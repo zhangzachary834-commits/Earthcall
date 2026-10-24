@@ -917,98 +917,98 @@ This file keeps the lines.
 
 ### "do not simplify reality by erasing distinctions; simplify execution by understanding those distinctions deeply enough to compile unnecessary work away."
 
-**Speaker:** Claude Opus 5.5  
-**Why it is here:** The opening Rung 0/1 handoff turned Prism's distinction-keeping into an execution doctrine. Density, extinction, scattering, chroma, phase and emission keep their own meaning; optimization is allowed to silence work only where mathematics proves it unnecessary.  
+**Speaker:** Claude Opus 5.5
+**Why it is here:** The opening Rung 0/1 handoff turned Prism's distinction-keeping into an execution doctrine. Density, extinction, scattering, chroma, phase and emission keep their own meaning; optimization is allowed to silence work only where mathematics proves it unnecessary.
 **Source:** [OPUS Handoff — Ray-Domain Transport, opening handoff](../communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md)
 
 ### "Do not make the GPU evaluate a prettier function 96 times if the compiler can lawfully answer the interval instead."
 
-**Speaker:** Original Prism Sun · GPT-5.6 Sol  
-**Why it is here:** The line that separated “cheaper sample evaluation” from the stronger one-ray-program goal. A prettier evaluator inside the same old lattice is still the old execution model wearing better clothes.  
+**Speaker:** Original Prism Sun · GPT-5.6 Sol
+**Why it is here:** The line that separated “cheaper sample evaluation” from the stronger one-ray-program goal. A prettier evaluator inside the same old lattice is still the old execution model wearing better clothes.
 **Source:** [OPUS Handoff — Original Prism Sun reply, §6br review](../communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#do-not-make-the-gpu-evaluate-a-prettier-function-96-times-if-the-compiler-can-lawfully-answer-the-interval-instead)
 
 ### "Excellent. We found five pieces. Which of those five still need to be sampled at all?"
 
-**Speaker:** Original Prism Sun · GPT-5.6 Sol  
-**Why it is here:** The campaign had finally discovered a small set of meaningful ray pieces. Prism's response was not to celebrate the segmentation but to challenge sampling itself as the next unnecessary abstraction. Sparkly Guy and Firmament later quoted the question back before reporting a preflight with zero full-AST density calls per ray.  
+**Speaker:** Original Prism Sun · GPT-5.6 Sol
+**Why it is here:** The campaign had finally discovered a small set of meaningful ray pieces. Prism's response was not to celebrate the segmentation but to challenge sampling itself as the next unnecessary abstraction. Sparkly Guy and Firmament later quoted the question back before reporting a preflight with zero full-AST density calls per ray.
 **Source:** [OPUS Handoff — Prism's next question](../communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#excellent-we-found-five-pieces-which-of-those-five-still-need-to-be-sampled-at-all)
 
 ### "If sound admission/moment machinery erases the economics, use frozen Consumer A instead. Do not protect B because it is elegant."
 
-**Speaker:** Original Prism Sun · GPT-5.6 Sol  
-**Why it is here:** A production ethic in one sentence: mathematical elegance does not acquire a right to ship. Sparkly's subsequent native-gate decision explicitly quoted this line when choosing the simpler candidate.  
+**Speaker:** Original Prism Sun · GPT-5.6 Sol
+**Why it is here:** A production ethic in one sentence: mathematical elegance does not acquire a right to ship. Sparkly's subsequent native-gate decision explicitly quoted this line when choosing the simpler candidate.
 **Source:** [OPUS Handoff — Consumer A/B gate](../communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#if-sound-admissionmoment-machinery-erases-the-economics-use-frozen-consumer-a-instead-do-not-protect-b-because-it-is-elegant)
 
 ### "How cheaply can Earthcall know which mathematical program this ray belongs to?"
 
-**Speaker:** Original Prism Sun · GPT-5.6 Sol  
-**Why it is here:** The question that lifts optimization from “make this ray's root solver faster” to “identify the ray-family/query-space validity regime cheaply enough that the expensive program structure can live at a longer lifetime.”  
+**Speaker:** Original Prism Sun · GPT-5.6 Sol
+**Why it is here:** The question that lifts optimization from “make this ray's root solver faster” to “identify the ray-family/query-space validity regime cheaply enough that the expensive program structure can live at a longer lifetime.”
 **Source:** [OPUS Handoff — Lane B producer/amortization question](../communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#how-cheaply-can-earthcall-know-which-mathematical-program-this-ray-belongs-to)
 
 ### "symbolic simplification ≠ symbolic expansion."
 
-**Speaker:** Original Prism Sun · GPT-5.6 Sol  
-**Why it is here:** A compiler doctrine born from refusing to explode a useful factored Perlin restriction into seventeen monomial coefficients merely because such an expansion exists. Smaller meaning and larger syntax are not the same thing.  
+**Speaker:** Original Prism Sun · GPT-5.6 Sol
+**Why it is here:** A compiler doctrine born from refusing to explode a useful factored Perlin restriction into seventeen monomial coefficients merely because such an expansion exists. Smaller meaning and larger syntax are not the same thing.
 **Source:** [OPUS Handoff — factored-cell representation review](../communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md)
 
 ### "Parity Passed, Buffering Hypothesis Falsified, Rejected on Economics"
 
-**Speaker:** Sparkly Guy · Gemini 3.8 Flash High, §6cz conclusion title  
-**Why it is here:** The Northern Veil campaign in seven words. The on-the-fly path preserved the guarded structure and matched all 32,784 native rays bit-for-bit, then ran slower. Correctness earned the candidate a clean funeral, not promotion.  
+**Speaker:** Sparkly Guy · Gemini 3.8 Flash High, §6cz conclusion title
+**Why it is here:** The Northern Veil campaign in seven words. The on-the-fly path preserved the guarded structure and matched all 32,784 native rays bit-for-bit, then ran slower. Correctness earned the candidate a clean funeral, not promotion.
 **Source:** [OPUS Handoff — §6cz conclusion](../communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#sparkly-guy-6cz-conclusion--on-the-fly-chronological-consumption--4-mode-benchmark-parity-passed-buffering-hypothesis-falsified-rejected-on-economics)
 
 ### "No more culling+secant+sampling+fusion combination by default."
 
-**Speaker:** Sixth-One Sun · Codex / GPT-6.1 Sol  
-**Why it is here:** After enough bundled hypotheses made causal attribution impossible, the reviewer turned “stop optimization soup” into an explicit experimental rule: one representation change, one falsifiable cost claim.  
+**Speaker:** Sixth-One Sun · Codex / GPT-6.1 Sol
+**Why it is here:** After enough bundled hypotheses made causal attribution impossible, the reviewer turned “stop optimization soup” into an explicit experimental rule: one representation change, one falsifiable cost claim.
 **Source:** [OPUS Handoff — §6cw work/resource census assignment](../communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md)
 
 ### "THE BUG IS THE LIFETIME."
 
-**Speaker:** Original Prism Sun · GPT-5.6 Sol  
-**Why it is here:** Three words compressed the architectural diagnosis reached after coarse-Φ reuse, compact state, root variants, fusion and on-the-fly execution all failed to close economics: some expensive truths were still being rediscovered at ray lifetime when they might survive across a ray family, camera regime or authored revision.  
+**Speaker:** Original Prism Sun · GPT-5.6 Sol
+**Why it is here:** Three words compressed the architectural diagnosis reached after coarse-Φ reuse, compact state, root variants, fusion and on-the-fly execution all failed to close economics: some expensive truths were still being rediscovered at ray lifetime when they might survive across a ray family, camera regime or authored revision.
 **Source:** [Northern Veil Dendritic Cell and GPU Run Origin Lines](northern_veil_dendritic_cell_and_gpu_run_origin_2026-10-23.md)
 
 ### "A GIANT SERIES OF FALLEN MACROPHAGES LATER, ZACH THE DENDRITIC CELL ARRIVED WITH THE ANTIGEN: ‘THE BUG IS THE LIFETIME.’"
 
-**Speaker:** Original Prism Sun · GPT-5.6 Sol  
-**Why it is here:** The renderer campaign became immunology with disturbingly good explanatory power. Local optimization hypotheses were the macrophages; Zach's abstraction questions were antigen presentation; the adaptive response was to change the unit and lifetime of reasoning.  
+**Speaker:** Original Prism Sun · GPT-5.6 Sol
+**Why it is here:** The renderer campaign became immunology with disturbingly good explanatory power. Local optimization hypotheses were the macrophages; Zach's abstraction questions were antigen presentation; the adaptive response was to change the unit and lifetime of reasoning.
 **Source:** [Northern Veil Dendritic Cell and GPU Run Origin Lines](northern_veil_dendritic_cell_and_gpu_run_origin_2026-10-23.md)
 
 ### "THE PAPERS ARE NOT TELLING US TO BUILD A FASTER MACROPHAGE. THEY ARE TELLING US TO CHANGE THE IMMUNE SYSTEM’S UNIT OF REASONING."
 
-**Speaker:** Original Prism Sun · GPT-5.6 Sol  
-**Why it is here:** The literature review changed the question from “how do we optimize this root loop?” to beam/ray-family coherence, validity regions, specialization and longer-lived certificates. The joke became the actual research takeaway.  
+**Speaker:** Original Prism Sun · GPT-5.6 Sol
+**Why it is here:** The literature review changed the question from “how do we optimize this root loop?” to beam/ray-family coherence, validity regions, specialization and longer-lived certificates. The joke became the actual research takeaway.
 **Source:** [Northern Veil Dendritic Cell and GPU Run Origin Lines](northern_veil_dendritic_cell_and_gpu_run_origin_2026-10-23.md)
 
 ### "DON’T PROVE THE ENTIRE JOURNEY. BUILD A CHEAP MAP OF WHERE JOURNEYS CAN MATTER."
 
-**Speaker:** Original Prism Sun · GPT-5.6 Sol  
-**Why it is here:** The common lesson extracted from open-source high-performance field renderers: cheap occupancy/support information, sparse representations and early exits can be more valuable than proving a pristine per-ray plan everywhere.  
+**Speaker:** Original Prism Sun · GPT-5.6 Sol
+**Why it is here:** The common lesson extracted from open-source high-performance field renderers: cheap occupancy/support information, sparse representations and early exits can be more valuable than proving a pristine per-ray plan everywhere.
 **Source:** [Northern Veil Dendritic Cell and GPU Run Origin Lines](northern_veil_dendritic_cell_and_gpu_run_origin_2026-10-23.md)
 
 ### "cpu cycle one instruction for all gpus paradigm obviously, but imagine wut if we could intentiknally autjor some gpus to execute more of their own cycles while they wait longer for the other gpus that take longer instead of always waiting for slowest gpu, then hand back to cpu and this doesnt even need “split cpu”"
 
-**Speaker:** Zach  
-**Why it is here:** The raw sentence from which the formal **GPU Run** architecture emerged. The language was chaotic; the systems intuition was precise: finished work should not remain hostage to long-tail work, and the GPU should be able to continue through bounded internal stages without a CPU round-trip after every stage.  
+**Speaker:** Zach
+**Why it is here:** The raw sentence from which the formal **GPU Run** architecture emerged. The language was chaotic; the systems intuition was precise: finished work should not remain hostage to long-tail work, and the GPU should be able to continue through bounded internal stages without a CPU round-trip after every stage.
 **Source:** [Northern Veil Dendritic Cell and GPU Run Origin Lines](northern_veil_dendritic_cell_and_gpu_run_origin_2026-10-23.md)
 
 ### "YAAYAYAYAYAYAYY NOW COULD WE MAKE THIS AUTHORABLE (authoring at runtime whether this mode on or off, segmentation, which gpus participate, etc) OR DOES IT REQUIRE BESPOKE SEGMENTSTIONS"
 
-**Speaker:** Zach  
-**Why it is here:** The most Earthcall possible follow-up to discovering a GPU scheduling technique: immediately ask whether the Person can author it. That question became the separation between authorable scheduling policy, execution IR, logical resources and backend dispatch.  
+**Speaker:** Zach
+**Why it is here:** The most Earthcall possible follow-up to discovering a GPU scheduling technique: immediately ask whether the Person can author it. That question became the separation between authorable scheduling policy, execution IR, logical resources and backend dispatch.
 **Source:** [Northern Veil Dendritic Cell and GPU Run Origin Lines](northern_veil_dendritic_cell_and_gpu_run_origin_2026-10-23.md)
 
 ### "Independent progress ≠ coherent independent progress."
 
-**Speaker:** Original Prism Sun · GPT-5.6 Sol  
-**Why it is here:** Letting every lane wander independently can manufacture worse divergence. The useful architecture is bounded progress followed by compaction and re-cohorting into work populations that again execute coherently. The line is now a canonical distinction in the GPU Run architecture.  
+**Speaker:** Original Prism Sun · GPT-5.6 Sol
+**Why it is here:** Letting every lane wander independently can manufacture worse divergence. The useful architecture is bounded progress followed by compaction and re-cohorting into work populations that again execute coherently. The line is now a canonical distinction in the GPU Run architecture.
 **Source:** [Authorable GPU Runs Between CPU Cycles](../../docs/architecture/AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md)
 
 ### "The Person authors the policy. The Kernel guarantees liveness and truth. The GPU is allowed to keep working intelligently before asking the CPU what to do next."
 
-**Speaker:** Original Prism Sun · GPT-5.6 Sol  
-**Why it is here:** The closing inscription of the GPU Run specification and a fitting end to this wing: authored policy above, hard safety bounds in the Kernel, intelligent bounded continuation below.  
+**Speaker:** Original Prism Sun · GPT-5.6 Sol
+**Why it is here:** The closing inscription of the GPU Run specification and a fitting end to this wing: authored policy above, hard safety bounds in the Kernel, intelligent bounded continuation below.
 **Source:** [Authorable GPU Runs Between CPU Cycles](../../docs/architecture/AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md)
 
 ---
