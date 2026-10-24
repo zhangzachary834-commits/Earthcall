@@ -2,10 +2,10 @@
 
 *GPU-resident continuation, bounded re-cohorting, and Law-authored execution policy*
 
-**Date:** 2026-10-23
-**Status:** Architecture specification; production GPU-run scheduler not yet wired
-**Human origin:** Zachary Zhang
-**Codification:** GPT-5.6 Sol
+**Date:** 2026-10-23  
+**Status:** Architecture specification; production GPU-run scheduler not yet wired  
+**Human origin:** Zachary Zhang  
+**Codification:** GPT-5.6 Sol  
 **Read beside:** [Adaptive Compute Moments](ADAPTIVE_COMPUTE_MOMENTS.md), [CPU-GPU Micro-Mastery](ontology/CPU_GPU_MICRO_MASTERY.md), [Algorithms as Law](law/ALGORITHMS_AS_LAW.md), [Geometry Execution Substrate Manifesto](mathematics/GEOMETRY_EXECUTION_SUBSTRATE_MANIFESTO.md), and the current ray-transport evidence under ../../docs/audits/.
 
 ---
