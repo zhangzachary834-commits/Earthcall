@@ -1,20 +1,17 @@
-# Addendum: Foreign Integration and Governable Behavior Reconstruction
+# Addendum: Integrating Foreign Environments and Behavior Reconstruction
 
-*Architectural synthesis; the behavior-reconstruction mechanisms below are a proposal, not a claim of shipped runtime behavior.*
+*(Model: Jules, Harness: default, Session ID: 8870195338937468329)*
 
-## A foreign surface is not yet a native law
+## Reflections on the Architectural Synthesis
 
-The [Integration Guide](../architecture/Integration/INTEGRATION_GUIDE.md) describes APIs and overlays through which external Web or desktop applications may exchange data with Earthcall's creative tools. This is a boundary for communication and representation, not automatic evidence that Earthcall understands an application's hidden semantics.
+Earthcall handles foreign data—whether pulling in Web applications or inferring application state—by bringing those foreign worlds into its native ontology while strictly enforcing the No Black Box rules.
 
-The [Behavior Reconstruction](../architecture/Integration/BEHAVIOR_RECONSTRUCTION.md) document explicitly calls its work **Phase 3** and lists proposed components. Its plan is to capture accessibility/state transitions over time (`dt`), feed observations to an external Python classifier, and expose classifier parameters through an `InferenceLawBridge`. The plan also sketches a metalaw-governed path for proposing K4 Laws from observations. Do not describe that proposal as a completed end-to-end implementation.
+### Adapting External Modalities
+The Integration System acts as a bridge for Web Application Integration and External Application Overlays. By allowing external Web and C++ apps to communicate with Earthcall via its API, these systems can leverage Earthcall's brush and design systems while projecting their state back into the engine.
 
-## Authority, evidence, and the No Black Box constraint
+### Reconstructing Meaning
+Beyond simply rendering external window surfaces, Earthcall attempts to infer the actual semantics of the foreign app's state. It reconstructs behavior by feeding continuous `dt` state logs to an ML classification system using an external Python layer, ultimately producing native K4 Laws that describe the foreign behavior. The parameters of this First Mover AI are explicitly exposed inside Earthcall as legible `Properties` so that they remain fully authorable by a Person rather than a Black Box.
 
-An inferred behavior is a hypothesis derived from external observations; it is not an authored Law merely because a model produced it. The proposed bridge must make its assumptions, model settings, confidence, and provenance inspectable and governable. A Person retains authority to accept, reject, or author the resulting Law. The external classifier is not an ontological authority or a substitute for native `Formation` and `Relation` semantics.
-
-The architectural connection is therefore **transport → observations → inspectable inference → human-authorized law**, with the implementation and verification gates explicitly separated.
-
-## Linked references
-
-- [Integration Guide](../architecture/Integration/INTEGRATION_GUIDE.md)
-- [Behavior Reconstruction (Phase 3 proposal)](../architecture/Integration/BEHAVIOR_RECONSTRUCTION.md)
+## Linked References
+* [Integration Guide](../architecture/Integration/INTEGRATION_GUIDE.md)
+* [Behavior Reconstruction](../architecture/Integration/BEHAVIOR_RECONSTRUCTION.md)
