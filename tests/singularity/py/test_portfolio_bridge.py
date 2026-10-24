@@ -1,3 +1,22 @@
+# WITNESS DOCUMENTATION:
+#
+# What the old test COULD prove:
+# - It could prove that the dictionary structure returned by `get_portfolio_state()`
+#   contained expected top-level schema keys ("schema", "connected") when manually constructed.
+#
+# What the old test COULD NOT prove:
+# - It could not prove that `get_portfolio_state()` projected actual live objects, laws, or active zone
+#   state, because `has_engine_snapshot` was default False on `CppBridge`, causing `get_portfolio_state()`
+#   to return empty lists/strings.
+# - It could not prove that CORS origin checking worked, because it attempted to import `PORTFOLIO_ALLOWED_ORIGINS`
+#   which was removed in favor of `_portfolio_allowed_origins()`, causing an unhandled `ImportError` that
+#   prevented the test file from running at all in the test suite.
+#
+# The new test below tests the real application runtime path by delivering a real C++ engine `state_sync`
+# JSON payload through `bridge._process_message()`, verifying that `has_engine_snapshot` is set to True,
+# and verifying that live objects, laws, and active zone state are projected while internal fields are stripped.
+
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -8,7 +27,7 @@ sys.path.insert(0, str(_SRC / "Singularity" / "Foreign" / "py"))
 
 from src.Singularity.Foreign.py.bridge import CppBridge
 from src.Singularity.Foreign.py.api.routes import (
-    PORTFOLIO_ALLOWED_ORIGINS,
+    _portfolio_allowed_origins,
     _portfolio_origin_allowed,
 )
 
@@ -17,6 +36,7 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
     def test_projection_is_read_only_and_bounded(self):
         bridge = CppBridge()
         bridge.connected = True
+        bridge.has_engine_snapshot = True
         bridge.current_state = {
             "timestamp": 123.0,
             "active_zone_index": 2,
@@ -54,14 +74,67 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
 
         self.assertEqual(projection["schema"], "earthcall.portfolio.v1")
         self.assertTrue(projection["connected"])
+        self.assertTrue(projection["has_engine_snapshot"])
         self.assertEqual(projection["active_zone"]["name"], "Law Garden")
         self.assertNotIn("secret_internal_field", projection["objects"][0])
         self.assertNotIn("private_runtime_state", projection["laws"][0])
         self.assertEqual(len(projection["recent_events"]), 1)
 
+    def test_real_live_snapshot_path_projection(self):
+        """Traverses the real production C++ websocket message ingestion path via _process_message()."""
+        bridge = CppBridge()
+        bridge.connected = True
+
+        # Ensure that initially, without an engine snapshot, no world objects or laws are projected
+        initial_projection = bridge.get_portfolio_state()
+        self.assertFalse(initial_projection["has_engine_snapshot"])
+        self.assertEqual(initial_projection["objects"], [])
+        self.assertEqual(initial_projection["laws"], [])
+
+        # Process a real C++ engine state_sync wire message
+        engine_wire_message = json.dumps({
+            "type": "state_sync",
+            "timestamp": 456.0,
+            "active_zone_index": 1,
+            "active_zone_name": "Sanctuary of Light",
+            "active_zone_id": "zone-sanctuary",
+            "objects": [
+                {
+                    "id": "obj-crystal",
+                    "name": "Crystal Pillar",
+                    "type": "ConstructedBeing",
+                    "position": [0.0, 5.0, 0.0],
+                    "unregistered_internal_ptr": "0xDEADBEEF",
+                }
+            ],
+            "laws": [
+                {
+                    "identifier": "law-resonance",
+                    "name": "Resonance Law",
+                    "enabled": True,
+                    "conditionDescription": "true",
+                    "actionDescription": "resonate()",
+                    "internal_rete_node_ptr": "0xCAFEBABE",
+                }
+            ],
+        })
+
+        bridge._process_message(engine_wire_message)
+
+        # Verify that traversing the real ingestion path sets has_engine_snapshot to True and projects state
+        live_projection = bridge.get_portfolio_state()
+        self.assertTrue(live_projection["has_engine_snapshot"])
+        self.assertEqual(live_projection["active_zone"]["name"], "Sanctuary of Light")
+        self.assertEqual(len(live_projection["objects"]), 1)
+        self.assertEqual(live_projection["objects"][0]["id"], "obj-crystal")
+        self.assertNotIn("unregistered_internal_ptr", live_projection["objects"][0])
+        self.assertEqual(len(live_projection["laws"]), 1)
+        self.assertEqual(live_projection["laws"][0]["identifier"], "law-resonance")
+        self.assertNotIn("internal_rete_node_ptr", live_projection["laws"][0])
+
     def test_public_portfolio_origin_is_explicitly_allowed(self):
         origin = "https://zhangzachary834-commits.github.io"
-        self.assertIn(origin, PORTFOLIO_ALLOWED_ORIGINS)
+        self.assertIn(origin, _portfolio_allowed_origins())
         self.assertTrue(_portfolio_origin_allowed(origin))
         self.assertFalse(_portfolio_origin_allowed("https://evil.example"))
 
