@@ -1566,7 +1566,11 @@ bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j) {
         const std::string safe = sanitizeLabel(identifier);
         if (!safe.empty()) {
             std::error_code ec;
-            std::filesystem::remove(std::filesystem::path(path).parent_path() / "zone.json", ec);
+            const auto parent = std::filesystem::path(path).parent_path();
+            std::filesystem::remove(parent / "zone.ecsave", ec);
+            if (ec) return false; // A stale higher-priority sidecar would shadow this write.
+            std::filesystem::remove(parent / "zone.json", ec);
+            if (ec) return false;
         }
     }
     return wrote;
@@ -1779,7 +1783,11 @@ bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j) {
         const std::string safe = sanitizeLabel(identifier);
         if (!safe.empty()) {
             std::error_code ec;
-            std::filesystem::remove(std::filesystem::path(path).parent_path() / "home.json", ec);
+            const auto parent = std::filesystem::path(path).parent_path();
+            std::filesystem::remove(parent / "home.ecsave", ec);
+            if (ec) return false; // A stale higher-priority sidecar would shadow this write.
+            std::filesystem::remove(parent / "home.json", ec);
+            if (ec) return false;
         }
     }
     return wrote;

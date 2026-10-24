@@ -3,8 +3,8 @@
 // Verifies that:
 // 1. SaveSystem::resolveZoneIdentityPath and resolveHomeIdentityPath accurately
 //    resolve .ecsave, .ecform, then legacy .json, including catalog discovery.
-// 2. SaveSystem::writeZoneIdentity and writeHomeIdentity automatically remove any
-//    legacy fixed-name zone.json or home.json sidecars in the zone/home directory
+// 2. SaveSystem::writeZoneIdentity and writeHomeIdentity automatically remove
+//    stale fixed-name .ecsave and .json sidecars in the zone/home directory
 //    upon successfully writing the .ecform binary identity file.
 
 #include "Singularity/Storage/SaveSystem.hpp"
@@ -85,6 +85,8 @@ int main() {
 
     const std::filesystem::path legacyZoneJson = zoneDir / "zone.json";
     const std::filesystem::path legacyHomeJson = homeDir / "home.json";
+    const std::filesystem::path legacyZoneEcsave = zoneDir / "zone.ecsave";
+    const std::filesystem::path legacyHomeEcsave = homeDir / "home.ecsave";
 
     // Write legacy .json sidecars
     {
@@ -115,6 +117,18 @@ int main() {
     check(catalogNames(true) == std::vector<std::string>{"Legacy Home"},
           "Home catalog discovers a JSON-only identity");
 
+    // Recreate the dangerous migration state: a nonempty higher-priority .ecsave
+    // shadows the next .ecform write unless the writer cleans it up.
+    auto writeStaleSidecar = [](const std::filesystem::path& path, const nlohmann::json& doc) {
+        const auto bytes = nlohmann::json::to_msgpack(doc);
+        std::ofstream out(path, std::ios::binary);
+        out.write(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+    };
+    writeStaleSidecar(legacyZoneEcsave, nlohmann::json{{"identifier", zoneId}, {"name", "Stale Zone"}});
+    writeStaleSidecar(legacyHomeEcsave, nlohmann::json{{"identifier", homeId}, {"name", "Stale Home"}});
+    check(std::filesystem::exists(legacyZoneEcsave), "Stale zone.ecsave fixture exists");
+    check(std::filesystem::exists(legacyHomeEcsave), "Stale home.ecsave fixture exists");
+
     // Write primary .ecform identities via writeZoneIdentity and writeHomeIdentity
     nlohmann::json zoneDoc{
         {"identifier", zoneId},
@@ -138,7 +152,9 @@ int main() {
     check(std::filesystem::exists(zoneEcform), "Primary zone.ecform created");
     check(std::filesystem::exists(homeEcform), "Primary home.ecform created");
 
-    // Assert legacy fixed-name .json sidecars were deleted automatically
+    // Assert both higher-priority .ecsave and legacy .json sidecars were removed.
+    check(!std::filesystem::exists(legacyZoneEcsave), "Stale zone.ecsave sidecar was removed");
+    check(!std::filesystem::exists(legacyHomeEcsave), "Stale home.ecsave sidecar was removed");
     check(!std::filesystem::exists(legacyZoneJson), "Stale legacy zone.json sidecar was removed");
     check(!std::filesystem::exists(legacyHomeJson), "Stale legacy home.json sidecar was removed");
 
