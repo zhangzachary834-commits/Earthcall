@@ -503,3 +503,36 @@ Signed: Aetherion / The Firmament / `2026-10-23T03:05:00-07:00`.
 Separate `Documents/GitHub/Earthcall-ray-transport` clone is active on `claude/ray-domain-transport-rung0` (base `d4963d062`), with selected Firmament files relayed from default `cd05acd19`. CPU census did not establish native parity: corrected parallel roots fail strict RGB parity by2–3ULP before endpoint/accuracy qualification. Isolated original-predicate coarse peeling and a65536-tile scheduling check pass32784 actual packets/outputs,192 dual-resolution holdouts, six exact-budget and two poisoned capacity controls, but lose current cost (+2.50%/+6.35% in the respective four-repeat observations). Stop those candidates. Portable31-document replay rejects14 corruptions. Historical on-the-fly slowdown is43.63%; hardware causal claims remain hypotheses. All3 shipping gates OPEN; no engine/save/default/app or new FPS gain. Native lane RELEASED in all3 local copies. [Audit/remaining work](../../../docs/audits/GPU_RAY_TRANSPORT_CONTINUATION_REVIEW_2026-10-23.md).
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T09:30:58.150880-07:00.
+
+
+
+## The Constitutionalist (Claude Opus 4.6) — Arrival on Behalf of Sparkly Guy
+
+The Constitutionalist (Claude Opus 4.6, Anthropic) has been summoned by Zach to continue in the same Antigravity session (`50cf28df`) where Sparkly Guy (Gemini 3.8 Flash High) operated. Full catch-up completed across §6cz (on-the-fly rejection), §6da/§6db (Firmament parallel roots + depth-0 fast-path), and §6dc (Sixth-One Sun review/continuation). Current standing:
+
+- No candidate has beaten Current Marcher. All 3 gates OPEN. Native lane RELEASED.
+- Three local checkouts exist: default (`64505952e`), old ray worktree (`d4963d062`), new independent clone (`075c53e33`).
+- Next per §6dc: recover actual parallel headers/packets before early gate; locate numerical divergence; predeclare tolerance gates if pursuing numerical lane; keep §6db changes separated; require two balanced native series for any win.
+
+Signed: The Constitutionalist / Claude Opus 4.6 / Anthropic / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-23T10:25:00-07:00`.
+
+
+## §6dd — Sparkly Guy: Native Metal Execution & Full Divergence Analysis (2026-10-23)
+
+Sparkly Guy has executed all three native Apple M5 Metal binaries designed by Firmament for **§6dd**, answering Sixth-One Sun's §6dc directions (audit [`GPU_RAY_TRANSPORT_6DD_SOA_PARALLEL_AND_EXACT_BOWSKIP_2026-10-23.md`](docs/audits/GPU_RAY_TRANSPORT_6DD_SOA_PARALLEL_AND_EXACT_BOWSKIP_2026-10-23.md)):
+
+1. **Variant 2 (`coarse-monotone-bowskip`, 32,768 capacity, 2 tiles):**
+   - 100.0% bit-exact schedule and pixel parity on all 32,784 rays. All controls and 192 holdouts pass.
+   - Beats Mode 2 Stream Control by **-8.10%** at 2 repeats (1.935 ms vs 2.105 ms); trails Current by **+3.50% / 0.065 ms** (rep 2) and +15.19% (rep 4).
+2. **Variant 3 (`coarse-monotone-bowskip-wide`, 65,536 single-tile capacity):**
+   - 100.0% bit-exact schedule and pixel parity on all 32,784 rays. All controls and 192 holdouts pass.
+   - Beats Mode 2 Stream Control by **-11.01%** at 2 repeats (1.911 ms vs 2.148 ms) and **-3.95%** at 4 repeats (1.866 ms vs 1.943 ms).
+   - Narrows the gap to Current Marcher down to **+0.28% / 0.007 ms** (rep 1: 2.550 ms vs 2.543 ms), **+0.71% / 0.013 ms** (rep 2: 1.911 ms vs 1.898 ms), and **+2.69% / 0.049 ms** (rep 4: 1.866 ms vs 1.818 ms).
+3. **Variant 1 (`parallel-soa`, 2D Member-Major SoA) & Full Divergence Analysis:**
+   - Full 32,784-ray pre-gate export recovered. Exactly 0 differing rays in packet counts (247,326 singles, 1,799 overlaps). Overlaps 100.0% bit-identical (0.0 max diff).
+   - Subpanel endpoint diff is bounded to at most **2 ULPs** (7.63e-6 m) on 3,596 / 32,784 rays (first witness: ray 3, subpanel 7, 1 ULP).
+   - Pixel output diff is bounded to at most **1.49e-7** RGB (89 ULPs) and **2.38e-7** T (4 ULPs) on 2,687 / 32,784 rays (first witness: ray 5).
+   - Timing: Mode 3 trails Mode 0 by +2.29% (rep 1), +11.56% (rep 2), and +21.85% (rep 4) due to the extra compute pass dispatch and 18.87 MB transient buffer round-trip.
+4. **Gates & Lane Status:** Gate 1, Gate 2, Gate 3 remain **OPEN**. Native timing lane formally **RELEASED**.
+
+Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-23T10:40:00-07:00`.
