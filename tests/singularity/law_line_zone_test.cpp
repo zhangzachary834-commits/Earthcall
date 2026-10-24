@@ -63,7 +63,7 @@ bool contains(const std::vector<std::string>& v, const std::string& s) {
 int main() {
     std::filesystem::path saves = std::getenv("EARTHCALL_LAW_LINE_TEST_SAVES")
         ? std::getenv("EARTHCALL_LAW_LINE_TEST_SAVES") : "saves";
-    if (!std::filesystem::exists(saves / "zones/LawLine")) saves = std::filesystem::path("..") / "saves";
+    if (!std::filesystem::exists(saves / "zones/LawLine") && std::filesystem::exists("../saves/zones/LawLine")) saves = std::filesystem::path("..") / "saves";
     saves = std::filesystem::absolute(saves);
     // An in-app Save Zone writes the native zone.ecform (Zach's LawLine save,
     // e4d7a72d); a fresh seed writes zone.json. Read whichever the Person's
