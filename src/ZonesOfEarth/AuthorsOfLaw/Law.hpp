@@ -954,15 +954,12 @@ public:
         std::string eventObjectId;
     };
     const std::vector<DriveSession>& driveSessions() const { return _driveSessions; }
-    struct PairHash {
-        std::size_t operator()(const std::pair<std::string, std::string>& p) const {
-            std::size_t h1 = std::hash<std::string>{}(p.first);
-            std::size_t h2 = std::hash<std::string>{}(p.second);
-            return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
-        }
-    };
+    // Two-stage lookup avoids constructing temporary owned strings for a pair key.
+    // This is an allocation property of the lookup, not a measured tick speedup.
     bool hasDriveSession(const std::string& lawId, const std::string& subjectId) const {
-        return _driveSessionKeys.find({lawId, subjectId}) != _driveSessionKeys.end();
+        const auto it = _driveSessionKeys.find(lawId);
+        return it != _driveSessionKeys.end() &&
+               it->second.find(subjectId) != it->second.end();
     }
 
     // Bounded law chaining per tick: a law firing an event that wakes another
@@ -1108,7 +1105,13 @@ private:
     Formation _lawFormation;
     ReteNetwork _rete;
     std::vector<DriveSession> _driveSessions;
-    std::unordered_set<std::pair<std::string, std::string>, PairHash> _driveSessionKeys;
+    std::unordered_map<std::string, std::unordered_set<std::string>> _driveSessionKeys;
+    void eraseDriveSessionKey(const std::string& lawId, const std::string& subjectId) {
+        const auto it = _driveSessionKeys.find(lawId);
+        if (it == _driveSessionKeys.end()) return;
+        it->second.erase(subjectId);
+        if (it->second.empty()) _driveSessionKeys.erase(it);
+    }
     std::unordered_map<std::string, std::vector<std::string>> _triggers;
     // Terminal node IDs for each law's compiled condition DAG.
     // Key: lawId, Value: {nodeId, isBeta} pairs for the DAG's terminal nodes.
