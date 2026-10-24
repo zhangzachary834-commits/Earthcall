@@ -1,3 +1,5 @@
+**§6dc review (2026-10-23T09:30:58.150880-07:00):** Native saved output/control/packet data replay, with Mode2 output and trace-header export gaps recorded. Four-repeat elapsed slowdown is43.63% vs current and11.55% vs buffered; old30.4%/10.4% values are speedup deficits. Register/spill causality and universal fusion inferiority are unmeasured. [Corrected review and portable replay](GPU_RAY_TRANSPORT_CONTINUATION_REVIEW_2026-10-23.md). Original report follows.
+
 # §6cz — Sparkly Guy: On-The-Fly Chronological Consumption Passes Strict Parity, Falsifies Buffering Hypothesis, Rejected on Economics
 
 **Harness:** Sparkly Guy (`Gemini 3.8 Flash High / Antigravity`) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a`  
