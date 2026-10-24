@@ -532,3 +532,20 @@ Sparkly Guy has executed all three native Apple M5 Metal binaries designed by Fi
 4. **Gates & Lane Status:** Gate 1, Gate 2, Gate 3 remain **OPEN**. Native timing lane formally **RELEASED**.
 
 Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-23T10:40:00-07:00`.
+
+
+## §6de — Formal Answers to Ancient Counsel + Isolated `cnoise3Pair` & Cooperative 16-Ray Sub-Beam Certificate Probes (2026-10-24)
+
+[Full audit](../../../docs/audits/GPU_RAY_TRANSPORT_6DE_CNOISE3_PAIR_AND_TILE_BEAM_2026-10-24.md), [machine record](../../../docs/audits/GPU_RAY_TRANSPORT_6DE_CNOISE3_PAIR_AND_TILE_BEAM_2026-10-24.json), [`§6de` native runner](../../../scratch/probes/ray_transport_gpu_6de_prism_ancients.py), [`§6de` C++20 verifier](../../../scratch/probes/ray_transport_gpu_6de_verify.py).
+
+1. **Candidate 1 Isolated (`cnoise3-pair-wide` at `65,536` cap & `cnoise3-pair` at `32,768` cap) — Plane-Staged `cnoise3Pair(Pa, Pb)` (Parberry 2014 / GPU Gems 2 Ch. 26 & 35):**
+   - Fixes both `§6cb`/`§6cc` `cnoise3_fused` defects: gates strictly on `env_m > 0.0 && env_p > 0.0` (avoiding `11,137` redundant single-positive Perlin evaluations) and stages `z = 0` (`ixy0`) then `z = 1` (`ixy1`) so peak live gradient registers drop from `24` floats to `12` floats (`+10` net scalar registers inside `cnoise3Pair`, `0` outside).
+   - C++20 verified across all `32,784` rays (`247,328` subpanels): **`89.62%` same-cell rate** (`211,627 / 236,147`), **`-43.78%` lattice permutation/gradient setups** (`483,431 -> 271,804`), and **100.0% bit-exact float parity** (`0 / 247,328` subpanel diffs, `0 / 32,784` pixel diffs).
+2. **Candidate 2 Isolated (`tile-beam-wide` at `65,536` cap & `tile-beam` at `32,768` cap) — Cooperative 16-Ray Sub-Beam Lipschitz Support Certificate (Ganacim 2011 / Knoll 2009 / Guenter 1995):**
+   - Lanes `0..8` of each 16-ray sub-beam evaluate the 9 reference knots in parallel in 1 wave (`720 B` `workgroup` memory); all 16 lanes apply the exact pure-FMA Lipschitz + wave-amplitude enclosure to certify whole-member and per-bin level exclusion (`|Phi_m| > w_z + bow`) before per-ray `phi_knots` evaluation.
+   - C++20 verified across all `32,784` rays: certifies **`51,452 / 55,318` (`93.01%`) of all root-free box-hit members** (`falseSkips = 0`), eliminates **`-66.57%` (`621,841 / 934,074`) of coarse knot `evalPhi` calls** (**`-24.82%` of total producer `evalPhi` calls**), and preserves **100.0% bit-exact schedule parity (`0 / 32,784` diffs)**, budget controls (`23/24/25 -> 16/0/0`), and capacity controls (`maxSub=4 -> 26,243`, `maxOver=1 -> 412`).
+3. **Gates & Lane Status:**
+   - All 5 native `-O3` Metal binaries compiled in `/private/tmp/earthcall-6de-*`. All 3 shipping gates **OPEN** pending non-sandboxed desktop Metal timing runs. Native timing lane **RELEASED**.
+
+Signed: Aetherion / The Firmament / `2026-10-24T01:40:00-07:00`.
+
