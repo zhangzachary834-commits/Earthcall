@@ -1,4 +1,5 @@
 #include "Singularity/Screen/LawGraphWindow.hpp"
+#include "Singularity/Screen/ActionNodeFeed.hpp"
 
 #include "Singularity/Screen/CardTreeLayout.hpp"
 #include "Singularity/Screen/MathEditors.hpp"
@@ -318,14 +319,7 @@ struct SessionState {
     };
     std::vector<ActionEntry> actionFeed;
     
-    struct ActionNodeEntry {
-        std::string actionName;
-        std::string targetId;
-        int count = 1;
-        bool success = true;
-        std::string reason;
-    };
-    std::vector<ActionNodeEntry> actionNodeFeed;
+    std::vector<ActionNodeFeedEntry> actionNodeFeed;
     
     bool feedSubscribed = false;
 
@@ -360,27 +354,12 @@ void subscribeEventFeed() {
     });
     Core::EventBus::instance().subscribe<ActionNode::ExecutedEvent>([](const ActionNode::ExecutedEvent& e) {
         const std::string targetId = e.target ? e.target->getIdentifier() : "";
-        if (!g.actionNodeFeed.empty() && g.actionNodeFeed.front().actionName == e.actionName &&
-            g.actionNodeFeed.front().targetId == targetId &&
-            g.actionNodeFeed.front().success == true) {
-            ++g.actionNodeFeed.front().count;
-            return;
-        }
-        g.actionNodeFeed.insert(g.actionNodeFeed.begin(), {e.actionName, targetId, 1, true, ""});
-        if (g.actionNodeFeed.size() > 8) g.actionNodeFeed.pop_back();
+        recordActionNodeFeed(g.actionNodeFeed, e.actionName, targetId, true);
     });
     Core::EventBus::instance().subscribe<ActionNode::FailedEvent>([](const ActionNode::FailedEvent& e) {
         const std::string targetId = e.target ? e.target->getIdentifier() : "";
         const std::string reason = ActionNode::reasonName(e.reason);
-        if (!g.actionNodeFeed.empty() && g.actionNodeFeed.front().actionName == e.actionName &&
-            g.actionNodeFeed.front().targetId == targetId &&
-            g.actionNodeFeed.front().success == false &&
-            g.actionNodeFeed.front().reason == reason) {
-            ++g.actionNodeFeed.front().count;
-            return;
-        }
-        g.actionNodeFeed.insert(g.actionNodeFeed.begin(), {e.actionName, targetId, 1, false, reason});
-        if (g.actionNodeFeed.size() > 8) g.actionNodeFeed.pop_back();
+        recordActionNodeFeed(g.actionNodeFeed, e.actionName, targetId, false, reason);
     });
 }
 
@@ -4375,7 +4354,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
     ImGui::Separator();
     if (ImGui::CollapsingHeader("Recent Action Nodes (live)")) {
         if (g.actionNodeFeed.empty()) {
-            ImGui::TextDisabled("No ActionNodes fired yet.");
+            ImGui::TextDisabled("No ActionNodes executed or failed yet.");
         }
         for (const auto& entry : g.actionNodeFeed) {
             if (entry.success) {
