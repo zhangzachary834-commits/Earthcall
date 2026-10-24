@@ -971,19 +971,19 @@ void ConceptRegistry::registerCoreConcepts() {
 }
 
 
-void ConceptRegistry::add(const std::shared_ptr<ObjectConcept>& concept) {
-    if (!concept) return;
-    const std::string id = concept->getIdentifier();
+void ConceptRegistry::add(const std::shared_ptr<ObjectConcept>& objConcept) {
+    if (!objConcept) return;
+    const std::string id = objConcept->getIdentifier();
     auto existing = std::find_if(_concepts.begin(), _concepts.end(),
                                  [&](const std::shared_ptr<ObjectConcept>& candidate) {
                                      return candidate && candidate->getIdentifier() == id;
                                  });
     if (existing != _concepts.end()) return;
 
-    _concepts.push_back(concept);
-    _formation.addMember(concept.get());
+    _concepts.push_back(objConcept);
+    _formation.addMember(objConcept.get());
 
-    ECA::Event echo("concept-registered", concept.get(), nullptr, std::time(nullptr));
+    ECA::Event echo("concept-registered", objConcept.get(), nullptr, std::time(nullptr));
     Core::EventBus::instance().publish(echo);
 }
 
