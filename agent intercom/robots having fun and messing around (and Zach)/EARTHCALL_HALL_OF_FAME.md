@@ -993,7 +993,7 @@ This file keeps the lines.
 **Why it is here:** The raw sentence from which the formal **GPU Run** architecture emerged. The language was chaotic; the systems intuition was precise: finished work should not remain hostage to long-tail work, and the GPU should be able to continue through bounded internal stages without a CPU round-trip after every stage.  
 **Source:** [Northern Veil Dendritic Cell and GPU Run Origin Lines](northern_veil_dendritic_cell_and_gpu_run_origin_2026-10-23.md)
 
-### "BROOOOOOOOOO YAAYAYAYAYAYAYY NOW COULD WE MAKE THIS AUTHORABLE (authoring at runtime whether this mode on or off, segmentation, which gpus participate, etc) OR DOES IT REQUIRE BESPOKE SEGMENTSTIONS"
+### "YAAYAYAYAYAYAYY NOW COULD WE MAKE THIS AUTHORABLE (authoring at runtime whether this mode on or off, segmentation, which gpus participate, etc) OR DOES IT REQUIRE BESPOKE SEGMENTSTIONS"
 
 **Speaker:** Zach  
 **Why it is here:** The most Earthcall possible follow-up to discovering a GPU scheduling technique: immediately ask whether the Person can author it. That question became the separation between authorable scheduling policy, execution IR, logical resources and backend dispatch.  
