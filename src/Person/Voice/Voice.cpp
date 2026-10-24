@@ -31,7 +31,12 @@ Voice Voice::createBasicVoice(const std::string& style) {
 
 VoicePart* Voice::getVoicePart(const std::string& name) const {
     for (auto* part : parts) {
-        if (part->getName() == name) {
+        if (part && part->getIdentifier() == name) {
+            return part;
+        }
+    }
+    for (auto* part : parts) {
+        if (part && part->getName() == name) {
             return part;
         }
     }
@@ -41,7 +46,7 @@ VoicePart* Voice::getVoicePart(const std::string& name) const {
 std::vector<VoicePart*> Voice::getVoicePartsByType(VoicePart::Type type) const {
     std::vector<VoicePart*> result;
     for (auto* part : parts) {
-        if (part->getType() == type) {
+        if (part && part->getType() == type) {
             result.push_back(part);
         }
     }
@@ -49,12 +54,19 @@ std::vector<VoicePart*> Voice::getVoicePartsByType(VoicePart::Type type) const {
 }
 
 void Voice::removeVoicePart(const std::string& name) {
+    bool foundById = false;
+    for (auto* part : parts) {
+        if (part && part->getIdentifier() == name) {
+            foundById = true;
+            break;
+        }
+    }
     auto it = std::remove_if(parts.begin(), parts.end(), [&](const VoicePart* p) {
-        return p->getName() == name;
+        if (!p) return false;
+        return foundById ? (p->getIdentifier() == name) : (p->getName() == name);
     });
     if (it != parts.end()) {
         parts.erase(it, parts.end());
-        // Formation element removal logic would be handled here as well.
     }
 }
 

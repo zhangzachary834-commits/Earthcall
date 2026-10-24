@@ -1,4 +1,7 @@
 #include "Person/Body/BodyPart/BodyPart.hpp"
+#include "Person/Body/Body.hpp"
+#include "Person/Voice/Voice.hpp"
+#include "Person/Voice/VoicePart/VoicePart.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 #include <cassert>
@@ -312,6 +315,80 @@ static void testConstitutionIsExplicitRelation() {
     std::cout << "  testConstitutionIsExplicitRelation OK\n";
 }
 
+static void testIdentifierAndLookupFallback() {
+    // 1. BodyPart and VoicePart getIdentifier() queries Formation::getIdentifier()
+    BodyPart arm("Arm", BodyPart::Type::Arm);
+    assert(arm.getIdentifier() == "Arm");
+    assert(arm.getName() == "Arm");
+
+    // Setting a custom identifier changes getIdentifier() while preserving getName()
+    arm.setIdentifier("arm_left_custom");
+    assert(arm.getIdentifier() == "arm_left_custom");
+    assert(arm.getName() == "Arm");
+
+    VoicePart pitch("Pitch", VoicePart::Type::Pitch);
+    assert(pitch.getIdentifier() == "Pitch");
+    assert(pitch.getName() == "Pitch");
+
+    pitch.setIdentifier("voice_pitch_custom");
+    assert(pitch.getIdentifier() == "voice_pitch_custom");
+    assert(pitch.getName() == "Pitch");
+
+    // 2. Body lookup and removal prioritize exact identifier over display name
+    Body body("Humanoid", "Default");
+    auto* armPart1 = new BodyPart("Arm", BodyPart::Type::Arm);
+    armPart1->setIdentifier("arm_left");
+    auto* armPart2 = new BodyPart("Arm", BodyPart::Type::Arm);
+    armPart2->setIdentifier("arm_right");
+
+    body.addPart(armPart1);
+    body.addPart(armPart2);
+
+    // Exact identifier lookup
+    assert(body.getBodyPart("arm_left") == armPart1);
+    assert(body.getBodyPart("arm_right") == armPart2);
+
+    // Fallback display name lookup (matches first with that display name)
+    assert(body.getBodyPart("Arm") == armPart1);
+
+    // Exact identifier removal
+    body.removeBodyPart("arm_left");
+    assert(body.getBodyPart("arm_left") == nullptr);
+    assert(body.getBodyPart("arm_right") == armPart2);
+
+    // Fallback display name removal
+    body.removeBodyPart("Arm");
+    assert(body.getBodyPart("arm_right") == nullptr);
+
+    // 3. Voice lookup and removal prioritize exact identifier over display name
+    Voice voice("Default");
+    auto* vp1 = new VoicePart("Timbre", VoicePart::Type::Timbre);
+    vp1->setIdentifier("voice_timbre_1");
+    auto* vp2 = new VoicePart("Timbre", VoicePart::Type::Timbre);
+    vp2->setIdentifier("voice_timbre_2");
+
+    voice.addPart(vp1);
+    voice.addPart(vp2);
+
+    // Exact identifier lookup
+    assert(voice.getVoicePart("voice_timbre_1") == vp1);
+    assert(voice.getVoicePart("voice_timbre_2") == vp2);
+
+    // Fallback display name lookup
+    assert(voice.getVoicePart("Timbre") == vp1);
+
+    // Exact identifier removal
+    voice.removeVoicePart("voice_timbre_1");
+    assert(voice.getVoicePart("voice_timbre_1") == nullptr);
+    assert(voice.getVoicePart("voice_timbre_2") == vp2);
+
+    // Fallback display name removal
+    voice.removeVoicePart("Timbre");
+    assert(voice.getVoicePart("voice_timbre_2") == nullptr);
+
+    std::cout << "  testIdentifierAndLookupFallback OK\n";
+}
+
 int main() {
     std::cout << "body_part_test:\n";
     testInitialState();
@@ -323,6 +400,7 @@ int main() {
     testAutomations();
     testDraw();
     testConstitutionIsExplicitRelation();
+    testIdentifierAndLookupFallback();
     std::cout << "body_part_test: ALL OK\n";
     return 0;
 }
