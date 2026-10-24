@@ -15,7 +15,7 @@ This became the motivating intuition behind **GPU Runs**: easy work may finish, 
 
 ## Zach — immediate authorability question
 
-> "BROOOOOOOOOO YAAYAYAYAYAYAYY NOW COULD WE MAKE THIS AUTHORABLE (authoring at runtime whether this mode on or off, segmentation, which gpus participate, etc) OR DOES IT REQUIRE BESPOKE SEGMENTSTIONS"
+> "YAAYAYAYAYAYAYY NOW COULD WE MAKE THIS AUTHORABLE (authoring at runtime whether this mode on or off, segmentation, which gpus participate, etc) OR DOES IT REQUIRE BESPOKE SEGMENTSTIONS"
 
 The answer became a separation between authorable scheduling intent, the policy representation, a finite execution vocabulary, logical execution resources, and backend dispatch commands.
 
