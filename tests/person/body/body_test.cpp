@@ -56,12 +56,48 @@ void testBasicAvatarCreation() {
     }
 }
 
+void testDistinctBodyPartsLookupAndRemoval() {
+    Body body("Humanoid", "Voxel");
+    auto* arm1 = new BodyPart("Arm", BodyPart::Type::Arm, ObjectTypes::ShapeKind::Cube, {1.0f, 1.0f, 1.0f});
+    auto* arm2 = new BodyPart("Arm", BodyPart::Type::Arm, ObjectTypes::ShapeKind::Cube, {1.0f, 1.0f, 1.0f});
+
+    arm1->setIdentifier("arm.left");
+    arm2->setIdentifier("arm.right");
+
+    body.addPart(arm1);
+    body.addPart(arm2);
+
+    check(body.getBodyPart("arm.left") == arm1, "Can retrieve arm1 by exact identifier 'arm.left'");
+    check(body.getBodyPart("arm.right") == arm2, "Can retrieve arm2 by exact identifier 'arm.right'");
+
+    // A display name must not shadow a different part's exact identifier.
+    check(body.getBodyPart("Arm") == arm1, "Display-name fallback finds first matching arm");
+    auto* namedById = new BodyPart("Leg", BodyPart::Type::Leg, ObjectTypes::ShapeKind::Cube, {1.0f, 1.0f, 1.0f});
+    namedById->setIdentifier("Arm");
+    body.addPart(namedById);
+    check(body.getBodyPart("Arm") == namedById, "Exact identifier wins over earlier display-name match");
+    body.removeBodyPart("Arm");
+    check(!body.formation.hasMember(namedById), "Removing exact ID releases Formation membership");
+    check(body.getBodyPart("Arm") == arm1, "Display-name fallback resumes after exact-ID removal");
+    check(body.getBodyPart("arm.right") == arm2, "Unrelated identity survives exact-ID removal");
+    delete namedById;
+
+    // Removing arm1 by unique identifier leaves arm2 intact despite matching display name "Arm"
+    body.removeBodyPart("arm.left");
+    check(body.getBodyPart("arm.left") == nullptr, "arm.left is removed");
+    check(body.getBodyPart("arm.right") == arm2, "arm.right remains in body");
+
+    delete arm1;
+    delete arm2;
+}
+
 int main() {
     std::cout << "Running body_test...\n";
     testBodyCreation();
     testAddAndGetBodyPart();
     testRemoveBodyPart();
     testBasicAvatarCreation();
+    testDistinctBodyPartsLookupAndRemoval();
     std::cout << "All body_test assertions passed.\n";
     return 0;
 }
