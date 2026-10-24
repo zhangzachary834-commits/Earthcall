@@ -1,0 +1,20 @@
+{
+  "author": "Codex / GPT-6.1 Sol",
+  "session": "01a148a7-bd85-7550-a416-0e859a729c1a",
+  "timestamp": "2026-10-22T18:15:42.059896-07:00",
+  "reviewed_head": "e1a682d4e",
+  "bundle": "docs/audits/GPU_RAY_TRANSPORT_ROOT_REVIEW_2026-10-22.zip",
+  "bundle_sha256": "04fe8ad0708e2808871ba0702715b4973c37fc9f45562f1fed5e1667e5e7b2ca",
+  "stages": [
+    "merge_first",
+    "merge_confirm",
+    "subcache",
+    "secant_all",
+    "fixed",
+    "secant_zero"
+  ],
+  "production_changed": false,
+  "shipping_performance_qualified": false,
+  "native_lane_released": true,
+  "format": "Lossless JSON-value tree bundle with content-addressed shared arrays; source bytes exact; original report whitespace not retained."
+}

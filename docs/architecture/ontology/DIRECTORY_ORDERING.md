@@ -70,7 +70,7 @@ TOP LEVEL = the ontology + the modality layer.
 ```
 
 Clause (e) is load-bearing and is the difference between an ontology and a pose.
-`build/`, `third_party/`, `local_deps/`, `Legacy/` are not ontological and never will
+`build/`, `third_party/`, and `local_deps/` are not ontological and never will
 be. The honest move is to name them plainly rather than to invent an ontological gloss
 for a folder of vendored OpenSSL. `SUBSTRATE_ORDERING.md` §2 makes the same discipline
 quantitative: an artifact without provenance counts as hand-written, and *the ratio
@@ -109,8 +109,8 @@ Earthcall/
         VoicePart/
     Relation/              Relation · RelationManager
       Formation/
-      py/
       Traversal/
+      py/
     Singularity/           the modality layer — where language stops mattering
       Audio/               the Sound modality (AudioSystem)
       Core/                Engine · EventBus · CreationChannel
@@ -121,10 +121,16 @@ Earthcall/
           Menu/
         TalkingRobotGuyAPI/
       Foreign/             the Foreign software modality (ForeignChannel at the root)
-        Adapters/          MacOSAccessibilityAdapter
         API/               EarthcallAPI, SecurityManager
-        mcp/               earthcall-mcp-server.js
+        Adapters/          MacOSAccessibilityAdapter
         Shell/
+        Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
+        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
+          web_ui/
+            public/
+            src/
+              assets/
+        mcp/               earthcall-mcp-server.js
         py/                app.py
           agent/
           api/
@@ -134,12 +140,6 @@ Earthcall/
             ui/
           templates/
           web/
-        Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
-        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
-          web_ui/
-            public/
-            src/
-              assets/
       Input/               the Input modality
         Interaction/       InteractionChannel, ControlPatterns
         Keyboard/          KeyboardHandler
@@ -167,7 +167,7 @@ Earthcall/
           Person/
           Relation/
           ZonesOfEarth/
-      Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence)
+      Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence [legacy name: TerminalLine])
     Time/                  Timeline · Moment · Event
       Event/               (the distinguished Moment: occurrence in time)
       Moment/              (instant or interval)
@@ -178,8 +178,8 @@ Earthcall/
       HomesOfEarth/
       Ourverse/
       Physics/
-      py/
       Zone/
+      py/
 
   docs/  tests/  examples/  scripts/  saves/  scratch/  web_ui/     the workshop
   third_party/  local_deps/  imgui/                                 the foreign
@@ -188,6 +188,8 @@ Earthcall/
 ```
 
 ---\
+
+> **TerminalLine naming decree (2026-10-20):** the source symbol `LawSentence` under `Singularity/Terminal/` is a legacy implementation name for the Terminal modality's line parser, conceptually **`TerminalLine`**. Its placement under Terminal is substantive: it must not be promoted into a universal language abstraction. See the [addendum](../../addendums/terminal_line_naming_and_modality_scope_addendum.md).
 
 ## 3. Where language goes
 
@@ -249,7 +251,7 @@ into their proper ontological homes:
 
 | Subsystem | Action | Why |
 |---|---|---|
-| `Legacy/` | dissolved | **Done.** the graveyard; burn down gradually. |
+| Former `Legacy/` | dissolved | **Done.** The obsolete directory has been retired. |
 
 **Stage 2's exit test achieved:** nothing at `src/` top level is named after a technology.
 
@@ -269,7 +271,7 @@ regrouping has thinned it.
 | `build/`, `logs/` | machine-specific output | permanent, and git-ignored. |
 | `TestLabInterfaces/`, `TestLabAI/` | standalone experiments with their own `main` | temporary. Fold in or retire. |
 | `docs/`, `tests/`, `examples/`, `scripts/`, `scratch/`, `saves/`, `web_ui/` | the workshop — things *about* the world rather than *in* it | permanent. `SUBSTRATE_ORDERING.md` contemplates a future where the world reads its own tests and docs as beings; until it does, they are workshop. |
-| `Legacy/`, `Legacy Depricated/` | superseded code, retained | temporary by intent. Named honestly, which is why it is tolerable. |
+| Former `Legacy/`, `Legacy Depricated/` | superseded code, retired | These directories are no longer present at the repository root. |
 
 ---\
 

@@ -92,7 +92,7 @@ src/
                   FirstMoverOntology/ (FirstMoverWindowTools · TalkingRobotGuyAPI)
   Identity/       First Mover register, identity ledger, keys
   Time/           Timeline · Moment · Event (distinguished Moment) — temporal ownership is relational; Universe may borrow a Timeline
-docs/ tests/ examples/ scripts/ saves/ scratch/     the workshop (saves/ = frozen snapshot + fixtures; live data is the data home)
+docs/ tests/ examples/ scripts/ saves/ scratch/ web_ui/     the workshop (saves/ = frozen snapshot + fixtures; live data is the data home)
 third_party/ local_deps/ imgui/                     the foreign
 ```
 
