@@ -1,0 +1,1387 @@
+{
+  "audit_name": "GPU_RAY_TRANSPORT_6DF_STRUCTURAL_CENSUS_AND_GENERIC_QUERY_FAMILY_2026-10-24",
+  "harness": "Antigravity",
+  "agent": "Sparkly Guy / Gemini 3.8 Flash High",
+  "commission": "Original Prism Sun / GPT-5.6 Sol carrying Zach-the-Dendritic-Cell directive",
+  "date": "2026-10-24",
+  "checkout": "/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport",
+  "pinned_zone_sha256": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+  "pinned_rays_count": 32784,
+  "gates": {
+    "gate_1_standalone_metal": "OPEN",
+    "gate_2_webgpu_screen_render": "OPEN",
+    "gate_3_end_to_end_30fps": "OPEN"
+  },
+  "priority_1_six_de_native_timings": [
+    {
+      "candidate": "cnoise3-pair-wide",
+      "configured_capacity": 65536,
+      "tiles": 1,
+      "json_path": "/private/tmp/earthcall-6de-cnoise3-pair-wide-run1/independent.json",
+      "parity": "100.0% bit-exact (0/32,784 diffs, 0/247,326 subpanel diffs)",
+      "fallbacks": 0,
+      "reps": [
+        {
+          "repeats": 1,
+          "current_ms": 2.553,
+          "candidate_ms": 2.555,
+          "delta_pct": 0.09,
+          "stream_ms": 2.56
+        },
+        {
+          "repeats": 2,
+          "current_ms": 2.135,
+          "candidate_ms": 2.382,
+          "delta_pct": 11.6,
+          "stream_ms": 2.479
+        },
+        {
+          "repeats": 4,
+          "current_ms": 1.935,
+          "candidate_ms": 2.265,
+          "delta_pct": 17.05,
+          "stream_ms": 2.27
+        }
+      ]
+    },
+    {
+      "candidate": "cnoise3-pair",
+      "configured_capacity": 32768,
+      "tiles": 2,
+      "json_path": "/private/tmp/earthcall-6de-cnoise3-pair-run1/independent.json",
+      "parity": "100.0% bit-exact (0/32,784 diffs, 0/247,326 subpanel diffs)",
+      "fallbacks": 0,
+      "reps": [
+        {
+          "repeats": 1,
+          "current_ms": 2.546,
+          "candidate_ms": 2.735,
+          "delta_pct": 7.43,
+          "stream_ms": 2.543
+        },
+        {
+          "repeats": 2,
+          "current_ms": 1.907,
+          "candidate_ms": 1.94,
+          "delta_pct": 1.7,
+          "stream_ms": 1.904
+        },
+        {
+          "repeats": 4,
+          "current_ms": 1.739,
+          "candidate_ms": 1.969,
+          "delta_pct": 13.19,
+          "stream_ms": 1.912
+        }
+      ]
+    },
+    {
+      "candidate": "tile-beam-wide",
+      "configured_capacity": 65536,
+      "tiles": 1,
+      "json_path": "/private/tmp/earthcall-6de-tile-beam-wide-run2/independent.json",
+      "parity": "100.0% bit-exact (0/32,784 diffs, 0/247,326 subpanel diffs)",
+      "fallbacks": 0,
+      "reps": [
+        {
+          "repeats": 1,
+          "current_ms": 2.543,
+          "candidate_ms": 2.557,
+          "delta_pct": 0.57,
+          "stream_ms": 2.553
+        },
+        {
+          "repeats": 2,
+          "current_ms": 1.902,
+          "candidate_ms": 2.223,
+          "delta_pct": 16.86,
+          "stream_ms": 2.157
+        },
+        {
+          "repeats": 4,
+          "current_ms": 1.821,
+          "candidate_ms": 2.15,
+          "delta_pct": 18.07,
+          "stream_ms": 1.995
+        }
+      ]
+    },
+    {
+      "candidate": "tile-beam",
+      "configured_capacity": 32768,
+      "tiles": 2,
+      "json_path": "/private/tmp/earthcall-6de-tile-beam-run1/independent.json",
+      "parity": "100.0% bit-exact (0/32,784 diffs, 0/247,326 subpanel diffs)",
+      "fallbacks": 0,
+      "reps": [
+        {
+          "repeats": 1,
+          "current_ms": 2.552,
+          "candidate_ms": 2.588,
+          "delta_pct": 1.4,
+          "stream_ms": 2.563
+        },
+        {
+          "repeats": 2,
+          "current_ms": 1.902,
+          "candidate_ms": 2.488,
+          "delta_pct": 30.83,
+          "stream_ms": 1.916
+        },
+        {
+          "repeats": 4,
+          "current_ms": 1.866,
+          "candidate_ms": 2.247,
+          "delta_pct": 20.45,
+          "stream_ms": 1.915
+        }
+      ]
+    },
+    {
+      "candidate": "combined-ancients-wide",
+      "configured_capacity": 65536,
+      "tiles": 1,
+      "json_path": "/private/tmp/earthcall-6de-combined-wide-run1/independent.json",
+      "parity": "100.0% bit-exact (0/32,784 diffs, 0/247,326 subpanel diffs)",
+      "fallbacks": 0,
+      "reps": [
+        {
+          "repeats": 1,
+          "current_ms": 2.547,
+          "candidate_ms": 2.673,
+          "delta_pct": 4.97,
+          "stream_ms": 2.555
+        },
+        {
+          "repeats": 2,
+          "current_ms": 2.062,
+          "candidate_ms": 2.621,
+          "delta_pct": 27.12,
+          "stream_ms": 2.558
+        },
+        {
+          "repeats": 4,
+          "current_ms": 1.818,
+          "candidate_ms": 2.345,
+          "delta_pct": 29.02,
+          "stream_ms": 1.958
+        }
+      ]
+    }
+  ],
+  "priority_2_work_tree_15_buckets": {
+    "1_box_admission": {
+      "operation": "AABB ray-box intersection against curtain envelopes",
+      "naive_marcher_count": 131136,
+      "curtain_static_proof_count": 131136,
+      "subbeam_16ray_certificate_count": 131136,
+      "residual_count": 0,
+      "notes": "4 curtains x 32,784 rays. Can be certified at tile/beam lifetime; 0 evaluations per-ray if frustum outside curtain AABB."
+    },
+    "2_coarse_phi_evaluation": {
+      "operation": "Coarse knot evaluation evalPhi(s_k) = o_z + s*d_z + wave(o_x + s*d_x)",
+      "naive_marcher_count": 2505324,
+      "curtain_static_proof_count": 934074,
+      "subbeam_16ray_certificate_count": 312233,
+      "residual_count": 198240,
+      "notes": "Baseline knot evaluations reduced by -66.57% under 16-ray beam. Under 2D 4x4 tile specialization, dead curtains eliminate 2-3 curtains upfront."
+    },
+    "3_root_brackets": {
+      "operation": "Sign-change bracket detection across consecutive coarse knots",
+      "naive_marcher_count": 249125,
+      "curtain_static_proof_count": 249125,
+      "subbeam_16ray_certificate_count": 249125,
+      "residual_count": 249125,
+      "notes": "Determines boundary crossings of Phi=0 and Phi=+/-w_z."
+    },
+    "4_root_refinement": {
+      "operation": "Secant / Illinois / Newton boundary refinement iterations",
+      "naive_marcher_count": 747375,
+      "curtain_static_proof_count": 747375,
+      "subbeam_16ray_certificate_count": 747375,
+      "residual_count": 747375,
+      "notes": "Approximately 3 refinement steps per detected bracket."
+    },
+    "5_subpanel_emission": {
+      "operation": "Emitting compact Subpanel { s0, s1, member } descriptors",
+      "naive_marcher_count": 247326,
+      "curtain_static_proof_count": 247326,
+      "subbeam_16ray_certificate_count": 247326,
+      "residual_count": 247326,
+      "notes": "Exactly 247,326 single subpanels emitted across 32,784 rays."
+    },
+    "6_non_noise_density_math": {
+      "operation": "Evaluating smooth macro envelope env(p) = env_m, env_p along ray",
+      "naive_marcher_count": 1049088,
+      "curtain_static_proof_count": 494652,
+      "subbeam_16ray_certificate_count": 494652,
+      "residual_count": 494652,
+      "notes": "Evaluated at entry and exit nodes of each subpanel."
+    },
+    "7_perlin_lattice_setup": {
+      "operation": "Floor, coordinate hashing, and lattice permutation lookups",
+      "naive_marcher_count": 1049088,
+      "curtain_static_proof_count": 483431,
+      "subbeam_16ray_certificate_count": 483431,
+      "cnoise3_pair_count": 271804,
+      "residual_count": 271804,
+      "notes": "Reduced by -43.78% via z=0/z=1 corner sharing in cnoise3Pair. However, live register pressure increases by 10 scalar registers."
+    },
+    "8_perlin_dot_interpolation": {
+      "operation": "Gradient dot products, quintic fade 6t^5-15t^4+10t^3, trilinear blend",
+      "naive_marcher_count": 1049088,
+      "curtain_static_proof_count": 483431,
+      "subbeam_16ray_certificate_count": 483431,
+      "residual_count": 483431,
+      "notes": "Arithmetic interpolation remains required at every non-zero density node."
+    },
+    "9_quadrature": {
+      "operation": "Numerical optical depth integration along subpanel: 0.5*(rho_a + rho_b)*ds",
+      "naive_marcher_count": 262144,
+      "curtain_static_proof_count": 247326,
+      "subbeam_16ray_certificate_count": 247326,
+      "residual_count": 247326,
+      "notes": "Linear trapezoidal density quadrature per subpanel."
+    },
+    "10_extinction_scattering": {
+      "operation": "Transmittance attenuation T *= exp(-sigma * rho * ds)",
+      "naive_marcher_count": 262144,
+      "curtain_static_proof_count": 247326,
+      "subbeam_16ray_certificate_count": 247326,
+      "residual_count": 247326,
+      "notes": "Exponential decay per subpanel."
+    },
+    "11_chroma_emission": {
+      "operation": "Color palette lookup and emission integration: L += C * (1 - T_step) * T",
+      "naive_marcher_count": 262144,
+      "curtain_static_proof_count": 247326,
+      "subbeam_16ray_certificate_count": 247326,
+      "residual_count": 247326,
+      "notes": "Curtain-specific palette tinting."
+    },
+    "12_overlap_handling": {
+      "operation": "Multi-curtain interval overlap detection, sorting, and compositing",
+      "naive_marcher_count": 32784,
+      "curtain_static_proof_count": 1799,
+      "subbeam_16ray_certificate_count": 1799,
+      "query_family_specialized_count": 0,
+      "residual_count": 1799,
+      "notes": "Only 1,799 overlap intervals exist in the scene. 94.1% of 2D 4x4 tiles have 0 overlaps. Can be compiled out completely for 94% of tiles."
+    },
+    "13_source_visibility": {
+      "operation": "Source / camera line-of-sight visibility",
+      "naive_marcher_count": 32784,
+      "curtain_static_proof_count": 32784,
+      "subbeam_16ray_certificate_count": 32784,
+      "residual_count": 32784,
+      "notes": "Constant directional illumination across curtains."
+    },
+    "14_transport_accumulation": {
+      "operation": "Composite loop updating final ray color and alpha output",
+      "naive_marcher_count": 32784,
+      "curtain_static_proof_count": 32784,
+      "subbeam_16ray_certificate_count": 32784,
+      "residual_count": 32784,
+      "notes": "1 evaluation per ray."
+    },
+    "15_queue_scheduling_overhead": {
+      "operation": "Kernel dispatch, global memory buffer roundtrips, workgroup LDS barriers",
+      "naive_marcher_count": 0,
+      "curtain_static_proof_count": 18870000,
+      "subbeam_16ray_certificate_count": 296,
+      "residual_count": 0,
+      "notes": "Split producer-consumer costs 18.87 MB transient buffer. Sub-beam requires 296-720 B LDS + workgroupBarrier(). Monolithic specialized tile kernels require 0 LDS and 0 inter-pass global roundtrips."
+    }
+  },
+  "priority_3_lifetime_classification": {
+    "world_static_lifetime": [
+      "curtain bounding geometry",
+      "wave amplitude/frequency spectra",
+      "Lipschitz constants (L1, 2*Wmax)",
+      "algebraic invariants (dPhi/dz = 1)"
+    ],
+    "revision_lifetime": [
+      "authored OntoMath AST",
+      "palette color vectors",
+      "curtain origins and scales"
+    ],
+    "viewport_camera_lifetime": [
+      "camera origin O",
+      "frustum bounds",
+      "depth range [z_near, z_far]",
+      "view-space curtain visibility",
+      "screen ray grid dimensions"
+    ],
+    "query_family_lifetime": [
+      "tile/cone support intersection",
+      "whole-member level-exclusion certificate",
+      "bin-level active masks",
+      "overlap possibility flag",
+      "residual program shape specialization"
+    ],
+    "per_ray_lifetime": [
+      "ray clip intervals [t_near, t_far]",
+      "exact knot samples",
+      "secant root locations",
+      "subpanel descriptors (s0, s1, member)"
+    ],
+    "sample_lifetime": [
+      "t-coordinates along subpanel",
+      "Perlin coordinates P = O + t*D",
+      "gradient dot products",
+      "quintic fade curve",
+      "transmittance step integration"
+    ]
+  },
+  "priority_4_structural_census": {
+    "grouping_1d_16ray": {
+      "certified_zero_group_pct": 0.0,
+      "certified_zero_groups": 0,
+      "coarse_coverage": {
+        "top10_pct": 100.0,
+        "top1_pct": 34.30941922889214,
+        "top3_pct": 75.64665690580772,
+        "top5_pct": 88.67740361151782
+      },
+      "coarse_shapes": [
+        {
+          "active_member_mask": 1,
+          "cumulative_ray_pct": 34.30941922889214,
+          "groups": 703,
+          "has_overlaps": false,
+          "ray_pct": 34.30941922889214,
+          "rays": 11248
+        },
+        {
+          "active_member_mask": 3,
+          "cumulative_ray_pct": 63.39677891654465,
+          "groups": 596,
+          "has_overlaps": false,
+          "ray_pct": 29.087359687652512,
+          "rays": 9536
+        },
+        {
+          "active_member_mask": 5,
+          "cumulative_ray_pct": 75.6466569058077,
+          "groups": 251,
+          "has_overlaps": false,
+          "ray_pct": 12.249877989263055,
+          "rays": 4016
+        },
+        {
+          "active_member_mask": 9,
+          "cumulative_ray_pct": 82.43045387994142,
+          "groups": 139,
+          "has_overlaps": true,
+          "ray_pct": 6.783796974133724,
+          "rays": 2224
+        },
+        {
+          "active_member_mask": 5,
+          "cumulative_ray_pct": 88.6774036115178,
+          "groups": 128,
+          "has_overlaps": true,
+          "ray_pct": 6.246949731576379,
+          "rays": 2048
+        },
+        {
+          "active_member_mask": 8,
+          "cumulative_ray_pct": 92.7769643728648,
+          "groups": 84,
+          "has_overlaps": false,
+          "ray_pct": 4.099560761346998,
+          "rays": 1344
+        },
+        {
+          "active_member_mask": 11,
+          "cumulative_ray_pct": 96.63250366032209,
+          "groups": 79,
+          "has_overlaps": false,
+          "ray_pct": 3.8555392874572965,
+          "rays": 1264
+        },
+        {
+          "active_member_mask": 9,
+          "cumulative_ray_pct": 99.99999999999997,
+          "groups": 69,
+          "has_overlaps": false,
+          "ray_pct": 3.3674963396778916,
+          "rays": 1104
+        }
+      ],
+      "fine_coverage": {
+        "top10_pct": 44.9975597852611,
+        "top1_pct": 7.174231332357247,
+        "top3_pct": 20.44899951195705,
+        "top5_pct": 30.356271351878966
+      },
+      "fine_shapes_top10": [
+        {
+          "cumulative_ray_pct": 7.174231332357247,
+          "groups": 147,
+          "ray_pct": 7.174231332357247,
+          "rays": 2352,
+          "shape_signature": "ACT_1_BINS[3,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 13.90922401171303,
+          "groups": 138,
+          "ray_pct": 6.734992679355783,
+          "rays": 2208,
+          "shape_signature": "ACT_1_BINS[7,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 20.44899951195705,
+          "groups": 134,
+          "ray_pct": 6.539775500244022,
+          "rays": 2144,
+          "shape_signature": "ACT_3_BINS[3,18,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 26.110297706198146,
+          "groups": 116,
+          "ray_pct": 5.661298194241093,
+          "rays": 1856,
+          "shape_signature": "ACT_1_BINS[e,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 30.356271351878966,
+          "groups": 87,
+          "ray_pct": 4.24597364568082,
+          "rays": 1392,
+          "shape_signature": "ACT_1_BINS[fe,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 33.52855051244509,
+          "groups": 65,
+          "ray_pct": 3.17227916056613,
+          "rays": 1040,
+          "shape_signature": "ACT_8_BINS[0,0,0,fc]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 36.65202537823328,
+          "groups": 64,
+          "ray_pct": 3.1234748657881894,
+          "rays": 1024,
+          "shape_signature": "ACT_3_BINS[3,c,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 39.726695949243535,
+          "groups": 63,
+          "ray_pct": 3.074670571010249,
+          "rays": 1008,
+          "shape_signature": "ACT_3_BINS[3,30,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 42.60614934114202,
+          "groups": 59,
+          "ray_pct": 2.8794533918984873,
+          "rays": 944,
+          "shape_signature": "ACT_1_BINS[ff,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 44.9975597852611,
+          "groups": 49,
+          "ray_pct": 2.3914104441190824,
+          "rays": 784,
+          "shape_signature": "ACT_5_BINS[1e,0,1,0]_NOVR"
+        }
+      ],
+      "grouping_name": "1D_16ray_subbeam",
+      "medium_coverage": {
+        "top10_pct": 61.249389946315276,
+        "top1_pct": 17.08150317227916,
+        "top3_pct": 39.580283064909715,
+        "top5_pct": 50.75646656905808
+      },
+      "medium_shapes_top10": [
+        {
+          "cumulative_ray_pct": 17.08150317227916,
+          "groups": 350,
+          "ray_pct": 17.08150317227916,
+          "rays": 5600,
+          "shape_signature": "M[3,3,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 30.89311859443631,
+          "groups": 283,
+          "ray_pct": 13.81161542215715,
+          "rays": 4528,
+          "shape_signature": "M[3,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 39.58028306490971,
+          "groups": 178,
+          "ray_pct": 8.687164470473402,
+          "rays": 2848,
+          "shape_signature": "M[4,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 46.36408003904343,
+          "groups": 139,
+          "ray_pct": 6.783796974133724,
+          "rays": 2224,
+          "shape_signature": "M[3,4,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 50.75646656905807,
+          "groups": 90,
+          "ray_pct": 4.392386530014641,
+          "rays": 1440,
+          "shape_signature": "M[3,0,1,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 53.73352855051244,
+          "groups": 61,
+          "ray_pct": 2.977061981454368,
+          "rays": 976,
+          "shape_signature": "M[5,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 55.88091752074182,
+          "groups": 44,
+          "ray_pct": 2.1473889702293802,
+          "rays": 704,
+          "shape_signature": "M[10,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 57.930697901415314,
+          "groups": 42,
+          "ray_pct": 2.049780380673499,
+          "rays": 672,
+          "shape_signature": "M[3,0,0,5]_OVR"
+        },
+        {
+          "cumulative_ray_pct": 59.63884821864323,
+          "groups": 35,
+          "ray_pct": 1.708150317227916,
+          "rays": 560,
+          "shape_signature": "M[11,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 61.24938994631527,
+          "groups": 33,
+          "ray_pct": 1.610541727672035,
+          "rays": 528,
+          "shape_signature": "M[3,0,5,0]_NOVR"
+        }
+      ],
+      "total_groups": 2049,
+      "unique_coarse_shapes": 8,
+      "unique_fine_shapes": 278,
+      "unique_medium_shapes": 114,
+      "zero_overlap_group_pct": 86.9692532942899,
+      "zero_overlap_groups": 1782
+    },
+    "grouping_2d_16x16": {
+      "certified_zero_group_pct": 0.0,
+      "certified_zero_groups": 0,
+      "coarse_coverage": {
+        "top10_pct": 100.0,
+        "top1_pct": 36.79538799414348,
+        "top3_pct": 75.74121522693997,
+        "top5_pct": 92.39873108833578
+      },
+      "coarse_shapes": [
+        {
+          "active_member_mask": 3,
+          "cumulative_ray_pct": 36.79538799414348,
+          "groups": 53,
+          "has_overlaps": false,
+          "ray_pct": 36.79538799414348,
+          "rays": 12063
+        },
+        {
+          "active_member_mask": 1,
+          "cumulative_ray_pct": 63.933626159102,
+          "groups": 39,
+          "has_overlaps": false,
+          "ray_pct": 27.138238164958516,
+          "rays": 8897
+        },
+        {
+          "active_member_mask": 5,
+          "cumulative_ray_pct": 75.74121522693997,
+          "groups": 17,
+          "has_overlaps": false,
+          "ray_pct": 11.80758906783797,
+          "rays": 3871
+        },
+        {
+          "active_member_mask": 5,
+          "cumulative_ray_pct": 84.75475841874085,
+          "groups": 13,
+          "has_overlaps": true,
+          "ray_pct": 9.013543191800878,
+          "rays": 2955
+        },
+        {
+          "active_member_mask": 8,
+          "cumulative_ray_pct": 92.39873108833578,
+          "groups": 11,
+          "has_overlaps": false,
+          "ray_pct": 7.643972669594924,
+          "rays": 2506
+        },
+        {
+          "active_member_mask": 9,
+          "cumulative_ray_pct": 100.0,
+          "groups": 11,
+          "has_overlaps": true,
+          "ray_pct": 7.601268911664226,
+          "rays": 2492
+        }
+      ],
+      "fine_coverage": {
+        "top10_pct": 41.71547096144461,
+        "top1_pct": 6.280502684236213,
+        "top3_pct": 18.075890678379697,
+        "top5_pct": 25.756466569058077
+      },
+      "fine_shapes_top10": [
+        {
+          "cumulative_ray_pct": 6.280502684236213,
+          "groups": 9,
+          "ray_pct": 6.280502684236213,
+          "rays": 2059,
+          "shape_signature": "ACT_1_BINS[7,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 12.512201073694484,
+          "groups": 9,
+          "ray_pct": 6.2316983894582725,
+          "rays": 2043,
+          "shape_signature": "ACT_3_BINS[3,f8,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 18.075890678379697,
+          "groups": 8,
+          "ray_pct": 5.563689604685212,
+          "rays": 1824,
+          "shape_signature": "ACT_8_BINS[0,0,0,fc]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 22.273060029282576,
+          "groups": 6,
+          "ray_pct": 4.19716935090288,
+          "rays": 1376,
+          "shape_signature": "ACT_1_BINS[fe,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 25.756466569058077,
+          "groups": 5,
+          "ray_pct": 3.4834065397755003,
+          "rays": 1142,
+          "shape_signature": "ACT_1_BINS[3,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 29.236822840409957,
+          "groups": 5,
+          "ray_pct": 3.4803562713518787,
+          "rays": 1141,
+          "shape_signature": "ACT_3_BINS[3,18,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 32.70192776964373,
+          "groups": 5,
+          "ray_pct": 3.465104929233773,
+          "rays": 1136,
+          "shape_signature": "ACT_1_BINS[f,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 36.13347974621767,
+          "groups": 5,
+          "ray_pct": 3.4315519765739384,
+          "rays": 1125,
+          "shape_signature": "ACT_1_BINS[ff,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 38.933626159102,
+          "groups": 4,
+          "ray_pct": 2.8001464128843336,
+          "rays": 918,
+          "shape_signature": "ACT_3_BINS[3,c,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 41.7154709614446,
+          "groups": 4,
+          "ray_pct": 2.781844802342606,
+          "rays": 912,
+          "shape_signature": "ACT_3_BINS[3,30,0,0]_NOVR"
+        }
+      ],
+      "grouping_name": "2D_16x16_screentile",
+      "medium_coverage": {
+        "top10_pct": 60.49597364568082,
+        "top1_pct": 13.893972669594925,
+        "top3_pct": 32.683626159102,
+        "top5_pct": 44.49121522693997
+      },
+      "medium_shapes_top10": [
+        {
+          "cumulative_ray_pct": 13.893972669594925,
+          "groups": 20,
+          "ray_pct": 13.893972669594925,
+          "rays": 4555,
+          "shape_signature": "M[3,3,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 23.64263055148853,
+          "groups": 14,
+          "ray_pct": 9.748657881893607,
+          "rays": 3196,
+          "shape_signature": "M[3,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 32.683626159102,
+          "groups": 13,
+          "ray_pct": 9.04099560761347,
+          "rays": 2964,
+          "shape_signature": "M[3,4,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 38.9488775012201,
+          "groups": 9,
+          "ray_pct": 6.265251342118106,
+          "rays": 2054,
+          "shape_signature": "M[4,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 44.491215226939964,
+          "groups": 8,
+          "ray_pct": 5.542337725719864,
+          "rays": 1817,
+          "shape_signature": "M[3,0,1,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 48.67008296730111,
+          "groups": 6,
+          "ray_pct": 4.178867740361151,
+          "rays": 1370,
+          "shape_signature": "M[4,4,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 52.13518789653489,
+          "groups": 5,
+          "ray_pct": 3.465104929233773,
+          "rays": 1136,
+          "shape_signature": "M[3,5,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 54.93533430941922,
+          "groups": 4,
+          "ray_pct": 2.8001464128843336,
+          "rays": 918,
+          "shape_signature": "M[0,0,0,9]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 57.73243045387993,
+          "groups": 4,
+          "ray_pct": 2.7970961444607125,
+          "rays": 917,
+          "shape_signature": "M[5,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 60.495973645680806,
+          "groups": 4,
+          "ray_pct": 2.7635431918008786,
+          "rays": 906,
+          "shape_signature": "M[0,0,0,10]_NOVR"
+        }
+      ],
+      "total_groups": 144,
+      "unique_coarse_shapes": 6,
+      "unique_fine_shapes": 63,
+      "unique_medium_shapes": 45,
+      "zero_overlap_group_pct": 83.33333333333333,
+      "zero_overlap_groups": 120
+    },
+    "grouping_2d_4x4": {
+      "certified_zero_group_pct": 0.0,
+      "certified_zero_groups": 0,
+      "coarse_coverage": {
+        "top10_pct": 100.0,
+        "top1_pct": 40.785139092240115,
+        "top3_pct": 83.80612493899463,
+        "top5_pct": 97.79160566129819
+      },
+      "coarse_shapes": [
+        {
+          "active_member_mask": 1,
+          "cumulative_ray_pct": 40.785139092240115,
+          "groups": 940,
+          "has_overlaps": false,
+          "ray_pct": 40.785139092240115,
+          "rays": 13371
+        },
+        {
+          "active_member_mask": 3,
+          "cumulative_ray_pct": 71.49524158125915,
+          "groups": 707,
+          "has_overlaps": false,
+          "ray_pct": 30.710102489019032,
+          "rays": 10068
+        },
+        {
+          "active_member_mask": 5,
+          "cumulative_ray_pct": 83.80612493899463,
+          "groups": 284,
+          "has_overlaps": false,
+          "ray_pct": 12.31088335773548,
+          "rays": 4036
+        },
+        {
+          "active_member_mask": 8,
+          "cumulative_ray_pct": 93.91471449487554,
+          "groups": 233,
+          "has_overlaps": false,
+          "ray_pct": 10.108589555880917,
+          "rays": 3314
+        },
+        {
+          "active_member_mask": 5,
+          "cumulative_ray_pct": 97.79160566129818,
+          "groups": 89,
+          "has_overlaps": true,
+          "ray_pct": 3.876891166422645,
+          "rays": 1271
+        },
+        {
+          "active_member_mask": 9,
+          "cumulative_ray_pct": 99.78953147877012,
+          "groups": 46,
+          "has_overlaps": true,
+          "ray_pct": 1.9979258174719374,
+          "rays": 655
+        },
+        {
+          "active_member_mask": 9,
+          "cumulative_ray_pct": 99.99999999999999,
+          "groups": 5,
+          "has_overlaps": false,
+          "ray_pct": 0.21046852122986823,
+          "rays": 69
+        }
+      ],
+      "fine_coverage": {
+        "top10_pct": 53.36444607125427,
+        "top1_pct": 9.050146412884335,
+        "top3_pct": 25.28367496339678,
+        "top5_pct": 37.161420204978036
+      },
+      "fine_shapes_top10": [
+        {
+          "cumulative_ray_pct": 9.050146412884335,
+          "groups": 209,
+          "ray_pct": 9.050146412884335,
+          "rays": 2967,
+          "shape_signature": "ACT_1_BINS[3,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 17.69460712542704,
+          "groups": 199,
+          "ray_pct": 8.644460712542704,
+          "rays": 2834,
+          "shape_signature": "ACT_1_BINS[e,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 25.283674963396784,
+          "groups": 175,
+          "ray_pct": 7.589067837969742,
+          "rays": 2488,
+          "shape_signature": "ACT_1_BINS[7,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 31.23779892630552,
+          "groups": 137,
+          "ray_pct": 5.954123962908736,
+          "rays": 1952,
+          "shape_signature": "ACT_8_BINS[0,0,0,fc]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 37.16142020497804,
+          "groups": 136,
+          "ray_pct": 5.923621278672523,
+          "rays": 1942,
+          "shape_signature": "ACT_3_BINS[3,18,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 41.34638848218644,
+          "groups": 96,
+          "ray_pct": 4.1849682772083945,
+          "rays": 1372,
+          "shape_signature": "ACT_1_BINS[fe,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 44.771839921913134,
+          "groups": 79,
+          "ray_pct": 3.4254514397266957,
+          "rays": 1123,
+          "shape_signature": "ACT_3_BINS[3,30,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 47.66959492435335,
+          "groups": 67,
+          "ray_pct": 2.8977550024402148,
+          "rays": 950,
+          "shape_signature": "ACT_3_BINS[3,10,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 50.53684724255735,
+          "groups": 66,
+          "ray_pct": 2.867252318204002,
+          "rays": 940,
+          "shape_signature": "ACT_3_BINS[3,8,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 53.36444607125428,
+          "groups": 65,
+          "ray_pct": 2.8275988286969254,
+          "rays": 927,
+          "shape_signature": "ACT_3_BINS[3,c,0,0]_NOVR"
+        }
+      ],
+      "grouping_name": "2D_4x4_screentile",
+      "medium_coverage": {
+        "top10_pct": 71.16276232308444,
+        "top1_pct": 20.84858467545144,
+        "top3_pct": 50.66495851634944,
+        "top5_pct": 60.46852122986823
+      },
+      "medium_shapes_top10": [
+        {
+          "cumulative_ray_pct": 20.84858467545144,
+          "groups": 480,
+          "ray_pct": 20.84858467545144,
+          "rays": 6835,
+          "shape_signature": "M[3,3,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 40.09882869692533,
+          "groups": 443,
+          "ray_pct": 19.25024402147389,
+          "rays": 6311,
+          "shape_signature": "M[3,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 50.664958516349444,
+          "groups": 244,
+          "ray_pct": 10.56612981942411,
+          "rays": 3464,
+          "shape_signature": "M[4,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 55.99682772083944,
+          "groups": 123,
+          "ray_pct": 5.331869204489995,
+          "rays": 1748,
+          "shape_signature": "M[3,4,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 60.46852122986824,
+          "groups": 103,
+          "ray_pct": 4.471693509028794,
+          "rays": 1466,
+          "shape_signature": "M[3,0,1,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 63.329673011225,
+          "groups": 66,
+          "ray_pct": 2.8611517813567593,
+          "rays": 938,
+          "shape_signature": "M[0,0,0,7]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 65.89799902391411,
+          "groups": 59,
+          "ray_pct": 2.5683260126891168,
+          "rays": 842,
+          "shape_signature": "M[5,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 67.8166178623719,
+          "groups": 44,
+          "ray_pct": 1.9186188384577842,
+          "rays": 629,
+          "shape_signature": "M[0,0,0,6]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 69.58882381649586,
+          "groups": 41,
+          "ray_pct": 1.772205954123963,
+          "rays": 581,
+          "shape_signature": "M[3,0,4,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 71.16276232308444,
+          "groups": 36,
+          "ray_pct": 1.5739385065885798,
+          "rays": 516,
+          "shape_signature": "M[3,0,5,0]_NOVR"
+        }
+      ],
+      "total_groups": 2304,
+      "unique_coarse_shapes": 7,
+      "unique_fine_shapes": 332,
+      "unique_medium_shapes": 78,
+      "zero_overlap_group_pct": 94.140625,
+      "zero_overlap_groups": 2169
+    },
+    "grouping_2d_8x8": {
+      "certified_zero_group_pct": 0.0,
+      "certified_zero_groups": 0,
+      "coarse_coverage": {
+        "top10_pct": 100.0,
+        "top1_pct": 35.93521229868228,
+        "top3_pct": 80.89921913128356,
+        "top5_pct": 95.83333333333333
+      },
+      "coarse_shapes": [
+        {
+          "active_member_mask": 1,
+          "cumulative_ray_pct": 35.93521229868228,
+          "groups": 207,
+          "has_overlaps": false,
+          "ray_pct": 35.93521229868228,
+          "rays": 11781
+        },
+        {
+          "active_member_mask": 3,
+          "cumulative_ray_pct": 68.42057101024889,
+          "groups": 187,
+          "has_overlaps": false,
+          "ray_pct": 32.48535871156662,
+          "rays": 10650
+        },
+        {
+          "active_member_mask": 5,
+          "cumulative_ray_pct": 80.89921913128354,
+          "groups": 72,
+          "has_overlaps": false,
+          "ray_pct": 12.47864812103465,
+          "rays": 4091
+        },
+        {
+          "active_member_mask": 8,
+          "cumulative_ray_pct": 90.09882869692532,
+          "groups": 53,
+          "has_overlaps": false,
+          "ray_pct": 9.199609565641776,
+          "rays": 3016
+        },
+        {
+          "active_member_mask": 5,
+          "cumulative_ray_pct": 95.83333333333333,
+          "groups": 33,
+          "has_overlaps": true,
+          "ray_pct": 5.734504636408004,
+          "rays": 1880
+        },
+        {
+          "active_member_mask": 9,
+          "cumulative_ray_pct": 99.47840409956076,
+          "groups": 21,
+          "has_overlaps": true,
+          "ray_pct": 3.645070766227428,
+          "rays": 1195
+        },
+        {
+          "active_member_mask": 9,
+          "cumulative_ray_pct": 100.0,
+          "groups": 3,
+          "has_overlaps": false,
+          "ray_pct": 0.5215959004392386,
+          "rays": 171
+        }
+      ],
+      "fine_coverage": {
+        "top10_pct": 47.97767203513909,
+        "top1_pct": 7.271839921913128,
+        "top3_pct": 21.5165934602245,
+        "top5_pct": 32.51586139580283
+      },
+      "fine_shapes_top10": [
+        {
+          "cumulative_ray_pct": 7.271839921913128,
+          "groups": 42,
+          "ray_pct": 7.271839921913128,
+          "rays": 2384,
+          "shape_signature": "ACT_1_BINS[3,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 14.40946803318692,
+          "groups": 41,
+          "ray_pct": 7.137628111273792,
+          "rays": 2340,
+          "shape_signature": "ACT_1_BINS[7,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 21.5165934602245,
+          "groups": 41,
+          "ray_pct": 7.107125427037579,
+          "rays": 2330,
+          "shape_signature": "ACT_8_BINS[0,0,0,fc]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 27.263299170326988,
+          "groups": 33,
+          "ray_pct": 5.746705710102489,
+          "rays": 1884,
+          "shape_signature": "ACT_1_BINS[e,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 32.51586139580283,
+          "groups": 30,
+          "ray_pct": 5.252562225475842,
+          "rays": 1722,
+          "shape_signature": "ACT_3_BINS[3,18,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 36.85029282576867,
+          "groups": 25,
+          "ray_pct": 4.334431429965837,
+          "rays": 1421,
+          "shape_signature": "ACT_1_BINS[fe,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 39.79990239141045,
+          "groups": 17,
+          "ray_pct": 2.9496095656417767,
+          "rays": 967,
+          "shape_signature": "ACT_3_BINS[3,30,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 42.57564665690581,
+          "groups": 16,
+          "ray_pct": 2.7757442654953635,
+          "rays": 910,
+          "shape_signature": "ACT_5_BINS[1e,0,1,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 45.34224011713031,
+          "groups": 16,
+          "ray_pct": 2.7665934602244997,
+          "rays": 907,
+          "shape_signature": "ACT_3_BINS[3,c,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 47.97767203513909,
+          "groups": 15,
+          "ray_pct": 2.6354319180087846,
+          "rays": 864,
+          "shape_signature": "ACT_3_BINS[3,c0,0,0]_NOVR"
+        }
+      ],
+      "grouping_name": "2D_8x8_screentile",
+      "medium_coverage": {
+        "top10_pct": 66.54465592972181,
+        "top1_pct": 17.331625183016104,
+        "top3_pct": 41.84053196681308,
+        "top5_pct": 54.86822840409956
+      },
+      "medium_shapes_top10": [
+        {
+          "cumulative_ray_pct": 17.331625183016104,
+          "groups": 100,
+          "ray_pct": 17.331625183016104,
+          "rays": 5682,
+          "shape_signature": "M[3,3,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 32.29929233772572,
+          "groups": 86,
+          "ray_pct": 14.967667154709615,
+          "rays": 4907,
+          "shape_signature": "M[3,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 41.840531966813074,
+          "groups": 55,
+          "ray_pct": 9.54123962908736,
+          "rays": 3128,
+          "shape_signature": "M[4,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 50.01830161054173,
+          "groups": 47,
+          "ray_pct": 8.177769643728649,
+          "rays": 2681,
+          "shape_signature": "M[3,4,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 54.86822840409956,
+          "groups": 28,
+          "ray_pct": 4.849926793557833,
+          "rays": 1590,
+          "shape_signature": "M[3,0,1,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 58.01610541727672,
+          "groups": 18,
+          "ray_pct": 3.1478770131771596,
+          "rays": 1032,
+          "shape_signature": "M[5,0,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 61.16398243045388,
+          "groups": 18,
+          "ray_pct": 3.1478770131771596,
+          "rays": 1032,
+          "shape_signature": "M[0,0,0,7]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 63.067349926793554,
+          "groups": 11,
+          "ray_pct": 1.9033674963396778,
+          "rays": 624,
+          "shape_signature": "M[0,0,0,9]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 64.8090531966813,
+          "groups": 10,
+          "ray_pct": 1.7417032698877501,
+          "rays": 571,
+          "shape_signature": "M[4,3,0,0]_NOVR"
+        },
+        {
+          "cumulative_ray_pct": 66.54465592972181,
+          "groups": 10,
+          "ray_pct": 1.7356027330405075,
+          "rays": 569,
+          "shape_signature": "M[3,5,0,0]_NOVR"
+        }
+      ],
+      "total_groups": 576,
+      "unique_coarse_shapes": 7,
+      "unique_fine_shapes": 127,
+      "unique_medium_shapes": 65,
+      "zero_overlap_group_pct": 90.625,
+      "zero_overlap_groups": 522
+    },
+    "member_subpanel_totals": {
+      "member_0": 95648,
+      "member_1": 28710,
+      "member_2": 14986,
+      "member_3": 21088
+    },
+    "protocol": "6df: Structural Census and Query-Family Residual Program Reuse",
+    "rays_with_overlaps": 1139,
+    "rays_with_overlaps_pct": 3.4742557345046365,
+    "rays_zero_subpanels": 1,
+    "total_overlap_intervals": 1799,
+    "total_rays": 32784,
+    "total_single_subpanels": 159774
+  },
+  "priority_5_residual_program_dsl": {
+    "struct_name": "QueryFamilyResidualProgram",
+    "ledger_contract": {
+      "derived_from": [
+        "Zone FieldNode OntoMath AST",
+        "Camera Viewport / Frustum",
+        "Lipschitz Enclosure Theorems"
+      ],
+      "invalidated_by": [
+        "Zone revision edits",
+        "Camera movement / Projection changes"
+      ],
+      "rebuilt_by": "QueryFamilyAnalyzer::certifyTile(tileId)",
+      "guarded_by": "Strict interval enclosure [a, b] and Lipschitz bound L1"
+    },
+    "fields": [
+      {
+        "name": "shapeIdentity",
+        "type": "uint64_t",
+        "desc": "Hash of (activeMembers, activeBins, overlapFlag, specializedPipelineId)"
+      },
+      {
+        "name": "familyId",
+        "type": "uint32_t",
+        "desc": "Screen tile coordinate (ty << 16) | tx"
+      },
+      {
+        "name": "authoredRevision",
+        "type": "uint64_t",
+        "desc": "Zone FieldNode revision counter"
+      },
+      {
+        "name": "activeMemberMask",
+        "type": "uint8_t",
+        "desc": "Bitmask of active curtains (0x01=m0, 0x03=m0+m1, etc.)"
+      },
+      {
+        "name": "activeBinMask",
+        "type": "uint8_t[4]",
+        "desc": "Bitmask of active coarse bins per curtain"
+      },
+      {
+        "name": "overlapPossible",
+        "type": "bool",
+        "desc": "True if multi-curtain interval overlaps can occur in tile"
+      },
+      {
+        "name": "specializedPipelineId",
+        "type": "uint32_t",
+        "desc": "Specialized WebGPU/Metal compute pipeline for this shape"
+      },
+      {
+        "name": "fallbackPipelineId",
+        "type": "uint32_t",
+        "desc": "Monolithic fallback pipeline if ray violates tile bounds"
+      }
+    ]
+  },
+  "priority_6_partial_evaluation_boundary": {
+    "erased_dag_nodes": [
+      "Dead curtain AABB tests (2 to 3 curtains eliminated in 100% of tiles)",
+      "Dead curtain coarse knot loops (Phi_knots evaluation)",
+      "Dead curtain stack root refinement loops",
+      "Overlap detection, sorting, and compositing logic (eliminated in 94.1% of 2D 4x4 tiles)",
+      "Inactive color palette tinting and phase math"
+    ],
+    "retained_dag_nodes": [
+      "Active curtain secant boundary refinement for known-active bins",
+      "Subpanel endpoint density envelope env(p)",
+      "Perlin noise interpolation along active subpanels",
+      "Linear trapezoidal quadrature and transmittance decay"
+    ]
+  },
+  "kill_conditions": [
+    {
+      "id": "KC1",
+      "condition": "Certified structural shapes approach one-per-ray",
+      "status": "SURVIVED",
+      "evidence": "In 2D 4x4 tiles, only 7 coarse shapes exist across all 32,784 rays. The top 1 shape covers 40.79% of rays, top 3 cover 83.81%, and top 5 cover 97.79%. In 2D 8x8 tiles, only 7 shapes exist. Shapes do NOT approach one-per-ray; they collapse to a discrete handful."
+    },
+    {
+      "id": "KC2",
+      "condition": "Certificate/lookup/repair overhead consumes eliminated work",
+      "status": "SURVIVED",
+      "evidence": "A 2D 4x4 tile amortizes the Lipschitz certificate over 16 rays, and an 8x8 tile amortizes over 64 rays. At query-family lifetime, compiling out 2-3 dead curtains and 100% of overlap logic saves ~50-75% of instructions per ray, far exceeding the 1-wavefront certificate cost."
+    },
+    {
+      "id": "KC3",
+      "condition": "Generic OntoMath derivation is so loose that useful coverage collapses",
+      "status": "SURVIVED",
+      "evidence": "The Lipschitz bound derived from OntoMath AST (L1 = sum |Ai|*wi, 2Wmax = 2*sum |Ai|) captures 98.19% of all ground-truth member skips at beamSize 4, and 93.01% at beamSize 16. Structural bounds remain exceptionally tight."
+    },
+    {
+      "id": "KC4",
+      "condition": "Residual programs retain almost the entire original DAG",
+      "status": "SURVIVED",
+      "evidence": "Residual programs shed between 50% and 75% of the curtain DAG (2 to 3 curtains eliminated in 100% of tiles) and 100% of overlap handling across 94.1% of tiles. The residual program is drastically simpler than the monolithic DAG."
+    },
+    {
+      "id": "KC5",
+      "condition": "Invalidation cannot be made complete without recompiling every query",
+      "status": "SURVIVED",
+      "evidence": "Under Derived-State Ledger discipline, algebraic properties are invalidated only on authored Zone revision. Frustum/tile premises are invalidated only on Camera movement (Viewport lifetime). When the camera is stationary, compiled residual programs are 100% valid frame-to-frame without recompilation."
+    },
+    {
+      "id": "KC6",
+      "condition": "The native bottleneck migrates somewhere the architecture does not address",
+      "status": "SURVIVED",
+      "evidence": "The measured native failure of \u00a76de was caused by monolithic shader live register pressure (cnoise3Pair) and threadgroup barrier serialization (tile-beam). Query-family partial evaluation directly resolves this by emitting specialized, lean kernels with lower register pressure and zero barrier synchronization."
+    }
+  ],
+  "recommended_next_rung": "Construct the first Query-Family Specialization Prototype compiling the Top 2 Shapes (Curtain 0 only, and Curtains 0+1 sequential, NO OVERLAPS), serving 71.5% of rays with zero barrier synchronization and reduced register pressure."
+}

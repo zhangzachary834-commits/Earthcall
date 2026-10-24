@@ -470,8 +470,8 @@ fn producerFastMain(@builtin(global_invocation_id) gid: vec3u, @builtin(local_in
 
   // Deterministically select midpoint hitting ray in the 16-lane sub-beam
   var refLid = 64u;
-  for (var pass = 0u; pass < 16u; pass++) {
-   let off = select(pass - select(0u, 1u, pass <= 8u), 8u, pass == 0u);
+  for (var candPass = 0u; candPass < 16u; candPass++) {
+   let off = select(candPass - select(0u, 1u, candPass <= 8u), 8u, candPass == 0u);
    let cand = beamStart + off;
    let sp = wg_hitSpan[cand];
    if (sp.y > sp.x) {
