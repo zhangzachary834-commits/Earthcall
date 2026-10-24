@@ -131,6 +131,7 @@ Earthcall/
             src/
               assets/
         mcp/               earthcall-mcp-server.js
+        Shell/
         py/                app.py
           agent/
           api/
@@ -251,7 +252,7 @@ into their proper ontological homes:
 
 | Subsystem | Action | Why |
 |---|---|---|
-| `Legacy/` | dissolve | the graveyard; burn down gradually. |
+| `Legacy/` | dissolved | **Done.** the graveyard; burn down gradually. |
 
 **Stage 2's exit test achieved:** nothing at `src/` top level is named after a technology.
 
