@@ -18,13 +18,15 @@ public:
 
     const std::string& getName() const { return partName; }
     Type getType() const { return partType; }
-    std::string getIdentifier() const override { return partName; }
+    void setIdentifier(const std::string& id) { _identifier = id; }
+    std::string getIdentifier() const override { return _identifier.empty() ? partName : _identifier; }
 
     // A literal voice part is an actual audible aspect or organic capacity.
     bool isLiteral = true;
     bool isSymbolic = true;
 
 private:
+    std::string _identifier;
     std::string partName;
     Type        partType {Type::Undefined};
 };

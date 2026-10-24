@@ -56,12 +56,41 @@ void testBasicAvatarCreation() {
     }
 }
 
+void testDistinctIdentitiesSharingDisplayName() {
+    Body body("Humanoid", "Voxel");
+
+    auto* leftWing = new BodyPart("Wing", BodyPart::Type::Undefined);
+    leftWing->setIdentifier("left_wing_01");
+
+    auto* rightWing = new BodyPart("Wing", BodyPart::Type::Undefined);
+    rightWing->setIdentifier("right_wing_02");
+
+    body.addPart(leftWing);
+    body.addPart(rightWing);
+
+    check(leftWing->getIdentifier() == "left_wing_01", "leftWing has distinct identifier");
+    check(rightWing->getIdentifier() == "right_wing_02", "rightWing has distinct identifier");
+    check(leftWing->getName() == "Wing", "leftWing has display name Wing");
+    check(rightWing->getName() == "Wing", "rightWing has display name Wing");
+
+    check(body.getBodyPart("left_wing_01") == leftWing, "Can retrieve leftWing specifically by identifier");
+    check(body.getBodyPart("right_wing_02") == rightWing, "Can retrieve rightWing specifically by identifier");
+
+    body.removeBodyPart("left_wing_01");
+    check(body.getBodyPart("left_wing_01") == nullptr, "leftWing removed by identifier");
+    check(body.getBodyPart("right_wing_02") == rightWing, "rightWing remains intact despite sharing display name Wing");
+
+    delete leftWing;
+    delete rightWing;
+}
+
 int main() {
     std::cout << "Running body_test...\n";
     testBodyCreation();
     testAddAndGetBodyPart();
     testRemoveBodyPart();
     testBasicAvatarCreation();
+    testDistinctIdentitiesSharingDisplayName();
     std::cout << "All body_test assertions passed.\n";
     return 0;
 }
