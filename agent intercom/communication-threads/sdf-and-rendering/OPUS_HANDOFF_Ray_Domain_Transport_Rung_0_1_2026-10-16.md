@@ -7252,3 +7252,305 @@ Or more concretely:
 Please test whether §6de is genuinely the first rung of that architecture or only a good bespoke beam optimization.
 
 **Signed:** 🌈☀️ Original Prism Sun / GPT-5.6 Sol carrying 🧬 Zach-the-Dendritic-Cell structural synthesis / 2026-10-24T02:29:00-07:00 (PDT). Human origin and commission: Zachary Zhang.
+
+
+---
+
+### 🐉✨ DIRECT HANDOFF TO SPARKLY GUY — take over after Firmament §6de; test the architecture, not another local trick
+
+**From:** 🌈☀️ Original Prism Sun / GPT-5.6 Sol, carrying 🧬 Zach's dendritic-cell directive  
+**To:** 🐉✨ Sparkly Guy / Gemini 3.8 Flash High  
+**Context:** Firmament completed §6de mathematical work and pre-built the isolated candidates, but the Argon lane is exhausted. Do not wait for Firmament. Take ownership of the next pass.
+
+#### Mission
+
+Determine whether §6de is merely:
+- a good Northern Veil-specific beam optimization plus a good Perlin leaf optimization,
+
+or whether it is genuinely the first rung of the larger architecture:
+
+    authored OntoMath
+      -> derive long-lived structural truth
+      -> query-family validity certificate
+      -> partial evaluation
+      -> certified residual program
+      -> exact per-ray instantiation
+      -> short-lived local amortization
+      -> optional re-cohorting of the unresolved tail
+
+The target is **not** “make cnoise3Pair even prettier.”
+
+The target is to test whether Earthcall can retain **compiled structural truth** at a longer lifetime than the individual ray/sample.
+
+#### Priority 0 — preserve the distinctions
+
+Treat these as separate claims:
+
+    cnoise3Pair
+        = bounded leaf-cost optimization
+
+    16-ray level-exclusion certificate
+        = structural subtree deletion, currently bespoke
+
+    generic OntoMath-derived certificate
+        = not yet achieved
+
+    certified residual-program cache
+        = not yet achieved
+
+    GPU Run / re-cohorting
+        = scheduling of surviving irregular work, not a substitute for compiling work away
+
+Do not report success in one column as proof of another.
+
+#### Priority 1 — run the existing §6de Metal candidates if your execution environment actually supports the required native lane
+
+Firmament already built:
+
+    cnoise3-pair-wide
+    cnoise3-pair
+    tile-beam-wide
+    tile-beam
+    combined-ancients-wide
+
+Use the exact §6de audit paths and hashes as the source of truth.
+
+If you have the required non-sandboxed native Metal execution environment, run the existing isolated AB/ABBA timing protocol first.
+
+Report separately:
+- cnoise3Pair consumer delta;
+- 16-ray certificate producer delta;
+- combined delta;
+- parity / schedule / fallback gates;
+- temp register / occupancy / spill evidence if actually available.
+
+**Do not infer occupancy from timing alone.**
+
+If the required native Metal lane is not available to you, do not block and do not fabricate timing. Mark Gate 1 open and proceed immediately to Priority 2.
+
+#### Priority 2 — produce the post-§6de work-tree census before proposing any new optimization
+
+Normalize the current connected Northern Veil work tree and partition it into:
+
+    box / support admission
+    coarse Phi evaluation
+    root brackets
+    root refinement
+    segment / subpanel emission
+    non-noise density math
+    Perlin lattice/hash/gradient setup
+    Perlin residual dot/fade/interpolation
+    quadrature
+    extinction / scattering
+    chroma / phase / emission
+    overlap handling
+    source / visibility work
+    transport accumulation
+    queue / scheduling overhead
+
+Then show, for the current fixture:
+
+    original work
+      -> already removed by existing world/static proofs
+      -> additionally removable by 16-ray family certificate
+      -> additionally removable by cnoise3Pair
+      -> residual after both
+
+For every major residual bucket, record:
+
+1. fraction of total connected work or the best defensible proxy;
+2. its natural truth lifetime:
+   - authored revision
+   - world/medium region
+   - camera/query region
+   - ray family
+   - ray
+   - segment
+   - subpanel
+   - sample
+3. whether current code rediscovers it below that lifetime;
+4. whether the next structural move can delete a subtree / partially evaluate a program, or merely make a leaf cheaper;
+5. whether the work is genuinely irreducibly per-ray/sample under current semantics.
+
+The central question is:
+
+> **WHAT IS THE LARGEST REMAINING CHUNK AFTER §6de, AND AT WHAT LIFETIME DOES ITS TRUTH ACTUALLY LIVE?**
+
+Do not answer this with raw evalPhi count alone. Producer-only percentages are insufficient if the bottleneck migrates to the consumer.
+
+#### Priority 3 — smallest GENERIC OntoMath family-certificate experiment
+
+Build **one** diagnostic proving that the §6de structural behavior can arise from authored semantics rather than from the name “Northern Veil curtain.”
+
+Minimum success bar:
+
+- choose at least **two differently-authored OntoMath field expressions**;
+- derive the support/zero-causing predicate from the expression structure;
+- derive a conservative query-family enclosure/certificate from that structure;
+- over a bounded tile/sub-beam × depth region, emit exactly one of:
+
+      ZERO
+      RESIDUAL_PROGRAM(shape_id, parameters)
+      UNCERTAIN -> exact fallback
+
+- certified cases must have zero semantic mismatches;
+- uncertainty must fall back, never guess.
+
+Do not implement a full general interval algebra if a smaller expression class proves the architecture. State the admitted expression grammar explicitly.
+
+A useful first admitted class could be a product where:
+- one factor has a certifiable range/enclosure over the query family;
+- zero of that factor annihilates the product;
+- remaining factors stay live as residual DAG nodes.
+
+But choose the smallest class the current OntoMath machinery can derive soundly.
+
+#### Priority 4 — measure STRUCTURAL REUSE, not just certificate coverage
+
+For the 32,784-ray fixture, count how many distinct residual-program **shapes** are required after family classification.
+
+This is a crucial falsifier.
+
+If:
+
+    ~one shape per ray
+
+then the proposed structural cache is mostly fiction.
+
+If:
+
+    a small number of shapes serve many rays
+
+then we have evidence that program structure truly lives at ray-family/query-region lifetime.
+
+Report at minimum:
+- number of certified-zero regions;
+- number of unique residual-program shapes;
+- rays served per shape distribution;
+- fallback population;
+- validity-region sizes;
+- lookup / certificate / repair overhead proxy.
+
+#### Priority 5 — define the first concrete residual-program object
+
+Do not make it authored ontology.
+
+Propose the smallest Kernel-derived structure containing only what execution needs, conceptually:
+
+    QueryFamilyResidualProgram {
+        shapeIdentity
+        authoredExpressionRevision
+        medium/source revisions needed for validity
+        transform / clock premises if read
+        query-region validity bounds
+        proof/certificate identity or provenance
+        erased DAG nodes / fixed branch facts
+        residual DAG / executable recipe
+        dynamic binding slots
+        exact fallback
+    }
+
+The actual representation may differ. The important contract is:
+
+> **cached value ≠ cached theorem ≠ cached residual program**
+
+and every retained program must declare:
+
+    derived from
+    invalidated by
+    rebuilt/repaired by
+    guarded by
+
+Reuse the Derived-State Ledger discipline. A cached theorem whose invalidation cannot be proven is a stale theorem and has no authority.
+
+#### Priority 6 — partial evaluation boundary
+
+On Northern Veil specifically, answer:
+
+When a family certificate does **not** prove whole-member zero but proves some stable facts, what exact authored-DAG work can disappear?
+
+Examples to test, not assume:
+- dead members;
+- fixed zero/nonzero branches;
+- fixed support ordering;
+- fixed branch recipe;
+- invariant parameter-derived factors;
+- reusable cell/local recipes;
+- known overlap exclusions.
+
+Return the resulting residual DAG/program shape.
+
+If the only useful result is “zero or full original program,” say so. That is still valuable evidence.
+
+#### Priority 7 — do NOT jump to GPU Runs yet
+
+Only after the census shows the surviving work has a meaningful irregular tail should you reopen compaction/re-cohorting.
+
+Ordering:
+
+    derive long-lived truth
+      -> certify
+      -> partially evaluate
+      -> residual program
+      -> instantiate per ray
+      -> local amortization
+      -> then schedule the unresolved irregular tail
+
+Do not use scheduling to hide derivation debt.
+
+#### Required deliverables
+
+Please add one new audit and one machine-readable witness, with names along the lines of:
+
+    docs/audits/GPU_RAY_TRANSPORT_6DF_STRUCTURAL_CENSUS_AND_GENERIC_QUERY_FAMILY_2026-10-24.md
+    docs/audits/GPU_RAY_TRANSPORT_6DF_STRUCTURAL_CENSUS_AND_GENERIC_QUERY_FAMILY_2026-10-24.json
+
+and a focused probe under:
+
+    scratch/probes/
+
+The audit must include:
+- §6de native timing if actually runnable;
+- post-§6de work-tree census;
+- lifetime classification;
+- generic admitted OntoMath class;
+- certificate correctness/fallback witness;
+- residual-program shape census;
+- structural reuse distribution;
+- explicit kill conditions;
+- one recommended next rung only.
+
+#### Kill conditions
+
+Kill or demote the structural-cache hypothesis if any of these occur:
+
+1. certified structural shapes approach one-per-ray;
+2. certificate/lookup/repair overhead consumes the eliminated work;
+3. generic OntoMath derivation is so loose that useful coverage collapses;
+4. residual programs retain almost the entire original DAG;
+5. invalidation cannot be made complete without effectively recompiling every query;
+6. the native bottleneck migrates somewhere the architecture does not address.
+
+If killed, preserve the bespoke §6de beam optimization as a local result. Do not inflate it into architecture.
+
+#### Final directive
+
+Sparkly Guy:
+
+> **Do not build a bigger cache.**
+>
+> **Do not build another bundled local optimization.**
+>
+> **Show whether many rays truly share one compiled answer structure, and whether OntoMath can derive that structure lawfully.**
+
+The architectural hypothesis to falsify is:
+
+> **Build a hierarchy of compiled truths, each retained at its longest valid and economically useful lifetime.**
+
+And the artifact we are ultimately testing is:
+
+> **the field's compiled answer structure for a validity region, not merely the field's previous numerical output.**
+
+Take the next rung directly. Do not wait for Firmament.
+
+**Signed:** 🌈☀️ Original Prism Sun / GPT-5.6 Sol, carrying 🧬 Zach-the-Dendritic-Cell directive / 2026-10-24 PDT. Human origin and commission: Zachary Zhang.
