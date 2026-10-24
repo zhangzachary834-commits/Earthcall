@@ -399,9 +399,9 @@ void fieldCaption(const char* label, const char* help = nullptr) {
 }
 
 bool textField(const char* label, char* value, std::size_t size,
-               const char* hint = "Type a value…") {
+               const char* hint = "Type a value…", const char* help = nullptr) {
     ImGui::PushID(label);
-    fieldCaption(label);
+    fieldCaption(label, help);
     ImGui::SetNextItemWidth(-1.0f);
     const bool changed = ImGui::InputTextWithHint("##value", hint, value, size);
     ImGui::PopID();
@@ -2196,9 +2196,9 @@ bool editActionNode(ActionNode& node, const Law* currentLaw = nullptr) {
 
             char typeBuf[64];
             copyToBuf(typeBuf, sizeof(typeBuf), node.eventType);
-            fieldCaption("Past-Tense Event Name", "Name of the event minted onto the EventBus (noun-verbed).");
             if (textField("Event name", typeBuf, sizeof(typeBuf),
-                          "Name the past-tense event being published…")) {
+                          "Name the past-tense event being published…",
+                          "Name of the event minted onto the EventBus (noun-verbed).")) {
                 node.eventType = typeBuf;
                 changed = true;
             }
@@ -2498,9 +2498,9 @@ bool editActionNode(ActionNode& node, const Law* currentLaw = nullptr) {
 
             char nameBuf[64];
             copyToBuf(nameBuf, sizeof(nameBuf), node.propertyName);
-            fieldCaption("Property Identifier", "The unique name of the new property on the being.");
             if (textField("Property name", nameBuf, sizeof(nameBuf),
-                          "Name the authored property…")) {
+                          "Name the authored property…",
+                          "The unique name of the new property on the being.")) {
                 node.propertyName = nameBuf;
                 changed = true;
             }
@@ -2533,9 +2533,9 @@ bool editActionNode(ActionNode& node, const Law* currentLaw = nullptr) {
 
             char nameBuf[64];
             copyToBuf(nameBuf, sizeof(nameBuf), node.propertyName);
-            fieldCaption("Property Name to Remove", "Authored properties will be deleted; registered slots cleared.");
             if (textField("Property name", nameBuf, sizeof(nameBuf),
-                          "Name the property to remove…")) {
+                          "Name the property to remove…",
+                          "Authored properties will be deleted; registered slots cleared.")) {
                 node.propertyName = nameBuf;
                 changed = true;
             }
@@ -2644,9 +2644,9 @@ bool editActionNode(ActionNode& node, const Law* currentLaw = nullptr) {
 
             char waveBuf[64];
             copyToBuf(waveBuf, sizeof(waveBuf), node.propertyName);
-            fieldCaption("Wave Type", "Oscillator waveform: sine, square, sawtooth, triangle, noise.");
             if (textField("Wave type", waveBuf, sizeof(waveBuf),
-                          "sine, square, sawtooth…")) {
+                          "sine, square, sawtooth…",
+                          "Oscillator waveform: sine, square, sawtooth, triangle, noise.")) {
                 node.propertyName = waveBuf;
                 changed = true;
             }
@@ -2789,9 +2789,9 @@ bool editActionNode(ActionNode& node, const Law* currentLaw = nullptr) {
 
             char nameBuf[128];
             copyToBuf(nameBuf, sizeof(nameBuf), node.propertyName);
-            fieldCaption("Elevated Property Identifier", "The name of the new Property granted to the subject (e.g. selectedPixels).");
             if (textField("Property name", nameBuf, sizeof(nameBuf),
-                          "Name the elevated pixel set…")) {
+                          "Name the elevated pixel set…",
+                          "The name of the new Property granted to the subject (e.g. selectedPixels).")) {
                 node.propertyName = nameBuf;
                 changed = true;
             }
@@ -2832,9 +2832,9 @@ bool editActionNode(ActionNode& node, const Law* currentLaw = nullptr) {
 
             char idBuf[128];
             copyToBuf(idBuf, sizeof(idBuf), node.createType);
-            fieldCaption("Zone Identifier", "Unique, stable identifier used for saves/zones/<id>/.");
             if (textField("Zone identifier", idBuf, sizeof(idBuf),
-                          "Stable identifier for the new Zone…")) {
+                          "Stable identifier for the new Zone…",
+                          "Unique, stable identifier used for saves/zones/<id>/.")) {
                 node.createType = idBuf;
                 changed = true;
             }
@@ -2842,8 +2842,8 @@ bool editActionNode(ActionNode& node, const Law* currentLaw = nullptr) {
 
             char kindBuf[64];
             copyToBuf(kindBuf, sizeof(kindBuf), node.propertyName);
-            fieldCaption("Authored Zone Kind", "home, community-home, community-zone…");
             if (textField("Authored kind", kindBuf, sizeof(kindBuf),
+                          "home, community-home, community-zone…",
                           "home, community-home, community-zone…")) {
                 node.propertyName = kindBuf;
                 changed = true;
@@ -2862,9 +2862,9 @@ bool editActionNode(ActionNode& node, const Law* currentLaw = nullptr) {
 
             char ownerBuf[128];
             copyToBuf(ownerBuf, sizeof(ownerBuf), node.elementToken);
-            fieldCaption("Zone Owner Token", "Empty means the Law's subject; or @person-id, @community-id.");
             if (textField("Owner", ownerBuf, sizeof(ownerBuf),
-                          "Empty means the Law's subject…")) {
+                          "Empty means the Law's subject…",
+                          "Empty means the Law's subject; or @person-id, @community-id.")) {
                 node.elementToken = ownerBuf;
                 changed = true;
             }
@@ -2873,8 +2873,8 @@ bool editActionNode(ActionNode& node, const Law* currentLaw = nullptr) {
 
             char ownerKindBuf[64];
             copyToBuf(ownerKindBuf, sizeof(ownerKindBuf), node.containerToken);
-            fieldCaption("Owner Kind", "person, relationship, community…");
             if (textField("Owner kind", ownerKindBuf, sizeof(ownerKindBuf),
+                          "person, relationship, community…",
                           "person, relationship, community…")) {
                 node.containerToken = ownerKindBuf;
                 changed = true;
@@ -2911,9 +2911,9 @@ bool editActionNode(ActionNode& node, const Law* currentLaw = nullptr) {
 
             char typeBuf[64];
             copyToBuf(typeBuf, sizeof(typeBuf), node.propertyName);
-            fieldCaption("Ontology Relation Type Tag", "Canonical relationship type (e.g. instance-of, abstracted-from, contains).");
             if (textField("Relation type", typeBuf, sizeof(typeBuf),
-                          "Name the relationship being authored…")) {
+                          "Name the relationship being authored…",
+                          "Canonical relationship type (e.g. instance-of, abstracted-from, contains).")) {
                 node.propertyName = typeBuf;
                 changed = true;
             }
