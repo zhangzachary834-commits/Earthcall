@@ -180,6 +180,25 @@ jobs:
           regex="^($(echo $FOCUSED_TESTS | tr ' ' '|'))$"
           ctest --test-dir build --output-on-failure --no-tests=error -R "$regex"
 
+
+  portfolio-bridge-python-witness:
+    name: Portfolio bridge Python witness (macOS)
+    runs-on: macos-14
+    timeout-minutes: 10
+    steps:
+      - name: Check out tested commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install minimal bridge witness dependencies
+        run: python -m pip install 'Flask==3.0.0' 'websockets==15.0.1'
+      - name: Run portfolio bridge projection and message-path witnesses
+        run: python -m unittest discover -s tests/singularity/py -p 'test_portfolio_bridge.py' -v
+
   sdf-range-proxy-verification:
     name: SDF range-proxy verification (macOS)
     runs-on: macos-14
