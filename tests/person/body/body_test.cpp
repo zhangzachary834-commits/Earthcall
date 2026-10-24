@@ -76,12 +76,38 @@ void testDistinctIdentitiesSharingDisplayName() {
     check(body.getBodyPart("left_wing_01") == leftWing, "Can retrieve leftWing specifically by identifier");
     check(body.getBodyPart("right_wing_02") == rightWing, "Can retrieve rightWing specifically by identifier");
 
+    check(body.formation.hasMember(leftWing), "leftWing registered as Formation member");
+    check(body.formation.hasMember(rightWing), "rightWing registered as Formation member");
+
     body.removeBodyPart("left_wing_01");
     check(body.getBodyPart("left_wing_01") == nullptr, "leftWing removed by identifier");
+    check(!body.formation.hasMember(leftWing), "leftWing released from Formation");
     check(body.getBodyPart("right_wing_02") == rightWing, "rightWing remains intact despite sharing display name Wing");
+    check(body.formation.hasMember(rightWing), "rightWing remains a Formation member");
 
+    body.removeBodyPart("right_wing_02");
+    check(!body.formation.hasMember(rightWing), "rightWing released from Formation");
     delete leftWing;
     delete rightWing;
+}
+
+void testAmbiguousDisplayNameRemovesOnlyOne() {
+    Body body("Humanoid", "Voxel");
+    BodyPart first("Wing", BodyPart::Type::Undefined);
+    BodyPart second("Wing", BodyPart::Type::Undefined);
+    first.setIdentifier("wing_first");
+    second.setIdentifier("wing_second");
+    body.addPart(&first);
+    body.addPart(&second);
+
+    body.removeBodyPart("Wing");
+    check(body.getBodyPart("wing_first") == nullptr, "display-name fallback removes first part");
+    check(body.getBodyPart("wing_second") == &second, "display-name fallback preserves distinct second part");
+    check(!body.formation.hasMember(&first), "removed first part absent from Formation");
+    check(body.formation.hasMember(&second), "second part remains in Formation");
+
+    body.removeBodyPart("wing_second");
+    check(!body.formation.hasMember(&second), "cleanup releases remaining Formation member");
 }
 
 int main() {
@@ -91,6 +117,7 @@ int main() {
     testRemoveBodyPart();
     testBasicAvatarCreation();
     testDistinctIdentitiesSharingDisplayName();
+    testAmbiguousDisplayNameRemovesOnlyOne();
     std::cout << "All body_test assertions passed.\n";
     return 0;
 }

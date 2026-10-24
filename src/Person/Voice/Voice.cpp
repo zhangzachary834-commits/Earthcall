@@ -54,20 +54,17 @@ std::vector<VoicePart*> Voice::getVoicePartsByType(VoicePart::Type type) const {
 }
 
 void Voice::removeVoicePart(const std::string& name) {
-    auto exactIt = std::find_if(parts.begin(), parts.end(), [&](const VoicePart* p) {
+    auto it = std::find_if(parts.begin(), parts.end(), [&name](const VoicePart* p) {
         return p && p->getIdentifier() == name;
     });
-    if (exactIt != parts.end()) {
-        parts.erase(exactIt);
-        return;
+    if (it == parts.end()) {
+        it = std::find_if(parts.begin(), parts.end(), [&name](const VoicePart* p) {
+            return p && p->getName() == name;
+        });
     }
-
-    auto it = std::remove_if(parts.begin(), parts.end(), [&](const VoicePart* p) {
-        return p && p->getName() == name;
-    });
     if (it != parts.end()) {
-        parts.erase(it, parts.end());
-        // Formation element removal logic would be handled here as well.
+        formation.releaseMember(*it);
+        parts.erase(it);
     }
 }
 

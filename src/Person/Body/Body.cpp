@@ -118,20 +118,20 @@ std::vector<BodyPart*> Body::getBodyPartsByType(BodyPart::Type type) const {
 }
 
 void Body::removeBodyPart(const std::string& name) {
-    auto exactIt = std::find_if(parts.begin(), parts.end(),
-        [&name](const BodyPart* part) {
-            return part && part->getIdentifier() == name;
-        });
-    if (exactIt != parts.end()) {
-        parts.erase(exactIt);
-        return;
-    }
-
-    auto it = std::remove_if(parts.begin(), parts.end(),
-        [&name](const BodyPart* part) {
+    // An exact identity wins; a legacy display-name lookup removes only
+    // the first matching part, never every distinct being sharing a label.
+    auto it = std::find_if(parts.begin(), parts.end(), [&name](const BodyPart* part) {
+        return part && part->getIdentifier() == name;
+    });
+    if (it == parts.end()) {
+        it = std::find_if(parts.begin(), parts.end(), [&name](const BodyPart* part) {
             return part && part->getName() == name;
         });
-    parts.erase(it, parts.end());
+    }
+    if (it != parts.end()) {
+        formation.releaseMember(*it);
+        parts.erase(it);
+    }
 }
 
 
