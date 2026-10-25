@@ -1,0 +1,81 @@
+{
+  "protocol": "6cy: census review and diagnostic corrections; no new optimization candidate",
+  "reviewed_commit": "9d1e35882",
+  "signature": "Codex / GPT-6.1 Sol / session 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-10-23T00:40:20.361400-07:00",
+  "bundle": "docs/audits/GPU_RAY_TRANSPORT_CENSUS_REVIEW_2026-10-23.zip",
+  "bundle_sha256": "efde6edf804ca82f33aa0e5873a1ed7ef39c53da6dc1583b6489195a31fedc85",
+  "documents": 15,
+  "deduplicated_arrays": 12,
+  "provenance": {
+    "rays": {
+      "raw_sha256": "cd403a013e75bfa748b6fc5c60ffe74a2df2fdae5bacce73605973d447dfa402",
+      "raw_bytes": 7981792
+    },
+    "reference": {
+      "raw_sha256": "2c3c66094049a24e3367797dddc84be86a0eedfe9743075d3c9a9ab79cf3c2b0",
+      "raw_bytes": 36498
+    },
+    "historical_generator": {
+      "raw_sha256": "24e7ad30163a4ae769acf36a826f0e2266f7b6240899ebc81f3447ee7e850331",
+      "raw_bytes": 59198
+    },
+    "corrected_generator": {
+      "raw_sha256": "7cdc99bb04c2b30526cbeb996d5c36d9f247d17bd2e7702178526997c89815cd",
+      "raw_bytes": 60051
+    },
+    "review_source": {
+      "raw_sha256": "44fe649c96d463648552f0271f82070e7d41f825b5aa834f0f0b8af99a6d8955",
+      "raw_bytes": 19592
+    },
+    "historical_report": {
+      "raw_sha256": "eab0005f74ed6f499534b392d1fc8485da38a2d815a29f31e9bcc518f2584b54",
+      "raw_bytes": 87947620
+    },
+    "historical_rows": {
+      "raw_sha256": "eadadf05e7d0619bb7ee14f0099f5371d0e1ab6cb6530634d528788593c4bd5d",
+      "raw_bytes": 8353225
+    },
+    "historical_baseline": {
+      "raw_sha256": "2d1be01fb1c372acae7fe1f43dcc3b4c4085724de9a32a5929c4a8e8ce0ad496",
+      "raw_bytes": 2998255
+    },
+    "historical_source": {
+      "raw_sha256": "eebd6a64893314e121f4cf7bcae359a3ca8d137a47386f885516a30a74914eac",
+      "raw_bytes": 244974
+    },
+    "historical_identity": {
+      "raw_sha256": "1707e5fe66426581e14709d65c0d3a58a2764403940198c93847b19cae50aac0",
+      "raw_bytes": 172
+    },
+    "corrected_report": {
+      "raw_sha256": "440bc212d1fdf6086196331bdf8ae95fe0032331f00755a882a51252cab2ef73",
+      "raw_bytes": 134281817
+    },
+    "corrected_rows": {
+      "raw_sha256": "eadadf05e7d0619bb7ee14f0099f5371d0e1ab6cb6530634d528788593c4bd5d",
+      "raw_bytes": 8353225
+    },
+    "corrected_baseline": {
+      "raw_sha256": "2d1be01fb1c372acae7fe1f43dcc3b4c4085724de9a32a5929c4a8e8ce0ad496",
+      "raw_bytes": 2998255
+    },
+    "corrected_source": {
+      "raw_sha256": "24f0b69217ed7349cef5e6261977d96ca225ae0e6e6a41c01f5b7b4778b94b3f",
+      "raw_bytes": 249697
+    },
+    "corrected_identity": {
+      "raw_sha256": "c180a60e26c3d473309d53b82c126dce78e99ecb0d7789f2552c91cb9e6190a5",
+      "raw_bytes": 172
+    }
+  },
+  "guarded_archives": [
+    {
+      "path": "docs/audits/GPU_RAY_TRANSPORT_SLIVER_REVIEW_2026-10-22.guarded_confirm_report.gz",
+      "sha256": "df4e5f9df405900709183aa5f3e29f317f89ade2573b9e73f6a54a378beedb0d"
+    },
+    {
+      "path": "docs/audits/GPU_RAY_TRANSPORT_SLIVER_REVIEW_2026-10-22.guarded_confirm_rows.gz",
+      "sha256": "16429ef0af384bac871024cba6ee65efcce9bd9fe4b7c8bd973af8a137a880cf"
+    }
+  ]
+}
