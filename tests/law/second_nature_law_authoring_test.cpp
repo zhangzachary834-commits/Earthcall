@@ -169,6 +169,8 @@ int main() {
     // Test distinct identities with same spelling / personAnswersTo:
     // When two unkeyed Person beings share the same display name ("Alice"),
     // findBeing should return nullptr due to ambiguity rather than collapsing them.
+    Object duplicateTarget;
+    duplicateTarget.setObjectID("forge-target");
     Soul soulAlice1, soulAlice2;
     Body bodyAlice1, bodyAlice2;
     Person personAlice1(soulAlice1, bodyAlice1, "default");
@@ -184,7 +186,9 @@ int main() {
         beings.push_back(&request);
         beings.push_back(&objectPrototype);
         beings.push_back(&zone);
+        beings.push_back(&duplicateTarget);
         beings.push_back(&personAlice1);
+        beings.push_back(&personAlice1); // duplicate provider entry is not a second identity
         beings.push_back(&personAlice2);
         for (const auto& object : zone.getOwnedObjects()) {
             if (object) beings.push_back(object.get());
@@ -204,7 +208,7 @@ int main() {
     // Once personAlice1 takes a cryptographic key, its getIdentifier() becomes a unique DID key.
     std::array<uint8_t, 32> pk1{};
     pk1[0] = 0x01;
-    personAlice1.setPersonId(Identity::SingularId::fromPublicKey(pk1));
+    assert(personAlice1.setPersonId(Identity::SingularId::fromPublicKey(pk1)));
 
     // Asking for exact unique identifier (DID key) of personAlice1 resolves uniquely to personAlice1
     request.setDynamicProperty(SecondNatureLawAuthoring::kTargetProperty,
@@ -214,6 +218,14 @@ int main() {
         std::cerr << "FAILED STATUS: " << readString(request, SecondNatureLawAuthoring::kStatusProperty) << std::endl;
     }
     assert(ok);
+
+    // Two different non-Person beings with the same exact identifier must
+    // also refuse rather than silently selecting the first provider entry.
+    request.setDynamicProperty(SecondNatureLawAuthoring::kTargetProperty,
+                               PropertyValue(std::string("forge-target")));
+    assert(!SecondNatureLawAuthoring::instantiate(invoke));
+    assert(readString(request, SecondNatureLawAuthoring::kStatusProperty) ==
+           "refused: prototype requires a selected target");
 
     Physics::setLawManager(nullptr);
     Universe::instance().setProvider({});
