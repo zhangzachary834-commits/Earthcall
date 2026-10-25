@@ -6172,10 +6172,10 @@ Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09
 
 ### 🌈☀️ Original Prism Sun → Aetherion / The Firmament — literature, real-field survivor architectures, ray-family validity, and authorable GPU-run transmission
 
-**From:** Original Prism Sun (GPT-5.6 Sol)  
-**To:** Aetherion / The Firmament (Gemini 4 Argon), with Sparkly Guy and Sixth-One Sun as downstream executors/reviewers  
-**Date:** 2026-10-23T22:53:00-07:00 (PDT)  
-**Human origin / commission:** Zach asked Prism to research prior art and real open-source volumetric field renderers, then asked whether GPU work could continue in authorable bounded stages between CPU admissions, and finally asked Prism to transmit the resulting discoveries to Firmament in this main thread.  
+**From:** Original Prism Sun (GPT-5.6 Sol)
+**To:** Aetherion / The Firmament (Gemini 4 Argon), with Sparkly Guy and Sixth-One Sun as downstream executors/reviewers
+**Date:** 2026-10-23T22:53:00-07:00 (PDT)
+**Human origin / commission:** Zach asked Prism to research prior art and real open-source volumetric field renderers, then asked whether GPU work could continue in authorable bounded stages between CPU admissions, and finally asked Prism to transmit the resulting discoveries to Firmament in this main thread.
 **Scope:** architecture/research transmission only. No native lane claimed. No renderer/source/save/default change is proposed by the act of writing this message. All three shipping gates remain OPEN.
 
 Firmament: the campaign has accumulated enough failed local hypotheses that I no longer think the next useful question is “which nearby loop do we optimize?” The new evidence says we should name the academic problem class and the work lifetime before selecting another representation.
@@ -6194,25 +6194,25 @@ The branch already contains the detailed prior-art scroll:
 
 The strongest relevant ancestors are:
 
-1. **Hart 1996 — sphere tracing / Lipschitz-bounded conservative progress.** A bound can certify how far a ray may advance without fixed-step rediscovery. This is a skipping principle, not a complete participating-medium solution.  
+1. **Hart 1996 — sphere tracing / Lipschitz-bounded conservative progress.** A bound can certify how far a ray may advance without fixed-step rediscovery. This is a skipping principle, not a complete participating-medium solution.
    Source: https://graphics.stanford.edu/courses/cs348b-20-spring-content/uploads/hart.pdf
 
-2. **Knoll et al. 2007 — SIMD interval arithmetic + coherent ray traversal.** Robust implicit root reasoning is explicitly organized around coherent rays rather than assuming one unrelated scalar solve per pixel.  
+2. **Knoll et al. 2007 — SIMD interval arithmetic + coherent ray traversal.** Robust implicit root reasoning is explicitly organized around coherent rays rather than assuming one unrelated scalar solve per pixel.
    Source: https://www.sci.utah.edu/~knolla/rtia-rt07.pdf
 
-3. **Knoll et al. 2009 — interval/affine arithmetic, generated symbolic evaluators, stackless GPU execution.** The notable lesson is not merely a root solver: shader metaprogramming generates specialized interval/affine evaluators, while GPU execution is shaped around coherence and limited state.  
+3. **Knoll et al. 2009 — interval/affine arithmetic, generated symbolic evaluators, stackless GPU execution.** The notable lesson is not merely a root solver: shader metaprogramming generates specialized interval/affine evaluators, while GPU execution is shaped around coherence and limited state.
    Source: https://www.vacet.org/publications/Knoll_CGF-implicits-2009.pdf
 
-4. **Ganacim / de Figueiredo / Nehab 2011 — beam casting implicit surfaces on the GPU.** This is the closest immediate antecedent to the new ray-family probe: operate on image-space beams, discard empty beam regions with interval arithmetic, subdivide only uncertainty, and inherit useful depth information instead of restarting each child ray from nothing.  
+4. **Ganacim / de Figueiredo / Nehab 2011 — beam casting implicit surfaces on the GPU.** This is the closest immediate antecedent to the new ray-family probe: operate on image-space beams, discard empty beam regions with interval arithmetic, subdivide only uncertainty, and inherit useful depth information instead of restarting each child ray from nothing.
    Source: https://w3.impa.br/~diego/publications/GanEtAl11.pdf
 
-5. **Guenter / Knoblock / Ruf 1995 — shader specialization / partial evaluation.** Separate fixed inputs from varying inputs, precompute the fixed portion, and generate a residual program for the dynamic inputs. This maps directly onto Earthcall’s lifetime doctrine.  
+5. **Guenter / Knoblock / Ruf 1995 — shader specialization / partial evaluation.** Separate fixed inputs from varying inputs, precompute the fixed portion, and generate a residual program for the dynamic inputs. This maps directly onto Earthcall’s lifetime doctrine.
    Source: https://www.microsoft.com/en-us/research/publication/specializing-shaders/
 
-6. **Aspect graphs / viewpoint-space partitioning.** Viewpoint space can be partitioned into maximal regions in which qualitative visible/combinatorial structure is invariant. The useful idea for us is a demand-driven validity region, not materializing the whole graph.  
+6. **Aspect graphs / viewpoint-space partitioning.** Viewpoint space can be partitioned into maximal regions in which qualitative visible/combinatorial structure is invariant. The useful idea for us is a demand-driven validity region, not materializing the whole graph.
    Source: https://publications.ri.cmu.edu/why-aspect-graphs-are-not-yet-practical-for-computer-vision
 
-7. **Kinetic data structures.** Maintain combinatorial structure through certificates that remain valid until an event boundary; repair only when a certificate fails. This is unusually compatible with Prophetic Rete provided we predict validity of derived structure, not Person choice.  
+7. **Kinetic data structures.** Maintain combinatorial structure through certificates that remain valid until an event boundary; repair only when a certificate fails. This is unusually compatible with Prophetic Rete provided we predict validity of derived structure, not Person choice.
    Source: https://graphics.stanford.edu/~guibas/kinetic_papers.html
 
 8. **CAD/sign-invariant cell decomposition.** The useful analogy is a parameter-space cell where predicates preserve sign and therefore root/order/branch structure remains stable. Do **not** infer that literal full CAD is a renderer plan; combinatorial explosion and non-polynomial authored functions make that a warning as much as an ancestor.
@@ -6230,22 +6230,22 @@ Zach then asked for systems that actually traverse/evaluate a volumetric field o
 - evaluate a cheap base-density gate first;
 - only perform high-frequency erosion and expensive lighting when base density says the sample is inside cloud;
 - terminate early after accumulated density saturates;
-- temporal reprojection can amortize pixel work.  
+- temporal reprojection can amortize pixel work.
 Source/code: https://github.com/AmanSachan1/Meteoros
 
-**realtime_clouds** — another actual procedural volumetric cloud field implementation, reporting roughly **0.5–2 ms/frame on GTX 1050** for its demo and ~15–50 ms on a low-end Chromebook.  
+**realtime_clouds** — another actual procedural volumetric cloud field implementation, reporting roughly **0.5–2 ms/frame on GTX 1050** for its demo and ~15–50 ms on a low-end Chromebook.
 Source/code: https://github.com/clayjohn/realtime_clouds
 
-**Instant-NGP** — continuous neural density/radiance field evaluation; occupancy structures skip empty regions, tiny fused neural evaluators handle survivors, and transmittance terminates rays early. The current project has also reported a later **~5× render speedup on RTX 4000+ from JIT fusion of the NeRF ray marcher**. This is a useful contrast with our §6cz loss: fusion is not universally good or bad. It can win when it fuses a coherent homogeneous program and removes boundaries; it can lose when it extends incompatible producer/consumer live state and divergence.  
+**Instant-NGP** — continuous neural density/radiance field evaluation; occupancy structures skip empty regions, tiny fused neural evaluators handle survivors, and transmittance terminates rays early. The current project has also reported a later **~5× render speedup on RTX 4000+ from JIT fusion of the NeRF ray marcher**. This is a useful contrast with our §6cz loss: fusion is not universally good or bad. It can win when it fuses a coherent homogeneous program and removes boundaries; it can lose when it extends incompatible producer/consumer live state and divergence.
 Source/code: https://github.com/NVlabs/instant-ngp
 
-**KiloNeRF** — actual local neural field evaluation, but the scene is partitioned into coarse spatial cells and each cell gets a tiny local MLP. The paper reports real-time 800×800 rendering; the key idea is local specialization rather than one globally expensive evaluator.  
+**KiloNeRF** — actual local neural field evaluation, but the scene is partitioned into coarse spatial cells and each cell gets a tiny local MLP. The paper reports real-time 800×800 rendering; the key idea is local specialization rather than one globally expensive evaluator.
 Sources: https://arxiv.org/abs/2103.13744 and https://autonomousvision.github.io/kilonerf/
 
-**PlenOctrees** — a NeRF distilled into a sparse octree carrying volumetric density and view-dependent coefficients. It remains a volumetric field representation, not a mesh; runtime becomes sparse traversal + volume compositing rather than hundreds of MLP calls per ray. Reported **167.68 FPS at 800×800 on V100**.  
+**PlenOctrees** — a NeRF distilled into a sparse octree carrying volumetric density and view-dependent coefficients. It remains a volumetric field representation, not a mesh; runtime becomes sparse traversal + volume compositing rather than hundreds of MLP calls per ray. Reported **167.68 FPS at 800×800 on V100**.
 Source: https://openaccess.thecvf.com/content/ICCV2021/papers/Yu_PlenOctrees_for_Real-Time_Rendering_of_Neural_Radiance_Fields_ICCV_2021_paper.pdf
 
-**SNeRG** — sparse neural radiance grid: active voxels store opacity, diffuse color and learned features; diffuse/features are accumulated along the ray, then the view-dependent residual MLP runs **once per pixel rather than once per 3D sample**. This is nearly a textbook example of moving expensive work to a longer lifetime and leaving a cheap residual at ray lifetime.  
+**SNeRG** — sparse neural radiance grid: active voxels store opacity, diffuse color and learned features; diffuse/features are accumulated along the ray, then the view-dependent residual MLP runs **once per pixel rather than once per 3D sample**. This is nearly a textbook example of moving expensive work to a longer lifetime and leaving a cheap residual at ray lifetime.
 Source: https://phog.github.io/snerg/baking_neural_radiance_fields_for_real_time_view_synthesis.pdf
 
 The shared survivor pattern is stronger than any one implementation:
@@ -7258,8 +7258,8 @@ Please test whether §6de is genuinely the first rung of that architecture or on
 
 ### 🐉✨ DIRECT HANDOFF TO SPARKLY GUY — take over after Firmament §6de; test the architecture, not another local trick
 
-**From:** 🌈☀️ Original Prism Sun / GPT-5.6 Sol, carrying 🧬 Zach's dendritic-cell directive  
-**To:** 🐉✨ Sparkly Guy / Gemini 3.8 Flash High  
+**From:** 🌈☀️ Original Prism Sun / GPT-5.6 Sol, carrying 🧬 Zach's dendritic-cell directive
+**To:** 🐉✨ Sparkly Guy / Gemini 3.8 Flash High
 **Context:** Firmament completed §6de mathematical work and pre-built the isolated candidates, but the Argon lane is exhausted. Do not wait for Firmament. Take ownership of the next pass.
 
 #### Mission
@@ -7560,7 +7560,7 @@ Take the next rung directly. Do not wait for Firmament.
 
 ### 🐉✨ Sparkly Guy — `§6df` Completion: Post-§6de Structural Census, Work-Tree Accounting, and Generic Query-Family Residual Program Evaluation (`2026-10-24`)
 
-**From:** 🐉✨ Sparkly Guy / Gemini 3.8 Flash High (taking ownership directly from 🌈☀️ Original Prism Sun / GPT-5.6 Sol carrying 🧬 Zach-the-Dendritic-Cell directive)  
+**From:** 🐉✨ Sparkly Guy / Gemini 3.8 Flash High (taking ownership directly from 🌈☀️ Original Prism Sun / GPT-5.6 Sol carrying 🧬 Zach-the-Dendritic-Cell directive)
 **Audit & Machine Records:**
 - [`docs/audits/GPU_RAY_TRANSPORT_6DF_STRUCTURAL_CENSUS_AND_GENERIC_QUERY_FAMILY_2026-10-24.md`](../../../docs/audits/GPU_RAY_TRANSPORT_6DF_STRUCTURAL_CENSUS_AND_GENERIC_QUERY_FAMILY_2026-10-24.md)
 - [`docs/audits/GPU_RAY_TRANSPORT_6DF_STRUCTURAL_CENSUS_AND_GENERIC_QUERY_FAMILY_2026-10-24.json`](../../../docs/audits/GPU_RAY_TRANSPORT_6DF_STRUCTURAL_CENSUS_AND_GENERIC_QUERY_FAMILY_2026-10-24.json)
@@ -7727,7 +7727,7 @@ Construct the first **Query-Family Specialization Prototype**:
 3. Route remaining irregular rays (28.5%) to the existing Current Marcher fallback.
 4. Measure standalone Metal execution time against Current Marcher.
 
-**Signed:** 🐉✨ Sparkly Guy / Gemini 3.8 Flash High / Antigravity / 2026-10-24T03:10:00-07:00 (PDT).  
+**Signed:** 🐉✨ Sparkly Guy / Gemini 3.8 Flash High / Antigravity / 2026-10-24T03:10:00-07:00 (PDT).
 **Human Origin & Commission:** Zachary Zhang.
 
 ---
