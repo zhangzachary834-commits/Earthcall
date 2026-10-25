@@ -3707,7 +3707,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
         ImGui::PushID(law->getIdentifier().c_str());
         bool enabled = law->isEnabled();
         if (ImGui::Checkbox("##enabled", &enabled)) law->setEnabled(enabled);
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("@[%s].enabled := %s", law->getIdentifier().c_str(), enabled ? "false" : "true");
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Click to set @%s.enabled := %s", law->getIdentifier().c_str(), enabled ? "false" : "true");
         ImGui::SameLine();
         if (ImGui::Selectable(law->name().c_str(),
                               law->getIdentifier() == g.selectedLawId)) {
@@ -3900,7 +3900,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
                 law->setEnabled(!law->isEnabled());
             }
             ImGui::PopStyleColor();
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("click to toggle\n@[%s].enabled := %s", law->getIdentifier().c_str(), law->isEnabled() ? "false" : "true");
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Click to set @%s.enabled := %s", law->getIdentifier().c_str(), law->isEnabled() ? "false" : "true");
             ImGui::SameLine();
             chip(kInfo, law->activation() == Law::Activation::WhileTrue
                             ? "while true"
