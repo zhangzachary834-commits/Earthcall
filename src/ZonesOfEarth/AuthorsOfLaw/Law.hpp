@@ -801,6 +801,7 @@ private:
     std::vector<ReteActivation> _agenda;
     void dropUnboundAlphaNodes();
 
+    std::size_t _transientFactCount{0};
     std::unordered_map<std::size_t, std::vector<std::string>> _alphaLawBindings;
     std::unordered_map<std::size_t, std::vector<std::string>> _betaLawBindings;
     std::unordered_map<std::string, std::size_t> _typeAlphaIndex;   // event type -> node
