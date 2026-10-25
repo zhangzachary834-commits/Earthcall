@@ -207,11 +207,11 @@ Body Body::createBasicAvatar(const std::string& artStyle) {
     return avatar;
 }
 
-Body Body::createFromConcept(const ObjectConcept& concept) {
-    Body avatar(concept.name(), "Concept");
+Body Body::createFromConcept(const ObjectConcept& objConcept) {
+    Body avatar(objConcept.name(), "Concept");
     int index = 0;
     // Iterate over the concept's members and create generic body parts for each
-    for(const auto& member : concept.members()) {
+    for(const auto& member : objConcept.members()) {
         BodyPart* bp = new BodyPart("concept-part-" + std::to_string(index++), BodyPart::Type::Undefined, ObjectTypes::ShapeKind::Cube, glm::vec3(1.0f));
         if (member.hasGeometry) {
             bp->setPrimaryShape(member.kind);
