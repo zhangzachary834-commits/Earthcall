@@ -44,10 +44,8 @@ int main() {
         return 1;
     }
 
-    // Ensure SaveSystem saveRoot points to the containing saves directory
-    const auto absWorld = std::filesystem::absolute(worldSavePath);
-    const auto savesDir = absWorld.parent_path().parent_path();
-    SaveSystem::setSaveRoot(savesDir.string());
+    // Protect real save tree from test mutations and load-time writes
+    TestSupport::RealSaveTreeGuard saveGuard(worldSavePath);
 
     ZoneManager mgr;
     Core::Camera camera;
