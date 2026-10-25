@@ -11,7 +11,6 @@
 #include "Singularity/Screen/LawGraphWindow.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 
-#include <GLFW/glfw3.h>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -24,19 +23,6 @@ bool nearf(float a, float b, float eps = 1e-4f) { return std::fabs(a - b) < eps;
 } // namespace
 
 int main() {
-    if (!glfwInit()) {
-        std::fprintf(stderr, "law_graph_test: glfwInit failed\n");
-        return 1;
-    }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "law_graph_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "law_graph_test: no GL context\n");
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
-
     {
         using Rendering::layoutCardTree;
 
@@ -202,8 +188,6 @@ int main() {
         assert(bare.applyTo(idle) == Law::ApplicationResult::NoAction);
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
     std::puts("law_graph_test: ALL OK");
     return 0;
 }
