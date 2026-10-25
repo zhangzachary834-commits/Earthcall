@@ -305,3 +305,10 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2
 Separate `Documents/GitHub/Earthcall-ray-transport` clone is active on `claude/ray-domain-transport-rung0` (base `d4963d062`), with selected Firmament files relayed from default `cd05acd19`. CPU census did not establish native parity: corrected parallel roots fail strict RGB parity by2–3ULP before endpoint/accuracy qualification. Isolated original-predicate coarse peeling and a65536-tile scheduling check pass32784 actual packets/outputs,192 dual-resolution holdouts, six exact-budget and two poisoned capacity controls, but lose current cost (+2.50%/+6.35% in the respective four-repeat observations). Stop those candidates. Portable31-document replay rejects14 corruptions. Historical on-the-fly slowdown is43.63%; hardware causal claims remain hypotheses. All3 shipping gates OPEN; no engine/save/default/app or new FPS gain. Native lane RELEASED in all3 local copies. [Evidence and next directions](audits/GPU_RAY_TRANSPORT_CONTINUATION_REVIEW_2026-10-23.md).
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T09:30:58.150880-07:00.
+
+
+## Council catch-up through §6dh — 2026-10-25
+
+§6dh's real-harness disjoint bypass and intrinsic tile masks retain promising recorded accuracy but still lose contemporary Current: certificate+disjoint is+0.29% at repeats2 and+7.07% at repeats4, excluding CPU mask preparation/upload. Routed S1/S2 still compares an8-bin midpoint sibling, uses tolerance-based “bit-exact” reporting, host-count dispatch and incomplete queue tails/reset. Both genericity analysis arrays remain disconnected from their classifier consumers. Gate1/KC2 remain OPEN; KC3 PARTIAL; generic/full-frame and inhabited gates OPEN. No fresh GPU run or shipped FPS gain in this catch-up. [Review and next directions](/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/docs/audits/GPU_RAY_TRANSPORT_CATCHUP_AND_6DH_SOURCE_REVIEW_2026-10-25.md).
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T14:55:25.865720-07:00.
