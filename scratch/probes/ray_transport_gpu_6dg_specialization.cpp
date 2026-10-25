@@ -194,8 +194,11 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
         var uxMin = 1e9f;
         var uxMax = -1e9f;
         var anyRayHit = false;
+        var rA: array<f32, 16>;
+        var rB: array<f32, 16>;
+        var rHit: array<bool, 16>;
 
-        for (var i = 0u; i < rayCount; i++) {
+        for (var i = 0u; i < rayCount && i < 16u; i++) {
             let rIdx = tileRayIndices[rayStart + i];
             let ray = rays[rIdx];
             let oRel = ray.ro_clipA.xyz - cur.origin.xyz;
@@ -219,6 +222,10 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
                 }
             }
 
+            rA[i] = a;
+            rB[i] = b;
+            rHit[i] = (hit && b > a);
+
             if (hit && b > a) {
                 anyRayHit = true;
                 let u0 = oRel.x + a * ray.rd_clipB.x;
@@ -235,36 +242,23 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
                 wKnots[k] = evalWave(cur, ux);
             }
             let h_ux = (uxMax - uxMin) / 8.0;
-            let bow = 0.125 * cur.curv.z * h_ux * h_ux;
+            let bow = 0.125 * cur.curv.x * h_ux * h_ux;
             let thresh = bow + cur.limits.w + 0.001;
 
             var enter = 1e9f;
             var exit = -1e9f;
             var curActive = false;
 
-            for (var i = 0u; i < rayCount; i++) {
+            for (var i = 0u; i < rayCount && i < 16u; i++) {
+                if (!rHit[i]) { continue; }
                 let rIdx = tileRayIndices[rayStart + i];
                 let ray = rays[rIdx];
                 let oRel = ray.ro_clipA.xyz - cur.origin.xyz;
                 let dx = ray.rd_clipB.x;
-                if (abs(dx) < 1e-6) { continue; }
+                if (abs(dx) < 1e-6) { curActive = true; enter = min(enter, rA[i]); exit = max(exit, rB[i]); break; }
 
-                var a = ray.ro_clipA.w;
-                var b = ray.rd_clipB.w;
-                for (var axis = 0; axis < 3; axis++) {
-                    var half = cur.half[axis];
-                    if (axis == 0) { half = min(half, cur.limits.x); }
-                    if (axis == 1) { half = min(half, cur.limits.y); }
-                    let d = ray.rd_clipB[axis];
-                    let o = oRel[axis];
-                    if (d != 0.0) {
-                        let q0 = (-half - cur.curv.y - o) / d;
-                        let q1 = (half + cur.curv.y - o) / d;
-                        a = max(a, min(q0, q1));
-                        b = min(b, max(q0, q1));
-                    }
-                }
-                if (b <= a) { continue; }
+                let a = rA[i];
+                let b = rB[i];
 
                 for (var bin = 0u; bin < 8u; bin++) {
                     let u0 = uxMin + f32(bin) / 8.0 * (uxMax - uxMin);
@@ -391,15 +385,19 @@ fn evalEnvelope0(p: vec3f, offset: u32) -> f32 {
     return params[offset + 0u] * b_x * b_y * b_z;
 }
 
-@compute @workgroup_size(16, 1, 1)
+@compute @workgroup_size(64, 1, 1)
 fn pipelineAlphaMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_index) lid: u32) {
-    let tileSlot = wid.x;
+    let localTile = lid >> 4u;
+    let rayInTile = lid & 15u;
+    let tileSlot = wid.x * 4u + localTile;
+    if (tileSlot >= 2304u) { return; }
     let tileId = s1TileList[tileSlot];
+    if (tileId >= 2304u) { return; }
     let rayStart = tileOffsets[tileId];
     let rayCount = tileOffsets[tileId + 1u] - rayStart;
 
-    if (lid >= rayCount) { return; }
-    let rayIdx = tileRayIndices[rayStart + lid];
+    if (rayInTile >= rayCount) { return; }
+    let rayIdx = tileRayIndices[rayStart + rayInTile];
     let ray = rays[rayIdx];
 
     var state = vec4f(0.0, 0.0, 0.0, 1.0);
@@ -459,8 +457,8 @@ fn pipelineAlphaMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
 
     // Monotone root refinement and immediate on-the-fly integration
     let pOffset = 0u;
-    let freq = 0.02;
-    let alpha = 0.08;
+    let freq = 0.08;
+    let alpha = 2.0 / 15.0;
     let color = vec3f(0.1, 0.9, 0.4);
 
     for (var bin = 0u; bin < 8u; bin++) {
@@ -572,15 +570,19 @@ fn evalEnvelopeM(m: u32, p: vec3f, offset: u32) -> f32 {
     return params[offset + 0u] * b_x * b_y * b_z;
 }
 
-@compute @workgroup_size(16, 1, 1)
+@compute @workgroup_size(64, 1, 1)
 fn pipelineBetaMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_index) lid: u32) {
-    let tileSlot = wid.x;
+    let localTile = lid >> 4u;
+    let rayInTile = lid & 15u;
+    let tileSlot = wid.x * 4u + localTile;
+    if (tileSlot >= 2304u) { return; }
     let tileId = s2TileList[tileSlot];
+    if (tileId >= 2304u) { return; }
     let rayStart = tileOffsets[tileId];
     let rayCount = tileOffsets[tileId + 1u] - rayStart;
 
-    if (lid >= rayCount) { return; }
-    let rayIdx = tileRayIndices[rayStart + lid];
+    if (rayInTile >= rayCount) { return; }
+    let rayIdx = tileRayIndices[rayStart + rayInTile];
     let ray = rays[rayIdx];
 
     var state = vec4f(0.0, 0.0, 0.0, 1.0);
@@ -634,8 +636,8 @@ fn pipelineBetaMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation
         if (activeMask == 0u && abs(phi_knots[0]) > wz + 0.001) { continue; }
 
         let pOffset = m * 34u;
-        let freq = 0.02;
-        let alpha = 0.08;
+        let freq = select(0.08, 0.09, m == 1u);
+        let alpha = select(2.0 / 15.0, 9.0 / 65.0, m == 1u);
         let color = select(vec3f(0.1, 0.9, 0.4), vec3f(0.2, 0.5, 0.9), m == 1u);
 
         for (var bin = 0u; bin < 8u; bin++) {
@@ -746,15 +748,19 @@ fn evalEnvelopeM4(m: u32, p: vec3f, offset: u32) -> f32 {
     return params[offset + 0u] * b_x * b_y * b_z;
 }
 
-@compute @workgroup_size(16, 1, 1)
+@compute @workgroup_size(64, 1, 1)
 fn pipelineFallbackMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_index) lid: u32) {
-    let tileSlot = wid.x;
+    let localTile = lid >> 4u;
+    let rayInTile = lid & 15u;
+    let tileSlot = wid.x * 4u + localTile;
+    if (tileSlot >= 2304u) { return; }
     let tileId = fallbackTileList[tileSlot];
+    if (tileId >= 2304u) { return; }
     let rayStart = tileOffsets[tileId];
     let rayCount = tileOffsets[tileId + 1u] - rayStart;
 
-    if (lid >= rayCount) { return; }
-    let rayIdx = tileRayIndices[rayStart + lid];
+    if (rayInTile >= rayCount) { return; }
+    let rayIdx = tileRayIndices[rayStart + rayInTile];
     let ray = rays[rayIdx];
 
     var state = vec4f(0.0, 0.0, 0.0, 1.0);
@@ -807,12 +813,12 @@ fn pipelineFallbackMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
         if (activeMask == 0u && abs(phi_knots[0]) > wz + 0.001) { continue; }
 
         let pOffset = m * 34u;
-        let freq = 0.02;
-        let alpha = 0.08;
+        var freq = 0.08;
+        var alpha = 2.0 / 15.0;
         var color = vec3f(0.1, 0.9, 0.4);
-        if (m == 1u) { color = vec3f(0.2, 0.5, 0.9); }
-        else if (m == 2u) { color = vec3f(0.8, 0.2, 0.6); }
-        else if (m == 3u) { color = vec3f(0.9, 0.6, 0.1); }
+        if (m == 1u) { freq = 0.09; alpha = 9.0 / 65.0; color = vec3f(0.2, 0.5, 0.9); }
+        else if (m == 2u) { freq = 0.07; alpha = 8.0 / 55.0; color = vec3f(0.8, 0.2, 0.6); }
+        else if (m == 3u) { freq = 0.10; alpha = 4.0 / 25.0; color = vec3f(0.9, 0.6, 0.1); }
 
         for (var bin = 0u; bin < 8u; bin++) {
             if ((activeMask & (1u << bin)) == 0u) { continue; }
@@ -975,12 +981,12 @@ fn pipelineReferenceMain(@builtin(global_invocation_id) gid: vec3u) {
         if (activeMask == 0u && abs(phi_knots[0]) > wz + 0.001) { continue; }
 
         let pOffset = m * 34u;
-        let freq = 0.02;
-        let alpha = 0.08;
+        var freq = 0.08;
+        var alpha = 2.0 / 15.0;
         var color = vec3f(0.1, 0.9, 0.4);
-        if (m == 1u) { color = vec3f(0.2, 0.5, 0.9); }
-        else if (m == 2u) { color = vec3f(0.8, 0.2, 0.6); }
-        else if (m == 3u) { color = vec3f(0.9, 0.6, 0.1); }
+        if (m == 1u) { freq = 0.09; alpha = 9.0 / 65.0; color = vec3f(0.2, 0.5, 0.9); }
+        else if (m == 2u) { freq = 0.07; alpha = 8.0 / 55.0; color = vec3f(0.8, 0.2, 0.6); }
+        else if (m == 3u) { freq = 0.10; alpha = 4.0 / 25.0; color = vec3f(0.9, 0.6, 0.1); }
 
         for (var bin = 0u; bin < 8u; bin++) {
             if ((activeMask & (1u << bin)) == 0u) { continue; }
@@ -1194,9 +1200,10 @@ int main(int argc, char** argv) {
 
     DispatchCounters initCounters{0, 0, 0, 0};
     WGPUBuffer cntBuf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc | WGPUBufferUsage_CopyDst, sizeof(DispatchCounters), &initCounters);
-    WGPUBuffer s1Buf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc, 2304 * sizeof(uint32_t), nullptr);
-    WGPUBuffer s2Buf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc, 2304 * sizeof(uint32_t), nullptr);
-    WGPUBuffer fbBuf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc, 2304 * sizeof(uint32_t), nullptr);
+    std::vector<uint32_t> initList(2304, 0xFFFFFFFFu);
+    WGPUBuffer s1Buf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc | WGPUBufferUsage_CopyDst, 2304 * sizeof(uint32_t), initList.data());
+    WGPUBuffer s2Buf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc | WGPUBufferUsage_CopyDst, 2304 * sizeof(uint32_t), initList.data());
+    WGPUBuffer fbBuf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc | WGPUBufferUsage_CopyDst, 2304 * sizeof(uint32_t), initList.data());
     WGPUBuffer progBuf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc, 2304 * sizeof(glm::uvec2), nullptr);
 
     WGPUBuffer resRoutedBuf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc, count * sizeof(GpuResult), nullptr);
@@ -1342,15 +1349,15 @@ int main(int argc, char** argv) {
             WGPUComputePassEncoder pass = wgpuCommandEncoderBeginComputePass(enc, nullptr);
             wgpuComputePassEncoderSetPipeline(pass, cpAlpha);
             wgpuComputePassEncoderSetBindGroup(pass, 0, bgAlpha, 0, nullptr);
-            wgpuComputePassEncoderDispatchWorkgroups(pass, s1Tiles, 1, 1);
+            wgpuComputePassEncoderDispatchWorkgroups(pass, (s1Tiles + 3u) / 4u, 1, 1);
 
             wgpuComputePassEncoderSetPipeline(pass, cpBeta);
             wgpuComputePassEncoderSetBindGroup(pass, 0, bgBeta, 0, nullptr);
-            wgpuComputePassEncoderDispatchWorkgroups(pass, s2Tiles, 1, 1);
+            wgpuComputePassEncoderDispatchWorkgroups(pass, (s2Tiles + 3u) / 4u, 1, 1);
 
             wgpuComputePassEncoderSetPipeline(pass, cpFallback);
             wgpuComputePassEncoderSetBindGroup(pass, 0, bgFallback, 0, nullptr);
-            wgpuComputePassEncoderDispatchWorkgroups(pass, fbTiles, 1, 1);
+            wgpuComputePassEncoderDispatchWorkgroups(pass, (fbTiles + 3u) / 4u, 1, 1);
             wgpuComputePassEncoderEnd(pass);
             wgpuComputePassEncoderRelease(pass);
         }
@@ -1380,15 +1387,15 @@ int main(int argc, char** argv) {
             WGPUComputePassEncoder pass1 = wgpuCommandEncoderBeginComputePass(enc, nullptr);
             wgpuComputePassEncoderSetPipeline(pass1, cpAlpha);
             wgpuComputePassEncoderSetBindGroup(pass1, 0, bgAlpha, 0, nullptr);
-            wgpuComputePassEncoderDispatchWorkgroups(pass1, s1Tiles, 1, 1);
+            wgpuComputePassEncoderDispatchWorkgroups(pass1, (s1Tiles + 3u) / 4u, 1, 1);
 
             wgpuComputePassEncoderSetPipeline(pass1, cpBeta);
             wgpuComputePassEncoderSetBindGroup(pass1, 0, bgBeta, 0, nullptr);
-            wgpuComputePassEncoderDispatchWorkgroups(pass1, s2Tiles, 1, 1);
+            wgpuComputePassEncoderDispatchWorkgroups(pass1, (s2Tiles + 3u) / 4u, 1, 1);
 
             wgpuComputePassEncoderSetPipeline(pass1, cpFallback);
             wgpuComputePassEncoderSetBindGroup(pass1, 0, bgFallback, 0, nullptr);
-            wgpuComputePassEncoderDispatchWorkgroups(pass1, fbTiles, 1, 1);
+            wgpuComputePassEncoderDispatchWorkgroups(pass1, (fbTiles + 3u) / 4u, 1, 1);
             wgpuComputePassEncoderEnd(pass1);
             wgpuComputePassEncoderRelease(pass1);
         }

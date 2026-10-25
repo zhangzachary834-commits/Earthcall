@@ -105,6 +105,30 @@ static bool hasLengthOp(const M* node) {
     return false;
 }
 
+static void collectWaveTerms(const M* node, float& outL1, float& outM2,
+                             std::vector<float>& amps, std::vector<float>& freqs, std::vector<float>& phases) {
+    if (!node) return;
+    if (node->op == M::Op::ScalarLeaf) {
+        for (const auto& term : node->scalarForm.terms) {
+            for (const auto& tf : term.trans) {
+                if (tf.kind == OntoMath::TransFactor::Kind::Sin || tf.kind == OntoMath::TransFactor::Kind::Cos) {
+                    float A = float(term.coefficient);
+                    float w = float(tf.scale);
+                    float p = float(tf.shift);
+                    amps.push_back(A);
+                    freqs.push_back(w);
+                    phases.push_back(p);
+                    outL1 += std::abs(A * w);
+                    outM2 += std::abs(A) * w * w;
+                }
+            }
+        }
+    }
+    for (const auto& ch : node->children) {
+        if (ch) collectWaveTerms(ch.get(), outL1, outM2, amps, freqs, phases);
+    }
+}
+
 // Generic Analyzer for arbitrary OntoMath Density ASTs
 static SupportAnalysis analyzeOntoMathQueryFamily(const M* densityExpr, glm::vec3 boxHalf) {
     SupportAnalysis sa;
@@ -143,10 +167,15 @@ static SupportAnalysis analyzeOntoMathQueryFamily(const M* densityExpr, glm::vec
     } else {
         // Trigonometric sheet or general wave
         sa.geomClass = GeometryClass::TrigonometricSheet;
-        // Collect wave coefficients if available
-        // Standard Northern Veil defaults or extracted
-        sa.L1 = 0.5f; // Lipschitz bound
-        sa.M2 = 0.05f; // Curvature bound
+        float l1 = 0.0f, m2 = 0.0f;
+        collectWaveTerms(clampNode ? clampNode : densityExpr, l1, m2, sa.waveAmps, sa.waveFreqs, sa.wavePhases);
+        if (l1 > 0.0f) {
+            sa.L1 = l1;
+            sa.M2 = m2;
+        } else {
+            sa.L1 = 0.5f;
+            sa.M2 = 0.05f;
+        }
     }
 
     return sa;
@@ -447,6 +476,11 @@ int main(int argc, char** argv) {
     uint32_t f1ZeroOverlapTiles = 0;
     uint32_t f1ZeroOverlapRays = 0;
 
+    struct HitRay {
+        uint32_t rIdx;
+        float a, b;
+    };
+
     for (const auto& [tileKey, rIndices] : groups4x4) {
         uint32_t activeMemberMask = 0u;
         bool tileOverlap = false;
@@ -456,7 +490,7 @@ int main(int argc, char** argv) {
         for (int m = 0; m < 4; ++m) {
             const auto& cur = field1Curtains[m];
             float uxMin = 1e9f, uxMax = -1e9f;
-            std::vector<std::pair<float, float>> hitRays;
+            std::vector<HitRay> hitRays;
 
             for (uint32_t rIdx : rIndices) {
                 const auto& ray = rays[rIdx];
@@ -488,7 +522,7 @@ int main(int argc, char** argv) {
                     float u1 = oRel.x + b * ray.dir.x;
                     uxMin = std::min({uxMin, u0, u1});
                     uxMax = std::max({uxMax, u0, u1});
-                    hitRays.push_back({a, b});
+                    hitRays.push_back({rIdx, a, b});
                 }
             }
 
@@ -507,8 +541,8 @@ int main(int argc, char** argv) {
                 bool curActive = false;
 
                 for (size_t i = 0; i < hitRays.size(); ++i) {
-                    float a = hitRays[i].first, b = hitRays[i].second;
-                    uint32_t rIdx = rIndices[i];
+                    float a = hitRays[i].a, b = hitRays[i].b;
+                    uint32_t rIdx = hitRays[i].rIdx;
                     const auto& ray = rays[rIdx];
                     glm::vec3 oRel = ro - glm::vec3(cur.origin);
                     float dx = ray.dir.x;
@@ -580,22 +614,41 @@ int main(int argc, char** argv) {
             f1ZeroOverlapRays += uint32_t(rIndices.size());
         }
 
-        // Ground-truth soundness check
-        if (shapeName == "ZERO") {
-            for (uint32_t rIdx : rIndices) {
-                const auto& ray = rays[rIdx];
-                for (int m = 0; m < 4; ++m) {
-                    const auto& cur = field1Curtains[m];
-                    // Test 32 sample points
-                    float dt = (ray.clip.y - ray.clip.x) / 32.0f;
-                    for (int s = 0; s < 32; ++s) {
-                        float t = ray.clip.x + (float(s) + 0.5f) * dt;
-                        glm::vec3 p = ro + t * ray.dir - glm::vec3(cur.origin);
-                        if (std::abs(p.x) <= cur.half.x && std::abs(p.y) <= cur.half.y && std::abs(p.z) <= cur.half.z) {
-                            float phi = p.z + evalWave(cur, p.x);
-                            if (std::abs(phi) <= cur.limits.w) {
-                                f1FalseSkips++;
-                                break;
+        // Ground-truth soundness check across EVERY skipped curtain (activeMemberMask & (1u << m)) == 0u
+        for (int m = 0; m < 4; ++m) {
+            if ((activeMemberMask & (1u << m)) == 0u) {
+                const auto& cur = field1Curtains[m];
+                for (uint32_t rIdx : rIndices) {
+                    const auto& ray = rays[rIdx];
+                    glm::vec3 oRel = ro - glm::vec3(cur.origin);
+                    float a = ray.clip.x, b = ray.clip.y;
+                    bool hit = true;
+                    for (int axis = 0; axis < 3; ++axis) {
+                        float half = cur.half[axis];
+                        if (axis == 0) half = std::min(half, cur.limits.x);
+                        if (axis == 1) half = std::min(half, cur.limits.y);
+                        float d = ray.dir[axis];
+                        float o = oRel[axis];
+                        if (d == 0.0f) {
+                            if (std::abs(o) > half) { hit = false; break; }
+                        } else {
+                            float q0 = (-half - o) / d;
+                            float q1 = (half - o) / d;
+                            a = std::max(a, std::min(q0, q1));
+                            b = std::min(b, std::max(q0, q1));
+                        }
+                    }
+                    if (hit && b > a) {
+                        float dt = (b - a) / 64.0f;
+                        for (int s = 0; s < 64; ++s) {
+                            float t = a + (float(s) + 0.5f) * dt;
+                            glm::vec3 p = oRel + t * ray.dir;
+                            if (std::abs(p.x) <= cur.half.x && std::abs(p.y) <= cur.half.y && std::abs(p.z) <= cur.half.z) {
+                                float phi = p.z + evalWave(cur, p.x);
+                                if (std::abs(phi) <= cur.limits.w) {
+                                    f1FalseSkips++;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -674,17 +727,20 @@ int main(int argc, char** argv) {
             f2ZeroOverlapRays += uint32_t(rIndices.size());
         }
 
-        // Ground-truth soundness check
-        if (shapeName == "ZERO") {
-            for (uint32_t rIdx : rIndices) {
-                const auto& ray = rays[rIdx];
-                for (int m = 0; m < 4; ++m) {
-                    const auto& shell = field2Shells[m];
+        // Ground-truth soundness check across EVERY skipped radial shell (activeMemberMask & (1u << m)) == 0u
+        for (int m = 0; m < 4; ++m) {
+            if ((activeMemberMask & (1u << m)) == 0u) {
+                const auto& shell = field2Shells[m];
+                glm::vec3 center = glm::vec3(shell.centerRadius);
+                float R = shell.centerRadius.w;
+                float wr = shell.thicknessNoise.x;
+
+                for (uint32_t rIdx : rIndices) {
+                    const auto& ray = rays[rIdx];
                     float s0, s1;
-                    if (intersectRaySphereShell(ro, ray.dir, glm::vec3(shell.centerRadius),
-                                               shell.centerRadius.w, shell.thicknessNoise.x,
-                                               ray.clip.x, ray.clip.y, s0, s1)) {
+                    if (intersectRaySphereShell(ro, ray.dir, center, R, wr, ray.clip.x, ray.clip.y, s0, s1)) {
                         f2FalseSkips++;
+                        break;
                     }
                 }
             }

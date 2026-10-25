@@ -426,11 +426,11 @@ fn mergeMain(@builtin(global_invocation_id) gid: vec3u) {
 '''
 
 
-def make_exact_monotone_bowskip_wgsl() -> str:
+def make_exact_monotone_bowskip_wgsl(disjoint_fastpath=False, tile_cert=False) -> str:
     """Uses ONLY the exact existing level-specific depth-0 bow and monotone predicates
     and keeps all original 20/32/96/48 private array capacities. Zero new math or slack constants.
     """
-    return r'''
+    s = r'''
 struct CurtainSpec {origin:vec4f,half:vec4f,limits:vec4f,curv:vec4f,amps:vec4f,freqs:vec4f,phases:vec4f};
 struct Ray {ro_clipA:vec4f,rd_clipB:vec4f,counts:vec4u};
 struct Subpanel {span:vec2f,info:vec2u};
@@ -760,6 +760,64 @@ fn producerFastMain(@builtin(global_invocation_id) gid: vec3u) {
  else { rays[id].counts = vec4u(subBase, singles, overBase, overs); }
 }
 '''
+    if tile_cert:
+        needle_bind = '@group(0) @binding(4) var<storage,read_write> overlaps:array<Overlap>;'
+        insertion_bind = '@group(0) @binding(4) var<storage,read_write> overlaps:array<Overlap>;\n@group(0) @binding(5) var<storage,read> rayMasks:array<u32>;'
+        if s.count(needle_bind) != 1:
+            raise ValueError('tile_cert needle_bind mismatch')
+        s = s.replace(needle_bind, insertion_bind, 1)
+
+        needle_cert = '  if (!hit || !(b > a)) { continue; }\n  var phi_knots: array<f32, 9>;'
+        insertion_cert = '''  if (!hit || !(b > a)) { continue; }
+  let tileMask = rayMasks[id];
+  if ((tileMask & (1u << member)) == 0u) {
+   if (work + 24u > cfg.budget) { reason |= 1u; break; }
+   work += 24u;
+   memCount[member] = 0u;
+   continue;
+  }
+  var phi_knots: array<f32, 9>;'''
+        if s.count(needle_cert) != 1:
+            raise ValueError('tile_cert needle hook mismatch')
+        s = s.replace(needle_cert, insertion_cert, 1)
+    if disjoint_fastpath:
+        needle = 'if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }\n var ne = 0u;'
+        insertion = '''if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }
+ var strictlyAscendingDisjoint = true;
+ for (var p = 1u; p < count; p++) {
+  if (!(pieces[p].x > pieces[p - 1u].y)) {
+   strictlyAscendingDisjoint = false;
+   break;
+  }
+ }
+ if (strictlyAscendingDisjoint) {
+  var singles = 0u;
+  for (var m = 0u; m < 4u && reason == 0u; m++) {
+   let start = memStart[m];
+   let numP = memCount[m];
+   for (var k = 0u; k < numP; k++) {
+    let piece = pieces[start + k];
+    let a = piece.x; let b = piece.y;
+    if (!(b > a)) { continue; }
+    let n = max(1u, u32(ceil((b - a) / 4.0)));
+    if (singles + n > cfg.maxSubPerRay) { reason |= 16u; break; }
+    for (var s = 0u; s < n; s++) {
+     let l = select(a + f32(s) * (b - a) / f32(n), a, s == 0u);
+     let r = select(a + f32(s + 1u) * (b - a) / f32(n), b, s + 1u == n);
+     subpanels[subBase + singles] = Subpanel(vec2f(l, r), vec2u(m, 0));
+     singles++;
+    }
+   }
+  }
+  if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); }
+  else { rays[id].counts = vec4u(subBase, singles, overBase, 0u); }
+  return;
+ }
+ var ne = 0u;'''
+        if s.count(needle) != 1:
+            raise ValueError('strictlyAscendingDisjoint needle hook mismatch')
+        s = s.replace(needle, insertion, 1)
+    return s
 
 
 def parallel_soa_source(base, root):
@@ -993,6 +1051,181 @@ def exact_monotone_bowskip_source(base, root, wide=False):
     return s
 
 
+def disjoint_fastpath_source(base, root, wide=True):
+    cr = load(root, 'ray_transport_gpu_continuation_review')
+    s = cr.coarse_peel_source(base, root, wide=wide)
+    old_compact = re.search(r'static const char\* kFastPathCompactShader = R"WGSL\((.*?)\)WGSL";', s, re.S)[0]
+    new_compact = 'static const char* kFastPathCompactShader = R"WGSL(\n' + make_exact_monotone_bowskip_wgsl(disjoint_fastpath=True).strip() + '\n)WGSL";'
+    if s.count(old_compact) != 1:
+        raise ValueError('kFastPathCompactShader hook')
+    s = s.replace(old_compact, new_compact, 1)
+    s = s.replace(
+        '"Exact level-specific coarse bow reject before stack; original20/32/96/48 capacities"',
+        '"Exact level-specific 3-level bow mask + whole-member bow skip + depth-0 monotone register peel + strictlyAscendingDisjoint fastpath; 65536 capacity"',
+        1,
+    )
+    return s
+
+
+def ux_tile_cert_disjoint_source(base, root, wide=True):
+    cr = load(root, 'ray_transport_gpu_continuation_review')
+    s = cr.coarse_peel_source(base, root, wide=wide)
+    old_compact = re.search(r'static const char\* kFastPathCompactShader = R"WGSL\((.*?)\)WGSL";', s, re.S)[0]
+    new_compact = 'static const char* kFastPathCompactShader = R"WGSL(\n' + make_exact_monotone_bowskip_wgsl(disjoint_fastpath=True, tile_cert=True).strip() + '\n)WGSL";'
+    if s.count(old_compact) != 1:
+        raise ValueError('kFastPathCompactShader hook')
+    s = s.replace(old_compact, new_compact, 1)
+    s = s.replace(
+        '"Exact level-specific coarse bow reject before stack; original20/32/96/48 capacities"',
+        '"Exact level-specific 3-level bow mask + whole-member bow skip + depth-0 monotone register peel + ux-tile-cert + strictlyAscendingDisjoint fastpath; 65536 capacity"',
+        1,
+    )
+    needle_spec = '    if (!extractCurtainSpecs(zone, curtainSpecs)) {\n        throw std::runtime_error("Failed to dynamically extract curtain specs from zone");\n    }'
+    inject_tile_cert = needle_spec + '''
+    std::vector<uint32_t> rayTileMasks(count, 0u);
+    {
+        std::map<uint32_t, std::vector<uint32_t>> tileToRays;
+        for(size_t i=0;i<count;++i){
+            uint32_t gx = uint32_t(R[i][0]) / 10u;
+            uint32_t gy = uint32_t(R[i][1]) / 10u;
+            uint32_t tid = (gy / 4u) * 64u + (gx / 4u);
+            tileToRays[tid].push_back(uint32_t(i));
+        }
+        for(const auto& [tid, rIndices] : tileToRays){
+            uint32_t mask = 0u;
+            for(uint32_t m=0; m<4; ++m){
+                const auto& cur = curtainSpecs[m];
+                float uxMin = 1e9f, uxMax = -1e9f;
+                struct HR { uint32_t rIdx; float a, b; };
+                std::vector<HR> hitRays;
+                for(uint32_t rIdx : rIndices){
+                    const auto& row = R[rIdx];
+                    glm::vec3 d(row[2], row[3], row[4]);
+                    glm::vec3 oRel = glm::vec3(ro) - glm::vec3(cur.origin[0], cur.origin[1], cur.origin[2]);
+                    float a = row[5], b = row[6];
+                    bool hit = true;
+                    for(int axis=0; axis<3; ++axis){
+                        float half = cur.half[axis];
+                        if(axis == 0) half = std::min(half, cur.limits[0]);
+                        if(axis == 1) half = std::min(half, cur.limits[1]);
+                        float dx = d[axis], ox = oRel[axis];
+                        if(dx == 0.0f){
+                            if(std::abs(ox) > half + cur.curv[1]){ hit = false; break; }
+                        } else {
+                            float q0 = (-half - cur.curv[1] - ox) / dx;
+                            float q1 = (half + cur.curv[1] - ox) / dx;
+                            a = std::max(a, std::min(q0, q1));
+                            b = std::min(b, std::max(q0, q1));
+                        }
+                    }
+                    if(hit && b > a){
+                        float u0 = oRel.x + a * d.x;
+                        float u1 = oRel.x + b * d.x;
+                        uxMin = std::min({uxMin, u0, u1});
+                        uxMax = std::max({uxMax, u0, u1});
+                        hitRays.push_back({rIdx, a, b});
+                    }
+                }
+                if(!hitRays.empty() && uxMax > uxMin){
+                    std::array<float, 9> wKnots;
+                    for(int k=0; k<9; ++k){
+                        float ux = uxMin + float(k)/8.0f * (uxMax - uxMin);
+                        wKnots[k] = cur.amps[0]*std::sin(cur.freqs[0]*ux + cur.phases[0])
+                                  + cur.amps[1]*std::cos(cur.freqs[1]*ux + cur.phases[1])
+                                  + cur.amps[2]*std::sin(cur.freqs[2]*ux + cur.phases[2]);
+                    }
+                    float h_ux = (uxMax - uxMin) / 8.0f;
+                    float bow = 0.125f * cur.curv[0] * h_ux * h_ux;
+                    float thresh = bow + cur.limits[3] + 0.001f;
+                    bool curActive = false;
+                    for(size_t i=0; i<hitRays.size(); ++i){
+                        float a = hitRays[i].a, b = hitRays[i].b;
+                        uint32_t rIdx = hitRays[i].rIdx;
+                        const auto& row = R[rIdx];
+                        glm::vec3 d(row[2], row[3], row[4]);
+                        glm::vec3 oRel = glm::vec3(ro) - glm::vec3(cur.origin[0], cur.origin[1], cur.origin[2]);
+                        if(std::abs(d.x) < 1e-6f) { curActive = true; break; }
+                        for(int bin=0; bin<8; ++bin){
+                            float u0 = uxMin + float(bin)/8.0f * (uxMax - uxMin);
+                            float u1 = uxMin + float(bin+1)/8.0f * (uxMax - uxMin);
+                            float su0 = (u0 - oRel.x) / d.x;
+                            float su1 = (u1 - oRel.x) / d.x;
+                            float phi0 = oRel.z + su0 * d.z + wKnots[bin];
+                            float phi1 = oRel.z + su1 * d.z + wKnots[bin+1];
+                            float sMin = std::min(su0, su1), sMax = std::max(su0, su1);
+                            float cLo = std::max(a, sMin), cHi = std::min(b, sMax);
+                            if(cHi > cLo){
+                                float tA = (cLo - su0) / (su1 - su0);
+                                float tB = (cHi - su0) / (su1 - su0);
+                                float pA = phi0 + tA * (phi1 - phi0);
+                                float pB = phi0 + tB * (phi1 - phi0);
+                                if(!(std::min(pA, pB) > thresh || std::max(pA, pB) < -thresh)){
+                                    curActive = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if(curActive) break;
+                    }
+                    if(curActive) mask |= (1u << m);
+                }
+            }
+            for(uint32_t rIdx : rIndices){
+                rayTileMasks[rIdx] = mask;
+            }
+        }
+    }
+    auto maskBuf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst, count * sizeof(uint32_t), rayTileMasks.data());'''
+    if s.count(needle_spec) != 1:
+        raise ValueError('curtainSpecs needle hook mismatch')
+    s = s.replace(needle_spec, inject_tile_cert, 1)
+
+    needle_prod = '''            auto prodGroup=[&](WGPUComputePipeline cp, WGPUBuffer configuration){return group(cp,{
+                entry(0,configuration,0,sizeof(pcfg)),entry(1,specBuf,0,curtainSpecs.size()*sizeof(GpuCurtainSpec)),
+                entry(2,rBuf,rayOffset,uint64_t(n)*sizeof(GpuRayHeader)),entry(3,tileSingles,0,tileSingleBytes),entry(4,tileOverlaps,0,tileOverlapBytes)});};
+            tiles.push_back({start,n,producer(cb),producer(fb),consumer,current(fallbackCP),
+                prodGroup(cpFastFull,cb),prodGroup(cpFastFull,fb),
+                prodGroup(cpFastCompact,cb),prodGroup(cpFastCompact,fb)});'''
+    inject_prod = '''            auto prodGroup=[&](WGPUComputePipeline cp, WGPUBuffer configuration){return group(cp,{
+                entry(0,configuration,0,sizeof(pcfg)),entry(1,specBuf,0,curtainSpecs.size()*sizeof(GpuCurtainSpec)),
+                entry(2,rBuf,rayOffset,uint64_t(n)*sizeof(GpuRayHeader)),entry(3,tileSingles,0,tileSingleBytes),entry(4,tileOverlaps,0,tileOverlapBytes)});};
+            auto prodCompactGroup=[&](WGPUBuffer configuration){return group(cpFastCompact,{
+                entry(0,configuration,0,sizeof(pcfg)),entry(1,specBuf,0,curtainSpecs.size()*sizeof(GpuCurtainSpec)),
+                entry(2,rBuf,rayOffset,uint64_t(n)*sizeof(GpuRayHeader)),entry(3,tileSingles,0,tileSingleBytes),entry(4,tileOverlaps,0,tileOverlapBytes),
+                entry(5,maskBuf,rayOffset/sizeof(GpuRayHeader)*sizeof(uint32_t),uint64_t(n)*sizeof(uint32_t))});};
+            tiles.push_back({start,n,producer(cb),producer(fb),consumer,current(fallbackCP),
+                prodGroup(cpFastFull,cb),prodGroup(cpFastFull,fb),
+                prodCompactGroup(cb),prodCompactGroup(fb)});'''
+    if s.count(needle_prod) != 1:
+        raise ValueError('prodGroup needle hook mismatch')
+    s = s.replace(needle_prod, inject_prod, 1)
+
+    needle_full = '''            auto bg=group(cpFastCompact,{entry(0,cfgBuf,0,sizeof(cfg)),entry(1,specBuf,0,curtainSpecs.size()*sizeof(GpuCurtainSpec)),
+                entry(2,rBuf,0,rayBytes),entry(3,sBuf,0,subpanelBytes),entry(4,oBuf,0,overlapBytes)});'''
+    inject_full = '''            auto bg=group(cpFastCompact,{entry(0,cfgBuf,0,sizeof(cfg)),entry(1,specBuf,0,curtainSpecs.size()*sizeof(GpuCurtainSpec)),
+                entry(2,rBuf,0,rayBytes),entry(3,sBuf,0,subpanelBytes),entry(4,oBuf,0,overlapBytes),
+                entry(5,maskBuf,0,count*sizeof(uint32_t))});'''
+    if s.count(needle_full) != 1:
+        raise ValueError('full dispatch needle hook mismatch')
+    s = s.replace(needle_full, inject_full, 1)
+
+    needle_budget = '''        for(int variant:{0,1})for(uint32_t budget:{23u,24u,25u}){
+            auto u=cfg;u.rayCount=16;u.pad=budget;auto cb=makeBuffer(WGPUBufferUsage_Uniform|WGPUBufferUsage_CopyDst,sizeof(u),&u);auto cp=variant?cpFastCompact:cpFastFull;
+            wgpuQueueWriteBuffer(gpu.queue,rayB,0,synthetic.data(),16*sizeof(GpuRayHeader));
+            auto bg=group(cp,{entry(0,cb,0,sizeof(u)),entry(1,specB,0,specs.size()*sizeof(GpuCurtainSpec)),entry(2,rayB,0,16*sizeof(GpuRayHeader)),entry(3,sBuf,0,subpanelBytes),entry(4,oBuf,0,overlapBytes)});'''
+    inject_budget = '''        std::vector<uint32_t> synMasks(16, 0xFFFFFFFFu);
+        auto synMaskBuf=makeBuffer(WGPUBufferUsage_Storage|WGPUBufferUsage_CopyDst,16*sizeof(uint32_t),synMasks.data());
+        for(int variant:{0,1})for(uint32_t budget:{23u,24u,25u}){
+            auto u=cfg;u.rayCount=16;u.pad=budget;auto cb=makeBuffer(WGPUBufferUsage_Uniform|WGPUBufferUsage_CopyDst,sizeof(u),&u);auto cp=variant?cpFastCompact:cpFastFull;
+            wgpuQueueWriteBuffer(gpu.queue,rayB,0,synthetic.data(),16*sizeof(GpuRayHeader));
+            auto bg=variant?group(cpFastCompact,{entry(0,cb,0,sizeof(u)),entry(1,specB,0,specs.size()*sizeof(GpuCurtainSpec)),entry(2,rayB,0,16*sizeof(GpuRayHeader)),entry(3,sBuf,0,subpanelBytes),entry(4,oBuf,0,overlapBytes),entry(5,synMaskBuf,0,16*sizeof(uint32_t))}):group(cpFastFull,{entry(0,cb,0,sizeof(u)),entry(1,specB,0,specs.size()*sizeof(GpuCurtainSpec)),entry(2,rayB,0,16*sizeof(GpuRayHeader)),entry(3,sBuf,0,subpanelBytes),entry(4,oBuf,0,overlapBytes)});'''
+    if s.count(needle_budget) != 1:
+        raise ValueError('budget needle hook mismatch')
+    s = s.replace(needle_budget, inject_budget, 1)
+
+    return s
+
+
 def build_variant(root: Path, build_root: Path, work: Path, variant: str):
     if work.exists() or root == work or root in work.parents:
         raise ValueError('fresh external work required')
@@ -1005,6 +1238,10 @@ def build_variant(root: Path, build_root: Path, work: Path, variant: str):
         cpp = exact_monotone_bowskip_source(v['CPP_SOURCE'], root, wide=False)
     elif variant == 'coarse-monotone-bowskip-wide':
         cpp = exact_monotone_bowskip_source(v['CPP_SOURCE'], root, wide=True)
+    elif variant == 'disjoint-fastpath-wide':
+        cpp = disjoint_fastpath_source(v['CPP_SOURCE'], root, wide=True)
+    elif variant == 'ux-tile-cert-disjoint-wide':
+        cpp = ux_tile_cert_disjoint_source(v['CPP_SOURCE'], root, wide=True)
     else:
         raise ValueError('unsupported variant: ' + variant)
 
@@ -1080,7 +1317,7 @@ def main():
     p.add_argument('--build-root', type=Path, default=Path('/private/tmp/earthcall-rt-pure-build'))
     p.add_argument('--work', type=Path, required=True)
     p.add_argument('--case', type=Path, default=Path('/private/tmp/earthcall-wide-case/manifest.json'))
-    p.add_argument('--variant', choices=['parallel-soa', 'coarse-monotone-bowskip', 'coarse-monotone-bowskip-wide'], required=True)
+    p.add_argument('--variant', choices=['parallel-soa', 'coarse-monotone-bowskip', 'coarse-monotone-bowskip-wide', 'disjoint-fastpath-wide', 'ux-tile-cert-disjoint-wide'], required=True)
     p.add_argument('--build-only', action='store_true')
     args = p.parse_args()
 
