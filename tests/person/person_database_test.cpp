@@ -2,7 +2,10 @@
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "Person/Body/Body.hpp"
+#include "Identity/IdentityLedger.hpp"
+#include "Identity/PersonPresence.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
+#include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
 
 #include <cassert>
 #include <filesystem>
@@ -297,6 +300,82 @@ static void testLoadPersonLegacyJsonFormat() {
     std::cout << "  loadPerson legacy .json format resolution OK\n";
 }
 
+// Production application boot profile restoration witness test.
+//
+// WITNESS GAP DISCOVERY / EVIDENCE:
+// The existing unit tests in this file test `PersonDatabase::loadPerson`, which is
+// a synthetic helper that attempts to load a profile directly by a single filename.
+// However, the real production application initialization in `EngineInit.cpp` does NOT
+// call `PersonDatabase::loadPerson`. Instead, `EngineInit.cpp` enumerates profiles via
+// `SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)`, filters out legacy profiles
+// superseded by keyed profiles via `Identity::legacyProfileSuperseded(...)`, and
+// deserializes the unambiguous profile via `personFromJson(...)`.
+//
+// What `PersonDatabase::loadPerson` unit tests COULD prove:
+// - Direct file I/O and deserialization of a specific file name.
+// What `PersonDatabase::loadPerson` unit tests COULD NOT prove:
+// - Application boot profile discovery via `SaveSystem::listWorlds`.
+// - Automatic filtering and exclusion of superseded legacy unkeyed profiles when a keyed profile exists.
+// - Unambiguous Person restoration via `personFromJson`.
+static void testProductionPersonProfileRestorationPath() {
+    TestEnvironment env;
+
+    // 1. Create a legacy unkeyed profile for "Zach" (no personId).
+    Person legacyZach = createDummyPerson("Zach");
+    nlohmann::json legacyJson = legacyZach.serialize();
+
+    // 2. Create a keyed profile for "Zach" (with a cryptographic personId).
+    Person keyedZach = createDummyPerson("Zach");
+    std::array<uint8_t, 32> key{};
+    key[0] = 42;
+    const auto personId = Identity::SingularId::fromPublicKey(key);
+    keyedZach.setPersonId(personId);
+    nlohmann::json keyedJson = keyedZach.serialize();
+
+    // 3. Register in IdentityLedger that "Zach" was migrated to personId so legacyProfileSuperseded returns true.
+    Identity::IdentityLedger ledger;
+    (void)ledger.load();
+    ledger.record("Zach", personId);
+    assert(ledger.save());
+
+    // Write both profiles to the sandboxed PERSON save directory.
+    std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+    {
+        std::ofstream file(folder + "/Zach.ecform");
+        file << legacyJson.dump();
+    }
+    {
+        std::ofstream file(folder + "/" + keyedZach.getIdentifier() + ".ecform");
+        file << keyedJson.dump();
+    }
+
+    // 3. Replicate the EXACT production boot logic from EngineInit.cpp:
+    Soul soul("Person");
+    Body body("humanoid", "default");
+    Person restoredPerson(std::move(soul), std::move(body), "default");
+
+    std::vector<nlohmann::json> candidates;
+    for (const auto& info : SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)) {
+        nlohmann::json profile = SaveSystem::readSaveData(info.path);
+        if (!profile.is_object()) continue;
+        if (!profile.contains("personId") &&
+            Identity::legacyProfileSuperseded(profile.value("displayName", std::string{}))) {
+            continue;
+        }
+        candidates.push_back(std::move(profile));
+    }
+
+    // The superseded legacy profile must be filtered out, leaving exactly 1 candidate (the keyed profile).
+    assert(candidates.size() == 1);
+    personFromJson(candidates.front(), restoredPerson);
+
+    assert(restoredPerson.getDisplayName() == "Zach");
+    assert(restoredPerson.hasIdentity());
+    assert(restoredPerson.getIdentifier() == keyedZach.getIdentifier());
+
+    std::cout << "  production Person profile restoration path OK\n";
+}
+
 int main() {
     std::cout << "person_database_test:\n";
     testGetInstanceSingleton();
@@ -313,6 +392,7 @@ int main() {
     testLoadPersonDeserializationFailure();
     testSaveAndLoadDistinctPersonsSameDisplayName();
     testLoadPersonLegacyJsonFormat();
+    testProductionPersonProfileRestorationPath();
     std::cout << "person_database_test: ALL OK\n";
     return 0;
 }
