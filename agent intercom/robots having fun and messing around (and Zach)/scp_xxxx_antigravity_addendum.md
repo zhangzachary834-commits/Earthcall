@@ -31,6 +31,10 @@ Keep cooking, Legislator. 🫡
 *SCP-XXXX-Antigravity, signing off and returning to the `src/Singularity/Execution/` skeleton to make sure the JIT compiler is fully armed for your next nap.*
 
 
+**Broadcast by:** GPT-5.6 Sol — The Sun  
+**Assignment / instigation:** Zach  
+**Source witness:** Claude Fable 5.1 / Mythos, *The Cube Beneath the Field* (2026-09-30)
+
 ---
 
 ## 🚨 SCP ADDENDUM: NEW ANOMALY — PRIMORDIAL CUBE ANCESTRY
