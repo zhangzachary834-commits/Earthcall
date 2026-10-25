@@ -1,57 +1,5 @@
 # Person Verification List
 
-## Ergonomic 2D ImGui Zone Selector
-
-*Antigravity · Gemini 3.8 Flash (High) · session `b7880025-6dbf-4c38-9916-6e90233bec71` · 2026-10-23. Commissioned by Zach: "BROOOOOOO PLZZZZZ MAKE IT SO I CAN SELECT ZONES IN A FRIENDLY AND ERGONOMIC 2D INTERFACE NOT A BORING AND INCONVENIENT DROPDOWN, keep the scroll list for now though at the side, and im talking about the imgui zone sleector"*
-
-- [ ] Launch Earthcall (`./build/earthcall_webgpu` or `./build/earthcall`) and press `F8` (or open Creator Console from the menu).
-- [ ] **Top Header Bar Quick-Jump:**
-  - In the Creator Console header, observe the active zone pill `[ Zone: Sanctum of Beginnings 🗺️ ]`.
-  - Click the pill and confirm it immediately jumps to the **Zones** tab (`CreatorSection::Zones`).
-- [ ] **Side Scroll List (Kept at Side):**
-  - Verify the scroll list on the left side of the Zones console (`ZoneListPane`) lists all available Zones with their object counts and badges (`[*]`, `[H]`, `[G]`, `[D]`).
-  - Single-click any zone to select it.
-  - Double-click any zone in the list: verify it immediately switches to that zone (`zoneMgr.switchTo`) with feedback in the status bar!
-- [ ] **Interactive 2D Spatial Canvas & Selector:**
-  - Verify the View Mode selector at the top right: `[ 🗺️ 2D Canvas ]`, `[ 🔀 Split View ]`, `[ 📋 Inspector ]`.
-  - In `🗺️ 2D Canvas` mode, verify:
-    - Subtle infinite grid background with pan and zoom.
-    - Pan by dragging with Right-Click, Middle-Click, or Left-Click on empty canvas space.
-    - Zoom with mouse wheel (or using the `[-]` / `[+]` / `[100%]` toolbar in the top-right corner).
-    - `[ ⟲ Fit ]` frames and centers all zones in view; `[ 🔲 Auto ]` organizes them topologically.
-    - Zones rendered as distinctive cards with colors reflecting kind (Home: amber/gold, Gathering: orange, Dimension: purple, Standard: steel blue).
-    - Active Zone has a glowing emerald/mint border and halo with `[ACTIVE]` pill.
-    - Selected Zone has a sky-blue border.
-    - Each card displays name, `@identifier`, objects & relations count, and an `[ Enter ]` button.
-    - Hierarchical connection lines (smooth Bezier curves) link parent and child zones.
-  - **Interactions:**
-    - Click any zone card: verifies it selects the zone and highlights it across both the 2D canvas and the side scroll list.
-    - Double-click any zone card: verifies it immediately enters/switches to that zone (`zoneMgr.switchTo`).
-    - Click `[ Enter ]` on any card: verifies it enters/switches to that zone in 1 click.
-    - Drag any zone card: verifies you can freely position and cluster cards in 2D space.
-    - Right-click any card: opens context menu (Enter / Switch, Save Zone, Diff with Active Zone, Reset Position).
-
-
-## 2D Chess Zone (`Chess2D`)
-
-*Gemini 3.8 Flash (the sparkly guy) · session `e1346ea7-7d86-4945-8831-01e3e33dd09a` · 2026-10-16. Commissioned by Zach: "MAKE NOT 3D CHESS MAKE 2D CHESS. MAKE SURE UR WORKING IN THE DEFAULT sync-from-earthcall-main CHECKOUT."*
-
-- [ ] Launch Earthcall WebGPU (`./build/earthcall_webgpu`) and switch to the **`Chess 2D`** Zone (`Chess2D`).
-- [ ] **Visual Layout & Aesthetics:**
-  - Verify the 504×504 rich dark mahogany board frame (`object.chess2d.frame`) with ivory border.
-  - Verify the 64 board squares in alternating warm ivory (`material.chess2d.light_square`) and dark walnut (`material.chess2d.dark_square`).
-  - Verify the 32 pieces centered on their starting ranks: White pieces with ivory finish, Black pieces with dark slate finish, each displaying clear typography glyph labels (`P`, `R`, `N`, `B`, `Q`, `K`).
-  - Verify the capture trays flanking the board: White side tray on the left, Black side tray on the right.
-  - Verify top UI banners: Title banner ("EARTHCALL 2D CHESS") and dynamic Turn HUD banner ("TURN: WHITE").
-- [ ] **Interactive Gameplay & Rule Verification:**
-  - **Selection:** Click White e2 pawn (`piece-white-pawn-4-1`). Verify it highlights and lifts to $zOrder2D=20$.
-  - **Deselection & Switching:** Click another friendly piece (e.g. White b1 knight). Verify knight selects and pawn automatically deselects. Click the knight again to verify it deselects completely.
-  - **Move 1 (White e2-e4):** Click e2 pawn, then click e4 square (`square-4-3`). Verify pawn moves to e4, turn banner changes to "TURN: BLACK".
-  - **Move 2 (Black e7-e5):** Click Black e7 pawn, then click e5 square (`square-4-4`). Verify pawn moves to e5, turn banner flips back to "TURN: WHITE".
-  - **Move 3 (White d2-d4):** Click White d2 pawn, then click d4 square (`square-3-3`). Verify pawn moves to d4, turn banner flips to "TURN: BLACK".
-  - **Move 4 (Capture - Black exd4):** Click Black e5 pawn, then click White d4 pawn. Verify Black pawn advances to d4, and White pawn is captured onto the left capture tray (`x2D=70`), with `onBoard=false`.
-  - **Illegal Move Refusal:** Try moving White a2 pawn forward 3 squares to a5. Verify the move is refused (pawn remains at a2, turn does not advance).
-
 ## 3D Sky-Island Sanctuary (`Sky-Island Sanctuary`)
 
 *Gemini 4 Argon (Spark) · session `argon-sky-island-sanctuary-20261013` · 2026-10-13 — Commissioned from the Sun's prompt: "Create a beautiful 3D sky-island sanctuary inside Earthcall. Make it feel wondrous, peaceful, and architecturally intentional. I want it to feel like a real place a person would want to enter and linger in. That's it."*
@@ -90,8 +38,6 @@
   - Advance to Combat phase and click `card.grizzly_bears_1`: verify it taps ($90^\circ$ rotation), steps forward across the centerline into combat, and deals 2 damage to opponent life (reducing life from 20 to 18).
   - Play Mountain, tap for red mana, cast Lightning Bolt to the stack, and click Resolve: verify Bolt deals 3 damage to opponent (life down to 15) and goes to graveyard.
   - Verify automated state-based actions: lethal damage sends creatures to graveyard, and reducing opponent life to 0 triggers game over.
-
-*Grok 4.7 (Grok Build), session `01a108eb-bfc1-7162-8064-96c491afeb5d`, 2026-10-17 13:24 PDT.* `./build/mtg_zone_native_test` passed 113/113 against this zone: the scripted clicks, the stack, the bolt, and both state-based actions. That does not check the look. What remains for a Person is whether the table, the four cards, the tap, and the stack read as a game under the pointer. The slice is these four cards. The Draw step does not draw, and no second player takes a turn. The arithmetic is witnessed; the feel is not.
 
 ## One-paste Law Line pixel-art editor
 
@@ -1706,37 +1652,3 @@ The checkout WebGPU app is rebuilt with [route-aware power lowering](../../../au
 [This mathematical analysis implementation](../../../audits/VOLUME_EUCLIDEAN_RANGE_2026-10-15.md) adds no new visible app behavior and claims no FPS gain. Existing Northern Veil/Sanctuary appearance, movement and usual-framebuffer acceptance checks remain open; there is no additional control to click or new performance benefit for Zach to verify from this API alone. Native proof consumers retain their prior behavior.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).
-
-
-### Support-allocation pass — retained renderer restored
-
-[All three tested allocation/traversal variants](../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) preserve the finite captures but regress in measured cost, so none remains enabled. The checkout app is rebuilt with the prior renderer; the installed app and live saves were untouched. This pass adds no new visual control or promised FPS improvement to inspect. Existing Northern Veil/Sanctuary continuous appearance, usual-framebuffer movement and 30 FPS acceptance checks remain open; the rejected variants do not create a new Person verification obligation.
-
-**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
-
-## Property-only direct Screen sources (2026-10-17)
-
-Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
-2026-10-17T16:27:11-07:00. Zach required the pipeline to work with added Properties
-on a Singular/Object and no ShapeKind specification. [Native audit](../../../audits/SINGULAR_SCREEN_PROPERTY_PIPELINE_2026-10-17.md).
-
-- [ ] Inspect the retained [plain Object bands](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-bands.png) and [edited bands](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-edited.png): two separated gradients over blue, with their blue component changing after a Law edit. The corresponding Singular captures should match. At native resolution, [the pixel replacement](../../../../scratch/verification/singular-screen-properties-2026-10-17/property-screen-object-pixel.png) has exactly one red pixel at column 7, row 9 over blue. Confirm this property-bearer authoring route meets your intended meaning. These are isolated production captures; no demo was installed in an inhabited Zone, and automatic composition of many sources remains open.
-
-## Sanctum of Beginnings cleared of test shapes (2026-10-17)
-
-Claude Code / Claude Opus 5.5 / session `8fa01418-49d7-4bfd-8a69-22d286eb6b8b` / 2026-10-17T19:29-07:00. At Zach's request ("all of them were literally just me spamming shapes to test"), 136 shape objects and their per-object materials were removed from `zones/Sanctum of Beginnings/zone.ecform` in the data home, plus the 135 present in the stale `zone.json`. Committed in the data home. The originals are in `backups/Sanctum of Beginnings.bak.20261017/`.
-
-- [ ] Enter Sanctum of Beginnings. The pile of default shapes at the spawn point (0, 0.5, 0) should be gone, along with the trail of cubes near (−0.2…−3.3, 2.2–2.8, 5–10) and the Sonnet test cube at the origin. **Luna's First Star** (near (−0.1, 1.35, 1.25)) and the Sonnet gift spheres (near (−9.6, 5.2, −6.1)) were kept on purpose. Say if you want those gone too. Lexemes, laws and the zone's spatial root are unchanged.
-
-
-## Shape Garden — Law Line 2D sidebar / 3D generator (2026-10-20)
-
-Zach commissioned this independent authored interface with no legacy 3D generator. [Guide and evidence](../Specific%20Tasks/Interaction%20and%20Interface/Law_Line_Shape_Garden/Law_Line_Shape_Garden.md).
-
-- [ ] Unlock as Zach if requested, select **Shape Garden** in Zones, and release the cursor with Escape. Confirm the sidebar appears over the 3D scene without opening the legacy creation window.
-- [ ] Choose sphere/box/torus, adjust size, choose a color, and click CREATE. Confirm one visible solid per press, correct color/form/size, and no repeated births while held.
-- [ ] Move/turn, resize and test the normal/Retina display: controls should stay aligned with the pointer. Foreign panels that capture the mouse should prevent births.
-- [ ] Close X, then reopen with the guide's Law Line sentence: existing objects should remain. Close before leaving for another Zone; automatic Screen ownership/exit restoration is not implemented.
-- [ ] Save Zone after creating objects; restart the ordinary app and reenter Shape Garden. Confirm the generated forms and chosen controller state persist. Initial/native fixture codec checks do not replace this inhabited acceptance.
-
-*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-20T13:44:21-07:00*

@@ -3,11 +3,6 @@
 **Origin:** Zach, `docs/architecture/law/Natural Language Law Authoring.md` (2026-09-25).
 **Design and record:** [`docs/plans/NATURAL_LANGUAGE_LAW_AUTHORING_PLAN_2026-09-25.md`](../../../../../plans/NATURAL_LANGUAGE_LAW_AUTHORING_PLAN_2026-09-25.md)
 
-
-## Naming decree — TerminalLine, not universal LawSentence
-
-Zach clarified on 2026-10-20 that `LawSentence` was a slight naming imprecision. The intended concept is **`TerminalLine`**: a Terminal-modality parser/reader for one command-line line. The existing C++ namespace/files may remain `LawSentence` temporarily for compatibility, but future work must not treat that name as a universal sentence ontology or route unrelated modalities through Terminal grammar. The reusable semantic layer is authored Lexemes, Relations, Laws, and Metalaws beneath the modality boundary. [Full decree.](../../../../../addendums/terminal_line_naming_and_modality_scope_addendum.md)
-
 ## Status
 
 - **Direct Screen authoring (2026-10-06):** nested value constructors and mathematical quotation compile through authored Metalaws into existing fields/selectors; [recipe, examples, and evidence](../../Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md#cli-field-and-selector-authoring--2026-10-06).
