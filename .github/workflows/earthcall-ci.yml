@@ -86,6 +86,8 @@ jobs:
         time_moment_test
         category_manager_test
         identity_ledger_test
+        claim_test
+        person_presence_test
         file_channel_test
         file_watcher_test
         first_mover_test
