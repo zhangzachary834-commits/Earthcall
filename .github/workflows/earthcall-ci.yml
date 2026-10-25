@@ -84,6 +84,7 @@ jobs:
         authored_physics_laws_test
         timeline_test
         time_moment_test
+        drive_session_key_test
         category_manager_test
         identity_ledger_test
         file_channel_test
