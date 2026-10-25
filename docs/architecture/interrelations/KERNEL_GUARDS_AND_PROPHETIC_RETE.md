@@ -2,7 +2,7 @@
 
 **Status:** Source-aligned architectural distinction; not a claim that Prophetic Rete authorizes or vetoes physical outputs.
 
-**Read with:** [Prophetic Rete](../law/PROPHETIC_RETE.md), [First Mover vs. Kernel Guards](FIRST_MOVER_VS_KERNEL_GUARDS.md), `src/ZonesOfEarth/AuthorsOfLaw/PropheticRete.cpp`, `src/Singularity/Audio/AudioSystem.hpp`, and `tests/infrasound_floor_test.cpp`.
+**Read with:** [Prophetic Rete](../law/PROPHETIC_RETE.md), [First Mover vs. Kernel Guards](FIRST_MOVER_VS_KERNEL_GUARDS.md), `src/ZonesOfEarth/AuthorsOfLaw/PropheticRete.cpp`, `src/Singularity/Audio/AudioSystem.hpp`, and `tests/singularity/infrasound_floor_test.cpp`.
 
 ## Different questions, different boundaries
 
