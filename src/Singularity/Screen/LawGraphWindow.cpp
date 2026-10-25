@@ -3900,7 +3900,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
                 law->setEnabled(!law->isEnabled());
             }
             ImGui::PopStyleColor();
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Click to set @%s.enabled := %s", law->getIdentifier().c_str(), law->isEnabled() ? "false" : "true");
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("click to toggle");
             ImGui::SameLine();
             chip(kInfo, law->activation() == Law::Activation::WhileTrue
                             ? "while true"
