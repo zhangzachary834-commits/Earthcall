@@ -25,6 +25,7 @@ jobs:
     # 4000-character regex, which happened twice on 2026-10-07.)
     env:
       FOCUSED_TESTS: |
+        property_value_json_test
         contour_test
         line_editor_test
         law_line_test
