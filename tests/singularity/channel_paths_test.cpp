@@ -95,13 +95,11 @@ void check(const Rendering::PathOption& option, Singular& owner) {
 
 int main() {
     // Object construction reaches the renderer boundary; give it a context.
-    const bool glfwReady = (glfwInit() == GLFW_TRUE);
-    GLFWwindow* window = nullptr;
-    if (glfwReady) {
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        window = glfwCreateWindow(64, 64, "channel_paths_test", nullptr, nullptr);
-    }
+    if (!glfwInit()) { std::fprintf(stderr, "channel_paths_test: glfwInit failed\n"); return 1; }
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    GLFWwindow* window = glfwCreateWindow(64, 64, "channel_paths_test", nullptr, nullptr);
+    if (!window) { std::fprintf(stderr, "channel_paths_test: no GL context\n"); glfwTerminate(); return 1; }
 
     Object object;
     Law law("channel-paths-probe");
@@ -327,8 +325,8 @@ int main() {
     std::printf("\nchannel_paths_test: %d advertised paths resolved, %d skipped (clock), %d failed\n",
                 g_checked - g_failures, skipped, g_failures);
 
-    if (window) glfwDestroyWindow(window);
-    if (glfwReady) glfwTerminate();
+    glfwDestroyWindow(window);
+    glfwTerminate();
     if (g_failures > 0) {
         std::printf("channel_paths_test: FAILED — the picker is offering paths the substrate "
                     "does not answer\n");

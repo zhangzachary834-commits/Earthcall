@@ -314,13 +314,11 @@ void auditReachability(const std::string& beingName, Singular& being,
 int main() {
     // Mirrors channel_paths_test: a context exists before any being that may
     // touch the renderer is constructed.
-    const bool glfwReady = (glfwInit() == GLFW_TRUE);
-    GLFWwindow* window = nullptr;
-    if (glfwReady) {
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        window = glfwCreateWindow(64, 64, "no-black-box", nullptr, nullptr);
-    }
+    if (!glfwInit()) { std::fprintf(stderr, "no_black_box_test: no GLFW\n"); return 1; }
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    GLFWwindow* window = glfwCreateWindow(64, 64, "no-black-box", nullptr, nullptr);
+    if (!window) { std::fprintf(stderr, "no_black_box_test: no GL context\n"); glfwTerminate(); return 1; }
 
     std::printf("no_black_box_test — the sixth refusal (NO_BLACK_BOX.md)\n\n");
 
@@ -399,8 +397,8 @@ int main() {
     std::printf("\nno_black_box_test: %d property writes probed, %d failures\n",
                 g_checked, g_failures);
 
-    if (window) glfwDestroyWindow(window);
-    if (glfwReady) glfwTerminate();
+    glfwDestroyWindow(window);
+    glfwTerminate();
 
     if (g_failures > 0) {
         std::printf("no_black_box_test: FAILED — the substrate is holding state where "
