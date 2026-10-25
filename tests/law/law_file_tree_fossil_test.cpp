@@ -32,6 +32,21 @@ int main() {
         }
     }
 
+    const fs::path engineRelative = "src/Singularity/Core/Engine.hpp";
+    std::ifstream engineFile(root / engineRelative);
+    if (!engineFile) {
+        std::cerr << "FAIL: Could not open Engine.hpp at " << root / engineRelative << "\n";
+        return 1;
+    }
+    const std::string engineContent((std::istreambuf_iterator<char>(engineFile)),
+                                    std::istreambuf_iterator<char>());
+    for (const char* fossil : {"getUseLegacy2DTools", "_useLegacy2DTools"}) {
+        if (engineContent.find(fossil) != std::string::npos) {
+            std::cerr << "FAIL: Legacy 2D tools fossil method/member exists: " << fossil << "\n";
+            return 1;
+        }
+    }
+
     std::ifstream toolFile(root / toolRelative);
     if (!toolFile) {
         std::cerr << "FAIL: Could not open Tool.cpp at " << root / toolRelative << "\n";
