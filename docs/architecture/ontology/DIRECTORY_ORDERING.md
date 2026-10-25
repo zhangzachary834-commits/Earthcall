@@ -105,12 +105,10 @@ Earthcall/
       Relationship/
         Community/
       Soul/
-      Voice/
-        VoicePart/
     Relation/              Relation · RelationManager
       Formation/
-      Traversal/
       py/
+      Traversal/
     Singularity/           the modality layer — where language stops mattering
       Audio/               the Sound modality (AudioSystem)
       Core/                Engine · EventBus · CreationChannel
@@ -119,17 +117,11 @@ Earthcall/
         FirstMoverWindowTools/
           CreatorConsole/
           Menu/
+        Legacy/
         TalkingRobotGuyAPI/
       Foreign/             the Foreign software modality (ForeignChannel at the root)
-        API/               EarthcallAPI, SecurityManager
         Adapters/          MacOSAccessibilityAdapter
-        Shell/
-        Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
-        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
-          web_ui/
-            public/
-            src/
-              assets/
+        API/               EarthcallAPI, SecurityManager
         mcp/               earthcall-mcp-server.js
         py/                app.py
           agent/
@@ -140,6 +132,12 @@ Earthcall/
             ui/
           templates/
           web/
+        Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
+        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
+          web_ui/
+            public/
+            src/
+              assets/
       Input/               the Input modality
         Interaction/       InteractionChannel, ControlPatterns
         Keyboard/          KeyboardHandler
@@ -147,8 +145,6 @@ Earthcall/
         Mouse/             MouseHandler
       Language/            the Symbolic modality (LanguageSystem, parser; Lexeme is a Singular)
       Network/             WebSocketClient.cpp · WebSocketServer.cpp
-        Http/
-        Osc/
         py/                engine_server.py · events.py
       OntoMath/            authored mathematics (Field, Function, CurveModel, Operations)
       Physical/            the Physical hardware modality (PhysicalChannel)
@@ -167,7 +163,7 @@ Earthcall/
           Person/
           Relation/
           ZonesOfEarth/
-      Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence [legacy name: TerminalLine])
+      Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence)
     Time/                  Timeline · Moment · Event
       Event/               (the distinguished Moment: occurrence in time)
       Moment/              (instant or interval)
@@ -178,8 +174,8 @@ Earthcall/
       HomesOfEarth/
       Ourverse/
       Physics/
-      Zone/
       py/
+      Zone/
 
   docs/  tests/  examples/  scripts/  saves/  scratch/  web_ui/     the workshop
   third_party/  local_deps/  imgui/                                 the foreign
@@ -188,8 +184,6 @@ Earthcall/
 ```
 
 ---\
-
-> **TerminalLine naming decree (2026-10-20):** the source symbol `LawSentence` under `Singularity/Terminal/` is a legacy implementation name for the Terminal modality's line parser, conceptually **`TerminalLine`**. Its placement under Terminal is substantive: it must not be promoted into a universal language abstraction. See the [addendum](../../addendums/terminal_line_naming_and_modality_scope_addendum.md).
 
 ## 3. Where language goes
 
