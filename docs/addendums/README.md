@@ -1,5 +1,7 @@
 # Documentation Addendums
 
+*   [TerminalLine Naming and Modality Scope](terminal_line_naming_and_modality_scope_addendum.md)
+
 This directory contains synthesized addendums that tie together various architectural and ontological concepts within Earthcall. These documents are generated to ensure the documentation acts as a fluid, continuous conversation rather than isolated technical specifications.
 
 *   [Integrating Adaptive Compute Moments and SDF Direct Profitability](adaptive_compute_and_sdf_profitability_addendum.md)
@@ -18,6 +20,7 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating GPU Micro-Mastery and Mathematical Frontiers](gpu_micro_mastery_and_mathematical_frontiers_addendum.md)
 *   [Integrating Hierarchy of Joys and First Mover Authoring](hierarchy_of_joys_and_first_mover_authoring_addendum.md)
 *   [Integrating HTML DOM Mirror Translation, Relation Lifecycle, and Language System Lexemes](html_dom_mirror_relation_lifecycle_addendum.md)
+*   [Integrating Identifier Resolution and Deterministic Lookups](identifier_resolution_and_deterministic_lookups_addendum.md)
 *   [Integrating ImGui First Mover and Performance as Rightly Ordered Truth](imgui_first_mover_and_performance_as_truth_addendum.md)
 *   [Integrating Law Migration Framework and Adaptive Compute Moments](law_migration_and_adaptive_compute_addendum.md)
 *   [Integrating OntoMath Raster Formations and GPU Micro-Mastery](ontomath_raster_and_gpu_micro_mastery_addendum.md)
@@ -29,8 +32,11 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating SDF Spatial Prophetic Artifact and Performance as Truth](sdf_prophetic_and_performance_as_truth_addendum.md)
 *   [Integrating Spatial Relations and Property Predication](spatial_relations_and_property_predication_addendum.md)
 *   [Integrating Split-Substrate Serialization, Matter Generation, and Atomic Save Swaps](split_substrate_matter_generation_addendum.md)
+*   [Integrating Structural Revisions and Transient Fact Retraction](structural_revisions_and_transient_fact_compaction_addendum.md)
 *   [Integrating Substrate Ordering, Property Storage, and CPU-GPU Micro-Mastery](substrate_ordering_and_micro_mastery_addendum.md)
+*   [Integrating Sync Registration, File Watcher Baselines, and First-Tick Guards](sync_registration_first_tick_baselines_addendum.md)
 *   [Integrating Systemic Propagation and Temporal Events](systemic_propagation_and_temporal_events_addendum.md)
 *   [Integrating Unified Brush System and Object Hover Events](unified_brush_and_hover_events_addendum.md)
 *   [Integrating Unified Brush System and CPU-GPU Micro-Mastery](unified_brush_and_micro_mastery_addendum.md)
 *   [Integrating the Event Bus, Discrete Moments, and Continuous Time](event_bus_and_time_moment_addendum.md)
+*   [The Slow Adapter and the Architecture of Understanding](slow_adapter_and_architectural_interrelations_addendum.md)

@@ -14,7 +14,6 @@
 
 #include "support/test_harness.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "support/test_save_helper.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -64,7 +63,7 @@ int main(int argc, char** argv) {
         else if (arg == "--adapter=off") adapter = false;
         else if (arg == "--direct=on") direct = true;
         else if (arg == "--direct=off") direct = false;
-        else if (arg.rfind("--frames=", 0) == 0) frames = std::max(2, std::atoi(arg.c_str() + 9));
+        else if (arg.rfind("--frames=", 0) == 0) frames = std::max(24, std::atoi(arg.c_str() + 9));
     }
 
     world = TestSupport::resolveRealWorldPath(world);
@@ -74,7 +73,7 @@ int main(int argc, char** argv) {
     }
 
     // Protect the real Zone identity store exactly like frame_lag_test.
-    TempSaveRoot saveGuard;
+    TestSupport::RealSaveTreeGuard saveGuard(world);
     TestSupport::BootedEngineHarness h;
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);

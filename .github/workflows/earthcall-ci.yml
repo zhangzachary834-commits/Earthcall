@@ -89,6 +89,7 @@ jobs:
         file_channel_test
         file_watcher_test
         first_mover_test
+        first_mover_tool_test
         law_file_tree_fossil_test
         earthcall_api_test
         rete_state_ptr_index_test
@@ -432,11 +433,11 @@ jobs:
 
           def run_mode(adapter, direct):
               cmd = ["./build/slow_adapter_zone_perf_test", world,
-                     f"--adapter={adapter}", f"--direct={direct}", "--frames=2"]
+                     f"--adapter={adapter}", f"--direct={direct}", "--frames=60"]
               try:
-                  result = subprocess.run(cmd, text=True, capture_output=True, timeout=600)
+                  result = subprocess.run(cmd, text=True, capture_output=True, timeout=120)
               except subprocess.TimeoutExpired:
-                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=600")
+                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=120")
                   raise SystemExit(1)
 
               lines = [line for line in result.stdout.splitlines()
