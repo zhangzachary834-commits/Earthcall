@@ -72,8 +72,9 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    SaveSystem::setSaveRoot("saves");
-    TestSupport::BootedEngineHarness h("Player", "humanoid", false);
+    // Protect the real Zone identity store exactly like frame_lag_test.
+    TestSupport::RealSaveTreeGuard saveGuard(world);
+    TestSupport::BootedEngineHarness h;
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);

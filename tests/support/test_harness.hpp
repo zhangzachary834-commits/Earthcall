@@ -371,12 +371,6 @@ private:
         if (ec) throw std::filesystem::filesystem_error("save-tree root inspection failed", ec);
 
         for (const auto& entry : initialEntries) {
-            if (entry == "worlds") {
-                // worlds/ contains ~740MB of static read-only world fixtures.
-                // Copying all world fixtures adds gigabytes of disk I/O per test run and causes CI timeouts.
-                // Since world files are read-only fixtures, we omit them from the recursive backup.
-                continue;
-            }
             std::filesystem::copy(
                 realSaves / entry, backup / entry,
                 std::filesystem::copy_options::recursive |

@@ -116,8 +116,6 @@ FetchContent_MakeAvailable(flatbuffers)
 include_directories(${flatbuffers_SOURCE_DIR}/include)
 
 if (NOT EMSCRIPTEN)
-    add_definitions(-DASIO_STANDALONE -D_WEBSOCKETPP_CPP11_STL_)
-
     FetchContent_Declare(
         asio
         GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
@@ -136,6 +134,7 @@ if (NOT EMSCRIPTEN)
         ${asio_SOURCE_DIR}/asio/include
         ${websocketpp_SOURCE_DIR}
     )
+    add_definitions(-DASIO_STANDALONE -D_WEBSOCKETPP_CPP11_STL_)
 endif()
 
 FetchContent_Declare(
