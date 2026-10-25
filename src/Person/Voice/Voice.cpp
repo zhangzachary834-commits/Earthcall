@@ -31,7 +31,12 @@ Voice Voice::createBasicVoice(const std::string& style) {
 
 VoicePart* Voice::getVoicePart(const std::string& name) const {
     for (auto* part : parts) {
-        if (part->getName() == name) {
+        if (part && part->getIdentifier() == name) {
+            return part;
+        }
+    }
+    for (auto* part : parts) {
+        if (part && part->getName() == name) {
             return part;
         }
     }
@@ -41,7 +46,7 @@ VoicePart* Voice::getVoicePart(const std::string& name) const {
 std::vector<VoicePart*> Voice::getVoicePartsByType(VoicePart::Type type) const {
     std::vector<VoicePart*> result;
     for (auto* part : parts) {
-        if (part->getType() == type) {
+        if (part && part->getType() == type) {
             result.push_back(part);
         }
     }
@@ -49,12 +54,17 @@ std::vector<VoicePart*> Voice::getVoicePartsByType(VoicePart::Type type) const {
 }
 
 void Voice::removeVoicePart(const std::string& name) {
-    auto it = std::remove_if(parts.begin(), parts.end(), [&](const VoicePart* p) {
-        return p->getName() == name;
+    auto it = std::find_if(parts.begin(), parts.end(), [&name](const VoicePart* p) {
+        return p && p->getIdentifier() == name;
     });
+    if (it == parts.end()) {
+        it = std::find_if(parts.begin(), parts.end(), [&name](const VoicePart* p) {
+            return p && p->getName() == name;
+        });
+    }
     if (it != parts.end()) {
-        parts.erase(it, parts.end());
-        // Formation element removal logic would be handled here as well.
+        formation.releaseMember(*it);
+        parts.erase(it);
     }
 }
 
