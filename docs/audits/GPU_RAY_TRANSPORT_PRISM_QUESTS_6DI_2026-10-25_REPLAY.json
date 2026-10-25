@@ -1,0 +1,523 @@
+{
+  "pass": true,
+  "verified_documents": 145,
+  "actual_pipeline_roles": {
+    "guarded_producer": {
+      "threadExecutionWidth": 32,
+      "function": "producerMain",
+      "factory": "descriptor-options",
+      "maxTotalThreadsPerThreadgroup": 1024,
+      "wgslSHA256": "5667ef1630e232e1b06f7bbdb040a039d299a089fc300f1fae4e2af2666fa14b",
+      "staticThreadgroupMemoryLength": 0,
+      "label": "",
+      "kind": "pipeline",
+      "wgslEntry": "producerMain"
+    },
+    "disjoint": {
+      "threadExecutionWidth": 32,
+      "function": "producerFastMain",
+      "factory": "descriptor-options",
+      "maxTotalThreadsPerThreadgroup": 1024,
+      "wgslSHA256": "50a2ea7b8abd1814cd1ff99401522c8eecfb773a0b1d00ed01e07b033662485c",
+      "staticThreadgroupMemoryLength": 0,
+      "label": "",
+      "kind": "pipeline",
+      "wgslEntry": "producerFastMain"
+    },
+    "current": {
+      "threadExecutionWidth": 32,
+      "function": "rayMain",
+      "factory": "descriptor-options",
+      "maxTotalThreadsPerThreadgroup": 1024,
+      "wgslSHA256": "3668454316e89daf3f442ed2c03427bdf0b5b225bafc5d970eb21fc4dd1652fd",
+      "staticThreadgroupMemoryLength": 0,
+      "label": "",
+      "kind": "pipeline",
+      "wgslEntry": "rayMain"
+    },
+    "cert": {
+      "threadExecutionWidth": 32,
+      "function": "producerFastMain",
+      "factory": "descriptor-options",
+      "maxTotalThreadsPerThreadgroup": 1024,
+      "wgslSHA256": "7b31382919405dde2d79e53317807b645aa9d59bffdfd3e1492ef0e716544452",
+      "staticThreadgroupMemoryLength": 0,
+      "label": "",
+      "kind": "pipeline",
+      "wgslEntry": "producerFastMain"
+    }
+  },
+  "qualification": {
+    "disjoint": {
+      "pass": true,
+      "queries": 32784,
+      "reference_queries": 192,
+      "all_query_native_AST_assertions_recorded": true,
+      "raw_AST_nodes_independently_recomputed_offline": false,
+      "accuracy": {
+        "finest": {
+          "metrics": {
+            "current": {
+              "RGB_pooled_channels": {
+                "mean": 5.2083436005461535e-05,
+                "p99": 0.0008628445430308024,
+                "max": 0.0014908520057793223
+              },
+              "T": {
+                "mean": 0.00013126131932741114,
+                "p99": 0.0014545230908419304,
+                "max": 0.0023179769068414346
+              }
+            },
+            "candidate": {
+              "RGB_pooled_channels": {
+                "mean": 6.501119626747072e-06,
+                "p99": 4.565286806328117e-05,
+                "max": 4.794852177492093e-05
+              },
+              "T": {
+                "mean": 1.8915837015402726e-05,
+                "p99": 6.906425235697622e-05,
+                "max": 6.965939815839484e-05
+              }
+            }
+          },
+          "gates": {
+            "RGB_pooled_channels.mean": true,
+            "RGB_pooled_channels.p99": true,
+            "RGB_pooled_channels.max": true,
+            "T.mean": true,
+            "T.p99": true,
+            "T.max": true
+          },
+          "all_six_pass": true
+        },
+        "half": {
+          "metrics": {
+            "current": {
+              "RGB_pooled_channels": {
+                "mean": 5.208338561012038e-05,
+                "p99": 0.000862840739760784,
+                "max": 0.0014908546309912868
+              },
+              "T": {
+                "mean": 0.00013126103989875444,
+                "p99": 0.001454485602050748,
+                "max": 0.002317992236419375
+              }
+            },
+            "candidate": {
+              "RGB_pooled_channels": {
+                "mean": 6.500785360810754e-06,
+                "p99": 4.565106607549996e-05,
+                "max": 4.79552170917219e-05
+              },
+              "T": {
+                "mean": 1.891577045932437e-05,
+                "p99": 6.909112370445669e-05,
+                "max": 6.96698785114247e-05
+              }
+            }
+          },
+          "gates": {
+            "RGB_pooled_channels.mean": true,
+            "RGB_pooled_channels.p99": true,
+            "RGB_pooled_channels.max": true,
+            "T.mean": true,
+            "T.p99": true,
+            "T.max": true
+          },
+          "all_six_pass": true
+        },
+        "reference_convergence": {
+          "T_max_delta": 7.156688219822627e-08,
+          "RGB_max_delta": 4.409033641655791e-08
+        },
+        "both_resolutions_pass": true
+      },
+      "contemporary_accuracy": {
+        "finest": {
+          "metrics": {
+            "current": {
+              "RGB_pooled_channels": {
+                "mean": 5.2083361199522314e-05,
+                "p99": 0.0008628445430308024,
+                "max": 0.0014908445551987254
+              },
+              "T": {
+                "mean": 0.00013126131932741114,
+                "p99": 0.0014545230908419304,
+                "max": 0.0023179769068414346
+              }
+            },
+            "candidate": {
+              "RGB_pooled_channels": {
+                "mean": 6.501119626747072e-06,
+                "p99": 4.565286806328117e-05,
+                "max": 4.794852177492093e-05
+              },
+              "T": {
+                "mean": 1.8915837015402726e-05,
+                "p99": 6.906425235697622e-05,
+                "max": 6.965939815839484e-05
+              }
+            }
+          },
+          "gates": {
+            "RGB_pooled_channels.mean": true,
+            "RGB_pooled_channels.p99": true,
+            "RGB_pooled_channels.max": true,
+            "T.mean": true,
+            "T.p99": true,
+            "T.max": true
+          },
+          "all_six_pass": true
+        },
+        "half": {
+          "metrics": {
+            "current": {
+              "RGB_pooled_channels": {
+                "mean": 5.208331080418116e-05,
+                "p99": 0.000862840739760784,
+                "max": 0.0014908471804106899
+              },
+              "T": {
+                "mean": 0.00013126103989875444,
+                "p99": 0.001454485602050748,
+                "max": 0.002317992236419375
+              }
+            },
+            "candidate": {
+              "RGB_pooled_channels": {
+                "mean": 6.500785360810754e-06,
+                "p99": 4.565106607549996e-05,
+                "max": 4.79552170917219e-05
+              },
+              "T": {
+                "mean": 1.891577045932437e-05,
+                "p99": 6.909112370445669e-05,
+                "max": 6.96698785114247e-05
+              }
+            }
+          },
+          "gates": {
+            "RGB_pooled_channels.mean": true,
+            "RGB_pooled_channels.p99": true,
+            "RGB_pooled_channels.max": true,
+            "T.mean": true,
+            "T.p99": true,
+            "T.max": true
+          },
+          "all_six_pass": true
+        },
+        "reference_convergence": {
+          "T_max_delta": 7.156688219822627e-08,
+          "RGB_max_delta": 4.409033641655791e-08
+        },
+        "both_resolutions_pass": true
+      },
+      "clocks": [
+        {
+          "repeats": 1,
+          "per_complete_query_ms": {
+            "0": 3.93807275,
+            "1": 4.256875,
+            "2": 4.30132275,
+            "3": 3.98952075
+          },
+          "candidate_slower_percent_vs_current": 1.3064258398984618,
+          "candidate_slower_percent_vs_stream": -7.2489793982560276
+        },
+        {
+          "repeats": 2,
+          "per_complete_query_ms": {
+            "0": 3.3737135625,
+            "1": 3.9825703125,
+            "2": 3.8336796250000003,
+            "3": 3.8359660625
+          },
+          "candidate_slower_percent_vs_current": 13.701592960887288,
+          "candidate_slower_percent_vs_stream": 0.059640807883099
+        },
+        {
+          "repeats": 4,
+          "per_complete_query_ms": {
+            "0": 2.10432684375,
+            "1": 2.42350259375,
+            "2": 2.4660130625,
+            "3": 2.3273567812500002
+          },
+          "candidate_slower_percent_vs_current": 10.59863576622686,
+          "candidate_slower_percent_vs_stream": -5.622690461721747
+        }
+      ],
+      "normal_fallbacks": 0,
+      "singles": 247326,
+      "overlaps": 1799,
+      "no_full_frame_or_hardware_cause_claim": true,
+      "affine": {
+        "matched": 12102,
+        "missing": 0,
+        "examples": [],
+        "scope": "Nearest original GPU endpoint within2ULP of CPU-f32 affine formula; exact-bit endpoint retention, not an exact CPU/GPU division claim."
+      },
+      "clocks_are_instrumented_not_clean_economics": true
+    },
+    "cert": {
+      "pass": true,
+      "queries": 32784,
+      "reference_queries": 192,
+      "all_query_native_AST_assertions_recorded": true,
+      "raw_AST_nodes_independently_recomputed_offline": false,
+      "accuracy": {
+        "finest": {
+          "metrics": {
+            "current": {
+              "RGB_pooled_channels": {
+                "mean": 5.2083436005461535e-05,
+                "p99": 0.0008628445430308024,
+                "max": 0.0014908520057793223
+              },
+              "T": {
+                "mean": 0.00013126131932741114,
+                "p99": 0.0014545230908419304,
+                "max": 0.0023179769068414346
+              }
+            },
+            "candidate": {
+              "RGB_pooled_channels": {
+                "mean": 6.501119626747072e-06,
+                "p99": 4.565286806328117e-05,
+                "max": 4.794852177492093e-05
+              },
+              "T": {
+                "mean": 1.8915837015402726e-05,
+                "p99": 6.906425235697622e-05,
+                "max": 6.965939815839484e-05
+              }
+            }
+          },
+          "gates": {
+            "RGB_pooled_channels.mean": true,
+            "RGB_pooled_channels.p99": true,
+            "RGB_pooled_channels.max": true,
+            "T.mean": true,
+            "T.p99": true,
+            "T.max": true
+          },
+          "all_six_pass": true
+        },
+        "half": {
+          "metrics": {
+            "current": {
+              "RGB_pooled_channels": {
+                "mean": 5.208338561012038e-05,
+                "p99": 0.000862840739760784,
+                "max": 0.0014908546309912868
+              },
+              "T": {
+                "mean": 0.00013126103989875444,
+                "p99": 0.001454485602050748,
+                "max": 0.002317992236419375
+              }
+            },
+            "candidate": {
+              "RGB_pooled_channels": {
+                "mean": 6.500785360810754e-06,
+                "p99": 4.565106607549996e-05,
+                "max": 4.79552170917219e-05
+              },
+              "T": {
+                "mean": 1.891577045932437e-05,
+                "p99": 6.909112370445669e-05,
+                "max": 6.96698785114247e-05
+              }
+            }
+          },
+          "gates": {
+            "RGB_pooled_channels.mean": true,
+            "RGB_pooled_channels.p99": true,
+            "RGB_pooled_channels.max": true,
+            "T.mean": true,
+            "T.p99": true,
+            "T.max": true
+          },
+          "all_six_pass": true
+        },
+        "reference_convergence": {
+          "T_max_delta": 7.156688219822627e-08,
+          "RGB_max_delta": 4.409033641655791e-08
+        },
+        "both_resolutions_pass": true
+      },
+      "contemporary_accuracy": {
+        "finest": {
+          "metrics": {
+            "current": {
+              "RGB_pooled_channels": {
+                "mean": 5.2083361199522314e-05,
+                "p99": 0.0008628445430308024,
+                "max": 0.0014908445551987254
+              },
+              "T": {
+                "mean": 0.00013126131932741114,
+                "p99": 0.0014545230908419304,
+                "max": 0.0023179769068414346
+              }
+            },
+            "candidate": {
+              "RGB_pooled_channels": {
+                "mean": 6.501119626747072e-06,
+                "p99": 4.565286806328117e-05,
+                "max": 4.794852177492093e-05
+              },
+              "T": {
+                "mean": 1.8915837015402726e-05,
+                "p99": 6.906425235697622e-05,
+                "max": 6.965939815839484e-05
+              }
+            }
+          },
+          "gates": {
+            "RGB_pooled_channels.mean": true,
+            "RGB_pooled_channels.p99": true,
+            "RGB_pooled_channels.max": true,
+            "T.mean": true,
+            "T.p99": true,
+            "T.max": true
+          },
+          "all_six_pass": true
+        },
+        "half": {
+          "metrics": {
+            "current": {
+              "RGB_pooled_channels": {
+                "mean": 5.208331080418116e-05,
+                "p99": 0.000862840739760784,
+                "max": 0.0014908471804106899
+              },
+              "T": {
+                "mean": 0.00013126103989875444,
+                "p99": 0.001454485602050748,
+                "max": 0.002317992236419375
+              }
+            },
+            "candidate": {
+              "RGB_pooled_channels": {
+                "mean": 6.500785360810754e-06,
+                "p99": 4.565106607549996e-05,
+                "max": 4.79552170917219e-05
+              },
+              "T": {
+                "mean": 1.891577045932437e-05,
+                "p99": 6.909112370445669e-05,
+                "max": 6.96698785114247e-05
+              }
+            }
+          },
+          "gates": {
+            "RGB_pooled_channels.mean": true,
+            "RGB_pooled_channels.p99": true,
+            "RGB_pooled_channels.max": true,
+            "T.mean": true,
+            "T.p99": true,
+            "T.max": true
+          },
+          "all_six_pass": true
+        },
+        "reference_convergence": {
+          "T_max_delta": 7.156688219822627e-08,
+          "RGB_max_delta": 4.409033641655791e-08
+        },
+        "both_resolutions_pass": true
+      },
+      "clocks": [
+        {
+          "repeats": 1,
+          "per_complete_query_ms": {
+            "0": 3.80725525,
+            "1": 4.160354125,
+            "2": 4.145682,
+            "3": 3.985833375
+          },
+          "candidate_slower_percent_vs_current": 4.6904689408465705,
+          "candidate_slower_percent_vs_stream": -3.8557859720065313
+        },
+        {
+          "repeats": 2,
+          "per_complete_query_ms": {
+            "0": 3.0511456875,
+            "1": 3.3792474375,
+            "2": 3.55819525,
+            "3": 3.3050000625
+          },
+          "candidate_slower_percent_vs_current": 8.319968988698111,
+          "candidate_slower_percent_vs_stream": -7.1158317548762895
+        },
+        {
+          "repeats": 4,
+          "per_complete_query_ms": {
+            "0": 2.16738015625,
+            "1": 2.501096375,
+            "2": 2.4952864375,
+            "3": 2.2629556875
+          },
+          "candidate_slower_percent_vs_current": 4.409726229816768,
+          "candidate_slower_percent_vs_stream": -9.310784786405913
+        }
+      ],
+      "normal_fallbacks": 0,
+      "singles": 247326,
+      "overlaps": 1799,
+      "no_full_frame_or_hardware_cause_claim": true,
+      "affine": {
+        "matched": 12102,
+        "missing": 0,
+        "examples": [],
+        "scope": "Nearest original GPU endpoint within2ULP of CPU-f32 affine formula; exact-bit endpoint retention, not an exact CPU/GPU division claim."
+      },
+      "clocks_are_instrumented_not_clean_economics": true
+    }
+  },
+  "routing_cases": 12,
+  "native_negative_controls": [
+    {
+      "mutation": "no-reset",
+      "returncode": -6,
+      "expected_refusal": "counter accumulation",
+      "refused_for_expected_reason": true
+    },
+    {
+      "mutation": "no-tail",
+      "returncode": -6,
+      "expected_refusal": "ray written other than exactly once",
+      "refused_for_expected_reason": true
+    }
+  ],
+  "host_generic_zero_boxes": 52381,
+  "host_generic_point_samples": 471429,
+  "host_refusal_controls": 32,
+  "trace_documents": {
+    "current": {
+      "files": 31,
+      "uncompressed_bytes": 130348472
+    },
+    "disjoint": {
+      "files": 31,
+      "uncompressed_bytes": 130902759
+    },
+    "cert": {
+      "files": 32,
+      "uncompressed_bytes": 130513699
+    }
+  },
+  "offline_corruption_refusals": [
+    "duplicate write",
+    "missing routing case",
+    "accumulated counts",
+    "stale indirect args"
+  ],
+  "resource_counters_inspected": false,
+  "shipping_gates_open": 3,
+  "limits": "No clean cost, full-frame or Person claim. Native AST and host point assertions recorded, not independently reevaluated offline. Exact trace bytes restored optionally; Xcode profiler unavailable for counter inspection."
+}

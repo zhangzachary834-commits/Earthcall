@@ -1753,3 +1753,10 @@ Earthcall can now author integrals as mathematics (`MathNode::Op::Integral`; [pl
 - [ ] Optional: author ∫₀¹ s ds (body = Variable Leaf `s`, lo = 0, hi = 1) wherever an expression's value is displayed. It should read 0.5.
 
 *Claude Code · Claude Opus 5.5 · `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T19:23 PDT.*
+
+
+## Native GPU mastery — profiler tooling readiness (2026-10-25)
+
+- [ ] When full Xcode GPU profiling is available, open the restored Current/disjoint/tile-cert Metal captures and collect matching occupancy/register/spill/cache counters; the selected Command Line Tools currently lack `xctrace`/`metal`. This is a tooling dependency, not a rendering acceptance claim. [Exact captures and restore instructions](/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/docs/audits/GPU_RAY_TRANSPORT_PRISM_QUESTS_6DI_2026-10-25.md). Existing Northern Veil movement/FPS/appearance acceptance stays open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T15:31:27.770627-07:00.

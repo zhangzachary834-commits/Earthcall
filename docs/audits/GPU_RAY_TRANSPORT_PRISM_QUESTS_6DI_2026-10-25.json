@@ -1,0 +1,711 @@
+{
+  "protocol": "6di Prism quests: exact pipeline facts/captures, routing correctness repair, common host AST consumer",
+  "signature": "Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-10-25T15:36:48.745863-07:00",
+  "starting_head": "17ef9b4a6",
+  "engine_tree": "3603add4018961529a91bc9592d76f9a553500b1",
+  "bundle": "docs/audits/GPU_RAY_TRANSPORT_PRISM_QUESTS_6DI_2026-10-25.zip",
+  "bundle_sha256": "b43129519253cf13f5f42a8b71168f479eae9801d4d1c2a2e62a139565970960",
+  "documents": 145,
+  "shared_arrays": 10,
+  "provenance": {
+    "disjoint_report": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/result.json",
+      "raw_sha256": "1e5d3ed924cb3a696c882067110d8dbe046c15a8062f18af027ea9660380515e",
+      "bytes": 87832999
+    },
+    "disjoint_rows": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/result.json-rows.json",
+      "raw_sha256": "eadadf05e7d0619bb7ee14f0099f5371d0e1ab6cb6530634d528788593c4bd5d",
+      "bytes": 8353225
+    },
+    "disjoint_baseline": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/result.json-baseline-rows.json",
+      "raw_sha256": "2d1be01fb1c372acae7fe1f43dcc3b4c4085724de9a32a5929c4a8e8ce0ad496",
+      "bytes": 2998255
+    },
+    "disjoint_source": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/probe.cpp",
+      "raw_sha256": "3616c3717e267592c3d9629b9917917a5dac87be45094f1fb014c9c71c1f1da8",
+      "bytes": 170966
+    },
+    "disjoint_identity": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/source.json",
+      "raw_sha256": "74853d9983f7d5b4a5dfcbe306fc60eb41850423d9dada8dd5e2b5dc39c487f5",
+      "bytes": 558
+    },
+    "disjoint_log": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/native.log",
+      "raw_sha256": "50b2c6035f0e22f8000b53f71ad5ce54c25c073ad7a1be13720f169cfdf53097",
+      "bytes": 4658
+    },
+    "disjoint_native_facts": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/pipeline-facts.jsonl",
+      "raw_sha256": "f737de0701ff210fcc8104953805cc7bf3236948a39426d9ccc835051a2d2404",
+      "bytes": 4261
+    },
+    "current_wgsl": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/result.json-current.wgsl",
+      "raw_sha256": "3668454316e89daf3f442ed2c03427bdf0b5b225bafc5d970eb21fc4dd1652fd",
+      "bytes": 64474
+    },
+    "cert_report": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/result.json",
+      "raw_sha256": "e864e7ae314e4a760321cc1e1b0157892ff9769fda94c90a50536c7a3044f3fc",
+      "bytes": 87832988
+    },
+    "cert_rows": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/result.json-rows.json",
+      "raw_sha256": "eadadf05e7d0619bb7ee14f0099f5371d0e1ab6cb6530634d528788593c4bd5d",
+      "bytes": 8353225
+    },
+    "cert_baseline": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/result.json-baseline-rows.json",
+      "raw_sha256": "2d1be01fb1c372acae7fe1f43dcc3b4c4085724de9a32a5929c4a8e8ce0ad496",
+      "bytes": 2998255
+    },
+    "cert_source": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/probe.cpp",
+      "raw_sha256": "5c6b990eeeba9a9d658566171d66d77eb184b6f3eaadd30cb300b8c6c95cfff1",
+      "bytes": 177170
+    },
+    "cert_identity": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/source.json",
+      "raw_sha256": "728b43ffc99fae6204c2abedc889887d47fd6497cb8a64e030c616b2ecd371c0",
+      "bytes": 554
+    },
+    "cert_log": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/native.log",
+      "raw_sha256": "b38bd76172c751c21c66624b329abba1d534fe3f6dc1bb66234ef10bab32b033",
+      "bytes": 4651
+    },
+    "cert_native_facts": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/pipeline-facts.jsonl",
+      "raw_sha256": "99941ebb7eb9f8d2b6aff624b3dabae54ad7aa4b13652f67160a3ba181248cd0",
+      "bytes": 4099
+    },
+    "deliverable_ray_transport_metal_pipeline_observer.mm": {
+      "path": "/private/tmp/earthcall-6di-work/deliverables/ray_transport_metal_pipeline_observer.mm",
+      "raw_sha256": "f54371da557a8a53d9819b11454aa6e1ef1e25d59f4a522f37634b9daeb33d89",
+      "bytes": 5733
+    },
+    "deliverable_ray_transport_gpu_pipeline_facts.py": {
+      "path": "/private/tmp/earthcall-6di-work/deliverables/ray_transport_gpu_pipeline_facts.py",
+      "raw_sha256": "d46f85a6e4b71dd2754f6e16ee1967f11f207feea079229e4b7977530d3d6109",
+      "bytes": 6221
+    },
+    "deliverable_ray_transport_gpu_routing_contract.py": {
+      "path": "/private/tmp/earthcall-6di-work/deliverables/ray_transport_gpu_routing_contract.py",
+      "raw_sha256": "eeac55663ab9fe07651d0ae8a9cfba1d43ab6dfbfd0007e460f30010711acba8",
+      "bytes": 11635
+    },
+    "deliverable_ray_transport_generic_family_contract.cpp": {
+      "path": "/private/tmp/earthcall-6di-work/deliverables/ray_transport_generic_family_contract.cpp",
+      "raw_sha256": "1d85d7d90fe5721a79806449dcbbbd99e200b1b14863be6b0aacb6a5837cd7de",
+      "bytes": 11949
+    },
+    "deliverable_ray_transport_probe_build.py": {
+      "path": "/private/tmp/earthcall-6di-work/deliverables/ray_transport_probe_build.py",
+      "raw_sha256": "a28d95a3a8c034fd2a9f60b2e3d119ced1e40dc697a0a3680554c6a32c214d57",
+      "bytes": 1995
+    },
+    "deliverable_ray_transport_gpu_mastery_replay.py": {
+      "path": "/private/tmp/earthcall-6di-work/deliverables/ray_transport_gpu_mastery_replay.py",
+      "raw_sha256": "ba66eda2a27b5591945780ffbbc54bcb21074cb762c9949e80e9376c57f643e3",
+      "bytes": 7815
+    },
+    "tooling_check": {
+      "path": "/private/tmp/earthcall-6di-work/tooling-check.json",
+      "raw_sha256": "8ab778d383fbb1178dbd697e21c7a337eb09f512e993617e9bda70cb50a1fc6a",
+      "bytes": 595
+    },
+    "generic_identity": {
+      "path": "/private/tmp/earthcall-6di-work/generic-identity.json",
+      "raw_sha256": "0ea01f4e4086bdf5df826167d6cb0ec046e0e55bf59780ff643eeeda73dc0a1b",
+      "bytes": 346
+    },
+    "generic_build_log": {
+      "path": "/private/tmp/earthcall-6di-work/generic-final-build.log",
+      "raw_sha256": "4687142f3c670bed56c0353489d81781cd5d7b75860a293de4b23a7c47aa9ddc",
+      "bytes": 2330
+    },
+    "executed_observer": {
+      "path": "/private/tmp/earthcall-6di-work/ray_transport_metal_pipeline_observer.mm",
+      "raw_sha256": "f54371da557a8a53d9819b11454aa6e1ef1e25d59f4a522f37634b9daeb33d89",
+      "bytes": 5733
+    },
+    "executed_capture_driver": {
+      "path": "/private/tmp/earthcall-6di-work/pipeline_capture.py",
+      "raw_sha256": "d40648f2185e4f763d664e8a723b8664a3a060b3e51620bfc683afdc22380ff5",
+      "bytes": 5679
+    },
+    "executed_routing_generator": {
+      "path": "/private/tmp/earthcall-6di-work/routing_repair.py",
+      "raw_sha256": "27102a75d760c5a8951c17907efa6ca4897ee86f463af5b3de0e8ce4d22b7997",
+      "bytes": 11039
+    },
+    "routing_fixed_source": {
+      "path": "/private/tmp/earthcall-6di-work/routing-validated-fixed/probe.cpp",
+      "raw_sha256": "c3d5b19b16871d05bf4971cccac593b7e2b597a4dd3c7cd981da4fe698ed5e25",
+      "bytes": 68423
+    },
+    "routing_fixed_identity": {
+      "path": "/private/tmp/earthcall-6di-work/routing-validated-fixed/source.json",
+      "raw_sha256": "bbdfe3503fa06207f22ea808d0c6cf38929febbc0bd1db4feae23093c21e88ff",
+      "bytes": 197
+    },
+    "routing_fixed_log": {
+      "path": "/private/tmp/earthcall-6di-work/routing-validated-fixed/native.log",
+      "raw_sha256": "4b31433d51610a075073626e79def6b12e452472a003fa26eb56daf91e5908c4",
+      "bytes": 483
+    },
+    "routing_no-reset_source": {
+      "path": "/private/tmp/earthcall-6di-work/routing-validated-no-reset/probe.cpp",
+      "raw_sha256": "064ae182aba8114cdb1d3a012ec0741460c49906f2ea6d2ecd2422773a3331cf",
+      "bytes": 68364
+    },
+    "routing_no-reset_identity": {
+      "path": "/private/tmp/earthcall-6di-work/routing-validated-no-reset/source.json",
+      "raw_sha256": "968acd9f1f77ac2934c6c0436cad4ce77494bb4053abe7dab63280ce7c91d39b",
+      "bytes": 200
+    },
+    "routing_no-reset_log": {
+      "path": "/private/tmp/earthcall-6di-work/routing-validated-no-reset/native.log",
+      "raw_sha256": "bb165a82580f39b2718157f29830aee711f5099269377696bc97b74cf63f56ae",
+      "bytes": 472
+    },
+    "routing_no-tail_source": {
+      "path": "/private/tmp/earthcall-6di-work/routing-validated-no-tail/probe.cpp",
+      "raw_sha256": "b3a3cec31d75bcdcd2c6a6f2cd160c5c5da0dd6db8cc62ff70439d691345a2f0",
+      "bytes": 68432
+    },
+    "routing_no-tail_identity": {
+      "path": "/private/tmp/earthcall-6di-work/routing-validated-no-tail/source.json",
+      "raw_sha256": "2a0046525d4b1bc2c3697c7f0906b5726efc8b9f872f15b8a1e43647f99793d9",
+      "bytes": 199
+    },
+    "routing_no-tail_log": {
+      "path": "/private/tmp/earthcall-6di-work/routing-validated-no-tail/native.log",
+      "raw_sha256": "c0006cb876a0c629e8c28ff4359330b9f4a8375179b282140d719e0bad652a13",
+      "bytes": 487
+    },
+    "routing_report": {
+      "path": "/private/tmp/earthcall-6di-work/routing-validated-fixed/result.json",
+      "raw_sha256": "1643adda0c6a73aa32755998c0f274e1e3ff2beee7e3b4b6e750de09ac03d2ba",
+      "bytes": 4332245
+    },
+    "routing_negative_results": {
+      "path": "/private/tmp/earthcall-6di-work/routing-negative-controls.json",
+      "raw_sha256": "f3d78d3276db166d8a2d5a8ffef57b4c077eeb1a8880e73a35dd11f80c37c700",
+      "bytes": 311
+    },
+    "generic_report": {
+      "path": "/private/tmp/earthcall-6di-work/generic-final/result.json",
+      "raw_sha256": "baef762b0e96d1d3ece227ebb51e91b111b9242fb63c07b5d3b4e847ff9e37ff",
+      "bytes": 2541
+    },
+    "generic_log": {
+      "path": "/private/tmp/earthcall-6di-work/generic-final/native.log",
+      "raw_sha256": "dc69766f0612dbf80dbe4c1675f8fbda7e4c61a1932e64550ba276a1c3a6a388",
+      "bytes": 58
+    },
+    "generic_source": {
+      "path": "/private/tmp/earthcall-6di-work/deliverables/ray_transport_generic_family_contract.cpp",
+      "raw_sha256": "1d85d7d90fe5721a79806449dcbbbd99e200b1b14863be6b0aacb6a5837cd7de",
+      "bytes": 11949
+    },
+    "rays": {
+      "path": "/private/tmp/earthcall-wide-case/rays.json",
+      "raw_sha256": "cd403a013e75bfa748b6fc5c60ffe74a2df2fdae5bacce73605973d447dfa402",
+      "bytes": 7981792
+    },
+    "reference": {
+      "path": "/private/tmp/earthcall-wide-case/reference.json",
+      "raw_sha256": "2c3c66094049a24e3367797dddc84be86a0eedfe9743075d3c9a9ab79cf3c2b0",
+      "bytes": 36498
+    },
+    "case_manifest": {
+      "path": "/private/tmp/earthcall-wide-case/manifest.json",
+      "raw_sha256": "bb98eb93e99b63cf2a1a782ac8f168bc7c21c4f818c23dbedb164c5824d20c1e",
+      "bytes": 679
+    },
+    "trace/current/242AC351A08ADA1E": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/242AC351A08ADA1E",
+      "raw_sha256": "79322aa2338600fd3b6ac6480eea0105c4131df9cccc45f4c74b988751a0f766",
+      "bytes": 54918
+    },
+    "trace/current/66A2808A656C912D": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/66A2808A656C912D",
+      "raw_sha256": "8dc9cb4f4ec9d7eb199c21a096ea1d3cc51cecfff8e934d0cda2e09838c15d96",
+      "bytes": 49330
+    },
+    "trace/current/789C58C19F66F270": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/789C58C19F66F270",
+      "raw_sha256": "382f09e28d1b07deac1faa3be5cdeaf5db88a89dc7559369f1321fd3d640b893",
+      "bytes": 152123
+    },
+    "trace/current/81ADFE0870BCF349": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/81ADFE0870BCF349",
+      "raw_sha256": "06ed267d3c17de4dff960e25c8033fa7bee6839fe15a3060ab1ad7a15f188577",
+      "bytes": 155620
+    },
+    "trace/current/854CCB4586E2B781": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/854CCB4586E2B781",
+      "raw_sha256": "09d01105feafb5bded82ffb4788c37722ba05e1d65721dabf8617647d28685b1",
+      "bytes": 167051
+    },
+    "trace/current/924A1EC01EBBF792": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/924A1EC01EBBF792",
+      "raw_sha256": "dddc7f0db4946c906dba416c84afedeae22fb44b26549d65c35865db24c0db8d",
+      "bytes": 212607
+    },
+    "trace/current/BC914DAB7D48EB41": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/BC914DAB7D48EB41",
+      "raw_sha256": "311af7632e78b300697033836d5461a811d6fdadea53a226ab2a829dfb6f3f5d",
+      "bytes": 55910
+    },
+    "trace/current/C0E58ABD01C7F5D7": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/C0E58ABD01C7F5D7",
+      "raw_sha256": "50436cba20bfecd71057a448bb7731a54fb2630d134b42a4aa4d3e1e304c0c03",
+      "bytes": 340257
+    },
+    "trace/current/EC50DCA1A2FB71FC": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/EC50DCA1A2FB71FC",
+      "raw_sha256": "733b04f4575e0b7d9d5d98a88176a4ea6f3a97535bf86b5bb20f860074bac513",
+      "bytes": 61003
+    },
+    "trace/current/F1BCDED37E18A47C": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/F1BCDED37E18A47C",
+      "raw_sha256": "30d4e23b31cb7c1a0da5f740f62a0165fdc76c41f803663a721e715da5ca9a0c",
+      "bytes": 152193
+    },
+    "trace/current/F1D929839230B6CD": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/F1D929839230B6CD",
+      "raw_sha256": "2f5a88e0aa0e28dc10cdb3af3169dcec8571b3d20a584859ab729ce6555b2c14",
+      "bytes": 212589
+    },
+    "trace/current/FCBCAB66324B9367": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/FCBCAB66324B9367",
+      "raw_sha256": "f07b71c1923ea38222cc62489127abad407c7d07a38525c5ef90505ce99b035f",
+      "bytes": 49322
+    },
+    "trace/current/MTLBuffer-1661-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/MTLBuffer-1661-0",
+      "raw_sha256": "202683d39df66f541fccd0145c0aa5041218f38c460d342da15c8e4b00fbb00f",
+      "bytes": 67108864
+    },
+    "trace/current/MTLBuffer-1662-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/MTLBuffer-1662-0",
+      "raw_sha256": "0f139640e1799d0e2cc79f3c1ec1114544a79983081f1ca89ea869bf4958b079",
+      "bytes": 16777216
+    },
+    "trace/current/MTLBuffer-23-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/MTLBuffer-23-0",
+      "raw_sha256": "c45c9ae9933a9626d1e6d268f8143a8ffa72b31842c0aa8f93d213932d658434",
+      "bytes": 1589248
+    },
+    "trace/current/MTLBuffer-25-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/MTLBuffer-25-0",
+      "raw_sha256": "aed8c9b44242b693187678e7bc2835dfee314936050f73b1aff9e85b0dc71b58",
+      "bytes": 33570816
+    },
+    "trace/current/MTLBuffer-26-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/MTLBuffer-26-0",
+      "raw_sha256": "e7a9a87feca94450283ae45c30f0aab10d5871c99a7db9f754b466b513052025",
+      "bytes": 8404992
+    },
+    "trace/current/MTLBuffer-27-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/MTLBuffer-27-0",
+      "raw_sha256": "c83833d1d0421cb4c88aef7d5942f7f5c72996a18ca2dddfed0d685b64864192",
+      "bytes": 540672
+    },
+    "trace/current/MTLBuffer-5-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/MTLBuffer-5-0",
+      "raw_sha256": "07854d2fef297a06ba81685e660c332de36d5d18d546927d30daad6d7fda1541",
+      "bytes": 524288
+    },
+    "trace/current/MTLBuffer-86-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/MTLBuffer-86-0",
+      "raw_sha256": "f774069803303d9db023fb6b0daee391e8374e1e780ad7642580dfd6c993d0d9",
+      "bytes": 32768
+    },
+    "trace/current/capture": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/capture",
+      "raw_sha256": "f2ff28baa10c9673dd2eddddc021cf92bd48e44c157c249ffce227a725438eda",
+      "bytes": 3992
+    },
+    "trace/current/delta-device-resources-0x106384280": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/delta-device-resources-0x106384280",
+      "raw_sha256": "25c005011948cf3ff17a694ccff2411decf31ee704a49d1165cf10047b5f42ec",
+      "bytes": 516
+    },
+    "trace/current/device-resources-0x106384280": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/device-resources-0x106384280",
+      "raw_sha256": "2a86cd1b73a357ca56df7e96eb2d0c7b60627961783f5f8da47091520a1e11f5",
+      "bytes": 17568
+    },
+    "trace/current/index": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/index",
+      "raw_sha256": "01aaf938d87cd88c5c7d45c0fb61cedb90f326a3d851ea0345d876f6fe680143",
+      "bytes": 15568
+    },
+    "trace/current/metadata": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/metadata",
+      "raw_sha256": "faf5384c5890f371f78cb5d6915d5a1ffbc609132dcffe4e1a4a0cb53ac4b305",
+      "bytes": 1150
+    },
+    "trace/current/startup-0-platform": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/startup-0-platform",
+      "raw_sha256": "75decee4437b5bbfeeb20f4903575ce9e9e498e57ee608cec3ef803157773b7a",
+      "bytes": 76
+    },
+    "trace/current/startup-1-platform": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/startup-1-platform",
+      "raw_sha256": "307bca216804762e9741cc4d56a78333351e51a2b9ba29b1b623c5c07df79550",
+      "bytes": 8
+    },
+    "trace/current/store0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/store0",
+      "raw_sha256": "a69ef517e74628f11bd9c1e2d49832e1eb8f41f3f83336b703b43e396fbb2440",
+      "bytes": 28715
+    },
+    "trace/current/unsorted-capture": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/unsorted-capture",
+      "raw_sha256": "8b1b5d5fdd794c1eeabea3a92c159c597a2af358bf9bfc677b31e0f7fde0b181",
+      "bytes": 3956
+    },
+    "trace/current/unused-device-resources-0x106384280": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/current.gputrace/unused-device-resources-0x106384280",
+      "raw_sha256": "68998066d4bd0b6b203fb0bcd17c7edc2aebd2ae48dd9e17036fd6ac602a3377",
+      "bytes": 65136
+    },
+    "trace/disjoint/242AC351A08ADA1E": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/242AC351A08ADA1E",
+      "raw_sha256": "79322aa2338600fd3b6ac6480eea0105c4131df9cccc45f4c74b988751a0f766",
+      "bytes": 54918
+    },
+    "trace/disjoint/66A2808A656C912D": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/66A2808A656C912D",
+      "raw_sha256": "8dc9cb4f4ec9d7eb199c21a096ea1d3cc51cecfff8e934d0cda2e09838c15d96",
+      "bytes": 49330
+    },
+    "trace/disjoint/789C58C19F66F270": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/789C58C19F66F270",
+      "raw_sha256": "382f09e28d1b07deac1faa3be5cdeaf5db88a89dc7559369f1321fd3d640b893",
+      "bytes": 152123
+    },
+    "trace/disjoint/81ADFE0870BCF349": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/81ADFE0870BCF349",
+      "raw_sha256": "06ed267d3c17de4dff960e25c8033fa7bee6839fe15a3060ab1ad7a15f188577",
+      "bytes": 155620
+    },
+    "trace/disjoint/854CCB4586E2B781": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/854CCB4586E2B781",
+      "raw_sha256": "09d01105feafb5bded82ffb4788c37722ba05e1d65721dabf8617647d28685b1",
+      "bytes": 167051
+    },
+    "trace/disjoint/924A1EC01EBBF792": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/924A1EC01EBBF792",
+      "raw_sha256": "dddc7f0db4946c906dba416c84afedeae22fb44b26549d65c35865db24c0db8d",
+      "bytes": 212607
+    },
+    "trace/disjoint/BC914DAB7D48EB41": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/BC914DAB7D48EB41",
+      "raw_sha256": "311af7632e78b300697033836d5461a811d6fdadea53a226ab2a829dfb6f3f5d",
+      "bytes": 55910
+    },
+    "trace/disjoint/C0E58ABD01C7F5D7": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/C0E58ABD01C7F5D7",
+      "raw_sha256": "50436cba20bfecd71057a448bb7731a54fb2630d134b42a4aa4d3e1e304c0c03",
+      "bytes": 340257
+    },
+    "trace/disjoint/EC50DCA1A2FB71FC": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/EC50DCA1A2FB71FC",
+      "raw_sha256": "733b04f4575e0b7d9d5d98a88176a4ea6f3a97535bf86b5bb20f860074bac513",
+      "bytes": 61003
+    },
+    "trace/disjoint/F1BCDED37E18A47C": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/F1BCDED37E18A47C",
+      "raw_sha256": "30d4e23b31cb7c1a0da5f740f62a0165fdc76c41f803663a721e715da5ca9a0c",
+      "bytes": 152193
+    },
+    "trace/disjoint/F1D929839230B6CD": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/F1D929839230B6CD",
+      "raw_sha256": "2f5a88e0aa0e28dc10cdb3af3169dcec8571b3d20a584859ab729ce6555b2c14",
+      "bytes": 212589
+    },
+    "trace/disjoint/FCBCAB66324B9367": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/FCBCAB66324B9367",
+      "raw_sha256": "f07b71c1923ea38222cc62489127abad407c7d07a38525c5ef90505ce99b035f",
+      "bytes": 49322
+    },
+    "trace/disjoint/MTLBuffer-1661-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/MTLBuffer-1661-0",
+      "raw_sha256": "202683d39df66f541fccd0145c0aa5041218f38c460d342da15c8e4b00fbb00f",
+      "bytes": 67108864
+    },
+    "trace/disjoint/MTLBuffer-1662-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/MTLBuffer-1662-0",
+      "raw_sha256": "0f139640e1799d0e2cc79f3c1ec1114544a79983081f1ca89ea869bf4958b079",
+      "bytes": 16777216
+    },
+    "trace/disjoint/MTLBuffer-23-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/MTLBuffer-23-0",
+      "raw_sha256": "c45c9ae9933a9626d1e6d268f8143a8ffa72b31842c0aa8f93d213932d658434",
+      "bytes": 1589248
+    },
+    "trace/disjoint/MTLBuffer-25-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/MTLBuffer-25-0",
+      "raw_sha256": "aed8c9b44242b693187678e7bc2835dfee314936050f73b1aff9e85b0dc71b58",
+      "bytes": 33570816
+    },
+    "trace/disjoint/MTLBuffer-26-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/MTLBuffer-26-0",
+      "raw_sha256": "e7a9a87feca94450283ae45c30f0aab10d5871c99a7db9f754b466b513052025",
+      "bytes": 8404992
+    },
+    "trace/disjoint/MTLBuffer-27-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/MTLBuffer-27-0",
+      "raw_sha256": "70884cf5b4863fccaaa988fa599dda1169a2404463d23b446a318cbe79dfa492",
+      "bytes": 540672
+    },
+    "trace/disjoint/MTLBuffer-28-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/MTLBuffer-28-0",
+      "raw_sha256": "c83833d1d0421cb4c88aef7d5942f7f5c72996a18ca2dddfed0d685b64864192",
+      "bytes": 540672
+    },
+    "trace/disjoint/MTLBuffer-5-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/MTLBuffer-5-0",
+      "raw_sha256": "07854d2fef297a06ba81685e660c332de36d5d18d546927d30daad6d7fda1541",
+      "bytes": 524288
+    },
+    "trace/disjoint/MTLBuffer-86-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/MTLBuffer-86-0",
+      "raw_sha256": "f774069803303d9db023fb6b0daee391e8374e1e780ad7642580dfd6c993d0d9",
+      "bytes": 32768
+    },
+    "trace/disjoint/capture": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/capture",
+      "raw_sha256": "9780fbf2452808ddca0f92f6f1b5c4f947adf24bcaa73ed5609b129bd69251cf",
+      "bytes": 10512
+    },
+    "trace/disjoint/delta-device-resources-0x106384280": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/delta-device-resources-0x106384280",
+      "raw_sha256": "67cf1ad7d413db22c57fca27fac85908531de2800c7ab7d799ec8ff7496b49fd",
+      "bytes": 812
+    },
+    "trace/disjoint/device-resources-0x106384280": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/device-resources-0x106384280",
+      "raw_sha256": "f1de2046da3fa49869897b9ed3b34d71133dc321acb7f16be194dd1b3720f6fa",
+      "bytes": 34044
+    },
+    "trace/disjoint/index": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/index",
+      "raw_sha256": "bd71aafca826becaf36c5728b53611602636e4fedc78315f37b0f1372df8c2c9",
+      "bytes": 15912
+    },
+    "trace/disjoint/metadata": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/metadata",
+      "raw_sha256": "319dc998bcb27e73bb80125e165d5bc8cfddf7420b2a568872a1d069b121050d",
+      "bytes": 1150
+    },
+    "trace/disjoint/startup-0-platform": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/startup-0-platform",
+      "raw_sha256": "75decee4437b5bbfeeb20f4903575ce9e9e498e57ee608cec3ef803157773b7a",
+      "bytes": 76
+    },
+    "trace/disjoint/startup-1-platform": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/startup-1-platform",
+      "raw_sha256": "307bca216804762e9741cc4d56a78333351e51a2b9ba29b1b623c5c07df79550",
+      "bytes": 8
+    },
+    "trace/disjoint/store0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/store0",
+      "raw_sha256": "b70b843e5c9369acbf954468d6d667366949da41d20b0986d15ff2902b13689c",
+      "bytes": 29066
+    },
+    "trace/disjoint/unsorted-capture": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/unsorted-capture",
+      "raw_sha256": "74b5f04c2dd7ec86f90b75dcdd6f9eb9b5875ac647bf84e91a536a6a24a87651",
+      "bytes": 10060
+    },
+    "trace/disjoint/unused-device-resources-0x106384280": {
+      "path": "/private/tmp/earthcall-6di-work/capture-disjoint/disjoint.gputrace/unused-device-resources-0x106384280",
+      "raw_sha256": "860cc6dd78c69b543b01f4ece34222c7d327fa5ded6b7137506152413bf05f93",
+      "bytes": 48660
+    },
+    "trace/cert/242AC351A08ADA1E": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/242AC351A08ADA1E",
+      "raw_sha256": "79322aa2338600fd3b6ac6480eea0105c4131df9cccc45f4c74b988751a0f766",
+      "bytes": 54918
+    },
+    "trace/cert/66A2808A656C912D": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/66A2808A656C912D",
+      "raw_sha256": "8dc9cb4f4ec9d7eb199c21a096ea1d3cc51cecfff8e934d0cda2e09838c15d96",
+      "bytes": 49330
+    },
+    "trace/cert/789C58C19F66F270": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/789C58C19F66F270",
+      "raw_sha256": "382f09e28d1b07deac1faa3be5cdeaf5db88a89dc7559369f1321fd3d640b893",
+      "bytes": 152123
+    },
+    "trace/cert/81ADFE0870BCF349": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/81ADFE0870BCF349",
+      "raw_sha256": "06ed267d3c17de4dff960e25c8033fa7bee6839fe15a3060ab1ad7a15f188577",
+      "bytes": 155620
+    },
+    "trace/cert/854CCB4586E2B781": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/854CCB4586E2B781",
+      "raw_sha256": "09d01105feafb5bded82ffb4788c37722ba05e1d65721dabf8617647d28685b1",
+      "bytes": 167051
+    },
+    "trace/cert/924A1EC01EBBF792": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/924A1EC01EBBF792",
+      "raw_sha256": "dddc7f0db4946c906dba416c84afedeae22fb44b26549d65c35865db24c0db8d",
+      "bytes": 212607
+    },
+    "trace/cert/BC914DAB7D48EB41": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/BC914DAB7D48EB41",
+      "raw_sha256": "311af7632e78b300697033836d5461a811d6fdadea53a226ab2a829dfb6f3f5d",
+      "bytes": 55910
+    },
+    "trace/cert/D894FE2B13301F4C": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/D894FE2B13301F4C",
+      "raw_sha256": "fa61ae7afbdbb977bb70d6295b1974eacf0dcb76e679f225c3dbb1f480cf8073",
+      "bytes": 61745
+    },
+    "trace/cert/E353362BBAD892BA": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/E353362BBAD892BA",
+      "raw_sha256": "c655185c64e2a35765fbff62811fc16c45d591ce01584a18c106eb912e2136d2",
+      "bytes": 341314
+    },
+    "trace/cert/F1BCDED37E18A47C": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/F1BCDED37E18A47C",
+      "raw_sha256": "30d4e23b31cb7c1a0da5f740f62a0165fdc76c41f803663a721e715da5ca9a0c",
+      "bytes": 152193
+    },
+    "trace/cert/F1D929839230B6CD": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/F1D929839230B6CD",
+      "raw_sha256": "2f5a88e0aa0e28dc10cdb3af3169dcec8571b3d20a584859ab729ce6555b2c14",
+      "bytes": 212589
+    },
+    "trace/cert/FCBCAB66324B9367": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/FCBCAB66324B9367",
+      "raw_sha256": "f07b71c1923ea38222cc62489127abad407c7d07a38525c5ef90505ce99b035f",
+      "bytes": 49322
+    },
+    "trace/cert/MTLBuffer-1663-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/MTLBuffer-1663-0",
+      "raw_sha256": "202683d39df66f541fccd0145c0aa5041218f38c460d342da15c8e4b00fbb00f",
+      "bytes": 67108864
+    },
+    "trace/cert/MTLBuffer-1664-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/MTLBuffer-1664-0",
+      "raw_sha256": "0f139640e1799d0e2cc79f3c1ec1114544a79983081f1ca89ea869bf4958b079",
+      "bytes": 16777216
+    },
+    "trace/cert/MTLBuffer-23-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/MTLBuffer-23-0",
+      "raw_sha256": "c45c9ae9933a9626d1e6d268f8143a8ffa72b31842c0aa8f93d213932d658434",
+      "bytes": 1589248
+    },
+    "trace/cert/MTLBuffer-25-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/MTLBuffer-25-0",
+      "raw_sha256": "aed8c9b44242b693187678e7bc2835dfee314936050f73b1aff9e85b0dc71b58",
+      "bytes": 33570816
+    },
+    "trace/cert/MTLBuffer-26-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/MTLBuffer-26-0",
+      "raw_sha256": "e7a9a87feca94450283ae45c30f0aab10d5871c99a7db9f754b466b513052025",
+      "bytes": 8404992
+    },
+    "trace/cert/MTLBuffer-27-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/MTLBuffer-27-0",
+      "raw_sha256": "c83833d1d0421cb4c88aef7d5942f7f5c72996a18ca2dddfed0d685b64864192",
+      "bytes": 540672
+    },
+    "trace/cert/MTLBuffer-35-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/MTLBuffer-35-0",
+      "raw_sha256": "50289e448e6a19cbad8f85fed41fbca863c5ad40e24324d36e7a5f37f5e8c3a8",
+      "bytes": 147456
+    },
+    "trace/cert/MTLBuffer-5-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/MTLBuffer-5-0",
+      "raw_sha256": "07854d2fef297a06ba81685e660c332de36d5d18d546927d30daad6d7fda1541",
+      "bytes": 524288
+    },
+    "trace/cert/MTLBuffer-88-0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/MTLBuffer-88-0",
+      "raw_sha256": "f774069803303d9db023fb6b0daee391e8374e1e780ad7642580dfd6c993d0d9",
+      "bytes": 32768
+    },
+    "trace/cert/capture": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/capture",
+      "raw_sha256": "7f76496cb1b3a87b257547802df8f03b34f677f4f216811827fda259150ec3ee",
+      "bytes": 10680
+    },
+    "trace/cert/delta-device-resources-0x106971d70": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/delta-device-resources-0x106971d70",
+      "raw_sha256": "b70be849480ff9db33f75ca4dc55873d9bb44304d31c2ef9322c7b0f51666558",
+      "bytes": 812
+    },
+    "trace/cert/device-resources-0x106971d70": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/device-resources-0x106971d70",
+      "raw_sha256": "a70590bfe96c706addc94f88dfcd7dcc0d4a4920905d85c300563ffc2c8dc43e",
+      "bytes": 35124
+    },
+    "trace/cert/index": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/index",
+      "raw_sha256": "afd333cadb5203f3f2ca926efa9ad5e22a2d9df6ada81d660b5128aa7b9272ed",
+      "bytes": 15950
+    },
+    "trace/cert/metadata": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/metadata",
+      "raw_sha256": "2b57a1acd41b83efad9ee1ca2265d8f6cc3e01a6934ec18313fd28b66b1486e8",
+      "bytes": 1150
+    },
+    "trace/cert/startup-0-platform": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/startup-0-platform",
+      "raw_sha256": "dce7fb5df56b28d07e921d4549052738c438d9def3fbbfbf0c5461b86f617e64",
+      "bytes": 76
+    },
+    "trace/cert/startup-1-platform": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/startup-1-platform",
+      "raw_sha256": "307bca216804762e9741cc4d56a78333351e51a2b9ba29b1b623c5c07df79550",
+      "bytes": 8
+    },
+    "trace/cert/store0": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/store0",
+      "raw_sha256": "21f128677ceb9433035392cbe80fd99805f5fdc92c748d32528f838726024c9f",
+      "bytes": 29113
+    },
+    "trace/cert/unsorted-capture": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/unsorted-capture",
+      "raw_sha256": "5467ff20f227fb71f4bc4721b78f886f139e2cbeb27ff8a34ffc1a7c3e000592",
+      "bytes": 10228
+    },
+    "trace/cert/unused-device-resources-0x106971d70": {
+      "path": "/private/tmp/earthcall-6di-work/capture-cert/cert.gputrace/unused-device-resources-0x106971d70",
+      "raw_sha256": "ec4a8b6e38dd11213544304c512a7f8aec7ed737e78543157bf3b752ca41e8a6",
+      "bytes": 49516
+    }
+  },
+  "dependencies": {
+    "scratch/probes/ray_transport_root_review.py": "b9c8ed9d806edfa623364fcda2d737f4b0dddad795152b89cdf04173f86c9fa9",
+    "scratch/probes/ray_transport_sliver_review.py": "ee547a1c5c08f23723fe5faa2908e0eb198c590b56e8650db0a2d5b5b4f4819a",
+    "scratch/probes/ray_transport_gpu_continuation_review.py": "7f0a64b709de045f7570a2217828963be0ab02a1ddf050f74f604ba019e5bfb2",
+    "scratch/probes/ray_transport_gpu_6dd_continuation.py": "33d9b36a6a173ebf66711004c169bde63765f96fe0d6733aa4912c27fe34076f",
+    "scratch/probes/ray_transport_gpu_6dg_ontomath_genericity.cpp": "162f7fdcf4b1c12825b2ae5515c51ad88c18ccf42a2ed35e22b8feb546fa3e02",
+    "scratch/probes/ray_transport_gpu_6dg_specialization.cpp": "5bb3cb4cbcbd94b09541061f87f3c86b05175c82cd36b61821309f0618c6a0b5",
+    "scratch/probes/ray_transport_metal_pipeline_observer.mm": "f54371da557a8a53d9819b11454aa6e1ef1e25d59f4a522f37634b9daeb33d89",
+    "scratch/probes/ray_transport_generic_family_contract.cpp": "1d85d7d90fe5721a79806449dcbbbd99e200b1b14863be6b0aacb6a5837cd7de",
+    "scratch/probes/ray_transport_gpu_pipeline_facts.py": "d46f85a6e4b71dd2754f6e16ee1967f11f207feea079229e4b7977530d3d6109",
+    "scratch/probes/ray_transport_gpu_routing_contract.py": "eeac55663ab9fe07651d0ae8a9cfba1d43ab6dfbfd0007e460f30010711acba8",
+    "scratch/probes/ray_transport_probe_build.py": "a28d95a3a8c034fd2a9f60b2e3d119ced1e40dc697a0a3680554c6a32c214d57",
+    "scratch/probes/ray_transport_gpu_mastery_replay.py": "ba66eda2a27b5591945780ffbbc54bcb21074cb762c9949e80e9376c57f643e3"
+  },
+  "resource_counter_profile_collected": false,
+  "programmatic_traces_collected": true,
+  "qualified_speedup": false,
+  "production_changed": false,
+  "shipping_gates_open": 3
+}
