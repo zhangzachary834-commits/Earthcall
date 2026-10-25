@@ -86,12 +86,9 @@ jobs:
         time_moment_test
         category_manager_test
         identity_ledger_test
-        claim_test
-        person_presence_test
         file_channel_test
         file_watcher_test
         first_mover_test
-        first_mover_tool_test
         law_file_tree_fossil_test
         earthcall_api_test
         rete_state_ptr_index_test

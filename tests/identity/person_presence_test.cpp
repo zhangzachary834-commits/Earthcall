@@ -9,59 +9,20 @@
 #include <iostream>
 #include <cassert>
 #include <filesystem>
-#include <cstdlib>
-#include <optional>
-#include <random>
-#include <stdexcept>
-#include <string>
-#include <system_error>
-#include <utility>
 
 using namespace Identity;
 
-// Keep identity keys, the migration ledger and Person saves inside one private
-// per-process scratch root. Never remove a predictable shared temp directory.
-struct TempPresenceRoot {
+struct TempSaveRoot {
     std::filesystem::path dir;
-    std::string previousSaveRoot = SaveSystem::saveRoot();
-    std::optional<std::string> previousHome;
-
-    TempPresenceRoot() {
-        if (const char* value = std::getenv("EARTHCALL_HOME")) previousHome = value;
-        std::random_device random;
-        for (int attempt = 0; attempt < 64; ++attempt) {
-            auto candidate = std::filesystem::temp_directory_path() /
-                ("earthcall_presence_" + std::to_string(random()) + "_" + std::to_string(attempt));
-            std::error_code ec;
-            if (std::filesystem::create_directory(candidate, ec)) {
-                dir = std::move(candidate);
-                break;
-            }
-            if (ec) throw std::filesystem::filesystem_error("create scratch root", candidate, ec);
-        }
-        if (dir.empty()) throw std::runtime_error("could not create unique Person presence test root");
-#if defined(_WIN32)
-        const int setResult = _putenv_s("EARTHCALL_HOME", dir.string().c_str());
-#else
-        const int setResult = setenv("EARTHCALL_HOME", dir.string().c_str(), 1);
-#endif
-        if (setResult != 0) {
-            std::filesystem::remove(dir);
-            throw std::runtime_error("could not isolate EARTHCALL_HOME");
-        }
-        SaveSystem::setSaveRoot((dir / "saves").string());
+    TempSaveRoot() {
+        dir = std::filesystem::temp_directory_path() / "earthcall_presence_test_saves";
+        std::filesystem::remove_all(dir);
+        std::filesystem::create_directories(dir);
+        SaveSystem::setSaveRoot(dir.string());
     }
-
-    ~TempPresenceRoot() {
-        SaveSystem::setSaveRoot(previousSaveRoot);
-#if defined(_WIN32)
-        (void)_putenv_s("EARTHCALL_HOME", previousHome ? previousHome->c_str() : "");
-#else
-        if (previousHome) (void)setenv("EARTHCALL_HOME", previousHome->c_str(), 1);
-        else (void)unsetenv("EARTHCALL_HOME");
-#endif
-        std::error_code ignored;
-        if (!dir.empty()) std::filesystem::remove_all(dir, ignored);
+    ~TempSaveRoot() {
+        SaveSystem::setSaveRoot("");
+        std::filesystem::remove_all(dir);
     }
 };
 
@@ -153,7 +114,7 @@ static void testUnlockPresence() {
 
 int main() {
     std::cout << "person_presence_test:\n";
-    TempPresenceRoot saves;
+    TempSaveRoot saves;
     testUnkeyedPerson();
     testKeyingAndPresence();
     testUnlockPresence();
