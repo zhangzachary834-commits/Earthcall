@@ -109,8 +109,8 @@ Earthcall/
         VoicePart/
     Relation/              Relation · RelationManager
       Formation/
-      py/
       Traversal/
+      py/
     Singularity/           the modality layer — where language stops mattering
       Audio/               the Sound modality (AudioSystem)
       Core/                Engine · EventBus · CreationChannel
@@ -121,8 +121,15 @@ Earthcall/
           Menu/
         TalkingRobotGuyAPI/
       Foreign/             the Foreign software modality (ForeignChannel at the root)
-        Adapters/          MacOSAccessibilityAdapter
         API/               EarthcallAPI, SecurityManager
+        Adapters/          MacOSAccessibilityAdapter
+        Shell/
+        Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
+        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
+          web_ui/
+            public/
+            src/
+              assets/
         mcp/               earthcall-mcp-server.js
         py/                app.py
           agent/
@@ -133,13 +140,6 @@ Earthcall/
             ui/
           templates/
           web/
-        Shell/
-        Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
-        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
-          web_ui/
-            public/
-            src/
-              assets/
       Input/               the Input modality
         Interaction/       InteractionChannel, ControlPatterns
         Keyboard/          KeyboardHandler
@@ -167,7 +167,7 @@ Earthcall/
           Person/
           Relation/
           ZonesOfEarth/
-      Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence)
+      Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence [legacy name: TerminalLine])
     Time/                  Timeline · Moment · Event
       Event/               (the distinguished Moment: occurrence in time)
       Moment/              (instant or interval)
@@ -178,8 +178,8 @@ Earthcall/
       HomesOfEarth/
       Ourverse/
       Physics/
-      py/
       Zone/
+      py/
 
   docs/  tests/  examples/  scripts/  saves/  scratch/  web_ui/     the workshop
   third_party/  local_deps/  imgui/                                 the foreign
@@ -188,6 +188,8 @@ Earthcall/
 ```
 
 ---\
+
+> **TerminalLine naming decree (2026-10-20):** the source symbol `LawSentence` under `Singularity/Terminal/` is a legacy implementation name for the Terminal modality's line parser, conceptually **`TerminalLine`**. Its placement under Terminal is substantive: it must not be promoted into a universal language abstraction. See the [addendum](../../addendums/terminal_line_naming_and_modality_scope_addendum.md).
 
 ## 3. Where language goes
 

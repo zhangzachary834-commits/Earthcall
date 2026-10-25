@@ -3091,5 +3091,57 @@
       }
     ],
     "scope": "host only; metadata 6/6; counts/footprints equal; no timing gain asserted"
+  },
+  "isolated_patch_application_checks": {
+    "baseline": "40b43c4ba114249a1d86ce7e0796c746533429f8",
+    "results": [
+      {
+        "patch": "VOLUME_SUPPORT_ALLOCATION_FULL_AXIS_2026-10-15.patch",
+        "exit": 0,
+        "diagnostic": ""
+      },
+      {
+        "patch": "VOLUME_SUPPORT_ALLOCATION_ISOTROPIC_2026-10-15.patch",
+        "exit": 0,
+        "diagnostic": ""
+      },
+      {
+        "patch": "VOLUME_SUPPORT_ALLOCATION_PARENT_2026-10-15.patch",
+        "exit": 0,
+        "diagnostic": ""
+      }
+    ],
+    "applied_to_production": false
+  },
+  "continuation_checkout_verification": {
+    "signature": "Codex / GPT-6.1 Sol / session 01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca / 2026-10-15T18:16:08.701599-07:00",
+    "branch": "sync-from-earthcall-main",
+    "worktree": "/private/tmp/earthcall-sync-from-earthcall-main",
+    "head": "18456320d10f7bddfa0bc5074dd665f1092ec7fe",
+    "hash_comparisons": {
+      "restored_main_source": {
+        "src/Singularity/Screen/VolumeZeroProof.cpp": true,
+        "src/Singularity/Screen/VolumeZeroProof.hpp": true,
+        "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": true,
+        "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": true,
+        "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": true,
+        "tests/singularity/volume_zero_proof_test.cpp": true,
+        "src/Singularity/OntoMath/ScalarForm.cpp": true,
+        "saves/zones/Northern Veil/zone.ecform": true,
+        "saves/zones/Sky-Island Sanctuary/zone.json": true
+      },
+      "final_tool_source_sha256": {
+        "scripts/volume_traversal_experiment.py": true,
+        "scratch/probes/volume_demand_probe.cpp": true,
+        "tests/singularity/webgpu_volume_zero_proof_test.cpp": true
+      },
+      "patch_sha256": {
+        "VOLUME_SUPPORT_ALLOCATION_ISOTROPIC_2026-10-15.patch": true,
+        "VOLUME_SUPPORT_ALLOCATION_FULL_AXIS_2026-10-15.patch": true,
+        "VOLUME_SUPPORT_ALLOCATION_PARENT_2026-10-15.patch": true
+      }
+    },
+    "native_tests_rerun": false,
+    "reason": "Recorded runtime, test and tool hashes match; prior native results remain dated evidence. Firmament laboratory modifications excluded."
   }
 }
