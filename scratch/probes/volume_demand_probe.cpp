@@ -6,6 +6,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
 #include "Singularity/Screen/VolumeDensity.hpp"
+#include "Singularity/Screen/VolumeZeroProof.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
@@ -29,6 +30,8 @@ extern "C" bool dumpFragmentCensus(WGPUDevice,WGPUInstance,WGPUQueue,const char*
 static bool dumpFragmentCensus(WGPUDevice,WGPUInstance,WGPUQueue,const char*) { return false; }
 #endif
 namespace {
+template<class Proof> auto hierarchyWords(const Proof& proof,int) -> decltype(proof.macroWords.size()) { return proof.macroWords.size(); }
+template<class Proof> size_t hierarchyWords(const Proof&,long) { return 0; }
 using Clock = std::chrono::steady_clock;
 double ms(Clock::time_point a, Clock::time_point b) {
     return std::chrono::duration<double, std::milli>(b - a).count();
@@ -84,6 +87,26 @@ int main(int argc, char** argv) {
             const auto stem=std::string(dir)+"/"+std::to_string(i);
             std::ofstream(stem+".wgsl") << p.wgsl;
             std::ofstream(stem+"-params.json") << nlohmann::json(p.params).dump(2);
+        }
+        return 0;
+    }
+
+    if (std::getenv("EC_PROOF_COST")) {
+        const auto* metadataText=std::getenv("EC_PROOF_METADATA_FLOATS");
+        if(!metadataText || std::atoi(metadataText)<0) {
+            std::fprintf(stderr,"proof-cost mode requires explicit nonnegative EC_PROOF_METADATA_FLOATS\n");return 2;
+        }
+        const size_t metadata=std::atoi(metadataText);
+        for (auto* f : active) {
+            if (!f->volumeDensity || f->volumeDensity->pieces.empty()) continue;
+            for (int repeat=0; repeat<3; ++repeat) {
+                const auto start=Clock::now();
+                const auto proof=Rendering::buildVolumeZeroProof(*f->volumeDensity,glm::abs(f->scale));
+                const auto end=Clock::now();
+                std::printf("PROOF id=%s repeat=%d ms=%.9f cells=%u proven=%u ranges=%u inside_bytes=%zu outside_bytes=%zu\n",
+                    f->getIdentifier().c_str(),repeat,ms(start,end),proof.totalCells,proof.provenCells,proof.rangeEvaluations,
+                    (proof.words.size()+hierarchyWords(proof,0)+metadata)*4,(proof.words.size()+hierarchyWords(proof,0)+metadata+4*proof.supportBands.size())*4);
+            }
         }
         return 0;
     }
@@ -191,7 +214,15 @@ int main(int argc, char** argv) {
             while(!result.done) wgpuInstanceProcessEvents(gpu.instance);
             return result.ok;
         };
-        for(int i=0;i<4;++i) { double p=0,q=0;frame(p,q); }
+        for(int i=0;i<4;++i) {
+            double p=0,q=0;frame(p,q);
+            if(i==0) {
+                const auto cold=renderer.frameStats();
+                std::printf("ADMISSION cpu_ms=%.9f compiles=%u lowerings=%u proof_builds=%u parameters=%zu proofs=%zu\n",
+                    p+q,cold.volumeProgramCompiles,cold.volumeLowerings,cold.volumeZeroProofBuilds,
+                    cold.volumeParameterBytesUploaded,cold.volumeProofBytesUploaded);
+            }
+        }
         REQUIRE(fence());
         const auto start=Clock::now();double prep=0,submit=0;
         for(int i=0;i<frames;++i) frame(prep,submit);
