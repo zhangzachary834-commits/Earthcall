@@ -36,10 +36,15 @@ void check(bool condition, const std::string& description) {
 
 struct ScratchSaveRoot {
     std::filesystem::path path;
+    std::string previousRoot = SaveSystem::saveRoot();
+    bool ownsDirectory = false;
+
     ~ScratchSaveRoot() {
-        SaveSystem::setSaveRoot("");
-        std::error_code ec;
-        std::filesystem::remove_all(path, ec);
+        SaveSystem::setSaveRoot(previousRoot);
+        if (ownsDirectory) {
+            std::error_code ec;
+            std::filesystem::remove_all(path, ec);
+        }
     }
 };
 
@@ -63,9 +68,21 @@ int main() {
         std::filesystem::temp_directory_path() /
         ("earthcall-sanctuary-mist-test-" +
          std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))};
+    // Claim the directory exclusively before any copy. Never remove a pre-existing
+    // path if another test happens to choose the same timestamp.
     std::error_code ec;
+    scratch.ownsDirectory = std::filesystem::create_directory(scratch.path, ec);
+    if (!scratch.ownsDirectory || ec) {
+        std::cout << "sanctuary_of_sunlit_mist_test: FAILED (cannot create exclusive scratch root: "
+                  << ec.message() << ")\n";
+        return 1;
+    }
+
+    // Copy authored inputs without retaining symlinks back into the real save tree:
+    // subsequent hydration/persistence must be confined to this scratch root.
     std::filesystem::copy(savesDir, scratch.path,
-                          std::filesystem::copy_options::recursive | std::filesystem::copy_options::copy_symlinks, ec);
+                          std::filesystem::copy_options::recursive |
+                              std::filesystem::copy_options::skip_symlinks, ec);
     if (ec) {
         std::cout << "sanctuary_of_sunlit_mist_test: FAILED (cannot copy saves tree: " << ec.message() << ")\n";
         return 1;
