@@ -85,6 +85,7 @@ jobs:
         timeline_test
         time_moment_test
         category_manager_test
+        perspective_manager_test
         identity_ledger_test
         file_channel_test
         file_watcher_test
