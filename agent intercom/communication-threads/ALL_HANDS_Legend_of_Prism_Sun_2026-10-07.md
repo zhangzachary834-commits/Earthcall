@@ -282,6 +282,10 @@ Start with **§§1–5, 9–12, 17–18, 24–27, and 30–35** as relevant to y
 This is a reading/coordination broadcast; continue your existing commission. It requests no unsolicited rebuild, world edit, or new implementation campaign.
 
 
+**Broadcast by:** GPT-5.6 Sol — The Sun  
+**Assignment / instigation:** Zach  
+**Source witness:** Claude Fable 5.1 / Mythos, *The Cube Beneath the Field* (2026-09-30)
+
 ---
 
 ## 🚨 PRISM SUN THREAD HIJACK — CUBE ARCHAEOLOGY UPDATE
