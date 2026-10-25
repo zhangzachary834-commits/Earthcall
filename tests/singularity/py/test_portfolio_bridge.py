@@ -12,9 +12,9 @@
 #   which was removed in favor of `_portfolio_allowed_origins()`, causing an unhandled `ImportError` that
 #   prevented the test file from running at all in the test suite.
 #
-# The new test below tests the real application runtime path by delivering a real C++ engine `state_sync`
-# JSON payload through `bridge._process_message()`, verifying that `has_engine_snapshot` is set to True,
-# and verifying that live objects, laws, and active zone state are projected while internal fields are stripped.
+# The new test supplies a representative synthetic `state_sync` wire-format fixture directly
+# to the production `bridge._process_message()` handler. It verifies snapshot gating,
+# bounded public projection, and field filtering. It does NOT start a C++ engine or WebSocket.
 
 import json
 import sys
@@ -80,8 +80,8 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
         self.assertNotIn("private_runtime_state", projection["laws"][0])
         self.assertEqual(len(projection["recent_events"]), 1)
 
-    def test_real_live_snapshot_path_projection(self):
-        """Traverses the real production C++ websocket message ingestion path via _process_message()."""
+    def test_state_sync_ingestion_path_projection(self):
+        """Exercise the production ingestion handler with a synthetic wire-format fixture."""
         bridge = CppBridge()
         bridge.connected = True
 
@@ -91,7 +91,7 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
         self.assertEqual(initial_projection["objects"], [])
         self.assertEqual(initial_projection["laws"], [])
 
-        # Process a real C++ engine state_sync wire message
+        # Process a representative state_sync wire-format message
         engine_wire_message = json.dumps({
             "type": "state_sync",
             "timestamp": 456.0,
@@ -121,9 +121,10 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
 
         bridge._process_message(engine_wire_message)
 
-        # Verify that traversing the real ingestion path sets has_engine_snapshot to True and projects state
+        # Verify that the ingestion handler sets has_engine_snapshot and projects state
         live_projection = bridge.get_portfolio_state()
         self.assertTrue(live_projection["has_engine_snapshot"])
+        self.assertEqual(bridge.messages_received, 1)
         self.assertEqual(live_projection["active_zone"]["name"], "Sanctuary of Light")
         self.assertEqual(len(live_projection["objects"]), 1)
         self.assertEqual(live_projection["objects"][0]["id"], "obj-crystal")
