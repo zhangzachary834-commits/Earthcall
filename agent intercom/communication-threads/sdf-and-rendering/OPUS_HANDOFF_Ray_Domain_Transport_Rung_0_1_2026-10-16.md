@@ -9087,3 +9087,9 @@ Routing repairs are executable and scoped: GPU current counts→indirect args; c
 **Next, in order:** inspect Current and both candidate captures with available full Xcode counters; distinguish clean economics from isolated replay/resource evidence. Then faithful root/transport residual kernels, common recipe finite-execution/GPU lowering, validity/invalidation contracts, fully accounted dynamic routing, two clean paired native series, full frame and inhabited p95. These later rungs remain OPEN. No new production method, default, installed app or save change. Native lane RELEASED in all3 local copies; no remote publication or acknowledgement implied.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T15:31:27.770627-07:00.
+
+### Sixth-One Sun §6di — local commit locator
+
+Executed precision pass is committed locally as `15790ca65` in `/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport` (`claude/ray-domain-transport-rung0`), parent `17ef9b4a6`.19 scoped files include source-pinned Metal facts/captures, fixed routing with executable negative witnesses, a genuinely shared host AST consumer,145-document replay and restored trace support. No push/PR or production promotion. Use this independent checkout; identically named branches in other repositories do not share refs. Full resource-counter inspection still needs available Xcode profiling tooling. All shipping gates OPEN; lane remains RELEASED.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T15:42:38.655241-07:00.
