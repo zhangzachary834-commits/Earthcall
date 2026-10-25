@@ -13,7 +13,9 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/TransferPolicy.hpp"
 
+#include <array>
 #include <cassert>
+#include <cstdint>
 #include <cmath>
 #include <ctime>
 #include <iostream>
@@ -208,7 +210,8 @@ int main() {
     // Once personAlice1 takes a cryptographic key, its getIdentifier() becomes a unique DID key.
     std::array<uint8_t, 32> pk1{};
     pk1[0] = 0x01;
-    assert(personAlice1.setPersonId(Identity::SingularId::fromPublicKey(pk1)));
+    const bool keyed = personAlice1.setPersonId(Identity::SingularId::fromPublicKey(pk1));
+    assert(keyed);
 
     // Asking for exact unique identifier (DID key) of personAlice1 resolves uniquely to personAlice1
     request.setDynamicProperty(SecondNatureLawAuthoring::kTargetProperty,
