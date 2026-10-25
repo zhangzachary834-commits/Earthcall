@@ -9,8 +9,10 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 
+#include <algorithm>
 #include <ctime>
 #include <string>
+#include <vector>
 
 namespace SecondNatureLawAuthoring {
 namespace {
@@ -36,27 +38,29 @@ void writeString(Singular& being, const char* property, const std::string& value
 
 Singular* findBeing(const std::string& id) {
     if (id.empty()) return nullptr;
-
-    // An exact identifier wins over historical Person aliases, but distinct
-    // beings with the same identifier must never be chosen by iteration order.
-    Singular* exact = nullptr;
+    std::vector<Singular*> exactMatches;
     for (Singular* being : Universe::instance().beings()) {
-        if (!being || being->getIdentifier() != id) continue;
-        if (exact && exact != being) return nullptr;
-        exact = being;
+        if (being && being->getIdentifier() == id) {
+            if (std::find(exactMatches.begin(), exactMatches.end(), being) == exactMatches.end()) {
+                exactMatches.push_back(being);
+            }
+        }
     }
-    if (exact) return exact;
+    if (exactMatches.size() == 1) return exactMatches.front();
+    if (exactMatches.size() > 1) return nullptr;
 
-    // Migration aliases are Person-specific. Duplicate provider entries for
-    // the same being are harmless; distinct matching Persons are ambiguous.
-    Singular* candidate = nullptr;
+    std::vector<Singular*> candidates;
     for (Singular* being : Universe::instance().beings()) {
-        auto* person = dynamic_cast<Person*>(being);
-        if (!person || !Identity::personAnswersTo(*person, id)) continue;
-        if (candidate && candidate != being) return nullptr;
-        candidate = being;
+        if (auto* person = dynamic_cast<Person*>(being)) {
+            if (Identity::personAnswersTo(*person, id)) {
+                if (std::find(candidates.begin(), candidates.end(), being) == candidates.end()) {
+                    candidates.push_back(being);
+                }
+            }
+        }
     }
-    return candidate;
+    if (candidates.size() == 1) return candidates.front();
+    return nullptr;
 }
 
 Law* resolvePrototype(const ECA::Event& event, LawManager& laws, Singular*& request) {
