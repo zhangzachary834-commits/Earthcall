@@ -1,0 +1,371 @@
+{
+  "authors": [
+    "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+  ],
+  "identifier": "shape-garden-law-27",
+  "law": {
+    "actionDescriptions": [
+      "sequence(6)"
+    ],
+    "actionModel": {
+      "children": [
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "@ShapeGarden.forge.ready"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "@ShapeGarden.forge.enabled"
+        },
+        {
+          "kind": 14,
+          "path": "@screen-channel",
+          "propertyName": "output.colorPath"
+        },
+        {
+          "kind": 14,
+          "path": "@screen-channel",
+          "propertyName": "output.opacityPath"
+        },
+        {
+          "kind": 14,
+          "path": "@screen-channel",
+          "propertyName": "output.color"
+        },
+        {
+          "kind": 14,
+          "path": "@screen-channel",
+          "propertyName": "output.opacity"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 2,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+    ],
+    "conditionDescriptions": [
+      "all(9)"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "beingKind": 2,
+          "kind": 7
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@ShapeGarden.forge.enabled"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@ShapeGarden.forge.ready"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "@interaction-channel.pointerLocked"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@interaction-channel.leftDown"
+        },
+        {
+          "kind": 0,
+          "op": 5,
+          "operand": {
+            "t": "double",
+            "v": 0.174
+          },
+          "path": "@ShapeGarden.forge.pressU"
+        },
+        {
+          "kind": 0,
+          "op": 2,
+          "operand": {
+            "t": "double",
+            "v": 0.204
+          },
+          "path": "@ShapeGarden.forge.pressU"
+        },
+        {
+          "kind": 0,
+          "op": 5,
+          "operand": {
+            "t": "double",
+            "v": 0.1
+          },
+          "path": "@ShapeGarden.forge.pressV"
+        },
+        {
+          "kind": 0,
+          "op": 2,
+          "operand": {
+            "t": "double",
+            "v": 0.14
+          },
+          "path": "@ShapeGarden.forge.pressV"
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "shape-garden-law-27",
+    "name": "Shape Garden | Close sidebar",
+    "provenance": [
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-27",
+        "entityB": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1792528728
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-27",
+        "entityB": "law-line-preset-becomes",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792528728
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-27",
+        "entityB": "law-line-args-sequence",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792528728
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-27",
+        "entityB": "law-line-compile-args-sequence",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792528728
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": [],
+  "injected_by": "Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-20; compiled through Law Line; first-seed application root"
+}
