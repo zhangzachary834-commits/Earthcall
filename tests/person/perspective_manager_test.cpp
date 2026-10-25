@@ -156,9 +156,34 @@ void test_distinct_perspectives_same_spelling() {
     assert(manager.currentIndex() == 0);
     assert(manager.current()->getType() == PersonPerspective::PerspectiveType::TopDown);
 
+    // Attempting lookup/switch by shared display name must return ambiguous refusal (-1) and not switch
+    size_t foundIndex = manager.findPerspective("Overhead View");
+    assert(foundIndex == static_cast<size_t>(-1));
+
+    manager.switchTo("p2_cam");
+    assert(manager.currentIndex() == 1);
+    manager.switchTo("Overhead View");
+    assert(manager.currentIndex() == 1); // Remained at index 1 because display name is ambiguous
+
     // Duplicate identifier should still be rejected
     manager.addPerspective(std::make_unique<PersonPerspective>("p1_cam", "Overhead View", PersonPerspective::PerspectiveType::FreeCamera));
     assert(manager.count() == 2);
+
+    // Once the duplicate display name is removed, name fallback is unambiguous again.
+    manager.removePerspective(1);
+    assert(manager.count() == 1);
+    assert(manager.findPerspective("Overhead View") == 0);
+    manager.switchTo("Overhead View");
+    assert(manager.currentIndex() == 0);
+
+    // An exact identifier takes precedence even when it equals another perspective's display name.
+    manager.addPerspective(std::make_unique<PersonPerspective>(
+        "Overhead View", "Different View", PersonPerspective::PerspectiveType::FreeCamera));
+    assert(manager.count() == 2);
+    assert(manager.findPerspective("Overhead View") == 1);
+    manager.switchTo("Overhead View");
+    assert(manager.currentIndex() == 1);
+    assert(manager.current()->getName() == "Different View");
 }
 
 } // namespace
