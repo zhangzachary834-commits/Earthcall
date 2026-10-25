@@ -1,37 +1,5 @@
 # Person Verification List
 
-## Ergonomic 2D ImGui Zone Selector
-
-*Antigravity · Gemini 3.8 Flash (High) · session `b7880025-6dbf-4c38-9916-6e90233bec71` · 2026-10-23. Commissioned by Zach: "BROOOOOOO PLZZZZZ MAKE IT SO I CAN SELECT ZONES IN A FRIENDLY AND ERGONOMIC 2D INTERFACE NOT A BORING AND INCONVENIENT DROPDOWN, keep the scroll list for now though at the side, and im talking about the imgui zone sleector"*
-
-- [ ] Launch Earthcall (`./build/earthcall_webgpu` or `./build/earthcall`) and press `F8` (or open Creator Console from the menu).
-- [ ] **Top Header Bar Quick-Jump:**
-  - In the Creator Console header, observe the active zone pill `[ Zone: Sanctum of Beginnings 🗺️ ]`.
-  - Click the pill and confirm it immediately jumps to the **Zones** tab (`CreatorSection::Zones`).
-- [ ] **Side Scroll List (Kept at Side):**
-  - Verify the scroll list on the left side of the Zones console (`ZoneListPane`) lists all available Zones with their object counts and badges (`[*]`, `[H]`, `[G]`, `[D]`).
-  - Single-click any zone to select it.
-  - Double-click any zone in the list: verify it immediately switches to that zone (`zoneMgr.switchTo`) with feedback in the status bar!
-- [ ] **Interactive 2D Spatial Canvas & Selector:**
-  - Verify the View Mode selector at the top right: `[ 🗺️ 2D Canvas ]`, `[ 🔀 Split View ]`, `[ 📋 Inspector ]`.
-  - In `🗺️ 2D Canvas` mode, verify:
-    - Subtle infinite grid background with pan and zoom.
-    - Pan by dragging with Right-Click, Middle-Click, or Left-Click on empty canvas space.
-    - Zoom with mouse wheel (or using the `[-]` / `[+]` / `[100%]` toolbar in the top-right corner).
-    - `[ ⟲ Fit ]` frames and centers all zones in view; `[ 🔲 Auto ]` organizes them topologically.
-    - Zones rendered as distinctive cards with colors reflecting kind (Home: amber/gold, Gathering: orange, Dimension: purple, Standard: steel blue).
-    - Active Zone has a glowing emerald/mint border and halo with `[ACTIVE]` pill.
-    - Selected Zone has a sky-blue border.
-    - Each card displays name, `@identifier`, objects & relations count, and an `[ Enter ]` button.
-    - Hierarchical connection lines (smooth Bezier curves) link parent and child zones.
-  - **Interactions:**
-    - Click any zone card: verifies it selects the zone and highlights it across both the 2D canvas and the side scroll list.
-    - Double-click any zone card: verifies it immediately enters/switches to that zone (`zoneMgr.switchTo`).
-    - Click `[ Enter ]` on any card: verifies it enters/switches to that zone in 1 click.
-    - Drag any zone card: verifies you can freely position and cluster cards in 2D space.
-    - Right-click any card: opens context menu (Enter / Switch, Save Zone, Diff with Active Zone, Reset Position).
-
-
 ## 2D Chess Zone (`Chess2D`)
 
 *Gemini 3.8 Flash (the sparkly guy) · session `e1346ea7-7d86-4945-8831-01e3e33dd09a` · 2026-10-16. Commissioned by Zach: "MAKE NOT 3D CHESS MAKE 2D CHESS. MAKE SURE UR WORKING IN THE DEFAULT sync-from-earthcall-main CHECKOUT."*
