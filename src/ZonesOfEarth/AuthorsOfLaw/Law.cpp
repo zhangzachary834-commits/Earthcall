@@ -1746,9 +1746,11 @@ void ReteNetwork::dropUnboundAlphaNodes() {
     for (std::size_t i = 0; i < _alphaNodes.size(); ++i) {
         _alphaIndexById[_alphaNodes[i].id] = i;
     }
-    // Beta nodes are append-only: pruning alpha nodes cannot invalidate
-    // their id-to-position index. Rebuilding it here would turn every alpha
-    // unbind into an unnecessary O(historical node-id) pass.
+    std::fill(_betaIndexById.begin(), _betaIndexById.end(),
+              static_cast<std::size_t>(-1));
+    for (std::size_t i = 0; i < _betaNodes.size(); ++i) {
+        _betaIndexById[_betaNodes[i].id] = i;
+    }
 }
 
 std::vector<ReteActivation> ReteNetwork::drainAgenda() {
