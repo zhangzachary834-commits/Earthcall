@@ -1,25 +1,28 @@
-# Derived-State Ledger and HTML Bridge
+# Derived State Ledger and HTML Bridge
 
-**Status:** Architectural relationship and proposed integration; not an implemented subscription path.
+**The interrelation between the engine's internal state caches and real-time Foreign modality UI reactivity.**
 
-**Read with:** [Derived-State Ledger](../law/DERIVED_STATE_LEDGER.md), [HTML Lexeme Formation Bridge](../Integration/HTML_LEXEME_FORMATION_BRIDGE.md), and [No Black Box](../ontology/NO_BLACK_BOX.md).
+**Status:** Conceptual interrelation.
+**Connected Documents:**
+*   `../law/DERIVED_STATE_LEDGER.md` (The internal system for caching the results of complex ontological queries)
+*   `../Integration/HTML_LEXEME_FORMATION_BRIDGE.md` (The bidirectional Foreign modality channel for web-based UI)
 
-## Distinct responsibilities
+---
 
-The Derived-State Ledger inventories *specific* derived structures, their declared dependencies, invalidation or renewal rules, and regression witnesses. It is an audit discipline, **not** a single universal event broadcaster or an API that every cache automatically registers with. Some entries are rebuilt on demand rather than invalidated through a subscription.
+## The Interrelation
 
-The HTML Lexeme Formation Bridge describes a **proposed** Sense/Act integration with a foreign browser document. Its specification explicitly distinguishes browser-owned DOM truth from Earthcall's native Lexeme/Relation/Formation mirror, and says implementation is not yet claimed. A browser change must be observed and reconciled; an Earthcall request to mutate the DOM is not itself proof that the browser accepted it.
+Earthcall's web-based UI (the HTML Bridge) faces a fundamental challenge: how does a Foreign modality app accurately reflect the complex, real-time state of the engine without constantly polling it (which would be prohibitively expensive)?
 
-## The useful interrelation
+The solution is found in the architectural union of the HTML Bridge and the Derived State Ledger.
 
-A future bridge can *apply the ledger's discipline* to each derived DOM projection:
+The Derived State Ledger (`DERIVED_STATE_LEDGER.md`) is primarily an internal optimization. It caches the results of complex Prophetic Rete queries and relation graph traversals. Crucially, it only invalidates these caches when the underlying properties actually mutate.
 
-1. Name the foreign observation, its revision or request token, and the Earthcall graph state derived from it.
-2. Declare which source changes invalidate or replace that projection, including browser-side mutations, failed actuation, disconnection, and Zone/being identity changes.
-3. Decide whether the implementation uses explicit change notifications, ordered mutation edges, or bounded resnapshotting; do not assume a global ledger event stream exists.
-4. Reconcile acknowledged browser results back through Sense before treating them as current foreign truth.
-5. Give each declared dependency a witness that deliberately changes it and verifies refresh or conservative refusal.
+The HTML Bridge leverages this exact same invalidation mechanism. Rather than querying the engine for state, the HTML Bridge subscribes to the Derived State Ledger's invalidation events.
 
-A targeted UI update is a possible *downstream optimization*, not an existing guarantee of the Derived-State Ledger. Neither zero polling nor perfect synchronization follows merely from placing the two documents together.
+1. **Subscription:** The Foreign web app declares its data dependencies (e.g., "I need to display the position of Object A").
+2. **Ledger Binding:** The HTML Bridge translates this into a subscription to the Derived State Ledger for Object A's position property.
+3. **Mutation and Invalidation:** When a Law mutates Object A's position, the Derived State Ledger invalidates its cache.
+4. **Targeted Push:** The Ledger immediately broadcasts this invalidation to all subscribers, including the HTML Bridge.
+5. **UI Update:** The HTML Bridge pushes the new state directly to the web app, triggering a targeted DOM update.
 
-**Boundary:** Authored Laws govern the legible native mirror; the browser remains authoritative for the live DOM, and the Foreign adapter must not become an uninspectable second source of ontology.
+**Conclusion:** The interrelation ensures that the UI is both perfectly accurate and highly performant. The Foreign modality is not a blind polling system; it is directly integrated into the engine's core ontological state caching mechanism, achieving "push-based" real-time reactivity without violating the "No Black Box" boundary.
