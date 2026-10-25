@@ -78,18 +78,30 @@ int main() {
         return 1;
     }
 
-    // Copy authored inputs without retaining symlinks back into the real save tree:
-    // subsequent hydration/persistence must be confined to this scratch root.
-    std::filesystem::copy(savesDir, scratch.path,
-                          std::filesystem::copy_options::recursive |
-                              std::filesystem::copy_options::skip_symlinks, ec);
+    // Stage only the world and Zone identity under test, not the entire authored
+    // saves tree (which can be gigabytes). Never retain symlinks into real saves.
+    const auto sandboxWorld = scratch.path / "worlds" / "sanctuary_of_sunlit_mist.json";
+    const auto sandboxZone = scratch.path / "zones" / "Sanctuary of Sunlit Mist";
+    std::filesystem::create_directories(sandboxWorld.parent_path(), ec);
+    if (!ec) {
+        std::filesystem::copy_file(absWorld, sandboxWorld, std::filesystem::copy_options::none, ec);
+    }
+    if (!ec) {
+        std::filesystem::create_directories(sandboxZone.parent_path(), ec);
+    }
+    if (!ec) {
+        std::filesystem::copy(savesDir / "zones" / "Sanctuary of Sunlit Mist", sandboxZone,
+                              std::filesystem::copy_options::recursive |
+                                  std::filesystem::copy_options::skip_symlinks, ec);
+    }
     if (ec) {
-        std::cout << "sanctuary_of_sunlit_mist_test: FAILED (cannot copy saves tree: " << ec.message() << ")\n";
+        std::cout << "sanctuary_of_sunlit_mist_test: FAILED (cannot stage isolated saves: "
+                  << ec.message() << ")\n";
         return 1;
     }
 
     SaveSystem::setSaveRoot(scratch.path.string());
-    const std::string sandboxWorldPath = (scratch.path / "worlds" / "sanctuary_of_sunlit_mist.json").string();
+    const std::string sandboxWorldPath = sandboxWorld.string();
 
     ZoneManager mgr;
     Core::Camera camera;
