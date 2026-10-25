@@ -156,6 +156,15 @@ void test_distinct_perspectives_same_spelling() {
     assert(manager.currentIndex() == 0);
     assert(manager.current()->getType() == PersonPerspective::PerspectiveType::TopDown);
 
+    // Attempting lookup/switch by shared display name must return ambiguous refusal (-1) and not switch
+    size_t foundIndex = manager.findPerspective("Overhead View");
+    assert(foundIndex == static_cast<size_t>(-1));
+
+    manager.switchTo("p2_cam");
+    assert(manager.currentIndex() == 1);
+    manager.switchTo("Overhead View");
+    assert(manager.currentIndex() == 1); // Remained at index 1 because display name is ambiguous
+
     // Duplicate identifier should still be rejected
     manager.addPerspective(std::make_unique<PersonPerspective>("p1_cam", "Overhead View", PersonPerspective::PerspectiveType::FreeCamera));
     assert(manager.count() == 2);
