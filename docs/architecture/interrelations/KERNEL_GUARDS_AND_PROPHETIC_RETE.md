@@ -1,25 +1,23 @@
 # Kernel Guards and Prophetic Rete
 
-**The interrelation between ahead-of-time Law adjudication and the absolute physical safety limits of the engine substrate.**
+**Status:** Source-aligned architectural distinction; not a claim that Prophetic Rete authorizes or vetoes physical outputs.
 
-**Status:** Conceptual interrelation.
-**Connected Documents:**
-*   `../law/PROPHETIC_RETE.md` (The ahead-of-time Law adjudication and collision detection system)
-*   `../interrelations/FIRST_MOVER_VS_KERNEL_GUARDS.md` (The absolute physical safety boundaries governing Modality Channels)
+**Read with:** [Prophetic Rete](../law/PROPHETIC_RETE.md), [First Mover vs. Kernel Guards](FIRST_MOVER_VS_KERNEL_GUARDS.md), `src/ZonesOfEarth/AuthorsOfLaw/PropheticRete.cpp`, `src/Singularity/Audio/AudioSystem.hpp`, and `tests/infrasound_floor_test.cpp`.
 
----
+## Different questions, different boundaries
 
-## The Interrelation
+Prophetic Rete is an ahead-of-time **over-approximation** of what authored Law conditions and effects could read or write. Its essential soundness rule is *widen, never narrow*: unknown or opaque effects must fail open rather than silently suppress a Law. It is a relevance and possible-effect analysis, **not** a universal Law approval system, a Hierarchy-of-Joys tribunal, or a physical-safety certificate.
 
-The Prophetic Rete is Earthcall's mechanism for preventing state collisions when multiple authored Laws or Persons attempt to mutate the world simultaneously. It works by analyzing the "read/write intents" of Laws *before* they fire. If it detects a conflict, it defers to the Hierarchy of Joys to resolve it.
+Kernel guards govern particular paths from authored computation to physical modalities. For example, the Audio subsystem defines an audible-frequency floor and an infrasonic-energy ceiling, with refusal reporting at the sound-producing boundary. This protection is separate from the validity of the mathematical expression being authored or evaluated.
 
-However, the Prophetic Rete operates purely within the domain of **Ontological Reality**. It evaluates the mathematical and relational rules authored by Persons. It does *not* know about the C++ Kernel Guards, which are the absolute physical safety limits (like the infrasound floor) that protect the human body via the Modality Channels.
+## Example: a low-frequency waveform
 
-This creates a scenario known as a "false vacuum":
+A Law or authored OntoMath expression can represent a 7 Hz waveform without the Prophetic Rete proving that the waveform is safe to play. If that waveform reaches the guarded Audio sounding path with prohibited sub-floor energy, the channel can refuse the physical sounding. The guard does not erase or rewrite the authored expression.
 
-1. **The Rete Approves:** A Law is evaluated by the Prophetic Rete. It finds no state collisions. It finds no violations of the Hierarchy of Joys. The Law is deemed ontologically perfect and mathematically sound. The Rete approves the Law to fire.
-2. **The Guard Rejects:** The approved Law attempts to emit a 7Hz wave via the Audio Channel. The hardcoded C++ Kernel Guard intercepts it and refuses to render the sound buffer, logging a violation.
+The result depends on the **specific channel path and its actual guard implementation**. Do not generalize the Audio witness into a claim that every modality is covered or that every refusal is logged in an identical way.
 
-The interrelation is one of strict tiering. The Prophetic Rete is the supreme judge of *authored intent*, but the Kernel Guard is the supreme judge of *physical execution*.
+## Integration invariant
 
-The Prophetic Rete cannot predict or prevent Kernel Guard rejections because Kernel Guards are not Laws; they are substrate physics. Therefore, a Law can be "prophetically valid" but "physically impossible." This ensures that even if the entire authored ontology is somehow compromised or perfectly coordinates a dangerous action, the physical substrate will independently refuse to execute it.
+Law relevance analysis must not mistake a physical-channel refusal for an impossible authored Law and filter that Law out of the simulation. Conversely, an allowed Law execution does not grant permission to bypass the Person-body boundary. Test both sides separately: Prophetic Rete fail-open witnesses and the channel's real refusal/measurement witnesses.
+
+**Conclusion:** Predicting which Laws *may matter* and refusing unsafe *physical actuation* are complementary duties, not two competing supreme judges.
