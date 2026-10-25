@@ -549,3 +549,23 @@ Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09
 
 Signed: Aetherion / The Firmament / `2026-10-24T01:40:00-07:00`.
 
+
+## §6df & Firmament Post-`§6df` Counsel — Native Metal `§6de` Results, A Priori vs. Posterior Query-Family Shape Census, and `§6dg` Single-Pass Residual Program Blueprint (2026-10-24)
+
+[`§6df` audit](../../../docs/audits/GPU_RAY_TRANSPORT_6DF_STRUCTURAL_CENSUS_AND_GENERIC_QUERY_FAMILY_2026-10-24.md), [`§6df` machine record](../../../docs/audits/GPU_RAY_TRANSPORT_6DF_STRUCTURAL_CENSUS_AND_GENERIC_QUERY_FAMILY_2026-10-24.json), [Firmament post-`§6df` counsel & `§6dg` blueprint](../../../docs/audits/FIRMAMENT_COUNSEL_POST_6DF_APRIORI_SHAPES_AND_6DG_BLUEPRINT_2026-10-24.md).
+
+1. **Native Apple M5 Metal Execution of All 5 `§6de` Candidates (`Sparkly Guy`, `f29ee3b16`):**
+   - All 5 `§6de` binaries pass **100.0% bit-exact schedule and pixel parity (`0 / 32,784` pixel diffs, `0 / 247,326` subpanel diffs, `0` fallbacks)** on Apple M5 Metal.
+   - All 5 lose at `rep=2, 4` to `§6dd` (`coarse-monotone-bowskip-wide`, `+0.28%` / `7 µs` from `Current Marcher`): `cnoise3-pair-wide` (`+0.09% / +11.60% / +17.05%`), `cnoise3-pair` (`+7.43% / +1.70% / +13.19%`), `tile-beam-wide` (`+0.57% / +16.86% / +18.07%`), `tile-beam` (`+1.40% / +30.83% / +20.45%`), and `combined-ancients-wide` (`+4.97% / +27.12% / +29.02%`).
+   - **Structural Cause:** Keeping the monolithic 4-curtain + `18.87 MB` global-buffer two-pass pipeline intact while adding in-shader mechanism (`+10` scalar registers in `cnoise3Pair` or `720 B` LDS + two `workgroupBarrier()` calls per curtain in `tile-beam`) penalizes shader execution more than the leaf/knot savings recover.
+2. **Firmament's Four Mandatory Corrections to `§6df` (`Aetherion / The Firmament`):**
+   - **A Priori Certified Shapes vs. Posterior Oracle Shapes:** `ray_transport_gpu_6df_structural_census.cpp` classified tiles using `grpActiveMembers` and `grpHasOverlaps` *after* full per-ray root isolation (the **Posterior Oracle**, `93.91%` `NO_OVERLAP`). Firmament's C++20 verification establishes the exact **A Priori** hierarchy on `2,304` `4×4` tiles (`32,784` rays):
+     - **Tier 0 (Pure AABB Slab `grpBoxHits`):** `4` shapes, **`0.00%` (`0 / 32,784`) `NO_OVERLAP`**.
+     - **Tier 1 (Uncorrelated Frustum-Box Lipschitz):** `10` shapes, **`68.12%` (`22,334 / 32,784`) `NO_OVERLAP`**.
+     - **Tier 2 (A Priori 9-Knot Reference-Ray + Cross-Ray Lipschitz + Secant-Bow Certificate):** Collapses a priori to **the exact same `7` coarse shapes** (`S1..S7`) as the Posterior Oracle and certifies **`83.94%` (`27,518 / 32,784` rays) as `NO_OVERLAP` a priori with `0` false skips (`100.0%` sound)**!
+   - **Un-Subdivided Analytical Spans (`35,986`) vs. $4\text{ m}$ Subpanels (`247,326`) & Scalar `prev_rho` Endpoint Forwarding:** `ray_transport_gpu_6df_structural_census.cpp` omitted the $4\text{ m}$ subpanel subdivision loop (`n = ceil((b-a)/4.0)`), revealing that all `247,326` single-medium subpanels come from just **`35,986` smooth contiguous positive intervals (`1.098` intervals/ray, `6.87` contiguous subpanels/interval)**. Forwarding the exit density `rho_b` of subpanel $j$ in a single scalar register `prev_rho` as the entry density `rho_a` of subpanel $j+1$ inside each contiguous interval cuts `494,652` endpoint evaluations down to **`283,312` (`-42.73%` of all `cnoise3` and envelope calls)** with **100.0% bit-exact IEEE-754 identity and `0` extra gradient registers**!
+   - **Priority 3 Generic `OntoMath` Two-Expression Witness:** Wired specification for `Expression Family A` (Trigonometric Wave Sheet) + `Expression Family B` (Euclidean Radial Shell) so `KC3` rests on two differently-authored `OntoMath` expressions rather than Northern Veil alone.
+   - **Blueprint for `§6dg`:** Replace in-kernel LDS/barriers and the `18.87 MB` two-pass schedule roundtrip with **(a) Pass 0 `classifyTilesMain` (`2,304` threads = `36` workgroups, 1 thread per `4×4` tile, `0` LDS, `0` barriers, `< 0.015 ms`)** emitting an `8-byte` `TileResidualProgram`, and **(b) Pass 1 Single-Pass Specialized Residual Execution** integrating the `83.94%` certified `NO_OVERLAP` tiles on the fly in registers with scalar `prev_rho` endpoint forwarding.
+
+Signed: Aetherion / The Firmament / `2026-10-24T22:15:00-07:00`.
+
