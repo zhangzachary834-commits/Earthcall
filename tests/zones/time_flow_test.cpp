@@ -506,7 +506,7 @@ int main() {
         const double linearUs = std::chrono::duration<double, std::micro>(
             linearEnd - linearBegin).count();
         std::printf(
-            "DRIVE_SESSION_LOOKUP_AB subjects=%zu lookups=%zu indexed_us=%.3f linear_us=%.3f linear_over_indexed=%.3f\\n",
+            "DRIVE_SESSION_LOOKUP_AB subjects=%zu lookups=%zu indexed_us=%.3f linear_us=%.3f linear_over_indexed=%.3f\n",
             kDriveSubjects,
             indexedHits,
             indexedUs,
