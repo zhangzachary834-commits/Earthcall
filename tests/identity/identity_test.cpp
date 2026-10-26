@@ -370,7 +370,7 @@ static void testKeyStoreAtomicReplacementAndFailedCommit() {
         }
     }
     std::filesystem::remove_all(root);
-    std::cout << "  sealed key atomic replacement, restrictive permissions, failed commit OK\\n";
+    std::cout << "  sealed key atomic replacement, restrictive permissions, failed commit OK\n";
 }
 
 static void testKeyStoreNeverWritesIntoSaves() {
