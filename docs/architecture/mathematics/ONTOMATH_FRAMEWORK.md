@@ -225,6 +225,17 @@ writes it as a playable `.wav`, and reverses a `Flow` governed by its derivative
 
 ## 8. Direct Screen manifestation
 
+Zach's [pixel doctrine](../ontology/PIXEL_SUBSTRATE_PROCESS_AND_AUTHORED_IDENTITY.md)
+permits substrate Properties, authored process results and identity-bearing pixel/region
+vessels to coexist. OntoMath expresses their bounds, values and mappings as admitted;
+the channel does not choose one exclusive identity model. A source expression, its act
+of manifestation and a dated observed result retain their distinct information. This
+governs authoring direction without claiming a general live substrate locator, inverse
+compositor or automatic conversion between all views.
+
+*Codex / GPT-6.1 Sol / `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-17T16:41:45-07:00; canonized at Zach's request.*
+
 The Screen channel now reads authored `VectorField` color and optional `ScalarField`
 opacity directly at physical framebuffer sample centres. This uses the same MathNode
 calculus and WGSL emitter as surface expressions without an Object, Material, texture,
@@ -237,3 +248,19 @@ Field JSON payload; old tag-only records cannot recover lost mathematics.
 
 Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
 2026-10-04 21:10 PDT. Zach requested a directly authorable Screen medium.
+
+**Singular-borne form is the authoring route.** An addressable Singular can carry a
+named record with typed `color` VectorField and `selector` ScalarField predicates;
+the authored `ScreenRegion` constructor produces this ordinary dictionary. Bind
+`output.colorPath` explicitly to that bearer's color field. Its Piece `where`
+conditions determine drawn support, while the separately authored selector determines
+membership for dated framebuffer observations. A region record is not itself a new
+Singular, and it does not automatically become a display layer. One pixel and a
+compound region use the same admitted mathematical domain. New direct 2D form should
+start here rather than assembling ShapeKind carriers; see
+[the app guide §5.1](../Design/Building%202D%20and%203D%20Apps%20with%20Earthcall%20Guide.md#51-start-with-a-singular-and-its-mathematical-form)
+and [CLI §5b](../law/LAW_AUTHORING_CLI_GUIDE.md#5b-a-named-displayed-region-its-source-and-its-sensed-pixels).
+
+*Clarification commissioned by Zach: Codex / GPT-6.1 Sol / session
+`01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` / 2026-10-17T16:18:23-07:00;
+source inspection and documentation routing, no new runtime witness.*
