@@ -14,7 +14,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 
-#include <GLFW/glfw3.h>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -45,18 +44,9 @@ OntoMath::Piecewise everywhereInT(OntoMath::ScalarForm e) {
 } // namespace
 
 int main() {
-    if (!glfwInit()) {
-        std::fprintf(stderr, "time_flow_test: glfwInit failed\n");
-        return 1;
-    }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "time_flow_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "time_flow_test: no GL context\n");
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
+    // CPU-only LawManager and OntoMath witness. Do not require a GLFW window:
+    // hosted macOS CI runners have no interactive display/GL context, and
+    // none of the assertions below exercise rendering.
 
     {
         Object author;
@@ -416,11 +406,65 @@ int main() {
         assert(mgr.driveSessions().empty());
         pursue->setEnabled(false);
 
+
+        // ------------------------------------------------------------------
+        // 9. An index must not change the first-match identity contract.
+        //    A provider can expose two distinct Objects with the same
+        //    identifier; the original linear lookup selected the FIRST.
+        //    A hash map that overwrites duplicates instead drives the LAST.
+        //    Also verify the existing Law-target fallback when the provider
+        //    no longer supplies the subject.
+        // ------------------------------------------------------------------
+        Object firstDuplicate, laterDuplicate;
+        firstDuplicate.setObjectID("shared-drive-identifier");
+        laterDuplicate.setObjectID("shared-drive-identifier");
+        firstDuplicate.setPosition(glm::vec3(0.0f, 5.0f, 0.0f));
+        laterDuplicate.setPosition(glm::vec3(0.0f, 99.0f, 0.0f));
+        Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+            beings.push_back(&firstDuplicate);
+            beings.push_back(&laterDuplicate);
+        });
+
+        auto sameIdDrive = mgr.createLaw("first-match-drive", {&author});
+        sameIdDrive->setDrives(true);
+        sameIdDrive->setActionModel(ActionNode::map(
+            "position.y",
+            boundedInT(OntoMath::ScalarForm::variable("t", 1.0, 2.0), 0.0, 2.0),
+            tBinding));
+        const std::size_t alphaDuplicate = mgr.rete().addAlphaNode(
+            "type == duplicate-drive",
+            [](const FactPtr& f) { return f->type == "duplicate-drive"; });
+        mgr.rete().bindLawToAlpha(sameIdDrive->getIdentifier(), alphaDuplicate);
+
+        Universe::instance().setClock(800.0, 0.1);
+        Core::EventBus::instance().publish(
+            ECA::Event{"duplicate-drive", &firstDuplicate, nullptr, std::time(nullptr)});
+        mgr.tick();
+        assert(mgr.driveSessions().size() == 1);
+        assert(nearf(firstDuplicate.getPosition().y, 0.0f));
+        assert(nearf(laterDuplicate.getPosition().y, 99.0f));
+
+        Universe::instance().setClock(801.0, 0.1);
+        mgr.tick();
+        assert(nearf(firstDuplicate.getPosition().y, 2.0f));
+        assert(nearf(laterDuplicate.getPosition().y, 99.0f));
+
+        // The provider no longer has the subject, but the Law explicitly
+        // retains it as a target: the original fallback must still work.
+        sameIdDrive->addTarget(firstDuplicate);
+        Universe::instance().setProvider({});
+        Universe::instance().setClock(802.0, 0.1);
+        mgr.tick();
+        assert(nearf(firstDuplicate.getPosition().y, 4.0f));
+        assert(nearf(laterDuplicate.getPosition().y, 99.0f));
+
+        Universe::instance().setClock(803.0, 0.1);
+        mgr.tick();
+        assert(mgr.driveSessions().empty());
+
         Universe::instance().setProvider({});              // leave no dangling refs
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
     std::puts("time_flow_test: ALL OK");
     return 0;
 }
