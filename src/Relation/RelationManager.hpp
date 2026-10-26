@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <cstdint>
 #include <memory>
 #include <unordered_map>
 #include "Relation.hpp"
@@ -153,6 +154,7 @@ private:
     void ensureStringIndexFresh() const;
     std::size_t _generation = 0;
     mutable std::size_t _indexedGeneration = static_cast<std::size_t>(-1);
+    mutable std::uint64_t _indexedEndpointEpoch = 0;
     mutable std::unordered_map<const Singular*, std::vector<Relation*>> _byEndpoint;
     mutable std::unordered_map<std::string, std::vector<Relation*>> _byIdentifier;
     mutable std::unordered_map<const Singular*, std::string> _boundIds;
