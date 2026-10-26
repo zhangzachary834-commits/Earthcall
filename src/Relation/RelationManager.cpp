@@ -181,6 +181,7 @@ void RelationManager::rebuildEndpointIndex() const {
         if (!bId.empty() && bId != aId) _byIdentifier[bId].push_back(r);
     }
     _indexedGeneration = _generation;
+    _indexedEndpointEpoch = Relation::endpointMutationEpoch();
 }
 
 // String queries cannot assume an index built before an unannounced identifier
@@ -190,7 +191,11 @@ void RelationManager::rebuildEndpointIndex() const {
 // before using the index; this is O(bound beings + degree), NOT unconditional
 // O(degree). A truly O(degree) path requires an explicit identity-change signal.
 void RelationManager::ensureStringIndexFresh() const {
-    if (_indexedGeneration != _generation) {
+    // Direct Relation::bind/forgetEndpoint calls do not touch this manager.
+    // The process-wide epoch makes such mutations visible without walking all
+    // relations on every string query. Rebuild only when the epoch changes.
+    if (_indexedGeneration != _generation ||
+        _indexedEndpointEpoch != Relation::endpointMutationEpoch()) {
         rebuildEndpointIndex();
         return;
     }
