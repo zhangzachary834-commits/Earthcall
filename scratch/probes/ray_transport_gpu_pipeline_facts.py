@@ -4,7 +4,7 @@ Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-10-25.
 """
 import argparse,ast,json,hashlib,importlib.util,subprocess,shlex,os,re
 from pathlib import Path
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('variant',choices=['disjoint','cert']);p.add_argument('--root',type=Path,required=True);p.add_argument('--build-root',type=Path,required=True);p.add_argument('--work',type=Path,required=True);p.add_argument('--case',type=Path,required=True);p.add_argument('--capture',action='store_true');a=p.parse_args();root=a.root.resolve();buildRoot=a.build_root.resolve();b=buildRoot/'build';work=a.work.resolve();base=root/'scratch/probes'
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('variant',choices=['disjoint','cert','disjoint-trimmed','cert-trimmed','disjoint-stream-merge','cert-stream-merge']);p.add_argument('--root',type=Path,required=True);p.add_argument('--build-root',type=Path,required=True);p.add_argument('--work',type=Path,required=True);p.add_argument('--case',type=Path,required=True);p.add_argument('--capture',action='store_true');a=p.parse_args();root=a.root.resolve();buildRoot=a.build_root.resolve();b=buildRoot/'build';work=a.work.resolve();base=root/'scratch/probes'
 if work.exists() or root==work or root in work.parents:raise ValueError('fresh external work required')
 work.mkdir(parents=True,exist_ok=False)
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
@@ -13,7 +13,20 @@ for r in [root,buildRoot]:
  if subprocess.check_output(['git','rev-parse','HEAD:src'],cwd=r,text=True).strip()!='3603add4018961529a91bc9592d76f9a553500b1':raise ValueError('engine changed')
 spec=importlib.util.spec_from_file_location('sixdd',root/'scratch/probes/ray_transport_gpu_6dd_continuation.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
 v={x.targets[0].id:ast.literal_eval(x.value) for x in ast.parse((root/'scratch/probes/ray_transport_metal_diagnostic.py').read_text()).body if isinstance(x,ast.Assign) and isinstance(x.value,ast.Constant) and isinstance(x.value.value,str)}
-cpp=(m.disjoint_fastpath_source if a.variant=='disjoint' else m.ux_tile_cert_disjoint_source)(v['CPP_SOURCE'],root,True)
+if a.variant=='disjoint':
+ cpp=m.disjoint_fastpath_source(v['CPP_SOURCE'],root,True,scratch_trimmed=False)
+elif a.variant=='disjoint-trimmed':
+ cpp=m.disjoint_fastpath_source(v['CPP_SOURCE'],root,True,scratch_trimmed=True)
+elif a.variant=='disjoint-stream-merge':
+ cpp=m.disjoint_fastpath_source(v['CPP_SOURCE'],root,True,scratch_trimmed=True,stream_merge=True)
+elif a.variant=='cert':
+ cpp=m.ux_tile_cert_disjoint_source(v['CPP_SOURCE'],root,True,scratch_trimmed=False)
+elif a.variant=='cert-trimmed':
+ cpp=m.ux_tile_cert_disjoint_source(v['CPP_SOURCE'],root,True,scratch_trimmed=True)
+elif a.variant=='cert-stream-merge':
+ cpp=m.ux_tile_cert_disjoint_source(v['CPP_SOURCE'],root,True,scratch_trimmed=True,stream_merge=True)
+else:
+ raise ValueError('unknown variant: '+a.variant)
 original=cpp
 needle='int main(int argc, char** argv) {';assert cpp.count(needle)==1;cpp=cpp.replace(needle,'extern "C" void rtInstallMetalObserver();\nextern "C" void rtMetalSetContext(const char*,const char*,size_t);\n'+needle+'\n    rtInstallMetalObserver();')
 # Attach exact WGSL source identity at the same synchronous create call. Labels,
@@ -26,7 +39,7 @@ if a.capture:
  hook='        for(int k=0;k<2;++k){execute(0,1,false);execute(1,1,false);execute(2,1,false);execute(3,1,false);}'
  assert cpp.count(hook)==1
  captures=''
- for mode,label in ([(0,'current'),(3,'disjoint')] if a.variant=='disjoint' else [(3,'cert')]):
+ for mode,label in ([(0,'current'),(3,a.variant)] if 'disjoint' in a.variant else [(3,a.variant)]):
   captures+='        rtBeginCapture("'+str(work/(label+'.gputrace'))+'"); execute('+str(mode)+',1,false); rtEndCapture();\n'
  cpp=cpp.replace(hook,captures+hook)
 (work/'probe.cpp').write_text(cpp);(work/'unobserved.cpp').write_text(original)
