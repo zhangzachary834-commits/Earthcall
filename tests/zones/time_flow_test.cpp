@@ -14,6 +14,13 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -463,6 +470,80 @@ int main() {
         assert(mgr.driveSessions().empty());
 
         Universe::instance().setProvider({});              // leave no dangling refs
+    }
+
+
+    // Reproducible, algorithm-level A/B for the drive-session being resolver.
+    // Includes per-pass index construction, excludes unrelated Law execution.
+    // Timing is observational: correctness is mandatory, speedup is not.
+    for (const std::size_t count : {std::size_t{200}, std::size_t{1200}}) {
+        std::vector<std::string> identifiers;
+        identifiers.reserve(count);
+        for (std::size_t i = 0; i < count; ++i) {
+            identifiers.push_back("being-" + std::to_string(i));
+        }
+        identifiers.back() = identifiers.front(); // duplicate: first wins
+        std::vector<std::string> queries;
+        for (std::size_t q = 0; q < 600; ++q) {
+            queries.push_back("being-" + std::to_string((q * 13) % (count - 1)));
+        }
+        queries.push_back(identifiers.front());
+        queries.push_back("missing-being");
+
+        const auto scan = [&]() -> std::size_t {
+            std::size_t checksum = 0;
+            for (const auto& query : queries) {
+                for (std::size_t i = 0; i < identifiers.size(); ++i) {
+                    if (identifiers[i] == query) {
+                        checksum += i + 1;
+                        break;
+                    }
+                }
+            }
+            return checksum;
+        };
+        const auto indexed = [&]() -> std::size_t {
+            std::unordered_map<std::string, std::size_t> index;
+            index.reserve(identifiers.size());
+            for (std::size_t i = 0; i < identifiers.size(); ++i) {
+                index.emplace(identifiers[i], i); // first insertion wins
+            }
+            assert(index.at(identifiers.front()) == 0);
+            std::size_t checksum = 0;
+            for (const auto& query : queries) {
+                const auto it = index.find(query);
+                if (it != index.end()) checksum += it->second + 1;
+            }
+            return checksum;
+        };
+        const auto timed = [](const auto& operation) {
+            const auto start = std::chrono::steady_clock::now();
+            const std::size_t checksum = operation();
+            const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
+                std::chrono::steady_clock::now() - start).count();
+            return std::make_pair(elapsed, checksum);
+        };
+
+        std::array<long long, 3> scanUs{}, indexedUs{};
+        std::size_t referenceChecksum = 0;
+        for (std::size_t trial = 0; trial < 3; ++trial) {
+            // Alternate order to reduce systematic warm-cache bias.
+            const auto first = (trial % 2 == 0) ? timed(scan) : timed(indexed);
+            const auto second = (trial % 2 == 0) ? timed(indexed) : timed(scan);
+            const auto scanResult = (trial % 2 == 0) ? first : second;
+            const auto indexResult = (trial % 2 == 0) ? second : first;
+            if (scanResult.second != indexResult.second) {
+                std::fprintf(stderr, "drive index A/B semantic mismatch\n");
+                return 1;
+            }
+            referenceChecksum = scanResult.second;
+            scanUs[trial] = scanResult.first;
+            indexedUs[trial] = indexResult.first;
+        }
+        std::sort(scanUs.begin(), scanUs.end());
+        std::sort(indexedUs.begin(), indexedUs.end());
+        std::printf("LAW_DRIVE_BEING_INDEX_AB nodes=%zu queries=%zu scan_median_us=%lld indexed_median_us=%lld checksum=%zu\n",
+                    count, queries.size(), scanUs[1], indexedUs[1], referenceChecksum);
     }
 
     std::puts("time_flow_test: ALL OK");

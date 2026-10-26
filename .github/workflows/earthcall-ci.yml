@@ -175,6 +175,14 @@ jobs:
             exit 1
           fi
 
+      - name: Run Law drive being-index A/B witness
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./build/time_flow_test | tee law-drive-index-ab.log
+          grep -F 'LAW_DRIVE_BEING_INDEX_AB nodes=200' law-drive-index-ab.log
+          grep -F 'LAW_DRIVE_BEING_INDEX_AB nodes=1200' law-drive-index-ab.log
+
       - name: Run focused regression witnesses
         shell: bash
         run: |
