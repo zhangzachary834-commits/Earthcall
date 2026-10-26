@@ -31,14 +31,10 @@ Voice Voice::createBasicVoice(const std::string& style) {
 
 VoicePart* Voice::getVoicePart(const std::string& name) const {
     for (auto* part : parts) {
-        if (part && part->getIdentifier() == name) {
-            return part;
-        }
+        if (part && part->getIdentifier() == name) return part;
     }
     for (auto* part : parts) {
-        if (part && part->getName() == name) {
-            return part;
-        }
+        if (part && part->getName() == name) return part;
     }
     return nullptr;
 }
@@ -46,7 +42,7 @@ VoicePart* Voice::getVoicePart(const std::string& name) const {
 std::vector<VoicePart*> Voice::getVoicePartsByType(VoicePart::Type type) const {
     std::vector<VoicePart*> result;
     for (auto* part : parts) {
-        if (part && part->getType() == type) {
+        if (part->getType() == type) {
             result.push_back(part);
         }
     }
@@ -54,19 +50,22 @@ std::vector<VoicePart*> Voice::getVoicePartsByType(VoicePart::Type type) const {
 }
 
 void Voice::removeVoicePart(const std::string& name) {
-    auto itId = std::find_if(parts.begin(), parts.end(), [&](const VoicePart* p) {
-        return p && p->getIdentifier() == name;
-    });
-    if (itId != parts.end()) {
-        parts.erase(itId);
+    auto byId = std::find_if(parts.begin(), parts.end(),
+        [&name](const VoicePart* part) {
+            return part && part->getIdentifier() == name;
+        });
+    if (byId != parts.end()) {
+        formation.releaseMember(*byId);
+        parts.erase(byId);
         return;
     }
-    auto it = std::remove_if(parts.begin(), parts.end(), [&](const VoicePart* p) {
-        return p && p->getName() == name;
-    });
-    if (it != parts.end()) {
-        parts.erase(it, parts.end());
-        // Formation element removal logic would be handled here as well.
+    for (auto it = parts.begin(); it != parts.end();) {
+        if (*it && (*it)->getName() == name) {
+            formation.releaseMember(*it);
+            it = parts.erase(it);
+        } else {
+            ++it;
+        }
     }
 }
 

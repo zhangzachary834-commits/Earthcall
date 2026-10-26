@@ -43,10 +43,8 @@ class BodyPart : public Formation {
     // Accessors
     const std::string& getName() const { return partName; }
     Type getType() const { return partType; }
-    std::string getIdentifier() const override {
-        const std::string id = Formation::getIdentifier();
-        return id.empty() ? partName : id;
-    }
+    // Formation owns this being's unique identifier; partName is a display label.
+    // Callers needing a stable authored slug may use inherited setIdentifier().
     glm::mat4 getTransform() const { return _transform; }
     // transform ∘ scale(dimensions): the geometry the primary manifestation
     // is DRAWN and COLLIDED with. Before 2026-10-13 this was named

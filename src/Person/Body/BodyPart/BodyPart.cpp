@@ -30,9 +30,6 @@ BodyPart::BodyPart(const std::string& name, Type type,
                    ObjectTypes::ShapeKind geometryType, const glm::vec3& dimensions)
     : Formation(), partName(name), partType(type), _dimensions(dimensions)
 {
-    if (!name.empty()) {
-        setIdentifier(name);
-    }
     isLiteral = true;
     isSymbolic = false;
     _localTransform = glm::mat4(1.0f);
