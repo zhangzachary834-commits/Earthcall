@@ -50,6 +50,8 @@ def generate_cpp_source(root: Path, mutation: str = 'fixed') -> str:
 
     lines = wgsl_full.splitlines()
     end_idx = next(i for i, l in enumerate(lines) if 'fn producerFastMain' in l)
+    while end_idx > 0 and lines[end_idx - 1].strip().startswith('@'):
+        end_idx -= 1
     helper_code = '\n'.join(lines[:end_idx])
     helper_code = helper_code.replace('var<storage,read> curtains:array<CurtainSpec,4>;', 'var<uniform> curtains: array<CurtainSpec, 4>;')
     wgsl_full = wgsl_full.replace('var<storage,read> curtains:array<CurtainSpec,4>;', 'var<uniform> curtains: array<CurtainSpec, 4>;')
@@ -132,9 +134,9 @@ struct ProducerConfig {
 
 struct DispatchCounters {
     uint32_t s1Count;
+    uint32_t s2Count;
     uint32_t fallbackCount;
     uint32_t pad0;
-    uint32_t pad1;
 };
 
 // ----------------------------------------------------------------------------
@@ -193,9 +195,9 @@ struct Ray {
 
 struct DispatchCounters {
     s1Count: atomic<u32>,
+    s2Count: atomic<u32>,
     fallbackCount: atomic<u32>,
     pad0: u32,
-    pad1: u32,
 };
 
 @group(0) @binding(0) var<uniform> curtains: array<CurtainSpec, 4>;
@@ -203,8 +205,9 @@ struct DispatchCounters {
 @group(0) @binding(2) var<storage, read> tileOffsets: array<u32, 2305>;
 @group(0) @binding(3) var<storage, read> tileRayIndices: array<u32>;
 @group(0) @binding(4) var<storage, read_write> s1TileList: array<u32>;
-@group(0) @binding(5) var<storage, read_write> fallbackTileList: array<u32>;
-@group(0) @binding(6) var<storage, read_write> counters: DispatchCounters;
+@group(0) @binding(5) var<storage, read_write> s2TileList: array<u32>;
+@group(0) @binding(6) var<storage, read_write> fallbackTileList: array<u32>;
+@group(0) @binding(7) var<storage, read_write> counters: DispatchCounters;
 
 fn evalWave(cur: CurtainSpec, x: f32) -> f32 {
     return cur.amps.x * sin(cur.freqs.x * x + cur.phases.x) +
@@ -350,6 +353,9 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
     if (activeMemberMask == 1u && !tileCanOverlap) {
         let slot = atomicAdd(&counters.s1Count, 1u);
         s1TileList[slot] = tileId;
+    } else if (activeMemberMask == 3u && !tileCanOverlap) {
+        let slot = atomicAdd(&counters.s2Count, 1u);
+        s2TileList[slot] = tileId;
     } else {
         let slot = atomicAdd(&counters.fallbackCount, 1u);
         fallbackTileList[slot] = tileId;
@@ -364,7 +370,7 @@ static const char* kRouteArgsWgsl = R"WGSL(
 @group(0) @binding(0) var<storage, read> counts: array<u32>;
 @group(0) @binding(1) var<storage, read_write> args: array<u32>;
 @compute @workgroup_size(1) fn routeArgs(@builtin(global_invocation_id) id: vec3u) {
-    if (id.x >= 2u) { return; }
+    if (id.x >= 3u) { return; }
     let n = min(counts[id.x], 2304u);
     args[3u * id.x] = (n + 3u) / 4u;
     args[3u * id.x + 1u] = 1u;
@@ -519,6 +525,136 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
 )WGSL";
 '''
 
+
+    # Now add kS2ProducerWgsl (Specialized Disjoint Producer for Members 0 & 1)
+    src += r'''// ----------------------------------------------------------------------------
+// 3b. S2 Specialized Producer WGSL: Pass 2b (Disjoint Members 0 & 1 Producer)
+// ----------------------------------------------------------------------------
+static const char* kS2ProducerWgsl = R"WGSL(
+''' + helper_code + r'''
+@group(0) @binding(5) var<storage, read> tileOffsets: array<u32, 2305>;
+@group(0) @binding(6) var<storage, read> tileRayIndices: array<u32>;
+@group(0) @binding(7) var<storage, read> s2TileList: array<u32>;
+@group(0) @binding(8) var<storage, read> routeCounts: array<u32>;
+@group(0) @binding(9) var<storage, read_write> writes: array<atomic<u32>>;
+
+@compute @workgroup_size(64, 1, 1)
+fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_index) lid: u32) {
+    let localTile = lid >> 4u;
+    let rayInTile = lid & 15u;
+    let tileSlot = wid.x * 4u + localTile;
+'''
+    if mutation == 'no-tail':
+        src += '    if (tileSlot >= min(routeCounts[1u] + 4u, 2304u)) { return; }\n'
+    else:
+        src += '    if (tileSlot >= min(routeCounts[1u], 2304u)) { return; }\n'
+
+    src += r'''    let tileId = s2TileList[tileSlot];
+    if (tileId >= 2304u) { return; }
+    let rayStart = tileOffsets[tileId];
+    let rayCount = tileOffsets[tileId + 1u] - rayStart;
+    if (rayInTile >= rayCount) { return; }
+    let id = tileRayIndices[rayStart + rayInTile];
+    if (id >= cfg.rayCount) { return; }
+
+    atomicAdd(&writes[id], 1u);
+
+    let input = rays[id]; let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
+    let subBase = id * cfg.maxSubPerRay; let overBase = id * cfg.maxOverPerRay;
+    var reason = 0u; var work = 0u; var count = 0u;
+    var pieces: array<vec2f, 48>;
+    var knots: array<f32, 96>;
+    if (cfg.budget == 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | 1u); return; }
+
+    var singles = 0u;
+    for (var member = 0u; member < 2u; member++) {
+        let m = curtains[member]; let o = ro - m.origin.xyz;
+        var a = input.ro_clipA.w; var b = input.rd_clipB.w; var hit = true;
+        for (var axis = 0u; axis < 3u; axis++) {
+            var half = m.half[axis];
+            if (axis == 0u) { half = min(half, m.limits.x); } if (axis == 1u) { half = min(half, m.limits.y); }
+            if (d[axis] == 0.0) { if (abs(o[axis]) > half + m.curv.y) { hit = false; break; } }
+            else {
+                let q0 = (-half - m.curv.y - o[axis]) / d[axis]; let q1 = (half + m.curv.y - o[axis]) / d[axis];
+                a = max(a, min(q0, q1)); b = min(b, max(q0, q1));
+            }
+        }
+        if (!hit || !(b > a)) { continue; }
+        var phi_knots: array<f32, 9>;
+        for (var k = 0u; k < 9u; k++) {
+            var s = a + (b - a) * f32(k) / 8.0;
+            if (k == 0u) { s = a; } if (k == 8u) { s = b; }
+            phi_knots[k] = evalPhi(m, o, d, s);
+        }
+        var allPositiveH = true;
+        let mask0 = exactLevelActiveMask(m, d, a, b, -m.limits.w, &phi_knots, &allPositiveH);
+        let mask1 = exactLevelActiveMask(m, d, a, b, 0.0, &phi_knots, &allPositiveH);
+        let mask2 = exactLevelActiveMask(m, d, a, b, m.limits.w, &phi_knots, &allPositiveH);
+        if (allPositiveH && (mask0 | mask1 | mask2) == 0u && abs(phi_knots[0]) > m.limits.w + m.curv.y) {
+            if (work + 24u > cfg.budget) { reason |= 1u; break; }
+            work += 24u;
+            continue;
+        }
+        var nb = 1u; knots[0] = a;
+        var bands: array<vec2f, 32>; var nr = 0u; var zeroBands = 0u;
+        roots(m, o, d, a, b, -m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask0);
+        if (reason != 0u) { break; }
+        roots(m, o, d, a, b, 0.0, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, true, mask1);
+        if (reason != 0u) { break; }
+        roots(m, o, d, a, b, m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask2);
+        if (reason != 0u) { break; }
+        if (d.x != 0.0) { let x = -o.x / d.x; if (x > a && x < b) { knots[nb] = x; nb++; } }
+        if (d.y != 0.0) {
+            let y = -o.y / d.y; if (y > a && y < b) { knots[nb] = y; nb++; }
+            let k = (m.limits.z - o.y) / d.y; if (k > a && k < b) { knots[nb] = k; nb++; }
+        }
+        knots[nb] = b; nb++;
+        for (var i = 1u; i < nb; i++) {
+            let v = knots[i]; var j = i; loop { if (j == 0u || knots[j - 1u] <= v) { break; } knots[j] = knots[j - 1u]; j--; }
+            knots[j] = v;
+        }
+        var memPieces = 0u;
+        var previousShortBand = false; var previousPositive = false;
+        for (var i = 1u; i < nb; i++) {
+            let l = knots[i - 1u]; let r = knots[i]; if (!(r > l)) { continue; }
+            let mid = l + 0.5 * (r - l); var uncertain = false; var protectedBoundary = false;
+            if (d.x != 0.0) { protectedBoundary = l == -o.x / d.x; }
+            if (d.y != 0.0) { protectedBoundary = protectedBoundary || l == -o.y / d.y || l == (m.limits.z - o.y) / d.y; }
+            for (var k = 0u; k < nr; k++) {
+                uncertain = uncertain || (l < bands[k].y && r > bands[k].x);
+                if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) { protectedBoundary = true; }
+            }
+            if (uncertain || abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
+                if (memPieces > 0u && mayAbsorb(pieces[memPieces - 1u], vec2f(l, r),
+                     previousShortBand, previousPositive, uncertain, protectedBoundary)) {
+                    pieces[memPieces - 1u].y = r; previousShortBand = false; previousPositive = true;
+                } else {
+                    if (memPieces >= 48u) { reason |= 8u; break; }
+                    pieces[memPieces] = vec2f(l, r);
+                    memPieces++; previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
+                }
+            }
+        }
+        if (reason != 0u) { break; }
+
+        for (var p = 0u; p < memPieces; p++) {
+            let pa = pieces[p].x; let pb = pieces[p].y;
+            let n = max(1u, u32(ceil((pb - pa) / 4.0)));
+            if (singles + n > cfg.maxSubPerRay) { reason |= 16u; break; }
+            for (var k = 0u; k < n; k++) {
+                let sl = select(pa + f32(k) * (pb - pa) / f32(n), pa, k == 0u);
+                let sr = select(pa + f32(k + 1u) * (pb - pa) / f32(n), pb, k + 1u == n);
+                subpanels[subBase + singles] = Subpanel(vec2f(sl, sr), vec2u(member, 0u));
+                singles++;
+            }
+        }
+    }
+    if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); }
+    else { rays[id].counts = vec4u(subBase, singles, overBase, 0u); }
+}
+)WGSL";
+'''
+
     # Now add kFallbackProducerWgsl (Full Guarded Producer from §6dd)
     src += r'''
 // ----------------------------------------------------------------------------
@@ -539,9 +675,9 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
     let tileSlot = wid.x * 4u + localTile;
 '''
     if mutation == 'no-tail':
-        src += '    if (tileSlot >= min(routeCounts[1u] + 4u, 2304u)) { return; }\n'
+        src += '    if (tileSlot >= min(routeCounts[2u] + 4u, 2304u)) { return; }\n'
     else:
-        src += '    if (tileSlot >= min(routeCounts[1u], 2304u)) { return; }\n'
+        src += '    if (tileSlot >= min(routeCounts[2u], 2304u)) { return; }\n'
 
     src += r'''    let tileId = fallbackTileList[tileSlot];
     if (tileId >= 2304u) { return; }
@@ -1090,11 +1226,12 @@ int main(int argc, char** argv) {
     auto cpClassify = buildPipeline(kClassifyWgsl, "classifyTilesMain");
     auto cpArgs = buildPipeline(kRouteArgsWgsl, "routeArgs");
     auto cpS1 = buildPipeline(kS1ProducerWgsl, "s1ProducerMain");
+    auto cpS2 = buildPipeline(kS2ProducerWgsl, "s2ProducerMain");
     auto cpFallback = buildPipeline(kFallbackProducerWgsl, "fallbackProducerMain");
     auto cpConsumer = buildPipeline(kConsumerWgsl, "consumerMain");
     auto cpReference = buildPipeline(kReferenceProducerWgsl, "producerFastMain");
 
-    if (!cpClassify || !cpArgs || !cpS1 || !cpFallback || !cpConsumer || !cpReference) {
+    if (!cpClassify || !cpArgs || !cpS1 || !cpS2 || !cpFallback || !cpConsumer || !cpReference) {
         std::cerr << "Pipeline compilation failed!" << std::endl;
         return 1;
     }
@@ -1134,11 +1271,12 @@ int main(int argc, char** argv) {
 
     std::vector<uint32_t> initList(2304, 0u);
     auto s1TileBuf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc | WGPUBufferUsage_CopyDst, 2304 * sizeof(uint32_t), initList.data());
+    auto s2TileBuf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc | WGPUBufferUsage_CopyDst, 2304 * sizeof(uint32_t), initList.data());
     auto fbTileBuf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst, 2304 * sizeof(uint32_t), initList.data());
 
     DispatchCounters initCounters{0, 0, 0, 0};
     auto cntBuf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc | WGPUBufferUsage_CopyDst, sizeof(DispatchCounters), &initCounters);
-    auto argsBuf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_Indirect | WGPUBufferUsage_CopySrc | WGPUBufferUsage_CopyDst, 24, nullptr);
+    auto argsBuf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_Indirect | WGPUBufferUsage_CopySrc | WGPUBufferUsage_CopyDst, 36, nullptr);
     auto writesBuf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc | WGPUBufferUsage_CopyDst, count * sizeof(uint32_t), nullptr);
 
     // Bind Groups
@@ -1162,13 +1300,26 @@ int main(int argc, char** argv) {
         entry(2, offBuf, 0, tileOffsets.size() * sizeof(uint32_t)),
         entry(3, idxBuf, 0, tileRayIndices.size() * sizeof(uint32_t)),
         entry(4, s1TileBuf, 0, 2304 * 4),
-        entry(5, fbTileBuf, 0, 2304 * 4),
-        entry(6, cntBuf, 0, sizeof(DispatchCounters))
+        entry(5, s2TileBuf, 0, 2304 * 4),
+        entry(6, fbTileBuf, 0, 2304 * 4),
+        entry(7, cntBuf, 0, sizeof(DispatchCounters))
     });
 
     auto bgArgs = group(cpArgs, {
         entry(0, cntBuf, 0, sizeof(DispatchCounters)),
-        entry(1, argsBuf, 0, 24)
+        entry(1, argsBuf, 0, 36)
+    });
+
+    auto bgS2 = group(cpS2, {
+        entry(0, cfgBuf, 0, sizeof(cfg)),
+        entry(1, specBuf, 0, curtainSpecs.size() * sizeof(GpuCurtainSpec)),
+        entry(2, rayBuf, 0, rayBytes),
+        entry(3, subBuf, 0, subBytes),
+        entry(5, offBuf, 0, tileOffsets.size() * sizeof(uint32_t)),
+        entry(6, idxBuf, 0, tileRayIndices.size() * sizeof(uint32_t)),
+        entry(7, s2TileBuf, 0, 2304 * 4),
+        entry(8, cntBuf, 0, sizeof(DispatchCounters)),
+        entry(9, writesBuf, 0, count * 4)
     });
 
         auto bgS1 = group(cpS1, {
@@ -1326,7 +1477,7 @@ auto bgConsumer = group(cpConsumer, {
             auto passAr = wgpuCommandEncoderBeginComputePass(enc, nullptr);
             wgpuComputePassEncoderSetPipeline(passAr, cpArgs);
             wgpuComputePassEncoderSetBindGroup(passAr, 0, bgArgs, 0, nullptr);
-            wgpuComputePassEncoderDispatchWorkgroups(passAr, 2, 1, 1);
+            wgpuComputePassEncoderDispatchWorkgroups(passAr, 3, 1, 1);
             wgpuComputePassEncoderEnd(passAr);
             wgpuComputePassEncoderRelease(passAr);
 
@@ -1338,11 +1489,19 @@ auto bgConsumer = group(cpConsumer, {
             wgpuComputePassEncoderEnd(passS1);
             wgpuComputePassEncoderRelease(passS1);
 
+            // Pass 2b: S2 Producer (Indirect)
+            auto passS2 = wgpuCommandEncoderBeginComputePass(enc, nullptr);
+            wgpuComputePassEncoderSetPipeline(passS2, cpS2);
+            wgpuComputePassEncoderSetBindGroup(passS2, 0, bgS2, 0, nullptr);
+            wgpuComputePassEncoderDispatchWorkgroupsIndirect(passS2, argsBuf, 12);
+            wgpuComputePassEncoderEnd(passS2);
+            wgpuComputePassEncoderRelease(passS2);
+
             // Pass 3: Fallback Producer (Indirect)
             auto passFb = wgpuCommandEncoderBeginComputePass(enc, nullptr);
             wgpuComputePassEncoderSetPipeline(passFb, cpFallback);
             wgpuComputePassEncoderSetBindGroup(passFb, 0, bgFallback, 0, nullptr);
-            wgpuComputePassEncoderDispatchWorkgroupsIndirect(passFb, argsBuf, 12);
+            wgpuComputePassEncoderDispatchWorkgroupsIndirect(passFb, argsBuf, 24);
             wgpuComputePassEncoderEnd(passFb);
             wgpuComputePassEncoderRelease(passFb);
 
@@ -1376,7 +1535,7 @@ auto bgConsumer = group(cpConsumer, {
 
     // 2. Multi-repeat verification with poison and publication checks
     std::cerr << "Running candidate verification (repeats = 1, 2, 4)..." << std::endl;
-    uint32_t counts0 = 0, counts1 = 0;
+    uint32_t counts0 = 0, counts1 = 0, counts2 = 0;
     for (int rep : {1, 2, 4}) {
         std::vector<GpuResult> poison(count);
         for (auto& p : poison) for (float& f : p.rgb_T) f = std::numeric_limits<float>::quiet_NaN();
@@ -1385,9 +1544,9 @@ auto bgConsumer = group(cpConsumer, {
         runCandidate(rep);
 
         auto counts = readWords(cntBuf, 16);
-        counts0 = counts[0]; counts1 = counts[1];
-        if (counts[0] + counts[1] != 2304u) {
-            throw std::runtime_error("counter accumulation mismatch: expected 2304, got " + std::to_string(counts[0] + counts[1]));
+        counts0 = counts[0]; counts1 = counts[1]; counts2 = counts[2];
+        if (counts[0] + counts[1] + counts[2] != 2304u) {
+            throw std::runtime_error("counter accumulation mismatch: expected 2304, got " + std::to_string(counts[0] + counts[1] + counts[2]));
         }
 
         auto writes = readWords(writesBuf, count * 4);
@@ -1401,9 +1560,9 @@ auto bgConsumer = group(cpConsumer, {
     }
 
     auto actual = readBackResults(resBuf);
-    auto args = readWords(argsBuf, 24);
-    std::cerr << "Classification results: S1=" << counts0 << " Fallback=" << counts1 << std::endl;
-    std::cerr << "Indirect args: S1 groups=" << args[0] << " FB groups=" << args[3] << std::endl;
+    auto args = readWords(argsBuf, 36);
+    std::cerr << "Classification results: S1=" << counts0 << " S2=" << counts1 << " Fallback=" << counts2 << std::endl;
+    std::cerr << "Indirect args: S1 groups=" << args[0] << " S2 groups=" << args[3] << " FB groups=" << args[6] << std::endl;
 
     uint32_t bitDiffs = 0;
     double maxDelta = 0.0;
@@ -1415,6 +1574,14 @@ auto bgConsumer = group(cpConsumer, {
             uint32_t uAct = std::bit_cast<uint32_t>(actual[i].rgb_T[k]);
             uint32_t uRef = std::bit_cast<uint32_t>(reference[i].rgb_T[k]);
             if (uAct != uRef) {
+                if (bitDiffs < 10) {
+                    std::cerr << "Diff at ray " << i << " chan " << k
+                              << " act=" << std::setprecision(9) << actual[i].rgb_T[k]
+                              << " ref=" << reference[i].rgb_T[k]
+                              << " delta=" << std::abs(actual[i].rgb_T[k] - reference[i].rgb_T[k])
+                              << " (hex act=" << std::hex << uAct << " ref=" << uRef << std::dec << ")"
+                              << std::endl;
+                }
                 bitDiffs++;
                 maxDelta = std::max(maxDelta, double(std::abs(actual[i].rgb_T[k] - reference[i].rgb_T[k])));
             }
@@ -1473,10 +1640,11 @@ auto bgConsumer = group(cpConsumer, {
 
     J outRecord = {
         {"audit", "§6do faithful residual pipeline connection"},
-        {"scope", "S1 specialized single-member producer + fallback producer + A* consumer with GPU indirect routing"},
+        {"scope", "S1 (single-member) + S2 (disjoint pair) specialized producers + fallback producer + A* consumer with GPU indirect routing"},
         {"s1_tiles", counts0},
-        {"fallback_tiles", counts1},
-        {"total_tiles", counts0 + counts1},
+        {"s2_tiles", counts1},
+        {"fallback_tiles", counts2},
+        {"total_tiles", counts0 + counts1 + counts2},
         {"rays_count", count},
         {"bit_diff_rays", bitDiffs},
         {"max_delta", maxDelta},

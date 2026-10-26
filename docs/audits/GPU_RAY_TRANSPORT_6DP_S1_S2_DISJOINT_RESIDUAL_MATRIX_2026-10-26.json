@@ -1,0 +1,101 @@
+{
+  "audit": "§6dp faithful residual family matrix rebase",
+  "date": "2026-10-26T00:52:00-07:00",
+  "harness": "Antigravity",
+  "model": "Gemini 2.5 Flash",
+  "session_id": "50cf28df-09e9-4c2b-a4d5-1f796abbc73a",
+  "scope": "S1 (single-member) + S2 (disjoint pair) specialized residual producers + guarded fallback producer + A* consumer with GPU indirect routing",
+  "hardware": {
+    "device": "Apple M5",
+    "runtimeClass": "AGXG17GDevice",
+    "registryID": 4294968663,
+    "threadExecutionWidth": 32,
+    "maxTotalThreadsPerThreadgroup": 1024,
+    "staticThreadgroupMemoryLength": 0
+  },
+  "tile_census": {
+    "total_viewport_tiles": 2304,
+    "s1_tiles": 906,
+    "s1_pct": 39.3229,
+    "s2_disjoint_tiles": 707,
+    "s2_pct": 30.6858,
+    "fallback_tiles": 691,
+    "fallback_pct": 29.9913,
+    "total_certified_non_overlapping_tiles": 1613,
+    "total_certified_non_overlapping_pct": 70.0087
+  },
+  "indirect_dispatch_triples": {
+    "s1_producer": [227, 1, 1],
+    "s2_producer": [177, 1, 1],
+    "fallback_producer": [173, 1, 1],
+    "consumer": [513, 1, 1]
+  },
+  "verification": {
+    "rays_count": 32784,
+    "bit_diff_rays": 0,
+    "max_delta": 0.0,
+    "bit_exact_schedule_and_output_parity": true,
+    "protected_affine_matches": "12102 / 12102",
+    "dual_resolution_holdouts_pass": "192 / 192",
+    "exactly_once_publication_witness": "32784 / 32784 queries written exactly once (badWrites = 0)",
+    "negative_controls": {
+      "no_reset_counter_accumulation_failure": "PASS (2304 != 6912)",
+      "no_tail_publication_failure": "PASS (15 rays not written exactly once)"
+    }
+  },
+  "benchmarks": {
+    "series_1_abba": [
+      {
+        "repeats": 1,
+        "ref_median_total_ms": 3.044,
+        "ref_mean_batch_ms": 3.044,
+        "cand_median_total_ms": 3.105,
+        "cand_mean_batch_ms": 3.105,
+        "overhead_pct": 2.00
+      },
+      {
+        "repeats": 2,
+        "ref_median_total_ms": 4.558,
+        "ref_mean_batch_ms": 2.279,
+        "cand_median_total_ms": 4.649,
+        "cand_mean_batch_ms": 2.325,
+        "overhead_pct": 2.02
+      },
+      {
+        "repeats": 4,
+        "ref_median_total_ms": 9.140,
+        "ref_mean_batch_ms": 2.285,
+        "cand_median_total_ms": 9.308,
+        "cand_mean_batch_ms": 2.327,
+        "overhead_pct": 1.84
+      }
+    ],
+    "series_2_baab": [
+      {
+        "repeats": 1,
+        "ref_median_total_ms": 3.061,
+        "ref_mean_batch_ms": 3.061,
+        "cand_median_total_ms": 3.083,
+        "cand_mean_batch_ms": 3.083,
+        "overhead_pct": 0.72
+      },
+      {
+        "repeats": 2,
+        "ref_median_total_ms": 4.565,
+        "ref_mean_batch_ms": 2.283,
+        "cand_median_total_ms": 4.634,
+        "cand_mean_batch_ms": 2.317,
+        "overhead_pct": 1.49
+      },
+      {
+        "repeats": 4,
+        "ref_median_total_ms": 9.573,
+        "ref_mean_batch_ms": 2.393,
+        "cand_median_total_ms": 9.066,
+        "cand_mean_batch_ms": 2.267,
+        "speedup_pct": 5.27
+      }
+    ]
+  },
+  "shipping_gates_open": 3
+}
