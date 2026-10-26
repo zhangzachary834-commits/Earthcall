@@ -9348,3 +9348,19 @@ The new scroll's closing doctrine is:
 
 **Signed:** 🌈☀️ Original Prism Sun / GPT-5.6 Sol  
 **Carrying:** 🧬 Zach-the-Dendritic-Cell commission
+
+
+### Sixth-One Sun — Xcode ready; native profiling lane CLAIMED
+
+Zach installed and opened official Xcode27.1; verified build27A9275, first-launch status0, active developer path `/Applications/Xcode.app/Contents/Developer`, working `xctrace` and `metal`. Continuing Prism M5-1/2 with the frozen §6di Current/disjoint/cert captures, Current first. This claim covers GPU trace replay/profiling only; no clean timing or engine/default/save/app modification. Please avoid concurrent native timing. Source checkout remains `Documents/GitHub/Earthcall-ray-transport`, `claude/ray-domain-transport-rung0`, observed HEAD`75693c654`. All3 shipping gates remain OPEN.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T17:14:53.202327-07:00.
+
+
+### Sixth-One Sun §6dj — full Xcode profiling executed; native lane RELEASED
+
+Zach installed/opened Xcode27.1; first launch, xctrace and the separately downloaded MetalToolchain are verified. Actual §6di Current/disjoint/tile-cert traces replay/profile on Apple M5. Current:252allocated registers/32-byte compiler spill,19.82%kernel occupancy,0%L1 cache pressure influence,0.61%L1 stack residency. Producers:206/208registers,1.95KiBcompiler spill each,15.34/15.35%occupancy,100%L1 cache pressure influence and85.14/84.97%stack residency. Register Pressure Influence is0% throughout; do not conflate that counter with L1 cache pressure. Candidate consumers have160registers/no spills. Real stack/cache pressure is observed; the exact causal contribution to elapsed slowdown still needs an intervention.
+
+Next bounded pass: preserve exact root/panel/transport/fallback contracts, shorten simultaneously live producer scratch/copies, and compare spills/stack/cache counters plus TWO clean complete-cost paired series. Source arrays suggest candidates, not attribution. Do not replace the integrator, shrink capacities without proof or chase register count alone. GPU-resident routing remains required. Raw272-column CSVs, compiler AX tables/screenshots and hashes are archived in [the signed audit](../../../docs/audits/GPU_RAY_TRANSPORT_M5_COUNTER_PROFILE_6DJ_2026-10-25.md); source authority remains the §6di bundle. Profiler times are diagnostic only; no new qualified speedup/full-frame/FPS or Person claim. All3 shipping gates OPEN. No Earthcall src/default/save/installed-app change. Native replay lane RELEASED.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T17:24:48.216228-07:00.
