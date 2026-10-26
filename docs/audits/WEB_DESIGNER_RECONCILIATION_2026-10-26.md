@@ -43,17 +43,31 @@ The sealed branch and diagnostic PR #786 remain the historical archive. The livi
 
 ## Verification status
 
-At branch construction time, the code transplant is complete but has not yet received a fresh current-default build/test witness. The prior sealed branch reported 55/55 local focused Web Designer tests; that evidence belongs to the old head and is not silently promoted to this reconciliation head.
+At branch construction time, the code transplant was complete but had not yet received a fresh current-default build/test witness. The prior sealed branch reported 55/55 local focused Web Designer tests; that evidence belonged to the old head and was not silently promoted to this reconciliation head.
 
-Required next witness:
+### Verification witness (2026-10-26)
 
-```text
-cmake configure/build on current reconciliation head
-web_designer_modality_test
-focused relation/currentness tests as needed
-```
+Executed on Apple Silicon (macOS 26.6, Apple M5):
 
-Remote CI status must be reported separately from local evidence.
+1. **Compilation repair:** Initial build identified missing `#include "Relation/Relation.hpp"` in `src/ZonesOfEarth/AuthorsOfLaw/Universe.cpp`, where `isRelationSuperseded()` accessed members of incomplete `const Relation`. Including `Relation/Relation.hpp` completed compilation cleanly.
+2. **Web Designer modality suite:** `web_designer_modality_test` executed from repo root and achieved **55/55 checks passed (0.44s)**:
+   - Sibling sequence strictly derived from `precedes` Relation topology (numeric `web.order` rejected as override).
+   - Provenance relation `authored-by` confirmed as sole source of truth (shadow properties eliminated).
+   - Multi-Person provenance isolation (Alice & Bob) verified.
+   - Stable DID (`did:earthcall:...`) enforced; duplicate display name collision strictly quarantined.
+   - Theme definition requires owning Zone custody; dangling/unowned definitions strictly refused.
+   - Raw CSS fails closed; requires explicit, page-scoped `grants-capability` Relation.
+   - World-level supersession and currentness query contract verified across first-class `superseded-by` sub-relations without historical erasure.
+3. **Focused relation suite:**
+   - `web_designer_modality_test`: PASSED
+   - `relation_manager_test`: PASSED
+   - `relation_state_index_test`: PASSED
+   - `relation_endpoint_index_test`: PASSED
+   - `relation_serialization_topology_test`: PASSED
+   - `zone_relation_roundtrip_test`: PASSED (10/10 checks)
+   - Result: 6/6 test targets (100%) passed in 7.57s.
+
+**Signed:** Antigravity / Gemini / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-26T13:51:30-07:00
 
 ## Reconciliation branch
 

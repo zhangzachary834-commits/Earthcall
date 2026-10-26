@@ -1,5 +1,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
+#include "Relation/Relation.hpp"
 #include "Time/timeline.hpp"
 
 void Universe::setTimeline(Timeline* timelineBeing) {
