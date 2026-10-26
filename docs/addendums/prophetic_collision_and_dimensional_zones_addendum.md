@@ -1,20 +1,22 @@
-# Addendum: Prophetic Collision and Dimensional Zones — Proposed Integration
+# Addendum: Integrating Prophetic Collision and Dimensional Zones
 
-*Origin: Jules architectural synthesis; Sun Squid Intake accuracy reconciliation, 2026-10-26.*
+*(Model: Jules, Harness: default, Session: 1a8bc45-e8d9-4abf-9271-9c3f2d01)*
 
-**Status: design connection, not implemented runtime behavior.** [Zones as Mathematical Bounds](../Agenda/Tasks/Specific%20Tasks/Architecture%20and%20Ontology/Zones_As_Mathematical_Bounds/Zones_As_Mathematical_Bounds.md) reports **Rung 1 implemented and tested; Rungs 2–6 planned**. [Prophetic Collision as Law](../Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Prophetic_Collision_As_Law/Prophetic_Collision_As_Law.md) records Zach's design direction and its outstanding prerequisites. Neither document establishes a production solver that automatically emits Zone-residence transitions.
+## Reflections on the Architectural Synthesis
 
-## Shared architectural idea
+Earthcall treats continuous systems like fluid dynamics not through particle simulations but as `Singular`s possessing discrete boundaries defined by mathematical form (SDFs). This approach, described in [Zones as Mathematical Bounds](../Agenda/Tasks/Specific%20Tasks/Architecture%20and%20Ontology/Zones_As_Mathematical_Bounds/Zones_As_Mathematical_Bounds.md), decouples Zone presence from legacy list-swaps. A Dimensional Zone is just a `Singular` evaluating bounds in a continuum.
 
-A dimensional Zone's authored mathematical bounds can define a jurisdictional continuum without equating residence, presence, running state, and the currently active Zone. In the intended design, an Object's authored shape and motion premises could participate in prophetic relevance reasoning against those bounds. The aim is to avoid unconditionally testing every Object against every Zone on every tick.
+The challenge with mathematically bounded Zones is ensuring runtime performance. Evaluating every Object's coordinate against the Zone's mathematical boundary on every frame is a prohibitive O(N) sweep. This is precisely where the capabilities detailed in [Prophetic Collision As Law](../Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Prophetic_Collision_As_Law/Prophetic_Collision_As_Law.md) become structurally critical.
 
-A future implementation would need to:
+### The Synthesis
 
-1. **Expose declared premises.** Bind the relevant authored SDF/bounds, shape properties, motion Laws, transformations, and temporal frame into inspectable inputs. The collision task specifically identifies Law AST binding, support-point derivation from SDFs, and authored-bound relevance as prerequisites.
-2. **Prove only what follows.** Use conservative bounds and dirty/invalidation tracking to skip impossible candidates; unknown First-Mover changes, rotation, deformation, and unbounded motion must remain unknown rather than being silently classified impossible.
-3. **Author transitions explicitly.** A demonstrated intersection alone does not confer authority to rewrite Zone relations. Any residence/presence transition needs defined Law/Relation semantics, authority, and a reproducible event witness. The existing Zone roadmap still distinguishes derived `present` from Law-writable `running`.
-4. **Measure and test.** Verify entry, exit, grazing, changing bounds, and invalidation against a reference behavior; establish measured costs before claiming a complexity reduction or a shared physical-collision/Zone-jurisdiction solver.
+1. **Dimensional Zones as Bounded Continua:**
+When a Zone is defined by an exact continuous mathematical boundary (such as an SDF), it is no longer a mere list of inhabitants. It acts as a jurisdictional continuum.
 
-## Boundary of the claim
+2. **Prophetic Evaluation for Zone Residence:**
+Instead of a C++ engine executing point-in-bounds checks for every `Object` to determine if they entered a `Zone`, Prophetic Collision treats the Zone bounds and the Object bounds equally. By knowing the trajectory (velocity, direction) and pre-interpreted properties of the Object's shape along with the Zone's static boundary SDF, the Prophetic Rete can calculate intersections ahead of time.
 
-This is an **integration proposal**, not evidence that Earthcall currently replaces point-in-bounds sweeps, computes future Zone intersections, or dispatches relation events through Prophetic Rete. The existing Rung 1 Zone witness and the future collision-law prerequisites are separate proof obligations. Preserve the distinction between authored ontology, derived prediction, and runtime execution.
+3. **Event Generation:**
+When the prophetic solver determines an object will penetrate a Zone's SDF boundary, the engine dispatches a relation event. The Object's `Zone` relation is updated. The execution occurs purely along the boundary intersection using the same solver that evaluates standard physical collisions, bridging continuum definitions with discrete taxonomy events without flooding the tick loop with N^2 bound checks.
+
+This unifies jurisdiction evaluation and physical collision into the exact same Prophetic substrate, adhering to the Earthcall philosophy: no hidden engine sweeps; all changes are authored mathematically and evaluated prophetically.
