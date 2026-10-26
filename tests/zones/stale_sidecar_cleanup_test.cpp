@@ -231,6 +231,30 @@ int main() {
     check(fileBytes(zoneEcform) == oldZoneBytes && fileBytes(homeEcform) == oldHomeBytes,
           "Discovery and reads preserve both old binary files byte for byte");
 
+    // A successful .ecform write must not silently report success when a stale
+    // sidecar cannot be removed. Nonempty directories deterministically make
+    // std::filesystem::remove fail without depending on OS permission settings.
+    const std::string blockedZoneId = "CleanupZoneBlocked";
+    const std::string blockedHomeId = "CleanupHomeBlocked";
+    const auto blockedZoneSidecar = sandbox.path / "zones" / blockedZoneId / "zone.ecsave";
+    const auto blockedHomeSidecar = sandbox.path / "homes" / blockedHomeId / "home.ecsave";
+    std::filesystem::create_directories(blockedZoneSidecar);
+    std::filesystem::create_directories(blockedHomeSidecar);
+    std::ofstream(blockedZoneSidecar / "keep").put('x');
+    std::ofstream(blockedHomeSidecar / "keep").put('x');
+    auto blockedZoneDoc = zoneDoc;
+    auto blockedHomeDoc = homeDoc;
+    blockedZoneDoc["identifier"] = blockedZoneId;
+    blockedHomeDoc["identifier"] = blockedHomeId;
+    check(!SaveSystem::writeZoneIdentity(blockedZoneId, blockedZoneDoc),
+          "Zone identity write reports failure when legacy cleanup fails");
+    check(!SaveSystem::writeHomeIdentity(blockedHomeId, blockedHomeDoc),
+          "Home identity write reports failure when legacy cleanup fails");
+    check(std::filesystem::exists(blockedZoneSidecar / "keep"),
+          "Failed Zone cleanup does not destroy unrelated directory contents");
+    check(std::filesystem::exists(blockedHomeSidecar / "keep"),
+          "Failed Home cleanup does not destroy unrelated directory contents");
+
     std::cout << "------------------------------------------------------------\n";
     std::cout << g_checks - g_failures << "/" << g_checks << " checks passed\n";
     if (g_failures > 0) {
