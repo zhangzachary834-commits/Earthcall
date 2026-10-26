@@ -1,22 +1,23 @@
-# Addendum: Integrating Zone Timeline Jurisdiction and Moment Execution Weave
+# Addendum: Zone Timeline Jurisdiction and the Moment Execution Weave — Proposed Integration
 
-*(Model: Jules, Harness: default, Session: 1a8bc45-e8d9-4abf-9271-9c3f2d01)*
+*Origin: Jules architectural synthesis; Sun Squid Intake accuracy reconciliation, 2026-10-26.*
 
-## Reflections on the Architectural Synthesis
+**Status: architectural direction, not an implemented cross-Timeline scheduler.** [Zone Timeline Jurisdiction Frames](../Agenda/Tasks/Specific%20Tasks/Architecture%20and%20Ontology/Zone_Timeline_Jurisdiction_Frames/Zone_Timeline_Jurisdiction_Frames.md) records an **open** author decision. [Timeline and Moment Execution Weave](../Agenda/Tasks/Specific%20Tasks/Architecture%20and%20Ontology/Timeline_Moment_Execution_Weave/Timeline_Moment_Execution_Weave.md) explicitly states **execution unimplemented**.
 
-Earthcall handles time not as a single global tick, but as a hierarchical, relational property. The philosophy mapped out in [Zone Timeline Jurisdiction Frames](../Agenda/Tasks/Specific%20Tasks/Architecture%20and%20Ontology/Zone_Timeline_Jurisdiction_Frames/Zone_Timeline_Jurisdiction_Frames.md) determines that each Zone has a local temporal frame, and individual `Singular`s can hold independent Timelines, with translation up the hierarchy only occurring during cross-zone relations.
+## Two complementary responsibilities
 
-However, evaluating distinct events within disparate local temporal frames poses an execution ordering challenge. How do you resolve causal dependencies (Law A → Law B) when the participating entities exist in multiple localized Timelines? The answer is formalized in the [Timeline Moment Execution Weave](../Agenda/Tasks/Specific%20Tasks/Architecture%20and%20Ontology/Timeline_Moment_Execution_Weave/Timeline_Moment_Execution_Weave.md).
+**Jurisdictional frame:** Zonal Laws need a shared temporal evaluation frame when comparing participants with independently authored Timelines. The Singulars need not share a `Timeline*`. Inter-Zone comparison may instead require an Ourverse reference frame. Hardware and executable clocks remain legitimate substrate facts; the refusal is to elevate one implicit global tick into the only possible temporal ontology.
 
-### The Synthesis
+**Moment execution weave:** Independently grounded occurrences need authored precedence, explicit output dependencies, contention rules, and continuation semantics. Ordering A before B is not equivalent to B consuming A's output. The proposed ready frontier must admit eligible work while retaining unresolved work without duplicating effects or clock advancement.
 
-1. **Relativity, not Absolute Tick:**
-Because `Singular`s and `Zone`s own distinct Timelines without forcing pointer identity across the Ourverse, temporal comparison requires a defined evaluation frame.
+## Integration obligations before implementation claims
 
-2. **The execution weave acts as the frame resolver:**
-The Moment Weave dictates how different Timeline Moments execute relative to one another. When a Zonal Law checks an interaction between an Object on an independent Timeline and a Zone, the weave provides the causal trace and safe continuation. It creates a shared "ready frontier" mapping independent Temporal coordinates without relying on hardcoded C++ fallback rules or forcing identical ticks.
+1. Define how each participating Timeline coordinate projects into the applicable Zone or Ourverse frame, including ambiguous or unavailable translations.
+2. Represent three independently testable occurrence grounds: declared Timeline start, qualifying state transition, and clock-only boundary. Unchanged holding conditions must not repeatedly publish transitions.
+3. Compile authored precedence and data dependencies, detect cycles, and preserve Law authority/consent guards and durable occurrence identity.
+4. Witness two independent Timelines with authored `A₁ → B₁ → A₂ → C₁`; prove that B consumes the selected A output, unrelated D progresses when B waits, and changing authored order requires no C++ scheduling rewrite.
+5. Separately verify observable native effects, persistence, cross-Zone reference selection, and safe continuation before declaring the runtime architecture complete.
 
-3. **Temporal Grounds Alignment:**
-The Moment Weave processes three grounds: declared Timeline start, qualifying state transitions, and clock-only boundaries. By applying the Weave within the context of the Zone Timeline Jurisdiction, Earthcall can evaluate continuous physics bounds (like fluid simulation in one Zone frame) interacting with independently acting entities (like a Person's avatar) maintaining causality natively.
+## Boundary of the claim
 
-Together, these principles allow Earthcall to discard global invariant clocks as the sole ontology. The engine safely evaluates laws across multi-layered domains (Singular -> Zone -> Ourverse) because the jurisdiction frames provide the spatial/relational context and the Moment Weave executes the dependencies coherently.
+Current `Engine::_worldTimeline`, `Universe::now()`, and compatibility `now/dt` paths remain in the engine. The jurisdiction proposal describes how they should become explicit substrate/default bindings, **not** that they have already been displaced. No current causal-trace, native-pixel, or production cross-Timeline execution witness is claimed by this addendum.
