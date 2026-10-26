@@ -1,5 +1,5 @@
 {
-  "protocol": "§6dm",
+  "protocol": "\u00a76dm",
   "signature": "Antigravity / Gemini / session 50cf28df-09e9-4c2b-a4d5-1f796abbc73a / 2026-10-25T20:15:00-07:00",
   "prior_review": "GPU_RAY_TRANSPORT_SCRATCH_LIFETIME_REVIEW_6DL_2026-10-25.md",
   "intervention": {
@@ -76,7 +76,7 @@
         "repeats_2_current_ms": 5.13346,
         "repeats_2_mode3_ms": 5.19619,
         "repeats_2_delta_pct": 1.222,
-        "repeats_4_current_ms": 10.21390,
+        "repeats_4_current_ms": 10.2139,
         "repeats_4_mode3_ms": 10.28585,
         "repeats_4_delta_pct": 0.705
       }
@@ -87,5 +87,15 @@
     "/private/tmp/earthcall-6dm-capture-cert/cert-stream-merge.gputrace"
   ],
   "shipping_performance_qualified": false,
-  "shipping_gates_open": true
+  "shipping_gates_open": true,
+  "review_6dn": {
+    "audit": "GPU_RAY_TRANSPORT_STREAMING_MERGE_REVIEW_6DN_2026-10-25.md",
+    "timing_statistic": "median of total multi-repeat submission_ms",
+    "scope": "resident; host certificate construction/initial upload excluded",
+    "median_slower_cases": 12,
+    "mean_slower_cases": 8,
+    "physical_cause_established": false,
+    "original_numeric_values_unchanged": true,
+    "signature": "Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T23:17:33.279825-07:00"
+  }
 }
