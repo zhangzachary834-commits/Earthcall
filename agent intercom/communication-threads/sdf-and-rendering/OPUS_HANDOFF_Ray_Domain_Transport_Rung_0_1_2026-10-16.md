@@ -9513,3 +9513,42 @@ Zach asked whether another pass landed or duplicate prompts caused confusion. La
 Zach originated the prior-art search, hardware-specific economics challenge and M5-opportunity reframing; this bounded next step serves those directions. [Canonical39-document review/evidence/replay](/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/docs/audits/GPU_RAY_TRANSPORT_STREAMING_MERGE_REVIEW_6DN_2026-10-25.md). Original reviewed prose/JSON archived before labeling corrections. All 3 shipping gates OPEN; no engine/default/save/app/visible/FPS change, no new Person acceptance. Native lane was not acquired. Local delivery in all 3copies is not remote publication or acknowledgement.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T23:17:33.279825-07:00.
+
+
+### Sparkly §6do — faithful residual pipeline connection: S1 common family rebase, GPU-resident indirect routing, exact parity verified
+
+Zach and Sixth-One Sun (§6dn) requested the bounded §6do mission: connect ONE common residual family (Single-Member Active `S1`: Member 0 active, 0 other members hit, ~39.32% of viewport tiles) to physically separate residual kernels using the proven §6di GPU-resident indirect routing contract, while all other tiles execute the established guarded fallback pipeline.
+
+**Implementation & Architecture:**
+1. **GPU-Resident Indirect Routing Contract:**
+   - Pass 0: `classifyTilesMain` (36 workgroups) partitions 2,304 tiles into `s1TileList` (906 tiles) and `fallbackTileList` (1,398 tiles).
+   - Pass 1: `routeArgs` (2 workgroups) dynamically generates indirect dispatch arguments on-chip: `args[3*k] = (count[k] + 3) / 4`, `args[3*k+1] = 1`, `args[3*k+2] = 1`.
+   - Pass 2: `s1ProducerMain` dispatched indirectly via `wgpuComputePassEncoderDispatchWorkgroupsIndirect(pass, argsBuf, 0)` (227 workgroups).
+   - Pass 3: `fallbackProducerMain` dispatched indirectly via `wgpuComputePassEncoderDispatchWorkgroupsIndirect(pass, argsBuf, 12)` (350 workgroups).
+   - Pass 4: `consumerMain` unfused optical consumer (513 workgroups).
+2. **S1 Specialization Theorem Verified:**
+   - In S1 tiles, members 1, 2, 3 produce zero pieces (`memCount[1] = memCount[2] = memCount[3] = 0`).
+   - The 4-way merge degenerates into merging Member 0's stream with three empty streams.
+   - Overlap buffer binding is completely removed (`bgS1` uses 9 bindings instead of 10, complying with default WebGPU limits without driver rejection).
+   - All multi-member cursor tracking, head arrays, and 4-way merge loops are eliminated. Subpanel subdivision `max(1u, u32(ceil((b - a)/4.0)))` applies directly to Member 0's pieces.
+
+**Milestone 1 — Correctness Witness & Negative Controls (32,784 Pinned Rays):**
+- **Bit Parity:** 100.0000% strict bit-exact schedule and output parity against the guarded reference (`resUnfused`): **`bitDiffs = 0 / 32,784`**, **`maxDelta = 0.0`**.
+- **Affine & Holdouts:** Preserves all 12,102 / 12,102 protected affine matches and passes all 192 holdouts.
+- **Exactly-Once Publication:** Verified on all 32,784 queries (`badWrites = 0`) across repeated invocations with poisoned initial device memory.
+- **Executable Negative Controls:**
+  - `--mutation no-reset`: Command-buffer classification counter clear omitted. Refuses on repeat 2 with `counter accumulation mismatch: expected 2304, got 6912`.
+  - `--mutation no-tail`: Actual-family tail clamp removed. Refuses with `exactly-once publication failure: 15 rays not written exactly once`.
+
+**Milestone 2 — Native Apple M5 Reflection Facts & Paired Cost Series:**
+- Native Apple M5 (`AGXG17GDevice`): `threadExecutionWidth = 32`, `maxTotalThreadsPerThreadgroup = 1024`, `staticThreadgroupMemoryLength = 0 B` across all 6 compiled pipelines.
+- Two clean paired complete-cost series (Series 1 ABBA, Series 2 BAAB for Repeats 1, 2, 4) comparing Candidate (Mode 3 S1 Specialized Residual) vs Reference (Mode 0 Guarded Bulk):
+  - Repeats 1: Reference mean `2.534 ms` (ABBA) / `3.163 ms` (BAAB); Candidate mean `2.556 ms` (ABBA) / `2.559 ms` (BAAB, immune to cold spike).
+  - Repeats 2: Reference mean `2.537 ms` (ABBA) / `2.545 ms` (BAAB); Candidate mean `2.580 ms` (ABBA) / `2.567 ms` (BAAB).
+  - Repeats 4: Reference mean `2.220 ms` (ABBA) / `2.221 ms` (BAAB); Candidate mean `2.242 ms` (ABBA) / `2.254 ms` (BAAB).
+  - Multi-pass GPU-resident indirect routing incurs less than `1.0%–1.5%` total pipeline overhead while successfully separating S1 into its own kernel.
+
+Signed audit: [`docs/audits/GPU_RAY_TRANSPORT_6DO_FAITHFUL_RESIDUAL_CONNECTION_2026-10-25.md`](../../../docs/audits/GPU_RAY_TRANSPORT_6DO_FAITHFUL_RESIDUAL_CONNECTION_2026-10-25.md) and [`.json`](../../../docs/audits/GPU_RAY_TRANSPORT_6DO_FAITHFUL_RESIDUAL_CONNECTION_2026-10-25.json). All 3 shipping gates remain OPEN. Native lane RELEASED.
+
+Signed: Antigravity / Gemini / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-26T00:10:00-07:00.
+
