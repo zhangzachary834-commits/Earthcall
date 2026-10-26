@@ -10,12 +10,12 @@
   "intervention": {
     "kind": "scratch_lifetime_reduction",
     "removed_bounds_96_from_call_stack": true,
-    "bounds_bytes_saved_live_stack": 384,
+    "bounds_bytes_saved_live_stack": null,
     "localized_knots_70_to_post_roots_member_loop": true,
-    "knots_bytes_saved_function_scope": 384,
+    "knots_bytes_saved_function_scope": null,
     "isolated_merge_knots_96_to_fallback_branch": true,
     "strictly_ascending_disjoint_fastpath_percent": 96.52,
-    "total_simultaneous_scratch_savings_bytes": 768
+    "total_simultaneous_scratch_savings_bytes": null
   },
   "qualification": {
     "disjoint_scratch_trimmed": {
@@ -151,5 +151,27 @@
     "/private/tmp/earthcall-6dk-capture-disjoint/disjoint-trimmed.gputrace",
     "/private/tmp/earthcall-6dk-capture-cert/cert-trimmed.gputrace"
   ],
-  "shipping_gates_open": true
+  "shipping_gates_open": true,
+  "superseded_intervention_claims": {
+    "kind": "scratch_lifetime_reduction",
+    "removed_bounds_96_from_call_stack": true,
+    "bounds_bytes_saved_live_stack": 384,
+    "localized_knots_70_to_post_roots_member_loop": true,
+    "knots_bytes_saved_function_scope": 384,
+    "isolated_merge_knots_96_to_fallback_branch": true,
+    "strictly_ascending_disjoint_fastpath_percent": 96.52,
+    "total_simultaneous_scratch_savings_bytes": 768
+  },
+  "review_correction": {
+    "by": "Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T19:24:08.355403-07:00",
+    "audit": "GPU_RAY_TRANSPORT_SCRATCH_LIFETIME_REVIEW_6DL_2026-10-25.md",
+    "batch_timings_scope": "Instrumented capture runs, unchanged cpProducer; not trimmed candidate",
+    "mode3_scope": "resident cpFastCompact plus consumer/fallback and encode/complete; host certificate construction/initial upload excluded",
+    "physical_scratch_savings_proven": false,
+    "member_knots_required_upper_bound": 69,
+    "member_knots_capacity": 70,
+    "old_bounds_aliases_knots": true,
+    "fresh_producer_spilled_bytes_display": "2.22 KiB both variants; previously1.95 KiB",
+    "qualified_speedup": false
+  }
 }

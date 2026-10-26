@@ -427,14 +427,15 @@ fn mergeMain(@builtin(global_invocation_id) gid: vec3u) {
 
 
 def make_exact_monotone_bowskip_wgsl(disjoint_fastpath=False, tile_cert=False, scratch_trimmed=False) -> str:
-    """Uses ONLY the exact existing level-specific depth-0 bow and monotone predicates
-    and keeps all original 20/32/96/48 private array capacities. Zero new math or slack constants.
-    When scratch_trimmed=True:
-    1. Eliminates duplicate bounds[96] parameter from putBand, putBandTagged, isolateMonotone, and roots.
-       putBand only records intervals into bands[32]; knots are populated in producerFastMain after roots.
-    2. Removes function-scope knots[96] from producerFastMain. Inside the member loop, memberKnots[70]
-       is used only for sorting that member's knots.
-    3. Fallback mergeKnots[96] is only allocated when strictlyAscendingDisjoint is false.
+    """Uses only the existing level-specific depth-0 bow and monotone predicates.
+    The untrimmed form retains the original20/32/96/48 capacities. No new slack constants.
+    In the trimmed form, bounds was an ALIAS of the caller's knots, not a second array.
+    Delaying reconstruction removes that alias from the roots call graph and narrows
+    source scope; it does not prove physical stack savings (compiler spills grew in6dl).
+    Capacity proof: nr<=32; member knots need1+2*nr+3+1<=69 entries, so70 is sufficient.
+    The old nb=1+2*nr makes its >92 guard redundant under the32-band bound. Merge knots
+    need2*count<=96 under the unchanged48-piece guard. Both refusal contracts survive.
+    Scoped WGSL declarations do not guarantee conditional physical allocation or reuse.
     """
     s = r'''
 struct CurtainSpec {origin:vec4f,half:vec4f,limits:vec4f,curv:vec4f,amps:vec4f,freqs:vec4f,phases:vec4f};
@@ -1461,6 +1462,19 @@ def validate_6dd(root, report, rows, baseline, rays, ref):
         )
         if res['affine']['missing']:
             raise ValueError('coarse-monotone-bowskip affine endpoint missing')
+        if 'scratch-trimmed' in report['coarse_peel_experiment']['scope']:
+            # These labels describe actual callers, not the audit's desired conclusion.
+            # BATCH uses unchanged cpProducer; mode3 uses trimmed cpFastCompact.
+            res['scratch_trimmed_scope'] = {
+                'qualification_lane': 'strict_bit_exact_to_guarded_schedule_and_transport',
+                'candidate_timing': 'streamed_schedule.cases[].series[].samples mode3',
+                'legacy_batch_timing': 'unchanged cpProducer; not the trimmed candidate',
+                'host_certificate_creation_and_initial_upload_in_mode3_timing': False,
+                'member_knots_capacity': 70, 'member_knots_required_upper_bound': 69,
+                'merge_knots_capacity': 96, 'merge_knots_required_upper_bound': 96,
+                'physical_bytes_saved_established': False,
+                'shipping_performance_qualified': False,
+            }
         return res
     result = p.check(root, report, rows, baseline, rays, ref['rows'], ref['ray_indices'])
     for c in report['streamed_schedule']['cases']:
