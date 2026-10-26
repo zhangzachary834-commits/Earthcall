@@ -109,6 +109,7 @@ jobs:
         foreign_web_dom_bridge_test
         foreign_web_dom_projection_test
         foreign_web_dom_protocol_test
+        web_designer_modality_test
 
     steps:
       - name: Check out tested commit
