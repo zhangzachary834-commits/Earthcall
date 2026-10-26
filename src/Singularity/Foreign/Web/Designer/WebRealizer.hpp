@@ -1,0 +1,252 @@
+#pragma once
+
+#include "Singularity/Foreign/Web/Designer/WebConcept.hpp"
+#include "Relation/Relation.hpp"
+#include "Relation/Formation/Formation.hpp"
+#include <string>
+#include <vector>
+#include <memory>
+#include <unordered_map>
+
+class Person;
+class Zone;
+
+namespace Singularity {
+namespace Foreign {
+namespace Web {
+
+// ---------------------------------------------------------------------------
+// RealizeOptions
+// ---------------------------------------------------------------------------
+
+struct RealizeOptions {
+    std::string title;
+    std::string metaDescription;
+    bool includeInteractiveScript;
+    bool minify;
+    std::string extraCss;
+    const Person* governingAuthor; // Explicit Person governance reference for raw CSS capability
+    bool allowUnrestrictedCss; // Requires explicit Person governance or TransferPolicy gate
+
+    RealizeOptions()
+        : title("Earthcall Web Designer"),
+          metaDescription("Authored natively through Earthcall Laws and Lexemes"),
+          includeInteractiveScript(true),
+          minify(false),
+          extraCss(""),
+          governingAuthor(nullptr),
+          allowUnrestrictedCss(false) {}
+};
+
+// ---------------------------------------------------------------------------
+// WebRealizer: Realization Substrate from Semantic Beings to HTML/CSS/DOM
+//
+// In accordance with Earthcall ontology:
+//   "HTML is an implementation target, not Earthcall's ontology."
+//
+// The WebRealizer traverses the semantic Singular graph and realizes it into
+// clean, accessible, modern HTML5 and responsive CSS.
+// ---------------------------------------------------------------------------
+
+class WebRealizer {
+public:
+    // Realize a full HTML5 document from a root Singular (Page or Site Formation)
+    static std::string realizeFullDocument(const Singular& root,
+                                           const std::vector<std::shared_ptr<Relation>>& relations,
+                                           const RealizeOptions& options = RealizeOptions());
+
+    // Realize a single element (and its children recursively) to an HTML fragment
+    static std::string realizeElement(const Singular& element,
+                                      const std::vector<std::shared_ptr<Relation>>& relations,
+                                      int indentLevel = 0,
+                                      std::string* outError = nullptr);
+
+    // Find all children connected to parent via 'contains' and ordered by 'precedes'.
+    // Detects cycles in 'precedes' relations and refuses/reports rather than falling back to fiat.
+    static std::vector<const Singular*> findChildren(const Singular& parent,
+                                                     const std::vector<std::shared_ptr<Relation>>& relations,
+                                                     std::string* outError = nullptr);
+
+    // Generate the minimal responsive CSS stylesheet with authored design tokens
+    static std::string generateStyleSheet(const Singular* root = nullptr,
+                                          const RealizeOptions& options = RealizeOptions());
+
+    // Generate the interactive DOM client script that hooks clicks into Earthcall
+    static std::string generateClientScript();
+
+    // Helper: Escapes text for HTML content
+    static std::string escapeHtml(const std::string& text);
+
+    // Helper: Escapes attribute value
+    static std::string escapeAttr(const std::string& attr);
+
+    // Browser Trust Boundary Sanitizers:
+    // C++ may know how a browser works; C++ must not decide what the Person means.
+    // Validates HTML tag identifier (letters, digits, dashes; blocks script/style/iframe/etc.; fallback: "div")
+    static std::string sanitizeHtmlTag(const std::string& tag);
+
+    // Normalizes CSS class-token fragment to safe characters [a-z0-9_-]
+    static std::string normalizeCssToken(const std::string& token);
+
+    // Enforces URL scheme policy on action hrefs (blocks javascript:/data:/vbscript:; permits http, https, mailto, tel, #, /)
+    static std::string sanitizeHref(const std::string& href);
+
+    // Enforces URL scheme policy on media src (blocks javascript:/vbscript:/file:; permits http, https, data:image/, relative paths)
+    static std::string sanitizeMediaSrc(const std::string& src);
+
+    // Neutralizes </style> end tags and HTML comments inside any CSS context
+    // Even unrestricted raw CSS must preserve the HTML parser boundary.
+    static std::string sanitizeCssBreakout(const std::string& css);
+
+    // Truthfully labeled conservative CSS-value filter: unescapes CSS escape sequences, neutralizes </style>,
+    // strips semicolons and curly braces to prevent smuggling additional declarations,
+    // and blocks network url(...), @import, and expression(...) unless permitted.
+    // (Note: This is a conservative declaration/breakout sanitizer, not a typed CSS grammar validator).
+    static std::string sanitizeCssValue(const std::string& value, bool allowNetworkUrl = false);
+};
+
+// ---------------------------------------------------------------------------
+// WebDesignerTheme: Authored Design System / Theme Tokens
+//
+// In accordance with Sun's decree:
+//   "C++ may know how CSS works. C++ must not decide what 'hero', 'primary',
+//    'generous', 'muted', 'subtle', 'floating', etc. look like.
+//    Move the aesthetic defaults into authored/default theme state or a
+//    clearly separate authored presentation Formation."
+// ---------------------------------------------------------------------------
+class WebDesignerTheme {
+public:
+    // Loads theme tokens and recorded authors from authored data fixture (saves/fixtures/web_themes.json)
+    static bool loadThemeTokens(const std::string& themeName,
+                                std::unordered_map<std::string, std::string>& outTokens,
+                                std::vector<std::string>* outAuthors = nullptr,
+                                const std::string& fixturePath = "");
+
+    // Authors custom design system tokens with explicit Person stewardship.
+    // The Relation(WebRelationType::kAuthoredBy) is the sole source of truth; no shadow property is written.
+    static void authorThemeTokens(Singular& root,
+                                  Person& author,
+                                  const std::unordered_map<std::string, std::string>& tokens,
+                                  Formation* formation = nullptr,
+                                  std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    // Overload taking Person* author: if author is null, applies tokens without claiming stewardship or self-awarding FirstMover
+    static void authorThemeTokens(Singular& root,
+                                  Person* author,
+                                  const std::unordered_map<std::string, std::string>& tokens,
+                                  Formation* formation = nullptr,
+                                  std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    // -----------------------------------------------------------------------
+    // Theming API Contract (Sun Round 10: Sealing the Maintenance Hatch):
+    // 1. Persistent World Theming:
+    //    Requires an owning Zone (explicit Zone& or active ZoneManager::live()).
+    //    Authors/discovers a durable theme definition Being in Zone custody, connects
+    //    the target root to it via Relation("uses-theme", root, themeDef), and establishes
+    //    applicant stewardship via Relation(kAuthoredBy, root, applicant).
+    // 2. Detached / Draft Application (no Zone):
+    //    When no owning Zone exists, applies theme aesthetic properties directly to root
+    //    as an ephemeral draft/detached style without creating a dangling world being
+    //    or admitting an unowned raw pointer into a non-owning Formation.
+    // -----------------------------------------------------------------------
+
+    // Authors a real world-owned theme definition Being carrying its design tokens
+    // with explicit Person stewardship in genuine Zone custody.
+    // If no owning Zone can be resolved, strictly REFUSES (returns nullptr) and leaves formation untouched!
+    static std::shared_ptr<Object> authorThemeDefinition(
+        const std::string& themeName,
+        Person* author = nullptr,
+        Formation* formation = nullptr,
+        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr,
+        Zone* zone = nullptr);
+
+    // Preferred type-safe overload requiring an explicit owning Zone&
+    static std::shared_ptr<Object> authorThemeDefinition(
+        const std::string& themeName,
+        Person& author,
+        Zone& zone,
+        Formation* formation = nullptr,
+        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static std::shared_ptr<Object> authorThemeDefinition(
+        const std::string& themeName,
+        Person* author,
+        Zone& zone,
+        Formation* formation = nullptr,
+        std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    // Authors full modern dark theme design tokens loading from authored fixture web_themes.json
+    static void applyModernDarkTheme(Singular& root,
+                                     Person& author,
+                                     Formation* formation = nullptr,
+                                     std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static void applyModernDarkTheme(Singular& root,
+                                     Person* author = nullptr,
+                                     Formation* formation = nullptr,
+                                     std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static void applyModernDarkTheme(Singular& root,
+                                     Person& author,
+                                     std::vector<std::shared_ptr<Relation>>* outRelations) {
+        applyModernDarkTheme(root, author, nullptr, outRelations);
+    }
+
+    static void applyModernDarkTheme(Singular& root,
+                                     Person* author,
+                                     std::vector<std::shared_ptr<Relation>>* outRelations) {
+        applyModernDarkTheme(root, author, nullptr, outRelations);
+    }
+
+    // Overloads taking explicit Zone custody to banish the Theme Ghost (Sun Round 9 Gate 1)
+    static void applyModernDarkTheme(Singular& root,
+                                     Person& author,
+                                     Zone& zone,
+                                     Formation* formation = nullptr,
+                                     std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static void applyModernDarkTheme(Singular& root,
+                                     Person* author,
+                                     Zone& zone,
+                                     Formation* formation = nullptr,
+                                     std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    // Authors clean neutral light theme design tokens loading from authored fixture web_themes.json
+    static void applyNeutralLightTheme(Singular& root,
+                                       Person& author,
+                                       Formation* formation = nullptr,
+                                       std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static void applyNeutralLightTheme(Singular& root,
+                                       Person* author = nullptr,
+                                       Formation* formation = nullptr,
+                                       std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static void applyNeutralLightTheme(Singular& root,
+                                       Person& author,
+                                       std::vector<std::shared_ptr<Relation>>* outRelations) {
+        applyNeutralLightTheme(root, author, nullptr, outRelations);
+    }
+
+    static void applyNeutralLightTheme(Singular& root,
+                                       Person* author,
+                                       std::vector<std::shared_ptr<Relation>>* outRelations) {
+        applyNeutralLightTheme(root, author, nullptr, outRelations);
+    }
+
+    static void applyNeutralLightTheme(Singular& root,
+                                       Person& author,
+                                       Zone& zone,
+                                       Formation* formation = nullptr,
+                                       std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+
+    static void applyNeutralLightTheme(Singular& root,
+                                       Person* author,
+                                       Zone& zone,
+                                       Formation* formation = nullptr,
+                                       std::vector<std::shared_ptr<Relation>>* outRelations = nullptr);
+};
+
+} // namespace Web
+} // namespace Foreign
+} // namespace Singularity
