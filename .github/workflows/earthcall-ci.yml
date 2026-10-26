@@ -51,6 +51,7 @@ jobs:
         dynamic_property_reachability_test
         property_path_precalc_test
         law_identifier_index_test
+        law_manager_drive_session_test
         relation_retry_lexeme_test
         relation_manager_test
         logos_modality_test
@@ -84,6 +85,7 @@ jobs:
         authored_physics_laws_test
         timeline_test
         time_moment_test
+        time_flow_test
         category_manager_test
         identity_test
         identity_ledger_test
@@ -150,6 +152,22 @@ jobs:
           set -euxo pipefail
           # shellcheck disable=SC2086  # FOCUSED_TESTS is split into target names on purpose
           cmake --build build --parallel 4 --target earthcall_terminal $FOCUSED_TESTS
+
+      - name: Measure drive-session lookup A/B
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./build/time_flow_test 2>&1 | tee drive-session-lookup-ab.log
+          grep -F 'DRIVE_SESSION_LOOKUP_AB ' drive-session-lookup-ab.log > drive-session-lookup-ab-result.txt
+
+      - name: Upload drive-session lookup A/B
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drive-session-lookup-ab
+          path: drive-session-lookup-ab-result.txt
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Run foreign DOM fixture witnesses from nested build directories
         shell: bash
