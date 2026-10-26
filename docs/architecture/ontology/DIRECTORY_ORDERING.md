@@ -20,8 +20,108 @@ The tree used to open like this:
 
 ```
 Earthcall/
-  sight-cpp/          ← "the C++ one"
-  backend-python/     ← "the Python one"
+  src/                     the one source root — all languages
+    ConstructedBeing/
+      Material/
+      Singular/
+        Creation/
+        Lexeme/
+        Object/
+          Automation/
+          Creation/
+          Geometry/
+          Object/
+        Property/
+        py/
+    Identity/
+    Person/
+      Body/
+        BodyPart/
+          Limb/
+        Head/
+      Perspective/
+      Relationship/
+        Community/
+      Soul/
+      Voice/
+        VoicePart/
+    Relation/
+      Formation/
+      Traversal/
+      py/
+    Singularity/
+      Audio/
+      Core/
+      Execution/
+      FirstMoverOntology/
+        FirstMoverWindowTools/
+          CreatorConsole/
+          Menu/
+        TalkingRobotGuyAPI/
+      Foreign/
+        API/
+        Adapters/
+        Shell/
+        Sync/
+        Web/
+          web_ui/
+            public/
+            src/
+              assets/
+        mcp/
+        py/
+          agent/
+          api/
+          static/
+            css/
+            js/
+            ui/
+          templates/
+          web/
+      Input/
+        Interaction/
+        Keyboard/
+        Locomotion/
+        Mouse/
+      Language/
+      Network/
+        Http/
+        Osc/
+        py/
+      OntoMath/
+      Physical/
+        Adapters/
+        py/
+          robotics/
+            drivers/
+      Screen/
+        GL/
+        WebGPU/
+      Storage/
+        FlatBuffers/
+        Schema/
+        Serialization/
+          ConstructedBeing/
+          Person/
+          Relation/
+          ZonesOfEarth/
+      Terminal/
+    Time/
+      Event/
+      Moment/
+    ZonesOfEarth/
+      AuthorsOfLaw/
+        py/
+      HomesOfEarth/
+      Ourverse/
+      Physics/
+      Zone/
+      py/
+
+  docs/  tests/  examples/  scripts/  saves/  scratch/  web_ui/     the workshop
+  third_party/  local_deps/  imgui/                                 the foreign
+  CMakeLists.txt  .gitmodules                                       the toolchain
+  build/  logs/                                                     output (ignored)
 ```
 
 That is a **category error of exactly the kind `NEW_KIND_FRAMEWORK.md` refuses**, made
@@ -81,6 +181,7 @@ never flatters itself.*
 ## 2. The top level, as of Stage 2
 
 ```
+```
 Earthcall/
   src/                     the one source root — all languages
     ConstructedBeing/
@@ -95,8 +196,8 @@ Earthcall/
           Object/
         Property/
         py/
-    Identity/              First Mover register, identity ledger, key pairs, claims
-    Person/                Person
+    Identity/
+    Person/
       Body/
         BodyPart/
           Limb/
@@ -107,31 +208,31 @@ Earthcall/
       Soul/
       Voice/
         VoicePart/
-    Relation/              Relation · RelationManager
+    Relation/
       Formation/
       Traversal/
       py/
-    Singularity/           the modality layer — where language stops mattering
-      Audio/               the Sound modality (AudioSystem)
-      Core/                Engine · EventBus · CreationChannel
-      Execution/           ExecutionChannel, NativeBytecodeVM, JITBridge
+    Singularity/
+      Audio/
+      Core/
+      Execution/
       FirstMoverOntology/
         FirstMoverWindowTools/
           CreatorConsole/
           Menu/
         TalkingRobotGuyAPI/
-      Foreign/             the Foreign software modality (ForeignChannel at the root)
-        API/               EarthcallAPI, SecurityManager
-        Adapters/          MacOSAccessibilityAdapter
+      Foreign/
+        API/
+        Adapters/
         Shell/
-        Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
-        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
+        Sync/
+        Web/
           web_ui/
             public/
             src/
               assets/
-        mcp/               earthcall-mcp-server.js
-        py/                app.py
+        mcp/
+        py/
           agent/
           api/
           static/
@@ -140,26 +241,26 @@ Earthcall/
             ui/
           templates/
           web/
-      Input/               the Input modality
-        Interaction/       InteractionChannel, ControlPatterns
-        Keyboard/          KeyboardHandler
-        Locomotion/        LocomotionChannel
-        Mouse/             MouseHandler
-      Language/            the Symbolic modality (LanguageSystem, parser; Lexeme is a Singular)
-      Network/             WebSocketClient.cpp · WebSocketServer.cpp
+      Input/
+        Interaction/
+        Keyboard/
+        Locomotion/
+        Mouse/
+      Language/
+      Network/
         Http/
         Osc/
-        py/                engine_server.py · events.py
-      OntoMath/            authored mathematics (Field, Function, CurveModel, Operations)
-      Physical/            the Physical hardware modality (PhysicalChannel)
+        py/
+      OntoMath/
+      Physical/
         Adapters/
         py/
           robotics/
             drivers/
-      Screen/              the Screen/Light modality (Renderer, BrushSystem, ScreenRecorder)
+      Screen/
         GL/
         WebGPU/
-      Storage/             the Storage modality (SaveSystem, CloudStorage, FileChannel, StreamChannel, VirtualFileSystem)
+      Storage/
         FlatBuffers/
         Schema/
         Serialization/
@@ -167,13 +268,12 @@ Earthcall/
           Person/
           Relation/
           ZonesOfEarth/
-      Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence [legacy name: TerminalLine])
-    Time/                  Timeline · Moment · Event
-      Event/               (the distinguished Moment: occurrence in time)
-      Moment/              (instant or interval)
-      timeline.hpp/.cpp    (Timeline: relative temporal domain, a Singular)
+      Terminal/
+    Time/
+      Event/
+      Moment/
     ZonesOfEarth/
-      AuthorsOfLaw/        (Law)
+      AuthorsOfLaw/
         py/
       HomesOfEarth/
       Ourverse/
@@ -188,8 +288,6 @@ Earthcall/
 ```
 
 ---\
-
-> **TerminalLine naming decree (2026-10-20):** the source symbol `LawSentence` under `Singularity/Terminal/` is a legacy implementation name for the Terminal modality's line parser, conceptually **`TerminalLine`**. Its placement under Terminal is substantive: it must not be promoted into a universal language abstraction. See the [addendum](../../addendums/terminal_line_naming_and_modality_scope_addendum.md).
 
 ## 3. Where language goes
 
