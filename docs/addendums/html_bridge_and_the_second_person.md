@@ -1,27 +1,14 @@
-# Addendum: Integrating HTML Bridge and the Second Person
+# HTML Bridge and the Second Person
 
-*(Model: Gemini Flash 1.5, Harness: Jules, Session ID: 3260200770766759045)*
+*Origin: Jules task 3260200770766759045; reviewed by Sun Squid Intake II, 2026-10-26.*
+**Status: cross-framework proposal; not evidence of a deployed bidirectional browser bridge.**
 
-## Reflections on the Architectural Synthesis
+## Do not collapse two meanings
+[HTML as Lexeme Formation](../architecture/Integration/HTML_LEXEME_FORMATION_BRIDGE.md) specifies a proposed Sense/Act boundary: foreign browser DOM state is sensed into Earthcall's existing Lexemes, Relations, and Formations; Person-authored Law may request bounded DOM mutations; browser acceptance or refusal is sensed back. The source explicitly labels the implementation **not yet claimed**.
 
-Earthcall's [HTML Lexeme Formation Bridge](../architecture/Integration/HTML_LEXEME_FORMATION_BRIDGE.md) and [Second Person Framework](../architecture/ourverse/SECOND_PERSON_FRAMEWORK.md) address how external systems and models interact with the internal, authored ontology of Earthcall.
+[The Second Person Framework](../architecture/ourverse/SECOND_PERSON_FRAMEWORK.md) addresses the future arrival of a **second real human Person** in Ourverse: Person-to-Person visibility, representation, and conflicting authority. It is not a framework that makes an LLM, a browser, or an external service a `Person`.
 
-### The Problem of Foreign Modalities
+## Possible interrelation
+A future web bridge may become one modality through which two human Persons interact with a shared authored world. Browser-originated events remain **foreign sensed facts**, not independent Person authority. Any cross-Person exposure must still answer to TransferPolicy, standing, and the author's unresolved decisions in the Second Person specification.
 
-Earthcall maintains a strict, discrete ontology. However, it must often interact with systems that do not share this ontology—such as web browsers (DOM), external databases, or large language models (LLMs). Forcing these external systems to natively speak Earthcall's internal representation is impractical and breaks the "Second Person" perspective, where Earthcall is an independent entity interacting with other independent entities.
-
-### HTML Bridge as the Universal Translator
-
-The `HTML_LEXEME_FORMATION_BRIDGE` provides a concrete mechanism for this interaction. It defines how foreign HTML structures are translated into Earthcall's native Lexemes and Relations, and vice versa. This acts as a universal translator, allowing Earthcall to render its internal state in a format understandable by web clients, and allowing web clients to manipulate the world through a familiar interface.
-
-### The Second Person Perspective
-
-The `SECOND_PERSON_FRAMEWORK` provides the philosophical grounding for this interaction. Earthcall doesn't just passively serve HTML; it actively *translates* its internal truth into a foreign modality for the benefit of another entity (the "Second Person" - e.g., an LLM or a human using a browser).
-
-Crucially, the translation happens at the boundary. The external entity manipulates the translated representation (the HTML), and the bridge translates those manipulations back into discrete semantic changes (Relations and Laws) within the engine.
-
-### The Synthesis
-
-1.  **Respecting Boundaries:** The HTML Bridge allows Earthcall to interact with foreign systems without compromising its internal, discrete ontology.
-2.  **Active Translation:** The engine acts as an active translator, projecting its internal state outward and interpreting external actions inward, embodying the Second Person Framework.
-3.  **Legible Interaction:** The translation process itself is legible—the mapping between HTML nodes and Lexemes/Relations is well-defined and auditable, maintaining the No Black Box principle even at the system boundary.
+The bridge is a *potential transport and representation mechanism*; the Second Person framework is a *human-to-human governance contract*. Neither substitutes for the other, and neither is claimed complete by this addendum.

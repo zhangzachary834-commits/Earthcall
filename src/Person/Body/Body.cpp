@@ -94,10 +94,12 @@ void Body::setHeight(float h) {
 }
 
 BodyPart* Body::getBodyPart(const std::string& name) const {
+    // Exact identity takes precedence when another part's display name collides.
     for (auto* part : parts) {
-        if (part && part->getName() == name) {
-            return part;
-        }
+        if (part && part->getIdentifier() == name) return part;
+    }
+    for (auto* part : parts) {
+        if (part && part->getName() == name) return part;
     }
     return nullptr;
 }
@@ -113,11 +115,24 @@ std::vector<BodyPart*> Body::getBodyPartsByType(BodyPart::Type type) const {
 }
 
 void Body::removeBodyPart(const std::string& name) {
-    auto it = std::remove_if(parts.begin(), parts.end(),
+    auto byId = std::find_if(parts.begin(), parts.end(),
         [&name](const BodyPart* part) {
-            return part && part->getName() == name;
+            return part && part->getIdentifier() == name;
         });
-    parts.erase(it, parts.end());
+    if (byId != parts.end()) {
+        formation.releaseMember(*byId);
+        parts.erase(byId);
+        return;
+    }
+    // Legacy display-name removal retains its remove-all behavior.
+    for (auto it = parts.begin(); it != parts.end();) {
+        if (*it && (*it)->getName() == name) {
+            formation.releaseMember(*it);
+            it = parts.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 
@@ -207,11 +222,11 @@ Body Body::createBasicAvatar(const std::string& artStyle) {
     return avatar;
 }
 
-Body Body::createFromConcept(const ObjectConcept& objConcept) {
-    Body avatar(objConcept.name(), "Concept");
+Body Body::createFromConcept(const ObjectConcept& concept) {
+    Body avatar(concept.name(), "Concept");
     int index = 0;
     // Iterate over the concept's members and create generic body parts for each
-    for(const auto& member : objConcept.members()) {
+    for(const auto& member : concept.members()) {
         BodyPart* bp = new BodyPart("concept-part-" + std::to_string(index++), BodyPart::Type::Undefined, ObjectTypes::ShapeKind::Cube, glm::vec3(1.0f));
         if (member.hasGeometry) {
             bp->setPrimaryShape(member.kind);
