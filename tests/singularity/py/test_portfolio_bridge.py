@@ -1,5 +1,7 @@
+import os
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 _SRC = Path(__file__).resolve().parents[3]
@@ -9,6 +11,7 @@ sys.path.insert(0, str(_SRC / "Singularity" / "Foreign" / "py"))
 from src.Singularity.Foreign.py.bridge import CppBridge
 from src.Singularity.Foreign.py.api.routes import (
     PORTFOLIO_ALLOWED_ORIGINS,
+    _portfolio_allowed_origins,
     _portfolio_origin_allowed,
 )
 
@@ -60,11 +63,42 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
         self.assertNotIn("private_runtime_state", projection["laws"][0])
         self.assertEqual(len(projection["recent_events"]), 1)
 
+    def test_connected_without_engine_snapshot_does_not_expose_synthetic_data(self):
+        bridge = CppBridge()
+        bridge.connected = True
+        bridge.current_state = {
+            "active_zone_index": 7,
+            "active_zone_name": "Synthetic Zone",
+            "active_zone_id": "synthetic",
+            "objects": [{"id": "synthetic-object"}],
+            "laws": [{"identifier": "synthetic-law"}],
+        }
+        projection = bridge.get_portfolio_state()
+        self.assertTrue(projection["connected"])
+        self.assertFalse(projection["has_engine_snapshot"])
+        self.assertEqual(projection["active_zone"], {"index": None, "name": "", "id": ""})
+        self.assertEqual(projection["objects"], [])
+        self.assertEqual(projection["laws"], [])
+
     def test_public_portfolio_origin_is_explicitly_allowed(self):
         origin = "https://zhangzachary834-commits.github.io"
         self.assertIn(origin, PORTFOLIO_ALLOWED_ORIGINS)
-        self.assertTrue(_portfolio_origin_allowed(origin))
-        self.assertFalse(_portfolio_origin_allowed("https://evil.example"))
+        with patch.dict(os.environ, {"PORTFOLIO_ALLOWED_ORIGINS": ""}):
+            self.assertTrue(_portfolio_origin_allowed(origin))
+            self.assertFalse(_portfolio_origin_allowed("https://evil.example"))
+
+    def test_default_origin_allowlist_is_immutable(self):
+        self.assertIsInstance(PORTFOLIO_ALLOWED_ORIGINS, frozenset)
+        with patch.dict(os.environ, {"PORTFOLIO_ALLOWED_ORIGINS": ""}):
+            self.assertIs(_portfolio_allowed_origins(), PORTFOLIO_ALLOWED_ORIGINS)
+            self.assertNotIn("https://evil.example", PORTFOLIO_ALLOWED_ORIGINS)
+
+    def test_environment_origin_override_replaces_defaults(self):
+        with patch.dict(os.environ, {"PORTFOLIO_ALLOWED_ORIGINS": "https://custom.example, https://second.example"}):
+            self.assertTrue(_portfolio_origin_allowed("https://custom.example"))
+            self.assertTrue(_portfolio_origin_allowed("https://second.example"))
+            self.assertFalse(_portfolio_origin_allowed("https://zhangzachary834-commits.github.io"))
+            self.assertFalse(_portfolio_origin_allowed("https://evil.example"))
 
 
 if __name__ == "__main__":
