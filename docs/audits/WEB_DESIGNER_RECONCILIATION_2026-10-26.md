@@ -101,3 +101,10 @@ Static inspection of the transplanted documentation found historical round langu
 The current focused source invokes 55 Web Designer test functions. The CI workflow was also updated to include `web_designer_modality_test` in its single canonical `FOCUSED_TESTS` list; otherwise a green PR would not have tested the reconciled artifact at all.
 
 This is why reconciliation is not file copying. The evidence, documentation, test selection, and present engine contracts must agree on the same head.
+
+
+### Web fixture author identity was rechecked against current tracked Person state
+
+The stable author identifier in the reconciled Web vocabulary/theme fixtures matches the keyed Person profile currently tracked under `saves/persons/` on default. An older Person Verification sentence names a different historical DID prefix; that sentence is stale relative to the tracked current profile and is not used as authority for this reconciliation.
+
+This pass does not attempt the broader legacy-name/succession migration. Current default still deliberately carries both legacy name-keyed history and keyed identity state, with the unfinished succession work tracked elsewhere. The Web fixture simply avoids introducing a new display-name ambiguity.
