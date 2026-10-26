@@ -1,6 +1,7 @@
 #include "Singularity/Storage/Serialization/BinarySerializer.hpp"
 #include <iostream>
 #include <filesystem>
+#include <fstream>
 #include <cassert>
 
 using namespace Earthcall::Storage;
@@ -72,24 +73,30 @@ int main() {
     
     std::filesystem::remove(testPath);
     
-    // Test atomic write-before-commit behavior
-    std::filesystem::path tempDir = std::filesystem::temp_directory_path() / "binary_serializer_test";
+    // Verify replacement actually publishes NEW contents, not merely the
+    // original payload; then force a failed commit without losing a sentinel.
+    const auto tempDir = std::filesystem::temp_directory_path() / "earthcall-binary-atomic-witness";
+    std::filesystem::remove_all(tempDir);
     std::filesystem::create_directories(tempDir);
-    std::filesystem::path target = tempDir / "graph.ecform";
-
+    const auto target = tempDir / "graph.ecform";
     check(BinarySerializer::writeBinary(graph, target.string()), "Initial atomic write succeeds");
-    check(std::filesystem::exists(target), "Target binary ecform exists");
-
-    check(BinarySerializer::writeBinary(graph, target.string()), "Overwriting atomic write succeeds");
-
-    for (const auto& entry : std::filesystem::directory_iterator(tempDir)) {
-        check(entry.path().filename().string().find("graph.ecform.tmp-") != 0, "No lingering temporary files remain after write");
-    }
-
+    const auto originalCount = graph.lexemes.size();
+    graph.getOrAddLexeme("atomic.new.lexeme");
+    check(BinarySerializer::writeBinary(graph, target.string()), "Atomic replacement succeeds");
     EcformGraph reloaded;
-    check(BinarySerializer::readBinary(target.string(), reloaded), "Reloading atomic binary file succeeds");
-    check(reloaded.lexemes.size() == graph.lexemes.size(), "Reloaded graph matches written graph");
+    check(BinarySerializer::readBinary(target.string(), reloaded), "Reload replacement succeeds");
+    check(reloaded.lexemes.size() == originalCount + 1, "Replacement publishes new payload");
 
+    const auto blocked = tempDir / "blocked.ecform";
+    std::filesystem::create_directory(blocked);
+    const auto sentinel = blocked / "sentinel";
+    { std::ofstream out(sentinel); out << "preserve"; }
+    check(!BinarySerializer::writeBinary(graph, blocked.string()), "Directory target refuses commit");
+    check(std::filesystem::exists(sentinel), "Failed commit preserves prior destination");
+    for (const auto& entry : std::filesystem::directory_iterator(tempDir)) {
+        check(entry.path().filename().string().find(".tmp-") == std::string::npos,
+              "No lingering temporary files after success or failure");
+    }
     std::filesystem::remove_all(tempDir);
 
     std::cout << "------------------------------------------------------------\n";

@@ -105,35 +105,41 @@ static void testResolveOrMint() {
 }
 
 static void testAtomicWritePreservesOnFailure() {
-    std::filesystem::path testPath = std::filesystem::temp_directory_path() / "test_ledger_atomic.json";
-    std::filesystem::remove(testPath);
+    const auto root = std::filesystem::temp_directory_path() / "earthcall-ledger-atomic-witness";
+    std::filesystem::remove_all(root);
+    std::filesystem::create_directories(root);
+    const auto testPath = root / "ledger.json";
+    const SingularId first = PrivateKey::generate().id();
+    const SingularId second = PrivateKey::generate().id();
 
-    SingularId id = PrivateKey::generate().id();
+    IdentityLedger ledger(testPath);
+    ledger.record("first", first);
+    assert(ledger.save());
+    ledger.record("second", second);
+    assert(ledger.save()); // Must replace an existing file, not merely create it.
 
-    // Write initial valid ledger
-    {
-        IdentityLedger ledger(testPath);
-        ledger.record("initial_user", id);
-        assert(ledger.save());
+    IdentityLedger reloaded(testPath);
+    assert(reloaded.load());
+    assert(reloaded.find("first").has_value());
+    assert(reloaded.find("second").has_value());
+    assert(reloaded.find("second")->toString() == second.toString());
+
+    // A nonempty directory at the destination forces the commit/rename to
+    // fail deterministically. Its contents must survive; no .tmp file remains.
+    const auto blocked = root / "blocked";
+    std::filesystem::create_directory(blocked);
+    const auto sentinel = blocked / "sentinel";
+    { std::ofstream out(sentinel); out << "preserve"; }
+    IdentityLedger cannotCommit(blocked);
+    cannotCommit.record("other", first);
+    assert(!cannotCommit.save());
+    assert(std::filesystem::exists(sentinel));
+    for (const auto& entry : std::filesystem::directory_iterator(root)) {
+        assert(entry.path().filename().string().find("blocked.tmp-") != 0);
+        assert(entry.path().filename().string().find("ledger.json.tmp-") != 0);
     }
-
-    // Confirm file exists and no temporary leftover files exist
-    assert(std::filesystem::exists(testPath));
-    for (const auto& entry : std::filesystem::directory_iterator(std::filesystem::temp_directory_path())) {
-        if (entry.path().filename().string().find("test_ledger_atomic.json.tmp-") == 0) {
-            assert(false && "Stale temporary file found");
-        }
-    }
-
-    // Re-load and verify
-    {
-        IdentityLedger reloaded(testPath);
-        assert(reloaded.load());
-        assert(reloaded.find("initial_user").has_value());
-    }
-
-    std::filesystem::remove(testPath);
-    std::cout << "  atomic write-before-commit OK\n";
+    std::filesystem::remove_all(root);
+    std::cout << "  atomic replacement and failed-commit preservation OK\n";
 }
 
 int main() {

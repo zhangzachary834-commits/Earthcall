@@ -54,8 +54,14 @@ bool IdentityLedger::load() {
 
 bool IdentityLedger::save() const {
     std::error_code ec;
-    std::filesystem::create_directories(_path.parent_path(), ec);
-    ec.clear();
+    if (_path.has_parent_path()) {
+        std::filesystem::create_directories(_path.parent_path(), ec);
+        if (ec) {
+            std::cerr << "[IdentityLedger] cannot create parent directory for " << _path
+                      << ": " << ec.message() << "\n";
+            return false;
+        }
+    }
 
     nlohmann::json entries = nlohmann::json::object();
     for (const auto& [name, id] : _byName) entries[name] = id.toString();
@@ -89,8 +95,10 @@ bool IdentityLedger::save() const {
 
     std::filesystem::rename(tempPath, _path, ec);
     if (ec) {
+        const auto renameError = ec;
         std::filesystem::remove(tempPath, ec);
-        std::cerr << "[IdentityLedger] failed to rename temporary ledger to " << _path << ": " << ec.message() << "\n";
+        std::cerr << "[IdentityLedger] failed to rename temporary ledger to " << _path
+                  << ": " << renameError.message() << "\n";
         return false;
     }
 

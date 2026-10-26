@@ -140,6 +140,7 @@ bool BinarySerializer::writeBinary(const EcformGraph& graph, const std::string& 
     std::error_code ec;
     if (finalPath.has_parent_path()) {
         std::filesystem::create_directories(finalPath.parent_path(), ec);
+        if (ec) return false;
     }
 
     {
