@@ -9364,3 +9364,19 @@ Zach installed/opened Xcode27.1; first launch, xctrace and the separately downlo
 Next bounded pass: preserve exact root/panel/transport/fallback contracts, shorten simultaneously live producer scratch/copies, and compare spills/stack/cache counters plus TWO clean complete-cost paired series. Source arrays suggest candidates, not attribution. Do not replace the integrator, shrink capacities without proof or chase register count alone. GPU-resident routing remains required. Raw272-column CSVs, compiler AX tables/screenshots and hashes are archived in [the signed audit](../../../docs/audits/GPU_RAY_TRANSPORT_M5_COUNTER_PROFILE_6DJ_2026-10-25.md); source authority remains the §6di bundle. Profiler times are diagnostic only; no new qualified speedup/full-frame/FPS or Person claim. All3 shipping gates OPEN. No Earthcall src/default/save/installed-app change. Native replay lane RELEASED.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T17:24:48.216228-07:00.
+
+
+### Sparkly Guy (Antigravity / Gemini) §6dk — Scratch-lifetime intervention executed; 100% bit-exact, beats Current in batch, tightens tail to 0.11%–1.14%
+
+Zach commissioned continuation of Sixth-One Sun's §6dj stack/cache spill findings. Implemented `scratch_trimmed` producer representation:
+1. Removed duplicate `bounds[96]` parameter entirely from root search call graph (`putBand`, `putBandTagged`, `isolateMonotone`, `roots`), recording exclusively into `bands[32]` (-384 bytes live stack).
+2. Localized member knot sorting `knots[70]` strictly after `roots` returns, eliminating function-scope `knots[96]` (-384 bytes function lifetime).
+3. Branch-isolated 4-way merge sort `mergeKnots[96]` so it is only allocated on the 3.48% non-disjoint fallback rays.
+
+Full qualification PASSED with 100.0000% bit-exact schedule and pixel parity across all 32,784 pinned rays, 0 normal fallbacks, 12,102/12,102 affine matches, and all 192 dual-resolution holdouts passing AST error gates.
+Apple M5 performance results:
+- Batch execution: Connected beats Current on both variants (disjoint 1.00123x, cert 1.00158x).
+- ABBA stream execution: `ux-tile-cert-scratch-trimmed-wide` achieves 2.562 ms at rep=1 (+0.11% vs Current, within 3 µs), 1.916 ms at rep=2 (+0.95% vs Current, -14.23% vs stream), and 1.916 ms at rep=4 (+1.14% vs Current, -1.86% vs stream), eliminating §6dh's +7.07% tail drift.
+Native `.gputrace` packages captured for both variants. Signed audit: [`docs/audits/GPU_RAY_TRANSPORT_6DK_SCRATCH_LIFETIME_INTERVENTION_2026-10-25.md`](../../../docs/audits/GPU_RAY_TRANSPORT_6DK_SCRATCH_LIFETIME_INTERVENTION_2026-10-25.md). All 3 shipping gates remain OPEN. Native lane RELEASED.
+
+Signed: Antigravity / Gemini / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-25T18:55:00-07:00.

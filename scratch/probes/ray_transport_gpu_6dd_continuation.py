@@ -426,9 +426,15 @@ fn mergeMain(@builtin(global_invocation_id) gid: vec3u) {
 '''
 
 
-def make_exact_monotone_bowskip_wgsl(disjoint_fastpath=False, tile_cert=False) -> str:
+def make_exact_monotone_bowskip_wgsl(disjoint_fastpath=False, tile_cert=False, scratch_trimmed=False) -> str:
     """Uses ONLY the exact existing level-specific depth-0 bow and monotone predicates
     and keeps all original 20/32/96/48 private array capacities. Zero new math or slack constants.
+    When scratch_trimmed=True:
+    1. Eliminates duplicate bounds[96] parameter from putBand, putBandTagged, isolateMonotone, and roots.
+       putBand only records intervals into bands[32]; knots are populated in producerFastMain after roots.
+    2. Removes function-scope knots[96] from producerFastMain. Inside the member loop, memberKnots[70]
+       is used only for sorting that member's knots.
+    3. Fallback mergeKnots[96] is only allocated when strictlyAscendingDisjoint is false.
     """
     s = r'''
 struct CurtainSpec {origin:vec4f,half:vec4f,limits:vec4f,curv:vec4f,amps:vec4f,freqs:vec4f,phases:vec4f};
@@ -760,6 +766,170 @@ fn producerFastMain(@builtin(global_invocation_id) gid: vec3u) {
  else { rays[id].counts = vec4u(subBase, singles, overBase, overs); }
 }
 '''
+    if scratch_trimmed:
+        # 1. putBand signature and body
+        old_pb = '''fn putBand(lo:f32,hi:f32,bounds:ptr<function,array<f32,96>>,nb:ptr<function,u32>,
+ bands:ptr<function,array<vec2f,32>>,nr:ptr<function,u32>,reason:ptr<function,u32>){
+ if(*nr>0u){
+  let last=(*bands)[*nr-1u];
+  if(lo<=last.y && hi>=last.x){
+   let merged=vec2f(min(lo,last.x),max(hi,last.y));
+   (*bands)[*nr-1u]=merged;
+   (*bounds)[*nb-2u]=merged.x;(*bounds)[*nb-1u]=merged.y;return;
+  }
+ }
+ if(*nb+2u>92u || *nr>=32u){*reason|=2u;return;}
+ (*bounds)[*nb]=lo;(*bounds)[*nb+1u]=hi;*nb+=2u;
+ (*bands)[*nr]=vec2f(lo,hi);*nr+=1u;
+}'''
+        new_pb = '''fn putBand(lo:f32,hi:f32,
+ bands:ptr<function,array<vec2f,32>>,nr:ptr<function,u32>,reason:ptr<function,u32>){
+ if(*nr>0u){
+  let last=(*bands)[*nr-1u];
+  if(lo<=last.y && hi>=last.x){
+   let merged=vec2f(min(lo,last.x),max(hi,last.y));
+   (*bands)[*nr-1u]=merged;
+   return;
+  }
+ }
+ if(*nr>=32u){*reason|=2u;return;}
+ (*bands)[*nr]=vec2f(lo,hi);*nr+=1u;
+}'''
+        if s.count(old_pb) != 1: raise ValueError('scratch_trimmed old_pb hook')
+        s = s.replace(old_pb, new_pb, 1)
+
+        old_pbt = '''fn putBandTagged(lo: f32, hi: f32, bounds: ptr<function, array<f32, 96>>,
+ nb: ptr<function, u32>, bands: ptr<function, array<vec2f, 32>>,
+ nr: ptr<function, u32>, reason: ptr<function, u32>,
+ zeroBands: ptr<function, u32>, isZeroLevel: bool) {'''
+        new_pbt = '''fn putBandTagged(lo: f32, hi: f32,
+ bands: ptr<function, array<vec2f, 32>>,
+ nr: ptr<function, u32>, reason: ptr<function, u32>,
+ zeroBands: ptr<function, u32>, isZeroLevel: bool) {'''
+        if s.count(old_pbt) != 1: raise ValueError('scratch_trimmed old_pbt hook')
+        s = s.replace(old_pbt, new_pbt, 1)
+
+        old_iso = '''fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
+ va: f32, vb: f32, error: f32, minSlope: f32,
+ bounds: ptr<function, array<f32, 96>>, nb: ptr<function, u32>,
+ bands: ptr<function, array<vec2f, 32>>, nr: ptr<function, u32>,'''
+        new_iso = '''fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
+ va: f32, vb: f32, error: f32, minSlope: f32,
+ bands: ptr<function, array<vec2f, 32>>, nr: ptr<function, u32>,'''
+        if s.count(old_iso) != 1: raise ValueError('scratch_trimmed old_iso hook')
+        s = s.replace(old_iso, new_iso, 1)
+
+        old_rts = '''fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
+ bounds: ptr<function, array<f32, 96>>, nb: ptr<function, u32>, bands: ptr<function, array<vec2f, 32>>,'''
+        new_rts = '''fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
+ bands: ptr<function, array<vec2f, 32>>,'''
+        if s.count(old_rts) != 1: raise ValueError('scratch_trimmed old_rts hook')
+        s = s.replace(old_rts, new_rts, 1)
+
+        s = re.sub(r'bounds,\s*nb,\s*bands', 'bands', s)
+
+        old_top = ''' var pieces: array<vec2f, 48>; var pieceMembers = vec3u(0u);
+ var knots: array<f32, 96>;
+ var memStart = vec4u(0u); var memCount = vec4u(0u);'''
+        new_top = ''' var pieces: array<vec2f, 48>; var pieceMembers = vec3u(0u);
+ var memStart = vec4u(0u); var memCount = vec4u(0u);'''
+        if s.count(old_top) != 1: raise ValueError('scratch_trimmed old_top hook')
+        s = s.replace(old_top, new_top, 1)
+
+        old_member_roots = '''  var nb = 1u; knots[0] = a;
+  var bands: array<vec2f, 32>; var nr = 0u; var zeroBands = 0u;
+  roots(m, o, d, a, b, -m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask0);
+  if (reason != 0u) { break; }
+  roots(m, o, d, a, b, 0.0, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, true, mask1);
+  if (reason != 0u) { break; }
+  roots(m, o, d, a, b, m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask2);
+  if (reason != 0u) { break; }
+  if (d.x != 0.0) { let x = -o.x / d.x; if (x > a && x < b) { knots[nb] = x; nb++; } }
+  if (d.y != 0.0) {
+   let y = -o.y / d.y; if (y > a && y < b) { knots[nb] = y; nb++; }
+   let k = (m.limits.z - o.y) / d.y; if (k > a && k < b) { knots[nb] = k; nb++; }
+  }
+  knots[nb] = b; nb++;'''
+        new_member_roots = '''  var bands: array<vec2f, 32>; var nr = 0u; var zeroBands = 0u;
+  roots(m, o, d, a, b, -m.limits.w, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask0);
+  if (reason != 0u) { break; }
+  roots(m, o, d, a, b, 0.0, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, true, mask1);
+  if (reason != 0u) { break; }
+  roots(m, o, d, a, b, m.limits.w, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask2);
+  if (reason != 0u) { break; }
+  var knots: array<f32, 70>;
+  var nb = 1u; knots[0] = a;
+  for (var k = 0u; k < nr; k++) {
+   knots[nb] = bands[k].x; nb++;
+   knots[nb] = bands[k].y; nb++;
+  }
+  if (d.x != 0.0) { let x = -o.x / d.x; if (x > a && x < b) { knots[nb] = x; nb++; } }
+  if (d.y != 0.0) {
+   let y = -o.y / d.y; if (y > a && y < b) { knots[nb] = y; nb++; }
+   let k = (m.limits.z - o.y) / d.y; if (k > a && k < b) { knots[nb] = k; nb++; }
+  }
+  knots[nb] = b; nb++;'''
+        if s.count(old_member_roots) != 1: raise ValueError('scratch_trimmed old_member_roots hook')
+        s = s.replace(old_member_roots, new_member_roots, 1)
+
+        old_merge = ''' var ne = 0u;
+ var head = vec4u(0u);
+ let totalKnots = (memCount.x + memCount.y + memCount.z + memCount.w) * 2u;
+ loop {
+  if (ne >= totalKnots) { break; }
+  var bestM = 4u;
+  var bestVal = 0.0;
+  for (var m = 0u; m < 4u; m++) {
+   let h = head[m];
+   if (h < memCount[m] * 2u) {
+    let pIdx = memStart[m] + (h >> 1u);
+    let isY = (h & 1u) != 0u;
+    let val = select(pieces[pIdx].x, pieces[pIdx].y, isY);
+    if (bestM == 4u || val < bestVal) {
+     bestVal = val;
+     bestM = m;
+    }
+   }
+  }
+  knots[ne] = bestVal;
+  ne++;
+  head[bestM]++;
+ }
+ var singles = 0u; var overs = 0u;
+ var pIdx = vec4u(0u);
+ for (var i = 1u; i < ne && reason == 0u; i++) {
+  let a = knots[i - 1u]; let b = knots[i]; if (!(b > a)) { continue; }'''
+        new_merge = ''' var mergeKnots: array<f32, 96>;
+ var ne = 0u;
+ var head = vec4u(0u);
+ let totalKnots = (memCount.x + memCount.y + memCount.z + memCount.w) * 2u;
+ loop {
+  if (ne >= totalKnots) { break; }
+  var bestM = 4u;
+  var bestVal = 0.0;
+  for (var m = 0u; m < 4u; m++) {
+   let h = head[m];
+   if (h < memCount[m] * 2u) {
+    let pIdx = memStart[m] + (h >> 1u);
+    let isY = (h & 1u) != 0u;
+    let val = select(pieces[pIdx].x, pieces[pIdx].y, isY);
+    if (bestM == 4u || val < bestVal) {
+     bestVal = val;
+     bestM = m;
+    }
+   }
+  }
+  mergeKnots[ne] = bestVal;
+  ne++;
+  head[bestM]++;
+ }
+ var singles = 0u; var overs = 0u;
+ var pIdx = vec4u(0u);
+ for (var i = 1u; i < ne && reason == 0u; i++) {
+  let a = mergeKnots[i - 1u]; let b = mergeKnots[i]; if (!(b > a)) { continue; }'''
+        if s.count(old_merge) != 1: raise ValueError('scratch_trimmed old_merge hook')
+        s = s.replace(old_merge, new_merge, 1)
+
     if tile_cert:
         needle_bind = '@group(0) @binding(4) var<storage,read_write> overlaps:array<Overlap>;'
         insertion_bind = '@group(0) @binding(4) var<storage,read_write> overlaps:array<Overlap>;\n@group(0) @binding(5) var<storage,read> rayMasks:array<u32>;'
@@ -782,6 +952,8 @@ fn producerFastMain(@builtin(global_invocation_id) gid: vec3u) {
         s = s.replace(needle_cert, insertion_cert, 1)
     if disjoint_fastpath:
         needle = 'if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }\n var ne = 0u;'
+        if scratch_trimmed:
+            needle = 'if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }\n var mergeKnots: array<f32, 96>;\n var ne = 0u;'
         insertion = '''if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }
  var strictlyAscendingDisjoint = true;
  for (var p = 1u; p < count; p++) {
@@ -813,7 +985,7 @@ fn producerFastMain(@builtin(global_invocation_id) gid: vec3u) {
   else { rays[id].counts = vec4u(subBase, singles, overBase, 0u); }
   return;
  }
- var ne = 0u;'''
+ ''' + ('var mergeKnots: array<f32, 96>;\n var ne = 0u;' if scratch_trimmed else 'var ne = 0u;')
         if s.count(needle) != 1:
             raise ValueError('strictlyAscendingDisjoint needle hook mismatch')
         s = s.replace(needle, insertion, 1)
@@ -1051,33 +1223,33 @@ def exact_monotone_bowskip_source(base, root, wide=False):
     return s
 
 
-def disjoint_fastpath_source(base, root, wide=True):
+def disjoint_fastpath_source(base, root, wide=True, scratch_trimmed=False):
     cr = load(root, 'ray_transport_gpu_continuation_review')
     s = cr.coarse_peel_source(base, root, wide=wide)
     old_compact = re.search(r'static const char\* kFastPathCompactShader = R"WGSL\((.*?)\)WGSL";', s, re.S)[0]
-    new_compact = 'static const char* kFastPathCompactShader = R"WGSL(\n' + make_exact_monotone_bowskip_wgsl(disjoint_fastpath=True).strip() + '\n)WGSL";'
+    new_compact = 'static const char* kFastPathCompactShader = R"WGSL(\n' + make_exact_monotone_bowskip_wgsl(disjoint_fastpath=True, scratch_trimmed=scratch_trimmed).strip() + '\n)WGSL";'
     if s.count(old_compact) != 1:
         raise ValueError('kFastPathCompactShader hook')
     s = s.replace(old_compact, new_compact, 1)
     s = s.replace(
         '"Exact level-specific coarse bow reject before stack; original20/32/96/48 capacities"',
-        '"Exact level-specific 3-level bow mask + whole-member bow skip + depth-0 monotone register peel + strictlyAscendingDisjoint fastpath; 65536 capacity"',
+        '"Exact level-specific 3-level bow mask + whole-member bow skip + depth-0 monotone register peel + strictlyAscendingDisjoint fastpath' + (' + scratch-trimmed' if scratch_trimmed else '') + '; 65536 capacity"',
         1,
     )
     return s
 
 
-def ux_tile_cert_disjoint_source(base, root, wide=True):
+def ux_tile_cert_disjoint_source(base, root, wide=True, scratch_trimmed=False):
     cr = load(root, 'ray_transport_gpu_continuation_review')
     s = cr.coarse_peel_source(base, root, wide=wide)
     old_compact = re.search(r'static const char\* kFastPathCompactShader = R"WGSL\((.*?)\)WGSL";', s, re.S)[0]
-    new_compact = 'static const char* kFastPathCompactShader = R"WGSL(\n' + make_exact_monotone_bowskip_wgsl(disjoint_fastpath=True, tile_cert=True).strip() + '\n)WGSL";'
+    new_compact = 'static const char* kFastPathCompactShader = R"WGSL(\n' + make_exact_monotone_bowskip_wgsl(disjoint_fastpath=True, tile_cert=True, scratch_trimmed=scratch_trimmed).strip() + '\n)WGSL";'
     if s.count(old_compact) != 1:
         raise ValueError('kFastPathCompactShader hook')
     s = s.replace(old_compact, new_compact, 1)
     s = s.replace(
         '"Exact level-specific coarse bow reject before stack; original20/32/96/48 capacities"',
-        '"Exact level-specific 3-level bow mask + whole-member bow skip + depth-0 monotone register peel + ux-tile-cert + strictlyAscendingDisjoint fastpath; 65536 capacity"',
+        '"Exact level-specific 3-level bow mask + whole-member bow skip + depth-0 monotone register peel + ux-tile-cert + strictlyAscendingDisjoint fastpath' + (' + scratch-trimmed' if scratch_trimmed else '') + '; 65536 capacity"',
         1,
     )
     needle_spec = '    if (!extractCurtainSpecs(zone, curtainSpecs)) {\n        throw std::runtime_error("Failed to dynamically extract curtain specs from zone");\n    }'
@@ -1240,8 +1412,12 @@ def build_variant(root: Path, build_root: Path, work: Path, variant: str):
         cpp = exact_monotone_bowskip_source(v['CPP_SOURCE'], root, wide=True)
     elif variant == 'disjoint-fastpath-wide':
         cpp = disjoint_fastpath_source(v['CPP_SOURCE'], root, wide=True)
+    elif variant == 'disjoint-scratch-trimmed-wide':
+        cpp = disjoint_fastpath_source(v['CPP_SOURCE'], root, wide=True, scratch_trimmed=True)
     elif variant == 'ux-tile-cert-disjoint-wide':
         cpp = ux_tile_cert_disjoint_source(v['CPP_SOURCE'], root, wide=True)
+    elif variant == 'ux-tile-cert-scratch-trimmed-wide':
+        cpp = ux_tile_cert_disjoint_source(v['CPP_SOURCE'], root, wide=True, scratch_trimmed=True)
     else:
         raise ValueError('unsupported variant: ' + variant)
 
@@ -1317,7 +1493,15 @@ def main():
     p.add_argument('--build-root', type=Path, default=Path('/private/tmp/earthcall-rt-pure-build'))
     p.add_argument('--work', type=Path, required=True)
     p.add_argument('--case', type=Path, default=Path('/private/tmp/earthcall-wide-case/manifest.json'))
-    p.add_argument('--variant', choices=['parallel-soa', 'coarse-monotone-bowskip', 'coarse-monotone-bowskip-wide', 'disjoint-fastpath-wide', 'ux-tile-cert-disjoint-wide'], required=True)
+    p.add_argument('--variant', choices=[
+        'parallel-soa',
+        'coarse-monotone-bowskip',
+        'coarse-monotone-bowskip-wide',
+        'disjoint-fastpath-wide',
+        'disjoint-scratch-trimmed-wide',
+        'ux-tile-cert-disjoint-wide',
+        'ux-tile-cert-scratch-trimmed-wide',
+    ], required=True)
     p.add_argument('--build-only', action='store_true')
     args = p.parse_args()
 
