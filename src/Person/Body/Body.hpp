@@ -49,7 +49,7 @@ public:
     static Body createBasicAvatar(const std::string& artStyle = "Voxel");
     
     // Factory: build an authored body from an ObjectConcept
-    static Body createFromConcept(const class ObjectConcept& concept);
+    static Body createFromConcept(const class ObjectConcept& objConcept);
     // Body customization
     void setHeight(float h);
     void scaleBodyParts();
