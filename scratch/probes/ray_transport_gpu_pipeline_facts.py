@@ -4,7 +4,7 @@ Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-10-25.
 """
 import argparse,ast,json,hashlib,importlib.util,subprocess,shlex,os,re
 from pathlib import Path
-p=argparse.ArgumentParser(description=__doc__);p.add_argument('variant',choices=['disjoint','cert','disjoint-trimmed','cert-trimmed']);p.add_argument('--root',type=Path,required=True);p.add_argument('--build-root',type=Path,required=True);p.add_argument('--work',type=Path,required=True);p.add_argument('--case',type=Path,required=True);p.add_argument('--capture',action='store_true');a=p.parse_args();root=a.root.resolve();buildRoot=a.build_root.resolve();b=buildRoot/'build';work=a.work.resolve();base=root/'scratch/probes'
+p=argparse.ArgumentParser(description=__doc__);p.add_argument('variant',choices=['disjoint','cert','disjoint-trimmed','cert-trimmed','disjoint-stream-merge','cert-stream-merge']);p.add_argument('--root',type=Path,required=True);p.add_argument('--build-root',type=Path,required=True);p.add_argument('--work',type=Path,required=True);p.add_argument('--case',type=Path,required=True);p.add_argument('--capture',action='store_true');a=p.parse_args();root=a.root.resolve();buildRoot=a.build_root.resolve();b=buildRoot/'build';work=a.work.resolve();base=root/'scratch/probes'
 if work.exists() or root==work or root in work.parents:raise ValueError('fresh external work required')
 work.mkdir(parents=True,exist_ok=False)
 def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
@@ -17,10 +17,14 @@ if a.variant=='disjoint':
  cpp=m.disjoint_fastpath_source(v['CPP_SOURCE'],root,True,scratch_trimmed=False)
 elif a.variant=='disjoint-trimmed':
  cpp=m.disjoint_fastpath_source(v['CPP_SOURCE'],root,True,scratch_trimmed=True)
+elif a.variant=='disjoint-stream-merge':
+ cpp=m.disjoint_fastpath_source(v['CPP_SOURCE'],root,True,scratch_trimmed=True,stream_merge=True)
 elif a.variant=='cert':
  cpp=m.ux_tile_cert_disjoint_source(v['CPP_SOURCE'],root,True,scratch_trimmed=False)
 elif a.variant=='cert-trimmed':
  cpp=m.ux_tile_cert_disjoint_source(v['CPP_SOURCE'],root,True,scratch_trimmed=True)
+elif a.variant=='cert-stream-merge':
+ cpp=m.ux_tile_cert_disjoint_source(v['CPP_SOURCE'],root,True,scratch_trimmed=True,stream_merge=True)
 else:
  raise ValueError('unknown variant: '+a.variant)
 original=cpp

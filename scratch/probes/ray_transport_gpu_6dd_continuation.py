@@ -426,7 +426,7 @@ fn mergeMain(@builtin(global_invocation_id) gid: vec3u) {
 '''
 
 
-def make_exact_monotone_bowskip_wgsl(disjoint_fastpath=False, tile_cert=False, scratch_trimmed=False) -> str:
+def make_exact_monotone_bowskip_wgsl(disjoint_fastpath=False, tile_cert=False, scratch_trimmed=False, stream_merge=False) -> str:
     """Uses only the existing level-specific depth-0 bow and monotone predicates.
     The untrimmed form retains the original20/32/96/48 capacities. No new slack constants.
     In the trimmed form, bounds was an ALIAS of the caller's knots, not a second array.
@@ -436,7 +436,11 @@ def make_exact_monotone_bowskip_wgsl(disjoint_fastpath=False, tile_cert=False, s
     The old nb=1+2*nr makes its >92 guard redundant under the32-band bound. Merge knots
     need2*count<=96 under the unchanged48-piece guard. Both refusal contracts survive.
     Scoped WGSL declarations do not guarantee conditional physical allocation or reuse.
+    Streaming merge (§6dm) eliminates mergeKnots[96] entirely, streaming four-way merge
+    directly into adjacent-interval emission using scalar prevKnot/bestVal and head cursors.
     """
+    if stream_merge:
+        scratch_trimmed = True
     s = r'''
 struct CurtainSpec {origin:vec4f,half:vec4f,limits:vec4f,curv:vec4f,amps:vec4f,freqs:vec4f,phases:vec4f};
 struct Ray {ro_clipA:vec4f,rd_clipB:vec4f,counts:vec4u};
@@ -873,7 +877,135 @@ fn producerFastMain(@builtin(global_invocation_id) gid: vec3u) {
         if s.count(old_member_roots) != 1: raise ValueError('scratch_trimmed old_member_roots hook')
         s = s.replace(old_member_roots, new_member_roots, 1)
 
-        old_merge = ''' var ne = 0u;
+        if stream_merge:
+            old_two_loops = ''' var ne = 0u;
+ var head = vec4u(0u);
+ let totalKnots = (memCount.x + memCount.y + memCount.z + memCount.w) * 2u;
+ loop {
+  if (ne >= totalKnots) { break; }
+  var bestM = 4u;
+  var bestVal = 0.0;
+  for (var m = 0u; m < 4u; m++) {
+   let h = head[m];
+   if (h < memCount[m] * 2u) {
+    let pIdx = memStart[m] + (h >> 1u);
+    let isY = (h & 1u) != 0u;
+    let val = select(pieces[pIdx].x, pieces[pIdx].y, isY);
+    if (bestM == 4u || val < bestVal) {
+     bestVal = val;
+     bestM = m;
+    }
+   }
+  }
+  knots[ne] = bestVal;
+  ne++;
+  head[bestM]++;
+ }
+ var singles = 0u; var overs = 0u;
+ var pIdx = vec4u(0u);
+ for (var i = 1u; i < ne && reason == 0u; i++) {
+  let a = knots[i - 1u]; let b = knots[i]; if (!(b > a)) { continue; }
+  let mid = a + 0.5 * (b - a);
+  var mask = 0u;
+  for (var m = 0u; m < 4u; m++) {
+   let start = memStart[m];
+   let numPieces = memCount[m];
+   var cur = pIdx[m];
+   loop {
+    if (cur >= numPieces || pieces[start + cur].y >= mid) { break; }
+    cur++;
+   }
+   pIdx[m] = cur;
+   if (cur < numPieces) {
+    let p = pieces[start + cur];
+    if (mid >= p.x && mid <= p.y) {
+     mask |= (1u << m);
+    }
+   }
+  }
+  if (mask == 0u) { continue; }
+  if (countOneBits(mask) == 1u) {
+   let n = max(1u, u32(ceil((b - a) / 4.0)));
+   if (singles + n > cfg.maxSubPerRay) { reason |= 16u; break; }
+   let member = firstTrailingBit(mask);
+   for (var k = 0u; k < n; k++) {
+    let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
+    let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
+    subpanels[subBase + singles] = Subpanel(vec2f(l, r), vec2u(member, 0)); singles++;
+   }
+  } else {
+   if (overs >= cfg.maxOverPerRay) { reason |= 32u; break; }
+   overlaps[overBase + overs] = Overlap(vec2f(a, b), vec2u(mask, 0)); overs++;
+  }
+ }'''
+            streaming_merge_body = ''' var singles = 0u; var overs = 0u;
+ var head = vec4u(0u);
+ var pIdx = vec4u(0u);
+ let totalKnots = (memCount.x + memCount.y + memCount.z + memCount.w) * 2u;
+ var stepCount = 0u;
+ var prevKnot = 0.0;
+ loop {
+  if (stepCount >= totalKnots || reason != 0u) { break; }
+  var bestM = 4u;
+  var bestVal = 0.0;
+  for (var m = 0u; m < 4u; m++) {
+   let h = head[m];
+   if (h < memCount[m] * 2u) {
+    let curP = memStart[m] + (h >> 1u);
+    let isY = (h & 1u) != 0u;
+    let val = select(pieces[curP].x, pieces[curP].y, isY);
+    if (bestM == 4u || val < bestVal) {
+     bestVal = val;
+     bestM = m;
+    }
+   }
+  }
+  head[bestM]++;
+  if (stepCount > 0u) {
+   let a = prevKnot; let b = bestVal;
+   if (b > a) {
+    let mid = a + 0.5 * (b - a);
+    var mask = 0u;
+    for (var m = 0u; m < 4u; m++) {
+     let start = memStart[m];
+     let numPieces = memCount[m];
+     var cur = pIdx[m];
+     loop {
+      if (cur >= numPieces || pieces[start + cur].y >= mid) { break; }
+      cur++;
+     }
+     pIdx[m] = cur;
+     if (cur < numPieces) {
+      let p = pieces[start + cur];
+      if (mid >= p.x && mid <= p.y) {
+       mask |= (1u << m);
+      }
+     }
+    }
+    if (mask != 0u) {
+     if (countOneBits(mask) == 1u) {
+      let n = max(1u, u32(ceil((b - a) / 4.0)));
+      if (singles + n > cfg.maxSubPerRay) { reason |= 16u; break; }
+      let member = firstTrailingBit(mask);
+      for (var k = 0u; k < n; k++) {
+       let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
+       let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
+       subpanels[subBase + singles] = Subpanel(vec2f(l, r), vec2u(member, 0)); singles++;
+      }
+     } else {
+      if (overs >= cfg.maxOverPerRay) { reason |= 32u; break; }
+      overlaps[overBase + overs] = Overlap(vec2f(a, b), vec2u(mask, 0)); overs++;
+     }
+    }
+   }
+  }
+  prevKnot = bestVal;
+  stepCount++;
+ }'''
+            if s.count(old_two_loops) != 1: raise ValueError('stream_merge old_two_loops hook')
+            s = s.replace(old_two_loops, streaming_merge_body, 1)
+        else:
+            old_merge = ''' var ne = 0u;
  var head = vec4u(0u);
  let totalKnots = (memCount.x + memCount.y + memCount.z + memCount.w) * 2u;
  loop {
@@ -900,7 +1032,7 @@ fn producerFastMain(@builtin(global_invocation_id) gid: vec3u) {
  var pIdx = vec4u(0u);
  for (var i = 1u; i < ne && reason == 0u; i++) {
   let a = knots[i - 1u]; let b = knots[i]; if (!(b > a)) { continue; }'''
-        new_merge = ''' var mergeKnots: array<f32, 96>;
+            new_merge = ''' var mergeKnots: array<f32, 96>;
  var ne = 0u;
  var head = vec4u(0u);
  let totalKnots = (memCount.x + memCount.y + memCount.z + memCount.w) * 2u;
@@ -928,8 +1060,8 @@ fn producerFastMain(@builtin(global_invocation_id) gid: vec3u) {
  var pIdx = vec4u(0u);
  for (var i = 1u; i < ne && reason == 0u; i++) {
   let a = mergeKnots[i - 1u]; let b = mergeKnots[i]; if (!(b > a)) { continue; }'''
-        if s.count(old_merge) != 1: raise ValueError('scratch_trimmed old_merge hook')
-        s = s.replace(old_merge, new_merge, 1)
+            if s.count(old_merge) != 1: raise ValueError('scratch_trimmed old_merge hook')
+            s = s.replace(old_merge, new_merge, 1)
 
     if tile_cert:
         needle_bind = '@group(0) @binding(4) var<storage,read_write> overlaps:array<Overlap>;'
@@ -952,9 +1084,15 @@ fn producerFastMain(@builtin(global_invocation_id) gid: vec3u) {
             raise ValueError('tile_cert needle hook mismatch')
         s = s.replace(needle_cert, insertion_cert, 1)
     if disjoint_fastpath:
-        needle = 'if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }\n var ne = 0u;'
-        if scratch_trimmed:
+        if stream_merge:
+            needle = 'if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }\n var singles = 0u; var overs = 0u;\n var head = vec4u(0u);'
+            tail = 'var singles = 0u; var overs = 0u;\n var head = vec4u(0u);'
+        elif scratch_trimmed:
             needle = 'if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }\n var mergeKnots: array<f32, 96>;\n var ne = 0u;'
+            tail = 'var mergeKnots: array<f32, 96>;\n var ne = 0u;'
+        else:
+            needle = 'if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }\n var ne = 0u;'
+            tail = 'var ne = 0u;'
         insertion = '''if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }
  var strictlyAscendingDisjoint = true;
  for (var p = 1u; p < count; p++) {
@@ -986,7 +1124,7 @@ fn producerFastMain(@builtin(global_invocation_id) gid: vec3u) {
   else { rays[id].counts = vec4u(subBase, singles, overBase, 0u); }
   return;
  }
- ''' + ('var mergeKnots: array<f32, 96>;\n var ne = 0u;' if scratch_trimmed else 'var ne = 0u;')
+ ''' + tail
         if s.count(needle) != 1:
             raise ValueError('strictlyAscendingDisjoint needle hook mismatch')
         s = s.replace(needle, insertion, 1)
@@ -1224,33 +1362,37 @@ def exact_monotone_bowskip_source(base, root, wide=False):
     return s
 
 
-def disjoint_fastpath_source(base, root, wide=True, scratch_trimmed=False):
+def disjoint_fastpath_source(base, root, wide=True, scratch_trimmed=False, stream_merge=False):
     cr = load(root, 'ray_transport_gpu_continuation_review')
     s = cr.coarse_peel_source(base, root, wide=wide)
     old_compact = re.search(r'static const char\* kFastPathCompactShader = R"WGSL\((.*?)\)WGSL";', s, re.S)[0]
-    new_compact = 'static const char* kFastPathCompactShader = R"WGSL(\n' + make_exact_monotone_bowskip_wgsl(disjoint_fastpath=True, scratch_trimmed=scratch_trimmed).strip() + '\n)WGSL";'
+    if stream_merge:
+        scratch_trimmed = True
+    new_compact = 'static const char* kFastPathCompactShader = R"WGSL(\n' + make_exact_monotone_bowskip_wgsl(disjoint_fastpath=True, scratch_trimmed=scratch_trimmed, stream_merge=stream_merge).strip() + '\n)WGSL";'
     if s.count(old_compact) != 1:
         raise ValueError('kFastPathCompactShader hook')
     s = s.replace(old_compact, new_compact, 1)
     s = s.replace(
         '"Exact level-specific coarse bow reject before stack; original20/32/96/48 capacities"',
-        '"Exact level-specific 3-level bow mask + whole-member bow skip + depth-0 monotone register peel + strictlyAscendingDisjoint fastpath' + (' + scratch-trimmed' if scratch_trimmed else '') + '; 65536 capacity"',
+        '"Exact level-specific 3-level bow mask + whole-member bow skip + depth-0 monotone register peel + strictlyAscendingDisjoint fastpath' + (' + stream-merge' if stream_merge else (' + scratch-trimmed' if scratch_trimmed else '')) + '; 65536 capacity"',
         1,
     )
     return s
 
 
-def ux_tile_cert_disjoint_source(base, root, wide=True, scratch_trimmed=False):
+def ux_tile_cert_disjoint_source(base, root, wide=True, scratch_trimmed=False, stream_merge=False):
     cr = load(root, 'ray_transport_gpu_continuation_review')
     s = cr.coarse_peel_source(base, root, wide=wide)
     old_compact = re.search(r'static const char\* kFastPathCompactShader = R"WGSL\((.*?)\)WGSL";', s, re.S)[0]
-    new_compact = 'static const char* kFastPathCompactShader = R"WGSL(\n' + make_exact_monotone_bowskip_wgsl(disjoint_fastpath=True, tile_cert=True, scratch_trimmed=scratch_trimmed).strip() + '\n)WGSL";'
+    if stream_merge:
+        scratch_trimmed = True
+    new_compact = 'static const char* kFastPathCompactShader = R"WGSL(\n' + make_exact_monotone_bowskip_wgsl(disjoint_fastpath=True, tile_cert=True, scratch_trimmed=scratch_trimmed, stream_merge=stream_merge).strip() + '\n)WGSL";'
     if s.count(old_compact) != 1:
         raise ValueError('kFastPathCompactShader hook')
     s = s.replace(old_compact, new_compact, 1)
     s = s.replace(
         '"Exact level-specific coarse bow reject before stack; original20/32/96/48 capacities"',
-        '"Exact level-specific 3-level bow mask + whole-member bow skip + depth-0 monotone register peel + ux-tile-cert + strictlyAscendingDisjoint fastpath' + (' + scratch-trimmed' if scratch_trimmed else '') + '; 65536 capacity"',
+        '"Exact level-specific 3-level bow mask + whole-member bow skip + depth-0 monotone register peel + ux-tile-cert + strictlyAscendingDisjoint fastpath' + (' + stream-merge' if stream_merge else (' + scratch-trimmed' if scratch_trimmed else '')) + '; 65536 capacity"',
         1,
     )
     needle_spec = '    if (!extractCurtainSpecs(zone, curtainSpecs)) {\n        throw std::runtime_error("Failed to dynamically extract curtain specs from zone");\n    }'
@@ -1415,10 +1557,14 @@ def build_variant(root: Path, build_root: Path, work: Path, variant: str):
         cpp = disjoint_fastpath_source(v['CPP_SOURCE'], root, wide=True)
     elif variant == 'disjoint-scratch-trimmed-wide':
         cpp = disjoint_fastpath_source(v['CPP_SOURCE'], root, wide=True, scratch_trimmed=True)
+    elif variant == 'disjoint-stream-merge-wide':
+        cpp = disjoint_fastpath_source(v['CPP_SOURCE'], root, wide=True, scratch_trimmed=True, stream_merge=True)
     elif variant == 'ux-tile-cert-disjoint-wide':
         cpp = ux_tile_cert_disjoint_source(v['CPP_SOURCE'], root, wide=True)
     elif variant == 'ux-tile-cert-scratch-trimmed-wide':
         cpp = ux_tile_cert_disjoint_source(v['CPP_SOURCE'], root, wide=True, scratch_trimmed=True)
+    elif variant == 'ux-tile-cert-stream-merge-wide':
+        cpp = ux_tile_cert_disjoint_source(v['CPP_SOURCE'], root, wide=True, scratch_trimmed=True, stream_merge=True)
     else:
         raise ValueError('unsupported variant: ' + variant)
 
@@ -1462,7 +1608,18 @@ def validate_6dd(root, report, rows, baseline, rays, ref):
         )
         if res['affine']['missing']:
             raise ValueError('coarse-monotone-bowskip affine endpoint missing')
-        if 'scratch-trimmed' in report['coarse_peel_experiment']['scope']:
+        if 'stream-merge' in report['coarse_peel_experiment']['scope']:
+            res['stream_merge_scope'] = {
+                'qualification_lane': 'strict_bit_exact_to_guarded_schedule_and_transport',
+                'candidate_timing': 'streamed_schedule.cases[].series[].samples mode3',
+                'legacy_batch_timing': 'unchanged cpProducer; not the streaming merge candidate',
+                'host_certificate_creation_and_initial_upload_in_mode3_timing': False,
+                'member_knots_capacity': 70, 'member_knots_required_upper_bound': 69,
+                'merge_knots_eliminated': True,
+                'physical_bytes_saved_established': False,
+                'shipping_performance_qualified': False,
+            }
+        elif 'scratch-trimmed' in report['coarse_peel_experiment']['scope']:
             # These labels describe actual callers, not the audit's desired conclusion.
             # BATCH uses unchanged cpProducer; mode3 uses trimmed cpFastCompact.
             res['scratch_trimmed_scope'] = {
@@ -1513,8 +1670,10 @@ def main():
         'coarse-monotone-bowskip-wide',
         'disjoint-fastpath-wide',
         'disjoint-scratch-trimmed-wide',
+        'disjoint-stream-merge-wide',
         'ux-tile-cert-disjoint-wide',
         'ux-tile-cert-scratch-trimmed-wide',
+        'ux-tile-cert-stream-merge-wide',
     ], required=True)
     p.add_argument('--build-only', action='store_true')
     args = p.parse_args()

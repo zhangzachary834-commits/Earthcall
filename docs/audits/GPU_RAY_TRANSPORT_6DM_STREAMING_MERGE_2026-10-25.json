@@ -1,0 +1,91 @@
+{
+  "protocol": "§6dm",
+  "signature": "Antigravity / Gemini / session 50cf28df-09e9-4c2b-a4d5-1f796abbc73a / 2026-10-25T20:15:00-07:00",
+  "prior_review": "GPU_RAY_TRANSPORT_SCRATCH_LIFETIME_REVIEW_6DL_2026-10-25.md",
+  "intervention": {
+    "mergeKnots_array_eliminated": true,
+    "streaming_four_way_merge": true,
+    "arrays_eliminated": [
+      "mergeKnots: array<f32, 96>"
+    ],
+    "local_arrays_retained": [
+      "knots: array<f32, 70> (member roots scope)"
+    ]
+  },
+  "qualification": {
+    "disjoint_stream_merge": {
+      "queries": 32784,
+      "bit_exact": true,
+      "normal_fallbacks": 0,
+      "singles": 247326,
+      "overlaps": 1799,
+      "affine_matches": 12102,
+      "dual_res_holdouts_passed": 192
+    },
+    "cert_stream_merge": {
+      "queries": 32784,
+      "bit_exact": true,
+      "normal_fallbacks": 0,
+      "singles": 247326,
+      "overlaps": 1799,
+      "affine_matches": 12102,
+      "dual_res_holdouts_passed": 192
+    }
+  },
+  "mode3_paired_timings": {
+    "disjoint": {
+      "series_1": {
+        "repeats_1_current_ms": 2.54717,
+        "repeats_1_mode3_ms": 2.55173,
+        "repeats_1_delta_pct": 0.179,
+        "repeats_2_current_ms": 3.80483,
+        "repeats_2_mode3_ms": 4.37081,
+        "repeats_2_delta_pct": 14.875,
+        "repeats_4_current_ms": 8.91783,
+        "repeats_4_mode3_ms": 10.23433,
+        "repeats_4_delta_pct": 14.763
+      },
+      "series_2": {
+        "repeats_1_current_ms": 2.54829,
+        "repeats_1_mode3_ms": 2.56158,
+        "repeats_1_delta_pct": 0.522,
+        "repeats_2_current_ms": 3.80713,
+        "repeats_2_mode3_ms": 3.83373,
+        "repeats_2_delta_pct": 0.699,
+        "repeats_4_current_ms": 6.34938,
+        "repeats_4_mode3_ms": 7.66098,
+        "repeats_4_delta_pct": 20.657
+      }
+    },
+    "tile_cert": {
+      "series_1": {
+        "repeats_1_current_ms": 2.54292,
+        "repeats_1_mode3_ms": 2.54529,
+        "repeats_1_delta_pct": 0.093,
+        "repeats_2_current_ms": 3.86683,
+        "repeats_2_mode3_ms": 3.88912,
+        "repeats_2_delta_pct": 0.576,
+        "repeats_4_current_ms": 8.88708,
+        "repeats_4_mode3_ms": 9.15365,
+        "repeats_4_delta_pct": 2.999
+      },
+      "series_2": {
+        "repeats_1_current_ms": 2.61773,
+        "repeats_1_mode3_ms": 2.67127,
+        "repeats_1_delta_pct": 2.045,
+        "repeats_2_current_ms": 5.13346,
+        "repeats_2_mode3_ms": 5.19619,
+        "repeats_2_delta_pct": 1.222,
+        "repeats_4_current_ms": 10.21390,
+        "repeats_4_mode3_ms": 10.28585,
+        "repeats_4_delta_pct": 0.705
+      }
+    }
+  },
+  "traces_captured": [
+    "/private/tmp/earthcall-6dm-capture-disjoint/disjoint-stream-merge.gputrace",
+    "/private/tmp/earthcall-6dm-capture-cert/cert-stream-merge.gputrace"
+  ],
+  "shipping_performance_qualified": false,
+  "shipping_gates_open": true
+}
