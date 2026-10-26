@@ -1,5 +1,7 @@
 #pragma once
 #include <string>
+#include <atomic>
+#include <cstdint>
 #include "json.hpp" // nlohmann::json single-header
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include <vector>
@@ -216,18 +218,36 @@ public:
     std::string aId() const { return _endpointA.id(); }
     std::string bId() const { return _endpointB.id(); }
 
+    // A relation can be rebound after a manager has indexed it. The manager
+    // cannot infer that change from its own vector generation, so publish a
+    // process-wide endpoint mutation epoch for lazy string-index invalidation.
+    // This is NOT a world structural revision or a semantic authorship event.
+    static std::uint64_t endpointMutationEpoch() {
+        return endpointMutationEpochCounter().load(std::memory_order_relaxed);
+    }
+
     void bind(Singular* aBeing, Singular* bBeing) {
         _endpointA.bind(aBeing);
         _endpointB.bind(bBeing);
         updatePersonEndpointFlag();
+        endpointMutationEpochCounter().fetch_add(1, std::memory_order_relaxed);
     }
 
     void forgetEndpoint(const Singular* being) {
         if (!being) return;
+        const bool changed = a() == being || b() == being;
         _endpointA.forget(being);
         _endpointB.forget(being);
         updatePersonEndpointFlag();
+        if (changed) endpointMutationEpochCounter().fetch_add(1, std::memory_order_relaxed);
     }
+
+private:
+    static std::atomic<std::uint64_t>& endpointMutationEpochCounter() {
+        static std::atomic<std::uint64_t> epoch{0};
+        return epoch;
+    }
+public:
 
     void updatePersonEndpointFlag();
 
