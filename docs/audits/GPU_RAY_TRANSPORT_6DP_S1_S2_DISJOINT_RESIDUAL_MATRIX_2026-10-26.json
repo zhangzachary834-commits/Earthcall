@@ -1,5 +1,5 @@
 {
-  "audit": "§6dp faithful residual family matrix rebase",
+  "audit": "\u00a76dp faithful residual family matrix rebase",
   "date": "2026-10-26T00:52:00-07:00",
   "harness": "Antigravity",
   "model": "Gemini 2.5 Flash",
@@ -25,18 +25,34 @@
     "total_certified_non_overlapping_pct": 70.0087
   },
   "indirect_dispatch_triples": {
-    "s1_producer": [227, 1, 1],
-    "s2_producer": [177, 1, 1],
-    "fallback_producer": [173, 1, 1],
-    "consumer": [513, 1, 1]
+    "s1_producer": [
+      227,
+      1,
+      1
+    ],
+    "s2_producer": [
+      177,
+      1,
+      1
+    ],
+    "fallback_producer": [
+      173,
+      1,
+      1
+    ],
+    "consumer": [
+      513,
+      1,
+      1
+    ]
   },
   "verification": {
     "rays_count": 32784,
     "bit_diff_rays": 0,
     "max_delta": 0.0,
-    "bit_exact_schedule_and_output_parity": true,
-    "protected_affine_matches": "12102 / 12102",
-    "dual_resolution_holdouts_pass": "192 / 192",
+    "bit_exact_schedule_and_output_parity": false,
+    "protected_affine_matches": "not checked by this binary; inherited assertion withdrawn",
+    "dual_resolution_holdouts_pass": "not checked by this binary; inherited assertion withdrawn",
     "exactly_once_publication_witness": "32784 / 32784 queries written exactly once (badWrites = 0)",
     "negative_controls": {
       "no_reset_counter_accumulation_failure": "PASS (2304 != 6912)",
@@ -51,7 +67,7 @@
         "ref_mean_batch_ms": 3.044,
         "cand_median_total_ms": 3.105,
         "cand_mean_batch_ms": 3.105,
-        "overhead_pct": 2.00
+        "overhead_pct": 2.0
       },
       {
         "repeats": 2,
@@ -63,7 +79,7 @@
       },
       {
         "repeats": 4,
-        "ref_median_total_ms": 9.140,
+        "ref_median_total_ms": 9.14,
         "ref_mean_batch_ms": 2.285,
         "cand_median_total_ms": 9.308,
         "cand_mean_batch_ms": 2.327,
@@ -97,5 +113,14 @@
       }
     ]
   },
-  "shipping_gates_open": 3
+  "shipping_gates_open": 3,
+  "review_6dq": {
+    "report": "GPU_RAY_TRANSPORT_RESIDUAL_CORRECTIVE_REVIEW_6DQ_2026-10-26.md",
+    "qualification_accepted": false,
+    "scope": "historical structural producer/routing diagnostic; shared noncanonical consumer, changed optics, no Current fallback",
+    "affine_and_holdout_claims_checked_by_this_binary": false,
+    "current_speedup_qualified": false,
+    "new_resource_profile": false,
+    "signature": "Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T11:23:37.388770-07:00"
+  }
 }
