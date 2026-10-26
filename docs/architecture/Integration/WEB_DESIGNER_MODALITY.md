@@ -1,5 +1,9 @@
 # Earthcall Web Designer Modality
 
+## Reconciliation status — 2026-10-26
+
+This document was reconciled against the Golden-Seal implementation and current default on 2026-10-26. Earlier round language that treated a First Mover, importer, initializer, or nearby Person pointer as authorship is superseded. **Authorship is Person-exclusive human stewardship; efficient causation and delegation are separate provenance.** The current reconciliation is tracked in [WEB_DESIGNER_RECONCILIATION_2026-10-26.md](../../audits/WEB_DESIGNER_RECONCILIATION_2026-10-26.md). Fresh current-head CI is required before this reconciliation is called verified.
+
 ## 1. Architectural Telos & Ontology
 
 > **"C++ May Know How A Browser Works. C++ Must Not Decide What The Person Means."**
@@ -9,9 +13,9 @@ The Earthcall Web Designer Modality establishes website authoring as a genuine *
 1. **Refusal 1 (No new C++ classes for domain nouns)**: There is no `class WebPage`, `class Button`, `class Heading`, `class Card`, or `class NavigationBar`. In-world beings are standard `Singular` (`Object`, `Formation`, `Relation`) entities living in the canonical world (`Universe::instance()`) and carrying authored properties.
 2. **Refusal 2 (Subsystems placed in Singularity)**: The web modality channel lives under `Singularity/Foreign/Web/Designer/` as a channel to foreign software/DOM environments.
 3. **Refusal 3 & Open Semantic Facets (Retiring WebConcept as source of truth)**: C++ enums do not define the universe of meanings a Person may author. `WebConcept` is demoted to an ephemeral compiled adapter view. Open strings (`roleName`, `variantName`, `flowName`, `alignName`, `justifyName`, `spacingName`, `scaleName`, `weightName`, `toneName`, `shapeName`, `elevationName`) allow Persons to introduce completely new semantic concepts (e.g. `sanctuary`, `ethereal`) entirely through authored data without modifying any C++ enum or table.
-4. **Refusal 5 (Person means Human)**: Persons author elements; elements carry first-class `Relation("authored-by", *being, *person, true, 1.0f)` provenance edges. Modality default seeds are authored by a designated First Mover authority (`s_seededAuthor`).
+4. **Refusal 5 (Person means Human)**: Authorship is Person-exclusive human stewardship. Authored state carries first-class `Relation("authored-by", *being, *person, true, 1.0f)` provenance. A First Mover, importer, compiler, initializer, loader, or injector may create/instantiate/inject/compile/realize state but does not become its author by efficient causation. `syncRegister()` manufactures no semantic authorship; shipped vocabulary is ordinary authored Earthcall data and restores its recorded stable Person identity.
 5. **Refusal 6 (No Black Box)**: Every property is accessible and governable via standard Earthcall `PropertyPath`. State is universalized above `web.*` (`role`, `level`, `layout.flow`, `surface.variant`, `prominence`, `subordinate`), with `web.*` strictly reserved for medium-specific browser parameters.
-6. **Refusal 7 (No hardcoded behavior in C++ methods)**: Behavior, presentation, and composition emerge entirely from Person-authored Laws and Metalaws reacting to events and mutating in-world state.
+6. **Refusal 7 (No hardcoded semantic constitution in C++ methods)**: Authored meaning, composition, design tokens, and behavioral intent live in ordinary Earthcall state. C++ may implement irreducible browser mechanics, sanitization, and lowering, but must not decide what the Person means.
 7. **Storage & Channel Invariants**: Realization and storage are strictly orthogonal. Direct raw filesystem I/O (`std::ofstream`, `create_directories`) is prohibited; all persistence routes through `VirtualFileSystem` (`memory://`) and `FileChannel` (`file.path`, `file.content`, `file.atomicWrite`).
 
 HTML, CSS, and DOM are not Earthcall's ontology—they are foreign realization targets of an in-world semantic model.
@@ -20,7 +24,7 @@ HTML, CSS, and DOM are not Earthcall's ontology—they are foreign realization t
 
 ## 2. Canonical Earthcall Language Precedent
 
-The Web Designer Modality uses the canonical Earthcall language precedent rather than a private tokenizer switch or static opcode dictionary:
+The Web Designer Modality uses the canonical Earthcall language precedent rather than a private semantic dictionary. `syncRegister()` is mechanism-only; the shipped vocabulary is loaded as ordinary authored Laws, Lexemes, and Relations from Earthcall data. `compilePhrase()` scans character spans against those live Lexemes and their `denotes` Relations; unmatched or genuinely ambiguous meaning is not invented by C++:
 
 ```
 Characters / Authored Input
@@ -61,7 +65,7 @@ Browser / WebView Realization Target
 To ensure authored semantic meaning survives realization into desktop UI, mobile UI, 2D/3D scenes, or print without being locked to the browser, properties are generalized above `web.*`:
 
 ### Universal Semantic Properties
-| Property Path | Purpose | Canonical Values / Open Extensibility |
+| Property Path | Purpose | Example authored values / open extensibility |
 |---|---|---|
 | `role` | Semantic role of the element | `page`, `section`, `navigation`, `heading`, `paragraph`, `action`, `container`, `list`, `item`, `media`, `quote`, `divider`, plus **arbitrary open roles** (e.g. `sanctuary`) |
 | `text` | Display text / content | Plain string |
@@ -92,9 +96,9 @@ Only properties genuinely unique to the web runtime carry the `web.*` prefix:
 ## 4. Hierarchy, Precedence & Provenance via Relational Topology
 
 Websites in Earthcall do not rely on flattened synthetic arrays or arbitrary `web.order` floating-point numbers:
-1. **Containment**: Parent-child relationship is established by `Relation("web-contains", *parent, *child, true, 1.0f)`.
+1. **Containment**: Parent-child relationship is established by `Relation("contains", *parent, *child, true, 1.0f)`.
 2. **Sibling Precedence DAG**: Sibling ordering is established by `Relation("precedes", *first, *second, true, 1.0f)`. When realizing children of a parent, `WebRealizer::findChildren` constructs an in-memory DAG and executes **Kahn's topological sort**, guaranteeing that the DOM sequence faithfully realizes the authored relational topology.
-3. **Authorship Provenance**: Elements carry `Relation("authored-by", *being, *author, true, 1.0f)` connecting every element to the Person or First Mover who authored it.
+3. **Authorship Provenance**: Authored elements carry `Relation("authored-by", *being, *author, true, 1.0f)` whose author endpoint is a real `Person`. First Movers and tools may carry separate creation/injection/delegation provenance; they are not substituted into `authored-by`.
 
 ---
 
@@ -102,7 +106,7 @@ Websites in Earthcall do not rely on flattened synthetic arrays or arbitrary `we
 
 `WebRealizer` does not dictate design choices or color palettes:
 - **Authored Theme Tokens**: The root/page element can carry authored theme properties (`theme.primaryColor`, `theme.backgroundColor`, `theme.textColor`, `theme.radius`, `theme.fontFamily`). `WebRealizer::generateStyleSheet` reads these properties from the root `Singular` and emits them into `:root` CSS custom properties (`--web-primary`, `--web-bg`, etc.).
-- **Minimal Browser Fallbacks**: If no theme properties are authored, clean neutral default tokens provide fallbacks.
+- **No opinionated theme backfill**: Missing authored aesthetic tokens remain unset rather than receiving C++ design opinions. The realizer retains only foreign-medium mechanics and narrow accessibility/legibility behavior.
 - **Substrate Cleanliness**: Substrate-level UI injections (such as hardcoded toast notifications) are strictly prohibited. Interactivity is signaled cleanly via semantic DOM event listeners that dispatch back to Earthcall's `EventBus`.
 
 ---
@@ -139,20 +143,14 @@ This loop holds only while the page is hosted inside Earthcall's own WebKit view
 
 ## 8. Verification & Extensibility Exit Test
 
-The modality is validated by 8 comprehensive automated tests in `tests/singularity/web_designer_modality_test.cpp`:
-1. **Lexeme & Relation In-World Resolution**: Validates that natural language tokens resolve through first-class `Singularity::Language::Lexeme` instances connected to `Law` objects via `"denotes"` `Relation` edges.
-2. **Law & Lexeme Universal Composition**: Validates that orthogonal semantic properties (`role`, `scale`, `layout.align`, `surface.variant`, `prominence`) compose cleanly onto a target `Singular`.
-3. **Relational Ordering & Provenance DAG**: Validates that sibling ordering is derived from `precedes` relations via topological sort and that `authored-by` provenance relations are preserved.
-4. **Thin WebRealizer & Authored Theme Tokens**: Validates that root theme properties (`theme.primaryColor`, etc.) are emitted into CSS `:root` variables and verifies the absence of hardcoded toast UI.
-5. **Extensibility Exit Test (Zero C++ Enum Modification)**: Validates that a Person can author a brand-new semantic concept (`role = "sanctuary"`, `surface.variant = "ethereal"`) purely through data, and `WebRealizer` realizes it into `<div class="web-sanctuary ... web-surface--ethereal ...">` without changing any C++ enum or table.
-6. **Orthogonal Storage via VFS & FileChannel**: Validates atomic writes via `FileChannel` and memory storage via `VirtualFileSystem` (`memory://`).
-7. **Law-Driven Event Reactivity**: Validates end-to-end DOM event dispatching to `EventBus`, reactive `Law` execution, property mutation (`surface.variant`), and re-realization.
-8. **End-to-End Frontend Website Prototype Generation**: Authors an 8-section living website prototype and exports it through `FileChannel`.
+The reconciled focused witness is `tests/singularity/web_designer_modality_test.cpp`. Its current source invokes **55 test functions** covering the original modality path plus the later Sun/Sparkly review gates: Person-only authorship, stable DID resolution and duplicate-display-name refusal, canonical authored vocabulary loading, no Power-of-Attorney inference, graph-authoritative redefinition and ambiguity refusal, first-class supersession/currentness, single-sink Relation admission, raw-CSS fail-closed capability governance, theme-definition versus application provenance, Zone custody, Ghost-Door/Maintenance-Hatch lifetime refusal, and zero opinionated theme fallback defaults.
 
-### Artifacts & Visual Witness
-- **Frontend Prototype**: `web_ui/designer_prototype.html` (22 KB) and `saves/web_designer/prototype.html`.
-- **Governed VFS File**: `saves/web_designer/test_governed_vfs.html`.
-- **Visual Witness**: `web_ui/designer_prototype.png` (291 KB, 1280x2400 rendered screenshot captured via headless Google Chrome).
+Evidence must be tied to the exact head that ran. The Oct-21 sealed branch reported 55/55 local focused witnesses; the Oct-26 reconciliation does **not** inherit that verdict automatically. Fresh CI/build evidence is recorded separately.
+
+### Artifacts
+- **Frontend Prototype**: `web_ui/designer_prototype.html` and `saves/web_designer/prototype.html`.
+- **Authored vocabulary/theme fixtures**: `saves/fixtures/web_vocabulary_seed.json` and `saves/fixtures/web_themes.json`.
+- **Reconciliation record**: [WEB_DESIGNER_RECONCILIATION_2026-10-26.md](../../audits/WEB_DESIGNER_RECONCILIATION_2026-10-26.md).
 
 ---
 
