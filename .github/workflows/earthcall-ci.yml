@@ -79,6 +79,7 @@ jobs:
         person_serialization_test
         person_ecform_propagation_test
         person_display_name_identity_test
+        perspective_manager_test
         community_test
         authorable_light_contract_test
         authored_physics_laws_test
