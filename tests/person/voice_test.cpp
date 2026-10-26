@@ -45,6 +45,10 @@ void run_tests() {
     check(voice.getVoicePart("Pitch") == nullptr, "Removed part is not returned");
     check(voice.getVoicePart("Timbre") == part2, "Other part preserved");
 
+    // VoicePart storage belongs to the caller; detach non-owning formation links
+    // before destroying the test fixtures.
+    voice.formation.releaseMember(part1);
+    voice.formation.releaseMember(part2);
     delete part1;
     delete part2;
 }
