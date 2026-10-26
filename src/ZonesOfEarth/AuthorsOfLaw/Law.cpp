@@ -2290,16 +2290,18 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                 occurrence ? occurrence->object : eventObject,
                 occurrence);
 
+            const std::string lawId = law->getIdentifier();
             if (law->scope() == Law::Scope::Everyone) {
                 std::vector<Singular*> subjects = sweepSubjects(*law);
                 for (Singular* being : subjects) {
                     if (!being || Universe::instance().isUnmade(being)) continue;
                     bool usedDirect = false;
                     if (!candidateConditionsSatisfied(*law, *being, &usedDirect)) continue;
+                    const std::string beingId = being->getIdentifier();
                     if (law->drives() &&
-                        hasDriveSession(law->getIdentifier(), being->getIdentifier())) {
+                        hasDriveSession(lawId, beingId)) {
                         if (law->retrigger() == Law::Retrigger::Absorb) continue;
-                        restartDriveSession(*law, being->getIdentifier());
+                        restartDriveSession(*law, beingId);
                     }
                     applyAndMaybeDrive(*law, *being, records, usedDirect);
                 }
@@ -2307,12 +2309,13 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             }
 
             if (!subject || Universe::instance().isUnmade(subject)) continue;
+            const std::string subjectId = subject->getIdentifier();
             if (law->drives() &&
-                hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
+                hasDriveSession(lawId, subjectId)) {
                 if (law->retrigger() == Law::Retrigger::Absorb) {
                     continue;
                 }
-                restartDriveSession(*law, subject->getIdentifier());
+                restartDriveSession(*law, subjectId);
             }
             applyAndMaybeDrive(*law, *subject, records);
         }
@@ -2480,12 +2483,14 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                   ? holds
                                   : (holds && !wasHolding);
             if (!fire) continue;
-            if (law->drives() &&
-                hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
-                if (law->retrigger() == Law::Retrigger::Absorb) {
-                    continue;
+            if (law->drives()) {
+                const std::string subjectId = subject->getIdentifier();
+                if (hasDriveSession(lawId, subjectId)) {
+                    if (law->retrigger() == Law::Retrigger::Absorb) {
+                        continue;
+                    }
+                    restartDriveSession(*law, subjectId);
                 }
-                restartDriveSession(*law, subject->getIdentifier());
             }
             applyAndMaybeDrive(*law, *subject, records, usedDirect);
         }
@@ -2996,7 +3001,11 @@ void LawManager::releaseFromLaws(Singular* being) {
         std::remove_if(_driveSessions.begin(), _driveSessions.end(),
                        [&id, this](const DriveSession& s) {
                            if (s.subjectId == id) {
-                               _driveSessionKeys.erase({s.lawId, s.subjectId});
+                               auto kIt = _driveSessionKeys.find(s.lawId);
+                               if (kIt != _driveSessionKeys.end()) {
+                                   kIt->second.erase(s.subjectId);
+                                   if (kIt->second.empty()) _driveSessionKeys.erase(kIt);
+                               }
                                return true;
                            }
                            return false;
@@ -3009,8 +3018,9 @@ void LawManager::restartDriveSession(Law& law, const std::string& subjectId) {
     // keeps its identity but its clock and event participants begin again.
     if (!Universe::instance().hasClock()) return;
     const double now = Universe::instance().now();
+    const std::string lawId = law.getIdentifier();
     for (auto& session : _driveSessions) {
-        if (session.lawId != law.getIdentifier() || session.subjectId != subjectId) {
+        if (session.lawId != lawId || session.subjectId != subjectId) {
             continue;
         }
         session.onset = now;
@@ -3043,15 +3053,16 @@ void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
     if (!Universe::instance().hasClock()) return;
 
     const std::string subjectId = subject.getIdentifier();
+    const std::string lawId = law.getIdentifier();
     for (const auto& session : _driveSessions) {
-        if (session.lawId == law.getIdentifier() && session.subjectId == subjectId) {
+        if (session.lawId == lawId && session.subjectId == subjectId) {
             return;   // already driving this subject
         }
     }
     const double onset = Universe::instance().now();
     law.rememberOnset(&subject, onset);
     DriveSession session;
-    session.lawId = law.getIdentifier();
+    session.lawId = lawId;
     session.subjectId = subjectId;
     session.onset = onset;
     // Remember the launching event's participants (when there is one) so
@@ -3064,7 +3075,7 @@ void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
             session.eventObjectId = o->getIdentifier();
         }
     }
-    _driveSessionKeys.insert({law.getIdentifier(), subjectId});
+    _driveSessionKeys[lawId].insert(subjectId);
     _driveSessions.push_back(std::move(session));
 }
 
@@ -3077,14 +3088,18 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
     // in the world — and this used to happen three times per session per tick
     // (subject, event subject, event object).
     const std::vector<Singular*> beings = Universe::instance().beings();
+    std::unordered_map<std::string, Singular*> beingMap;
+    beingMap.reserve(beings.size());
+    for (Singular* being : beings) {
+        if (being) beingMap[being->getIdentifier()] = being;
+    }
 
     for (auto it = _driveSessions.begin(); it != _driveSessions.end();) {
         Law* law = find(it->lawId);
         const auto findBeing = [&](const std::string& id) -> Singular* {
             if (id.empty()) return nullptr;
-            for (Singular* being : beings) {
-                if (being && being->getIdentifier() == id) return being;
-            }
+            auto bIt = beingMap.find(id);
+            if (bIt != beingMap.end()) return bIt->second;
             if (law) {
                 for (Singular* target : law->targets().getMembers()) {
                     if (!target || Universe::instance().isUnmade(target)) continue;
@@ -3098,7 +3113,11 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
         // A law or being that left the world ends its sessions silently.
         if (!law || !subject || !law->isEnabled()) {
             if (law && subject) law->forgetOnset(subject);
-            _driveSessionKeys.erase({it->lawId, it->subjectId});
+            auto kIt = _driveSessionKeys.find(it->lawId);
+            if (kIt != _driveSessionKeys.end()) {
+                kIt->second.erase(it->subjectId);
+                if (kIt->second.empty()) _driveSessionKeys.erase(kIt);
+            }
             it = _driveSessions.erase(it);
             continue;
         }
@@ -3124,7 +3143,11 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
             law->forgetOnset(subject);
             Core::EventBus::instance().publish(
                 ECA::Event{"law-drive-finished", subject, nullptr, std::time(nullptr)});
-            _driveSessionKeys.erase({it->lawId, it->subjectId});
+            auto kIt = _driveSessionKeys.find(it->lawId);
+            if (kIt != _driveSessionKeys.end()) {
+                kIt->second.erase(it->subjectId);
+                if (kIt->second.empty()) _driveSessionKeys.erase(kIt);
+            }
             it = _driveSessions.erase(it);
             continue;
         }
@@ -3168,14 +3191,11 @@ bool LawManager::remove(const std::string& lawId) {
 
     _driveSessions.erase(
         std::remove_if(_driveSessions.begin(), _driveSessions.end(),
-                       [&lawId, this](const DriveSession& s) {
-                           if (s.lawId == lawId) {
-                               _driveSessionKeys.erase({s.lawId, s.subjectId});
-                               return true;
-                           }
-                           return false;
+                       [&lawId](const DriveSession& s) {
+                           return s.lawId == lawId;
                        }),
         _driveSessions.end());
+    _driveSessionKeys.erase(lawId);
 
     return true;
 }

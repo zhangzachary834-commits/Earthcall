@@ -954,15 +954,10 @@ public:
         std::string eventObjectId;
     };
     const std::vector<DriveSession>& driveSessions() const { return _driveSessions; }
-    struct PairHash {
-        std::size_t operator()(const std::pair<std::string, std::string>& p) const {
-            std::size_t h1 = std::hash<std::string>{}(p.first);
-            std::size_t h2 = std::hash<std::string>{}(p.second);
-            return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
-        }
-    };
     bool hasDriveSession(const std::string& lawId, const std::string& subjectId) const {
-        return _driveSessionKeys.find({lawId, subjectId}) != _driveSessionKeys.end();
+        auto it = _driveSessionKeys.find(lawId);
+        if (it == _driveSessionKeys.end()) return false;
+        return it->second.count(subjectId) != 0;
     }
 
     // Bounded law chaining per tick: a law firing an event that wakes another
@@ -1108,7 +1103,7 @@ private:
     Formation _lawFormation;
     ReteNetwork _rete;
     std::vector<DriveSession> _driveSessions;
-    std::unordered_set<std::pair<std::string, std::string>, PairHash> _driveSessionKeys;
+    std::unordered_map<std::string, std::unordered_set<std::string>> _driveSessionKeys;
     std::unordered_map<std::string, std::vector<std::string>> _triggers;
     // Terminal node IDs for each law's compiled condition DAG.
     // Key: lawId, Value: {nodeId, isBeta} pairs for the DAG's terminal nodes.
