@@ -1,0 +1,544 @@
+{
+  "pass": true,
+  "documents_verified": 26,
+  "raw_qualification": {
+    "pass": true,
+    "queries": 32784,
+    "reference_queries": 192,
+    "all_query_native_AST_assertions_recorded": true,
+    "raw_AST_nodes_independently_recomputed_offline": false,
+    "accuracy": {
+      "finest": {
+        "metrics": {
+          "current": {
+            "RGB_pooled_channels": {
+              "mean": 5.2083436005461535e-05,
+              "p99": 0.0008628445430308024,
+              "max": 0.0014908520057793223
+            },
+            "T": {
+              "mean": 0.00013126131932741114,
+              "p99": 0.0014545230908419304,
+              "max": 0.0023179769068414346
+            }
+          },
+          "candidate": {
+            "RGB_pooled_channels": {
+              "mean": 6.501119626747072e-06,
+              "p99": 4.565286806328117e-05,
+              "max": 4.794852177492093e-05
+            },
+            "T": {
+              "mean": 1.8915837015402726e-05,
+              "p99": 6.906425235697622e-05,
+              "max": 6.965939815839484e-05
+            }
+          }
+        },
+        "gates": {
+          "RGB_pooled_channels.mean": true,
+          "RGB_pooled_channels.p99": true,
+          "RGB_pooled_channels.max": true,
+          "T.mean": true,
+          "T.p99": true,
+          "T.max": true
+        },
+        "all_six_pass": true
+      },
+      "half": {
+        "metrics": {
+          "current": {
+            "RGB_pooled_channels": {
+              "mean": 5.208338561012038e-05,
+              "p99": 0.000862840739760784,
+              "max": 0.0014908546309912868
+            },
+            "T": {
+              "mean": 0.00013126103989875444,
+              "p99": 0.001454485602050748,
+              "max": 0.002317992236419375
+            }
+          },
+          "candidate": {
+            "RGB_pooled_channels": {
+              "mean": 6.500785360810754e-06,
+              "p99": 4.565106607549996e-05,
+              "max": 4.79552170917219e-05
+            },
+            "T": {
+              "mean": 1.891577045932437e-05,
+              "p99": 6.909112370445669e-05,
+              "max": 6.96698785114247e-05
+            }
+          }
+        },
+        "gates": {
+          "RGB_pooled_channels.mean": true,
+          "RGB_pooled_channels.p99": true,
+          "RGB_pooled_channels.max": true,
+          "T.mean": true,
+          "T.p99": true,
+          "T.max": true
+        },
+        "all_six_pass": true
+      },
+      "reference_convergence": {
+        "T_max_delta": 7.156688219822627e-08,
+        "RGB_max_delta": 4.409033641655791e-08
+      },
+      "both_resolutions_pass": true
+    },
+    "contemporary_accuracy": {
+      "finest": {
+        "metrics": {
+          "current": {
+            "RGB_pooled_channels": {
+              "mean": 5.2083361199522314e-05,
+              "p99": 0.0008628445430308024,
+              "max": 0.0014908445551987254
+            },
+            "T": {
+              "mean": 0.00013126131932741114,
+              "p99": 0.0014545230908419304,
+              "max": 0.0023179769068414346
+            }
+          },
+          "candidate": {
+            "RGB_pooled_channels": {
+              "mean": 6.501119626747072e-06,
+              "p99": 4.565286806328117e-05,
+              "max": 4.794852177492093e-05
+            },
+            "T": {
+              "mean": 1.8915837015402726e-05,
+              "p99": 6.906425235697622e-05,
+              "max": 6.965939815839484e-05
+            }
+          }
+        },
+        "gates": {
+          "RGB_pooled_channels.mean": true,
+          "RGB_pooled_channels.p99": true,
+          "RGB_pooled_channels.max": true,
+          "T.mean": true,
+          "T.p99": true,
+          "T.max": true
+        },
+        "all_six_pass": true
+      },
+      "half": {
+        "metrics": {
+          "current": {
+            "RGB_pooled_channels": {
+              "mean": 5.208331080418116e-05,
+              "p99": 0.000862840739760784,
+              "max": 0.0014908471804106899
+            },
+            "T": {
+              "mean": 0.00013126103989875444,
+              "p99": 0.001454485602050748,
+              "max": 0.002317992236419375
+            }
+          },
+          "candidate": {
+            "RGB_pooled_channels": {
+              "mean": 6.500785360810754e-06,
+              "p99": 4.565106607549996e-05,
+              "max": 4.79552170917219e-05
+            },
+            "T": {
+              "mean": 1.891577045932437e-05,
+              "p99": 6.909112370445669e-05,
+              "max": 6.96698785114247e-05
+            }
+          }
+        },
+        "gates": {
+          "RGB_pooled_channels.mean": true,
+          "RGB_pooled_channels.p99": true,
+          "RGB_pooled_channels.max": true,
+          "T.mean": true,
+          "T.p99": true,
+          "T.max": true
+        },
+        "all_six_pass": true
+      },
+      "reference_convergence": {
+        "T_max_delta": 7.156688219822627e-08,
+        "RGB_max_delta": 4.409033641655791e-08
+      },
+      "both_resolutions_pass": true
+    },
+    "clocks": [
+      {
+        "repeats": 1,
+        "per_complete_query_ms": {
+          "0": 2.54058325,
+          "1": 2.554354125,
+          "2": 2.560395625,
+          "3": 2.6144374999999997
+        },
+        "candidate_slower_percent_vs_current": 2.906980119624092,
+        "candidate_slower_percent_vs_stream": 2.1106845548527264
+      },
+      {
+        "repeats": 2,
+        "per_complete_query_ms": {
+          "0": 1.90252875,
+          "1": 1.9941145,
+          "2": 2.1501849375,
+          "3": 1.9793150625
+        },
+        "candidate_slower_percent_vs_current": 4.036013253413384,
+        "candidate_slower_percent_vs_stream": -7.946752487191588
+      },
+      {
+        "repeats": 4,
+        "per_complete_query_ms": {
+          "0": 2.01545703125,
+          "1": 2.15217315625,
+          "2": 2.19685671875,
+          "3": 2.0067226875
+        },
+        "candidate_slower_percent_vs_current": -0.4333678969371535,
+        "candidate_slower_percent_vs_stream": -8.654821665301194
+      }
+    ],
+    "normal_fallbacks": 0,
+    "singles": 247326,
+    "overlaps": 1799,
+    "no_full_frame_or_hardware_cause_claim": true,
+    "affine": {
+      "matched": 12102,
+      "missing": 0,
+      "examples": [],
+      "scope": "Nearest original GPU endpoint within2ULP of CPU-f32 affine formula; exact-bit endpoint retention, not an exact CPU/GPU division claim."
+    },
+    "routed_residual_scope": {
+      "candidate_timing": "mode3; GPU reset/classification/indirect producers/canonical consumer/Current fallback",
+      "host_preparation_initial_upload_and_compile_included": false,
+      "legacy_budget_controls": "bulk cpFastFull/cpFastCompact, not routed kernels",
+      "routed_capacity_and_forced_current_controls": true,
+      "changed_pose_and_ownership_mutations_in_this_report": false,
+      "timing_series": "one four-mode32sample series per repeat; eight observations per mode",
+      "physical_register_spill_occupancy_profile": false,
+      "shipping_performance_qualified": false
+    }
+  },
+  "native_summary": [
+    {
+      "case": "pose-0",
+      "repeats": 1,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-0",
+      "repeats": 2,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-0",
+      "repeats": 4,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-0",
+      "repeats": 9,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-1",
+      "repeats": 1,
+      "counts": [
+        0,
+        0,
+        2304
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-1",
+      "repeats": 2,
+      "counts": [
+        0,
+        0,
+        2304
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-1",
+      "repeats": 4,
+      "counts": [
+        0,
+        0,
+        2304
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-1",
+      "repeats": 9,
+      "counts": [
+        0,
+        0,
+        2304
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-0",
+      "repeats": 1,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-0",
+      "repeats": 2,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-0",
+      "repeats": 4,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-0",
+      "repeats": 9,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-2",
+      "repeats": 1,
+      "counts": [
+        7,
+        0,
+        2297
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-2",
+      "repeats": 2,
+      "counts": [
+        7,
+        0,
+        2297
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-2",
+      "repeats": 4,
+      "counts": [
+        7,
+        0,
+        2297
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-2",
+      "repeats": 9,
+      "counts": [
+        7,
+        0,
+        2297
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-3",
+      "repeats": 1,
+      "counts": [
+        0,
+        0,
+        2304
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-3",
+      "repeats": 2,
+      "counts": [
+        0,
+        0,
+        2304
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-3",
+      "repeats": 4,
+      "counts": [
+        0,
+        0,
+        2304
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-3",
+      "repeats": 9,
+      "counts": [
+        0,
+        0,
+        2304
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-0",
+      "repeats": 1,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-0",
+      "repeats": 2,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-0",
+      "repeats": 4,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 0
+    },
+    {
+      "case": "pose-0",
+      "repeats": 9,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 0
+    },
+    {
+      "case": "budget-0",
+      "repeats": 1,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 32784
+    },
+    {
+      "case": "budget-23",
+      "repeats": 1,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 32784
+    },
+    {
+      "case": "budget-24",
+      "repeats": 1,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 32782
+    },
+    {
+      "case": "budget-25",
+      "repeats": 1,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 32781
+    },
+    {
+      "case": "capacity-0",
+      "repeats": 1,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 26243
+    },
+    {
+      "case": "capacity-1",
+      "repeats": 1,
+      "counts": [
+        906,
+        707,
+        691
+      ],
+      "refused": 412
+    }
+  ],
+  "corruption_refusals": [
+    "routed packet endpoint",
+    "missing capacity coverage",
+    "negative clock",
+    "forced Current output",
+    "routed census",
+    "native final output word",
+    "native indirect args",
+    "native forced coverage"
+  ],
+  "new_native_execution_by_replay": false,
+  "shipping_performance_qualified": false,
+  "new_physical_profile": false,
+  "native_packet_word_comparisons_are_native_assertions": true
+}
