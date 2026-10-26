@@ -74,3 +74,8 @@ Native `.gputrace` packages were captured using `MTLCaptureManager`:
   2. Generic / native / full-frame integration.
   3. Inhabited native FPS / Person acceptance.
 - Native replay lane RELEASED.
+
+
+## §6dl — scratch-lifetime review correction
+
+Zach requested independent review of Sparkly§6dk. Raw native correctness replays; headline BATCHwins came from unchanged producer in instrumented runs. Actual mode3loses Current in all6reportedcases and excludes host certificate refresh/upload. Fresh M5profiles show2.22KiBspills(up from1.95),~100%L1cache influence;768physical bytes saved is unproved because bounds aliases knots. Generated shaders are unchanged by corrections. [Canonical local review,40-document replay and bounded next proposal](/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/docs/audits/GPU_RAY_TRANSPORT_SCRATCH_LIFETIME_REVIEW_6DL_2026-10-25.md). All3shipping gates OPEN; no Earthcall renderer/save/default/app/FPS change. Lane RELEASED. Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` /2026-10-25; exact signed timestamp is in the review.
