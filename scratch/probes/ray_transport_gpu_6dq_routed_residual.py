@@ -1,25 +1,14 @@
-"""§6dq: Routed Residual Matrix Connected to Canonical Consumer & Current Fallback.
-Implements the exact four directives specified by Sixth-One Sun (Codex / GPT-6.1 Sol) in §6dq review:
-
-1. Reconnect canonical consumer and authored preparation:
-   - Uses the canonical common header (kCommonWgslHeader), canonical chronological overlap flow (kOverlapWgsl
-     with advanceOverlap and phiSafe), and canonical unfused consumer (kUnfusedShader).
-   - Dynamically prepares authored optical constants via extractCurtainSpecs and OntoMath::factorCommonScalar.
-2. Connect actual Current fallback:
-   - Evaluates production-generated Current marcher fallback (fallbackCP) whenever reason != 0 (counts.w & 0x80000000u).
-   - Validates forced fallback bit-identical to native Current (resCurrent) across poisoned outputs (NAN).
-   - Verifies budget 23/24/25 boundary controls and capacity controls (kind 0 & 1).
-3. Promote only the actual composed path:
-   - Validates 100.0000% bit-exact schedule and pixel parity across all 32,784 queries (0 packet diffs, 0 output diffs).
-   - Rechecks all 12,102 protected affine endpoints (0 missing).
-   - Rechecks all 192 dual-resolution holdouts against the 65,536-step Simpson reference.
-   - Verifies reverse diagnostic and parallel diagnostic fixtures with 0 packet and 0 output diffs.
-4. Gather physical counters and two sufficiently sampled ordered native series:
-   - Reflection pipeline facts for Apple M5.
-   - Clean 32-sample paired complete-cost series across repeats {1, 2, 4} (Series 1 ABBA, Series 2 BAAB).
-
-Commissioned by Zachary Zhang. Reviewed and directed by Sixth-One Sun (Codex / GPT-6.1 Sol).
-Authored by Antigravity / Gemini / session 50cf28df-09e9-4c2b-a4d5-1f796abbc73a / 2026-10-26.
+"""Routed producers in the canonical consumer/Current-fallback harness.
+Pinned wide qualification uses actual routed packets/outputs and inherited
+canonical authored-reference machinery. Legacy budget23/24/25 controls still
+exercise cpFastFull/cpFastCompact; reverse/parallel and ownership mutation checks
+must be witnessed separately on this composed path (see §6dr review).
+Mode3 timing includes GPU classification/reset/indirect routing/consumer/fallback,
+but excludes host coefficient preparation, initial upload and pipeline creation.
+The saved32 ordered samples are one four-mode series, eight samples per mode;
+reflection is not a register/spill/occupancy profile. No shipping speedup.
+Antigravity / Gemini / 50cf28df-09e9-4c2b-a4d5-1f796abbc73a / 2026-10-26.
+Scope corrections: Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-10-26.
 """
 
 import argparse, ast, copy, hashlib, importlib.util, json, math, os, re, shlex, statistics, subprocess, sys
@@ -470,6 +459,12 @@ def build_probe(root: Path, build_root: Path, work: Path) -> str:
         'build_root': str(build_root),
     }, indent=2) + '\n')
 
+    engine_trees = []
+    for checkout in [root, build_root]:
+        if subprocess.check_output(['git','-c','core.fsmonitor=false','status','--porcelain','--','src'],cwd=checkout,text=True).strip():
+            raise ValueError('dirty engine source')
+        engine_trees.append(subprocess.check_output(['git','rev-parse','HEAD:src'],cwd=checkout,text=True).strip())
+    if engine_trees[0] != engine_trees[1]: raise ValueError('engine source trees differ')
     b = build_root / 'build'
     db = json.loads((b / 'compile_commands.json').read_text())
     entry = next(x for x in db if x['file'].endswith('/entry.cpp') and 'earthcall_webgpu.dir' in x['command'])

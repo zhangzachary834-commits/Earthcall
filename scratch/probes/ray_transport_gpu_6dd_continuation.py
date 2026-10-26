@@ -1608,7 +1608,22 @@ def validate_6dd(root, report, rows, baseline, rays, ref):
         )
         if res['affine']['missing']:
             raise ValueError('coarse-monotone-bowskip affine endpoint missing')
-        if 'stream-merge' in report['coarse_peel_experiment']['scope']:
+        if 'routed-residual' in report['coarse_peel_experiment']['scope']:
+            census = report.get('routed_residual', {})
+            keys = ['s1_tiles', 's2_tiles', 'fallback_tiles']
+            if set(census) != set(keys) or any(type(census[k]) is not int or census[k] < 0 for k in keys) or sum(census.values()) != 2304:
+                raise ValueError('routed residual census coverage')
+            res['routed_residual_scope'] = {
+                'candidate_timing': 'mode3; GPU reset/classification/indirect producers/canonical consumer/Current fallback',
+                'host_preparation_initial_upload_and_compile_included': False,
+                'legacy_budget_controls': 'bulk cpFastFull/cpFastCompact, not routed kernels',
+                'routed_capacity_and_forced_current_controls': True,
+                'changed_pose_and_ownership_mutations_in_this_report': False,
+                'timing_series': 'one four-mode32sample series per repeat; eight observations per mode',
+                'physical_register_spill_occupancy_profile': False,
+                'shipping_performance_qualified': False,
+            }
+        elif 'stream-merge' in report['coarse_peel_experiment']['scope']:
             res['stream_merge_scope'] = {
                 'qualification_lane': 'strict_bit_exact_to_guarded_schedule_and_transport',
                 'candidate_timing': 'streamed_schedule.cases[].series[].samples mode3',

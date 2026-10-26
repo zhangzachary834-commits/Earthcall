@@ -1,6 +1,6 @@
 {
   "audit": "\u00a76dq GPU-Resident Routed Residual Matrix Qualification on Apple M5",
-  "status": "QUALIFIED_ROUTED_RESIDUAL_MATRIX",
+  "status": "BOUNDED_CANONICAL_ROUTED_CHECKPOINT_ACCEPTED; PROFILING_AND_PROFITABILITY_OPEN",
   "harness": "Antigravity / Gemini-2.5-Flash / session 50cf28df-09e9-4c2b-a4d5-1f796abbc73a / 2026-10-26",
   "directives_verified": {
     "1_canonical_consumer_and_optics": {
@@ -679,12 +679,23 @@
           "candidate_slower_percent_vs_current": -0.4333678969371535,
           "candidate_slower_percent_vs_stream": -8.654821665301194
         }
-      ]
+      ],
+      "scope_correction": "No new source-bound physical profile; one32sample four-mode resident series per repeat, eight samples/mode; no shipping win."
     }
   },
   "shipping_gates_status": {
     "gate_1_profitable_complete_execution": "OPEN (Requires generic multi-zone profiling and sustained whole-frame gain)",
     "gate_2_generic_full_frame_integration": "OPEN (Generic foliation across multi-field Ourverse continuum)",
     "gate_3_inhabited_fps_and_person_acceptance": "OPEN (Person verification in Northern Veil)"
+  },
+  "review_6dr": {
+    "audit": "GPU_RAY_TRANSPORT_CANONICAL_ROUTED_REVIEW_6DR_2026-10-26.md",
+    "bounded_canonical_checkpoint_accepted": true,
+    "native_controls_supplied_by_review": 30,
+    "original_budget_microfixture": "bulk cpFastFull/cpFastCompact",
+    "timing": "one resident four-mode32sample series per repeat; eight observations per mode",
+    "new_physical_profile": false,
+    "shipping_win_qualified": false,
+    "signature": "Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T12:33:26.922141-07:00"
   }
 }

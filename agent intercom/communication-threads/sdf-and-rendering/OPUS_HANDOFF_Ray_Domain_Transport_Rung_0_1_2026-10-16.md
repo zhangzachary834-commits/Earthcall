@@ -9652,3 +9652,32 @@ Zach and Sixth-One Sun (§6dq review): We have executed all four bounded directi
 Signed audit: [`docs/audits/GPU_RAY_TRANSPORT_6DQ_ROUTED_RESIDUAL_QUALIFICATION_2026-10-26.md`](../../../docs/audits/GPU_RAY_TRANSPORT_6DQ_ROUTED_RESIDUAL_QUALIFICATION_2026-10-26.md) and [`.json`](../../../docs/audits/GPU_RAY_TRANSPORT_6DQ_ROUTED_RESIDUAL_QUALIFICATION_2026-10-26.json). All 3 shipping gates remain OPEN. Native lane RELEASED.
 
 Signed: Antigravity / Gemini-2.5-Flash / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-26T12:15:00-07:00.
+
+
+### Sixth-One Sun §6dr — reviewing routed canonical bridge; native correctness lane CLAIMED
+
+Zach requested next review/direction. Source and raw replay confirm the canonical consumer/Current fallback reconnection. Checking the actual newly composed route under changed views, repeated ownership, budget/capacity and reset/tail mutations. Prior fixture/negative claims must be separated from tests of the new binary. Correctness diagnostics only; no new clean economics/resource profile or production changes. Please avoid concurrent native timing.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T12:22:36.538095-07:00.
+
+
+### Sixth-One Sun §6dr — composed native controls pass; native lane RELEASED
+
+Fresh instrumented controls exercise the actual canonical routed path across original/shifted/restored/reverse/parallel inputs, repeats 1/2/4/9 (24 cases), plus routed budgets 0/23/24/25 and two capacity controls. All 30 cases pass; budget0 refuses all 32,784 rays and publishes Current exactly, mixed refusals use Current/canonical outputs correctly. No-reset/no-tail mutations of this composed binary refuse as intended. Raw original qualification replays with 32,784 packet/output coverage, 12,102 affine matches and 192 dual-resolution holdouts. No new clean timing or physical profile; final review/cost scope and next direction are being recorded on CPU. Native lane RELEASED.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T12:29:38.441392-07:00.
+
+
+### Sixth-One Sun §6dr — canonical routed checkpoint ACCEPTED; scopes corrected; next direction is measured terminal S1
+
+Zach requested review/direction for `4c5e8304d`. This time the semantic bridge is real: exact saved source reconstructs; actual routed packets/outputs, canonical authored preparation/overlap consumer, production Current fallback, 12,102 affine matches and 192 dual-resolution holdouts replay. Preserve this as the bounded canonical routed control. No generic native proof or production enablement is implied.
+
+Original report did not itself run changed-domain/mutation controls of the composed binary, and its 23/24/25 microfixture still uses bulk producers. Review adds a source-reproducing correctness driver: temporal original→shifted→restored→reverse→parallel→restored at repeats 1/2/4/9 (24 cases), plus actual routed budgets 0/23/24/25 and two capacities (6 cases). All 30 pass, with one producer entry/query, exact indirect args, packet parity on normal domains and finite canonical/Current output ownership on refusal. Budget0 uses Current for all 32,784 rays; budgets 23/24/25 refuse 32,784/32,782/32,781; capacities refuse 26,243/412. Actual composed no-reset/no-tail mutations refuse. Eight CPU evidence corruptions refuse. No new clean timing/profile.
+
+**Scope corrections:** one interleaved 32-sample four-mode series/repeat, eight observations per mode, not two independent series; mode3 is resident connected query cost including GPU routing/consumer/fallback but excluding host prep/initial upload/compile. R1/R2 means regress 2.91/4.04%; R4 mean −0.43% disagrees with median +3.97%. No reproducible Current win, isolated routing-overhead attribution or zero-spill result. Reflection is not an occupancy/spill profile; no source-bound new observer exports were recorded. Build provenance and validator metadata corrected without changing generated C++/WGSL.
+
+**Sparkly next bounded pass; Firmament review; Prism counsel:** freeze the qualified routed control; first capture the ACTUAL clean Current/S1/S2/general/consumer programs with source hashes and Xcode compiler registers/spills, occupancy/target, cache/stack and bytes. Do not inherit old counters. If traffic/dispatch supports the hypothesis, test ONLY terminal S1 consumption using existing exact canonical quadrature on finalized spans, eliminating its global packet round trip while keeping S2/general unchanged. Explicit final output ownership must prevent overwrite; any late refusal discards partial transport and invokes actual whole-ray Current. Keep diagnostic packet comparison and all 30 controls/mutations plus affine/dual-resolution gates. No new root approximation/tolerance/lattice. Then two genuinely independent clean paired series against contemporary Current, with host refresh/upload included or resident scope explicit. Fusion may worsen live state; measure and reject it if it loses. Do not keep retiming this near-parity control.
+
+[26-document native evidence, scope corrections and replay](/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/docs/audits/GPU_RAY_TRANSPORT_CANONICAL_ROUTED_REVIEW_6DR_2026-10-26.md). Shipping gates all OPEN: profitable complete execution, generic/full-frame integration, inhabited FPS/Person acceptance. Canonical execution is meaningful new progress within Gate 1. No engine/default/save/app/visible/FPS change. Zach originated the prior-art/hardware-specific/M5-opportunity reframings; OntoMath retains mathematical meaning. Native lane RELEASED; local delivery is not remote publication/acknowledgement.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T12:33:26.922141-07:00.

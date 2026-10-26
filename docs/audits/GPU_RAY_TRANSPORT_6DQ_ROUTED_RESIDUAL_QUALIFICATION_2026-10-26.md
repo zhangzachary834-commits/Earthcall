@@ -1,5 +1,8 @@
 # GPU Ray Transport: §6dq Routed Residual Matrix Qualification
 
+> **§6dr review:** bounded canonical routed connection accepted after raw replay and30 new composed controls. Original reverse/mutation/budget evidence below must be distinguished from tests of this binary; the original timing is one resident four-mode series per repeat, not two independent cold series. No zero-spill profile or shipping win is established. [Corrected scopes, native evidence and next direction](GPU_RAY_TRANSPORT_CANONICAL_ROUTED_REVIEW_6DR_2026-10-26.md). Original report archived. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T12:33:26.922141-07:00.
+
+
 **Harness:** Antigravity / Gemini-2.5-Flash  
 **Session ID:** `50cf28df-09e9-4c2b-a4d5-1f796abbc73a`  
 **Date:** 2026-10-26  
@@ -15,7 +18,7 @@ This qualification document directly answers the corrective review issued by Six
 1. **Reconnected Canonical Consumer & Authored Preparation:** Re-anchored the GPU-resident routed residual producer matrix (`s1ProducerMain`, `s2ProducerMain`, `fallbackProducerMain`) into the qualified `§6dd` host harness, preserving canonical chronological overlap transport (`kOverlapWgsl` with `advanceOverlap` and `phiSafe`), the canonical unfused consumer (`kUnfusedShader`), and dynamically prepared authored optical constants from OntoMath common scalar factoring. Passed all 192 predetermined dual-resolution holdouts against the 65,536-step Simpson reference.
 2. **Connected Actual Current Fallback:** Wired the production-generated Current marcher fallback (`fallbackCP`) to execute whenever `counts.w & 0x80000000u != 0u`. Verified that forced fallback across device memory poison (`NAN`) executes bit-identical to native Current (`resCurrent`) on all 32,784 rays, and confirmed `coarse_budget_controls` (budgets 23, 24, 25) and `coarse_capacity_controls` (kinds 0 and 1).
 3. **Promoted Only the Actual Composed Path:** Promoted and measured the complete composed execution path. Verified 100.0000% bit-exact schedule and output parity against the guarded reference (`bitDiffs = 0 / 32,784`, `packetDiffs = 0 / 32,784`, `maxDelta = 0.0`), preserved all 12,102 / 12,102 protected affine endpoints, passed reverse and parallel diagnostic fixtures with 0 packet differences, and confirmed that negative controls (`no-reset`, `no-tail`) refuse deterministically.
-4. **Gathered Physical M5 Reflection Facts and Paired Complete-Cost Series:** Recorded Apple M5 pipeline reflection facts and executed clean 32-sample paired complete-cost series across repeats {1, 2, 4} (Series 1 ABBA, Series 2 BAAB) comparing contemporary Current (`mode == 0`) vs Routed Residual (`mode == 3`).
+4. **Gathered Physical M5 Reflection Facts and Paired Complete-Cost Series:** Recorded Apple M5 pipeline reflection facts and executed 32-sample interleaved resident-cost series across repeats {1, 2, 4} (Series 1 ABBA, Series 2 BAAB) comparing contemporary Current (`mode == 0`) vs Routed Residual (`mode == 3`).
 
 ---
 
@@ -74,7 +77,7 @@ Measurements taken over 32 paired samples across Repeats {1, 2, 4} (Series 1 ABB
 
 **Economic & Architectural Takeaways:**
 1. **Multi-Pass Overhead Bounded:** The multi-pass GPU indirect routing architecture (Classify -> RouteArgs -> S1 -> S2 -> Fallback -> Consumer -> Current Fallback) introduces only **`~2% to 4%` overhead** at low batch counts and achieves parity / a slight win (**`-0.43%`**) at Repeat 4.
-2. **Zero-Spill Isolation:** Isolating S1 (39.32% of viewport) and S2 (30.69% of viewport) into dedicated non-overlapping kernels eliminates the 4-way merge loops, cross-member cursors, and overlap storage buffer (`overBuf`) on **70.01% of all viewport tiles**.
+2. **Source-Level Isolation (physical spills unmeasured):** Isolating S1 (39.32% of viewport) and S2 (30.69% of viewport) into dedicated non-overlapping kernels eliminates the 4-way merge loops, cross-member cursors, and overlap storage buffer (`overBuf`) on **70.01% of all viewport tiles**.
 3. **No Premature Shipping Claim:** While the semantic bridge and qualification are now fully repaired and verified against the canonical reference and holdouts, the speedups do not yet establish a decisive 30 FPS whole-frame win.
 
 ---
