@@ -7,6 +7,9 @@
 #include <iostream>
 #include <string>
 #include <cassert>
+#include <chrono>
+#include <array>
+#include <algorithm>
 
 namespace {
 
@@ -268,6 +271,62 @@ void test_string_queries_rename_and_equivalence() {
     check(adjUnbound2.size() == 1 && adjUnbound2[0] == "unbound1", "findAdjacentEntities(unbound2) finds unbound1 for undirected edge");
 }
 
+
+void test_string_query_ab_performance() {
+    // Report-only A/B: exact pre-optimization full scan versus indexed path,
+    // on the SAME graph and runner. No timing-based CI assertion.
+    using Clock = std::chrono::steady_clock;
+    for (const int edgeCount : {200, 1200}) {
+        RelationManager rm;
+        std::vector<std::unique_ptr<DummySingular>> beings;
+        for (int i = 0; i < 100; ++i) {
+            beings.push_back(std::make_unique<DummySingular>("bench-" + std::to_string(i)));
+        }
+        for (int i = 0; i < edgeCount; ++i) {
+            const int a = i % 100;
+            const int b = (a + i / 100 + 1) % 100;
+            rm.add(std::make_shared<Relation>("bench-link", *beings[a], *beings[b], true));
+        }
+        const std::string key = "bench-0";
+        const auto scan = [&]() {
+            std::vector<std::shared_ptr<Relation>> result;
+            for (const auto& rel : rm.getAll()) {
+                if (rel && rel->involves(key)) result.push_back(rel);
+            }
+            return result.size();
+        };
+        const auto indexed = [&]() { return rm.getRelationsOf(key).size(); };
+        check(scan() == indexed(), "A/B precondition: full scan and index agree");
+        // Warm up the index before measurement; measure query cost, not build.
+        (void)indexed();
+        const auto measure = [&](const auto& query) {
+            const auto start = Clock::now();
+            std::size_t checksum = 0;
+            for (int i = 0; i < 600; ++i) checksum += query();
+            const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
+                Clock::now() - start).count();
+            return std::pair<long long, std::size_t>(elapsed, checksum);
+        };
+        std::array<long long, 3> scanUs{}, indexUs{};
+        for (int trial = 0; trial < 3; ++trial) {
+            const auto [scanTime, scanCount] = measure(scan);
+            const auto [indexTime, indexCount] = measure(indexed);
+            check(scanCount == indexCount, "A/B timed checksums match");
+            scanUs[trial] = scanTime;
+            indexUs[trial] = indexTime;
+        }
+        std::sort(scanUs.begin(), scanUs.end());
+        std::sort(indexUs.begin(), indexUs.end());
+        std::cout << "RELATION_STRING_AB edge_count=" << edgeCount
+                  << " endpoint_count=100 queries_per_trial=600"
+                  << " scan_median_us=" << scanUs[1]
+                  << " indexed_median_us=" << indexUs[1]
+                  << " ratio_scan_over_index="
+                  << (indexUs[1] ? static_cast<double>(scanUs[1]) / indexUs[1] : 0.0)
+                  << "\\n";
+    }
+}
+
 void test_forget_being() {
     std::cout << "--- test_forget_being ---\n";
     // Using a separate scope for the manager to ensure liveManagers behavior
@@ -379,6 +438,7 @@ int main() {
     test_forget_type_lexeme();
     test_would_form_cycle_string_overload();
     test_string_queries_rename_and_equivalence();
+    test_string_query_ab_performance();
 
     std::cout << "============================================================\n";
     std::cout << "RelationManager test summary: "
