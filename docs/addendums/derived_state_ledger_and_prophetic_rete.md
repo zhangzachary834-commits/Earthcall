@@ -1,25 +1,14 @@
-# Addendum: Integrating Derived State Ledger and Prophetic Rete
+# Derived-State Ledger and Prophetic Rete
 
-*(Model: Gemini Flash 1.5, Harness: Jules, Session ID: 3260200770766759045)*
+*Origin: Jules task 3260200770766759045; reviewed by Sun Squid Intake II, 2026-10-26.*
+**Status: documentation synthesis, not a new materialized-fact store.**
 
-## Reflections on the Architectural Synthesis
+## Two different responsibilities
+[The Derived-State Ledger](../architecture/law/DERIVED_STATE_LEDGER.md) is primarily an **audit inventory**: it records derived structures, their inputs, invalidation triggers, and executable witnesses. It is not itself a runtime database where every inferred proposition is persisted.
 
-Earthcall's [Derived State Ledger](../architecture/law/DERIVED_STATE_LEDGER.md) and [Prophetic Rete](../architecture/law/PROPHETIC_RETE.md) work together to manage the legibility and performance of complex, multi-step logical deductions.
+[Prophetic Rete](../architecture/law/PROPHETIC_RETE.md) is an ahead-of-time, conservative analysis of what authored Laws *may* read and write. Its governing soundness rule is to **widen on uncertainty**: an incomplete analysis must fail open rather than silence a Law.
 
-### The Problem of Transitive State
+## Interrelation
+Every optimization that maintains derived execution state should declare its dependencies, invalidation behavior, and regression witness in the ledger. Prophetic Rete can help avoid irrelevant work only where its over-approximation proves exclusion safe. Neither document licenses assuming all transitive facts are materialized, that every change has a precise dependency edge, or that an unknown First-Mover input can be treated as impossible.
 
-Laws often express transitive relationships (e.g., if A is in B, and B is in C, then A is in C). Recomputing these transitive facts on every tick for every potential observer is computationally prohibitive.
-
-### Derived State Ledger as the Truth
-
-The `DERIVED_STATE_LEDGER` provides a mechanism for explicitly storing these deduced facts. When a Law concludes a derived truth, it writes it to the ledger. This makes the fact legible—it is not hidden in a C++ call stack but exists as a queryable property in the world state.
-
-### Prophetic Rete as the Efficient Observer
-
-The `PROPHETIC_RETE` is responsible for efficiently identifying *when* these derived facts might change. Instead of re-evaluating the entire transitive chain constantly, the Rete network builds a dependency graph. It only triggers the re-evaluation of a specific Law when the underlying base facts it depends on are mutated.
-
-### The Synthesis
-
-1.  **Legible Conclusions:** The Derived State Ledger ensures that complex deductions are materialized as readable properties, adhering to the No Black Box principle.
-2.  **Targeted Re-evaluation:** The Prophetic Rete prevents the combinatorial explosion of recomputing these facts by only triggering updates when necessary base facts change.
-3.  **Performant Semantics:** Together, they allow Earthcall to support deep, expressive semantic rules without sacrificing the performance required for a real-time simulation. The Rete handles the 'when', and the Ledger handles the 'what'.
+The shared principle is **legibility plus soundness**: a performance filter must never silently remove a semantically possible Law execution. New caching or materialization proposals need explicit ownership, invalidation, and negative/positive witnesses before being described as implemented.

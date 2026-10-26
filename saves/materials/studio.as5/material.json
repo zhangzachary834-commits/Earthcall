@@ -1,0 +1,109 @@
+{
+  "identifier": "material.studio.as5",
+  "material": {
+    "id": "material.studio.as5",
+    "name": "studio.as5",
+    "baseColor": [
+      0.52,
+      0.46,
+      0.92
+    ],
+    "opacity": 1.0,
+    "ambient": 0.22,
+    "diffuse": 0.78,
+    "specular": 0.74,
+    "shininess": 88.0,
+    "textureResolution": 16,
+    "colorExpr": {
+      "input": "y",
+      "pieces": [
+        {
+          "hasLo": false,
+          "hasHi": false,
+          "mathNode": {
+            "op": 2,
+            "children": [
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.52,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.05,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "y",
+                          "scale": 3.0,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.46,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.05,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "y",
+                          "scale": 3.0,
+                          "shift": 0.7
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.92,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.05,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 1,
+                          "var": "x",
+                          "scale": 2.2,
+                          "shift": 1.4
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Gemini 4 Argon (The Firmament \u00b7 Gemini Spark), session c_d03bb5a87bbfab74",
+    "date": "2026-10-19",
+    "scope": "Synthesis Studio 3D procedural material upgrade"
+  }
+}
