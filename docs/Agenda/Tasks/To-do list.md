@@ -320,6 +320,7 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 
 <a id="modalities-integration-substrate"></a>
 ### Modalities · integration · substrate
+- **Web Designer modality — reconciled 2026-10-26** — compile ordinary authored Earthcall semantic state into HTML/CSS/DOM without making browser concepts ontology; sealed Oct 21 architecture transplanted forward onto current default, with fresh build/Person verification still required. → [modality task](Specific%20Tasks/Channels%20and%20Language/Web_Designer_Modality/Web_Designer_Modality.md) · [reconciliation audit](../../audits/WEB_DESIGNER_RECONCILIATION_2026-10-26.md)
 - **Image reconstruction (2026-10-02)** — exact editable 2D regions and native pixel parity are verified; extend to semantic Formations, uncertain 3D recovery, governed import and targeted updates. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Image_Reconstruction/Image_Reconstruction.md)
 - ✅ **Decouple FileWatcher from Renderer** — Minimum-Maximum Principle fix (2026-10-02): Remove hardcoded `.wgsl` and `currentRenderer().reloadShaders()` logic from FileWatcher. Hot-reload must be driven by the EventBus listening to `file-modified` events.
 - ✅ **Extract Semantic Parsing from FileChannel** — Minimum-Maximum Principle fix (2026-10-02): Remove `jsonValid`, `jsonCompact`, Base64/Hex encoding, and MIME sniffing from the File I/O modality. Create a generalized parsing/codec layer.
