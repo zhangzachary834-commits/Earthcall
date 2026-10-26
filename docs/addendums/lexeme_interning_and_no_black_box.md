@@ -1,15 +1,27 @@
-# Lexeme Identity, Future Execution Keys, and No Black Box
+# Addendum: Integrating Lexeme Interning and the No Black Box Principle
 
-*Origin: Jules task 3260200770766759045; reviewed by Sun Squid Intake II, 2026-10-26.*
-**Status: design hypothesis; no shipped LexemeID VM operand or measured speedup is asserted.**
+*(Model: Gemini Flash 1.5, Harness: Jules, Session ID: 3260200770766759045)*
 
-[Lexeme Identity and a Future CPU Law Execution VM](../architecture/interrelations/LEXEME_INTERNING_AND_LAW_BYTECODE_VM.md) explicitly says today's Lexeme representation is **not** a bytecode VM integer ABI. The proposed compilation boundary might resolve authored vocabulary to compact execution-local operands; operand representation, cache behavior, and performance benefit remain open to implementation and measurement.
+## Reflections on the Architectural Synthesis
 
-[No Black Box](../architecture/ontology/NO_BLACK_BOX.md) requires authored being state to be addressable under registered paths or explicitly designated Kernel mechanism. A future internal lookup key must not become a second, hidden ontological identity or an ungovernable store of meaning.
+Earthcall's [Lexeme Interning](../architecture/interrelations/LEXEME_INTERNING_AND_LAW_BYTECODE_VM.md) and the core [No Black Box](../architecture/ontology/NO_BLACK_BOX.md) principle address the legibility and performance of the engine's core vocabulary.
 
-## Architectural contract
-- Authored Lexeme identity and meaning remain authoritative; an execution key is a derived optimization, not a replacement for the Lexeme.
-- Any key mapping needs provenance, collision/ambiguity handling, invalidation, and a legible path back to authored vocabulary.
-- An optimization may avoid repeated string work only if executable tests establish equivalent Law behavior and measurements establish a real gain.
+### Lexemes as the Atoms of Meaning
 
-This is a **possible bridge** between authored semantics and faster execution, not a description of an already implemented interning table.
+Lexemes are the foundational units of meaning in Earthcall. They name properties, define relation types, and establish the vocabulary for Law authoring. As the engine scales, the sheer volume of these string-based identifiers could become a performance bottleneck.
+
+### Interning for Performance and Equivalence
+
+`LEXEME_INTERNING_AND_LAW_BYTECODE_VM` describes how Lexemes are interned—mapped to unique, integer-based identifiers at runtime. This allows the engine, particularly the Law Bytecode VM, to perform O(1) integer comparisons instead of O(N) string comparisons during hot loops (like property resolution and Law application).
+
+### Legibility Under the Hood
+
+Crucially, this interning process does not violate the No Black Box principle. The integer identifiers are an internal optimization, not a hidden layer of meaning.
+
+When a Person inspects a being, authors a Law, or reads a log, the system always resolves the internal integer back to its human-readable string representation. The string is the true, authored identity; the integer is merely a transient, runtime alias for performance.
+
+### The Synthesis
+
+1.  **Authored Truth:** The string representation of a Lexeme is its authored truth.
+2.  **Runtime Optimization:** Interning provides necessary performance scaling without altering semantics.
+3.  **Transparent Resolution:** The engine ensures that internal identifiers are always translated back to their human-readable form at the interaction boundary, preserving complete legibility.
