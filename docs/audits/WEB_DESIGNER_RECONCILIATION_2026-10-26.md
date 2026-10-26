@@ -60,3 +60,44 @@ Remote CI status must be reported separately from local evidence.
 `sun/web-designer-reconcile-20261026`
 
 Human origin: Zach requested immediate reconciliation after returning to Earthcall on 2026-10-26.
+
+
+## What changed on default while Web Designer was sealed
+
+The five-day gap contained more than one hundred commits. Only a small subset materially changes the reconciliation boundary.
+
+### Relation graph infrastructure became newer than the sealed branch
+
+Current default added Relation lifetime retention, endpoint indexing, graph-generation tracking, and broader cleanup semantics after the Web branch diverged. Therefore the sealed copies of `RelationManager.*` were not restored. Only the Web-specific currentness/supersession queries were composed into current code.
+
+### Identity moved further away from display spelling
+
+Current default now includes explicit BodyPart/VoicePart regression work proving that two beings may share the same spelling while retaining distinct identities. That reinforces, rather than supersedes, the Web Designer's Actual Two-Zachs fix: stable identity wins; display-name fallback must never silently choose among multiple Persons.
+
+### Publication became more fail-closed
+
+KeyStore/IdentityLedger staging now uses stricter temporary-file creation, fsync-before-publication, rename/close error handling, and deterministic failed-publication witnesses. Web Designer's FileChannel/VFS boundary should inherit those storage guarantees rather than reintroducing its own writer.
+
+### Law hot paths got evidence-preserving performance fixes
+
+Audit logging now avoids eagerly building expensive strings/JSON when the relevant log level is disabled. This is a useful pattern for Web realization too: remove work only when the observable semantics are unchanged.
+
+### Ray transport became a residual-program/query-family architecture
+
+Northern Veil work advanced from support-certificate experiments into partial evaluation, query-family routing, residual programs, GPU continuation/re-cohorting research, and Apple-M5-specific qualification. This does not change Web Designer ontology, but it sharpens a project-wide doctrine that also applies here:
+
+> Meaning != proof/compiled representation != executable realization != hardware/browser profitability.
+
+The Web Designer should therefore remain a compiler from authored meaning into browser realization, not let the foreign realization become the source of semantic truth.
+
+### Person-facing surfaces also moved
+
+Current Person Verification now includes an ergonomic 2D ImGui Zone selector and other post-Oct-21 inhabited-world work. Web Designer is reintroduced into that living verification list rather than restoring an older snapshot of the file.
+
+## Reconciliation mistakes caught before merge
+
+Static inspection of the transplanted documentation found historical round language that no longer matched the sealed implementation: First-Mover-as-author wording, stale `web-contains` naming, and 8/14-test counts. Those were corrected before merge.
+
+The current focused source invokes 55 Web Designer test functions. The CI workflow was also updated to include `web_designer_modality_test` in its single canonical `FOCUSED_TESTS` list; otherwise a green PR would not have tested the reconciled artifact at all.
+
+This is why reconciliation is not file copying. The evidence, documentation, test selection, and present engine contracts must agree on the same head.
