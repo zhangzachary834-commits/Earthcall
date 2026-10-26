@@ -209,6 +209,35 @@ void test_string_queries_rename_and_equivalence() {
     DummySingular impostor("a-orig");
     check(rm.getRelationsOf("a-orig").empty(), "impostor with old ID 'a-orig' does NOT falsely match rels of renamed boundA");
 
+    // A live rename can collide with an ALREADY INDEXED name. Merely
+    // scanning on an index miss silently drops the renamed edge here.
+    {
+        RelationManager collision;
+        DummySingular moved("previous");
+        DummySingular stable("shared");
+        DummySingular leftTarget("left-target");
+        DummySingular rightTarget("right-target");
+        auto movedEdge = std::make_shared<Relation>("link", moved, leftTarget, true);
+        auto stableEdge = std::make_shared<Relation>("link", stable, rightTarget, true);
+        collision.add(movedEdge);
+        collision.add(stableEdge);
+        check(collision.getRelationsOf("previous").size() == 1,
+              "collision precondition builds the old-name index");
+        moved.id = "shared";  // no RelationManager::touch() notification
+        const auto both = collision.getRelationsOf("shared");
+        check(both.size() == 2 && both[0] == movedEdge && both[1] == stableEdge,
+              "renamed endpoint joins an existing indexed key without dropping either edge");
+        const auto between = collision.getRelationsBetween("shared", "left-target");
+        check(between.size() == 1 && between[0] == movedEdge,
+              "between(string,string) sees renamed endpoint despite existing index key");
+        const auto adjacent = collision.findAdjacentEntities("shared");
+        check(adjacent.size() == 2 && adjacent[0] == "left-target" &&
+              adjacent[1] == "right-target",
+              "adjacency retains both renamed and existing edges in insertion order");
+        check(collision.getRelationsOf("previous").empty(),
+              "old identifier does not continue to own renamed edge");
+    }
+
     // 3. Loaded-unbound identifiers coverage
     RelationManager rmUnbound;
     rmUnbound.loadFromJson(nlohmann::json::array({
