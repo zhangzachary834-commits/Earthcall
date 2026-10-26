@@ -148,6 +148,7 @@ bool BinarySerializer::writeBinary(const EcformGraph& graph, const std::string& 
         if (!out) return false;
         out.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
         out.flush();
+        out.close(); // A delayed write error may surface only during close.
         if (!out) {
             std::filesystem::remove(tempPath, ec);
             return false;
