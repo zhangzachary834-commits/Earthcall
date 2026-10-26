@@ -1,0 +1,29 @@
+[
+  {
+    "clock": "0.000000",
+    "different_rgba_bytes": 0,
+    "max_channel_delta": 0,
+    "dimensions": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "clock": "0.750000",
+    "different_rgba_bytes": 0,
+    "max_channel_delta": 0,
+    "dimensions": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "clock": "2.250000",
+    "different_rgba_bytes": 0,
+    "max_channel_delta": 0,
+    "dimensions": [
+      1920,
+      1080
+    ]
+  }
+]

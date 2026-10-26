@@ -1,3 +1,5 @@
+> **TerminalLine naming correction — 2026-10-20.** Zach clarified that `LawSentence` was a slight naming imprecision. The intended concept is **`TerminalLine`**: a parser for the Terminal modality's line, not an in-world or cross-modality sentence abstraction. The existing C++ name may remain temporarily as a legacy implementation identifier. Do not route Web, Voice, Screen, or other modalities through it merely because they also involve language or Laws. Meaning remains authored through Lexemes, Relations, Laws, and Metalaws. See the [TerminalLine naming and modality-scope addendum](../../addendums/terminal_line_naming_and_modality_scope_addendum.md).
+
 > **Learning to use it?** Read [Writing Earthcall Laws: a guide for humans and agents](LAW_AUTHORING_CLI_GUIDE.md) for pasteable lessons, the action reference, and current limits (2026-10-05). Zach's original design note follows, preserved below.
 
 So I think the simplest and most elegant solution to the tedious law-authoring is not to try to figure out all the nuances of developing a mature, heavily interconnected Formation-like 2D
