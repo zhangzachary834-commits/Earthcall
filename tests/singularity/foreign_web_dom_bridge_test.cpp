@@ -10,7 +10,7 @@
 using namespace Singularity::Foreign::Web;
 
 static std::string readFixture(const std::string& path) {
-    const std::vector<std::string> prefixes = {"", "../", "../../"};
+    const std::vector<std::string> prefixes = {"", "../", "../../", "../../../"};
     std::string resolvedPath = path;
 
     for (const auto& prefix : prefixes) {
