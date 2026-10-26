@@ -3054,9 +3054,9 @@ void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
 
     const std::string subjectId = subject.getIdentifier();
     const std::string lawId = law.getIdentifier();
-    // The index is maintained alongside every session insertion/removal.
-    // Consult it rather than scanning all active drives on each application.
-    if (hasDriveSession(lawId, subjectId)) return;
+    if (hasDriveSession(lawId, subjectId)) {
+        return;   // already driving this subject
+    }
     const double onset = Universe::instance().now();
     law.rememberOnset(&subject, onset);
     DriveSession session;
@@ -3089,10 +3089,7 @@ void LawManager::runDriveSessions(std::vector<Law::ApplicationRecord>& records) 
     std::unordered_map<std::string, Singular*> beingMap;
     beingMap.reserve(beings.size());
     for (Singular* being : beings) {
-        // The former linear search returned the FIRST matching identifier.
-        // Identifiers are not globally guaranteed unique, so overwriting an
-        // earlier entry would silently redirect a running authored drive.
-        if (being) beingMap.emplace(being->getIdentifier(), being);
+            if (being) beingMap.emplace(being->getIdentifier(), being);
     }
 
     for (auto it = _driveSessions.begin(); it != _driveSessions.end();) {
