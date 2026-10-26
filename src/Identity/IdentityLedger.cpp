@@ -80,6 +80,7 @@ bool IdentityLedger::save() const {
         }
         out << j.dump(2) << "\n";
         out.flush();
+        out.close(); // A delayed write error may surface only during close.
         if (!out) {
             std::filesystem::remove(tempPath, ec);
             std::cerr << "[IdentityLedger] write failed for " << tempPath << "\n";
