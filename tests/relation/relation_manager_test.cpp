@@ -258,6 +258,29 @@ void test_string_queries_rename_and_equivalence() {
               "directly forgotten endpoint keeps saved ID without stale-pointer dereference");
     }
 
+    // A direct rebind is another unannounced mutation. The old endpoint
+    // remains live in a second relation, so a pointer-liveness check alone
+    // cannot detect the first relation moving to a new identifier.
+    {
+        RelationManager rebinding;
+        DummySingular original("original");
+        DummySingular replacement("replacement");
+        DummySingular target1("target1");
+        DummySingular target2("target2");
+        auto movedEdge = std::make_shared<Relation>("link", original, target1, true);
+        auto stableEdge = std::make_shared<Relation>("link", original, target2, true);
+        rebinding.add(movedEdge);
+        rebinding.add(stableEdge);
+        check(rebinding.getRelationsOf("original").size() == 2,
+              "direct rebind with still-retained old endpoint: precondition");
+        movedEdge->bind(&replacement, &target1);
+        const auto oldEdges = rebinding.getRelationsOf("original");
+        const auto newEdges = rebinding.getRelationsOf("replacement");
+        check(oldEdges.size() == 1 && oldEdges[0] == stableEdge &&
+              newEdges.size() == 1 && newEdges[0] == movedEdge,
+              "direct rebind updates string index despite old endpoint still being retained");
+    }
+
     // 3. Loaded-unbound identifiers coverage
     RelationManager rmUnbound;
     rmUnbound.loadFromJson(nlohmann::json::array({
@@ -323,7 +346,7 @@ void test_string_query_ab_performance() {
                   << " indexed_median_us=" << indexUs[1]
                   << " ratio_scan_over_index="
                   << (indexUs[1] ? static_cast<double>(scanUs[1]) / indexUs[1] : 0.0)
-                  << "\\n";
+                  << "\n";
     }
 }
 
