@@ -3,6 +3,7 @@
 #include "Person/Voice/Voice.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
+#include "../support/test_harness.hpp"
 #include <cassert>
 #include <cmath>
 #include <iostream>
@@ -361,7 +362,36 @@ static void testBodyAndVoiceIdentityDistinctFromSpelling() {
     assert(voice.getVoicePart("Resonance") == nullptr);
     assert(!voice.formation.hasMember(&second));
 
-    std::cout << "  testBodyAndVoiceIdentityDistinctFromSpelling OK\\n";
+    std::cout << "  testBodyAndVoiceIdentityDistinctFromSpelling OK\n";
+}
+
+// Witness test for BootedEngineHarness / EngineInit Universe relation parity:
+// Old unit tests (e.g. testConstitutionIsExplicitRelation above) proved that
+// BodyPart::constitute adds a constituted-by relation directly to BodyPart::relations().
+// What they COULD NOT prove was whether that relation was reachable through
+// Universe::instance() in a booted engine environment. Before the harness fix,
+// BootedEngineHarness's Universe relation provider omitted Person body parts,
+// causing a witness gap where test execution bypassed the production path (EngineInit.cpp).
+static void testBootedHarnessExposesConstitutionRelations() {
+    TestSupport::BootedEngineHarness harness("Zach", "humanoid", /*hydrateAllZones=*/false);
+    auto partPtr = std::make_unique<BodyPart>("RightHand", BodyPart::Type::Hand, ObjectTypes::ShapeKind::Cube, glm::vec3(1.0f));
+    BodyPart* part = partPtr.get();
+    harness.player.getBody().addPart(part);
+
+    Object* primaryObj = part->getPrimaryObject();
+    assert(primaryObj != nullptr);
+
+    std::vector<Relation*> edges;
+    Universe::instance().relationsInvolving(*primaryObj, edges);
+    bool foundConstitutionEdge = false;
+    for (Relation* rel : edges) {
+        if (rel && rel->type == BodyPart::kConstitutedByType && rel->a() == part && rel->b() == primaryObj) {
+            foundConstitutionEdge = true;
+            break;
+        }
+    }
+    assert(foundConstitutionEdge);
+    std::cout << "  testBootedHarnessExposesConstitutionRelations OK\n";
 }
 
 int main() {
@@ -376,6 +406,7 @@ int main() {
     testDraw();
     testConstitutionIsExplicitRelation();
     testBodyAndVoiceIdentityDistinctFromSpelling();
+    testBootedHarnessExposesConstitutionRelations();
     std::cout << "body_part_test: ALL OK\n";
     return 0;
 }

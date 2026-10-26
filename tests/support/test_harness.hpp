@@ -121,11 +121,19 @@ struct BootedEngineHarness {
         });
 
         Universe::instance().setRelationProvider([this](std::vector<Relation*>& relations) {
-            if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return;
-            auto active = zones.zones()[zones.currentIndex()];
-            if (!active) return;
-            for (const auto& rel : active->formation().relations().getAll()) {
-                if (rel) relations.push_back(rel.get());
+            if (!zones.zones().empty() && zones.currentIndex() < zones.zones().size()) {
+                auto active = zones.zones()[zones.currentIndex()];
+                if (active) {
+                    for (const auto& rel : active->formation().relations().getAll()) {
+                        if (rel) relations.push_back(rel.get());
+                    }
+                }
+            }
+            for (BodyPart* part : player.getBody().parts) {
+                if (!part) continue;
+                for (const auto& rel : part->relations().getAll()) {
+                    if (rel) relations.push_back(rel.get());
+                }
             }
         });
         // The endpoint index, exactly as Engine::initLogic installs it — after
@@ -135,15 +143,36 @@ struct BootedEngineHarness {
         Universe::instance().setRelationsInvolvingProvider(
             [this](const Singular& being, std::vector<Relation*>& out) {
                 out.clear();
-                if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return;
-                auto active = zones.zones()[zones.currentIndex()];
-                if (!active) return;
-                active->formation().relations().relationsInvolving(being, out);
+                if (!zones.zones().empty() && zones.currentIndex() < zones.zones().size()) {
+                    auto active = zones.zones()[zones.currentIndex()];
+                    if (active) {
+                        active->formation().relations().relationsInvolving(being, out);
+                    }
+                }
+                std::vector<Relation*> partEdges;
+                for (BodyPart* part : player.getBody().parts) {
+                    if (!part) continue;
+                    part->relations().relationsInvolving(being, partEdges);
+                    out.insert(out.end(), partEdges.begin(), partEdges.end());
+                }
             });
         Universe::instance().setRelationGenerationProvider([this]() -> std::size_t {
-            if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return 0;
-            auto active = zones.zones()[zones.currentIndex()];
-            return active ? active->formation().relations().generation() : 0;
+            std::size_t stamp = 0;
+            if (!zones.zones().empty() && zones.currentIndex() < zones.zones().size()) {
+                auto active = zones.zones()[zones.currentIndex()];
+                if (active) {
+                    stamp = active->formation().relations().generation();
+                }
+            }
+            auto mix = [&stamp](std::size_t v) {
+                stamp ^= v + 0x9e3779b97f4a7c15ULL + (stamp << 6) + (stamp >> 2);
+            };
+            for (BodyPart* part : player.getBody().parts) {
+                if (!part) continue;
+                mix(reinterpret_cast<std::size_t>(&part->relations()));
+                mix(part->relations().generation());
+            }
+            return stamp;
         });
 
         Universe::instance().setRelationRegistrar([this](std::shared_ptr<Relation> relation) {
