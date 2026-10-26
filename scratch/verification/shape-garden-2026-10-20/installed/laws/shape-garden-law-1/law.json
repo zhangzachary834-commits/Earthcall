@@ -1,0 +1,289 @@
+{
+  "authors": [
+    "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+  ],
+  "identifier": "shape-garden-law-1",
+  "law": {
+    "actionDescriptions": [
+      "sequence(2)"
+    ],
+    "actionModel": {
+      "children": [
+        {
+          "kind": 12,
+          "operand": {
+            "t": "string",
+            "v": "@ShapeGarden.forge.panel"
+          },
+          "path": "@screen-channel",
+          "propertyName": "output.colorPath"
+        },
+        {
+          "kind": 12,
+          "operand": {
+            "t": "string",
+            "v": "@ShapeGarden.forge.opacity"
+          },
+          "path": "@screen-channel",
+          "propertyName": "output.opacityPath"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 1,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+    ],
+    "conditionDescriptions": [
+      "all(2)"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "beingKind": 2,
+          "kind": 7
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@ShapeGarden.forge.enabled"
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "shape-garden-law-1",
+    "name": "Shape Garden | Bind sidebar",
+    "provenance": [
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-1",
+        "entityB": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1792529340
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-1",
+        "entityB": "law-line-preset-constant",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792529340
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-1",
+        "entityB": "law-line-args-sequence",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792529340
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-1",
+        "entityB": "law-line-compile-args-sequence",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792529340
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": []
+}
