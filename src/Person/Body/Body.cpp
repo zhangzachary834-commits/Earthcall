@@ -95,6 +95,11 @@ void Body::setHeight(float h) {
 
 BodyPart* Body::getBodyPart(const std::string& name) const {
     for (auto* part : parts) {
+        if (part && part->getIdentifier() == name) {
+            return part;
+        }
+    }
+    for (auto* part : parts) {
         if (part && part->getName() == name) {
             return part;
         }
@@ -113,9 +118,17 @@ std::vector<BodyPart*> Body::getBodyPartsByType(BodyPart::Type type) const {
 }
 
 void Body::removeBodyPart(const std::string& name) {
+    bool foundById = false;
+    for (auto* part : parts) {
+        if (part && part->getIdentifier() == name) {
+            foundById = true;
+            break;
+        }
+    }
     auto it = std::remove_if(parts.begin(), parts.end(),
-        [&name](const BodyPart* part) {
-            return part && part->getName() == name;
+        [&name, foundById](const BodyPart* part) {
+            if (!part) return false;
+            return foundById ? (part->getIdentifier() == name) : (part->getName() == name);
         });
     parts.erase(it, parts.end());
 }
