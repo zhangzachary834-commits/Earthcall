@@ -512,11 +512,13 @@ Law::ApplicationResult Law::applyToImpl(
         result = ApplicationResult::AuthorityDenied;
     } else if (!conditionsAlreadySatisfied && !conditionsSatisfied(target)) {
         result = ApplicationResult::ConditionsFailed;
-        ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
-            {"lawId", getIdentifier()},
-            {"targetId", target.getIdentifier()},
-            {"result", "ConditionsFailed"}
-        });
+        if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+            ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
+                {"lawId", getIdentifier()},
+                {"targetId", target.getIdentifier()},
+                {"result", "ConditionsFailed"}
+            });
+        }
     } else if (_actions.empty()) {
         result = ApplicationResult::NoAction;
         if (ECA::LawAuditLogger::instance().level() == ECA::LawAuditLogger::Level::Verbose) {
@@ -577,15 +579,6 @@ Law::ApplicationResult Law::applyToImpl(
         // every write failed used to log SUCCESS; now it says so, names the
         // first reason, and the record carries the rest.
         const bool wrote = trace.anyWrote();
-        std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
-                              target.getIdentifier() + "\" - " +
-                              (trace.fired() ? (wrote ? "SUCCESS" : "NO EFFECT") : "NO NODES");
-        if (!wrote && trace.fired()) {
-            const auto& first = trace.nodes.front();
-            message += " (" + first.actionName + ": " +
-                       (first.note.empty() ? std::string(ActionNode::reasonName(first.reason))
-                                           : first.note) + ")";
-        }
         if (wrote) {
             for (const auto& node : trace.nodes) {
                 if (node.wrote && !node.path.empty()) {
@@ -601,7 +594,17 @@ Law::ApplicationResult Law::applyToImpl(
         // WhileTrue that wrote nothing is a level, not an event. Logging it
         // every tick is the disk stall after loading a world of servos.
         const bool skipAudit = _activation == Activation::WhileTrue && !wrote;
-        if (!skipAudit) {
+        if (!skipAudit && ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+            std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
+                                  target.getIdentifier() + "\" - " +
+                                  (trace.fired() ? (wrote ? "SUCCESS" : "NO EFFECT") : "NO NODES");
+            if (!wrote && trace.fired()) {
+                const auto& first = trace.nodes.front();
+                message += " (" + first.actionName + ": " +
+                           (first.note.empty() ? std::string(ActionNode::reasonName(first.reason))
+                                               : first.note) + ")";
+            }
+
             nlohmann::json nodesJson = nlohmann::json::array();
             for (const auto& node : trace.nodes) {
                 nodesJson.push_back({{"action", node.actionName},
@@ -2035,15 +2038,18 @@ void LawManager::connectToEventBus() {
 
     _ecaEventSubscription = Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
         std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
-        std::string objectId = e.object ? e.object->getIdentifier() : "null";
 
-        ECA::LawAuditLogger::instance().log("EVENT", "Event \"" + e.type + "\" triggered (Subject: " + subjectId + ", Object: " + objectId + ")", {
-            {"eventType", e.type},
-            {"eventId", e.getIdentifier()},
-            {"subjectId", subjectId},
-            {"objectId", objectId},
-            {"timestamp", e.timestamp().toJson()}
-        });
+        if (ECA::LawAuditLogger::instance().wouldLog("EVENT")) {
+            // Only the audit payload needs the object identifier; Rete uses subjectId.
+            std::string objectId = e.object ? e.object->getIdentifier() : "null";
+            ECA::LawAuditLogger::instance().log("EVENT", "Event \"" + e.type + "\" triggered (Subject: " + subjectId + ", Object: " + objectId + ")", {
+                {"eventType", e.type},
+                {"eventId", e.getIdentifier()},
+                {"subjectId", subjectId},
+                {"objectId", objectId},
+                {"timestamp", e.timestamp().toJson()}
+            });
+        }
 
         // A being that has just left the world is released from every law
         // that named it. Formations hold RAW pointers and nothing else
@@ -2111,12 +2117,14 @@ void LawManager::connectToEventBus() {
         std::string aId = e.relation->aId();
         std::string bId = e.relation->bId();
         
-        ECA::LawAuditLogger::instance().log("EVENT", "Custom Event \"" + evType + "\" triggered (Id: " + e.relation->getIdentifier() + ")", {
-            {"eventType", evType},
-            {"eventId", e.relation->getIdentifier()},
-            {"sourceId", aId},
-            {"targetId", bId}
-        });
+        if (ECA::LawAuditLogger::instance().wouldLog("EVENT")) {
+            ECA::LawAuditLogger::instance().log("EVENT", "Custom Event \"" + evType + "\" triggered (Id: " + e.relation->getIdentifier() + ")", {
+                {"eventType", evType},
+                {"eventId", e.relation->getIdentifier()},
+                {"sourceId", aId},
+                {"targetId", bId}
+            });
+        }
         
         auto fact = std::make_shared<ReteFact>();
         fact->type = evType;
@@ -2160,15 +2168,17 @@ void LawManager::syncProphetic() {
     // satisfying range is exactly the thing an author stares at wondering why
     // their law never fires, and the engine already knows.
     for (const auto& finding : _prophetic.unreachable()) {
-        ECA::LawAuditLogger::instance().log(
-            "LAW",
-            std::string(finding.selfImpossible ? "Law \"" : "Law \"") + finding.lawId +
-                "\" has a condition on " + finding.path + " that cannot be satisfied: " +
-                finding.why,
-            {{"lawId", finding.lawId},
-             {"path", finding.path},
-             {"why", finding.why},
-             {"selfImpossible", finding.selfImpossible}});
+        if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+            ECA::LawAuditLogger::instance().log(
+                "LAW",
+                std::string(finding.selfImpossible ? "Law \"" : "Law \"") + finding.lawId +
+                    "\" has a condition on " + finding.path + " that cannot be satisfied: " +
+                    finding.why,
+                {{"lawId", finding.lawId},
+                 {"path", finding.path},
+                 {"why", finding.why},
+                 {"selfImpossible", finding.selfImpossible}});
+        }
     }
 }
 
@@ -3042,7 +3052,7 @@ void LawManager::maybeStartDriveSession(Law& law, Singular& subject) {
 
     const std::string lawId = law.getIdentifier();
     const std::string subjectId = subject.getIdentifier();
-    // Fast path: O(1) hash set check instead of O(N) linear scan over _driveSessions
+    // Fast path: average O(1) indexed membership instead of an O(N) session scan.
     if (hasDriveSession(lawId, subjectId)) {
         return;   // already driving this subject
     }
