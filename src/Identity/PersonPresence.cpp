@@ -69,6 +69,24 @@ bool legacyProfileSuperseded(const std::string& displayName) {
     return false;
 }
 
+// Production boot's profile-selection contract. Keep discovery and the
+// legacy-to-keyed supersession rule in one place so tests exercise the same
+// code as Engine::initLogic rather than copying a lookalike algorithm.
+std::size_t restoreUnambiguousLocalProfile(Person& person) {
+    std::vector<nlohmann::json> candidates;
+    for (const auto& info : SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)) {
+        nlohmann::json profile = SaveSystem::readSaveData(info.path);
+        if (!profile.is_object()) continue;
+        if (!profile.contains("personId") &&
+            legacyProfileSuperseded(profile.value("displayName", std::string{}))) {
+            continue;
+        }
+        candidates.push_back(std::move(profile));
+    }
+    if (candidates.size() == 1) personFromJson(candidates.front(), person);
+    return candidates.size();
+}
+
 PresenceResult unlockPresentPerson(Person& person, const std::string& passphrase) {
     if (passphrase.empty()) return {false, "refused: empty passphrase"};
     KeyStore keys;
