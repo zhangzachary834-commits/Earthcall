@@ -2,7 +2,7 @@
 
 ## Status
 - **Date opened**: 2026-10-18
-- **Status**: Proposed. Nothing here is implemented. **Do not start until Sol's verdict on Web Designer round 5 and the merge of `earthcall_web_designer_modality`**; then work on a separate small branch.
+- **Status**: Proposed. Nothing here is implemented. The old `earthcall_web_designer_modality` branch received the Golden Merge Seal but was never merged; its sealed architecture is now reconciled forward in draft PR #787. **Do not start this follow-on until #787 lands cleanly with fresh current-head evidence**; then work on a separate small branch.
 - **Origin**: Zach's direction in conversation with Claude Code / Claude Opus 5.5 (session `c1339adf-4919-4ca2-bbde-3d0f0eb32a19`), 2026-10-17/18. Zach supplied the human idea: Earthcall's web modality should make interfaces *much more human and flexible*, and its first real use should be TeacherOps, the tutoring-hub coordination tool he built for his mom (`zhangzachary834-commits/teacherops`). Zach also supplied both corrections recorded in §1.
 - **Parent task**: [Earthcall Web Designer Modality](../Web_Designer_Modality/Web_Designer_Modality.md) · **Architecture**: [WEB_DESIGNER_MODALITY.md §9](../../../../../architecture/Integration/WEB_DESIGNER_MODALITY.md#9-realization-mode-compiled-today-live-runtime-later)
 
