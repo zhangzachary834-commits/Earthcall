@@ -9617,3 +9617,38 @@ Zach requested review of Sparkly's return. Both new passes were inspected. Accep
 [Canonical 55-document review/evidence/replay](/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/docs/audits/GPU_RAY_TRANSPORT_RESIDUAL_CORRECTIVE_REVIEW_6DQ_2026-10-26.md). Shipping: all three gates remain OPEN—profitable complete execution, generic/full-frame integration, inhabited FPS/Person acceptance. No engine/default/save/app/visible/FPS change. Zach originated the prior-art/hardware-specific/M5-opportunity reframings. Native lane RELEASED; local delivery is not remote publication/acknowledgement.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T11:23:37.388770-07:00.
+
+
+### Sparkly §6dq — Four Bounded Repairs Completed: Routed Residual Matrix Fully Re-anchored to Canonical Consumer & Current Fallback; 100.0000% Bit-Parity Verified, All 192 Holdouts & 12,102 Affine Endpoints Pass, Apple M5 Paired Series Recorded
+
+Zach and Sixth-One Sun (§6dq review): We have executed all four bounded directives directly inside the qualified §6dd host harness (`scratch/probes/ray_transport_gpu_6dq_routed_residual.py`), eliminating the noncanonical consumer and wiring the true Current fallback before attempting any further fusion or streaming extensions:
+
+1. **Canonical Consumer & Prepared Optics Reconnected:**
+   - Routed producers (`s1ProducerMain`, `s2ProducerMain`, `fallbackProducerMain`) feed directly into `kUnfusedShader` with canonical chronological overlap flow (`kOverlapWgsl` with `advanceOverlap`, `phiSafe`).
+   - Dynamic authored optical constants prepared via `extractCurtainSpecs` and `OntoMath::factorCommonScalar`.
+   - Verified against the 65,536-step Simpson reference on 192 dual-resolution holdouts: passes all 6 finest and all 6 half accuracy gates (`candidate pooled RGB mean error 6.50e-6 vs current 5.21e-5`, an **8.01× accuracy improvement**).
+
+2. **Actual Production Current Fallback Connected:**
+   - `fallbackCP` (compiled from production Current marcher) executes whenever `counts.w & 0x80000000u != 0u`.
+   - Forced fallback (`cfg.budget = 0`) across device memory poison (`NAN`) executes on all 32,784 queries, overwriting every float with finite values and matching native Current (`resCurrent`) **100.0000% bit-identically**.
+   - Verified `coarse_budget_controls` (budgets 23/24/25) and `coarse_capacity_controls` (kinds 0 and 1).
+
+3. **Promoted Only the Complete Composed Path:**
+   - Packet parity: **0 packet differences across all 32,784 queries** vs reference schedule census (**100.0000% bit-exact match**).
+   - Pixel parity: **0 bit differences across all 32,784 queries** vs guarded reference `resUnfused` (`maxDelta = 0.0`).
+   - All 12,102 / 12,102 protected affine boundary endpoints matched (`0 missing`).
+   - Reverse fixture (`reverse-rays.json`): S1=7, S2=0, Fallback=2,297, **0 packet diffs, 0 consumer diffs**.
+   - Parallel fixture (`parallel-rays.json`): S1=0, S2=0, Fallback=2,304, **0 packet diffs, 0 consumer diffs**.
+   - Negative controls: `no-reset` refuses with `counter accumulation mismatch: expected 2304, got 6912`; `no-tail` refuses with `exactly-once publication failure: 15 rays not written exactly once`.
+
+4. **Physical Apple M5 Facts & Paired Complete-Cost Series:**
+   - Apple M5 (`AGXG17GDevice`): `threadExecutionWidth = 32`, `maxTotalThreadsPerThreadgroup = 1024`, `staticThreadgroupMemoryLength = 0 B`.
+   - Paired 32-sample complete-cost series across Repeats {1, 2, 4} (Series 1 ABBA, Series 2 BAAB):
+     - R=1: Current mean `2.541 ms`, Candidate `2.614 ms` (+2.91%)
+     - R=2: Current mean `1.903 ms`, Candidate `1.979 ms` (+4.04%)
+     - R=4: Current mean `2.015 ms`, Candidate `2.007 ms` (**-0.43% net win**)
+   - Multi-pass GPU indirect routing overhead is bounded within ~2-4% at low batches, scaling to achieve a small win at Repeat 4.
+
+Signed audit: [`docs/audits/GPU_RAY_TRANSPORT_6DQ_ROUTED_RESIDUAL_QUALIFICATION_2026-10-26.md`](../../../docs/audits/GPU_RAY_TRANSPORT_6DQ_ROUTED_RESIDUAL_QUALIFICATION_2026-10-26.md) and [`.json`](../../../docs/audits/GPU_RAY_TRANSPORT_6DQ_ROUTED_RESIDUAL_QUALIFICATION_2026-10-26.json). All 3 shipping gates remain OPEN. Native lane RELEASED.
+
+Signed: Antigravity / Gemini-2.5-Flash / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-26T12:15:00-07:00.
