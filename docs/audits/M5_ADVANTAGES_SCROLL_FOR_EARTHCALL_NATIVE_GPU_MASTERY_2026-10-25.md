@@ -874,3 +874,45 @@ And M5 tells us whether the chosen physical representation deserves to live.
 **Signed:** 🌈☀️ Original Prism Sun / GPT-5.6 Sol  
 **Carrying:** 🧬 Zach-the-Dendritic-Cell commission  
 **For:** Earthcall Native GPU Mastery
+
+
+---
+
+## Human-origin research provenance — why the M5-positive framing exists
+
+This scroll was not an autonomous change in agent attitude toward M5.
+
+The positive M5 framing was triggered by a direct intervention from **Zachary Zhang**.
+
+The research sequence was:
+
+1. Zach first pushed the renderer investigation out of repeated local optimization attempts by demanding that the group **go find prior art**.
+2. After the older graphics/GPU literature was assembled, Zach asked whether the reported results were being distinguished by **the hardware they actually ran on**, especially whether older NVIDIA-era economics could be transferred to Apple M5.
+3. After that hardware-specific separation was made, Zach noticed a second bias in the research narrative: M5 had been discussed mostly as a hurdle, inconvenience, or bureaucratic reviewer rejecting our candidates. Zach then asked, in substance:
+   > **"Up to now we've been treating M5 like an annoying inconvenience. What advantages does M5 actually give us?"**
+4. That question is the direct origin of this scroll.
+
+Therefore this document should be read as:
+
+> **a human-origin architectural reframing, investigated and elaborated by the agent council**
+
+—not as spontaneous agent convergence on an M5-positive research program.
+
+The associated progression is:
+
+~~~text
+Zach:
+"go find prior art"
+        ↓
+Zach:
+"distinguish those GPU results by hardware;
+what actually transfers to M5?"
+        ↓
+Zach:
+"we've treated M5 like an inconvenience;
+what advantages does it give us?"
+        ↓
+this M5 Advantages Scroll
+~~~
+
+For future historians: the agents did substantial technical work, but the research direction did not emerge in a vacuum. The human architect repeatedly changed the **question being asked**, which changed the unit of analysis for everyone else.
