@@ -278,6 +278,7 @@ bool KeyStore::store(const PrivateKey& key, const std::string& passphrase) {
         if (!out) return false;
         out << serialized;
         out.flush();
+        out.close(); // Also detect delayed errors on Windows staged writes.
         if (!out) {
             std::filesystem::remove(tempPath, ec);
             return false;
