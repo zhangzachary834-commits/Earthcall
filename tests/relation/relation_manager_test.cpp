@@ -238,6 +238,23 @@ void test_string_queries_rename_and_equivalence() {
               "old identifier does not continue to own renamed edge");
     }
 
+    // A Relation can forget an endpoint directly, without notifying its
+    // manager. A subsequent string query must not dereference its old pointer.
+    {
+        RelationManager forgotten;
+        auto departed = std::make_unique<DummySingular>("departed");
+        DummySingular remaining("remaining");
+        auto edge = std::make_shared<Relation>("link", *departed, remaining, true);
+        forgotten.add(edge);
+        check(forgotten.getRelationsOf("departed").size() == 1,
+              "direct-forget precondition builds the pointer/name index");
+        edge->forgetEndpoint(departed.get());
+        departed.reset();
+        const auto kept = forgotten.getRelationsOf("departed");
+        check(kept.size() == 1 && kept[0] == edge,
+              "directly forgotten endpoint keeps saved ID without stale-pointer dereference");
+    }
+
     // 3. Loaded-unbound identifiers coverage
     RelationManager rmUnbound;
     rmUnbound.loadFromJson(nlohmann::json::array({

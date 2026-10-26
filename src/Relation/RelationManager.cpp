@@ -195,7 +195,11 @@ void RelationManager::ensureStringIndexFresh() const {
         return;
     }
     for (const auto& [being, indexedId] : _boundIds) {
-        if (being && being->getIdentifier() != indexedId) {
+        // Endpoint::forget() can run directly without manager->touch().
+        // Never dereference a being that no Relation still retains: the
+        // unannounced forget may have preceded its destruction.
+        if (!Relation::mayBeEndpoint(being) ||
+            being->getIdentifier() != indexedId) {
             rebuildEndpointIndex();
             return;
         }
