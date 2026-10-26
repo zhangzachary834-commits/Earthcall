@@ -1154,8 +1154,10 @@ plus `MouseHandler` for orientation.
 
 ### R1 — mint the camera being
 
-`Core::CameraState` (`src/Singularity/Core/CameraState.hpp:8`) is a plain struct with
-no identity. But `Perspective : public Singular` already exists with an **empty**
+**Historical example:** `Core::CameraState` (formerly in
+`src/Singularity/Core/CameraState.hpp`) was a plain struct with no identity.
+That header has since been retired in favor of `Singularity::Screen::Camera`.
+The `CameraState` field names below describe the former representation. But `Perspective : public Singular` already exists with an **empty**
 `buildProperties()` (`src/Perspective/BasicPerspective/Perspective.hpp:19`) — the hook
 is sitting there waiting. Give it a stable identifier (`camera`) and bridge the
 `CameraState` fields into it (Pattern B, `RigidBodyBridge`-style):

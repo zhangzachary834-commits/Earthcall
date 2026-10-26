@@ -48,7 +48,17 @@ namespace Rendering {
         {
             ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.08f, 0.09f, 0.11f, 0.85f));
             if (ImGui::BeginChild("##CreatorConsoleHeaderBar", ImVec2(0, 26.0f), false, ImGuiWindowFlags_NoScrollbar)) {
-                ImGui::TextColored(ImVec4(0.45f, 0.75f, 1.0f, 1.0f), "Zone: %s", zoneMgr.active().name().c_str());
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.12f, 0.22f, 0.35f, 0.70f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.20f, 0.35f, 0.55f, 0.90f));
+                std::string zonePillLabel = "Zone: " + zoneMgr.active().name() + " 🗺️";
+                if (ImGui::SmallButton(zonePillLabel.c_str())) {
+                    state.currentSection = CreatorSection::Zones;
+                }
+                ImGui::PopStyleColor(2);
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip("Active Zone: %s (@%s)\nClick to open 2D Zone Selector workbench.",
+                                      zoneMgr.active().name().c_str(), zoneMgr.active().getIdentifier().c_str());
+                }
                 ImGui::SameLine();
                 ImGui::TextDisabled("|");
                 ImGui::SameLine();
