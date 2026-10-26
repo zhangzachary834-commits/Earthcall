@@ -14,7 +14,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 
-#include <GLFW/glfw3.h>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -45,18 +44,9 @@ OntoMath::Piecewise everywhereInT(OntoMath::ScalarForm e) {
 } // namespace
 
 int main() {
-    if (!glfwInit()) {
-        std::fprintf(stderr, "time_flow_test: glfwInit failed\n");
-        return 1;
-    }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "time_flow_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "time_flow_test: no GL context\n");
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
+    // CPU-only LawManager and OntoMath witness. Do not require a GLFW window:
+    // hosted macOS CI runners have no interactive display/GL context, and
+    // none of the assertions below exercise rendering.
 
     {
         Object author;
@@ -475,8 +465,6 @@ int main() {
         Universe::instance().setProvider({});              // leave no dangling refs
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
     std::puts("time_flow_test: ALL OK");
     return 0;
 }
