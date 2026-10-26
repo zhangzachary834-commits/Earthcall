@@ -84,6 +84,7 @@ jobs:
         authored_physics_laws_test
         timeline_test
         time_moment_test
+        time_flow_test
         category_manager_test
         identity_test
         identity_ledger_test
