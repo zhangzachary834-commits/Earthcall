@@ -1,52 +1,50 @@
 #include "ConstructedBeing/Singular/Singular.hpp"
-#include "Person/Body/Body.hpp"
 #include "Person/Person.hpp"
-#include "Person/Soul/Soul.hpp"
 
-#include <cassert>
 #include <iostream>
-#include <type_traits>
+#include <vector>
 
-namespace {
-
-// SFINAE checks to detect if parentFormationInstances or childFormationInstances exist on Singular
-template <typename T, typename = void>
-struct has_parent_formation_instances : std::false_type {};
+// The removed Formation vectors were PROTECTED, not public. A probe using
+// declval<T>().member outside a derived context returns false even when those
+// members still exist, making the original witness falsely green.
+template <typename T>
+struct ProtectedFormationProbe : T {
+    static constexpr bool hasParent = requires(ProtectedFormationProbe& probe) {
+        probe.parentFormationInstances;
+    };
+    static constexpr bool hasChild = requires(ProtectedFormationProbe& probe) {
+        probe.childFormationInstances;
+    };
+};
 
 template <typename T>
-struct has_parent_formation_instances<T, std::void_t<decltype(std::declval<T>().parentFormationInstances)>> : std::true_type {};
+constexpr bool hasKernelBounds = requires(const T& instance) {
+    instance.satisfiesKernelBounds();
+};
 
-template <typename T, typename = void>
-struct has_child_formation_instances : std::false_type {};
+// Positive controls ensure the probes do detect protected inherited members.
+struct FossilPositiveControl {
+protected:
+    std::vector<int> parentFormationInstances;
+    std::vector<int> childFormationInstances;
+public:
+    bool satisfiesKernelBounds() const { return true; }
+};
 
-template <typename T>
-struct has_child_formation_instances<T, std::void_t<decltype(std::declval<T>().childFormationInstances)>> : std::true_type {};
+static_assert(ProtectedFormationProbe<FossilPositiveControl>::hasParent);
+static_assert(ProtectedFormationProbe<FossilPositiveControl>::hasChild);
+static_assert(hasKernelBounds<FossilPositiveControl>);
 
-// SFINAE check to detect if satisfiesKernelBounds exists on Singular
-template <typename T, typename = void>
-struct has_satisfies_kernel_bounds : std::false_type {};
-
-template <typename T>
-struct has_satisfies_kernel_bounds<T, std::void_t<decltype(std::declval<T>().satisfiesKernelBounds())>> : std::true_type {};
-
-} // namespace
+// The actual structural contract, including the Person inheritance path.
+static_assert(!ProtectedFormationProbe<Singular>::hasParent);
+static_assert(!ProtectedFormationProbe<Singular>::hasChild);
+static_assert(!ProtectedFormationProbe<Person>::hasParent);
+static_assert(!ProtectedFormationProbe<Person>::hasChild);
+static_assert(!hasKernelBounds<Singular>);
+static_assert(!hasKernelBounds<Person>);
 
 int main() {
-    static_assert(!has_parent_formation_instances<Singular>::value,
-                  "Singular must not contain dead parentFormationInstances vector");
-    static_assert(!has_child_formation_instances<Singular>::value,
-                  "Singular must not contain dead childFormationInstances vector");
-    static_assert(!has_satisfies_kernel_bounds<Singular>::value,
-                  "Singular must not contain placeholder satisfiesKernelBounds() method");
-
-    // Runtime sanity check on derived Singulars
-    Body body("Humanoid", "Voxel");
-    Person person(Soul("TestUser"), body, "");
-
-    assert(!has_parent_formation_instances<Person>::value);
-    assert(!has_child_formation_instances<Person>::value);
-    assert(!has_satisfies_kernel_bounds<Person>::value);
-
-    std::cout << "singular_dead_members_fossil_test: Singular is clean of dead formation vectors and placeholder satisfiesKernelBounds\n";
+    std::cout << "singular_dead_members_fossil_test: protected Formation fossils and "
+                 "unused Kernel-bounds placeholder absent; positive controls passed\n";
     return 0;
 }
