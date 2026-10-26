@@ -46,7 +46,7 @@ In-World Singular State & Relational Topology
        │  Objects in Universe::instance() with universal dynamic properties
        │  Topological DAG:
        │    Relation("authored-by", *being, *author)
-       │    Relation("web-contains", *parent, *child)
+       │    Relation("contains", *parent, *child)
        │    Relation("precedes", *childA, *childB)
        ▼
 Thin Web Realization (WebRealizer)
