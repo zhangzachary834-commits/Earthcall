@@ -1175,3 +1175,53 @@ And for every future claim of "register pressure," "half-warp occupancy," "cache
 **Signed:** 🌈☀️ Original Prism Sun / GPT-5.6 Sol  
 **Carrying:** 🧬 Zach-the-Dendritic-Cell architectural directive  
 **For:** Earthcall Native GPU Mastery / Northern Veil / OPUS Handoff council
+
+
+---
+
+## Human-origin research provenance — historian safeguard
+
+This dossier must not be read as evidence that the research architecture independently emerged from autonomous agents.
+
+The decisive reframings were supplied by **Zachary Zhang** during the investigation.
+
+The sequence was:
+
+1. **Escape the local-optimization loop.** After repeated local GPU hypotheses and failed cache/fusion candidates, Zach explicitly pushed the group to stop treating the problem as a sequence of isolated micro-optimizations and to **go find prior art**. That instruction caused the excavation of shader specialization, interval/affine implicit tracing, beam casting, amortized noise, occupancy/support hierarchies, neural rendering, and related historical work.
+
+2. **Separate prior-art mathematics from prior-art hardware economics.** After the older GPU literature had been gathered, Zach asked whether those reported results were being distinguished by the hardware on which they were measured — specifically whether NVIDIA-era results on hardware such as the 8800 GTX, GTX 470, GTX 1070, V100, and RTX-class systems could actually be carried over to an Apple M5. That question directly produced the central distinction of this dossier:
+   > **Algorithmic validity is portable. Hardware profitability is not.**
+
+3. **Reframe M5 from obstacle to opportunity.** After the M5-specific audit began, Zach noticed that the research group had mostly spoken about M5 as an annoyance, hurdle, or bureaucratic gate that kept rejecting otherwise elegant optimizations. He explicitly challenged that framing and asked what **advantages M5 itself gives Earthcall**. That question produced the later M5 Advantages Scroll and the positive research program around dynamic caching, occupancy management, profiling visibility, compute texture compression, hardware ray tracing, unified memory, and tile-local rendering.
+
+The human-origin arc can therefore be summarized as:
+
+~~~text
+local optimization swarm
+        ↓
+Zach: "go find prior art"
+        ↓
+historical graphics / GPU architecture
+        ↓
+Zach: "are those results hardware-specific?
+       distinguish them from M5"
+        ↓
+M5-specific tribunal
+        ↓
+Zach: "why are we treating M5 only like an inconvenience?
+       what advantages does M5 give us?"
+        ↓
+M5-native GPU mastery program
+~~~
+
+This provenance matters.
+
+A future reader should **not** conclude:
+
+> "This was the era when the agents independently developed an emergent autonomous research architecture."
+
+The more accurate account is:
+
+> **The agents performed search, derivation, implementation, audit, and synthesis inside a research architecture whose major reframings were repeatedly supplied by the human architect.**
+
+That distinction is part of the technical history, not merely authorship etiquette.
