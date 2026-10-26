@@ -119,8 +119,8 @@ int main() {
           "Home catalog discovers JSON-only identity");
 
     // Now introduce legacy binary sidecars and verify they take precedence.
-    writeMsgpack(legacyZoneEcsave, nlohmann::json{{"identifier", zoneId}, {"name", "Legacy Zone"}});
-    writeMsgpack(legacyHomeEcsave, nlohmann::json{{"identifier", homeId}, {"name", "Legacy Home"}});
+    writeMsgpack(legacyZoneEcsave, nlohmann::json{{"identifier", zoneId}, {"name", "Legacy Binary Zone"}});
+    writeMsgpack(legacyHomeEcsave, nlohmann::json{{"identifier", homeId}, {"name", "Legacy Binary Home"}});
     check(std::filesystem::exists(legacyZoneEcsave), "Legacy zone.ecsave created in sandbox");
     check(std::filesystem::exists(legacyHomeEcsave), "Legacy home.ecsave created in sandbox");
 
@@ -130,14 +130,14 @@ int main() {
     check(SaveSystem::resolveHomeIdentityPath(homeId) == legacyHomeEcsave.string(),
           "resolveHomeIdentityPath resolves legacy home.ecsave when home.ecform does not exist");
     // Direct identity reads and catalog discovery must agree on binary sidecar precedence.
-    check(identityName(SaveSystem::readZoneIdentity(zoneId)) == "Legacy Zone",
+    check(identityName(SaveSystem::readZoneIdentity(zoneId)) == "Legacy Binary Zone",
           "Zone direct read resolves legacy zone.ecsave before .ecform creation");
-    check(identityName(SaveSystem::readHomeIdentity(homeId)) == "Legacy Home",
+    check(identityName(SaveSystem::readHomeIdentity(homeId)) == "Legacy Binary Home",
           "Home direct read resolves legacy home.ecsave before .ecform creation");
 
-    check(catalogNames(false) == std::vector<std::string>{"Legacy Zone"},
+    check(catalogNames(false) == std::vector<std::string>{"Legacy Binary Zone"},
           "Zone catalog discovers legacy .ecsave identity");
-    check(catalogNames(true) == std::vector<std::string>{"Legacy Home"},
+    check(catalogNames(true) == std::vector<std::string>{"Legacy Binary Home"},
           "Home catalog discovers legacy .ecsave identity");
 
     // Write primary .ecform identities via writeZoneIdentity and writeHomeIdentity
