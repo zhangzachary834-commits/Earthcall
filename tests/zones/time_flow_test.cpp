@@ -16,8 +16,12 @@
 
 #include <GLFW/glfw3.h>
 #include <cassert>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace {
 
@@ -415,6 +419,143 @@ int main() {
         assert(driveFinished);
         assert(mgr.driveSessions().empty());
         pursue->setEnabled(false);
+
+        // ------------------------------------------------------------------
+        // 9. Drive-session index witness: high-cardinality identity parity.
+        //
+        // The production fast path is _driveSessionKeys keyed by
+        // (lawId, subjectId). Keep a real LawManager population here rather
+        // than benchmarking a detached container: 256 subjects launch one
+        // drive each, repeated events must not duplicate Absorb sessions,
+        // Restart must reset the SAME sessions, disabling must reap them, and
+        // a later event must be able to launch them afresh.
+        //
+        // The timing line is diagnostic, not a CI wall-clock gate. It compares
+        // hasDriveSession() against the equivalent pre-index vector scan over
+        // the exact same live sessions. Hardware noise may move the ratio; the
+        // correctness assertions are the contract.
+        // ------------------------------------------------------------------
+        constexpr std::size_t kDriveSubjects = 256;
+        std::vector<std::unique_ptr<Object>> driveCrowd;
+        driveCrowd.reserve(kDriveSubjects);
+        for (std::size_t i = 0; i < kDriveSubjects; ++i) {
+            auto subject = std::make_unique<Object>();
+            subject->setObjectID("drive-index-subject-" + std::to_string(i));
+            subject->setPosition(glm::vec3(static_cast<float>(i), 9.0f, 0.0f));
+            driveCrowd.push_back(std::move(subject));
+        }
+        Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+            beings.push_back(&a);
+            beings.push_back(&b);
+            for (const auto& subject : driveCrowd) beings.push_back(subject.get());
+        });
+
+        auto bulk = mgr.createLaw("drive-index-bulk", {&author});
+        bulk->setDrives(true);
+        bulk->setActionModel(ActionNode::map(
+            "position.y",
+            boundedInT(OntoMath::ScalarForm::variable("t"), 0.0, 1000.0),
+            tBinding));
+        const std::size_t alphaBulk = mgr.rete().addAlphaNode(
+            "type == drive-index-kick",
+            [](const FactPtr& f) { return f->type == "drive-index-kick"; });
+        mgr.rete().bindLawToAlpha(bulk->getIdentifier(), alphaBulk);
+
+        Universe::instance().setClock(800.0, 1.0);
+        for (const auto& subject : driveCrowd) {
+            Core::EventBus::instance().publish(
+                ECA::Event{"drive-index-kick", subject.get(), nullptr, std::time(nullptr)});
+        }
+        mgr.tick();
+        assert(mgr.driveSessions().size() == kDriveSubjects);
+        for (const auto& subject : driveCrowd) {
+            assert(mgr.hasDriveSession(bulk->getIdentifier(), subject->getIdentifier()));
+        }
+
+        const std::string bulkLawId = bulk->getIdentifier();
+        constexpr int kLookupRounds = 200;
+        std::size_t indexedHits = 0;
+        const auto indexedBegin = std::chrono::steady_clock::now();
+        for (int round = 0; round < kLookupRounds; ++round) {
+            for (const auto& subject : driveCrowd) {
+                indexedHits += mgr.hasDriveSession(bulkLawId, subject->getIdentifier()) ? 1u : 0u;
+            }
+        }
+        const auto indexedEnd = std::chrono::steady_clock::now();
+
+        std::size_t linearHits = 0;
+        const auto linearBegin = std::chrono::steady_clock::now();
+        for (int round = 0; round < kLookupRounds; ++round) {
+            for (const auto& subject : driveCrowd) {
+                const std::string subjectId = subject->getIdentifier();
+                bool found = false;
+                for (const auto& session : mgr.driveSessions()) {
+                    if (session.lawId == bulkLawId && session.subjectId == subjectId) {
+                        found = true;
+                        break;
+                    }
+                }
+                linearHits += found ? 1u : 0u;
+            }
+        }
+        const auto linearEnd = std::chrono::steady_clock::now();
+        assert(indexedHits == linearHits);
+        assert(indexedHits == kDriveSubjects * static_cast<std::size_t>(kLookupRounds));
+        const double indexedUs = std::chrono::duration<double, std::micro>(
+            indexedEnd - indexedBegin).count();
+        const double linearUs = std::chrono::duration<double, std::micro>(
+            linearEnd - linearBegin).count();
+        std::printf(
+            "DRIVE_SESSION_LOOKUP_AB subjects=%zu lookups=%zu indexed_us=%.3f linear_us=%.3f linear_over_indexed=%.3f\\n",
+            kDriveSubjects,
+            indexedHits,
+            indexedUs,
+            linearUs,
+            indexedUs > 0.0 ? linearUs / indexedUs : 0.0);
+
+        // Absorb: repeated events keep the original t=0 and one session each.
+        Universe::instance().setClock(801.0, 1.0);
+        for (const auto& subject : driveCrowd) {
+            Core::EventBus::instance().publish(
+                ECA::Event{"drive-index-kick", subject.get(), nullptr, std::time(nullptr)});
+        }
+        mgr.tick();
+        assert(mgr.driveSessions().size() == kDriveSubjects);
+        for (const auto& subject : driveCrowd) assert(nearf(subject->getPosition().y, 1.0f));
+
+        // Restart: same identities, same cardinality, but every onset becomes now.
+        bulk->setRetrigger(Law::Retrigger::Restart);
+        Universe::instance().setClock(802.0, 1.0);
+        for (const auto& subject : driveCrowd) {
+            Core::EventBus::instance().publish(
+                ECA::Event{"drive-index-kick", subject.get(), nullptr, std::time(nullptr)});
+        }
+        mgr.tick();
+        assert(mgr.driveSessions().size() == kDriveSubjects);
+        for (const auto& subject : driveCrowd) assert(nearf(subject->getPosition().y, 0.0f));
+
+        // Disable reaps every indexed key; re-enable allows a clean fresh launch.
+        bulk->setEnabled(false);
+        Universe::instance().setClock(803.0, 1.0);
+        mgr.tick();
+        assert(mgr.driveSessions().empty());
+        for (const auto& subject : driveCrowd) {
+            assert(!mgr.hasDriveSession(bulkLawId, subject->getIdentifier()));
+        }
+
+        bulk->setRetrigger(Law::Retrigger::Absorb);
+        bulk->setEnabled(true);
+        Universe::instance().setClock(900.0, 1.0);
+        for (const auto& subject : driveCrowd) {
+            Core::EventBus::instance().publish(
+                ECA::Event{"drive-index-kick", subject.get(), nullptr, std::time(nullptr)});
+        }
+        mgr.tick();
+        assert(mgr.driveSessions().size() == kDriveSubjects);
+        bulk->setEnabled(false);
+        Universe::instance().setClock(901.0, 1.0);
+        mgr.tick();
+        assert(mgr.driveSessions().empty());
 
         Universe::instance().setProvider({});              // leave no dangling refs
     }
