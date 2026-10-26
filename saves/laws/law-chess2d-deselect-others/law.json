@@ -1,0 +1,84 @@
+{
+    "authors": [
+        "Zach",
+        "Gemini"
+    ],
+    "identifier": "law-chess2d-deselect-others",
+    "injected_by": "Gemini 3.8 Flash, 2026-10-16 2D Chess Zone authoring",
+    "law": {
+        "id": "law-chess2d-deselect-others",
+        "name": "deselect-other-pieces",
+        "enabled": true,
+        "activation": 0,
+        "scope": 1,
+        "authority": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+            "Zach",
+            "Gemini"
+        ],
+        "conditionModel": {
+            "kind": 3,
+            "children": [
+                {
+                    "kind": 2,
+                    "relationType": "instance-of",
+                    "otherId": "category.chess2d.piece"
+                },
+                {
+                    "kind": 0,
+                    "path": "isSelected",
+                    "op": 0,
+                    "operand": {
+                        "t": "bool",
+                        "v": true
+                    }
+                },
+                {
+                    "kind": 4,
+                    "children": [
+                        {
+                            "kind": 0,
+                            "path": "gridX",
+                            "op": 1,
+                            "operandPath": "@state.chess2d.targetX"
+                        },
+                        {
+                            "kind": 0,
+                            "path": "gridY",
+                            "op": 1,
+                            "operandPath": "@state.chess2d.targetY"
+                        }
+                    ]
+                }
+            ]
+        },
+        "actionModel": {
+            "kind": 5,
+            "children": [
+                {
+                    "kind": 0,
+                    "path": "isSelected",
+                    "operand": {
+                        "t": "bool",
+                        "v": false
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "zOrder2D",
+                    "operand": {
+                        "t": "int",
+                        "v": 10
+                    }
+                }
+            ]
+        },
+        "targets": []
+    },
+    "triggers": [
+        "piece-selected"
+    ]
+}

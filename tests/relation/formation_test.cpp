@@ -3,6 +3,8 @@
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include <iostream>
+#include <memory>
+#include <utility>
 #include <string>
 
 namespace {
@@ -45,6 +47,8 @@ void run_tests() {
     formation.setRoot(&beingA);
     check(formation.hasRoot() == true, "Formation has root");
     check(formation.isRoot(&beingA) == true, "BeingA is root");
+    check(!formation.setRoot(&formation), "Formation cannot root itself");
+    check(formation.root() == &beingA, "Refused self-root preserves existing root");
 
     formation.removeElement(beingB);
     check(formation.getMembers().size() == 1, "Formation has 1 member after removal");
@@ -56,6 +60,10 @@ void run_tests() {
     formation.addElement(beingB);
     bool added = formation.addRelation(relation);
     check(added == true, "Relation added successfully");
+    check(formation.relations().getAll().size() == 1, "Admitted relation is retained");
+    auto selfLoop = std::make_shared<Relation>(typeLexeme, beingA, beingA, true);
+    check(!formation.addRelation(selfLoop), "Self-loop refused");
+    check(formation.relations().getAll().size() == 1, "Refusal preserves admitted relation");
 }
 
 } // namespace

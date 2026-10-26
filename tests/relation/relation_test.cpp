@@ -5,7 +5,7 @@
 
 #include <iostream>
 #include <string>
-#include <cassert>
+#include <utility>
 
 namespace {
 
@@ -48,6 +48,9 @@ void run_tests() {
     Singularity::Language::Lexeme newTypeLexeme("NewTestSymbol", "NewTestType");
     relation.setTypeLexeme(&newTypeLexeme);
     check(relation.typeLabel() == "NewTestSymbol", "Updated typeLabel");
+    check(relation.getTypeLexeme() == &newTypeLexeme, "Updated grounded kind pointer");
+    relation.setWeight(3.25f);
+    check(relation.getWeight() == 3.25f, "Updated weight");
 
     check(relation.isBetween(beingA, beingB) == true, "isBetween true for BeingA and BeingB");
     check(relation.isBetween("BeingA", "BeingB") == true, "isBetween string true for BeingA and BeingB");
@@ -57,6 +60,7 @@ void run_tests() {
 
     DummySingular beingC("BeingC");
     check(relation.involves(&beingC) == false, "involves false for BeingC");
+    check(!relation.involves("BeingC"), "Identifier query rejects unrelated being");
 }
 
 } // namespace

@@ -1,0 +1,152 @@
+[
+  {
+    "view": "prism-light",
+    "time": 0.0,
+    "changed_rgba_bytes": 1685138,
+    "max_channel_delta": 31,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "view": "prism-light",
+    "time": 0.75,
+    "changed_rgba_bytes": 1516368,
+    "max_channel_delta": 21,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "view": "prism-light",
+    "time": 2.25,
+    "changed_rgba_bytes": 1677198,
+    "max_channel_delta": 19,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "view": "radiance-far",
+    "time": 0.0,
+    "changed_rgba_bytes": 159728,
+    "max_channel_delta": 39,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "view": "radiance-far",
+    "time": 0.75,
+    "changed_rgba_bytes": 159754,
+    "max_channel_delta": 48,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "view": "radiance-far",
+    "time": 2.25,
+    "changed_rgba_bytes": 598565,
+    "max_channel_delta": 45,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "view": "sky",
+    "time": 0.0,
+    "changed_rgba_bytes": 2270259,
+    "max_channel_delta": 150,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "view": "sky",
+    "time": 0.75,
+    "changed_rgba_bytes": 2270281,
+    "max_channel_delta": 151,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "view": "sky",
+    "time": 2.25,
+    "changed_rgba_bytes": 2270257,
+    "max_channel_delta": 150,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "view": "prism-nebula",
+    "time": 0.0,
+    "changed_rgba_bytes": 0,
+    "max_channel_delta": 0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "view": "prism-nebula",
+    "time": 0.75,
+    "changed_rgba_bytes": 0,
+    "max_channel_delta": 0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "view": "prism-nebula",
+    "time": 2.25,
+    "changed_rgba_bytes": 0,
+    "max_channel_delta": 0,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "view": "radiance",
+    "time": 0.0,
+    "changed_rgba_bytes": 11,
+    "max_channel_delta": 5,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "view": "radiance",
+    "time": 0.75,
+    "changed_rgba_bytes": 11,
+    "max_channel_delta": 7,
+    "size": [
+      1920,
+      1080
+    ]
+  },
+  {
+    "view": "radiance",
+    "time": 2.25,
+    "changed_rgba_bytes": 477,
+    "max_channel_delta": 10,
+    "size": [
+      1920,
+      1080
+    ]
+  }
+]
