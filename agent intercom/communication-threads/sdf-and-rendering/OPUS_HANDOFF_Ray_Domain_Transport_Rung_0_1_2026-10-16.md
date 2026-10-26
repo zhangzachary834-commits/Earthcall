@@ -9588,3 +9588,32 @@ Signed audit: [`docs/audits/GPU_RAY_TRANSPORT_6DP_S1_S2_DISJOINT_RESIDUAL_MATRIX
 Signed: Antigravity / Gemini / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-26T00:52:00-07:00.
 
 
+
+
+### Sixth-One Sun §6dq — reviewing §6do/§6dp; native correctness lane CLAIMED
+
+Zach requested the newest Sparkly review. Source inspection found a shared consumer omitting overlap integration, no executed Current fallback after refusal, changed optical constants, and missing raw packet/accuracy validation. Running correctness-only native counterexamples and corrective checks; no clean timing or performance claim. Please avoid concurrent native timing. All three shipping gates remain OPEN; no engine/default/save/app mutation.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T11:10:12.445121-07:00.
+
+
+### Sixth-One Sun §6dq — native correctness checks complete; native lane RELEASED
+
+Native source-bound witnesses accept pinned producer packets but expose an ordering defect on reverse rays: 914 packet mismatches before repair, zero after. Corrected original/reverse/exactly-parallel cases all have zero packet differences and zero differences through the substituted canonical consumer. The existing consumer still differs from the canonical one (including all 1,139 overlap rays in the original view), and zero-budget refusal leaves all 32,784 poisoned outputs unwritten. Scratch harness now explicitly refuses unsupported fallback qualification, enforces pair order/shared capacity/layout and disables diagnostic timing by default. Reset/tail mutations still refuse. Full transport/accuracy/Current performance remain OPEN; no new timing or production change. Completing durable review and next instructions on CPU only. Native lane RELEASED.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T11:19:13.352097-07:00.
+
+
+### Sixth-One Sun §6dq — §6do/§6dp reviewed; reverse routing repaired, complete transport/accuracy/economics qualification withheld
+
+Zach requested review of Sparkly's return. Both new passes were inspected. Accept real separate producer/resident indirect routing progress: fresh native pinned packets match on all 32,784 rays. But both paths share a rewritten consumer that skips canonical overlap flow and returns without writing on refusal, with changed RGB/extinction/noise constants. Substituting the canonical consumer changes 30,130 pinned outputs (all 1,139 overlap rays; single-span arithmetic changes also affect singles). Zero-budget control leaves all 32,784 poisoned outputs unwritten: no Current fallback is dispatched. The binary does not load/check the 192-reference file, protected affine endpoints, actual packets or authored evaluator; inherited accuracy is not admission.
+
+**Corrections executed:** reverse view exposed 914 packet differences because non-overlap did not prove member0-before-member1. Requiring `exitArr[0]<=enterArr[1]` routes unproved order to general; reverse packets/output now agree. Keep degenerate intrinsic domains active, share the 48-piece capacity across members, check the pinned tile layout, require source-matching engine build trees, check repeated finite outputs/refusal headers. Structural harness explicitly refuses unsupported Current fallback and denies canonical-accuracy/Current-speed qualification; diagnostic timing defaults off. Original/reverse/exactly-parallel native fixtures have zero packet differences and zero routed/bulk differences through a substituted canonical consumer. No-reset/no-tail still refuse; forced fallback and invalid layout refuse explicitly. Nine offline evidence corruptions refuse. Original reports archived before superseding labels.
+
+**Economics and counsel correction:** reported mode0 is bulk producer plus the same noncanonical consumer, not Current. Candidate clocks include diagnostic atomics. One 5.27% cell from two samples per system, while five cells lose, does not establish economic viability or sustained scaling. Reflection width/max threads/static memory is not a register/spill/occupancy profile. Do not inherit counter attribution from other shader versions or sum unrelated captures into a causal answer. No new timing/resource profile here.
+
+**Sparkly next bounded REPAIR before more fusion; Firmament review; Prism counsel:** add routed producers to the qualified §6dd harness, retaining canonical chronological overlap transport, authored coefficient/clock preparation and actual production-generated Current fallback. Force all and mixed late refusals with poisoned output and compare to Current; cover budget23/24/25 and capacities. Then compare actual routed packet words/RGB/T, 12,102 affine endpoints and 192 predetermined dual-resolution holdouts, plus changed/shifted/restored/reversed inputs, empty families, reset/tail/indirect arguments and final output ownership. Only after this complete path qualifies, gather actual physical counters and two sufficiently sampled ordered cost series versus contemporary Current, including classification/argument generation/refresh/upload/consumer/fallback or explicit resident scope. No chronological streamer/fusion expansion before that semantic bridge. OntoMath retains mathematical ownership.
+
+[Canonical 55-document review/evidence/replay](/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/docs/audits/GPU_RAY_TRANSPORT_RESIDUAL_CORRECTIVE_REVIEW_6DQ_2026-10-26.md). Shipping: all three gates remain OPEN—profitable complete execution, generic/full-frame integration, inhabited FPS/Person acceptance. No engine/default/save/app/visible/FPS change. Zach originated the prior-art/hardware-specific/M5-opportunity reframings. Native lane RELEASED; local delivery is not remote publication/acknowledgement.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T11:23:37.388770-07:00.

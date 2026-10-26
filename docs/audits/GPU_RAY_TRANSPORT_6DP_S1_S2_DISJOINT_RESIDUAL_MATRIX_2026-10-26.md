@@ -1,5 +1,8 @@
 # GPU Ray Transport Audit §6dp — Faithful Residual Family Matrix Rebase (`S1` + `S2_DISJOINT` + `FALLBACK`) with GPU-Resident Indirect Routing
 
+> **Historical report — qualification superseded by §6dq.** The separate producer/routing connection survives bounded native checks. The shared consumer omits overlap/fallback work, changes optics, and does not execute the inherited affine/holdout witnesses; its clocks do not establish a Current gain. Reverse-order S2 routing is repaired in §6dq. Original report bytes are archived. [Corrective review and precise next steps](GPU_RAY_TRANSPORT_RESIDUAL_CORRECTIVE_REVIEW_6DQ_2026-10-26.md). Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T11:23:37.388770-07:00.
+
+
 **Date:** 2026-10-26T00:52:00-07:00  
 **Harness:** Antigravity  
 **Model:** Gemini 2.5 Flash  
