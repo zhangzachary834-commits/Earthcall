@@ -2,27 +2,44 @@
 #include "Person/Person.hpp"
 
 #include <iostream>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
-// The removed Formation vectors were PROTECTED, not public. A probe using
-// declval<T>().member outside a derived context returns false even when those
-// members still exist, making the original witness falsely green.
+// The removed Formation vectors were protected. An outside-class expression
+// cannot distinguish an inaccessible inherited member from a missing member.
+// Probe through a derived class, using the project's C++17 dialect.
 template <typename T>
 struct ProtectedFormationProbe : T {
-    static constexpr bool hasParent = requires(ProtectedFormationProbe& probe) {
-        probe.parentFormationInstances;
-    };
-    static constexpr bool hasChild = requires(ProtectedFormationProbe& probe) {
-        probe.childFormationInstances;
-    };
+private:
+    template <typename U>
+    static auto detectParent(int) -> decltype(
+        (void)std::declval<U&>().parentFormationInstances, std::true_type{});
+    template <typename>
+    static auto detectParent(...) -> std::false_type;
+
+    template <typename U>
+    static auto detectChild(int) -> decltype(
+        (void)std::declval<U&>().childFormationInstances, std::true_type{});
+    template <typename>
+    static auto detectChild(...) -> std::false_type;
+
+public:
+    static constexpr bool hasParent =
+        decltype(detectParent<ProtectedFormationProbe>(0))::value;
+    static constexpr bool hasChild =
+        decltype(detectChild<ProtectedFormationProbe>(0))::value;
 };
+
+template <typename T, typename = void>
+struct HasKernelBounds : std::false_type {};
 
 template <typename T>
-constexpr bool hasKernelBounds = requires(const T& instance) {
-    instance.satisfiesKernelBounds();
-};
+struct HasKernelBounds<T, std::void_t<
+    decltype(std::declval<const T&>().satisfiesKernelBounds())>>
+    : std::true_type {};
 
-// Positive controls ensure the probes do detect protected inherited members.
+// Positive controls prove the probes detect protected inherited members.
 struct FossilPositiveControl {
 protected:
     std::vector<int> parentFormationInstances;
@@ -33,15 +50,15 @@ public:
 
 static_assert(ProtectedFormationProbe<FossilPositiveControl>::hasParent);
 static_assert(ProtectedFormationProbe<FossilPositiveControl>::hasChild);
-static_assert(hasKernelBounds<FossilPositiveControl>);
+static_assert(HasKernelBounds<FossilPositiveControl>::value);
 
 // The actual structural contract, including the Person inheritance path.
 static_assert(!ProtectedFormationProbe<Singular>::hasParent);
 static_assert(!ProtectedFormationProbe<Singular>::hasChild);
 static_assert(!ProtectedFormationProbe<Person>::hasParent);
 static_assert(!ProtectedFormationProbe<Person>::hasChild);
-static_assert(!hasKernelBounds<Singular>);
-static_assert(!hasKernelBounds<Person>);
+static_assert(!HasKernelBounds<Singular>::value);
+static_assert(!HasKernelBounds<Person>::value);
 
 int main() {
     std::cout << "singular_dead_members_fossil_test: protected Formation fossils and "
