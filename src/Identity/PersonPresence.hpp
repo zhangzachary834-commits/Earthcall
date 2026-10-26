@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <string>
 
 class Person;
@@ -49,5 +50,11 @@ bool personAnswersTo(const Person& person, const std::string& identifier);
 // A legacy profile is SUPERSEDED when the ledger has signed its name over to
 // a keyed profile that is also on disk: one Person, not two.
 bool legacyProfileSuperseded(const std::string& displayName);
+
+// Boot profile discovery and supersession are one production path, shared by
+// Engine::initLogic and regression witnesses. This only restores profile data:
+// it NEVER authenticates the Person or establishes First-Mover presence.
+// Returns the number of viable profiles; restores only when exactly one exists.
+std::size_t restoreUnambiguousLocalProfile(Person& person);
 
 } // namespace Identity
