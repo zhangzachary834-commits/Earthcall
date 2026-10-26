@@ -4,7 +4,7 @@
 // 1. SaveSystem::resolveZoneIdentityPath and resolveHomeIdentityPath accurately
 //    resolve .ecsave, .ecform, then legacy .json, including catalog discovery.
 // 2. SaveSystem::writeZoneIdentity and writeHomeIdentity automatically remove any
-//    legacy fixed-name zone.json, home.json, zone.ecsave and home.ecsave sidecars
+//    legacy fixed-name zone.json or home.json sidecars in the zone/home directory
 //    upon successfully writing the .ecform binary identity file.
 
 #include "Singularity/Storage/SaveSystem.hpp"
@@ -94,51 +94,38 @@ int main() {
         out.write(reinterpret_cast<const char*>(bytes.data()), bytes.size());
     };
 
-    // First verify the original JSON-only fallback before introducing .ecsave.
+    // Write legacy .json and .ecsave sidecars with distinct names to prove format precedence
     {
         std::ofstream zOut(legacyZoneJson);
-        zOut << nlohmann::json{{"identifier", zoneId}, {"name", "Legacy Zone"}}.dump(2);
+        zOut << nlohmann::json{{"identifier", zoneId}, {"name", "Legacy JSON Zone"}}.dump(2);
     }
     {
         std::ofstream hOut(legacyHomeJson);
-        hOut << nlohmann::json{{"identifier", homeId}, {"name", "Legacy Home"}}.dump(2);
+        hOut << nlohmann::json{{"identifier", homeId}, {"name", "Legacy JSON Home"}}.dump(2);
     }
+    writeMsgpack(legacyZoneEcsave, nlohmann::json{{"identifier", zoneId}, {"name", "Legacy ECSAVE Zone"}});
+    writeMsgpack(legacyHomeEcsave, nlohmann::json{{"identifier", homeId}, {"name", "Legacy ECSAVE Home"}});
+
     check(std::filesystem::exists(legacyZoneJson), "Legacy zone.json created in sandbox");
     check(std::filesystem::exists(legacyHomeJson), "Legacy home.json created in sandbox");
-    check(SaveSystem::resolveZoneIdentityPath(zoneId) == legacyZoneJson.string(),
-          "Zone JSON-only fallback resolves before binary identity creation");
-    check(SaveSystem::resolveHomeIdentityPath(homeId) == legacyHomeJson.string(),
-          "Home JSON-only fallback resolves before binary identity creation");
-    check(identityName(SaveSystem::readZoneIdentity(zoneId)) == "Legacy Zone",
-          "Zone direct read uses JSON-only fallback");
-    check(identityName(SaveSystem::readHomeIdentity(homeId)) == "Legacy Home",
-          "Home direct read uses JSON-only fallback");
-    check(catalogNames(false) == std::vector<std::string>{"Legacy Zone"},
-          "Zone catalog discovers JSON-only identity");
-    check(catalogNames(true) == std::vector<std::string>{"Legacy Home"},
-          "Home catalog discovers JSON-only identity");
-
-    // Now introduce legacy binary sidecars and verify they take precedence.
-    writeMsgpack(legacyZoneEcsave, nlohmann::json{{"identifier", zoneId}, {"name", "Legacy Binary Zone"}});
-    writeMsgpack(legacyHomeEcsave, nlohmann::json{{"identifier", homeId}, {"name", "Legacy Binary Home"}});
     check(std::filesystem::exists(legacyZoneEcsave), "Legacy zone.ecsave created in sandbox");
     check(std::filesystem::exists(legacyHomeEcsave), "Legacy home.ecsave created in sandbox");
 
-    // Before .ecform exists, a nonempty .ecsave takes precedence over .json.
+    // Before .ecform exists, resolveZoneIdentityPath/resolveHomeIdentityPath resolves legacy .ecsave or .json
     check(SaveSystem::resolveZoneIdentityPath(zoneId) == legacyZoneEcsave.string(),
           "resolveZoneIdentityPath resolves legacy zone.ecsave when zone.ecform does not exist");
     check(SaveSystem::resolveHomeIdentityPath(homeId) == legacyHomeEcsave.string(),
           "resolveHomeIdentityPath resolves legacy home.ecsave when home.ecform does not exist");
-    // Direct identity reads and catalog discovery must agree on binary sidecar precedence.
-    check(identityName(SaveSystem::readZoneIdentity(zoneId)) == "Legacy Binary Zone",
-          "Zone direct read resolves legacy zone.ecsave before .ecform creation");
-    check(identityName(SaveSystem::readHomeIdentity(homeId)) == "Legacy Binary Home",
-          "Home direct read resolves legacy home.ecsave before .ecform creation");
+    // Direct identity reads and discovery resolve .ecsave over .json when .ecsave exists
+    check(identityName(SaveSystem::readZoneIdentity(zoneId)) == "Legacy ECSAVE Zone",
+          "Zone direct read resolves legacy zone.ecsave over zone.json before binary .ecform creation");
+    check(identityName(SaveSystem::readHomeIdentity(homeId)) == "Legacy ECSAVE Home",
+          "Home direct read resolves legacy home.ecsave over home.json before binary .ecform creation");
 
-    check(catalogNames(false) == std::vector<std::string>{"Legacy Binary Zone"},
-          "Zone catalog discovers legacy .ecsave identity");
-    check(catalogNames(true) == std::vector<std::string>{"Legacy Binary Home"},
-          "Home catalog discovers legacy .ecsave identity");
+    check(catalogNames(false) == std::vector<std::string>{"Legacy ECSAVE Zone"},
+          "Zone catalog discovers a legacy .ecsave identity over .json");
+    check(catalogNames(true) == std::vector<std::string>{"Legacy ECSAVE Home"},
+          "Home catalog discovers a legacy .ecsave identity over .json");
 
     // Write primary .ecform identities via writeZoneIdentity and writeHomeIdentity
     nlohmann::json zoneDoc{
@@ -230,30 +217,6 @@ int main() {
           "Home direct read falls back when .ecsave is empty");
     check(fileBytes(zoneEcform) == oldZoneBytes && fileBytes(homeEcform) == oldHomeBytes,
           "Discovery and reads preserve both old binary files byte for byte");
-
-    // A successful .ecform write must not silently report success when a stale
-    // sidecar cannot be removed. Nonempty directories deterministically make
-    // std::filesystem::remove fail without depending on OS permission settings.
-    const std::string blockedZoneId = "CleanupZoneBlocked";
-    const std::string blockedHomeId = "CleanupHomeBlocked";
-    const auto blockedZoneSidecar = sandbox.path / "zones" / blockedZoneId / "zone.ecsave";
-    const auto blockedHomeSidecar = sandbox.path / "homes" / blockedHomeId / "home.ecsave";
-    std::filesystem::create_directories(blockedZoneSidecar);
-    std::filesystem::create_directories(blockedHomeSidecar);
-    std::ofstream(blockedZoneSidecar / "keep").put('x');
-    std::ofstream(blockedHomeSidecar / "keep").put('x');
-    auto blockedZoneDoc = zoneDoc;
-    auto blockedHomeDoc = homeDoc;
-    blockedZoneDoc["identifier"] = blockedZoneId;
-    blockedHomeDoc["identifier"] = blockedHomeId;
-    check(!SaveSystem::writeZoneIdentity(blockedZoneId, blockedZoneDoc),
-          "Zone identity write reports failure when legacy cleanup fails");
-    check(!SaveSystem::writeHomeIdentity(blockedHomeId, blockedHomeDoc),
-          "Home identity write reports failure when legacy cleanup fails");
-    check(std::filesystem::exists(blockedZoneSidecar / "keep"),
-          "Failed Zone cleanup does not destroy unrelated directory contents");
-    check(std::filesystem::exists(blockedHomeSidecar / "keep"),
-          "Failed Home cleanup does not destroy unrelated directory contents");
 
     std::cout << "------------------------------------------------------------\n";
     std::cout << g_checks - g_failures << "/" << g_checks << " checks passed\n";

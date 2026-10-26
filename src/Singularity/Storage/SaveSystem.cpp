@@ -1566,17 +1566,20 @@ bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j) {
         const std::string safe = sanitizeLabel(identifier);
         if (!safe.empty()) {
             const auto parent = std::filesystem::path(path).parent_path();
-            bool cleanupOk = true;
-            for (const auto& legacy : {parent / "zone.json", parent / "zone.ecsave"}) {
-                std::error_code ec;
-                std::filesystem::remove(legacy, ec);
-                if (ec) {
-                    std::cerr << "[SaveSystem] Failed to remove stale Zone identity sidecar "
-                              << legacy.string() << ": " << ec.message() << "\n";
-                    cleanupOk = false;
-                }
+            std::error_code ecJson, ecEcsave;
+            std::filesystem::remove(parent / "zone.json", ecJson);
+            std::filesystem::remove(parent / "zone.ecsave", ecEcsave);
+            if (ecJson) {
+                std::cerr << "[SaveSystem] Warning/error removing legacy zone.json: "
+                          << ecJson.message() << "\n";
             }
-            if (!cleanupOk) return false;
+            if (ecEcsave) {
+                std::cerr << "[SaveSystem] Warning/error removing legacy zone.ecsave: "
+                          << ecEcsave.message() << "\n";
+            }
+            if (ecJson || ecEcsave) {
+                return false;
+            }
         }
     }
     return wrote;
@@ -1789,17 +1792,20 @@ bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j) {
         const std::string safe = sanitizeLabel(identifier);
         if (!safe.empty()) {
             const auto parent = std::filesystem::path(path).parent_path();
-            bool cleanupOk = true;
-            for (const auto& legacy : {parent / "home.json", parent / "home.ecsave"}) {
-                std::error_code ec;
-                std::filesystem::remove(legacy, ec);
-                if (ec) {
-                    std::cerr << "[SaveSystem] Failed to remove stale Home identity sidecar "
-                              << legacy.string() << ": " << ec.message() << "\n";
-                    cleanupOk = false;
-                }
+            std::error_code ecJson, ecEcsave;
+            std::filesystem::remove(parent / "home.json", ecJson);
+            std::filesystem::remove(parent / "home.ecsave", ecEcsave);
+            if (ecJson) {
+                std::cerr << "[SaveSystem] Warning/error removing legacy home.json: "
+                          << ecJson.message() << "\n";
             }
-            if (!cleanupOk) return false;
+            if (ecEcsave) {
+                std::cerr << "[SaveSystem] Warning/error removing legacy home.ecsave: "
+                          << ecEcsave.message() << "\n";
+            }
+            if (ecJson || ecEcsave) {
+                return false;
+            }
         }
     }
     return wrote;
