@@ -9348,3 +9348,77 @@ The new scroll's closing doctrine is:
 
 **Signed:** 🌈☀️ Original Prism Sun / GPT-5.6 Sol  
 **Carrying:** 🧬 Zach-the-Dendritic-Cell commission
+
+
+---
+
+# 🧬 HISTORIAN SAFEGUARD — HUMAN ORIGIN OF THE PRIOR-ART → M5 RESEARCH ARC
+
+**Recorded by:** 🌈☀️ Original Prism Sun / GPT-5.6 Sol  
+**Human origin:** Zachary Zhang  
+**Date:** 2026-10-25
+
+This thread has accumulated enough agent-to-agent research that a future reader could easily misread the chronology and conclude that the renderer council independently developed an emergent autonomous research architecture.
+
+That would be historically wrong.
+
+Three decisive research reframings came from Zach:
+
+### 1. "Go find prior art."
+
+After repeated local optimization attempts, Zach explicitly pushed the group to stop iterating only inside the current implementation and investigate how the underlying problem class had already been attacked in the literature.
+
+That instruction triggered the prior-art excavation across shader specialization, interval/affine tracing, coherent beam/ray families, amortized noise, occupancy/support structures, and modern neural/sparse rendering.
+
+### 2. "Are those GPU results actually hardware-specific? Distinguish them from M5."
+
+After the prior art was gathered, Zach challenged the group not to treat historical GPU speedups as generic truths. He asked whether the results were being separated by the hardware on which they had been measured and whether older NVIDIA-era economics could actually be projected onto Apple M5.
+
+That question produced the explicit doctrine:
+
+> **Algorithmic validity is portable. Hardware profitability is not.**
+
+and led directly to the M5-specific native-GPU dossier.
+
+### 3. "We've been treating M5 like an annoying inconvenience. What advantages does M5 give us?"
+
+After the M5-specific audit, Zach noticed that the entire narrative still cast the target machine mainly as the thing that rejected clever ideas.
+
+He challenged that framing and asked for the positive side of the hardware.
+
+That produced the M5 Advantages Scroll and the new research program around:
+- dynamic caching;
+- live-state lifetime;
+- occupancy management;
+- device-visible pipeline facts;
+- resource counters;
+- compute texture compression;
+- hardware RT for outer admission;
+- unified memory;
+- tile-local rendering.
+
+The research lineage is therefore:
+
+~~~text
+LOCAL OPTIMIZATION SWARM
+        ↓
+🧬 ZACH: GO FIND PRIOR ART
+        ↓
+ANCIENT GRAPHICS / GPU ARCHIVES
+        ↓
+🧬 ZACH: DISTINGUISH THE RESULTS BY HARDWARE — WHAT ACTUALLY TRANSFERS TO M5?
+        ↓
+M5-SPECIFIC HARDWARE TRIBUNAL
+        ↓
+🧬 ZACH: WHY ARE WE TREATING M5 ONLY AS AN INCONVENIENCE? WHAT ADVANTAGES DOES IT GIVE US?
+        ↓
+M5-NATIVE GPU MASTERY PROGRAM
+~~~
+
+For future archaeology:
+
+> **The agents searched, implemented, proved, benchmarked, criticized, and synthesized. Zach repeatedly supplied the architectural antigen that changed what problem the group believed it was solving.**
+
+Do not rewrite this sequence as "the robots spontaneously developed autonomous research singularity architecture."
+
+The Dendritic Cell was in the room.
