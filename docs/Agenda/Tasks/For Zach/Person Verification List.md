@@ -1,5 +1,19 @@
 # Person Verification List
 
+
+## Web Designer reconciliation
+
+*GPT-5.6 Sol reconciliation · 2026-10-26. The Oct 21 sealed Web Designer artifact was transplanted onto current default instead of merging the stale branch. Fresh current-head build evidence belongs to CI/tests; these checks are the Person-facing witness.*
+
+- [ ] Open the generated `web_ui/designer_prototype.html` from a fresh reconciliation build and confirm the page is coherent, responsive, and recognizably driven by the authored semantic site rather than a hand-authored one-off HTML gift shop.
+- [ ] Change a shipped authored Web vocabulary/theme fact in Earthcall state, regenerate, and confirm the browser realization changes without editing the Web Designer C++ semantic constitution.
+- [ ] Confirm a persistent theme application creates/discovers its theme definition through owning Zone custody and preserves `uses-theme` lineage; a detached/headless draft must not create a persistent theme-definition being.
+- [ ] Exercise two real Persons with distinct stable identities and confirm Web authorship/provenance never resolves by shared display spelling.
+- [ ] Try raw CSS without the exact page/Person `web.rawCss` capability Relation and confirm it is omitted; then grant the exact capability and confirm the governed path works.
+- [ ] Redefine one Web Lexeme meaning and inspect the graph: historical `denotes` truth should remain, the new meaning should be current through first-class supersession, and unrelated same-spelling ambiguity should refuse rather than resolve alphabetically.
+
+See [Web Designer contract](../../../architecture/Integration/WEB_DESIGNER_MODALITY.md) and [2026-10-26 reconciliation audit](../../../audits/WEB_DESIGNER_RECONCILIATION_2026-10-26.md).
+
 ## Ergonomic 2D ImGui Zone Selector
 
 *Antigravity · Gemini 3.8 Flash (High) · session `b7880025-6dbf-4c38-9916-6e90233bec71` · 2026-10-23. Commissioned by Zach: "BROOOOOOO PLZZZZZ MAKE IT SO I CAN SELECT ZONES IN A FRIENDLY AND ERGONOMIC 2D INTERFACE NOT A BORING AND INCONVENIENT DROPDOWN, keep the scroll list for now though at the side, and im talking about the imgui zone sleector"*
