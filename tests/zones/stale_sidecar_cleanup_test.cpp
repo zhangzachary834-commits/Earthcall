@@ -4,7 +4,7 @@
 // 1. SaveSystem::resolveZoneIdentityPath and resolveHomeIdentityPath accurately
 //    resolve .ecsave, .ecform, then legacy .json, including catalog discovery.
 // 2. SaveSystem::writeZoneIdentity and writeHomeIdentity automatically remove any
-//    legacy fixed-name zone.json or home.json sidecars in the zone/home directory
+//    legacy fixed-name zone.json, home.json, zone.ecsave and home.ecsave sidecars
 //    upon successfully writing the .ecform binary identity file.
 
 #include "Singularity/Storage/SaveSystem.hpp"
@@ -94,7 +94,7 @@ int main() {
         out.write(reinterpret_cast<const char*>(bytes.data()), bytes.size());
     };
 
-    // Write legacy .json and .ecsave sidecars
+    // First verify the original JSON-only fallback before introducing .ecsave.
     {
         std::ofstream zOut(legacyZoneJson);
         zOut << nlohmann::json{{"identifier", zoneId}, {"name", "Legacy Zone"}}.dump(2);
@@ -103,29 +103,42 @@ int main() {
         std::ofstream hOut(legacyHomeJson);
         hOut << nlohmann::json{{"identifier", homeId}, {"name", "Legacy Home"}}.dump(2);
     }
-    writeMsgpack(legacyZoneEcsave, nlohmann::json{{"identifier", zoneId}, {"name", "Legacy Zone"}});
-    writeMsgpack(legacyHomeEcsave, nlohmann::json{{"identifier", homeId}, {"name", "Legacy Home"}});
-
     check(std::filesystem::exists(legacyZoneJson), "Legacy zone.json created in sandbox");
     check(std::filesystem::exists(legacyHomeJson), "Legacy home.json created in sandbox");
+    check(SaveSystem::resolveZoneIdentityPath(zoneId) == legacyZoneJson.string(),
+          "Zone JSON-only fallback resolves before binary identity creation");
+    check(SaveSystem::resolveHomeIdentityPath(homeId) == legacyHomeJson.string(),
+          "Home JSON-only fallback resolves before binary identity creation");
+    check(identityName(SaveSystem::readZoneIdentity(zoneId)) == "Legacy Zone",
+          "Zone direct read uses JSON-only fallback");
+    check(identityName(SaveSystem::readHomeIdentity(homeId)) == "Legacy Home",
+          "Home direct read uses JSON-only fallback");
+    check(catalogNames(false) == std::vector<std::string>{"Legacy Zone"},
+          "Zone catalog discovers JSON-only identity");
+    check(catalogNames(true) == std::vector<std::string>{"Legacy Home"},
+          "Home catalog discovers JSON-only identity");
+
+    // Now introduce legacy binary sidecars and verify they take precedence.
+    writeMsgpack(legacyZoneEcsave, nlohmann::json{{"identifier", zoneId}, {"name", "Legacy Zone"}});
+    writeMsgpack(legacyHomeEcsave, nlohmann::json{{"identifier", homeId}, {"name", "Legacy Home"}});
     check(std::filesystem::exists(legacyZoneEcsave), "Legacy zone.ecsave created in sandbox");
     check(std::filesystem::exists(legacyHomeEcsave), "Legacy home.ecsave created in sandbox");
 
-    // Before .ecform exists, resolveZoneIdentityPath/resolveHomeIdentityPath resolves legacy .ecsave or .json
+    // Before .ecform exists, a nonempty .ecsave takes precedence over .json.
     check(SaveSystem::resolveZoneIdentityPath(zoneId) == legacyZoneEcsave.string(),
           "resolveZoneIdentityPath resolves legacy zone.ecsave when zone.ecform does not exist");
     check(SaveSystem::resolveHomeIdentityPath(homeId) == legacyHomeEcsave.string(),
           "resolveHomeIdentityPath resolves legacy home.ecsave when home.ecform does not exist");
-    // Direct identity reads must use the same legacy JSON fallback as discovery.
+    // Direct identity reads and catalog discovery must agree on binary sidecar precedence.
     check(identityName(SaveSystem::readZoneIdentity(zoneId)) == "Legacy Zone",
-          "Zone direct read resolves legacy zone.json before binary identity creation");
+          "Zone direct read resolves legacy zone.ecsave before .ecform creation");
     check(identityName(SaveSystem::readHomeIdentity(homeId)) == "Legacy Home",
-          "Home direct read resolves legacy home.json before binary identity creation");
+          "Home direct read resolves legacy home.ecsave before .ecform creation");
 
     check(catalogNames(false) == std::vector<std::string>{"Legacy Zone"},
-          "Zone catalog discovers a JSON-only identity");
+          "Zone catalog discovers legacy .ecsave identity");
     check(catalogNames(true) == std::vector<std::string>{"Legacy Home"},
-          "Home catalog discovers a JSON-only identity");
+          "Home catalog discovers legacy .ecsave identity");
 
     // Write primary .ecform identities via writeZoneIdentity and writeHomeIdentity
     nlohmann::json zoneDoc{
