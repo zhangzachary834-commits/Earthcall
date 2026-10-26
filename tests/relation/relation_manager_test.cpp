@@ -292,6 +292,23 @@ void test_string_queries_rename_and_equivalence() {
     check(adjUnbound1.size() == 1 && adjUnbound1[0] == "unbound2", "findAdjacentEntities(unbound1) finds unbound2");
     auto adjUnbound2 = rmUnbound.findAdjacentEntities("unbound2");
     check(adjUnbound2.size() == 1 && adjUnbound2[0] == "unbound1", "findAdjacentEntities(unbound2) finds unbound1 for undirected edge");
+
+    // The legacy adjacency scan accepts the empty identifier even though
+    // getRelationsOf/getRelationsBetween explicitly reject it. Preserve that
+    // observable behavior for unresolved or malformed saved relations.
+    RelationManager emptyNames;
+    emptyNames.loadFromJson(nlohmann::json::array({
+        {{"type", "empty-out"}, {"entityA", ""}, {"entityB", "out"}, {"directed", true}},
+        {{"type", "empty-undirected"}, {"entityA", "peer"}, {"entityB", ""}, {"directed", false}},
+        {{"type", "empty-incoming"}, {"entityA", "incoming"}, {"entityB", ""}, {"directed", true}}
+    }));
+    const auto emptyAdj = emptyNames.findAdjacentEntities("");
+    check(emptyAdj.size() == 2 && emptyAdj[0] == "out" && emptyAdj[1] == "peer",
+          "empty identifier adjacency retains legacy directed/undirected ordering");
+    check(emptyNames.getRelationsOf("").empty(),
+          "empty identifier getRelationsOf still refuses an empty lookup");
+    check(emptyNames.getRelationsBetween("", "out").empty(),
+          "empty identifier getRelationsBetween still refuses an empty lookup");
 }
 
 

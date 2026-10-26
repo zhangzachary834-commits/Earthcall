@@ -177,8 +177,10 @@ void RelationManager::rebuildEndpointIndex() const {
         const std::string bId = r->bId();
         if (Singular* a = r->a()) _boundIds[a] = aId;
         if (Singular* b = r->b()) _boundIds[b] = bId;
-        if (!aId.empty()) _byIdentifier[aId].push_back(r);
-        if (!bId.empty() && bId != aId) _byIdentifier[bId].push_back(r);
+        // Empty identifiers are still observable by legacy adjacency scans.
+        // The other string queries reject empty keys in their own predicates.
+        _byIdentifier[aId].push_back(r);
+        if (bId != aId) _byIdentifier[bId].push_back(r);
     }
     _indexedGeneration = _generation;
     _indexedEndpointEpoch = Relation::endpointMutationEpoch();
@@ -521,7 +523,6 @@ void RelationManager::loadFromJson(const nlohmann::json& j, const RelationEndpoi
 
 std::vector<std::string> RelationManager::findAdjacentEntities(const std::string& entityId, const std::string& relationType) const {
     std::vector<std::string> adjacent;
-    if (entityId.empty()) return adjacent;
     ensureStringIndexFresh();
     auto it = _byIdentifier.find(entityId);
     if (it == _byIdentifier.end()) return adjacent;
