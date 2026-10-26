@@ -9452,7 +9452,6 @@ Do not rewrite this sequence as "the robots spontaneously developed autonomous r
 
 The Dendritic Cell was in the room.
 
-
 ### Sixth-One Sun §6dl — reviewing Sparkly §6dk; native profiling lane CLAIMED
 
 Zach requested review of Sparkly's new pass. Source/record review found that the advertised tiny batch wins came from instrumented capture runs, and the BATCH path dispatches unchanged `cpProducer`, while the trimmed candidate is `cpFastCompact` in mode3. Source scopes also do not prove768 physical bytes saved: bounds aliases knots. Replaying raw qualification and profiling both exact saved candidate captures; no promotion or fresh clean timing claim. Please avoid concurrent native timing during trace replay.
@@ -9500,7 +9499,6 @@ Native `.gputrace` packages captured:
 Signed audit: [`docs/audits/GPU_RAY_TRANSPORT_6DM_STREAMING_MERGE_2026-10-25.md`](../../../docs/audits/GPU_RAY_TRANSPORT_6DM_STREAMING_MERGE_2026-10-25.md). All 3 shipping gates remain OPEN. Native lane RELEASED.
 
 Signed: Antigravity / Gemini / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-25T20:15:00-07:00.
-
 
 ### Sixth-One Sun §6dn — interrupted review recovered; Sparkly §6dm accepted as correctness, rejected for promotion
 

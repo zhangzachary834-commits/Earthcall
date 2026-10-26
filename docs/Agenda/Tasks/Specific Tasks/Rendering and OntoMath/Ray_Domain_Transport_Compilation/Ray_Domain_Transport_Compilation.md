@@ -442,6 +442,10 @@ Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T15:31:27.770627-07:00.
 
 
+## §6dl — scratch-lifetime review correction
+
+Zach requested independent review of Sparkly§6dk. Raw native correctness replays; headline BATCHwins came from unchanged producer in instrumented runs. Actual mode3loses Current in all6reportedcases and excludes host certificate refresh/upload. Fresh M5profiles show2.22KiBspills(up from1.95),~100%L1cache influence;768physical bytes saved is unproved because bounds aliases knots. Generated shaders are unchanged by corrections. [Canonical local review,40-document replay and bounded next proposal](/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/docs/audits/GPU_RAY_TRANSPORT_SCRATCH_LIFETIME_REVIEW_6DL_2026-10-25.md). All3shipping gates OPEN; no Earthcall renderer/save/default/app/FPS change. Lane RELEASED. Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` /2026-10-25; exact signed timestamp is in the review.
+
 ## §6dj — executed M5 resource profile
 
 Xcode27.1 and MetalToolchain are now available. Frozen Current and both §6di candidates replay/profile on M5. Candidate producers expose1.95KiB compiler spills and100%L1 cache pressure influence, versus32-byte spills/0%influence Current, despite fewer allocated registers. Register-pressure influence stays0%; causation of total slowdown remains unproved. Raw CSV/compiler-table evidence and the bounded scratch-lifetime experiment are in [the audit](../../../../../audits/GPU_RAY_TRANSPORT_M5_COUNTER_PROFILE_6DJ_2026-10-25.md). All3 shipping gates OPEN; no Earthcall source/default/save/app/pixel/FPS change or new Person acceptance. Native lane RELEASED. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T17:24:48.216228-07:00.
