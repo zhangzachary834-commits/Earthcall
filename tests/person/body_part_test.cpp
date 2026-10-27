@@ -4,9 +4,11 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 #include "../support/test_harness.hpp"
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <memory>
 #include <glm/gtc/matrix_transform.hpp>
 
 // MockRenderer to test draw() without needing an active OpenGL or GPU window context
@@ -395,11 +397,10 @@ static void testBootedHarnessExposesConstitutionRelations() {
     // The indexed endpoint provider must agree with the complete graph provider.
     // Checking only relationsInvolving would miss a partial harness installation.
     const auto allEdges = Universe::instance().relations();
-    assert(std::find(allEdges.begin(), allEdges.end(),
-                     *std::find_if(edges.begin(), edges.end(), [part, primaryObj](Relation* rel) {
-                         return rel && rel->type == BodyPart::kConstitutedByType &&
-                                rel->a() == part && rel->b() == primaryObj;
-                     })) != allEdges.end());
+    assert(std::any_of(allEdges.begin(), allEdges.end(), [part, primaryObj](Relation* rel) {
+        return rel && rel->type == BodyPart::kConstitutedByType &&
+               rel->a() == part && rel->b() == primaryObj;
+    }));
 
     // A new body part must become visible without re-installing any provider.
     // The relation-generation stamp must change so cached graph consumers
