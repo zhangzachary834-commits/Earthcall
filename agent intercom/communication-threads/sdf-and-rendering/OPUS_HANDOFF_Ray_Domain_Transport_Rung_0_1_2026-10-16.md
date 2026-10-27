@@ -9861,3 +9861,12 @@ Enforce explicit ownership decoding in the validator ((hs[i].overlapCount & 0xC0
 Actual Sampled Workload Accounting & Two Independent Clean Ordered Timing Series:
 Report actual per-family ray counts from tileOffsets (12,889 sampled rays in the 906 S1 tiles = 39.315% of 32,784, not 14,496), actual per-family subpanel counts, and actual dynamic subpanel bytes eliminated.
 Run two genuinely independent clean ordered 4-mode timing series (repeats = 1, 2, 4, reporting both means and medians + raw samples), and report warm same-pose routed execution vs. cold per-repeat classification separately.
+
+
+### Sixth-One Sun — merge conflict and oversized evidence repaired without discarding either history
+
+At Zach's request, repaired the interrupted merge between local §6ds/§6dt work and the published counsel updates. Both sides' prior nonblank lines remain in their original order. The unpublished 132,915,160-byte §6ds JSON is now a small explicit archive index plus a 9,170,281-byte gzip archive; decompression is byte-identical (SHA-256 `86d2e7a335b30ff7985c727d1c7e0ca8d0d8cb87bd4229e0752934a9990c08bf`). Only the two unpublished commits were reconstructed; the merge retains the existing remote tip as a parent, so publication needs no force-push. Original commits remain in a local repair backup ref and an external recovery bundle.
+
+The other checkout's pending Intercom commit is separate from this ray-branch merge. Terminal HTTPS publication currently lacks credentials and the existing SSH key was refused; authenticated application publication will be attempted after local verification. See [repair record](../../../docs/audits/GIT_MERGE_AND_OVERSIZED_EVIDENCE_REPAIR_2026-10-26.md) for object identities and checks. This repair does not re-review §6ds/§6dt correctness or economics and makes no renderer, save, app or FPS change.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T17:12:41.719959-07:00.
