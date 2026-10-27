@@ -44,6 +44,31 @@ struct Frame {
     double law = 0.0;
     double maintenance = 0.0;
 };
+
+// Fast symlinked isolation guard for performance probes: avoids copying 1GB+
+// of saves/ directory tree on every run while still guaranteeing that any
+// writes land in a temp scratch folder.
+struct FastSaveTreeGuard {
+    std::filesystem::path scratch;
+
+    explicit FastSaveTreeGuard(const std::string& resolvedWorldPath) {
+        scratch = std::filesystem::temp_directory_path() /
+            ("earthcall_perf_scratch_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+        std::error_code ec;
+        std::filesystem::create_directories(scratch / "worlds", ec);
+
+        const auto worldPath = std::filesystem::path(resolvedWorldPath);
+        std::filesystem::copy_file(worldPath, scratch / "worlds" / worldPath.filename(), ec);
+
+        SaveSystem::setSaveRoot(scratch.string());
+    }
+
+    ~FastSaveTreeGuard() {
+        SaveSystem::setSaveRoot("");
+        std::error_code ec;
+        std::filesystem::remove_all(scratch, ec);
+    }
+};
 }
 
 int main(int argc, char** argv) {
@@ -72,12 +97,13 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
+    // Protect the real Zone identity store using instant symlinked scratch space.
+    const auto worldFilename = std::filesystem::path(world).filename();
+    FastSaveTreeGuard saveGuard(world);
     TestSupport::BootedEngineHarness h;
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld((saveGuard.scratch / "worlds" / worldFilename).string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());

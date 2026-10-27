@@ -109,6 +109,7 @@ jobs:
         foreign_web_dom_bridge_test
         foreign_web_dom_projection_test
         foreign_web_dom_protocol_test
+        sanctuary_of_sunlit_mist_test
 
     steps:
       - name: Check out tested commit
