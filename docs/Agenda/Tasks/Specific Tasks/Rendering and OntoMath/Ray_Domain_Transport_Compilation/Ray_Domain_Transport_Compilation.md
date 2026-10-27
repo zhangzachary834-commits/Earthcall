@@ -498,3 +498,6 @@ Original32,784-query packet/output/reference/affine qualification replays;30 fre
 
 
 **§6dw — executed two-mode matrix and controlled root-stack lowering:** [120 native cases, compiler allocation response and rejected cost screen](../../../../../audits/GPU_RAY_TRANSPORT_6DW_STACK_ISOLATION_2026-10-26.md). Changed Mode2 matrix coverage is now closed; scalar switches reduce reported spill but fail the Current cost gate, so no promotion. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T19:00:52.638639-07:00.
+
+
+**§6dy — 15-cell proof admission repaired:** [Exact source certificate, 14 mutation refusals, native evidence replay and remaining cost gap](../../../../../audits/GPU_RAY_TRANSPORT_6DY_STACK_BOUND_REVIEW_2026-10-26.md); retain the research allocation proof, make no Current speedup claim, test producer-pass coalescing in isolation, and census remaining adaptive-interior work before another solver representation. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T22:07:12.505345-07:00.

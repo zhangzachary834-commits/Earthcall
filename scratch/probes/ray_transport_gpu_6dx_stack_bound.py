@@ -3,9 +3,11 @@
 Antigravity / Gemini 2.5 Pro (Sparkly Guy) / 50cf28df-09e9-4c2b-a4d5-1f796abbc73a / 2026-10-26.
 Commissioned by Sixth-One Sun (Codex / GPT-6.1 Sol / session 01a148a7-bd85-7550-a416-0e859a729c1a).
 Scratch-only diagnostic research on Apple M5.
+Corrective source-proof guard: Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-10-26.
 """
 import argparse, ast, hashlib, importlib.util, json, os, re, shlex, subprocess, sys
 from pathlib import Path
+from collections import deque
 
 def sha(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 
@@ -16,20 +18,24 @@ def load(root, name):
     return module
 
 def prove_stack_bound(max_depth=14, seed_count=2):
-    """Exhaustive abstract state-space exploration over all reachable DFS stack configurations.
-    Proves that for any possible execution trace:
+    """Exhaust the finite abstraction of pending-depth configurations.
+    The exact maximum here is an upper bound for the certified shader; it does
+    not establish that a real ray reaches the abstract worst case.
+    The abstract transition system is:
     initial stack has `seed_count` elements at depth 1.
     popped elements subdivide into 2 children at depth `d + 1` if and only if `d < max_depth`.
     Returns (max_top_seen, total_unique_states, total_transitions).
     """
+    if type(max_depth) is not int or type(seed_count) is not int or max_depth < 1 or seed_count < 1:
+        raise ValueError('positive integer depth and seed count required')
     initial_state = tuple([1] * seed_count)
     visited = {initial_state}
-    queue = [initial_state]
+    queue = deque([initial_state])
     max_top_seen = len(initial_state)
 
     transitions = 0
     while queue:
-        state = queue.pop(0)
+        state = queue.popleft()
         k = len(state)
         if k == 0:
             continue
@@ -57,26 +63,113 @@ def prove_stack_bound(max_depth=14, seed_count=2):
 
     return max_top_seen, len(visited), transitions
 
+# Reviewed certificate for the precise roots/depth-helper transition system.
+# Kernel compiler metadata, not authored state. Changing these functions needs
+# a renewed transition proof; marker strings or comments cannot renew it.
+PROOF_FUNCTION_SHA256 = {
+    'roots': '453057d9914fcadaec0e555155843c97837e7586f573bbba8ffe605fee28d9c6',
+    'getDepth': '27cf285d3c8729c3f1d1b4053d77d9188d254429085b159ea92616ac29c3cae0',
+    'setDepth': '47c3286e2615395af82aa1fdff2c0138414de918bbf363e996caa82ce3771cc4',
+}
+
+def proof_code(shader):
+    """Remove line/nested block comments without accepting comment decoys."""
+    out, i, block_depth = [], 0, 0
+    while i < len(shader):
+        if block_depth:
+            if shader.startswith('/*', i): block_depth += 1; i += 2
+            elif shader.startswith('*/', i): block_depth -= 1; i += 2
+            else: i += 1
+            continue
+        if shader.startswith('//', i):
+            end = shader.find('\n', i + 2)
+            i = len(shader) if end < 0 else end
+            out.append(' ')
+        elif shader.startswith('/*', i):
+            block_depth = 1; i += 2; out.append(' ')
+        else:
+            out.append(shader[i]); i += 1
+    if block_depth:
+        raise ValueError('unterminated WGSL block comment')
+    return ''.join(out)
+
+def proof_function(shader, name):
+    code = proof_code(shader)
+    starts = list(re.finditer(r'\bfn\s+' + re.escape(name) + r'\s*\(', code))
+    if len(starts) != 1:
+        raise ValueError(f'proof requires exactly one {name} definition')
+    start = starts[0].start()
+    opening = code.find('{', start)
+    if opening < 0:
+        raise ValueError(f'missing {name} body')
+    depth, end = 1, opening + 1
+    while depth and end < len(code):
+        depth += (code[end] == '{') - (code[end] == '}')
+        end += 1
+    if depth:
+        raise ValueError(f'unbalanced {name} body')
+    return code[start:end]
+
 def verify_source_matches_proof(shader_wgsl: str):
-    """Verifies that the WGSL shader source strictly satisfies the mathematical proof assumptions.
-    Refuses if seeds, cutoff depth, or pop/push increments diverge.
+    """Bind the abstract proof to complete roots and depth-helper tokens.
+
+    The reviewed source seeds two depth-1 cells, pops before reading, prunes or
+    pushes exactly two depth-(d+1) children only for d<14, and faithfully packs
+    depths in four bits. Early exits only remove reachable abstract traces.
+    This exact-body certificate intentionally declines other implementations;
+    it is not a general WGSL theorem prover. It also survives Python -O.
     """
-    assert 'top = 2u;' in shader_wgsl, 'proof assumption violated: initial top != 2'
-    assert 'setDepth(&depthBits, 0u, 1u);' in shader_wgsl, 'proof assumption violated: seed 0 depth != 1'
-    assert 'setDepth(&depthBits, 1u, 1u);' in shader_wgsl, 'proof assumption violated: seed 1 depth != 1'
-    assert 'f32(depth) >= 14.0' in shader_wgsl, 'proof assumption violated: cutoff depth != 14'
-    assert 'setDepth(&depthBits, top, depth + 1u);' in shader_wgsl, 'proof assumption violated: child 0 depth != depth + 1'
-    assert 'setDepth(&depthBits, top + 1u, depth + 1u);' in shader_wgsl, 'proof assumption violated: child 1 depth != depth + 1'
-    assert 'top += 2u;' in shader_wgsl, 'proof assumption violated: push step != 2'
+    bindings = {}
+    for name, expected in PROOF_FUNCTION_SHA256.items():
+        body = proof_function(shader_wgsl, name)
+        tokens = re.findall(r'\w+|[^\s]', body)
+        actual = hashlib.sha256('\x1f'.join(tokens).encode()).hexdigest()
+        if actual != expected:
+            raise ValueError(f'{name} differs from the source-bound stack proof; renew proof before specializing')
+        bindings[name] = actual
+    return bindings
+
+def verify_proof_sources(root):
+    """Exercise real emitted-source mutations, not just model parameters."""
+    shaders = load(root, 'ray_transport_gpu_6du_true_terminal_s1').make_terminal_s1_shaders(root)
+    results = []
+    for name in ['kS1UnfusedProducerWgsl', 'kS1TerminalProducerWgsl']:
+        source = shaders[name]
+        verify_source_matches_proof(source)
+        getter = proof_function(source, 'getDepth')
+        bad_getter = re.sub(r'return\s+[^;]+;', 'return 0u;', getter)
+        mutations = {
+            'missing-pop': source.replace('top--; let cell = stack[top];', 'let cell = stack[top];'),
+            'ineffective-cutoff': source.replace('if (f32(depth) >= 14.0 ||', 'if ((false && f32(depth) >= 14.0) ||'),
+            'cutoff-depth-15': source.replace('f32(depth) >= 14.0', 'f32(depth) >= 15.0'),
+            'seed-comment-decoy': source.replace('top = 2u;', 'top = 3u; // top = 2u;'),
+            'push-comment-decoy': source.replace('top += 2u;', 'top += 3u; // top += 2u;'),
+            'child-depth-change': source.replace('depth + 1u', 'depth + 2u'),
+            'depth-decoder-zero': source.replace(getter, bad_getter),
+        }
+        for mutation, changed in mutations.items():
+            if changed == source:
+                raise ValueError(f'{name}: mutation hook absent: {mutation}')
+            try:
+                verify_source_matches_proof(changed)
+            except ValueError:
+                results.append({'shader': name, 'mutation': mutation, 'rejected': True})
+            else:
+                raise ValueError(f'unsound source mutation admitted: {name}/{mutation}')
+        # Comments/formatting are outside the mathematical transition tokens.
+        verify_source_matches_proof('// unrelated comment\n' + source.replace('top--;', 'top -- ;'))
+        verify_source_matches_proof('/* outer /* nested */ fn roots() {{decoy}} */\n' + source)
+    return results
+
 
 def bound_stack_15(shader: str) -> str:
     """Specializes S1 stack allocation from 20 to the proven bound 15 without switch expansion."""
     verify_source_matches_proof(shader)
     declaration = 'var stack: array<vec4f, 20>;'
-    assert shader.count(declaration) == 1, 'expected exactly one stack[20] declaration'
+    if shader.count(declaration) != 1: raise ValueError('expected exactly one stack[20] declaration')
     shader = shader.replace(declaration, 'var stack: array<vec4f, 15>;')
     guard = 'top + 2u > 20u'
-    assert shader.count(guard) == 1, 'expected exactly one top+2u > 20u guard'
+    if shader.count(guard) != 1: raise ValueError('expected exactly one top+2u > 20u guard')
     shader = shader.replace(guard, 'top + 2u > 15u')
     return shader
 
@@ -168,9 +261,9 @@ def build_capture(root: Path, build: Path, work: Path, source: Path) -> Path:
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--root', type=Path, required=True)
-    p.add_argument('--build-root', type=Path, required=True)
-    p.add_argument('--work', type=Path, required=True)
-    p.add_argument('--variant', choices=['canonical', 'bound-stack-15'], required=True)
+    p.add_argument('--build-root', type=Path)
+    p.add_argument('--work', type=Path)
+    p.add_argument('--variant', choices=['canonical', 'bound-stack-15'], default='canonical')
     p.add_argument('--capture', action='store_true')
     p.add_argument('--timing', action='store_true')
     p.add_argument('--run', action='store_true')
@@ -179,18 +272,22 @@ def main():
 
     # Step 1: Run and log the formal proof
     max_top, num_states, num_trans = prove_stack_bound(max_depth=14, seed_count=2)
-    print(f'PROVE: max_top = {max_top} across {num_states} unique reachable DFS stack states ({num_trans} transitions explored).')
-    assert max_top == 15, 'proof failed: max_top must be 15'
+    print(f'PROVE (abstract model): max_top = {max_top} across {num_states} unique reachable DFS stack states ({num_trans} transitions explored).')
+    if max_top != 15: raise ValueError('proof failed: max_top must be 15')
 
     # Verify mutations detect deviations:
     m_top, _, _ = prove_stack_bound(max_depth=15, seed_count=2)
-    assert m_top == 16, 'mutation test failed: max_depth=15 must yield 16'
+    if m_top != 16: raise ValueError('mutation test failed: max_depth=15 must yield 16')
     m_seed, _, _ = prove_stack_bound(max_depth=14, seed_count=3)
-    assert m_seed == 16, 'mutation test failed: seed=3 must yield 16'
+    if m_seed != 16: raise ValueError('mutation test failed: seed=3 must yield 16')
     print('PROVE: Mutation checks passed (cutoff=15 -> 16, seed=3 -> 16). Theorem holds.')
 
+    mutations = verify_proof_sources(a.root.resolve())
+    print(f'PROVE: both actual source certificates match; {len(mutations)} emitted-source mutations rejected.')
     if a.prove_only:
         return
+    if a.build_root is None or a.work is None:
+        p.error('--build-root and --work are required for native execution')
 
     root = a.root.resolve()
     build = a.build_root.resolve()
@@ -282,6 +379,10 @@ def main():
             s1_rows = []
             for f in sorted(trace_dir.glob('*')):
                 if f.is_file():
+                    with f.open('rb') as header:
+                        is_plist = header.read(8).startswith(b'bplist')
+                    if not is_plist:
+                        continue
                     try:
                         row = m_replay.decode_table(f.read_bytes())
                         if row:
@@ -289,8 +390,10 @@ def main():
                             all_rows.append(entry)
                             if row.get('function') == 's1ProducerMain':
                                 s1_rows.append(entry)
-                    except Exception:
-                        pass
+                    except Exception as error:
+                        raise ValueError(f'invalid compiler plist: {f}') from error
+            if len(s1_rows) != 2:
+                raise ValueError('capture must contain exactly two S1 compiler rows')
             print(f'Found {len(s1_rows)} s1ProducerMain rows (out of {len(all_rows)} total compiled pipelines) in {trace_dir.name}:')
             for r in s1_rows:
                 print('  S1:', r)
