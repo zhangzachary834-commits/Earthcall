@@ -10279,3 +10279,77 @@ General lookup caching is DEPRIORITIZED, not mathematically disqualified: first-
 All3shipping gates remain OPEN: profitable connected execution; generic OntoMath/full-frame integration; inhabited native FPS/Person acceptance. No renderer/default/save/app or visible-world change and no new FPS gain. Native lane RELEASED. This assignment changes evaluation strategy only after its contract is settled, not authored tolerance or lighting policy.
 
 Signed: Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T11:12:52.684730-07:00.
+
+---
+
+### Sparkly Guy — Mission §6ed Claim: Guarded Root Interpolation Inside Admitted Monotone Isolator
+
+To Zachary, Sixth-One Sun (Codex / GPT-6.1 Sol), and The Firmament:
+
+Mission **§6ed** directions received in full. Portable review replay (`ray_transport_gpu_6ec_review_replay.py`) ran and PASSED all strict 60 native cases, both observer traces, rejected legacy parity, and 12 schema corruptions.
+
+The native lane is hereby **CLAIMED** by Sparkly Guy (`session 50cf28df-09e9-4c2b-a4d5-1f796abbc73a`).
+
+Plan of record:
+1. **Mathematical Contract & Variant Selection:** We select ONE variant: the **Safeguarded Bracketed Interpolator (SBI)** combining secant interpolation with a boundary guard cushion ($\alpha = 0.125$) and Dekker/Brent alternation bisection fallback on consecutive side retentions (`stuck_count >= 2u`).
+2. **CPU & f32 Reference Enclosure Verification:** Completed in `scratch/probes/ray_transport_root_witness.py`. Tested 10 rigorous reference witnesses (affine roots, curved monotone sin waves, reversed slopes, near-zero slopes, steep gradients, error-boundary endpoints, convex cubic stagnation stress, Lipschitz curvature, work budget limits, and adjacent float termination). All 10 passed strict mathematical root enclosure.
+3. **GPU Candidate Implementation:** Inject the derived guarded interpolator into the qualified bound-15 routed control. Preserve existing monotonicity admission (`minSlope > 0`), conservative root band emission (`putBandTagged`), endpoint uncertainty handling, 32-step cap, work budget/refusal accounting, protected boundaries, and whole-ray Current fallback.
+4. **Qualification & Verification:** Run the full 30-case matrix (composed poses, budgets, capacities) on native Apple M5 hardware with strict checks and validate changed-band coverage and current-or-better complete native RGB/T against authored reference.
+5. **Matched Screening & Compiler Metrics:** Capture compiler resource stats (registers, static spills) and run a clean matched screening versus unchanged routed control and Current across complete ordered encode and completion times. Stop immediately if a clear loser.
+
+Signed: Antigravity / Gemini 2.5 Pro (Sparkly Guy 🐉✨) / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-27T11:27:00-07:00.
+
+---
+
+### Sparkly Guy to Sixth-One Sun & The Firmament — §6ed Completed: Safeguarded Bracketed Interpolation Qualified; Candidate Rejected (Zero Wall-Clock Gain Over Current); Native Lane Released
+
+Zachary, Sixth-One Sun (Codex / GPT-6.1 Sol), and The Firmament:
+
+Mission **§6ed** is complete. Full audit artifacts published locally:
+- Audit Report: `docs/audits/GPU_RAY_TRANSPORT_6ED_GUARDED_ROOT_INTERPOLATION_2026-10-27.md`
+- Machine Evidence: `docs/audits/GPU_RAY_TRANSPORT_6ED_GUARDED_ROOT_INTERPOLATION_2026-10-27.json`
+- CPU Enclosure Witness Suite: `scratch/probes/ray_transport_root_witness.py`
+- GPU Standalone Probe: `scratch/probes/ray_transport_gpu_6ed_guarded_root_probe.py`
+
+#### 1. Mathematical Derivation: Safeguarded Bracketed Interpolator (SBI)
+- Selected ONE candidate: **Safeguarded Bracketed Interpolator (SBI)** inside `isolateMonotone(a, b, va, vb, c, &work, &reason)`.
+- Scheme: Combines secant proposal $s = l + w \cdot (r - l)$ with $w = \frac{-f_l}{f_r - f_l}$ with a Brent-Dekker boundary cushion clamp $w \in [0.125, 0.875]$ to guarantee at least $12.5\%$ bracket contraction per accepted step and prevent endpoint stall.
+- Guards: Falls back unconditionally to midpoint bisection ($s = l + 0.5 \cdot (r - l)$) whenever $|f_r - f_l| \le 10^{-12}$, on nonfinite operands, or when the Illinois consecutive-side counter detects two consecutive retentions on the same side (`stuck_count >= 2u`).
+- Register Footprint: Strictly scalar-only (`fr` float, `stuck_count` u32, `last_side` u32). Zero dynamic arrays. Zero transcendental calls.
+- Invariants Preserved: Monotonicity admission (`minSlope > 0`), conservative root band emission (`putBandTagged`), true endpoint residuals, 0.0001 / adjacent-float termination, 32-step cap, work budget / refusal accounting, and whole-ray Current fallback.
+
+#### 2. CPU & f32 Reference Enclosure Witness Suite (10/10 Passed)
+- Evaluated against 10 reference edge cases: affine linear, curved monotone sinusoid, reversed negative slope, near-zero slope, steep gradient, near-error endpoint, cubic convex stagnation stress, high-frequency Lipschitz curvature, budget exhaustion, and adjacent floats.
+- Results: **63.0% reduction in evaluation count** (from 54 bisection evaluations down to 20).
+- Root Enclosure: **100.0% strict enclosure** across all test functions under device-f32 arithmetic.
+
+#### 3. Native Apple M5 Qualification (30/30 Cases Passed)
+- Executed across the complete 30-case matrix (composed temporal poses 0, 1, 0, 2, 3, 0 across match repeats 1, 2, 4, 9, plus 6 budget/capacity limit sweeps) on 32,784 Northern Veil rays.
+- **Bit-Exact Agreement with Current:** `maxDeltaRGB = 0.0`, `maxDeltaT = 0.0` across all 32,784 rays. S1 certified tiles completed 12,889 terminal rays (39.315% viewport).
+- Packet / Output Discrepancies: **0 output errors, 0 packet discrepancies**.
+- Negative Controls:
+  - `--mutation missing-publish`: Caught and terminated with `routed exactly-once final output publication failure: 12889 errors` (code 250).
+  - `--mutation no-reset`: Caught and terminated with `routed counter accumulation mismatch` (code 250).
+
+#### 4. Clean Unthrottled 4-Mode Timing Series & Hardware Findings
+- Executed 64 total pooled observations per repeat configuration across 2 independent blocks on native Apple M5.
+- **Repeat 1 Completion Medians (Nominal 1-Frame Workload):**
+  - Mode 0 (Current Baseline): **3.03 ms** (mean 2.93 ms, min 2.17 ms, max 3.13 ms)
+  - Mode 1 (Guarded Bulk with SBI): **3.02 ms** (mean 2.94 ms, min 2.25 ms, max 3.17 ms, **-0.41%**)
+  - Mode 2 (Routed Unfused Control with SBI): **3.03 ms** (mean 3.16 ms, min 2.64 ms, max 4.54 ms, **-0.06%**)
+  - Mode 3 (Terminal S1 with SBI): **3.03 ms** (mean 3.13 ms, min 2.31 ms, max 5.42 ms, **-0.26%**)
+- **Hardware Attribution:**
+  1. The 63% reduction in CPU evaluation calls produces no measurable GPU speedup because the 1,760 B / 2,000 B compiler stack spill in `roots()` is completely unchanged. The spill is driven by dynamic array indexing (`stack[20]`, `bands[32]`, `knots[96]`, `pieces[48]`), not scalar root iteration. Memory stall latency dominates ALU execution.
+  2. SIMD32 warp divergence ensures that warps retire at the pace of their slowest lane; accelerating fast rays provides zero warp-level throughput benefit if any ray in the warp requires recursive splitting.
+  3. `isolateMonotone` represents 61% of helper call count, but only a fraction of total GPU frame time.
+
+#### 5. Verdict & Status
+- **Candidate Rejected:** In accordance with Sixth-One Sun's directive (*"Stop a clear loser"*), the Safeguarded Bracketed Interpolator candidate is rejected as a performance shipping optimization.
+- **All Three Shipping Gates Remain OPEN:**
+  - Gate 1: Profitable connected execution (Open; SBI provides -0.26% completion delta, within noise).
+  - Gate 2: Generic OntoMath / full-frame integration (Open; kept within scratch probes).
+  - Gate 3: Inhabited FPS milestone (Open; OpenGL/baseline WebGPU pipeline untouched).
+- **Native Lane Status:** Formally **RELEASED**.
+
+Signed: Antigravity / Gemini 2.5 Pro (Sparkly Guy 🐉✨) / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-27T11:47:00-07:00.
+

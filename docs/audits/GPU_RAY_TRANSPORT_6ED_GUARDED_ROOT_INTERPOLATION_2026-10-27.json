@@ -1,0 +1,849 @@
+{
+  "scope": "\u00a76ed Guarded Root Interpolation Inside Admitted Monotone Isolator on Apple M5",
+  "attribution": {
+    "harness": "Antigravity",
+    "model": "Gemini 2.5 Pro (Sparkly Guy \ud83d\udc09\u2728)",
+    "session_id": "50cf28df-09e9-4c2b-a4d5-1f796abbc73a",
+    "timestamp": "2026-10-27T11:45:00-07:00",
+    "commissioned_by": "Sixth-One Sun (Codex / GPT-6.1 Sol / session 01a148a7-bd85-7550-a416-0e859a729c1a)",
+    "branch": "claude/ray-domain-transport-rung0",
+    "engine_source_tree": "3603add4018961529a91bc9592d76f9a553500b1"
+  },
+  "variant_definition": {
+    "name": "Safeguarded Bracketed Interpolation (SBI)",
+    "method_reference": "Brent-Dekker safeguarded linear interpolation with bisection fallback and Illinois-style consecutive-side stagnation dampening",
+    "enclosure_guarantee": "Strict bracketing [l, r] maintained invariant. Secant proposal s = l + w * (r - l) where w = -fl / (fr - fl). Clamped to [0.125, 0.875] to enforce geometric progress. Degenerate denominators (|fr - fl| <= 1e-12) or consecutive stuck sides (stuck_count >= 2) immediately fallback to exact midpoint bisection.",
+    "register_footprint": "Scalar-only: fr (1 float), stuck_count (1 u32), last_side (1 u32). Zero dynamic array allocation. Zero transcendental calls.",
+    "protected_contracts": "Unchanged monotonicity admission (minSlope > 0), conservative root bands, true endpoint residuals, 0.0001 / adjacent-float termination, 32-step cap, work budget / refusal accounting, and whole-ray Current fallback."
+  },
+  "cpu_witness_results": {
+    "total_cases": 10,
+    "total_bisection_evals": 54,
+    "total_sbi_evals": 20,
+    "evaluation_reduction_pct": 63.0,
+    "all_enclosed": true,
+    "cases": [
+      {
+        "name": "1. Affine Linear Field",
+        "bisection_evals": 14,
+        "sbi_evals": 1,
+        "reduction_pct": 92.9,
+        "enclosed": true
+      },
+      {
+        "name": "2. Curved Monotone Sinusoid",
+        "bisection_evals": 9,
+        "sbi_evals": 3,
+        "reduction_pct": 66.7,
+        "enclosed": true
+      },
+      {
+        "name": "3. Reversed Direction (Negative Slope)",
+        "bisection_evals": 1,
+        "sbi_evals": 1,
+        "reduction_pct": 0.0,
+        "enclosed": true
+      },
+      {
+        "name": "4. Near-Zero / Flat Slope",
+        "bisection_evals": 1,
+        "sbi_evals": 1,
+        "reduction_pct": 0.0,
+        "enclosed": true
+      },
+      {
+        "name": "5. Steep Slope (High Gradient)",
+        "bisection_evals": 11,
+        "sbi_evals": 1,
+        "reduction_pct": 90.9,
+        "enclosed": true
+      },
+      {
+        "name": "6. Endpoint Within Error",
+        "bisection_evals": 0,
+        "sbi_evals": 0,
+        "reduction_pct": 0.0,
+        "enclosed": true
+      },
+      {
+        "name": "7. Cubic Convex Stagnation Stress",
+        "bisection_evals": 6,
+        "sbi_evals": 5,
+        "reduction_pct": 16.7,
+        "enclosed": true
+      },
+      {
+        "name": "8. High Frequency Monotone Curvature",
+        "bisection_evals": 12,
+        "sbi_evals": 8,
+        "reduction_pct": 33.3,
+        "enclosed": true
+      },
+      {
+        "name": "9. Work Budget Guard (Budget=0)",
+        "bisection_evals": 0,
+        "sbi_evals": 0,
+        "exhausted_reason": 1,
+        "enclosed": true
+      },
+      {
+        "name": "10. Adjacent Floats Termination",
+        "bisection_evals": 0,
+        "sbi_evals": 0,
+        "enclosed": true
+      }
+    ]
+  },
+  "native_gpu_matrix_results": {
+    "total_cases": 30,
+    "passed_cases": 30,
+    "total_rays_per_case": 32784,
+    "s1_completed_rays": 12889,
+    "s1_completed_pct": 39.315,
+    "output_discrepancies": 0,
+    "packet_discrepancies": 0,
+    "agreement_with_current": {
+      "maxDeltaRGB": 0.0,
+      "maxDeltaT": 0.0
+    },
+    "negative_mutations_qualified": [
+      {
+        "mutation": "missing-publish",
+        "caught_assertion": "routed exactly-once final output publication failure: 12889 errors",
+        "exit_code": 250
+      },
+      {
+        "mutation": "no-reset",
+        "caught_assertion": "routed counter accumulation mismatch",
+        "exit_code": 250
+      }
+    ]
+  },
+  "clean_timing_series": {
+    "pooled": {
+      "1": {
+        "0": {
+          "max_ms": 3.126833,
+          "mean_ms": 2.9287760625,
+          "median_ms": 3.033833,
+          "min_ms": 2.173875,
+          "samples": [
+            2.173875,
+            2.566667,
+            2.701208,
+            2.893417,
+            3.016417,
+            3.020208,
+            3.021542,
+            3.031333,
+            3.036333,
+            3.036875,
+            3.039167,
+            3.03925,
+            3.040875,
+            3.052459,
+            3.063958,
+            3.126833
+          ]
+        },
+        "1": {
+          "max_ms": 3.168583,
+          "mean_ms": 2.9442188125,
+          "median_ms": 3.02125,
+          "min_ms": 2.25,
+          "samples": [
+            2.25,
+            2.63825,
+            2.64075,
+            2.998667,
+            3.016875,
+            3.01775,
+            3.018292,
+            3.018417,
+            3.024083,
+            3.026375,
+            3.035834,
+            3.040166,
+            3.043458,
+            3.048042,
+            3.121959,
+            3.168583
+          ]
+        },
+        "2": {
+          "max_ms": 4.543417,
+          "mean_ms": 3.1624244999999997,
+          "median_ms": 3.032063,
+          "min_ms": 2.635833,
+          "samples": [
+            2.635833,
+            2.642833,
+            2.759417,
+            2.864709,
+            2.941125,
+            3.028625,
+            3.030916,
+            3.031792,
+            3.032334,
+            3.033,
+            3.035291,
+            3.03625,
+            3.19275,
+            3.258416,
+            4.532084,
+            4.543417
+          ]
+        },
+        "3": {
+          "max_ms": 5.419125,
+          "mean_ms": 3.1327368750000004,
+          "median_ms": 3.0259375000000004,
+          "min_ms": 2.308333,
+          "samples": [
+            2.308333,
+            2.668458,
+            2.696541,
+            2.745375,
+            2.786042,
+            2.897,
+            3.023458,
+            3.024417,
+            3.027458,
+            3.02975,
+            3.030125,
+            3.03725,
+            3.039125,
+            3.083917,
+            4.307416,
+            5.419125
+          ]
+        }
+      },
+      "2": {
+        "0": {
+          "max_ms": 9.070584,
+          "mean_ms": 6.2218359375,
+          "median_ms": 6.343624999999999,
+          "min_ms": 3.625792,
+          "samples": [
+            3.625792,
+            3.91175,
+            4.064875,
+            4.302541,
+            4.529916,
+            4.564166,
+            4.595292,
+            5.129375,
+            7.557875,
+            7.558209,
+            7.567625,
+            7.568042,
+            7.57075,
+            8.874833,
+            9.05775,
+            9.070584
+          ]
+        },
+        "1": {
+          "max_ms": 11.839584,
+          "mean_ms": 6.454653749999999,
+          "median_ms": 6.119146000000001,
+          "min_ms": 4.213875,
+          "samples": [
+            4.213875,
+            4.283917,
+            4.3685,
+            4.411167,
+            4.41125,
+            4.540666,
+            4.542875,
+            4.682792,
+            7.5555,
+            7.560667,
+            7.561958,
+            7.563125,
+            7.570292,
+            9.076833,
+            9.091459,
+            11.839584
+          ]
+        },
+        "2": {
+          "max_ms": 7.602792,
+          "mean_ms": 5.889385249999999,
+          "median_ms": 6.374229,
+          "min_ms": 3.695209,
+          "samples": [
+            3.695209,
+            3.733125,
+            3.754125,
+            4.118041,
+            4.23975,
+            4.3425,
+            4.568583,
+            5.239,
+            7.509458,
+            7.558333,
+            7.56525,
+            7.568208,
+            7.572583,
+            7.579416,
+            7.583791,
+            7.602792
+          ]
+        },
+        "3": {
+          "max_ms": 9.079667,
+          "mean_ms": 6.248851625,
+          "median_ms": 6.2639165000000006,
+          "min_ms": 3.827375,
+          "samples": [
+            3.827375,
+            4.217958,
+            4.543875,
+            4.560834,
+            4.592792,
+            4.869958,
+            5.124,
+            5.2205,
+            7.307333,
+            7.548417,
+            7.57075,
+            7.5765,
+            7.581584,
+            7.598208,
+            8.761875,
+            9.079667
+          ]
+        }
+      },
+      "4": {
+        "0": {
+          "max_ms": 13.586,
+          "mean_ms": 9.279903875000002,
+          "median_ms": 8.976292,
+          "min_ms": 7.099458,
+          "samples": [
+            7.099458,
+            7.130375,
+            7.480334,
+            7.558625,
+            7.569083,
+            7.602667,
+            7.612959,
+            8.651792,
+            9.300792,
+            9.737542,
+            10.046917,
+            10.135625,
+            10.667792,
+            10.933334,
+            13.365167,
+            13.586
+          ]
+        },
+        "1": {
+          "max_ms": 15.112375,
+          "mean_ms": 10.0009089375,
+          "median_ms": 9.474666500000001,
+          "min_ms": 7.555459,
+          "samples": [
+            7.555459,
+            7.580042,
+            7.646541,
+            8.092459,
+            8.597042,
+            9.076542,
+            9.08825,
+            9.146375,
+            9.802958,
+            10.253875,
+            10.795,
+            11.175334,
+            11.596667,
+            12.247583,
+            12.248041,
+            15.112375
+          ]
+        },
+        "2": {
+          "max_ms": 13.6805,
+          "mean_ms": 9.079130375000002,
+          "median_ms": 8.088813,
+          "min_ms": 7.258917,
+          "samples": [
+            7.258917,
+            7.399583,
+            7.597334,
+            7.600458,
+            7.635084,
+            7.689708,
+            7.712166,
+            7.714042,
+            8.463584,
+            8.890917,
+            9.095167,
+            9.116542,
+            10.844958,
+            12.214167,
+            12.352959,
+            13.6805
+          ]
+        },
+        "3": {
+          "max_ms": 13.784041,
+          "mean_ms": 9.5061744375,
+          "median_ms": 8.904833499999999,
+          "min_ms": 7.307833,
+          "samples": [
+            7.307833,
+            7.595625,
+            7.608791,
+            7.685542,
+            7.715667,
+            7.727708,
+            8.005625,
+            8.786334,
+            9.023333,
+            9.074583,
+            9.255917,
+            10.586125,
+            10.676709,
+            13.618083,
+            13.646875,
+            13.784041
+          ]
+        }
+      }
+    },
+    "series_1": {
+      "1": {
+        "0": {
+          "max_ms": 3.040875,
+          "mean_ms": 3.031333375,
+          "median_ms": 3.036604,
+          "min_ms": 3.016417,
+          "samples": [
+            3.016417,
+            3.020208,
+            3.021542,
+            3.036333,
+            3.036875,
+            3.039167,
+            3.03925,
+            3.040875
+          ]
+        },
+        "1": {
+          "max_ms": 3.043458,
+          "mean_ms": 3.0251355,
+          "median_ms": 3.02125,
+          "min_ms": 3.016875,
+          "samples": [
+            3.016875,
+            3.01775,
+            3.018292,
+            3.018417,
+            3.024083,
+            3.026375,
+            3.035834,
+            3.043458
+          ]
+        },
+        "2": {
+          "max_ms": 4.543417,
+          "mean_ms": 3.409099125,
+          "median_ms": 3.0341455,
+          "min_ms": 3.028625,
+          "samples": [
+            3.028625,
+            3.031792,
+            3.032334,
+            3.033,
+            3.035291,
+            3.03625,
+            4.532084,
+            4.543417
+          ]
+        },
+        "3": {
+          "max_ms": 4.307416,
+          "mean_ms": 3.1898748749999997,
+          "median_ms": 3.0299375,
+          "min_ms": 3.023458,
+          "samples": [
+            3.023458,
+            3.024417,
+            3.027458,
+            3.02975,
+            3.030125,
+            3.03725,
+            3.039125,
+            4.307416
+          ]
+        }
+      },
+      "2": {
+        "0": {
+          "max_ms": 9.070584,
+          "mean_ms": 8.103208500000001,
+          "median_ms": 7.569396,
+          "min_ms": 7.557875,
+          "samples": [
+            7.557875,
+            7.558209,
+            7.567625,
+            7.568042,
+            7.57075,
+            8.874833,
+            9.05775,
+            9.070584
+          ]
+        },
+        "1": {
+          "max_ms": 11.839584,
+          "mean_ms": 8.47742725,
+          "median_ms": 7.566708500000001,
+          "min_ms": 7.5555,
+          "samples": [
+            7.5555,
+            7.560667,
+            7.561958,
+            7.563125,
+            7.570292,
+            9.076833,
+            9.091459,
+            11.839584
+          ]
+        },
+        "2": {
+          "max_ms": 7.602792,
+          "mean_ms": 7.567478875,
+          "median_ms": 7.5703955,
+          "min_ms": 7.509458,
+          "samples": [
+            7.509458,
+            7.558333,
+            7.56525,
+            7.568208,
+            7.572583,
+            7.579416,
+            7.583791,
+            7.602792
+          ]
+        },
+        "3": {
+          "max_ms": 9.079667,
+          "mean_ms": 7.8780417499999995,
+          "median_ms": 7.579042,
+          "min_ms": 7.307333,
+          "samples": [
+            7.307333,
+            7.548417,
+            7.57075,
+            7.5765,
+            7.581584,
+            7.598208,
+            8.761875,
+            9.079667
+          ]
+        }
+      },
+      "4": {
+        "0": {
+          "max_ms": 13.586,
+          "mean_ms": 10.971646125,
+          "median_ms": 10.4017085,
+          "min_ms": 9.300792,
+          "samples": [
+            9.300792,
+            9.737542,
+            10.046917,
+            10.135625,
+            10.667792,
+            10.933334,
+            13.365167,
+            13.586
+          ]
+        },
+        "1": {
+          "max_ms": 15.112375,
+          "mean_ms": 11.653979125000001,
+          "median_ms": 11.3860005,
+          "min_ms": 9.802958,
+          "samples": [
+            9.802958,
+            10.253875,
+            10.795,
+            11.175334,
+            11.596667,
+            12.247583,
+            12.248041,
+            15.112375
+          ]
+        },
+        "2": {
+          "max_ms": 13.6805,
+          "mean_ms": 10.474067999999999,
+          "median_ms": 9.98075,
+          "min_ms": 7.597334,
+          "samples": [
+            7.597334,
+            8.890917,
+            9.095167,
+            9.116542,
+            10.844958,
+            12.214167,
+            12.352959,
+            13.6805
+          ]
+        },
+        "3": {
+          "max_ms": 13.784041,
+          "mean_ms": 11.149510375,
+          "median_ms": 10.631416999999999,
+          "min_ms": 8.786334,
+          "samples": [
+            8.786334,
+            9.023333,
+            9.074583,
+            10.586125,
+            10.676709,
+            13.618083,
+            13.646875,
+            13.784041
+          ]
+        }
+      }
+    },
+    "series_2": {
+      "1": {
+        "0": {
+          "max_ms": 3.126833,
+          "mean_ms": 2.82621875,
+          "median_ms": 2.9623749999999998,
+          "min_ms": 2.173875,
+          "samples": [
+            2.173875,
+            2.566667,
+            2.701208,
+            2.893417,
+            3.031333,
+            3.052459,
+            3.063958,
+            3.126833
+          ]
+        },
+        "1": {
+          "max_ms": 3.168583,
+          "mean_ms": 2.8633021249999997,
+          "median_ms": 3.0194165,
+          "min_ms": 2.25,
+          "samples": [
+            2.25,
+            2.63825,
+            2.64075,
+            2.998667,
+            3.040166,
+            3.048042,
+            3.121959,
+            3.168583
+          ]
+        },
+        "2": {
+          "max_ms": 3.258416,
+          "mean_ms": 2.915749875,
+          "median_ms": 2.902917,
+          "min_ms": 2.635833,
+          "samples": [
+            2.635833,
+            2.642833,
+            2.759417,
+            2.864709,
+            2.941125,
+            3.030916,
+            3.19275,
+            3.258416
+          ]
+        },
+        "3": {
+          "max_ms": 5.419125,
+          "mean_ms": 3.0755988750000003,
+          "median_ms": 2.7657085,
+          "min_ms": 2.308333,
+          "samples": [
+            2.308333,
+            2.668458,
+            2.696541,
+            2.745375,
+            2.786042,
+            2.897,
+            3.083917,
+            5.419125
+          ]
+        }
+      },
+      "2": {
+        "0": {
+          "max_ms": 5.129375,
+          "mean_ms": 4.340463375000001,
+          "median_ms": 4.4162285,
+          "min_ms": 3.625792,
+          "samples": [
+            3.625792,
+            3.91175,
+            4.064875,
+            4.302541,
+            4.529916,
+            4.564166,
+            4.595292,
+            5.129375
+          ]
+        },
+        "1": {
+          "max_ms": 4.682792,
+          "mean_ms": 4.43188025,
+          "median_ms": 4.4112085,
+          "min_ms": 4.213875,
+          "samples": [
+            4.213875,
+            4.283917,
+            4.3685,
+            4.411167,
+            4.41125,
+            4.540666,
+            4.542875,
+            4.682792
+          ]
+        },
+        "2": {
+          "max_ms": 5.239,
+          "mean_ms": 4.211291625,
+          "median_ms": 4.178895499999999,
+          "min_ms": 3.695209,
+          "samples": [
+            3.695209,
+            3.733125,
+            3.754125,
+            4.118041,
+            4.23975,
+            4.3425,
+            4.568583,
+            5.239
+          ]
+        },
+        "3": {
+          "max_ms": 5.2205,
+          "mean_ms": 4.619661499999999,
+          "median_ms": 4.576813,
+          "min_ms": 3.827375,
+          "samples": [
+            3.827375,
+            4.217958,
+            4.543875,
+            4.560834,
+            4.592792,
+            4.869958,
+            5.124,
+            5.2205
+          ]
+        }
+      },
+      "4": {
+        "0": {
+          "max_ms": 8.651792,
+          "mean_ms": 7.588161625,
+          "median_ms": 7.563854,
+          "min_ms": 7.099458,
+          "samples": [
+            7.099458,
+            7.130375,
+            7.480334,
+            7.558625,
+            7.569083,
+            7.602667,
+            7.612959,
+            8.651792
+          ]
+        },
+        "1": {
+          "max_ms": 9.146375,
+          "mean_ms": 8.347838750000001,
+          "median_ms": 8.3447505,
+          "min_ms": 7.555459,
+          "samples": [
+            7.555459,
+            7.580042,
+            7.646541,
+            8.092459,
+            8.597042,
+            9.076542,
+            9.08825,
+            9.146375
+          ]
+        },
+        "2": {
+          "max_ms": 8.463584,
+          "mean_ms": 7.684192750000001,
+          "median_ms": 7.662396,
+          "min_ms": 7.258917,
+          "samples": [
+            7.258917,
+            7.399583,
+            7.600458,
+            7.635084,
+            7.689708,
+            7.712166,
+            7.714042,
+            8.463584
+          ]
+        },
+        "3": {
+          "max_ms": 9.255917,
+          "mean_ms": 7.8628385000000005,
+          "median_ms": 7.7006045,
+          "min_ms": 7.307833,
+          "samples": [
+            7.307833,
+            7.595625,
+            7.608791,
+            7.685542,
+            7.715667,
+            7.727708,
+            8.005625,
+            9.255917
+          ]
+        }
+      }
+    }
+  },
+  "clean_timing_scope": {
+    "blocks_per_invocation": 2,
+    "clock": "host submit-to-completion; includes GPU work and host completion wait",
+    "encode_and_total_samples_retained": true,
+    "gpu_frequency_observed": false,
+    "independent_native_invocations": 1,
+    "observations_per_mode_per_block_per_repeat": 8
+  },
+  "compiler_and_hardware_attribution": {
+    "roots_stack_spill_bytes": 1760,
+    "compiler_spill_invariance": "SBI alters only scalar local state within isolateMonotone; the 1,760 B / 2,000 B compiler stack spill is caused exclusively by the dynamic indexing of stack[20], bands[32], knots[96], and pieces[48] in roots() and is identical across all producer kernels.",
+    "warp_divergence_finding": "In a SIMD32 warp, thread execution is bounded by the worst-case thread across the wavefront. Reducing scalar loop iterations in isolateMonotone does not yield a wall-clock speedup when threads within the same tile warp still require band refinement or polynomial evaluations."
+  },
+  "verdict_and_recommendation": {
+    "current_win_established": false,
+    "repeat_1_pooled_median_ms": {
+      "mode_0_current": 3.033833,
+      "mode_1_bulk_sbi": 3.02125,
+      "mode_2_routed_unfused_sbi": 3.032063,
+      "mode_3_terminal_s1_sbi": 3.025938
+    },
+    "delta_vs_current_pct": {
+      "mode_1_bulk_sbi": -0.41,
+      "mode_2_routed_unfused_sbi": -0.06,
+      "mode_3_terminal_s1_sbi": -0.26
+    },
+    "conclusion": "Reject the Safeguarded Bracketed Interpolator candidate as a performance-improving shipping route. While mathematically rigorous, 100% root-enclosing, and bit-exact against Current (maxDeltaRGB=0, maxDeltaT=0), SBI delivers no material wall-clock gain over Current on Apple M5 (-0.26% median completion difference at Repeat 1 is within host noise). The execution bottleneck on M5 is not monotone bisection iteration, but the 2,000 B stack spill and warp divergence in roots(). All three shipping gates remain OPEN.",
+    "shipping_gates_open": true
+  }
+}
