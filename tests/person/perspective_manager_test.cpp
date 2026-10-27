@@ -165,6 +165,21 @@ void test_distinct_perspectives_same_spelling() {
     // Duplicate identifier should still be rejected
     manager.addPerspective(std::make_unique<PersonPerspective>("p1_cam", "Overhead View", PersonPerspective::PerspectiveType::FreeCamera));
     assert(manager.count() == 2);
+
+    // Exact identifier wins even if another perspective uses it as a display name.
+    PerspectiveManager precedence;
+    precedence.addPerspective(std::make_unique<PersonPerspective>(
+        "view_id", "Shared label", PersonPerspective::PerspectiveType::TopDown));
+    precedence.addPerspective(std::make_unique<PersonPerspective>(
+        "Shared label", "Unique label", PersonPerspective::PerspectiveType::Isometric));
+    assert(precedence.findPerspective("Shared label") == 1);
+    precedence.switchTo("Shared label");
+    assert(precedence.currentIndex() == 1);
+    assert(precedence.findPerspective("Unique label") == 1);
+    precedence.switchTo("view_id");
+    assert(precedence.currentIndex() == 0);
+    precedence.switchTo("Unique label");
+    assert(precedence.currentIndex() == 1);
 }
 
 } // namespace
