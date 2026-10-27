@@ -57,6 +57,8 @@ Authorship does not establish consent to every future movement. Current Law moti
 
 Look for existing modality channels before adding one: `Storage/FileChannel`, `Terminal/`, `Execution/`, `Foreign/Shell/`, `Network/Http/`, audio/network transport, and the [HTML Lexeme Formation bridge](architecture/Integration/HTML_LEXEME_FORMATION_BRIDGE.md). Their presence in source proves neither universal governance nor live external acceptance. Foreign mutation must use the applicable [First Mover guard](plans/MCP_FIRST_MOVER_GOVERNANCE_IMPLEMENTATION_PLAN_2026-09-18.md) with actor/resource context; do not infer authority from being a channel.
 
+**Web Designer modality.** The browser is a foreign realization target, not Earthcall ontology. Web authoring preserves ordinary authored Lexemes/Relations/Laws/Formations and compiles them through a thin Web adapter; HTML/CSS/DOM must not become a second semantic constitution. Persistent theme definitions require owning Zone custody, raw CSS requires an exact page/Person capability Relation, and `TerminalLine` remains Terminal-local ingress rather than a universal parser. Read [the Web Designer contract](architecture/Integration/WEB_DESIGNER_MODALITY.md) before extending it.
+
 ## Persistence and history
 
 Registered reach, saved state, and a reconstructible past are independent obligations. [Persistence tier at registration](Agenda/Tasks/Specific%20Tasks/Serialization%20and%20Storage/Persistence_Tier_At_Registration/Persistence_Tier_At_Registration.md) is an **open proposal** prompted by the [Undeclared Survivor audit](audits/2026-10-08_mythos_undeclared_survivor_audit.md). Inspect registry and every applicable codec; do not infer durability from a successful property write or declare the proposed tier machinery implemented.
@@ -363,3 +365,13 @@ Historical producer/routing connection by Sparkly; full transport, inherited aff
 ## §6dq — residual corrective review and the remaining canonical bridge
 
 Native review repairs reverse-order S2 routing (914→0 packet differences), unknown scalar domains, shared capacity and layout/build checks. Original/reverse/parallel fixtures now match producer packets; reset/tail and explicit unsupported-fallback refusals pass. Full canonical overlap consumer, authored optics and actual Current fallback remain unconnected, so inherited accuracy/speed claims are withdrawn; default diagnostic timing is disabled. [Evidence, replay and bounded repair instructions](audits/GPU_RAY_TRANSPORT_RESIDUAL_CORRECTIVE_REVIEW_6DQ_2026-10-26.md). All three shipping gates OPEN; no engine/default/save/app/visible/FPS change. Native lane RELEASED. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T11:23:37.388770-07:00.
+
+## §6dq — routed residual matrix qualification on Apple M5
+
+Canonical consumer/authored preparation/Current fallback connection by Sparkly; pinned raw qualification passes. Evidence/cost scope and changed-domain/ownership checks are corrected and extended by §6dr below. The resident mean/median disagreement does not qualify a shipping speedup, and no physical zero-spill profile is established.
+
+
+
+## §6dr — canonical routed checkpoint and measured representation direction
+
+Original32,784-query packet/output/reference/affine qualification replays;30 fresh composed temporal/reverse/parallel/budget/capacity cases and actual reset/tail mutations pass. Canonical routed execution is now a bounded checkpoint. Timing remains one resident series with8 observations per mode and no repeatable gain; actual register/spill/occupancy evidence is absent. Next: source-bound physical profile, then one conditional terminal-S1 consumption experiment with explicit output ownership and late Current fallback. [Review, native evidence and replay](audits/GPU_RAY_TRANSPORT_CANONICAL_ROUTED_REVIEW_6DR_2026-10-26.md). All three shipping gates OPEN; no engine/default/save/app/visible/FPS change. Native lane RELEASED. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T12:33:26.922141-07:00.
