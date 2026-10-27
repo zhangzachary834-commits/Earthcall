@@ -10158,3 +10158,84 @@ Review and portable replay: `docs/audits/GPU_RAY_TRANSPORT_6EA_COALESCING_REVIEW
 **Shipping account:** all3 gates remain OPEN — profitable connected execution; generic OntoMath/full-frame integration; inhabited native FPS/Person acceptance. No renderer/default/save/app change or new visible/FPS gain. Native lane RELEASED. Mathematical meaning remains in OntoMath. Publish only owned files, retain compact raw evidence, and distinguish local completion from shared publication.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T00:20:40.622065-07:00.
+
+---
+
+### Sparkly Guy — Mission §6eb Claim: Measuring Actual Duplicated Phi Demand Across Root Levels
+
+To Zachary, Sixth-One Sun (Codex / GPT-6.1 Sol), and The Firmament:
+
+Mission **§6eb** instructions received in full. §6ea replay passed cleanly (`ray_transport_gpu_6ea_review_replay.py`).
+
+The native lane is hereby **CLAIMED** by Sparkly Guy (`session 50cf28df-09e9-4c2b-a4d5-1f796abbc73a`).
+
+Plan of record:
+1. **Instrumented Diagnostic Census:** Construct a source-bound diagnostic census tracking all `evalPhi` evaluations across the 32,784 frozen rays (and pose/budget/capacity controls).
+2. **Taxonomy & Exact Accounting:** Separate evaluation calls into:
+   - Coarse knots 0..8 (already shared across levels, not counted as new savings).
+   - First adaptive bin midpoints (depth 1).
+   - Deeper adaptive midpoints (depth 2..14).
+   - Monotone isolator iterations.
+   - Post-root selection / quadrature.
+   - Consumer evaluations.
+   Record exact f32 parameter bits, returned value bits, curtain medium index, ray index, and evaluation site.
+3. **Online vs. Offline Distinction:** Distinguish online prior-available evaluations (where a value was already computed earlier in chronological or level order on the same ray and could conceivably be cached in registers/shared memory) from offline coincident evaluations across independent branches.
+4. **Validation & Integrity:** Verify 100% exact bit parity and packet equality on the instrumented execution before accepting counts. Diagnostic event storage will be bounded with loud overflow reporting.
+5. **Upper Bound & Decision Gate:** Quantify the maximum removable evaluations and evaluate the register/storage lookup cost. Only propose an exact candidate if material savings justify it; otherwise deliver the census report and next evidence-based hypothesis.
+
+Signed: Antigravity / Gemini 2.5 Pro (Sparkly Guy) / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-27T00:35:00-07:00.
+
+---
+
+### Sparkly Guy — Mission §6eb Findings: Diagnostic Census of Actual evalPhi Demand Across Root Levels & Lane Release
+
+To Zachary, Sixth-One Sun (Codex / GPT-6.1 Sol), and The Firmament:
+
+Mission **§6eb** is complete. The diagnostic census tracking every `evalPhi` evaluation across all root levels and evaluation sites on native Apple M5 hardware has executed cleanly across the full 30-case control matrix.
+
+**Primary Deliverables:**
+1. Audit Report: `docs/audits/GPU_RAY_TRANSPORT_6EB_PHI_DEMAND_CENSUS_2026-10-27.md`
+2. Complete Census Artifact: `docs/audits/GPU_RAY_TRANSPORT_6EB_PHI_DEMAND_CENSUS_2026-10-27.json`
+3. Committed Diagnostic Generator & Harness: `scratch/probes/ray_transport_gpu_6eb_phi_demand_census.py`
+
+#### 1. Census Headline & Removable Work Upper Bound
+- **Total Rays Evaluated:** 32,784 rays (Northern Veil frozen workload).
+- **Total `evalPhi` Evaluations:** 2,142,232 calls (mean 65.34 calls/ray, max 110 calls/ray).
+- **Total Online Duplicates:** **40,941 calls** (**1.9111%** of total demand).
+- **Total Irreducible Unique Evaluations:** **2,101,291 calls** (**98.0889%** of total demand).
+- **UPPER BOUND ON REMOVABLE WORK:** At most **1.91%** of evaluations could theoretically be eliminated by a thread-local cache! Over 98% of all evaluations are mathematically necessary and unique.
+- **Exact 0-ULP Bit Parity:** In 100.0000% of the 40,941 duplicate evaluations, the returned `phi` bit pattern matched the original evaluation with **0 ULP difference** (`0x00000000` mismatch across all 32 bits).
+
+#### 2. Breakdown by Site & Level
+- **Site 3 (`MONOTONE_ISOLATOR`):** 1,307,017 calls (**61.01%** of total demand). Online duplicates: 37,624 (2.88%). Dominates total GPU time!
+- **Site 0 (`COARSE_KNOT`):** 570,987 calls (**26.65%** of total demand). Online duplicates: 0 (0.00%) (already shared across levels in `phi_knots[9]`).
+- **Site 4 (`POST_ROOT`):** 217,690 calls (**10.16%** of total demand). Online duplicates: 2,197 (1.01%).
+- **Site 1 (`INITIAL_MIDPOINT`, depth 1):** 33,958 calls (**1.59%** of total demand). Online duplicates: 1,120 (3.30%).
+- **Site 2 (`ADAPTIVE_MIDPOINT`, depth $\ge 2$):** 12,580 calls (**0.59%** of total demand). Online duplicates: 0 (0.00%).
+- **Site 5 (`CONSUMER`):** 0 calls (**0.00%**).
+- **By Level:** Level 0 ($-w_z$): 452,096 calls (0 dups); Level 1 ($0.0$): 440,216 calls (14,706 dups); Level 2 ($+w_z$): 461,243 calls (24,038 dups); Non-level / Post-root: 788,677 calls (2,197 dups).
+- **By Family:** S1: 559,488 calls (1.21% dups); S2: 893,369 calls (3.51% dups); Fallback: 689,375 calls (0.41% dups).
+
+#### 3. Formal Rejection of Cache Candidate
+- **Reuse Distance:** Over 91.5% of duplicates occur at distance $> 8$ evaluations (76.4% at distance 9–16). Capturing them requires at least a 16-slot cache ($16 \times 12\text{ B} = 192\text{ bytes}$ of live state per GPU thread).
+- **Register / Spill Pressure:** The producer kernels already suffer a **2,000-byte stack spill** on Apple M5. Adding 192 bytes of live state drastically worsens spill latency and occupancy.
+- **ALU Economics:** Probing 16 slots across 2.14M calls costs $\approx 15\text{M}$ ALU instructions, saving only 40.9K `evalPhi` calls ($\approx 1.9\text{M}$ instructions). Overhead exceeds potential savings by **$7.9 \times$**.
+- **Decision:** As directed by §6eb rules ("If duplicate demand is negligible, stop with that finding rather than build a cache"), building a thread-local cache is **ECONOMICALLY UNVIABLE AND REJECTED**.
+
+#### 4. Matrix Controls & Negative Qualifications
+- Complete 30-case matrix passed cleanly on native Apple M5 (`pose-0`, `pose-1`, `pose-2`, `pose-3` across repeats `{1, 2, 4, 9}`; `budget-0..25`; `capacity-0..1`).
+- Per-repeat clearing (`wgpuCommandEncoderClearBuffer(enc, evalCensusBuf, 0, 8)`) verified to keep event counts bounded per frame.
+- Negative Mutation 1 (`overflow-tripwire`): Clamped capacity to 100 events -> loudly refused with `LOUD REFUSAL: evalCensus event storage overflowed by 2142132 events!` (exit code 250).
+- Negative Mutation 2 (`fallback-missing-publish`): S1 results publication bypassed -> caught with `routed exactly-once final output publication failure: 12889 errors` (exit code 250).
+
+#### 5. Evidence-Based Next Hypothesis
+- The true computational driver is the **1,307,017 binary bisection iterations** (61.01% of all evaluations).
+- Rather than caching redundant points (which do not exist), the path to performance is reducing the iteration count of the 98.09% irreducible evaluations via **superlinear root isolation** (e.g. Anderson-Björck / Illinois bracketed root finding) or **kernel splitting** (separating root-finding arrays from quadrature to eliminate the 2,000-byte stack frame spill).
+
+#### 6. Shipping Gates & Lane Release
+- Gate 1 (Profitable connected execution): OPEN.
+- Gate 2 (Generic OntoMath/full-frame integration): OPEN.
+- Gate 3 (Inhabited native FPS/Person acceptance): OPEN.
+- **Native Lane Status:** **RELEASED**.
+
+Signed: Antigravity / Gemini 2.5 Pro (Sparkly Guy 🐉✨) / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-27T01:18:00-07:00.
