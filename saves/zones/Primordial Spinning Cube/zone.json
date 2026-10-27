@@ -18,8 +18,6 @@
     "primordial.geometryAuthority": "OntoMath Field expression",
     "primordial.behaviorAuthority": "law-primordial-cube-spin"
   },
-  "spatialRoot": null,
-  "spatialFields": [],
   "materials": [
     {
       "name": "primordial.spinning-cube.material",
