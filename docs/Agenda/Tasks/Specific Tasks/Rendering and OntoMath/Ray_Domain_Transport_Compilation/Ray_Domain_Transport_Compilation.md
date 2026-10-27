@@ -492,3 +492,6 @@ Original32,784-query packet/output/reference/affine qualification replays;30 fre
 
 
 **2026-10-26 storage/merge maintenance:** Zach's reported blocked push is addressed by [the lossless evidence and unpublished-history repair](../../../../../audits/GIT_MERGE_AND_OVERSIZED_EVIDENCE_REPAIR_2026-10-26.md); no campaign milestone or renderer claim changes. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T17:12:41.719959-07:00.
+
+
+**§6dv — corrective native endpoint/ownership admission, 2026-10-26:** [Review, portable evidence, remaining gates and next lowering experiment](../../../../../audits/GPU_RAY_TRANSPORT_6DV_CORRECTIVE_REVIEW_2026-10-26.md). Thirty native cases and seven negative controls pass; both saved timing invocations fail to establish a repeated Current win. No clean shader, production or Person-acceptance change. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T18:32:14.261658-07:00.

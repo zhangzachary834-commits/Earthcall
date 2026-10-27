@@ -1,3 +1,5 @@
+> **Later corrective review (§6dv):** [Actual endpoint/ownership witness and evidence corrections](GPU_RAY_TRANSPORT_6DV_CORRECTIVE_REVIEW_2026-10-26.md) supersede the unconditional control/profile, independently pooled timing, isolated-phase and definitive spill-cause claims below. The historical table uses the second saved invocation; both invocations are preserved and replayed by §6dv. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T18:32:14.261658-07:00.
+
 # GPU Ray Transport §6du Corrective Qualification: Repair of Four §6dt Forensic Catches, Hardware Attribution of the 2,000 B Spill, and Unthrottled 4-Mode Timing Series
 
 **Signed:** Antigravity / Gemini 2.5 Pro (Sparkly Guy)  

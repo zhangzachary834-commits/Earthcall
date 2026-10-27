@@ -3,7 +3,7 @@
 Builds on §6dt with Firmament's 4 forensic repairs:
 1. fallbackCP Final-Output Atomic: Removes atomicAdd from producer refusal paths and injects it into fallbackShader (fallbackCP) at actual results write site.
 2. sBuf Poisoning: Clears sBuf and oBuf with 0xcdcdcdcd before execute(3); on 0x40000000u (S1 terminal) rays, asserts that sBuf at hs[i].subpanelOffset remains unwritten (proving 0 global sBuf writes directly via memory check!).
-3. Negative mutations: Supports 'no-reset', 'no-tail', 'double-publish', 'missing-publish', 'fallback-missing-publish', and 'fallback-double-publish'.
+3. Negative mutations: Supports 'no-reset', 'no-tail', 'double-publish', 'missing-publish', 'fallback-missing-publish', 'fallback-double-publish', and 'terminal-endpoint-corrupt'.
 """
 
 import argparse, ast, hashlib, importlib.util, json, os, re, shlex, subprocess, sys
@@ -12,6 +12,7 @@ from pathlib import Path
 BRANCH = r"""        J routeChecks=J::array(); auto originalInputs=gpuRays;
         auto bitsEqual=[](const GpuResult& a,const GpuResult& b){for(int k=0;k<4;++k)if(!std::isfinite(a.rgb_T[k])||std::bit_cast<uint32_t>(a.rgb_T[k])!=std::bit_cast<uint32_t>(b.rgb_T[k]))return false;return true;};
         auto poisonOutput=[&](){std::vector<GpuResult> x(executionRays);for(auto& a:x)for(float& v:a.rgb_T)v=NAN;wgpuQueueWriteBuffer(gpu.queue,outBuf,0,x.data(),outBytes);};
+        if(cfg.maxSubPerRay>64)throw std::runtime_error("diagnostic endpoint capacity requires at most 64 panels per ray");
         auto poisonSchedule=[&](){
             std::vector<uint32_t> pSub(subpanelBytes / 4, 0xcdcdcdcd);
             wgpuQueueWriteBuffer(gpu.queue, sBuf, 0, pSub.data(), subpanelBytes);
@@ -30,7 +31,7 @@ BRANCH = r"""        J routeChecks=J::array(); auto originalInputs=gpuRays;
             auto ob=readBackBuffer(oBuf,overlapBytes);
             auto cb=readBackBuffer(cntBuf,sizeof(initCnt));
             auto ab=readBackBuffer(argsBuf,36);
-            auto wb=readBackBuffer(auditWritesBuf,count*8);
+            auto wb=readBackBuffer(auditWritesBuf,auditBytes);
             DispatchCounters c{};std::memcpy(&c,cb.data(),sizeof(c));std::array<uint32_t,9> args{};std::memcpy(args.data(),ab.data(),36);
             if(c.s1+c.s2+c.fb!=2304u)throw std::runtime_error("routed counter accumulation mismatch");
             const uint32_t ns[3]={c.s1,c.s2,c.fb};for(int k=0;k<3;++k)if(args[3*k]!=(ns[k]+3)/4||args[3*k+1]!=1||args[3*k+2]!=1)throw std::runtime_error("routed indirect args mismatch");
@@ -38,7 +39,7 @@ BRANCH = r"""        J routeChecks=J::array(); auto originalInputs=gpuRays;
             auto hs=reinterpret_cast<const GpuRayHeader*>(hb.data());auto rh=reinterpret_cast<const GpuRayHeader*>(refH.data());
             auto subs=reinterpret_cast<const GpuSubpanel*>(sb.data());auto rs=reinterpret_cast<const GpuSubpanel*>(refS.data());auto overs=reinterpret_cast<const GpuOverlap*>(ob.data());auto rr=reinterpret_cast<const GpuOverlap*>(refO.data());
             const auto* sWords=reinterpret_cast<const uint32_t*>(sb.data());
-            uint32_t refused=0,packets=0,wrong=0,owners=0,finalOwners=0,completed_s1=0;J flags=J::array(),rows=J::array();
+            uint32_t refused=0,packets=0,wrong=0,owners=0,finalOwners=0,completed_s1=0,terminalEndpointChecks=0;J flags=J::array(),rows=J::array(),terminalEndpoints=J::array();
             for(size_t i=0;i<count;++i){
                 uint32_t producerEntries = writes[i * 2];
                 uint32_t finalPublishes = writes[i * 2 + 1];
@@ -66,9 +67,20 @@ BRANCH = r"""        J routeChecks=J::array(); auto originalInputs=gpuRays;
 
                 if(completed){
                     // Terminal S1 ray: verify subpanelCount matches reference, but global sBuf remained COMPLETELY UNWRITTEN!
-                    if(hs[i].subpanelCount != rh[i].subpanelCount) ++packets;
+                    if(hs[i].subpanelCount != rh[i].subpanelCount || (hs[i].overlapCount & 0x00ffffffu) != 0u) ++packets;
+                    J captured=J::array();
+                    for(uint32_t k=0;k<hs[i].subpanelCount;++k){
+                        uint32_t captureBase=2u*count+i*128u+2u*k;
+                        uint32_t s0= writes[captureBase],s1=writes[captureBase+1];
+                        auto expected=rs[rh[i].subpanelOffset+k];
+                        if(s0!=std::bit_cast<uint32_t>(expected.s0)||s1!=std::bit_cast<uint32_t>(expected.s1))++packets;
+                        ++terminalEndpointChecks;
+                        if(rep==1)captured.push_back({s0,s1});
+                    }
+                    if(rep==1&&hs[i].subpanelCount)terminalEndpoints.push_back({i,captured});
                     uint32_t offsetWords = hs[i].subpanelOffset * (sizeof(GpuSubpanel) / 4);
                     uint32_t countWords = hs[i].subpanelCount * (sizeof(GpuSubpanel) / 4);
+                    if(uint64_t(offsetWords) + countWords > sb.size() / 4) throw std::runtime_error("terminal packet range outside schedule storage");
                     for(uint32_t w = 0; w < countWords; ++w){
                         if(sWords[offsetWords + w] != 0xcdcdcdcd){
                             throw std::runtime_error("violation: global sBuf written for terminal S1 ray " + std::to_string(i));
@@ -88,7 +100,7 @@ BRANCH = r"""        J routeChecks=J::array(); auto originalInputs=gpuRays;
             if(owners)throw std::runtime_error("routed exactly-once producer publication failure: " + std::to_string(owners) + " errors");
             if(finalOwners)throw std::runtime_error("routed exactly-once final output publication failure: " + std::to_string(finalOwners) + " errors");
             if(wrong||packets)throw std::runtime_error("routed composed path differs: "+std::to_string(wrong)+" outputs, "+std::to_string(packets)+" packets");
-            routeChecks.push_back({{"case",label},{"repeats",rep},{"rays",count},{"family_counts",{c.s1,c.s2,c.fb}},{"indirect_args",args},{"producer_entry_errors",owners},{"final_output_errors",finalOwners},{"output_differences",wrong},{"packet_differences",normal?J(packets):J(nullptr)},{"refused",refused},{"completed_s1",completed_s1},{"flags",flags},{"outputs",rows}});
+            routeChecks.push_back({{"case",label},{"repeats",rep},{"rays",count},{"family_counts",{c.s1,c.s2,c.fb}},{"indirect_args",args},{"producer_entry_errors",owners},{"final_output_errors",finalOwners},{"output_differences",wrong},{"packet_differences",normal?J(packets):J(nullptr)},{"refused",refused},{"completed_s1",completed_s1},{"terminal_endpoint_checks",terminalEndpointChecks},{"terminal_endpoints",terminalEndpoints},{"flags",flags},{"outputs",rows}});
             std::cerr<<"ROUTED REVIEW "<<label<<" repeats="<<rep<<" PASS counts="<<c.s1<<"/"<<c.s2<<"/"<<c.fb<<" completed_s1="<<completed_s1<<" refused="<<refused<<" finalOwners="<<finalOwners<<" (0 sBuf writes verified)\n";
         };
         for(int pose:{0,1,0,2,3,0}){
@@ -117,7 +129,7 @@ def generate(root, mutation='fixed'):
     needle_out_buf = '    WGPUBuffer readBuf = makeBuffer(WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead, outBytes, nullptr);'
     assert source.count(needle_out_buf) == 1
     new_buffers = (needle_out_buf + '\n' +
-                   '    size_t auditBytes = executionRays * 2 * sizeof(uint32_t);\n' +
+                   '    size_t auditBytes = executionRays * (2 + 2 * 64) * sizeof(uint32_t);\n' +
                    '    WGPUBuffer auditWritesBuf = makeBuffer(WGPUBufferUsage_Storage | WGPUBufferUsage_CopySrc | WGPUBufferUsage_CopyDst, auditBytes, nullptr);')
     source = source.replace(needle_out_buf, new_buffers)
 
@@ -141,6 +153,19 @@ def generate(root, mutation='fixed'):
         s1_shader = s1_shader.replace(needle_s1_results, '    if (id > 1000000u) { results[id] = vec4<f32>(L, T); }')
     else:
         s1_shader = s1_shader.replace(needle_s1_results, needle_s1_results + '\n    atomicAdd(&auditWrites[id * 2u + 1u], 1u);')
+
+    # Diagnostic-only endpoint export shares the audit buffer, leaving clean
+    # S1 without a subpanel binding. The caller owns layout: 2*count counter
+    # words, then 128 endpoint words per ray. BRANCH reads/compares that tail.
+    endpoint_hook = '            let sub_h = s1 - s0;'
+    assert s1_shader.count(endpoint_hook) == 1
+    captured_s0 = 'bitcast<u32>(s0) ^ 1u' if mutation == 'terminal-endpoint-corrupt' else 'bitcast<u32>(s0)'
+    s1_shader = s1_shader.replace('    let rd = d;', '    var capturedSubpanels = 0u;\n    let rd = d;')
+    s1_shader = s1_shader.replace(endpoint_hook,
+        '            let captureBase = 2u * arrayLength(&rays) + id * 128u + capturedSubpanels * 2u;\n'
+        f'            atomicStore(&auditWrites[captureBase], {captured_s0});\n'
+        '            atomicStore(&auditWrites[captureBase + 1u], bitcast<u32>(s1));\n'
+        '            capturedSubpanels++;\n' + endpoint_hook)
 
     source = source[:hit_s1.start(2)] + s1_shader + source[hit_s1.end(2):]
 
@@ -298,7 +323,7 @@ def generate(root, mutation='fixed'):
             '    {\n' +
             '        const std::string target = "capturedOutput[idx]=vec4<f32>(integratedRadiance,transmittance);\\n atomicAdd(&auditWrites[idx * 2u + 1u], 1u);";\n' +
             '        auto p = fallbackShader.find(target);\n' +
-            '        if(p != std::string::npos) fallbackShader.replace(p, target.size(), "if(idx > 1000000u) { capturedOutput[idx]=vec4<f32>(integratedRadiance,transmittance); atomicAdd(&auditWrites[idx * 2u + 1u], 1u); }");\n' +
+            '        if(p == std::string::npos) throw std::runtime_error("fallback missing-publish mutation hook absent"); fallbackShader.replace(p, target.size(), "if(idx > 1000000u) { capturedOutput[idx]=vec4<f32>(integratedRadiance,transmittance); atomicAdd(&auditWrites[idx * 2u + 1u], 1u); }");\n' +
             '    }'
         )
         source = source.replace(old_fallback_hook, mutation_patch)
@@ -315,7 +340,7 @@ def generate(root, mutation='fixed'):
     assert source.count(needle_bg_s1) == 2
     source = source.replace(needle_bg_s1,
                             '        makeEntry(2, rBuf, 0, rayBytes),\n' +
-                            '        makeEntry(3, auditWritesBuf, 0, count * 8),\n' +
+                            '        makeEntry(3, auditWritesBuf, 0, auditBytes),\n' +
                             '        makeEntry(4, outBuf, 0, outBytes),')
 
     # Bind groups for S2 and fallback: add auditWrites at binding 9
@@ -329,7 +354,7 @@ def generate(root, mutation='fixed'):
     part = source[a:b]
     needle_repeats = '            for(int k=0;k<repeats;++k){'
     assert part.count(needle_repeats) == 1
-    part = part.replace(needle_repeats, needle_repeats + '\n                if(mode==3) wgpuCommandEncoderClearBuffer(enc,auditWritesBuf,0,count*8);')
+    part = part.replace(needle_repeats, needle_repeats + '\n                if(mode==3) wgpuCommandEncoderClearBuffer(enc,auditWritesBuf,0,auditBytes);')
     source = source[:a] + part + source[b:]
     source = source[:source.index('        auto correctness=', a)] + BRANCH + source[source.index('        auto correctness=', a):]
 
@@ -356,7 +381,7 @@ def main():
     p.add_argument('--root', type=Path, required=True)
     p.add_argument('--build-root', type=Path, required=True)
     p.add_argument('--work', type=Path, required=True)
-    p.add_argument('--mutation', choices=['fixed', 'no-reset', 'no-tail', 'double-publish', 'missing-publish', 'fallback-missing-publish', 'fallback-double-publish'], default='fixed')
+    p.add_argument('--mutation', choices=['fixed', 'no-reset', 'no-tail', 'double-publish', 'missing-publish', 'fallback-missing-publish', 'fallback-double-publish', 'terminal-endpoint-corrupt'], default='fixed')
     p.add_argument('--case', type=Path, default=Path('/private/tmp/earthcall-wide-case/manifest.json'))
     p.add_argument('--run', action='store_true')
     args = p.parse_args()
@@ -367,10 +392,9 @@ def main():
     worktree_root = build_root.parent if build_root.name == 'build' else build_root
     work = args.work.resolve()
 
-    if work.exists():
-        import shutil
-        shutil.rmtree(work)
-    work.mkdir(parents=True)
+    if work.exists() or work == root or root in work.parents:
+        raise ValueError('fresh external work required; existing directories are never deleted')
+    work.mkdir(parents=True, exist_ok=False)
 
     print(f'Generating source for mutation: {args.mutation}...')
     cpp_source = generate(root, mutation=args.mutation)

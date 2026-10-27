@@ -1,0 +1,267 @@
+{
+  "scope": "Lossless \u00a76dv corrective review: two saved native timing invocations and fresh actual endpoint/ownership controls",
+  "source_commit_reviewed": "1f29da123",
+  "archive_sha256": "4b612f382fe80061b34ea1d787bf2fb733f477ad77d50bf09b71fdb70bdf9116",
+  "archive_bytes": 29228491,
+  "zone_sha256": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+  "control_cpp_sha256": "e9db0e81732796f3c890b0b4bb97df5d2d3b1b53cb550ddcd20f00808c89d56c",
+  "source_sha256": {
+    "scratch/probes/ray_transport_admission_and_metric_repair.py": "4d555d8ac66c2c9aee9b7eb68c400084a35c2fb8053b43c76cdb934042ffd0be",
+    "scratch/probes/ray_transport_allocation_trial.py": "61e0cad8eed2b9ee7c9db2b060662505583571d3af4e10c3264aaf52396440de",
+    "scratch/probes/ray_transport_batch_trial.py": "d8feca08e5f5c1488754c0425f9d799ef78ae43567e3e16eaac14364b4263c0f",
+    "scratch/probes/ray_transport_canonical_bow_preflight.py": "59bd1dd116f7a8f2fb531c624324e0c097c44ff4216056a93a6b5ec01462ec4e",
+    "scratch/probes/ray_transport_canonical_harness_test.py": "7058a8d86ed8ef896571c82bfb8f1c77c59c5d94b45729a8c1d07a6c58b5202a",
+    "scratch/probes/ray_transport_canonical_producer_corrective_test.py": "a9f6a7b0285484e299ff8fdf15804fc9adad425c9878cb3dafc2a7c2c3a8789e",
+    "scratch/probes/ray_transport_canonical_producer_metal.py": "d4292b0a729b5a00c79310c8b5b178773852d94a3c3fb68f2f5b6420ddd128c0",
+    "scratch/probes/ray_transport_canonical_producer_review.py": "7539081239f180db61272db1528a45562272ba714e00ab8e2b75eda0e03f2682",
+    "scratch/probes/ray_transport_canonical_producer_test.py": "59bd1dd116f7a8f2fb531c624324e0c097c44ff4216056a93a6b5ec01462ec4e",
+    "scratch/probes/ray_transport_canonical_root_contract.py": "cb3578f42589e66024eb691a1b5caa047c782907fafe316685a58d81758d31f3",
+    "scratch/probes/ray_transport_census_and_three_consumer_screen.py": "504c00a95b6c65337dec70c9e1ba35cc817f024a8a6adb21041680881ae2e358",
+    "scratch/probes/ray_transport_cf4_trial.py": "5b521dcd4267375ceed1905cec0c4b1b67de2b61d2421d8bf0912bdbfd88395b",
+    "scratch/probes/ray_transport_complete_product_subpanel_preflight.py": "3cf07f0ff68c94a67acf2559b00fe6debe558f85daed343bb0d0f82fe07f9d94",
+    "scratch/probes/ray_transport_consumer_a_star_preflight.py": "296133e0133da00da81428775c0f34e3aaea9fde26093a82312dd7fe941671dc",
+    "scratch/probes/ray_transport_curvature_review_witness.py": "84cb7704d1cac5a8df9340abe80959a8f655482407721a25a209cb9c57d49f01",
+    "scratch/probes/ray_transport_firmament_chord_guard_test.py": "09ce1f6c2c3ccc49192f5f82ff286ff49193a505dc951d3ab969b311c24633f9",
+    "scratch/probes/ray_transport_firmament_knot_cone_test.py": "2752dbbd4ab74fca76dcd5f1762da0bf67b349fea45b3f2893a28861b2c89d43",
+    "scratch/probes/ray_transport_gpu_6da_6db_census_verify.py": "253ce7f033d6852c998aa1f0705d75e1daca391a23e74351e8112bf0ffb0572f",
+    "scratch/probes/ray_transport_gpu_6dd_continuation.py": "ffafe5f30391b6053f2d2a2f218b08afcf38fac49744bb1a15a0d4421efb8405",
+    "scratch/probes/ray_transport_gpu_6dd_verify.py": "6fffe01a683f38cc6e01628c476b79be6cd24653c879ffde317ab6d89b8386e4",
+    "scratch/probes/ray_transport_gpu_6de_prism_ancients.py": "e81e41ca5f570288e5e63d4930a01a0b62c840bca37ca1d9a43db9f3f068fdab",
+    "scratch/probes/ray_transport_gpu_6de_verify.py": "91c1d4f89703935a77e5c78613925b667d658d9b70ad2eac524609a757102de7",
+    "scratch/probes/ray_transport_gpu_6df_structural_census.py": "5684cf55751b631c16cc61fac971211ffab70b4509d378404ca1b1e5930f6500",
+    "scratch/probes/ray_transport_gpu_6dg_ontomath_genericity.py": "722de2ee49d608dcd4fa25851911ad16483d72334a1fb9203ea093b19b2fe649",
+    "scratch/probes/ray_transport_gpu_6dg_specialization.py": "4720ec454aa193b80cc60d176fbe181bb28b7f976d362414204bad83b32ac617",
+    "scratch/probes/ray_transport_gpu_6dk_review.py": "0e4931b35283164faae77a95a8aa7c81bf47ebae6bd38b3f60a23249e5868871",
+    "scratch/probes/ray_transport_gpu_6dm_review.py": "8370207e5222e151e71138ea0487ae4bda73f9e5de3329381bb92701819c1457",
+    "scratch/probes/ray_transport_gpu_6dq_routed_residual.py": "846f2113317be43d2d4e2001f9cbeb24d2cd8835026304c37426ba924f8b076d",
+    "scratch/probes/ray_transport_gpu_6ds_controls.py": "4208b2aad285e3697cd534840ab360542178d5250daccbbef84dd73d67edabde",
+    "scratch/probes/ray_transport_gpu_6ds_terminal_s1.py": "159783d9cea3b7070d57800d4f878b9b8cf48e3ed802bc55f7f840884603721a",
+    "scratch/probes/ray_transport_gpu_6dt_capture.py": "538bc93667e085f64402103c3975b049639001f9dfe63c8de35e77079db4188a",
+    "scratch/probes/ray_transport_gpu_6dt_controls.py": "eb41903803196d88cd097330af05bb644411ae73d3332b26f36c4d63cf484c95",
+    "scratch/probes/ray_transport_gpu_6dt_true_terminal_s1.py": "788bc0a530dc8e420740499b961f34c1810fcd8a46f5cdad306cb05222b3149e",
+    "scratch/probes/ray_transport_gpu_6du_controls.py": "6e132897224625f2195160f91cba275d0ac4eaea9f0cf7ffa38a3d0edfae0501",
+    "scratch/probes/ray_transport_gpu_6du_true_terminal_s1.py": "e374300f88422585c01f60acc919229b23444a565a9ee41e66598d0e9a4d18db",
+    "scratch/probes/ray_transport_gpu_6dv_review_replay.py": "2283a1b1d30b9edbc73936a4928517f3ada371e72162e1c70043a802278b70b1",
+    "scratch/probes/ray_transport_gpu_census_review.py": "44fe649c96d463648552f0271f82070e7d41f825b5aa834f0f0b8af99a6d8955",
+    "scratch/probes/ray_transport_gpu_clock_lifecycle.py": "a5d68c060fa7ad0f23998cdd32e332902f007739a7bf3471f3672bc5577f0fe2",
+    "scratch/probes/ray_transport_gpu_connected_metal.py": "6d6d707a551a3e454b26b40b6011356ddddb7d0e5cc54a39aea6b2dbf065d7eb",
+    "scratch/probes/ray_transport_gpu_continuation_replay.py": "d03e9ae269f195d7fc7e04d13ce07984ef5894e4ef211d7c102d71fc4fcf7003",
+    "scratch/probes/ray_transport_gpu_continuation_review.py": "7f0a64b709de045f7570a2217828963be0ab02a1ddf050f74f604ba019e5bfb2",
+    "scratch/probes/ray_transport_gpu_depth0_fastpath.py": "aa93b5395ff0094312254c466f9c182eb285dcab48490112e95c81c5c781cff3",
+    "scratch/probes/ray_transport_gpu_evidence_check.py": "1d77727c96f27d90ca09c427d99ba59ac7cf864aefc71a27fac11a0440cf00b3",
+    "scratch/probes/ray_transport_gpu_faithful_residual.py": "59120a53fd7ed377da9efa36cf21b850837f20a94c37b6e443973189233d032d",
+    "scratch/probes/ray_transport_gpu_fused_review.py": "b9c221f3031ad25d8de1ddb9f161520e41b863c81fe4e3c9a4b96d19db32dbf3",
+    "scratch/probes/ray_transport_gpu_knot_fma.py": "6afbd3f159f5d41e0058129c6f2d4e2e3d899dcf0f2478edeb147bd84587c0e2",
+    "scratch/probes/ray_transport_gpu_knot_numerical.py": "b46a136d703d86ce33b5eee81ab5eb01de628d660c3e9de7c4515041fe19ffd3",
+    "scratch/probes/ray_transport_gpu_knot_phases.py": "c9a30a1c139a68efcb21af726cb16349ac7d152170ff70274b67b9a41950f0b7",
+    "scratch/probes/ray_transport_gpu_knot_stream.py": "893a536d46fda646bdc9eb85f1fe72877ad3ac38d4a0298398259dc4894060ad",
+    "scratch/probes/ray_transport_gpu_mastery_replay.py": "ba66eda2a27b5591945780ffbbc54bcb21074cb762c9949e80e9376c57f643e3",
+    "scratch/probes/ray_transport_gpu_on_the_fly.py": "5e2fd68fbb7880a97086cdc8e4a75245f6dc5e40015bc5d47184f62dc774a6e1",
+    "scratch/probes/ray_transport_gpu_on_the_fly_review.py": "309fdbbeb2a255f39fe70937a0875df12cacd17769998cd07d590563e71a9cb9",
+    "scratch/probes/ray_transport_gpu_parallel_roots.py": "0b34a4ae59bf3a0c35f28197a808ac708b91d6c31ac5bd7c833e1fb22dcda79e",
+    "scratch/probes/ray_transport_gpu_pipeline_facts.py": "530a4d055c2efdadcabee32aef24eeaa3cf056650a68d763ff67a9f3b07dd7d9",
+    "scratch/probes/ray_transport_gpu_pose_authored_coefficients.py": "4cb1d4ef234e4722ffe92f91f56376337ecdc6d17203103e919922cc36800b45",
+    "scratch/probes/ray_transport_gpu_pose_binding_test.py": "80b6222d86cf1efc584974a09e37e1883ea8fa8f0ab94b26cc4d186a44df9f2b",
+    "scratch/probes/ray_transport_gpu_pose_capture.py": "5411fe4f920000289fd3f69a3fcba7e2c736775ecf8227cedb0d926848d712f2",
+    "scratch/probes/ray_transport_gpu_pose_evidence.py": "e63bee5dd35ca182a586ac310b172a1bd3540e5a619c1677f399bd3cdeff6146",
+    "scratch/probes/ray_transport_gpu_pose_harness_test.py": "a38312e95e62a2a50016c9e0b0c11e13e9e171119bf11791243d3020ea74eaea",
+    "scratch/probes/ray_transport_gpu_pose_qualification.py": "86d4303c42f7a52de03fb542b33b21fcc43a004ac1192058f95c6b4e0cee1763",
+    "scratch/probes/ray_transport_gpu_prepared_coefficients.py": "d6f0d5079c785d82917832b620b55da656088b38ec422d5f15ecc32b43d31a92",
+    "scratch/probes/ray_transport_gpu_producer_budget_review.py": "f1cd1c52649375deb4a9daa5386361be6264e6cfcbb38004da76f2d5544580eb",
+    "scratch/probes/ray_transport_gpu_producer_coarse_phi.py": "cd55e7a05d903a746f882eee3a0fc444caf1cda15542352bff466806481d30dc",
+    "scratch/probes/ray_transport_gpu_producer_coarse_phi_phases.py": "d3cbf4ea80f159b5526e33d266ab61dedd5e78d624ee8aa6257cde3a67bfffa3",
+    "scratch/probes/ray_transport_gpu_producer_compact.py": "e24ebb21e8c7395303ce4ce165d02ca91c6e2614515ff64658158206043bb0bf",
+    "scratch/probes/ray_transport_gpu_producer_comparison.py": "a7a4fbf3bc6876034c808d6e7372b8e33798dbd5c57346568dfacdf8a9ead7e1",
+    "scratch/probes/ray_transport_gpu_producer_connected.py": "08e568305138cbe6796410d4661f414f039a7937fa64a8cc44b39185f8739d1a",
+    "scratch/probes/ray_transport_gpu_producer_envelope_and_subcache.py": "6f3c1dbc310d1688fd3be4554e48836454da23514eed35efb57237de6ae725b5",
+    "scratch/probes/ray_transport_gpu_producer_fused.py": "40462e4417208f7ea3787aa44b071d553e8105e0d83a4638a5a89450a600bade",
+    "scratch/probes/ray_transport_gpu_producer_fused_normal.py": "7ab1fdff639b82657a973d043f110c910c2c783e23d13dfb3c2916cf38d8ab59",
+    "scratch/probes/ray_transport_gpu_producer_harness_test.py": "b922f108f16ab3ad8889efaeca3b72e6ed30aae5f7be8cf6bb0fc1b6da39b8d4",
+    "scratch/probes/ray_transport_gpu_producer_merge_sweep.py": "483091977fa35de6b04a47e213ccf097cf5fc7c91f26ba96e4c467c1d2a8903a",
+    "scratch/probes/ray_transport_gpu_producer_phase_census.py": "3a54e4de0caf792488ac2325fa982c0883f1b29be2377556cfad66fdf1f46bfa",
+    "scratch/probes/ray_transport_gpu_producer_prototype.py": "79204744b8fa3389b7b9d189df808ead9fd2bc4f4e4ee12c89deec99f1e58385",
+    "scratch/probes/ray_transport_gpu_producer_repaired.py": "77f59ee0e44cbdcfeae6e9789f0f52e6a232608b07160a36ea96f3dede4700b1",
+    "scratch/probes/ray_transport_gpu_producer_secant_guarded.py": "cbda44f37ecdbb8a9701bdd00c39a6192889a80b4fa81eb96e9e1b83ab7dc321",
+    "scratch/probes/ray_transport_gpu_producer_sliver_guarded.py": "bc280256076060fb3c3446b9cf877e7f39ffcb34c6fc89f607639bdd8275f45e",
+    "scratch/probes/ray_transport_gpu_producer_sliver_merge.py": "d2c31702fe3b031dfc20aa791e124ffa1f19851ddab3a9caff35151a801288ba",
+    "scratch/probes/ray_transport_gpu_producer_sliver_merge_phases.py": "c2463188b22e0b7afc976409651f9f8f551ade57a64d425111f7076c8350576c",
+    "scratch/probes/ray_transport_gpu_producer_small_state.py": "ee6c834379c18a880cfaf3367443dd24593ca766caa5a5734e2970d200bfa155",
+    "scratch/probes/ray_transport_gpu_producer_stack_and_compact_state.py": "856a402c408498970b6498d234f900be88f1e50354e45f0225ab4067e61db4b3",
+    "scratch/probes/ray_transport_gpu_producer_stack_and_compact_state_phases.py": "82c5a28b5e6c5fb831a9bff3d0e6f536c248d0d46f8e9858382f3d778320dcd4",
+    "scratch/probes/ray_transport_gpu_producer_uncertain_bands.py": "19eadda4feccc0d58fb9be3ffdc8cb50c85929c3e801f93fdfd7d5dbeaecca05",
+    "scratch/probes/ray_transport_gpu_residual_review.py": "bf180a657441469535b91ee35f832df0332c196f840dc9eb5ce82c39e45ada00",
+    "scratch/probes/ray_transport_gpu_root_baseline.py": "d4be973cfbb336ea95e5494b2b8fea2238ae9dcd7d8c49c7a15bb6a8f1ff8152",
+    "scratch/probes/ray_transport_gpu_root_contract.py": "8044e360d4aa3f0b1b6ce36e7d4b28ee85cb43132d886fe749fb62cbd7c682fa",
+    "scratch/probes/ray_transport_gpu_root_proposals.py": "4ef4187d04f683ae1e750a42841759484cdb2ae6ee9fdd122519ce7047a47f58",
+    "scratch/probes/ray_transport_gpu_routed_bridge_replay.py": "91d09ae9126af638ae559b20e8b4bc40ad390df162a0d411d5c5d60daa8a5d29",
+    "scratch/probes/ray_transport_gpu_routed_controls.py": "789195de73f53257eb37616c0930d10adab8eeab9462c6369efc4481709e7d5b",
+    "scratch/probes/ray_transport_gpu_routing_contract.py": "eeac55663ab9fe07651d0ae8a9cfba1d43ab6dfbfd0007e460f30010711acba8",
+    "scratch/probes/ray_transport_gpu_streamed_schedule.py": "911a9afd43b82272720ff93ac5864e661cbe4099495921b1f3e50925ed6244d0",
+    "scratch/probes/ray_transport_gpu_wide_adaptive_bins.py": "cd029d4a33d7020b635df17207c103e73c986d697e0477d5e75e176e8b34e306",
+    "scratch/probes/ray_transport_gpu_wide_envelope.py": "85fd97731809bfb9459dfb79176472a230ee150ef86c2ac64966bf2d803fbf39",
+    "scratch/probes/ray_transport_gpu_wide_stream.py": "4a5190ecdb44dcd95728a7116096c74a78038ac136c74cd32061138b9f44a687",
+    "scratch/probes/ray_transport_gpu_work_census.py": "7cdc99bb04c2b30526cbeb996d5c36d9f247d17bd2e7702178526997c89815cd",
+    "scratch/probes/ray_transport_knot_evidence.py": "d650b7db2616164cdfbfa0a1d7eb523df4fcc7f93c8bcb787baacdac28a84724",
+    "scratch/probes/ray_transport_metal_diagnostic.py": "c774ebe89da8c61c0bad4dfcd34925e7cd251a2d9bcd9d55350c9061072156f4",
+    "scratch/probes/ray_transport_metal_overlap_repair.py": "c5dfdd716400a1b8245954022c9b7171b14d9c193c5d2f0a25719184a321a098",
+    "scratch/probes/ray_transport_native_march_comparison.py": "9ad613352f3b51196150f786f142a1ea803a3e8d6a46836ac1730d011bca198f",
+    "scratch/probes/ray_transport_native_preflight.py": "01285a44e8bac714e02d237da299afb60720aa9fbe71158c53d49f02b5f69459",
+    "scratch/probes/ray_transport_noise_polynomial_analyze.py": "dd6ad4a7a5ed3ddeb8e79d19f5299f1c4e735429240ef3afe25ee171da757236",
+    "scratch/probes/ray_transport_noise_polynomial_trial.py": "866b8a1f5d54ff622bff380ddb368159d6ad35c443bf143965f9617f74394d80",
+    "scratch/probes/ray_transport_prepared_coefficients_test.py": "fc16cb257bcbc86c93f693774c9051d9ccc3c20990aa9d00d1b15b1765f50f8a",
+    "scratch/probes/ray_transport_prepared_evidence.py": "0df62686b37508eeb8fc5ba83febcf21bd07a444cfe40fb6f29dc916f5826a37",
+    "scratch/probes/ray_transport_probe_build.py": "a28d95a3a8c034fd2a9f60b2e3d119ced1e40dc697a0a3680554c6a32c214d57",
+    "scratch/probes/ray_transport_root_review.py": "b9c8ed9d806edfa623364fcda2d737f4b0dddad795152b89cdf04173f86c9fa9",
+    "scratch/probes/ray_transport_selective_cf4_trial.py": "75128d14cf80cf021705a0a6e6fadf14997a719948c2e1f82871098ed4cfb60e",
+    "scratch/probes/ray_transport_shared_noise_trial.py": "5bfe88f7eb48b921ececc25484407e87f788bb4fb675957b0104a179a6b3de01",
+    "scratch/probes/ray_transport_sliver_review.py": "ee547a1c5c08f23723fe5faa2908e0eb198c590b56e8650db0a2d5b5b4f4819a",
+    "scratch/probes/ray_transport_streamed_schedule_evidence.py": "de3a947600118e1864c672b2025789b919aa6c54559807659424db3ac8227dda",
+    "scratch/probes/ray_transport_support_preflight.py": "1b0e33903a04b6f6db8cf14046e5b526bb07c0cb6fa45d7ea4b0f7c162e03e36",
+    "scratch/probes/ray_transport_support_producer.py": "2c6c3486c69ede74fc237bcfef7b6b744b871cab32300f1b3dfb635704a21531",
+    "scratch/probes/ray_transport_wide_capture.py": "6fbe0967e44315c83c5b72afbccbf95e69f0cebae6e4b552e2db21d1f193328a",
+    "scratch/probes/ray_transport_wide_evidence.py": "7afd0f8a0e6da37b7a7fc8a27add288b2889b095bf8ba14421695bd25ac30417"
+  },
+  "artifacts": {
+    "benchmark/first.json": {
+      "bytes": 88015428,
+      "sha256": "d4862a9bc0dded8d417efc0d6c8f3d2ece232b171104cca8836c2c3c1b04a956"
+    },
+    "benchmark/second.json": {
+      "bytes": 88015380,
+      "sha256": "67db71f928edb9c5010393a992c892047252a58e80aff4972cdb2e562002a73a"
+    },
+    "benchmark/first-source.json": {
+      "bytes": 327,
+      "sha256": "74f700cfd2eeb70114d2fb6d8d221aa04e03c7e6367da0016b0aa8b4455f5429"
+    },
+    "benchmark/second-source.json": {
+      "bytes": 327,
+      "sha256": "74f700cfd2eeb70114d2fb6d8d221aa04e03c7e6367da0016b0aa8b4455f5429"
+    },
+    "benchmark/probe.cpp": {
+      "bytes": 275009,
+      "sha256": "8cee3ba58a26b51ba923dfa4e7381b63f22e857144f74a6e3eb790df37c6f6dd"
+    },
+    "benchmark/rows.json": {
+      "bytes": 8353225,
+      "sha256": "eadadf05e7d0619bb7ee14f0099f5371d0e1ab6cb6530634d528788593c4bd5d"
+    },
+    "benchmark/baseline.json": {
+      "bytes": 2998255,
+      "sha256": "2d1be01fb1c372acae7fe1f43dcc3b4c4085724de9a32a5929c4a8e8ce0ad496"
+    },
+    "fixture/rays.json": {
+      "bytes": 7981792,
+      "sha256": "cd403a013e75bfa748b6fc5c60ffe74a2df2fdae5bacce73605973d447dfa402"
+    },
+    "fixture/reference.json": {
+      "bytes": 36498,
+      "sha256": "2c3c66094049a24e3367797dddc84be86a0eedfe9743075d3c9a9ab79cf3c2b0"
+    },
+    "original/published-6du.json": {
+      "bytes": 30383,
+      "sha256": "fcca06575bd831896f370d64b79083f341beca951e87ef9bc5574f7ca54a2018"
+    },
+    "original/benchmark.py": {
+      "bytes": 63604,
+      "sha256": "605b1ae6112019164072fddfba993b57e44138fc62e8c3d3eb93466aae988c92"
+    },
+    "controls/review.json": {
+      "bytes": 150033597,
+      "sha256": "3bd6479eca5a0df26b44a862ca556d450d1fe240d38eba0c50ba92b3d25427be"
+    },
+    "controls/probe.cpp": {
+      "bytes": 256160,
+      "sha256": "e9db0e81732796f3c890b0b4bb97df5d2d3b1b53cb550ddcd20f00808c89d56c"
+    },
+    "controls/native.log": {
+      "bytes": 5974,
+      "sha256": "92d87e7fee6d06c7a10bab9549ad2a6609ef45f03c8d5e00256f0cfa46bd589f"
+    },
+    "negative/results.json": {
+      "bytes": 3574,
+      "sha256": "f93b726f07c10584faca4a34bc5b00c708ef3b173ad71375d1054a3da7617945"
+    },
+    "corrective/benchmark.cpp": {
+      "bytes": 266208,
+      "sha256": "244624734029b837b2175bc42d3c6cc3e3406abc0a3c1a12d1f85fcc641656dd"
+    },
+    "corrective/benchmark-build.log": {
+      "bytes": 1476,
+      "sha256": "3925fd7bb92d973ae0f231246597c970eb7887ae1b4af6c5e77245826494aeb7"
+    },
+    "corrective/fresh-directory-guard.json": {
+      "bytes": 145,
+      "sha256": "e464158b8a100ceaed85109f434012f01739c57769dd61dba7af79795affc9e3"
+    },
+    "negative/no-reset.log": {
+      "bytes": 2727,
+      "sha256": "cb19cab38babb117e257c67bca6c8199905f40d78f0903342b2c8578f48d052c"
+    },
+    "negative/no-reset.cpp": {
+      "bytes": 255792,
+      "sha256": "45fac62c6e16ab264ff439b7bdeb4f743fe810d97853d7f4f23ee17ce1ef806a"
+    },
+    "negative/no-tail.log": {
+      "bytes": 2624,
+      "sha256": "0f60f6ad766716722c56d636a50d3db96e69a2ccf861a41f7e85e1b0e08c7e38"
+    },
+    "negative/no-tail.cpp": {
+      "bytes": 256165,
+      "sha256": "07c98a0390c1f5380a597adacffbbb88f6dbbdf826bea0ab0411b53ef9916b55"
+    },
+    "negative/double-publish.log": {
+      "bytes": 3828,
+      "sha256": "5bb58865b3f1c5edcf4fb8de67ed15db300d899a9f751159a963af91ef32863d"
+    },
+    "negative/double-publish.cpp": {
+      "bytes": 256170,
+      "sha256": "47afa3b47de28eaa4c96fb449b89495cca1307f4f0943bf2bab72d9cfc33e069"
+    },
+    "negative/missing-publish.log": {
+      "bytes": 3968,
+      "sha256": "17a572c43944a0e8c015797a89ed9b1a5f89cf74609db42fdc914f891157cf98"
+    },
+    "negative/missing-publish.cpp": {
+      "bytes": 256136,
+      "sha256": "67c4104f75ed25e7be0bcd6435cc7b3c93ec1a34c2f1bc78d9b8a083ee52688a"
+    },
+    "negative/fallback-missing-publish.log": {
+      "bytes": 6892,
+      "sha256": "c6f65def0865da64d15a160b077d2b9ec6eed15eab57ca53a200cd27389b91c4"
+    },
+    "negative/fallback-missing-publish.cpp": {
+      "bytes": 256654,
+      "sha256": "ef752d508da41459ed55d034c2cd0e176fad4ef8a39a3eec258104d0489b0d91"
+    },
+    "negative/fallback-double-publish.log": {
+      "bytes": 2770,
+      "sha256": "d26c48f43fc33797d293681d97beab17c14b1fb5440454088b794e731e07f80f"
+    },
+    "negative/fallback-double-publish.cpp": {
+      "bytes": 256129,
+      "sha256": "6b5c8032fe1c310b0949bbbd23ba5d5ee7a1c9ebf30d3a4bf4721879679c7a68"
+    },
+    "negative/terminal-endpoint-corrupt.log": {
+      "bytes": 2774,
+      "sha256": "fcf4f57cc46e8c12a785855ec176c1c0d6807155cf85b2632beaaf26bf56c061"
+    },
+    "negative/terminal-endpoint-corrupt.cpp": {
+      "bytes": 256165,
+      "sha256": "e3b3c730889559bd10d50dc43e534a2d8dc8ae3e12cac24be64013a6b287aef5"
+    }
+  },
+  "native_cost_remeasured_in_review": false,
+  "new_hardware_profile": false,
+  "new_native_control_cases": 30,
+  "new_native_negative_controls": 7,
+  "actual_terminal_subpanels_compared": 1073023,
+  "all_three_shipping_gates_open": true,
+  "attribution": {
+    "harness": "Codex",
+    "model": "GPT-6.1 Sol",
+    "session": "01a148a7-bd85-7550-a416-0e859a729c1a",
+    "timestamp": "2026-10-26T18:36:47.757011-07:00"
+  },
+  "archive_compression": "ZIP-LZMA (Python standard library zipfile)"
+}
