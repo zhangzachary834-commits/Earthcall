@@ -214,14 +214,29 @@ if(NOT APPLE AND NOT EXISTS "/usr/include/GL/gl.h")
     target_compile_definitions(earthcall_core PUBLIC GLFW_INCLUDE_NONE)
 endif()
 if (NOT EMSCRIPTEN)
-    target_link_libraries(earthcall_core PUBLIC
-        ${GLFW_LIB}
-        ZLIB::ZLIB
-        OpenSSL::SSL
-        OpenSSL::Crypto
-        ${CMAKE_DL_LIBS}
-        Threads::Threads
-    )
+    if (OPENSSL_CRYPTO_LIBRARY AND OPENSSL_SSL_LIBRARY)
+        target_link_libraries(earthcall_core PUBLIC
+            ${GLFW_LIB}
+            ZLIB::ZLIB
+            ${OPENSSL_SSL_LIBRARY}
+            ${OPENSSL_CRYPTO_LIBRARY}
+            OpenSSL::SSL
+            OpenSSL::Crypto
+            ssl
+            crypto
+            ${CMAKE_DL_LIBS}
+            Threads::Threads
+        )
+    else()
+        target_link_libraries(earthcall_core PUBLIC
+            ${GLFW_LIB}
+            ZLIB::ZLIB
+            OpenSSL::SSL
+            OpenSSL::Crypto
+            ${CMAKE_DL_LIBS}
+            Threads::Threads
+        )
+    endif()
     if (NOT APPLE)
         # <uuid/uuid.h>'s symbols (uuid_generate/uuid_unparse, used by
         # Lexeme.cpp) ship in libSystem on Apple platforms, so UUID_LIB is
