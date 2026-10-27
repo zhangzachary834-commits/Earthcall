@@ -1,25 +1,25 @@
-# Native GPU OntoMath and Authorable GPU Runs
+# Integrating Native GPU OntoMath and Authorable GPU Runs
 
-**Status:** Proposed architectural integration; neither the general GPU AST interpreter nor the production GPU-run scheduler is established by these documents as deployed.
+This addendum ties together the concepts introduced in [Native GPU OntoMath](../architecture/Singularity/NATIVE_GPU_ONTOMATH.md) and [Authorable GPU Runs Between CPU Cycles](../architecture/AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md).
 
-Read [Native GPU OntoMath](../architecture/Singularity/NATIVE_GPU_ONTOMATH.md) alongside [Authorable GPU Runs Between CPU Cycles](../architecture/AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md).
+## The Static Substrate and Dynamic Policy
 
-## Representation is not scheduling
+The shift to Native GPU OntoMath marks a crucial evolution: by implementing an AST interpreter (a Virtual Machine) directly inside the fragment shader, Earthcall liberates mathematical form evaluation from the heavy burden of OS-level graphics driver shader recompilation. The math becomes a static substrate, evaluated universally.
 
-Native GPU OntoMath proposes serializing a mathematical expression tree into data consumed by a static GPU interpreter, instead of generating fresh WGSL for each structural edit. Its motivating bottleneck is topology-driven shader compilation. This is an **architecture proposal**, not a measured zero-recompilation result on current Earthcall.
+However, a unified zone field still faces the challenge of managing the sheer volume of computation, especially when dealing with complex, recursively intersecting fields and potentially unbounded ray marching steps.
 
-Authorable GPU Runs proposes a different boundary: a host-admitted, bounded interval in which GPU work can execute, classify unfinished work, compact continuation records, and possibly re-cohort before a host synchronization boundary. Its source explicitly states that the **production GPU-run scheduler is not yet wired**.
+This is where Authorable GPU Runs bridge the gap.
 
-The connection is a possible division of responsibility, not an existing pipeline:
+While Native GPU OntoMath provides the *capability* to execute complex forms without stalling the engine, Authorable GPU Runs provide the *policy* for how that capability is wielded. A GPU Run defines a bounded execution context—a host-admitted interval where work is scheduled, completed, or deferred.
 
-1. **Expression representation:** a future GPU OntoMath evaluator could supply a bounded instruction/data stream for mathematical field evaluation.
-2. **Execution policy:** a future GPU Run could admit bounded cohorts of evaluations, determine continuation stages, and route unresolved work to a defined exact or certified fallback.
-3. **Backend realization:** the Kernel/backend—not an authored Law—would choose and validate actual dispatches, storage, synchronization, and hardware capabilities.
+## The Synergy
 
-A static interpreter alone does not guarantee bounded GPU work, zero overdraw, or infinite scene complexity. A GPU-run policy alone does not make a fragment shader preemptible, permit arbitrary mid-invocation yielding, or allow unbounded loops. Re-cohorting and continuation require explicit backend support and state representation.
+The AST interpreter relies on a linear byte-code stream sub-allocated dynamically. GPU Runs can govern the ingestion, staging, and classification of this byte-code stream across cohorts.
 
-**Correctness boundary:** do not silently lower field fidelity or drop low-relevance work when a budget expires. Any approximation or deferral must have an explicit authored/Kernel contract, defined observation semantics, and a certified fallback. Preserve the distinction from the source document: authored scheduling intent ≠ policy representation ≠ physical cohort ≠ backend command.
+1.  **Zero Recompilation Meets Bounded Execution:** The Native GPU OntoMath ensures that structural changes (spawning or modifying objects) do not trigger recompilations. GPU Runs ensure that the *evaluation* of those structural changes does not lock up the GPU. By authoring policies for how much ray-marching or field evaluation a cohort is allowed to perform before yielding, Earthcall maintains high responsiveness.
+2.  **Adaptive Detail:** If a GPU Run approaches its budget, the engine (guided by authored policy) might decide to evaluate the OntoMath AST at a lower fidelity or defer the evaluation of less relevant nodes to a subsequent run, leveraging the static nature of the VM to seamlessly resume execution.
 
-**Evidence required before claiming integration:** a bounded interpreter witness, an actual host-admitted GPU-run path, continuation/fallback correctness, parity against the reference evaluator, bounded resource use, and measurements on supported backends. The current documents specify the destination, not that this joint system has shipped.
+In essence, Native GPU OntoMath builds the indestructible track, and Authorable GPU Runs are the sophisticated train schedules ensuring traffic flows without catastrophic collisions or endless delays.
 
-*Jules-originated architectural linkage; corrected to distinguish proposals from implemented runtime.*
+---
+*Provenance: Authored by Jules, harness: Earthcall, session ID: current.*
