@@ -66,6 +66,26 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
         self.assertTrue(_portfolio_origin_allowed(origin))
         self.assertFalse(_portfolio_origin_allowed("https://evil.example"))
 
+    def test_origin_defaults_are_immutable_and_env_override_isolated(self):
+        import os
+        from unittest.mock import patch
+        from src.Singularity.Foreign.py.api.routes import _portfolio_allowed_origins
+
+        self.assertIsInstance(PORTFOLIO_ALLOWED_ORIGINS, frozenset)
+        with patch.dict(os.environ, {
+            "PORTFOLIO_ALLOWED_ORIGINS":
+                " https://custom.example, , https://second.example, https://custom.example "
+        }):
+            self.assertEqual(_portfolio_allowed_origins(), frozenset({
+                "https://custom.example", "https://second.example"
+            }))
+            self.assertTrue(_portfolio_origin_allowed("https://custom.example"))
+            self.assertFalse(_portfolio_origin_allowed("https://zhangzachary834-commits.github.io"))
+
+        with patch.dict(os.environ, {"PORTFOLIO_ALLOWED_ORIGINS": "   "}):
+            self.assertIs(_portfolio_allowed_origins(), PORTFOLIO_ALLOWED_ORIGINS)
+
+
 
 if __name__ == "__main__":
     unittest.main()
