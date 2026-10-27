@@ -3,6 +3,7 @@
 Antigravity / Gemini 2.5 Pro (Sparkly Guy) / 50cf28df-09e9-4c2b-a4d5-1f796abbc73a / 2026-10-26.
 Commissioned by Sixth-One Sun (Codex / GPT-6.1 Sol / session 01a148a7-bd85-7550-a416-0e859a729c1a).
 Scratch-only diagnostic research on Apple M5.
+§6ea corrective review: Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-10-27; actual-mode negative admission and bounded capture parsing.
 
 Isolates a single architectural execution variable:
 Coalescing the three indirect producer dispatches (cpS1, cpS2, cpFallback)
@@ -324,7 +325,9 @@ def clean_cpp(root: Path, variant: str) -> str:
 
     return apply_variant(cpp, variant)
 
-def controls_cpp(root: Path, variant: str, mutation: str = 'fixed') -> str:
+def controls_cpp(root: Path, variant: str, mutation: str = 'fixed', review_mode=None) -> str:
+    if review_mode == 4 and mutation in ['double-publish', 'missing-publish', 'terminal-endpoint-corrupt']:
+        raise ValueError('terminal-only mutation requires Mode 3 or 5')
     path = root / 'scratch/probes/ray_transport_gpu_6du_controls.py'
     text = path.read_text()
     target = "root / 'scratch/probes/ray_transport_gpu_6dt_true_terminal_s1.py'"
@@ -350,8 +353,37 @@ def controls_cpp(root: Path, variant: str, mutation: str = 'fixed') -> str:
     branch = branch.replace('std::cerr<<"ROUTED REVIEW "<<label', 'std::cerr<<"ROUTED REVIEW mode="<<reviewMode<<" "<<label')
     branch = branch.replace('(0 sBuf writes verified)', '(completed-S1 poison check only)')
     ns['BRANCH'] = branch
-    cpp = ns['generate'](root, mutation)
+    # Reset/tail mutations must modify the newly injected candidate branches,
+    # not just the older Mode 2/3 control implementation.
+    inherited_mutation = 'fixed' if mutation in ['no-reset', 'no-tail'] else mutation
+    cpp = ns['generate'](root, inherited_mutation)
     cpp = inject_coalesced_modes(cpp)
+    if mutation == 'no-reset':
+        start = cpp.index('        auto execute=')
+        end = cpp.index('        J routeChecks=', start)
+        body = cpp[start:end]
+        needle = 'wgpuComputePassEncoderDispatchWorkgroups(p, 1, 1, 1);'
+        if body.count(needle) != 4:
+            raise ValueError('expected reset dispatch in each routed mode')
+        body = body.replace(needle, '// reset dispatch omitted for no-reset mutation')
+        cpp = cpp[:start] + body + cpp[end:]
+    elif mutation == 'no-tail':
+        for name in ['kS1UnfusedProducerWgsl', 'kS1ProducerWgsl']:
+            match = re.search(r'(static const char\* ' + name + r' = R"WGSL\()(.*?)(\)WGSL";)', cpp, re.S)
+            if not match: raise ValueError('missing S1 shader: ' + name)
+            body = match[2]
+            counter = 'routeCounts[0u]' if name == 'kS1UnfusedProducerWgsl' else 'routeCounts.x'
+            needle = f'if (tileSlot >= min({counter}, 2304u)) {{ return; }}'
+            if body.count(needle) != 1: raise ValueError('missing tail guard: ' + name)
+            body = body.replace(needle, f'if (tileSlot >= min({counter} + 4u, 2304u)) {{ return; }}')
+            cpp = cpp[:match.start(2)] + body + cpp[match.end(2):]
+    if review_mode is not None:
+        if review_mode not in [2,3,4,5]: raise ValueError('unknown routed review mode')
+        needle = 'for(int reviewMode:{2,3,4,5}){'
+        if cpp.count(needle) != 1: raise ValueError('missing review-mode selection')
+        cpp = cpp.replace(needle, 'for(int reviewMode:{' + str(review_mode) + '}){')
+        cpp = cpp.replace('            execute(reviewMode,rep,false);',
+            '            std::cerr << "REVIEW EXECUTE mode=" << reviewMode << " case=" << label << " repeats=" << rep << std::endl;\n            execute(reviewMode,rep,false);')
     return apply_variant(cpp, variant)
 
 def capture_cpp(cpp: str, work: Path) -> str:
@@ -402,11 +434,14 @@ def main():
     p.add_argument('--work', type=Path, required=True)
     p.add_argument('--variant', choices=['canonical', 'bound-stack-15'], default='bound-stack-15')
     p.add_argument('--mutation', choices=['fixed', 'no-reset', 'no-tail', 'double-publish', 'missing-publish', 'fallback-missing-publish', 'fallback-double-publish', 'terminal-endpoint-corrupt'], default='fixed')
+    p.add_argument('--review-mode', type=int, choices=[2,3,4,5], help='Run one actual routed mode; required to target candidate negative controls')
     p.add_argument('--capture', action='store_true')
     p.add_argument('--timing', action='store_true')
     p.add_argument('--run', action='store_true')
     p.add_argument('--prove-only', action='store_true')
     a = p.parse_args()
+    if (a.capture or a.timing) and (a.review_mode is not None or a.mutation != 'fixed'):
+        raise ValueError('review-mode/mutation apply only to correctness controls')
 
     max_top, num_states, num_trans = prove_stack_bound(max_depth=14, seed_count=2)
     print(f'PROVE (abstract model): max_top = {max_top} across {num_states} unique reachable DFS stack states ({num_trans} transitions explored).')
@@ -435,12 +470,13 @@ def main():
     if a.capture and a.timing:
         raise ValueError('capture and clean timing are separate runs')
 
-    cpp = capture_cpp(clean_cpp(root, a.variant), work) if a.capture else clean_cpp(root, a.variant) if a.timing else controls_cpp(root, a.variant, mutation=a.mutation)
+    cpp = capture_cpp(clean_cpp(root, a.variant), work) if a.capture else clean_cpp(root, a.variant) if a.timing else controls_cpp(root, a.variant, mutation=a.mutation, review_mode=a.review_mode)
     source = work / 'probe.cpp'
     source.write_text(cpp)
     (work / 'source.json').write_text(json.dumps({
         'variant': a.variant,
         'mutation': a.mutation,
+        'review_mode': a.review_mode,
         'capture': a.capture,
         'timing': a.timing,
         'cpp_sha256': sha(source),
@@ -508,9 +544,10 @@ def main():
         elif not a.capture:
             data = json.loads((work / 'result.json').read_text())
             modes_present = sorted(list(set(c['mode'] for c in data['cases'])))
-            assert modes_present == [2, 3, 4, 5], f'unexpected modes: {modes_present}'
-            assert len(data['cases']) == 120, f'expected 120 cases, got {len(data["cases"])}'
-            print('PASS', a.variant, 'actual routed modes (2, 3, 4, 5): 120 native cases (all exact bit parity and packet equality)')
+            expected_modes = [a.review_mode] if a.review_mode is not None else [2,3,4,5]
+            if modes_present != expected_modes or len(data['cases']) != 30*len(expected_modes):
+                raise ValueError('incomplete actual-mode control matrix')
+            print('PASS', a.variant, expected_modes, len(data['cases']), 'native cases (exact output/packet checks)')
         else:
             print('CAPTURED', a.variant, 'modes 0, 2, 3, 4, 5; extracting plist telemetry...')
             spec_replay = importlib.util.spec_from_file_location('replay', root / 'scratch/probes/ray_transport_gpu_6dw_review_replay.py')
@@ -522,6 +559,10 @@ def main():
             s1_rows = []
             for f in sorted(trace_dir.glob('*')):
                 if f.is_file():
+                    with f.open('rb') as header:
+                        is_plist = header.read(8).startswith(b'bplist')
+                    if not is_plist:
+                        continue
                     try:
                         row = m_replay.decode_table(f.read_bytes())
                         if row:
@@ -529,8 +570,10 @@ def main():
                             all_rows.append(entry)
                             if row.get('function') == 's1ProducerMain':
                                 s1_rows.append(entry)
-                    except Exception:
-                        pass
+                    except Exception as error:
+                        raise ValueError(f'invalid compiler plist: {f}') from error
+            if len(s1_rows) != 2:
+                raise ValueError('capture must contain exactly two S1 compiler rows')
             print(f'Found {len(s1_rows)} s1ProducerMain rows in {trace_dir.name}:')
             for r in s1_rows:
                 print('  S1:', r)

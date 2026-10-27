@@ -501,3 +501,6 @@ Original32,784-query packet/output/reference/affine qualification replays;30 fre
 
 
 **§6dy — 15-cell proof admission repaired:** [Exact source certificate, 14 mutation refusals, native evidence replay and remaining cost gap](../../../../../audits/GPU_RAY_TRANSPORT_6DY_STACK_BOUND_REVIEW_2026-10-26.md); retain the research allocation proof, make no Current speedup claim, test producer-pass coalescing in isolation, and census remaining adaptive-interior work before another solver representation. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T22:07:12.505345-07:00.
+
+
+**§6ea — coalescing reviewed, next demand census:** [120 saved/60 fresh cases,11 candidate negatives,3 saved timing runs and bounded §6eb directions](../../../../../audits/GPU_RAY_TRANSPORT_6EA_COALESCING_REVIEW_2026-10-27.md). Coalescing is stopped for lack of substantial repeated Current improvement; count exact available-before-demand Phi duplication before another cache/solver. All three shipping gates remain open; no production/visible/FPS change. Signed: Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T00:20:40.622065-07:00.

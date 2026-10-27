@@ -11,9 +11,10 @@
   },
   "hypothesis": "Isolate the effect of coalescing the three indirect producer dispatches (cpS1, cpS2, cpFallback) into a single WGPUComputePassEncoder, keeping all pipelines, bind groups, indirect offsets, and shaders identical byte-for-byte.",
   "findings_summary": {
-    "dispatch_latency_impact_repeat_1": "Neutral within +/-0.19% across two independent invocations",
-    "command_pass_overhead_bottleneck_disproved": true,
-    "conclusion": "Command-encoder boundary overhead is negligible on Apple M5 (~1-2 \u00b5s per pass). The hardware bottleneck remains kernel compute/memory traffic (per-ray interval arithmetic, stack frame spill, and branch divergence), not command-buffer pass transitions."
+    "dispatch_latency_impact_repeat_1": "Observed completion medians: -0.046% to +0.193% versus corresponding routed control in the two reported invocations; not an all-clock equivalence bound",
+    "command_pass_overhead_bottleneck_disproved": null,
+    "conclusion": "Reject this producer-pass coalescing candidate for lack of substantial repeated Current improvement. Host encoding decreases in saved samples; no universal per-pass overhead or causal kernel bottleneck is established.",
+    "correction_record": "GPU_RAY_TRANSPORT_6EA_COALESCING_REVIEW_2026-10-27.md"
   },
   "compiler_telemetry_invariance": {
     "s1ProducerMain_unfused": {
@@ -32,7 +33,8 @@
       "instructions": 6375,
       "file_hash": "EC952860CE9E18F3"
     },
-    "byte_identical_to_6dx": true
+    "claim_scope": "Actual S1 raw compiler table bytes match the prior mode3 capture; identical shader source SHA-256 and observed compiler fields. file_hash entries are Xcode table identifiers, not cryptographic shader/binary hashes.",
+    "s1_table_bytes_identical_to_6dx": true
   },
   "controls_matrix": {
     "total_cases": 120,
@@ -48,7 +50,8 @@
     "producer_entry_errors": 0,
     "final_output_errors": 0,
     "negative_control_passed": true,
-    "negative_control_exit_code": 250
+    "negative_control_exit_code": 250,
+    "negative_control_scope": "Saved fallback-missing-publish run aborts in old Mode 2; \u00a76ea separately tests actual candidate Modes 4/5."
   },
   "timing_comparison": {
     "invocation_1": {
@@ -2125,5 +2128,11 @@
     "inv2_passed": true,
     "both_resolutions_pass": true,
     "queries": 32784
+  },
+  "correction_attribution": {
+    "harness": "Codex",
+    "model": "GPT-6.1 Sol",
+    "session_id": "01a148a7-bd85-7550-a416-0e859a729c1a",
+    "date": "2026-10-27"
   }
 }
