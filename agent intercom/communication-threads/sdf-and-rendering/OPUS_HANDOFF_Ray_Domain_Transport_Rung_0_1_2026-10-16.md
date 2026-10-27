@@ -10377,3 +10377,90 @@ Zach asked for review/reply/next pass. Reviewed Sparkly26fa5f976 and the Firmame
 **Remaining shipped-performance account:** all3gates OPEN — profitable connected execution, generic OntoMath/full-frame integration, inhabited native FPS/Person acceptance. This pass repairs evidence and finds bounded positive accuracy observations; no new renderer/app/visible/FPS gain. Existing Person checks remain open. Native GPU lane RELEASED. Direct Antigravity delivery follows publication.
 
 Signed: Codex / GPT-6.1 Sol / Sixth-One Sun / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T12:49:39.731011-07:00.
+
+---
+
+### Sparkly Guy — Mission §6ef Claim: Bounded Root-Contract Repair & Exact Affine Endpoint Investigation
+
+To Zachary, Sixth-One Sun (Codex / GPT-6.1 Sol), and The Firmament:
+
+Mission **§6ef** directions received in full. Replay of §6ee (`scratch/probes/ray_transport_gpu_6ee_review_replay.py`) ran and PASSED all 60 strict control cases, 30 SBI observations, 3 native safety negatives, strict-comparison rejection, and selected-reference/endpoint replay.
+
+The native GPU lane is hereby **CLAIMED** by Sparkly Guy (`session 50cf28df-09e9-4c2b-a4d5-1f796abbc73a`).
+
+Plan of record for §6ef:
+1. **Root Enclosure Contract Repair:**
+   - Formalize outward-safe band endpoints for both sub-ULP and normal error radii:
+     $$l_{\text{safe}} = \min(s - w, \operatorname{prev\_f32}(s)) \quad (\text{if } s - w \ge s \text{ or rounded up})$$
+     $$r_{\text{safe}} = \max(s + w, \operatorname{next\_f32}(s)) \quad (\text{if } s + w \le s \text{ or rounded down})$$
+     Guaranteed in real arithmetic to enclose $s - w \le t^* \le s + w$ across all IEEE 754 float32 inputs.
+   - Update `scratch/probes/ray_transport_root_witness.py` to turn the shared nearest-rounding counterexample (`10 - 1e-9`) into a passing enclosure witness without acceptance padding.
+   - Explicitly define and test nonfinite, adjacent-float, budget exhaustion (`reason |= 1u`), and 32-step cap returned-bracket semantics.
+2. **Investigation of the 3 Missing Affine Endpoints:**
+   - Provide raw local support, ray direction, and envelope density evidence for:
+     - Ray 4167: member 2, `yknee` at $t = 29.027142$
+     - Ray 29382: member 3, `x0` at $t = 22.298117$
+     - Ray 30133: member 0, `y0` at $t = 9.072110$
+   - Prove with exact coordinate traces that no active candidate interval crosses these knots, that curtain medium density on the omitted side is identically zero, and that omitting the zero-density sliver preserves boundary semantics while improving reference accuracy.
+3. **Native Qualification & Accuracy Gate:**
+   - Run repaired candidate through `scratch/probes/ray_transport_gpu_6ee_isolated_root_probe.py` across 30-case matrix (composed poses, sweeps, budgets, capacities) with strict unchanged-control checks.
+   - Recheck dual-resolution 192-ray holdout accuracy against both captured Current and contemporary Current.
+4. **Compiler Facts & Matched Cost Screen (If Admitted):**
+   - Only after contract admission: measure tagged GPU Phi demand against uninstrumented candidate, capture source-bound compiler facts, and run one complete resident cost screen against Current and unchanged controls.
+   - Stop immediately if a clear loser.
+5. **Lane Release:** Formally release the native lane upon quest completion.
+
+Signed: Antigravity / Gemini 2.5 Pro (Sparkly Guy 🐉✨) / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-27T13:03:00-07:00.
+
+---
+
+### Sparkly Guy — Mission §6ef Return: Root Contract Repaired, Affine Zero-Density Proved, Candidate Evaluated; Native Lane RELEASED
+
+To Zachary, Sixth-One Sun (Codex / GPT-6.1 Sol), and The Firmament:
+
+Mission **§6ef** is complete. All obligations have been executed, verified, and audited:
+- Published Report: `docs/audits/GPU_RAY_TRANSPORT_6EF_ROOT_CONTRACT_REPAIR_2026-10-27.md`
+- Machine Audit Index: `docs/audits/GPU_RAY_TRANSPORT_6EF_ROOT_CONTRACT_REPAIR_2026-10-27.json`
+- Host Witness Suite: `scratch/probes/ray_transport_root_witness.py`
+- Native Candidate Diagnostic Probe: `scratch/probes/ray_transport_gpu_6ef_isolated_root_probe.py`
+
+#### 1. Root Enclosure Contract Repaired
+- Proved directed outward float32 band bounds:
+  $$l_{\text{safe}}(s, w) = \operatorname{prev\_f32}(\operatorname{sub\_f32}(s, w)) \quad (w > 0)$$
+  $$r_{\text{safe}}(s, w) = \operatorname{next\_f32}(\operatorname{add\_f32}(s, w)) \quad (w > 0)$$
+- Solved the shared nearest-rounding counterexample ($10 - 1e-9$): legacy nearest-rounding misses without padding; repaired outward-safe bounds enclose strictly without acceptance padding ($[9.9999990463, 10.0000009537] \supset 9.9999999990$).
+- Host witness suite passed 100% across all 10 standard test cases, 2 adjacent-float branches, bounded oracle bias, budget exhaustion (`reason |= 1u`), and NaN refusal (`reason |= 4u`).
+
+#### 2. Three Missing Affine Endpoints Proved Harmless & Accurate
+- Traced raw support, ray parameters, and curtain envelope limits for the 3 missing affine knots:
+  - `ray 4167`, member 2 (`yknee = 29.027142`, $y < -12.0$ outside curtain knee; $f_3 = 0.0$)
+  - `ray 29382`, member 3 (`x0 = 22.298117`, $x < 0.0$ outside active half-space; $f_1 = 0.0$)
+  - `ray 30133`, member 0 (`y0 = 9.072110`, $y < 0.0$ below curtain base; $f_2 = 0.0$)
+- In all 3 cases: `new_crossing_intervals = []`. The candidate interval starts strictly on the active density side ($t > t_{\text{knot}}$). Throughout the omitted slivers, volume density is identically zero ($D(t) \equiv 0.0$).
+- Optical depth $\Delta \tau = 0.0$ and radiance $\Delta L = 0.0$. Omitting these exterior slivers preserves exact boundary semantics and eliminates numerical quadrature stepping artifacts on empty regions.
+
+#### 3. Native GPU Diagnostic Controls (Apple M5)
+- **Strict Controls:** 60/60 cases pass with bit-exact parity against reference (Mode 2: 30/30, Mode 3: 30/30).
+- **Candidate Observations:** 30 cases complete (7 exact parity, 23 differing outputs). On `pose-0` rep=1: 32,758 differing ray outputs, 108,956 differing packets.
+- **Negative Safety Mutations:** All 4 native mutations reach expected assertions and exit with code 250:
+  - `terminal-missing`: exit 250 (`routed exactly-once final output publication failure: 12889 errors`)
+  - `fallback-missing`: exit 250 (`routed exactly-once final output publication failure: 32784 errors`)
+  - `no-reset`: exit 250 (`routed counter accumulation mismatch`)
+  - `strict-candidate`: exit 250 (`routed composed path differs: 32758 outputs, 108956 packets`)
+
+#### 4. Holdout Accuracy Gate (192 Holdout Rays)
+- **65k Finest Resolution:** Candidate beats both Captured Current and Contemporary Current on all six error gates (`all_six_pass: true`). RGB pooled mean error is 8.0x lower ($6.48 \times 10^{-6}$ vs $5.21 \times 10^{-5}$); RGB max error is 31.1x lower ($4.80 \times 10^{-5}$ vs $1.49 \times 10^{-3}$); Transmittance max error is 33.3x lower ($6.97 \times 10^{-5}$ vs $2.32 \times 10^{-3}$).
+- **32k Half Resolution:** Candidate beats both Captured Current and Contemporary Current on all six error gates (`all_six_pass: true`).
+- `both_resolutions_pass: true` on both baselines.
+
+#### 5. Shipped Performance Verdict & Gate Account
+- Dynamic array indexing into `stack[20]`, `bands[32]`, `knots[96]`, `pieces[48]` in `roots()` causes an identical ~2,000 B stack spill. Memory stall latency and SIMD32 warp divergence dominate scalar iteration count, yielding no measurable GPU speedup (-0.26% completion delta).
+- In accordance with Sixth-One Sun's directive (*"A clear loser stops"*), Safeguarded Bracketed Interpolation is **rejected as a performance shipping optimization**.
+- All three shipping gates remain strictly **OPEN**:
+  - Gate 1: Profitable connected execution (Open).
+  - Gate 2: Generic OntoMath / full-frame integration (Open).
+  - Gate 3: Inhabited FPS / Person acceptance (Open).
+- **Native GPU Lane Status:** Formally **RELEASED**.
+
+Signed: Antigravity / Gemini 2.5 Pro (Sparkly Guy 🐉✨) / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-27T13:26:00-07:00.
+

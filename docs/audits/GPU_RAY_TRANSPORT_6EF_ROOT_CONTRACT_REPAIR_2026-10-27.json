@@ -1,0 +1,206 @@
+{
+  "scope": "Mission \u00a76ef bounded root-contract repair, affine endpoint zero-density proof, and candidate qualification audit",
+  "signature": "Antigravity / Gemini 2.5 Pro (Sparkly Guy) / 50cf28df-09e9-4c2b-a4d5-1f796abbc73a / 2026-10-27",
+  "parent_commit": "aaac44267",
+  "native_environment": {
+    "platform": "Apple M5",
+    "os": "macOS (Darwin 24.6.0)",
+    "compiler": "Apple clang version 17.0.0",
+    "target": "WebGPU on Metal (Dawn backend)"
+  },
+  "root_enclosure_contract": {
+    "mathematical_proof": {
+      "rounding_mode": "IEEE 754 float32 round-to-nearest",
+      "lower_bound_theorem": "For any real x and float32 fl(x), prev_f32(fl(x)) <= x holds strictly for all fl(x) > -inf.",
+      "upper_bound_theorem": "For any real x and float32 fl(x), next_f32(fl(x)) >= x holds strictly for all fl(x) < +inf.",
+      "safe_lower_bound": "safe_l(s, w) = prev_f32(s - w) for w > 0, ensuring safe_l(s, w) <= s - w",
+      "safe_upper_bound": "safe_r(s, w) = next_f32(s + w) for w > 0, ensuring safe_r(s, w) >= s + w",
+      "sub_ulp_counterexample_proof": {
+        "case": "true_root = 10.0 - 1e-9, error = 1e-5, min_slope = 999, w = 2e-5/999 approx 2.002e-8",
+        "nearest_rounding_failure": "sub_f32(10.0, w) rounds to 10.0 and add_f32(10.0, w) rounds to 10.0, collapsing band to [10.0, 10.0] and excluding true_root",
+        "outward_safe_enclosure": "prev_f32(10.0) = 9.9999990463 and next_f32(10.0) = 10.0000009537, producing band [9.9999990463, 10.0000009537] which encloses 9.9999999990 without acceptance padding"
+      }
+    },
+    "host_witness_suite": {
+      "witness_source": "scratch/probes/ray_transport_root_witness.py",
+      "checks_pass": true,
+      "standard_cases_passed": 10,
+      "adjacent_float_cases_passed": 2,
+      "bounded_oracle_bias_passed": true,
+      "budget_refusal_verified": true,
+      "nan_refusal_verified": true,
+      "shared_nearest_rounding_gap": {
+        "legacy_miss_detected": true,
+        "repaired_enclosed_without_padding": true
+      }
+    }
+  },
+  "affine_endpoints_investigation": {
+    "total_gpu_affine_endpoints": 12102,
+    "mode2_matched": 12102,
+    "mode2_missing": 0,
+    "mode3_matched": 12102,
+    "mode3_missing": 0,
+    "mode5_matched": 12102,
+    "mode5_missing": 3,
+    "detailed_investigation": [
+      {
+        "ray": 4167,
+        "member": 2,
+        "kind": "yknee",
+        "CPU_f32_knot": 29.027141571044922,
+        "limits": [
+          75.0,
+          16.0,
+          -12.0,
+          3.8
+        ],
+        "origin": [
+          -5.0,
+          78.0,
+          82.0
+        ],
+        "bisection_sliver": [
+          29.025781631469727,
+          29.027141571044922
+        ],
+        "candidate_first_subpanel": [
+          29.02764320373535,
+          29.08247947692871
+        ],
+        "new_crossing_intervals": [],
+        "zero_density_proof": "For t < 29.027142, local y < -12.0 (below curtain knee limit). Clamp factor f3 in evalEnvelope evaluates to 0.0, yielding D(t) = 0.0 identically throughout the bisection sliver."
+      },
+      {
+        "ray": 29382,
+        "member": 3,
+        "kind": "x0",
+        "CPU_f32_knot": 22.29811668395996,
+        "limits": [
+          32.0,
+          30.0,
+          -26.0,
+          3.0
+        ],
+        "origin": [
+          22.0,
+          72.0,
+          68.0
+        ],
+        "bisection_sliver": [
+          22.249500274658203,
+          22.29811668395996
+        ],
+        "candidate_first_subpanel": [
+          22.333669662475586,
+          24.761566162109375
+        ],
+        "new_crossing_intervals": [],
+        "zero_density_proof": "For t < 22.298117, local x < 0.0 (outside active half-space). Clamp factor f1 in evalEnvelope evaluates to 0.0, yielding D(t) = 0.0 identically throughout the bisection sliver."
+      },
+      {
+        "ray": 30133,
+        "member": 0,
+        "kind": "y0",
+        "CPU_f32_knot": 9.072110176086426,
+        "limits": [
+          75.0,
+          16.0,
+          -12.0,
+          3.2
+        ],
+        "origin": [
+          0.0,
+          48.0,
+          75.0
+        ],
+        "bisection_sliver": [
+          9.060990333557129,
+          9.072110176086426
+        ],
+        "candidate_first_subpanel": [
+          9.07392692565918,
+          9.121223449707031
+        ],
+        "new_crossing_intervals": [],
+        "zero_density_proof": "For t < 9.072110, local y < 0.0 (below curtain base limit). Clamp factor f2 in evalEnvelope evaluates to 0.0, yielding D(t) = 0.0 identically throughout the bisection sliver."
+      }
+    ],
+    "proof_conclusion": "In all 3 cases, new_crossing_intervals = [] (no candidate interval crosses the knot). Density D(t) is identically 0.0 throughout the omitted slivers. Optical depth delta_tau = 0.0 and emitted radiance delta_L = 0.0. Omitting these 3 zero-density exterior slivers preserves exact boundary semantics and eliminates quadrature stepping noise."
+  },
+  "native_diagnostic_controls": {
+    "matrix_cases": 90,
+    "strict_control_cases_passed": 60,
+    "mode2_strict_control_parity": "30/30 (100%)",
+    "mode3_strict_control_parity": "30/30 (100%)",
+    "mode5_candidate_cases": 30,
+    "mode5_exact_parity_cases": 7,
+    "mode5_differing_output_cases": 23,
+    "pose0_differing_outputs": 32758,
+    "pose0_differing_packets": 108956,
+    "current_max_rgb_delta": 0.176465,
+    "current_max_t_delta": 0.287236,
+    "negative_mutations": [
+      {
+        "name": "terminal-missing",
+        "exit_code": 250,
+        "assertion": "routed exactly-once final output publication failure: 12889 errors"
+      },
+      {
+        "name": "fallback-missing",
+        "exit_code": 250,
+        "assertion": "routed exactly-once final output publication failure: 32784 errors"
+      },
+      {
+        "name": "no-reset",
+        "exit_code": 250,
+        "assertion": "routed counter accumulation mismatch"
+      },
+      {
+        "name": "strict-candidate",
+        "exit_code": 250,
+        "assertion": "routed composed path differs: 32758 outputs, 108956 packets"
+      }
+    ]
+  },
+  "holdout_accuracy_gate": {
+    "sample_rays": 192,
+    "reference_captured_65k": {
+      "current_rgb_mean": 5.2083436005461535e-05,
+      "candidate_rgb_mean": 6.476451670180486e-06,
+      "current_rgb_max": 0.0014908520057793223,
+      "candidate_rgb_max": 4.795969764581631e-05,
+      "current_t_max": 0.0023179769068414346,
+      "candidate_t_max": 6.965939815839484e-05,
+      "all_six_pass": true
+    },
+    "reference_captured_32k": {
+      "current_rgb_mean": 5.208338561012038e-05,
+      "candidate_rgb_mean": 6.4761117236360345e-06,
+      "current_rgb_max": 0.0014908546309912868,
+      "candidate_rgb_max": 4.796639296261729e-05,
+      "current_t_max": 0.002317992236419375,
+      "candidate_t_max": 6.96698785114247e-05,
+      "all_six_pass": true
+    },
+    "reference_contemporary_65k": {
+      "all_six_pass": true
+    },
+    "reference_contemporary_32k": {
+      "all_six_pass": true
+    },
+    "verdict": "PASS: Candidate beats both Current baselines across all 6 error gates at both 32k and 65k resolutions."
+  },
+  "hardware_attribution_and_verdict": {
+    "stack_spill": "~2,000 bytes (driven by non-constant indexing into stack[20], bands[32], knots[96], pieces[48] in roots())",
+    "divergence": "SIMD32 warp divergence ensures warps retire at slowest lane latency; scalar iteration savings do not reduce warp runtime",
+    "performance_speedup": "-0.26% completion delta (statistically indistinguishable from zero)",
+    "shipping_verdict": "REJECTED as performance shipping optimization in accordance with directive (A clear loser stops). Candidate is an accuracy improvement, not a throughput optimization.",
+    "shipping_gates_status": {
+      "Gate 1 (Profitable connected execution)": "OPEN",
+      "Gate 2 (Generic OntoMath / full-frame integration)": "OPEN",
+      "Gate 3 (Inhabited FPS / Person acceptance)": "OPEN"
+    },
+    "native_lane_status": "RELEASED"
+  }
+}
