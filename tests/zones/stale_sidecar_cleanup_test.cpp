@@ -4,8 +4,8 @@
 // 1. SaveSystem::resolveZoneIdentityPath and resolveHomeIdentityPath accurately
 //    resolve .ecsave, .ecform, then legacy .json, including catalog discovery.
 // 2. SaveSystem::writeZoneIdentity and writeHomeIdentity automatically remove any
-//    legacy fixed-name zone.json or home.json sidecars in the zone/home directory
-//    upon successfully writing the .ecform binary identity file.
+//    legacy fixed-name zone.json, zone.ecsave, home.json, or home.ecsave sidecars
+//    in the zone/home directory upon successfully writing the .ecform binary identity file.
 
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "json.hpp"
@@ -85,6 +85,8 @@ int main() {
 
     const std::filesystem::path legacyZoneJson = zoneDir / "zone.json";
     const std::filesystem::path legacyHomeJson = homeDir / "home.json";
+    const std::filesystem::path staleZoneEcsave = zoneDir / "zone.ecsave";
+    const std::filesystem::path staleHomeEcsave = homeDir / "home.ecsave";
 
     // Write legacy .json sidecars
     {
@@ -115,6 +117,19 @@ int main() {
     check(catalogNames(true) == std::vector<std::string>{"Legacy Home"},
           "Home catalog discovers a JSON-only identity");
 
+    // Also place stale .ecsave sidecars to ensure writeZoneIdentity/writeHomeIdentity clean them up
+    {
+        std::ofstream zsOut(staleZoneEcsave, std::ios::binary);
+        zsOut << "stale ecsave bytes";
+    }
+    {
+        std::ofstream hsOut(staleHomeEcsave, std::ios::binary);
+        hsOut << "stale ecsave bytes";
+    }
+
+    check(std::filesystem::exists(staleZoneEcsave), "Stale zone.ecsave created in sandbox");
+    check(std::filesystem::exists(staleHomeEcsave), "Stale home.ecsave created in sandbox");
+
     // Write primary .ecform identities via writeZoneIdentity and writeHomeIdentity
     nlohmann::json zoneDoc{
         {"identifier", zoneId},
@@ -138,9 +153,11 @@ int main() {
     check(std::filesystem::exists(zoneEcform), "Primary zone.ecform created");
     check(std::filesystem::exists(homeEcform), "Primary home.ecform created");
 
-    // Assert legacy fixed-name .json sidecars were deleted automatically
+    // Assert legacy fixed-name .json and stale .ecsave sidecars were deleted automatically
     check(!std::filesystem::exists(legacyZoneJson), "Stale legacy zone.json sidecar was removed");
     check(!std::filesystem::exists(legacyHomeJson), "Stale legacy home.json sidecar was removed");
+    check(!std::filesystem::exists(staleZoneEcsave), "Stale legacy zone.ecsave sidecar was removed");
+    check(!std::filesystem::exists(staleHomeEcsave), "Stale legacy home.ecsave sidecar was removed");
 
     // Assert resolveZoneIdentityPath / resolveHomeIdentityPath now resolve to .ecform
     check(SaveSystem::resolveZoneIdentityPath(zoneId) == zoneEcform.string(),
