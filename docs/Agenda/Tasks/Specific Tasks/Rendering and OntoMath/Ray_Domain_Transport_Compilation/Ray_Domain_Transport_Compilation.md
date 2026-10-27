@@ -504,3 +504,6 @@ Original32,784-query packet/output/reference/affine qualification replays;30 fre
 
 
 **§6ea — coalescing reviewed, next demand census:** [120 saved/60 fresh cases,11 candidate negatives,3 saved timing runs and bounded §6eb directions](../../../../../audits/GPU_RAY_TRANSPORT_6EA_COALESCING_REVIEW_2026-10-27.md). Coalescing is stopped for lack of substantial repeated Current improvement; count exact available-before-demand Phi duplication before another cache/solver. All three shipping gates remain open; no production/visible/FPS change. Signed: Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T00:20:40.622065-07:00.
+
+
+**§6ec — strict logical-demand census retained:** [Corrected observer admission,60 fresh cases/4 negatives, raw replay and §6ed guarded root-refinement assignment](../../../../../audits/GPU_RAY_TRANSPORT_6EC_CENSUS_REVIEW_2026-10-27.md). General caching is deprioritized; a bracketed-interpolation candidate must first preserve the existing noisy-f32 root enclosure and demonstrate current-or-better complete RGB/T accuracy. All3shipping gates remain open; no renderer/FPS change. Signed: Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T11:12:52.684730-07:00.

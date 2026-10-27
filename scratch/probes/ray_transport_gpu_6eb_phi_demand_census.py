@@ -13,14 +13,15 @@ separated by S1/S2/general family and evaluation site:
   Site 4: post-root interval selection
   Site 5: consumer work (0 calls)
 
-Captures exact f32 argument bits (s_bits), returned value bits (phi_bits),
+§6ec correction by Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a.
+Captures exact f32 argument bits and explicitly typed observed values (raw materialized Phi, residual, or unavailable),
 site identity, root level, curtain member, and per-ray monotonic execution sequence.
 Distinguishes online available reuse from offline duplicates.
 Enforces bounded event storage with loud overflow refusal.
 Qualifies instrumented outputs/packets against reference before trusting counts.
 """
 
-import argparse, ast, hashlib, importlib.util, json, math, os, re, shlex, shutil, struct, subprocess, sys
+import argparse, ast, hashlib, importlib.util, json, math, os, re, shlex, struct, subprocess, sys
 from pathlib import Path
 from collections import defaultdict
 
@@ -49,7 +50,7 @@ struct EvalCensusBuffer {
 
 @group(0) @binding(11) var<storage, read_write> evalCensus: EvalCensusBuffer;
 
-fn recordEvalEvent(rayIdx: u32, mIdx: u32, site: u32, level: u32, detail: u32, seq: u32, s: f32, phi: f32) {
+fn recordEvalEvent(rayIdx: u32, mIdx: u32, site: u32, level: u32, detail: u32, seq: u32, s: f32, phi: f32, quantity: u32) {
     let slot = atomicAdd(&evalCensus.eventCount, 1u);
     if (slot < evalCensus.maxCapacity) {
         evalCensus.events[slot].rayIdx = rayIdx;
@@ -66,102 +67,121 @@ fn recordEvalEvent(rayIdx: u32, mIdx: u32, site: u32, level: u32, detail: u32, s
 }
 '''
 
-def instrument_producer_wgsl(source: str) -> str:
+def instrument_producer_wgsl(source: str, family: int, capture_values='residual') -> str:
+    if family not in [1,2,3] or capture_values not in ['residual','arguments']:
+        raise ValueError('invalid diagnostic provenance')
+    # Bind the uninstrumented roots/depth helpers to the reviewed proof. The
+    # diagnostic retains stack[20]; it does not inherit a smaller allocation.
+    import importlib.util
+    proof_path = Path(__file__).with_name('ray_transport_gpu_6dx_stack_bound.py')
+    spec = importlib.util.spec_from_file_location('census_proof', proof_path)
+    proof = importlib.util.module_from_spec(spec); spec.loader.exec_module(proof)
+    proof.verify_source_matches_proof(source)
+    patches = []
+    def patch(text, old, new):
+        count = text.count(old)
+        if count < 1: raise ValueError('missing certified instrumentation hook')
+        patches.append((old,new,count))
+        return text.replace(old,new)
     s = source
     needle_eval = 'fn evalPhi(m:CurtainSpec,o:vec3f,d:vec3f,s:f32)->f32{return o.z+s*d.z+evalWave(m,o.x+s*d.x);}'
     if needle_eval not in s:
         raise ValueError('evalPhi definition hook not found in producer WGSL')
-    s = s.replace(needle_eval, needle_eval + '\n' + INSTRUMENTATION_PREAMBLE)
+    s = patch(s,needle_eval, needle_eval + '\n' + INSTRUMENTATION_PREAMBLE.replace('slot].reserved = 0u;', f'slot].reserved = ({family}u << 8u) | quantity;'))
 
     old_iso_sig = 'reason: ptr<function, u32>, work: ptr<function, u32>,\n zeroBands: ptr<function, u32>, isZeroLevel: bool) {'
     new_iso_sig = 'reason: ptr<function, u32>, work: ptr<function, u32>,\n zeroBands: ptr<function, u32>, isZeroLevel: bool, rayIdx: u32, mIdx: u32, levelIdx: u32, seq: ptr<function, u32>) {'
     if old_iso_sig not in s:
         raise ValueError('isolateMonotone signature hook not found')
-    s = s.replace(old_iso_sig, new_iso_sig)
+    s = patch(s,old_iso_sig, new_iso_sig)
 
     old_iso_call = 'let v = evalPhi(m, o, d, mid) - c;'
     new_iso_call = ('let v = evalPhi(m, o, d, mid) - c;\n'
-                    '   recordEvalEvent(rayIdx, mIdx, 3u, levelIdx, iter, *seq, mid, v + c); *seq += 1u;')
+                    f'   recordEvalEvent(rayIdx, mIdx, 3u, levelIdx, iter, *seq, mid, {"v, 1u" if capture_values == "residual" else "0.0, 2u"}); *seq += 1u;')
     if old_iso_call not in s:
         raise ValueError('isolateMonotone evalPhi call hook not found')
-    s = s.replace(old_iso_call, new_iso_call)
+    s = patch(s,old_iso_call, new_iso_call)
 
     old_roots_sig = 'zeroBands: ptr<function, u32>, isZeroLevel: bool,\n levelActiveMask: u32) {'
     new_roots_sig = 'zeroBands: ptr<function, u32>, isZeroLevel: bool,\n levelActiveMask: u32, rayIdx: u32, mIdx: u32, levelIdx: u32, seq: ptr<function, u32>) {'
     if old_roots_sig not in s:
         raise ValueError('roots signature hook not found')
-    s = s.replace(old_roots_sig, new_roots_sig)
+    s = patch(s,old_roots_sig, new_roots_sig)
 
     old_iso_inv = 'bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel);'
     new_iso_inv = 'bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel, rayIdx, mIdx, levelIdx, seq);'
     if s.count(old_iso_inv) != 2:
         raise ValueError(f'expected 2 isolateMonotone calls in roots, found {s.count(old_iso_inv)}')
-    s = s.replace(old_iso_inv, new_iso_inv)
+    s = patch(s,old_iso_inv, new_iso_inv)
 
     old_mid0 = 'let phi_mid0 = evalPhi(m, o, d, mid0);'
     new_mid0 = ('let phi_mid0 = evalPhi(m, o, d, mid0);\n'
-                '  recordEvalEvent(rayIdx, mIdx, 1u, levelIdx, 1u, *seq, mid0, phi_mid0); *seq += 1u;')
+                f'  recordEvalEvent(rayIdx, mIdx, 1u, levelIdx, 1u, *seq, mid0, {"phi_mid0, 0u" if capture_values == "residual" else "0.0, 2u"}); *seq += 1u;')
     if old_mid0 not in s:
         raise ValueError('mid0 evalPhi call hook not found')
-    s = s.replace(old_mid0, new_mid0)
+    s = patch(s,old_mid0, new_mid0)
 
     old_mid = 'let phi_mid = evalPhi(m, o, d, mid);'
     new_mid = ('let phi_mid = evalPhi(m, o, d, mid);\n'
-               '   recordEvalEvent(rayIdx, mIdx, 2u, levelIdx, depth + 1u, *seq, mid, phi_mid); *seq += 1u;')
+               f'   recordEvalEvent(rayIdx, mIdx, 2u, levelIdx, depth + 1u, *seq, mid, {"phi_mid, 0u" if capture_values == "residual" else "0.0, 2u"}); *seq += 1u;')
     if old_mid not in s:
         raise ValueError('mid evalPhi call hook not found')
-    s = s.replace(old_mid, new_mid)
+    s = patch(s,old_mid, new_mid)
 
     needle_main = 'var count = 0u;'
     if needle_main not in s:
         raise ValueError('main producer count hook not found')
-    s = s.replace(needle_main, needle_main + '\n var evalSeq = 0u;')
+    s = patch(s,needle_main, needle_main + '\n var evalSeq = 0u;')
 
     old_knot = 'phi_knots[k] = evalPhi(m, o, d, s);'
     new_knot = ('phi_knots[k] = evalPhi(m, o, d, s);\n'
-                '   recordEvalEvent(id, member, 0u, 3u, k, evalSeq, s, phi_knots[k]); evalSeq++;')
+                f'   recordEvalEvent(id, member, 0u, 3u, k, evalSeq, s, {"phi_knots[k], 0u" if capture_values == "residual" else "0.0, 2u"}); evalSeq++;')
     if old_knot not in s:
         raise ValueError('phi_knots evalPhi call hook not found')
-    s = s.replace(old_knot, new_knot)
+    s = patch(s,old_knot, new_knot)
 
     old_r0 = 'roots(m, o, d, a, b, -m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask0);'
     new_r0 = 'roots(m, o, d, a, b, -m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask0, id, member, 0u, &evalSeq);'
     if old_r0 not in s:
         raise ValueError('roots level 0 call hook not found')
-    s = s.replace(old_r0, new_r0)
+    s = patch(s,old_r0, new_r0)
 
     old_r1 = 'roots(m, o, d, a, b, 0.0, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, true, mask1);'
     new_r1 = 'roots(m, o, d, a, b, 0.0, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, true, mask1, id, member, 1u, &evalSeq);'
     if old_r1 not in s:
         raise ValueError('roots level 1 call hook not found')
-    s = s.replace(old_r1, new_r1)
+    s = patch(s,old_r1, new_r1)
 
     old_r2 = 'roots(m, o, d, a, b, m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask2);'
     new_r2 = 'roots(m, o, d, a, b, m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask2, id, member, 2u, &evalSeq);'
     if old_r2 not in s:
         raise ValueError('roots level 2 call hook not found')
-    s = s.replace(old_r2, new_r2)
+    s = patch(s,old_r2, new_r2)
 
     old_post = 'if (uncertain || abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y)'
-    new_post = ('var phi_post = 0.0;\n'
-                '   if (!uncertain) {\n'
-                '       phi_post = evalPhi(m, o, d, mid);\n'
-                '       recordEvalEvent(id, member, 4u, 3u, i, evalSeq, mid, phi_post); evalSeq++;\n'
-                '   }\n'
-                '   if (uncertain || abs(phi_post) <= m.limits.w + m.curv.y)')
+    # Observe demand without rewriting the original short-circuit expression
+    # or claiming a raw Phi value that the original native arithmetic may fuse.
+    new_post = ('if (!uncertain) {\n'
+                '       recordEvalEvent(id, member, 4u, 3u, i, evalSeq, mid, 0.0, 2u); evalSeq++;\n'
+                '   }\n   ' + old_post)
     if old_post not in s:
         raise ValueError('post-root evalPhi call hook not found')
-    s = s.replace(old_post, new_post)
+    s = patch(s,old_post, new_post)
 
+    restored = s
+    for old,new,count in reversed(patches):
+        if restored.count(new) != count: raise ValueError('instrumentation inverse is ambiguous')
+        restored = restored.replace(new,old)
+    if restored != source: raise ValueError('instrumentation does not restore the original shader')
     return s
 
 
-def generate_census_cpp(root: Path, mutation: str = 'fixed') -> str:
+def generate_census_cpp(root: Path, mutation: str = 'fixed', capture_values='residual') -> str:
     spec = importlib.util.spec_from_file_location('controls_6du', root / 'scratch/probes/ray_transport_gpu_6du_controls.py')
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     
-    du_mutation = 'missing-publish' if mutation == 'fallback-missing-publish' else 'fixed'
+    du_mutation = {'terminal-missing-publish':'missing-publish','fallback-missing-publish':'fallback-missing-publish'}.get(mutation,'fixed')
     source = m.generate(root, mutation=du_mutation)
 
     # Patch device limits to grant up to 31 storage buffers per stage on Metal
@@ -233,7 +253,8 @@ def generate_census_cpp(root: Path, mutation: str = 'fixed') -> str:
     for name in ['kS1ProducerWgsl', 'kS2ProducerWgsl', 'kFallbackProducerWgsl']:
         hit = re.search(r'(static const char\* ' + name + r' = R"WGSL\()(.*?)(\)WGSL";)', source, re.S)
         assert hit, f"shader {name} not found"
-        instrumented = instrument_producer_wgsl(hit[2])
+        family = {'kS1ProducerWgsl':1,'kS2ProducerWgsl':2,'kFallbackProducerWgsl':3}[name]
+        instrumented = instrument_producer_wgsl(hit[2], family, capture_values)
         source = source[:hit.start(2)] + instrumented + source[hit.end(2):]
 
     # Add binding 11 to S1 bind groups (bgS1 and bgS1Forced)
@@ -290,11 +311,23 @@ def generate_census_cpp(root: Path, mutation: str = 'fixed') -> str:
             }'''
     source = source.replace(needle_after_exec, census_readback)
 
-    # Permit diagnostic instrumentation tolerance on floating point FMA reordering (up to 25 outputs with 1-ULP diff, 100 packets)
-    old_assert = 'if(wrong||packets)throw std::runtime_error("routed composed path differs: "+std::to_string(wrong)+" outputs, "+std::to_string(packets)+" packets");'
-    new_assert = 'if(wrong > 25 || packets > 100)throw std::runtime_error("routed composed path differs beyond diagnostic instrumentation tolerance: "+std::to_string(wrong)+" outputs, "+std::to_string(packets)+" packets");'
-    assert source.count(old_assert) == 1
-    source = source.replace(old_assert, new_assert)
+    # Exact admission is unchanged. Any wrong output OR packet refuses.
+    strict = 'if(wrong||packets)throw std::runtime_error("routed composed path differs: "+std::to_string(wrong)+" outputs, "+std::to_string(packets)+" packets");'
+    if source.count(strict) != 1: raise ValueError('strict output/packet admission missing')
+    source = source.replace('J routeChecks=J::array(); auto originalInputs=gpuRays;',
+        'J routeChecks=J::array(); auto originalInputs=gpuRays; bool censusSaved=false; std::map<std::string,uint32_t> censusCounts;')
+    source = source.replace('if(rep == 1 && normal && label == "pose-0"){',
+        'if(!censusSaved && rep == 1 && normal && label == "pose-0"){ censusSaved=true;')
+    marker = '            // Dump event buffer on baseline pose-0 rep=1'
+    source = source.replace(marker,
+        '            if(rep==1)censusCounts[label]=ch.eventCount;\n'
+        '            else if(censusCounts[label]!=ch.eventCount)throw std::runtime_error("census repeat accumulation");\n'+marker)
+    source = source.replace('routeChecks.push_back({{"case",label}',
+        'routeChecks.push_back({{"census_events",ch.eventCount},{"census_overflow",ch.overflowCount},{"case",label}')
+    if mutation == 'no-census-reset':
+        marker = 'if(mode==3) wgpuCommandEncoderClearBuffer(enc,evalCensusBuf,0,8);'
+        if source.count(marker)!=1: raise ValueError('census reset hook missing')
+        source = source.replace(marker,'// census repeat reset intentionally omitted')
 
     old_log = 'std::cerr<<"ROUTED REVIEW "<<label<<" repeats="<<rep<<" PASS counts="<<c.s1<<"/"<<c.s2<<"/"<<c.fb<<" completed_s1="<<completed_s1<<" refused="<<refused<<" finalOwners="<<finalOwners<<" (0 sBuf writes verified)\\n";'
     new_log = 'std::cerr<<"ROUTED REVIEW "<<label<<" repeats="<<rep<<" PASS counts="<<c.s1<<"/"<<c.s2<<"/"<<c.fb<<" completed_s1="<<completed_s1<<" refused="<<refused<<" finalOwners="<<finalOwners<<" (0 sBuf writes verified, events="<<ch.eventCount<<", diffs="<<wrong<<")\\n";'
@@ -305,365 +338,42 @@ def generate_census_cpp(root: Path, mutation: str = 'fixed') -> str:
 
 
 def parse_and_analyze_census(events_bin_path: Path, rays_manifest_path: Path) -> dict:
-    raw = events_bin_path.read_bytes()
-    if len(raw) < 16:
-        raise ValueError(f"binary too short: {len(raw)} bytes")
-    
-    event_count, overflow_count, max_capacity, _ = struct.unpack_from('<4I', raw, 0)
-    if overflow_count > 0:
-        raise ValueError(f"census overflow recorded: {overflow_count} dropped events")
-    
-    expected_bytes = 16 + event_count * 32
-    if len(raw) < expected_bytes:
-        raise ValueError(f"truncated events binary: expected {expected_bytes} bytes, got {len(raw)}")
-    
-    events_raw = raw[16:expected_bytes]
-    
-    fmt = f'<{event_count * 8}I'
-    unpacked = struct.unpack(fmt, events_raw)
-    
-    SITE_NAMES = {
-        0: 'COARSE_KNOT',
-        1: 'INITIAL_MIDPOINT',
-        2: 'ADAPTIVE_MIDPOINT',
-        3: 'MONOTONE_ISOLATOR',
-        4: 'POST_ROOT',
-        5: 'CONSUMER',
-    }
-    LEVEL_NAMES = {
-        0: '-w_z (Level 0)',
-        1: '0.0 (Level 1)',
-        2: '+w_z (Level 2)',
-        3: 'NONE',
-    }
-
-    ray_events = defaultdict(list)
-    for i in range(event_count):
-        base = i * 8
-        ray_idx = unpacked[base]
-        medium_idx = unpacked[base + 1]
-        site_and_level = unpacked[base + 2]
-        seq_in_ray = unpacked[base + 3]
-        s_bits = unpacked[base + 4]
-        phi_bits = unpacked[base + 5]
-        detail = unpacked[base + 6]
-        
-        site = (site_and_level >> 4) & 0xF
-        level = site_and_level & 0xF
-        
-        s_val = struct.unpack('<f', struct.pack('<I', s_bits))[0]
-        phi_val = struct.unpack('<f', struct.pack('<I', phi_bits))[0]
-        
-        ray_events[ray_idx].append({
-            'seq': seq_in_ray,
-            'medium': medium_idx,
-            'site': site,
-            'site_name': SITE_NAMES.get(site, f'SITE_{site}'),
-            'level': level,
-            'level_name': LEVEL_NAMES.get(level, f'LEVEL_{level}'),
-            'detail': detail,
-            's_bits': s_bits,
-            'phi_bits': phi_bits,
-            's_val': s_val,
-            'phi_val': phi_val,
-        })
-    
-    total_rays = len(ray_events)
-    all_evaluations = event_count
-    
-    site_counts = defaultdict(int)
-    level_counts = defaultdict(int)
-    family_counts = defaultdict(int)
-    
-    site_online_duplicates = defaultdict(int)
-    level_online_duplicates = defaultdict(int)
-    family_online_duplicates = defaultdict(int)
-    
-    site_to_site_transitions = defaultdict(int)
-    reuse_distance_histogram = defaultdict(int)
-    
-    ray_total_calls = []
-    ray_duplicate_calls = []
-    
-    exact_ulp_mismatches = 0
-    total_online_duplicates = 0
-
-    cross_ray_s_seen = defaultdict(int)
-
-    most_complex_ray_idx = -1
-    max_ray_calls = -1
-
-    for ray_idx, evs in ray_events.items():
-        evs.sort(key=lambda x: x['seq'])
-        
-        for idx, ev in enumerate(evs):
-            if ev['seq'] != idx:
-                raise ValueError(f"ray {ray_idx} sequence gap: expected {idx}, got {ev['seq']}")
-        
-        num_calls = len(evs)
-        ray_total_calls.append(num_calls)
-        if num_calls > max_ray_calls:
-            max_ray_calls = num_calls
-            most_complex_ray_idx = ray_idx
-            
-        max_med = max(x['medium'] for x in evs) if evs else 0
-        if max_med == 0:
-            fam = 'S1'
-        elif max_med == 1:
-            fam = 'S2'
-        else:
-            fam = 'Fallback'
-            
-        family_counts[fam] += num_calls
-        seen_on_ray = {}
-        ray_dups = 0
-        
-        for ev in evs:
-            s_bits = ev['s_bits']
-            phi_bits = ev['phi_bits']
-            med = ev['medium']
-            site = ev['site']
-            level = ev['level']
-            seq = ev['seq']
-            
-            site_counts[ev['site_name']] += 1
-            level_counts[ev['level_name']] += 1
-            cross_ray_s_seen[(med, s_bits)] += 1
-            
-            key = (med, s_bits)
-            if key in seen_on_ray:
-                first = seen_on_ray[key]
-                total_online_duplicates += 1
-                ray_dups += 1
-                site_online_duplicates[ev['site_name']] += 1
-                level_online_duplicates[ev['level_name']] += 1
-                family_online_duplicates[fam] += 1
-                
-                if phi_bits != first['phi_bits']:
-                    exact_ulp_mismatches += 1
-                    
-                dist = seq - first['seq']
-                if dist <= 4:
-                    reuse_distance_histogram['dist_1_4'] += 1
-                elif dist <= 8:
-                    reuse_distance_histogram['dist_5_8'] += 1
-                elif dist <= 16:
-                    reuse_distance_histogram['dist_9_16'] += 1
-                elif dist <= 32:
-                    reuse_distance_histogram['dist_17_32'] += 1
-                else:
-                    reuse_distance_histogram['dist_33_plus'] += 1
-                    
-                trans_key = f"{first['site_name']} -> {ev['site_name']}"
-                site_to_site_transitions[trans_key] += 1
-                
-                ev['is_reuse'] = True
-                ev['reuse_from_seq'] = first['seq']
-                ev['reuse_dist'] = dist
-            else:
-                seen_on_ray[key] = ev
-                ev['is_reuse'] = False
-                ev['reuse_from_seq'] = None
-                ev['reuse_dist'] = 0
-                
-        ray_duplicate_calls.append(ray_dups)
-
-    def get_percentiles(vals):
-        if not vals:
-            return {}
-        s = sorted(vals)
-        n = len(s)
-        def pct(p):
-            idx = int(round(p * (n - 1)))
-            return s[idx]
-        return {
-            'min': s[0],
-            'p10': pct(0.10),
-            'p25': pct(0.25),
-            'p50_median': pct(0.50),
-            'mean': round(sum(s) / n, 2),
-            'p75': pct(0.75),
-            'p90': pct(0.90),
-            'p99': pct(0.99),
-            'max': s[-1],
-        }
-
-    total_calls_stats = get_percentiles(ray_total_calls)
-    duplicate_calls_stats = get_percentiles(ray_duplicate_calls)
-
-    complex_ray_trace = []
-    if most_complex_ray_idx in ray_events:
-        for ev in ray_events[most_complex_ray_idx]:
-            complex_ray_trace.append({
-                'seq': ev['seq'],
-                'curtain_member': ev['medium'],
-                'site': ev['site_name'],
-                'level': ev['level_name'],
-                'detail': ev['detail'],
-                's_f32': ev['s_val'],
-                's_hex': f"0x{ev['s_bits']:08x}",
-                'phi_f32': ev['phi_val'],
-                'phi_hex': f"0x{ev['phi_bits']:08x}",
-                'is_online_reuse': ev['is_reuse'],
-                'reuse_from_seq': ev['reuse_from_seq'],
-                'reuse_distance': ev['reuse_dist'],
-            })
-
-    total_offline_unique_params = len(cross_ray_s_seen)
-
-    return {
-        'census_summary': {
-            'total_rays_evaluated': total_rays,
-            'total_evaluations': all_evaluations,
-            'total_online_duplicates': total_online_duplicates,
-            'online_duplicate_percentage': round(100.0 * total_online_duplicates / all_evaluations, 4) if all_evaluations else 0.0,
-            'exact_0_ulp_bit_parity': (exact_ulp_mismatches == 0),
-            'ulp_mismatches': exact_ulp_mismatches,
-            'total_offline_unique_params': total_offline_unique_params,
-            'consumer_eval_phi_calls': 0,
-        },
-        'per_ray_calls_distribution': total_calls_stats,
-        'per_ray_online_duplicates_distribution': duplicate_calls_stats,
-        'breakdown_by_family': {
-            fam: {
-                'total_evaluations': family_counts[fam],
-                'online_duplicates': family_online_duplicates[fam],
-                'duplicate_pct': round(100.0 * family_online_duplicates[fam] / family_counts[fam], 2) if family_counts[fam] else 0.0
-            } for fam in ['S1', 'S2', 'Fallback']
-        },
-        'breakdown_by_site': {
-            site: {
-                'total_evaluations': site_counts[site],
-                'pct_of_all_evals': round(100.0 * site_counts[site] / all_evaluations, 2) if all_evaluations else 0.0,
-                'online_duplicates': site_online_duplicates[site],
-                'duplicate_pct_within_site': round(100.0 * site_online_duplicates[site] / site_counts[site], 2) if site_counts[site] else 0.0
-            } for site in ['COARSE_KNOT', 'INITIAL_MIDPOINT', 'ADAPTIVE_MIDPOINT', 'MONOTONE_ISOLATOR', 'POST_ROOT', 'CONSUMER']
-        },
-        'breakdown_by_level': {
-            lvl: {
-                'total_evaluations': level_counts[lvl],
-                'online_duplicates': level_online_duplicates[lvl]
-            } for lvl in ['-w_z (Level 0)', '0.0 (Level 1)', '+w_z (Level 2)', 'NONE']
-        },
-        'reuse_distance_histogram': dict(reuse_distance_histogram),
-        'site_to_site_transitions': dict(site_to_site_transitions),
-        'representative_complex_ray': {
-            'ray_index': most_complex_ray_idx,
-            'total_evaluations': max_ray_calls,
-            'trace_length': len(complex_ray_trace),
-            'trace_first_30': complex_ray_trace[:30],
-            'trace_last_10': complex_ray_trace[-10:] if len(complex_ray_trace) > 40 else []
-        }
-    }
+    helper = Path(__file__).with_name('ray_transport_gpu_6ec_census_review.py')
+    spec = importlib.util.spec_from_file_location('census_admission', helper)
+    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+    return m.analyze_events(events_bin_path, m.manifest_ray_count(rays_manifest_path))
 
 
 def main():
-    p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--root', type=Path, default=Path('.'))
-    p.add_argument('--build-root', type=Path, default=Path('/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop'))
-    p.add_argument('--work', type=Path, default=Path('/private/tmp/earthcall-6eb-census'))
-    p.add_argument('--case', type=Path, default=Path('/private/tmp/earthcall-wide-case/manifest.json'))
-    p.add_argument('--mutation', choices=['fixed', 'overflow-tripwire', 'fallback-missing-publish'], default='fixed')
-    p.add_argument('--run', action='store_true')
-    args = p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--root',type=Path,default=Path('.'))
+    p.add_argument('--build-root',type=Path,required=True)
+    p.add_argument('--work',type=Path,required=True)
+    p.add_argument('--case',type=Path,default=Path('/private/tmp/earthcall-wide-case/manifest.json'))
+    p.add_argument('--mutation',choices=['fixed','overflow-tripwire','terminal-missing-publish','fallback-missing-publish','no-census-reset'],default='fixed')
+    p.add_argument('--capture-values',choices=['residual','arguments'],default='residual')
+    p.add_argument('--run',action='store_true')
+    a=p.parse_args();root=a.root.resolve();build=a.build_root.resolve();work=a.work.resolve()
+    if work.exists() or work==root or root in work.parents: raise ValueError('fresh external work required; existing outputs are preserved')
+    work.mkdir(parents=True,exist_ok=False)
+    cpp=generate_census_cpp(root,a.mutation,a.capture_values);source=work/'probe.cpp';source.write_text(cpp)
+    meta={'cpp_sha256':sha256_file(source),'generator_sha256':sha256_file(Path(__file__)),'capture_values':a.capture_values,'mutation':a.mutation,'diagnostic_pending_stack':20,'engine_src_tree':subprocess.check_output(['git','rev-parse','HEAD:src'],cwd=root,text=True).strip()}
+    (work/'source.json').write_text(json.dumps(meta,indent=2)+'\n')
+    subprocess.run([sys.executable,'-B',str(root/'scratch/probes/ray_transport_probe_build.py'),'--root',str(root),'--build-root',str(build),'--source',str(source),'--work',str(work/'build')],check=True)
+    if not a.run:return
+    spec=importlib.util.spec_from_file_location('wide',root/'scratch/probes/ray_transport_gpu_wide_stream.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+    zone=root/'saves/zones/Northern Veil/zone.ecform';before=sha256_file(zone);fixture,rays,_=m.verify_case(root,a.case.resolve(),before)
+    env=dict(os.environ,EC_POSE_RAYS=fixture['rays'],EC_POSE_REFERENCE=fixture['reference'],EC_POSE_CLOCK=str(rays['time']),EC_MATCH_REPEAT='1',EC_GPU_BUDGET='1024',EC_GPU_SUB_CAP='64',EC_GPU_OVER_CAP='16',EC_GPU_MARGIN='.001')
+    env.pop('EC_GPU_GEOMETRY_CASE',None);env.pop('METAL_CAPTURE_ENABLED',None)
+    with (work/'native.log').open('xb') as log:result=subprocess.run([str(work/'build/probe'),str(work/'review.json')],cwd=root,env=env,stdout=log,stderr=subprocess.STDOUT)
+    if sha256_file(zone)!=before:raise ValueError('fixture drift')
+    m.verify_case(root,a.case.resolve(),before)
+    if result.returncode:raise SystemExit(result.returncode)
+    controls=json.loads((work/'review.json').read_text())
+    if len(controls['cases'])!=30 or any(c['output_differences'] or c['packet_differences'] not in [0,None] or c['census_overflow'] for c in controls['cases']):raise ValueError('strict census control qualification failed')
+    analysis=parse_and_analyze_census(work/'review.json.events.bin',a.case)
+    (work/'census_analysis.json').write_text(json.dumps(analysis,indent=2)+'\n')
+    print('PASS: strict30-case output/packet/ownership controls; explicit actual routes and observed value kinds')
+    print(json.dumps({k:analysis[k] for k in ['total_evaluations','position_repeats','value_observations','actual_route_counts']}))
 
-    root = args.root.resolve()
-    build_root = args.build_root.resolve()
-    worktree_root = build_root.parent if build_root.name == 'build' else build_root
-    work = args.work.resolve()
-
-    if not work.exists():
-        work.mkdir(parents=True, exist_ok=False)
-
-    print(f'Generating source for §6eb demand census (mutation: {args.mutation})...')
-    cpp_source = generate_census_cpp(root, mutation=args.mutation)
-    (work / 'probe.cpp').write_text(cpp_source)
-
-    build_dir = work / 'build'
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
-    print(f'Compiling standalone probe to {build_dir}...')
-    subprocess.run([
-        sys.executable, '-B', str(root / 'scratch/probes/ray_transport_probe_build.py'),
-        '--root', str(root),
-        '--build-root', str(worktree_root),
-        '--source', str(work / 'probe.cpp'),
-        '--work', str(build_dir)
-    ], check=True)
-    print('Compilation successful!')
-
-    if args.run:
-        spec = importlib.util.spec_from_file_location('wide', root / 'scratch/probes/ray_transport_gpu_wide_stream.py')
-        m = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(m)
-        zone = root / 'saves/zones/Northern Veil/zone.ecform'
-        before = hashlib.sha256(zone.read_bytes()).hexdigest()
-        meta, rays, _ = m.verify_case(root, args.case.resolve(), before)
-        env = dict(
-            os.environ,
-            EC_POSE_RAYS=meta['rays'],
-            EC_POSE_REFERENCE=meta['reference'],
-            EC_POSE_CLOCK=str(rays['time']),
-            EC_MATCH_REPEAT='1',
-            EC_GPU_BUDGET='1024',
-            EC_GPU_SUB_CAP='64',
-            EC_GPU_OVER_CAP='16',
-            EC_GPU_MARGIN='.001',
-        )
-        env.pop('EC_GPU_GEOMETRY_CASE', None)
-        env.pop('METAL_CAPTURE_ENABLED', None)
-
-        output = work / 'review.json'
-        print(f'Executing probe for mutation: {args.mutation}...')
-        result = subprocess.run([str(build_dir / 'probe'), str(output)], cwd=root, env=env)
-        if hashlib.sha256(zone.read_bytes()).hexdigest() != before:
-            raise ValueError('source drift')
-        m.verify_case(root, args.case.resolve(), before)
-        if result.returncode != 0:
-            print(f'Probe exited with code {result.returncode}')
-            sys.exit(result.returncode)
-        else:
-            print(f'PASS control execution: {args.mutation}')
-
-        if args.mutation == 'fixed':
-            events_bin = work / 'review.json.events.bin'
-            if not events_bin.exists():
-                raise FileNotFoundError(f"expected events binary at {events_bin}")
-            print(f"Parsing and analyzing demand census from {events_bin}...")
-            analysis = parse_and_analyze_census(events_bin, args.case)
-            census_json_path = work / 'census_analysis.json'
-            census_json_path.write_text(json.dumps(analysis, indent=2))
-            print(f"Demand census analysis complete! Exported to {census_json_path}")
-            
-            cs = analysis['census_summary']
-            print("\n=== §6eb evalPhi DEMAND CENSUS SUMMARY ===")
-            print(f"Total Rays Evaluated:        {cs['total_rays_evaluated']:,}")
-            print(f"Total evalPhi Calls:         {cs['total_evaluations']:,}")
-            print(f"Total Online Duplicates:     {cs['total_online_duplicates']:,} ({cs['online_duplicate_percentage']}%)")
-            print(f"Exact 0-ULP Bit Parity:      {cs['exact_0_ulp_bit_parity']} (ULP mismatches = {cs['ulp_mismatches']})")
-            print(f"Total Offline Unique Params: {cs['total_offline_unique_params']:,}")
-            print(f"Consumer evalPhi Calls:      {cs['consumer_eval_phi_calls']}")
-            print("\nBreakdown by Family:")
-            for fam, fdata in analysis['breakdown_by_family'].items():
-                print(f"  {fam:<10}: {fdata['total_evaluations']:>10,} calls | {fdata['online_duplicates']:>8,} dups ({fdata['duplicate_pct']:>5.1f}%)")
-            print("\nBreakdown by Site:")
-            for site, sdata in analysis['breakdown_by_site'].items():
-                print(f"  {site:<22}: {sdata['total_evaluations']:>10,} calls ({sdata['pct_of_all_evals']:>5.1f}%) | {sdata['online_duplicates']:>8,} dups ({sdata['duplicate_pct_within_site']:>5.1f}%)")
-            print("\nBreakdown by Level:")
-            for lvl, ldata in analysis['breakdown_by_level'].items():
-                print(f"  {lvl:<20}: {ldata['total_evaluations']:>10,} calls | {ldata['online_duplicates']:>8,} dups")
-            print("\nPer-Ray Call Distribution:")
-            for k, v in analysis['per_ray_calls_distribution'].items():
-                print(f"  {k:<12}: {v}")
-            print("\nPer-Ray Online Duplicates Distribution:")
-            for k, v in analysis['per_ray_online_duplicates_distribution'].items():
-                print(f"  {k:<12}: {v}")
-            print("\nReuse Distance Histogram:")
-            for k, v in analysis['reuse_distance_histogram'].items():
-                print(f"  {k:<14}: {v:,}")
-            print("\nSite-to-Site Transition Sharing:")
-            for k, v in sorted(analysis['site_to_site_transitions'].items(), key=lambda x: -x[1]):
-                print(f"  {k:<35}: {v:,}")
-
-if __name__ == '__main__':
-    main()
+if __name__=='__main__':main()
