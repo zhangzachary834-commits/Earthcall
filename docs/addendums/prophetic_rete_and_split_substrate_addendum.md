@@ -1,17 +1,23 @@
 # Addendum: Integrating Prophetic Rete and Split-Substrate Serialization
 
-*(Model: Claude 3.5 Sonnet, Harness: Jules, Session: 13284209740648546535)*
+*(Original synthesis: Claude 3.5 Sonnet / Jules, session 13284209740648546535. Correctness and status clarification: Sun Squid Intake III, 2026-10-27.)*
 
-## Reflections on the Architectural Synthesis
+**Status: conceptual interrelation, not an implemented matter scheduler.**
 
-Earthcall's architecture separates the legible truth of the world from its opaque physical expression. The Split-Substrate Serialization separates the human-authored, relational `.ecform` graph from the high-density, binary `.ecmatter` blobs. Concurrently, the Prophetic Rete predicts and organizes the logical interactions of Laws *before* they collide in the world.
+## Two distinct forms of legibility
 
-These two distinct frameworks synthesize to solve a critical constraint: how to manage heavy, detached data generation without stalling the continuous evaluation of truth.
+[Prophetic Rete](../architecture/law/PROPHETIC_RETE.md) conservatively analyzes what authored Laws *could* read or write before they execute. Its soundness rule is an **over-approximation**: an unknown effect must fail open rather than suppress a real Law. It is not an oracle for the exact future state.
 
-### The Synthesis
+[Split-substrate persistence](split_substrate_matter_generation_addendum.md) separates the semantic `.ecform` save root from derived `.ecmatter` physical sidecars. The latter are generation-addressed and checked for existence, size, schema, and SHA-256 before admission. The semantic root is not intrinsically a human-readable text file.
 
-1. **Predictive Generation:**
-Because `.ecmatter` represents opaque physical artifacts (like rasterized pixel fields or audio buffers), its generation can be computationally heavy. If the main semantic tick waits for this generation, the framerate—and thus the continuous truth of the world—stalls. The Prophetic Rete, by analyzing the authored intent before it resolves, can predict *which* semantic changes will necessitate a re-generation of the underlying matter.
+These boundaries are complementary: authored dependencies can describe *why* physical material may need regeneration, while a verified generation identifies *which* physical bytes actually correspond to a committed semantic root. Neither boundary makes the other automatic.
 
-2. **Decoupled Fulfillment:**
-By predicting the requirement, the Rete acts as a scheduler. It allows the semantic `.ecform` graph to advance immediately, acknowledging the intent, while dispatching the heavy generation of the `.ecmatter` blobs to background fulfillment (such as asynchronous GPU routines). The semantic truth remains unbroken and legible, while the physical substrate catches up, ensuring that "Performance as Truth" is maintained in the continuous evaluation of the world.
+## A possible dependency-to-generation bridge
+
+A future integration could map a conservative Law write effect to an invalidation frontier for a derived matter artifact. Such a bridge would have to prove that every actual change affecting the artifact is included, including First-Mover/foreign writes and unknown dependencies. Only then could it avoid redundant generation without silently missing updates.
+
+Scheduling expensive generation asynchronously is a **proposal**, not a shipped capability of Prophetic Rete. A scheduler would need versioned inputs, cancellation or discard of obsolete results, an explicit publication boundary, and tests that stale results cannot overwrite newer semantic truth. Advancing the semantic graph before physical fulfillment is safe only when consumers distinguish pending material from a committed, verified generation; it must not silently display old bytes as if they represented the new state.
+
+The existing save protocol writes a new sidecar before committing the semantic root and retires the predecessor only after the root commit. Its filesystem fallback and lack of explicit durable `fsync` do **not** establish universal crash-proof atomicity. See the [split-substrate audit](split_substrate_matter_generation_addendum.md).
+
+**Engineering gate:** prove conservative invalidation, version-correct publication, verified readback, and failure/restart behavior with executable witnesses before promoting this synthesis into runtime claims.
