@@ -13,7 +13,6 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/RelationManager.hpp"
 
-#include <GLFW/glfw3.h>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -33,18 +32,8 @@ double filletOf(Object& obj) {
 } // namespace
 
 int main() {
-    if (!glfwInit()) {
-        std::fprintf(stderr, "continuous_law_test: glfwInit failed\n");
-        return 1;
-    }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "continuous_law_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "continuous_law_test: no GL context\n");
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
+    // Headless CPU witness: Object texture uploads are guarded without a GL context.
+
 
     {
         Object author;
@@ -408,8 +397,6 @@ int main() {
         Universe::instance().setProvider({});             // leave no dangling refs
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
     std::puts("continuous_law_test: ALL OK");
     return 0;
 }

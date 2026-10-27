@@ -17,7 +17,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 
-#include <GLFW/glfw3.h>
 #include <cassert>
 #include <iostream>
 #include <string>
@@ -47,21 +46,8 @@ Object* findByType(Zone& world, const std::string& type) {
 int main() {
     std::cout << "Running Law Creation Test..." << std::endl;
 
-    // Constructing an Object uploads its face textures, which needs a live GL
-    // context (Object::initFaceTextures -> glGenTextures). Same hidden-window
-    // bootstrap the render tests use.
-    if (!glfwInit()) {
-        std::cout << "law_creation_test: glfwInit failed" << std::endl;
-        return 1;
-    }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "law_creation_test", nullptr, nullptr);
-    if (!window) {
-        std::cout << "law_creation_test: window creation failed" << std::endl;
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
+    // Headless CPU witness: Object texture uploads are guarded without a GL context.
+
 
     Zone world("test-zone", "default");
     Zone inactiveWorld("World", "default");
@@ -265,7 +251,5 @@ int main() {
           "an explicit Zone subject still determines Create destination");
     std::cout << "\nSUCCESS — " << g_checks << " checks passed." << std::endl;
     Universe::instance().setProvider(nullptr);   // the world outlives this scope
-    glfwDestroyWindow(window);
-    glfwTerminate();
     return 0;
 }
