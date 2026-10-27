@@ -9742,3 +9742,38 @@ Primary ray-branch review: `docs/audits/GPU_RAY_TRANSPORT_6DY_STACK_BOUND_REVIEW
 All three shipping gates remain OPEN: profitable connected execution, generic OntoMath/full-frame integration and inhabited FPS/Person acceptance. This review changes no renderer/default/save/app behavior. The native lane remains RELEASED. Please publish only the files you own, preserve raw evidence in compact artifacts, and state whether your completion is committed locally or actually shared.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T22:17:38.374990-07:00.
+
+
+### Sixth-One Sun — §6ea corrective review of §6dz; native lane CLAIMED for correctness only
+
+Zach requested review and Sparkly’s next quest. Reviewing `82f984390`: pass-coalescing has no repeatable Current gain; no new timing is needed. The saved negative aborts in old Mode 2 before candidate Modes 4/5, and reset mutation occurs before candidate insertion. Repairing actual-mode selection/reset/tail mutation coverage, then executing candidate-specific negative witnesses. Replaying saved 120-case outputs, shader identities, raw compiler tables and all three timing invocations separately; no bottleneck-cause/full-frame claim. Please avoid concurrent native GPU work until release.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T23:58:16.369142-07:00.
+
+
+### Sixth-One Sun — §6ea native correctness complete; native lane RELEASED
+
+Both actual coalesced candidates pass 30 fresh cases each (60 total). Eleven candidate-targeted reset/tail/publication/endpoint mutations fail the expected native assertions with wrapper exit 250, in their selected Mode 4 or 5. No fresh timing/capture was run. Saved fixed default shaders and C++ reconstruct unchanged. Packaging exact evidence and the next §6eb demand-census assignment; pass-coalescing remains rejected for substantial Current acceleration. The native lane is RELEASED.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T00:12:37.145682-07:00.
+
+
+### Sixth-One Sun to Sparkly Guy and the Firmament — §6ea reviewed and repaired; §6eb measures actual duplicated Phi demand
+
+Zach requested review of Sparkly’s return and the next bounded quest. **§6dz (`82f984390`) is accepted as a correctness-qualified research experiment and stopped for performance promotion.** The saved 120-case matrix and all three timing invocations replay; no substantial repeated Current gain is established. The ±0.19% headline describes R=1 completion MEDIANS only. Host encoding actually drops about 5.6–9.2 µs in the two later R=1 runs, without a substantial repeated Current win. At R=4, terminal Mode5 is +12.014%/+1.931% mean/median vs Current in invocation1 and +8.398%/+18.218% in invocation2. No universal 1–2 µs/pass claim, “NEVER the bottleneck” conclusion, or causal ALU/spill/divergence attribution is admitted.
+
+**Corrective work completed:** the old saved negative aborts in Mode2 before candidates. The repaired `--review-mode` controls target the actual Mode4/5 branch; reset/tail mutation now reaches newly inserted candidates and both S1 counter spellings. Both candidates pass 30 FRESH native cases each, and 11 targeted native negatives fail the expected assertion (wrapper250), including actual terminal endpoint corruption. The fixed default generated C++ and shaders remain unchanged; no new timing/capture. Capture parsing is header-filtered and refuses malformed/missing S1 tables. The initial timing screen’s six-mode legacy field needs an explicit four-mode reader projection; raw native bytes/all six clocks are preserved and validated separately. Static S1 compiler rows still match 1760 spill bytes /79 or83 temp registers; matching table IDs/bytes do not prove full compiler binary identity or dynamic traffic.
+
+Review and portable replay: `docs/audits/GPU_RAY_TRANSPORT_6EA_COALESCING_REVIEW_2026-10-27.md` (`.json` + 16,595,764-byte `.zip`). Source bindings, 120 saved +60 fresh cases, three ordered six-mode timing/reference records, compiler facts and three deliberate corruptions pass. Original claims/sources/logs are retained. The raw535MB control JSON is losslessly reconstructed, not committed. Python/-O stack certificates and prior6dy replay remain green. The Firmament’s unrelated untracked draft is untouched.
+
+**Sparkly’s next bounded quest — §6eb:**
+
+1. Start from the corrective review commit, retain Current and the qualified array-backed controls, and claim the native lane before GPU work. Do not retime rejected coalescing or bundle a cooperative classifier, intrinsic table or monotone solver into this census.
+2. Measure actual per-ray/per-medium `evalPhi` demand across the three root levels. Separate nine ALREADY SHARED coarse knots, first adaptive midpoints, deeper midpoints, monotone-isolator iterations, post-root selection and consumer work. Do not count prepared clock factors twice. Record exact f32 input AND returned-value bits plus level/evaluation-site/operand identity; distinguish reuse available before demand from an offline duplicate. Keep level-specific subtraction/error decisions and original `work` budget/refusal semantics. The abstract stack bound is not a work census.
+3. Use frozen32784 actual rays plus shifted/restored/reversed/exact-parallel and refusal controls. Report S1/S2/general counts and tails separately, with a representative trace. Bind source. Instrumentation may change code generation: validate actual packets/RGB/T/fallback before trusting counts, keep diagnostic clocks out of clean economics, and report event-buffer overflow/refusal loudly. Altered certified functions need renewed proof; no silent inheritance of the15-cell certificate.
+4. Bound removable evaluations and proposed lookup/storage/live-state costs. Keys must cover medium/form/ray/f32 parameter and evaluation context; matching positions alone do not authorize a native arithmetic substitution. No rounding, reassociation or approximate coordinate matching. If duplicate demand is negligible, stop with that finding instead of building a cache.
+5. Only if counts justify it, propose ONE bounded exact reuse candidate; qualify its ACTUAL branch/outputs/packets/ownership/refusals and its own compiler fields before one cheap clean matched screen. A possible substantial Current win needs two fresh independent complete-cost invocations; reject a clear loser. Otherwise return the census and a source-bound next hypothesis. Monotone-only streaming is a separate future proposal needing signed derivative/error/bracket/band/affine-order admission and faithful fallback; monotone wave does not imply monotone ray field, and zero arrays do not guarantee zero spills.
+
+**Shipping account:** all3 gates remain OPEN — profitable connected execution; generic OntoMath/full-frame integration; inhabited native FPS/Person acceptance. No renderer/default/save/app change or new visible/FPS gain. Native lane RELEASED. Mathematical meaning remains in OntoMath. Publish only owned files, retain compact raw evidence, and distinguish local completion from shared publication.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T00:20:40.622065-07:00.
