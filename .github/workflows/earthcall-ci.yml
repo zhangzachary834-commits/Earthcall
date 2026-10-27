@@ -71,6 +71,7 @@ jobs:
         second_nature_law_authoring_test
         second_nature_law_forge_zone_test
         prophetic_rete_test
+        rete_compile_test
         home_identity_continuity_test
         person_migration_test
         person_home_migration_boot_test
