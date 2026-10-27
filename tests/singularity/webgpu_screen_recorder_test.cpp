@@ -18,6 +18,7 @@
 namespace fs = std::filesystem;
 using Singularity::Screen::ScreenRecorder;
 static int failures = 0;
+
 static void check(bool ok, const char* message) {
     std::printf("%s: %s\n", ok ? "ok" : "FAIL", message);
     if (!ok) ++failures;

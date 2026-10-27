@@ -13,6 +13,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <cstdlib>
 #include <sstream>
 
 #if defined(__APPLE__)
@@ -92,11 +93,55 @@ static int closeProcessPipe(FILE* pipe) {
     return result;
 }
 
+
 static std::string shellPath(const std::string& path) {
     std::string result = "'";
     for (char c : path) result += c == '\'' ? "'\\''" : std::string(1, c);
     return result + "'";
 }
+
+static bool isCommandAvailable(const std::string& command) {
+    const char* pathEnv = std::getenv("PATH");
+    if (!pathEnv) return false;
+
+    std::string pathStr = pathEnv;
+    size_t start = 0;
+#ifdef _WIN32
+    const char delimiter = ';';
+    const std::string exeName = command + ".exe";
+#else
+    const char delimiter = ':';
+    const std::string exeName = command;
+#endif
+
+    while (start < pathStr.length()) {
+        size_t end = pathStr.find(delimiter, start);
+        if (end == std::string::npos) end = pathStr.length();
+
+        std::string dir = pathStr.substr(start, end - start);
+        if (!dir.empty()) {
+            std::error_code ec;
+            std::filesystem::path p(dir);
+            p /= exeName;
+
+            if (std::filesystem::exists(p, ec) && std::filesystem::is_regular_file(p, ec)) {
+#ifdef _WIN32
+                return true;
+#else
+                auto perms = std::filesystem::status(p, ec).permissions();
+                if ((perms & (std::filesystem::perms::owner_exec |
+                              std::filesystem::perms::group_exec |
+                              std::filesystem::perms::others_exec)) != std::filesystem::perms::none) {
+                    return true;
+                }
+#endif
+            }
+        }
+        start = end + 1;
+    }
+    return false;
+}
+
 
 // ---------------------------------------------------------------------------
 // Static file export utilities
@@ -354,7 +399,7 @@ bool ScreenRecorder::startRecording() {
         _lastError = "Unknown recording format: " + _format;
         return false;
     }
-    if (_format == "mp4" && std::system("command -v ffmpeg > /dev/null 2>&1") != 0) {
+    if (_format == "mp4" && !isCommandAvailable("ffmpeg")) {
         _status = "error: video encoder unavailable";
         _lastError = "MP4 requires ffmpeg on PATH; choose png_sequence, ppm_sequence, or raw.";
         return false;
