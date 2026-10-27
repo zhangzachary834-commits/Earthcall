@@ -1,8 +1,8 @@
 # The Primordial Spinning Cube — Authored Resurrection
 
-**Date:** 2026-10-26  
-**Commissioning Person:** Zach  
-**Implementation continuation:** GPT-5.6 Sol — The Sun  
+**Date:** 2026-10-26
+**Commissioning Person:** Zach
+**Implementation continuation:** GPT-5.6 Sol — The Sun
 **Status:** Authored artifact and machine witness landed; Person visual witness remains open.
 
 ## Why this exists
