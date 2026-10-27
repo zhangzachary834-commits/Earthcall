@@ -1,29 +1,13 @@
-# Addendum: Integrating Physics as Algorithmic Driver and Continuous Space
+# Physics Events as Algorithmic Drivers in Continuous Space
 
-*(Model: Gemini Flash 1.5, Harness: Jules, Session ID: 3260200770766759045)*
+*Origin: Jules task 3260200770766759045; reviewed by Sun Squid Intake II, 2026-10-26.*
+**Status: conceptual interrelation, not a claim that all physics is event-sourced.**
 
-## Reflections on the Architectural Synthesis
+[Physics as an Algorithmic Driver](../architecture/interrelations/PHYSICS_AS_ALGORITHMIC_DRIVER.md) describes how collision events can trigger Person-authored Laws and thereby advance algorithms in discrete steps. [Discrete Entities vs Continuous Space Scaling](../architecture/interrelations/DISCRETE_ENTITIES_VS_CONTINUOUS_SPACE_SCALING.md) distinguishes discrete beings from continuous mathematical/geometric domains and their different scaling costs.
 
-Earthcall's [Physics as Algorithmic Driver](../architecture/interrelations/PHYSICS_AS_ALGORITHMIC_DRIVER.md) and [Discrete Entities vs Continuous Space Scaling](../architecture/interrelations/DISCRETE_ENTITIES_VS_CONTINUOUS_SPACE_SCALING.md) represent a fundamental tension in the engine's design: how to manage continuous movement and interaction within a discrete, authored ontology.
+## The boundary
+A physics substrate may evolve continuous positions and detect collisions; the Event Bus can expose *selected* collision facts to authored Law. This does not mean every physical state transition is a Law-authored event, that every physics tick is a semantic Moment, or that the engine itself is a human `Person` or autonomous First Mover with Person authority.
 
-### The Problem of Continuous Simulation
+A Person could author a collision-driven process whose Laws respond to those events. The engineering questions are which events are actually emitted, their ordering and identity, whether repeated contacts are coalesced, how physics and Law clocks interact, and which state changes are governed by TransferPolicy.
 
-Physics engines (like Box2D, integrated into Earthcall) operate on continuous space and time, resolving collisions and applying forces over small, continuous intervals. This continuous simulation is mathematically elegant but conceptually distinct from Earthcall's discrete, authored ontology, where changes are explicit events authored by Persons or Laws.
-
-### Physics as a Generative Algorithmic Driver
-
-As described in `PHYSICS_AS_ALGORITHMIC_DRIVER`, physics is not treated as a black-box simulation that arbitrarily mutates the world state. Instead, it is an *algorithmic driver*—a First Mover of sorts—that generates proposed discrete events (e.g., collisions, boundary crossings) and submits them to the Event Bus.
-
-The physics engine is a continuous oracle that produces discrete semantic facts.
-
-### Bridging Continuous Space to Discrete Entities
-
-This bridges the gap outlined in `DISCRETE_ENTITIES_VS_CONTINUOUS_SPACE_SCALING`. The continuous simulation occurs within the physics substrate, but its *effects* on the world are translated into discrete, relational changes (e.g., `Relation(ObjectA, CollidesWith, ObjectB)`).
-
-This allows the engine to maintain a discrete, legible ontology—where every meaningful change can be audited and traced back to a specific event or Law—while still supporting the fluid dynamics of a continuous world.
-
-### The Synthesis
-
-1.  **Continuous Oracle:** The physics engine operates continuously, but its output is discrete semantic facts.
-2.  **Event Bus as Mediator:** These facts are submitted to the Event Bus as discrete events, subject to the same routing and Law application as any other event.
-3.  **Legible Ontology:** This ensures that the continuous nature of physics does not corrupt the discrete, legible nature of Earthcall's ontology. The continuous simulation is a tool for generating discrete meaning.
+The synthesis is a **candidate design discipline**: preserve the distinction between continuous computation, discrete observations, and Person-authored semantic actions. Verify concrete behavior with EventBus/physics integration tests before asserting stronger guarantees.
