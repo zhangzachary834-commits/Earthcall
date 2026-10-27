@@ -72,12 +72,60 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
+    // Protect the real Zone identity store by redirecting SaveSystem::setSaveRoot
+    // to a temporary sandbox containing only the target world, laws, materials, homes,
+    // and target zone directory, preventing ZoneManager::loadState from hydrating
+    // all 50+ unrelated zones in saves/zones/.
+    namespace fs = std::filesystem;
+    const fs::path realSaves = TestSupport::resolveRealWorldPath("saves");
+    const fs::path sandbox = fs::temp_directory_path() /
+        ("earthcall-slow-adapter-perf-sandbox-" + std::to_string(Clock::now().time_since_epoch().count()));
+    fs::create_directories(sandbox / "worlds");
+    fs::create_directories(sandbox / "zones");
+    fs::create_directories(sandbox / "homes");
+    if (fs::exists(realSaves / "laws")) {
+        fs::copy(realSaves / "laws", sandbox / "laws", fs::copy_options::recursive);
+    }
+    if (fs::exists(realSaves / "materials")) {
+        fs::copy(realSaves / "materials", sandbox / "materials", fs::copy_options::recursive);
+    }
+    if (fs::exists(realSaves / "homes")) {
+        fs::copy(realSaves / "homes", sandbox / "homes", fs::copy_options::recursive);
+    }
+    fs::copy_file(world, sandbox / "worlds" / fs::path(world).filename());
+
+    // Read the world file to identify and copy only the active zone
+    try {
+        nlohmann::json wj = SaveSystem::readSaveData(world);
+        if (wj.contains("zones") && wj["zones"].is_array()) {
+            for (const auto& zj : wj["zones"]) {
+                if (zj.contains("id")) {
+                    const std::string zId = zj["id"].get<std::string>();
+                    const fs::path srcZone = realSaves / "zones" / zId;
+                    if (fs::exists(srcZone)) {
+                        fs::copy(srcZone, sandbox / "zones" / zId, fs::copy_options::recursive);
+                    }
+                }
+            }
+        }
+    } catch (...) {}
+
+    struct SandboxGuard {
+        fs::path path;
+        std::string prevRoot;
+        ~SandboxGuard() {
+            SaveSystem::setSaveRoot(prevRoot);
+            std::error_code ec;
+            fs::remove_all(path, ec);
+        }
+    } guard{sandbox, SaveSystem::saveRoot()};
+
+    SaveSystem::setSaveRoot(sandbox.string());
+
     TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld((sandbox / "worlds" / fs::path(world).filename()).string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
