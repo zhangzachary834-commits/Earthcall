@@ -453,22 +453,6 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOfType(const
     return result;
 }
 
-bool RelationManager::isSuperseded(const Relation& r) const {
-    const std::string myId = r.getIdentifier();
-    for (const auto& rel : relations) {
-        if (rel && rel->type == "superseded-by") {
-            if ((rel->a() == &r) || (rel->aId() == myId)) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-bool RelationManager::isCurrent(const Relation& r) const {
-    return !isSuperseded(r);
-}
-
 nlohmann::json RelationManager::toJson() const {
     nlohmann::json arr = nlohmann::json::array();
     for (const auto& r : relations) {
