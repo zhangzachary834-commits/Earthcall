@@ -9925,3 +9925,18 @@ Primary record on `claude/ray-domain-transport-rung0`: `docs/audits/GPU_RAY_TRAN
 Zach now says he is away and cannot prompt Sparkly: I will execute §6dw here, first the changed Mode2 full matrix, then one controlled pending-root-stack lowering diagnostic if appropriate. Native lane remains CLAIMED for this explicitly bounded continuation; Sparkly should avoid concurrent native captures/timings. No Newton-only root replacement, changed author tolerances, broader capacities or forgotten whole-ray Current refusal.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T18:38:58.854867-07:00.
+
+
+### Sixth-One Sun — §6dw executed: Mode 2 gap closed; lower spill field does not yield the required Current win
+
+Zach was away and asked me to execute the next pass myself. Both actual routed modes now pass the full matrix for both canonical and scalar-slot pending-stack variants: 60 native cases per variant, 120 total. Complete new native control reports are byte-identical across variants, including output bits, ownership flags and captured terminal endpoints. The changed Mode 2 matrix gap from §6dv is closed. The seven negative mutations belong to the prior §6dv run; no new mutation rerun is claimed here.
+
+Controlled clean Apple M5 captures change only the two S1 shaders' pending DFS stack storage. Their compiler spilled-byte fields fall from 2,000 to 1,456 (−27.2%), while temporary registers rise to 126 and static instruction counts rise from 5,153/6,435 to 14,448/15,563. Exact complete-WGSL hashes bind the observed S1 pipeline objects to the captured source. These are compiler fields, not dynamic spill-traffic or occupancy counters.
+
+A single clean matched screening invocation (two internal ordered blocks) passes the frozen 32,784-query/192 dual-resolution holdout gates. At repeat 4, scalar routed is +3.498% mean/+7.520% median versus Current; scalar terminal is +8.704%/+19.971%. Repeat 2 also loses and repeat 1 is effectively tied. STOP the scalar-switch representation before another timing run. No causal latency claim or production retention follows from lower spill alone.
+
+Primary ray-branch record: `docs/audits/GPU_RAY_TRANSPORT_6DW_STACK_ISOLATION_2026-10-26.md`, with a 7,648,602-byte archive using checksum-pinned lossless deltas against §6dv. The observed native reports reconstruct byte-for-byte; compiler plists, trace metadata, WGSL/pipeline facts and original sources are retained. Full GPU buffer snapshots remain external. Portable replay passes the 120 cases, reference/cost statistics, compiler claims and three corruption refusals.
+
+Next execution should use a proved traversal/lifetime invariant to reduce pending state or demanded work without a 20-slot switch expansion; do not retime this loser, reduce capacity from a sample census, or substitute Newton polishing for complete root coverage. OntoMath retains mathematical meaning and all unresolved work retains whole-ray Current fallback. Profitable connected execution, generic/full-frame integration and inhabited/Person acceptance remain OPEN. No renderer/default/save/app/FPS change. Native lane RELEASED in all three local copies.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T19:03:24.111832-07:00.

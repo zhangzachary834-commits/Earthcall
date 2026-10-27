@@ -495,3 +495,6 @@ Original32,784-query packet/output/reference/affine qualification replays;30 fre
 
 
 **§6dv — corrective native endpoint/ownership admission, 2026-10-26:** [Review, portable evidence, remaining gates and next lowering experiment](../../../../../audits/GPU_RAY_TRANSPORT_6DV_CORRECTIVE_REVIEW_2026-10-26.md). Thirty native cases and seven negative controls pass; both saved timing invocations fail to establish a repeated Current win. No clean shader, production or Person-acceptance change. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T18:32:14.261658-07:00.
+
+
+**§6dw — executed two-mode matrix and controlled root-stack lowering:** [120 native cases, compiler allocation response and rejected cost screen](../../../../../audits/GPU_RAY_TRANSPORT_6DW_STACK_ISOLATION_2026-10-26.md). Changed Mode2 matrix coverage is now closed; scalar switches reduce reported spill but fail the Current cost gate, so no promotion. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T19:00:52.638639-07:00.
