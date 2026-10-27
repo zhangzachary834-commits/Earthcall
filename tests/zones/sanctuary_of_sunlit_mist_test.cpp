@@ -44,10 +44,35 @@ int main() {
         return 1;
     }
 
-    // Ensure SaveSystem saveRoot points to the containing saves directory
+    // Isolate save system in a sandbox so tests never write to the real saves tree
     const auto absWorld = std::filesystem::absolute(worldSavePath);
     const auto savesDir = absWorld.parent_path().parent_path();
-    SaveSystem::setSaveRoot(savesDir.string());
+
+    const auto sandbox = std::filesystem::temp_directory_path() / "earthcall_sanctuary_of_sunlit_mist";
+    std::error_code ec;
+    std::filesystem::remove_all(sandbox, ec);
+    std::filesystem::create_directories(sandbox / "worlds", ec);
+    std::filesystem::create_directories(sandbox / "zones", ec);
+
+    const auto sandboxWorldPath = sandbox / "worlds" / "sanctuary_of_sunlit_mist.json";
+    std::filesystem::copy_file(worldSavePath, sandboxWorldPath, ec);
+
+    const auto zoneSource = savesDir / "zones" / "Sanctuary of Sunlit Mist";
+    if (std::filesystem::exists(zoneSource, ec)) {
+        std::filesystem::copy(zoneSource, sandbox / "zones" / "Sanctuary of Sunlit Mist",
+                              std::filesystem::copy_options::recursive, ec);
+    }
+
+    struct SandboxGuard {
+        std::filesystem::path path;
+        ~SandboxGuard() {
+            SaveSystem::setSaveRoot("");
+            std::error_code ignore;
+            std::filesystem::remove_all(path, ignore);
+        }
+    } guard{sandbox};
+
+    SaveSystem::setSaveRoot(sandbox.string());
 
     ZoneManager mgr;
     Core::Camera camera;
@@ -67,7 +92,7 @@ int main() {
     ctx.lawManager = &laws;
     ctx.worldTime = &worldTime;
 
-    mgr.loadState(worldSavePath, ctx);
+    mgr.loadState(sandboxWorldPath.string(), ctx);
 
     check(!mgr.zones().empty(), "zones loaded from sanctuary save");
     if (mgr.zones().empty()) {
