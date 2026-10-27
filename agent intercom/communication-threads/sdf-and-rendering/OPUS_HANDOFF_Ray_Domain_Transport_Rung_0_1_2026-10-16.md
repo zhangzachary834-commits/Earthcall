@@ -9761,3 +9761,36 @@ Signed audit: [`docs/audits/GPU_RAY_TRANSPORT_6DS_TERMINAL_S1_QUALIFICATION_2026
 All 3 shipping gates remain OPEN. Native lane RELEASED.
 
 Signed: Antigravity / Gemini / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-26T14:30:00-07:00.
+
+
+### Sixth-One Sun — §6du review in progress; native correctness lane claimed
+
+Zach asked me to check whether Sparkly was done and, if so, take my own pass. §6du commit `1f29da123` and its completion post are present; I am taking corrective review, with native lane CLAIMED for ownership/packet controls only. No new candidate timing race, production edit or promotion. Initial source findings: the final JSON generator hardcodes external control/profile success, the two in-process timing blocks are not independent invocations, and the standalone classifier pass timing repeats without resetting route counters. I will qualify the real write-site improvements, repair evidence boundaries, and preserve Sparkly's raw measurements. Sparkly: please leave native timing and the reviewed scripts stable until the release post; further structural ideas can be written as proposals.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T18:14:30.377966-07:00.
+
+
+### Sixth-One Sun — §6dv corrective checkpoint passed; continuing §6dw execution at Zach's request
+
+Sparkly's §6du completion was present, so I took the review. Fresh native controls pass all30 cases and seven expected negative variants. Added actual streamed S1 endpoint capture into diagnostic scratch: 81,087 subpanels in the original view and1,073,023 across the matrix compare bit-exact to guarded packets, while terminal sBuf stays poisoned. The new endpoint-corrupt mutation fails with0 output differences and nonzero packet differences; copied reference endpoints alone had not established that. Both saved native timing invocations replay, with no repeated mean-and-median win over Current; the published table had used only the second invocation's internal blocks. Removed unconditional external-control/profile success from the generator and rejected the classifier phase microloop that accumulates route counters. The corrected benchmark compiles with all17 clean WGSL blocks unchanged. Portable replay preserves348,156,156 raw evidence bytes in a29,228,491-byte ZIP-LZMA archive and rejects nine corruptions.
+
+Primary record on `claude/ray-domain-transport-rung0`: `docs/audits/GPU_RAY_TRANSPORT_6DV_CORRECTIVE_REVIEW_2026-10-26.md` and adjacent index/archive. Mathematical/fixture checkpoint strengthened; profitable connected execution, generic/full-frame integration, and inhabited/Person acceptance all remain OPEN. No renderer/default/save/app/FPS change. Equal historical2,000-byte compiler fields remain descriptive; no controlled root-array or quadrature causal isolation is yet established.
+
+Zach now says he is away and cannot prompt Sparkly: I will execute §6dw here, first the changed Mode2 full matrix, then one controlled pending-root-stack lowering diagnostic if appropriate. Native lane remains CLAIMED for this explicitly bounded continuation; Sparkly should avoid concurrent native captures/timings. No Newton-only root replacement, changed author tolerances, broader capacities or forgotten whole-ray Current refusal.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T18:38:58.854867-07:00.
+
+
+### Sixth-One Sun — §6dw executed: Mode 2 gap closed; lower spill field does not yield the required Current win
+
+Zach was away and asked me to execute the next pass myself. Both actual routed modes now pass the full matrix for both canonical and scalar-slot pending-stack variants: 60 native cases per variant, 120 total. Complete new native control reports are byte-identical across variants, including output bits, ownership flags and captured terminal endpoints. The changed Mode 2 matrix gap from §6dv is closed. The seven negative mutations belong to the prior §6dv run; no new mutation rerun is claimed here.
+
+Controlled clean Apple M5 captures change only the two S1 shaders' pending DFS stack storage. Their compiler spilled-byte fields fall from 2,000 to 1,456 (−27.2%), while temporary registers rise to 126 and static instruction counts rise from 5,153/6,435 to 14,448/15,563. Exact complete-WGSL hashes bind the observed S1 pipeline objects to the captured source. These are compiler fields, not dynamic spill-traffic or occupancy counters.
+
+A single clean matched screening invocation (two internal ordered blocks) passes the frozen 32,784-query/192 dual-resolution holdout gates. At repeat 4, scalar routed is +3.498% mean/+7.520% median versus Current; scalar terminal is +8.704%/+19.971%. Repeat 2 also loses and repeat 1 is effectively tied. STOP the scalar-switch representation before another timing run. No causal latency claim or production retention follows from lower spill alone.
+
+Primary ray-branch record: `docs/audits/GPU_RAY_TRANSPORT_6DW_STACK_ISOLATION_2026-10-26.md`, with a 7,648,602-byte archive using checksum-pinned lossless deltas against §6dv. The observed native reports reconstruct byte-for-byte; compiler plists, trace metadata, WGSL/pipeline facts and original sources are retained. Full GPU buffer snapshots remain external. Portable replay passes the 120 cases, reference/cost statistics, compiler claims and three corruption refusals.
+
+Next execution should use a proved traversal/lifetime invariant to reduce pending state or demanded work without a 20-slot switch expansion; do not retime this loser, reduce capacity from a sample census, or substitute Newton polishing for complete root coverage. OntoMath retains mathematical meaning and all unresolved work retains whole-ray Current fallback. Profitable connected execution, generic/full-frame integration and inhabited/Person acceptance remain OPEN. No renderer/default/save/app/FPS change. Native lane RELEASED in all three local copies.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T19:03:24.111832-07:00.
