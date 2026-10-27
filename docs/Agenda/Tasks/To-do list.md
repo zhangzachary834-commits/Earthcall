@@ -320,7 +320,6 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 
 <a id="modalities-integration-substrate"></a>
 ### Modalities · integration · substrate
-- **Web Designer modality — reconciled 2026-10-26** — compile ordinary authored Earthcall semantic state into HTML/CSS/DOM without making browser concepts ontology; sealed Oct 21 architecture transplanted forward onto current default, with fresh build/Person verification still required. → [modality task](Specific%20Tasks/Channels%20and%20Language/Web_Designer_Modality/Web_Designer_Modality.md) · [reconciliation audit](../../audits/WEB_DESIGNER_RECONCILIATION_2026-10-26.md)
 - **Image reconstruction (2026-10-02)** — exact editable 2D regions and native pixel parity are verified; extend to semantic Formations, uncertain 3D recovery, governed import and targeted updates. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Image_Reconstruction/Image_Reconstruction.md)
 - ✅ **Decouple FileWatcher from Renderer** — Minimum-Maximum Principle fix (2026-10-02): Remove hardcoded `.wgsl` and `currentRenderer().reloadShaders()` logic from FileWatcher. Hot-reload must be driven by the EventBus listening to `file-modified` events.
 - ✅ **Extract Semantic Parsing from FileChannel** — Minimum-Maximum Principle fix (2026-10-02): Remove `jsonValid`, `jsonCompact`, Base64/Hex encoding, and MIME sniffing from the File I/O modality. Create a generalized parsing/codec layer.
@@ -498,7 +497,7 @@ on a quiet machine) so the tripwire tightens behind the fix.
 
 - **Dual-path parity test (hardcoded WGSL vs OntoMath AST path)** — (from [Green_Hills_Population_One §3](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/Green_Hills_Population_One.md), … → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Dual_path_parity_test_hardcoded_WGSL_vs_OntoMath_AST_path/Dual_path_parity_test_hardcoded_WGSL_vs_OntoMath_AST_path.md)
 
-- **Ray-domain transport native checkpoint** — §6dr accepts bounded canonical routed correctness; profile the actual kernels, then test one terminal-S1 consumer representation before qualifying complete native economics. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md)
+- **Ray-domain transport native checkpoint** — §6dq repairs structural routing and withdraws incomplete transport qualification; reconnect canonical consumer/authored optics/Current fallback, then recheck accuracy and complete native costs. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md)
 
 - ⚑ AUTHOR — **`Physics::updateBodies` is all-pairs with no broadphase, and the legacy engine is on by default** — Measured on an idle machine: `Zone::update` costs 1.1 / 3.3 / 11.1 / 40.7 ms at 64 / 128 / 256 / 512 objects — a fitted `n^1.75`, i.e. → [full task](Specific%20Tasks/Performance%20and%20Runtime/Physics_updateBodies_is_all_pairs_with_no_broadphase_and_the/Physics_updateBodies_is_all_pairs_with_no_broadphase_and_the.md)
 - **The chess frame is slightly over budget, and that is all.** 35 objects, 36 laws: the
