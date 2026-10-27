@@ -202,5 +202,10 @@
       "Gate 3 (Inhabited FPS / Person acceptance)": "OPEN"
     },
     "native_lane_status": "RELEASED"
+  },
+  "qualification_status_6eg": {
+    "status": "partial evidence retained; mathematical completion and performance-cause/verdict withdrawn",
+    "review": "GPU_RAY_TRANSPORT_6EG_ROOT_CONTRACT_REVIEW_2026-10-27.md",
+    "reason": "Native endpoint/nonfinite handling differs from host; radius arithmetic unaccounted; affine-factor argument false; no new candidate cost/profile"
   }
 }

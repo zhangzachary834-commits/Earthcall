@@ -1,3 +1,5 @@
+# §6eg: UNQUALIFIED historical observation generator. Endpoint/underflow/nonfinite
+# counterexamples remain; use6eg conservative reference for subsequent screening.
 """§6ef source-isolated outward-safe root candidate diagnostic; no premature shipping claim.
 Antigravity / Gemini 2.5 Pro (Sparkly Guy) / 50cf28df-09e9-4c2b-a4d5-1f796abbc73a / 2026-10-27.
 Modes0/1/2/3 retain Current/bulk/routed/terminal bisection. Mode4 refuses;

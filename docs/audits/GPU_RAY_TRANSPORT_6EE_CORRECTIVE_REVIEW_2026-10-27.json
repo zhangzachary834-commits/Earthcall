@@ -5423,7 +5423,7 @@
     "scratch/probes/ray_transport_gpu_6ec_review_replay.py": "7c49b31e6427aacba92af9deec03bc7b8b85b312815c40aef555b4d009cf24b3",
     "scratch/probes/ray_transport_gpu_6ed_guarded_root_probe.py": "848595365bc4e603ba0b974f8f40a2bc5642ba7418daa6736c230267eb898fd3",
     "scratch/probes/ray_transport_gpu_6ee_isolated_root_probe.py": "1dee2b65eade87bb88b1f2307347e660500588df07dd418a549ea33b0dc44d50",
-    "scratch/probes/ray_transport_gpu_6ee_review_replay.py": "f389904f9167a2f49ad18b8eae9a86b9c36b93403d2e20effe525e260a683a6c",
+    "scratch/probes/ray_transport_gpu_6ee_review_replay.py": "fa324b8e2e4a9a398ab560fef4e8475b5239b369439896a1f3cbf484e4b97ce5",
     "scratch/probes/ray_transport_gpu_census_review.py": "44fe649c96d463648552f0271f82070e7d41f825b5aa834f0f0b8af99a6d8955",
     "scratch/probes/ray_transport_gpu_clock_lifecycle.py": "a5d68c060fa7ad0f23998cdd32e332902f007739a7bf3471f3672bc5577f0fe2",
     "scratch/probes/ray_transport_gpu_connected_metal.py": "6d6d707a551a3e454b26b40b6011356ddddb7d0e5cc54a39aea6b2dbf065d7eb",
@@ -5504,5 +5504,9 @@
     "scratch/probes/ray_transport_wide_capture.py": "6fbe0967e44315c83c5b72afbccbf95e69f0cebae6e4b552e2db21d1f193328a",
     "scratch/probes/ray_transport_wide_evidence.py": "7afd0f8a0e6da37b7a7fc8a27add288b2889b095bf8ba14421695bd25ac30417"
   },
-  "archive_sha256": "7e3d9ba864999b9bc80fd05f147d022871afa92e6c8e07691af7379a5f67a76a"
+  "archive_sha256": "7e3d9ba864999b9bc80fd05f147d022871afa92e6c8e07691af7379a5f67a76a",
+  "replay_maintenance_6eg": {
+    "reason": "Historical host source is loaded verbatim from aaac44267 only when the mutable public witness differs, then validated against its original digest; native source/evidence unchanged.",
+    "signature": "Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-10-27"
+  }
 }

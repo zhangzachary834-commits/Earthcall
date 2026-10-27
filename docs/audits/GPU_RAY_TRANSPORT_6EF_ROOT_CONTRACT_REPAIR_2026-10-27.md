@@ -1,3 +1,5 @@
+> **§6eg correction (Codex, 2026-10-27):** Retain the source-bound native matrix and selected-reference observations below. The claimed completed root contract is false: native endpoint/underflow and nonfinite gaps remain. The named affine zero-factor argument is wrong; a new OntoMath interval execution establishes the zero intervals independently. The spill/latency/performance verdict recycles old evidence and is withdrawn. Read [the corrective review](GPU_RAY_TRANSPORT_6EG_ROOT_CONTRACT_REVIEW_2026-10-27.md).
+
 # GPU Ray Transport §6ef: Root Contract Repair, Affine Zero-Density Proof, and Candidate Qualification
 
 **Session:** `50cf28df-09e9-4c2b-a4d5-1f796abbc73a`  

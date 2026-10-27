@@ -1,7 +1,7 @@
 """§6ee source-isolated review replay; saved native evidence, no new GPU timing.
 Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-10-27.
 """
-import argparse,hashlib,importlib.util,json,math,re,struct,zipfile
+import argparse,hashlib,importlib.util,json,math,re,struct,subprocess,zipfile
 from pathlib import Path
 
 def sha(data):return hashlib.sha256(data).hexdigest()
@@ -58,7 +58,13 @@ def analyze(root,data,rays,refs,baseline,before,bindings):
 
 def replay(root,index,archive,donor):
     meta=json.loads(index.read_text());need(sha(archive.read_bytes())==meta['archive_sha256'],'archive drift');need(sha(donor.read_bytes())==meta['donor_archive_sha256'],'donor drift')
-    for name,h in meta['source_sha256'].items():need(sha((root/name).read_bytes())==h,'source drift: '+name)
+    historical_host=None
+    for name,h in meta['source_sha256'].items():
+        data=(root/name).read_bytes()
+        if sha(data)!=h and name=='scratch/probes/ray_transport_root_witness.py':
+            data=subprocess.check_output(['git','show','aaac44267:'+name],cwd=root)
+            historical_host=data
+        need(sha(data)==h,'source drift: '+name)
     with zipfile.ZipFile(archive) as z,zipfile.ZipFile(donor) as dz:
         need(set(z.namelist())==set(meta['artifacts']),'archive membership')
         def read(name):
@@ -75,7 +81,10 @@ def replay(root,index,archive,donor):
         refs=json.loads(dz.read('fixture/reference.json'));rays=json.loads(dz.read('fixture/rays.json'));original=json.loads(dz.read('benchmark/second.json'));baseline=json.loads(read('fresh/baseline.json'))
         analysis=analyze(root,restored['fresh'],rays,refs,baseline,original['schedule_census_inputs'],original['guarded_sliver_policy']['curtain_bindings'])
         need(analysis==json.loads(read('analysis/native.json')),'analysis drift')
-        host=load(root,'ray_transport_root_witness').evaluate_suite();need(json.loads(json.dumps(host))==json.loads(read('analysis/cpu.json')),'host witness drift');need(host['checks_pass'] and not host['mathematical_qualification'],'host scope drift')
+        if historical_host is not None:
+            namespace={'__name__':'source_bound_6ee_host'};exec(compile(historical_host,'source_bound_6ee_host','exec'),namespace);host=namespace['evaluate_suite']()
+        else:host=load(root,'ray_transport_root_witness').evaluate_suite()
+        need(json.loads(json.dumps(host))==json.loads(read('analysis/cpu.json')),'host witness drift');need(host['checks_pass'] and not host['mathematical_qualification'],'host scope drift')
         legacy=restored['legacy-matrix'];need(len(legacy['cases'])==30 and all(c['output_differences']==0 and c['packet_differences'] in [0,None] for c in legacy['cases']),'legacy self-comparison observation drift')
         old=load(root,'ray_transport_gpu_6dv_review_replay').verify_timing(restored['legacy-clean-timing']['clean_timing_series'])
         published=json.loads(read('legacy/published.json'));need(published['clean_timing_series']==restored['legacy-clean-timing']['clean_timing_series'],'legacy timing provenance differs')

@@ -1,3 +1,6 @@
+# §6eg review: finite HOST model only. The rounded radius may underflow or
+# underestimate the real radius; the GPU endpoint/NaN paths differ from this
+# host model. See the6eg audit and native helper witnesses before qualification.
 """§6ef operation-rounded HOST oracle witnesses & outward-safe root contract repair.
 Antigravity / Gemini 2.5 Pro (Sparkly Guy) / 50cf28df-09e9-4c2b-a4d5-1f796abbc73a / 2026-10-27.
 The SBI strategy is evaluated under rigorous outward-safe band bounds for IEEE 754 f32.
@@ -148,12 +151,21 @@ def evaluate_suite():
 
     legacy_detected = all(not contains(v, (true_root, true_root)) for v in legacy_gap.values())
     repaired_enclosed = all(contains(v, (true_root, true_root)) for v in repaired_gap.values())
+    # Mathematical proof obligation at the *radius computation*, independently
+    # of outward rounding of the final addition/subtraction.
+    from fractions import Fraction
+    radius=div(mul(2,1.0),25.0);center=radius
+    exact_lower=Fraction.from_float(center)-Fraction(2,25)
+    low=safe_l(center,radius)
+    underflow=isolate('sbi',lambda x:4*x,to_f32(-.0001),to_f32(.0001),to_f32(-.0004),to_f32(.0004),2**-149,4,outward_safe=True)
+    remaining={'radius_underflow':{'result':underflow,'ideal_root':-2**-152,'miss_detected':not contains(underflow,(-2**-152,-2**-152))},'rounded_nonzero_radius':{'error':1.,'min_slope':25.,'center':center,'rounded_radius':radius,'computed_lower':low,'exact_required_lower':float(exact_lower),'inward_gap_detected':Fraction.from_float(low)>exact_lower},'native_host_path_mismatch':'Native6ef endpoints are nearest-rounded and nonfinite evalPhi does not set reason4; see native6eg readback'}
     positive = all(r['both_enclose_without_padding'] for r in rows)
 
     return {
       'scope': 'finite operation-rounded HOST model with outward-safe IEEE 754 float32 band bounds; not a device execution proof',
-      'checks_pass': positive and repaired_enclosed and legacy_detected and budget['reason'] == 1 and budget['evals'] == 0 and nan_res['reason'] == 4 and nan_res['evals'] == 1,
+      'checks_pass': remaining['radius_underflow']['miss_detected'] and remaining['rounded_nonzero_radius']['inward_gap_detected'] and positive and repaired_enclosed and legacy_detected and budget['reason'] == 1 and budget['evals'] == 0 and nan_res['reason'] == 4 and nan_res['evals'] == 1,
       'mathematical_qualification': False,
+      'remaining_contract_gaps': remaining,
       'cases': rows,
       'budget_refusal': budget,
       'nan_refusal': nan_res,
@@ -171,6 +183,7 @@ def run_witness_suite():
     print(json.dumps({
       'host_checks_pass': d['checks_pass'],
       'mathematical_qualification': False,
+      'remaining_contract_gaps': remaining,
       'legacy_nearest_rounding_gap_detected': d['shared_nearest_rounding_gap']['legacy_miss_detected'],
       'repaired_outward_safe_enclosure': d['shared_nearest_rounding_gap']['repaired_enclosed_without_padding']
     }))
