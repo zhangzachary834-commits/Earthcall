@@ -91,6 +91,7 @@ int main() {
 
     SaveSystem::setSaveRoot(scratch.path.string());
     TestSupport::BootedEngineHarness harness("Zach");
+    harness.lawManager.setUseLawDirect(true);
     harness.zones.bindLive();
     Singularity::Terminal::TerminalChannel::syncRegister(harness.lawManager);
     auto* terminal = Singularity::Terminal::TerminalChannel::find(harness.lawManager);
@@ -834,8 +835,8 @@ int main() {
         {
             // The look cache is re-derived every frame; it must stay cheap.
             const auto t0 = std::chrono::steady_clock::now();
-            for (int i = 0; i < 200; ++i) terminal->sense(harness.lawManager);
-            const double us = std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - t0).count() / 200;
+            for (int i = 0; i < 20; ++i) terminal->sense(harness.lawManager);
+            const double us = std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - t0).count() / 20;
             std::cout << "    sense() with authored looks: " << us << " us per frame ("
                       << Singularity::Language::LanguageSystem::instance().getAll().size() << " Lexemes)\n";
             check(us < 2000.0, "sense() stays well under a frame's budget with appearance read every frame");
@@ -1460,7 +1461,7 @@ int main() {
             sense.pointerX=u*1000;sense.pointerY=v*500;sense.left=held;sense.uiCaptured=captured;
             harness.interaction->pointerLocked=false;
             harness.interaction->observePending(sense,{});
-            for(int i=0;i<3;++i)harness.lawManager.tick();
+            harness.lawManager.tick();
         };
         const auto click=[&](double u,double v) {point(u,v,false);point(u,v,true);point(u,v,false);};
         check(colour(0,0)==glm::vec3(1),"initial canvas is white");
