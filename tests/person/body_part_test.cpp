@@ -391,6 +391,37 @@ static void testBootedHarnessExposesConstitutionRelations() {
         }
     }
     assert(foundConstitutionEdge);
+
+    // The indexed endpoint provider must agree with the complete graph provider.
+    // Checking only relationsInvolving would miss a partial harness installation.
+    const auto allEdges = Universe::instance().relations();
+    assert(std::find(allEdges.begin(), allEdges.end(),
+                     *std::find_if(edges.begin(), edges.end(), [part, primaryObj](Relation* rel) {
+                         return rel && rel->type == BodyPart::kConstitutedByType &&
+                                rel->a() == part && rel->b() == primaryObj;
+                     })) != allEdges.end());
+
+    // A new body part must become visible without re-installing any provider.
+    // The relation-generation stamp must change so cached graph consumers
+    // notice the additional constitution edge.
+    const std::size_t generationBefore = Universe::instance().relationGeneration();
+    auto secondPart = std::make_unique<BodyPart>(
+        "LeftHand", BodyPart::Type::Hand, ObjectTypes::ShapeKind::Cube, glm::vec3(1.0f));
+    BodyPart* second = secondPart.get();
+    harness.player.getBody().addPart(second);
+    assert(Universe::instance().relationGeneration() != generationBefore);
+    Object* secondObject = second->getPrimaryObject();
+    assert(secondObject != nullptr);
+    std::vector<Relation*> secondEdges;
+    assert(Universe::instance().relationsInvolving(*secondObject, secondEdges));
+    const auto isSecondConstitution = [second, secondObject](Relation* rel) {
+        return rel && rel->type == BodyPart::kConstitutedByType &&
+               rel->a() == second && rel->b() == secondObject;
+    };
+    assert(std::count_if(secondEdges.begin(), secondEdges.end(), isSecondConstitution) == 1);
+    const auto allEdgesAfter = Universe::instance().relations();
+    assert(std::count_if(allEdgesAfter.begin(), allEdgesAfter.end(), isSecondConstitution) == 1);
+
     std::cout << "  testBootedHarnessExposesConstitutionRelations OK\n";
 }
 
