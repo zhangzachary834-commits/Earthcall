@@ -72,12 +72,63 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
+    // Isolate save root in a sandbox containing only target world and zone data
+    // so hydrateFromZoneStore doesn't scan and hydrate all 50+ unrelated zones.
+    const auto absWorldPath = std::filesystem::absolute(world);
+    const auto savesDir = absWorldPath.parent_path().parent_path();
+    const auto sandbox = std::filesystem::temp_directory_path() /
+        ("earthcall_slow_adapter_perf_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+
+    std::error_code ec;
+    std::filesystem::create_directories(sandbox / "worlds", ec);
+    std::filesystem::create_directories(sandbox / "zones", ec);
+    std::filesystem::create_directories(sandbox / "laws", ec);
+    std::filesystem::create_directories(sandbox / "materials", ec);
+    std::filesystem::create_directories(sandbox / "homes", ec);
+
+    std::filesystem::copy_file(absWorldPath, sandbox / "worlds" / absWorldPath.filename(), ec);
+
+    if (std::filesystem::exists(savesDir / "laws", ec)) {
+        std::filesystem::copy(savesDir / "laws", sandbox / "laws", std::filesystem::copy_options::recursive, ec);
+    }
+    if (std::filesystem::exists(savesDir / "materials", ec)) {
+        std::filesystem::copy(savesDir / "materials", sandbox / "materials", std::filesystem::copy_options::recursive, ec);
+    }
+    if (std::filesystem::exists(savesDir / "homes", ec)) {
+        std::filesystem::copy(savesDir / "homes", sandbox / "homes", std::filesystem::copy_options::recursive, ec);
+    }
+
+    const std::string stem = absWorldPath.stem().string();
+    std::string targetZone = "Chess";
+    if (stem == "basic_pixel_changer") targetZone = "BasicPixelChanger";
+    else if (stem == "noise_floor") targetZone = "Noise Floor";
+
+    if (std::filesystem::exists(savesDir / "zones" / targetZone, ec)) {
+        std::filesystem::copy(savesDir / "zones" / targetZone, sandbox / "zones" / targetZone, std::filesystem::copy_options::recursive, ec);
+    } else if (std::filesystem::exists(savesDir / "zones", ec)) {
+        for (const auto& entry : std::filesystem::directory_iterator(savesDir / "zones", ec)) {
+            if (entry.is_directory()) {
+                std::filesystem::copy(entry.path(), sandbox / "zones" / entry.path().filename(), std::filesystem::copy_options::recursive, ec);
+            }
+        }
+    }
+
+    struct SandboxGuard {
+        std::filesystem::path path;
+        ~SandboxGuard() {
+            SaveSystem::setSaveRoot("");
+            std::error_code ignore;
+            std::filesystem::remove_all(path, ignore);
+        }
+    } sandboxGuard{sandbox};
+
+    SaveSystem::setSaveRoot(sandbox.string());
+    const std::string sandboxWorldPath = (sandbox / "worlds" / absWorldPath.filename()).string();
+
     TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(sandboxWorldPath);
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
