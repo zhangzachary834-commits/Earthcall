@@ -2276,7 +2276,7 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
             // evaluate. Rete owns the copy because the EventBus publisher may
             // already have returned; participant aliases remain compatible.
             const Event* occurrence = nullptr;
-            // Activation already carries the law identifier; do not materialize it again.
+            // Pre-cached activation.lawId avoids virtual getIdentifier() heap string allocation
             const auto& triggers = triggersOf(activation.lawId);
             for (const auto& fact : activation.token.facts) {
                 if (fact && fact->occurrence &&
