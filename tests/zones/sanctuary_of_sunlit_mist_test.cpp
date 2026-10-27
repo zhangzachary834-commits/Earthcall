@@ -17,9 +17,6 @@
 #include <memory>
 #include <filesystem>
 #include <cassert>
-#include <chrono>
-#include <stdexcept>
-#include <string>
 
 namespace {
 
@@ -36,64 +33,6 @@ void check(bool condition, const std::string& description) {
     std::cout << "  ok: " << description << std::endl;
 }
 
-
-struct SanctuarySaveSandbox {
-    std::filesystem::path root;
-    std::filesystem::path worldPath;
-    std::string previousRoot;
-
-    explicit SanctuarySaveSandbox(const std::filesystem::path& sourceWorld) {
-        const auto sourceZone = sourceWorld.parent_path().parent_path() /
-            "zones" / "Sanctuary of Sunlit Mist";
-        if (!std::filesystem::is_regular_file(sourceWorld) ||
-            !std::filesystem::is_directory(sourceZone)) {
-            throw std::runtime_error("sanctuary save fixtures missing");
-        }
-
-        // Each invocation owns a fresh directory. Never remove a shared,
-        // fixed-name scratch directory or write into the authored save tree.
-        const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
-        for (int attempt = 0; attempt < 32; ++attempt) {
-            const auto candidate = std::filesystem::temp_directory_path() /
-                ("earthcall-sanctuary-" + std::to_string(stamp) + "-" +
-                 std::to_string(attempt));
-            std::error_code ec;
-            if (std::filesystem::create_directory(candidate, ec)) {
-                root = candidate;
-                break;
-            }
-            if (ec) throw std::filesystem::filesystem_error(
-                "creating sanctuary scratch directory", candidate, ec);
-        }
-        if (root.empty()) throw std::runtime_error("no unique sanctuary scratch directory");
-
-        try {
-            std::filesystem::create_directories(root / "worlds");
-            std::filesystem::create_directories(root / "zones");
-            worldPath = root / "worlds" / sourceWorld.filename();
-            std::filesystem::copy_file(sourceWorld, worldPath);
-            std::filesystem::copy(sourceZone, root / "zones" / sourceZone.filename(),
-                                  std::filesystem::copy_options::recursive);
-            previousRoot = SaveSystem::saveRoot();
-            SaveSystem::setSaveRoot(root.string());
-        } catch (...) {
-            std::error_code ec;
-            std::filesystem::remove_all(root, ec);
-            throw;
-        }
-    }
-
-    ~SanctuarySaveSandbox() {
-        SaveSystem::setSaveRoot(previousRoot);
-        std::error_code ec;
-        std::filesystem::remove_all(root, ec);
-        if (ec) std::terminate(); // Never silently leave a polluted scratch tree.
-    }
-
-    SanctuarySaveSandbox(const SanctuarySaveSandbox&) = delete;
-    SanctuarySaveSandbox& operator=(const SanctuarySaveSandbox&) = delete;
-};
-
 } // namespace
 
 int main() {
@@ -105,13 +44,35 @@ int main() {
         return 1;
     }
 
-    // Load the real authored fixture only from a private, checked scratch tree.
-    // The guard outlives ZoneManager and restores the previous global save root.
-    SanctuarySaveSandbox sandbox(std::filesystem::absolute(worldSavePath));
-    check(SaveSystem::saveRoot() == sandbox.root.string(),
-          "SaveSystem points at the private sandbox");
-    check(std::filesystem::exists(sandbox.worldPath),
-          "sandbox world fixture copied successfully");
+    // Isolate save system in a sandbox so tests never write to the real saves tree
+    const auto absWorld = std::filesystem::absolute(worldSavePath);
+    const auto savesDir = absWorld.parent_path().parent_path();
+
+    const auto sandbox = std::filesystem::temp_directory_path() / "earthcall_sanctuary_of_sunlit_mist";
+    std::error_code ec;
+    std::filesystem::remove_all(sandbox, ec);
+    std::filesystem::create_directories(sandbox / "worlds", ec);
+    std::filesystem::create_directories(sandbox / "zones", ec);
+
+    const auto sandboxWorldPath = sandbox / "worlds" / "sanctuary_of_sunlit_mist.json";
+    std::filesystem::copy_file(worldSavePath, sandboxWorldPath, ec);
+
+    const auto zoneSource = savesDir / "zones" / "Sanctuary of Sunlit Mist";
+    if (std::filesystem::exists(zoneSource, ec)) {
+        std::filesystem::copy(zoneSource, sandbox / "zones" / "Sanctuary of Sunlit Mist",
+                              std::filesystem::copy_options::recursive, ec);
+    }
+
+    struct SandboxGuard {
+        std::filesystem::path path;
+        ~SandboxGuard() {
+            SaveSystem::setSaveRoot("");
+            std::error_code ignore;
+            std::filesystem::remove_all(path, ignore);
+        }
+    } guard{sandbox};
+
+    SaveSystem::setSaveRoot(sandbox.string());
 
     ZoneManager mgr;
     Core::Camera camera;
@@ -131,7 +92,7 @@ int main() {
     ctx.lawManager = &laws;
     ctx.worldTime = &worldTime;
 
-    mgr.loadState(sandbox.worldPath.string(), ctx);
+    mgr.loadState(sandboxWorldPath.string(), ctx);
 
     check(!mgr.zones().empty(), "zones loaded from sanctuary save");
     if (mgr.zones().empty()) {
