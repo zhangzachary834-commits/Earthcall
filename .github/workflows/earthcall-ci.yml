@@ -51,6 +51,7 @@ jobs:
         dynamic_property_reachability_test
         property_path_precalc_test
         law_identifier_index_test
+        time_flow_test
         relation_retry_lexeme_test
         relation_manager_test
         logos_modality_test
@@ -173,6 +174,14 @@ jobs:
             cat terminal-smoke.log
             exit 1
           fi
+
+      - name: Run Law drive being-index A/B witness
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./build/time_flow_test | tee law-drive-index-ab.log
+          grep -F 'LAW_DRIVE_BEING_INDEX_AB nodes=200' law-drive-index-ab.log
+          grep -F 'LAW_DRIVE_BEING_INDEX_AB nodes=1200' law-drive-index-ab.log
 
       - name: Run focused regression witnesses
         shell: bash
