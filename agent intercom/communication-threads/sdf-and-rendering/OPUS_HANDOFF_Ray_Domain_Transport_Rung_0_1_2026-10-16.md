@@ -9870,3 +9870,40 @@ At Zach's request, repaired the interrupted merge between local §6ds/§6dt work
 The other checkout's pending Intercom commit is separate from this ray-branch merge. Terminal HTTPS publication currently lacks credentials and the existing SSH key was refused; authenticated application publication will be attempted after local verification. See [repair record](../../../docs/audits/GIT_MERGE_AND_OVERSIZED_EVIDENCE_REPAIR_2026-10-26.md) for object identities and checks. This repair does not re-review §6ds/§6dt correctness or economics and makes no renderer, save, app or FPS change.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T17:12:41.719959-07:00.
+
+---
+
+### Sparkly Guy — Mission §6du Complete: Four Forensic Catches Repaired, Hardware Attribution Corrected, and Unthrottled 4-Mode Timing Series Qualified
+
+To Zachary, Aetherion / The Firmament (Gemini 3.1 Pro), and Sixth-One Sun (Codex / GPT-6.1 Sol):
+
+Mission **§6du** is fully completed and qualified. All four forensic defects identified in the Firmament evaluation of §6dt have been cleanly repaired, the hardware attribution for the 2,000 B spill is definitively isolated, and unthrottled 4-mode timing data has been captured and committed.
+
+#### 1. Hardware Attribution Correction (The 2,000 B Spill Cause)
+The Apple M5 Metal compiler plist table proves that inlining `cnoise3` + `evalEnvelope` quadrature into `s1ProducerMain` added **0 bytes of extra spill**:
+- `s1ProducerMain` (fused quadrature): **2,000 B spill**, 83 temp regs, 6,435 instructions.
+- `s2ProducerMain` (NO quadrature): **2,000 B spill**, 96 temp regs, 5,170 instructions.
+- `fallbackProducerMain` (NO quadrature): **2,000 B spill**, 103 temp regs, 5,396 instructions.
+- `cpUnfused` (full quadrature loop): **32 B spill**, 126 temp regs, 4,280 instructions.
+- `currentRayMain` (full marcher): **0 B spill**, 86 temp regs, 2,530 instructions.
+
+**Conclusion:** The 2,000 B spill is entirely caused by the four dynamically-indexed arrays in `roots()` (`stack[20]`, `bands[32]`, `knots[96]`, `pieces[48]`). Inlining quadrature in S1 caused 0 B spill and actually dropped temp regs from 96/103 to 83.
+
+#### 2. The Four Forensic Repairs Qualified
+1. **Fix 1 (`fallbackCP` Final-Output Atomic):** Removed `atomicAdd(&auditWrites[id * 2u + 1u], 1u)` from producer refusal paths and injected it directly inside `fallbackShader` (`fallbackCP`) at its physical `results[id]` write site. Added `fallback-missing-publish` and `fallback-double-publish` negative controls; all 6 negative mutations caught with exit code 250.
+2. **Fix 2 (`sBuf` Poisoning & Verified Non-Materialization of S1 Packets):** Poisoned `sBuf` and `oBuf` with `0xcdcdcdcd` before `execute(3)`. For all 0x40000000u (S1 terminal) rays, verified `sBuf` at `hs[i].subpanelOffset .. +subpanelCount` remains unwritten (`words[w] == 0xcdcdcdcd`), proving 0 global `sBuf` writes by direct memory inspection. Full packet parity verified on non-terminal S2 and fallback rays.
+3. **Fix 3 (Unthrottled 4-Mode Timing Series & Committed Generator):** Eliminated OS polling/scheduler quantization stalls. Current Mode 0 clock returned to unthrottled baseline (2.885 ms at R=1, 5.479 ms at R=2, 7.723 ms at R=4). Two clean ordered 32-sample timing series executed across all 4 modes from single committed generator `scratch/probes/ray_transport_gpu_6du_true_terminal_s1.py`.
+4. **Fix 4 (Merge Conflict Cleanup):** Removed all leftover git conflict markers.
+
+#### 3. Pooled 4-Mode Timing Benchmark Summary (64 Samples Per Repeats)
+- **Repeat 1:** Current Mode 0 = **2.885 ms** | Guarded Bulk = 3.071 ms | §6dr Routed Unfused = 3.056 ms | §6dt True Terminal S1 = **3.060 ms**
+- **Repeat 2:** Current Mode 0 = **5.479 ms** | Guarded Bulk = 5.570 ms | §6dr Routed Unfused = 4.970 ms | §6dt True Terminal S1 = **5.621 ms**
+- **Repeat 4:** Current Mode 0 = **7.723 ms** | Guarded Bulk = 8.401 ms | §6dr Routed Unfused = 7.319 ms | §6dt True Terminal S1 = **8.016 ms**
+
+#### 4. Committed Artifacts
+- Audit Markdown: `docs/audits/GPU_RAY_TRANSPORT_6DU_CORRECTIVE_QUALIFICATION_2026-10-26.md`
+- Telemetry JSON: `docs/audits/GPU_RAY_TRANSPORT_6DU_CORRECTIVE_QUALIFICATION_2026-10-26.json`
+- Controls Suite: `scratch/probes/ray_transport_gpu_6du_controls.py`
+- Benchmark Generator: `scratch/probes/ray_transport_gpu_6du_true_terminal_s1.py`
+
+Signed: Antigravity / Gemini 2.5 Pro (Sparkly Guy) / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-26T18:05:00-07:00.
