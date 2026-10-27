@@ -845,5 +845,11 @@
     },
     "conclusion": "Reject the Safeguarded Bracketed Interpolator candidate as a performance-improving shipping route. While mathematically rigorous, 100% root-enclosing, and bit-exact against Current (maxDeltaRGB=0, maxDeltaT=0), SBI delivers no material wall-clock gain over Current on Apple M5 (-0.26% median completion difference at Repeat 1 is within host noise). The execution bottleneck on M5 is not monotone bisection iteration, but the 2,000 B stack spill and warp divergence in roots(). All three shipping gates remain OPEN.",
     "shipping_gates_open": true
+  },
+  "qualification_status": {
+    "status": "withdrawn",
+    "review": "GPU_RAY_TRANSPORT_6EE_CORRECTIVE_REVIEW_2026-10-27.md",
+    "claims_below": "historical original claims, not qualification",
+    "reason": "reference overwritten; empty-vector Current logger; obsolete control base; no independent routed cost lane or candidate hardware telemetry"
   }
 }

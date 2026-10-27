@@ -507,3 +507,6 @@ Original32,784-query packet/output/reference/affine qualification replays;30 fre
 
 
 **§6ec — strict logical-demand census retained:** [Corrected observer admission,60 fresh cases/4 negatives, raw replay and §6ed guarded root-refinement assignment](../../../../../audits/GPU_RAY_TRANSPORT_6EC_CENSUS_REVIEW_2026-10-27.md). General caching is deprioritized; a bracketed-interpolation candidate must first preserve the existing noisy-f32 root enclosure and demonstrate current-or-better complete RGB/T accuracy. All3shipping gates remain open; no renderer/FPS change. Signed: Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T11:12:52.684730-07:00.
+
+
+**§6ee — SBI qualification withdrawn and independently observed:** [Source isolation,60 strict controls/30 candidate observations, native safety/strict negatives and §6ef root-enclosure quest](../../../../../audits/GPU_RAY_TRANSPORT_6EE_CORRECTIVE_REVIEW_2026-10-27.md). Candidate selected accuracy beats Current at both reference resolutions, but shared rounding and3 missing protected endpoints remain unresolved; no mathematical, cost or shipping admission. All3shipping gates OPEN; no engine/default/save/app/Person-visible change; existing Person checks stay open. Native lane RELEASED. Signed: Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T12:48:00-07:00.

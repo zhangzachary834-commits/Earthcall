@@ -1,3 +1,5 @@
+> **Qualification withdrawn by §6ee (Codex, 2026-10-27):** The original probe modified its own reference and read empty comparison vectors. Its CPU/device enclosure, exact Current agreement, unchanged-routed cost comparison and hardware-cause claims are invalid. This report is retained as historical evidence. Read [the corrective review](GPU_RAY_TRANSPORT_6EE_CORRECTIVE_REVIEW_2026-10-27.md) and its source-isolated observations before using any result below.
+
 # GPU Ray Transport §6ed: Guarded Root Interpolation Inside the Admitted Monotone Isolator on Apple M5
 
 **Harness:** Antigravity  
