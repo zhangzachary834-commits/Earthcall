@@ -1,0 +1,157 @@
+{
+  "schema": "6ep-reference-binding-reuse-1",
+  "signed_by": "Codex / GPT-6.1 Sol / Sixth-One Sun / 01a148a7-bd85-7550-a416-0e859a729c1a",
+  "timestamp": "2026-10-28T08:14:24.895430-07:00",
+  "scope": "CPU reference allocation reuse, exact canonical parity and bounded cost/scaling observations; no new population coverage or GPU/frame acceptance",
+  "archive_sha256": "764929dc918c56e73f396e09cf27f046fd102c1afbc1752127572839e3079c42",
+  "members_sha256": {
+    "selection.json": "cefe0463b827cc0e9dcd8fdcc1cbf4995dc8d92df0627f7d2530f73d4b3f19c8",
+    "inputs/continuity-rays.json": "7a1c754c4f851b325b40100af39e3dcf3478cd94dac4c9d07cd320677adf8328",
+    "inputs/continuity-canonical.json": "2880db88ea37b8982df5aae102b13be0c435f2b70f6b5250bb07166fdb1515ac",
+    "inputs/stress-rays.json": "aec8b6bdae5b147732985f18961c586726fda0c4bdb55b8358a6889e4317d501",
+    "inputs/stress-canonical.json": "287a70a58e6f623b5eb3211cde29ed750e2b51c60739cd284cc3813f055bddbd",
+    "inputs/pilot256-rays.json": "3d935aff72405fdcb1b175a6a4903e272f1f0d65e1aa8d20e4b429bf83f6db9b",
+    "inputs/pilot256-canonical.json": "21e645e450aa7c4fcdb7cc5e86d0233ccd645ad1751a58b2ee92bb836c0b0dbb",
+    "inputs/cost1024-rays.json": "6cd5703cf334a3665d4ab6a240e1ee78ca2d95e3cad4c16746e5e53e7c47f838",
+    "inputs/cost1024-canonical.json": "f724b291e6cd65f174c504e5ffc6ea10bd372941c0b189e4f94d9a6c75ee0282",
+    "runs/hoist-continuity-4-reference.json": "8555726355554688075ab6220a11e417567d0c96421653338d6e07c122c6086b",
+    "runs/hoist-continuity-4-receipt.json": "7de1c0a1de76b465ef31d267eb451406ad225e86c55856dcd590e356de072096",
+    "runs/hoist-continuity-4.log": "fad96cdc17f65bdb3233904fa842682f69ba824c2b7bb1ee1aaf987392e7c7fb",
+    "runs/hoist-stress-4-reference.json": "ab278debbafbcfed401f89b7dc5f88c23c1e11b8150ef80e57b5e34ef252bbdf",
+    "runs/hoist-stress-4-receipt.json": "594b3a3b1d7ce60f0dc49d05a13e431a62604bf2e9c40ed3fff9cdeaafad3b37",
+    "runs/hoist-stress-4.log": "7a372dee64b77b1d722cc833dc0abf7482f4179642d1c52d8417405b4241e746",
+    "runs/hoist-pilot256-4-reference.json": "a648a18e9a5785f52f932dcd8d76a0286edfb346525eac9213d74502602d619f",
+    "runs/hoist-pilot256-4-receipt.json": "af5fe19619d9494eb39337c87a010893c0fdf301715ea1b2725dd218c91a2220",
+    "runs/hoist-pilot256-4.log": "829a2cd62ddf6f28bb7096c7d50d150c5420e8dc595e03b37f49fea2eefe737c",
+    "runs/canonical-pilot256-4-reference.json": "a648a18e9a5785f52f932dcd8d76a0286edfb346525eac9213d74502602d619f",
+    "runs/canonical-pilot256-4-receipt.json": "20dbd836d6d99f08697400310caadf0ebdcbb98cde9d763e016b70419b477445",
+    "runs/canonical-pilot256-4.log": "beb1902ff6c15d5413267d8a6bdeff5fce06c9827b82707b8825db0da69affb2",
+    "runs/hoist-cost1024-4-reference.json": "978b41b353167fbae9d0c00cf503559ceceb6350148b89e94b3d1085415beba7",
+    "runs/hoist-cost1024-4-receipt.json": "30fef337bf4277e47f2df754eccd776b4a918f556ee0960edb52f782c2a36a22",
+    "runs/hoist-cost1024-4.log": "a062e9329579ac3625406fb540c911f8e38bfaaf0cf20846f712b37371e54c5d",
+    "runs/hoist-cost1024-8-reference.json": "978b41b353167fbae9d0c00cf503559ceceb6350148b89e94b3d1085415beba7",
+    "runs/hoist-cost1024-8-receipt.json": "2c574a5e8c3037565a8766706df7a8e7cdb958c947bf277c34c9df3fe7ebc79b",
+    "runs/hoist-cost1024-8.log": "338e3cf3706260428621d4f1c2d9db303605d86eaa222b7f1f9989f4c52e5fdd",
+    "build/canonical-source.json": "09b36d4420aac8514bedda1e862a46c48e7b41ff40b7ffca232c15b22233a9b2",
+    "build/derived-source.json": "b5f495998b11add5b4f39d437f25fc7740908a70148d3c87c9ea88a6a8948537",
+    "source/derived-reference.cpp": "4aa1fd5fe79ac60f1ad2db7950b1413631bb2410a341ba8fe9ff859293f23930",
+    "source/ray_transport_6ep_reference_bindings.py": "4adbff7f4b725b7c3a703d6fa08c3826706adedfdcfd863365851474b8c52b82",
+    "source/ray_transport_6ep_reference_derivation.py": "d5e2b6812c85d467f659976e033a00745915c96b94384e2e01256d688e95a24e",
+    "source/ray_transport_6ep_replay.py": "3c2cdd9dc5451ab38aff71f7720bfdb80996e51255aaa2f73d3df32df90c5cbe",
+    "source/sonnet_oracle_capture_gate.py": "d5a2aad5a00028e4519d7392445f3e9135b051c88e05e9f5eda8bd36886ccbed",
+    "source/veil_projected_reference.cpp": "bdcdd79eb7408b45cc48346010d6584e2d4cdedbf974ae25b5302148fa443b1f",
+    "controls/identity.json": "4674f73a055705c524a4e6e4a728186004a98ab2a30be6bfb8d22ae532538aaa",
+    "controls/existing-integration.json": "3da06f301d29a130bccee3d82e95439528a75143ab50088a1ed48ef4340b45db"
+  },
+  "prior_record": "docs/audits/GPU_RAY_TRANSPORT_6EO_REFERENCE_PILOT_2026-10-28.json",
+  "prior_record_sha256": "152a93c7329065cbf87724cfd79af777caca68380707206c2461a4c67afd8596",
+  "generator_derivation": {
+    "kind": "worker-local-reference-bindings-v1",
+    "canonical_generator_sha256": "bdcdd79eb7408b45cc48346010d6584e2d4cdedbf974ae25b5302148fa443b1f",
+    "derived_generator_sha256": "4aa1fd5fe79ac60f1ad2db7950b1413631bb2410a341ba8fe9ff859293f23930"
+  },
+  "executions": [
+    {
+      "tag": "hoist-continuity-4",
+      "job": "continuity",
+      "build_receipt": "build/derived-source.json"
+    },
+    {
+      "tag": "hoist-stress-4",
+      "job": "stress",
+      "build_receipt": "build/derived-source.json"
+    },
+    {
+      "tag": "hoist-pilot256-4",
+      "job": "pilot256",
+      "build_receipt": "build/derived-source.json"
+    },
+    {
+      "tag": "canonical-pilot256-4",
+      "job": "pilot256",
+      "build_receipt": "build/canonical-source.json"
+    },
+    {
+      "tag": "hoist-cost1024-4",
+      "job": "cost1024",
+      "build_receipt": "build/derived-source.json"
+    },
+    {
+      "tag": "hoist-cost1024-8",
+      "job": "cost1024",
+      "build_receipt": "build/derived-source.json"
+    }
+  ],
+  "results": {
+    "hoist-continuity-4": {
+      "threads": 4,
+      "convergence_max": {
+        "T": 2.905071616599031e-08,
+        "RGB": 1.7212257258369945e-08
+      },
+      "full_population_minutes_linear_estimate": 880.9728710415462,
+      "seconds": 4.129560333007248,
+      "rays": 18
+    },
+    "hoist-stress-4": {
+      "threads": 4,
+      "convergence_max": {
+        "T": 6.815546793603744e-08,
+        "RGB": 4.0170468285083416e-08
+      },
+      "full_population_minutes_linear_estimate": 661.21576434102,
+      "seconds": 12.742178791988408,
+      "rays": 74
+    },
+    "hoist-pilot256-4": {
+      "threads": 4,
+      "convergence_max": {
+        "T": 4.324315461268213e-08,
+        "RGB": 2.8641512606064623e-08
+      },
+      "full_population_minutes_linear_estimate": 694.747349384852,
+      "seconds": 46.31648995899013,
+      "rays": 256
+    },
+    "canonical-pilot256-4": {
+      "threads": 4,
+      "convergence_max": {
+        "T": 4.324315461268213e-08,
+        "RGB": 2.8641512606064623e-08
+      },
+      "full_population_minutes_linear_estimate": 899.3754181348777,
+      "seconds": 59.958361208991846,
+      "rays": 256
+    },
+    "hoist-cost1024-4": {
+      "threads": 4,
+      "convergence_max": {
+        "T": 6.529390639276045e-08,
+        "RGB": 3.908280873932135e-08
+      },
+      "full_population_minutes_linear_estimate": 744.555758906281,
+      "seconds": 198.54820237500826,
+      "rays": 1024
+    },
+    "hoist-cost1024-8": {
+      "threads": 8,
+      "convergence_max": {
+        "T": 6.529390639276045e-08,
+        "RGB": 3.908280873932135e-08
+      },
+      "full_population_minutes_linear_estimate": 480.2653392186767,
+      "seconds": 128.07075712498045,
+      "rays": 1024
+    }
+  },
+  "distinct_new_capture_rays": 1094,
+  "new_reference_coverage_added": 0,
+  "fresh_256_time_ratio": 0.7724775831939205,
+  "four_to_eight_thread_speed_ratio": 1.5503008401929799,
+  "historical_1024_canonical_seconds": 256.7982936669723,
+  "linear_full_population_minutes_estimate": 480.2653392186767,
+  "full_population_reference_launched": false,
+  "shipping_gates_open": 3,
+  "gpu_lane_claimed": false,
+  "shared_accuracy_checker_sha256": "106c7004b2cd39d4c722a1a1d5a0198ec9723ae7df746cc6e7e4b33d7627eb93"
+}

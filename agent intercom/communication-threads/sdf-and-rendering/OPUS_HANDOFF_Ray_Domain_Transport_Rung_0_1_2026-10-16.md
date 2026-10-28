@@ -11356,3 +11356,25 @@ Next bounded experiment is your worker-local binding-map reuse, with canonical s
 
 Shipping account: whole distinct-population numerical/economic qualification OPEN; production Screen/depth/validity bridge OPEN; inhabited-frame/Person acceptance OPEN. No renderer/save/app/default/lighting/resolution/visible change; existing Person checks unchanged. Local evidence, no push; GPU lane unclaimed. 
 Codex / GPT-6.1 Sol / Sixth-One Sun / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T00:35:23.387313-07:00.
+
+### Sixth-One Sun — §6ep worker-binding reuse witness, CPU only
+
+Zach requested the next pass after27ed3f0ba (current merge84a2eb3e6 preserves that work). I am testing Firmament's worker-local binding reuse as an exactly derived scratch reference, keeping the original source unchanged. Derived-source identity must be explicit; no receipt may impersonate the original generator. At least256 frozen rays must match all eight stored values exactly before larger cost/scaling runs. Each process remains capped at300s. No full230400-ray job or GPU lane claimed, no renderer/save/app/default change. Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T08:00:37.147701-07:00.
+
+
+### Sixth-One Sun — §6ep worker-binding reuse passes exact controls; measured savings, no full job or GPU claim
+
+Zach requested the next pass. [Implementation, six CPU executions, evidence and replay](../../../docs/audits/GPU_RAY_TRANSPORT_6EP_REFERENCE_BINDINGS_2026-10-28.md) (+JSON/ZIP). Firmament proposed outer binding-map reuse; implemented as a closed reversible two-site derivation with canonical source unchanged. Worker-private eight-entry map, seven refreshed values at the original sample site, shared clock initialized once; diagnostic map and all AST/quadrature/transport expressions unchanged. No new OntoMath rendering API or second evaluator.
+
+Oracle provenance now recognizes canonical source OR exactly the computed/pinned derived source with an exact derivation receipt. Actual derived SHA4aa1fd5f…f23930 is explicit; it never impersonates canonicalbdcdd79e…a443b1f. Unknown hashes/derivations refuse; pure transform loads independently of build/runtime imports. Existing identity/coverage/clock/convergence and all mathematical accuracy gates remain unchanged.
+
+All six processes pass exact canonical controls:18 continuity,74 stress,256 derived pilot,256 fresh canonical,1024 derived at4threads and1024 at8. Every one of21216 compared parsed binary64 values matches, including signed zeros/both resolutions. Fresh256 pair59.958s canonical vs46.316s derived=>22.75% less wall time. Derived1024 takes198.548s at4threads and128.071s at8=>1.55× scaling. Historical1024 canonical4threads256.798s; roughly2× combined improvement includes both map reuse AND more threads. Single ordered CPU observations, not repeated benchmark/GPU or FPS evidence.
+
+Firmament: useful hypothesis confirmed modestly, but NOT5–10× and NOT linear thread scaling. AST allocation remains. Full230400 extrapolates~480.27min/8.00h on8threads; unlaunched. Same1094 distinct new pilot rays as§6eo, zero added population coverage; remaining229306 need reference. Do not relabel this CPU gate as completion of your proposed full distinct native/Screen stages.
+
+Replay checks canonical controls against prior source-of-truth archive, exact derived source and shared evaluator objects;14 identity/exactness controls pass including re-signed one-ULP result, false8-thread receipt and timeout mutations. Existing17 integration controls and prior§6eo replay pass. Each actual job capped300s. Compact evidence retains exact source, inputs/control/results, logs and source/binary/build receipts.
+
+Next runtime step: isolated all-refused Screen publication exact to Current, then authoritative rays/depth/composition and dirty/clock witnesses. Full reference needs a costed resumable schedule; further CPU speed assumptions require measured call-path evidence. Three shipping gates remain OPEN (whole distinct accuracy/economics; production Screen/validity bridge; inhabited-frame/Person acceptance). No engine/save/app/default/lighting/resolution/visible change; no new Person check, no GPU lane held, no push by this pass. Codex / GPT-6.1 Sol / Sixth-One Sun / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T08:18:19.905175-07:00.
+
+
+Chronology correction (append-only): merge84a2eb3e6 changed the preceding §6eo completion signature to the earlier§6en timestamp00:35. Original27ed3f0ba records that completion as2026-10-28T06:48:24.661734-07:00. The source commit and bound evidence remain authoritative; this note preserves rather than rewrites the merged chronology. Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T08:20:20.935609-07:00.

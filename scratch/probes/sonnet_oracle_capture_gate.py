@@ -57,6 +57,23 @@ def validate_capture(cap, *, zone_sha256, expected_clock=None, expected_count=No
         need(r[6] > r[5] >= 0, f'ray {i}: empty/inverted clip interval')
     return clock
 
+def validate_reference_generator(receipt):
+    """Closed admission: original bytes, or the exact pinned worker-map reuse.
+    The caller cannot authorize another source by supplying its hash. Derivation
+    changes require an explicit source-pinned transformation and new witnesses.
+    """
+    canonical = sha256_file(HERE / 'veil_projected_reference.cpp')
+    if receipt.get('generator_sha256') == canonical:
+        need('generator_derivation' not in receipt, 'canonical generator cannot claim a derivation')
+        return 'canonical'
+    spec = importlib.util.spec_from_file_location('reference_bindings_derivation', HERE / 'ray_transport_6ep_reference_derivation.py')
+    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+    expected = m.derivation_identity((HERE / 'veil_projected_reference.cpp').read_text())
+    need(receipt.get('generator_sha256') == expected['derived_generator_sha256'],
+         'reference generator identity mismatch')
+    need(receipt.get('generator_derivation') == expected, 'reference generator derivation identity mismatch')
+    return expected['kind']
+
 def reference_to_checker_form(ref_cols_rows, cap, rays_sha256, *, reference_identity=None, reference_sha256=None):
     """The probe writes columns T,Lr,Lg,Lb,T_half,... without pixels; bind each row to its ray's pixel by position
     and the shared checker's schema (px,py first). Row count must equal ray count exactly."""
@@ -69,8 +86,7 @@ def reference_to_checker_form(ref_cols_rows, cap, rays_sha256, *, reference_iden
     need(reference_sha256 is not None, 'reference byte identity required')
     for key, value in expected.items():
         need(reference_identity.get(key) == value, 'reference receipt identity mismatch: ' + key)
-    need(reference_identity.get('generator_sha256') == sha256_file(HERE / 'veil_projected_reference.cpp'),
-         'reference generator identity mismatch')
+    validate_reference_generator(reference_identity)
     rows = ref_cols_rows['rows']; rays = cap['rays']
     need(len(rows) == len(rays), 'reference row count differs from capture (missing rays)')
     need(ref_cols_rows['columns'] == ['T', 'Lr', 'Lg', 'Lb', 'T_half', 'Lr_half', 'Lg_half', 'Lb_half'], 'probe column schema')
