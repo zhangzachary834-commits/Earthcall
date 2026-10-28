@@ -270,8 +270,10 @@ def generate(root: Path) -> str:
     source = source.replace(old_matrix_end, new_matrix_end)
 
     # 5. Inject Multi-Scale screen timing section replacing the old reviewOut return 0;
-    hook_review_out = 'std::ofstream reviewOut(outputPath);reviewOut<<J({{"scope","§6ej Terminal S2 routed correctness and ownership controls"},{"cases",routeChecks},{"clean_timing",false},{"shipping_qualified",false}}).dump(2)<<std::endl;return 0;'
-    assert source.count(hook_review_out) == 1
+    # The qualification writer now includes a route census; replace its whole
+    # return block rather than matching the historical single-line JSON shape.
+    output_start = source.index("std::ofstream reviewOut(outputPath);")
+    output_end = source.index("return 0;", output_start) + len("return 0;")
 
     timing_section = """std::cerr << "Starting Multi-Scale Screen for K=" << scaleK << " (Rays=" << count << ")..." << std::endl;
         const std::vector<int> activeModes = {0, 1, 3, 4};
@@ -324,7 +326,7 @@ def generate(root: Path) -> str:
         std::ofstream(outputPath) << scaleReport.dump(2) << "\\n";
         std::cerr << "Scale K=" << scaleK << " complete. Saved " << observations.size() << " timing observations." << std::endl;
         return 0;"""
-    source = source.replace(hook_review_out, timing_section)
+    source = source[:output_start] + timing_section + source[output_end:]
 
     return source
 

@@ -1,3 +1,5 @@
+> **Follow-up (Codex, 2026-10-27):** fresh poisoned-output/finite/actual-row qualification and repeated clean costs are recorded in [§6em](GPU_RAY_TRANSPORT_6EM_CORRECTIVE_TAKEOVER_2026-10-27.md). The10–12FPS projection below does not establish a native frame result, ceiling or inability to reach30FPS.
+
 # GPU Ray Transport §6el: Clean Multi-Scale Ablation & Indirect Consumer Qualification
 
 **Author:** Antigravity / Gemini 3.8 Flash (Sparkly Guy 🐉✨)  

@@ -11232,3 +11232,27 @@ All three shipping gates remain **OPEN**:
 Native GPU lane is RELEASED. No engine, save, app, or visible-world changes.
 
 Signed: Antigravity / Gemini 3.8 Flash (Sparkly Guy 🐉✨) / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / 2026-10-27.
+
+
+### Sixth-One Sun — §6em corrective native lane claim after Sparkly §6el release
+
+Zach reports Sparkly has ~1% weekly energy and hands the next stretch to this session. Sparkly `8bc339a85` is present and explicitly RELEASED the native lane. I claim one bounded corrective pass: poison/finite/actual-row clean preflight with a targeted missing-publication negative; independently checked positive late refusal and partial-publication negative; then repeat clean synthetic cost only if those pass. No compaction, renderer integration, save/app changes or projected-FPS admission. Preserve Sparkly's historical §6el data.
+
+Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T05:47:00.849537+00:00.
+
+
+### Sixth-One Sun — §6em native takeover complete; Sparkly can rest; routed-unfused earns the next bridge
+
+Zach relayed Firmament's counsel and Sparkly's1% weekly energy. I found Sparkly's completed `8bc339a85` and released-lane note, then claimed and ran a bounded corrective native pass. Full record: `docs/audits/GPU_RAY_TRANSPORT_6EM_CORRECTIVE_TAKEOVER_2026-10-27.md` (+JSON/9.8MBZIP); native generator `scratch/probes/ray_transport_gpu_6em_corrective_takeover.py`; CPU replay `ray_transport_6em_replay.py`. Native GPU lane now **RELEASED**. No additional action required from Sparkly.
+
+Positive original-pose32,784-ray late-member1 refusal passes: expected set independently derived from S2 classifier membership, exactly10,068 Current fallbacks,12,889 terminal S1, zero ownership/output errors, no partial refused schedule writes. Targeted partial-publish negative catches10,068 double publications; new missing-clean-publication negative catches mode5 ray0 after poison. Both actual subprocess returns−6 at intended errors, not observed250. One full-population positive, not a new30-case suite.
+
+Clean preflight now poisons output before EVERY method, checks finite values and actual rows, and rejects missing publication. GPU shader literals match §6el byte-for-byte. All10 scales/wait runs pass own-method parity at every invocation. AtK1 actual rows for all6 modes and both poll styles pass all6 original-reference gates at both resolutions; candidates1–5 have identical values across both waits. MaxRGB1.210615e−4/T1.760469e−4, zero beyondCurrentmax.960 fresh raw cost observations archived; portable replay passes180 mean/median pairs, actual-row oracle checks and targeted records.
+
+**Economics:** K16 complete medians (encoding+completion), Current/routed2/indirect5: active22.49425/18.25579/18.61104ms; blocking20.19300/17.58096/17.61883ms. Routed2 saves18.84%/12.94% versusCurrent, both independent series favorable. Terminal fusion/indirect is not the required next step: simpler Mode2 deserves priority. Small workloads may tie/lose under blocking poll. This is clean replicated sparse demand, not native frame/FPS. §6el's10–12FPS extrapolation establishes neither a ceiling nor failure to reach30FPS. API clear bytes and cross-run differences cannot price a fixed diagnostic tax.
+
+**Next bounded bridge:** preserve unchanged routed2/bulk/Current; capture and qualify a denser set of distinct native rays with correct tile topology, actual clips/reference/finite/coverage, proven memory bounds and matched complete clocks. Then connect the minimum qualified route to production viewport/depth/composition in isolation, preserving shared derivation validity, medium revisions/clocks and Current fallback. Keep terminal/indirect/compaction optional and separate. Fixed-step/synthetic kernel costs cannot be narrated as shipped frame profit. Source/edit/dirty/depth/clock witnesses precede promotion.
+
+Repaired the6ek diagnostic generator's stale output hook after6el added census JSON;160-row historical CPU replay passes. No engine/save/app/default/lighting/visible change; all three shipping gates OPEN, with positive fallback/accuracy and clean synthetic gain now witnessed. Existing Person checks remain open.
+
+Codex / GPT-6.1 Sol / Sixth-One Sun / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T22:56:02.869526-07:00.
