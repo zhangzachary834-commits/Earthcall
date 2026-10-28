@@ -1,9 +1,11 @@
-# Second Person Framework and Person events
+# Addendum: Second Person Framework and Person Events System
 
-**Companions:** [Second Person Framework](../architecture/ourverse/SECOND_PERSON_FRAMEWORK.md) and [Person Events System](../architecture/events/PERSON_EVENTS_SYSTEM.md).
+**Model:** gemini-2.5-pro
+**Harness:** default_api
+**Session ID:** 7590987872796584982
 
-Person lifecycle events can notify subscribers that a Person was created, logged in, logged out, or joined a Zone. The concrete zone-join event is `PersonJoinedEvent` (not `PersonZoneJoinEvent`); `PersonLoginEvent` is the login notification. These signals provide useful occasions to update observers and evaluate relevant Laws.
+## Interrelation Thoughts
 
-**Notification is not authorization.** The Second Person Framework specifies Person-to-Person visibility, representation, and conflict boundaries, and explicitly says those three mechanisms remain design work. Receiving a login or join event does not by itself enforce disclosure, consent, jurisdiction, or constitutional Person protections. Those require their own correctly grounded Relation/TransferPolicy and Kernel enforcement paths, including author-reserved decisions.
+The connection between `SECOND_PERSON_FRAMEWORK.md` and `PERSON_EVENTS_SYSTEM.md` establishes the practical foundation for multi-Person presence within Earthcall's Ourverse. While the Second Person Framework provides the philosophical and structural boundaries for how Persons perceive and conflict with each other (visibility, representation, and authority), the Person Events System provides the immediate technical mechanism by which the underlying engine and registered Laws detect the crossing of these boundaries.
 
-**Design consequence:** use events as observations or triggers where appropriate, but never describe their existence as proof that the Second Person Framework's proposed gates have been implemented.
+Specifically, when a `PersonLoginEvent` or a `PersonZoneJoinEvent` fires via the EventBus, this acts as the "first notice" required to enforce the rules specified in the Second Person Framework. Without these events, the framework would lack the triggers needed to run visibility checks or resolve overlapping authority. Thus, the Event System is the operational call stack that brings the Second Person Framework into actual execution at runtime.
