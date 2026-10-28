@@ -1,4 +1,0 @@
-test: fix CI timeouts in slow_adapter_zone_perf_test
-
-- Skips full saves/zones/ hydration in `slow_adapter_zone_perf_test` by passing `false` to the `BootedEngineHarness` constructor, adhering to existing patterns to avoid large disk/memory overhead in CI environments.
-- Extends the `subprocess.run` timeout from 120s to 300s in `.github/workflows/earthcall-ci.yml` for macOS arm64 CI runners.
