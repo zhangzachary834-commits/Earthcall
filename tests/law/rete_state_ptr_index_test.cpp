@@ -193,6 +193,54 @@ int main() {
     assert(runtimeFactCount == 1);
 
     // ---------------------------------------------------------------------
+    // 5b. Indexed relation-state retraction preserves unrelated facts and
+    //     distinguishes relation-state from ordinary state at the same key.
+    // ---------------------------------------------------------------------
+    ReteNetwork relationRete;
+    Object relationSubject;
+    relationSubject.setObjectID("relation-retraction.subject");
+    Object relationBystander;
+    relationBystander.setObjectID("relation-retraction.bystander");
+
+    auto relationFact = [](Object& obj, const std::string& id,
+                           const std::string& attribute, const std::string& type) {
+        auto fact = std::make_shared<ReteFact>();
+        fact->id = id;
+        fact->type = type;
+        fact->subject = &obj;
+        fact->subjectId = obj.getIdentifier();
+        fact->attribute = attribute;
+        fact->isState = true;
+        return fact;
+    };
+
+    const FactPtr ordinary = relationFact(relationSubject, "ordinary-touching", "touching", "state");
+    const FactPtr targetEdge = relationFact(relationSubject, "edge-touching", "touching", "relation-state");
+    const FactPtr otherEdge = relationFact(relationSubject, "edge-near", "near", "relation-state");
+    const FactPtr bystanderEdge = relationFact(relationBystander, "bystander-touching", "touching", "relation-state");
+    relationRete.assertFact(ordinary); // Must not be mistaken for a relation-state fact.
+    relationRete.assertFact(targetEdge);
+    relationRete.assertFact(otherEdge);
+    relationRete.assertFact(bystanderEdge);
+
+    assert(relationRete.hasRelationStateFact(&relationSubject, "touching"));
+    assert(relationRete.hasRelationStateFact(&relationSubject, "near"));
+    assert(relationRete.hasRelationStateFact(&relationBystander, "touching"));
+    assert(!relationRete.retractRelationStateFact(nullptr, "touching"));
+    assert(!relationRete.retractRelationStateFact(&relationSubject, "missing"));
+    assert(relationRete.retractRelationStateFact(&relationSubject, "touching"));
+    assert(!relationRete.retractRelationStateFact(&relationSubject, "touching"));
+    assert(!relationRete.hasRelationStateFact(&relationSubject, "touching"));
+    assert(relationRete.hasRelationStateFact(&relationSubject, "near"));
+    assert(relationRete.hasRelationStateFact(&relationBystander, "touching"));
+    assert(relationRete.facts().size() == 3);
+    assert(relationRete.markFactDirty(&relationSubject, "touching")); // Ordinary state remains.
+    assert(relationRete.retractRelationStateFact(&relationSubject, "near"));
+    assert(relationRete.retractRelationStateFact(&relationBystander, "touching"));
+    assert(relationRete.facts().size() == 1);
+    assert(relationRete.facts().front() == ordinary);
+
+    // ---------------------------------------------------------------------
     // 6. A/B Performance benchmark: Pointer fast-path vs String lookup
     //    Isolates lookup & dirty-marking work by periodically evaluating dirty facts.
     // ---------------------------------------------------------------------
