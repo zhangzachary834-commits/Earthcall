@@ -1,0 +1,958 @@
+{
+  "signature": "Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T13:32:16.064075-07:00`",
+  "head": "ce78d72c5",
+  "viewport": [
+    2560,
+    1440
+  ],
+  "camera": [
+    0,
+    50,
+    75,
+    40,
+    62,
+    110
+  ],
+  "time": 7.25,
+  "samples_per_chord": 96,
+  "source": "authored, literal zero incident radiance",
+  "source_sha256": {
+    "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "7448ed0b220d5248d2d73659e9f1d446a85e4924a137da60409b5410dc677d70",
+    "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "36bb9ecffea56ef075bc137f1d8fb4f29649a50cc0e75ea4a4290710c8874701",
+    "saves/zones/Northern Veil/zone.ecform": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+    "docs/audits/NORTHERN_VEIL_NATIVE_CF4_PREFLIGHT_2026-10-21_RAYS.json": "f2d51ac017f27a3b45d7032b9b50313fc24e8c6fa05fe0fe495c236805fa6be7",
+    "docs/audits/NORTHERN_VEIL_PROJECTED_REFERENCE_2026-10-21_ROWS.json": "eb76bb86a69571b7bf2927df31d43920d8751d1b96b5b931cd94f55e4f1b76a8"
+  },
+  "decision": "reject this complete native implementation on cost; finite accuracy screen only, no production admission",
+  "witness": {
+    "cases": 8704,
+    "max_double_error": 2.2537527399890678e-14,
+    "degree": 16,
+    "coefficients": 17,
+    "coefficient_DAG_scalar_operations": {
+      "+": 175,
+      "-": 46,
+      "*": 296
+    },
+    "extra_corner_dots": 16,
+    "horner_stages": 16,
+    "scope": "real-polynomial algebra witness, not f32 admission; gradients/hash/domain costs additional"
+  },
+  "reuse": {
+    "rays": 2304,
+    "calls": 67184,
+    "hits": 59929,
+    "preparations": 7255,
+    "fallback_calls": 0,
+    "model_domain_resets": 0,
+    "hit_fraction": 0.8920129792807812,
+    "calls_per_preparation": 9.26037215713301,
+    "reuse_run_histogram_cap31": [
+      0,
+      768,
+      658,
+      566,
+      519,
+      622,
+      451,
+      279,
+      247,
+      247,
+      407,
+      194,
+      163,
+      329,
+      116,
+      101,
+      84,
+      97,
+      117,
+      107,
+      124,
+      208,
+      575,
+      126,
+      24,
+      19,
+      22,
+      16,
+      13,
+      17,
+      8,
+      31
+    ]
+  },
+  "noise_values": {
+    "calls": 67184,
+    "hits": 59929,
+    "preparations": 7255,
+    "fallback": 0,
+    "max_absolute_noise_error": 3.5793171264231205e-05,
+    "max_error_pixel": [
+      820,
+      100
+    ],
+    "scope": "separate actual-call comparison, diagnostic instrumentation, not uninstrumented bit equivalence"
+  },
+  "accuracy": {
+    "baseline": {
+      "T": {
+        "mean": 0.00013351522807581676,
+        "p99": 0.0014302853591834364,
+        "max": 0.003024910893728472
+      },
+      "RGB": {
+        "mean": 5.223495505468821e-05,
+        "p99": 0.0007491029737184962,
+        "max": 0.001958256955896076
+      }
+    },
+    "polynomial": {
+      "T": {
+        "mean": 0.00013351575900429774,
+        "p99": 0.0014301065452491102,
+        "max": 0.003024910893728472
+      },
+      "RGB": {
+        "mean": 5.223499263734456e-05,
+        "p99": 0.0007490955231378993,
+        "max": 0.001958256955896076
+      }
+    },
+    "candidate_minus_control": {
+      "T": {
+        "mean": 1.042563882138994e-08,
+        "p99": 1.1920928955078125e-07,
+        "max": 2.384185791015625e-07
+      },
+      "RGB": {
+        "mean": 4.5225318140646105e-09,
+        "p99": 8.195638656616211e-08,
+        "max": 1.564621925354004e-07
+      }
+    },
+    "reference_finest_half_spread": {
+      "T": {
+        "mean": 8.395930249577183e-09,
+        "p99": 4.0485861552141955e-08,
+        "max": 7.310186067588376e-08
+      },
+      "RGB": {
+        "mean": 3.0568822040751634e-09,
+        "p99": 2.1077177267403435e-08,
+        "max": 4.76758993950277e-08
+      }
+    },
+    "largest_new_RGB_regressions": [
+      {
+        "pixel": [
+          300,
+          180
+        ],
+        "T_delta_error": 2.384185791015625e-07,
+        "RGB_max_delta_error": 1.5273690223693848e-07,
+        "baseline": [
+          0.9071482419967651,
+          0.05688052251935005,
+          0.010037736967206001,
+          0.018402518704533577
+        ],
+        "candidate": [
+          0.907148003578186,
+          0.05688067525625229,
+          0.01003776304423809,
+          0.018402567133307457
+        ],
+        "reference": [
+          0.9072391476904208,
+          0.056824821173339306,
+          0.010027909555650418,
+          0.018384502108475854
+        ]
+      },
+      {
+        "pixel": [
+          1540,
+          420
+        ],
+        "T_delta_error": 1.7881393432617188e-07,
+        "RGB_max_delta_error": 1.2293457984924316e-07,
+        "baseline": [
+          0.9536857604980469,
+          0.003463571658357978,
+          0.03186485916376114,
+          0.011083429679274559
+        ],
+        "candidate": [
+          0.9536859393119812,
+          0.0034635583870112896,
+          0.03186473622918129,
+          0.011083388701081276
+        ],
+        "reference": [
+          0.9536710592003483,
+          0.0034646709079506287,
+          0.03187497164215637,
+          0.011086947077366446
+        ]
+      },
+      {
+        "pixel": [
+          60,
+          180
+        ],
+        "T_delta_error": 1.7881393432617188e-07,
+        "RGB_max_delta_error": 1.1920928955078125e-07,
+        "baseline": [
+          0.6639665961265564,
+          0.20585234463214874,
+          0.03632688894867897,
+          0.0665993019938469
+        ],
+        "candidate": [
+          0.6639664173126221,
+          0.2058524638414383,
+          0.03632691130042076,
+          0.06659933924674988
+        ],
+        "reference": [
+          0.6639951578437995,
+          0.205834847337875,
+          0.036323796357255154,
+          0.066593631254637
+        ]
+      },
+      {
+        "pixel": [
+          180,
+          260
+        ],
+        "T_delta_error": 1.7881393432617188e-07,
+        "RGB_max_delta_error": 1.1920928955078125e-07,
+        "baseline": [
+          0.729037344455719,
+          0.16599035263061523,
+          0.029292412102222443,
+          0.05370275303721428
+        ],
+        "candidate": [
+          0.7290371656417847,
+          0.16599047183990479,
+          0.029292430728673935,
+          0.053702790290117264
+        ],
+        "reference": [
+          0.7291052795691647,
+          0.16594871705812847,
+          0.02928506753600931,
+          0.053689294127737534
+        ]
+      },
+      {
+        "pixel": [
+          2220,
+          900
+        ],
+        "T_delta_error": 1.7881393432617188e-07,
+        "RGB_max_delta_error": 1.1920928955078125e-07,
+        "baseline": [
+          0.8534998297691345,
+          0.00824387464672327,
+          0.09013108909130096,
+          0.06567087024450302
+        ],
+        "candidate": [
+          0.8534996509552002,
+          0.008243881165981293,
+          0.09013118594884872,
+          0.06567098945379257
+        ],
+        "reference": [
+          0.855332514666329,
+          0.00817235784553168,
+          0.08912785887014793,
+          0.06449250562764355
+        ]
+      },
+      {
+        "pixel": [
+          1340,
+          1180
+        ],
+        "T_delta_error": 1.7881393432617188e-07,
+        "RGB_max_delta_error": 1.1920928955078125e-07,
+        "baseline": [
+          0.9025224447250366,
+          0.006120994221419096,
+          0.062470514327287674,
+          0.03651997819542885
+        ],
+        "candidate": [
+          0.902522623538971,
+          0.006120980251580477,
+          0.06247039511799812,
+          0.03651993349194527
+        ],
+        "reference": [
+          0.9021875751153852,
+          0.0061371726880867054,
+          0.06266606480552234,
+          0.0367001641130097
+        ]
+      },
+      {
+        "pixel": [
+          620,
+          1420
+        ],
+        "T_delta_error": 1.7881393432617188e-07,
+        "RGB_max_delta_error": 1.1920928955078125e-07,
+        "baseline": [
+          0.7209391593933105,
+          0.020869331434369087,
+          0.19199784100055695,
+          0.06678185611963272
+        ],
+        "candidate": [
+          0.7209393382072449,
+          0.020869320258498192,
+          0.1919977217912674,
+          0.06678181886672974
+        ],
+        "reference": [
+          0.7209317629834681,
+          0.02086988343715483,
+          0.19200292336298508,
+          0.06678362801633479
+        ]
+      },
+      {
+        "pixel": [
+          180,
+          180
+        ],
+        "T_delta_error": 1.7881393432617188e-07,
+        "RGB_max_delta_error": 1.043081283569336e-07,
+        "baseline": [
+          0.7125430703163147,
+          0.1760946810245514,
+          0.031075526028871536,
+          0.05697179213166237
+        ],
+        "candidate": [
+          0.7125428915023804,
+          0.17609478533267975,
+          0.031075546517968178,
+          0.05697182938456535
+        ],
+        "reference": [
+          0.7125450314408948,
+          0.17609343282676848,
+          0.031075311468671273,
+          0.056971408247402704
+        ]
+      },
+      {
+        "pixel": [
+          540,
+          860
+        ],
+        "T_delta_error": 1.1920928955078125e-07,
+        "RGB_max_delta_error": 1.043081283569336e-07,
+        "baseline": [
+          0.7707828879356384,
+          0.017141813412308693,
+          0.1577046811580658,
+          0.05485379323363304
+        ],
+        "candidate": [
+          0.770783007144928,
+          0.017141804099082947,
+          0.15770457684993744,
+          0.05485376715660095
+        ],
+        "reference": [
+          0.7707263001036255,
+          0.017146040858007798,
+          0.15774357239602488,
+          0.05486733158425116
+        ]
+      },
+      {
+        "pixel": [
+          980,
+          60
+        ],
+        "T_delta_error": 1.1920928955078125e-07,
+        "RGB_max_delta_error": 8.940696716308594e-08,
+        "baseline": [
+          0.7259048819541931,
+          0.17941708862781525,
+          0.03509530797600746,
+          0.18675090372562408
+        ],
+        "candidate": [
+          0.7259047627449036,
+          0.17941716313362122,
+          0.03509531915187836,
+          0.18675099313259125
+        ],
+        "reference": [
+          0.7259452221516003,
+          0.17939005410866832,
+          0.03509074049751874,
+          0.1867229228422718
+        ]
+      },
+      {
+        "pixel": [
+          1020,
+          100
+        ],
+        "T_delta_error": 1.1920928955078125e-07,
+        "RGB_max_delta_error": 8.940696716308594e-08,
+        "baseline": [
+          0.7387755513191223,
+          0.1684112548828125,
+          0.03594004735350609,
+          0.17601396143436432
+        ],
+        "candidate": [
+          0.7387756705284119,
+          0.16841116547584534,
+          0.03594003617763519,
+          0.17601385712623596
+        ],
+        "reference": [
+          0.7387689008306682,
+          0.1684366782769669,
+          0.03592053898292524,
+          0.17603454915460715
+        ]
+      },
+      {
+        "pixel": [
+          500,
+          1260
+        ],
+        "T_delta_error": 5.960464477539063e-08,
+        "RGB_max_delta_error": 8.940696716308594e-08,
+        "baseline": [
+          0.576753556728363,
+          0.03165213018655777,
+          0.29119953513145447,
+          0.10128682106733322
+        ],
+        "candidate": [
+          0.5767536163330078,
+          0.03165212646126747,
+          0.2911994457244873,
+          0.10128681361675262
+        ],
+        "reference": [
+          0.5767422220878887,
+          0.03165297690755948,
+          0.2912073812873808,
+          0.10128952769779165
+        ]
+      }
+    ],
+    "largest_new_T_regressions": [
+      {
+        "pixel": [
+          300,
+          180
+        ],
+        "T_delta_error": 2.384185791015625e-07,
+        "RGB_max_delta_error": 1.5273690223693848e-07,
+        "baseline": [
+          0.9071482419967651,
+          0.05688052251935005,
+          0.010037736967206001,
+          0.018402518704533577
+        ],
+        "candidate": [
+          0.907148003578186,
+          0.05688067525625229,
+          0.01003776304423809,
+          0.018402567133307457
+        ],
+        "reference": [
+          0.9072391476904208,
+          0.056824821173339306,
+          0.010027909555650418,
+          0.018384502108475854
+        ]
+      },
+      {
+        "pixel": [
+          900,
+          460
+        ],
+        "T_delta_error": 2.384185791015625e-07,
+        "RGB_max_delta_error": 2.9802322387695312e-08,
+        "baseline": [
+          0.8475454449653625,
+          0.0863991379737854,
+          0.03245697543025017,
+          0.09366102516651154
+        ],
+        "candidate": [
+          0.8475456833839417,
+          0.08639898151159286,
+          0.03245694562792778,
+          0.093660868704319
+        ],
+        "reference": [
+          0.8475080811615914,
+          0.08638470666260195,
+          0.03249930096051795,
+          0.09365683452584804
+        ]
+      },
+      {
+        "pixel": [
+          60,
+          180
+        ],
+        "T_delta_error": 1.7881393432617188e-07,
+        "RGB_max_delta_error": 1.1920928955078125e-07,
+        "baseline": [
+          0.6639665961265564,
+          0.20585234463214874,
+          0.03632688894867897,
+          0.0665993019938469
+        ],
+        "candidate": [
+          0.6639664173126221,
+          0.2058524638414383,
+          0.03632691130042076,
+          0.06659933924674988
+        ],
+        "reference": [
+          0.6639951578437995,
+          0.205834847337875,
+          0.036323796357255154,
+          0.066593631254637
+        ]
+      },
+      {
+        "pixel": [
+          180,
+          180
+        ],
+        "T_delta_error": 1.7881393432617188e-07,
+        "RGB_max_delta_error": 1.043081283569336e-07,
+        "baseline": [
+          0.7125430703163147,
+          0.1760946810245514,
+          0.031075526028871536,
+          0.05697179213166237
+        ],
+        "candidate": [
+          0.7125428915023804,
+          0.17609478533267975,
+          0.031075546517968178,
+          0.05697182938456535
+        ],
+        "reference": [
+          0.7125450314408948,
+          0.17609343282676848,
+          0.031075311468671273,
+          0.056971408247402704
+        ]
+      },
+      {
+        "pixel": [
+          180,
+          260
+        ],
+        "T_delta_error": 1.7881393432617188e-07,
+        "RGB_max_delta_error": 1.1920928955078125e-07,
+        "baseline": [
+          0.729037344455719,
+          0.16599035263061523,
+          0.029292412102222443,
+          0.05370275303721428
+        ],
+        "candidate": [
+          0.7290371656417847,
+          0.16599047183990479,
+          0.029292430728673935,
+          0.053702790290117264
+        ],
+        "reference": [
+          0.7291052795691647,
+          0.16594871705812847,
+          0.02928506753600931,
+          0.053689294127737534
+        ]
+      },
+      {
+        "pixel": [
+          1540,
+          420
+        ],
+        "T_delta_error": 1.7881393432617188e-07,
+        "RGB_max_delta_error": 1.2293457984924316e-07,
+        "baseline": [
+          0.9536857604980469,
+          0.003463571658357978,
+          0.03186485916376114,
+          0.011083429679274559
+        ],
+        "candidate": [
+          0.9536859393119812,
+          0.0034635583870112896,
+          0.03186473622918129,
+          0.011083388701081276
+        ],
+        "reference": [
+          0.9536710592003483,
+          0.0034646709079506287,
+          0.03187497164215637,
+          0.011086947077366446
+        ]
+      },
+      {
+        "pixel": [
+          2220,
+          900
+        ],
+        "T_delta_error": 1.7881393432617188e-07,
+        "RGB_max_delta_error": 1.1920928955078125e-07,
+        "baseline": [
+          0.8534998297691345,
+          0.00824387464672327,
+          0.09013108909130096,
+          0.06567087024450302
+        ],
+        "candidate": [
+          0.8534996509552002,
+          0.008243881165981293,
+          0.09013118594884872,
+          0.06567098945379257
+        ],
+        "reference": [
+          0.855332514666329,
+          0.00817235784553168,
+          0.08912785887014793,
+          0.06449250562764355
+        ]
+      },
+      {
+        "pixel": [
+          1340,
+          1180
+        ],
+        "T_delta_error": 1.7881393432617188e-07,
+        "RGB_max_delta_error": 1.1920928955078125e-07,
+        "baseline": [
+          0.9025224447250366,
+          0.006120994221419096,
+          0.062470514327287674,
+          0.03651997819542885
+        ],
+        "candidate": [
+          0.902522623538971,
+          0.006120980251580477,
+          0.06247039511799812,
+          0.03651993349194527
+        ],
+        "reference": [
+          0.9021875751153852,
+          0.0061371726880867054,
+          0.06266606480552234,
+          0.0367001641130097
+        ]
+      },
+      {
+        "pixel": [
+          620,
+          1420
+        ],
+        "T_delta_error": 1.7881393432617188e-07,
+        "RGB_max_delta_error": 1.1920928955078125e-07,
+        "baseline": [
+          0.7209391593933105,
+          0.020869331434369087,
+          0.19199784100055695,
+          0.06678185611963272
+        ],
+        "candidate": [
+          0.7209393382072449,
+          0.020869320258498192,
+          0.1919977217912674,
+          0.06678181886672974
+        ],
+        "reference": [
+          0.7209317629834681,
+          0.02086988343715483,
+          0.19200292336298508,
+          0.06678362801633479
+        ]
+      },
+      {
+        "pixel": [
+          180,
+          20
+        ],
+        "T_delta_error": 1.1920928955078125e-07,
+        "RGB_max_delta_error": 7.450580596923828e-08,
+        "baseline": [
+          0.7030302882194519,
+          0.18192215263843536,
+          0.03210391104221344,
+          0.05885717272758484
+        ],
+        "candidate": [
+          0.7030301690101624,
+          0.18192222714424133,
+          0.032103922218084335,
+          0.05885719507932663
+        ],
+        "reference": [
+          0.7031097526423105,
+          0.1818734429157555,
+          0.032095313248373475,
+          0.05884141169250532
+        ]
+      },
+      {
+        "pixel": [
+          340,
+          20
+        ],
+        "T_delta_error": 1.1920928955078125e-07,
+        "RGB_max_delta_error": 6.705522537231445e-08,
+        "baseline": [
+          0.9330937266349792,
+          0.040986448526382446,
+          0.007232902571558952,
+          0.013260320760309696
+        ],
+        "candidate": [
+          0.9330936074256897,
+          0.04098651558160782,
+          0.00723291514441371,
+          0.013260343112051487
+        ],
+        "reference": [
+          0.9331008385796695,
+          0.04098208091901664,
+          0.007232131876624545,
+          0.013258909353610035
+        ]
+      },
+      {
+        "pixel": [
+          2460,
+          20
+        ],
+        "T_delta_error": 1.1920928955078125e-07,
+        "RGB_max_delta_error": 8.195638656616211e-08,
+        "baseline": [
+          0.9377915859222412,
+          0.00465220445767045,
+          0.04280027374625206,
+          0.014887054450809956
+        ],
+        "candidate": [
+          0.9377914667129517,
+          0.004652213305234909,
+          0.042800355702638626,
+          0.014887082390487194
+        ],
+        "reference": [
+          0.9378435432048712,
+          0.004648318387891082,
+          0.042764528263341595,
+          0.0148746190740466
+        ]
+      }
+    ],
+    "polynomial_calls": {
+      "calls": 67184,
+      "hits": 59929,
+      "preparations": 7255,
+      "fallback": 0,
+      "domain_resets": 0
+    }
+  },
+  "full_image": {
+    "bytes": 14745600,
+    "fresh_control_vs_frozen_changed_bytes": 0,
+    "candidate_changed_bytes": 10,
+    "candidate_max_byte_delta": 1,
+    "changed_pixels": 10
+  },
+  "cost_summary": {
+    "series": [
+      {
+        "series": 0,
+        "baseline_ms": 87.30546008350001,
+        "polynomial_ms": 91.7472274375,
+        "delta_percent": 5.087616913938531
+      },
+      {
+        "series": 1,
+        "baseline_ms": 97.937436625,
+        "polynomial_ms": 95.0698237915,
+        "delta_percent": -2.9280047878729176
+      }
+    ],
+    "pooled": {
+      "baseline_ms": 92.62144835425,
+      "polynomial_ms": 93.40852561450001,
+      "delta_percent": 0.8497786141711483
+    }
+  },
+  "cost_runs": [
+    {
+      "series": 0,
+      "position": 0,
+      "kind": "baseline",
+      "frames": 24,
+      "ms": 80.329810792,
+      "prep_ms": 0.862623167,
+      "submit_ms": 0.366941,
+      "compiles": 0,
+      "lowerings": 0,
+      "parameters": 0,
+      "proofs": 0,
+      "started_unix": 1792614470.113717,
+      "ended_unix": 1792614474.068917,
+      "log": "cost-s0-0-baseline.log"
+    },
+    {
+      "series": 0,
+      "position": 1,
+      "kind": "polynomial",
+      "frames": 24,
+      "ms": 84.528487833,
+      "prep_ms": 0.851748167,
+      "submit_ms": 0.44231425,
+      "compiles": 0,
+      "lowerings": 0,
+      "parameters": 0,
+      "proofs": 0,
+      "started_unix": 1792614474.069112,
+      "ended_unix": 1792614478.037473,
+      "log": "cost-s0-1-polynomial.log"
+    },
+    {
+      "series": 0,
+      "position": 2,
+      "kind": "polynomial",
+      "frames": 24,
+      "ms": 98.965967042,
+      "prep_ms": 0.883819292,
+      "submit_ms": 0.524295125,
+      "compiles": 0,
+      "lowerings": 0,
+      "parameters": 0,
+      "proofs": 0,
+      "started_unix": 1792614478.037788,
+      "ended_unix": 1792614482.455928,
+      "log": "cost-s0-2-polynomial.log"
+    },
+    {
+      "series": 0,
+      "position": 3,
+      "kind": "baseline",
+      "frames": 24,
+      "ms": 94.281109375,
+      "prep_ms": 0.82614925,
+      "submit_ms": 0.383468708,
+      "compiles": 0,
+      "lowerings": 0,
+      "parameters": 0,
+      "proofs": 0,
+      "started_unix": 1792614482.45617,
+      "ended_unix": 1792614486.684159,
+      "log": "cost-s0-3-baseline.log"
+    },
+    {
+      "series": 1,
+      "position": 0,
+      "kind": "baseline",
+      "frames": 24,
+      "ms": 94.627317708,
+      "prep_ms": 0.836744792,
+      "submit_ms": 0.396857583,
+      "compiles": 0,
+      "lowerings": 0,
+      "parameters": 0,
+      "proofs": 0,
+      "started_unix": 1792614486.684364,
+      "ended_unix": 1792614490.936417,
+      "log": "cost-s1-0-baseline.log"
+    },
+    {
+      "series": 1,
+      "position": 1,
+      "kind": "polynomial",
+      "frames": 24,
+      "ms": 94.531585083,
+      "prep_ms": 0.821250042,
+      "submit_ms": 0.406683958,
+      "compiles": 0,
+      "lowerings": 0,
+      "parameters": 0,
+      "proofs": 0,
+      "started_unix": 1792614490.936674,
+      "ended_unix": 1792614495.148919,
+      "log": "cost-s1-1-polynomial.log"
+    },
+    {
+      "series": 1,
+      "position": 2,
+      "kind": "polynomial",
+      "frames": 24,
+      "ms": 95.6080625,
+      "prep_ms": 0.821628625,
+      "submit_ms": 0.357762083,
+      "compiles": 0,
+      "lowerings": 0,
+      "parameters": 0,
+      "proofs": 0,
+      "started_unix": 1792614495.1491132,
+      "ended_unix": 1792614499.407973,
+      "log": "cost-s1-2-polynomial.log"
+    },
+    {
+      "series": 1,
+      "position": 3,
+      "kind": "baseline",
+      "frames": 24,
+      "ms": 101.247555542,
+      "prep_ms": 0.818927083,
+      "submit_ms": 0.353025917,
+      "compiles": 0,
+      "lowerings": 0,
+      "parameters": 0,
+      "proofs": 0,
+      "started_unix": 1792614499.4081652,
+      "ended_unix": 1792614503.81733,
+      "log": "cost-s1-3-baseline.log"
+    }
+  ],
+  "cost_logs": {
+    "cost-s0-0-baseline.log": "SOURCE mode=authored radiance=1 chroma=0 angular=0 clock=7.250000000\nADMISSION cpu_ms=1434.818375000 compiles=3 lowerings=4 proof_builds=4 parameters=1036 proofs=22892\nCOST frames=24 total_ms=80.329810792 prep_ms=0.862623167 submit_ms=0.366941000 compiles=0 lowerings=0 parameters=0 proofs=0\n",
+    "cost-s0-1-polynomial.log": "SOURCE mode=authored radiance=1 chroma=0 angular=0 clock=7.250000000\nPOLY mode=polynomial; same original sample lattice/transport; unqualified numerical lowering\nPOLY mode=polynomial; same original sample lattice/transport; unqualified numerical lowering\nADMISSION cpu_ms=1437.753042000 compiles=3 lowerings=4 proof_builds=4 parameters=1036 proofs=22892\nCOST frames=24 total_ms=84.528487833 prep_ms=0.851748167 submit_ms=0.442314250 compiles=0 lowerings=0 parameters=0 proofs=0\n",
+    "cost-s0-2-polynomial.log": "SOURCE mode=authored radiance=1 chroma=0 angular=0 clock=7.250000000\nPOLY mode=polynomial; same original sample lattice/transport; unqualified numerical lowering\nPOLY mode=polynomial; same original sample lattice/transport; unqualified numerical lowering\nADMISSION cpu_ms=1504.843834000 compiles=3 lowerings=4 proof_builds=4 parameters=1036 proofs=22892\nCOST frames=24 total_ms=98.965967042 prep_ms=0.883819292 submit_ms=0.524295125 compiles=0 lowerings=0 parameters=0 proofs=0\n",
+    "cost-s0-3-baseline.log": "SOURCE mode=authored radiance=1 chroma=0 angular=0 clock=7.250000000\nADMISSION cpu_ms=1446.808708000 compiles=3 lowerings=4 proof_builds=4 parameters=1036 proofs=22892\nCOST frames=24 total_ms=94.281109375 prep_ms=0.826149250 submit_ms=0.383468708 compiles=0 lowerings=0 parameters=0 proofs=0\n",
+    "cost-s1-0-baseline.log": "SOURCE mode=authored radiance=1 chroma=0 angular=0 clock=7.250000000\nADMISSION cpu_ms=1457.341083000 compiles=3 lowerings=4 proof_builds=4 parameters=1036 proofs=22892\nCOST frames=24 total_ms=94.627317708 prep_ms=0.836744792 submit_ms=0.396857583 compiles=0 lowerings=0 parameters=0 proofs=0\n",
+    "cost-s1-1-polynomial.log": "SOURCE mode=authored radiance=1 chroma=0 angular=0 clock=7.250000000\nPOLY mode=polynomial; same original sample lattice/transport; unqualified numerical lowering\nPOLY mode=polynomial; same original sample lattice/transport; unqualified numerical lowering\nADMISSION cpu_ms=1428.406875000 compiles=3 lowerings=4 proof_builds=4 parameters=1036 proofs=22892\nCOST frames=24 total_ms=94.531585083 prep_ms=0.821250042 submit_ms=0.406683958 compiles=0 lowerings=0 parameters=0 proofs=0\n",
+    "cost-s1-2-polynomial.log": "SOURCE mode=authored radiance=1 chroma=0 angular=0 clock=7.250000000\nPOLY mode=polynomial; same original sample lattice/transport; unqualified numerical lowering\nPOLY mode=polynomial; same original sample lattice/transport; unqualified numerical lowering\nADMISSION cpu_ms=1434.493750000 compiles=3 lowerings=4 proof_builds=4 parameters=1036 proofs=22892\nCOST frames=24 total_ms=95.608062500 prep_ms=0.821628625 submit_ms=0.357762083 compiles=0 lowerings=0 parameters=0 proofs=0\n",
+    "cost-s1-3-baseline.log": "SOURCE mode=authored radiance=1 chroma=0 angular=0 clock=7.250000000\nADMISSION cpu_ms=1443.153584000 compiles=3 lowerings=4 proof_builds=4 parameters=1036 proofs=22892\nCOST frames=24 total_ms=101.247555542 prep_ms=0.818927083 submit_ms=0.353025917 compiles=0 lowerings=0 parameters=0 proofs=0\n"
+  },
+  "diagnostic_logs": {
+    "/private/tmp/earthcall-noise-polynomial-hits-v3-20261021/inside.log": "SOURCE mode=authored radiance=1 chroma=0 angular=0 clock=7.250000000\nPOLY mode=hits; same original sample lattice/transport; unqualified numerical lowering\nPOLY mode=hits; same original sample lattice/transport; unqualified numerical lowering\nIMAGE mask=0123 2560x1440 t=7.25 out=/private/tmp/earthcall-noise-polynomial-hits-v3-20261021/inside.rgba; NOT PERFORMANCE TIMING\n",
+    "/private/tmp/earthcall-noise-polynomial-capture-20261021/baseline.log": "SOURCE mode=authored radiance=1 chroma=0 angular=0 clock=7.250000000\nIMAGE mask=0123 2560x1440 t=7.25 out=/private/tmp/earthcall-noise-polynomial-capture-20261021/baseline.rgba; NOT PERFORMANCE TIMING\n",
+    "/private/tmp/earthcall-noise-polynomial-capture-20261021/polynomial.log": "SOURCE mode=authored radiance=1 chroma=0 angular=0 clock=7.250000000\nPOLY mode=polynomial; same original sample lattice/transport; unqualified numerical lowering\nPOLY mode=polynomial; same original sample lattice/transport; unqualified numerical lowering\nIMAGE mask=0123 2560x1440 t=7.25 out=/private/tmp/earthcall-noise-polynomial-capture-20261021/polynomial.rgba; NOT PERFORMANCE TIMING\n",
+    "/private/tmp/earthcall-noise-polynomial-values-20261021/inside.log": "SOURCE mode=authored radiance=1 chroma=0 angular=0 clock=7.250000000\nPOLY mode=polynomial; same original sample lattice/transport; unqualified numerical lowering\nPOLY mode=polynomial; same original sample lattice/transport; unqualified numerical lowering\nIMAGE mask=0123 2560x1440 t=7.25 out=/private/tmp/earthcall-noise-polynomial-values-20261021/inside.rgba; NOT PERFORMANCE TIMING\n",
+    "/private/tmp/earthcall-noise-polynomial-native-20261021/baseline.log": "SOURCE mode=authored radiance=1 chroma=0 angular=0 clock=7.250000000\nIMAGE mask=0123 2560x1440 t=7.25 out=/private/tmp/earthcall-noise-polynomial-native-20261021/baseline.rgba; NOT PERFORMANCE TIMING\n",
+    "/private/tmp/earthcall-noise-polynomial-native-20261021/polynomial.log": "SOURCE mode=authored radiance=1 chroma=0 angular=0 clock=7.250000000\nPOLY mode=polynomial; same original sample lattice/transport; unqualified numerical lowering\nPOLY mode=polynomial; same original sample lattice/transport; unqualified numerical lowering\nIMAGE mask=0123 2560x1440 t=7.25 out=/private/tmp/earthcall-noise-polynomial-native-20261021/polynomial.rgba; NOT PERFORMANCE TIMING\n"
+  }
+}

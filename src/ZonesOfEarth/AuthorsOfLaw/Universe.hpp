@@ -129,14 +129,8 @@ public:
         return out;
     }
 
-    // Query contract: Raw Relation queries (relationsInvolving, relations()) return
-    // historical truth without destructive erasure. Callers asking for current semantic state
-    // must consult canonical currentness/supersession semantics (isRelationCurrent / isRelationSuperseded).
-    // Do not assume that being returned by relations() means "currently active".
-    //
-    // World-level canonical supersession query:
-    // A relation is superseded if another relation in the world graph declares
-    // `superseded-by` with this relation as its source endpoint (a).
+    // Raw graph queries preserve historical truth. Current semantic state is
+    // determined through first-class superseded-by Relations.
     bool isRelationSuperseded(const Relation& r) const;
     bool isRelationCurrent(const Relation& r) const;
 
