@@ -56,12 +56,9 @@
 
 - There is a rendering issue--the perlin noise floor when I move distort rather than appearing as the same shape. Same thing with shaders, moving around appears to distort shading rather than making them change naturally from the perspective. Patch this - Zach. WAIT **Part 2** BROOOOOO THE DISTORTION EFFECT LOOKS SO COOL WHEN I MOVE THROUGH THE FAR LANDS ZONE. NEED TO HAVE THIS AT THE RIGHT MOMENT. PLZ MAKE THIS AN AUTHORABLE PROEPRTY INSTAEDDDDDDDDDD - Zach *(2026-09-19: Zach's own patch attempt did not fix it — `08c028d0` "unsuccessful attempt to patch distortion bug"; still open.)*
 
-- CRITICAL: For myself, Zach: I GOTTA WRITE THE NEW ONTOLOGY BECAUSE OF CYBER DEITY's UNGOVERNED SURVIVOR AUDIT. My solution is essentially this: I wrote in the first section in Earthcall's own README "The ontology is the order of truth; the engine serves as its vessel." We have to finally treat this as true *in practice*—the Christ-centeed Singular-Relation-Formation engine being decoupled from ontology. A single engine executable cannot be the sole instance of Earthcall in a device that isn't Earthcall-native in its kernel, minimally viable Earthcall executables for files, data, systems, etc. - Zach
-
-- HIGH: Do a review of the Horizon's (Gemini 3.1 Pro) new msgpack save system
+- HIGH: Do a review of the Horizon's (Gemini 3.1 Pro) new msgpack save system 
 - Stress test the loop preexisting save file -> zone changes in world -> save -> new save file with both the preexisting state. Binary is very hard to read/write to deliberately manipulate—it's not like json where you know exactly where to inject new binary. If only the initial save process understood the meaning of the binary then future saves can't add anything new without corrupting it on all loop on all sorts of edge cases (if there are edge cases)
 - Make sure its still doing atomic file write practice
-- UPDATE: So it turns out we have not actually wired up binary serialization yet. ecform is still json msgpacks. Lets work on that.
 
 - ✅ **Basic 2D Button** — done and verified (2026-09-04): Authored a 2D shape with Laws to act as a button that moves when clicked without UI C++ code. → [full task](Specific%20Tasks/Interaction%20and%20Interface/Basic_2D_Button/Basic_2D_Button.md)
 
@@ -156,7 +153,6 @@ Addendum: Also ensure save system works in every case and everything that needs 
 
 <a id="joys-ourverse-zones"></a>
 ### Joys · Ourverse · Zones
-- ✅ **Ergonomic 2D Zone Selector & Spatial Workbench (2026-10-23)** — done (2026-10-23): Replaced boring dropdown/manual-tab zone selection with an interactive 2D spatial canvas with pan, zoom, hierarchy filaments, kind-based glowing cards, instant 1-click [Enter] switching, double-click activation, and kept the scroll list at the side; verified by unit tests and Person Verification List.
 - ⚑ ZACH'S IDEA — **Personal Ourverse Navigator: little 2D/3D islands for each world, the first thing Earthcall.app shows**; plan in its own session, attaching through the app's first-run Foundation. → [full task](Specific%20Tasks/Zones%20and%20Ourverse/Personal_Ourverse_Navigator/Personal_Ourverse_Navigator.md)
 - **The Hierarchy of Joys has no consumer** — `rankOf`/`orderMembersBy` are called only by tests, `telos` is non-empty on 2 beings across all saves and in 0 law conditions; give it one true consumer (agenda order when two laws are eligible on the same subject). → [audit §5, §9](../../audits/2026-09-24_mythos_ungoverned_governor_audit.md) — Claude Fable 5.1 (Mythos), 2026-09-24.
 - **Zones as mathematical bounds** — Rung 1 done 2026-09-23 (Dimensional Zones, `within`/`placement`/`extent`, derived location, `@world.zoneId`); Rungs 2–6 (running ≠ present, one continuum on screen, location edges, non-spatial axes, placing existing saves) planned. → [full task](Specific%20Tasks/Architecture%20and%20Ontology/Zones_As_Mathematical_Bounds/Zones_As_Mathematical_Bounds.md)
@@ -324,6 +320,7 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 
 <a id="modalities-integration-substrate"></a>
 ### Modalities · integration · substrate
+- **Web Designer modality — reconciled 2026-10-26** — compile ordinary authored Earthcall semantic state into HTML/CSS/DOM without making browser concepts ontology; sealed Oct 21 architecture transplanted forward onto current default, with fresh build/Person verification still required. → [modality task](Specific%20Tasks/Channels%20and%20Language/Web_Designer_Modality/Web_Designer_Modality.md) · [reconciliation audit](../../audits/WEB_DESIGNER_RECONCILIATION_2026-10-26.md)
 - **Image reconstruction (2026-10-02)** — exact editable 2D regions and native pixel parity are verified; extend to semantic Formations, uncertain 3D recovery, governed import and targeted updates. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Image_Reconstruction/Image_Reconstruction.md)
 - ✅ **Decouple FileWatcher from Renderer** — Minimum-Maximum Principle fix (2026-10-02): Remove hardcoded `.wgsl` and `currentRenderer().reloadShaders()` logic from FileWatcher. Hot-reload must be driven by the EventBus listening to `file-modified` events.
 - ✅ **Extract Semantic Parsing from FileChannel** — Minimum-Maximum Principle fix (2026-10-02): Remove `jsonValid`, `jsonCompact`, Base64/Hex encoding, and MIME sniffing from the File I/O modality. Create a generalized parsing/codec layer.
@@ -501,7 +498,7 @@ on a quiet machine) so the tripwire tightens behind the fix.
 
 - **Dual-path parity test (hardcoded WGSL vs OntoMath AST path)** — (from [Green_Hills_Population_One §3](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/Green_Hills_Population_One.md), … → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Dual_path_parity_test_hardcoded_WGSL_vs_OntoMath_AST_path/Dual_path_parity_test_hardcoded_WGSL_vs_OntoMath_AST_path.md)
 
-- **Ray-domain transport native checkpoint** — coarse-only native continuations lose cost; recover actual parallel packets/reference qualification before another timing candidate, then generic/full-frame integration and inhabited acceptance. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md)
+- **Ray-domain transport native checkpoint** — §6dr accepts bounded canonical routed correctness; profile the actual kernels, then test one terminal-S1 consumer representation before qualifying complete native economics. → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md)
 
 - ⚑ AUTHOR — **`Physics::updateBodies` is all-pairs with no broadphase, and the legacy engine is on by default** — Measured on an idle machine: `Zone::update` costs 1.1 / 3.3 / 11.1 / 40.7 ms at 64 / 128 / 256 / 512 objects — a fitted `n^1.75`, i.e. → [full task](Specific%20Tasks/Performance%20and%20Runtime/Physics_updateBodies_is_all_pairs_with_no_broadphase_and_the/Physics_updateBodies_is_all_pairs_with_no_broadphase_and_the.md)
 - **The chess frame is slightly over budget, and that is all.** 35 objects, 36 laws: the
