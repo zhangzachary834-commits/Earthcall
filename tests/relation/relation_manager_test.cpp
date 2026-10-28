@@ -7,6 +7,9 @@
 #include <iostream>
 #include <string>
 #include <cassert>
+#include <chrono>
+#include <array>
+#include <algorithm>
 
 namespace {
 
@@ -209,6 +212,75 @@ void test_string_queries_rename_and_equivalence() {
     DummySingular impostor("a-orig");
     check(rm.getRelationsOf("a-orig").empty(), "impostor with old ID 'a-orig' does NOT falsely match rels of renamed boundA");
 
+    // A live rename can collide with an ALREADY INDEXED name. Merely
+    // scanning on an index miss silently drops the renamed edge here.
+    {
+        RelationManager collision;
+        DummySingular moved("previous");
+        DummySingular stable("shared");
+        DummySingular leftTarget("left-target");
+        DummySingular rightTarget("right-target");
+        auto movedEdge = std::make_shared<Relation>("link", moved, leftTarget, true);
+        auto stableEdge = std::make_shared<Relation>("link", stable, rightTarget, true);
+        collision.add(movedEdge);
+        collision.add(stableEdge);
+        check(collision.getRelationsOf("previous").size() == 1,
+              "collision precondition builds the old-name index");
+        moved.id = "shared";  // no RelationManager::touch() notification
+        const auto both = collision.getRelationsOf("shared");
+        check(both.size() == 2 && both[0] == movedEdge && both[1] == stableEdge,
+              "renamed endpoint joins an existing indexed key without dropping either edge");
+        const auto between = collision.getRelationsBetween("shared", "left-target");
+        check(between.size() == 1 && between[0] == movedEdge,
+              "between(string,string) sees renamed endpoint despite existing index key");
+        const auto adjacent = collision.findAdjacentEntities("shared");
+        check(adjacent.size() == 2 && adjacent[0] == "left-target" &&
+              adjacent[1] == "right-target",
+              "adjacency retains both renamed and existing edges in insertion order");
+        check(collision.getRelationsOf("previous").empty(),
+              "old identifier does not continue to own renamed edge");
+    }
+
+    // A Relation can forget an endpoint directly, without notifying its
+    // manager. A subsequent string query must not dereference its old pointer.
+    {
+        RelationManager forgotten;
+        auto departed = std::make_unique<DummySingular>("departed");
+        DummySingular remaining("remaining");
+        auto edge = std::make_shared<Relation>("link", *departed, remaining, true);
+        forgotten.add(edge);
+        check(forgotten.getRelationsOf("departed").size() == 1,
+              "direct-forget precondition builds the pointer/name index");
+        edge->forgetEndpoint(departed.get());
+        departed.reset();
+        const auto kept = forgotten.getRelationsOf("departed");
+        check(kept.size() == 1 && kept[0] == edge,
+              "directly forgotten endpoint keeps saved ID without stale-pointer dereference");
+    }
+
+    // A direct rebind is another unannounced mutation. The old endpoint
+    // remains live in a second relation, so a pointer-liveness check alone
+    // cannot detect the first relation moving to a new identifier.
+    {
+        RelationManager rebinding;
+        DummySingular original("original");
+        DummySingular replacement("replacement");
+        DummySingular target1("target1");
+        DummySingular target2("target2");
+        auto movedEdge = std::make_shared<Relation>("link", original, target1, true);
+        auto stableEdge = std::make_shared<Relation>("link", original, target2, true);
+        rebinding.add(movedEdge);
+        rebinding.add(stableEdge);
+        check(rebinding.getRelationsOf("original").size() == 2,
+              "direct rebind with still-retained old endpoint: precondition");
+        movedEdge->bind(&replacement, &target1);
+        const auto oldEdges = rebinding.getRelationsOf("original");
+        const auto newEdges = rebinding.getRelationsOf("replacement");
+        check(oldEdges.size() == 1 && oldEdges[0] == stableEdge &&
+              newEdges.size() == 1 && newEdges[0] == movedEdge,
+              "direct rebind updates string index despite old endpoint still being retained");
+    }
+
     // 3. Loaded-unbound identifiers coverage
     RelationManager rmUnbound;
     rmUnbound.loadFromJson(nlohmann::json::array({
@@ -220,6 +292,79 @@ void test_string_queries_rename_and_equivalence() {
     check(adjUnbound1.size() == 1 && adjUnbound1[0] == "unbound2", "findAdjacentEntities(unbound1) finds unbound2");
     auto adjUnbound2 = rmUnbound.findAdjacentEntities("unbound2");
     check(adjUnbound2.size() == 1 && adjUnbound2[0] == "unbound1", "findAdjacentEntities(unbound2) finds unbound1 for undirected edge");
+
+    // The legacy adjacency scan accepts the empty identifier even though
+    // getRelationsOf/getRelationsBetween explicitly reject it. Preserve that
+    // observable behavior for unresolved or malformed saved relations.
+    RelationManager emptyNames;
+    emptyNames.loadFromJson(nlohmann::json::array({
+        {{"type", "empty-out"}, {"entityA", ""}, {"entityB", "out"}, {"directed", true}},
+        {{"type", "empty-undirected"}, {"entityA", "peer"}, {"entityB", ""}, {"directed", false}},
+        {{"type", "empty-incoming"}, {"entityA", "incoming"}, {"entityB", ""}, {"directed", true}}
+    }));
+    const auto emptyAdj = emptyNames.findAdjacentEntities("");
+    check(emptyAdj.size() == 2 && emptyAdj[0] == "out" && emptyAdj[1] == "peer",
+          "empty identifier adjacency retains legacy directed/undirected ordering");
+    check(emptyNames.getRelationsOf("").empty(),
+          "empty identifier getRelationsOf still refuses an empty lookup");
+    check(emptyNames.getRelationsBetween("", "out").empty(),
+          "empty identifier getRelationsBetween still refuses an empty lookup");
+}
+
+
+void test_string_query_ab_performance() {
+    // Report-only A/B: exact pre-optimization full scan versus indexed path,
+    // on the SAME graph and runner. No timing-based CI assertion.
+    using Clock = std::chrono::steady_clock;
+    for (const int edgeCount : {200, 1200}) {
+        RelationManager rm;
+        std::vector<std::unique_ptr<DummySingular>> beings;
+        for (int i = 0; i < 100; ++i) {
+            beings.push_back(std::make_unique<DummySingular>("bench-" + std::to_string(i)));
+        }
+        for (int i = 0; i < edgeCount; ++i) {
+            const int a = i % 100;
+            const int b = (a + i / 100 + 1) % 100;
+            rm.add(std::make_shared<Relation>("bench-link", *beings[a], *beings[b], true));
+        }
+        const std::string key = "bench-0";
+        const auto scan = [&]() {
+            std::vector<std::shared_ptr<Relation>> result;
+            for (const auto& rel : rm.getAll()) {
+                if (rel && rel->involves(key)) result.push_back(rel);
+            }
+            return result.size();
+        };
+        const auto indexed = [&]() { return rm.getRelationsOf(key).size(); };
+        check(scan() == indexed(), "A/B precondition: full scan and index agree");
+        // Warm up the index before measurement; measure query cost, not build.
+        (void)indexed();
+        const auto measure = [&](const auto& query) {
+            const auto start = Clock::now();
+            std::size_t checksum = 0;
+            for (int i = 0; i < 600; ++i) checksum += query();
+            const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
+                Clock::now() - start).count();
+            return std::pair<long long, std::size_t>(elapsed, checksum);
+        };
+        std::array<long long, 3> scanUs{}, indexUs{};
+        for (int trial = 0; trial < 3; ++trial) {
+            const auto [scanTime, scanCount] = measure(scan);
+            const auto [indexTime, indexCount] = measure(indexed);
+            check(scanCount == indexCount, "A/B timed checksums match");
+            scanUs[trial] = scanTime;
+            indexUs[trial] = indexTime;
+        }
+        std::sort(scanUs.begin(), scanUs.end());
+        std::sort(indexUs.begin(), indexUs.end());
+        std::cout << "RELATION_STRING_AB edge_count=" << edgeCount
+                  << " endpoint_count=100 queries_per_trial=600"
+                  << " scan_median_us=" << scanUs[1]
+                  << " indexed_median_us=" << indexUs[1]
+                  << " ratio_scan_over_index="
+                  << (indexUs[1] ? static_cast<double>(scanUs[1]) / indexUs[1] : 0.0)
+                  << "\n";
+    }
 }
 
 void test_forget_being() {
@@ -333,6 +478,7 @@ int main() {
     test_forget_type_lexeme();
     test_would_form_cycle_string_overload();
     test_string_queries_rename_and_equivalence();
+    test_string_query_ab_performance();
 
     std::cout << "============================================================\n";
     std::cout << "RelationManager test summary: "
