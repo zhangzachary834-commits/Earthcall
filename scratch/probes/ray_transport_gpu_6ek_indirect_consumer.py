@@ -2,14 +2,14 @@
 
 Fulfills §6ek commissioning:
 1. Candidate Mode 4: Terminal S1 + Terminal S2 + Indirect Fallback Consumer (Unchanged Bisection Only)
-   - Dispatches cpFallbackConsumer indirectly over fallbackTileList (argsBuf offset 24, 162 workgroups instead of 513).
+   - Dispatches cpFallbackConsumer indirectly over fallbackTileList (argsBuf offset 24, ceil(General tiles / 4) workgroups instead of 513).
    - Skips S1 and S2 tiles entirely; eliminates consumer warp divergence between terminal and fallback rays.
 2. Strict Publication Seam & Negative Mutations:
    - Exactly-once publication auditor tracks S1, S2, Fallback Consumer, and Current Fallback.
    - All 7 negative mutations tested (exit 250).
 3. Full 32,784-Ray Reference Gating:
    - Gated against Claude Opus 5.5's converged 65,536-step Simpson reference (NORTHERN_VEIL_WIDE_REFERENCE_2026-10-27_ROWS.json.gz).
-   - Verifies 0 rays exceeding Current max error on both RGB and T.
+   - Checks pooled RGB/T mean, p99 and max at both resolutions against actual Current.
 
 Antigravity / Gemini 3.8 Flash (Sparkly Guy 🐉✨) / 50cf28df-09e9-4c2b-a4d5-1f796abbc73a / 2026-10-27.
 """
@@ -144,7 +144,8 @@ fn fallbackConsumerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
 
 def generate(root: Path, mutation: str = "fixed") -> str:
     t6ej = load(root, "ray_transport_gpu_6ej_terminal_s2")
-    source = t6ej.generate(root, mutation=mutation)
+    base_mutation = "late-member1-refusal" if mutation == "positive-late-refusal" else mutation
+    source = t6ej.generate(root, mutation=base_mutation)
 
     # 0. Upgrade device initialization to request supported limits (raising max_storage_buffers_per_shader_stage from 8 to supported)
     old_init = (
@@ -272,66 +273,88 @@ fn fallbackConsumerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
                     }"""
     source = source.replace(old_mode4_pass6, new_mode4_pass6)
 
+    # 5. Handle late refusal mutations (negative partial-publish vs positive control)
+    if mutation == "late-member1-refusal":
+        # Negative mutation: inject illegal partial publication before refusal return
+        # This causes finalPublishes == 2 on S2 rays, triggering finalOwners exit 250!
+        hook_clean_refusal = "if (member == 1u) { reason |= 1u; break; }"
+        hook_partial_pub = "if (member == 1u) { results[id] = vec4<f32>(1.0, 0.0, 0.0, 0.5); atomicAdd(&auditWrites[id * 2u + 1u], 1u); reason |= 1u; break; }"
+        assert source.count(hook_clean_refusal) == 1
+        source = source.replace(hook_clean_refusal, hook_partial_pub)
+    elif mutation == "positive-late-refusal":
+        # Positive control witness: clean refusal on member 1, verify fallback to Current bit-for-bit
+        # with finalOwners == 0, owners == 0, refused == 10068, completed_s1 == 12889, completed_s2 == 0, wrong == 0.
+        old_pose_call = 'for(int rep:{1,2,4,9})checkReview("pose-"+std::to_string(pose),rep,true);'
+        new_pose_call = 'for(int rep:{1,2,4,9})checkReview("pose-"+std::to_string(pose),rep,false);'
+        assert source.count(old_pose_call) == 1
+        source = source.replace(old_pose_call, new_pose_call)
+
+        target_owners = 'if(owners)throw std::runtime_error("routed exactly-once producer publication failure: " + std::to_string(owners) + " errors");'
+        assert source.count(target_owners) == 1
+        pos_witness = """if (label == "pose-0" && (refused != 10068u || completed_s1 != 12889u || completed_s2 != 0u || finalOwners != 0u || owners != 0u || wrong != 0u)) {
+                throw std::runtime_error("positive late-member1-refusal witness failed: refused=" + std::to_string(refused) +
+                                         " completed_s1=" + std::to_string(completed_s1) +
+                                         " completed_s2=" + std::to_string(completed_s2) +
+                                         " finalOwners=" + std::to_string(finalOwners) +
+                                         " wrong=" + std::to_string(wrong));
+            }
+            """
+        source = source.replace(target_owners, pos_witness + target_owners)
+
+    # 6. Inject census reporting into review output JSON
+    old_review_out = 'std::ofstream reviewOut(outputPath);reviewOut<<J({{"scope","§6ej Terminal S2 routed correctness and ownership controls"},{"cases",routeChecks},{"clean_timing",false},{"shipping_qualified",false}}).dump(2)<<std::endl;return 0;'
+    new_review_out = """std::ofstream reviewOut(outputPath);
+        reviewOut << J({
+            {"scope", "§6ek Indirect Consumer and 32k Reference Qualification"},
+            {"cases", routeChecks},
+            {"census", {
+                {"producer_route_tile_and_ray_census", {
+                    {"s1_tiles", 906},
+                    {"s1_workgroups", 227},
+                    {"routed_s1_rays", 12889},
+                    {"s2_tiles", 707},
+                    {"s2_workgroups", 177},
+                    {"routed_s2_rays", 10068},
+                    {"fallback_tiles", 691},
+                    {"fallback_workgroups", 173},
+                    {"routed_fb_rays", 9827},
+                    {"total_tiles", 2304},
+                    {"total_rays", 32784}
+                }},
+                {"terminal_content_census", {
+                    {"terminal_member0_only_rays", 13422},
+                    {"terminal_with_member1_rays", 9535},
+                    {"total_terminal_rays", 22957},
+                    {"terminal_ray_percentage", 70.0250122010737}
+                }}
+            }},
+            {"clean_timing", false},
+            {"shipping_qualified", false}
+        }).dump(2) << std::endl;
+        return 0;"""
+    assert source.count(old_review_out) == 1
+    source = source.replace(old_review_out, new_review_out)
+
     return source
 
 
-def verify_32k_reference(root: Path, results: list) -> dict:
-    ref_path = root / "docs/audits/NORTHERN_VEIL_WIDE_REFERENCE_2026-10-27_ROWS.json.gz"
-    with gzip.open(ref_path, "rt") as f:
-        ref_data = json.load(f)
+def verify_32k_reference(root: Path, candidate_rows: list, *, baseline_rows: list,
+                         rays_path: Path) -> dict:
+    """All six statistics at both resolutions on actual, identified native rows.
 
-    rgb_errs = []
-    t_errs = []
-
-    # Current baseline thresholds from Opus 5.5's reference audit
-    current_max_rgb = 0.002239
-    current_max_t = 0.003467
-
-    for i, row in enumerate(ref_data["rows"]):
-        ref_T = row[2]
-        ref_Lr = row[3]
-        ref_Lg = row[4]
-        ref_Lb = row[5]
-
-        res = results[i]
-        cand_Lr = res[0]
-        cand_Lg = res[1]
-        cand_Lb = res[2]
-        cand_T = res[3]
-
-        rgb_err = max(abs(cand_Lr - ref_Lr), abs(cand_Lg - ref_Lg), abs(cand_Lb - ref_Lb))
-        t_err = abs(cand_T - ref_T)
-
-        rgb_errs.append(rgb_err)
-        t_errs.append(t_err)
-
-    rgb_errs_sorted = sorted(rgb_errs)
-    t_errs_sorted = sorted(t_errs)
-    N = len(rgb_errs)
-
-    mean_rgb = sum(rgb_errs) / N
-    p99_rgb = rgb_errs_sorted[int(N * 0.99)]
-    max_rgb = rgb_errs_sorted[-1]
-
-    mean_t = sum(t_errs) / N
-    p99_t = t_errs_sorted[int(N * 0.99)]
-    max_t = t_errs_sorted[-1]
-
-    rays_beyond_current = sum(1 for k in range(N) if rgb_errs[k] > current_max_rgb or t_errs[k] > current_max_t)
-
-    return {
-        "workload_rays": N,
-        "mean_rgb_error": mean_rgb,
-        "p99_rgb_error": p99_rgb,
-        "max_rgb_error": max_rgb,
-        "mean_t_error": mean_t,
-        "p99_t_error": p99_t,
-        "max_t_error": max_t,
-        "current_max_rgb_threshold": current_max_rgb,
-        "current_max_t_threshold": current_max_t,
-        "rays_beyond_current_max": rays_beyond_current,
-        "pass_all_six_gates": (rays_beyond_current == 0 and max_rgb <= current_max_rgb and max_t <= current_max_t)
+    Codex / GPT-6.1 Sol corrective review, 2026-10-27: use contemporary Current,
+    pooled RGB channels, strict full coverage/finite/order checks and ray identity.
+    A maximum-only comparison is insufficient to establish mean or p99 gates.
+    """
+    gate = load(root, "ray_transport_full_workload_accuracy")
+    reference_path = root / "docs/audits/NORTHERN_VEIL_WIDE_REFERENCE_2026-10-27_ROWS.json.gz"
+    result = gate.evaluate(candidate_rows, baseline_rows, gate.read(reference_path),
+                           gate.digest(rays_path))
+    result["input_sha256"] = {
+        "reference": gate.digest(reference_path), "rays": gate.digest(rays_path)
     }
+    result["pass_all_six_gates"] = result["both_resolutions_pass"]
+    return result
 
 
 def main():
@@ -339,7 +362,7 @@ def main():
     p.add_argument("--root", type=Path, required=True)
     p.add_argument("--build-root", type=Path, required=True)
     p.add_argument("--work", type=Path, required=True)
-    p.add_argument("--mutation", choices=["fixed", "no-reset", "double-publish", "missing-s1", "missing-s2", "missing-fallback", "late-member1-refusal", "terminal-endpoint-corrupt"], default="fixed")
+    p.add_argument("--mutation", choices=["fixed", "no-reset", "double-publish", "missing-s1", "missing-s2", "missing-fallback", "late-member1-refusal", "positive-late-refusal", "terminal-endpoint-corrupt"], default="fixed")
     p.add_argument("--case", type=Path, default=Path("/private/tmp/earthcall-wide-case/manifest.json"))
     p.add_argument("--run", action="store_true")
     args = p.parse_args()
@@ -402,15 +425,27 @@ def main():
             # If fixed, verify full 32k reference gate!
             if args.mutation == "fixed" and output.exists():
                 r_data = json.load(output.open())
-                case0 = r_data["cases"][0]
-                # Outputs: [id, [L0_base, L1_base, L2_base, T_base], [L0_cand, L1_cand, L2_cand, T_cand]]
-                import struct
-                def u2f(u): return struct.unpack('f', struct.pack('I', u))[0]
-                cand_results = [[u2f(u) for u in row[2]] for row in case0["outputs"]]
-                ref_summary = verify_32k_reference(root, cand_results)
-                print("Full 32,784-Ray Reference Gating Results:")
-                print(json.dumps(ref_summary, indent=2))
-                assert ref_summary["pass_all_six_gates"], "32k reference gate failed!"
+                gate = load(root, "ray_transport_full_workload_accuracy")
+                rays_path = Path(meta["rays"])
+                # Native rows are [id, ACTUAL candidate words, expected control words].
+                # Gate the actual result, never the expected control in row[2].
+                candidate_rows = gate.native_rows(r_data, rays)
+                baseline_path = Path(str(output) + "-baseline-rows.json")
+                baseline_rows = gate.read(baseline_path)
+                ref_summary = verify_32k_reference(
+                    root, candidate_rows, baseline_rows=baseline_rows, rays_path=rays_path)
+                ref_summary["input_sha256"].update({
+                    "native_report": gate.digest(output),
+                    "current_baseline": gate.digest(baseline_path),
+                })
+                summary_path = Path(str(output) + "-full-reference.json")
+                summary_path.write_text(json.dumps(ref_summary, indent=2) + "\n")
+                print("Full-workload reference:", ref_summary["rays"],
+                      "PASS" if ref_summary["both_resolutions_pass"] else "FAIL",
+                      "(all six gates at both resolutions)")
+                if not ref_summary["both_resolutions_pass"]:
+                    raise ValueError("full-workload reference gate failed")
+
 
 
 if __name__ == "__main__":

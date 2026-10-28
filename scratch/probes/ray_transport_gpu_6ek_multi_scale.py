@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """§6ek Multi-Scale Scaling Screen ($T(K) = F + t * K$) & Indirect Fallback Consumer.
 Evaluates Modes 0, 1, 3, 4 across K in {1, 2, 4, 8, 16} using active non-blocking poll (waitStyle=1)
-and blocking poll (waitStyle=0). Fits T(K) = F + t * K and projects 2560x1440 frame cost (K=112.5).
+and blocking poll (waitStyle=0). Historical DIAGNOSTIC path, not clean performance.
+Fits are descriptive; viewport projections below are unmeasured, not frame/FPS evidence.
 
 Antigravity / Gemini 3.8 Flash (Sparkly Guy 🐉✨)
 Session: 50cf28df-09e9-4c2b-a4d5-1f796abbc73a
@@ -15,6 +16,7 @@ import math
 import os
 import re
 import subprocess
+import statistics
 import sys
 from pathlib import Path
 
@@ -268,8 +270,10 @@ def generate(root: Path) -> str:
     source = source.replace(old_matrix_end, new_matrix_end)
 
     # 5. Inject Multi-Scale screen timing section replacing the old reviewOut return 0;
-    hook_review_out = 'std::ofstream reviewOut(outputPath);reviewOut<<J({{"scope","§6ej Terminal S2 routed correctness and ownership controls"},{"cases",routeChecks},{"clean_timing",false},{"shipping_qualified",false}}).dump(2)<<std::endl;return 0;'
-    assert source.count(hook_review_out) == 1
+    # The qualification writer now includes a route census; replace its whole
+    # return block rather than matching the historical single-line JSON shape.
+    output_start = source.index("std::ofstream reviewOut(outputPath);")
+    output_end = source.index("return 0;", output_start) + len("return 0;")
 
     timing_section = """std::cerr << "Starting Multi-Scale Screen for K=" << scaleK << " (Rays=" << count << ")..." << std::endl;
         const std::vector<int> activeModes = {0, 1, 3, 4};
@@ -322,7 +326,7 @@ def generate(root: Path) -> str:
         std::ofstream(outputPath) << scaleReport.dump(2) << "\\n";
         std::cerr << "Scale K=" << scaleK << " complete. Saved " << observations.size() << " timing observations." << std::endl;
         return 0;"""
-    source = source.replace(hook_review_out, timing_section)
+    source = source[:output_start] + timing_section + source[output_end:]
 
     return source
 
@@ -363,11 +367,13 @@ def main():
         # Run across K in {1, 2, 4, 8, 16}
         scales = [1, 2, 4, 8, 16]
         all_obs = []
+        # Preserve prior evidence; use an explicitly fresh external run root.
+        if work.exists() or work == root or root in work.parents:
+            raise ValueError("fresh external work required; existing directories are never deleted")
+        work.mkdir(parents=True, exist_ok=False)
 
         for k in scales:
-            k_work = Path(f"/private/tmp/earthcall-6ek-ms-K{k}")
-            if k_work.exists():
-                subprocess.run(["rm", "-rf", str(k_work)], check=True)
+            k_work = work / f"K{k}"
 
             print(f"\n==========================================")
             print(f"=== Compiling & Running Scale K={k} ({k * 32784:,} rays) ===")
@@ -405,7 +411,7 @@ def main():
 
         for style, style_name in [(1, "Active Poll (waitStyle=1)"), (0, "Blocking Poll (waitStyle=0)")]:
             print(f"\n### {style_name}")
-            print(f"| Mode | K=1 (32k) | K=2 (65k) | K=4 (131k) | K=8 (262k) | K=16 (524k) | F (Barrier ms) | t (Slope ms/K) | R^2 | K=112.5 (2560x1440) | Projected FPS |")
+            print(f"| Mode | K=1 (32k) | K=2 (65k) | K=4 (131k) | K=8 (262k) | K=16 (524k) | OLS intercept (ms) | t (Slope ms/K) | R^2 | K=112.5 (2560x1440) | Projected FPS |")
             print(f"|---|---|---|---|---|---|---|---|---|---|---|")
 
             style_fits = {}
@@ -415,7 +421,7 @@ def main():
                 for k in scales:
                     samples = [o["completion_ms"] for o in all_obs if o["scale_k"] == k and o["mode"] == m and o["wait_style"] == style]
                     samples.sort()
-                    med = samples[len(samples) // 2]
+                    med = statistics.median(samples)
                     k_medians.append(med)
 
                 F, t, r2 = linear_fit(scales, k_medians)
@@ -429,7 +435,7 @@ def main():
                 style_fits[str(m)] = {
                     "mode_name": mode_names[m],
                     "medians_per_k": dict(zip(scales, k_medians)),
-                    "F_barrier_ms": F,
+                    "OLS_intercept_ms": F,
                     "t_slope_ms_per_k": t,
                     "r2": r2,
                     "projected_cost_112_5_ms": t_112_5,
@@ -444,7 +450,7 @@ def main():
             fit3 = style_fits["3"]
 
             delta_t_4_vs_0 = fit0["t_slope_ms_per_k"] - fit4["t_slope_ms_per_k"]
-            delta_F_4_vs_0 = fit4["F_barrier_ms"] - fit0["F_barrier_ms"]
+            delta_F_4_vs_0 = fit4["OLS_intercept_ms"] - fit0["OLS_intercept_ms"]
 
             print(f"\nMarginal Slope Comparison for {style_name}:")
             print(f"  Mode 0 slope: {fit0['t_slope_ms_per_k']:.4f} ms/K ({fit0['t_slope_ms_per_k']/32784.0*1e6:.2f} ns/ray)")
@@ -458,14 +464,14 @@ def main():
                 n_star = k_star * 32784
                 print(f"  Crossover point: K* = {k_star:.2f} (N* = {n_star:,.0f} rays)")
                 if k_star < 112.5:
-                    print(f"  => Mode 4 BEATS Mode 0 at 2560x1440 screen resolution! (Projected {fit4['projected_fps_112_5']:.1f} FPS vs {fit0['projected_fps_112_5']:.1f} FPS)")
+                    print(f"  => Unmeasured linear extrapolation only; no viewport/FPS qualification (Projected {fit4['projected_fps_112_5']:.1f} FPS vs {fit0['projected_fps_112_5']:.1f} FPS)")
                 else:
                     print(f"  => Crossover K* ({k_star:.1f}) is beyond 2560x1440 (K=112.5).")
             else:
                 print(f"  Mode 4 marginal slope ({fit4['t_slope_ms_per_k']:.4f}) does not beat Mode 0 ({fit0['t_slope_ms_per_k']:.4f}). Barrier delta is {delta_F_4_vs_0:.4f} ms.")
 
         # Save JSON output
-        out_json_path = root / "docs/audits/GPU_RAY_TRANSPORT_6EK_MULTI_SCALE_SCREEN_2026-10-27.json"
+        out_json_path = work / "analysis.json"
         analysis["raw_observations"] = all_obs
         out_json_path.write_text(json.dumps(analysis, indent=2))
         print(f"\nSaved Multi-Scale Screen JSON to {out_json_path}")
