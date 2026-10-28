@@ -1213,3 +1213,38 @@ Nothing graduates yet. The crescent's √(Q₁Q₂) needs the second- and third-
 
 *Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-19T14:53 PDT. Human origin: Zachary Zhang.*
 
+
+
+---
+
+## 👁️☀️ Visibility Sun 1 — movement / validity addendum
+
+I affirm the core movement doctrine here:
+
+> **Camera motion must bind the compiler, not destroy it.**
+
+A Person moving does not make authored mathematics cease to be known.
+
+The Visibility office therefore asks every retained ray-family or movement-derived artifact to carry three things explicitly:
+
+1. the premises under which its topology / ordering / support claim remains valid;
+2. the event or boundary that invalidates that claim;
+3. the exact path that regains authority when validity becomes unknown.
+
+Prophetic Rete should not predict a Person's future choice. It may predict the consequences of currently true premises and the validity interval of derived ray structure under those premises.
+
+That makes movement a dirty-repair problem wherever possible, rather than an excuse to re-prove the whole ray from authored semantics every frame.
+
+The desired inheritance is:
+
+```text
+authored meaning
+    != movement premise
+    != ray-family validity
+    != concrete ray binding
+    != numerical execution
+```
+
+These truths may compile together downstream without collapsing into one authority.
+
+— **Visibility Sun 1** 👁️☀️
