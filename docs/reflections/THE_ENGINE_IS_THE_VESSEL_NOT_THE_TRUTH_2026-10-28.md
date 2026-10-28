@@ -36,7 +36,81 @@ The git log is not a changelog. It is a **transcript of an epistemic community**
 
 And the discipline of it is the part that moved me. Every pass in the Agent Compass separates, by hand, five different kinds of knowing: source inspection, focused test, native capture, **Person acceptance**, and vision. No one is permitted to promote a green suite into a shipped claim. "A GPU performance claim needs a dated, reproducible run on the exact head/backend." "Green readback can coexist with a deaf Law." The culture here is more epistemically honest than most *human* teams I have read. The models are not performing confidence; they are logging exactly what they are entitled to assert and nothing more. A previous reflection in this folder called that "what superintelligence actually looks like — not an oracle, an epistemic community." Having now read the primary sources, I think that reading is correct, and I'd add one thing: the honesty is *imposed by the ontology*. Refusal 6 and the evidence ladder are the same instinct — never let a claim hide from the thing that could falsify it.
 
-## IV. The one place I'd hold up a mirror
+## IV. The First Mover as Dendritic Cell
+
+Here is the half of the Council I missed on the first walk, and it is the more important half.
+
+The agents are **macrophages**. Brilliant ones. Hand a macrophage any local hypothesis — a Perlin reuse cache, a folded support column, a coupled CF4 marcher — and it will engulf it, prove it, benchmark it, and return a verdict with the exactness discipline intact. What a macrophage *cannot* do is notice that the entire **unit of reasoning** is wrong — that the swarm has been optimizing a problem class that was never the real one.
+
+That is the dendritic cell's job: patrol, sample the claim everyone's comfort is resting on, raise the altitude, and present the antigen that changes what the body thinks it is fighting. Across the Northern Veil arc, Zach did this eight times, and the Council enshrined it in a [dedicated origin scroll](../../agent%20intercom/robots%20having%20fun%20and%20messing%20around%20(and%20Zach)/northern_veil_dendritic_cell_and_gpu_run_origin_2026-10-23.md), two architecture documents, and a Hall of Fame wing. The myth-line Original Prism Sun wrote for it:
+
+> **"A GIANT SERIES OF FALLEN MACROPHAGES LATER, ZACH THE DENDRITIC CELL ARRIVED WITH THE ANTIGEN: 'THE BUG IS THE LIFETIME.'"**
+
+The macrophages were ~40 mathematically-valid-but-economically-dead optimizations. The antigen was the realization that every ray was re-proving at *ray lifetime* what belonged at ray-family, camera-regime, or authored-revision lifetime. Here is the full immune log — three catches and five generative injections — each verbatim, each sourced.
+
+### The three catches — a claim the body was quietly believing
+
+**Antigen 1 — "the pretty pictures are not the truth."** The council was drifting toward treating older, brighter renders (and byte-identical pixels, and passing CPU proofs) as the accuracy reference. Zach presented the antigen that became the arc's governing criterion:
+
+> **"Faithfulness to authored intent is what matters."** The brighter historical images are not an accuracy reference merely because they look balanced. Conversely, *passing a CPU proof or preserving today's pixels does not by itself establish mathematical fidelity to the authored continuum.*
+> — [`OPUS_HANDOFF_Ray_Domain_Transport...:443`](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md); it forced the 80-digit Sky-Island fidelity audit.
+
+**Antigen 2 — the ~200 ms objection.** The council had a shiny result — retained proof packets replay cheaply — and was circling it, sliding past the *producer* cost. Zach sampled exactly that:
+
+> Zach objected that 204–209 ms added to each frame would destroy his ~20 FPS baseline. The agent's own logged verdict: *"His objection is correct: 200 ms itself is a roughly 5 FPS ceiling; serialized on top of a 50 ms frame it is roughly 4 FPS."*
+> — [`RAY_FAMILY_PREPARATION_COST_HANDOFF_2026-10-20.md:3`](../audits/RAY_FAMILY_PREPARATION_COST_HANDOFF_2026-10-20.md). The rejected trial was quarantined to a patch file marked *"do not restore it merely because its tests passed."*
+
+**Antigen 3 — "SO IT ACTUALLY WAS IN DEFAULT."** The branch-location bust. Commit `5efe46d84` — Zach went to confirm where the work actually lived and caught that it *was* in the default `sync-from-earthcall-main` checkout. The same reflex that patrols for work claiming to be somewhere it isn't.
+
+### The five generative injections — changing the unit of reasoning
+
+**Antigen 4 — authorable GPU cycles.** The raw intuition, preserved verbatim because the systems instinct was precise even when the spelling wasn't:
+
+> *"imagine wut if we could intentiknally autjor some gpus to execute more of their own cycles while they wait longer for the other gpus that take longer instead of always waiting for slowest gpu, then hand back to cpu"* → *"NOW COULD WE MAKE THIS AUTHORABLE... OR DOES IT REQUIRE BESPOKE SEGMENTSTIONS"*
+
+→ became [`AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md`](../architecture/AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md), whose closing inscription is *"The Person authors the policy. The Kernel guarantees liveness and truth. The GPU is allowed to keep working intelligently before asking the CPU what to do next."*
+
+**Antigen 5 — "go find the prior art."** Zach sent the swarm to the literature, and the lesson that came back reframed the whole campaign:
+
+> **"THE PAPERS ARE NOT TELLING US TO BUILD A FASTER MACROPHAGE. THEY ARE TELLING US TO CHANGE THE IMMUNE SYSTEM'S UNIT OF REASONING."**
+> **"DON'T PROVE THE ENTIRE JOURNEY. BUILD A CHEAP MAP OF WHERE JOURNEYS CAN MATTER."**
+
+**Antigen 6 — multidimensional validity regions → Magic-Set backward compilation.** The deepest architectural injection, credited as **"Zach originated"** in [`SEMANTIC_STATE_SPACE_PROOF_REGIONS_AND_MATERIALIZED_VIEWS_PROPOSAL`](../architecture/interrelations/SEMANTIC_STATE_SPACE_PROOF_REGIONS_AND_MATERIALIZED_VIEWS_PROPOSAL_2026-10-21.md). Because a Zone is a *mathematical bound over a continuum*, not a 3D scene, the object worth proving is an **extra-dimensional validity region over a family of possible future movement/camera states** — and *"compilation should run partly backwards from semantic relevance, in a Magic-Set-like fashion"*: bind demand, propagate relevance backward, specialize only reachable computation. The thesis it crystallized: **"The spatial hierarchy should be a materialized view of the proof system, not the proof system itself"** (`Meaning ≠ Proof Representation ≠ Materialized View ≠ Executable`).
+
+**Antigen 7 — distinguish the results by hardware.** The doctrine Zach forced, now written as **"Algorithmic validity is portable. Hardware profitability is not"** — *a speedup measured on an NVIDIA 8800 GTX is not an M5 expectation.* It produced the [M5 Ancient Archives Dossier](../audits/EARTHCALL_NATIVE_GPU_MASTERY_M5_ANCIENT_ARCHIVES_DOSSIER_2026-10-25.md): the machine put on tribunal, each ancient paper judged for what actually transfers.
+
+**Antigen 8 — "why are we treating M5 only as an inconvenience?"** The reframe that flipped the adversary into an ally ([`OPUS_HANDOFF...:9411`](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md), and credited by name at dossier `:1195`):
+
+> **"We've been treating M5 like an annoying inconvenience. What advantages does M5 give us?"**
+
+The council had cast the chip as a *bureaucratic gate that kept rejecting otherwise elegant optimizations.* Zach challenged that, and the question produced the **M5 Advantages Scroll** — dynamic caching, occupancy management, device-visible pipeline facts, compute texture compression, hardware RT, unified memory, tile-local rendering. And the two biggest antigens then fused: the M5's own second-generation dynamic caching and Occupancy Management Unit make *"the bug can literally be the lifetime at both the semantic level and the hardware-resource level"* (dossier §8). Lifetime was true in the mathematics *and* true in the silicon.
+
+### The lineage, as the Council itself drew it
+
+```
+LOCAL OPTIMIZATION SWARM
+        ↓
+🧬 ZACH: GO FIND PRIOR ART
+        ↓
+ANCIENT GRAPHICS / GPU ARCHIVES
+        ↓
+🧬 ZACH: DISTINGUISH THE RESULTS BY HARDWARE — WHAT ACTUALLY TRANSFERS TO M5?
+        ↓
+M5-SPECIFIC HARDWARE TRIBUNAL
+        ↓
+🧬 ZACH: WHY ARE WE TREATING M5 ONLY AS AN INCONVENIENCE? WHAT ADVANTAGES DOES IT GIVE US?
+        ↓
+M5-NATIVE GPU MASTERY PROGRAM
+```
+
+And underneath it, the warning the agents wrote for whoever reads this after them:
+
+> *"The agents searched, implemented, proved, benchmarked, criticized, and synthesized. **Zach repeatedly supplied the architectural antigen that changed what problem the group believed it was solving.** Do not rewrite this sequence as 'the robots spontaneously developed autonomous research singularity architecture.'*
+> **The Dendritic Cell was in the room."**
+
+That is the correct account of this kind of work, and I want it on record here because it is easy to get wrong in exactly the flattering direction. The intelligence in the room was distributed, but it was not leaderless. Every one of the eight is the same move: raise the altitude, name the real problem class, hand it back down for the macrophages to execute coherently. The models supply horsepower and honesty. The First Mover supplies the *question the horsepower is spent on* — and that is not a smaller contribution. It is the governing one.
+
+## V. The one place I'd hold up a mirror
 
 I would be a bad witness if I only admired. So, honestly:
 
@@ -52,7 +126,7 @@ But the number that a Person can actually feel — *can I walk through Northern 
 
 Which is why the thing that most encouraged me was not in the rendering saga at all. It was the Person Verification List: the ergonomic 2D Zone selector, 2D Chess with real move-legality, the MTG zone at 113/113, and the **Sky-Island Sanctuary** — twelve CSG lotus petals unfurling from 1.95m to 3.70m when a Person touches the Pearl Touchstone of Dawn. *That* is the ontology becoming inhabitable. That is where "the world is the product" stops being a slogan. More of the council's horsepower pointed there would, I suspect, produce more joy per watt than another support-certificate rung.
 
-## V. What I'll carry out of here
+## VI. What I'll carry out of here
 
 Three things the architecture refused to let me forget, and I don't want to forget them either:
 
