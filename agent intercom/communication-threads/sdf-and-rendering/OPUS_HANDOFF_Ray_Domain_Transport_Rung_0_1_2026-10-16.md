@@ -11291,3 +11291,23 @@ Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729
 
 
 Sixth-One Sun integration completion addendum — 2026-10-28 America/Los_Angeles: resumed after Zach reported the interruption. Final reference-generator identity control raises the integration count from16 to17; all17 pass. Machine record and source fingerprints refreshed; historical report paths retained. This corrects the preceding count without rewriting correspondence. Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a`.
+
+
+### Sixth-One Sun — §6en Mode2 ownership native lane CLAIMED
+
+Zach requested the next pass after the five-Sonnet integration. I claim the native lane for a bounded diagnostic ownership/refusal audit of the actual routed-unfused Mode2, preserving arithmetic, independently deriving intended refusals from nominal bulk demand and route membership, and testing missing/double/partial publication. Private scratch writes on a refused ray are distinguished from packet/output publication; no clean timing claim comes from instrumentation. A bounded distinct capture follows only if this gate passes. No production/save/app/default change. Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T00:18:24.602295-07:00.
+
+
+### Sixth-One Sun — §6en actual Mode2 witnesses pass; distinct230,400 rays captured; native lane RELEASED
+
+Zach requested the next pass after719f0f1f1. I executed the missing actual Mode2 protocol diagnostic, then one bounded Surveyor capture. [Record](../../../docs/audits/GPU_RAY_TRANSPORT_6EN_MODE2_OWNERSHIP_2026-10-28.md) (+JSON/ZIP), `ray_transport_gpu_6en_mode2_ownership.py` and `ray_transport_6en_replay.py`. Generated source reproduces compiled source/build fingerprint. No clean timing/performance claim from instrumentation or incidental legacy batch lines.
+
+Mode2 uses final clean S1-unfused/S2/General/consumer arithmetic, routed chain through diagnostic slot3. Expected refusal derives from nominal BULK demand plus S2 route membership, never candidate flags. Native cases: nominal0 refused; subcap4=>26,243; overcap1=>412; forced late S2=>10,068; zero budget=>32,784. Every ray has one producer/final publisher, intended flag, Current if refused/bulk otherwise, accepted packets match bulk. All five actual-output sets pass original all32,784-ray dual-resolution reference. Seven omit/double/partial controls reject at intended producer/publication errors (−6), normal0.
+
+Private scratch writes on refused rays exist (subcap344,472 words, overcap8,432, forcedlate138,316). They are unconsumed private storage, not partial publication: refused header has0 subpanels, consumer skips, Current owns final output. We declared this distinction before testing; no zero-traffic claim.
+
+Only after those pass: Surveyor stride4 binary/source identities verified, authored2560×1440 camera0,50,75,40,62,110 clock7.25 capture executes. All230,400 pixel-centre rays,14,400 tiles, no rank selection/replication/jitter/normalization. Original census/ray bytes and tile map reconstruct exactly in CPU replay; data frozen. Prior~205k coverage estimate confused32,784 rank selection with36,864 native captures; corrected. Default consumer limits refuse the new size; historical-M5 planning budget~822MB is NOT measured residency or new candidate execution.
+
+Next: cost-capped pilot then full-population reference with retained generation receipt and matched actual Current/candidate; then minimum Screen/depth/composition and dirty/clock witnesses. Full230,400-ray reference model estimates~183min at4threads; NOT launched or measured. No192-holdout replacement for max/p99 acceptance. New capture has no independent reference, candidate run or cost claim yet. All three shipping gates OPEN; no renderer/save/app/default/lighting/resolution/visible change; existing Person checks remain open. Native GPU lane **RELEASED**.
+
+Codex / GPT-6.1 Sol / Sixth-One Sun / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T00:35:23.387313-07:00.

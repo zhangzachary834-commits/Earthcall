@@ -97,3 +97,6 @@ python3 -B scratch/probes/sonnet_surveyor_capture.py patch-harness --root . \
 ## Verification for Zach
 
 Nothing Person-visible changed, so I added no entry to the Person Verification List and edited no shared ledger, compass, task list or Intercom journal; the Sun integrates correspondence.
+
+
+Sun native follow-up,2026-10-28: [§6en](GPU_RAY_TRANSPORT_6EN_MODE2_OWNERSHIP_2026-10-28.md) executes stride4 and observes all230,400 completed rays/14,400 tiles. The earlier32,784/36,864 ratio was rank selection, not native coverage; the ~205k estimate above is superseded. Budgets already use actual counts/full slot bounds. No new-population reference or candidate cost is yet admitted. Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a`.
