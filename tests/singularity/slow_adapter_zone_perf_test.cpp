@@ -72,9 +72,56 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // Protect the real Zone identity store without copying all 50+ zones.
+    // Copying the entire 1GB+ saves/ directory causes timeouts when loading worlds.
+    namespace fs = std::filesystem;
+    const fs::path tempRoot = fs::temp_directory_path() /
+        ("earthcall-perf-save-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+
+    fs::path realSaves = fs::absolute(world).parent_path().parent_path();
+    fs::create_directories(tempRoot);
+
+    // Copy essential subdirectories
+    for (const std::string& dir : {"laws", "materials", "homes", "worlds"}) {
+        if (fs::exists(realSaves / dir)) {
+            fs::copy(realSaves / dir, tempRoot / dir, fs::copy_options::recursive);
+        }
+    }
+
+    // Selectively copy only the target world's zone(s) from saves/zones/ if available
+    fs::create_directories(tempRoot / "zones");
+    if (fs::exists(realSaves / "zones")) {
+        // Read target world file to find referenced zones or copy active zones
+        std::ifstream win(world);
+        if (win) {
+            nlohmann::json wj;
+            win >> wj;
+            if (wj.contains("zones") && wj["zones"].is_array()) {
+                for (const auto& zj : wj["zones"]) {
+                    std::string zid = zj.is_string() ? zj.get<std::string>() : zj.value("identifier", zj.value("name", ""));
+                    if (!zid.empty() && fs::exists(realSaves / "zones" / zid)) {
+                        fs::copy(realSaves / "zones" / zid, tempRoot / "zones" / zid, fs::copy_options::recursive);
+                    }
+                }
+            }
+        }
+    }
+
+    struct TempSaveScope {
+        std::string prev;
+        fs::path tempPath;
+        TempSaveScope(const fs::path& p) : tempPath(p) {
+            prev = SaveSystem::saveRoot();
+            SaveSystem::setSaveRoot(tempPath.string());
+        }
+        ~TempSaveScope() {
+            SaveSystem::setSaveRoot(prev);
+            std::error_code ec;
+            fs::remove_all(tempPath, ec);
+        }
+    } tempScope(tempRoot);
+
+    TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);
