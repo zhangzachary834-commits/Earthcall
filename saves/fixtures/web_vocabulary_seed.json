@@ -1,0 +1,1736 @@
+{
+  "authors": [
+    "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+  ],
+  "laws": [
+    {
+      "id": "law.concept.role.page",
+      "name": "law.concept.role.page",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "page"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "page"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.role.section",
+      "name": "law.concept.role.section",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "section"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "section"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.role.navigation",
+      "name": "law.concept.role.navigation",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "navigation"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "navigation"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.role.heading",
+      "name": "law.concept.role.heading",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "heading"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "heading"
+          },
+          {
+            "kind": 0,
+            "path": "level",
+            "operand": 2.0
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.level",
+            "operand": 2.0
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.role.title",
+      "name": "law.concept.role.title",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "heading"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "heading"
+          },
+          {
+            "kind": 0,
+            "path": "level",
+            "operand": 1.0
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.level",
+            "operand": 1.0
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.role.subtitle",
+      "name": "law.concept.role.subtitle",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "heading"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "heading"
+          },
+          {
+            "kind": 0,
+            "path": "level",
+            "operand": 3.0
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.level",
+            "operand": 3.0
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.role.paragraph",
+      "name": "law.concept.role.paragraph",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "paragraph"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "paragraph"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.role.action",
+      "name": "law.concept.role.action",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "action"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "action"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.role.link",
+      "name": "law.concept.role.link",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "action"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "action"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.role.container",
+      "name": "law.concept.role.container",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "container"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "container"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.variant.card",
+      "name": "law.concept.variant.card",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.variant",
+            "operand": "card"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.variant",
+            "operand": "card"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.role.list",
+      "name": "law.concept.role.list",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "list"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "list"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.role.item",
+      "name": "law.concept.role.item",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "item"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "item"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.role.media",
+      "name": "law.concept.role.media",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "media"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "media"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.role.quote",
+      "name": "law.concept.role.quote",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "quote"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "quote"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.role.divider",
+      "name": "law.concept.role.divider",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "role",
+            "operand": "divider"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.role",
+            "operand": "divider"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.layout.horizontal",
+      "name": "law.concept.layout.horizontal",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.flow",
+            "operand": "horizontal"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.flow",
+            "operand": "horizontal"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.layout.vertical",
+      "name": "law.concept.layout.vertical",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.flow",
+            "operand": "vertical"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.flow",
+            "operand": "vertical"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.layout.grid",
+      "name": "law.concept.layout.grid",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.flow",
+            "operand": "grid"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.flow",
+            "operand": "grid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.align.center",
+      "name": "law.concept.align.center",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.align",
+            "operand": "center"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.align",
+            "operand": "center"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.align.start",
+      "name": "law.concept.align.start",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.align",
+            "operand": "start"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.align",
+            "operand": "start"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.align.end",
+      "name": "law.concept.align.end",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.align",
+            "operand": "end"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.align",
+            "operand": "end"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.justify.between",
+      "name": "law.concept.justify.between",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.justify",
+            "operand": "between"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.justify",
+            "operand": "between"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.spacing.tight",
+      "name": "law.concept.spacing.tight",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.spacing",
+            "operand": "tight"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.spacing",
+            "operand": "tight"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.spacing.normal",
+      "name": "law.concept.spacing.normal",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.spacing",
+            "operand": "normal"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.spacing",
+            "operand": "normal"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.spacing.relaxed",
+      "name": "law.concept.spacing.relaxed",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.spacing",
+            "operand": "relaxed"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.spacing",
+            "operand": "relaxed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.spacing.generous",
+      "name": "law.concept.spacing.generous",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "layout.spacing",
+            "operand": "generous"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.layout.spacing",
+            "operand": "generous"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.size.small",
+      "name": "law.concept.size.small",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "scale",
+            "operand": "small"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.scale",
+            "operand": "small"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.size.large",
+      "name": "law.concept.size.large",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "scale",
+            "operand": "large"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.scale",
+            "operand": "large"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.size.huge",
+      "name": "law.concept.size.huge",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "scale",
+            "operand": "huge"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.scale",
+            "operand": "huge"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.weight.bold",
+      "name": "law.concept.weight.bold",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "typography.weight",
+            "operand": "bold"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.typography.weight",
+            "operand": "bold"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.weight.light",
+      "name": "law.concept.weight.light",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "typography.weight",
+            "operand": "light"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.typography.weight",
+            "operand": "light"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.tone.muted",
+      "name": "law.concept.tone.muted",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "typography.tone",
+            "operand": "muted"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.typography.tone",
+            "operand": "muted"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.tone.prominent",
+      "name": "law.concept.tone.prominent",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "scale",
+            "operand": "large"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.scale",
+            "operand": "large"
+          },
+          {
+            "kind": 0,
+            "path": "typography.tone",
+            "operand": "prominent"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.typography.tone",
+            "operand": "prominent"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.shape.rounded",
+      "name": "law.concept.shape.rounded",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.shape",
+            "operand": "rounded"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.shape",
+            "operand": "rounded"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.shape.pill",
+      "name": "law.concept.shape.pill",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.shape",
+            "operand": "pill"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.shape",
+            "operand": "pill"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.shape.sharp",
+      "name": "law.concept.shape.sharp",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.shape",
+            "operand": "sharp"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.shape",
+            "operand": "sharp"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.variant.primary",
+      "name": "law.concept.variant.primary",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.variant",
+            "operand": "primary"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.variant",
+            "operand": "primary"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.variant.secondary",
+      "name": "law.concept.variant.secondary",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.variant",
+            "operand": "secondary"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.variant",
+            "operand": "secondary"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.variant.hero",
+      "name": "law.concept.variant.hero",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.variant",
+            "operand": "hero"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.variant",
+            "operand": "hero"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.variant.outline",
+      "name": "law.concept.variant.outline",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.variant",
+            "operand": "outline"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.variant",
+            "operand": "outline"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.elevation.subtle",
+      "name": "law.concept.elevation.subtle",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.elevation",
+            "operand": "subtle"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.elevation",
+            "operand": "subtle"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.elevation.raised",
+      "name": "law.concept.elevation.raised",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "surface.elevation",
+            "operand": "raised"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.surface.elevation",
+            "operand": "raised"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.rel.subordinate",
+      "name": "law.concept.rel.subordinate",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "subordinate",
+            "operand": true
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.subordinate",
+            "operand": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.rel.prominent",
+      "name": "law.concept.rel.prominent",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "prominence",
+            "operand": "prominent"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.prominence",
+            "operand": "prominent"
+          }
+        ]
+      }
+    },
+    {
+      "id": "law.concept.rel.quiet",
+      "name": "law.concept.rel.quiet",
+      "authors": [
+        "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+      ],
+      "authority": 0,
+      "enabled": true,
+      "actionModel": {
+        "kind": 5,
+        "children": [
+          {
+            "kind": 0,
+            "path": "prominence",
+            "operand": "quiet"
+          },
+          {
+            "kind": 0,
+            "path": "compilation.output.web.prominence",
+            "operand": "quiet"
+          }
+        ]
+      }
+    }
+  ],
+  "lexemes": [
+    {
+      "id": "lexeme.web.page",
+      "symbol": "page"
+    },
+    {
+      "id": "lexeme.web.section",
+      "symbol": "section"
+    },
+    {
+      "id": "lexeme.web.navigation",
+      "symbol": "navigation"
+    },
+    {
+      "id": "lexeme.web.nav",
+      "symbol": "nav"
+    },
+    {
+      "id": "lexeme.web.heading",
+      "symbol": "heading"
+    },
+    {
+      "id": "lexeme.web.title",
+      "symbol": "title"
+    },
+    {
+      "id": "lexeme.web.subtitle",
+      "symbol": "subtitle"
+    },
+    {
+      "id": "lexeme.web.paragraph",
+      "symbol": "paragraph"
+    },
+    {
+      "id": "lexeme.web.text",
+      "symbol": "text"
+    },
+    {
+      "id": "lexeme.web.button",
+      "symbol": "button"
+    },
+    {
+      "id": "lexeme.web.btn",
+      "symbol": "btn"
+    },
+    {
+      "id": "lexeme.web.action",
+      "symbol": "action"
+    },
+    {
+      "id": "lexeme.web.link",
+      "symbol": "link"
+    },
+    {
+      "id": "lexeme.web.container",
+      "symbol": "container"
+    },
+    {
+      "id": "lexeme.web.card",
+      "symbol": "card"
+    },
+    {
+      "id": "lexeme.web.list",
+      "symbol": "list"
+    },
+    {
+      "id": "lexeme.web.item",
+      "symbol": "item"
+    },
+    {
+      "id": "lexeme.web.media",
+      "symbol": "media"
+    },
+    {
+      "id": "lexeme.web.image",
+      "symbol": "image"
+    },
+    {
+      "id": "lexeme.web.quote",
+      "symbol": "quote"
+    },
+    {
+      "id": "lexeme.web.divider",
+      "symbol": "divider"
+    },
+    {
+      "id": "lexeme.web.horizontal",
+      "symbol": "horizontal"
+    },
+    {
+      "id": "lexeme.web.vertical",
+      "symbol": "vertical"
+    },
+    {
+      "id": "lexeme.web.grid",
+      "symbol": "grid"
+    },
+    {
+      "id": "lexeme.web.centered",
+      "symbol": "centered"
+    },
+    {
+      "id": "lexeme.web.center",
+      "symbol": "center"
+    },
+    {
+      "id": "lexeme.web.start",
+      "symbol": "start"
+    },
+    {
+      "id": "lexeme.web.end",
+      "symbol": "end"
+    },
+    {
+      "id": "lexeme.web.between",
+      "symbol": "between"
+    },
+    {
+      "id": "lexeme.web.tight",
+      "symbol": "tight"
+    },
+    {
+      "id": "lexeme.web.normal",
+      "symbol": "normal"
+    },
+    {
+      "id": "lexeme.web.relaxed",
+      "symbol": "relaxed"
+    },
+    {
+      "id": "lexeme.web.generous",
+      "symbol": "generous"
+    },
+    {
+      "id": "lexeme.web.small",
+      "symbol": "small"
+    },
+    {
+      "id": "lexeme.web.large",
+      "symbol": "large"
+    },
+    {
+      "id": "lexeme.web.huge",
+      "symbol": "huge"
+    },
+    {
+      "id": "lexeme.web.bold",
+      "symbol": "bold"
+    },
+    {
+      "id": "lexeme.web.light",
+      "symbol": "light"
+    },
+    {
+      "id": "lexeme.web.muted",
+      "symbol": "muted"
+    },
+    {
+      "id": "lexeme.web.lead",
+      "symbol": "lead"
+    },
+    {
+      "id": "lexeme.web.rounded",
+      "symbol": "rounded"
+    },
+    {
+      "id": "lexeme.web.pill",
+      "symbol": "pill"
+    },
+    {
+      "id": "lexeme.web.sharp",
+      "symbol": "sharp"
+    },
+    {
+      "id": "lexeme.web.primary",
+      "symbol": "primary"
+    },
+    {
+      "id": "lexeme.web.secondary",
+      "symbol": "secondary"
+    },
+    {
+      "id": "lexeme.web.hero",
+      "symbol": "hero"
+    },
+    {
+      "id": "lexeme.web.outline",
+      "symbol": "outline"
+    },
+    {
+      "id": "lexeme.web.subtle",
+      "symbol": "subtle"
+    },
+    {
+      "id": "lexeme.web.elevated",
+      "symbol": "elevated"
+    },
+    {
+      "id": "lexeme.web.subordinate",
+      "symbol": "subordinate"
+    },
+    {
+      "id": "lexeme.web.prominent",
+      "symbol": "prominent"
+    },
+    {
+      "id": "lexeme.web.quiet",
+      "symbol": "quiet"
+    }
+  ],
+  "relations": [
+    {
+      "type": "denotes",
+      "source": "lexeme.web.page",
+      "target": "law.concept.role.page",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.section",
+      "target": "law.concept.role.section",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.navigation",
+      "target": "law.concept.role.navigation",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.nav",
+      "target": "law.concept.role.navigation",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.heading",
+      "target": "law.concept.role.heading",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.title",
+      "target": "law.concept.role.title",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.subtitle",
+      "target": "law.concept.role.subtitle",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.paragraph",
+      "target": "law.concept.role.paragraph",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.text",
+      "target": "law.concept.role.paragraph",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.button",
+      "target": "law.concept.role.action",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.btn",
+      "target": "law.concept.role.action",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.action",
+      "target": "law.concept.role.action",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.link",
+      "target": "law.concept.role.link",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.container",
+      "target": "law.concept.role.container",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.card",
+      "target": "law.concept.variant.card",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.list",
+      "target": "law.concept.role.list",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.item",
+      "target": "law.concept.role.item",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.media",
+      "target": "law.concept.role.media",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.image",
+      "target": "law.concept.role.media",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.quote",
+      "target": "law.concept.role.quote",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.divider",
+      "target": "law.concept.role.divider",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.horizontal",
+      "target": "law.concept.layout.horizontal",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.vertical",
+      "target": "law.concept.layout.vertical",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.grid",
+      "target": "law.concept.layout.grid",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.centered",
+      "target": "law.concept.align.center",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.center",
+      "target": "law.concept.align.center",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.start",
+      "target": "law.concept.align.start",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.end",
+      "target": "law.concept.align.end",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.between",
+      "target": "law.concept.justify.between",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.tight",
+      "target": "law.concept.spacing.tight",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.normal",
+      "target": "law.concept.spacing.normal",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.relaxed",
+      "target": "law.concept.spacing.relaxed",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.generous",
+      "target": "law.concept.spacing.generous",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.small",
+      "target": "law.concept.size.small",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.large",
+      "target": "law.concept.size.large",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.huge",
+      "target": "law.concept.size.huge",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.bold",
+      "target": "law.concept.weight.bold",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.light",
+      "target": "law.concept.weight.light",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.muted",
+      "target": "law.concept.tone.muted",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.lead",
+      "target": "law.concept.tone.prominent",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.rounded",
+      "target": "law.concept.shape.rounded",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.pill",
+      "target": "law.concept.shape.pill",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.sharp",
+      "target": "law.concept.shape.sharp",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.primary",
+      "target": "law.concept.variant.primary",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.secondary",
+      "target": "law.concept.variant.secondary",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.hero",
+      "target": "law.concept.variant.hero",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.outline",
+      "target": "law.concept.variant.outline",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.subtle",
+      "target": "law.concept.elevation.subtle",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.elevated",
+      "target": "law.concept.elevation.raised",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.subordinate",
+      "target": "law.concept.rel.subordinate",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.prominent",
+      "target": "law.concept.rel.prominent",
+      "directed": true,
+      "weight": 1.0
+    },
+    {
+      "type": "denotes",
+      "source": "lexeme.web.quiet",
+      "target": "law.concept.rel.quiet",
+      "directed": true,
+      "weight": 1.0
+    }
+  ],
+  "injectedBy": {
+    "mover": "Antigravity",
+    "onBehalfOf": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
+    "at": 1787452800,
+    "sections": [
+      "vocabulary"
+    ],
+    "attestation": "Authored web vocabulary fixture defining Lexemes, Laws, and denotes Relations as in-world data rather than C++ hardcoding."
+  }
+}
