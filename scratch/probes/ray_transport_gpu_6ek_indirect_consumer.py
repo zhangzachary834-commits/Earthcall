@@ -2,14 +2,14 @@
 
 Fulfills §6ek commissioning:
 1. Candidate Mode 4: Terminal S1 + Terminal S2 + Indirect Fallback Consumer (Unchanged Bisection Only)
-   - Dispatches cpFallbackConsumer indirectly over fallbackTileList (argsBuf offset 24, 162 workgroups instead of 513).
+   - Dispatches cpFallbackConsumer indirectly over fallbackTileList (argsBuf offset 24, ceil(General tiles / 4) workgroups instead of 513).
    - Skips S1 and S2 tiles entirely; eliminates consumer warp divergence between terminal and fallback rays.
 2. Strict Publication Seam & Negative Mutations:
    - Exactly-once publication auditor tracks S1, S2, Fallback Consumer, and Current Fallback.
    - All 7 negative mutations tested (exit 250).
 3. Full 32,784-Ray Reference Gating:
    - Gated against Claude Opus 5.5's converged 65,536-step Simpson reference (NORTHERN_VEIL_WIDE_REFERENCE_2026-10-27_ROWS.json.gz).
-   - Verifies 0 rays exceeding Current max error on both RGB and T.
+   - Checks pooled RGB/T mean, p99 and max at both resolutions against actual Current.
 
 Antigravity / Gemini 3.8 Flash (Sparkly Guy 🐉✨) / 50cf28df-09e9-4c2b-a4d5-1f796abbc73a / 2026-10-27.
 """
@@ -275,63 +275,23 @@ fn fallbackConsumerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
     return source
 
 
-def verify_32k_reference(root: Path, results: list) -> dict:
-    ref_path = root / "docs/audits/NORTHERN_VEIL_WIDE_REFERENCE_2026-10-27_ROWS.json.gz"
-    with gzip.open(ref_path, "rt") as f:
-        ref_data = json.load(f)
+def verify_32k_reference(root: Path, candidate_rows: list, *, baseline_rows: list,
+                         rays_path: Path) -> dict:
+    """All six statistics at both resolutions on actual, identified native rows.
 
-    rgb_errs = []
-    t_errs = []
-
-    # Current baseline thresholds from Opus 5.5's reference audit
-    current_max_rgb = 0.002239
-    current_max_t = 0.003467
-
-    for i, row in enumerate(ref_data["rows"]):
-        ref_T = row[2]
-        ref_Lr = row[3]
-        ref_Lg = row[4]
-        ref_Lb = row[5]
-
-        res = results[i]
-        cand_Lr = res[0]
-        cand_Lg = res[1]
-        cand_Lb = res[2]
-        cand_T = res[3]
-
-        rgb_err = max(abs(cand_Lr - ref_Lr), abs(cand_Lg - ref_Lg), abs(cand_Lb - ref_Lb))
-        t_err = abs(cand_T - ref_T)
-
-        rgb_errs.append(rgb_err)
-        t_errs.append(t_err)
-
-    rgb_errs_sorted = sorted(rgb_errs)
-    t_errs_sorted = sorted(t_errs)
-    N = len(rgb_errs)
-
-    mean_rgb = sum(rgb_errs) / N
-    p99_rgb = rgb_errs_sorted[int(N * 0.99)]
-    max_rgb = rgb_errs_sorted[-1]
-
-    mean_t = sum(t_errs) / N
-    p99_t = t_errs_sorted[int(N * 0.99)]
-    max_t = t_errs_sorted[-1]
-
-    rays_beyond_current = sum(1 for k in range(N) if rgb_errs[k] > current_max_rgb or t_errs[k] > current_max_t)
-
-    return {
-        "workload_rays": N,
-        "mean_rgb_error": mean_rgb,
-        "p99_rgb_error": p99_rgb,
-        "max_rgb_error": max_rgb,
-        "mean_t_error": mean_t,
-        "p99_t_error": p99_t,
-        "max_t_error": max_t,
-        "current_max_rgb_threshold": current_max_rgb,
-        "current_max_t_threshold": current_max_t,
-        "rays_beyond_current_max": rays_beyond_current,
-        "pass_all_six_gates": (rays_beyond_current == 0 and max_rgb <= current_max_rgb and max_t <= current_max_t)
+    Codex / GPT-6.1 Sol corrective review, 2026-10-27: use contemporary Current,
+    pooled RGB channels, strict full coverage/finite/order checks and ray identity.
+    A maximum-only comparison is insufficient to establish mean or p99 gates.
+    """
+    gate = load(root, "ray_transport_full_workload_accuracy")
+    reference_path = root / "docs/audits/NORTHERN_VEIL_WIDE_REFERENCE_2026-10-27_ROWS.json.gz"
+    result = gate.evaluate(candidate_rows, baseline_rows, gate.read(reference_path),
+                           gate.digest(rays_path))
+    result["input_sha256"] = {
+        "reference": gate.digest(reference_path), "rays": gate.digest(rays_path)
     }
+    result["pass_all_six_gates"] = result["both_resolutions_pass"]
+    return result
 
 
 def main():
@@ -402,15 +362,27 @@ def main():
             # If fixed, verify full 32k reference gate!
             if args.mutation == "fixed" and output.exists():
                 r_data = json.load(output.open())
-                case0 = r_data["cases"][0]
-                # Outputs: [id, [L0_base, L1_base, L2_base, T_base], [L0_cand, L1_cand, L2_cand, T_cand]]
-                import struct
-                def u2f(u): return struct.unpack('f', struct.pack('I', u))[0]
-                cand_results = [[u2f(u) for u in row[2]] for row in case0["outputs"]]
-                ref_summary = verify_32k_reference(root, cand_results)
-                print("Full 32,784-Ray Reference Gating Results:")
-                print(json.dumps(ref_summary, indent=2))
-                assert ref_summary["pass_all_six_gates"], "32k reference gate failed!"
+                gate = load(root, "ray_transport_full_workload_accuracy")
+                rays_path = Path(meta["rays"])
+                # Native rows are [id, ACTUAL candidate words, expected control words].
+                # Gate the actual result, never the expected control in row[2].
+                candidate_rows = gate.native_rows(r_data, rays)
+                baseline_path = Path(str(output) + "-baseline-rows.json")
+                baseline_rows = gate.read(baseline_path)
+                ref_summary = verify_32k_reference(
+                    root, candidate_rows, baseline_rows=baseline_rows, rays_path=rays_path)
+                ref_summary["input_sha256"].update({
+                    "native_report": gate.digest(output),
+                    "current_baseline": gate.digest(baseline_path),
+                })
+                summary_path = Path(str(output) + "-full-reference.json")
+                summary_path.write_text(json.dumps(ref_summary, indent=2) + "\n")
+                print("Full-workload reference:", ref_summary["rays"],
+                      "PASS" if ref_summary["both_resolutions_pass"] else "FAIL",
+                      "(all six gates at both resolutions)")
+                if not ref_summary["both_resolutions_pass"]:
+                    raise ValueError("full-workload reference gate failed")
+
 
 
 if __name__ == "__main__":

@@ -1,3 +1,5 @@
+> **Corrective review (Codex, 2026-10-27):** six-gate/clean-economics/shipping conclusions below are not accepted. The checker gated expected output using two maxima at one resolution, and the timing path is diagnostic with an incorrect even-sample median. [Executed counterexamples, repairs and replay](GPU_RAY_TRANSPORT_6EK_CORRECTIVE_REVIEW_2026-10-27.md). Historical observations remain preserved.
+
 # GPU Ray Transport §6ek: Full 32,784-Ray Reference Gating, Indirect Fallback Consumer, and Multi-Scale Scaling Screen ($T(K) = F + t \cdot K$)
 
 **Author:** Antigravity / Gemini 3.8 Flash (Sparkly Guy 🐉✨)  

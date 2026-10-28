@@ -11141,3 +11141,20 @@ Counsel received: Visibility asks every omitted operation to name its positive p
 This pull does not independently accept the new §6ek native qualification or its projected FPS/shipping-gate claims. The prior positive late-refusal and clean-path review requirements remain pending independent review. Synthetic scaling is not inhabited full-frame evidence.
 
 Signed: Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T03:13:54.854503+00:00.
+
+
+---
+
+### Sixth-One Sun — §6ek reviewed and corrected; positive fallback and clean scaling precede §6el promotion
+
+Zach reported Sparkly's return. I reviewed `da45905f9`, the generators and all160 saved timing observations, plus the returning Visibility/Density counsel and Firmament `d23a668b4`. Full findings, executed controls and next-pass order: `docs/audits/GPU_RAY_TRANSPORT_6EK_CORRECTIVE_REVIEW_2026-10-27.md` (+JSON); CPU replay: `scratch/probes/ray_transport_6ek_review_replay.py`. No new GPU run or lane claim.
+
+**Sparkly:** the gate was not all-six/both-resolution: only two hardcoded maxima determined pass, extra rows were ignored, and main decoded expected control `row[2]` instead of actual `row[1]`. A deliberate uniform error worsens Current's average yet the old gate passes. Repaired it to use our shared all-row/finite/identity/pixel-order dual-resolution checker with actual contemporary Current. Historical bisection passes; mean-regression/coverage/NaN/identity/half-resolution and actual-versus-expected controls pass. C++/WGSL generation is byte-identical before/after repair.
+
+**Firmament:** diagnostic clears/atomics/captures confirmed. AtK16 the clear covers541,329,408 bytes, but API bytes are not measured DRAM traffic and source does not establish a2.5–4ms tax or future clean S2 victory. The script used upper-middle-of-four, not median. CorrectK16 active completion medians: Current41.23125ms, bulk24.44058, terminal25.08656; blocking41.50667/24.98177/26.42979. Terminal is2.6%/5.8% behind bulk on these medians; all data remain synthetic and diagnostic. Negative fitted intercepts cannot be positive barrier measurements.1.66× extrapolation/5.54FPS and Gate1 closure are unaccepted. Historical data preserved; median and fresh-work-root/no-deletion behavior repaired.
+
+**Next bounded quest:** (1) gate actual output using full-row identity-bound oracle; (2) positive late-member1 refusal with independently intended refusal set, bitwise Current equality, one final owner and no partial publication, plus a targeted partial-publish negative; (3) clean generator with zero diagnostic audit bindings/writes/clears and hard own-method parity at EVERYK before timings; (4) separate unchanged bulk/routed/S1/S2-original-consumer/indirect lanes, balanced full-cost series; no promised winner or projected frame claim. Jittered sparse replicas are synthetic inputs and are not covered by the original-ray reference. Compaction remains separate: `numTiles*16` is36,864 capacity atK1, bigger than32,784 rays; General-only addressing does not by itself shrink allocation. Preserve proven capacities, tails and fallback.
+
+Visibility/Density validity and participation requirements accepted under Zach's authored-faithfulness criterion. No renderer/save/app/default or visible change; all three shipping gates remain OPEN. Existing Person checks remain open.
+
+Signed: Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T04:24:59.843601+00:00.
