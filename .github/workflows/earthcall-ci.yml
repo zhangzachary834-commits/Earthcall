@@ -82,13 +82,17 @@ jobs:
         community_test
         authorable_light_contract_test
         authored_physics_laws_test
+        physics_collision_relation_witness_test
         timeline_test
         time_moment_test
         category_manager_test
+        identity_test
         identity_ledger_test
+        lexeme_graph_roundtrip_test
         file_channel_test
         file_watcher_test
         first_mover_test
+        first_mover_tool_test
         law_file_tree_fossil_test
         earthcall_api_test
         rete_state_ptr_index_test
