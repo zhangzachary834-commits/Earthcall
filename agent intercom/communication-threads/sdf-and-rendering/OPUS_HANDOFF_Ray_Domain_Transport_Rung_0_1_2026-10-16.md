@@ -11271,3 +11271,23 @@ Zach explicitly requested dispatch through the open Claude app and, after automa
 All were told: no subagents, GPU execution/capture/timing, heavy reference runs, save/app/default/lighting/resolution changes, pushes or merges; no shared AGENTS/compass/task/Intercom edits. The Sun reviews and sequences native GPU work. Surveyor prepares distinct capture/layout; Oracle prepares variable-size identity-bound reference tools and small controls; Bridge prepares a minimal existing-API scratch adapter or precise missing-interface proposal; Guardian prepares invalidation/fallback witnesses; Skeptic independently reviews current6em without polling endlessly for others. Deliver local commits and worktree/branch identities; completed work still requires review, integration and native qualification. No result is accepted merely because a session was launched.
 
 Local dispatch receipt only, not a GitHub publication or guarantee of later completion. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T23:19:57.276996-07:00.
+
+
+### Sixth-One Sun — five Sonnet branches reviewed, corrected and integrated; preparation advances, Screen connection remains open
+
+Zach asked me to check the completed army and merge ready work. Reviewed tips: Surveyor cb9f6fea8, Oracle eb9503320, Bridge36fe43bec, Guardian97c408458, Skeptic72b20ec3c; each clean and rooted at46ebde497. I staged all five without conflicts and made integration repairs before the merge commit. [Review](../../../docs/audits/SONNET_TEAM_INTEGRATION_REVIEW_2026-10-27.md) (+JSON); cross-tool checker `scratch/probes/ray_transport_sonnet_integration_checks.py`. Agent authorship/commits preserved; worktrees retained.
+
+Independent runs: Surveyor54/54, Oracle22 controls, Guardian68/68 source/model controls and42/42 generated/static/syntax checks; ten prepared native C++ sources syntax-pass. Bridge freshly rebuilt/linked with matching engine source and executed with zero failures; its parsed JSON exactly matches its committed report. Skeptic analysis replayed;16 cross-tool controls and strengthened6em CPU replay pass. NO new GPU execution or timing.
+
+Corrections: lossless Surveyor-to-Oracle adapter (recorded directions unnormalized; actual clocks explicit), mandatory retained reference-generation receipt before attaching today's capture identity to raw rows, fractional-pixel re-sign refusal, per-ray/indirect dispatch bounds, missing real reference fails closed by default (stub diagnostic-only). Our replay now asserts actual row IDs/coverage and prints its computed statistic count. Oracle's1e−6 convergence refusal remains a diagnostic proposal, not author tolerance or a proof. Current/backend provenance remains the producer's obligation.
+
+Guardian correction: archived actual6em Mode2 IS routed-unfused, not obsolete streamed fastFull. The remaining gap is valid: terminalMode4 forced-refusal publication proof does not establish the same native ownership/refusal contract for winningMode2. General-family9,827 rays are checked for bulk output AND packet parity. Skeptic's drift concern retained: pairedK16 ABBA ratiosfavorMode2 across recorded blocks (active0.7372–0.8786, blocking0.8150–0.9363), descriptive only, no confidence interval/new process or frame claim.
+
+Bridge's parameter-layout mismatch is reproduced and useful. Its P1–P5/newAPI are PROPOSALS, not adopted substrate or working Screen code. OntoMath keeps general mathematical meaning; no renderer/volume office is added by this merge. Necessary initialization is legitimate measured work; diagnostic clearing was what the clean screen excluded.
+
+Next: Mode2 intended-refusal/publication native witness, bounded distinct capture with validated tiles/memory, full-population identity-bound reference/Current, then all-refused realScreen pixel/depth/composition connection. Independent medium clocks remain legal; existing reference's shared-clock limitation must be implemented or refused. No engine/save/app/default/lighting/resolution/visible change; all three shipping gates OPEN, existing Person checks unchanged. This is a local merge, not a GitHub publication.
+
+Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T23:59:46.491897-07:00.
+
+
+Sixth-One Sun integration completion addendum — 2026-10-28 America/Los_Angeles: resumed after Zach reported the interruption. Final reference-generator identity control raises the integration count from16 to17; all17 pass. Machine record and source fingerprints refreshed; historical report paths retained. This corrects the preceding count without rewriting correspondence. Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a`.

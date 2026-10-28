@@ -6,6 +6,11 @@ import argparse,gzip,hashlib,importlib.util,json,math,re,statistics,zipfile
 from pathlib import Path
 
 
+def validate_actual_rows(rows, count):
+    if len(rows) != count or any(len(row) != 5 or type(row[0]) != int or row[0] != i for i,row in enumerate(rows)):
+        raise ValueError('native preflight row index/coverage differs')
+
+
 def replay(root,record,archive):
     need=lambda v,msg: (_ for _ in ()).throw(ValueError(msg)) if not v else None
     index=json.loads(record.read_text())
@@ -49,6 +54,8 @@ def replay(root,record,archive):
                 summary[style][K]={'total_median_ms':medians,'routed_vs_Current':medians[2]/medians[0],'indirect_vs_Current':medians[5]/medians[0],'indirect_vs_routed':medians[5]/medians[2],'series_ratios':series_ratios}
                 if K==1:
                     actual={m:json.loads(gzip.decompress(z.read(name))) for m,name in d['preflight_actual_rows_files'].items()}
+                    for mode, values in actual.items():
+                        validate_actual_rows(values, len(rays['rays']))
                     norm={m:[[ *rays['rays'][i][:2],*row[1:]] for i,row in enumerate(values)] for m,values in actual.items()}
                     for mode,rows in norm.items():
                         q=gate.evaluate(rows,norm['0'],reference,rays_sha);need(q['both_resolutions_pass'],'native accuracy '+mode);all_accuracy[f'w{style}-m{mode}']=q
@@ -61,6 +68,6 @@ def replay(root,record,archive):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--root',type=Path,default=Path.cwd());p.add_argument('--record',type=Path,required=True);p.add_argument('--archive',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
-    d=replay(a.root.resolve(),a.record,a.archive);a.output.write_text(json.dumps(d,indent=2)+'\n');print('PASS: complete native actual rows/both resolutions; 180 timing mean/median pairs; positive refusal and two targeted negatives; shader arithmetic unchanged. Stored-evidence replay only.')
+    d=replay(a.root.resolve(),a.record,a.archive);a.output.write_text(json.dumps(d,indent=2)+'\n');print(f"PASS: complete native actual rows/both resolutions; {d['timing_stat_pairs_verified']} timing mean/median pairs; positive forced S2 refusal and two targeted negatives; shader arithmetic unchanged. Stored-evidence replay only.")
 
 if __name__=='__main__':main()

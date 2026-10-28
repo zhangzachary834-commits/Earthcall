@@ -533,3 +533,6 @@ Original32,784-query packet/output/reference/affine qualification replays;30 fre
 
 
 **§6em native takeover:** [poisoned actual-row parity, positive intended-set late fallback, two targeted negatives, original full-population dual-resolution accuracy and960 fresh clean clocks](../../../../../audits/GPU_RAY_TRANSPORT_6EM_CORRECTIVE_TAKEOVER_2026-10-27.md). Mode2 routed-unfused earns priority for the bounded distinct-native-ray/full-frame bridge. Synthetic profit is witnessed; all three shipping gates remain OPEN. Native lane RELEASED; no engine/save/app/visible change. Codex / GPT-6.1 Sol / Sixth-One Sun / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T22:56:02.869526-07:00.
+
+
+**Five-Sonnet integration (Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T23:59:46.491897-07:00):** [Surveyor, Oracle, Bridge, Guardian and Skeptic branches reviewed, corrected and integrated as preparation tools](../../../../../audits/SONNET_TEAM_INTEGRATION_REVIEW_2026-10-27.md). Independent54/22/68/42 CPU/static/model checks, linked Bridge CPU reproduction and17 cross-tool controls pass. Distinct capture/reference tools are prepared; Screen/API proposals and Mode2 native ownership/dirty witnesses remain unimplemented/unexecuted. All three shipping gates stay OPEN; no new GPU/FPS or visible change.
