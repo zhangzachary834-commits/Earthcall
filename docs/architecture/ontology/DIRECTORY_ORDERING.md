@@ -164,8 +164,8 @@ Earthcall/
         Schema/
         Serialization/
           ConstructedBeing/
-          Person/          BodySerialization · PersonSerialization
-          Relation/        FormationSerialization · RelationSerialization
+          Person/          PersonSerialization · BodySerialization
+          Relation/        RelationSerialization · FormationSerialization
           ZonesOfEarth/
       Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence [legacy name: TerminalLine])
     Time/                  Timeline · Moment · Event
