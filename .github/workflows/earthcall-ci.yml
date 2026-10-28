@@ -157,7 +157,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ./build/time_flow_test 2>&1 | tee drive-session-lookup-ab.log
+          ./build/law_manager_drive_session_test 2>&1 | tee drive-session-lookup-ab.log
           grep -F 'DRIVE_SESSION_LOOKUP_AB ' drive-session-lookup-ab.log > drive-session-lookup-ab-result.txt
 
       - name: Upload drive-session lookup A/B
