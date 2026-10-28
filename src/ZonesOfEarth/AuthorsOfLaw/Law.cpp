@@ -1202,23 +1202,22 @@ bool ReteNetwork::retractRelationStateFact(const Singular* subject,
                                            const std::string& relationType) {
     if (!subject) return false;
 
-    // Average O(1) pointer/attribute index lookup, followed by a scan of only
-    // this subject's facts for the attribute (not the whole Rete fact store).
+    // Fast-path O(1) pointer-indexed lookup: _stateFactsBySubjectPtrAttr maps
+    // (subject, attribute) directly to state facts, avoiding an O(N) linear scan
+    // over all facts in _facts on hot relation revalidation tick paths.
     auto pIt = _stateFactsBySubjectPtrAttr.find(subject);
     if (pIt == _stateFactsBySubjectPtrAttr.end()) return false;
     auto aIt = pIt->second.find(relationType);
     if (aIt == pIt->second.end()) return false;
 
-    // Find the ID before mutating the indexed vector in retractFact().
-    std::string factId;
     for (const auto& fact : aIt->second) {
         if (fact && fact->isState && fact->type == "relation-state") {
-            factId = fact->id;
-            break;
+            std::string factId = fact->id;
+            retractFact(factId);
+            return true;
         }
     }
-    if (factId.empty()) return false;
-    return retractFact(factId);
+    return false;
 }
 
 void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
