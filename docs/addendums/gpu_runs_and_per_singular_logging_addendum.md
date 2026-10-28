@@ -1,30 +1,50 @@
 # Integrating Authorable GPU Runs and Per-Singular Durable Logging
 
-**Model Name:** GPT-4o
-**Harness Name:** Earthcall Autonomous Testing Harness
-**Session ID:** session_74a58b99_gpu_logging_addendum
+**Status:** Proposed architectural synthesis; neither the production GPU Run scheduler nor its per-Singular telemetry-to-log bridge is implemented by this addendum.
+**Sources:** [Authorable GPU Runs Between CPU Cycles](../architecture/AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md) and [Per-Singular Durable Logging](../architecture/PER_SINGULAR_DURABLE_LOGGING.md).
 
-This addendum synthesizes the architectural relationship between **Authorable GPU Runs Between CPU Cycles** (`docs/architecture/AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md`) and **Per-Singular Durable Logging** (`docs/architecture/PER_SINGULAR_DURABLE_LOGGING.md`). It addresses how granular device-resident execution telemetry connects to the durable, attributable history of beings in Earthcall.
+This proposal connects bounded GPU execution diagnostics to meaningful, identity-attributable history without treating transient device counters as ontological facts.
 
-## 1. Bridging Device Execution and Semantics
+## 1. Device telemetry is not automatically Singular history
 
-GPU Runs execute at the lowest substrate level, performing bounded loops, queue compaction, and re-cohorting without CPU intervention. They produce critical telemetry: fallback reasons, continuation counts, and queue overflows.
+A GPU Run may produce completion and continuation counts, overflow/refusal reasons, and measured device costs. These are **execution observations**. A raw counter such as `fallback_queue_overflows = 42` is not, by itself, evidence that any particular Zone or Law caused those overflows.
 
-However, a raw counter like `fallback_queue_overflows = 42` is semantically meaningless if it cannot be attributed to the authored entity that caused it. This is where Per-Singular Durable Logging integrates.
+A device cohort may contain work from several authored sources, and its temporary work-item indices or queue positions are not durable identities. Attribution requires a validated mapping from the run's workload and policy to the actual authoring Singular(s), under the revisions and Zone context for which that mapping was valid.
 
-When a GPU Run yields its telemetry at the CPU admission boundary, that data must be mapped back to the Singulars (e.g., specific Zones, Laws, or materials) that authored the executed policy.
+If attribution is unknown, ambiguous, or shared, preserve that uncertainty in an aggregate diagnostic; **never invent a single owner**. Multiple independently established owners may receive appropriately scoped records, but a shared run must not silently charge its entire cost to each participant.
 
-## 2. Telemetry as Attributable History
+## 2. Selective durable events, not a permanent stream of counters
 
-Per-Singular Durable Logging demands that meaningful runtime history has an attributable home. The performance and execution reality of a Singular is part of its history.
+[Per-Singular Durable Logging](../architecture/PER_SINGULAR_DURABLE_LOGGING.md) distinguishes semantic history, debug traces, and high-frequency instrumentation. The proposed bridge must preserve those categories:
 
-If a specific authored Law requesting `auto eligibility = true` consistently forces a GPU Run into its exact fallback path due to pathological complexity, this is not just a transient console warning. It is a durable fact about that Law's execution history.
+1. **Device:** A bounded GPU Run yields telemetry and any exact/certified fallback or refusal outcome at a host-visible boundary.
+2. **Host:** The Kernel validates the run's revision, source attribution, and outcome. It distinguishes an expected fallback from a meaningful anomaly, such as repeated refusal or a reproducible queue-capacity violation.
+3. **Routing:** A meaningful, attributable event may enter the affected Singular's durable history, while high-frequency timings and per-frame counts remain in sampled diagnostics or subsystem chronicles.
+4. **Persistence:** The identity-aware durable sink writes an event under stable Singular identity and retains it across process restarts. This is a required property of the future bridge, **not a feature demonstrated by this documentation change**.
 
-The integration flow:
-1.  **Device:** The GPU Run completes and yields telemetry (e.g., `NEEDS_ROOT_REFINE` overflow).
-2.  **Host Boundary:** The CPU correlates the execution cohorts back to their authoring Singulars (e.g., the Northern Veil Zone).
-3.  **Durable Logging:** The execution anomaly is persisted into the specific, queryable durable log for that Singular, surviving process shutdown.
+For example, a Law's repeatedly requested GPU policy may be refused under a measured profitability veto. The refusal and its valid reason could be historically meaningful; recording every per-frame measurement indefinitely would not be.
 
-## 3. Performance as Truth in the Log
+## 3. A proposed attributable event envelope
 
-This synthesis realizes the principle of **Performance as Truth** (`docs/architecture/ontology/PERFORMANCE_AS_TRUTH.md`). By logging GPU Run telemetry into the Per-Singular Durable Log, Earthcall ensures that the physical execution cost of an authored being is as legible and permanent as its explicit properties. A Person reviewing a Zone's history can see exactly when and why its authored geometry overwhelmed the GPU's internal continuation budget.
+An eventual event should retain enough evidence to reconstruct its claim without relying on process-local indices:
+
+```text
+GpuRunHistoryEvent {
+    stableSourceSingularIds     // only identities proven by source mapping
+    workloadAndPolicyRevision   // validity regime for attribution
+    runOrCorrelationId          // connects to aggregate diagnostics
+    observedAt
+    adapterAndExecutionRegime
+    eventKind                   // refusal, overflow, fallback, etc.
+    measuredCountsAndReason
+    fallbackDisposition         // completed, pending, or refused
+}
+```
+
+This is illustrative, not a committed serialization schema. If source identity cannot be established, an aggregate diagnostic must preserve that fact rather than manufacturing a per-Singular event. Log records should be bounded, attributable, queryable, and safe to reopen without truncation, according to the logging architecture.
+
+## 4. Performance as Truth, without conflating measurement and being
+
+[Performance as Truth](../architecture/ontology/PERFORMANCE_AS_TRUTH.md) demands that the physical computation be faithfully ordered after authored meaning. Device telemetry can expose where execution diverges from that intention, and an attributable durable event can preserve the explanation.
+
+But **execution cost is not the Singular's identity**, and a transient scheduler decision is not automatically a permanent authored Property. The history records a witnessed execution event under a stable bearer; it does not turn a GPU queue, continuation record, or measurement into another Singular.
