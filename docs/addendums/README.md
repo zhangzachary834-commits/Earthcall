@@ -37,6 +37,3 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Unified Brush System and CPU-GPU Micro-Mastery](unified_brush_and_micro_mastery_addendum.md)
 *   [Integrating the Event Bus, Discrete Moments, and Continuous Time](event_bus_and_time_moment_addendum.md)
 *   [The Slow Adapter and the Architecture of Understanding](slow_adapter_and_architectural_interrelations_addendum.md)
-*   [Interaction as Law and the Person-facing Interface](interaction_as_law_and_person_interface_addendum.md)
-*   [Performance as Truth and Physics EventBus Integration](performance_truth_and_physics_eventbus_addendum.md)
-*   [Second Person Framework and Person Events](second_person_and_person_events_addendum.md)
