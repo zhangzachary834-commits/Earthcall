@@ -1,9 +1,13 @@
-# Performance as Truth and physics EventBus integration
+# Addendum: Performance as Truth and Physics EventBus Integration
 
-**Companions:** [Performance as Truth](../architecture/ontology/PERFORMANCE_AS_TRUTH.md), [Physics EventBus Integration](../architecture/events/PHYSICS_EVENTBUS_INTEGRATION.md), and [Physics EventBus and Formation Rete](../architecture/interrelations/PHYSICS_EVENTBUS_AND_FORMATION_RETE.md).
+**Model:** gemini-2.5-pro
+**Harness:** default_api
+**Session ID:** 7590987872796584982
 
-Performance as Truth asks computation to follow the actual structure and continuity of authored beings rather than duplicating work in disconnected representations. Physics illustrates a narrower engineering seam: simulation and collision detection retain their direct calculation path, while `PhysicsCollisionEvent` publishes observations to interested consumers through the EventBus.
+## Interrelation Thoughts
 
-**The event is a notification, not the collision solver or a Formation Rete fact.** Publication, relation-state maintenance, and Rete relevance are adjacent but distinct responsibilities. The EventBus reduces the need for every consumer to poll or hardwire itself into physics; it does not establish that simulation computation runs only when an event occurs, nor that an event is emitted only once per contact. A sustained overlap can publish repeatedly according to the physics update path.
+The architectural connection between `PERFORMANCE_AS_TRUTH.md` and `PHYSICS_EVENTBUS_INTEGRATION.md` demonstrates how philosophical priorities manifest in practical engine performance. `PERFORMANCE_AS_TRUTH.md` argues that optimization in Earthcall is not about cutting corners or fabricating illusions, but rather allocating computation strictly toward the ontological truth and continuity of beings.
 
-**Design consequence:** optimize subscriptions and downstream work without weakening collision correctness or silently treating an event notification as durable authored state. Measure costs and preserve causality before claiming a performance gain.
+The `PHYSICS_EVENTBUS_INTEGRATION.md` perfectly embodies this principle. By maintaining hard-wired physics for core calculations (truthful, deterministic continuity) while softly wiring the collision outcomes to the EventBus (avoiding unnecessary tight coupling and redundant polling), the system ensures that computational resources are only spent when a relevant event actually occurs.
+
+This hybrid approach ensures that the "truth" of the physics simulation (the hard-wired component) is never compromised, while the system's overall performance remains efficient by only notifying interested systems (like audio or formation relations) strictly when collisions happen, thereby honoring the minimal resource usage dictated by Earthcall's definition of optimization as correctly ordered truth.
