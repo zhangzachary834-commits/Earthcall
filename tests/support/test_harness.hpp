@@ -61,6 +61,8 @@ struct BootedEngineHarness {
         // A boot harness that omits this wire is not actually exercising the
         // same runtime graph as the app.
         Physics::setLawManager(&lawManager);
+        // Mirror production EngineInit's collision-to-relation event bridge.
+        Physics::setupPhysicsEventListeners();
 
         // 1. Sync register standard channels like InteractionChannel
         Singularity::Input::InteractionChannel::syncRegister(lawManager);
