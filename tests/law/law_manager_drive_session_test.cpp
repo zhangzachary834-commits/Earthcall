@@ -10,7 +10,7 @@
 #include "Singularity/Core/EventBus.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 
-#include <cassert>
+#include <cstdlib>
 #include <chrono>
 #include <memory>
 #include <ctime>
@@ -26,7 +26,7 @@ void check(bool condition, const std::string& description) {
     ++gChecks;
     if (!condition) {
         std::cerr << "FAILED: " << description << '\n';
-        assert(condition);
+        std::exit(EXIT_FAILURE);
     }
 }
 
@@ -49,16 +49,12 @@ int main() {
     LawManager mgr;
     mgr.connectToEventBus();
 
-    const std::size_t pulseAlpha = mgr.rete().addAlphaNode(
-        "type == drive-index-pulse",
-        [](const FactPtr& fact) { return fact && fact->type == "drive-index-pulse"; });
-
     const std::string lawId = "law-drive-index-01";
     const std::string subjectId = subject.getIdentifier();
     auto law = mgr.createLaw("Drive index contract", lawId, {&author});
     law->setDrives(true);
     law->setActionModel(ActionNode::set("glow", PropertyValue(1.0)));
-    mgr.rete().bindLawToAlpha(lawId, pulseAlpha);
+    mgr.bindTrigger(lawId, "drive-index-pulse");
 
     check(!mgr.hasDriveSession(lawId, subjectId),
           "no derived drive key exists before the authored event");
@@ -90,7 +86,8 @@ int main() {
     auto law2 = mgr.createLaw("Drive subject-release contract", lawId2, {&author});
     law2->setDrives(true);
     law2->setActionModel(ActionNode::set("glow", PropertyValue(2.0)));
-    mgr.rete().bindLawToAlpha(lawId2, pulseAlpha);
+    // remove() prunes the now-unbound alpha; bindTrigger interns a fresh one.
+    mgr.bindTrigger(lawId2, "drive-index-pulse");
 
     Universe::instance().setClock(20.0, 0.1);
     Core::EventBus::instance().publish(
@@ -128,7 +125,7 @@ int main() {
     auto bulk = mgr.createLaw("Drive high-cardinality contract", bulkLawId, {&author});
     bulk->setDrives(true);
     bulk->setActionModel(ActionNode::set("glow", PropertyValue(1.0)));
-    mgr.rete().bindLawToAlpha(bulkLawId, pulseAlpha);
+    mgr.bindTrigger(bulkLawId, "drive-index-pulse");
 
     auto fireCrowd = [&]() {
         for (const auto& being : crowd) {
