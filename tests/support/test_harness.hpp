@@ -61,8 +61,7 @@ struct BootedEngineHarness {
         // A boot harness that omits this wire is not actually exercising the
         // same runtime graph as the app.
         Physics::setLawManager(&lawManager);
-
-        // Wire physics collision event listeners to EventBus, matching EngineInit.cpp
+        // Mirror production EngineInit's collision-to-relation event bridge.
         Physics::setupPhysicsEventListeners();
 
         // 1. Sync register standard channels like InteractionChannel

@@ -1,0 +1,13 @@
+{
+  "testBranch": "claude/ray-domain-transport-rung0",
+  "testCommit": "d7f8aa31f061e2e5e7c18ff6539edb0ce5c976f9",
+  "logicChecks": 87,
+  "nativeChecks": 15,
+  "sourceSha256": "d0bb05b6c0265ce59524ccad8612be9b1c4f9adf1496f4ae6c1f3810c465ad2a",
+  "nativeDimensions": [
+    2560,
+    1440
+  ],
+  "sourceWorkspace": "sync-from-earthcall-main",
+  "productionCppChanged": false
+}
