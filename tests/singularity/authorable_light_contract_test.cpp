@@ -82,9 +82,9 @@ int main() {
     check(near3(Rendering::lightSpecularRadiance(state), glm::vec3(1.0f, 0.5f, 0.25f)),
           "specular renderer radiance is color * intensity * authored specular coefficient");
 
-    // Hydrate the actual authored Sun Zone spatial root rather than rebuilding
-    // a lookalike AST in test code. This witnesses the save -> FieldNode ->
-    // OntoMath path that EngineRender consumes.
+    // Hydrate the named primary solar-radiance source from the authored Sun
+    // Zone, not the distinct background spatialRoot celestial-fill field.
+    // This witnesses the saved source -> FieldNode -> OntoMath path.
     {
         namespace fs = std::filesystem;
         const fs::path repoRoot = fs::path(__FILE__).parent_path().parent_path().parent_path();
@@ -93,15 +93,19 @@ int main() {
 
         nlohmann::json sun;
         if (in) in >> sun;
-        check(sun.contains("spatialRoot") || sun.contains("spatialFields"),
-              "Sun save carries a spatial root or spatial fields");
-
         const nlohmann::json* sourceNode = nullptr;
-        if (sun.contains("spatialFields") && sun["spatialFields"].is_array() && !sun["spatialFields"].empty()) {
-            sourceNode = &sun["spatialFields"][0];
-        } else if (sun.contains("spatialRoot")) {
-            sourceNode = &sun["spatialRoot"];
+        int solarSourceCount = 0;
+        if (sun.contains("spatialFields") && sun["spatialFields"].is_array()) {
+            for (const auto& candidate : sun["spatialFields"]) {
+                if (candidate.is_object() &&
+                    candidate.value("id", std::string{}) == "sun.citadel.solar-radiance") {
+                    ++solarSourceCount;
+                    sourceNode = &candidate;
+                }
+            }
         }
+        check(solarSourceCount == 1,
+              "Sun save carries exactly one named primary solar-radiance field");
 
         const bool hasCanonicalAstKey =
             sourceNode != nullptr && sourceNode->contains("field") &&
@@ -115,9 +119,9 @@ int main() {
               "Sun save does not use the ignored noncanonical ast key");
 
         geom::FieldNode hydrated("sun.light-field.test");
-        if (sourceNode != nullptr) hydrated.applyJson(*sourceNode);
+        if (sourceNode != nullptr && solarSourceCount == 1) hydrated.applyJson(*sourceNode);
 
-        check(hydrated.field != nullptr, "Sun spatial root hydrates a scalar field");
+        check(hydrated.field != nullptr, "Sun solar-radiance source hydrates a scalar field");
         check(hydrated.field &&
               hydrated.field->mode == OntoMath::ScalarField::EvaluationMode::AST,
               "Sun scalar field hydrates in AST mode");
@@ -126,7 +130,7 @@ int main() {
 
         Rendering::AuthorableLightState hydratedLight;
         check(Rendering::readAuthorableLight(hydrated, hydratedLight) && hydratedLight.source,
-              "hydrated Sun spatial root retains authored light.source");
+              "hydrated Sun solar-radiance source retains authored light.source");
 
         auto eval = [&](double x, double y, double z, double t) -> double {
             if (!hydrated.field) return -1.0;
@@ -146,7 +150,8 @@ int main() {
         const double nearSource = eval(0.0, 0.0, 0.0, 0.0);
         const double farther = eval(20.0, 0.0, 0.0, 0.0);
         const double nearSourceLater = eval(0.0, 0.0, 0.0, 123.0);
-        check(nearSource > 0.99, "Sun radiance is approximately unit strength at its source");
+        check(std::fabs(nearSource - 3.4) < 1e-6,
+              "Sun primary solar radiance matches authored 3.4 strength at its source");
         check(farther >= 0.0 && farther < nearSource,
               "Sun authored radiance decreases with distance on the CPU");
         check(std::fabs(nearSourceLater - nearSource) < 1e-9,
