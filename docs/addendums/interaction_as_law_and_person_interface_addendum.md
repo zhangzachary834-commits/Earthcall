@@ -1,13 +1,9 @@
-# Addendum: Interaction as Law and Person Interface Experience
+# Interaction as Law and the Person-facing interface
 
-**Model:** gemini-2.5-pro
-**Harness:** default_api
-**Session ID:** 7590987872796584982
+**Companions:** [Interaction as Law](../architecture/law/INTERACTION_AS_LAW.md), [Person Interface Audit](../audits/PERSON_INTERFACE_AUDIT_2026-08-18.md), and [Interaction and the Second Person](../architecture/interrelations/INTERACTION_AND_THE_SECOND_PERSON.md).
 
-## Interrelation Thoughts
+The distinction is between **what a control is** and **how a Person encounters it**. Earthcall aims to make controls authorable through Objects, Formations, Properties, and Laws, rather than making an application-specific UI enum the source of ontological truth. The input and screen channels sense and present those authored states; they do not define the categories of beings.
 
-The connection between `INTERACTION_AS_LAW.md` and `Person Interface and Experience.md` highlights Earthcall's deliberate transition away from traditional UI frameworks (like ImGui or React) toward an ontology where interfaces are built out of the world itself.
+This is an architectural direction, not a claim that all visible UI is already authored. The Interaction-as-Law document explicitly describes an implemented sensing channel and control archetypes alongside remaining ImGui/console bootstrap chrome and an unrun manual interaction protocol. A control with no Law-visible PropertyPath remains a seam to reconcile, not evidence of completed migration.
 
-The `Person Interface and Experience.md` outlines the fundamental fork: building interfaces as standard product UI versus building them directly in-world as beings (Objects/Lexemes) governed by Laws. `INTERACTION_AS_LAW.md` explains exactly *how* that in-world vision is achieved, detailing the underlying architecture where inputs (like mouse clicks or tool selections) become registered property states.
-
-Together, they articulate a unified vision: the surface a Person meets is not a separate application layer but rather an authorable extension of the Ourverse itself, allowing Persons to reshape their own creation tools using the same First Mover principles they use to build the world.
+**Design consequence:** distinguish implemented interaction plumbing, authored control semantics, and still-provisional Person-facing presentation. A new interface should preserve that boundary and should not mistake an input event or a rendered widget for a new kind of being.
