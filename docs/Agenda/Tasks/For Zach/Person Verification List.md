@@ -1,6 +1,5 @@
 # Person Verification List
 
-
 ## Web Designer reconciliation
 
 *GPT-5.6 Sol reconciliation · 2026-10-26. The Oct 21 sealed Web Designer artifact was transplanted onto current default instead of merging the stale branch. Fresh current-head build evidence belongs to CI/tests; these checks are the Person-facing witness.*
@@ -1754,3 +1753,16 @@ Zach commissioned this independent authored interface with no legacy 3D generato
 - [ ] Save Zone after creating objects; restart the ordinary app and reenter Shape Garden. Confirm the generated forms and chosen controller state persist. Initial/native fixture codec checks do not replace this inhabited acceptance.
 
 *Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-20T13:44:21-07:00*
+
+
+## Primordial Spinning Cube — authored resurrection (2026-10-26)
+
+Zach commissioned the return of Earthcall's Spring-2025 rotating reference cube, but explicitly refused a return to primordial substrate assumptions: the new being is a Field whose cubical zero-set is authored mathematics, its six colour regions are an authored Material expression, and its spin is an authored Law over persisted in-world properties. See [the resurrection record](../Specific%20Tasks/Zones%20and%20Ourverse/Primordial_Spinning_Cube/Primordial_Spinning_Cube.md).
+
+- [ ] Open **primordial_spinning_cube** / enter **Primordial Spinning Cube** in the ordinary WebGPU app. Confirm the resurrected ancestor is plainly visible from the starting camera instead of existing only in a save/test.
+- [ ] Watch it long enough to confirm **continuous rotation around multiple axes**. The machine witness can inspect the Law bindings; only this visual check proves the Law is on the live causal/render path.
+- [ ] Fly around it. Confirm the coloured regions make orientation legible and that the object again serves its original purpose: camera translation is perceptible because there is something stable to move relative to.
+- [ ] Save/leave/restart/reenter. Confirm the authored mathematical form, six colour regions and spin behavior survive the temporal boundary. In particular, motion must not depend on unpersisted Object angularVelocity.
+- [ ] Inspect the lived result rather than the historical implementation: it should feel like the 2025 **first constellation** returned, while remaining an ordinary authored being rather than a privileged Cube primitive.
+
+*GPT-5.6 Sol — The Sun · commissioned by Zach · 2026-10-26. Machine witness authored in primordial_spinning_cube_test; not claimed as Person verification.*
