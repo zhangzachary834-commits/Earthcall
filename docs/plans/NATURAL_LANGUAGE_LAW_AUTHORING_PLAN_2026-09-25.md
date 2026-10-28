@@ -22,20 +22,13 @@ Author a Law by typing one sentence, slash-command style. Tab auto-fills. There 
 | 6 | "operandPath needs to be considered alongside the broader PropertyPath-Memory/Opcode memory mastery movement" | Nothing was added to `ActionNode`. `set x to @y.z` is refused, and the refusal points at PROPERTY_STORAGE §2 "copy value". |
 | 7 | "We only want a LawSentence to parse the modality channel of the Mac Terminal's command line. We don't want it in-world. Lexeme-as-opcode really should mean Lexeme <--Relation--> Law (the law is where the executable opcodes live)" · "a Lexeme is not strictly 'one word' … any semantic language unit, whether a word, phrase, a sentence, prefix/suffix, or keyboard smash" | The grammar lives in `Singularity/Terminal/`. A word means the **Law its Lexeme `denotes`**. Spellings are matched on characters: phrases, glued symbols (`hp>=3`), bound prefixes (`re-`), bound suffixes (`-ly`), and arbitrary strings all work. |
 
-
-## 2026-10-20 naming addendum — LawSentence means TerminalLine
-
-Zach clarified that the name `LawSentence` was slightly imprecise. The architectural concept is **`TerminalLine`**: the Terminal modality's parser for one sensed command-line line. Existing files/namespaces may retain `LawSentence` as a legacy implementation name until a deliberate refactor, but the name must not be generalized into a universal language or Law-authoring abstraction.
-
-This sharpens correction #7 above rather than changing it. `TerminalLine` is modality-local ingress; semantic truth remains in authored `Lexeme <--Relation--> Law / Metalaw` state. Other modalities may share lower-level neutral mechanisms, but must not import Terminal grammar merely because they also receive text. See the [full decree](../addendums/terminal_line_naming_and_modality_scope_addendum.md).
-
 ## 3. The design as built
 
 ```
 Sense   TerminalChannel (C++)   libedit on stdin → level `lastLine`, edge `terminal-line-entered`
 Decide  seeded Laws             on terminal-line-entered → Publish "law-sentence-spoken"
                                 on law-sentence-spoken  → Add @terminal-channel.speakRequests 1
-Act     TerminalChannel (C++)   when speakRequests advances: read lastLine with `LawSentence` (legacy implementation name; conceptually `TerminalLine`),
+Act     TerminalChannel (C++)   when speakRequests advances: read lastLine with LawSentence,
                                 author the Law (author = the being at authorPath, default
                                 @interaction-channel.personId), bind triggers, join the Zone
 Show    TerminalChannel         prints what is written to its `output`

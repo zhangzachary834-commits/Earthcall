@@ -606,7 +606,13 @@ namespace Physics {
     }
 
     void recordCollision(const Singular& a, const Singular& b, float strength) {
-        // g_physicsRegistry.add(Relation{"collision", a, b, false, strength});
+        const auto existing = g_physicsRegistry.getRelationsBetween(a, b);
+        for (const auto& rel : existing) {
+            if (rel && rel->type == "collision") {
+                rel->setWeight(strength);
+                return;
+            }
+        }
         auto rel = std::make_shared<Relation>("collision", a, b, false, strength);
         g_physicsRegistry.add(rel);
         Core::EventBus::instance().publish(Core::Event::Custom{rel});
@@ -678,10 +684,10 @@ namespace Physics {
     // EventBus Integration Helpers
     // -----------------------------------------------------------------
     void setupPhysicsEventListeners() {
-        // Production boot and multiple test harnesses share one EventBus.
-        // Subscribe exactly once: otherwise each harness construction multiplies
-        // collision relations and downstream Custom event publications.
-        static const auto subscription = Core::EventBus::instance().subscribe<PhysicsCollisionEvent>([](const PhysicsCollisionEvent& event) {
+        auto& eventBus = Core::EventBus::instance();
+
+        // Listen for physics collisions with high priority
+        eventBus.subscribe<PhysicsCollisionEvent>([](const PhysicsCollisionEvent& event) {
             
             // Record collision in physics registry (existing functionality)
             if (event.objectA && event.objectB) {
@@ -700,7 +706,6 @@ namespace Physics {
             // edges, once each). This handler does what only it can do —
             // record the collision in the relation graph.
         }, 10); // High priority for physics events
-        (void)subscription;
     }
 
     void enforceCollisions(glm::vec3& position, const std::vector<std::shared_ptr<Object>>& objects) {
