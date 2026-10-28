@@ -43,6 +43,11 @@ public:
     bool init(const wgpu::Device& gpu,
               WGPUTextureFormat colorFormat = WGPUTextureFormat_RGBA8Unorm);
     void shutdown();
+    // Kernel diagnostics: hardware publication inspection and refuse-only work
+    // ceiling. These are not authored state or an alternate transport policy.
+    const KernelRoutedTransport* routedTransportKernelForDiagnostics() const { return _kernelRouted.get(); }
+    void setRoutedWorkLimitForDiagnostics(uint32_t limit) { if(_kernelRouted)_kernelRouted->workLimit=std::min(limit,1024u); }
+
 
     // Offscreen frame: opens a pass rendering into an explicit `target` texture
     // view (used by tests and any render-to-texture). endFrame ends + submits it.

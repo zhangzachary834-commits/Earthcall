@@ -3177,7 +3177,8 @@ void WebGpuRenderer::flushVolumeComposite() {
 
     std::array<KernelRoutedSpec,4> frameSpecs{};
     bool wantRouted = volumeRoutedTransportEnabled() && activeMedia.size()==4 &&
-        (!incidentSource || OntoMath::literalZero(incidentSource->radianceExpr));
+        incidentSource && OntoMath::literalZero(incidentSource->radianceExpr);
+    // No source uses Current's unit compatibility illumination, not zero light.
     const auto vector4=[](const std::array<float,4>& v){return glm::vec4(v[0],v[1],v[2],v[3]);};
     for(size_t i=0;wantRouted && i<4;++i){
         const auto& m=*activeMedia[i];const auto recipe=OntoMath::clampedWaveSupport(m.densityExpr);
@@ -3935,13 +3936,14 @@ void WebGpuRenderer::flushVolumeComposite() {
         if(pipeline->routed){
             if(_pass){wgpuRenderPassEncoderEnd(_pass);wgpuRenderPassEncoderRelease(_pass);_pass=nullptr;_boundPipeline=nullptr;}
             const auto& spec=routedSpecs.at(pipeline);const auto specAlloc=bufferPool().suballocateStorage(spec.data(),sizeof(spec));
+            const auto specUniform=bufferPool().suballocateUniform(spec.data(),sizeof(spec));
             auto* transport=_kernelRouted->program(pipeline->routedSource);
             if(transport)_kernelRouted->encode(*transport,_encoder,
                 {globalAlloc.buffer,globalAlloc.offset,globalAlloc.size},{paramBuffer,paramOffset,bytes},
-                {instanceAlloc.buffer,instanceAlloc.offset,instanceAlloc.size},_depthView,{specAlloc.buffer,specAlloc.offset,specAlloc.size},
+                {instanceAlloc.buffer,instanceAlloc.offset,instanceAlloc.size},_depthView,{specAlloc.buffer,specAlloc.offset,specAlloc.size},{specUniform.buffer,specUniform.offset,specUniform.size},
                 [&](const void* data,size_t size){const auto a=bufferPool().suballocateUniform(data,size);return KernelRoutedRange{a.buffer,a.offset,a.size};});
             ++mutableFrameStats().volumeRoutedSets;mutableFrameStats().volumeRoutedPixels+=_depthW*_depthH;
-            mutableFrameStats().volumeRoutedWorkingSetBytes=uint64_t(_depthW)*_depthH*16+uint64_t(_kernelRouted->capacity)*(48+64*16+16*16+4)+uint64_t(_kernelRouted->tiles)*16+68;
+            mutableFrameStats().volumeRoutedWorkingSetBytes=uint64_t(_depthW)*_depthH*16+uint64_t(_kernelRouted->capacity)*(48+64*16+16*16+4)+uint64_t(_kernelRouted->tiles)*16+56;
         }
         if (!_pass) {
             _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &volumePassDesc);

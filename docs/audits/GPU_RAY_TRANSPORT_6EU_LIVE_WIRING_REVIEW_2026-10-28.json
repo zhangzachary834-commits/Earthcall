@@ -1,0 +1,355 @@
+{
+  "schema": "6eu-retained-live-renderer-review-1",
+  "cases": {
+    "forced": {
+      "width": 334,
+      "height": 190,
+      "dispatches": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "publication": {
+        "accepted": 0,
+        "refused": 63460,
+        "nonempty": 0,
+        "nonfinite": 0
+      }
+    },
+    "front-forced": {
+      "width": 334,
+      "height": 190,
+      "dispatches": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "publication": {
+        "accepted": 0,
+        "refused": 63460,
+        "nonempty": 0,
+        "nonfinite": 0
+      }
+    },
+    "front-off": {
+      "width": 334,
+      "height": 190,
+      "dispatches": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "front-on": {
+      "width": 334,
+      "height": 190,
+      "dispatches": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonempty": 31730,
+        "nonfinite": 0
+      }
+    },
+    "full-forced": {
+      "width": 2560,
+      "height": 1440,
+      "dispatches": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "publication": {
+        "accepted": 0,
+        "refused": 3686400,
+        "nonempty": 0,
+        "nonfinite": 0
+      }
+    },
+    "full-off": {
+      "width": 2560,
+      "height": 1440,
+      "dispatches": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "full-on": {
+      "width": 2560,
+      "height": 1440,
+      "dispatches": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "publication": {
+        "accepted": 3686398,
+        "refused": 2,
+        "nonempty": 3686014,
+        "nonfinite": 0
+      }
+    },
+    "nosource-off": {
+      "width": 334,
+      "height": 190,
+      "dispatches": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "nosource-on": {
+      "width": 334,
+      "height": 190,
+      "dispatches": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "off": {
+      "width": 334,
+      "height": 190,
+      "dispatches": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "on": {
+      "width": 334,
+      "height": 190,
+      "dispatches": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonempty": 63454,
+        "nonfinite": 0
+      }
+    },
+    "outside-forced": {
+      "width": 334,
+      "height": 190,
+      "dispatches": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "publication": {
+        "accepted": 0,
+        "refused": 63460,
+        "nonempty": 0,
+        "nonfinite": 0
+      }
+    },
+    "outside-off": {
+      "width": 334,
+      "height": 190,
+      "dispatches": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "outside-on": {
+      "width": 334,
+      "height": 190,
+      "dispatches": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonempty": 28358,
+        "nonfinite": 0
+      }
+    },
+    "unsupported-off": {
+      "width": 334,
+      "height": 190,
+      "dispatches": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "unsupported-on": {
+      "width": 334,
+      "height": 190,
+      "dispatches": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  "exact_comparisons": {
+    "forced == off": {
+      "bytes": 253840,
+      "different_bytes": 0
+    },
+    "full-forced == full-off": {
+      "bytes": 14745600,
+      "different_bytes": 0
+    },
+    "unsupported-on == unsupported-off": {
+      "bytes": 253840,
+      "different_bytes": 0
+    },
+    "front-forced == front-off": {
+      "bytes": 253840,
+      "different_bytes": 0
+    },
+    "outside-forced == outside-off": {
+      "bytes": 253840,
+      "different_bytes": 0
+    },
+    "nosource-on == nosource-off": {
+      "bytes": 253840,
+      "different_bytes": 0
+    }
+  },
+  "natural_refused_pixels": [
+    894498,
+    1969317
+  ],
+  "opaque_front_zero_pixels": 31730,
+  "recipe_checks": 33,
+  "common_ideal_camera_80_pixel_pilot": {
+    "2^16": {
+      "historical_Current_float_T": {
+        "mean": 0.0002017195497158994,
+        "p99": 0.0027628506533921016,
+        "max": 0.0027628506533921016
+      },
+      "historical_Current_float_RGB": {
+        "mean": 0.0001319039179868911,
+        "p99": 0.0017892597007573494,
+        "max": 0.0017892597007573494
+      },
+      "live_routed_T": {
+        "mean": 2.441181700114231e-05,
+        "p99": 0.00013753306918451447,
+        "max": 0.00013753306918451447
+      },
+      "live_routed_RGB": {
+        "mean": 1.7590373378134457e-05,
+        "p99": 9.448749378349053e-05,
+        "max": 9.448749378349053e-05
+      },
+      "fresh_Current_RGBA8_RGB": {
+        "mean": 0.001531850120171626,
+        "p99": 0.0030487356617927217,
+        "max": 0.0030487356617927217
+      },
+      "fresh_routed_RGBA8_RGB": {
+        "mean": 0.0014887405148001057,
+        "p99": 0.001959728905714452,
+        "max": 0.001959728905714452
+      }
+    },
+    "2^15": {
+      "historical_Current_float_T": {
+        "mean": 0.00020172043063453466,
+        "p99": 0.002762858505602761,
+        "max": 0.002762858505602761
+      },
+      "historical_Current_float_RGB": {
+        "mean": 0.00013190403920061635,
+        "p99": 0.001789269606707368,
+        "max": 0.001789269606707368
+      },
+      "live_routed_T": {
+        "mean": 2.4410984697255388e-05,
+        "p99": 0.00013754107909436097,
+        "max": 0.00013754107909436097
+      },
+      "live_routed_RGB": {
+        "mean": 1.759007006295665e-05,
+        "p99": 9.449228880090144e-05,
+        "max": 9.449228880090144e-05
+      },
+      "fresh_Current_RGBA8_RGB": {
+        "mean": 0.00153185164689656,
+        "p99": 0.0030487455677427402,
+        "max": 0.0030487455677427402
+      },
+      "fresh_routed_RGBA8_RGB": {
+        "mean": 0.0014887415175047869,
+        "p99": 0.001959728517154304,
+        "max": 0.001959728517154304
+      }
+    }
+  },
+  "connected_debug_frame_cost": {
+    "blocks": [
+      {
+        "off_ms": 77.53804166649999,
+        "on_ms": 72.40684725,
+        "ratio": 0.9338235231865947
+      },
+      {
+        "off_ms": 80.05328120850001,
+        "on_ms": 73.0509045,
+        "ratio": 0.9125285484518466
+      },
+      {
+        "off_ms": 79.24630725,
+        "on_ms": 72.1918993335,
+        "ratio": 0.9109812411290622
+      },
+      {
+        "off_ms": 82.32995137500001,
+        "on_ms": 74.97363025,
+        "ratio": 0.9106482998940068
+      }
+    ],
+    "median_ratio": 0.9117548947904544,
+    "frames_per_sample": 12,
+    "samples": 16
+  },
+  "scope": "Retained Apple M5 offscreen evidence. Historical float Current comparison is explicitly historical; fresh Screen comparison is native RGBA8. No full-population reference closure, moving-scene FPS, display pacing, resize/edit/device recreation or Person acceptance claim."
+}

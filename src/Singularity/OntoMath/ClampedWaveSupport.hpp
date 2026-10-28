@@ -32,10 +32,7 @@ inline bool symbol(const N* n,const char* v){return n&&!n->unsupported&&n->op==O
 inline const N* clamp(const N* n){return child(n,O::Clamp,0,3)&&number(n->children[1].get(),0)&&number(n->children[2].get(),1)?n->children[0].get():nullptr;}
 inline const N* oneMinus(const N* n){return child(n,O::Sub,1,2)&&number(n->children[0].get(),1)?n->children[1].get():nullptr;}
 inline bool plusY(const N* n,float value){return child(n,O::Add,0,2)&&symbol(n->children[0].get(),"y")&&number(n->children[1].get(),value);}
-inline std::optional<ClampedWaveSupport> match(const N* n){
-    const auto xy=child(n,O::Scale,0,2),z=child(n,O::Scale,1,2);
-    const auto x=child(xy,O::Scale,0,2),ys=child(xy,O::Scale,1,2);
-    const auto yr=child(ys,O::Scale,0,2),yf=child(ys,O::Scale,1,2);
+inline std::optional<ClampedWaveSupport> match(const N* x,const N* yr,const N* yf,const N* z){
     auto xd=oneMinus(clamp(x));auto zd=oneMinus(clamp(z));auto yd=oneMinus(clamp(yf));auto rise=clamp(yr);
     if(!child(xd,O::Div,0,2)||!child(zd,O::Div,0,2)||!child(yd,O::Div,0,2)||!child(rise,O::Scale,0,2))return {};
     if(!symbol(child(xd->children[0].get(),O::Abs,0,1),"x"))return {};
@@ -60,12 +57,29 @@ inline std::optional<ClampedWaveSupport> match(const N* n){
     out.curvature={std::nextafter(static_cast<float>(curvature),std::numeric_limits<float>::infinity())*1.00002f,.001f,0,0};
     if(!std::isfinite(out.curvature[0]))return {};return out;
 }
+inline bool factors(const N* n,unsigned depth,std::vector<const N*>& out){
+    if(!n||n->unsupported||depth>64||out.size()>=32)return false;
+    if(n->op==O::Scale&&n->children.size()==2)return factors(n->children[0].get(),depth+1,out)&&factors(n->children[1].get(),depth+1,out);
+    out.push_back(n);return true;
+}
 inline std::optional<ClampedWaveSupport> search(const N* n,unsigned depth){
-    if(!n||n->unsupported||depth>64)return {};if(auto r=match(n))return r;
-    // Only multiplicative ancestors: never infer support through addition,
-    // cancellation, division or a computed clamp bound.
-    if(n->op==O::Scale&&n->children.size()==2){for(const auto& c:n->children)if(auto r=search(c.get(),depth+1))return r;}
-    return {};
+    std::vector<const N*> leaves;if(!factors(n,depth,leaves))return {};
+    const N *x=nullptr,*yr=nullptr,*yf=nullptr,*z=nullptr;
+    // Inspect factors without changing the authored evaluation tree/order.
+    // Multiplication parentheses do not change the support implication.
+    for(const auto* f:leaves){
+        const auto* inside=clamp(f);const auto* d=oneMinus(inside);const N** slot=nullptr;
+        if(child(d,O::Div,0,2)){
+            const auto* value=d->children[0].get();const auto* absolute=child(value,O::Abs,0,1);
+            if(symbol(absolute,"x"))slot=&x;
+            else if(absolute)slot=&z;
+            else if(child(value,O::Add,0,2)&&symbol(value->children[0].get(),"y"))slot=&yf;
+        }else if(child(inside,O::Scale,0,2)&&literal(inside->children[0].get())){
+            const auto* value=inside->children[1].get();if(child(value,O::Add,0,2)&&symbol(value->children[0].get(),"y"))slot=&yr;
+        }
+        if(slot){if(*slot)return {};*slot=f;}
+    }
+    return match(x,yr,yf,z);
 }
 }
 inline std::optional<ClampedWaveSupport> clampedWaveSupport(const Piecewise* p){

@@ -11,6 +11,8 @@ it describes the workshop, not the ontology.)*
 
 ## Build
 
+**Ray-transport feature checkout (2026-10-28):** `Earthcall-ray-transport` now has experimental routed transport defaultON, with Current fallback and default Camera speed12units/s. Rebuild/run its own `build/earthcall_webgpu`; this pass did not install `/Applications/Earthcall.app`. Use the registered `volumeRoutedTransportEnabled` property/API, not nonexistent routed CLI flags. Its current `build` is Debug; a copied `build_release` cache names the other checkout and is not qualified here. [Native review, replay and remaining gates](audits/GPU_RAY_TRANSPORT_6EU_LIVE_WIRING_REVIEW_2026-10-28.md). Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T16:51:42.230711-07:00.
+
 ### One-click WebGPU launch (macOS)
 
 Double-click `Run Earthcall.command` at the repository root. It opens Terminal, configures

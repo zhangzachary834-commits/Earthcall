@@ -21,12 +21,13 @@ struct KernelRoutedTransport {
     std::array<WGPUBuffer,3> lists{};
     std::array<WGPUComputePipeline,6> common{};
     uint32_t width=0,height=0,stripRows=0,capacity=0,tiles=0;
+    uint32_t workLimit=1024; // Kernel search ceiling; lowering it can only force Current refusal.
     struct Program {WGPUComputePipeline setup=nullptr,consumer=nullptr;WGPUBindGroupLayout globals=nullptr,instances=nullptr,local=nullptr;};
     std::map<std::string,Program> programs;
     ~KernelRoutedTransport();
     void releaseBuffers();
     bool ensure(WGPUDevice d,WGPUQueue q,uint32_t w,uint32_t h);
     Program* program(const std::string& source);
-    bool encode(Program&,WGPUCommandEncoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth,const KernelRoutedRange& specs,
+    bool encode(Program&,WGPUCommandEncoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth,const KernelRoutedRange& specs,const KernelRoutedRange& uniformSpecs,
                 const std::function<KernelRoutedRange(const void*,size_t)>& uniform);
 };
