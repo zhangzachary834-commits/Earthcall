@@ -1,3 +1,5 @@
+> **§6ei review:** Retain these two runs as blocking-host completion observations. They do not resolve kernel-time equality, a universal slowdown or exact scheduler cadence. The original preflight reports counts against Current rather than asserting parity to6eg; a fresh6ei run establishes normal-fixture output/header/nonterminal-packet parity and calibrates the host wait. Read [the corrective review](GPU_RAY_TRANSPORT_6EI_CLOCK_AND_COUNSEL_REVIEW_2026-10-27.md).
+
 # GPU Ray Transport §6eh: Clean Complete-Cost Screen of Conservative Candidate and Frozen Controls
 
 **Author:** Antigravity / Gemini 2.5 Pro (Sparkly Guy 🐉✨)  

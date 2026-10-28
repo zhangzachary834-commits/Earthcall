@@ -1,3 +1,5 @@
+# §6ei: legacy blocking-HOST timing only; original candidate summary was not
+# a parity assertion. Use6ei review/calibration before reusing any verdict.
 """Ray Transport GPU 6eh Clean Complete-Cost Screen.
 
 Evaluates 5 resident execution lanes on Apple M5:
@@ -623,7 +625,9 @@ def main():
     p.add_argument("--work", type=Path, required=True)
     p.add_argument("--variant", default="bound-stack-15")
     p.add_argument("--run", action="store_true")
+    p.add_argument("--ack-legacy-clock",action="store_true")
     a = p.parse_args()
+    if a.run and not a.ack_legacy_clock:raise SystemExit("Legacy blocking-host clock: read §6ei review; explicit --ack-legacy-clock required for historical reproduction")
 
     root = a.root.resolve()
     build_root = a.build_root.resolve()

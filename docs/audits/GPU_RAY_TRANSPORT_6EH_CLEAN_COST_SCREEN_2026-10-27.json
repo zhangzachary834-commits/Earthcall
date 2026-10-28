@@ -9782,5 +9782,10 @@
     "gate_1_profitable_connected_execution": "OPEN (rejected; no speedup over Current baseline)",
     "gate_2_generic_ontomath_integration": "OPEN",
     "gate_3_inhabited_native_fps_acceptance": "OPEN"
+  },
+  "qualification_status_6ei": {
+    "status": "historical host-completion measurements retained; kernel/no-benefit verdict not established",
+    "review": "GPU_RAY_TRANSPORT_6EI_CLOCK_AND_COUNSEL_REVIEW_2026-10-27.md",
+    "scope": "new normal-fixture parity and wait calibration are separate evidence"
   }
 }
