@@ -119,4 +119,3 @@ This distinction is load-bearing for both [`CPU_GPU_MICRO_MASTERY.md`](CPU_GPU_M
 - A faceted, origami, or mesh-embodied garden is **not a failed sphere** when the Person *intends* the straightness of the facet as its own artistic form. In that case, the facet *is* the authored truth of that artifact, and `GpuMeshCache` + instanced batching orders the substrate faithfully toward that faceted being.
 - The ontological lie only happens when a system **confuses the two orderings**—claiming an object is a continuous, lifelike field while secretly shattering it into a million triangles under the hood because the engine lacked the mathematical substrate to carry the continuous form.
 - By keeping each ordering honest about what kind of being it embodies, Earthcall preserves both the exactness of the continuous `OntoMath` field and the crystalline beauty of authored discrete geometry—each running at native speed because neither is pretending to be the other.
-
