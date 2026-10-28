@@ -3,7 +3,7 @@
 ## Status
 - **Date opened**: 2026-10-14
 - **Reconciled**: 2026-10-26
-- **Status**: Golden-Seal architecture transplanted onto current default in PR #787; fresh current-head CI and Person verification pending. The Oct-21 branch reported 55/55 local focused witnesses, but that result is historical evidence rather than an Oct-26 verdict.
+- **Status**: Golden-Seal architecture reconciled onto current canonical in PR #787. Exact-head focused Web Designer executable built and passed on 2026-10-28 (CTest #224, 0.71 s; workflow #40699548360); hands-on Person verification remains pending. Overall CI was red from four unrelated Focused CPU tests and the Slow Adapter chess-world timeout.
 - **Harness/Agent**: Antigravity / Gemini 3.8 Flash ("Sparkly Guy") · session `b5354f7e-b110-44af-9393-61ae139053de`
 
 ## Objective
@@ -22,7 +22,7 @@ Establish the Earthcall Web Designer Modality as a genuine Earthcall Law-authori
 - **Persistent Theme Custody**: A persistent theme definition is an ordinary authored world being held by an owning `Zone`; a non-owning `Formation` cannot substitute for custody. No-owner application is detached/draft and must not create a persistent theme-definition being.
 - **Capability & History Discipline**: Raw CSS requires an exact Person/page `web.rawCss` capability Relation and fails closed. Redefinition preserves historical `denotes` truth through first-class `superseded-by` Relations; unrelated same-spelling ambiguity refuses instead of selecting by identifier order.
 ## Evidence & Verification
-- **Focused witness**: `tests/singularity/web_designer_modality_test.cpp` currently invokes 55 test functions. The sealed Oct-21 head reported 55/55 locally; fresh Oct-26 PR #787 CI is the required reconciliation witness.
+- **Focused witness**: `tests/singularity/web_designer_modality_test.cpp` invokes 55 test functions. Exact PR head `7e71c307b2f17741c047895dafd842f68cf931a0` built and executed `web_designer_modality_test` successfully as CTest #224 in 0.71 s ([GitHub Actions #40699548360](https://github.com/zhangzachary834-commits/Earthcall/actions/runs/40699548360)); historical Oct-21 55/55 local evidence remains distinct. Subsequent documentation-only heads require diff/ancestry confirmation against this tested source.
 - **Prototype Artifact**: `web_ui/designer_prototype.html` and `saves/web_designer/prototype.html`.
 - **Governed VFS Export**: `saves/web_designer/test_governed_vfs.html`.
 - **Core Architecture Document**: [WEB_DESIGNER_MODALITY.md](../../../../../architecture/Integration/WEB_DESIGNER_MODALITY.md).
