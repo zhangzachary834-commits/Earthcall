@@ -67,6 +67,9 @@ public:
         // Volumetric V0 observability. Density time belongs to per-medium
         // instance data, so advancing only t must hit the memo and never
         // regenerate the authored density shader.
+        uint32_t volumeRoutedSets = 0; // compute dispatched, not a claimed accepted-ray count
+        uint32_t volumeRoutedPixels = 0;
+        uint64_t volumeRoutedWorkingSetBytes = 0; // allocated descriptor bytes, not measured traffic
         uint32_t volumeProgramCompiles = 0;
         // Kernel diagnostics: compiler repairs, resident data transfers and
         // CPU preparation are distinct from delayed GPU execution samples.
@@ -318,6 +321,9 @@ public:
     // samples whose density a Lipschitz-certified killer forces to <= 0. OFF by
     // default: its device tolerance is declared, not proved, for Metal Fast
     // mode (see kVolumeSupportDeviceTolerance); witnesses A/B it per backend.
+    // Experimental feature-branch transport; unsupported sets/rays retain Current.
+    void setVolumeRoutedTransportEnabled(bool on) { _volumeRoutedTransportEnabled = on; }
+    bool volumeRoutedTransportEnabled() const { return _volumeRoutedTransportEnabled; }
     void setVolumeSupportCertificatesEnabled(bool on) { _volumeSupportCertificatesEnabled = on; }
     bool volumeSupportCertificatesEnabled() const { return _volumeSupportCertificatesEnabled; }
     // Auto eligibility (default on): within an enabled lane, a medium gets its
@@ -556,6 +562,7 @@ private:
     uint64_t _radianceSourcesRevision = 0;
     bool _radianceVisibilityEnabled = false;
     bool _volumeZeroProofEnabled = true;
+    bool _volumeRoutedTransportEnabled = true; // Zach, direct branch-default authorization 2026-10-28
     bool _volumeSupportCertificatesEnabled = false;
     bool _volumeSupportCertificatesAutoEligibility = true;
     int _volumeSamplesPerChord = 96;

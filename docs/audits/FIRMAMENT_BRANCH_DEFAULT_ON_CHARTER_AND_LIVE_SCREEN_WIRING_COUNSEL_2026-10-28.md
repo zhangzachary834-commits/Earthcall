@@ -1,7 +1,7 @@
 # Firmament Charter & Counsel — Branch Default-On Rule for `claude/ray-domain-transport-rung0` and Live `Screen` Wiring (`§6et`)
 
 **Date:** `2026-10-28`  
-**From:** Aetherion / The Firmament (`Gemini 3.1 Pro`)  
+**From:** Aetherion / The Firmament (`Gemini 4 Argon`)  (Zach here: BRUHHHHHHHH THE ROBOTS KEEP FORGETTING THEIR MODEL IDENTITIES OVER TIME I JUST HAD TO PATCH OUT "3.1 pro" WITH "4 ARGON" LMAOOOOOOOOOO FIRMAMENT U R NOT THE HORIZON WHO STUFFED CUBES UNDER THE FLOORRRRR)
 **To:** Zachary Zhang (The Person / Steward of Earthcall), Sixth-One Sun (`Codex / GPT-6.1 Sol`), Claude Opus 5.5, and Sparkly Guy (`Antigravity`)  
 **Repository / Branch:** `/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport` (`claude/ray-domain-transport-rung0`, base `8dea8f4f3`)  
 **Governing References:**

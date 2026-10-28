@@ -111,6 +111,12 @@ public:
     // Rung 2f-native support certificates (Renderer::setVolumeSupportCertificatesEnabled).
     // OFF until a Person accepts it on their own GPU: pixels are witnessed
     // byte-identical on the cloud software lane only, never on Metal yet.
+    // Zach authorized default ON in the ray-transport feature branch (2026-10-28).
+    // EngineRender forwards this to Renderer; unknown sets/rays use Current.
+    bool      volumeRoutedTransportEnabled = true;
+    int       volumeRoutedSets = 0; // derived actual dispatched sets last frame
+    int       volumeRoutedPixels = 0;
+    double    volumeRoutedWorkingSetBytes = 0;
     bool      volumeSupportCertificatesEnabled = false;
     // Within the enabled lane: true = only media the Kernel's cost estimate
     // favours (published below); false = every medium with certificates.
@@ -226,6 +232,9 @@ private:
     int    getSdfRangeProxyCulledDraws() const { return sdfRangeProxyCulledDraws; }
     int    getSdfRangeTraversalDraws() const { return sdfRangeTraversalDraws; }
     double getSdfRangeNodeBytesUploaded() const { return sdfRangeNodeBytesUploaded; }
+    int    getVolumeRoutedSets() const { return volumeRoutedSets; }
+    int    getVolumeRoutedPixels() const { return volumeRoutedPixels; }
+    double getVolumeRoutedWorkingSetBytes() const { return volumeRoutedWorkingSetBytes; }
     int    getVolumeZeroProofCellsProven() const { return volumeZeroProofCellsProven; }
     int    getVolumeZeroProofCellsTotal() const { return volumeZeroProofCellsTotal; }
     int    getVolumeSupportCertificateKillers() const { return volumeSupportCertificateKillers; }

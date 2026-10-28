@@ -13,6 +13,8 @@
 
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/GpuBufferPool.hpp"
+#include "Singularity/Screen/WebGPU/VolumeRoutedTransport.hpp"
+#include <memory>
 #include "Singularity/Screen/WebGPU/GpuMeshCache.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/VolumeZeroProof.hpp"
@@ -369,7 +371,12 @@ private:
         WGPUBindGroupLayout globalBgl = nullptr;
     };
     std::map<std::string, KernelVolumeTimePipeline> _kernelVolumeTimePipes;
+    // Kernel-only device cache, released on shutdown; viewport resources rebuild
+    // on resize. Mathematical support recipes are rederived each frame.
+    std::unique_ptr<KernelRoutedTransport> _kernelRouted;
     struct VolumePipeline {
+        bool routed = false; // compiled layout, never authored medium state
+        std::string routedSource; // Kernel key; exact production evaluator source
         WGPURenderPipeline pipe = nullptr;
         WGPUBindGroupLayout globalBgl = nullptr;
         WGPUBindGroupLayout instanceBgl = nullptr;
@@ -588,7 +595,7 @@ private:
     // the header proxy once; this map records that explicit draw count.
     std::map<const VolumePipeline*, uint32_t> _volumeDrawInstanceCounts;
     std::vector<const VolumePipeline*> _activeVolumePipelines;
-    const VolumePipeline* volumePipeline(const sdfwgsl::Program& program);
+    const VolumePipeline* volumePipeline(const sdfwgsl::Program& program, bool routed = false);
     const KernelVolumeTimePipeline* volumeTimePipeline(const std::string& wgsl,
                                                      WGPUBindGroupLayout instances);
     void flushVolumeComposite();

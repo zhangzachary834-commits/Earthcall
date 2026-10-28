@@ -15,7 +15,7 @@ public:
     glm::vec3 pos   {0.0f, 0.0f, 3.0f};
     glm::vec3 front {0.0f, 0.0f, -1.0f};
     glm::vec3 up    {0.0f, 1.0f, 0.0f};
-    float speed = 6.0f;   // units per second (was 0.1 per frame, i.e. 6/s at 60 FPS)
+    float speed = 12.0f;  // units/second; Zach requested faster 3D traversal, 2026-10-28
 
     // Matrices and viewport
     GLdouble modelview[16]  {};

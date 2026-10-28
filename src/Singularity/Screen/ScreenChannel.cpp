@@ -348,6 +348,10 @@ void ScreenChannel::buildProperties() {
     floating("spaceDistortion", &ScreenChannel::spaceDistortion);
     boolean("sdfRangeProxyEnabled", &ScreenChannel::sdfRangeProxyEnabled);
     boolean("volumeZeroProofEnabled", &ScreenChannel::volumeZeroProofEnabled);
+    boolean("volumeRoutedTransportEnabled", &ScreenChannel::volumeRoutedTransportEnabled);
+    readOnlyInt("volumeRoutedSets", &ScreenChannel::getVolumeRoutedSets);
+    readOnlyInt("volumeRoutedPixels", &ScreenChannel::getVolumeRoutedPixels);
+    readOnlyDouble("volumeRoutedWorkingSetBytes", &ScreenChannel::getVolumeRoutedWorkingSetBytes);
     boolean("volumeSupportCertificatesEnabled", &ScreenChannel::volumeSupportCertificatesEnabled);
     boolean("volumeSupportCertificatesAutoEligibility", &ScreenChannel::volumeSupportCertificatesAutoEligibility);
     floating("volumeOutputErrorBudget", &ScreenChannel::volumeOutputErrorBudget);

@@ -1,5 +1,7 @@
 #include <chrono>
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
+#include "Singularity/OntoMath/ClampedWaveSupport.hpp"
+#include "Singularity/Screen/WebGPU/VolumeRoutedTransport.inc"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
@@ -651,6 +653,7 @@ WGPURenderPipeline WebGpuRenderer::flatPipeline(WGPUPrimitiveTopology topo, Blen
 }
 
 void WebGpuRenderer::shutdown() {
+    _kernelRouted.reset();
     releaseGpuTimestampQueries();
     releasePersistentSdfParams();
     releasePersistentSdfRangeNodes();
@@ -1301,8 +1304,27 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
 }
 
 const WebGpuRenderer::VolumePipeline*
-WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program) {
-    const auto& wgsl = program.wgsl;
+WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program, bool routed) {
+    if (routed && (!_kernelRouted || !_kernelRouted->program(program.wgsl))) {
+        ++mutableFrameStats().volumeProgramRefusals;
+        mutableFrameStats().volumeLastProgramRefusal = "routed compute compilation refused; Current retained";
+        return volumePipeline(program, false);
+    }
+    std::string wgsl = program.wgsl;
+    if (routed) {
+        const std::string binding = "@group(0) @binding(2) var sceneDepthTex: texture_depth_2d;";
+        const std::string anchor = "    var transmittance = 1.0;";
+        const std::string publish = R"WGSL(    {
+        let answer = routedPublication[u32(px.y)*u32(u.viewport.x)+u32(px.x)];
+        if (answer.w >= 0.0) {
+            if (answer.w <= 1e-5 && max(max(abs(answer.x),abs(answer.y)),abs(answer.z)) <= 1e-6) { discard; }
+            return answer;
+        }
+    }
+)WGSL";
+        if (!kernel_routed_detail::replace(wgsl,binding,binding+"\n@group(0) @binding(3) var<storage,read> routedPublication:array<vec4<f32>>;") ||
+            !kernel_routed_detail::replace(wgsl,anchor,publish+anchor)) return volumePipeline(program,false);
+    }
     const auto key = wgsl + program.kernelVolumePreparationWgsl;
     auto it = _volumePipes.find(key);
     if (it != _volumePipes.end()) return &it->second;
@@ -1318,7 +1340,7 @@ WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program) {
         return nullptr;
     }
 
-    WGPUBindGroupLayoutEntry globalEntries[3] = {};
+    WGPUBindGroupLayoutEntry globalEntries[4] = {};
     globalEntries[0].binding = 0;
     globalEntries[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     globalEntries[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -1333,9 +1355,10 @@ WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program) {
     globalEntries[2].texture.sampleType = WGPUTextureSampleType_Depth;
     globalEntries[2].texture.viewDimension = WGPUTextureViewDimension_2D;
     globalEntries[2].texture.multisampled = false;
+    if(routed){globalEntries[3].binding=3;globalEntries[3].visibility=WGPUShaderStage_Fragment;globalEntries[3].buffer.type=WGPUBufferBindingType_ReadOnlyStorage;}
 
     WGPUBindGroupLayoutDescriptor globalDesc = {};
-    globalDesc.entryCount = 3;
+    globalDesc.entryCount = routed ? 4 : 3;
     globalDesc.entries = globalEntries;
 
     WGPUBindGroupLayoutEntry instanceEntry = {};
@@ -1349,6 +1372,8 @@ WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program) {
     instanceDesc.entries = &instanceEntry;
 
     VolumePipeline out;
+    out.routed = routed;
+    if(routed)out.routedSource=program.wgsl;
     out.globalBgl = wgpuDeviceCreateBindGroupLayout(_device, &globalDesc);
     out.instanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &instanceDesc);
     if (!out.globalBgl || !out.instanceBgl) {
@@ -2986,6 +3011,7 @@ void WebGpuRenderer::attachVolumeSupportCertificates(const Rendering::VolumeDens
 
 void WebGpuRenderer::flushVolumeComposite() {
     if (!_encoder || !_frameColorView || !_depthView || !_inverseViewProjValid) return;
+    std::map<const VolumePipeline*, std::array<KernelRoutedSpec,4>> routedSpecs;
     const auto prepareStart = std::chrono::steady_clock::now();
     ++_volumeZeroProofFrame;
 
@@ -3149,6 +3175,16 @@ void WebGpuRenderer::flushVolumeComposite() {
         }
     }
 
+    std::array<KernelRoutedSpec,4> frameSpecs{};
+    bool wantRouted = volumeRoutedTransportEnabled() && activeMedia.size()==4 &&
+        (!incidentSource || OntoMath::literalZero(incidentSource->radianceExpr));
+    const auto vector4=[](const std::array<float,4>& v){return glm::vec4(v[0],v[1],v[2],v[3]);};
+    for(size_t i=0;wantRouted && i<4;++i){
+        const auto& m=*activeMedia[i];const auto recipe=OntoMath::clampedWaveSupport(m.densityExpr);
+        if(!recipe||glm::any(glm::greaterThan(glm::abs(m.origin),glm::vec3(1024)))||glm::any(glm::greaterThan(glm::abs(m.scale),glm::vec3(1024)))){wantRouted=false;break;}
+        frameSpecs[i]={glm::vec4(m.origin,0),glm::vec4(glm::abs(m.scale),0),vector4(recipe->limits),vector4(recipe->curvature),vector4(recipe->amplitudes),vector4(recipe->frequencies),vector4(recipe->phases)};
+    }
+    if(wantRouted){if(!_kernelRouted)_kernelRouted=std::make_unique<KernelRoutedTransport>();wantRouted=_kernelRouted->ensure(_device,_queue,_depthW,_depthH);}
     if (activeMedia.size() > 1) {
         VolumeSetProgramKey setKey;
         setKey.reserve(activeMedia.size());
@@ -3187,6 +3223,7 @@ void WebGpuRenderer::flushVolumeComposite() {
 
         auto& setMemo = _volumeSetProgramCache[setKey];
         uint64_t setContentRevision = volumeDensitySourcesRevision();
+        combineRevision(setContentRevision, wantRouted ? 0x524f5554ULL : 0x4c454741ULL);
         combineRevision(setContentRevision, incidentSourceContentRevision);
         for (std::size_t m = 0; m < activeMedia.size(); ++m)
             if (certificateMembers[m]) combineCertificateSet(setContentRevision, *activeMedia[m]);
@@ -3200,7 +3237,7 @@ void WebGpuRenderer::flushVolumeComposite() {
             bool layoutsOk = incidentSourceLayoutsOk;
             std::string layoutError = incidentSourceLayoutError;
             std::string structure =
-                "medium-count:" + std::to_string(activeMedia.size()) + "\n" +
+                "medium-count:" + std::to_string(activeMedia.size()) + (wantRouted ? "\nrouted\n" : "\nlegacy\n") +
                 incidentSourceStructure + "\n";
 
             std::vector<sdfwgsl::KernelVolumeEvaluator> retainedEvaluators;
@@ -3316,7 +3353,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                     setMemo.ok = setMemo.prog.ok;
                     setMemo.error = setMemo.prog.error;
                     setMemo.pipeline =
-                        setMemo.ok ? volumePipeline(setMemo.prog) : nullptr;
+                        setMemo.ok ? volumePipeline(setMemo.prog, wantRouted) : nullptr;
                     if (!setMemo.pipeline) setMemo.ok = false;
                 }
 
@@ -3355,7 +3392,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                             mutableFrameStats().volumeWgslBytesGenerated += other.prog.wgsl.size();
                             other.ok = other.prog.ok;
                             other.error = other.prog.error;
-                            other.pipeline = other.ok ? volumePipeline(other.prog) : nullptr;
+                            other.pipeline = other.ok ? volumePipeline(other.prog, wantRouted) : nullptr;
                             if (!other.pipeline) other.ok = false;
                         }
                         other.contentRevision = setContentRevision;
@@ -3452,6 +3489,7 @@ void WebGpuRenderer::flushVolumeComposite() {
             }
             payload.layoutIdentity = identity;
             instances.push_back(header);
+            if(setMemo.pipeline->routed)routedSpecs[setMemo.pipeline]=frameSpecs;
             instances.insert(
                 instances.end(), mediumInstances.begin(), mediumInstances.end());
             _volumeDrawInstanceCounts[setMemo.pipeline] = 1u;
@@ -3840,7 +3878,7 @@ void WebGpuRenderer::flushVolumeComposite() {
             bufferPool().suballocateStorage(instances.data(),
                                             instances.size() * sizeof(VolumeInstanceData));
 
-        WGPUBindGroupEntry globalEntries[3] = {};
+        WGPUBindGroupEntry globalEntries[4] = {};
         globalEntries[0].binding = 0;
         globalEntries[0].buffer = globalAlloc.buffer;
         globalEntries[0].offset = globalAlloc.offset;
@@ -3851,10 +3889,11 @@ void WebGpuRenderer::flushVolumeComposite() {
         globalEntries[1].size = bytes;
         globalEntries[2].binding = 2;
         globalEntries[2].textureView = _depthView;
+        if(pipeline->routed){globalEntries[3].binding=3;globalEntries[3].buffer=_kernelRouted->publication;globalEntries[3].size=uint64_t(_depthW)*_depthH*16;}
 
         WGPUBindGroupDescriptor globalBgDesc = {};
         globalBgDesc.layout = pipeline->globalBgl;
-        globalBgDesc.entryCount = 3;
+        globalBgDesc.entryCount = pipeline->routed ? 4 : 3;
         globalBgDesc.entries = globalEntries;
         WGPUBindGroup globalBg = wgpuDeviceCreateBindGroup(_device, &globalBgDesc);
         _frameBindGroups.push_back(globalBg);
@@ -3892,6 +3931,17 @@ void WebGpuRenderer::flushVolumeComposite() {
             wgpuComputePassEncoderDispatchWorkgroups(compute,
                 static_cast<uint32_t>(instances.size()) - pipeline->preparationInstanceBase, 1, 1);
             wgpuComputePassEncoderEnd(compute); wgpuComputePassEncoderRelease(compute);
+        }
+        if(pipeline->routed){
+            if(_pass){wgpuRenderPassEncoderEnd(_pass);wgpuRenderPassEncoderRelease(_pass);_pass=nullptr;_boundPipeline=nullptr;}
+            const auto& spec=routedSpecs.at(pipeline);const auto specAlloc=bufferPool().suballocateStorage(spec.data(),sizeof(spec));
+            auto* transport=_kernelRouted->program(pipeline->routedSource);
+            if(transport)_kernelRouted->encode(*transport,_encoder,
+                {globalAlloc.buffer,globalAlloc.offset,globalAlloc.size},{paramBuffer,paramOffset,bytes},
+                {instanceAlloc.buffer,instanceAlloc.offset,instanceAlloc.size},_depthView,{specAlloc.buffer,specAlloc.offset,specAlloc.size},
+                [&](const void* data,size_t size){const auto a=bufferPool().suballocateUniform(data,size);return KernelRoutedRange{a.buffer,a.offset,a.size};});
+            ++mutableFrameStats().volumeRoutedSets;mutableFrameStats().volumeRoutedPixels+=_depthW*_depthH;
+            mutableFrameStats().volumeRoutedWorkingSetBytes=uint64_t(_depthW)*_depthH*16+uint64_t(_kernelRouted->capacity)*(48+64*16+16*16+4)+uint64_t(_kernelRouted->tiles)*16+68;
         }
         if (!_pass) {
             _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &volumePassDesc);
