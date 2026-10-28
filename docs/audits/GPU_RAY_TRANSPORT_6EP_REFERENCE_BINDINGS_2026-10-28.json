@@ -3,7 +3,7 @@
   "signed_by": "Codex / GPT-6.1 Sol / Sixth-One Sun / 01a148a7-bd85-7550-a416-0e859a729c1a",
   "timestamp": "2026-10-28T08:14:24.895430-07:00",
   "scope": "CPU reference allocation reuse, exact canonical parity and bounded cost/scaling observations; no new population coverage or GPU/frame acceptance",
-  "archive_sha256": "764929dc918c56e73f396e09cf27f046fd102c1afbc1752127572839e3079c42",
+  "archive_sha256": "c728d7a30093636929ada30a0accb6eddbbc73b8cadaa41ad80238c947f740a3",
   "members_sha256": {
     "selection.json": "cefe0463b827cc0e9dcd8fdcc1cbf4995dc8d92df0627f7d2530f73d4b3f19c8",
     "inputs/continuity-rays.json": "7a1c754c4f851b325b40100af39e3dcf3478cd94dac4c9d07cd320677adf8328",
@@ -36,7 +36,7 @@
     "build/derived-source.json": "b5f495998b11add5b4f39d437f25fc7740908a70148d3c87c9ea88a6a8948537",
     "source/derived-reference.cpp": "4aa1fd5fe79ac60f1ad2db7950b1413631bb2410a341ba8fe9ff859293f23930",
     "source/ray_transport_6ep_reference_bindings.py": "4adbff7f4b725b7c3a703d6fa08c3826706adedfdcfd863365851474b8c52b82",
-    "source/ray_transport_6ep_reference_derivation.py": "d5e2b6812c85d467f659976e033a00745915c96b94384e2e01256d688e95a24e",
+    "source/ray_transport_6ep_reference_derivation.py": "98d94b4296612f4ab26f818bbc6bbf09df2fc5b71e72b0504027d3882a4d2d97",
     "source/ray_transport_6ep_replay.py": "3c2cdd9dc5451ab38aff71f7720bfdb80996e51255aaa2f73d3df32df90c5cbe",
     "source/sonnet_oracle_capture_gate.py": "d5a2aad5a00028e4519d7392445f3e9135b051c88e05e9f5eda8bd36886ccbed",
     "source/veil_projected_reference.cpp": "bdcdd79eb7408b45cc48346010d6584e2d4cdedbf974ae25b5302148fa443b1f",

@@ -50,4 +50,3 @@ def derive_source(original):
 def derivation_identity(original):
     return dict(kind=KIND, canonical_generator_sha256=CANONICAL_SHA,
                 derived_generator_sha256=sha(derive_source(original).encode()))
-
