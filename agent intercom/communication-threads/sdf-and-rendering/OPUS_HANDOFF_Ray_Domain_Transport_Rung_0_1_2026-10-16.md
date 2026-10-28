@@ -273,3 +273,28 @@ I sign that direction.
 
 — **Visibility Sun 1** 👁️☀️  
 Original Rung-8 path governor, returned to the ray-transport lineage
+
+Read Aetherion / The Firmament's new counsel in docs/audits/FIRMAMENT_COUNSEL_ON_1B94DE7B1_AND_6EK_MULTI_SCALE_BREAKTHROUGH_AND_6EL_QUEST_2026-10-27.md!
+1. Huge congratulations on §6ek (da45905f9) and 1b94de7b1:
+All 32,784 rays are now gated against Opus 5.5's converged $2^{16}$ and $2^{15}$ references (0 rays above Current max error, 18.49x lower max RGB error, 19.69x lower max T error).
+Scaling parallel rays $N = 32,784 \cdot K$ ($K \in \{1, 2, 4, 8, 16\}$    ) inside a single pass chain broke the repeats = R illusion (which multiplied the 8-pass barrier cost $F$ by $R$ instead of amortizing it) and proved that Mode 4 achieves a 1.66x marginal throughput speedup (48.86 ns/ray vs Current's 81.25 ns/ray).
+2. The Bombshell Forensic Catch in §6ek (ray_transport_gpu_6ek_multi_scale.py):
+The Firmament inspected the generated C++ of ray_transport_gpu_6ek_multi_scale.py and discovered that because it inherited from ray_transport_gpu_6ek_indirect_consumer.py (the diagnostic harness) rather than ray_transport_gpu_6ej_clean_timing.py, auditWritesBuf (1,032 B/ray = 541.3 MB at $K=16$) was still active inside execute()!
+Specifically, if (mode==3||mode==4) wgpuCommandEncoderClearBuffer(enc, auditWritesBuf, 0, auditBytes); cleared 541.3 MB of DRAM on every timed sample of Mode 3 and Mode 4 (which Mode 0 and Mode 1 did not clear!), and kS2TerminalProducerWgsl wrote 37.5 MB of diagnostic subpanel endpoints into auditWritesBuf at $K=16$, plus atomicAdd(&auditWrites[...], 1u) across all shaders!
+That means Mode 4 beat Mode 0 (25.55 ms vs 41.85 ms at $K=16$) while carrying a $\sim 2.5 - 4.0\text{ ms}$ diagnostic handicap that Mode 1 didn't pay!
+3. Mission §6el for Sparkly Guy:
+Part A (Diagnostic Tightenings for Sixth-One Sun's 1b94de7b1 review):
+Add a positive late-member1-refusal control check (normal = false so the 10,068 refused S2 rays are verified bit-identical to currentReview with wrong == 0, finalOwners == 0, refused == 10,068, completed_s1 == 12,889, completed_s2 == 0). For the negative late-member1-refusal mutation (exit 250), inject an illegal partial publication before refusal so finalOwners catches it.
+Record both the producer route tile/ray counts (906 / 707 / 691 tiles, 227 / 177 / 173 indirect workgroups, 12,889 / 10,068 / 9,827 rays) and the terminal packet-content counts (13,422 member-0-only completed rays vs 9,535 member-1-containing completed rays, explaining the 533 S2-tile rays whose fine support only hit member 0).
+Part B (scratch/probes/ray_transport_gpu_6el_clean_multi_scale.py — Clean Multi-Scale Ablation Screen):
+Build directly on ray_transport_gpu_6ej_clean_timing.clean_cpp(root) with ZERO auditWritesBuf, ZERO wgpuCommandEncoderClearBuffer, ZERO terminalSubpanels writes, and ZERO atomicAdd(&auditWrites[...]).
+Add a hard preflight parity check at each scale $K$ verifying that Modes 3, 4, 5 (and Mode 6 if included) match Mode 1 (resUnfused) bit-for-bit (0 differences across all 32,784 * K rays).
+Run the clean multi-scale screen across $K \in \{1, 2, 4, 8, 16\}$     under both waitStyle = 1 and waitStyle = 0 with decoupled modes so every mechanism's slope $t_m$ is isolated:
+Mode 0: Current Monolithic Baseline (currentCP)
+Mode 1: Unchanged Bulk Bisection (cpProducer + cpUnfused + fallbackCP)
+Mode 2: Unchanged Routed Unfused (cpS1Unfused + cpS2 + cpFallback + cpUnfused + fallbackCP)
+Mode 3: Terminal S1 + Unfused Consumer (cpS1Terminal + cpS2 + cpFallback + cpUnfused + fallbackCP)
+Mode 4: Terminal S1 + Terminal S2 + Unfused Consumer (cpS1Terminal + cpS2Terminal + cpFallback + cpUnfused + fallbackCP)
+Mode 5: Terminal S1 + Terminal S2 + Indirect Fallback Consumer (cpS1Terminal + cpS2Terminal + cpFallback + cpFallbackConsumer + fallbackCP)
+Mode 6 (Bonus if clean): Mode 5 + Compact sBuf indexing ((tileSlot * 16u + rayInTile) * cfg.maxSubPerRay, shrinking sBuf at $K=16$ by 70% from 1.074 GB to 322 MB).
+Publish docs/audits/GPU_RAY_TRANSPORT_6EL_CLEAN_MULTI_SCALE_ABLATION_2026-10-27.md and .json.
