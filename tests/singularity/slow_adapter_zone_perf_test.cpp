@@ -72,12 +72,58 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
+    std::filesystem::path realSaves = "saves";
+    if (!std::filesystem::exists(realSaves / "worlds")) {
+        realSaves = std::filesystem::path("..") / "saves";
+    }
+    realSaves = std::filesystem::absolute(realSaves);
+
+    std::filesystem::path sandbox = std::filesystem::temp_directory_path() /
+        ("earthcall_slow_adapter_sandbox_" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+    std::filesystem::create_directories(sandbox);
+
+    std::error_code copyEc;
+    std::filesystem::copy(realSaves / "laws", sandbox / "laws", std::filesystem::copy_options::recursive, copyEc);
+    std::filesystem::copy(realSaves / "materials", sandbox / "materials", std::filesystem::copy_options::recursive, copyEc);
+    std::filesystem::copy(realSaves / "homes", sandbox / "homes", std::filesystem::copy_options::recursive, copyEc);
+    std::filesystem::create_directories(sandbox / "worlds");
+    std::filesystem::copy_file(world, sandbox / "worlds" / std::filesystem::path(world).filename(), copyEc);
+
+    std::filesystem::path worldPath(world);
+    nlohmann::json worldJson = SaveSystem::readSaveData(worldPath.string());
+    if (worldJson.contains("zones") && worldJson["zones"].is_array()) {
+        for (const auto& zRef : worldJson["zones"]) {
+            std::string zId;
+            if (zRef.is_string()) zId = zRef.get<std::string>();
+            else if (zRef.is_object() && zRef.contains("identifier") && zRef["identifier"].is_string()) {
+                zId = zRef["identifier"].get<std::string>();
+            }
+            if (!zId.empty()) {
+                std::filesystem::path zSrc = realSaves / "zones" / zId;
+                if (std::filesystem::exists(zSrc)) {
+                    std::filesystem::create_directories(sandbox / "zones");
+                    std::filesystem::copy(zSrc, sandbox / "zones" / zId, std::filesystem::copy_options::recursive, copyEc);
+                }
+            }
+        }
+    }
+
+    struct SandboxRestorer {
+        std::filesystem::path path;
+        ~SandboxRestorer() {
+            SaveSystem::setSaveRoot("");
+            std::error_code ec;
+            std::filesystem::remove_all(path, ec);
+        }
+    } restorer{sandbox};
+
+    SaveSystem::setSaveRoot(sandbox.string());
+
     TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld((sandbox / "worlds" / std::filesystem::path(world).filename()).string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
