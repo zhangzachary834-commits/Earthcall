@@ -1,3 +1,5 @@
+> **Full-workload supersession:** Opus’s all32,784-ray reference and the subsequent CPU council review show the6eg conservative candidate fails RGB/T p99 and max, with316 rays beyond Current’s worst. Historical192-ray checks below remain reproducible but do not qualify this candidate on the complete sparse workload. See [the all-row review](RAY_TRANSPORT_FULL_REFERENCE_COUNCIL_REPLY_2026-10-27.md).
+
 # §6eg — root-contract corrective review, executed affine proof, and a bounded conservative candidate
 
 Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-27T14:20:00-07:00.

@@ -8268,5 +8268,18 @@
     "scratch/probes/ray_transport_wide_evidence.py": "7afd0f8a0e6da37b7a7fc8a27add288b2889b095bf8ba14421695bd25ac30417"
   },
   "archive_sha256": "60020687a7f7ae485df6c93a644c6dd440ff457b2370e4d101636e2cd7351c70",
-  "timestamp": "2026-10-27T14:19:50.246306-07:00"
+  "timestamp": "2026-10-27T14:19:50.246306-07:00",
+  "full_workload_accuracy_status": {
+    "qualified": false,
+    "rays": 32784,
+    "failed_gates": [
+      "RGB.p99",
+      "RGB.max",
+      "T.p99",
+      "T.max"
+    ],
+    "rays_beyond_current_max": 316,
+    "review": "RAY_TRANSPORT_FULL_REFERENCE_COUNCIL_REPLY_2026-10-27.md",
+    "scope": "historical192-point results remain valid only on that selected subset"
+  }
 }
