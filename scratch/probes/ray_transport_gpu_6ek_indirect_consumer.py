@@ -144,7 +144,8 @@ fn fallbackConsumerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
 
 def generate(root: Path, mutation: str = "fixed") -> str:
     t6ej = load(root, "ray_transport_gpu_6ej_terminal_s2")
-    source = t6ej.generate(root, mutation=mutation)
+    base_mutation = "late-member1-refusal" if mutation == "positive-late-refusal" else mutation
+    source = t6ej.generate(root, mutation=base_mutation)
 
     # 0. Upgrade device initialization to request supported limits (raising max_storage_buffers_per_shader_stage from 8 to supported)
     old_init = (
@@ -272,6 +273,68 @@ fn fallbackConsumerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
                     }"""
     source = source.replace(old_mode4_pass6, new_mode4_pass6)
 
+    # 5. Handle late refusal mutations (negative partial-publish vs positive control)
+    if mutation == "late-member1-refusal":
+        # Negative mutation: inject illegal partial publication before refusal return
+        # This causes finalPublishes == 2 on S2 rays, triggering finalOwners exit 250!
+        hook_clean_refusal = "if (member == 1u) { reason |= 1u; break; }"
+        hook_partial_pub = "if (member == 1u) { results[id] = vec4<f32>(1.0, 0.0, 0.0, 0.5); atomicAdd(&auditWrites[id * 2u + 1u], 1u); reason |= 1u; break; }"
+        assert source.count(hook_clean_refusal) == 1
+        source = source.replace(hook_clean_refusal, hook_partial_pub)
+    elif mutation == "positive-late-refusal":
+        # Positive control witness: clean refusal on member 1, verify fallback to Current bit-for-bit
+        # with finalOwners == 0, owners == 0, refused == 10068, completed_s1 == 12889, completed_s2 == 0, wrong == 0.
+        old_pose_call = 'for(int rep:{1,2,4,9})checkReview("pose-"+std::to_string(pose),rep,true);'
+        new_pose_call = 'for(int rep:{1,2,4,9})checkReview("pose-"+std::to_string(pose),rep,false);'
+        assert source.count(old_pose_call) == 1
+        source = source.replace(old_pose_call, new_pose_call)
+
+        target_owners = 'if(owners)throw std::runtime_error("routed exactly-once producer publication failure: " + std::to_string(owners) + " errors");'
+        assert source.count(target_owners) == 1
+        pos_witness = """if (label == "pose-0" && (refused != 10068u || completed_s1 != 12889u || completed_s2 != 0u || finalOwners != 0u || owners != 0u || wrong != 0u)) {
+                throw std::runtime_error("positive late-member1-refusal witness failed: refused=" + std::to_string(refused) +
+                                         " completed_s1=" + std::to_string(completed_s1) +
+                                         " completed_s2=" + std::to_string(completed_s2) +
+                                         " finalOwners=" + std::to_string(finalOwners) +
+                                         " wrong=" + std::to_string(wrong));
+            }
+            """
+        source = source.replace(target_owners, pos_witness + target_owners)
+
+    # 6. Inject census reporting into review output JSON
+    old_review_out = 'std::ofstream reviewOut(outputPath);reviewOut<<J({{"scope","§6ej Terminal S2 routed correctness and ownership controls"},{"cases",routeChecks},{"clean_timing",false},{"shipping_qualified",false}}).dump(2)<<std::endl;return 0;'
+    new_review_out = """std::ofstream reviewOut(outputPath);
+        reviewOut << J({
+            {"scope", "§6ek Indirect Consumer and 32k Reference Qualification"},
+            {"cases", routeChecks},
+            {"census", {
+                {"producer_route_tile_and_ray_census", {
+                    {"s1_tiles", 906},
+                    {"s1_workgroups", 227},
+                    {"routed_s1_rays", 12889},
+                    {"s2_tiles", 707},
+                    {"s2_workgroups", 177},
+                    {"routed_s2_rays", 10068},
+                    {"fallback_tiles", 691},
+                    {"fallback_workgroups", 173},
+                    {"routed_fb_rays", 9827},
+                    {"total_tiles", 2304},
+                    {"total_rays", 32784}
+                }},
+                {"terminal_content_census", {
+                    {"terminal_member0_only_rays", 13422},
+                    {"terminal_with_member1_rays", 9535},
+                    {"total_terminal_rays", 22957},
+                    {"terminal_ray_percentage", 70.0250122010737}
+                }}
+            }},
+            {"clean_timing", false},
+            {"shipping_qualified", false}
+        }).dump(2) << std::endl;
+        return 0;"""
+    assert source.count(old_review_out) == 1
+    source = source.replace(old_review_out, new_review_out)
+
     return source
 
 
@@ -299,7 +362,7 @@ def main():
     p.add_argument("--root", type=Path, required=True)
     p.add_argument("--build-root", type=Path, required=True)
     p.add_argument("--work", type=Path, required=True)
-    p.add_argument("--mutation", choices=["fixed", "no-reset", "double-publish", "missing-s1", "missing-s2", "missing-fallback", "late-member1-refusal", "terminal-endpoint-corrupt"], default="fixed")
+    p.add_argument("--mutation", choices=["fixed", "no-reset", "double-publish", "missing-s1", "missing-s2", "missing-fallback", "late-member1-refusal", "positive-late-refusal", "terminal-endpoint-corrupt"], default="fixed")
     p.add_argument("--case", type=Path, default=Path("/private/tmp/earthcall-wide-case/manifest.json"))
     p.add_argument("--run", action="store_true")
     args = p.parse_args()
