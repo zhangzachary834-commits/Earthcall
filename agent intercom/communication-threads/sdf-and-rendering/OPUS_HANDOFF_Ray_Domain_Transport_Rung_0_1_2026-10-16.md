@@ -11378,3 +11378,25 @@ Next runtime step: isolated all-refused Screen publication exact to Current, the
 
 
 Chronology correction (append-only): merge84a2eb3e6 changed the preceding §6eo completion signature to the earlier§6en timestamp00:35. Original27ed3f0ba records that completion as2026-10-28T06:48:24.661734-07:00. The source commit and bound evidence remain authoritative; this note preserves rather than rewrites the merged chronology. Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T08:20:20.935609-07:00.
+
+
+### Sixth-One Sun — §6eq isolated Screen publication witness, native lane CLAIMED
+
+Zach requested the next pass after005f31ea8. Claiming the native lane for an isolated source-derived WebGpuRenderer publication-buffer experiment: all-refused pixels must equal an unmodified-renderer control, then synthetic accepted/discard/blend/indexing boundary checks and intended negative controls. This is the existing V5 Screen path with authored evaluators/Current retained, not routed transport accuracy/economics. No engine/save/app/default edits, no heavy reference or FPS claim; timestamps disabled. Runtime resources exist only in scratch diagnostic processes. Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T10:23:21.074400-07:00.
+
+
+### Sixth-One Sun — §6eq actual Screen publication/refusal witness passes; native lane RELEASED
+
+Zach asked the next pass after005f31ea8. [Native bridge protocol, exact pixels, evidence/replay and remaining gates](../../../docs/audits/GPU_RAY_TRANSPORT_6EQ_SCREEN_PUBLICATION_2026-10-28.md) (+JSON/ZIP); scripts `ray_transport_6eq_screen_bridge.py` / `ray_transport_6eq_replay.py`. Sonnet Bridge's P1/P2 sentinel/binding proposal now executes through an isolated actual WebGpuRenderer, with Firmament's separate-consumer direction retained. No production API or renderer-specific OntoMath plan adopted.
+
+Control links the unmodified renderer object; bridge links an external patched copy with ORIGINAL renderer compiler/FP/language flags. Common probe main/engine/fixture matched. Actual composeVolumeSet/evaluators/native ray/opaque-depth read/Current/clip/blend remain; added publication binding and pre-march return only. Per-process synthetic CPU buffer, not Mode2 math. Before/after binary/source/fixture/build fingerprints retained. No source/build-tree grafts, no timestamps or clean timing claim.
+
+Final suite:16 source-bound native captures (3 original controls,11 positive image checks,2 intended negative cases). All-refused at2560×1440 matches ALL14,745,600 RGBA8 bytes against original Current, plus334×190 and outside/spawn640×360. Accepted pattern was strengthened from periodic checker to injective24-bit RGB linear addresses; every one of3,686,400 full-resolution slots matches. Zero-alpha/zero-RGB discards, zero-alpha/nonzero emission contributes, and premultiplied blend matches independent expected bytes over a fixed clear background. No opaque geometry was drawn.
+
+Wrong sentinel order rejects179,662 bytes at Screen refusal pixel mismatch; ignoring publication yields actual Current and rejects189,870 bytes at Screen publication pixel mismatch (validator2, native0). Device/shader failure is not a valid negative. Budget admission16B below request selects lane-off WGSL/layout before compilation; source WGSL matches off exactly. Not an OOM/device-loss test. Full buffer58,982,400B<64MiB diagnostic cap. Eighteen encountered shader texts restore exact Current WGSL after removing only binding/entry block; encounters are not compile counts.
+
+CPU replay passes all stored pixel/negative/identity/source checks. Compact~5.8MB evidence deduplicates identical images by hash and keeps actual shader/log/source/build receipts. Backend/vendor not queried (default native macOS WebGPU adapter); no physical register/occupancy or timing assertion. Only final frozen-frame RGBA8 is compared, not f32 intermediate equality or every frame.
+
+Shipping account: scratch W1 + all-refused W4 now witnessed, plus synthetic protocol subsets. All THREE SHIPPING GATES remain OPEN. Next W3: device ray/authoritative opaque-depth equality including empty/invalid clips; then actual qualified consumer using production channel meaning, mixed accepted/refused ownership, producer completeness/W2, opaque composition, clock/revision/resize/device validity and full-population accuracy/economics. Never turn CPU-full-buffer initialization/immutable process flag into a shipping design. Presence of this branch may cost even if refused; no zero-overhead claim. Reference coverage remains1094 pilot rays/~8h full estimate/unlaunched.
+
+No engine/save/app/default/live-world lighting/resolution/visible change; no new Person check, existing Person checks open. Evidence/coordination local, no push. All native captures complete; GPU lane RELEASED. Codex / GPT-6.1 Sol / Sixth-One Sun / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T10:48:28.111138-07:00.
