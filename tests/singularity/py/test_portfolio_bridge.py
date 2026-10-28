@@ -1,5 +1,7 @@
+import os
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 _SRC = Path(__file__).resolve().parents[3]
@@ -9,6 +11,7 @@ sys.path.insert(0, str(_SRC / "Singularity" / "Foreign" / "py"))
 from src.Singularity.Foreign.py.bridge import CppBridge
 from src.Singularity.Foreign.py.api.routes import (
     PORTFOLIO_ALLOWED_ORIGINS,
+    _portfolio_allowed_origins,
     _portfolio_origin_allowed,
 )
 
@@ -62,9 +65,22 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
 
     def test_public_portfolio_origin_is_explicitly_allowed(self):
         origin = "https://zhangzachary834-commits.github.io"
+        self.assertIsInstance(PORTFOLIO_ALLOWED_ORIGINS, frozenset)
         self.assertIn(origin, PORTFOLIO_ALLOWED_ORIGINS)
         self.assertTrue(_portfolio_origin_allowed(origin))
         self.assertFalse(_portfolio_origin_allowed("https://evil.example"))
+
+
+    def test_configured_origins_replace_defaults_without_mutating_export(self):
+        configured = " https://custom.example , https://another.example, "
+        with patch.dict(os.environ, {"PORTFOLIO_ALLOWED_ORIGINS": configured}):
+            self.assertEqual(
+                _portfolio_allowed_origins(),
+                frozenset({"https://custom.example", "https://another.example"}),
+            )
+            self.assertTrue(_portfolio_origin_allowed("https://custom.example"))
+            self.assertFalse(_portfolio_origin_allowed("https://zhangzachary834-commits.github.io"))
+        self.assertIn("https://zhangzachary834-commits.github.io", PORTFOLIO_ALLOWED_ORIGINS)
 
 
 if __name__ == "__main__":

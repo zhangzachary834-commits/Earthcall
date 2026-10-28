@@ -17,7 +17,7 @@ PORTFOLIO_ALLOWED_ORIGINS = frozenset({
 def _portfolio_allowed_origins():
     configured = os.environ.get("PORTFOLIO_ALLOWED_ORIGINS", "")
     if configured.strip():
-        return {origin.strip() for origin in configured.split(",") if origin.strip()}
+        return frozenset(origin.strip() for origin in configured.split(",") if origin.strip())
     return PORTFOLIO_ALLOWED_ORIGINS
 
 def _portfolio_origin_allowed(origin):
