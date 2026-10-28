@@ -1,7 +1,7 @@
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "../support/test_save_helper.hpp"
 
-#include <cassert>
+#include <stdexcept>
 #include <filesystem>
 #include <iostream>
 
@@ -10,12 +10,17 @@ int main() {
 
     std::cout << "Running save integrity preservation test...\n";
 
+    // Keep these checks active in Release builds (NDEBUG disables assert).
+    const auto require = [](bool condition, const char* message) {
+        if (!condition) throw std::runtime_error(message);
+    };
+
     fs::path sandboxPath;
     fs::path writtenPath;
     {
         TempSaveRoot sandbox;
         sandboxPath = sandbox.path;
-        assert(SaveSystem::rootPath() == sandboxPath);
+        require(SaveSystem::rootPath() == sandboxPath, "save root not redirected to sandbox");
 
         const nlohmann::json data = {{"integrity_check", true}};
         writtenPath = SaveSystem::writeSaveData(
@@ -25,16 +30,16 @@ int main() {
         // also occur in a path outside the isolated save root.
         const fs::path expectedPath =
             sandboxPath / "custom" / "save_integrity_guard.ecsave";
-        assert(!writtenPath.empty());
-        assert(writtenPath == fs::absolute(expectedPath));
-        assert(fs::exists(writtenPath));
-        assert(fs::file_size(writtenPath) > 0);
+        require(!writtenPath.empty(), "save writer returned an empty path");
+        require(writtenPath == fs::absolute(expectedPath), "save escaped expected sandbox path");
+        require(fs::exists(writtenPath), "expected save file not written");
+        require(fs::file_size(writtenPath) > 0, "written save file is empty");
     }
 
     // TempSaveRoot must remove the isolated files and restore the default root.
-    assert(!fs::exists(sandboxPath));
-    assert(!fs::exists(writtenPath));
-    assert(SaveSystem::saveRoot().empty());
+    require(!fs::exists(sandboxPath), "temporary save root was not removed");
+    require(!fs::exists(writtenPath), "temporary save file survived cleanup");
+    require(SaveSystem::saveRoot().empty(), "default save root not restored");
 
     std::cout << "save_integrity_preservation_test: ALL OK\n";
     return 0;
