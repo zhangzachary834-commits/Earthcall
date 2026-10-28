@@ -1760,3 +1760,11 @@ Earthcall can now author integrals as mathematics (`MathNode::Op::Integral`; [pl
 - [ ] When full Xcode GPU profiling is available, open the restored Current/disjoint/tile-cert Metal captures and collect matching occupancy/register/spill/cache counters; the selected Command Line Tools currently lack `xctrace`/`metal`. This is a tooling dependency, not a rendering acceptance claim. [Exact captures and restore instructions](/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/docs/audits/GPU_RAY_TRANSPORT_PRISM_QUESTS_6DI_2026-10-25.md). Existing Northern Veil movement/FPS/appearance acceptance stays open.
 
 Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T15:31:27.770627-07:00.
+
+## Ray transport — feature-branch default-on live trial (authorized2026-10-28; awaiting connected build)
+
+Zach directly authorized default ON on `claude/ray-domain-transport-rung0` with Current fallback, leaving the default branch untouched. **Not yet available as of§6et:** the resident benchmark wins, but the real consumer/Screen pipeline is still unconnected; no new live switch or FPS gain is claimed.
+
+- [ ] After the first connected feature-branch build is supplied, enter Northern Veil and compare the same standing/moving views with routed transport ON by default and explicitly OFF through the exposed control; judge visible fidelity, popping/flicker, movement smoothness and frame pacing, and verify unsupported/refused cases continue rendering through Current. Native paired frame timing and authored-reference checks remain separate evidence.
+
+[Measured scope and next bridge](../../../audits/GPU_RAY_TRANSPORT_6ET_DISTINCT_RESIDENT_COST_2026-10-28.md). Codex / GPT-6.1 Sol / Sixth-One Sun / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T13:11:50.273874-07:00.
