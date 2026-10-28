@@ -1,3 +1,5 @@
+#include "Person/PersonDatabase.hpp"
+
 // Lag probe: does a frame of Earthcall still fit inside a frame?
 //
 // Zach asked for "a test that systematically checks for lag." Lag is not one
@@ -934,6 +936,8 @@ int main(int argc, char** argv) {
     if (auto* interaction = Singularity::Input::InteractionChannel::find(lawManager)) {
         interaction->setEnabled(true);
     }
+
+    TestSupport::BootedEngineHarness h("Zach", "humanoid", true);
 
     ZoneManager zones;
     Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
