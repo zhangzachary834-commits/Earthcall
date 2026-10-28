@@ -72,12 +72,41 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
+    // Isolate SaveSystem in a temporary directory and copy required world assets to prevent scanning/hydrating all 50+ zones in saves/zones/
+    const std::filesystem::path worldPath(world);
+    const std::filesystem::path savesDir = worldPath.parent_path().parent_path();
+    const std::filesystem::path tempRoot = std::filesystem::temp_directory_path() /
+        ("slow_adapter_sandbox_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+
+    std::filesystem::create_directories(tempRoot / "worlds");
+    std::filesystem::copy_file(worldPath, tempRoot / "worlds" / worldPath.filename(), std::filesystem::copy_options::overwrite_existing);
+
+    for (const std::string& dir : {"laws", "materials", "homes"}) {
+        if (std::filesystem::exists(savesDir / dir)) {
+            std::filesystem::copy(savesDir / dir, tempRoot / dir, std::filesystem::copy_options::recursive);
+        }
+    }
+
+    if (std::filesystem::exists(savesDir / "zones")) {
+        std::filesystem::create_directories(tempRoot / "zones");
+        // Selectively copy only the target world's zone (e.g. Chess or Basic Pixel Changer)
+        std::string targetZone = "Chess";
+        if (world.find("pixel") != std::string::npos) targetZone = "Basic Pixel Changer";
+        else if (world.find("noise") != std::string::npos) targetZone = "Noise Floor";
+
+        if (std::filesystem::exists(savesDir / "zones" / targetZone)) {
+            std::filesystem::copy(savesDir / "zones" / targetZone, tempRoot / "zones" / targetZone, std::filesystem::copy_options::recursive);
+        }
+    }
+
+    const std::string prevSaveRoot = SaveSystem::saveRoot();
+    SaveSystem::setSaveRoot(tempRoot.string());
+    const std::string sandboxWorld = (tempRoot / "worlds" / worldPath.filename()).string();
+
     TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(sandboxWorld);
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
