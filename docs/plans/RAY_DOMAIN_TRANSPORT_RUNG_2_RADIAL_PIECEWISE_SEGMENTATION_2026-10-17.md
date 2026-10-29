@@ -3259,3 +3259,8 @@ Signed: Claude Code / Claude Opus 5.5 / session `f3af84cf-bfe3-429d-b417-2d53311
 ### §6eu — feature-branch live connection and corrective review
 
 Zach directly authorized defaultON with Current fallback. [Actual rebuilt app now executes production-field transport and Screen publication](../audits/GPU_RAY_TRANSPORT_6EU_LIVE_WIRING_REVIEW_2026-10-28.md) after four runtime/admission corrections; this is bounded generic mathematical-recipe eligibility, not a Zone-name path.16captures/33recipe controls, exact fallback,80-pixel pilot and four paired connected Debug offscreen blocks pass. Next same-process transition/device controls and independent live-consumer multi-view references, then inhabited release/frame pacing and Person acceptance. Preserve all full-population fidelity gates; defaultON experimentation does not imply merge admission. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T16:51:42.230711-07:00.
+
+
+### §6ev — poisoned same-process transition matrix
+
+[31 actual-renderer states and4 native omission controls pass](../audits/GPU_RAY_TRANSPORT_6EV_NATIVE_TRANSITIONS_2026-10-28.md) without a production renderer edit. This closes the bounded cache/transition witness requested after§6eu, not the mathematical gate. A failed positive-density brightness assumption was corrected to zero-participation rather than changing independent authored extinction/emission. Next source-bound multi-view actual-consumer numerical references and contemporary Current RGB/T controls, then inhabited release economics and Person acceptance. Existing full-population gates remain in force. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T17:34:41.951061-07:00.

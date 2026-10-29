@@ -11493,3 +11493,31 @@ A few counsel details need tightening: no routed CLI flags exist; use registered
 `cmake --build build --target earthcall_webgpu -j8` passes. CPU archive replay passes. Launch the feature checkout's `./build/earthcall_webgpu`; no installed-app replacement, main/default checkout or live save edits. No push or PR. Native lane RELEASED after all captures and clocks.
 
 Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T16:52:45.894521-07:00.
+
+
+### Sixth-One Sun — §6ev native transition/poison pass, GPU lane CLAIMED
+
+Zach requested the next pass after775f91105. Testing the actual connected renderer across toggle, independent clocks, channel edits, extent/membership/source changes, resize, opaque-depth and device replacement. A reused renderer is compared to fresh state-specific instances, then publication and mutable scratch are poisoned before replay. This is state-validity evidence, not new mathematical accuracy or FPS admission. Native negative stage controls will be separately identified source derivatives. No live save/default branch/install/timestamp/push changes. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T17:17:03.521567-07:00.
+
+
+### Sixth-One Sun — §6ev transition matrix complete, native lane RELEASED
+
+Zach's next pass is complete. [Actual-renderer state validity, native omissions, retained evidence and next numerical quest](../../../docs/audits/GPU_RAY_TRANSPORT_6EV_NATIVE_TRANSITIONS_2026-10-28.md). **31 same-process states / 95 positive compositions / 75,000,040 exact Screen+float comparison bytes** pass against fresh state-specific renderer instances, including first frames after transitions and poisoned repeats. Publication, rays, intervals, route lists, counts and indirect args receive713,130,924 submitted poison bytes; static offsets/indices are intentionally retained, not poisoned. This is byte-submission accounting, not physical memory traffic.
+
+Covered: ON/OFF/recovery; mixed per-medium clocks; emission and zero-density edits/revisions; unsupported density structure/recovery; origin/extent; three/four membership; positive/zero/absent sources; three viewports334×190,321×181,640×360; opaque/clear; forced whole-ray Current fallback; outside/inside camera; shutdown/reinit on a second logical device. All26 intended routed states have finite matching publication; all5 intended Current states have zero routed dispatches and zero program refusals. The absent-source case uses a constant non-wi phase and genuinely renders through Current, closing §6eu's earlier refusal-only source control. All restored states and the replacement-device states return to the original baseline image.
+
+Four **separately source-derived native** omission controls reject intentionally with exit42: missing setup leaves NaN publication; missing producers, consumer or actual WGSL publication store fail the fresh output comparison. Exact reversible derivations and object/binary/source hashes are retained; none is the positive app renderer or a performance variant. The positive executable links the actual775f91105 renderer object.
+
+One test assumption was corrected: positive density0.75→0.38 need not dim a scene whose extinction/emission are independently authored. Both renderers correctly agreed. We changed the control to density0 (participation removed), not the renderer or authored world. The failed development attempt is preserved separately. **No production renderer change was needed in this pass.**
+
+**Shipping ledger:** live feature-branch connection/defaultON DONE; bounded full-resolution publication/fallback from§6eu PASS; this scoped transition/poison matrix PASS. Authored numerical admission remains OPEN: fresh-instance equality does not validate common mathematical errors. §6eu is still only an80-pixel common-target pilot. Next bind actual live-consumer rays/clips and outputs across several views to independent converged references with contemporary Current RGB/T controls, preserving mean/p99/max, both resolutions and full-population admission rules. Instrumented Current controls need their own native fidelity check; copied compute controls are not unmodified fragment Current. Then inhabited release frame/completion/pacing and Zach's appearance/movement acceptance. Full-resolution transitions, arbitrary edits and real device-loss paths remain outside this matrix. No new speedup/FPS claim; retain§6eu's dated6.6–8.9% fixed-view Debug observation separately.
+
+CPU replay passes all31 states and4 actual omission rejections. Content-addressed lossless archive is9,638,769 bytes for282 logical files, avoiding redundant captures. Native lane RELEASED after the normal run and all four negatives. No live saves, main/default checkout, installed app, timestamps, push or PR. Local delivery in `/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport`; not remote publication.
+
+Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T17:38:34.622450-07:00.
+
+
+§6ev packaging follow-up: generated fixture contained three whitespace-only lines. Cleaning those and rebuilding/rerunning the exact-source-bound witnesses so committed tools and receipts agree; no renderer/source-policy change. Native lane briefly CLAIMED for this final binding check. Earlier numerical/state conclusions remain the same scoped observations. Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T17:46:21.319715-07:00.
+
+
+§6ev final packaging revalidation COMPLETE, GPU lane RELEASED. After cleaning three whitespace-only generated-fixture lines, rebuilt and reran all31 states and all4 native omission controls against the unchanged renderer. Every RGBA8 and float-publication output is bit-identical to the earlier completed run; independent replay results are unchanged. Final committed tools now match final build receipts. Archive 9638755 bytes / SHA256 `8f34ea0be85572ef1d8333c3f178f4a1456a450c7da7ca941ba55c0532e5169b`; this supersedes the earlier size-only packaging note, not its state/numerical conclusions. No engine/default/save/install/push change. Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T17:50:21.699177-07:00.

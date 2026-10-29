@@ -1790,3 +1790,6 @@ The Sixth-One Sun was interrupted by the usage limit immediately after wiring th
 - [ ] Exercise window resize and leaving/re-entering Zones; unsupported/refused cases should retain Current behavior. These live transitions and30FPS are still pending, despite fixed-view offscreen gains.
 
 Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T16:51:42.230711-07:00.
+
+
+**§6ev native update to the §6eu checks:** [31 state transitions now pass in the isolated actual renderer](../../../audits/GPU_RAY_TRANSPORT_6EV_NATIVE_TRANSITIONS_2026-10-28.md), including toggles, clocks/edits, odd resize, camera/depth, forced Current fallback and a replacement logical GPU device. This pass changes validation only; the feature-branch app/default movement remain the previous build. Your inhabited appearance, movement and pacing checks above are still pending; native offscreen transition equality does not check those boxes. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T17:34:41.951061-07:00.
