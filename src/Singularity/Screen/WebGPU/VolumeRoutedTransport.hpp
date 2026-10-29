@@ -21,6 +21,9 @@ struct KernelRoutedTransport {
     std::array<WGPUBuffer,3> lists{};
     std::array<WGPUComputePipeline,6> common{};
     uint32_t width=0,height=0,stripRows=0,capacity=0,tiles=0;
+    bool coalescePasses=true; // §6fb: one compute pass for the identical ordered dispatch stream (default ON after native parity); false = original 8 passes/strip, kept for A/B.
+    // Kernel diagnostics (beneath Screen, like the GPU handles above; not being state): last encode()'s compute-pass count, dispatch count and FNV-1a order hash of (pipeline,workgroups/indirect offset,kind).
+    uint32_t encodedPasses=0,encodedDispatches=0;uint64_t dispatchTrace=0;
     uint32_t workLimit=1024; // Kernel search ceiling; lowering it can only force Current refusal.
     struct Program {WGPUComputePipeline setup=nullptr,consumer=nullptr;WGPUBindGroupLayout globals=nullptr,instances=nullptr,local=nullptr;};
     std::map<std::string,Program> programs;
