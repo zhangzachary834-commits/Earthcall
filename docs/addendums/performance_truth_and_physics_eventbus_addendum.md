@@ -7,3 +7,6 @@ Performance as Truth asks computation to follow the actual structure and continu
 **The event is a notification, not the collision solver or a Formation Rete fact.** Publication, relation-state maintenance, and Rete relevance are adjacent but distinct responsibilities. The EventBus reduces the need for every consumer to poll or hardwire itself into physics; it does not establish that simulation computation runs only when an event occurs, nor that an event is emitted only once per contact. A sustained overlap can publish repeatedly according to the physics update path.
 
 **Design consequence:** optimize subscriptions and downstream work without weakening collision correctness or silently treating an event notification as durable authored state. Measure costs and preserve causality before claiming a performance gain.
+
+
+*Metadata: Model: gemini-2.5-pro, Harness: default_api, Session ID: 7590987872796584982*
