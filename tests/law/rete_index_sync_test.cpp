@@ -47,6 +47,15 @@ void testAlphaIndexSynchronization() {
     assert(!rete.isAlphaNode(id1));
     assert(!rete.isAlphaNode(id2));
 
+    // Create a Beta node joining id3 and id4
+    std::size_t beta1 = rete.addBetaNode("beta1", false, id3, id4);
+    assert(beta1 == 5);
+    assert(rete.isBetaNode(beta1));
+    assert(!rete.isAlphaNode(beta1));
+    assert(rete.findBeta(beta1) != nullptr);
+    assert(rete.findBeta(beta1)->id == beta1);
+    assert(rete.findBeta(999) == nullptr);
+
     std::cout << "rete_index_sync_test: PASS" << std::endl;
 }
 
