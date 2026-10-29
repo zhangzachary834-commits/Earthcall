@@ -219,8 +219,6 @@ if (NOT EMSCRIPTEN)
         ZLIB::ZLIB
         OpenSSL::SSL
         OpenSSL::Crypto
-        ${OPENSSL_SSL_LIBRARY}
-        ${OPENSSL_CRYPTO_LIBRARY}
         ${CMAKE_DL_LIBS}
         Threads::Threads
     )
