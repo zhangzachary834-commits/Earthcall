@@ -3264,3 +3264,8 @@ Zach directly authorized defaultON with Current fallback. [Actual rebuilt app no
 ### §6ev — poisoned same-process transition matrix
 
 [31 actual-renderer states and4 native omission controls pass](../audits/GPU_RAY_TRANSPORT_6EV_NATIVE_TRANSITIONS_2026-10-28.md) without a production renderer edit. This closes the bounded cache/transition witness requested after§6eu, not the mathematical gate. A failed positive-density brightness assumption was corrected to zero-participation rather than changing independent authored extinction/emission. Next source-bound multi-view actual-consumer numerical references and contemporary Current RGB/T controls, then inhabited release economics and Person acceptance. Existing full-population gates remain in force. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T17:34:41.951061-07:00.
+
+
+### §6ew — multi-view native numerical pilot
+
+[Actual-consumer own-input and explicit ideal-camera references now span4views](../audits/GPU_RAY_TRANSPORT_6EW_MULTIVIEW_NUMERICAL_PILOT_2026-10-28.md).24captures/880new rows/162aggregate checks pass at both resolutions; individual float regressions and observer limitations remain visible. No sampled-max/full-population substitution. Next exact evaluator/reference-cost work under a declared cap and matched inhabited release economics, preserving default-on experiment and Current fallback. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T19:23:50.132756-07:00.

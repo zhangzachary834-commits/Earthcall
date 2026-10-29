@@ -1793,3 +1793,6 @@ Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729
 
 
 **§6ev native update to the §6eu checks:** [31 state transitions now pass in the isolated actual renderer](../../../audits/GPU_RAY_TRANSPORT_6EV_NATIVE_TRANSITIONS_2026-10-28.md), including toggles, clocks/edits, odd resize, camera/depth, forced Current fallback and a replacement logical GPU device. This pass changes validation only; the feature-branch app/default movement remain the previous build. Your inhabited appearance, movement and pacing checks above are still pending; native offscreen transition equality does not check those boxes. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T17:34:41.951061-07:00.
+
+
+**§6ew native numerical update:** [Four-view selected-pixel reference comparison](../../../audits/GPU_RAY_TRANSPORT_6EW_MULTIVIEW_NUMERICAL_PILOT_2026-10-28.md) improves all scoped aggregate metrics and unmodified Screen sample errors; full-population and moving performance remain unverified. This pass changes evidence only. Existing feature-branch appearance, movement, resize and pacing checks remain yours; no Person box is checked by this numerical pilot. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T19:23:50.132756-07:00.
