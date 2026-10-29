@@ -11,13 +11,12 @@
 #include <memory>
 #include <set>
 #include <tuple>
+#include <vector>
 
 extern MaterialManager materials;
 extern CategoryManager categories;
 
-namespace {
-
-void internZoneLexemes(Zone& zone, const nlohmann::json& zj) {
+void hydrateZoneLexemes(Zone& zone, const nlohmann::json& zj, bool restoreExisting) {
     if (!zj.contains("lexemes") || !zj["lexemes"].is_array()) return;
     auto& language = Singularity::Language::LanguageSystem::instance();
     for (const auto& item : zj["lexemes"]) {
@@ -25,11 +24,17 @@ void internZoneLexemes(Zone& zone, const nlohmann::json& zj) {
         const std::string id = item.value("id", std::string{});
         const std::string symbol = item.value("symbol", std::string{});
         if (id.empty() || symbol.empty()) continue;
+        const bool alreadyLive = static_cast<bool>(language.findById(id));
         auto lexeme = language.intern(symbol, id);
         zone.addToFormation(lexeme.get());
-        // ZoneSerialization writes a Lexeme's dynamic properties here; until
-        // 2026-10-14 nothing read them back, so an authored Lexeme property
-        // (e.g. `appearance.glyph`) survived Save Zone but vanished on load.
+        // A canonical Lexeme can be shared across Zones. Rebinding a saved
+        // reference must preserve both live edits and deliberate removals.
+        if (alreadyLive && !restoreExisting) continue;
+        if (restoreExisting) {
+            std::vector<Earthcall::StringId> keys;
+            for (const auto& entry : lexeme->dynamicProperties()) keys.push_back(entry.first);
+            for (const auto key : keys) lexeme->removeDynamicProperty(key);
+        }
         if (const auto authored = item.find("authoredProperties");
             authored != item.end() && authored->is_object()) {
             for (auto it = authored->begin(); it != authored->end(); ++it)
@@ -37,6 +42,8 @@ void internZoneLexemes(Zone& zone, const nlohmann::json& zj) {
         }
     }
 }
+
+namespace {
 
 Singular* resolveZoneEndpoint(Zone& zone, const std::string& id) {
     if (id.empty()) return nullptr;
@@ -68,14 +75,14 @@ Singular* resolveZoneEndpoint(Zone& zone, const std::string& id) {
 
 } // namespace
 
-void applyFormationRelations(Zone& zone, const nlohmann::json& zj) {
+void applyFormationRelations(Zone& zone, const nlohmann::json& zj, bool restoreExistingLexemes) {
+    hydrateZoneLexemes(zone, zj, restoreExistingLexemes);
     if (!zj.contains("formationRelations") || !zj["formationRelations"].is_array()) return;
 
     // Members must exist before endpoint resolution.  This is deliberately a
     // separate hydration phase: a Relation is a first-class Singular, not a
     // child nested below the Zone that happens to hold its endpoints.
     zone.syncFormationMembers();
-    internZoneLexemes(zone, zj);
 
     std::set<std::tuple<std::string, std::string, std::string>> existing;
     for (const auto& relation : zone.formation().relations().getAll()) {

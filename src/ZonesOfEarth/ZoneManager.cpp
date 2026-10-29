@@ -2059,7 +2059,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 // exactly as the store-hit branch below keeps the store's.
                 // applyFormationRelations is idempotent by type + endpoint ids,
                 // so re-running it adds only what is genuinely missing.
-                applyZoneJson(*live, zj, /*replaceObjects=*/snapshotRestore);
+                applyZoneJson(*live, zj, /*replaceObjects=*/snapshotRestore, /*restoreExistingLexemes=*/snapshotRestore);
                 // Tried and reverted (2026-09-07): re-running from_json on an
                 // object that is already live corrupts it. from_json is only
                 // safe on a just-constructed Object — a live one may already
@@ -2104,7 +2104,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 }
             }
             if (!zj.is_object()) return;
-            auto z = makeZoneFromJson(zj);
+            auto z = makeZoneFromJson(zj, /*restoreExistingLexemes=*/snapshotRestore);
             addZone(z);
             if (!snapshotRestore && !isObservationZone(*z)) {
                 // A session's embedded zones[] can equally name a Home
@@ -2139,7 +2139,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 else if (ref.is_object()) id = ref.value("identifier", std::string{});
                 if (id.empty() || findLive(id)) continue;
                 nlohmann::json identity = SaveSystem::readZoneIdentity(id);
-                if (identity.is_object()) addZone(makeZoneFromJson(identity));
+                if (identity.is_object()) addZone(makeZoneFromJson(identity, /*restoreExistingLexemes=*/snapshotRestore));
             }
         }
 
