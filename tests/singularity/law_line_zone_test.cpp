@@ -90,7 +90,7 @@ int main() {
     }
 
     SaveSystem::setSaveRoot(scratch.path.string());
-    TestSupport::BootedEngineHarness harness("Zach", "humanoid", true);
+    TestSupport::BootedEngineHarness harness("Zach");
     harness.zones.bindLive();
     Singularity::Terminal::TerminalChannel::syncRegister(harness.lawManager);
     auto* terminal = Singularity::Terminal::TerminalChannel::find(harness.lawManager);
