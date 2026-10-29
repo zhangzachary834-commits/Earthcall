@@ -29,13 +29,29 @@ bool isPersonMotionProperty(const std::string& property) {
            property == "acceleration";
 }
 
-bool actionTreeWritesMotionProperty(const ActionNode& action) {
-    if (isPersonMotionProperty(action.propertyName)) return true;
-    for (const auto& seg : action.path.segments) {
-        if (isPersonMotionProperty(seg)) return true;
+// Conservative, compile-time destination filter: only skip the expensive
+// per-target Person/qualified-root check when no action can write motion.
+// This is deliberately allowed to over-approximate, never under-approximate.
+bool actionTreeMayWritePersonMotion(const ActionNode& action) {
+    switch (action.kind) {
+        case ActionNode::Kind::Set:
+        case ActionNode::Kind::Add:
+        case ActionNode::Kind::Scale:
+        case ActionNode::Kind::Lerp:
+        case ActionNode::Kind::Drive:
+        case ActionNode::Kind::Map:
+        case ActionNode::Kind::Flow:
+        case ActionNode::Kind::RemoveProperty:
+            if (isPersonMotionProperty(action.propertyName)) return true;
+            for (const auto& segment : action.path.segments) {
+                if (isPersonMotionProperty(segment)) return true;
+            }
+            break;
+        default:
+            break;
     }
     for (const auto& child : action.children) {
-        if (actionTreeWritesMotionProperty(child)) return true;
+        if (actionTreeMayWritePersonMotion(child)) return true;
     }
     return false;
 }
@@ -317,16 +333,13 @@ void Law::recompile() {
         std::vector<PropertyPath> writes;
         _actionModel->collectPaths(writes);
         for (const PropertyPath& w : writes) {
-            if (!w.segments.empty()) {
-                const std::string& root = w.segments.front();
-                if (!root.empty() && root[0] == '@') {
-                    _writesQualifiedRoots = true;
-                }
-                if (root == "canExit") _writesZoneCanExit = true;
-                if (root == "owner") _writesZoneOwner = true;
-            }
+            if (w.segments.empty()) continue;
+            const std::string& root = w.segments.front();
+            if (!root.empty() && root[0] == '@') _writesQualifiedRoots = true;
+            if (root == "canExit") _writesZoneCanExit = true;
+            if (root == "owner") _writesZoneOwner = true;
         }
-        _writesMotionProperties = actionTreeWritesMotionProperty(*_actionModel);
+        _writesMotionProperties = actionTreeMayWritePersonMotion(*_actionModel);
     }
     rebuildRequiredProperties();
 }
@@ -488,15 +501,15 @@ Law::ApplicationResult Law::applyToImpl(
     const Law* targetLaw = dynamic_cast<const Law*>(&target);
     const Zone* targetZone = dynamic_cast<const Zone*>(&target);
 
-    const bool lacksPersonMotionConsent = _writesMotionProperties && _actionModel &&
+    const bool lacksPersonMotionConsent = _actionModel && _writesMotionProperties &&
         writesPersonsMotionWithoutActuationConsent(*_actionModel, target);
     bool violatesKernelBoundary = lacksPersonMotionConsent;
     bool personMotionRefused = false;
-
-    if (targetZone) {
-        if (_writesZoneCanExit || (_writesZoneOwner && targetZone->isOurverseGathering())) {
-            violatesKernelBoundary = true;
-        }
+    // Same collected-path semantics as before, but derived once per model edit.
+    // A cleared model must not inherit a stale cached Zone prohibition.
+    if (_actionModel && targetZone &&
+        (_writesZoneCanExit || (_writesZoneOwner && targetZone->isOurverseGathering()))) {
+        violatesKernelBoundary = true;
     }
 
     if (!_enabled) {
@@ -512,11 +525,13 @@ Law::ApplicationResult Law::applyToImpl(
         result = ApplicationResult::AuthorityDenied;
     } else if (!conditionsAlreadySatisfied && !conditionsSatisfied(target)) {
         result = ApplicationResult::ConditionsFailed;
-        ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
-            {"lawId", getIdentifier()},
-            {"targetId", target.getIdentifier()},
-            {"result", "ConditionsFailed"}
-        });
+        if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+            ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
+                {"lawId", getIdentifier()},
+                {"targetId", target.getIdentifier()},
+                {"result", "ConditionsFailed"}
+            });
+        }
     } else if (_actions.empty()) {
         result = ApplicationResult::NoAction;
         if (ECA::LawAuditLogger::instance().level() == ECA::LawAuditLogger::Level::Verbose) {
@@ -577,15 +592,6 @@ Law::ApplicationResult Law::applyToImpl(
         // every write failed used to log SUCCESS; now it says so, names the
         // first reason, and the record carries the rest.
         const bool wrote = trace.anyWrote();
-        std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
-                              target.getIdentifier() + "\" - " +
-                              (trace.fired() ? (wrote ? "SUCCESS" : "NO EFFECT") : "NO NODES");
-        if (!wrote && trace.fired()) {
-            const auto& first = trace.nodes.front();
-            message += " (" + first.actionName + ": " +
-                       (first.note.empty() ? std::string(ActionNode::reasonName(first.reason))
-                                           : first.note) + ")";
-        }
         if (wrote) {
             for (const auto& node : trace.nodes) {
                 if (node.wrote && !node.path.empty()) {
@@ -601,7 +607,17 @@ Law::ApplicationResult Law::applyToImpl(
         // WhileTrue that wrote nothing is a level, not an event. Logging it
         // every tick is the disk stall after loading a world of servos.
         const bool skipAudit = _activation == Activation::WhileTrue && !wrote;
-        if (!skipAudit) {
+        if (!skipAudit && ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+            std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
+                                  target.getIdentifier() + "\" - " +
+                                  (trace.fired() ? (wrote ? "SUCCESS" : "NO EFFECT") : "NO NODES");
+            if (!wrote && trace.fired()) {
+                const auto& first = trace.nodes.front();
+                message += " (" + first.actionName + ": " +
+                           (first.note.empty() ? std::string(ActionNode::reasonName(first.reason))
+                                               : first.note) + ")";
+            }
+
             nlohmann::json nodesJson = nlohmann::json::array();
             for (const auto& node : trace.nodes) {
                 nodesJson.push_back({{"action", node.actionName},
@@ -2035,15 +2051,18 @@ void LawManager::connectToEventBus() {
 
     _ecaEventSubscription = Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
         std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
-        std::string objectId = e.object ? e.object->getIdentifier() : "null";
 
-        ECA::LawAuditLogger::instance().log("EVENT", "Event \"" + e.type + "\" triggered (Subject: " + subjectId + ", Object: " + objectId + ")", {
-            {"eventType", e.type},
-            {"eventId", e.getIdentifier()},
-            {"subjectId", subjectId},
-            {"objectId", objectId},
-            {"timestamp", e.timestamp().toJson()}
-        });
+        if (ECA::LawAuditLogger::instance().wouldLog("EVENT")) {
+            // Only the audit payload needs the object identifier; Rete uses subjectId.
+            std::string objectId = e.object ? e.object->getIdentifier() : "null";
+            ECA::LawAuditLogger::instance().log("EVENT", "Event \"" + e.type + "\" triggered (Subject: " + subjectId + ", Object: " + objectId + ")", {
+                {"eventType", e.type},
+                {"eventId", e.getIdentifier()},
+                {"subjectId", subjectId},
+                {"objectId", objectId},
+                {"timestamp", e.timestamp().toJson()}
+            });
+        }
 
         // A being that has just left the world is released from every law
         // that named it. Formations hold RAW pointers and nothing else
@@ -2111,12 +2130,14 @@ void LawManager::connectToEventBus() {
         std::string aId = e.relation->aId();
         std::string bId = e.relation->bId();
         
-        ECA::LawAuditLogger::instance().log("EVENT", "Custom Event \"" + evType + "\" triggered (Id: " + e.relation->getIdentifier() + ")", {
-            {"eventType", evType},
-            {"eventId", e.relation->getIdentifier()},
-            {"sourceId", aId},
-            {"targetId", bId}
-        });
+        if (ECA::LawAuditLogger::instance().wouldLog("EVENT")) {
+            ECA::LawAuditLogger::instance().log("EVENT", "Custom Event \"" + evType + "\" triggered (Id: " + e.relation->getIdentifier() + ")", {
+                {"eventType", evType},
+                {"eventId", e.relation->getIdentifier()},
+                {"sourceId", aId},
+                {"targetId", bId}
+            });
+        }
         
         auto fact = std::make_shared<ReteFact>();
         fact->type = evType;
@@ -2160,15 +2181,17 @@ void LawManager::syncProphetic() {
     // satisfying range is exactly the thing an author stares at wondering why
     // their law never fires, and the engine already knows.
     for (const auto& finding : _prophetic.unreachable()) {
-        ECA::LawAuditLogger::instance().log(
-            "LAW",
-            std::string(finding.selfImpossible ? "Law \"" : "Law \"") + finding.lawId +
-                "\" has a condition on " + finding.path + " that cannot be satisfied: " +
-                finding.why,
-            {{"lawId", finding.lawId},
-             {"path", finding.path},
-             {"why", finding.why},
-             {"selfImpossible", finding.selfImpossible}});
+        if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+            ECA::LawAuditLogger::instance().log(
+                "LAW",
+                std::string(finding.selfImpossible ? "Law \"" : "Law \"") + finding.lawId +
+                    "\" has a condition on " + finding.path + " that cannot be satisfied: " +
+                    finding.why,
+                {{"lawId", finding.lawId},
+                 {"path", finding.path},
+                 {"why", finding.why},
+                 {"selfImpossible", finding.selfImpossible}});
+        }
     }
 }
 

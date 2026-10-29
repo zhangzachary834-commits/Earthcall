@@ -1330,7 +1330,7 @@ bool TerminalChannel::refreshLooks() {
             const std::string code = sgrForColor(value, _colorDepth);
             if (!code.empty()) next[key].glyphSgr = code;
         } else if (field == "glyph") {
-            if (const auto* g = std::get_if<std::string>(&value); g && !g->empty()) next[key].glyph = *g;
+            if (const auto* g = std::get_if<std::string>(&value); g && !g->empty() && isPrintableGlyph(*g)) next[key].glyph = *g;
         }
     };
     for (const auto& lexeme : Singularity::Language::LanguageSystem::instance().getAll()) {
@@ -2421,17 +2421,8 @@ struct HelpRow {
     std::string out;
     std::size_t used = 0;
     void add(const std::string& text, const std::string& code = "") {
-        std::string piece;
-        for (std::size_t i = 0; i < text.size();) {
-            std::size_t n = 1;
-            const unsigned char c = static_cast<unsigned char>(text[i]);
-            if (c >= 0xF0) n = 4; else if (c >= 0xE0) n = 3; else if (c >= 0xC0) n = 2;
-            const std::size_t cells = visibleWidth(text.substr(i, n));
-            if (used + cells > max) break;
-            piece += text.substr(i, n);
-            i += n;
-            used += cells;
-        }
+        const std::string piece = clipToCells(text, max - used);
+        used += visibleWidth(piece);
         out += (color && !code.empty()) ? "\x1b[" + code + "m" + piece + "\x1b[0m" : piece;
     }
 };
@@ -2465,10 +2456,9 @@ void TerminalChannel::showHelp() {
         const std::string authored = lookFor("chrome.help.border").glyph;
         std::vector<std::string> split;
         for (std::size_t i = 0; i < authored.size();) {
-            const unsigned char c = static_cast<unsigned char>(authored[i]);
-            const std::size_t n = c >= 0xF0 ? 4 : c >= 0xE0 ? 3 : c >= 0xC0 ? 2 : 1;
-            split.push_back(authored.substr(i, n));
-            i += n;
+            const std::size_t end = nextDisplayCluster(authored, i);
+            split.push_back(authored.substr(i, end - i));
+            i = end;
         }
         // Only single-cell pieces keep the box square.
         if (split.size() == 6 && std::all_of(split.begin(), split.end(),
@@ -2488,7 +2478,7 @@ void TerminalChannel::showHelp() {
     const auto blank = [&] { boxed([](HelpRow&) {}); };
     const auto rule = [&](const std::string& left, const std::string& heading, const std::string& right) {
         std::string s = "  " + left;
-        std::string t = heading.empty() ? "" : pieces[1] + " " + heading + " ";
+        std::string t = heading.empty() ? "" : clipToCells(pieces[1] + " " + heading + " ", inner + 2, true);
         const std::size_t width = visibleWidth(t);
         std::string fill;
         for (std::size_t i = width; i < inner + 2; ++i) fill += pieces[1];
