@@ -13,7 +13,6 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "support/test_harness.hpp"
 
-#include <chrono>
 #include <iostream>
 #include <memory>
 #include <filesystem>
@@ -71,21 +70,21 @@ int main() {
 
     if (std::filesystem::exists(realSavesDir / "zones")) {
         std::filesystem::create_directories(sandbox.path / "zones");
-        // Fail rather than loading a silently incomplete authored save sandbox.
+        std::error_code ec;
         std::filesystem::copy(realSavesDir / "zones", sandbox.path / "zones",
-                              std::filesystem::copy_options::recursive);
+                              std::filesystem::copy_options::recursive, ec);
     }
     if (std::filesystem::exists(realSavesDir / "materials")) {
         std::filesystem::create_directories(sandbox.path / "materials");
-        // Fail rather than loading a silently incomplete authored save sandbox.
+        std::error_code ec;
         std::filesystem::copy(realSavesDir / "materials", sandbox.path / "materials",
-                              std::filesystem::copy_options::recursive);
+                              std::filesystem::copy_options::recursive, ec);
     }
     if (std::filesystem::exists(realSavesDir / "laws")) {
         std::filesystem::create_directories(sandbox.path / "laws");
-        // Fail rather than loading a silently incomplete authored save sandbox.
+        std::error_code ec;
         std::filesystem::copy(realSavesDir / "laws", sandbox.path / "laws",
-                              std::filesystem::copy_options::recursive);
+                              std::filesystem::copy_options::recursive, ec);
     }
 
     ZoneManager mgr;
