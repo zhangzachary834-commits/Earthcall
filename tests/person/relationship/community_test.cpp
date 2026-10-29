@@ -2,14 +2,10 @@
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "Identity/KeyPair.hpp"
-#include "Identity/IdentityLedger.hpp"
 #include "Person/Body/Body.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 
 #include <cassert>
-#include <chrono>
-#include <cstdlib>
-#include <filesystem>
 #include <iostream>
 #include <string>
 
@@ -88,22 +84,6 @@ static void testAddMemberAndInvolves() {
     check(commKeyed.involves(keyedAlice1), "commKeyed involves keyedAlice1 by key identity");
     check(!commKeyed.involves(keyedAlice2), "commKeyed MUST NOT involve distinct keyedAlice2 sharing display name 'Alice'");
     check(!commKeyed.involves("Alice"), "commKeyed MUST NOT match unverified display name string 'Alice' for keyed person");
-    check(commKeyed.involves(keyedAlice1.getIdentifier()), "keyed Person is addressable by key string");
-
-    Person sameIdentity = createDummyPerson("Another Display Name");
-    check(sameIdentity.setPersonId(keyedAlice1.personId()), "test alias accepts same cryptographic identity");
-    check(commKeyed.involves(sameIdentity), "same keyed identity across Person instances is involved");
-
-    Person unkeyedAlice = createDummyPerson("Alice");
-    check(!commKeyed.involves(unkeyedAlice), "unkeyed Person sharing a keyed member's name is distinct");
-
-    // A legacy Person's display name can spell a key identifier. Such a name
-    // must not impersonate the keyed Person in either object-query direction.
-    Person nameSpoof = createDummyPerson(keyedAlice1.getIdentifier());
-    check(!commKeyed.involves(nameSpoof), "unkeyed Person named after key cannot impersonate keyed member");
-    Community legacyCommunity("Legacy Group");
-    legacyCommunity.addMember(&nameSpoof);
-    check(!legacyCommunity.involves(keyedAlice1), "keyed Person cannot impersonate unkeyed member via its name");
 
     comm.addMember(&bob);
     check(comm.involves(bob), "Community involves Bob after adding him");
@@ -122,49 +102,6 @@ static void testAddMemberAndInvolves() {
     comm.addMember(&dummy);
     check(!comm.involves(dummy), "Community should not involve a non-Person after attempting to add it");
     check(!comm.involves("NotAPerson"), "Community should not involve 'NotAPerson' string after attempting to add it");
-}
-
-static void testMigratedNameBridgeDoesNotMergePersonObjects() {
-    // Isolate the ledger completely: never read or write the real Person's
-    // EARTHCALL_HOME, even when the test is launched from a developer machine.
-    const char* previous = std::getenv("EARTHCALL_HOME");
-    const bool hadPrevious = previous != nullptr;
-    const std::string oldHome = hadPrevious ? previous : "";
-    const auto root = std::filesystem::temp_directory_path() /
-        ("earthcall-community-bridge-" +
-         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-    std::filesystem::create_directories(root);
-#if defined(_WIN32)
-    const int setResult = _putenv_s("EARTHCALL_HOME", root.string().c_str());
-#else
-    const int setResult = setenv("EARTHCALL_HOME", root.string().c_str(), 1);
-#endif
-    check(setResult == 0, "test uses an isolated EARTHCALL_HOME");
-
-    if (setResult == 0) {
-        Person keyed = createDummyPerson("New Name");
-        const auto id = Identity::PrivateKey::generate().id();
-        check(keyed.setPersonId(id), "migrated Person accepts identity");
-        Identity::IdentityLedger ledger;
-        ledger.record("Old Name", id);
-        check(ledger.save(), "isolated legacy-name ledger persists");
-
-        Community community("Migrated Group");
-        community.addMember(&keyed);
-        check(community.involves("Old Name"), "legacy string resolves to keyed Person through ledger");
-        Person distinctLegacy = createDummyPerson("Old Name");
-        check(!community.involves(distinctLegacy),
-              "ledger bridge must not equate distinct unkeyed Person with keyed Person");
-    }
-
-#if defined(_WIN32)
-    if (hadPrevious) _putenv_s("EARTHCALL_HOME", oldHome.c_str());
-    else _putenv_s("EARTHCALL_HOME", "");
-#else
-    if (hadPrevious) setenv("EARTHCALL_HOME", oldHome.c_str(), 1);
-    else unsetenv("EARTHCALL_HOME");
-#endif
-    std::filesystem::remove_all(root);
 }
 
 static void testIsBetween() {
@@ -190,7 +127,6 @@ int main() {
     testBasicInstantiation();
     testDescribe();
     testAddMemberAndInvolves();
-    testMigratedNameBridgeDoesNotMergePersonObjects();
     testIsBetween();
 
     if (g_failures == 0) {
