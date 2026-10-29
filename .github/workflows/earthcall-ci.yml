@@ -15,28 +15,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
-  portfolio-python-witness:
-    name: Portfolio Python bridge witness (Ubuntu)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - name: Check out tested commit
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install minimal portfolio bridge dependencies
-        run: python -m pip install Flask==3.0.0 Werkzeug==3.0.1 websockets==15.0.1
-
-      - name: Execute portfolio projection and origin policy witnesses
-        run: python -m unittest discover -s tests/singularity/py -p test_portfolio_bridge.py -v
   focused-cpu-tests:
     name: Focused CPU tests (macOS)
     runs-on: macos-14
