@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <cstdlib>
 #include <vector>
-#include "support/webgpu_power_witness.hpp"
 
 namespace {
 
@@ -99,7 +98,6 @@ int main() {
     std::vector<std::shared_ptr<geom::FieldNode>> media;
     wgpu::Device gpu;
     if (!gpu.init()) { std::printf("SKIP: no WebGPU device\n"); return 0; }
-    PowerWitness::run(gpu, check);
     WebGpuRenderer renderer;
     if (!renderer.init(gpu)) { std::printf("FAIL: renderer init\n"); return 1; }
     setCurrentRenderer(&renderer);

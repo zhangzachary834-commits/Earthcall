@@ -393,7 +393,7 @@ nlohmann::json zoneToJson(const Zone& zone) {
     return zj;
 }
 
-void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects, bool restoreExistingLexemes) {
+void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
     if (!zj.is_object()) return;
     if (zj.contains("materials")) {
         materials.mergeFromJson(zj["materials"]);
@@ -457,14 +457,17 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects, bo
         }
     }
     if (zj.contains("storedSingulars")) {
-        // Hydrate before stored graphs resolve source references. A second
-        // relation pass must only rebind, never replay an older snapshot.
-        hydrateZoneLexemes(zone, zj, restoreExistingLexemes);
-        SingularSetToSetCreation::restoreStored(zone, zj["storedSingulars"], replaceObjects, restoreExistingLexemes);
-    } else {
-        if (replaceObjects) zone.clearStoredSingulars();
-        hydrateZoneLexemes(zone, zj, restoreExistingLexemes);
-    }
+        // Source Lexemes are references too. Admit their canonical identities
+        // before decoding newly stored graphs; later formation hydration uses
+        // the SAME language instances and restores legacy properties.
+        for (const auto& item : zj.value("lexemes", nlohmann::json::array())) {
+            const auto id = item.value("id", std::string{});
+            const auto symbol = item.value("symbol", std::string{});
+            if (!id.empty() && !symbol.empty())
+                zone.addToFormation(Singularity::Language::LanguageSystem::instance().intern(symbol, id).get());
+        }
+        SingularSetToSetCreation::restoreStored(zone, zj["storedSingulars"], replaceObjects);
+    } else if (replaceObjects) zone.clearStoredSingulars();
     // A non-empty zone here can mean two different things this function
     // cannot tell apart from replaceObjects alone: a Zone kept LIVE from the
     // running session (unsaved_preserve_test: another file's snapshot of the
@@ -484,7 +487,7 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects, bo
     }
 }
 
-std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj, bool restoreExistingLexemes) {
+std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj) {
     // Identity, not display: MUST agree with zoneIdFromJson, the same
     // resolution every admission/dedup check in ZoneManager.cpp uses to
     // ask "is a Zone with this id already live?" Before this fix, this
@@ -513,6 +516,6 @@ std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj, bool restoreExi
     if (!displayName.empty() && displayName != safeIdentifier) {
         zone->setName(displayName);
     }
-    applyZoneJson(*zone, zj, true, restoreExistingLexemes);
+    applyZoneJson(*zone, zj, true);
     return zone;
 }

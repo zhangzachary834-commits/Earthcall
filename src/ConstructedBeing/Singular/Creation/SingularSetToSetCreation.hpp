@@ -81,8 +81,6 @@ Result derive(const Request& request);
 using Resolver = std::function<Singular*(const std::string&)>;
 nlohmann::json storedToJson(const Singular& being);
 std::shared_ptr<Singular> storedFromJson(const nlohmann::json& record, const Resolver& resolve);
-// Direct codec restoration replaces canonical Lexeme state by default; Zone
-// reference admission passes false unless the Person explicitly restores.
-void restoreStored(Zone& zone, const nlohmann::json& records, bool replace, bool restoreExistingLexemes = true);
+void restoreStored(Zone& zone, const nlohmann::json& records, bool replace);
 
 } // namespace SingularSetToSetCreation
