@@ -7,6 +7,3 @@ Person lifecycle events can notify subscribers that a Person was created, logged
 **Notification is not authorization.** The Second Person Framework specifies Person-to-Person visibility, representation, and conflict boundaries, and explicitly says those three mechanisms remain design work. Receiving a login or join event does not by itself enforce disclosure, consent, jurisdiction, or constitutional Person protections. Those require their own correctly grounded Relation/TransferPolicy and Kernel enforcement paths, including author-reserved decisions.
 
 **Design consequence:** use events as observations or triggers where appropriate, but never describe their existence as proof that the Second Person Framework's proposed gates have been implemented.
-
-
-*Metadata: Model: gemini-2.5-pro, Harness: default_api, Session ID: 7590987872796584982*
