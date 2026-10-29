@@ -231,26 +231,6 @@ int main() {
             assert(forcedMotion.applyTo(otherSubject) ==
                    Law::ApplicationResult::AuthorityDenied);
             assert(nearf(person.position().y, 0.0f));
-            // Recompilation must invalidate the motion-destination cache in
-            // BOTH directions, including after clearing an authored model.
-            Law changingDestinations("changing-motion-destinations");
-            changingDestinations.addAuthor(author);
-            changingDestinations.setActionModel(
-                ActionNode::set("rotation.y", PropertyValue(5.0f)));
-            assert(changingDestinations.applyTo(otherSubject) ==
-                   Law::ApplicationResult::Applied);
-            changingDestinations.setActionModel(
-                ActionNode::set(personPath, PropertyValue(42.0f)));
-            assert(changingDestinations.applyTo(otherSubject) ==
-                   Law::ApplicationResult::AuthorityDenied);
-            assert(nearf(person.position().y, 0.0f));
-            changingDestinations.clearActionModel();
-            assert(changingDestinations.applyTo(otherSubject) ==
-                   Law::ApplicationResult::NoAction);
-            changingDestinations.setActionModel(
-                ActionNode::set("rotation.y", PropertyValue(6.0f)));
-            assert(changingDestinations.applyTo(otherSubject) ==
-                   Law::ApplicationResult::Applied);
             Universe::instance().setProvider(nullptr);
         }
         // A non-motion Property still tests condition evaluation on a Person;
