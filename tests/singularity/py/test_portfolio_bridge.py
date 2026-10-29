@@ -1,5 +1,6 @@
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 _SRC = Path(__file__).resolve().parents[3]
@@ -62,9 +63,14 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
 
     def test_public_portfolio_origin_is_explicitly_allowed(self):
         origin = "https://zhangzachary834-commits.github.io"
+        self.assertIsInstance(PORTFOLIO_ALLOWED_ORIGINS, frozenset)
         self.assertIn(origin, PORTFOLIO_ALLOWED_ORIGINS)
-        self.assertTrue(_portfolio_origin_allowed(origin))
-        self.assertFalse(_portfolio_origin_allowed("https://evil.example"))
+        with patch.dict("os.environ", {"PORTFOLIO_ALLOWED_ORIGINS": ""}):
+            self.assertTrue(_portfolio_origin_allowed(origin))
+            self.assertFalse(_portfolio_origin_allowed("https://evil.example"))
+        with patch.dict("os.environ", {"PORTFOLIO_ALLOWED_ORIGINS": "https://trusted.example"}):
+            self.assertTrue(_portfolio_origin_allowed("https://trusted.example"))
+            self.assertFalse(_portfolio_origin_allowed(origin))
 
 
 if __name__ == "__main__":
