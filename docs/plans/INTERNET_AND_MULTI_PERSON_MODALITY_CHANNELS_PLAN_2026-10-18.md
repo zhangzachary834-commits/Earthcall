@@ -1,13 +1,13 @@
 # Implementation Plan — Internet Modality Channels & Multi-Person Substrate
 
-**Date:** 2026-10-18
-**Author:** Antigravity / Gemini 3.8 Flash (High)
-**Session:** `aa07dad9-20d8-4921-82f9-ba93171605bc`
-**Requested by:** Zach
-**Status:** PROPOSED / READY FOR REVIEW
-**Plan base:** `earthcall_web_designer_modality@c675948a32d69585422a6a3877935e9ca6de0d75`
-**Primary scope:** `src/Singularity/Network/`, `src/Singularity/Input/`, `src/Singularity/Audio/`, `src/Singularity/Foreign/`, `src/Singularity/TransferPolicy.*`, `docs/architecture/ourverse/SECOND_PERSON_FRAMEWORK.md`, `tests/singularity/`.
-**Related doctrine:** [`NEW_KIND_FRAMEWORK.md`](../architecture/ontology/NEW_KIND_FRAMEWORK.md) §5a, §7b; [`SECOND_PERSON_FRAMEWORK.md`](../architecture/ourverse/SECOND_PERSON_FRAMEWORK.md); [`NO_BLACK_BOX.md`](../architecture/ontology/NO_BLACK_BOX.md); [`OURVERSE.md`](../architecture/ourverse/OURVERSE.md); [`FIRST_MOVER_AUTHORING.md`](../architecture/law/FIRST_MOVER_AUTHORING.md).
+**Date:** 2026-10-18  
+**Author:** Antigravity / Gemini 3.8 Flash (High)  
+**Session:** `aa07dad9-20d8-4921-82f9-ba93171605bc`  
+**Requested by:** Zach  
+**Status:** PROPOSED / READY FOR REVIEW  
+**Plan base:** `earthcall_web_designer_modality@c675948a32d69585422a6a3877935e9ca6de0d75`  
+**Primary scope:** `src/Singularity/Network/`, `src/Singularity/Input/`, `src/Singularity/Audio/`, `src/Singularity/Foreign/`, `src/Singularity/TransferPolicy.*`, `docs/architecture/ourverse/SECOND_PERSON_FRAMEWORK.md`, `tests/singularity/`.  
+**Related doctrine:** [`NEW_KIND_FRAMEWORK.md`](../architecture/ontology/NEW_KIND_FRAMEWORK.md) §5a, §7b; [`SECOND_PERSON_FRAMEWORK.md`](../architecture/ourverse/SECOND_PERSON_FRAMEWORK.md); [`NO_BLACK_BOX.md`](../architecture/ontology/NO_BLACK_BOX.md); [`OURVERSE.md`](../architecture/ourverse/OURVERSE.md); [`FIRST_MOVER_AUTHORING.md`](../architecture/law/FIRST_MOVER_AUTHORING.md).  
 **Related tasks:** [`docs/Agenda/Tasks/To-do list.md`](../Agenda/Tasks/To-do%20list.md) items 149, 344, 624; [`Second_Person_frameworks`](../Agenda/Tasks/Specific%20Tasks/First%20Movers%20and%20Persons/Second_Person_frameworks/Second_Person_frameworks.md).
 
 ---
@@ -287,13 +287,13 @@ Currently, identifiers like `Player`, `Home`, `material.wood` are single-univers
 
 Before any multi-Person networking feature can be declared shippable, it must pass the four mandatory questions in [`SECOND_PERSON_FRAMEWORK.md` §5](file:///Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/add_internet_modality_channels/docs/architecture/ourverse/SECOND_PERSON_FRAMEWORK.md#L208-L230):
 
-1. **Q1: Does every read of one Person's state by another Person's law pass the one gate, carrying the Relation between them?**
+1. **Q1: Does every read of one Person's state by another Person's law pass the one gate, carrying the Relation between them?**  
    *Verified:* ReplicationChannel enforces `TransferPolicy::canTransfer()` across the network boundary; reads cannot bypass TransferPolicy.
-2. **Q2: Does every representation of a Person that crosses a channel resolve its derived-from chain and the source Person's constraint, refusing OUT LOUD?**
+2. **Q2: Does every representation of a Person that crosses a channel resolve its derived-from chain and the source Person's constraint, refusing OUT LOUD?**  
    *Verified:* `RemotePresenceChannel` requires cryptographic signature verification from the remote Person's key. Missing or forged signatures refuse loudly and log machine-readable failures.
-3. **Q3: Is every equal-authority conflict on the feature's paths resolved by jurisdiction, covenant, or loud mutual refusal — and by no accident of the machine?**
+3. **Q3: Is every equal-authority conflict on the feature's paths resolved by jurisdiction, covenant, or loud mutual refusal — and by no accident of the machine?**  
    *Verified:* Conflicts over shared objects in gathering Zones obey the horizontal conflict ladder (covenant $\to$ mutual refusal); no timestamp or packet arrival order silently determines ownership.
-4. **Q4: Are all ⚑ AUTHOR decisions the feature touches actually decided — by the author, recorded in SECOND_PERSON_FRAMEWORK.md?**
+4. **Q4: Are all ⚑ AUTHOR decisions the feature touches actually decided — by the author, recorded in SECOND_PERSON_FRAMEWORK.md?**  
    *Verified:* Stranger-default visibility and covenant shapes remain documented and explicitly configurable by Zach before broad deployment.
 
 ---
