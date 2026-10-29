@@ -14,17 +14,14 @@
 
 #include "support/test_harness.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "json.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
-#include <fstream>
 #include <numeric>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
 namespace {
@@ -47,72 +44,6 @@ struct Frame {
     double law = 0.0;
     double maintenance = 0.0;
 };
-
-struct IsolatedWorldSandbox {
-    std::filesystem::path path;
-    std::string previousSaveRoot;
-
-    explicit IsolatedWorldSandbox(const std::string& resolvedWorldPath) {
-        path = std::filesystem::temp_directory_path() /
-               ("earthcall-perf-sandbox-" +
-                std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
-        std::filesystem::create_directories(path);
-
-        const std::filesystem::path repoSaves = std::filesystem::absolute("saves");
-
-        std::error_code ec;
-        for (const std::string& item : {"laws", "materials", "homes", "persons", "identity"}) {
-            if (std::filesystem::exists(repoSaves / item, ec)) {
-                std::filesystem::copy(repoSaves / item, path / item,
-                    std::filesystem::copy_options::recursive | std::filesystem::copy_options::copy_symlinks, ec);
-            }
-        }
-
-        std::filesystem::create_directories(path / "worlds", ec);
-        const std::filesystem::path worldFile(resolvedWorldPath);
-        const std::filesystem::path targetWorld = path / "worlds" / worldFile.filename();
-        std::filesystem::copy(worldFile, targetWorld, ec);
-
-        std::filesystem::create_directories(path / "zones", ec);
-        std::ifstream win(resolvedWorldPath);
-        if (win) {
-            try {
-                nlohmann::json wjson;
-                win >> wjson;
-                std::unordered_set<std::string> zoneNames;
-                if (wjson.contains("zones")) {
-                    for (const auto& z : wjson["zones"]) {
-                        if (z.is_string()) zoneNames.insert(z.get<std::string>());
-                        else if (z.is_object() && z.contains("name")) zoneNames.insert(z["name"].get<std::string>());
-                    }
-                }
-                for (const auto& zName : zoneNames) {
-                    if (std::filesystem::exists(repoSaves / "zones" / zName, ec)) {
-                        std::filesystem::copy(repoSaves / "zones" / zName, path / "zones" / zName,
-                            std::filesystem::copy_options::recursive | std::filesystem::copy_options::copy_symlinks, ec);
-                    }
-                }
-            } catch (...) {}
-        }
-
-        if (std::filesystem::is_empty(path / "zones", ec)) {
-            if (std::filesystem::exists(repoSaves / "zones/Chess", ec)) {
-                std::filesystem::copy(repoSaves / "zones/Chess", path / "zones/Chess",
-                    std::filesystem::copy_options::recursive | std::filesystem::copy_options::copy_symlinks, ec);
-            }
-        }
-
-        previousSaveRoot = SaveSystem::saveRoot();
-        SaveSystem::setSaveRoot(path.string());
-    }
-
-    ~IsolatedWorldSandbox() {
-        SaveSystem::setSaveRoot(previousSaveRoot);
-        std::error_code ec;
-        std::filesystem::remove_all(path, ec);
-    }
-};
-
 }
 
 int main(int argc, char** argv) {
@@ -141,15 +72,12 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    IsolatedWorldSandbox sandbox(world);
-    const std::filesystem::path targetWorldInSandbox =
-        std::filesystem::path(SaveSystem::saveRoot()) / "worlds" / std::filesystem::path(world).filename();
-    const std::string sandboxWorldPath = targetWorldInSandbox.string();
-
-    TestSupport::BootedEngineHarness h("Player", "humanoid", false);
+    // Protect the real Zone identity store exactly like frame_lag_test.
+    TestSupport::RealSaveTreeGuard saveGuard(world);
+    TestSupport::BootedEngineHarness h;
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(sandboxWorldPath);
+    h.loadWorld(world);
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
