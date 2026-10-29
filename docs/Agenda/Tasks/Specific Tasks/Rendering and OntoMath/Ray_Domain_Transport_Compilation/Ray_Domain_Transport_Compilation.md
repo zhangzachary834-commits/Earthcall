@@ -599,3 +599,24 @@ Original32,784-query packet/output/reference/affine qualification replays;30 fre
 
 
 **§6fc corrective review / exact-route baseline answer:** [Independent1536-frame replay and206,438,400decodedRGBA comparison bytes verify Sonnet's small original-routed gain and Current tie](../../../../../audits/GPU_RAY_TRANSPORT_6FC_SONNET_REVIEW_AND_ROUTING_BOUNDARIES_2026-10-29.md). Current62.092/66.493ms vscoalesced62.421/66.685ms, queued/fenced; not new authored accuracy. Native15-valid-ray empty-skip witness changes refusals atbudgets0/95, so Firmament's unconditional identity claim needs a deliberate guard/proof contract. Ordinary hashing made opt-in, oldwitnesses preserved, appbuild/CPUcommandidentity pass. Next§6fdboundedmaskcensus and oneguardedroutingablation; own-route references stillopen. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T11:19:46.729976-07:00.
+
+
+## Authorable GPU Runs: implementation priority — 2026-10-29
+
+Zach asked whether his authorable GPU-cycles architecture should be implemented before further transport optimization. The [canonical specification](../../../../../architecture/AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md), copied unchanged from the default checkout, already answers the sequencing question in §§20–22: measure first, retain one bounded continuation queue if useful, then expose policy. This is a source-grounded next direction, not a completed executor or measured speedup.
+
+**Present:** the production feature path has GPU-written route lists/counts, indirect dispatch and a finite coalesced dispatch graph without intermediate host count readback. ScreenChannel already exposes routed enablement and other rendering policy. **Missing:** saved unfinished producer state, a compact continuation queue, resume stages and authorable continuation quantum/stage policy. The existing lists classify initial work; they do not resume suspended execution. Root stacks/brackets remain invocation-local in VolumeRoutedKernels.hpp. Exhaustion of the current attempt allowance marks fallback; the fragment shader executes Current on the GPU. There is no per-ray CPU handoff for this proposal to remove.
+
+**Next bounded structural pass:**
+
+1. Add diagnostic-only per-item work and refusal distributions, with long-tail percentiles and a separate clean timing path; route-mask counts alone do not establish divergence or useful quantum boundaries.
+2. Select one measured expensive unresolved class. Persist the state required to resume its existing algorithm, compact pending items and redispatch through GPU-written counts. Keep fixed capacity, an explicit overflow path and bounded stages; do not build a generic scheduler or classifier taxonomy first.
+3. Freeze the current total-work allowance and mathematical/output contract while varying per-stage quantum. Quantum, total attempt ceiling, maxStages and numerical tolerance are distinct controls. Preserve explicit zero-total-budget fallback. Resumption must preserve arithmetic order/state where exact parity is promised; changing subdivision or numerical method requires its own accuracy gate.
+4. Require independent terminal-ownership checks, poisoned scratch/publication, forced overflow/stage exhaustion and missing-stage negatives. Every item completes once or takes authoritative Current fallback; partial work never publishes. First scope is one frozen frame/run, with no stale continuation across camera/time/expression changes.
+5. Compare complete same-process costs including recording, compaction, memory traffic, redispatch and fallback on easy and hard populations. Retain only a demonstrated benefit, then author on/off/auto and one supported quantum through the existing ScreenChannel/Law boundary with visible requested/effective clamps and actual runtime mutation witnesses.
+
+This is the next structural investigation, not a prerequisite to every smaller Veil improvement. Work elimination and better scheduling address different costs; neither guarantees the other. Completing the entire Adaptive Compute Moments or multi-resource design is not required for the first queue. OntoMath retains mathematical meaning; Screen owns backend execution and Kernel safety limits. No inert property-only implementation should be described as completed GPU Runs.
+
+**Evidence boundary:** specification and source inspection only; no implementation, build, native run, new accuracy coverage or performance result in this pass. No visible change or new Person-only check; existing movement/acceptance gates remain open.
+
+Signed: Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T14:25:09-07:00.
