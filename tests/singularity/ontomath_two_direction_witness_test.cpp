@@ -14,7 +14,7 @@
 extern MaterialManager materials;
 
 int main() {
-    TestSupport::BootedEngineHarness harness;
+    TestSupport::BootedEngineHarness harness("Player", "humanoid", false);
     auto activeZone = harness.zones.zones()[harness.zones.currentIndex()];
     
     // A 4x4 PNG image (white)
