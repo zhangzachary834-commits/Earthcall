@@ -95,6 +95,7 @@ jobs:
         law_file_tree_fossil_test
         earthcall_api_test
         rete_state_ptr_index_test
+        rete_index_sync_test
         relation_type_lexeme_lifetime_test
         event_bus_test
         law_manager_eventbus_lifetime_test
