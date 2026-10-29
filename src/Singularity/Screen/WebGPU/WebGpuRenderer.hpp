@@ -48,6 +48,8 @@ public:
     const KernelRoutedTransport* routedTransportKernelForDiagnostics() const { return _kernelRouted.get(); }
     // Opt-in dispatch tracing lives in KernelRoutedTransport::collectDispatchTrace; encode reads it.
     void setRoutedCoalescedPassesForDiagnostics(bool on, bool trace=false) { if(_kernelRouted){_kernelRouted->coalescePasses=on;_kernelRouted->collectDispatchTrace=trace;} }
+    bool setRoutedRouteObserverForDiagnostics(bool on) { return _kernelRouted && _kernelRouted->enableRouteObserver(on); }
+    void resetRoutedRouteObserverForDiagnostics() { if(_kernelRouted)_kernelRouted->resetRouteHistogram(); }
     void setRoutedWorkLimitForDiagnostics(uint32_t limit) { if(_kernelRouted)_kernelRouted->workLimit=std::min(limit,1024u); }
 
 

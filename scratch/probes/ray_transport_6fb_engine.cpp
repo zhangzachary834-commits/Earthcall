@@ -76,6 +76,12 @@ static std::string hex(uint64_t v){char b[24];std::snprintf(b,sizeof b,"%016llx"
 static void poisonScratch(const KernelRoutedTransport* k){
  std::vector<unsigned char> v;for(auto b:{k->publication,k->rays,k->singles,k->overlaps,k->counts,k->lists[0],k->lists[1],k->lists[2],k->args}){const uint64_t n=wgpuBufferGetSize(b);if(v.size()<n)v.assign(n,0xFF);wgpuQueueWriteBuffer(k->queue,b,0,v.data(),n);}
 }
+static std::vector<uint32_t> readWords(const KernelRoutedTransport* k,WGPUBuffer src,uint64_t bytes){
+ WGPUBufferDescriptor bd={};bd.usage=WGPUBufferUsage_CopyDst|WGPUBufferUsage_MapRead;bd.size=bytes;auto dst=wgpuDeviceCreateBuffer(k->device,&bd);auto enc=wgpuDeviceCreateCommandEncoder(k->device,nullptr);wgpuCommandEncoderCopyBufferToBuffer(enc,src,0,dst,0,bytes);auto cmd=wgpuCommandEncoderFinish(enc,nullptr);wgpuQueueSubmit(k->queue,1,&cmd);wgpuCommandBufferRelease(cmd);wgpuCommandEncoderRelease(enc);
+ struct State{std::atomic<bool>done{false};bool ok=false;} s;WGPUBufferMapCallbackInfo cb={};cb.mode=WGPUCallbackMode_AllowSpontaneous;cb.userdata1=&s;cb.callback=[](WGPUMapAsyncStatus status,WGPUStringView,void*p,void*){auto& s=*static_cast<State*>(p);s.ok=status==WGPUMapAsyncStatus_Success;s.done.store(true,std::memory_order_release);};
+ wgpuBufferMapAsync(dst,WGPUMapMode_Read,0,bytes,cb);wgpuDevicePoll(k->device,true,nullptr);auto start=Clock::now();while(!s.done.load(std::memory_order_acquire)){if(elapsed(start)>10000)std::abort();std::this_thread::yield();}need(s.ok,"word map failed");
+ auto* f=static_cast<const uint32_t*>(wgpuBufferGetConstMappedRange(dst,0,bytes));need(f,"mapped words");std::vector<uint32_t> out(f,f+bytes/4);wgpuBufferUnmap(dst);wgpuBufferRelease(dst);return out;
+}
 int main(int argc,char**argv){
  try{
   need(argc==3,"usage engine <preflight|timing|negative> <result.json>");std::cout.setf(std::ios::unitbuf);const std::string mode=argv[1];const fs::path output=fs::absolute(argv[2]);const float dt=1.f/60;
@@ -137,6 +143,22 @@ int main(int argc,char**argv){
     eq(traceHash,"orig","coal","dispatch order/workgroup trace differs");eq(traceHash,"orig","coalP","dispatch order trace differs (poisoned)");
    }
    r->setRoutedWorkLimitForDiagnostics(1024);r->setRoutedCoalescedPassesForDiagnostics(false);result["captures"]=caps;result["expected_dispatches"]=expectDispatch;result["strips"]=strips;
+  }
+  if(mode=="census"){
+   // §6fd: actual route masks on the frozen 64-pose route, observer-controlled. Every observer-ON frame is cross-checked against the production list counters.
+   const uint32_t strips=(k->height+k->stripRows-1)/k->stripRows;const uint64_t perFrame=uint64_t(k->tiles)*strips;Json rows=Json::array();std::map<uint32_t,uint64_t> total;uint64_t totals[3]={0,0,0};
+   auto pubHash=[&](){auto raw=rawPublication(k);return hex(fnv(raw.data(),raw.size()*4));};
+   // Output-perturbation control: observer ON must publish exactly what observer OFF publishes.
+   Json control=Json::array();for(int index:{0,32}){need(r->setRoutedRouteObserverForDiagnostics(false),"observer off");frame(index,true);fence(k);auto off=pubHash();need(r->setRoutedRouteObserverForDiagnostics(true),"observer on");r->resetRoutedRouteObserverForDiagnostics();frame(index,true);fence(k);auto on=pubHash();need(on==off,"route observer perturbed the publication");control.push_back(Json{{"index",index},{"publication_fnv_off",off},{"publication_fnv_on",on}});}
+   result["observer_output_control"]=control;
+   for(int index=0;index<64;++index){
+    r->resetRoutedRouteObserverForDiagnostics();auto facts=frame(index,true);fence(k);auto w=readWords(k,k->routeHistogram,1032*4);
+    uint64_t sum=0,s1=0,s2=0,fb=0;Json bins=Json::object();for(uint32_t key=0;key<1024;++key){if(!w[key])continue;sum+=w[key];total[key]+=w[key];bins[std::to_string(key)]=w[key];const uint32_t mask=key&15,overlap=(key>>8)&1,ordered=(key>>9)&1;if(mask==1&&!overlap)s1+=w[key];else if(ordered)s2+=w[key];else fb+=w[key];}
+    need(sum==perFrame,"observer did not classify every tile of every strip");need(w[1027]==strips,"observer strip count");need(s1==w[1024]&&s2==w[1025]&&fb==w[1026],"observer routes differ from production list counters");
+    totals[0]+=s1;totals[1]+=s2;totals[2]+=fb;rows.push_back(Json{{"index",index},{"s1",s1},{"s2",s2},{"fallback",fb},{"bins",bins},{"production",Json::array({w[1024],w[1025],w[1026]})}});
+   }
+   Json agg=Json::object();for(auto& [key,n]:total)agg[std::to_string(key)]=n;result["tiles_per_frame"]=perFrame;result["frames"]=64;result["aggregate_bins"]=agg;result["aggregate_routes"]={{"s1",totals[0]},{"s2",totals[1]},{"fallback",totals[2]}};result["poses"]=rows;
+   need(r->setRoutedRouteObserverForDiagnostics(false),"observer off");
   }
   if(mode=="packaging"){
    // Lanes: 0 Current, 1 original routed, 2 coalesced routed. Separately paid warmup and activation; queued and completion-fenced series.

@@ -26,6 +26,12 @@ struct KernelRoutedTransport {
     // collectDispatchTrace is opt-in: the renderer diagnostic setter writes it; encode/note reads it. Ordinary rendering never pays the per-dispatch FNV loop.
     bool collectDispatchTrace=false;
     uint32_t encodedPasses=0,encodedDispatches=0;uint64_t dispatchTrace=0;
+    // §6fd route census (Kernel diagnostic, OFF by default, never touched by ordinary rendering): when observeRoutes is set, encode() adds two
+    // dispatches per strip after routeArgs that histogram (activeMemberMask, AABB-hit mask, overlap, ordered-S2) per tile and total the production list counters.
+    // The observer WGSL is derived from kClassifyWgsl by substitution of its routing tail only; routeHistogram holds 1024 key bins then 3 production totals + 1 strip count.
+    bool observeRoutes=false;WGPUComputePipeline observerPipe=nullptr,accumPipe=nullptr;WGPUBuffer routeHistogram=nullptr;
+    bool enableRouteObserver(bool on);
+    void resetRouteHistogram();
     uint32_t workLimit=1024; // Kernel search ceiling; lowering it can only force Current refusal.
     struct Program {WGPUComputePipeline setup=nullptr,consumer=nullptr;WGPUBindGroupLayout globals=nullptr,instances=nullptr,local=nullptr;};
     std::map<std::string,Program> programs;
