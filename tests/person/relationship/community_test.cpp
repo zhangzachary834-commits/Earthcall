@@ -84,6 +84,22 @@ static void testAddMemberAndInvolves() {
     check(commKeyed.involves(keyedAlice1), "commKeyed involves keyedAlice1 by key identity");
     check(!commKeyed.involves(keyedAlice2), "commKeyed MUST NOT involve distinct keyedAlice2 sharing display name 'Alice'");
     check(!commKeyed.involves("Alice"), "commKeyed MUST NOT match unverified display name string 'Alice' for keyed person");
+    check(commKeyed.involves(keyedAlice1.getIdentifier()), "keyed Person is addressable by key string");
+
+    Person sameIdentity = createDummyPerson("Another Display Name");
+    check(sameIdentity.setPersonId(keyedAlice1.personId()), "test alias accepts same cryptographic identity");
+    check(commKeyed.involves(sameIdentity), "same keyed identity across Person instances is involved");
+
+    Person unkeyedAlice = createDummyPerson("Alice");
+    check(!commKeyed.involves(unkeyedAlice), "unkeyed Person sharing a keyed member's name is distinct");
+
+    // A legacy Person's display name can spell a key identifier. Such a name
+    // must not impersonate the keyed Person in either object-query direction.
+    Person nameSpoof = createDummyPerson(keyedAlice1.getIdentifier());
+    check(!commKeyed.involves(nameSpoof), "unkeyed Person named after key cannot impersonate keyed member");
+    Community legacyCommunity("Legacy Group");
+    legacyCommunity.addMember(&nameSpoof);
+    check(!legacyCommunity.involves(keyedAlice1), "keyed Person cannot impersonate unkeyed member via its name");
 
     comm.addMember(&bob);
     check(comm.involves(bob), "Community involves Bob after adding him");
