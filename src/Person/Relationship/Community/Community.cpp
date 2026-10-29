@@ -32,26 +32,17 @@ bool Community::involves(const std::string& entity) const {
 }
 
 bool Community::involves(const Singular& entity) const {
+    // A Person object is not an unverified name string. Legacy-name migration
+    // may resolve a string query, but must never merge two distinct Persons.
     const auto* pEntity = dynamic_cast<const Person*>(&entity);
-    for (auto* m : getMembers()) {
-        if (!m) continue;
-        if (m == &entity) return true;
+    if (!pEntity) return false;
 
+    for (auto* m : getMembers()) {
+        if (m == &entity) return true;
         const auto* pM = dynamic_cast<const Person*>(m);
-        if (pM && pEntity) {
-            if (pM->hasIdentity() && pEntity->hasIdentity()) {
-                if (pM->personId() == pEntity->personId()) return true;
-            } else if (pM->hasIdentity()) {
-                if (Identity::personAnswersTo(*pM, pEntity->getIdentifier())) return true;
-            } else if (pEntity->hasIdentity()) {
-                if (Identity::personAnswersTo(*pEntity, m->getIdentifier())) return true;
-            }
-        } else if (pM) {
-            if (Identity::personAnswersTo(*pM, entity.getIdentifier())) return true;
-        } else if (pEntity) {
-            if (Identity::personAnswersTo(*pEntity, m->getIdentifier())) return true;
-        } else {
-            if (m->getIdentifier() == entity.getIdentifier()) return true;
+        if (pM && pM->hasIdentity() && pEntity->hasIdentity() &&
+            pM->personId() == pEntity->personId()) {
+            return true;
         }
     }
     return false;
