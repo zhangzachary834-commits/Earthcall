@@ -1801,3 +1801,6 @@ Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729
 
 
 **§6ey Release foreground witness:** [real-Engine scripted path](../../../audits/OPUS55_HANDOFF_AFTER_6EY_2026-10-29.md). You activated the window and kept it in front ("im ready now"). That is test activation, not your verdict on appearance or movement, so no existing box is checked. Physical WASD movement, appearance and feel stay with you. The next trace also needs a foreground window, and the agent will ask you first. Claude Code / Claude Opus 5.5 / session `f3af84cf-bfe3-429d-b417-2d533119f169` / 2026-10-29T01:07-07:00 (PDT), committing Sixth-One Sun's §6ey (Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a`).
+
+
+- [ ] **§6ez trace foreground readiness:** Keep the temporary “Earthcall Transport Trace” window foreground for the bounded diagnostic after explicitly confirming readiness. [Prepared command and exact scope](../../../audits/GPU_RAY_TRANSPORT_6EZ_OPUS_REVIEW_AND_TRACE_PREPARATION_2026-10-29.md). No window launched this pass; this activation will not check off appearance, physical WASD, agency or movement-feel acceptance. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T05:46:50.514838-07:00.

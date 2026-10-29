@@ -1,0 +1,156 @@
+{
+  "schema": "6ez-opus-review-host-encode-only-1",
+  "head": "687dd98e27bd8537de0c18600ee5550881a3ef8b",
+  "signature": "Codex / GPT-6.1 Sol / Sixth-One Sun / 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-10-29",
+  "source_sha256": {
+    "src/Singularity/Screen/WebGPU/VolumeRoutedTransport.inc": "47fb2884614b1b3034599ab1d6da3b0283dee8179ee204e0aa268090bcd920bb",
+    "src/Singularity/Screen/WebGPU/VolumeRoutedTransport.hpp": "7d85cb9ddb0ee70eebfa8c0e8c1f21530e9f9d76e002a72efae9228bc178c9fc"
+  },
+  "generated_cpp_sha256": "cbefb34f6ed42976b737279c6bbdff45f2744881c8ef6a5c5402fad528b3ba2b",
+  "executable_sha256": "7336318e0b3030d527ebf503fabebff0379faf373c952f1f3cef6e08c784439f",
+  "compiler_argv": [
+    "/usr/bin/c++",
+    "-std=c++17",
+    "-O3",
+    "-DNDEBUG",
+    "-I/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/local_deps/include",
+    "-I/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/src",
+    "-I/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/src/s",
+    "-I/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/src/ZonesOfEarth",
+    "-I/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/src/Person/Body",
+    "-I/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/imgui",
+    "-I/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/third_party/miniaudio",
+    "-I/include",
+    "-I/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/build/_deps/flatbuffers-src/include",
+    "-I/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/build/_deps/asio-src/asio/include",
+    "-I/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/build/_deps/websocketpp-src",
+    "-I/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/build/_deps/vhacd-src/include",
+    "-I/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/third_party/wgpu/include",
+    "/private/tmp/earthcall-6ez-review-final/mock.cpp",
+    "-o",
+    "/private/tmp/earthcall-6ez-review-final/mock"
+  ],
+  "summaries": [
+    {
+      "width": 2560,
+      "height": 1440,
+      "binding_limit": 134217728,
+      "eligible": true,
+      "strips": 30,
+      "passes": 240,
+      "bind_groups": 125,
+      "rows": 48,
+      "allocated_bytes": 222781496,
+      "direct_dispatches": 150,
+      "indirect_dispatches": 90
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "binding_limit": 1073741824,
+      "eligible": true,
+      "strips": 30,
+      "passes": 240,
+      "bind_groups": 125,
+      "rows": 48,
+      "allocated_bytes": 222781496,
+      "direct_dispatches": 150,
+      "indirect_dispatches": 90
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "binding_limit": 67108864,
+      "eligible": true,
+      "strips": 60,
+      "passes": 480,
+      "bind_groups": 245,
+      "rows": 24,
+      "allocated_bytes": 140881976,
+      "direct_dispatches": 300,
+      "indirect_dispatches": 180
+    },
+    {
+      "width": 320,
+      "height": 181,
+      "binding_limit": 134217728,
+      "eligible": true,
+      "strips": 4,
+      "passes": 32,
+      "bind_groups": 21,
+      "rows": 48,
+      "allocated_bytes": 21401656,
+      "direct_dispatches": 20,
+      "indirect_dispatches": 12
+    },
+    {
+      "width": 7680,
+      "height": 4320,
+      "binding_limit": 1073741824,
+      "eligible": false
+    },
+    {
+      "width": 0,
+      "height": 1440,
+      "binding_limit": 134217728,
+      "eligible": false
+    }
+  ],
+  "negatives": [
+    {
+      "mutation": "missing-pass",
+      "refusal": "eight actual encode passes per strip"
+    },
+    {
+      "mutation": "wrong-producer-order",
+      "refusal": "actual stage order"
+    },
+    {
+      "mutation": "lost-window",
+      "refusal": "unreduced capacity, interval limits and contiguous window"
+    },
+    {
+      "mutation": "diminished-interval-budget",
+      "refusal": "unreduced capacity, interval limits and contiguous window"
+    },
+    {
+      "mutation": "rebound-scratch",
+      "refusal": "same scratch bound at every strip setup"
+    }
+  ],
+  "retained_archive_sha256": "aa6109cdeaf29b05f6158c5940250ae6ff8660d2181a7f35f20fa61cf27aace8",
+  "retained_means_arithmetic": {
+    "complete_delta_ms": -0.11643513671874928,
+    "host_tick_delta_ms": 5.372375023437501,
+    "remainder_delta_ms": -5.48881016015625,
+    "interpretation": "Arithmetic on retained means only; remainder is not GPU busy time."
+  },
+  "native_backend_libraries": [
+    "/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/third_party/wgpu/lib/libwgpu_native.a"
+  ],
+  "native_link_file_sha256": "fd4ed8155b8c8abf25fbe7287f6c93e64c50ddad01f9056c22adf517ba40a4df",
+  "replay_argv": [
+    "python3",
+    "-B",
+    "/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/scratch/probes/ray_transport_6ey_replay.py",
+    "replay",
+    "/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/docs/audits/GPU_RAY_TRANSPORT_6EY_ENGINE_RELEASE_WINDOW_2026-10-29.zip"
+  ],
+  "replay_exit_code": 0,
+  "scope": "CPU interception of verbatim production ensure/releaseBuffers/encode bodies. No GPU, driver, shader execution, contention, time or speedup measurement.",
+  "prepared_trace": {
+    "base_cpp_sha256": "e7053a761f5b1ae0c75805bc902f40374e29dd9ba02e7a367839b58ed8fc372e",
+    "derived_cpp_sha256": "63fda23777dd04ec7360deb43d3bcdc8e73e6bf6d96d2d74d8fc2eb5b4eae9e5",
+    "binary_sha256": "7664bbcea3d63ad0780e7c35977384b730fbc0e7793631830309df2a6553f832",
+    "native_executed": false,
+    "profile_executed": false,
+    "scope": "same production Release objects; derived independent main/signposts; no production source edit",
+    "work_root": "/private/tmp/earthcall-6ez-trace-final",
+    "release_objects": 238,
+    "initial_fixture_files": 56,
+    "protocol": "128 warmup frames; 4 x 64 queued traced ABBA frames; 8 activation frames; no sampled accuracy/clean cost admission; 45s trace; one 240s native-process cap; requires new foreground readiness"
+  },
+  "timestamp_local": "2026-10-29T05:44:06.776097-07:00",
+  "raw_host_observations_in_archive": "review/result.json",
+  "raw_result_sha256": "283462713310a2d1c70dedfa76a5af6d036da9d72c6049651de40c87a4e381fc"
+}
