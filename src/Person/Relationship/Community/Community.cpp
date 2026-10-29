@@ -1,4 +1,5 @@
 #include "Community.hpp"
+#include "Identity/PersonPresence.hpp"
 #include "Person/Person.hpp"
 #include <iostream>
 #include <stdexcept>
@@ -23,6 +24,9 @@ bool Community::involves(const std::string& entity) const {
     for (auto* m : getMembers()) {
         if (!m) continue;
         if (m->getIdentifier() == entity) return true;
+        if (const auto* pM = dynamic_cast<const Person*>(m)) {
+            if (Identity::personAnswersTo(*pM, entity)) return true;
+        }
     }
     return false;
 }
@@ -35,13 +39,19 @@ bool Community::involves(const Singular& entity) const {
 
         const auto* pM = dynamic_cast<const Person*>(m);
         if (pM && pEntity) {
-            if (pM->hasIdentity() && pEntity->hasIdentity() && pM->personId() == pEntity->personId()) {
-                return true;
+            if (pM->hasIdentity() && pEntity->hasIdentity()) {
+                if (pM->personId() == pEntity->personId()) return true;
+            } else if (pM->hasIdentity()) {
+                if (Identity::personAnswersTo(*pM, pEntity->getIdentifier())) return true;
+            } else if (pEntity->hasIdentity()) {
+                if (Identity::personAnswersTo(*pEntity, m->getIdentifier())) return true;
             }
-        } else if (!pM && !pEntity) {
-            if (m->getIdentifier() == entity.getIdentifier()) {
-                return true;
-            }
+        } else if (pM) {
+            if (Identity::personAnswersTo(*pM, entity.getIdentifier())) return true;
+        } else if (pEntity) {
+            if (Identity::personAnswersTo(*pEntity, m->getIdentifier())) return true;
+        } else {
+            if (m->getIdentifier() == entity.getIdentifier()) return true;
         }
     }
     return false;

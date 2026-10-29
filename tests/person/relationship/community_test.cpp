@@ -65,9 +65,25 @@ static void testAddMemberAndInvolves() {
     check(comm.involves(alice), "Community involves Alice after adding her");
     check(comm.involves("Alice"), "Community involves 'Alice' string after adding her");
 
-    // Regression test: distinct Person with same display name ("Alice")
+    // Regression test: distinct unkeyed Person with same display name ("Alice") must NOT be conflated.
     Person alice2 = createDummyPerson("Alice");
     check(!comm.involves(alice2), "Community must NOT involve distinct Person 'alice2' sharing the same display name 'Alice'");
+
+    // Regression test: distinct keyed Persons sharing display name "Alice" must NEVER be conflated.
+    Person keyedAlice1 = createDummyPerson("Alice");
+    Identity::PrivateKey priv1 = Identity::PrivateKey::generate();
+    keyedAlice1.setPersonId(priv1.publicKey().id());
+
+    Person keyedAlice2 = createDummyPerson("Alice");
+    Identity::PrivateKey priv2 = Identity::PrivateKey::generate();
+    keyedAlice2.setPersonId(priv2.publicKey().id());
+
+    Community commKeyed("Keyed Group");
+    commKeyed.addMember(&keyedAlice1);
+
+    check(commKeyed.involves(keyedAlice1), "commKeyed involves keyedAlice1 by key identity");
+    check(!commKeyed.involves(keyedAlice2), "commKeyed MUST NOT involve distinct keyedAlice2 sharing display name 'Alice'");
+    check(!commKeyed.involves("Alice"), "commKeyed MUST NOT match unverified display name string 'Alice' for keyed person");
 
     comm.addMember(&bob);
     check(comm.involves(bob), "Community involves Bob after adding him");
