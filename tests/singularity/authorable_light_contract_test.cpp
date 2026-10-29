@@ -93,21 +93,25 @@ int main() {
 
         nlohmann::json sun;
         if (in) in >> sun;
-        check(sun.contains("spatialRoot"), "Sun save carries a spatial root");
+        check(sun.contains("spatialRoot") || sun.contains("spatialFields"),
+              "Sun save carries spatial field(s)");
+
+        const bool hasSpatialFields = sun.contains("spatialFields") && !sun["spatialFields"].empty();
+        const auto& targetFieldJson = hasSpatialFields ? sun["spatialFields"][0] : sun["spatialRoot"];
 
         const bool hasCanonicalAstKey =
-            sun.contains("spatialRoot") && sun["spatialRoot"].contains("field") &&
-            sun["spatialRoot"]["field"].contains("astDefinition");
+            targetFieldJson.contains("field") &&
+            targetFieldJson["field"].contains("astDefinition");
         const bool hasIgnoredAstKey =
-            sun.contains("spatialRoot") && sun["spatialRoot"].contains("field") &&
-            sun["spatialRoot"]["field"].contains("ast");
+            targetFieldJson.contains("field") &&
+            targetFieldJson["field"].contains("ast");
         check(hasCanonicalAstKey,
               "Sun save uses ScalarField's canonical astDefinition serialization key");
         check(!hasIgnoredAstKey,
               "Sun save does not use the ignored noncanonical ast key");
 
         geom::FieldNode hydrated("sun.light-field.test");
-        if (sun.contains("spatialRoot")) hydrated.applyJson(sun["spatialRoot"]);
+        hydrated.applyJson(targetFieldJson);
 
         check(hydrated.field != nullptr, "Sun spatial root hydrates a scalar field");
         check(hydrated.field &&
