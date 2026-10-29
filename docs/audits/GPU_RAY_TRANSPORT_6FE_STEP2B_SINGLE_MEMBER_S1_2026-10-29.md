@@ -33,3 +33,6 @@ Pose 32 fallback 189,828→11,344 matches the Firmament's prediction exactly. S2
 Evidence class: native Metal bitwise publication/snapshot comparison (not timing, not Person evidence).
 
 Signed: Claude Code / Sonnet 5.5 / worktree `authorable-gpu-runs-268d29` / 2026-10-29 (PDT).
+
+## Decision recorded (2026-10-29)
+Zach, in chat: **accept the change.** Contract for 2b: refusals are decided by the members the classifier proves wave-active; a proof-skipped member's refusal no longer forces Current (as S1/S2 already behave). This accepts the contract only. The toggle stays default OFF until timing, wider-pose (20,28,36,44) and inside-population parity are recorded; the pose-40 refusal mechanism is still unisolated.
