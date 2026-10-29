@@ -4,14 +4,14 @@
     "id": "material.sky.sanctuary.timber",
     "name": "sky.sanctuary.timber",
     "baseColor": [
-      0.32,
-      0.19,
-      0.12
+      0.36,
+      0.22,
+      0.14
     ],
     "opacity": 1.0,
-    "ambient": 0.08,
-    "diffuse": 0.56,
-    "specular": 0.18,
+    "ambient": 0.14,
+    "diffuse": 0.68,
+    "specular": 0.2,
     "shininess": 22.0,
     "textureResolution": 16
   },

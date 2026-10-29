@@ -4,14 +4,14 @@
     "id": "material.sky.sanctuary.bronze",
     "name": "sky.sanctuary.bronze",
     "baseColor": [
-      0.62,
-      0.36,
-      0.15
+      0.66,
+      0.4,
+      0.17
     ],
     "opacity": 1.0,
-    "ambient": 0.09,
-    "diffuse": 0.6,
-    "specular": 0.58,
+    "ambient": 0.16,
+    "diffuse": 0.72,
+    "specular": 0.6,
     "shininess": 72.0,
     "textureResolution": 16,
     "colorExpr": {
@@ -28,7 +28,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.62,
+                      "c": 0.66,
                       "factors": {}
                     },
                     {
@@ -57,7 +57,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.36,
+                      "c": 0.4,
                       "factors": {}
                     },
                     {
@@ -80,7 +80,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.15,
+                      "c": 0.17,
                       "factors": {}
                     },
                     {

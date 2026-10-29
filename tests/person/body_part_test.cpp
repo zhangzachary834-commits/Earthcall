@@ -1,4 +1,6 @@
 #include "Person/Body/BodyPart/BodyPart.hpp"
+#include "Person/Body/Body.hpp"
+#include "Person/Voice/Voice.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 #include <cassert>
@@ -79,7 +81,9 @@ static void testAccessorsAndMutators() {
     BodyPart bodyPart("Head", BodyPart::Type::Head, ObjectTypes::ShapeKind::Sphere, glm::vec3(1.0f));
 
     // Identifier check
-    assert(bodyPart.getIdentifier() == "Head");
+    assert(!bodyPart.getIdentifier().empty());
+    assert(bodyPart.getIdentifier() != bodyPart.getName());
+    assert(bodyPart.getIdentifier() == bodyPart.Formation::getIdentifier());
 
     // Color mutator/accessor
     bodyPart.setColor(0.5f, 0.6f, 0.7f);
@@ -312,6 +316,54 @@ static void testConstitutionIsExplicitRelation() {
     std::cout << "  testConstitutionIsExplicitRelation OK\n";
 }
 
+
+static void testBodyAndVoiceIdentityDistinctFromSpelling() {
+    BodyPart left("Wing", BodyPart::Type::Arm);
+    BodyPart right("Wing", BodyPart::Type::Arm);
+    assert(left.getName() == right.getName());
+    assert(left.getIdentifier() != right.getIdentifier());
+    assert(left.getIdentifier() == left.Formation::getIdentifier());
+
+    Body body("Humanoid", "Voxel");
+    body.addPart(&left);
+    body.addPart(&right);
+    assert(body.formation.hasMember(&left) && body.formation.hasMember(&right));
+    assert(body.getBodyPart(left.getIdentifier()) == &left);
+    assert(body.getBodyPart(right.getIdentifier()) == &right);
+    assert(body.getBodyPart("Wing") == &left); // legacy display-name lookup
+    const std::string leftId = left.getIdentifier();
+    body.removeBodyPart(leftId);
+    assert(body.getBodyPart(leftId) == nullptr);
+    assert(body.getBodyPart(right.getIdentifier()) == &right);
+    assert(!body.formation.hasMember(&left));
+    body.removeBodyPart("Wing");
+    assert(body.getBodyPart("Wing") == nullptr);
+    assert(!body.formation.hasMember(&right));
+
+    VoicePart first("Resonance", VoicePart::Type::Resonance);
+    VoicePart second("Resonance", VoicePart::Type::Resonance);
+    assert(first.getIdentifier() != second.getIdentifier());
+    assert(first.getIdentifier() == first.Formation::getIdentifier());
+    first.setIdentifier("voice-part-id-1");
+    second.setIdentifier("voice-part-id-2");
+    Voice voice;
+    voice.addPart(&first);
+    voice.addPart(&second);
+    assert(voice.formation.hasMember(&first) && voice.formation.hasMember(&second));
+    assert(voice.getVoicePart("voice-part-id-1") == &first);
+    assert(voice.getVoicePart("voice-part-id-2") == &second);
+    assert(voice.getVoicePart("Resonance") == &first);
+    voice.removeVoicePart("voice-part-id-1");
+    assert(voice.getVoicePart("voice-part-id-1") == nullptr);
+    assert(voice.getVoicePart("voice-part-id-2") == &second);
+    assert(!voice.formation.hasMember(&first));
+    voice.removeVoicePart("Resonance");
+    assert(voice.getVoicePart("Resonance") == nullptr);
+    assert(!voice.formation.hasMember(&second));
+
+    std::cout << "  testBodyAndVoiceIdentityDistinctFromSpelling OK\\n";
+}
+
 int main() {
     std::cout << "body_part_test:\n";
     testInitialState();
@@ -323,6 +375,7 @@ int main() {
     testAutomations();
     testDraw();
     testConstitutionIsExplicitRelation();
+    testBodyAndVoiceIdentityDistinctFromSpelling();
     std::cout << "body_part_test: ALL OK\n";
     return 0;
 }

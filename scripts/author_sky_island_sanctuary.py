@@ -277,12 +277,21 @@ def m_pow(a, b):
     return {"op": 24, "children": [a, b]}
 
 
+def m_abs(a):
+    return {"op": 25, "children": [a]}
+
+
 def m_clamp(val, lo, hi):
     return {"op": 26, "children": [val, m_scalar(lo), m_scalar(hi)]}
 
 
 def m_dist(a, b):
     return {"op": 15, "children": [a, b]}
+
+
+def m_sq(a):
+    # Hardware-safe squaring via Op::Scale (a * a), avoiding WGSL pow(neg, 2) -> NaN
+    return m_mul(a, a)
 
 
 def m_noise(vec_node):
@@ -330,90 +339,90 @@ def relation(a, b, rel_type):
 def build_materials():
     palette = {
         "travertine": {
-            "rgb": (0.72, 0.67, 0.58),
-            "ambient": 0.09, "diffuse": 0.62, "specular": 0.28, "shininess": 42.0,
+            "rgb": (0.76, 0.70, 0.61),
+            "ambient": 0.16, "diffuse": 0.74, "specular": 0.30, "shininess": 42.0,
             "colorExpr": m_vec3(
-                m_poly([term(0.72), term(0.045, trans=[wave("y", 3.2, 0.0, 0), wave("x", 1.4, 0.0, 1)])]),
-                m_poly([term(0.67), term(0.040, trans=[wave("y", 3.2, 0.6, 0), wave("z", 1.4, 0.0, 1)])]),
-                m_poly([term(0.58), term(0.035, trans=[wave("y", 3.2, 1.2, 0)])]),
+                m_poly([term(0.76), term(0.045, trans=[wave("y", 3.2, 0.0, 0), wave("x", 1.4, 0.0, 1)])]),
+                m_poly([term(0.70), term(0.040, trans=[wave("y", 3.2, 0.6, 0), wave("z", 1.4, 0.0, 1)])]),
+                m_poly([term(0.61), term(0.035, trans=[wave("y", 3.2, 1.2, 0)])]),
             ),
         },
         "basalt": {
-            "rgb": (0.11, 0.14, 0.20),
-            "ambient": 0.07, "diffuse": 0.58, "specular": 0.30, "shininess": 36.0,
+            "rgb": (0.14, 0.17, 0.24),
+            "ambient": 0.14, "diffuse": 0.70, "specular": 0.32, "shininess": 36.0,
             "colorExpr": m_vec3(
-                m_poly([term(0.11), term(0.025, trans=[wave("y", 1.8, 0.0, 1)])]),
-                m_poly([term(0.14), term(0.028, trans=[wave("y", 1.8, 0.4, 1)])]),
-                m_poly([term(0.20), term(0.032, trans=[wave("x", 1.1, 0.0, 0)])]),
+                m_poly([term(0.14), term(0.025, trans=[wave("y", 1.8, 0.0, 1)])]),
+                m_poly([term(0.17), term(0.028, trans=[wave("y", 1.8, 0.4, 1)])]),
+                m_poly([term(0.24), term(0.032, trans=[wave("x", 1.1, 0.0, 0)])]),
             ),
         },
         "gold": {
-            "rgb": (0.86, 0.64, 0.20),
-            "ambient": 0.11, "diffuse": 0.64, "specular": 0.72, "shininess": 88.0,
+            "rgb": (0.88, 0.66, 0.22),
+            "ambient": 0.18, "diffuse": 0.76, "specular": 0.74, "shininess": 88.0,
             "colorExpr": m_vec3(
-                m_poly([term(0.86), term(0.04, trans=[wave("y", 2.6, 0.0, 0)])]),
-                m_poly([term(0.64), term(0.05, trans=[wave("x", 2.0, 0.5, 1)])]),
-                m_poly([term(0.20), term(0.03, trans=[wave("z", 2.0, 1.0, 0)])]),
+                m_poly([term(0.88), term(0.04, trans=[wave("y", 2.6, 0.0, 0)])]),
+                m_poly([term(0.66), term(0.05, trans=[wave("x", 2.0, 0.5, 1)])]),
+                m_poly([term(0.22), term(0.03, trans=[wave("z", 2.0, 1.0, 0)])]),
             ),
         },
         "bronze": {
-            "rgb": (0.62, 0.36, 0.15),
-            "ambient": 0.09, "diffuse": 0.60, "specular": 0.58, "shininess": 72.0,
+            "rgb": (0.66, 0.40, 0.17),
+            "ambient": 0.16, "diffuse": 0.72, "specular": 0.60, "shininess": 72.0,
             "colorExpr": m_vec3(
-                m_poly([term(0.62), term(0.04, trans=[wave("y", 2.4, 0.0, 0), wave("x", 1.2, 0.0, 1)])]),
-                m_poly([term(0.36), term(0.035, trans=[wave("y", 2.4, 0.8, 0)])]),
-                m_poly([term(0.15), term(0.025, trans=[wave("z", 1.8, 0.4, 1)])]),
+                m_poly([term(0.66), term(0.04, trans=[wave("y", 2.4, 0.0, 0), wave("x", 1.2, 0.0, 1)])]),
+                m_poly([term(0.40), term(0.035, trans=[wave("y", 2.4, 0.8, 0)])]),
+                m_poly([term(0.17), term(0.025, trans=[wave("z", 1.8, 0.4, 1)])]),
             ),
         },
         "verdigris": {
-            "rgb": (0.13, 0.45, 0.40),
-            "ambient": 0.09, "diffuse": 0.60, "specular": 0.46, "shininess": 58.0,
+            "rgb": (0.15, 0.48, 0.43),
+            "ambient": 0.16, "diffuse": 0.72, "specular": 0.48, "shininess": 58.0,
             "colorExpr": m_vec3(
-                m_poly([term(0.13), term(0.03, trans=[wave("y", 2.2, 0.0, 0)])]),
-                m_poly([term(0.45), term(0.06, trans=[wave("x", 1.6, 0.3, 1), wave("z", 1.6, 0.0, 0)])]),
-                m_poly([term(0.40), term(0.05, trans=[wave("y", 2.2, 1.1, 0)])]),
+                m_poly([term(0.15), term(0.03, trans=[wave("y", 2.2, 0.0, 0)])]),
+                m_poly([term(0.48), term(0.06, trans=[wave("x", 1.6, 0.3, 1), wave("z", 1.6, 0.0, 0)])]),
+                m_poly([term(0.43), term(0.05, trans=[wave("y", 2.2, 1.1, 0)])]),
             ),
         },
         "water": {
-            "rgb": (0.10, 0.42, 0.62),
-            "ambient": 0.10, "diffuse": 0.62, "specular": 0.78, "shininess": 104.0,
+            "rgb": (0.12, 0.46, 0.68),
+            "ambient": 0.17, "diffuse": 0.74, "specular": 0.80, "shininess": 104.0,
             "colorExpr": m_vec3(
-                m_poly([term(0.10), term(0.04, trans=[wave("x", 3.5, 0.0, 0), wave("z", 3.5, 0.0, 1)])]),
-                m_poly([term(0.42), term(0.07, trans=[wave("x", 2.8, 0.7, 1), wave("z", 2.8, 0.4, 0)])]),
-                m_poly([term(0.62), term(0.06, trans=[wave("z", 3.5, 1.2, 0)])]),
+                m_poly([term(0.12), term(0.04, trans=[wave("x", 3.5, 0.0, 0), wave("z", 3.5, 0.0, 1)])]),
+                m_poly([term(0.46), term(0.07, trans=[wave("x", 2.8, 0.7, 1), wave("z", 2.8, 0.4, 0)])]),
+                m_poly([term(0.68), term(0.06, trans=[wave("z", 3.5, 1.2, 0)])]),
             ),
         },
         "crystal": {
-            "rgb": (0.36, 0.74, 0.90),
-            "ambient": 0.14, "diffuse": 0.66, "specular": 0.84, "shininess": 112.0,
+            "rgb": (0.38, 0.78, 0.94),
+            "ambient": 0.22, "diffuse": 0.78, "specular": 0.86, "shininess": 112.0,
             "colorExpr": m_vec3(
-                m_poly([term(0.36), term(0.12, trans=[wave("y", 2.5, 0.0, 0)])]),
-                m_poly([term(0.74), term(0.09, trans=[wave("x", 2.0, 0.6, 1)])]),
-                m_poly([term(0.90), term(0.05, trans=[wave("z", 2.0, 1.2, 0)])]),
+                m_poly([term(0.38), term(0.12, trans=[wave("y", 2.5, 0.0, 0)])]),
+                m_poly([term(0.78), term(0.09, trans=[wave("x", 2.0, 0.6, 1)])]),
+                m_poly([term(0.94), term(0.05, trans=[wave("z", 2.0, 1.2, 0)])]),
             ),
         },
         "foliage": {
-            "rgb": (0.14, 0.44, 0.26),
-            "ambient": 0.08, "diffuse": 0.60, "specular": 0.20, "shininess": 26.0,
+            "rgb": (0.16, 0.48, 0.28),
+            "ambient": 0.15, "diffuse": 0.72, "specular": 0.22, "shininess": 26.0,
             "colorExpr": m_vec3(
-                m_poly([term(0.14), term(0.04, trans=[wave("y", 1.8, 0.0, 0)])]),
-                m_poly([term(0.44), term(0.07, trans=[wave("x", 1.5, 0.0, 1), wave("y", 2.1, 0.4, 0)])]),
-                m_poly([term(0.26), term(0.04, trans=[wave("z", 1.5, 0.8, 0)])]),
+                m_poly([term(0.16), term(0.04, trans=[wave("y", 1.8, 0.0, 0)])]),
+                m_poly([term(0.48), term(0.07, trans=[wave("x", 1.5, 0.0, 1), wave("y", 2.1, 0.4, 0)])]),
+                m_poly([term(0.28), term(0.04, trans=[wave("z", 1.5, 0.8, 0)])]),
             ),
         },
         "timber": {
-            "rgb": (0.32, 0.19, 0.12),
-            "ambient": 0.08, "diffuse": 0.56, "specular": 0.18, "shininess": 22.0,
+            "rgb": (0.36, 0.22, 0.14),
+            "ambient": 0.14, "diffuse": 0.68, "specular": 0.20, "shininess": 22.0,
             "colorExpr": None,
         },
         "pearl": {
-            "rgb": (0.78, 0.75, 0.70),
-            "ambient": 0.11, "diffuse": 0.62, "specular": 0.62, "shininess": 88.0,
+            "rgb": (0.82, 0.79, 0.74),
+            "ambient": 0.18, "diffuse": 0.74, "specular": 0.64, "shininess": 88.0,
             "colorExpr": None,
         },
         "amber": {
-            "rgb": (0.92, 0.66, 0.26),
-            "ambient": 0.16, "diffuse": 0.66, "specular": 0.68, "shininess": 84.0,
+            "rgb": (0.94, 0.68, 0.28),
+            "ambient": 0.22, "diffuse": 0.78, "specular": 0.70, "shininess": 84.0,
             "colorExpr": None,
         },
     }
@@ -526,42 +535,45 @@ def make_arched_bridge_sdf():
 
 def build_spatial_fields():
     # =========================================================================
-    # LAYER 1: Primary Spatial Root — Low-Angle Golden-Hour Sunbeam + Cloud Dapple
-    # Origin at [-24.0, 16.0, 18.0] (low ~28-deg SW angle for dramatic chiaroscuro
-    # shadows across the Pavilion colonnade, bridge, and island crags).
+    # LAYER 1: Primary Spatial Root — Golden-Hour Sunbeam Pools + Cloud Dapple
+    # Origin at [-20.0, 24.0, 18.0] (golden-hour SW angle shining cleanly into
+    # the open-sky Pavilion colonnade, across the 5 islands, and onto the Sea
+    # of Clouds).
     # Remember: SdfWgsl.cpp passes `sourceDelta = pw - source.position.xyz` as `p`
     # to both `lightRadiance(p)` and `lightChroma(p)`!
+    # All distance/envelope math uses `m_dist` (Op::Distance) and `m_sq`
+    # (Op::Scale `u * u`) — never `pow(signed, 2.0)` — so every octant evaluates
+    # cleanly without WGSL `pow(negative, exp) -> NaN`.
     # =========================================================================
-    sun_origin = (-24.0, 16.0, 18.0)
+    sun_origin = (-20.0, 24.0, 18.0)
 
-    def lobe_at(world_pt, gain, falloff):
+    def lobe_at(world_pt, gain, radius):
         lx = world_pt[0] - sun_origin[0]
         ly = world_pt[1] - sun_origin[1]
         lz = world_pt[2] - sun_origin[2]
-        dx = m_poly([term(1.0, {"x": 1.0}), term(-lx)])
-        dy = m_poly([term(1.0, {"y": 1.0}), term(-ly)])
-        dz = m_poly([term(1.0, {"z": 1.0}), term(-lz)])
-        d2 = m_add(m_add(m_pow(dx, m_scalar(2.0)), m_pow(dy, m_scalar(2.0))), m_pow(dz, m_scalar(2.0)))
-        return m_div(m_scalar(gain), m_add(m_scalar(1.0), m_mul(m_scalar(falloff), d2)))
+        d = m_dist(m_var("p"), m_vec3(m_scalar(lx), m_scalar(ly), m_scalar(lz)))
+        u = m_clamp(m_sub(m_scalar(1.0), m_mul(m_scalar(1.0 / radius), d)), 0.0, 1.0)
+        return m_mul(m_scalar(gain), m_sq(u))
 
-    # Five tight, intentional bright spots on the five islands with real dark
-    # twilight shadow valleys (0.05..0.12) across the bridges and stepping stones
-    # between them, modulated by drifting cloud-dapple waves.
+    # Five distinct, intentional bright golden sunbeam pools centered on the
+    # five islands, rising above a readable morning-sky baseline (0.24) so
+    # bridges and stepping stones between islands sit in soft dappled shade
+    # (~0.24..0.34) while the 5 island sanctuaries glow (~0.80..1.10).
     sun_dapple = m_poly([
-        term(0.84),
-        term(0.16, trans=[wave("x", 0.22, 0.0, 0), wave("z", 0.22, 0.0, 1)]),
+        term(0.88),
+        term(0.12, trans=[wave("x", 0.20, 0.0, 0), wave("z", 0.20, 0.0, 1)]),
     ])
     sun_pools = m_add(
-        m_scalar(0.05),
+        m_scalar(0.24),
         m_add(
-            lobe_at((0.0, 2.5, 0.0), 0.62, 0.048),      # Central Pavilion focal sunbeam
+            lobe_at((0.0, 2.5, 0.0), 0.86, 13.5),       # Central Pavilion focal sunbeam
             m_add(
-                lobe_at((0.0, 0.8, 21.0), 0.46, 0.080),  # South Threshold Pagoda Lanterns
+                lobe_at((0.0, 0.8, 21.0), 0.72, 11.0),   # South Threshold Pagoda Lanterns
                 m_add(
-                    lobe_at((19.5, 2.0, -2.0), 0.50, 0.085),  # East Armillary Sundial
+                    lobe_at((19.5, 2.0, -2.0), 0.74, 10.5),   # East Armillary Sundial
                     m_add(
-                        lobe_at((-19.5, 2.5, -2.0), 0.44, 0.072), # West Sky-Cedar crown
-                        lobe_at((0.0, 4.2, -21.5), 0.52, 0.080),  # North Zenith Campanile
+                        lobe_at((-19.5, 2.5, -2.0), 0.68, 10.5), # West Sky-Cedar crown
+                        lobe_at((0.0, 4.2, -21.5), 0.76, 11.0),  # North Zenith Campanile
                     ),
                 ),
             ),
@@ -570,16 +582,16 @@ def build_spatial_fields():
     sun_rho = m_mul(sun_dapple, sun_pools)
 
     # Vertical & horizontal color-temperature transition in sourceDelta coordinates
-    # (world y = p.y + 16.0, so p.y = -16 is world y = 0, p.y = -10 is world y = +6,
-    # p.y = -22 is world y = -6):
-    # High domes/spires get warm apricot-gold [0.98, 0.78, 0.48];
-    # Mid terraces get soft rose-amber [0.84, 0.62, 0.54];
-    # Deep crag underbellies shift into cool dusk-indigo [0.28, 0.36, 0.64].
-    alt_t = m_clamp(m_poly([term(1.0 / 14.0, {"y": 1.0}), term(20.0 / 14.0)]), 0.0, 1.0)
+    # (world y = p.y + 24.0, so p.y = -24 is world y = 0, p.y = -16 is world y = +8,
+    # p.y = -30 is world y = -6):
+    # High domes/spires get warm apricot-gold [0.98, 0.80, 0.52];
+    # Mid terraces get soft rose-amber [0.84, 0.66, 0.56];
+    # Deep crag underbellies shift into cool dusk-periwinkle [0.36, 0.44, 0.72].
+    alt_t = m_clamp(m_poly([term(1.0 / 16.0, {"y": 1.0}), term(29.0 / 16.0)]), 0.0, 1.0)
     sun_chroma = m_vec3(
-        m_add(m_scalar(0.28), m_mul(m_scalar(0.70), alt_t)),
-        m_add(m_scalar(0.36), m_mul(m_scalar(0.42), alt_t)),
-        m_add(m_scalar(0.64), m_mul(m_scalar(-0.16), alt_t)),
+        m_add(m_scalar(0.36), m_mul(m_scalar(0.62), alt_t)),
+        m_add(m_scalar(0.44), m_mul(m_scalar(0.36), alt_t)),
+        m_add(m_scalar(0.72), m_mul(m_scalar(-0.20), alt_t)),
     )
     spatial_root = {
         "id": PREFIX + "sun-of-dawn",
@@ -603,69 +615,87 @@ def build_spatial_fields():
             "displayName": pv("Celestial Sun of the Living Dawn"),
             "light.source": pv(True),
             "light.enabled": pv(True),
-            "light.ambient": pv_float(0.025),
-            "light.diffuse": pv_float(0.68),
-            "light.specular": pv_float(0.55),
-            "light.intensity": pv_float(0.82),
-            "light.color": pv_vec3(0.96, 0.78, 0.54),
+            "light.ambient": pv_float(0.085),
+            "light.diffuse": pv_float(0.84),
+            "light.specular": pv_float(0.68),
+            "light.intensity": pv_float(1.28),
+            "light.color": pv_vec3(0.98, 0.80, 0.54),
             "sanctuary.role": pv("primary-dawn-radiance"),
         },
     }
 
     # =========================================================================
     # LAYER 2: Participating Medium 1 — Sea of Sunlit Clouds Below the Islands
-    # Origin at (0, -8.6, 0), scale [30.0, 2.4, 30.0].
-    # Compact support reaches EXACT ZERO at r=25m (<30m) and |y|=1.8m (<2.4m).
-    # Squared Perlin cloud billows create real dark sky gaps between clouds,
-    # and radial/vertical volumeChroma shifts from warm sunset-amber under the
-    # central Pavilion to cool twilight indigo-violet at the outer horizon!
+    # Origin at (0, -5.5, 0), scale [36.0, 2.7, 36.0] (world y in [-8.2, -2.8],
+    # cradling the rocky island crag roots while staying strictly below all
+    # island decks so horizontal island sightlines remain 100% clear!).
+    # Compact support uses `m_dist` and `m_abs` + `m_sq` (zero `pow`), reaching
+    # exact 0 at r = 33m (< 36m) and |y| = 2.3m (< 2.7m).
+    # Multi-octave Perlin cumulus billows have sunlit golden-peach tops (`y > 0`)
+    # and cool twilight-periwinkle undersides (`y < 0`), with bounded sub-unity
+    # albedo + self-emission so the cloud sea looks bright and fluffy without
+    # ever turning the rest of the world white!
     # =========================================================================
-    cloud_r2_norm = m_poly([
-        term(1.0 / (25.0 * 25.0), {"x": 2.0}),
-        term(1.0 / (25.0 * 25.0), {"z": 2.0}),
-    ])
-    cloud_horiz_env = m_pow(m_clamp(m_sub(m_scalar(1.0), cloud_r2_norm), 0.0, 1.0), m_scalar(2.0))
-    cloud_vert_env = m_pow(
-        m_clamp(m_sub(m_scalar(1.0), m_poly([term(1.0 / (1.8 * 1.8), {"y": 2.0})])), 0.0, 1.0),
-        m_scalar(2.0),
+    cloud_r_xz = m_dist(
+        m_vec3(m_var("x"), m_scalar(0.0), m_var("z")),
+        m_vec3(m_scalar(0.0), m_scalar(0.0), m_scalar(0.0)),
+    )
+    cloud_horiz_env = m_sq(
+        m_clamp(m_sub(m_scalar(1.0), m_mul(m_scalar(1.0 / 33.0), cloud_r_xz)), 0.0, 1.0)
+    )
+    cloud_vert_env = m_sq(
+        m_clamp(m_sub(m_scalar(1.0), m_mul(m_scalar(1.0 / 2.3), m_abs(m_var("y")))), 0.0, 1.0)
     )
     cloud_envelope = m_mul(cloud_horiz_env, cloud_vert_env)
 
-    cloud_noise = m_noise(m_mul(m_scalar(0.18), m_var("p")))
-    cloud_puffs = m_pow(
-        m_clamp(
-            m_add(
-                m_poly([
-                    term(0.34),
-                    term(0.24, trans=[wave("x", 0.22, 0.0, 1), wave("z", 0.22, 0.0, 0)]),
-                ]),
-                m_mul(m_scalar(0.38), cloud_noise),
-            ),
-            0.0,
-            1.0,
+    cloud_n1 = m_noise(m_mul(m_scalar(0.14), m_var("p")))
+    cloud_n2 = m_noise(
+        m_add(m_mul(m_scalar(0.32), m_var("p")), m_vec3(m_scalar(3.1), m_scalar(1.7), m_scalar(5.3)))
+    )
+    cloud_puffs = m_clamp(
+        m_add(
+            m_poly([
+                term(0.46),
+                term(0.20, trans=[wave("x", 0.22, 0.0, 1), wave("z", 0.22, 0.0, 0)]),
+            ]),
+            m_add(m_mul(m_scalar(0.42), cloud_n1), m_mul(m_scalar(0.22), cloud_n2)),
         ),
-        m_scalar(2.0),
+        0.0,
+        1.0,
     )
     cloud_density = m_mul(cloud_envelope, cloud_puffs)
-    # Gentle diffusing optical depth: albedo = 0.008 / 0.028 = 0.285 (< 1.0)
-    cloud_ext = m_mul(m_scalar(0.028), cloud_density)
-    cloud_scat = m_mul(m_scalar(0.008), cloud_density)
-    # Radial blend weight: 1.0 under the central Pavilion, 0.0 at outer rim
-    cloud_warm_w = cloud_horiz_env
-    cloud_chroma = m_vec3(
-        m_add(m_scalar(0.20), m_mul(m_scalar(0.66), cloud_warm_w)),
-        m_add(m_scalar(0.26), m_mul(m_scalar(0.32), cloud_warm_w)),
-        m_add(m_scalar(0.48), m_mul(m_scalar(-0.06), cloud_warm_w)),
+
+    # Optical depth & scattering: sigma_t = 0.42 * D, sigma_s = 0.20 * D,
+    # E_v = 0.14 * D * cloud_chroma -> asymptotic ceiling ~ 0.81 * cloud_chroma
+    # (bright sunlit cumulus billows that can never clip to #FFFFFF white).
+    cloud_ext = m_mul(m_scalar(0.42), cloud_density)
+    cloud_scat = m_mul(m_scalar(0.20), cloud_density)
+
+    # Sunlit top vs shaded cloud belly blend (1.0 on upper cloud crests, 0.0 in troughs)
+    cloud_top_t = m_clamp(
+        m_add(
+            m_poly([term(0.55), term(0.36, {"y": 1.0})]),
+            m_mul(m_scalar(0.22), cloud_n1),
+        ),
+        0.0,
+        1.0,
     )
+    cloud_chroma = m_vec3(
+        m_add(m_scalar(0.32), m_mul(m_scalar(0.64), cloud_top_t)),
+        m_add(m_scalar(0.40), m_mul(m_scalar(0.42), cloud_top_t)),
+        m_add(m_scalar(0.66), m_mul(m_scalar(0.06), cloud_top_t)),
+    )
+    cloud_emission = m_mul(m_mul(m_scalar(0.14), cloud_density), cloud_chroma)
+
     sea_of_clouds = {
         "id": PREFIX + "sea-of-clouds",
-        "origin": [0.0, -8.6, 0.0],
-        "scale": [30.0, 2.4, 30.0],
+        "origin": [0.0, -5.5, 0.0],
+        "scale": [36.0, 2.7, 36.0],
         "field": {
             "mode": "AST",
             "baseDensity": 1.0,
             "frequency": 1.0,
-            "amplitude": 0.4,
+            "amplitude": 0.65,
             "astDefinition": piecewise(cloud_density, input_var="x"),
         },
         "vectorField": {
@@ -677,6 +707,7 @@ def build_spatial_fields():
         "volumeExtinction": piecewise(cloud_ext, input_var="x"),
         "volumeScattering": piecewise(cloud_scat, input_var="x"),
         "volumeChroma": piecewise(cloud_chroma, input_var="x"),
+        "volumeEmission": piecewise(cloud_emission, input_var="x"),
         "authoredProperties": {
             "displayName": pv("Sea of Sunlit Cumulus Clouds"),
             "light.source": pv(False),
@@ -687,36 +718,37 @@ def build_spatial_fields():
     # =========================================================================
     # LAYER 3: Participating Medium 2 — Fluted Clerestory Sunbeam Mist
     # Origin at (0, 3.5, 0), scale [5.0, 2.7, 5.0].
-    # Compact support vanishes at r=4.0m (<5.0m) and |y|=2.1m (<2.7m).
-    # Vertical chroma gradient blends from lapis-teal reflection near the Mirror
-    # Pool floor up to warm golden sunbeam at the oculus crown!
+    # Compact support vanishes at r=4.0m (<5.0m) and |y|=2.1m (<2.7m) via
+    # `m_dist` and `m_abs` + `m_sq`.
     # =========================================================================
-    mist_r2_norm = m_poly([
-        term(1.0 / (4.0 * 4.0), {"x": 2.0}),
-        term(1.0 / (4.0 * 4.0), {"z": 2.0}),
-    ])
-    mist_horiz_env = m_pow(m_clamp(m_sub(m_scalar(1.0), mist_r2_norm), 0.0, 1.0), m_scalar(2.0))
-    mist_vert_env = m_pow(
-        m_clamp(m_sub(m_scalar(1.0), m_poly([term(1.0 / (2.1 * 2.1), {"y": 2.0})])), 0.0, 1.0),
-        m_scalar(2.0),
+    mist_r_xz = m_dist(
+        m_vec3(m_var("x"), m_scalar(0.0), m_var("z")),
+        m_vec3(m_scalar(0.0), m_scalar(0.0), m_scalar(0.0)),
+    )
+    mist_horiz_env = m_sq(
+        m_clamp(m_sub(m_scalar(1.0), m_mul(m_scalar(1.0 / 4.0), mist_r_xz)), 0.0, 1.0)
+    )
+    mist_vert_env = m_sq(
+        m_clamp(m_sub(m_scalar(1.0), m_mul(m_scalar(1.0 / 2.1), m_abs(m_var("y")))), 0.0, 1.0)
     )
     mist_flutes = m_clamp(
         m_poly([
-            term(0.24),
+            term(0.26),
             term(0.18, trans=[wave("x", 1.1, 0.0, 1), wave("z", 1.1, 0.0, 1)]),
         ]),
         0.0,
         1.0,
     )
     mist_density = m_mul(m_mul(mist_horiz_env, mist_vert_env), mist_flutes)
-    mist_ext = m_mul(m_scalar(0.014), mist_density)
-    mist_scat = m_mul(m_scalar(0.0045), mist_density)
+    mist_ext = m_mul(m_scalar(0.024), mist_density)
+    mist_scat = m_mul(m_scalar(0.009), mist_density)
     mist_y_t = m_clamp(m_poly([term(1.0 / 4.2, {"y": 1.0}), term(0.5)]), 0.0, 1.0)
     mist_chroma = m_vec3(
-        m_add(m_scalar(0.20), m_mul(m_scalar(0.76), mist_y_t)),
-        m_add(m_scalar(0.46), m_mul(m_scalar(0.36), mist_y_t)),
-        m_add(m_scalar(0.68), m_mul(m_scalar(-0.14), mist_y_t)),
+        m_add(m_scalar(0.24), m_mul(m_scalar(0.72), mist_y_t)),
+        m_add(m_scalar(0.50), m_mul(m_scalar(0.32), mist_y_t)),
+        m_add(m_scalar(0.72), m_mul(m_scalar(-0.18), mist_y_t)),
     )
+    mist_emission = m_mul(m_mul(m_scalar(0.008), mist_density), mist_chroma)
 
     occ_slab = sdf_leaf(1, (4.6, 0.40, 4.6), offset=(0.0, 1.9, 0.0))
     occ_hole_center = sdf_leaf(4, (2.0, 1.0, 0.0), offset=(0.0, 1.9, 0.0))
@@ -745,6 +777,7 @@ def build_spatial_fields():
         "volumeExtinction": piecewise(mist_ext, input_var="x"),
         "volumeScattering": piecewise(mist_scat, input_var="x"),
         "volumeChroma": piecewise(mist_chroma, input_var="x"),
+        "volumeEmission": piecewise(mist_emission, input_var="x"),
         "volumeOccluder": mist_occluder,
         "authoredProperties": {
             "displayName": pv("Sanctuary Clerestory Sunbeam Mist"),
@@ -755,36 +788,35 @@ def build_spatial_fields():
 
     # =========================================================================
     # LAYER 4: Secondary Radiant FieldNode 1 — Lotus Heart Sanctuary Lantern
-    # Origin at (0, 3.4, 0). Strict compact support (exact 0 outside r=6.8m) with
-    # zero ambient. Radial chroma shifts from luminous cyan-pearl at the Heart
-    # Crystal (r=0) to warm amber-copper across the 12 Lotus Petals (r=2..6m).
+    # Origin at (0, 4.8, 0) in open air just above the Heart Crystal (0, 3.4, 0)
+    # so `sourceVisibility` has an unobstructed line of sight to all 12 Lotus
+    # Petals, the Mirror Pool, and the inner colonnade across all 360 degrees.
+    # Uses `m_dist` (Op::Distance) so all 8 octants evaluate cleanly!
     # =========================================================================
-    heart_d2 = m_poly([
-        term(1.0, {"x": 2.0}),
-        term(1.0, {"y": 2.0}),
-        term(1.0, {"z": 2.0}),
-    ])
-    heart_support = m_pow(
-        m_clamp(m_sub(m_scalar(1.0), m_mul(m_scalar(1.0 / (6.8 * 6.8)), heart_d2)), 0.0, 1.0),
-        m_scalar(2.0),
+    heart_d = m_dist(
+        m_var("p"),
+        m_vec3(m_scalar(0.0), m_scalar(-1.4), m_scalar(0.0)),
+    )
+    heart_support = m_sq(
+        m_clamp(m_sub(m_scalar(1.0), m_mul(m_scalar(1.0 / 9.0), heart_d)), 0.0, 1.0)
     )
     heart_pulse = m_poly([
-        term(0.86),
-        term(0.14, trans=[wave("t", 1.5, 0.0, 0)]),
+        term(0.88),
+        term(0.12, trans=[wave("t", 1.5, 0.0, 0)]),
     ])
     heart_rho = m_mul(
         heart_support,
-        m_div(heart_pulse, m_add(m_scalar(1.0), m_mul(m_scalar(0.38), heart_d2))),
+        m_div(heart_pulse, m_add(m_scalar(1.0), m_mul(m_scalar(0.12), m_sq(heart_d)))),
     )
     heart_chroma = m_vec3(
-        m_add(m_scalar(0.96), m_mul(m_scalar(-0.44), heart_support)),
-        m_add(m_scalar(0.56), m_mul(m_scalar(0.38), heart_support)),
+        m_add(m_scalar(0.96), m_mul(m_scalar(-0.48), heart_support)),
+        m_add(m_scalar(0.58), m_mul(m_scalar(0.36), heart_support)),
         m_add(m_scalar(0.24), m_mul(m_scalar(0.74), heart_support)),
     )
     heart_radiance = {
         "id": PREFIX + "heart-radiance",
-        "origin": [0.0, 3.4, 0.0],
-        "scale": [5.5, 5.5, 5.5],
+        "origin": [0.0, 4.8, 0.0],
+        "scale": [6.5, 6.5, 6.5],
         "field": {
             "mode": "AST",
             "baseDensity": 1.0,
@@ -803,10 +835,10 @@ def build_spatial_fields():
             "displayName": pv("Heart of the Dawn Radiant Core"),
             "light.source": pv(True),
             "light.enabled": pv(True),
-            "light.ambient": pv_float(0.00),
-            "light.diffuse": pv_float(0.72),
-            "light.specular": pv_float(0.68),
-            "light.intensity": pv_float(0.88),
+            "light.ambient": pv_float(0.02),
+            "light.diffuse": pv_float(0.84),
+            "light.specular": pv_float(0.76),
+            "light.intensity": pv_float(1.18),
             "light.color": pv_vec3(0.52, 0.90, 0.98),
             "sanctuary.role": pv("lotus-heart-beacon"),
         },
@@ -814,35 +846,37 @@ def build_spatial_fields():
 
     # =========================================================================
     # LAYER 5: Secondary Radiant FieldNode 2 — Aether Iris Counter-Light Ring
-    # Origin at (0, 1.8, 0). Toroidal ring peaking around r = 15.5m (where the
-    # outer cloister balustrade, arched stone bridge, and cloud stepping stones
-    # meet the twilight sky), casting a cool aquamarine/sapphire rim light that
-    # contrasts against the warm golden Pavilion core!
+    # Origin at (12.0, 14.0, -16.0) in the northeastern twilight sky opposite
+    # the golden sun, casting a cool aquamarine/cerulean counter-light ring
+    # peaking around the outer cloister balustrade, stepping stones, and shaded
+    # northern column faces. Uses `m_dist` + `m_sq` (zero `pow`).
     # =========================================================================
-    iris_r2 = m_poly([
-        term(1.0, {"x": 2.0}),
-        term(0.5, {"y": 2.0}),
-        term(1.0, {"z": 2.0}),
-    ])
-    # Smooth ring peaking at r^2 = 240 (r ~ 15.5m), zero at r=0 and outside r=24m
-    iris_inner = m_clamp(m_mul(m_scalar(1.0 / 200.0), iris_r2), 0.0, 1.0)
-    iris_outer = m_pow(
-        m_clamp(m_sub(m_scalar(1.0), m_mul(m_scalar(1.0 / (24.0 * 24.0)), iris_r2)), 0.0, 1.0),
-        m_scalar(2.0),
+    iris_origin = (12.0, 14.0, -16.0)
+    iris_world_r = m_dist(
+        m_vec3(
+            m_poly([term(1.0, {"x": 1.0}), term(iris_origin[0])]),
+            m_scalar(0.0),
+            m_poly([term(1.0, {"z": 1.0}), term(iris_origin[2])]),
+        ),
+        m_vec3(m_scalar(0.0), m_scalar(0.0), m_scalar(0.0)),
+    )
+    iris_inner = m_clamp(m_mul(m_scalar(1.0 / 12.0), iris_world_r), 0.0, 1.0)
+    iris_outer = m_sq(
+        m_clamp(m_sub(m_scalar(1.0), m_mul(m_scalar(1.0 / 28.0), iris_world_r)), 0.0, 1.0)
     )
     iris_wave = m_poly([
-        term(0.82),
-        term(0.18, trans=[wave("x", 0.25, 0.0, 1), wave("z", 0.25, 0.0, 0)]),
+        term(0.84),
+        term(0.16, trans=[wave("x", 0.25, 0.0, 1), wave("z", 0.25, 0.0, 0)]),
     ])
-    iris_rho = m_mul(m_scalar(0.52), m_mul(m_mul(iris_inner, iris_outer), iris_wave))
+    iris_rho = m_mul(m_scalar(0.68), m_mul(m_mul(iris_inner, iris_outer), iris_wave))
     iris_chroma = m_vec3(
-        m_poly([term(0.16), term(0.06, trans=[wave("z", 0.2, 0.0, 0)])]),
-        m_poly([term(0.68), term(0.10, trans=[wave("x", 0.2, 0.0, 1)])]),
-        m_poly([term(0.88)]),
+        m_poly([term(0.20), term(0.06, trans=[wave("z", 0.2, 0.0, 0)])]),
+        m_poly([term(0.70), term(0.10, trans=[wave("x", 0.2, 0.0, 1)])]),
+        m_poly([term(0.92)]),
     )
     aether_iris_ring = {
         "id": PREFIX + "aether-iris-ring",
-        "origin": [0.0, 1.8, 0.0],
+        "origin": list(iris_origin),
         "scale": [1.0, 1.0, 1.0],
         "field": {
             "mode": "AST",
@@ -862,11 +896,11 @@ def build_spatial_fields():
             "displayName": pv("Aether Iris Counter-Light Ring"),
             "light.source": pv(True),
             "light.enabled": pv(True),
-            "light.ambient": pv_float(0.00),
-            "light.diffuse": pv_float(0.64),
-            "light.specular": pv_float(0.58),
-            "light.intensity": pv_float(0.58),
-            "light.color": pv_vec3(0.16, 0.68, 0.88),
+            "light.ambient": pv_float(0.025),
+            "light.diffuse": pv_float(0.72),
+            "light.specular": pv_float(0.62),
+            "light.intensity": pv_float(0.74),
+            "light.color": pv_vec3(0.20, 0.70, 0.92),
             "sanctuary.role": pv("cloister-rim-counterlight"),
         },
     }
