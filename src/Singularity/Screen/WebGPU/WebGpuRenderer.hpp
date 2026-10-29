@@ -50,6 +50,7 @@ public:
     void setRoutedCoalescedPassesForDiagnostics(bool on, bool trace=false) { if(_kernelRouted){_kernelRouted->coalescePasses=on;_kernelRouted->collectDispatchTrace=trace;} }
     bool setRoutedRouteObserverForDiagnostics(bool on) { return _kernelRouted && _kernelRouted->enableRouteObserver(on); }
     void resetRoutedRouteObserverForDiagnostics() { if(_kernelRouted)_kernelRouted->resetRouteHistogram(); }
+    bool setRoutedWorkTraceForDiagnostics(bool on) { return _kernelRouted && _kernelRouted->enableWorkTrace(on); }
     void setRoutedSkipEmptyTilesForDiagnostics(bool on) { if(_kernelRouted)_kernelRouted->skipEmptyTiles=on&&_kernelRouted->classifySkip; }
     void setRoutedWorkLimitForDiagnostics(uint32_t limit) { if(_kernelRouted)_kernelRouted->workLimit=std::min(limit,1024u); }
 

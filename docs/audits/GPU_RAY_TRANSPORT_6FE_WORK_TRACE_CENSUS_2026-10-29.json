@@ -1,0 +1,7317 @@
+{
+ "schema": "6fe-work-trace-census-1",
+ "signed": "Claude Code / Sonnet 5.5 / worktree authorable-gpu-runs-268d29 / 2026-10-29",
+ "base_commit": "301304eed0be1b3b72cca61e84f3d2859544d68a",
+ "source_state": "base 301304eed + uncommitted Pass A diagnostic (VolumeRoutedTransport.hpp/.inc, WebGpuRenderer.hpp) + scratch/probes 6fe harness",
+ "backend": "wgpu-native/Metal, Release (-O3 -DNDEBUG), real Engine, 2560x1440, offscreen-equivalent (no foreground handoff; not timing)",
+ "dimensions": {
+  "width": 2560,
+  "height": 1440,
+  "strips": 30,
+  "tiles_per_strip": 7680,
+  "lanes_per_producer_per_strip": 122880
+ },
+ "budget_policy": {
+  "workLimit": 1024,
+  "skipEmptyTiles": false,
+  "coalesced": true,
+  "note": "production configuration; trace words record the producers' own work counters"
+ },
+ "binary_sha256": "69c7fec403867a9f592c45001c6864d641fc36b10443ea94b8ea94c4293883fb",
+ "tools_sha256": {
+  "ray_transport_6fe_engine.py": "642e872c50f1eab4d2aceaf3e147f90240bf9c53f608b7f28b7baafd47a5933d",
+  "ray_transport_6fe_engine.cpp": "55af6a73abfdce5fe0c217d4f47da974d4dd3a05d5a57d7f71645ece201dee5e"
+ },
+ "routes": {
+  "outside": "64-pose Northern Veil route, every 4th pose (16 poses), pose() of ray_transport_6fe_engine.cpp",
+  "inside": "worktrace_in: eye at route aim point among the curtains, yaw sweep, every 4th of 64 (16 poses)"
+ },
+ "outside_run": {
+  "fixed_step": 0.01666666753590107,
+  "foreground_required": false,
+  "foreign_network_service": false,
+  "framebuffer": [
+   2560,
+   1440
+  ],
+  "init_ms": 472.942125,
+  "media": 4,
+  "mode": "worktrace",
+  "objects": 24,
+  "schema": "6ey-actual-engine-release-scripted-path-1",
+  "snapshot_scope": "3D scene before ImGui overlay, through actual ScreenRecorder",
+  "strips": 30,
+  "tiles": 7680,
+  "trace_bytes": 44236800,
+  "trace_output_control": [
+   {
+    "index": 0,
+    "off": "de154bd4fd9d2c0b",
+    "on": "de154bd4fd9d2c0b"
+   },
+   {
+    "index": 32,
+    "off": "7c14eadd2a2e79c9",
+    "on": "7c14eadd2a2e79c9"
+   }
+  ],
+  "traces": [
+   {
+    "file": "trace-0.bin",
+    "fnv": "c3cd06e0def5a349",
+    "index": 0,
+    "publication_fnv": "de154bd4fd9d2c0b"
+   },
+   {
+    "file": "trace-4.bin",
+    "fnv": "fcd3670c097fa162",
+    "index": 4,
+    "publication_fnv": "4b91db0dfbfc2922"
+   },
+   {
+    "file": "trace-8.bin",
+    "fnv": "9e45864c9fb0e076",
+    "index": 8,
+    "publication_fnv": "be13011ceec1ae65"
+   },
+   {
+    "file": "trace-12.bin",
+    "fnv": "72514865635668ee",
+    "index": 12,
+    "publication_fnv": "695a951e68e49f15"
+   },
+   {
+    "file": "trace-16.bin",
+    "fnv": "7553e15792d001c8",
+    "index": 16,
+    "publication_fnv": "632b0663022bf93b"
+   },
+   {
+    "file": "trace-20.bin",
+    "fnv": "bbe1465aaf1ff827",
+    "index": 20,
+    "publication_fnv": "0ab6692d52582e22"
+   },
+   {
+    "file": "trace-24.bin",
+    "fnv": "491d2f565819d858",
+    "index": 24,
+    "publication_fnv": "2c5e306fedd1273d"
+   },
+   {
+    "file": "trace-28.bin",
+    "fnv": "b47f8d8a78023cd8",
+    "index": 28,
+    "publication_fnv": "9c8fe8e922e8c66b"
+   },
+   {
+    "file": "trace-32.bin",
+    "fnv": "9525ad1cfeb4ed96",
+    "index": 32,
+    "publication_fnv": "7c14eadd2a2e79c9"
+   },
+   {
+    "file": "trace-36.bin",
+    "fnv": "1326f2d64f19ebd6",
+    "index": 36,
+    "publication_fnv": "f03b778e415cb27f"
+   },
+   {
+    "file": "trace-40.bin",
+    "fnv": "f2c77795777cf332",
+    "index": 40,
+    "publication_fnv": "a38741c971d77e6a"
+   },
+   {
+    "file": "trace-44.bin",
+    "fnv": "7f80e910ab45216c",
+    "index": 44,
+    "publication_fnv": "86892e6c46c601ff"
+   },
+   {
+    "file": "trace-48.bin",
+    "fnv": "f297a768358536cb",
+    "index": 48,
+    "publication_fnv": "71b3dc6fd2478f99"
+   },
+   {
+    "file": "trace-52.bin",
+    "fnv": "3ae539f3b6ce4246",
+    "index": 52,
+    "publication_fnv": "69cb3a75d2c8a65d"
+   },
+   {
+    "file": "trace-56.bin",
+    "fnv": "8eb8d015bf96f0f8",
+    "index": 56,
+    "publication_fnv": "2339f34a5071b9da"
+   },
+   {
+    "file": "trace-60.bin",
+    "fnv": "4a74fc1188e71763",
+    "index": 60,
+    "publication_fnv": "206b9886b616b768"
+   }
+  ]
+ },
+ "inside_run": {
+  "fixed_step": 0.01666666753590107,
+  "foreground_required": false,
+  "foreign_network_service": false,
+  "framebuffer": [
+   2560,
+   1440
+  ],
+  "init_ms": 683.729292,
+  "media": 4,
+  "mode": "worktrace_in",
+  "objects": 24,
+  "schema": "6ey-actual-engine-release-scripted-path-1",
+  "snapshot_scope": "3D scene before ImGui overlay, through actual ScreenRecorder",
+  "strips": 30,
+  "tiles": 7680,
+  "trace_bytes": 44236800,
+  "trace_output_control": [
+   {
+    "index": 0,
+    "off": "9595573d1b9192fc",
+    "on": "9595573d1b9192fc"
+   },
+   {
+    "index": 32,
+    "off": "2f35b0eeab3cdc68",
+    "on": "2f35b0eeab3cdc68"
+   }
+  ],
+  "traces": [
+   {
+    "file": "traceIn-0.bin",
+    "fnv": "89ba1db46f63b955",
+    "index": 0,
+    "publication_fnv": "9595573d1b9192fc"
+   },
+   {
+    "file": "traceIn-4.bin",
+    "fnv": "b83a35d38e38d253",
+    "index": 4,
+    "publication_fnv": "39068fe6dcda0f39"
+   },
+   {
+    "file": "traceIn-8.bin",
+    "fnv": "843c161eff0b4594",
+    "index": 8,
+    "publication_fnv": "5441b64691753cc8"
+   },
+   {
+    "file": "traceIn-12.bin",
+    "fnv": "185b497a37b77b95",
+    "index": 12,
+    "publication_fnv": "106a12e5309a5c7c"
+   },
+   {
+    "file": "traceIn-16.bin",
+    "fnv": "170bf3cdcf44c226",
+    "index": 16,
+    "publication_fnv": "6f57aeeb21fa8646"
+   },
+   {
+    "file": "traceIn-20.bin",
+    "fnv": "9894689d0ee92767",
+    "index": 20,
+    "publication_fnv": "6c21a83aab47aacf"
+   },
+   {
+    "file": "traceIn-24.bin",
+    "fnv": "70d59cb389f2457a",
+    "index": 24,
+    "publication_fnv": "23d95dc120db6e2e"
+   },
+   {
+    "file": "traceIn-28.bin",
+    "fnv": "7909af0d38b03d7d",
+    "index": 28,
+    "publication_fnv": "c1066b5b51a67c3e"
+   },
+   {
+    "file": "traceIn-32.bin",
+    "fnv": "07081a5c5e948d0e",
+    "index": 32,
+    "publication_fnv": "2f35b0eeab3cdc68"
+   },
+   {
+    "file": "traceIn-36.bin",
+    "fnv": "86b5f42723d677d7",
+    "index": 36,
+    "publication_fnv": "3bfd56c561c1570d"
+   },
+   {
+    "file": "traceIn-40.bin",
+    "fnv": "2d1b094f3ef9c3c9",
+    "index": 40,
+    "publication_fnv": "326e2ec10d98efbc"
+   },
+   {
+    "file": "traceIn-44.bin",
+    "fnv": "a361bd03fa761ba0",
+    "index": 44,
+    "publication_fnv": "d27a631cbf700cd4"
+   },
+   {
+    "file": "traceIn-48.bin",
+    "fnv": "fab0d45f236fc367",
+    "index": 48,
+    "publication_fnv": "38067309b1f3cba0"
+   },
+   {
+    "file": "traceIn-52.bin",
+    "fnv": "d4b8a90839b78748",
+    "index": 52,
+    "publication_fnv": "d559bffe2a50fbe6"
+   },
+   {
+    "file": "traceIn-56.bin",
+    "fnv": "4f293ec3f90b2975",
+    "index": 56,
+    "publication_fnv": "03e940c7d5a97551"
+   },
+   {
+    "file": "traceIn-60.bin",
+    "fnv": "cf7b5c2a7fbc2ffc",
+    "index": 60,
+    "publication_fnv": "fcd369e988da595a"
+   }
+  ]
+ },
+ "analyzer": "scratch/probes/ray_work_trace_analyze.cpp (clang++ -O2 -std=c++17); args: 30 7680 <trace files>",
+ "outside_analysis": {
+  "poses": [
+   {
+    "file": "worktrace/trace-0.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 1569360,
+      "refused_lanes": 0,
+      "sum_work": 86210027,
+      "mean": 54.933,
+      "p50": 54,
+      "p90": 71,
+      "p99": 93,
+      "p999": 98,
+      "max": 102,
+      "reasons": {
+       "0": 1569360
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       16701,
+       1343467,
+       209192,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 98085,
+        "sum_max": 5718146,
+        "sum_work": 86210027,
+        "efficiency": 0.9423
+       },
+       "32": {
+        "groups": 49047,
+        "sum_max": 2886681,
+        "sum_work": 86210027,
+        "efficiency": 0.9333
+       },
+       "64": {
+        "groups": 24528,
+        "sum_max": 1462631,
+        "sum_work": 86210027,
+        "efficiency": 0.921
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 2882464,
+        "vs_direct": 0.9985,
+        "max_stages": 4,
+        "pending_after_stage1": 1536089
+       },
+       "Q64": {
+        "lockstep_units": 2884123,
+        "vs_direct": 0.9991,
+        "max_stages": 2,
+        "pending_after_stage1": 201912
+       },
+       "Q128": {
+        "lockstep_units": 2886681,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 2886681,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 2886681,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 1412912,
+      "refused_lanes": 0,
+      "sum_work": 157353848,
+      "mean": 111.368,
+      "p50": 113,
+      "p90": 118,
+      "p99": 121,
+      "p999": 122,
+      "max": 123,
+      "reasons": {
+       "0": 1412912
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       1412912,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 88307,
+        "sum_max": 10249463,
+        "sum_work": 157353848,
+        "efficiency": 0.9595
+       },
+       "32": {
+        "groups": 44154,
+        "sum_max": 5167750,
+        "sum_work": 157353848,
+        "efficiency": 0.9515
+       },
+       "64": {
+        "groups": 22081,
+        "sum_max": 2603333,
+        "sum_work": 157353848,
+        "efficiency": 0.9444
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 5167420,
+        "vs_direct": 0.9999,
+        "max_stages": 4,
+        "pending_after_stage1": 1412912
+       },
+       "Q64": {
+        "lockstep_units": 5167880,
+        "vs_direct": 1.0,
+        "max_stages": 2,
+        "pending_after_stage1": 1412911
+       },
+       "Q128": {
+        "lockstep_units": 5167750,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 5167750,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 5167750,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 704128,
+      "refused_lanes": 0,
+      "sum_work": 86751421,
+      "mean": 123.204,
+      "p50": 125,
+      "p90": 137,
+      "p99": 157,
+      "p999": 166,
+      "max": 180,
+      "reasons": {
+       "0": 704128
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       376162,
+       327966,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 44008,
+        "sum_max": 5621750,
+        "sum_work": 86751421,
+        "efficiency": 0.9645
+       },
+       "32": {
+        "groups": 22009,
+        "sum_max": 2835457,
+        "sum_work": 86751421,
+        "efficiency": 0.9561
+       },
+       "64": {
+        "groups": 11010,
+        "sum_max": 1435154,
+        "sum_work": 86751421,
+        "efficiency": 0.9445
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 2823482,
+        "vs_direct": 0.9958,
+        "max_stages": 6,
+        "pending_after_stage1": 704128
+       },
+       "Q64": {
+        "lockstep_units": 2825334,
+        "vs_direct": 0.9964,
+        "max_stages": 3,
+        "pending_after_stage1": 704128
+       },
+       "Q128": {
+        "lockstep_units": 2825334,
+        "vs_direct": 0.9964,
+        "max_stages": 2,
+        "pending_after_stage1": 317549
+       },
+       "Q256": {
+        "lockstep_units": 2835457,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 2835457,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-12.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 1708416,
+      "refused_lanes": 0,
+      "sum_work": 84249058,
+      "mean": 49.314,
+      "p50": 45,
+      "p90": 69,
+      "p99": 101,
+      "p999": 109,
+      "max": 115,
+      "reasons": {
+       "0": 1708416
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       9364,
+       1484549,
+       214503,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 106776,
+        "sum_max": 5577384,
+        "sum_work": 84249058,
+        "efficiency": 0.9441
+       },
+       "32": {
+        "groups": 53395,
+        "sum_max": 2817279,
+        "sum_work": 84249058,
+        "efficiency": 0.9345
+       },
+       "64": {
+        "groups": 26704,
+        "sum_max": 1429809,
+        "sum_work": 84249058,
+        "efficiency": 0.9207
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 2812150,
+        "vs_direct": 0.9982,
+        "max_stages": 4,
+        "pending_after_stage1": 1689668
+       },
+       "Q64": {
+        "lockstep_units": 2816076,
+        "vs_direct": 0.9996,
+        "max_stages": 2,
+        "pending_after_stage1": 204524
+       },
+       "Q128": {
+        "lockstep_units": 2817279,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 2817279,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 2817279,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 1484336,
+      "refused_lanes": 0,
+      "sum_work": 149140159,
+      "mean": 100.476,
+      "p50": 103,
+      "p90": 107,
+      "p99": 110,
+      "p999": 111,
+      "max": 111,
+      "reasons": {
+       "0": 1484336
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       446,
+       1483890,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 92771,
+        "sum_max": 9723171,
+        "sum_work": 149140159,
+        "efficiency": 0.9587
+       },
+       "32": {
+        "groups": 46389,
+        "sum_max": 4900265,
+        "sum_work": 149140159,
+        "efficiency": 0.9511
+       },
+       "64": {
+        "groups": 23198,
+        "sum_max": 2467837,
+        "sum_work": 149140159,
+        "efficiency": 0.9443
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 4880506,
+        "vs_direct": 0.996,
+        "max_stages": 4,
+        "pending_after_stage1": 1484336
+       },
+       "Q64": {
+        "lockstep_units": 4907059,
+        "vs_direct": 1.0014,
+        "max_stages": 2,
+        "pending_after_stage1": 1483741
+       },
+       "Q128": {
+        "lockstep_units": 4900265,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 4900265,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 4900265,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 493648,
+      "refused_lanes": 0,
+      "sum_work": 55181060,
+      "mean": 111.782,
+      "p50": 114,
+      "p90": 125,
+      "p99": 151,
+      "p999": 162,
+      "max": 170,
+      "reasons": {
+       "0": 493648
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       469677,
+       23971,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 30853,
+        "sum_max": 3570063,
+        "sum_work": 55181060,
+        "efficiency": 0.966
+       },
+       "32": {
+        "groups": 15432,
+        "sum_max": 1801857,
+        "sum_work": 55181060,
+        "efficiency": 0.957
+       },
+       "64": {
+        "groups": 7721,
+        "sum_max": 913445,
+        "sum_work": 55181060,
+        "efficiency": 0.9439
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 1796086,
+        "vs_direct": 0.9968,
+        "max_stages": 6,
+        "pending_after_stage1": 493648
+       },
+       "Q64": {
+        "lockstep_units": 1800205,
+        "vs_direct": 0.9991,
+        "max_stages": 3,
+        "pending_after_stage1": 493648
+       },
+       "Q128": {
+        "lockstep_units": 1800205,
+        "vs_direct": 0.9991,
+        "max_stages": 2,
+        "pending_after_stage1": 22333
+       },
+       "Q256": {
+        "lockstep_units": 1801857,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 1801857,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-16.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 1732704,
+      "refused_lanes": 0,
+      "sum_work": 72755417,
+      "mean": 41.99,
+      "p50": 35,
+      "p90": 68,
+      "p99": 83,
+      "p999": 107,
+      "max": 115,
+      "reasons": {
+       "0": 1732704
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       93474,
+       1394791,
+       244439,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 108294,
+        "sum_max": 4777800,
+        "sum_work": 72755417,
+        "efficiency": 0.9517
+       },
+       "32": {
+        "groups": 54152,
+        "sum_max": 2410146,
+        "sum_work": 72755417,
+        "efficiency": 0.9433
+       },
+       "64": {
+        "groups": 27084,
+        "sum_max": 1222216,
+        "sum_work": 72755417,
+        "efficiency": 0.9301
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 2390285,
+        "vs_direct": 0.9918,
+        "max_stages": 4,
+        "pending_after_stage1": 1545917
+       },
+       "Q64": {
+        "lockstep_units": 2403978,
+        "vs_direct": 0.9974,
+        "max_stages": 2,
+        "pending_after_stage1": 229989
+       },
+       "Q128": {
+        "lockstep_units": 2410146,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 2410146,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 2410146,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 1502992,
+      "refused_lanes": 0,
+      "sum_work": 134925124,
+      "mean": 89.771,
+      "p50": 92,
+      "p90": 96,
+      "p99": 98,
+      "p999": 99,
+      "max": 100,
+      "reasons": {
+       "0": 1502992
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       17830,
+       1485162,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 93937,
+        "sum_max": 8783165,
+        "sum_work": 134925124,
+        "efficiency": 0.9601
+       },
+       "32": {
+        "groups": 46971,
+        "sum_max": 4424908,
+        "sum_work": 134925124,
+        "efficiency": 0.9529
+       },
+       "64": {
+        "groups": 23491,
+        "sum_max": 2227886,
+        "sum_work": 134925124,
+        "efficiency": 0.9463
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 4389951,
+        "vs_direct": 0.9921,
+        "max_stages": 4,
+        "pending_after_stage1": 1502992
+       },
+       "Q64": {
+        "lockstep_units": 4429495,
+        "vs_direct": 1.001,
+        "max_stages": 2,
+        "pending_after_stage1": 1482712
+       },
+       "Q128": {
+        "lockstep_units": 4424908,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 4424908,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 4424908,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 450704,
+      "refused_lanes": 0,
+      "sum_work": 44176406,
+      "mean": 98.016,
+      "p50": 97,
+      "p90": 115,
+      "p99": 123,
+      "p999": 132,
+      "max": 139,
+      "reasons": {
+       "0": 450704
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       449100,
+       1604,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 28169,
+        "sum_max": 2849340,
+        "sum_work": 44176406,
+        "efficiency": 0.969
+       },
+       "32": {
+        "groups": 14088,
+        "sum_max": 1440304,
+        "sum_work": 44176406,
+        "efficiency": 0.9585
+       },
+       "64": {
+        "groups": 7050,
+        "sum_max": 733119,
+        "sum_work": 44176406,
+        "efficiency": 0.9415
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 1433846,
+        "vs_direct": 0.9955,
+        "max_stages": 5,
+        "pending_after_stage1": 450704
+       },
+       "Q64": {
+        "lockstep_units": 1439876,
+        "vs_direct": 0.9997,
+        "max_stages": 3,
+        "pending_after_stage1": 450704
+       },
+       "Q128": {
+        "lockstep_units": 1439876,
+        "vs_direct": 0.9997,
+        "max_stages": 2,
+        "pending_after_stage1": 1300
+       },
+       "Q256": {
+        "lockstep_units": 1440304,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 1440304,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-20.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 934000,
+      "refused_lanes": 0,
+      "sum_work": 36637947,
+      "mean": 39.227,
+      "p50": 36,
+      "p90": 60,
+      "p99": 70,
+      "p999": 96,
+      "max": 105,
+      "reasons": {
+       "0": 934000
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       408195,
+       498845,
+       26960,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 58375,
+        "sum_max": 2391457,
+        "sum_work": 36637947,
+        "efficiency": 0.9575
+       },
+       "32": {
+        "groups": 29194,
+        "sum_max": 1208941,
+        "sum_work": 36637947,
+        "efficiency": 0.9471
+       },
+       "64": {
+        "groups": 14600,
+        "sum_max": 615318,
+        "sum_work": 36637947,
+        "efficiency": 0.9304
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 1208976,
+        "vs_direct": 1.0,
+        "max_stages": 4,
+        "pending_after_stage1": 520117
+       },
+       "Q64": {
+        "lockstep_units": 1208140,
+        "vs_direct": 0.9993,
+        "max_stages": 2,
+        "pending_after_stage1": 19902
+       },
+       "Q128": {
+        "lockstep_units": 1208941,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 1208941,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 1208941,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 39264,
+      "refused_lanes": 0,
+      "sum_work": 2189126,
+      "mean": 55.754,
+      "p50": 58,
+      "p90": 59,
+      "p99": 68,
+      "p999": 70,
+      "max": 70,
+      "reasons": {
+       "0": 39264
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       37939,
+       1325,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 2454,
+        "sum_max": 140765,
+        "sum_work": 2189126,
+        "efficiency": 0.972
+       },
+       "32": {
+        "groups": 1228,
+        "sum_max": 72004,
+        "sum_work": 2189126,
+        "efficiency": 0.9501
+       },
+       "64": {
+        "groups": 615,
+        "sum_max": 37490,
+        "sum_work": 2189126,
+        "efficiency": 0.9124
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 71544,
+        "vs_direct": 0.9936,
+        "max_stages": 3,
+        "pending_after_stage1": 39264
+       },
+       "Q64": {
+        "lockstep_units": 71544,
+        "vs_direct": 0.9936,
+        "max_stages": 2,
+        "pending_after_stage1": 1309
+       },
+       "Q128": {
+        "lockstep_units": 72004,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 72004,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 72004,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 2713136,
+      "refused_lanes": 0,
+      "sum_work": 280378233,
+      "mean": 103.341,
+      "p50": 103,
+      "p90": 128,
+      "p99": 133,
+      "p999": 134,
+      "max": 157,
+      "reasons": {
+       "0": 2713136
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       4,
+       2423762,
+       289370,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 169571,
+        "sum_max": 17877709,
+        "sum_work": 280378233,
+        "efficiency": 0.9802
+       },
+       "32": {
+        "groups": 84791,
+        "sum_max": 8978061,
+        "sum_work": 280378233,
+        "efficiency": 0.9759
+       },
+       "64": {
+        "groups": 42400,
+        "sum_max": 4516127,
+        "sum_work": 280378233,
+        "efficiency": 0.9701
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 8951290,
+        "vs_direct": 0.997,
+        "max_stages": 5,
+        "pending_after_stage1": 2713136
+       },
+       "Q64": {
+        "lockstep_units": 8959108,
+        "vs_direct": 0.9979,
+        "max_stages": 3,
+        "pending_after_stage1": 2713131
+       },
+       "Q128": {
+        "lockstep_units": 8959050,
+        "vs_direct": 0.9979,
+        "max_stages": 2,
+        "pending_after_stage1": 242852
+       },
+       "Q256": {
+        "lockstep_units": 8978061,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 8978061,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-24.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 595152,
+      "refused_lanes": 0,
+      "sum_work": 29211582,
+      "mean": 49.083,
+      "p50": 53,
+      "p90": 60,
+      "p99": 64,
+      "p999": 67,
+      "max": 70,
+      "reasons": {
+       "0": 595152
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       25455,
+       561647,
+       8050,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 37197,
+        "sum_max": 1932779,
+        "sum_work": 29211582,
+        "efficiency": 0.9446
+       },
+       "32": {
+        "groups": 18604,
+        "sum_max": 976437,
+        "sum_work": 29211582,
+        "efficiency": 0.9349
+       },
+       "64": {
+        "groups": 9307,
+        "sum_max": 496174,
+        "sum_work": 29211582,
+        "efficiency": 0.9199
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 976333,
+        "vs_direct": 0.9999,
+        "max_stages": 3,
+        "pending_after_stage1": 561549
+       },
+       "Q64": {
+        "lockstep_units": 975070,
+        "vs_direct": 0.9986,
+        "max_stages": 2,
+        "pending_after_stage1": 4166
+       },
+       "Q128": {
+        "lockstep_units": 976437,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 976437,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 976437,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3091248,
+      "refused_lanes": 0,
+      "sum_work": 307563177,
+      "mean": 99.495,
+      "p50": 96,
+      "p90": 127,
+      "p99": 133,
+      "p999": 135,
+      "max": 149,
+      "reasons": {
+       "0": 3091248
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       21,
+       2793934,
+       297293,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 193203,
+        "sum_max": 19584769,
+        "sum_work": 307563177,
+        "efficiency": 0.9815
+       },
+       "32": {
+        "groups": 96607,
+        "sum_max": 9837470,
+        "sum_work": 307563177,
+        "efficiency": 0.977
+       },
+       "64": {
+        "groups": 48310,
+        "sum_max": 4958541,
+        "sum_work": 307563177,
+        "efficiency": 0.9692
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 9810249,
+        "vs_direct": 0.9972,
+        "max_stages": 5,
+        "pending_after_stage1": 3091248
+       },
+       "Q64": {
+        "lockstep_units": 9819815,
+        "vs_direct": 0.9982,
+        "max_stages": 3,
+        "pending_after_stage1": 3091220
+       },
+       "Q128": {
+        "lockstep_units": 9819143,
+        "vs_direct": 0.9981,
+        "max_stages": 2,
+        "pending_after_stage1": 255173
+       },
+       "Q256": {
+        "lockstep_units": 9837470,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 9837470,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-28.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 651040,
+      "refused_lanes": 0,
+      "sum_work": 32111204,
+      "mean": 49.323,
+      "p50": 53,
+      "p90": 60,
+      "p99": 62,
+      "p999": 65,
+      "max": 68,
+      "reasons": {
+       "0": 651040
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       28451,
+       621063,
+       1526,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 40690,
+        "sum_max": 2123914,
+        "sum_work": 32111204,
+        "efficiency": 0.9449
+       },
+       "32": {
+        "groups": 20349,
+        "sum_max": 1072308,
+        "sum_work": 32111204,
+        "efficiency": 0.9358
+       },
+       "64": {
+        "groups": 10179,
+        "sum_max": 543470,
+        "sum_work": 32111204,
+        "efficiency": 0.9232
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 1073230,
+        "vs_direct": 1.0009,
+        "max_stages": 3,
+        "pending_after_stage1": 613169
+       },
+       "Q64": {
+        "lockstep_units": 1071954,
+        "vs_direct": 0.9997,
+        "max_stages": 2,
+        "pending_after_stage1": 668
+       },
+       "Q128": {
+        "lockstep_units": 1072308,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 1072308,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 1072308,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3035360,
+      "refused_lanes": 0,
+      "sum_work": 302426557,
+      "mean": 99.634,
+      "p50": 96,
+      "p90": 127,
+      "p99": 133,
+      "p999": 137,
+      "max": 166,
+      "reasons": {
+       "0": 3035360
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       62,
+       2739719,
+       295579,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 189710,
+        "sum_max": 19271087,
+        "sum_work": 302426557,
+        "efficiency": 0.9808
+       },
+       "32": {
+        "groups": 94859,
+        "sum_max": 9681923,
+        "sum_work": 302426557,
+        "efficiency": 0.9761
+       },
+       "64": {
+        "groups": 47436,
+        "sum_max": 4880594,
+        "sum_work": 302426557,
+        "efficiency": 0.9682
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 9656099,
+        "vs_direct": 0.9973,
+        "max_stages": 6,
+        "pending_after_stage1": 3035360
+       },
+       "Q64": {
+        "lockstep_units": 9664103,
+        "vs_direct": 0.9982,
+        "max_stages": 3,
+        "pending_after_stage1": 3035295
+       },
+       "Q128": {
+        "lockstep_units": 9663687,
+        "vs_direct": 0.9981,
+        "max_stages": 2,
+        "pending_after_stage1": 257852
+       },
+       "Q256": {
+        "lockstep_units": 9681923,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 9681923,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-32.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 649152,
+      "refused_lanes": 0,
+      "sum_work": 31983584,
+      "mean": 49.27,
+      "p50": 53,
+      "p90": 60,
+      "p99": 64,
+      "p999": 66,
+      "max": 68,
+      "reasons": {
+       "0": 649152
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       29549,
+       612476,
+       7127,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 40572,
+        "sum_max": 2115764,
+        "sum_work": 31983584,
+        "efficiency": 0.9448
+       },
+       "32": {
+        "groups": 20292,
+        "sum_max": 1069489,
+        "sum_work": 31983584,
+        "efficiency": 0.9345
+       },
+       "64": {
+        "groups": 10151,
+        "sum_max": 542805,
+        "sum_work": 31983584,
+        "efficiency": 0.9207
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 1069198,
+        "vs_direct": 0.9997,
+        "max_stages": 3,
+        "pending_after_stage1": 610135
+       },
+       "Q64": {
+        "lockstep_units": 1068400,
+        "vs_direct": 0.999,
+        "max_stages": 2,
+        "pending_after_stage1": 3332
+       },
+       "Q128": {
+        "lockstep_units": 1069489,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 1069489,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 1069489,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3037248,
+      "refused_lanes": 0,
+      "sum_work": 302774769,
+      "mean": 99.687,
+      "p50": 96,
+      "p90": 127,
+      "p99": 133,
+      "p999": 140,
+      "max": 168,
+      "reasons": {
+       "0": 3037248
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       13,
+       2750220,
+       287015,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 189828,
+        "sum_max": 19308283,
+        "sum_work": 302774769,
+        "efficiency": 0.9801
+       },
+       "32": {
+        "groups": 94920,
+        "sum_max": 9703263,
+        "sum_work": 302774769,
+        "efficiency": 0.9751
+       },
+       "64": {
+        "groups": 47464,
+        "sum_max": 4890561,
+        "sum_work": 302774769,
+        "efficiency": 0.9673
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 9679085,
+        "vs_direct": 0.9975,
+        "max_stages": 6,
+        "pending_after_stage1": 3037248
+       },
+       "Q64": {
+        "lockstep_units": 9686507,
+        "vs_direct": 0.9983,
+        "max_stages": 3,
+        "pending_after_stage1": 3037231
+       },
+       "Q128": {
+        "lockstep_units": 9686252,
+        "vs_direct": 0.9982,
+        "max_stages": 2,
+        "pending_after_stage1": 252553
+       },
+       "Q256": {
+        "lockstep_units": 9703263,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 9703263,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-36.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 606992,
+      "refused_lanes": 0,
+      "sum_work": 29980577,
+      "mean": 49.392,
+      "p50": 53,
+      "p90": 61,
+      "p99": 65,
+      "p999": 66,
+      "max": 69,
+      "reasons": {
+       "0": 606992
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       28443,
+       565416,
+       13133,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 37937,
+        "sum_max": 1983065,
+        "sum_work": 29980577,
+        "efficiency": 0.9449
+       },
+       "32": {
+        "groups": 18974,
+        "sum_max": 1002935,
+        "sum_work": 29980577,
+        "efficiency": 0.9342
+       },
+       "64": {
+        "groups": 9492,
+        "sum_max": 509820,
+        "sum_work": 29980577,
+        "efficiency": 0.9188
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 1001430,
+        "vs_direct": 0.9985,
+        "max_stages": 3,
+        "pending_after_stage1": 570501
+       },
+       "Q64": {
+        "lockstep_units": 1000785,
+        "vs_direct": 0.9979,
+        "max_stages": 2,
+        "pending_after_stage1": 6367
+       },
+       "Q128": {
+        "lockstep_units": 1002935,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 1002935,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 1002935,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3079408,
+      "refused_lanes": 0,
+      "sum_work": 306400008,
+      "mean": 99.5,
+      "p50": 96,
+      "p90": 126,
+      "p99": 133,
+      "p999": 140,
+      "max": 169,
+      "reasons": {
+       "0": 3079408
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       39,
+       2803040,
+       276329,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 192463,
+        "sum_max": 19551357,
+        "sum_work": 306400008,
+        "efficiency": 0.9795
+       },
+       "32": {
+        "groups": 96237,
+        "sum_max": 9828987,
+        "sum_work": 306400008,
+        "efficiency": 0.9742
+       },
+       "64": {
+        "groups": 48124,
+        "sum_max": 4959431,
+        "sum_work": 306400008,
+        "efficiency": 0.9653
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 9804404,
+        "vs_direct": 0.9975,
+        "max_stages": 6,
+        "pending_after_stage1": 3079408
+       },
+       "Q64": {
+        "lockstep_units": 9813570,
+        "vs_direct": 0.9984,
+        "max_stages": 3,
+        "pending_after_stage1": 3079368
+       },
+       "Q128": {
+        "lockstep_units": 9813139,
+        "vs_direct": 0.9984,
+        "max_stages": 2,
+        "pending_after_stage1": 243867
+       },
+       "Q256": {
+        "lockstep_units": 9828987,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 9828987,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-4.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 1599120,
+      "refused_lanes": 0,
+      "sum_work": 88579912,
+      "mean": 55.393,
+      "p50": 54,
+      "p90": 73,
+      "p99": 93,
+      "p999": 99,
+      "max": 106,
+      "reasons": {
+       "0": 1599120
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       14409,
+       1357741,
+       226970,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 99945,
+        "sum_max": 5875686,
+        "sum_work": 88579912,
+        "efficiency": 0.9422
+       },
+       "32": {
+        "groups": 49978,
+        "sum_max": 2967787,
+        "sum_work": 88579912,
+        "efficiency": 0.9327
+       },
+       "64": {
+        "groups": 24994,
+        "sum_max": 1503837,
+        "sum_work": 88579912,
+        "efficiency": 0.9204
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 2963031,
+        "vs_direct": 0.9984,
+        "max_stages": 4,
+        "pending_after_stage1": 1570290
+       },
+       "Q64": {
+        "lockstep_units": 2965175,
+        "vs_direct": 0.9991,
+        "max_stages": 2,
+        "pending_after_stage1": 219515
+       },
+       "Q128": {
+        "lockstep_units": 2967787,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 2967787,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 2967787,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 1432704,
+      "refused_lanes": 0,
+      "sum_work": 159552800,
+      "mean": 111.365,
+      "p50": 113,
+      "p90": 118,
+      "p99": 121,
+      "p999": 122,
+      "max": 123,
+      "reasons": {
+       "0": 1432704
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       1432704,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 89544,
+        "sum_max": 10382369,
+        "sum_work": 159552800,
+        "efficiency": 0.9605
+       },
+       "32": {
+        "groups": 44777,
+        "sum_max": 5230428,
+        "sum_work": 159552800,
+        "efficiency": 0.9533
+       },
+       "64": {
+        "groups": 22393,
+        "sum_max": 2634870,
+        "sum_work": 159552800,
+        "efficiency": 0.9462
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 5230124,
+        "vs_direct": 0.9999,
+        "max_stages": 4,
+        "pending_after_stage1": 1432704
+       },
+       "Q64": {
+        "lockstep_units": 5230428,
+        "vs_direct": 1.0,
+        "max_stages": 2,
+        "pending_after_stage1": 1432704
+       },
+       "Q128": {
+        "lockstep_units": 5230428,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 5230428,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 5230428,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 654576,
+      "refused_lanes": 0,
+      "sum_work": 80785601,
+      "mean": 123.417,
+      "p50": 126,
+      "p90": 137,
+      "p99": 156,
+      "p999": 163,
+      "max": 172,
+      "reasons": {
+       "0": 654576
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       342410,
+       312166,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 40911,
+        "sum_max": 5235721,
+        "sum_work": 80785601,
+        "efficiency": 0.9644
+       },
+       "32": {
+        "groups": 20458,
+        "sum_max": 2640708,
+        "sum_work": 80785601,
+        "efficiency": 0.956
+       },
+       "64": {
+        "groups": 10233,
+        "sum_max": 1335733,
+        "sum_work": 80785601,
+        "efficiency": 0.945
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 2629423,
+        "vs_direct": 0.9957,
+        "max_stages": 6,
+        "pending_after_stage1": 654576
+       },
+       "Q64": {
+        "lockstep_units": 2630860,
+        "vs_direct": 0.9963,
+        "max_stages": 3,
+        "pending_after_stage1": 654576
+       },
+       "Q128": {
+        "lockstep_units": 2630860,
+        "vs_direct": 0.9963,
+        "max_stages": 2,
+        "pending_after_stage1": 302832
+       },
+       "Q256": {
+        "lockstep_units": 2640708,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 2640708,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-40.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 571120,
+      "refused_lanes": 0,
+      "sum_work": 28677296,
+      "mean": 50.212,
+      "p50": 53,
+      "p90": 62,
+      "p99": 67,
+      "p999": 70,
+      "max": 75,
+      "reasons": {
+       "0": 571120
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       26382,
+       507556,
+       37182,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 35695,
+        "sum_max": 1896860,
+        "sum_work": 28677296,
+        "efficiency": 0.9449
+       },
+       "32": {
+        "groups": 17853,
+        "sum_max": 959903,
+        "sum_work": 28677296,
+        "efficiency": 0.9336
+       },
+       "64": {
+        "groups": 8932,
+        "sum_max": 488757,
+        "sum_work": 28677296,
+        "efficiency": 0.9168
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 957893,
+        "vs_direct": 0.9979,
+        "max_stages": 3,
+        "pending_after_stage1": 539040
+       },
+       "Q64": {
+        "lockstep_units": 955685,
+        "vs_direct": 0.9956,
+        "max_stages": 2,
+        "pending_after_stage1": 22495
+       },
+       "Q128": {
+        "lockstep_units": 959903,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 959903,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 959903,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3115280,
+      "refused_lanes": 1,
+      "sum_work": 310759153,
+      "mean": 99.753,
+      "p50": 96,
+      "p90": 127,
+      "p99": 134,
+      "p999": 150,
+      "max": 170,
+      "reasons": {
+       "0": 3115279,
+       "4": 1
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       1,
+       482,
+       2819820,
+       294977,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 194705,
+        "sum_max": 19836235,
+        "sum_work": 310759153,
+        "efficiency": 0.9791
+       },
+       "32": {
+        "groups": 97358,
+        "sum_max": 9974337,
+        "sum_work": 310759153,
+        "efficiency": 0.9736
+       },
+       "64": {
+        "groups": 48684,
+        "sum_max": 5032334,
+        "sum_work": 310759153,
+        "efficiency": 0.9649
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 9948407,
+        "vs_direct": 0.9974,
+        "max_stages": 6,
+        "pending_after_stage1": 3115279
+       },
+       "Q64": {
+        "lockstep_units": 9958190,
+        "vs_direct": 0.9984,
+        "max_stages": 3,
+        "pending_after_stage1": 3114795
+       },
+       "Q128": {
+        "lockstep_units": 9956692,
+        "vs_direct": 0.9982,
+        "max_stages": 2,
+        "pending_after_stage1": 260768
+       },
+       "Q256": {
+        "lockstep_units": 9974337,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 9974337,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-44.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 541440,
+      "refused_lanes": 0,
+      "sum_work": 32997064,
+      "mean": 60.943,
+      "p50": 63,
+      "p90": 84,
+      "p99": 90,
+      "p999": 95,
+      "max": 128,
+      "reasons": {
+       "0": 541440
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       24726,
+       246332,
+       270380,
+       2,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 33840,
+        "sum_max": 2187116,
+        "sum_work": 32997064,
+        "efficiency": 0.9429
+       },
+       "32": {
+        "groups": 16926,
+        "sum_max": 1113323,
+        "sum_work": 32997064,
+        "efficiency": 0.9262
+       },
+       "64": {
+        "groups": 8468,
+        "sum_max": 572777,
+        "sum_work": 32997064,
+        "efficiency": 0.9001
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 1107783,
+        "vs_direct": 0.995,
+        "max_stages": 4,
+        "pending_after_stage1": 512356
+       },
+       "Q64": {
+        "lockstep_units": 1108665,
+        "vs_direct": 0.9958,
+        "max_stages": 2,
+        "pending_after_stage1": 254052
+       },
+       "Q128": {
+        "lockstep_units": 1113323,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 1113323,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 1113323,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3144960,
+      "refused_lanes": 2,
+      "sum_work": 314469517,
+      "mean": 99.992,
+      "p50": 97,
+      "p90": 125,
+      "p99": 133,
+      "p999": 138,
+      "max": 178,
+      "reasons": {
+       "0": 3144958,
+       "4": 2
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       1,
+       1795,
+       2875788,
+       267376,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 196560,
+        "sum_max": 20085405,
+        "sum_work": 314469517,
+        "efficiency": 0.9785
+       },
+       "32": {
+        "groups": 98286,
+        "sum_max": 10100881,
+        "sum_work": 314469517,
+        "efficiency": 0.9729
+       },
+       "64": {
+        "groups": 49149,
+        "sum_max": 5096718,
+        "sum_work": 314469517,
+        "efficiency": 0.9641
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 10070641,
+        "vs_direct": 0.997,
+        "max_stages": 6,
+        "pending_after_stage1": 3144959
+       },
+       "Q64": {
+        "lockstep_units": 10085549,
+        "vs_direct": 0.9985,
+        "max_stages": 3,
+        "pending_after_stage1": 3143156
+       },
+       "Q128": {
+        "lockstep_units": 10083902,
+        "vs_direct": 0.9983,
+        "max_stages": 2,
+        "pending_after_stage1": 232980
+       },
+       "Q256": {
+        "lockstep_units": 10100881,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 10100881,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-48.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 775056,
+      "refused_lanes": 0,
+      "sum_work": 47106113,
+      "mean": 60.778,
+      "p50": 63,
+      "p90": 87,
+      "p99": 98,
+      "p999": 109,
+      "max": 148,
+      "reasons": {
+       "0": 775056
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       145396,
+       248303,
+       381228,
+       129,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 48441,
+        "sum_max": 3115622,
+        "sum_work": 47106113,
+        "efficiency": 0.945
+       },
+       "32": {
+        "groups": 24227,
+        "sum_max": 1587028,
+        "sum_work": 47106113,
+        "efficiency": 0.9276
+       },
+       "64": {
+        "groups": 12120,
+        "sum_max": 816248,
+        "sum_work": 47106113,
+        "efficiency": 0.9017
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 1576281,
+        "vs_direct": 0.9932,
+        "max_stages": 5,
+        "pending_after_stage1": 627685
+       },
+       "Q64": {
+        "lockstep_units": 1582574,
+        "vs_direct": 0.9972,
+        "max_stages": 3,
+        "pending_after_stage1": 369565
+       },
+       "Q128": {
+        "lockstep_units": 1586556,
+        "vs_direct": 0.9997,
+        "max_stages": 2,
+        "pending_after_stage1": 111
+       },
+       "Q256": {
+        "lockstep_units": 1587028,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 1587028,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 2911344,
+      "refused_lanes": 0,
+      "sum_work": 305515565,
+      "mean": 104.94,
+      "p50": 105,
+      "p90": 129,
+      "p99": 137,
+      "p999": 148,
+      "max": 167,
+      "reasons": {
+       "0": 2911344
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       2577013,
+       334331,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 181959,
+        "sum_max": 19563680,
+        "sum_work": 305515565,
+        "efficiency": 0.976
+       },
+       "32": {
+        "groups": 90986,
+        "sum_max": 9842004,
+        "sum_work": 305515565,
+        "efficiency": 0.9701
+       },
+       "64": {
+        "groups": 45499,
+        "sum_max": 4967266,
+        "sum_work": 305515565,
+        "efficiency": 0.961
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 9810269,
+        "vs_direct": 0.9968,
+        "max_stages": 6,
+        "pending_after_stage1": 2911344
+       },
+       "Q64": {
+        "lockstep_units": 9819177,
+        "vs_direct": 0.9977,
+        "max_stages": 3,
+        "pending_after_stage1": 2911344
+       },
+       "Q128": {
+        "lockstep_units": 9819177,
+        "vs_direct": 0.9977,
+        "max_stages": 2,
+        "pending_after_stage1": 294517
+       },
+       "Q256": {
+        "lockstep_units": 9842004,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 9842004,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-52.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 1580528,
+      "refused_lanes": 0,
+      "sum_work": 76029784,
+      "mean": 48.104,
+      "p50": 37,
+      "p90": 81,
+      "p99": 111,
+      "p999": 126,
+      "max": 138,
+      "reasons": {
+       "0": 1580528
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       123142,
+       1078727,
+       377542,
+       1117,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 98783,
+        "sum_max": 5003964,
+        "sum_work": 76029784,
+        "efficiency": 0.9496
+       },
+       "32": {
+        "groups": 49397,
+        "sum_max": 2534225,
+        "sum_work": 76029784,
+        "efficiency": 0.9375
+       },
+       "64": {
+        "groups": 24705,
+        "sum_max": 1293667,
+        "sum_work": 76029784,
+        "efficiency": 0.9183
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 2510723,
+        "vs_direct": 0.9907,
+        "max_stages": 5,
+        "pending_after_stage1": 1334274
+       },
+       "Q64": {
+        "lockstep_units": 2528107,
+        "vs_direct": 0.9976,
+        "max_stages": 3,
+        "pending_after_stage1": 360066
+       },
+       "Q128": {
+        "lockstep_units": 2533583,
+        "vs_direct": 0.9997,
+        "max_stages": 2,
+        "pending_after_stage1": 750
+       },
+       "Q256": {
+        "lockstep_units": 2534225,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 2534225,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 1329152,
+      "refused_lanes": 0,
+      "sum_work": 118837498,
+      "mean": 89.409,
+      "p50": 92,
+      "p90": 95,
+      "p99": 98,
+      "p999": 102,
+      "max": 110,
+      "reasons": {
+       "0": 1329152
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       18836,
+       1310316,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 83072,
+        "sum_max": 7750147,
+        "sum_work": 118837498,
+        "efficiency": 0.9583
+       },
+       "32": {
+        "groups": 41538,
+        "sum_max": 3899085,
+        "sum_work": 118837498,
+        "efficiency": 0.9524
+       },
+       "64": {
+        "groups": 20773,
+        "sum_max": 1961366,
+        "sum_work": 118837498,
+        "efficiency": 0.9467
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 3877861,
+        "vs_direct": 0.9946,
+        "max_stages": 4,
+        "pending_after_stage1": 1329152
+       },
+       "Q64": {
+        "lockstep_units": 3900283,
+        "vs_direct": 1.0003,
+        "max_stages": 2,
+        "pending_after_stage1": 1308123
+       },
+       "Q128": {
+        "lockstep_units": 3899085,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 3899085,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 3899085,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 776720,
+      "refused_lanes": 1,
+      "sum_work": 87313669,
+      "mean": 112.413,
+      "p50": 111,
+      "p90": 135,
+      "p99": 156,
+      "p999": 163,
+      "max": 173,
+      "reasons": {
+       "0": 776719,
+       "4": 1
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       1,
+       651735,
+       124984,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 48545,
+        "sum_max": 5669322,
+        "sum_work": 87313669,
+        "efficiency": 0.9626
+       },
+       "32": {
+        "groups": 24278,
+        "sum_max": 2869892,
+        "sum_work": 87313669,
+        "efficiency": 0.9508
+       },
+       "64": {
+        "groups": 12143,
+        "sum_max": 1462399,
+        "sum_work": 87313669,
+        "efficiency": 0.9329
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 2857419,
+        "vs_direct": 0.9957,
+        "max_stages": 6,
+        "pending_after_stage1": 776720
+       },
+       "Q64": {
+        "lockstep_units": 2861289,
+        "vs_direct": 0.997,
+        "max_stages": 3,
+        "pending_after_stage1": 776719
+       },
+       "Q128": {
+        "lockstep_units": 2861265,
+        "vs_direct": 0.997,
+        "max_stages": 2,
+        "pending_after_stage1": 117811
+       },
+       "Q256": {
+        "lockstep_units": 2869892,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 2869892,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-56.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 1558720,
+      "refused_lanes": 0,
+      "sum_work": 84002784,
+      "mean": 53.892,
+      "p50": 46,
+      "p90": 84,
+      "p99": 117,
+      "p999": 124,
+      "max": 138,
+      "reasons": {
+       "0": 1558720
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       496,
+       1231999,
+       325727,
+       498,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 97420,
+        "sum_max": 5564630,
+        "sum_work": 84002784,
+        "efficiency": 0.9435
+       },
+       "32": {
+        "groups": 48720,
+        "sum_max": 2814668,
+        "sum_work": 84002784,
+        "efficiency": 0.9326
+       },
+       "64": {
+        "groups": 24369,
+        "sum_max": 1432701,
+        "sum_work": 84002784,
+        "efficiency": 0.9161
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 2807530,
+        "vs_direct": 0.9975,
+        "max_stages": 5,
+        "pending_after_stage1": 1557736
+       },
+       "Q64": {
+        "lockstep_units": 2810226,
+        "vs_direct": 0.9984,
+        "max_stages": 3,
+        "pending_after_stage1": 310142
+       },
+       "Q128": {
+        "lockstep_units": 2814007,
+        "vs_direct": 0.9998,
+        "max_stages": 2,
+        "pending_after_stage1": 384
+       },
+       "Q256": {
+        "lockstep_units": 2814668,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 2814668,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 1351328,
+      "refused_lanes": 0,
+      "sum_work": 134657648,
+      "mean": 99.648,
+      "p50": 102,
+      "p90": 106,
+      "p99": 108,
+      "p999": 109,
+      "max": 112,
+      "reasons": {
+       "0": 1351328
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       531,
+       1350797,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 84458,
+        "sum_max": 8792760,
+        "sum_work": 134657648,
+        "efficiency": 0.9572
+       },
+       "32": {
+        "groups": 42233,
+        "sum_max": 4426149,
+        "sum_work": 134657648,
+        "efficiency": 0.9507
+       },
+       "64": {
+        "groups": 21122,
+        "sum_max": 2227946,
+        "sum_work": 134657648,
+        "efficiency": 0.9444
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 4399910,
+        "vs_direct": 0.9941,
+        "max_stages": 4,
+        "pending_after_stage1": 1351328
+       },
+       "Q64": {
+        "lockstep_units": 4430926,
+        "vs_direct": 1.0011,
+        "max_stages": 2,
+        "pending_after_stage1": 1350486
+       },
+       "Q128": {
+        "lockstep_units": 4426149,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 4426149,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 4426149,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 776352,
+      "refused_lanes": 1,
+      "sum_work": 89424145,
+      "mean": 115.185,
+      "p50": 116,
+      "p90": 131,
+      "p99": 152,
+      "p999": 179,
+      "max": 196,
+      "reasons": {
+       "0": 776351,
+       "4": 1
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       673547,
+       102805,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 48522,
+        "sum_max": 5800011,
+        "sum_work": 89424145,
+        "efficiency": 0.9636
+       },
+       "32": {
+        "groups": 24269,
+        "sum_max": 2929869,
+        "sum_work": 89424145,
+        "efficiency": 0.9538
+       },
+       "64": {
+        "groups": 12141,
+        "sum_max": 1486593,
+        "sum_work": 89424145,
+        "efficiency": 0.9399
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 2919668,
+        "vs_direct": 0.9965,
+        "max_stages": 7,
+        "pending_after_stage1": 776352
+       },
+       "Q64": {
+        "lockstep_units": 2922348,
+        "vs_direct": 0.9974,
+        "max_stages": 4,
+        "pending_after_stage1": 776352
+       },
+       "Q128": {
+        "lockstep_units": 2922384,
+        "vs_direct": 0.9974,
+        "max_stages": 2,
+        "pending_after_stage1": 94199
+       },
+       "Q256": {
+        "lockstep_units": 2929869,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 2929869,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-60.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 1562480,
+      "refused_lanes": 0,
+      "sum_work": 86021661,
+      "mean": 55.055,
+      "p50": 54,
+      "p90": 70,
+      "p99": 100,
+      "p999": 107,
+      "max": 115,
+      "reasons": {
+       "0": 1562480
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       16082,
+       1348522,
+       197876,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 97655,
+        "sum_max": 5705582,
+        "sum_work": 86021661,
+        "efficiency": 0.9423
+       },
+       "32": {
+        "groups": 48835,
+        "sum_max": 2886497,
+        "sum_work": 86021661,
+        "efficiency": 0.9313
+       },
+       "64": {
+        "groups": 24423,
+        "sum_max": 1466443,
+        "sum_work": 86021661,
+        "efficiency": 0.9166
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 2876515,
+        "vs_direct": 0.9965,
+        "max_stages": 4,
+        "pending_after_stage1": 1530325
+       },
+       "Q64": {
+        "lockstep_units": 2882816,
+        "vs_direct": 0.9987,
+        "max_stages": 2,
+        "pending_after_stage1": 191370
+       },
+       "Q128": {
+        "lockstep_units": 2886497,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 2886497,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 2886497,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 1377792,
+      "refused_lanes": 0,
+      "sum_work": 152238942,
+      "mean": 110.495,
+      "p50": 112,
+      "p90": 117,
+      "p99": 120,
+      "p999": 121,
+      "max": 123,
+      "reasons": {
+       "0": 1377792
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       1,
+       1377791,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 86112,
+        "sum_max": 9937180,
+        "sum_work": 152238942,
+        "efficiency": 0.9575
+       },
+       "32": {
+        "groups": 43059,
+        "sum_max": 5006324,
+        "sum_work": 152238942,
+        "efficiency": 0.9503
+       },
+       "64": {
+        "groups": 21533,
+        "sum_max": 2520254,
+        "sum_work": 152238942,
+        "efficiency": 0.9438
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 5003358,
+        "vs_direct": 0.9994,
+        "max_stages": 4,
+        "pending_after_stage1": 1377792
+       },
+       "Q64": {
+        "lockstep_units": 5006419,
+        "vs_direct": 1.0,
+        "max_stages": 2,
+        "pending_after_stage1": 1377791
+       },
+       "Q128": {
+        "lockstep_units": 5006324,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 5006324,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 5006324,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 746128,
+      "refused_lanes": 0,
+      "sum_work": 90284873,
+      "mean": 121.005,
+      "p50": 121,
+      "p90": 136,
+      "p99": 158,
+      "p999": 174,
+      "max": 186,
+      "reasons": {
+       "0": 746128
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       438016,
+       308112,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 46633,
+        "sum_max": 5854979,
+        "sum_work": 90284873,
+        "efficiency": 0.9638
+       },
+       "32": {
+        "groups": 23322,
+        "sum_max": 2956997,
+        "sum_work": 90284873,
+        "efficiency": 0.9541
+       },
+       "64": {
+        "groups": 11667,
+        "sum_max": 1500878,
+        "sum_work": 90284873,
+        "efficiency": 0.9399
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 2945273,
+        "vs_direct": 0.996,
+        "max_stages": 6,
+        "pending_after_stage1": 746128
+       },
+       "Q64": {
+        "lockstep_units": 2945150,
+        "vs_direct": 0.996,
+        "max_stages": 3,
+        "pending_after_stage1": 746128
+       },
+       "Q128": {
+        "lockstep_units": 2945150,
+        "vs_direct": 0.996,
+        "max_stages": 2,
+        "pending_after_stage1": 296299
+       },
+       "Q256": {
+        "lockstep_units": 2956997,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 2956997,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace/trace-8.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 1653328,
+      "refused_lanes": 0,
+      "sum_work": 94639126,
+      "mean": 57.242,
+      "p50": 55,
+      "p90": 74,
+      "p99": 96,
+      "p999": 100,
+      "max": 105,
+      "reasons": {
+       "0": 1653328
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       7187,
+       1362750,
+       283391,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 103333,
+        "sum_max": 6285104,
+        "sum_work": 94639126,
+        "efficiency": 0.9411
+       },
+       "32": {
+        "groups": 51671,
+        "sum_max": 3176228,
+        "sum_work": 94639126,
+        "efficiency": 0.9311
+       },
+       "64": {
+        "groups": 25842,
+        "sum_max": 1610023,
+        "sum_work": 94639126,
+        "efficiency": 0.9185
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 3167382,
+        "vs_direct": 0.9972,
+        "max_stages": 4,
+        "pending_after_stage1": 1638887
+       },
+       "Q64": {
+        "lockstep_units": 3173072,
+        "vs_direct": 0.999,
+        "max_stages": 2,
+        "pending_after_stage1": 273362
+       },
+       "Q128": {
+        "lockstep_units": 3176228,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 3176228,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 3176228,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 1458336,
+      "refused_lanes": 0,
+      "sum_work": 162225945,
+      "mean": 111.24,
+      "p50": 113,
+      "p90": 118,
+      "p99": 121,
+      "p999": 122,
+      "max": 123,
+      "reasons": {
+       "0": 1458336
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       1458336,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 91146,
+        "sum_max": 10565736,
+        "sum_work": 162225945,
+        "efficiency": 0.9596
+       },
+       "32": {
+        "groups": 45577,
+        "sum_max": 5325858,
+        "sum_work": 162225945,
+        "efficiency": 0.9519
+       },
+       "64": {
+        "groups": 22795,
+        "sum_max": 2684176,
+        "sum_work": 162225945,
+        "efficiency": 0.9443
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 5324442,
+        "vs_direct": 0.9997,
+        "max_stages": 4,
+        "pending_after_stage1": 1458336
+       },
+       "Q64": {
+        "lockstep_units": 5325894,
+        "vs_direct": 1.0,
+        "max_stages": 2,
+        "pending_after_stage1": 1458335
+       },
+       "Q128": {
+        "lockstep_units": 5325858,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 5325858,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 5325858,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 574736,
+      "refused_lanes": 0,
+      "sum_work": 70391998,
+      "mean": 122.477,
+      "p50": 124,
+      "p90": 137,
+      "p99": 160,
+      "p999": 168,
+      "max": 176,
+      "reasons": {
+       "0": 574736
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       310368,
+       264368,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 35921,
+        "sum_max": 4564293,
+        "sum_work": 70391998,
+        "efficiency": 0.9639
+       },
+       "32": {
+        "groups": 17965,
+        "sum_max": 2303456,
+        "sum_work": 70391998,
+        "efficiency": 0.955
+       },
+       "64": {
+        "groups": 8987,
+        "sum_max": 1166368,
+        "sum_work": 70391998,
+        "efficiency": 0.943
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 2293488,
+        "vs_direct": 0.9957,
+        "max_stages": 6,
+        "pending_after_stage1": 574736
+       },
+       "Q64": {
+        "lockstep_units": 2294054,
+        "vs_direct": 0.9959,
+        "max_stages": 3,
+        "pending_after_stage1": 574736
+       },
+       "Q128": {
+        "lockstep_units": 2294054,
+        "vs_direct": 0.9959,
+        "max_stages": 2,
+        "pending_after_stage1": 255372
+       },
+       "Q256": {
+        "lockstep_units": 2303456,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 2303456,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   }
+  ]
+ },
+ "inside_analysis": {
+  "poses": [
+   {
+    "file": "worktrace_in/traceIn-0.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 391696,
+      "refused_lanes": 0,
+      "sum_work": 18111742,
+      "mean": 46.239,
+      "p50": 46,
+      "p90": 57,
+      "p99": 58,
+      "p999": 60,
+      "max": 60,
+      "reasons": {
+       "0": 391696
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       16288,
+       375408,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 24481,
+        "sum_max": 1177015,
+        "sum_work": 18111742,
+        "efficiency": 0.9617
+       },
+       "32": {
+        "groups": 12241,
+        "sum_max": 597974,
+        "sum_work": 18111742,
+        "efficiency": 0.9465
+       },
+       "64": {
+        "groups": 6121,
+        "sum_max": 304939,
+        "sum_work": 18111742,
+        "efficiency": 0.928
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 599498,
+        "vs_direct": 1.0025,
+        "max_stages": 2,
+        "pending_after_stage1": 367400
+       },
+       "Q64": {
+        "lockstep_units": 597974,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 597974,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 597974,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 597974,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3294704,
+      "refused_lanes": 0,
+      "sum_work": 281404428,
+      "mean": 85.411,
+      "p50": 72,
+      "p90": 115,
+      "p99": 147,
+      "p999": 160,
+      "max": 165,
+      "reasons": {
+       "0": 3294704
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       3194246,
+       100458,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 205919,
+        "sum_max": 17773998,
+        "sum_work": 281404428,
+        "efficiency": 0.9895
+       },
+       "32": {
+        "groups": 102960,
+        "sum_max": 8931541,
+        "sum_work": 281404428,
+        "efficiency": 0.9846
+       },
+       "64": {
+        "groups": 51481,
+        "sum_max": 4496942,
+        "sum_work": 281404428,
+        "efficiency": 0.9778
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 8931011,
+        "vs_direct": 0.9999,
+        "max_stages": 6,
+        "pending_after_stage1": 3294704
+       },
+       "Q64": {
+        "lockstep_units": 8928438,
+        "vs_direct": 0.9997,
+        "max_stages": 3,
+        "pending_after_stage1": 3294704
+       },
+       "Q128": {
+        "lockstep_units": 8928438,
+        "vs_direct": 0.9997,
+        "max_stages": 2,
+        "pending_after_stage1": 75496
+       },
+       "Q256": {
+        "lockstep_units": 8931541,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 8931541,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-12.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3686400,
+      "refused_lanes": 0,
+      "sum_work": 382513298,
+      "mean": 103.763,
+      "p50": 104,
+      "p90": 108,
+      "p99": 110,
+      "p999": 111,
+      "max": 111,
+      "reasons": {
+       "0": 3686400
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       3686400,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 230400,
+        "sum_max": 24615192,
+        "sum_work": 382513298,
+        "efficiency": 0.9712
+       },
+       "32": {
+        "groups": 115200,
+        "sum_max": 12351039,
+        "sum_work": 382513298,
+        "efficiency": 0.9678
+       },
+       "64": {
+        "groups": 57600,
+        "sum_max": 6190380,
+        "sum_work": 382513298,
+        "efficiency": 0.9655
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 12330720,
+        "vs_direct": 0.9984,
+        "max_stages": 4,
+        "pending_after_stage1": 3686400
+       },
+       "Q64": {
+        "lockstep_units": 12351039,
+        "vs_direct": 1.0,
+        "max_stages": 2,
+        "pending_after_stage1": 3686400
+       },
+       "Q128": {
+        "lockstep_units": 12351039,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 12351039,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 12351039,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-16.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3686400,
+      "refused_lanes": 0,
+      "sum_work": 383435299,
+      "mean": 104.013,
+      "p50": 104,
+      "p90": 108,
+      "p99": 110,
+      "p999": 111,
+      "max": 111,
+      "reasons": {
+       "0": 3686400
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       3686400,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 230400,
+        "sum_max": 24591907,
+        "sum_work": 383435299,
+        "efficiency": 0.9745
+       },
+       "32": {
+        "groups": 115200,
+        "sum_max": 12351144,
+        "sum_work": 383435299,
+        "efficiency": 0.9701
+       },
+       "64": {
+        "groups": 57600,
+        "sum_max": 6194249,
+        "sum_work": 383435299,
+        "efficiency": 0.9672
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 12347530,
+        "vs_direct": 0.9997,
+        "max_stages": 4,
+        "pending_after_stage1": 3686400
+       },
+       "Q64": {
+        "lockstep_units": 12351144,
+        "vs_direct": 1.0,
+        "max_stages": 2,
+        "pending_after_stage1": 3686400
+       },
+       "Q128": {
+        "lockstep_units": 12351144,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 12351144,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 12351144,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-20.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3686400,
+      "refused_lanes": 0,
+      "sum_work": 316552974,
+      "mean": 85.87,
+      "p50": 82,
+      "p90": 105,
+      "p99": 111,
+      "p999": 120,
+      "max": 149,
+      "reasons": {
+       "0": 3686400
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       73077,
+       3611376,
+       1947,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 230400,
+        "sum_max": 20495668,
+        "sum_work": 316552974,
+        "efficiency": 0.9653
+       },
+       "32": {
+        "groups": 115200,
+        "sum_max": 10301397,
+        "sum_work": 316552974,
+        "efficiency": 0.9603
+       },
+       "64": {
+        "groups": 57600,
+        "sum_max": 5174815,
+        "sum_work": 316552974,
+        "efficiency": 0.9558
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 10300066,
+        "vs_direct": 0.9999,
+        "max_stages": 5,
+        "pending_after_stage1": 3686400
+       },
+       "Q64": {
+        "lockstep_units": 10309972,
+        "vs_direct": 1.0008,
+        "max_stages": 3,
+        "pending_after_stage1": 3611294
+       },
+       "Q128": {
+        "lockstep_units": 10300610,
+        "vs_direct": 0.9999,
+        "max_stages": 2,
+        "pending_after_stage1": 1859
+       },
+       "Q256": {
+        "lockstep_units": 10301397,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 10301397,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-24.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3686400,
+      "refused_lanes": 0,
+      "sum_work": 279277357,
+      "mean": 75.759,
+      "p50": 79,
+      "p90": 102,
+      "p99": 111,
+      "p999": 117,
+      "max": 153,
+      "reasons": {
+       "0": 3686400
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       823923,
+       2862272,
+       205,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 230400,
+        "sum_max": 18017874,
+        "sum_work": 279277357,
+        "efficiency": 0.9688
+       },
+       "32": {
+        "groups": 115200,
+        "sum_max": 9049584,
+        "sum_work": 279277357,
+        "efficiency": 0.9644
+       },
+       "64": {
+        "groups": 57600,
+        "sum_max": 4545084,
+        "sum_work": 279277357,
+        "efficiency": 0.9601
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 9049948,
+        "vs_direct": 1.0,
+        "max_stages": 5,
+        "pending_after_stage1": 3686400
+       },
+       "Q64": {
+        "lockstep_units": 9056608,
+        "vs_direct": 1.0008,
+        "max_stages": 3,
+        "pending_after_stage1": 2852236
+       },
+       "Q128": {
+        "lockstep_units": 9049304,
+        "vs_direct": 1.0,
+        "max_stages": 2,
+        "pending_after_stage1": 167
+       },
+       "Q256": {
+        "lockstep_units": 9049584,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 9049584,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-28.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3686400,
+      "refused_lanes": 1,
+      "sum_work": 259033958,
+      "mean": 70.267,
+      "p50": 72,
+      "p90": 96,
+      "p99": 110,
+      "p999": 115,
+      "max": 121,
+      "reasons": {
+       "0": 3686399,
+       "4": 1
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       1259389,
+       2427011,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 230400,
+        "sum_max": 16531413,
+        "sum_work": 259033958,
+        "efficiency": 0.9793
+       },
+       "32": {
+        "groups": 115200,
+        "sum_max": 8291113,
+        "sum_work": 259033958,
+        "efficiency": 0.9763
+       },
+       "64": {
+        "groups": 57600,
+        "sum_max": 4160122,
+        "sum_work": 259033958,
+        "efficiency": 0.9729
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 8290936,
+        "vs_direct": 1.0,
+        "max_stages": 4,
+        "pending_after_stage1": 3686400
+       },
+       "Q64": {
+        "lockstep_units": 8293667,
+        "vs_direct": 1.0003,
+        "max_stages": 2,
+        "pending_after_stage1": 2421097
+       },
+       "Q128": {
+        "lockstep_units": 8291113,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 8291113,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 8291113,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-32.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 432320,
+      "refused_lanes": 0,
+      "sum_work": 28155012,
+      "mean": 65.125,
+      "p50": 63,
+      "p90": 95,
+      "p99": 114,
+      "p999": 120,
+      "max": 130,
+      "reasons": {
+       "0": 432320
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       23098,
+       204556,
+       204663,
+       3,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 27020,
+        "sum_max": 1852402,
+        "sum_work": 28155012,
+        "efficiency": 0.9499
+       },
+       "32": {
+        "groups": 13513,
+        "sum_max": 946403,
+        "sum_work": 28155012,
+        "efficiency": 0.9297
+       },
+       "64": {
+        "groups": 6759,
+        "sum_max": 492324,
+        "sum_work": 28155012,
+        "efficiency": 0.8936
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 947492,
+        "vs_direct": 1.0012,
+        "max_stages": 5,
+        "pending_after_stage1": 408031
+       },
+       "Q64": {
+        "lockstep_units": 951373,
+        "vs_direct": 1.0053,
+        "max_stages": 3,
+        "pending_after_stage1": 191055
+       },
+       "Q128": {
+        "lockstep_units": 946403,
+        "vs_direct": 1.0,
+        "max_stages": 2,
+        "pending_after_stage1": 1
+       },
+       "Q256": {
+        "lockstep_units": 946403,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 946403,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3254080,
+      "refused_lanes": 0,
+      "sum_work": 259873599,
+      "mean": 79.861,
+      "p50": 72,
+      "p90": 129,
+      "p99": 157,
+      "p999": 184,
+      "max": 200,
+      "reasons": {
+       "0": 3254080
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       785189,
+       2112221,
+       356670,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 203380,
+        "sum_max": 16466444,
+        "sum_work": 259873599,
+        "efficiency": 0.9864
+       },
+       "32": {
+        "groups": 101693,
+        "sum_max": 8266526,
+        "sum_work": 259873599,
+        "efficiency": 0.9824
+       },
+       "64": {
+        "groups": 50849,
+        "sum_max": 4165261,
+        "sum_work": 259873599,
+        "efficiency": 0.9749
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 8262827,
+        "vs_direct": 0.9996,
+        "max_stages": 7,
+        "pending_after_stage1": 3254080
+       },
+       "Q64": {
+        "lockstep_units": 8269324,
+        "vs_direct": 1.0003,
+        "max_stages": 4,
+        "pending_after_stage1": 2466006
+       },
+       "Q128": {
+        "lockstep_units": 8265116,
+        "vs_direct": 0.9998,
+        "max_stages": 2,
+        "pending_after_stage1": 333245
+       },
+       "Q256": {
+        "lockstep_units": 8266526,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 8266526,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-36.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 350928,
+      "refused_lanes": 0,
+      "sum_work": 23466358,
+      "mean": 66.869,
+      "p50": 62,
+      "p90": 96,
+      "p99": 120,
+      "p999": 125,
+      "max": 131,
+      "reasons": {
+       "0": 350928
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       15786,
+       185116,
+       149933,
+       93,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 21933,
+        "sum_max": 1555642,
+        "sum_work": 23466358,
+        "efficiency": 0.9428
+       },
+       "32": {
+        "groups": 10969,
+        "sum_max": 798019,
+        "sum_work": 23466358,
+        "efficiency": 0.9189
+       },
+       "64": {
+        "groups": 5486,
+        "sum_max": 416188,
+        "sum_work": 23466358,
+        "efficiency": 0.881
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 792281,
+        "vs_direct": 0.9928,
+        "max_stages": 5,
+        "pending_after_stage1": 333776
+       },
+       "Q64": {
+        "lockstep_units": 799188,
+        "vs_direct": 1.0015,
+        "max_stages": 3,
+        "pending_after_stage1": 136431
+       },
+       "Q128": {
+        "lockstep_units": 797997,
+        "vs_direct": 1.0,
+        "max_stages": 2,
+        "pending_after_stage1": 32
+       },
+       "Q256": {
+        "lockstep_units": 798019,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 798019,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3335472,
+      "refused_lanes": 0,
+      "sum_work": 361376804,
+      "mean": 108.344,
+      "p50": 112,
+      "p90": 160,
+      "p99": 177,
+      "p999": 186,
+      "max": 198,
+      "reasons": {
+       "0": 3335472
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       351843,
+       1559218,
+       1424411,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 208467,
+        "sum_max": 23094222,
+        "sum_work": 361376804,
+        "efficiency": 0.978
+       },
+       "32": {
+        "groups": 104236,
+        "sum_max": 11609506,
+        "sum_work": 361376804,
+        "efficiency": 0.9727
+       },
+       "64": {
+        "groups": 52120,
+        "sum_max": 5850434,
+        "sum_work": 361376804,
+        "efficiency": 0.9651
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 11557632,
+        "vs_direct": 0.9955,
+        "max_stages": 7,
+        "pending_after_stage1": 3335472
+       },
+       "Q64": {
+        "lockstep_units": 11612826,
+        "vs_direct": 1.0003,
+        "max_stages": 4,
+        "pending_after_stage1": 2983629
+       },
+       "Q128": {
+        "lockstep_units": 11603878,
+        "vs_direct": 0.9995,
+        "max_stages": 2,
+        "pending_after_stage1": 1366807
+       },
+       "Q256": {
+        "lockstep_units": 11609506,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 11609506,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-4.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3686400,
+      "refused_lanes": 0,
+      "sum_work": 323916854,
+      "mean": 87.868,
+      "p50": 89,
+      "p90": 106,
+      "p99": 113,
+      "p999": 127,
+      "max": 140,
+      "reasons": {
+       "0": 3686400
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       3683334,
+       3066,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 230400,
+        "sum_max": 20634694,
+        "sum_work": 323916854,
+        "efficiency": 0.9811
+       },
+       "32": {
+        "groups": 115200,
+        "sum_max": 10349031,
+        "sum_work": 323916854,
+        "efficiency": 0.9781
+       },
+       "64": {
+        "groups": 57600,
+        "sum_max": 5193624,
+        "sum_work": 323916854,
+        "efficiency": 0.9745
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 10337234,
+        "vs_direct": 0.9989,
+        "max_stages": 5,
+        "pending_after_stage1": 3686400
+       },
+       "Q64": {
+        "lockstep_units": 10347901,
+        "vs_direct": 0.9999,
+        "max_stages": 3,
+        "pending_after_stage1": 3686400
+       },
+       "Q128": {
+        "lockstep_units": 10347901,
+        "vs_direct": 0.9999,
+        "max_stages": 2,
+        "pending_after_stage1": 2321
+       },
+       "Q256": {
+        "lockstep_units": 10349031,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 10349031,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-40.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 340944,
+      "refused_lanes": 0,
+      "sum_work": 23696438,
+      "mean": 69.502,
+      "p50": 62,
+      "p90": 104,
+      "p99": 124,
+      "p999": 129,
+      "max": 135,
+      "reasons": {
+       "0": 340944
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       20069,
+       163206,
+       156965,
+       704,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 21309,
+        "sum_max": 1569861,
+        "sum_work": 23696438,
+        "efficiency": 0.9434
+       },
+       "32": {
+        "groups": 10657,
+        "sum_max": 801647,
+        "sum_work": 23696438,
+        "efficiency": 0.9237
+       },
+       "64": {
+        "groups": 5331,
+        "sum_max": 415766,
+        "sum_work": 23696438,
+        "efficiency": 0.8905
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 798844,
+        "vs_direct": 0.9965,
+        "max_stages": 5,
+        "pending_after_stage1": 320350
+       },
+       "Q64": {
+        "lockstep_units": 802546,
+        "vs_direct": 1.0011,
+        "max_stages": 3,
+        "pending_after_stage1": 147484
+       },
+       "Q128": {
+        "lockstep_units": 801153,
+        "vs_direct": 0.9994,
+        "max_stages": 2,
+        "pending_after_stage1": 449
+       },
+       "Q256": {
+        "lockstep_units": 801647,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 801647,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3345456,
+      "refused_lanes": 0,
+      "sum_work": 470019208,
+      "mean": 140.495,
+      "p50": 141,
+      "p90": 166,
+      "p99": 184,
+      "p999": 192,
+      "max": 207,
+      "reasons": {
+       "0": 3345456
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       777541,
+       2567915,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 209091,
+        "sum_max": 30240025,
+        "sum_work": 470019208,
+        "efficiency": 0.9714
+       },
+       "32": {
+        "groups": 104548,
+        "sum_max": 15204390,
+        "sum_work": 470019208,
+        "efficiency": 0.966
+       },
+       "64": {
+        "groups": 52277,
+        "sum_max": 7652687,
+        "sum_work": 470019208,
+        "efficiency": 0.9597
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 15126539,
+        "vs_direct": 0.9949,
+        "max_stages": 7,
+        "pending_after_stage1": 3345456
+       },
+       "Q64": {
+        "lockstep_units": 15210634,
+        "vs_direct": 1.0004,
+        "max_stages": 4,
+        "pending_after_stage1": 3345456
+       },
+       "Q128": {
+        "lockstep_units": 15213012,
+        "vs_direct": 1.0006,
+        "max_stages": 2,
+        "pending_after_stage1": 2497189
+       },
+       "Q256": {
+        "lockstep_units": 15204390,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 15204390,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-44.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 118944,
+      "refused_lanes": 0,
+      "sum_work": 7160891,
+      "mean": 60.204,
+      "p50": 61,
+      "p90": 63,
+      "p99": 65,
+      "p999": 65,
+      "max": 65,
+      "reasons": {
+       "0": 118944
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       108591,
+       10353,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 7434,
+        "sum_max": 472928,
+        "sum_work": 7160891,
+        "efficiency": 0.9464
+       },
+       "32": {
+        "groups": 3718,
+        "sum_max": 237867,
+        "sum_work": 7160891,
+        "efficiency": 0.9408
+       },
+       "64": {
+        "groups": 1862,
+        "sum_max": 119648,
+        "sum_work": 7160891,
+        "efficiency": 0.9352
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 236366,
+        "vs_direct": 0.9937,
+        "max_stages": 3,
+        "pending_after_stage1": 118944
+       },
+       "Q64": {
+        "lockstep_units": 236366,
+        "vs_direct": 0.9937,
+        "max_stages": 2,
+        "pending_after_stage1": 2405
+       },
+       "Q128": {
+        "lockstep_units": 237867,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 237867,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 237867,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3567456,
+      "refused_lanes": 0,
+      "sum_work": 542071384,
+      "mean": 151.949,
+      "p50": 156,
+      "p90": 173,
+      "p99": 192,
+      "p999": 197,
+      "max": 203,
+      "reasons": {
+       "0": 3567456
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       170182,
+       3397274,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 222966,
+        "sum_max": 34943049,
+        "sum_work": 542071384,
+        "efficiency": 0.9696
+       },
+       "32": {
+        "groups": 111484,
+        "sum_max": 17556047,
+        "sum_work": 542071384,
+        "efficiency": 0.9649
+       },
+       "64": {
+        "groups": 55744,
+        "sum_max": 8814781,
+        "sum_work": 542071384,
+        "efficiency": 0.9609
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 17440881,
+        "vs_direct": 0.9934,
+        "max_stages": 7,
+        "pending_after_stage1": 3567456
+       },
+       "Q64": {
+        "lockstep_units": 17546089,
+        "vs_direct": 0.9994,
+        "max_stages": 4,
+        "pending_after_stage1": 3567456
+       },
+       "Q128": {
+        "lockstep_units": 17559166,
+        "vs_direct": 1.0002,
+        "max_stages": 2,
+        "pending_after_stage1": 3349296
+       },
+       "Q256": {
+        "lockstep_units": 17556047,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 17556047,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-48.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 429120,
+      "refused_lanes": 0,
+      "sum_work": 24143791,
+      "mean": 56.263,
+      "p50": 57,
+      "p90": 59,
+      "p99": 60,
+      "p999": 62,
+      "max": 62,
+      "reasons": {
+       "0": 429120
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       429120,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 26820,
+        "sum_max": 1576733,
+        "sum_work": 24143791,
+        "efficiency": 0.957
+       },
+       "32": {
+        "groups": 13410,
+        "sum_max": 795382,
+        "sum_work": 24143791,
+        "efficiency": 0.9486
+       },
+       "64": {
+        "groups": 6705,
+        "sum_max": 400437,
+        "sum_work": 24143791,
+        "efficiency": 0.9421
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 795382,
+        "vs_direct": 1.0,
+        "max_stages": 2,
+        "pending_after_stage1": 429120
+       },
+       "Q64": {
+        "lockstep_units": 795382,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 795382,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 795382,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 795382,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3257280,
+      "refused_lanes": 0,
+      "sum_work": 524256655,
+      "mean": 160.949,
+      "p50": 162,
+      "p90": 181,
+      "p99": 198,
+      "p999": 202,
+      "max": 205,
+      "reasons": {
+       "0": 3257280
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       104947,
+       3152333,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 203580,
+        "sum_max": 33520348,
+        "sum_work": 524256655,
+        "efficiency": 0.9775
+       },
+       "32": {
+        "groups": 101790,
+        "sum_max": 16857338,
+        "sum_work": 524256655,
+        "efficiency": 0.9719
+       },
+       "64": {
+        "groups": 50895,
+        "sum_max": 8467130,
+        "sum_work": 524256655,
+        "efficiency": 0.9674
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 16728024,
+        "vs_direct": 0.9923,
+        "max_stages": 7,
+        "pending_after_stage1": 3257280
+       },
+       "Q64": {
+        "lockstep_units": 16851430,
+        "vs_direct": 0.9996,
+        "max_stages": 4,
+        "pending_after_stage1": 3257280
+       },
+       "Q128": {
+        "lockstep_units": 16875000,
+        "vs_direct": 1.001,
+        "max_stages": 2,
+        "pending_after_stage1": 3111104
+       },
+       "Q256": {
+        "lockstep_units": 16857338,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 16857338,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-52.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 1001232,
+      "refused_lanes": 0,
+      "sum_work": 54855731,
+      "mean": 54.788,
+      "p50": 55,
+      "p90": 58,
+      "p99": 60,
+      "p999": 60,
+      "max": 63,
+      "reasons": {
+       "0": 1001232
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       1001232,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 62577,
+        "sum_max": 3629944,
+        "sum_work": 54855731,
+        "efficiency": 0.9445
+       },
+       "32": {
+        "groups": 31289,
+        "sum_max": 1825194,
+        "sum_work": 54855731,
+        "efficiency": 0.9392
+       },
+       "64": {
+        "groups": 15645,
+        "sum_max": 916703,
+        "sum_work": 54855731,
+        "efficiency": 0.935
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 1825194,
+        "vs_direct": 1.0,
+        "max_stages": 2,
+        "pending_after_stage1": 1001232
+       },
+       "Q64": {
+        "lockstep_units": 1825194,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 1825194,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 1825194,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 1825194,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 2685168,
+      "refused_lanes": 0,
+      "sum_work": 418150484,
+      "mean": 155.726,
+      "p50": 159,
+      "p90": 181,
+      "p99": 198,
+      "p999": 202,
+      "max": 207,
+      "reasons": {
+       "0": 2685168
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       323696,
+       2361472,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 167823,
+        "sum_max": 26890861,
+        "sum_work": 418150484,
+        "efficiency": 0.9719
+       },
+       "32": {
+        "groups": 83912,
+        "sum_max": 13506354,
+        "sum_work": 418150484,
+        "efficiency": 0.9675
+       },
+       "64": {
+        "groups": 41956,
+        "sum_max": 6780203,
+        "sum_work": 418150484,
+        "efficiency": 0.9636
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 13405931,
+        "vs_direct": 0.9926,
+        "max_stages": 7,
+        "pending_after_stage1": 2685168
+       },
+       "Q64": {
+        "lockstep_units": 13496952,
+        "vs_direct": 0.9993,
+        "max_stages": 4,
+        "pending_after_stage1": 2685168
+       },
+       "Q128": {
+        "lockstep_units": 13518338,
+        "vs_direct": 1.0009,
+        "max_stages": 2,
+        "pending_after_stage1": 2295845
+       },
+       "Q256": {
+        "lockstep_units": 13506354,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 13506354,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-56.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 1487728,
+      "refused_lanes": 0,
+      "sum_work": 74860485,
+      "mean": 50.319,
+      "p50": 54,
+      "p90": 57,
+      "p99": 59,
+      "p999": 60,
+      "max": 63,
+      "reasons": {
+       "0": 1487728
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       31051,
+       1456677,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 92983,
+        "sum_max": 4943914,
+        "sum_work": 74860485,
+        "efficiency": 0.9464
+       },
+       "32": {
+        "groups": 46497,
+        "sum_max": 2492753,
+        "sum_work": 74860485,
+        "efficiency": 0.9385
+       },
+       "64": {
+        "groups": 23254,
+        "sum_max": 1258420,
+        "sum_work": 74860485,
+        "efficiency": 0.9295
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 2494717,
+        "vs_direct": 1.0008,
+        "max_stages": 2,
+        "pending_after_stage1": 1438633
+       },
+       "Q64": {
+        "lockstep_units": 2492753,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 2492753,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 2492753,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 2492753,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 2198672,
+      "refused_lanes": 0,
+      "sum_work": 305925751,
+      "mean": 139.141,
+      "p50": 138,
+      "p90": 166,
+      "p99": 196,
+      "p999": 201,
+      "max": 208,
+      "reasons": {
+       "0": 2198672
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       807399,
+       1391273,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 137417,
+        "sum_max": 19638728,
+        "sum_work": 305925751,
+        "efficiency": 0.9736
+       },
+       "32": {
+        "groups": 68714,
+        "sum_max": 9870981,
+        "sum_work": 305925751,
+        "efficiency": 0.9685
+       },
+       "64": {
+        "groups": 34361,
+        "sum_max": 4963528,
+        "sum_work": 305925751,
+        "efficiency": 0.963
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 9810400,
+        "vs_direct": 0.9939,
+        "max_stages": 7,
+        "pending_after_stage1": 2198672
+       },
+       "Q64": {
+        "lockstep_units": 9858502,
+        "vs_direct": 0.9987,
+        "max_stages": 4,
+        "pending_after_stage1": 2198672
+       },
+       "Q128": {
+        "lockstep_units": 9868489,
+        "vs_direct": 0.9997,
+        "max_stages": 2,
+        "pending_after_stage1": 1326189
+       },
+       "Q256": {
+        "lockstep_units": 9870981,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 9870981,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-60.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 1107120,
+      "refused_lanes": 0,
+      "sum_work": 56816015,
+      "mean": 51.319,
+      "p50": 55,
+      "p90": 58,
+      "p99": 59,
+      "p999": 60,
+      "max": 60,
+      "reasons": {
+       "0": 1107120
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       20248,
+       1086872,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 69195,
+        "sum_max": 3753946,
+        "sum_work": 56816015,
+        "efficiency": 0.9459
+       },
+       "32": {
+        "groups": 34599,
+        "sum_max": 1892271,
+        "sum_work": 56816015,
+        "efficiency": 0.9383
+       },
+       "64": {
+        "groups": 17301,
+        "sum_max": 955683,
+        "sum_work": 56816015,
+        "efficiency": 0.9289
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 1895754,
+        "vs_direct": 1.0018,
+        "max_stages": 2,
+        "pending_after_stage1": 1076638
+       },
+       "Q64": {
+        "lockstep_units": 1892271,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 1892271,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 1892271,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 1892271,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 2579280,
+      "refused_lanes": 0,
+      "sum_work": 247900202,
+      "mean": 96.112,
+      "p50": 72,
+      "p90": 134,
+      "p99": 161,
+      "p999": 164,
+      "max": 168,
+      "reasons": {
+       "0": 2579280
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       2139155,
+       440125,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 161205,
+        "sum_max": 15725929,
+        "sum_work": 247900202,
+        "efficiency": 0.9852
+       },
+       "32": {
+        "groups": 80604,
+        "sum_max": 7889232,
+        "sum_work": 247900202,
+        "efficiency": 0.982
+       },
+       "64": {
+        "groups": 40303,
+        "sum_max": 3964603,
+        "sum_work": 247900202,
+        "efficiency": 0.977
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 7858108,
+        "vs_direct": 0.9961,
+        "max_stages": 6,
+        "pending_after_stage1": 2579280
+       },
+       "Q64": {
+        "lockstep_units": 7867467,
+        "vs_direct": 0.9972,
+        "max_stages": 3,
+        "pending_after_stage1": 2579280
+       },
+       "Q128": {
+        "lockstep_units": 7867467,
+        "vs_direct": 0.9972,
+        "max_stages": 2,
+        "pending_after_stage1": 357392
+       },
+       "Q256": {
+        "lockstep_units": 7889232,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 7889232,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   },
+   {
+    "file": "worktrace_in/traceIn-8.bin",
+    "producers": {
+     "S1": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "S2": {
+      "active_lanes": 0,
+      "refused_lanes": 0,
+      "sum_work": 0,
+      "mean": 0.0,
+      "p50": 0,
+      "p90": 0,
+      "p99": 0,
+      "p999": 0,
+      "max": 0,
+      "reasons": {},
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0,
+       0
+      ],
+      "simd": {},
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q64": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q128": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q256": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 0,
+        "vs_direct": 0.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     },
+     "Fallback": {
+      "active_lanes": 3686400,
+      "refused_lanes": 0,
+      "sum_work": 368679341,
+      "mean": 100.011,
+      "p50": 103,
+      "p90": 108,
+      "p99": 122,
+      "p999": 128,
+      "max": 134,
+      "reasons": {
+       "0": 3686400
+      },
+      "hist_log2": [
+       0,
+       0,
+       0,
+       0,
+       0,
+       3682679,
+       3721,
+       0,
+       0,
+       0
+      ],
+      "simd": {
+       "16": {
+        "groups": 230400,
+        "sum_max": 23736786,
+        "sum_work": 368679341,
+        "efficiency": 0.9707
+       },
+       "32": {
+        "groups": 115200,
+        "sum_max": 11919845,
+        "sum_work": 368679341,
+        "efficiency": 0.9666
+       },
+       "64": {
+        "groups": 57600,
+        "sum_max": 5988466,
+        "sum_work": 368679341,
+        "efficiency": 0.962
+       }
+      },
+      "model_w32": {
+       "Q32": {
+        "lockstep_units": 11899938,
+        "vs_direct": 0.9983,
+        "max_stages": 5,
+        "pending_after_stage1": 3686400
+       },
+       "Q64": {
+        "lockstep_units": 11918440,
+        "vs_direct": 0.9999,
+        "max_stages": 3,
+        "pending_after_stage1": 3686400
+       },
+       "Q128": {
+        "lockstep_units": 11918440,
+        "vs_direct": 0.9999,
+        "max_stages": 2,
+        "pending_after_stage1": 1594
+       },
+       "Q256": {
+        "lockstep_units": 11919845,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       },
+       "Q512": {
+        "lockstep_units": 11919845,
+        "vs_direct": 1.0,
+        "max_stages": 1,
+        "pending_after_stage1": 0
+       }
+      }
+     }
+    }
+   }
+  ]
+ }
+}

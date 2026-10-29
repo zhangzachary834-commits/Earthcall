@@ -36,6 +36,11 @@ struct KernelRoutedTransport {
     // packet their producer would (base offsets id*maxSub/id*maxOver, zero counts, FALLBACK|1 at zero budget). Positive budgets below 96 are no longer charged for skipped
     // empty-member work (the budget bounds work performed); budget 0 still forces refusal. Same classifier proof S1/S2 already trust for their other members.
     bool skipEmptyTiles=false;WGPUComputePipeline classifySkip=nullptr;
+    // §6fe Pass A (Rung 0 telemetry, Kernel diagnostic, OFF by default, never touched by ordinary rendering): when observeWork is set, encode() runs producer variants derived by
+    // substitution that also record each lane's final (work, reason) into workTrace, indexed [strip][producer S1/S2/Fallback][tileSlot*16+rayInTile] (0 = lane wrote nothing).
+    // workTrace is cleared at the start of every encode(), so it holds the last frame's complete per-lane trace. It never changes what the producers publish.
+    bool observeWork=false;std::array<WGPUComputePipeline,3> workPipes{};WGPUBuffer workTrace=nullptr;uint64_t workTraceBytes=0;
+    bool enableWorkTrace(bool on);
     uint32_t workLimit=1024; // Kernel search ceiling; lowering it can only force Current refusal.
     struct Program {WGPUComputePipeline setup=nullptr,consumer=nullptr;WGPUBindGroupLayout globals=nullptr,instances=nullptr,local=nullptr;};
     std::map<std::string,Program> programs;

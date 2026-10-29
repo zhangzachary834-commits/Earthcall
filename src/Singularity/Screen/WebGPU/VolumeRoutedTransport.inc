@@ -77,10 +77,11 @@ fn ecAdvanceOverlap(stateIn:vec4<f32>,ro:vec3<f32>,rd:vec3<f32>,span:ECSpan)->ve
 )WGSL";
 }
 KernelRoutedTransport::~KernelRoutedTransport(){
- enableRouteObserver(false);releaseBuffers();for(auto p:common)if(p)wgpuComputePipelineRelease(p);if(classifySkip)wgpuComputePipelineRelease(classifySkip);
+ enableRouteObserver(false);releaseBuffers();for(auto p:common)if(p)wgpuComputePipelineRelease(p);if(classifySkip)wgpuComputePipelineRelease(classifySkip);enableWorkTrace(false);
  for(auto& [key,p]:programs){if(p.setup)wgpuComputePipelineRelease(p.setup);if(p.consumer)wgpuComputePipelineRelease(p.consumer);if(p.globals)wgpuBindGroupLayoutRelease(p.globals);if(p.instances)wgpuBindGroupLayoutRelease(p.instances);if(p.local)wgpuBindGroupLayoutRelease(p.local);}
 }
 void KernelRoutedTransport::releaseBuffers(){
+ if(workTrace){wgpuBufferRelease(workTrace);workTrace=nullptr;workTraceBytes=0;observeWork=false;}
  for(auto* p:{&publication,&rays,&singles,&overlaps,&offsets,&indices,&counts,&args})if(*p){wgpuBufferRelease(*p);*p=nullptr;}
  for(auto& p:lists)if(p){wgpuBufferRelease(p);p=nullptr;}width=height=capacity=tiles=stripRows=0;
 }
@@ -124,6 +125,24 @@ bool KernelRoutedTransport::enableRouteObserver(bool on){
 )WGSL";
  observerPipe=pipeline(device,src,"classifyTilesMain");accumPipe=pipeline(device,accum,"accumCounts");routeHistogram=buffer(device,queue,1032*4);
  if(!observerPipe||!accumPipe||!routeHistogram){enableRouteObserver(false);return false;}resetRouteHistogram();observeRoutes=true;return true;
+}
+bool KernelRoutedTransport::enableWorkTrace(bool on){
+ using namespace kernel_routed_detail;
+ if(!on){observeWork=false;for(auto& p:workPipes)if(p){wgpuComputePipelineRelease(p);p=nullptr;}if(workTrace){wgpuBufferRelease(workTrace);workTrace=nullptr;workTraceBytes=0;}return true;}
+ if(!device||!tiles||!common[3])return false;if(observeWork&&workTrace&&workPipes[0]&&workPipes[1]&&workPipes[2])return true;
+ const char* codes[]={routed_wgsl::kS1UnfusedProducerWgsl,routed_wgsl::kS2ProducerWgsl,routed_wgsl::kFallbackProducerWgsl};const char* entries[]={"s1ProducerMain","s2ProducerMain","fallbackProducerMain"};
+ for(int i=0;i<3;++i){
+  std::string src=codes[i];
+  if(!replace(src,"struct Config {rayCount:u32,maxSubPerRay:u32,maxOverPerRay:u32,budget:u32};","struct Config {rayCount:u32,maxSubPerRay:u32,maxOverPerRay:u32,budget:u32,width:u32,height:u32,start:u32,stripRows:u32};"))return enableWorkTrace(false);
+  if(!replace(src,"@group(0) @binding(8) var<storage, read> routeCounts: array<u32>;","@group(0) @binding(8) var<storage, read> routeCounts: array<u32>;\n@group(0) @binding(9) var<storage, read_write> workTrace: array<u32>;"))return enableWorkTrace(false);
+  // Every producer exit path writes its counts through exactly one 'rays[id].counts = ' statement inside a braced block; record (work, reason) just before it.
+  const std::string site="rays[id].counts = ";const std::string record="workTrace[(cfg.start/cfg.stripRows)*3u*((arrayLength(&tileOffsets)-1u)*16u)+"+std::to_string(i)+"u*((arrayLength(&tileOffsets)-1u)*16u)+tileSlot*16u+rayInTile]=(work&0xFFFFu)|((reason&63u)<<16)|(1u<<22); ";
+  size_t n=0;for(size_t p=0;(p=src.find(site,p))!=std::string::npos;p+=site.size()+record.size()){src.insert(p,record);++n;}
+  if(n<3)return enableWorkTrace(false);
+  workPipes[i]=pipeline(device,src,entries[i]);if(!workPipes[i])return enableWorkTrace(false);
+ }
+ const uint32_t strips=(height+stripRows-1)/stripRows;workTraceBytes=uint64_t(strips)*3*tiles*16*4;workTrace=buffer(device,queue,workTraceBytes);
+ if(!workTrace)return enableWorkTrace(false);observeWork=true;return true;
 }
 void KernelRoutedTransport::resetRouteHistogram(){if(!routeHistogram)return;std::vector<uint32_t> z(1032,0);wgpuQueueWriteBuffer(queue,routeHistogram,0,z.data(),z.size()*4);}
 KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string& source){
@@ -169,6 +188,7 @@ bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const K
  auto g=std::vector<WGPUBindGroupEntry>{entry(0,globals.buffer,globals.size,globals.offset),entry(1,params.buffer,params.size,params.offset),{},entry(3,publication,uint64_t(width)*height*16)};g[2].binding=2;g[2].textureView=depth;
  auto globalGroup=group(device,p.globals,g),instanceGroup=group(device,p.instances,{entry(0,instances.buffer,instances.size,instances.offset)});
  // §6fb packaging ablation: coalescePasses encodes the identical ordered dispatch stream inside ONE compute pass (WebGPU usage scopes are per dispatch).
+ if(observeWork&&workTrace)wgpuCommandEncoderClearBuffer(encoder,workTrace,0,workTraceBytes);
  encodedPasses=0;encodedDispatches=0;dispatchTrace=collectDispatchTrace?0xcbf29ce484222325ull:0;
  auto begin=[&](){++encodedPasses;return wgpuCommandEncoderBeginComputePass(encoder,nullptr);};
  auto note=[&](const void* pipe,uint32_t n,uint64_t tag){++encodedDispatches;if(!collectDispatchTrace)return;for(uint64_t v:{uint64_t(reinterpret_cast<uintptr_t>(pipe)),uint64_t(n),tag})for(int b=0;b<8;++b)dispatchTrace=(dispatchTrace^((v>>(8*b))&255))*0x100000001b3ull;};
@@ -189,7 +209,8 @@ bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const K
    auto ag=group(device,accumPipe,{entry(0,counts,16),entry(1,routeHistogram,1032*4)});dispatch(observerPipe,og,(tiles+63)/64);dispatch(accumPipe,ag,1);wgpuBindGroupRelease(og);wgpuBindGroupRelease(ag);
   }
   for(unsigned i=0;i<3;++i){auto entries=std::vector<WGPUBindGroupEntry>{entry(0,u.buffer,u.size,u.offset),entry(1,uniformSpecs.buffer,uniformSpecs.size,uniformSpecs.offset),entry(2,rays,uint64_t(capacity)*48),entry(3,singles,uint64_t(capacity)*64*16)};if(i==2)entries.push_back(entry(4,overlaps,uint64_t(capacity)*16*16));entries.push_back(entry(5,offsets,uint64_t(tiles+1)*4));entries.push_back(entry(6,indices,uint64_t(capacity)*4));entries.push_back(entry(7,lists[i],uint64_t(tiles)*4));entries.push_back(entry(8,counts,16));
-   auto bg=group(device,common[i+3],entries);auto pass=open();wgpuComputePassEncoderSetPipeline(pass,common[i+3]);wgpuComputePassEncoderSetBindGroup(pass,0,bg,0,nullptr);note(common[i+3],i*12,3);wgpuComputePassEncoderDispatchWorkgroupsIndirect(pass,args,i*12);close(pass);wgpuBindGroupRelease(bg);
+   const bool tracing=observeWork&&workTrace&&workPipes[i];auto producer=tracing?workPipes[i]:common[i+3];if(tracing)entries.push_back(entry(9,workTrace,workTraceBytes));
+   auto bg=group(device,producer,entries);auto pass=open();wgpuComputePassEncoderSetPipeline(pass,producer);wgpuComputePassEncoderSetBindGroup(pass,0,bg,0,nullptr);note(producer,i*12,3);wgpuComputePassEncoderDispatchWorkgroupsIndirect(pass,args,i*12);close(pass);wgpuBindGroupRelease(bg);
   }
   withContext(p.consumer);wgpuBindGroupRelease(localGroup);
  }
