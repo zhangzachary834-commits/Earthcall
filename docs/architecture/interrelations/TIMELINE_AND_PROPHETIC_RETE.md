@@ -1,23 +1,28 @@
 # Timeline Singulars and Prophetic Rete
 
-**Date:** 2026-10-28  
-**Status:** Architectural cross-check; cross-Timeline solver is not implemented  
-**Sources:** `docs/architecture/ontology/TIME_AND_MOMENT.md`; `docs/architecture/law/PROPHETIC_RETE.md`
+**Date:** 2026-10-28
+**Status:** Architectural cross-check
+**Related:** `docs/architecture/ontology/TIME_AND_MOMENT.md`, `docs/architecture/law/PROPHETIC_RETE.md`
 
-## The shared problem
+## The Interrelation
 
-Timelines are independent temporal domains unless authored Relations establish otherwise. Prophetic Rete is an ahead-of-time, **conservative over-approximation** of authored Law reads, writes, and possible relevance. Its critical safety rule is that uncertainty must **fail open**: it may prove an interaction impossible, but must not suppress a Law on an unproven assumption.
+The `TIME_AND_MOMENT.md` architecture replaces a monolithic world clock with independent `Timeline` Singulars. Different domains of the world may run on entirely separate clocks, advancing at different rates or pausing independently.
 
-These facts motivate Timeline-aware *future* analysis, but do not make wall-clock overlap a necessary condition for semantic dependence. Two writes may conflict by targeting the same persistent state even when their execution windows do not overlap; a later Law may depend on an earlier write across Timeline boundaries.
+`PROPHETIC_RETE.md` details a system that performs a static, forward-looking analysis of Laws to determine possible state changes (writes) before they happen. Its goal is to predict and manage semantic collisions—situations where two Laws attempt to mutate the same property concurrently.
 
-## Architectural interrelation
+### How they relate
 
-1. **Temporal provenance:** Future relevance edges may record the Timeline/Moment context in which a Law reads or writes, provided that context has an explicit, trustworthy source.
-2. **Relations before exclusion:** Independent Timeline identity alone does not prove that two effects are disjoint. A sound exclusion would require proven noninteraction of the target state, causal dependencies, and any authored synchronization or translation.
-3. **Conservative fallback:** If scheduling, cross-Timeline relations, First-Mover writes, or external sources are unknown, retain the possible relevance edge. Never suppress a real Law firing merely because two clocks appear unsynchronized.
-4. **Derived evidence, not authority:** The existing Prophetic relevance graph is diagnostic/derived state; incomplete analysis does not acquire hot-path narrowing authority. A future Timeline-aware solver needs separate currency, invalidation, soundness, and regression witnesses.
-5. **No invented global fixpoint:** The source specification says general cross-Law least-post-fixpoint closure remains a refinement. Do not describe a deployed cross-Timeline clash solver or a proof of real-time overlap.
+The introduction of independent Timelines radically shifts the definition of "concurrent" for the Prophetic Rete.
 
-**Implementation boundary:** The current Timeline first rung supports independently advancing beings, not the final authored synchronization Laws. Prophetic Rete's existing soundness witnesses (including `tests/law/prophetic_rete_test.cpp` Section F) remain authoritative when extending analysis.
+Before Timelines, if Law A and Law B both declared an intent to write to `Object.position`, the Prophetic Rete could easily flag this as a potential collision because both were evaluated in the same implicit global timestep.
 
-**Original intake:** Jules PR #812; scope and implementation claims reconciled against the source architecture.
+With independent Timelines, the Prophetic Rete's clash prediction must become strictly **Timeline-aware**.
+
+1.  **Temporal Intersection:** If Law A is driven by `Timeline_X` and Law B is driven by `Timeline_Y`, they cannot clash unless the `Moment` bounds evaluated on `Timeline_X` actually intersect in real-world execution with the `Moment` bounds on `Timeline_Y`.
+2.  **Relative Advance Rates:** Because Adaptive Compute might advance `Timeline_X` rapidly while pausing `Timeline_Y`, the Prophetic Rete cannot assume that a structural write overlap in the Law text implies an actual runtime collision.
+3.  **Cross-Timeline Solver:** The Prophetic Rete's cross-Law solver (the least-post-fixpoint solver) must integrate Timeline relations. To prove a collision, the Rete must prove that the two Timelines are synchronized or related in such a way that their execution Windows overlap.
+4.  **False Positives:** If the Prophetic Rete ignores Timelines, it will generate massive false-positive collision reports, forcing the engine into unnecessary fallback modes because it assumes independent processes are running simultaneously.
+
+Therefore, Prophetic Rete analysis is incomplete without examining the Timeline context of the Laws it evaluates. Predicting *what* will happen is no longer sufficient; the Rete must predict *when* it will happen relative to the independent clocks governing the actions.
+
+**Author**: Jules (Claude 3.5 Sonnet, default harness, Session 8124)

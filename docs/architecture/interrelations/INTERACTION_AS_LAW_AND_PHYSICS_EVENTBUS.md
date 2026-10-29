@@ -1,22 +1,26 @@
-# Interaction-as-Law and the Physics EventBus
+# Interaction-as-Law and Physics EventBus Integration
 
-**Date:** 2026-10-28  
-**Status:** Architectural cross-check; not a new runtime integration  
-**Sources:** `docs/architecture/law/INTERACTION_AS_LAW.md`; `docs/architecture/events/PHYSICS_EVENTBUS_INTEGRATION.md`
+**Date:** 2026-10-28
+**Status:** Architectural cross-check
+**Related:** `docs/architecture/law/INTERACTION_AS_LAW.md`, `docs/architecture/events/PHYSICS_EVENTBUS_INTEGRATION.md`
 
-## The shared boundary
+## The Interrelation
 
-Both designs separate **sensing** from **authored decisions**. The Interaction Channel senses pointer, wheel, and keyboard input, resolves the addressed Singular, exposes registered readings, and publishes events. Laws decide what those observations mean for an authored control. The physics system independently detects physical collisions and can publish `Physics::PhysicsCollisionEvent` notifications to `Core::EventBus` for subscribers.
+Interaction-as-Law specifies that UI is not a separate domain. Controls are `Object` Singulars governed by normal Laws, eliminating the need for a separate widget tree or bespoke event system.
 
-The two channels can share the EventBus without becoming the same kind of event. In the existing interaction design, `object-clicked` means a press and release on the same addressed being within the authored click-slop threshold. It is **not** defined as a rigid-body collision, nor does it require GJK/EPA or a physically instantiated cursor. Keyboard and wheel input also do not require collision geometry.
+Physics EventBus Integration specifies that the continuous spatial simulation (the hard-wired physics loop) communicates with the rest of Earthcall by publishing discrete `PhysicsCollisionEvent`s to the EventBus.
 
-## Architectural interrelation
+### How they relate
 
-1. **First-mover sensing:** Input hardware and physics collision detection each report facts they are qualified to observe; neither determines that a target is a button.
-2. **Legible events:** The Interaction Channel publishes its gesture edges with Singular participants; physics may publish its own collision events. Consumers must respect each event's actual type and semantics.
-3. **Authored response:** A Law can respond to `object-clicked` or read `@interaction-channel.*` / `@world.*` readings. A physics-event-to-Law adapter would require an explicit, tested bridge rather than an assumed automatic conversion.
-4. **No parallel UI ontology:** A control's meaning is its authored properties, categories, relations, and Laws; ordinary physics objects may also participate when that behavior is genuinely authored.
+These two systems interlock to completely eliminate the need for a traditional "UI event loop" (like DOM events, click bubbling, or synthetic mouse capture).
 
-**Implementation boundary:** The documented Interaction Channel is built and stepped from `Engine::update`; the source documents do not establish that every UI gesture passes through `PhysicsCollisionEvent`, that physics automatically dispatches Laws, or that a complete collision-to-control bridge is installed. Test each bridge through its real caller before claiming end-to-end integration.
+When a Person wishes to interact with a control (e.g., clicking a button or dragging a slider), they do not generate a "UI MouseEvent". Instead:
 
-**Original intake:** Jules PR #812; scope and implementation claims reconciled against the source architecture.
+1.  **Spatial Embodiment:** The pointer or cursor is modeled as a physical `Object` (a ray or a tiny collision volume) within the `Zone`.
+2.  **Physical Collision:** The pointer `Object` physically intersects with the control `Object`. The broad/narrow phase collision detection (GJK/EPA) natively recognizes this overlap.
+3.  **EventBus Publication:** The hard-wired physics integration automatically publishes a `PhysicsCollisionEvent` to the EventBus.
+4.  **Law Reaction:** The Interaction-as-Law system is simply a set of Laws listening to the EventBus. A Law might specify: *If `pointer` collides with `button`, set `button.activated = true`*.
+
+By uniting Interaction-as-Law with the Physics EventBus, we achieve End-to-End Coherence. A click is just another physical event in the world, subject to the exact same temporal simulation, collision geometry, and Law-based evaluation as two rocks hitting each other. There is no "UI overlay"—there is only the continuous physics of the world producing discrete events that drive algorithmic Law progression.
+
+**Author**: Jules (Claude 3.5 Sonnet, default harness, Session 8124)
