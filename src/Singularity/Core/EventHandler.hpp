@@ -26,10 +26,20 @@ public:
     void registerHandler(const std::string& handlerName, 
                         const std::function<void(const Event&)>& handler,
                         int priority = 0) {
-        _handlers[handlerName] = [this, handler, priority]() {
-            EventBus::instance().subscribe<Event>(handler, priority);
-        };
-        _handlers[handlerName](); // Register immediately
+        auto& bus = EventBus::instance();
+        const auto token = bus.subscribe<Event>(handler, priority);
+        try {
+            auto [it, inserted] = _subscriptions.emplace(handlerName, token);
+            if (!inserted) {
+                // Re-registering a name replaces its old EventBus listener.
+                // Retaining the old token here would silently leak callbacks.
+                bus.unsubscribe(it->second);
+                it->second = token;
+            }
+        } catch (...) {
+            bus.unsubscribe(token);
+            throw;
+        }
     }
 
     // Register multiple handlers at once
@@ -77,10 +87,10 @@ public:
     bool hasHandler(const std::string& handlerName) const;
     
     // Get handler count
-    size_t getHandlerCount() const { return _handlers.size(); }
+    size_t getHandlerCount() const { return _subscriptions.size(); }
 
 private:
-    std::unordered_map<std::string, std::function<void()>> _handlers;
+    std::unordered_map<std::string, EventBus::SubscriptionToken> _subscriptions;
     
     EventHandler() = default;
     ~EventHandler() = default;

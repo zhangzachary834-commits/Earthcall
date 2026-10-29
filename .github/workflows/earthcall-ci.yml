@@ -97,6 +97,7 @@ jobs:
         rete_state_ptr_index_test
         relation_type_lexeme_lifetime_test
         event_bus_test
+        event_handler_lifetime_test
         law_manager_eventbus_lifetime_test
         locomotion_eventbus_lifetime_test
         jit_llvm_test
