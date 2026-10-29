@@ -3707,7 +3707,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
         ImGui::PushID(law->getIdentifier().c_str());
         bool enabled = law->isEnabled();
         if (ImGui::Checkbox("##enabled", &enabled)) law->setEnabled(enabled);
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("enabled");
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Click to set @%s.enabled := %s", law->getIdentifier().c_str(), enabled ? "false" : "true");
         ImGui::SameLine();
         if (ImGui::Selectable(law->name().c_str(),
                               law->getIdentifier() == g.selectedLawId)) {
