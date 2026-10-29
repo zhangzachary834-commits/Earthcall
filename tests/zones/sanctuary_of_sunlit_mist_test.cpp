@@ -16,6 +16,7 @@
 #include <iostream>
 #include <memory>
 #include <filesystem>
+#include <chrono>
 #include <cassert>
 
 namespace {
@@ -70,21 +71,18 @@ int main() {
 
     if (std::filesystem::exists(realSavesDir / "zones")) {
         std::filesystem::create_directories(sandbox.path / "zones");
-        std::error_code ec;
         std::filesystem::copy(realSavesDir / "zones", sandbox.path / "zones",
-                              std::filesystem::copy_options::recursive, ec);
+                              std::filesystem::copy_options::recursive);
     }
     if (std::filesystem::exists(realSavesDir / "materials")) {
         std::filesystem::create_directories(sandbox.path / "materials");
-        std::error_code ec;
         std::filesystem::copy(realSavesDir / "materials", sandbox.path / "materials",
-                              std::filesystem::copy_options::recursive, ec);
+                              std::filesystem::copy_options::recursive);
     }
     if (std::filesystem::exists(realSavesDir / "laws")) {
         std::filesystem::create_directories(sandbox.path / "laws");
-        std::error_code ec;
         std::filesystem::copy(realSavesDir / "laws", sandbox.path / "laws",
-                              std::filesystem::copy_options::recursive, ec);
+                              std::filesystem::copy_options::recursive);
     }
 
     ZoneManager mgr;
