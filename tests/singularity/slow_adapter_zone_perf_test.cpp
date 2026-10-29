@@ -72,8 +72,68 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
+    struct IsolatedPerfSaveSandbox {
+        std::filesystem::path tempPath;
+        std::string previousRoot;
+
+        std::string sandboxWorldPath;
+
+        explicit IsolatedPerfSaveSandbox(const std::string& resolvedWorldPath) {
+            previousRoot = SaveSystem::saveRoot();
+            tempPath = std::filesystem::temp_directory_path() /
+                       ("earthcall-perf-sandbox-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+            std::filesystem::create_directories(tempPath);
+
+            const auto worldPath = std::filesystem::absolute(resolvedWorldPath);
+            const auto realSaves = worldPath.parent_path().parent_path();
+
+            std::error_code ec;
+            for (const std::string& sub : {"laws", "materials", "homes", "identity", "fixtures"}) {
+                if (std::filesystem::exists(realSaves / sub, ec)) {
+                    std::filesystem::copy(realSaves / sub, tempPath / sub,
+                        std::filesystem::copy_options::recursive, ec);
+                }
+            }
+
+            std::filesystem::create_directories(tempPath / "worlds", ec);
+            if (std::filesystem::exists(worldPath, ec)) {
+                sandboxWorldPath = (tempPath / "worlds" / worldPath.filename()).string();
+                for (auto it = std::filesystem::directory_iterator(worldPath.parent_path(), ec);
+                     it != std::filesystem::directory_iterator(); it.increment(ec)) {
+                    if (ec) break;
+                    if (it->path().stem() == worldPath.stem()) {
+                        std::filesystem::copy_file(it->path(), tempPath / "worlds" / it->path().filename(),
+                            std::filesystem::copy_options::overwrite_existing, ec);
+                    }
+                }
+            } else {
+                sandboxWorldPath = resolvedWorldPath;
+            }
+
+            std::filesystem::create_directories(tempPath / "zones", ec);
+            if (std::filesystem::exists(realSaves / "zones", ec)) {
+                for (auto it = std::filesystem::directory_iterator(realSaves / "zones", ec);
+                     it != std::filesystem::directory_iterator(); it.increment(ec)) {
+                    if (ec) break;
+                    std::filesystem::copy(it->path(), tempPath / "zones" / it->path().filename(),
+                        std::filesystem::copy_options::recursive, ec);
+                }
+            }
+
+            SaveSystem::setSaveRoot(tempPath.string());
+        }
+
+        ~IsolatedPerfSaveSandbox() {
+            SaveSystem::setSaveRoot(previousRoot);
+            std::error_code ec;
+            std::filesystem::remove_all(tempPath, ec);
+        }
+    } saveSandbox(world);
+
+    if (!saveSandbox.sandboxWorldPath.empty()) {
+        world = saveSandbox.sandboxWorldPath;
+    }
+
     TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
