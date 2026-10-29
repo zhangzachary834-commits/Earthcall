@@ -117,8 +117,8 @@ int main(int argc,char**argv){
    // §6fb: original routed (separate compute passes) vs coalesced (one pass), same process/device/camera/clock.
    need(lawSetValue(*rec,PropertyPath::parse("outputPath"),(fs::current_path()/"captures").string()),"recorder output");need(lawSetValue(*rec,PropertyPath::parse("recordCursor"),false),"recorder cursor");
    const uint32_t strips=(k->height+k->stripRows-1)/k->stripRows,expectDispatch=8*strips;Json caps=Json::array();std::map<std::string,uint64_t> pubHash,snapHash;std::map<std::string,uint64_t> traceHash;
-   auto capture=[&](const char* name,int index,bool on,bool coalesce,uint32_t limit,bool poisoned){
-    r->setRoutedWorkLimitForDiagnostics(limit);r->setRoutedCoalescedPassesForDiagnostics(coalesce,true);Json row={{"name",name},{"index",index},{"routed",on},{"coalesced",coalesce},{"work_limit",limit},{"poisoned",poisoned}};
+   auto capture=[&](const char* name,int index,bool on,bool coalesce,uint32_t limit,bool poisoned,bool skip=false){r->setRoutedSkipEmptyTilesForDiagnostics(skip);
+    r->setRoutedWorkLimitForDiagnostics(limit);r->setRoutedCoalescedPassesForDiagnostics(coalesce,true);Json row={{"name",name},{"index",index},{"routed",on},{"coalesced",coalesce},{"skip_empty",skip},{"work_limit",limit},{"poisoned",poisoned}};
     if(poisoned){fence(k);poisonScratch(k);fence(k);auto raw=rawPublication(k);uint64_t nan=0;for(float f:raw)nan+=std::isnan(f);need(nan==raw.size(),"poison control did not reach the publication buffer");row["poison_nan_words"]=nan;}
     need(lawSetValue(*rec,PropertyPath::parse("snapshot"),true),"snapshot request");auto facts=frame(index,on);fence(k);
     PropertyValue path;need(lawGetValue(*rec,PropertyPath::parse("lastSnapshotPath"),path)&&std::holds_alternative<std::string>(path),"actual viewport snapshot");const auto file=output.parent_path()/(std::string("scene-")+name+"-"+std::to_string(index)+fs::path(std::get<std::string>(path)).extension().string());fs::copy_file(std::get<std::string>(path),file,fs::copy_options::overwrite_existing);
@@ -136,12 +136,17 @@ int main(int argc,char**argv){
     capture("orig",index,true,false,1024,false);capture("orig2",index,true,false,1024,false);capture("coal",index,true,true,1024,false);
     capture("origP",index,true,false,1024,true);capture("coalP",index,true,true,1024,true);
     capture("origR",index,true,false,0,false);capture("coalR",index,true,true,0,false);capture("coalRP",index,true,true,0,true);
+    capture("skip",index,true,true,1024,false,true);capture("skipP",index,true,true,1024,true,true);capture("skipR",index,true,true,0,false,true);capture("skipRP",index,true,true,0,true,true);
     auto eq=[&](std::map<std::string,uint64_t>& m,const char* a,const char* b,const char* why){need(m.at(a+I)==m.at(b+I),why);};
     eq(pubHash,"orig","orig2","control: original not deterministic");eq(pubHash,"orig","coal","coalesced publication differs");eq(pubHash,"orig","origP","poisoned original differs");eq(pubHash,"orig","coalP","poisoned coalesced differs");eq(pubHash,"origR","coalR","refusal publication differs");eq(pubHash,"origR","coalRP","poisoned refusal publication differs");
     eq(snapHash,"orig","orig2","control: original snapshot not deterministic");eq(snapHash,"orig","coal","coalesced snapshot differs");eq(snapHash,"orig","origP","poisoned original snapshot differs");eq(snapHash,"orig","coalP","poisoned coalesced snapshot differs");eq(snapHash,"current","origR","forced refusal must preserve Current output (original)");eq(snapHash,"current","coalR","forced refusal must preserve Current output (coalesced)");eq(snapHash,"current","coalRP","forced refusal must preserve Current output (coalesced, poisoned)");
     need(snapHash.at("orig"+I)!=snapHash.at("current"+I),"routed output must differ from Current somewhere (transport actually contributes)");
-    eq(traceHash,"orig","coal","dispatch order/workgroup trace differs");eq(traceHash,"orig","coalP","dispatch order trace differs (poisoned)");
+    eq(pubHash,"orig","skip","skip-empty publication differs");eq(pubHash,"orig","skipP","poisoned skip-empty publication differs");eq(pubHash,"origR","skipR","skip-empty refusal publication differs");eq(pubHash,"origR","skipRP","poisoned skip-empty refusal publication differs");eq(snapHash,"orig","skip","skip-empty snapshot differs");eq(snapHash,"orig","skipP","poisoned skip-empty snapshot differs");eq(snapHash,"current","skipR","skip-empty forced refusal must preserve Current output");eq(snapHash,"current","skipRP","skip-empty poisoned forced refusal must preserve Current output");eq(traceHash,"orig","coal","dispatch order/workgroup trace differs");eq(traceHash,"orig","coalP","dispatch order trace differs (poisoned)");
    }
+   {Json eff=Json::array();uint64_t allEmpties=0;for(int index:{0,32}){need(r->setRoutedRouteObserverForDiagnostics(true),"observer on");r->setRoutedWorkLimitForDiagnostics(1024);r->setRoutedCoalescedPassesForDiagnostics(true);r->setRoutedSkipEmptyTilesForDiagnostics(true);r->resetRoutedRouteObserverForDiagnostics();frame(index,true);fence(k);auto w=readWords(k,k->routeHistogram,1032*4);uint64_t empties=0,obsFb=0;for(uint32_t key=0;key<1024;++key){if(!w[key])continue;const uint32_t mask=key&15,overlap=(key>>8)&1,ordered=(key>>9)&1;const bool s1=mask==1&&!overlap,s2=ordered;if(!s1&&!s2){obsFb+=w[key];if(mask==0)empties+=w[key];}}
+     // the observer's own classifier is the original; the production counters come from the skipping classifier
+     allEmpties+=empties;need(w[1026]+empties==obsFb,"skip-empty did not remove exactly the wave-empty tiles from the fallback list");eff.push_back(Json{{"index",index},{"observed_fallback",obsFb},{"observed_empty",empties},{"production_fallback_with_skip",w[1026]}});}
+    need(allEmpties>0,"checked poses must contain wave-empty tiles (skip not exercised otherwise)");r->setRoutedSkipEmptyTilesForDiagnostics(false);need(r->setRoutedRouteObserverForDiagnostics(false),"observer off");result["skip_effectiveness"]=eff;}
    r->setRoutedWorkLimitForDiagnostics(1024);r->setRoutedCoalescedPassesForDiagnostics(false);result["captures"]=caps;result["expected_dispatches"]=expectDispatch;result["strips"]=strips;
   }
   if(mode=="census"){
@@ -159,6 +164,15 @@ int main(int argc,char**argv){
    }
    Json agg=Json::object();for(auto& [key,n]:total)agg[std::to_string(key)]=n;result["tiles_per_frame"]=perFrame;result["frames"]=64;result["aggregate_bins"]=agg;result["aggregate_routes"]={{"s1",totals[0]},{"s2",totals[1]},{"fallback",totals[2]}};result["poses"]=rows;
    need(r->setRoutedRouteObserverForDiagnostics(false),"observer off");
+  }
+  if(mode=="skiptiming"){
+   // Lanes: 0 Current, 1 coalesced baseline (production default), 2 coalesced + skip-empty-tiles.
+   auto lane=[&](int l,int i){r->setRoutedCoalescedPassesForDiagnostics(l!=0);r->setRoutedSkipEmptyTilesForDiagnostics(l==2);return frame(i,l!=0);};
+   Json warm=Json::array();for(int l:{0,1,2})for(int i=0;i<64;++i)warm.push_back(lane(l,i));fence(k);Json samples=Json::array();const int orders[4][3]={{0,1,2},{1,2,0},{2,0,1},{2,1,0}};
+   for(bool serial:{false,true})for(int block=0;block<4;++block)for(int pos=0;pos<3;++pos){const int l=orders[block][pos];fence(k);Json activation=Json::array();auto activationStart=Clock::now();for(int w=0;w<2;++w)activation.push_back(lane(l,0));fence(k);double activationMs=elapsed(activationStart);
+    Json frames=Json::array();auto begin=Clock::now();for(int i=0;i<64;++i){auto start=Clock::now();auto row=lane(l,i);need(row["volume_compiles"].get<uint32_t>()==0,"cold volume compile in timed interval");if(l!=0)need(k->encodedPasses==1u,"lane compute-pass count");if(serial)fence(k);row["completion_inclusive_ms"]=elapsed(start);frames.push_back(row);}
+    auto drain=Clock::now();fence(k);double drainMs=elapsed(drain),total=elapsed(begin);samples.push_back(Json{{"serial",serial},{"block",block},{"position",pos},{"lane",l},{"mode_activation_ms",activationMs},{"frames",frames},{"terminal_drain_ms",drainMs},{"total_ms",total}});result["samples"]=samples;write(output.parent_path()/"progress.json",result);std::cout<<"SAMPLE serial="<<serial<<" block="<<block<<" lane="<<l<<" total_ms="<<total<<'\n';}
+   r->setRoutedSkipEmptyTilesForDiagnostics(false);result["samples"]=samples;result["final_publication"]=publication(k);
   }
   if(mode=="packaging"){
    // Lanes: 0 Current, 1 original routed, 2 coalesced routed. Separately paid warmup and activation; queued and completion-fenced series.

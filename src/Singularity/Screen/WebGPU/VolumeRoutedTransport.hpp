@@ -32,6 +32,10 @@ struct KernelRoutedTransport {
     bool observeRoutes=false;WGPUComputePipeline observerPipe=nullptr,accumPipe=nullptr;WGPUBuffer routeHistogram=nullptr;
     bool enableRouteObserver(bool on);
     void resetRouteHistogram();
+    // §6fd step 2a (Kernel ablation toggle, default OFF): wave-proved-empty tiles (activeMemberMask==0) leave the fallback list and ecSetup pre-writes the exact
+    // packet their producer would (base offsets id*maxSub/id*maxOver, zero counts, FALLBACK|1 at zero budget). Positive budgets below 96 are no longer charged for skipped
+    // empty-member work (the budget bounds work performed); budget 0 still forces refusal. Same classifier proof S1/S2 already trust for their other members.
+    bool skipEmptyTiles=false;WGPUComputePipeline classifySkip=nullptr;
     uint32_t workLimit=1024; // Kernel search ceiling; lowering it can only force Current refusal.
     struct Program {WGPUComputePipeline setup=nullptr,consumer=nullptr;WGPUBindGroupLayout globals=nullptr,instances=nullptr,local=nullptr;};
     std::map<std::string,Program> programs;
