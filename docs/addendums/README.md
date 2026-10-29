@@ -37,3 +37,5 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Unified Brush System and CPU-GPU Micro-Mastery](unified_brush_and_micro_mastery_addendum.md)
 *   [Integrating the Event Bus, Discrete Moments, and Continuous Time](event_bus_and_time_moment_addendum.md)
 *   [The Slow Adapter and the Architecture of Understanding](slow_adapter_and_architectural_interrelations_addendum.md)
+*   [Integrating Terminal Language Instrument and First Mover Identity](terminal_language_and_first_mover_identity_addendum.md)
+*   [Integrating Identity Succession and Mathematical Zone Bounds](identity_ledger_and_zone_bounds_addendum.md)
