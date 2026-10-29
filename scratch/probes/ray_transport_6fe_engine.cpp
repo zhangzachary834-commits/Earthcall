@@ -103,7 +103,7 @@ int main(int argc,char**argv){
   };
   Json result={{"schema","6ey-actual-engine-release-scripted-path-1"},{"mode",mode},{"init_ms",initMs},{"framebuffer",{2560,1440}},{"objects",24},{"media",4},{"foreign_network_service",false},{"fixed_step",dt},{"snapshot_scope","3D scene before ImGui overlay, through actual ScreenRecorder"}};
   const auto gate=output.parent_path()/"foreground-ready";auto gateStart=Clock::now();
-  if(mode!="worktrace"&&mode!="worktrace_in"){std::cout<<"WAIT_FOREGROUND "<<gate<<'\n';
+  if(mode!="worktrace"&&mode!="worktrace_in"&&mode!="parity2b"){std::cout<<"WAIT_FOREGROUND "<<gate<<'\n';
   while(!fs::exists(gate)||glfwGetWindowAttrib(e.window(),GLFW_FOCUSED)!=GLFW_TRUE){need(elapsed(gateStart)<120000,"foreground handoff timeout");glfwPollEvents();std::this_thread::sleep_for(std::chrono::milliseconds(10));}
   need(glfwGetWindowAttrib(e.window(),GLFW_FOCUSED)==GLFW_TRUE,"foreground handoff did not focus native window");
   requireFocus=true;result["foreground_handoff_ms"]=elapsed(gateStart);result["foreground_required"]=true;}
@@ -117,12 +117,13 @@ int main(int argc,char**argv){
   need(k&&startup.back()["routed_sets"].get<uint32_t>()>0,"native window did not become ready");
   result["startup_attempts"]=startup;requireRoute=true;fence(k);
   if(mode=="negative"){frame(1,true);throw std::runtime_error("negative failed to reject");}
-  if(mode=="parity"){
+  if(mode=="parity"||mode=="parity2b"){
+   const bool p2b=mode=="parity2b";
    // §6fb: original routed (separate compute passes) vs coalesced (one pass), same process/device/camera/clock.
    need(lawSetValue(*rec,PropertyPath::parse("outputPath"),(fs::current_path()/"captures").string()),"recorder output");need(lawSetValue(*rec,PropertyPath::parse("recordCursor"),false),"recorder cursor");
    const uint32_t strips=(k->height+k->stripRows-1)/k->stripRows,expectDispatch=8*strips;Json caps=Json::array();std::map<std::string,uint64_t> pubHash,snapHash;std::map<std::string,uint64_t> traceHash;
-   auto capture=[&](const char* name,int index,bool on,bool coalesce,uint32_t limit,bool poisoned,bool skip=false){r->setRoutedSkipEmptyTilesForDiagnostics(skip);
-    r->setRoutedWorkLimitForDiagnostics(limit);r->setRoutedCoalescedPassesForDiagnostics(coalesce,true);Json row={{"name",name},{"index",index},{"routed",on},{"coalesced",coalesce},{"skip_empty",skip},{"work_limit",limit},{"poisoned",poisoned}};
+   auto capture=[&](const char* name,int index,bool on,bool coalesce,uint32_t limit,bool poisoned,bool skip=false,bool one=false){r->setRoutedSkipEmptyTilesForDiagnostics(skip);r->setRoutedSingleMemberS1ForDiagnostics(one);
+    r->setRoutedWorkLimitForDiagnostics(limit);r->setRoutedCoalescedPassesForDiagnostics(coalesce,true);Json row={{"name",name},{"index",index},{"routed",on},{"coalesced",coalesce},{"skip_empty",skip},{"single_member_s1",one},{"work_limit",limit},{"poisoned",poisoned}};
     if(poisoned){fence(k);poisonScratch(k);fence(k);auto raw=rawPublication(k);uint64_t nan=0;for(float f:raw)nan+=std::isnan(f);need(nan==raw.size(),"poison control did not reach the publication buffer");row["poison_nan_words"]=nan;}
     need(lawSetValue(*rec,PropertyPath::parse("snapshot"),true),"snapshot request");auto facts=frame(index,on);fence(k);
     PropertyValue path;need(lawGetValue(*rec,PropertyPath::parse("lastSnapshotPath"),path)&&std::holds_alternative<std::string>(path),"actual viewport snapshot");const auto file=output.parent_path()/(std::string("scene-")+name+"-"+std::to_string(index)+fs::path(std::get<std::string>(path)).extension().string());fs::copy_file(std::get<std::string>(path),file,fs::copy_options::overwrite_existing);
@@ -134,8 +135,30 @@ int main(int argc,char**argv){
      if(limit==0)need(nonempty==0,"forced refusal must not publish partial transport");else need(nonempty>100,"normal transport must contribute");}
     caps.push_back(row);
    };
-   for(int index:{0,32}){
+   const std::vector<int> poseList=p2b?std::vector<int>{0,8,16,24,32,40,48,56}:std::vector<int>{0,32};Json eff2b=Json::array(),diffs=Json::array();
+   for(int index:poseList){
     const std::string I=std::to_string(index);
+    if(p2b){
+     capture("current",index,false,false,1024,false);capture("orig",index,true,true,1024,false);auto rawO=rawPublication(k);capture("origR",index,true,true,0,false);
+     capture("skip",index,true,true,1024,false,true);capture("one",index,true,true,1024,false,false,true);{auto rawN=rawPublication(k);uint64_t nd=0,refToAcc=0,accToRef=0,other=0;Json ex=Json::array();
+   for(uint64_t i=0;i<rawO.size()/4;++i){bool d=false;for(int j=0;j<4;++j)if(std::memcmp(&rawO[i*4+j],&rawN[i*4+j],4))d=true;if(!d)continue;++nd;
+    const bool oRef=rawO[i*4+3]<0,nRef=rawN[i*4+3]<0;if(oRef&&!nRef){++refToAcc;if(ex.size()<4)ex.push_back(Json{{"x",i%2560},{"y",i/2560},{"new",Json::array({rawN[i*4],rawN[i*4+1],rawN[i*4+2],rawN[i*4+3]})}});}else if(!oRef&&nRef)++accToRef;else ++other;}
+   diffs.push_back(Json{{"index",index},{"differing_pixels",nd},{"orig_refused_2b_accepted",refToAcc},{"orig_accepted_2b_refused",accToRef},{"both_accepted_but_different",other},{"examples",ex}});
+   need(accToRef==0&&other==0,"2b changed an accepted ray or refused one the original accepted");}capture("oneP",index,true,true,1024,true,false,true);capture("oneR",index,true,true,0,false,false,true);capture("oneRP",index,true,true,0,true,false,true);
+     auto eq2=[&](std::map<std::string,uint64_t>& m,const char* a,const char* b,const char* why){if(m.at(a+I)!=m.at(b+I))throw std::runtime_error(std::string(why)+" @pose "+I+" "+a+"="+hex(m.at(a+I))+" "+b+"="+hex(m.at(b+I)));};
+     eq2(pubHash,"orig","skip","2a skip-empty publication differs from original routed");eq2(pubHash,"one","oneP","2b poisoned publication differs from clean 2b");eq2(pubHash,"origR","oneR","2b refusal publication differs");eq2(pubHash,"origR","oneRP","2b poisoned refusal publication differs");
+     eq2(snapHash,"one","oneP","2b poisoned snapshot differs from clean 2b");eq2(snapHash,"current","oneR","2b forced refusal must preserve Current");eq2(snapHash,"current","oneRP","2b poisoned forced refusal must preserve Current");
+     need(snapHash.at("orig"+I)!=snapHash.at("current"+I),"routed output must differ from Current somewhere");
+     // production list counters (observer pass also totals counts): original vs skip vs 2b
+     uint32_t fb[3]={0,0,0},s1c[3]={0,0,0},s2c[3]={0,0,0};
+     for(int v=0;v<3;++v){need(r->setRoutedRouteObserverForDiagnostics(true),"observer on");r->setRoutedWorkLimitForDiagnostics(1024);r->setRoutedCoalescedPassesForDiagnostics(true);r->setRoutedSkipEmptyTilesForDiagnostics(v==1);r->setRoutedSingleMemberS1ForDiagnostics(v==2);r->resetRoutedRouteObserverForDiagnostics();frame(index,true);fence(k);auto w=readWords(k,k->routeHistogram,1032*4);s1c[v]=w[1024];s2c[v]=w[1025];fb[v]=w[1026];need(r->setRoutedRouteObserverForDiagnostics(false),"observer off");}
+     r->setRoutedSkipEmptyTilesForDiagnostics(false);r->setRoutedSingleMemberS1ForDiagnostics(false);
+     need(s2c[0]==s2c[2]&&s2c[0]==s2c[1],"S2 count must be untouched");need(s1c[2]+fb[2]<=s1c[0]+fb[0]&&fb[2]<=fb[1]&&fb[1]<=fb[0],"2b must only shrink the fallback list");
+     if(index==24||index==32||index==40||index==48)need(fb[2]<fb[1]&&s1c[2]>s1c[0],"2b must move single-curtain tiles to S1 on poses with them");
+     if(index==8||index==16||index==56)need(fb[2]==fb[0]&&s1c[2]==s1c[0],"2b must be inert on poses without empties/single-curtain tiles");
+     eff2b.push_back(Json{{"index",index},{"s1",{s1c[0],s1c[1],s1c[2]}},{"s2",{s2c[0],s2c[1],s2c[2]}},{"fallback",{fb[0],fb[1],fb[2]}},{"order","original, skip-empty, 2b"}});
+     continue;
+    }
     capture("current",index,false,false,1024,false);
     capture("orig",index,true,false,1024,false);capture("orig2",index,true,false,1024,false);capture("coal",index,true,true,1024,false);
     capture("origP",index,true,false,1024,true);capture("coalP",index,true,true,1024,true);
@@ -147,7 +170,8 @@ int main(int argc,char**argv){
     need(snapHash.at("orig"+I)!=snapHash.at("current"+I),"routed output must differ from Current somewhere (transport actually contributes)");
     eq(pubHash,"orig","skip","skip-empty publication differs");eq(pubHash,"orig","skipP","poisoned skip-empty publication differs");eq(pubHash,"origR","skipR","skip-empty refusal publication differs");eq(pubHash,"origR","skipRP","poisoned skip-empty refusal publication differs");eq(snapHash,"orig","skip","skip-empty snapshot differs");eq(snapHash,"orig","skipP","poisoned skip-empty snapshot differs");eq(snapHash,"current","skipR","skip-empty forced refusal must preserve Current output");eq(snapHash,"current","skipRP","skip-empty poisoned forced refusal must preserve Current output");eq(traceHash,"orig","coal","dispatch order/workgroup trace differs");eq(traceHash,"orig","coalP","dispatch order trace differs (poisoned)");
    }
-   {Json eff=Json::array();uint64_t allEmpties=0;for(int index:{0,32}){need(r->setRoutedRouteObserverForDiagnostics(true),"observer on");r->setRoutedWorkLimitForDiagnostics(1024);r->setRoutedCoalescedPassesForDiagnostics(true);r->setRoutedSkipEmptyTilesForDiagnostics(true);r->resetRoutedRouteObserverForDiagnostics();frame(index,true);fence(k);auto w=readWords(k,k->routeHistogram,1032*4);uint64_t empties=0,obsFb=0;for(uint32_t key=0;key<1024;++key){if(!w[key])continue;const uint32_t mask=key&15,overlap=(key>>8)&1,ordered=(key>>9)&1;const bool s1=mask==1&&!overlap,s2=ordered;if(!s1&&!s2){obsFb+=w[key];if(mask==0)empties+=w[key];}}
+   if(p2b){result["effectiveness_2b"]=eff2b;result["2b_vs_original_diffs"]=diffs;}
+   if(!p2b){Json eff=Json::array();uint64_t allEmpties=0;for(int index:{0,32}){need(r->setRoutedRouteObserverForDiagnostics(true),"observer on");r->setRoutedWorkLimitForDiagnostics(1024);r->setRoutedCoalescedPassesForDiagnostics(true);r->setRoutedSkipEmptyTilesForDiagnostics(true);r->resetRoutedRouteObserverForDiagnostics();frame(index,true);fence(k);auto w=readWords(k,k->routeHistogram,1032*4);uint64_t empties=0,obsFb=0;for(uint32_t key=0;key<1024;++key){if(!w[key])continue;const uint32_t mask=key&15,overlap=(key>>8)&1,ordered=(key>>9)&1;const bool s1=mask==1&&!overlap,s2=ordered;if(!s1&&!s2){obsFb+=w[key];if(mask==0)empties+=w[key];}}
      // the observer's own classifier is the original; the production counters come from the skipping classifier
      allEmpties+=empties;need(w[1026]+empties==obsFb,"skip-empty did not remove exactly the wave-empty tiles from the fallback list");eff.push_back(Json{{"index",index},{"observed_fallback",obsFb},{"observed_empty",empties},{"production_fallback_with_skip",w[1026]}});}
     need(allEmpties>0,"checked poses must contain wave-empty tiles (skip not exercised otherwise)");r->setRoutedSkipEmptyTilesForDiagnostics(false);need(r->setRoutedRouteObserverForDiagnostics(false),"observer off");result["skip_effectiveness"]=eff;}
@@ -186,13 +210,13 @@ int main(int argc,char**argv){
    need(r->setRoutedRouteObserverForDiagnostics(false),"observer off");
   }
   if(mode=="skiptiming"){
-   // Lanes: 0 Current, 1 coalesced baseline (production default), 2 coalesced + skip-empty-tiles.
-   auto lane=[&](int l,int i){r->setRoutedCoalescedPassesForDiagnostics(l!=0);r->setRoutedSkipEmptyTilesForDiagnostics(l==2);return frame(i,l!=0);};
-   Json warm=Json::array();for(int l:{0,1,2})for(int i=0;i<64;++i)warm.push_back(lane(l,i));fence(k);Json samples=Json::array();const int orders[4][3]={{0,1,2},{1,2,0},{2,0,1},{2,1,0}};
-   for(bool serial:{false,true})for(int block=0;block<4;++block)for(int pos=0;pos<3;++pos){const int l=orders[block][pos];fence(k);Json activation=Json::array();auto activationStart=Clock::now();for(int w=0;w<2;++w)activation.push_back(lane(l,0));fence(k);double activationMs=elapsed(activationStart);
+   // Lanes: 0 Current, 1 coalesced baseline (production default), 2 coalesced + skip-empty-tiles, 3 coalesced + single-member S1 (step 2b). 4x4 Latin-square block order.
+   auto lane=[&](int l,int i){r->setRoutedCoalescedPassesForDiagnostics(l!=0);r->setRoutedSkipEmptyTilesForDiagnostics(l==2);r->setRoutedSingleMemberS1ForDiagnostics(l==3);return frame(i,l!=0);};
+   Json warm=Json::array();for(int l:{0,1,2,3})for(int i=0;i<64;++i)warm.push_back(lane(l,i));fence(k);Json samples=Json::array();const int orders[4][4]={{0,1,2,3},{1,2,3,0},{2,3,0,1},{3,0,1,2}};
+   for(bool serial:{false,true})for(int block=0;block<4;++block)for(int pos=0;pos<4;++pos){const int l=orders[block][pos];fence(k);Json activation=Json::array();auto activationStart=Clock::now();for(int w=0;w<2;++w)activation.push_back(lane(l,0));fence(k);double activationMs=elapsed(activationStart);
     Json frames=Json::array();auto begin=Clock::now();for(int i=0;i<64;++i){auto start=Clock::now();auto row=lane(l,i);need(row["volume_compiles"].get<uint32_t>()==0,"cold volume compile in timed interval");if(l!=0)need(k->encodedPasses==1u,"lane compute-pass count");if(serial)fence(k);row["completion_inclusive_ms"]=elapsed(start);frames.push_back(row);}
     auto drain=Clock::now();fence(k);double drainMs=elapsed(drain),total=elapsed(begin);samples.push_back(Json{{"serial",serial},{"block",block},{"position",pos},{"lane",l},{"mode_activation_ms",activationMs},{"frames",frames},{"terminal_drain_ms",drainMs},{"total_ms",total}});result["samples"]=samples;write(output.parent_path()/"progress.json",result);std::cout<<"SAMPLE serial="<<serial<<" block="<<block<<" lane="<<l<<" total_ms="<<total<<'\n';}
-   r->setRoutedSkipEmptyTilesForDiagnostics(false);result["samples"]=samples;result["final_publication"]=publication(k);
+   r->setRoutedSkipEmptyTilesForDiagnostics(false);r->setRoutedSingleMemberS1ForDiagnostics(false);result["samples"]=samples;result["final_publication"]=publication(k);
   }
   if(mode=="packaging"){
    // Lanes: 0 Current, 1 original routed, 2 coalesced routed. Separately paid warmup and activation; queued and completion-fenced series.

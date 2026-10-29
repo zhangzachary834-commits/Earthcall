@@ -41,6 +41,10 @@ struct KernelRoutedTransport {
     // workTrace is cleared at the start of every encode(), so it holds the last frame's complete per-lane trace. It never changes what the producers publish.
     bool observeWork=false;std::array<WGPUComputePipeline,3> workPipes{};WGPUBuffer workTrace=nullptr;uint64_t workTraceBytes=0;
     bool enableWorkTrace(bool on);
+    // §6fe step 2b (Kernel ablation toggle, default OFF; implies the step-2a empty-tile skip): tiles with exactly one wave-active member and no overlap route to the S1 producer
+    // with the member id packed in bits 28..31 of the list entry (producer variant derived by substitution: member from the entry, stack 20 = the fallback producer's, Subpanel info.x = member).
+    // ecConsume reads only Subpanel.info.x, so the consumer is unchanged. Same classifier proof S1/S2 already trust for their other members.
+    bool singleMemberS1=false;WGPUComputePipeline classifyS1=nullptr,s1Member=nullptr;
     uint32_t workLimit=1024; // Kernel search ceiling; lowering it can only force Current refusal.
     struct Program {WGPUComputePipeline setup=nullptr,consumer=nullptr;WGPUBindGroupLayout globals=nullptr,instances=nullptr,local=nullptr;};
     std::map<std::string,Program> programs;
