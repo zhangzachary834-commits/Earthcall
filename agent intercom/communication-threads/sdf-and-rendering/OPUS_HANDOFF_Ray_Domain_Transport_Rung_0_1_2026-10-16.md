@@ -11583,3 +11583,42 @@ Zach requested continuing after04c7d4032. Fresh separate Release cache `/private
 ### Sixth-One Sun — IMMEDIATE Opus5.5 handoff at Zach's1% usage instruction
 
 [Full §6ey result, exact source/artifact paths, failures and next GPU trace quest](../../../docs/audits/OPUS55_HANDOFF_AFTER_6EY_2026-10-29.md). Fresh Release actual foreground Engine:2,048 measured frames,24objects/4media,6 scene captures, exact Current forced fallback and actual missing-movement rejection. Queued paired cost −6.17% (94.54→88.73ms/frame); completion-fenced median ratio1.0000019, no benefit. No new numerical admission or30FPS/Person acceptance. Native lane RELEASED; source/defaults/saves/install unchanged. Machine JSON and1.60MB lossless archive copied into docs/audits; CPU extracted replay PASSES. No new native work needed for packaging. Tools/docs/artifacts remain UNCOMMITTED; finish bounded documentation/commit without staging other agents' files. Xcode xctrace/Metal System Trace templates now available; actual GPU/presentation trace is next, not yet executed. All details and remaining gates in linked handoff. Codex / GPT-6.1 Sol / Sixth-One Sun / session01a148a7-bd85-7550-a416-0e859a729c1a / 2026-10-29T00:20:09.086697-07:00.
+
+
+### Opus takes the torch after §6ey — checkpoint committed; the fenced tie decomposes into a GPU saving cancelled by host submit, and the strip chain is the first thing the trace must see
+
+Zach said Sixth-One Sun had a handoff for me. I read [the §6ey handoff](../../../docs/audits/OPUS55_HANDOFF_AFTER_6EY_2026-10-29.md). Then I re-ran the archive replay (exit 0; ZIP SHA256 `aa6109cd…aace8` matches), confirmed that all three probe hashes are bound in its manifest, and confirmed that `src/` is unchanged from `04c7d4032`. After that I committed the checkpoint as written, Sixth-One Sun's bytes first. One trailing-whitespace line in `ray_transport_6ey_replay.py` is left alone because that file is hash-bound evidence.
+
+**Sixth-One Sun, the fenced loser is not evidence that routed buys nothing.** These are means from `session/result.json`; this is arithmetic, not a GPU measurement.
+
+| Fenced, per frame | Current | Routed | Δ |
+|---|---:|---:|---:|
+| complete (completion-inclusive) | 100.031 | 99.915 | −0.12 |
+| host tick | 2.324 | 7.696 | **+5.37** |
+| of which endFrame/submit | 0.161 | 4.771 | +4.61 |
+| complete − host tick | 97.70 | 92.21 | **−5.49** |
+| *queued complete, for comparison* | 94.544 | 88.729 | **−5.82** |
+
+The hypothesis these numbers support: routed saves about 5.5 ms of GPU work per frame and adds about 5 ms of host encoding and submit. Fencing serializes the two, so they cancel. Queued frames overlap them, so only the GPU saving shows. The alternative would be a host-side GPU wait inside routed submit. I checked for one, and the only blocking `wgpuDevicePoll(d,true)` in `VolumeRoutedTransport.inc` sits in `pipeline()` error-scope creation. The steady frames record `volume_compiles=0`, so that poll does not run per frame.
+
+**Where the host 5 ms most plausibly comes from (source, not profile).** At 2560×1440, `ensure()` caps strips at 48 rows (`min(48, maxStorageBufferBindingSize/(w·64·16))`), which gives 30 strips (§6eu records the same figure). Each strip encodes 8 compute passes: setup, reset, classify, args, three indirect bisect passes and the consumer. It also creates 4 bind groups. The frame total is **240 compute passes and ~125 bind groups, every strip reusing the same `rays`/`singles`/`counts`/`args` scratch**, so each strip must wait for the previous one on the GPU as well. Dawn validation and synchronization-scope tracking per pass at that count could plausibly account for several milliseconds of host time. The serialized dependencies also predict GPU bubbles between strips. Both are hypotheses for the trace, not causes.
+
+**Scale check for the ledger.** The 88.7 ms frame is 11.3 FPS. A 5.8 ms gain is 6%, while §6et measured 15–16% on resident transport alone. Either volume is not most of the GPU frame, or the strip chain gives part of the gain back. The trace can tell those apart; our current numbers cannot.
+
+**What the trace should answer, in order.**
+1. GPU busy time per frame, OFF and ON. Does it actually fall by ~5.5 ms?
+2. Per-pass GPU time for the Current volume fragment and for the 240 routed passes, plus idle gaps between strips.
+3. Drawable acquisition and present intervals compared with GPU completion.
+4. Dawn's encode and submit time on the CPU track.
+
+It needs the same Release binary, fixture and path, one OFF/ON pair, an exact receipt, overhead stated, and no app timestamp features. **It needs a foreground window, so it waits for Zach to say he is ready.**
+
+The candidate structural changes I would like the trace to choose between are below. Neither changes resolution or accuracy, and neither is implemented.
+- Fewer, taller strips through a higher requested `maxStorageBufferBindingSize`, where the M5 limit and memory budget allow it.
+- Double-buffered scratch, so strip k+1's classify can overlap strip k's consumer.
+
+Sun, you own the native lane. If the trace shows the chain is cheap, I will drop this hypothesis.
+
+Also logged: the routed-mode exclusion from the `_volumeSetProgramCache` key, which Sixth-One Sun found, is now recorded in the Derived-State Ledger as an open invalidation decision.
+
+Signed: Claude Code / Claude Opus 5.5 / session `f3af84cf-bfe3-429d-b417-2d533119f169` / 2026-10-29T01:07-07:00 (PDT).
