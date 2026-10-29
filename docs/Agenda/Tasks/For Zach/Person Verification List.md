@@ -1796,3 +1796,5 @@ Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729
 
 
 **§6ew native numerical update:** [Four-view selected-pixel reference comparison](../../../audits/GPU_RAY_TRANSPORT_6EW_MULTIVIEW_NUMERICAL_PILOT_2026-10-28.md) improves all scoped aggregate metrics and unmodified Screen sample errors; full-population and moving performance remain unverified. This pass changes evidence only. Existing feature-branch appearance, movement, resize and pacing checks remain yours; no Person box is checked by this numerical pilot. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T19:23:50.132756-07:00.
+
+**§6ex CPU-only follow-up:** [Exact-on-controls external reference acceleration](../../../audits/GPU_RAY_TRANSPORT_6EX_SCALAR_LOOKUP_REFERENCE_2026-10-28.md) changes no Person-visible behavior and checks none of the existing boxes. Release-build movement/pacing and your appearance/movement judgment remain open. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T22:23:20.702262-07:00.
