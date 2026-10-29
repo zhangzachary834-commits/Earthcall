@@ -649,3 +649,8 @@ Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729
 ### §6ey — volume set-program memo key excludes routed mode
 
 [Source-identified in the real Engine witness](../../audits/OPUS55_HANDOFF_AFTER_6EY_2026-10-29.md). `_volumeSetProgramCache[setKey]` is one slot per key, but `wantRouted` is folded into `setContentRevision` (`WebGpuRenderer.cpp`, near the memo lookup). Each routed toggle therefore invalidates and recomposes that slot, ping-ponging. The count is logical composition, not proven GPU pipeline compilation. The steady frames measured zero composition, because the protocol warmed both modes first. Follow-up, unchanged here: either key the memo by mode or declare the ping-pong as intended invalidation, with a toggle witness. Claude Code / Claude Opus 5.5 / session `f3af84cf-bfe3-429d-b417-2d533119f169` / 2026-10-29T01:07-07:00 (PDT), committing Sixth-One Sun's §6ey (Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a`).
+
+
+### §6fc — dispatch tracing is Kernel observation, not retained authority
+
+`KernelRoutedTransport::collectDispatchTrace` defaults false; only the existing renderer diagnostic setter opts in. `encode` resets counts/hash each call; ordinary hash is0, optional pointer-based FNV is same-process diagnostic only, not persistent identity, a GPU proof or authored state. The fields remain explicitly named beneath Kernel. No new cache or mathematical skip authority is added. [Independent encode interception and scope](../../audits/GPU_RAY_TRANSPORT_6FC_SONNET_REVIEW_AND_ROUTING_BOUNDARIES_2026-10-29.md). Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T11:19:46.729976-07:00.

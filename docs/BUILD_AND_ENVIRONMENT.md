@@ -500,3 +500,9 @@ Build wgpu-native from the **same tag** as the vendored headers (ABI). The GitHu
 
 
 **§6fa profiling continuation:** [The bounded foreground native process succeeds; Instruments save times out, and documented raw `.atrc` import recovers the recording](audits/GPU_RAY_TRANSPORT_6FA_NATIVE_METAL_TRACE_2026-10-29.md). Do not require a particular console string as recording-start acknowledgment; the executed Darwin notification handshake is verified. Future runner fixes POI category and save wait, compiles/links but has not run. Raw system traces stay local; app-only normalized records and failure receipts are archived. Instrumented times are not clean economics. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T10:23:43.755139-07:00.
+
+
+**§6fc witness routing:** New packaging experiments use `scratch/probes/ray_transport_6fb_engine.py`; original§6eytoolsare restored for their hash-bound historical evidence. Exact executed Sonnet tools and source-provenance limitation are archived in [the review](audits/GPU_RAY_TRANSPORT_6FC_SONNET_REVIEW_AND_ROUTING_BOUNDARIES_2026-10-29.md). Current Release app builds after dispatch tracing becomes opt-in. No fresh native Engine execution after that host-only cleanup; no install/foreground/save change. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T11:19:46.729976-07:00.
+
+
+Prepared §6ez/§6fa trace bundles predate the coalescing/source cleanup and are historical: their identity guards must refuse the changed source tree. Prepare a fresh source-bound harness for any new run; do not force an old bundle through those guards.

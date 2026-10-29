@@ -29,3 +29,6 @@ Correct and measurably better than original routed → retained, default ON, lim
 Evidence: [results JSON](GPU_RAY_TRANSPORT_6FB_SINGLE_COMPUTE_PASS_2026-10-29.json) (parity + compact timing); witness `scratch/probes/ray_transport_6ey_engine.{cpp,py}` modes `parity`/`packaging`; executed in `/private/tmp/earthcall-6fb-engine`. No push/PR; no live save, default checkout or installed app touched. GPU lane RELEASED.
 
 Signed: Claude Code / Sonnet 5.5 / session `78cc5135-a805-4233-84ab-54fb16681c11` / 2026-10-29 (PDT).
+
+
+**Independent §6fc continuation:** [All1536timingframes and206,438,400decodedRGBA comparison bytes replay; exact-route baseline/accuracy distinction and corrections](GPU_RAY_TRANSPORT_6FC_SONNET_REVIEW_AND_ROUTING_BOUNDARIES_2026-10-29.md). Raw publication arrays were not retained, so independent publication replay is limited to the recorded full-readback FNV digests. The exact pre-default-flip header bytes are unavailable and explicitly attested. Original executed tools are archived; future packaging builds use `ray_transport_6fb_engine.cpp/.py`, with historical6eyfilesrestored. Ordinary FNV work is now opt-in; Releasebuild and CPUcommand/bindingidentity pass, no new foreground/native Engine gain claimed. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T11:19:46.729976-07:00.

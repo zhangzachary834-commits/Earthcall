@@ -148,9 +148,9 @@ bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const K
  auto g=std::vector<WGPUBindGroupEntry>{entry(0,globals.buffer,globals.size,globals.offset),entry(1,params.buffer,params.size,params.offset),{},entry(3,publication,uint64_t(width)*height*16)};g[2].binding=2;g[2].textureView=depth;
  auto globalGroup=group(device,p.globals,g),instanceGroup=group(device,p.instances,{entry(0,instances.buffer,instances.size,instances.offset)});
  // §6fb packaging ablation: coalescePasses encodes the identical ordered dispatch stream inside ONE compute pass (WebGPU usage scopes are per dispatch).
- encodedPasses=0;encodedDispatches=0;dispatchTrace=0xcbf29ce484222325ull;
+ encodedPasses=0;encodedDispatches=0;dispatchTrace=collectDispatchTrace?0xcbf29ce484222325ull:0;
  auto begin=[&](){++encodedPasses;return wgpuCommandEncoderBeginComputePass(encoder,nullptr);};
- auto note=[&](const void* pipe,uint32_t n,uint64_t tag){++encodedDispatches;for(uint64_t v:{uint64_t(reinterpret_cast<uintptr_t>(pipe)),uint64_t(n),tag})for(int b=0;b<8;++b)dispatchTrace=(dispatchTrace^((v>>(8*b))&255))*0x100000001b3ull;};
+ auto note=[&](const void* pipe,uint32_t n,uint64_t tag){++encodedDispatches;if(!collectDispatchTrace)return;for(uint64_t v:{uint64_t(reinterpret_cast<uintptr_t>(pipe)),uint64_t(n),tag})for(int b=0;b<8;++b)dispatchTrace=(dispatchTrace^((v>>(8*b))&255))*0x100000001b3ull;};
  WGPUComputePassEncoder shared=coalescePasses?begin():nullptr;
  auto open=[&](){return shared?shared:begin();};
  auto close=[&](WGPUComputePassEncoder pass){if(pass==shared)return;wgpuComputePassEncoderEnd(pass);wgpuComputePassEncoderRelease(pass);};

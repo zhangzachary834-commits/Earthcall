@@ -46,7 +46,8 @@ public:
     // Kernel diagnostics: hardware publication inspection and refuse-only work
     // ceiling. These are not authored state or an alternate transport policy.
     const KernelRoutedTransport* routedTransportKernelForDiagnostics() const { return _kernelRouted.get(); }
-    void setRoutedCoalescedPassesForDiagnostics(bool on) { if(_kernelRouted)_kernelRouted->coalescePasses=on; }
+    // Opt-in dispatch tracing lives in KernelRoutedTransport::collectDispatchTrace; encode reads it.
+    void setRoutedCoalescedPassesForDiagnostics(bool on, bool trace=false) { if(_kernelRouted){_kernelRouted->coalescePasses=on;_kernelRouted->collectDispatchTrace=trace;} }
     void setRoutedWorkLimitForDiagnostics(uint32_t limit) { if(_kernelRouted)_kernelRouted->workLimit=std::min(limit,1024u); }
 
 

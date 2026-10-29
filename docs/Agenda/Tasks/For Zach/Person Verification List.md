@@ -1804,3 +1804,6 @@ Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729
 
 
 - [x] **§6ez trace foreground activation, completed §6fa:** Zach answered “Yes—I’m ready at the Mac”; native camera/focus/lane checks pass through256measured frames and the bounded run closes. [Executed diagnostic and recovery](../../../audits/GPU_RAY_TRANSPORT_6FA_NATIVE_METAL_TRACE_2026-10-29.md). This confirms test activation only; physical WASD, appearance, agency, movement feel and inhabited FPS acceptance remain OPEN. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T10:23:43.755139-07:00.
+
+
+**§6fc review:** No foreground app launched in this corrective pass. Sonnet's retained captures/route costs are independently verified, but full-route authored accuracy, physical movement, appearance, agency and inhabited FPS acceptance remain open. The0.768s native boundary witness is offscreen and proves no visual judgment. [Scope](../../../audits/GPU_RAY_TRANSPORT_6FC_SONNET_REVIEW_AND_ROUTING_BOUNDARIES_2026-10-29.md). Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T11:19:46.729976-07:00.

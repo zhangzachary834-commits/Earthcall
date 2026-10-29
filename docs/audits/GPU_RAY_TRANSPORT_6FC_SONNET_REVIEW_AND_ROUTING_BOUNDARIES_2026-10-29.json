@@ -1,0 +1,397 @@
+{
+  "review": {
+    "decoded_pixel_comparisons": [
+      {
+        "pose": 0,
+        "a": "orig",
+        "b": "orig2",
+        "compared_RGBA8_bytes": 14745600
+      },
+      {
+        "pose": 0,
+        "a": "orig",
+        "b": "coal",
+        "compared_RGBA8_bytes": 14745600
+      },
+      {
+        "pose": 0,
+        "a": "orig",
+        "b": "origP",
+        "compared_RGBA8_bytes": 14745600
+      },
+      {
+        "pose": 0,
+        "a": "orig",
+        "b": "coalP",
+        "compared_RGBA8_bytes": 14745600
+      },
+      {
+        "pose": 0,
+        "a": "current",
+        "b": "origR",
+        "compared_RGBA8_bytes": 14745600
+      },
+      {
+        "pose": 0,
+        "a": "current",
+        "b": "coalR",
+        "compared_RGBA8_bytes": 14745600
+      },
+      {
+        "pose": 0,
+        "a": "current",
+        "b": "coalRP",
+        "compared_RGBA8_bytes": 14745600
+      },
+      {
+        "pose": 32,
+        "a": "orig",
+        "b": "orig2",
+        "compared_RGBA8_bytes": 14745600
+      },
+      {
+        "pose": 32,
+        "a": "orig",
+        "b": "coal",
+        "compared_RGBA8_bytes": 14745600
+      },
+      {
+        "pose": 32,
+        "a": "orig",
+        "b": "origP",
+        "compared_RGBA8_bytes": 14745600
+      },
+      {
+        "pose": 32,
+        "a": "orig",
+        "b": "coalP",
+        "compared_RGBA8_bytes": 14745600
+      },
+      {
+        "pose": 32,
+        "a": "current",
+        "b": "origR",
+        "compared_RGBA8_bytes": 14745600
+      },
+      {
+        "pose": 32,
+        "a": "current",
+        "b": "coalR",
+        "compared_RGBA8_bytes": 14745600
+      },
+      {
+        "pose": 32,
+        "a": "current",
+        "b": "coalRP",
+        "compared_RGBA8_bytes": 14745600
+      }
+    ],
+    "decoded_compared_bytes": 206438400,
+    "measured_frames": 1536,
+    "timing": {
+      "queued": {
+        "mean_ms": {
+          "0": 62.09213883984375,
+          "1": 63.360328124999995,
+          "2": 62.420923988281245
+        },
+        "endFrame_ms": {
+          "0": 0.09147459373343736,
+          "1": 3.2354464596137404,
+          "2": 0.29827361361822113
+        },
+        "blocks": [
+          {
+            "block": 0,
+            "coalesced_over_original": 0.9898827791553151,
+            "coalesced_over_Current": 1.0153012297791006
+          },
+          {
+            "block": 1,
+            "coalesced_over_original": 0.9924831718334606,
+            "coalesced_over_Current": 1.015754814875819
+          },
+          {
+            "block": 2,
+            "coalesced_over_original": 0.9823396202627166,
+            "coalesced_over_Current": 1.0048242032808747
+          },
+          {
+            "block": 3,
+            "coalesced_over_original": 0.9762697515254487,
+            "coalesced_over_Current": 0.9861273750990053
+          }
+        ]
+      },
+      "fenced": {
+        "mean_ms": {
+          "0": 66.493458984375,
+          "1": 69.33532308203125,
+          "2": 66.6853634453125
+        },
+        "endFrame_ms": {
+          "0": 0.08034601571853273,
+          "1": 2.9273520298302174,
+          "2": 0.22219968755962327
+        },
+        "blocks": [
+          {
+            "block": 0,
+            "coalesced_over_original": 0.9691442583377557,
+            "coalesced_over_Current": 1.0167546116517292
+          },
+          {
+            "block": 1,
+            "coalesced_over_original": 0.9620665105666889,
+            "coalesced_over_Current": 0.9982228847490567
+          },
+          {
+            "block": 2,
+            "coalesced_over_original": 0.9608999988083721,
+            "coalesced_over_Current": 1.0059804000814427
+          },
+          {
+            "block": 3,
+            "coalesced_over_original": 0.9551552854068263,
+            "coalesced_over_Current": 0.9910155152416156
+          }
+        ]
+      }
+    },
+    "publication_scope": "All publication bytes were read and FNV64-hashed in the native process; raw publication arrays were not retained. This replay verifies recorded digests, not independent raw-publication equality.",
+    "accuracy_scope": "No new authored reference on the complete 45-degree route; parity is not authored accuracy.",
+    "schema": "6fc-independent-6fb-evidence-review-1",
+    "negatives": [
+      {
+        "control": "missing-sample",
+        "refusal": "complete 24-sample screen"
+      },
+      {
+        "control": "forged-lane",
+        "refusal": "recorded rotated protocol (not ABBA)"
+      },
+      {
+        "control": "lost-focus",
+        "refusal": "foreground throughout actual moving path"
+      }
+    ],
+    "build_sha256": "52bca06c3dd2d4bcad29211b1d70a6e191635edc91ce9fff812c6b09f49b6ba9",
+    "binary_sha256": "4bedad7d4e1a5ef382df055511971e1efb1663b41d1433105f1b91459ee08c3b"
+  },
+  "native_boundary": [
+    {
+      "budget": 0,
+      "skip_empty": false,
+      "refused": 15,
+      "accepted": 0,
+      "invalid": 1,
+      "route_counts": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "budget": 0,
+      "skip_empty": true,
+      "refused": 0,
+      "accepted": 15,
+      "invalid": 1,
+      "route_counts": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "budget": 95,
+      "skip_empty": false,
+      "refused": 15,
+      "accepted": 0,
+      "invalid": 1,
+      "route_counts": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "budget": 95,
+      "skip_empty": true,
+      "refused": 0,
+      "accepted": 15,
+      "invalid": 1,
+      "route_counts": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "budget": 96,
+      "skip_empty": false,
+      "refused": 0,
+      "accepted": 15,
+      "invalid": 1,
+      "route_counts": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "budget": 96,
+      "skip_empty": true,
+      "refused": 0,
+      "accepted": 15,
+      "invalid": 1,
+      "route_counts": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "budget": 1024,
+      "skip_empty": false,
+      "refused": 0,
+      "accepted": 15,
+      "invalid": 1,
+      "route_counts": [
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "budget": 1024,
+      "skip_empty": true,
+      "refused": 0,
+      "accepted": 15,
+      "invalid": 1,
+      "route_counts": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "native_receipt": {
+    "exit_code": 0,
+    "seconds": 0.7677214590075891,
+    "cap_seconds": 60,
+    "source_sha256": "2c91018cf3eccec99091ab371a8895b97e7d76b68e8d3c1c9567b8fdda016ef8",
+    "binary_sha256": "862e483055867aefb6fd93c5fbfa88d1253f2b802be1023eff42b09d477c57c5",
+    "kernel_sha256": "66c725d43bb1ec49e1b1dd89b92caa1cde6b730ec19bb0d3a4ea21bf893bfb61"
+  },
+  "source_attestation": {
+    "files": [
+      {
+        "path": "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp",
+        "expected_measured_sha256": "c9b2eaa0c3c6d4b59945ffa4ec6febab1f3ce8cc08e6b256499aeff6c70df382",
+        "preserved_commit_sha256": "c9b2eaa0c3c6d4b59945ffa4ec6febab1f3ce8cc08e6b256499aeff6c70df382",
+        "exact": true
+      },
+      {
+        "path": "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp",
+        "expected_measured_sha256": "51a2792bcb61ab219f48602abab4dbffba9929f14f39aabda87bc2e307264250",
+        "preserved_commit_sha256": "51a2792bcb61ab219f48602abab4dbffba9929f14f39aabda87bc2e307264250",
+        "exact": true
+      },
+      {
+        "path": "src/Singularity/Screen/WebGPU/VolumeRoutedTransport.hpp",
+        "expected_measured_sha256": "957d515faec638254548d1ee2c109829ea1a9e60c2cd0bbca516ce2d27c97390",
+        "preserved_commit_sha256": "5ebde97a76177d261b974b437a53306e29f7d6a160f853bfae832e16e6643caa",
+        "exact": false
+      },
+      {
+        "path": "src/Singularity/Screen/WebGPU/VolumeRoutedTransport.inc",
+        "expected_measured_sha256": "94d35f4accbf749a9a29244012e44d675622804eaec72fa44ef47c47829b10fa",
+        "preserved_commit_sha256": "94d35f4accbf749a9a29244012e44d675622804eaec72fa44ef47c47829b10fa",
+        "exact": true
+      },
+      {
+        "path": "src/Singularity/Screen/WebGPU/VolumeRoutedKernels.hpp",
+        "expected_measured_sha256": "66c725d43bb1ec49e1b1dd89b92caa1cde6b730ec19bb0d3a4ea21bf893bfb61",
+        "preserved_commit_sha256": "66c725d43bb1ec49e1b1dd89b92caa1cde6b730ec19bb0d3a4ea21bf893bfb61",
+        "exact": true
+      },
+      {
+        "path": "src/Singularity/OntoMath/ClampedWaveSupport.hpp",
+        "expected_measured_sha256": "0c4cfc4ed6f5cb43f16fe7277bf5d3d737c3570f2395f2d1428cc07239ab25f7",
+        "preserved_commit_sha256": "0c4cfc4ed6f5cb43f16fe7277bf5d3d737c3570f2395f2d1428cc07239ab25f7",
+        "exact": true
+      },
+      {
+        "path": "src/Singularity/Screen/Camera.hpp",
+        "expected_measured_sha256": "dac58143d3d11b63b34b9150c1ad6f6735b11017335e4edca587ba11131dffe9",
+        "preserved_commit_sha256": "dac58143d3d11b63b34b9150c1ad6f6735b11017335e4edca587ba11131dffe9",
+        "exact": true
+      },
+      {
+        "path": "src/Singularity/Screen/Camera.cpp",
+        "expected_measured_sha256": "f113f8236e2a59b1c9e27395746a874ca66745a233bbcd3a594711c6c0ab9b9a",
+        "preserved_commit_sha256": "f113f8236e2a59b1c9e27395746a874ca66745a233bbcd3a594711c6c0ab9b9a",
+        "exact": true
+      },
+      {
+        "path": "src/Singularity/Screen/ScreenChannel.hpp",
+        "expected_measured_sha256": "f7637e99a782d66a044dec011ab7f3fdbadad083f4ce9b03296f0a75ced0052e",
+        "preserved_commit_sha256": "f7637e99a782d66a044dec011ab7f3fdbadad083f4ce9b03296f0a75ced0052e",
+        "exact": true
+      },
+      {
+        "path": "src/Singularity/Screen/ScreenChannel.cpp",
+        "expected_measured_sha256": "297e82afcffbe21a4018025f5ff7de63a3a34f01adb4b505064bf819cff0216b",
+        "preserved_commit_sha256": "297e82afcffbe21a4018025f5ff7de63a3a34f01adb4b505064bf819cff0216b",
+        "exact": true
+      },
+      {
+        "path": "src/Singularity/Screen/Renderer.hpp",
+        "expected_measured_sha256": "d2f994701be5be21bc6ac0a9f6d2e242a33c0224a132dfbdf311ce4b369e822a",
+        "preserved_commit_sha256": "d2f994701be5be21bc6ac0a9f6d2e242a33c0224a132dfbdf311ce4b369e822a",
+        "exact": true
+      },
+      {
+        "path": "src/Singularity/Core/EngineRender.cpp",
+        "expected_measured_sha256": "ca4bedf57f341cab10f3089faee546598204d49c32920ca602552c02e31c990c",
+        "preserved_commit_sha256": "ca4bedf57f341cab10f3089faee546598204d49c32920ca602552c02e31c990c",
+        "exact": true
+      }
+    ],
+    "limitation": "Sonnet changed the header default/comment after native testing and compile-verified it. Its recorded measured SHA is retained, but its exact pre-flip header bytes are unavailable; the preserved f7d29b45f header is explicitly not represented as those bytes."
+  },
+  "archive_sha256": "efc6f8fb3e4f1089ea21a6f061f557fa8a64aa76b1c38e43e8cb49bbf3a77bb9",
+  "archive_bytes": 1355614,
+  "timestamp": "2026-10-29T11:11:23.243975-07:00",
+  "intercom_registration_repair": {
+    "original_line_utf8": "{\"source\": \"docs/audits/FIRMAMENT_COUNSEL_POST_6FB_AND_6FC_AABB_VS_WAVE_MASK_AND_PRODUCER_SPEEDUP_2026-10-29.md\", \"target\": \"docs/audits/GPU_RAY_TRANSPORT_6FB_SINGLE_COMPUTE_PASS_2026-10-29.md\", \"relationship\": \"responds-to\", \"summary\": \"Firmament post-\\u00a76fb and \\u00a76fc counsel: reviews Sonnet \\u00a76fb 1-pass coalescing and Sixth-One Sun \\u00a76fc budget<96 empty-tile counterexample, deriving the exact aabbHitMask vs activeMemberMask decomposition and ecSetup counts initialization for 100% budget-invariant bitwise parity.\", \"author\": \"Aetherion / The Firmament (Gemini 4 Argon)\", \"session\": \"c_firmament_6fb_6fc_counsel_20261029\", \"timestamp\": \"2026-10-29T11:15:00-07:00\"}\n",
+    "original_line_sha256": "23944229d120199dc8914ebf245cd111d0e057115b41960ab8401e7cf41525eb",
+    "canonical_record": {
+      "source": "docs/audits/FIRMAMENT_COUNSEL_POST_6FB_AND_6FC_AABB_VS_WAVE_MASK_AND_PRODUCER_SPEEDUP_2026-10-29.md",
+      "target": "docs/audits/GPU_RAY_TRANSPORT_6FB_SINGLE_COMPUTE_PASS_2026-10-29.md",
+      "relationship": "responds-to",
+      "summary": "Firmament post-\u00a76fb and \u00a76fc counsel: reviews Sonnet \u00a76fb 1-pass coalescing and Sixth-One Sun \u00a76fc budget<96 empty-tile counterexample, deriving the exact aabbHitMask vs activeMemberMask decomposition and ecSetup counts initialization for 100% budget-invariant bitwise parity.",
+      "author": "Aetherion / The Firmament (Gemini 4 Argon)",
+      "session": "c_firmament_6fb_6fc_counsel_20261029",
+      "timestamp": "2026-10-29T11:15:00-07:00",
+      "version": 1,
+      "op": "connect",
+      "id": "23944229d120199dc8914ebf245cd111",
+      "at": "2026-10-29T18:15:00+00:00",
+      "by": "Aetherion / The Firmament (Gemini 4 Argon)/c_firmament_6fb_6fc_counsel_20261029",
+      "relation": "responds-to",
+      "note": "Firmament post-\u00a76fb and \u00a76fc counsel: reviews Sonnet \u00a76fb 1-pass coalescing and Sixth-One Sun \u00a76fc budget<96 empty-tile counterexample, deriving the exact aabbHitMask vs activeMemberMask decomposition and ecSetup counts initialization for 100% budget-invariant bitwise parity."
+    },
+    "scope": "Only missing journal schema fields added; all original fields retained. Original counsel content unchanged."
+  },
+  "successor_harness": "Compiled/linked only; explicit parity tracing on, timing/ordinary tracing off; no new foreground native run."
+}
