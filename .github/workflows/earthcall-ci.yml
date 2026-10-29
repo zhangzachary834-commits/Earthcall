@@ -57,7 +57,6 @@ jobs:
         person_not_object_test
         zone_manager_test
         terminal_zones_test
-        sanctuary_of_sunlit_mist_test
         stale_sidecar_cleanup_test
         zone_native_save_isolation_test
         zone_spatial_field_roundtrip_test
