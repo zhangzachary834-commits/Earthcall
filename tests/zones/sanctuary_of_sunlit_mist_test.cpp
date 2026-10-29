@@ -44,10 +44,48 @@ int main() {
         return 1;
     }
 
-    // Ensure SaveSystem saveRoot points to the containing saves directory
     const auto absWorld = std::filesystem::absolute(worldSavePath);
-    const auto savesDir = absWorld.parent_path().parent_path();
-    SaveSystem::setSaveRoot(savesDir.string());
+    const auto realSavesDir = absWorld.parent_path().parent_path();
+
+    // Isolate SaveSystem saveRoot into a temporary sandbox to protect authored save integrity
+    struct TempSaveSandbox {
+        std::filesystem::path path;
+        TempSaveSandbox() {
+            path = std::filesystem::temp_directory_path() /
+                   ("earthcall-sanctuary-mist-test-" +
+                    std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+            std::filesystem::create_directories(path);
+            SaveSystem::setSaveRoot(path.string());
+        }
+        ~TempSaveSandbox() {
+            SaveSystem::setSaveRoot("");
+            std::error_code ignored;
+            std::filesystem::remove_all(path, ignored);
+        }
+    } sandbox;
+
+    std::filesystem::create_directories(sandbox.path / "worlds");
+    const auto sandboxWorldPath = sandbox.path / "worlds" / "sanctuary_of_sunlit_mist.json";
+    std::filesystem::copy_file(absWorld, sandboxWorldPath);
+
+    if (std::filesystem::exists(realSavesDir / "zones")) {
+        std::filesystem::create_directories(sandbox.path / "zones");
+        std::error_code ec;
+        std::filesystem::copy(realSavesDir / "zones", sandbox.path / "zones",
+                              std::filesystem::copy_options::recursive, ec);
+    }
+    if (std::filesystem::exists(realSavesDir / "materials")) {
+        std::filesystem::create_directories(sandbox.path / "materials");
+        std::error_code ec;
+        std::filesystem::copy(realSavesDir / "materials", sandbox.path / "materials",
+                              std::filesystem::copy_options::recursive, ec);
+    }
+    if (std::filesystem::exists(realSavesDir / "laws")) {
+        std::filesystem::create_directories(sandbox.path / "laws");
+        std::error_code ec;
+        std::filesystem::copy(realSavesDir / "laws", sandbox.path / "laws",
+                              std::filesystem::copy_options::recursive, ec);
+    }
 
     ZoneManager mgr;
     Core::Camera camera;
@@ -67,7 +105,7 @@ int main() {
     ctx.lawManager = &laws;
     ctx.worldTime = &worldTime;
 
-    mgr.loadState(worldSavePath, ctx);
+    mgr.loadState(sandboxWorldPath.string(), ctx);
 
     check(!mgr.zones().empty(), "zones loaded from sanctuary save");
     if (mgr.zones().empty()) {
