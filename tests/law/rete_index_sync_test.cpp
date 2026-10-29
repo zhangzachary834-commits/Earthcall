@@ -50,7 +50,57 @@ void testAlphaIndexSynchronization() {
     std::cout << "rete_index_sync_test: PASS" << std::endl;
 }
 
+
+void testBetaIndexPropagationAndRetraction() {
+    ReteNetwork rete;
+    const auto alphaA = rete.addAlphaNode("A", [](const FactPtr& f) { return f->type == "A"; });
+    const auto alphaB = rete.addAlphaNode("B", [](const FactPtr& f) { return f->type == "B"; });
+    const auto alphaC = rete.addAlphaNode("C", [](const FactPtr& f) { return f->type == "C"; });
+    const auto betaAB = rete.addBetaNode("A and B", false, alphaA, alphaB);
+    const auto betaABC = rete.addBetaNode("AB and C", true, betaAB, alphaC);
+
+    // Alpha and beta ids share one namespace; alpha holes must not alias a beta.
+    assert(rete.findBeta(alphaA) == nullptr);
+    assert(rete.findBeta(alphaB) == nullptr);
+    assert(rete.findBeta(alphaC) == nullptr);
+    assert(rete.findBeta(betaABC + 1) == nullptr);
+    assert(rete.findBeta(betaAB) && rete.findBeta(betaAB)->id == betaAB);
+    assert(rete.findBeta(betaABC) && rete.findBeta(betaABC)->id == betaABC);
+
+    rete.bindLawToBeta("three-clause-law", betaABC);
+    auto fact = [](const std::string& type, const std::string& subject) {
+        auto f = std::make_shared<ReteFact>();
+        f->type = type;
+        f->subjectId = subject;
+        return f;
+    };
+    rete.assertFact(fact("A", "same"));
+    const auto idB = rete.assertFact(fact("B", "same"));
+    rete.assertFact(fact("C", "other"));
+    assert(rete.findBeta(betaAB)->memory.size() == 1);
+    assert(rete.findBeta(betaABC)->memory.empty());
+    const auto idC = rete.assertFact(fact("C", "same"));
+    assert(rete.findBeta(betaABC)->memory.size() == 1);
+    const auto agenda = rete.drainAgenda();
+    assert(agenda.size() == 1 && agenda[0].token.facts.size() == 3);
+
+    // Both the direct beta and its downstream beta must retract their tokens.
+    assert(rete.retractFact(idB));
+    assert(rete.findBeta(betaAB)->memory.empty());
+    assert(rete.findBeta(betaABC)->memory.empty());
+    assert(rete.drainAgenda().empty());
+
+    // The index remains valid after retraction and a new propagation cycle.
+    rete.assertFact(fact("B", "same"));
+    assert(rete.findBeta(betaAB)->memory.size() == 1);
+    assert(rete.findBeta(betaABC)->memory.size() == 1);
+    assert(rete.retractFact(idC));
+    assert(rete.findBeta(betaABC)->memory.empty());
+    std::cout << "rete beta index propagation/retraction: PASS" << std::endl;
+}
+
 int main() {
     testAlphaIndexSynchronization();
+    testBetaIndexPropagationAndRetraction();
     return 0;
 }
