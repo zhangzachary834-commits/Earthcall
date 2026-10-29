@@ -46,13 +46,22 @@ TRACE = r'''
   WGPULimits limits={};need(wgpuDeviceGetLimits(k->device,&limits)==WGPUStatus_Success,"native device limits");
   result["device_binding_limit"]=limits.maxStorageBufferBindingSize;result["strip_rows"]=k->stripRows;
   result["process_id"]=getpid();result["scope"]="instrumented queued Engine ticks, not clean timing or physical scanout";
+  const std::string notifyName="org.earthcall.transport.trace-start."+std::to_string(getpid());
+  int notifyFd=-1,notifyToken=-1;
+  need(notify_register_file_descriptor(notifyName.c_str(),&notifyFd,0,&notifyToken)==NOTIFY_STATUS_OK,"register trace-start notification");
+  result["recording_notification"]=notifyName;
   write(output.parent_path()/"trace-ready.json",result);
   auto traceWait=Clock::now();
-  while(!fs::exists(output.parent_path()/"trace-go")){
+  uint32_t deliveredToken=0;
+  for(;;){
    need(elapsed(traceWait)<45000,"trace attach timeout");glfwPollEvents();
    need(glfwGetWindowAttrib(e.window(),GLFW_FOCUSED)==GLFW_TRUE,"focus lost waiting for trace attach");
-   std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   pollfd event{notifyFd,POLLIN,0};int ready=poll(&event,1,10);need(ready>=0,"trace notification poll failed");
+   if(ready&&event.revents&POLLIN){need(read(notifyFd,&deliveredToken,sizeof(deliveredToken))==sizeof(deliveredToken),"complete trace-start notification");break;}
   }
+  need(notify_cancel(notifyToken)==NOTIFY_STATUS_OK,"cancel trace notification");
+  result["recording_ack"]={{"notification",notifyName},{"registered_token",notifyToken},{"delivered_token",deliveredToken}};
+  write(output.parent_path()/"trace-recording-ack.json",result["recording_ack"]);
   Json samples=Json::array();
   for(int order=0;order<4;++order){
    bool on=order==1||order==2;fence(k);Json activation=Json::array();for(int i=0;i<2;++i)activation.push_back(frame(0,on));fence(k);
@@ -72,7 +81,7 @@ def prepare(work):
     work.mkdir()
     before = E.R.snapshot()
     base = E.CPP.read_text()
-    text = replace(base, '#include <cstring>', '#include <cstring>\n#include <os/signpost.h>\n#include <unistd.h>\nstatic os_log_t ecTraceLog=os_log_create("org.earthcall.transport","6ez");')
+    text = replace(base, '#include <cstring>', '#include <cstring>\n#include <os/signpost.h>\n#include <unistd.h>\n#include <notify.h>\n#include <poll.h>\nstatic os_log_t ecTraceLog=os_log_create("org.earthcall.transport",OS_LOG_CATEGORY_POINTS_OF_INTEREST);')
     text = replace(text, 'auto begin=Clock::now();e.tick(dt);double tickMs=elapsed(begin);',
                    'auto fid=os_signpost_id_generate(ecTraceLog);os_signpost_interval_begin(ecTraceLog,fid,"EC6EZFrame","index=%d routed=%d",i,int(on));auto begin=Clock::now();e.tick(dt);double tickMs=elapsed(begin);os_signpost_interval_end(ecTraceLog,fid,"EC6EZFrame");')
     start = text.index('  if(mode=="timing"||mode=="session"){')
@@ -150,17 +159,17 @@ def run(work):
             while not (session / 'trace-ready.json').exists():
                 need(process.poll() is None and time.monotonic() - started < 165, 'native warmup/focus refused or timed out')
                 time.sleep(.2)
-            instrument_argv += ['--attach', str(process.pid)]
+            ready = json.loads((session / 'trace-ready.json').read_text())
+            instrument_argv += ['--attach', str(process.pid), '--notify-tracing-started', ready['recording_notification']]
             profiler = subprocess.Popen(instrument_argv, stdout=trace_log, stderr=subprocess.STDOUT)
             attach_start = time.monotonic()
-            while 'Recording started' not in (work / 'xctrace.log').read_text():
+            while not (session / 'trace-recording-ack.json').exists():
                 need(profiler.poll() is None and process.poll() is None and time.monotonic() - attach_start < 30,
                      'trace did not acknowledge recording; no sample admitted')
                 time.sleep(.2)
-            (session / 'trace-go').touch()
             native_code = process.wait(timeout=min(60, 230 - (time.monotonic() - started)))
             need(native_code == 0, 'native trace witness failed')
-            profiler_code = profiler.wait(timeout=min(60, 230 - (time.monotonic() - started)))
+            profiler_code = profiler.wait(timeout=max(1, 230 - (time.monotonic() - started)))
             need(profiler_code == 0 and trace.exists(), 'trace did not save')
         except Exception as error:
             failure = str(error)
