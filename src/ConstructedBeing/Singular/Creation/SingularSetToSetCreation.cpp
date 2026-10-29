@@ -654,7 +654,7 @@ std::shared_ptr<Singular> storedFromJson(const nlohmann::json& record, const Res
     return being;
 }
 
-void restoreStored(Zone& zone, const nlohmann::json& records, bool replace) {
+void restoreStored(Zone& zone, const nlohmann::json& records, bool replace, bool restoreExistingLexemes) {
     if (!records.is_array()) throw std::runtime_error("storedSingulars must be an array");
     std::unordered_set<std::string> recordIds;
     for (const auto& record : records) {
@@ -734,7 +734,7 @@ void restoreStored(Zone& zone, const nlohmann::json& records, bool replace) {
                 if (auto canonical = Singularity::Language::LanguageSystem::instance().findById(id)) {
                     if (canonical->getSymbol() != lexeme->getSymbol())
                         throw std::runtime_error("Lexeme identity has conflicting symbols");
-                    lexicalUpdates.emplace_back(canonical, lexeme);
+                    if (restoreExistingLexemes) lexicalUpdates.emplace_back(canonical, lexeme);
                     being = std::move(canonical);
                 }
             }

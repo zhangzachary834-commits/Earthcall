@@ -39,6 +39,7 @@
 //
 // Failures are REPORTED, not asserted, so one gap does not hide the rest.
 
+#include "Person/Body/BodyPart/BodyPart.hpp"
 #include "ConstructedBeing/Material/Material.hpp"
 #include "Relation/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
@@ -350,6 +351,10 @@ int main() {
         Soul soul;               audit("Soul", soul);
         Ourverse ourverse;       audit("Ourverse", ourverse);
         Body body;               audit("Body", body);
+        // Formation, not Object; its constitution is now registered too
+        // (o3 seam audit / BodyPart_Constitution_As_Explicit_Relation).
+        BodyPart part("probe-hand", BodyPart::Type::Hand);
+        audit("BodyPart", part);
     }
 
     // ---- D. reachability from the authoring surface -----------------------

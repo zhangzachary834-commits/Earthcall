@@ -26,7 +26,20 @@ public:
     void registerHandler(const std::string& handlerName, 
                         const std::function<void(const Event&)>& handler,
                         int priority = 0) {
-        _subscriptions[handlerName] = EventBus::instance().subscribe<Event>(handler, priority);
+        auto& bus = EventBus::instance();
+        const auto token = bus.subscribe<Event>(handler, priority);
+        try {
+            auto [it, inserted] = _subscriptions.emplace(handlerName, token);
+            if (!inserted) {
+                // Re-registering a name replaces its old EventBus listener.
+                // Retaining the old token here would silently leak callbacks.
+                bus.unsubscribe(it->second);
+                it->second = token;
+            }
+        } catch (...) {
+            bus.unsubscribe(token);
+            throw;
+        }
     }
 
     // Register multiple handlers at once

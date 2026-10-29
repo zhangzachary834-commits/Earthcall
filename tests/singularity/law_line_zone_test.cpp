@@ -17,6 +17,9 @@
 #include "json.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
+#include "Singularity/Storage/Serialization/Relation/FormationSerialization.hpp"
+#include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
 
 #include <algorithm>
 #include <array>
@@ -788,6 +791,126 @@ int main() {
         const auto persisted = SaveSystem::readZoneIdentity("LawLine");
         check(persisted.dump().find("pressed and released on a being") != std::string::npos,
               "the meaning is saved with the Zone");
+    }
+    // Authored appearance (Zach, 2026-10-14: "make the Law Line ... more
+    // beautiful using Lexeme symbols or objects with symbolic properties").
+    // A Zone's `appearance.chrome.*` and a Lexeme's own `appearance.*` are
+    // ordinary dynamic properties a Person writes with a sentence.
+    {
+        const auto vocab = terminal->vocabulary(harness.lawManager);
+        std::string setLexeme;
+        for (const auto& w : vocab.words)
+            if (w.symbol == "set" && w.opcode == "action.Set" && !w.lexemeId.empty()) setLexeme = w.lexemeId;
+        check(!setLexeme.empty(), "the seed's 'set' is an authored Lexeme");
+        auto lexeme = Singularity::Language::LanguageSystem::instance().findById(setLexeme);
+        check(lexeme != nullptr, "that Lexeme is reachable by its identifier");
+
+        terminal->inject("called \"Selected Star\" on \"argument-test\" then add property "
+                         "@LawLine.appearance.chrome.selected.glyph to \"\u2727\""); frame();
+        auto ids = lawNamed("Selected Star");
+        auto* star = ids.empty() ? nullptr : harness.lawManager.find(ids.back());
+        check(star != nullptr, "a sentence authors the Zone's selection glyph: " + printed.back());
+        if (star) star->applyTo(*cube);
+        terminal->inject("called \"Set Is Gold\" on \"argument-test\" then add property @" + setLexeme +
+                         ".appearance.color to gold"); frame();
+        ids = lawNamed("Set Is Gold");
+        auto* gold = ids.empty() ? nullptr : harness.lawManager.find(ids.back());
+        check(gold != nullptr, "a sentence authors a Lexeme's own colour: " + printed.back());
+        if (gold) gold->applyTo(*cube);
+        PropertyValue authored;
+        check(lexeme && lexeme->getDynamicProperty("appearance.color", authored) &&
+                  std::holds_alternative<glm::vec3>(authored),
+              "the Lexeme now carries appearance.color as a vec3, like an Object's color");
+        if (lexeme) lexeme->setDynamicProperty("appearance.glyph", std::string("\u2726"));
+
+        PropertyValue depthWas;
+        lawGetValue(*terminal, PropertyPath::parse("colorDepth"), depthWas);
+        lawSetValue(*terminal, PropertyPath::parse("colorDepth"), PropertyValue(std::string("truecolor")));
+        terminal->injectKeys("when clicked then s"); frame();
+        const auto shown = terminal->editorForTests().render(120).text;
+        check(mentions(shown, "\u2727"), "the menu's selection mark is the Zone's authored glyph");
+        check(mentions(shown, "\u2726"), "'set' shows its Lexeme's glyph in the menu");
+        check(mentions(shown, "38;2;255;214;0m"), "'set' wears its Lexeme's truecolor gold (255, 214, 0)");
+        {
+            // The look cache is re-derived every frame; it must stay cheap.
+            const auto t0 = std::chrono::steady_clock::now();
+            for (int i = 0; i < 200; ++i) terminal->sense(harness.lawManager);
+            const double us = std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - t0).count() / 200;
+            std::cout << "    sense() with authored looks: " << us << " us per frame ("
+                      << Singularity::Language::LanguageSystem::instance().getAll().size() << " Lexemes)\n";
+            check(us < 2000.0, "sense() stays well under a frame's budget with appearance read every frame");
+        }
+        lawSetValue(*terminal, PropertyPath::parse("colorDepth"), PropertyValue(std::string("256")));
+        frame();
+        const auto lowered = terminal->editorForTests().render(120).text;
+        check(!mentions(lowered, "38;2;") && mentions(lowered, "38;5;220m"), "at 256 colours the same gold is lowered (38;5;220), never dropped");
+        lawSetValue(*terminal, PropertyPath::parse("colorDepth"), depthWas);
+        terminal->injectKeys("\x03"); frame();
+
+        // The real channel rejects control glyphs before the look cache and
+        // keeps long help-heading glyphs inside the preformatted box.
+        harness.zones.active().setDynamicProperty("appearance.chrome.selected.glyph", std::string("\nextra-row"));
+        terminal->injectKeys("when clicked then s"); frame();
+        const auto control = terminal->editorForTests().render(80);
+        check(control.text.find("extra-row") == std::string::npos &&
+                  std::count(control.text.begin(), control.text.end(), '\n') == control.rows - 1,
+              "control glyphs cannot add unaccounted rows through the real Terminal channel");
+        harness.zones.active().setDynamicProperty("appearance.chrome.selected.glyph", std::string("\u2727"));
+        std::string heading;
+        for (int i = 0; i < 50; ++i) heading += "\u2764\uFE0F";
+        harness.zones.active().setDynamicProperty("appearance.chrome.help.mark.glyph", heading);
+        terminal->injectKeys("\x1bOP"); frame();
+        const auto help = terminal->editorForTests().render(80);
+        bool helpFits = help.text.find("\u2764\uFE0F") != std::string::npos;
+        for (std::size_t at = help.text.find("\r\n"); at != std::string::npos;) {
+            at += 2;
+            const auto end = help.text.find("\r\n", at);
+            helpFits &= Singularity::Terminal::visibleWidth(help.text.substr(at, end == std::string::npos ? end : end - at)) <= 79;
+            at = end;
+        }
+        check(helpFits, "the actual help page clips an authored emoji heading to its cell budget");
+        terminal->injectKeys("\x03"); frame();
+        terminal->injectKeys("\x03"); frame();
+        harness.zones.active().removeDynamicProperty("appearance.chrome.help.mark.glyph");
+
+        // Saved with the Zone, and read back: Lexemes' authoredProperties were
+        // written before 2026-10-14 but never restored on load.
+        check(harness.zones.persistActiveZone(), "Save Zone after authoring appearance");
+        const auto persisted = SaveSystem::readZoneIdentity("LawLine");
+        check(persisted.dump().find("appearance.chrome.selected.glyph") != std::string::npos,
+              "the Zone's appearance is saved with it");
+        if (lexeme) {
+            lexeme->removeDynamicProperty("appearance.glyph");
+            Zone probe("appearance-probe", "appearance-probe");
+            auto records = nlohmann::json{{"lexemes", persisted.value("lexemes", nlohmann::json::array())},
+                                          {"formationRelations", nlohmann::json::array()}};
+            applyFormationRelations(probe, records);
+            PropertyValue glyph;
+            check(!lexeme->getDynamicProperty("appearance.glyph", glyph),
+                  "reference hydration preserves a live Lexeme's deliberate glyph removal");
+            lexeme->setDynamicProperty("appearance.glyph", std::string("live-glyph"));
+            applyFormationRelations(probe, records);
+            check(lexeme->getDynamicProperty("appearance.glyph", glyph) && glyph == PropertyValue(std::string("live-glyph")),
+                  "reference hydration preserves a newer live glyph across Zones");
+            applyFormationRelations(probe, records, true);
+            check(lexeme->getDynamicProperty("appearance.glyph", glyph) && glyph == PropertyValue(std::string("\u2726")),
+                  "explicit restoration may restore the saved glyph");
+            // A never-interned identity exercises actual first hydration, also
+            // when stored graphs need the Lexeme before relation decoding.
+            auto fresh = nlohmann::json{{"id", "lexeme.appearance.fresh-hydration"}, {"symbol", "Fresh appearance"},
+                                       {"authoredProperties", {{"appearance.glyph", "fresh-glyph"}}}};
+            applyZoneJson(probe, nlohmann::json{{"lexemes", nlohmann::json::array({fresh})},
+                                               {"storedSingulars", nlohmann::json::array()}}, true);
+            const auto restored = Singularity::Language::LanguageSystem::instance().findById("lexeme.appearance.fresh-hydration");
+            check(restored && restored->getDynamicProperty("appearance.glyph", glyph) && glyph == PropertyValue(std::string("fresh-glyph")),
+                  "fresh Lexeme properties hydrate before stored graph references, even without formationRelations");
+        }
+        // Leave the shared fixture as it was for later checks.
+        if (lexeme) {
+            lexeme->removeDynamicProperty("appearance.glyph");
+            lexeme->removeDynamicProperty("appearance.color");
+        }
+        harness.zones.active().removeDynamicProperty("appearance.chrome.selected.glyph");
     }
     // Multi-line blocks: typed one line per frame, folded when an empty line ends them.
     {

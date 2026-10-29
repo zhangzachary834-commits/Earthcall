@@ -18,6 +18,7 @@ void EventHandler::removeHandler(const std::string& handlerName) {
 
 void EventHandler::clearAllHandlers() {
     for (const auto& [name, token] : _subscriptions) {
+        (void)name;
         EventBus::instance().unsubscribe(token);
     }
     _subscriptions.clear();

@@ -107,8 +107,11 @@ void onBufferMapped(WGPUMapAsyncStatus s, WGPUStringView, void* u, void*) {
     r->ok = (s == WGPUMapAsyncStatus_Success);
 }
 
-bool renderOffscreen(wgpu::Device& gpu, WebGpuRenderer& r, const std::vector<Object*>& objects) {
-    constexpr uint32_t W = 640, H = 480, ROW = W * 4;
+bool renderOffscreen(wgpu::Device& gpu, WebGpuRenderer& r, Zone& zone,
+                     const std::vector<Object*>& objects, const fs::path& ppmOut,
+                     const glm::vec3& eye, const glm::vec3& aim,
+                     double& outMeanLum, double& outSaturatedRatio) {
+    constexpr uint32_t W = 960, H = 600, ROW = W * 4;
     WGPUTextureDescriptor td = {};
     td.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_CopySrc;
     td.dimension = WGPUTextureDimension_2D;
@@ -119,23 +122,74 @@ bool renderOffscreen(wgpu::Device& gpu, WebGpuRenderer& r, const std::vector<Obj
     auto tex = wgpuDeviceCreateTexture(gpu.device, &td);
     auto view = wgpuTextureCreateView(tex, nullptr);
 
-    const glm::vec3 eye(0.0f, 3.6f, 22.5f);
-    const glm::vec3 aim(0.0f, 2.8f, 0.0f);
+    // Bind full multi-source radiance and volumetric media exactly like EngineRender.cpp
+    std::vector<geom::FieldNode*> candidateFields;
+    if (auto* root = zone.spatialRoot()) candidateFields.push_back(root);
+    for (const auto& f : zone.additionalSpatialFields()) {
+        if (f) candidateFields.push_back(f.get());
+    }
+    std::vector<Rendering::RadianceSourceBinding> radiantSources;
+    std::string sourceSetIdentity;
+    std::vector<Rendering::VolumeDensityBinding> volumeDensities;
+    std::string volumeSetIdentity;
+    for (geom::FieldNode* field : candidateFields) {
+        Rendering::VolumeDensityBinding medium;
+        if (Rendering::readVolumeDensity(*field, 0.0, 0.016, medium)) {
+            Rendering::appendVolumeSetIdentity(volumeSetIdentity, medium.producerId, medium);
+            volumeDensities.push_back(medium);
+        }
+        Rendering::AuthorableLightState l;
+        if (!Rendering::readAuthorableLight(*field, l)) continue;
+        Rendering::RadianceSourceBinding src;
+        src.producerId = field->getIdentifier();
+        src.position = l.position;
+        src.ambientRadiance = Rendering::lightAmbientRadiance(l);
+        src.diffuseRadiance = Rendering::lightDiffuseRadiance(l);
+        src.specularRadiance = Rendering::lightSpecularRadiance(l);
+        src.coefficients = glm::vec4(l.intensity, l.ambient, l.diffuse, l.specular);
+        src.temporalCoordinate = 0.0;
+        src.temporalDelta = 0.016;
+        src.enabled = l.enabled;
+        field->verifyAuthoredMath();
+        if (field->field && field->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
+            !field->field->astDefinition.pieces.empty()) {
+            src.radianceExpr = &field->field->astDefinition;
+            src.radianceRevision = field->authoredMathRevision(geom::FieldNode::kMathFieldAst);
+        }
+        if (field->lightChroma && !field->lightChroma->pieces.empty()) {
+            src.chromaExpr = field->lightChroma.get();
+            src.chromaRevision = field->authoredMathRevision(geom::FieldNode::kMathLightChroma);
+        }
+        if (field->lightAngular && !field->lightAngular->pieces.empty()) {
+            src.angularExpr = field->lightAngular.get();
+            src.angularRevision = field->authoredMathRevision(geom::FieldNode::kMathLightAngular);
+        }
+        sourceSetIdentity += src.producerId + ";";
+        radiantSources.push_back(src);
+    }
+    r.setVolumeDensitySources(volumeDensities, std::hash<std::string>{}(volumeSetIdentity));
+    r.setRadianceSources(radiantSources, std::hash<std::string>{}(sourceSetIdentity));
+    if (!radiantSources.empty()) {
+        const auto& c = radiantSources.front();
+        r.setLight(c.position, c.ambientRadiance, c.diffuseRadiance, c.specularRadiance);
+        r.setLightingEnabled(c.enabled);
+        r.setRadianceSourceCoefficients(c.coefficients.x, c.coefficients.y, c.coefficients.z, c.coefficients.w);
+        r.setRadianceField(c.radianceExpr, c.radianceRevision);
+        r.setRadianceChroma(c.chromaExpr, c.chromaRevision);
+        r.setRadianceAngular(c.angularExpr, c.angularRevision);
+    }
+
     r.setCamera(glm::lookAt(eye, aim, glm::vec3(0.0f, 1.0f, 0.0f)),
                 glm::perspectiveZO(glm::radians(50.0f), float(W) / float(H), 0.1f, 200.0f),
                 eye);
-    r.beginFrameOffscreen(view, W, H, glm::vec4(0.06f, 0.09f, 0.16f, 1.0f));
+    r.beginFrameOffscreen(view, W, H, glm::vec4(0.06f, 0.08f, 0.13f, 1.0f));
     bool compiled = true;
     for (Object* o : objects) {
         auto mat = resolveRenderMaterial(o->materialId(), {});
-        auto program = sdfwgsl::compile(o->getFieldData(), nullptr, mat.colorExpr.get(), r.radianceExpr());
-        if (!program.ok) {
-            std::cerr << o->getIdentifier() << ": " << program.error << '\n';
-            compiled = false;
-        }
         r.setModel(o->getTransform());
         r.drawImplicit(o->getFieldData(), o->getFieldExtent(), mat);
     }
+    r.composeVolumes();
     r.endFrame();
 
     WGPUBufferDescriptor bd = {};
@@ -165,21 +219,34 @@ bool renderOffscreen(wgpu::Device& gpu, WebGpuRenderer& r, const std::vector<Obj
         wgpuDevicePoll(gpu.device, true, nullptr);
     }
     size_t visible = 0;
+    size_t saturated = 0;
+    double lumSum = 0.0;
     if (mr.ok) {
         auto* px = static_cast<const unsigned char*>(wgpuBufferGetConstMappedRange(buffer, 0, ROW * H));
+        std::ofstream img;
+        if (!ppmOut.empty()) {
+            img.open(ppmOut, std::ios::binary);
+            img << "P6\n" << W << " " << H << "\n255\n";
+        }
         for (size_t i = 0; i < W * H; ++i) {
-            if (px[i * 4] > 20 || px[i * 4 + 1] > 25 || px[i * 4 + 2] > 45) {
-                ++visible;
-            }
+            const unsigned char R = px[i * 4];
+            const unsigned char G = px[i * 4 + 1];
+            const unsigned char B = px[i * 4 + 2];
+            if (R > 20 || G > 25 || B > 40) ++visible;
+            if (R >= 250 && G >= 250 && B >= 250) ++saturated;
+            lumSum += (0.2126 * R + 0.7152 * G + 0.0722 * B) / 255.0;
+            if (img) img.write(reinterpret_cast<const char*>(px + i * 4), 3);
         }
         wgpuBufferUnmap(buffer);
     }
+    outMeanLum = lumSum / double(W * H);
+    outSaturatedRatio = double(saturated) / double(W * H);
     wgpuCommandBufferRelease(cmd);
     wgpuCommandEncoderRelease(enc);
     wgpuBufferRelease(buffer);
     wgpuTextureViewRelease(view);
     wgpuTextureRelease(tex);
-    return compiled && mr.ok && visible > 15000;
+    return compiled && mr.ok && visible > 20000;
 }
 
 } // namespace
@@ -309,7 +376,7 @@ int main(int argc, char** argv) {
         for (const auto& f : zone->additionalSpatialFields()) {
             if (f) fieldNodes.push_back(f.get());
         }
-        check(fieldNodes.size() == 4, "One spatialRoot + three additional volumetric/radiant spatialFields");
+        check(fieldNodes.size() == 5, "One spatialRoot + four additional volumetric/radiant spatialFields");
 
         bool allFieldsCompile = true;
         bool foundOccluderMist = false;
@@ -382,6 +449,57 @@ int main(int argc, char** argv) {
         }
         check(allFieldsCompile, "All spatialRoot and spatialField expressions compile cleanly to WGSL");
         check(foundOccluderMist, "Sunlit Halo Mist carries an active CSG volumeOccluder");
+
+        // Verify numerical light-field and cloud-sea values across all 8 octants:
+        // 1. Sun of Dawn has bright intentional pools on all 5 islands and a softer shade valley between them
+        auto evalScalarAt = [](const OntoMath::Piecewise& pw, const glm::vec3& p) -> double {
+            std::map<std::string, PropertyValue> vars;
+            vars["x"] = double(p.x);
+            vars["y"] = double(p.y);
+            vars["z"] = double(p.z);
+            vars["t"] = 0.0;
+            vars["p"] = p;
+            const auto v = pw.evaluate(vars);
+            if (!v) return 0.0;
+            if (std::holds_alternative<double>(*v)) return std::get<double>(*v);
+            if (std::holds_alternative<float>(*v)) return std::get<float>(*v);
+            return 0.0;
+        };
+        const glm::vec3 sunPos = root->origin;
+        const double sunPavilion = evalScalarAt(root->field->astDefinition, glm::vec3(0.0f, 2.5f, 0.0f) - sunPos);
+        const double sunSouth    = evalScalarAt(root->field->astDefinition, glm::vec3(0.0f, 0.8f, 21.0f) - sunPos);
+        const double sunEast     = evalScalarAt(root->field->astDefinition, glm::vec3(19.5f, 2.0f, -2.0f) - sunPos);
+        const double sunWest     = evalScalarAt(root->field->astDefinition, glm::vec3(-19.5f, 2.5f, -2.0f) - sunPos);
+        const double sunNorth    = evalScalarAt(root->field->astDefinition, glm::vec3(0.0f, 4.2f, -21.5f) - sunPos);
+        const double sunBridge   = evalScalarAt(root->field->astDefinition, glm::vec3(10.0f, 1.0f, 10.0f) - sunPos);
+        check(sunPavilion > 0.80 && sunSouth > 0.65 && sunEast > 0.65 && sunWest > 0.60 && sunNorth > 0.65,
+              "Sun of Dawn illuminates all 5 islands with intentional golden light pools");
+        check(sunBridge > 0.18 && sunBridge < sunPavilion * 0.55,
+              "Sun of Dawn preserves a softer morning shade valley between island light pools");
+
+        // 2. Sea of Clouds is restored at y = -5.5m with fluffy non-zero cumulus billows in all 4 quadrants
+        //    and exact 0 outside its compact support
+        const geom::FieldNode* cloudField = nullptr;
+        const geom::FieldNode* heartField = nullptr;
+        for (const auto* n : fieldNodes) {
+            if (n->getIdentifier() == "sky.sanctuary.sea-of-clouds") cloudField = n;
+            if (n->getIdentifier() == "sky.sanctuary.heart-radiance") heartField = n;
+        }
+        check(cloudField != nullptr && std::abs(cloudField->origin.y - (-5.5f)) < 0.2f,
+              "Sea of Clouds medium is positioned right beneath the islands (y = -5.5m)");
+        if (cloudField && cloudField->volumeDensity && cloudField->volumeEmission) {
+            const double cPP = evalScalarAt(*cloudField->volumeDensity, glm::vec3(6.0f, 0.0f, 6.0f));
+            const double cNN = evalScalarAt(*cloudField->volumeDensity, glm::vec3(-6.0f, 0.0f, -6.0f));
+            const double cOut = evalScalarAt(*cloudField->volumeDensity, glm::vec3(35.0f, 0.0f, 0.0f));
+            check(cPP > 0.15 && cNN > 0.15 && std::abs(cOut) < 1e-6,
+                  "Sea of Clouds has active cumulus density across both positive and negative octants and compact zero boundary");
+        }
+        if (heartField && heartField->field) {
+            const double hPos = evalScalarAt(heartField->field->astDefinition, glm::vec3(1.5f, -1.4f, 1.5f));
+            const double hNeg = evalScalarAt(heartField->field->astDefinition, glm::vec3(-1.5f, -1.4f, -1.5f));
+            check(hPos > 0.25 && std::abs(hPos - hNeg) < 1e-5,
+                  "Lotus Heart radiance is symmetric across all octants (+x/+z and -x/-z)");
+        }
 
         bool allObjectsCompile = true;
         for (Object* o : allObjects) {
@@ -471,18 +589,20 @@ int main(int argc, char** argv) {
         WebGpuRenderer renderer;
         check(renderer.init(gpu), "Production WebGPU renderer initializes");
         setCurrentRenderer(&renderer);
-        if (root && Rendering::readAuthorableLight(*root, light)) {
-            renderer.setLight(light.position,
-                              Rendering::lightAmbientRadiance(light),
-                              Rendering::lightDiffuseRadiance(light),
-                              Rendering::lightSpecularRadiance(light));
-            renderer.setLightingEnabled(light.enabled);
-            if (root->field) {
-                renderer.setRadianceField(&root->field->astDefinition, 1);
-            }
-        }
-        check(renderOffscreen(gpu, renderer, allObjects),
-              "Sky-Island Sanctuary renders visible non-black frame on production WebGPU pipeline");
+        double meanLumOverview = 0.0, satOverview = 1.0;
+        check(renderOffscreen(gpu, renderer, *zone, allObjects,
+                              "build/sanctuary_overview.ppm",
+                              glm::vec3(18.0f, 11.5f, 24.0f), glm::vec3(0.0f, 2.0f, 0.0f),
+                              meanLumOverview, satOverview),
+              "Sky-Island Sanctuary overview renders on production WebGPU pipeline");
+        std::cout << "  Overview meanLuminance=" << meanLumOverview
+                  << " saturatedWhiteRatio=" << satOverview << "\n";
+        check(satOverview < 0.01,
+              "Intentional lighting: overview has < 1% pure-white saturated pixels (actual: " +
+                  std::to_string(satOverview * 100.0) + "%)");
+        check(meanLumOverview > 0.06 && meanLumOverview < 0.45,
+              "Intentional lighting: overview mean luminance is balanced (" +
+                  std::to_string(meanLumOverview) + ")");
         setCurrentRenderer(nullptr);
     }
 

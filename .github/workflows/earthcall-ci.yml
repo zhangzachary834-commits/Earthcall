@@ -85,15 +85,19 @@ jobs:
         timeline_test
         time_moment_test
         category_manager_test
+        identity_test
         identity_ledger_test
+        lexeme_graph_roundtrip_test
         file_channel_test
         file_watcher_test
         first_mover_test
+        first_mover_tool_test
         law_file_tree_fossil_test
         earthcall_api_test
         rete_state_ptr_index_test
         relation_type_lexeme_lifetime_test
         event_bus_test
+        event_handler_lifetime_test
         law_manager_eventbus_lifetime_test
         locomotion_eventbus_lifetime_test
         jit_llvm_test

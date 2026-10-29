@@ -17,50 +17,71 @@ struct EventBusTestFriend {
 } // namespace Core
 
 namespace {
-int g_failures = 0;
-void check(bool ok, const std::string& what) {
+int failures = 0;
+void check(bool ok, const char* description) {
     if (!ok) {
-        ++g_failures;
-        std::printf("  FAILED: %s\n", what.c_str());
+        ++failures;
+        std::fprintf(stderr, "FAILED: %s\n", description);
     } else {
-        std::printf("  ok: %s\n", what.c_str());
+        std::printf("ok: %s\n", description);
     }
 }
-struct DummyEvent { int val; };
-}
+struct DummyEvent { int value; };
+struct OtherEvent { int value; };
+} // namespace
 
 int main() {
-    using Core::EventHandler;
+    using Core::EventBus;
     using Core::EventBusTestFriend;
+    using Core::EventHandler;
 
-    const std::size_t baseline = EventBusTestFriend::listenerCount<DummyEvent>();
+    auto& handler = EventHandler::instance();
+    auto& bus = EventBus::instance();
+    const auto baseline = EventBusTestFriend::listenerCount<DummyEvent>();
+    const auto otherBaseline = EventBusTestFriend::listenerCount<OtherEvent>();
 
-    int callCount = 0;
-    EventHandler::instance().registerHandler<DummyEvent>("test1", [&](const DummyEvent&){
-        callCount++;
-    });
-
+    int originalCalls = 0;
+    int replacementCalls = 0;
+    handler.registerHandler<DummyEvent>("replace-me", [&](const DummyEvent&) { ++originalCalls; });
     check(EventBusTestFriend::listenerCount<DummyEvent>() == baseline + 1,
-          "registerHandler installs one listener");
+          "registration installs exactly one listener");
+    bus.publish(DummyEvent{1});
+    check(originalCalls == 1, "registered callback receives the event");
 
-    EventHandler::instance().removeHandler("test1");
+    handler.registerHandler<DummyEvent>("replace-me", [&](const DummyEvent&) { ++replacementCalls; });
+    check(handler.getHandlerCount() == 1 && handler.hasHandler("replace-me"),
+          "re-registering the same name retains exactly one managed handler");
+    check(EventBusTestFriend::listenerCount<DummyEvent>() == baseline + 1,
+          "re-registering the same name unsubscribes the previous listener");
+    bus.publish(DummyEvent{2});
+    check(originalCalls == 1 && replacementCalls == 1,
+          "only the replacement callback receives subsequent events");
 
-    check(EventBusTestFriend::listenerCount<DummyEvent>() == baseline,
-          "removeHandler removes the listener");
+    handler.removeHandler("replace-me");
+    check(EventBusTestFriend::listenerCount<DummyEvent>() == baseline &&
+              !handler.hasHandler("replace-me"),
+          "removeHandler revokes the EventBus subscription");
+    bus.publish(DummyEvent{3});
+    check(replacementCalls == 1, "removed callback cannot fire again");
 
-    EventHandler::instance().registerHandler<DummyEvent>("test2", [&](const DummyEvent&){});
-    EventHandler::instance().registerHandler<DummyEvent>("test3", [&](const DummyEvent&){});
-
+    handler.registerHandler<DummyEvent>("one", [](const DummyEvent&) {});
+    handler.registerHandler<DummyEvent>("two", [](const DummyEvent&) {});
     check(EventBusTestFriend::listenerCount<DummyEvent>() == baseline + 2,
-          "registerHandler installs more listeners");
+          "distinct handler names install two listeners");
+    handler.clearAllHandlers();
+    check(EventBusTestFriend::listenerCount<DummyEvent>() == baseline &&
+              handler.getHandlerCount() == 0,
+          "clearAllHandlers revokes every managed subscription");
 
-    EventHandler::instance().clearAllHandlers();
+    handler.registerHandler<DummyEvent>("change-type", [](const DummyEvent&) {});
+    handler.registerHandler<OtherEvent>("change-type", [](const OtherEvent&) {});
+    check(EventBusTestFriend::listenerCount<DummyEvent>() == baseline &&
+              EventBusTestFriend::listenerCount<OtherEvent>() == otherBaseline + 1,
+          "same-name replacement across event types revokes the old type");
+    handler.removeHandler("change-type");
+    check(EventBusTestFriend::listenerCount<OtherEvent>() == otherBaseline,
+          "cross-type replacement token can be revoked");
 
-    check(EventBusTestFriend::listenerCount<DummyEvent>() == baseline,
-          "clearAllHandlers removes all listeners");
-
-    std::printf("%s\n",
-                g_failures ? "event_handler_lifetime_test: FAILURES"
-                           : "event_handler_lifetime_test: OK");
-    return g_failures ? 1 : 0;
+    std::printf("event_handler_lifetime_test: %s\n", failures ? "FAILED" : "PASSED");
+    return failures ? 1 : 0;
 }

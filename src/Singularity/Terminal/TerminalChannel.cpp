@@ -10,6 +10,7 @@
 #include "Relation/Relation.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Core/StringId.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -361,6 +362,12 @@ TerminalChannel::TerminalChannel() : Law("terminal-channel") {
     setName("Terminal Channel");
     listenForEvents();
     if (std::getenv("NO_COLOR")) _color = false;   // the no-color.org convention
+    // The de-facto convention for 24-bit colour (iTerm2, kitty, WezTerm,
+    // VS Code, Windows Terminal set it; Apple Terminal does not).
+    if (const char* depth = std::getenv("COLORTERM")) {
+        const std::string d = depth;
+        if (d == "truecolor" || d == "24bit") _colorDepth = "truecolor";
+    }
 }
 
 TerminalChannel::~TerminalChannel() { detach(); }
@@ -403,6 +410,7 @@ std::vector<LawSentence::Suggestion> TerminalChannel::completionSuggestions(cons
 }
 
 void TerminalChannel::configureEditor() {
+    _editor.look = [this](const std::string& key) { return lookFor(key); };
     _editor.setProviders(
         [this](const std::string& before) {
             if (_completionActive && !awaitingAnswer()) return completionSuggestions(before);
@@ -632,6 +640,7 @@ void TerminalChannel::draw() {
                          " › ";
     }
     bool hears = false;
+    refreshLooks();
     _editor.footer = footerText(hears);
     _editor.footerMark = hears ? "32" : "33";
     _editor.menuRows = std::max(1, _menuRows);
@@ -791,6 +800,7 @@ void TerminalChannel::sense(LawManager& laws) {
     if (!isEnabled()) return;
     if (!_attachTried) attach(laws);
     placeLine();
+    _looksChanged = refreshLooks();
 
 #ifdef EARTHCALL_TERMINAL_POSIX
     if (_attached && g_attached == this) {
@@ -840,6 +850,7 @@ void TerminalChannel::sense(LawManager& laws) {
             const std::string liveFooter = footerText(hears);
             const std::string liveMark = hears ? "32" : "33";
             if (_editor.footer != liveFooter || _editor.footerMark != liveMark) dirty = true;
+            if (_looksChanged) dirty = true;   // a Law re-authored how the line looks
         }
         if (_attached && (dirty || !_drawn)) draw();
     }
@@ -1233,6 +1244,127 @@ std::string TerminalChannel::describeSingular(Singular* being) {
     }
     if (auto* law = dynamic_cast<Law*>(being)) return kind + " · " + law->name();
     return kind;
+}
+
+namespace {
+
+// An authored colour as SGR foreground parameters. vec3 is the codebase's own
+// colour (Object `color`, Material `baseColor`, components 0..1); "#rrggbb"
+// is admitted for hand authoring. At "truecolor" it is exact (38;2;r;g;b);
+// otherwise the nearest entry of xterm's 6x6x6 cube or 24-step grey ramp.
+std::string sgrForColor(const PropertyValue& v, const std::string& depth) {
+    int rgb[3] = {0, 0, 0};
+    if (const auto* c = std::get_if<glm::vec3>(&v)) {
+        for (int k = 0; k < 3; ++k)
+            rgb[k] = static_cast<int>(std::lround(std::clamp((*c)[k], 0.0f, 1.0f) * 255.0f));
+    } else if (const auto* text = std::get_if<std::string>(&v);
+               text && text->size() == 7 && (*text)[0] == '#' &&
+               text->find_first_not_of("0123456789abcdefABCDEF", 1) == std::string::npos) {
+        for (int k = 0; k < 3; ++k) rgb[k] = std::stoi(text->substr(1 + 2 * k, 2), nullptr, 16);
+    } else {
+        return {};
+    }
+    if (depth == "truecolor")
+        return "38;2;" + std::to_string(rgb[0]) + ";" + std::to_string(rgb[1]) + ";" + std::to_string(rgb[2]);
+    static const int kLevel[6] = {0, 95, 135, 175, 215, 255};
+    const auto step = [](int c) { return c < 48 ? 0 : c < 115 ? 1 : (c - 35) / 40; };
+    const int cube[3] = {step(rgb[0]), step(rgb[1]), step(rgb[2])};
+    const int average = (rgb[0] + rgb[1] + rgb[2]) / 3;
+    const int greyStep = average > 238 ? 23 : std::max(0, (average - 3) / 10);
+    const int grey = 8 + 10 * greyStep;
+    const auto distance = [&](int r, int g, int b) {
+        return (r - rgb[0]) * (r - rgb[0]) + (g - rgb[1]) * (g - rgb[1]) + (b - rgb[2]) * (b - rgb[2]);
+    };
+    const int cubeIndex = 16 + 36 * cube[0] + 6 * cube[1] + cube[2];
+    const bool useGrey = distance(grey, grey, grey) < distance(kLevel[cube[0]], kLevel[cube[1]], kLevel[cube[2]]);
+    return "38;5;" + std::to_string(useGrey ? 232 + greyStep : cubeIndex);
+}
+
+// "bold italic", "dim, underline" -> "1;3". Unknown words are ignored.
+std::string sgrForStyle(const PropertyValue& v) {
+    const auto* text = std::get_if<std::string>(&v);
+    if (!text) return {};
+    static const std::map<std::string, std::string> kAttribute = {
+        {"bold", "1"}, {"dim", "2"}, {"faint", "2"}, {"italic", "3"}, {"underline", "4"},
+        {"reverse", "7"}, {"strike", "9"}, {"strikethrough", "9"}, {"overline", "53"},
+    };
+    std::string out, word;
+    const auto flush = [&] {
+        const auto it = kAttribute.find(lowerCopy(word));
+        if (it != kAttribute.end()) out += (out.empty() ? "" : ";") + it->second;
+        word.clear();
+    };
+    for (char c : *text) {
+        if (c == ' ' || c == ',' || c == '\t') flush();
+        else word += c;
+    }
+    flush();
+    return out;
+}
+
+} // namespace
+
+// The appearance the line wears is AUTHORED (Zach, 2026-10-14: "more
+// beautiful using Lexeme symbols or objects with symbolic properties over the
+// terminal channel"). A Lexeme carries its own `appearance.glyph`,
+// `appearance.color` (vec3 or "#rrggbb"), `appearance.style` and
+// `appearance.glyphColor` (the glyph's own colour, e.g. a swatch); a Zone
+// carries `appearance.<key>.<field>` for roles ("role.action"), chrome
+// ("chrome.selected") or a Lexeme in that Zone's context
+// ("lexeme.<identifier>"). Read order: the Lexeme, then the body's Zone, then
+// the line's own Zone -- the line's Zone speaks last, as for `meaning.*`.
+bool TerminalChannel::refreshLooks() {
+    if (_looksFrame == _frame && _looksDepth == _colorDepth) return false;
+    _looksFrame = _frame;
+    _looksDepth = _colorDepth;
+    static const std::string kPrefix = "appearance.";
+    std::map<std::string, LineEditor::Look> next;
+    const auto apply = [&](const std::string& key, const std::string& field, const PropertyValue& value) {
+        if (field == "color") {
+            const std::string code = sgrForColor(value, _colorDepth);
+            if (!code.empty()) next[key].sgr = code;
+        } else if (field == "style") {
+            const std::string code = sgrForStyle(value);
+            if (!code.empty()) next[key].style = code;
+        } else if (field == "glyphColor") {
+            const std::string code = sgrForColor(value, _colorDepth);
+            if (!code.empty()) next[key].glyphSgr = code;
+        } else if (field == "glyph") {
+            if (const auto* g = std::get_if<std::string>(&value); g && !g->empty() && isPrintableGlyph(*g)) next[key].glyph = *g;
+        }
+    };
+    for (const auto& lexeme : Singularity::Language::LanguageSystem::instance().getAll()) {
+        if (!lexeme) continue;
+        for (const auto& [id, value] : lexeme->dynamicProperties()) {
+            const std::string name = Earthcall::StringInterner::resolve(id);
+            if (name.rfind(kPrefix, 0) != 0 || name.find('.', kPrefix.size()) != std::string::npos) continue;
+            apply("lexeme." + lexeme->getIdentifier(), name.substr(kPrefix.size()), value);
+        }
+    }
+    if (ZoneManager* zones = ZoneManager::live()) {
+        std::vector<Zone*> readers;
+        if (!zones->zones().empty()) readers.push_back(&zones->active());
+        if (!_zone.empty())
+            if (Zone* line = zones->findZone(_zone); line && (readers.empty() || readers.front() != line))
+                readers.push_back(line);
+        for (Zone* zone : readers) {
+            for (const auto& [id, value] : zone->dynamicProperties()) {
+                const std::string name = Earthcall::StringInterner::resolve(id);
+                if (name.rfind(kPrefix, 0) != 0) continue;
+                const std::size_t dot = name.rfind('.');
+                if (dot <= kPrefix.size()) continue;
+                apply(name.substr(kPrefix.size(), dot - kPrefix.size()), name.substr(dot + 1), value);
+            }
+        }
+    }
+    if (next == _looks) return false;
+    _looks = std::move(next);
+    return true;
+}
+
+LineEditor::Look TerminalChannel::lookFor(const std::string& key) const {
+    const auto it = _looks.find(key);
+    return it == _looks.end() ? LineEditor::Look{} : it->second;
 }
 
 const LawSentence::Vocabulary& TerminalChannel::liveVocabulary() {
@@ -2289,15 +2421,8 @@ struct HelpRow {
     std::string out;
     std::size_t used = 0;
     void add(const std::string& text, const std::string& code = "") {
-        std::string piece;
-        for (std::size_t i = 0; i < text.size() && used < max;) {
-            std::size_t n = 1;
-            const unsigned char c = static_cast<unsigned char>(text[i]);
-            if (c >= 0xF0) n = 4; else if (c >= 0xE0) n = 3; else if (c >= 0xC0) n = 2;
-            piece += text.substr(i, n);
-            i += n;
-            ++used;
-        }
+        const std::string piece = clipToCells(text, max - used);
+        used += visibleWidth(piece);
         out += (color && !code.empty()) ? "\x1b[" + code + "m" + piece + "\x1b[0m" : piece;
     }
 };
@@ -2315,26 +2440,49 @@ void TerminalChannel::showHelp() {
     const auto& v = liveVocabulary();
     const int w = std::max(40, std::min(width() - 4, 100));
     const std::size_t inner = static_cast<std::size_t>(w - 4);   // "│ " + content + " │"
-    const std::string frame = "38;5;141", label = "1;38;5;183", dim = "2";
+    // The page's chrome is authorable like the line's: `chrome.help.border`
+    // (its glyph may be six characters, ╭─╮│╰╯ in that order), `.title`,
+    // `.label`, `.text`.
+    const auto chrome = [this](const std::string& key, const std::string& code) {
+        const LineEditor::Look l = lookFor(key);
+        const std::string colour = l.sgr.empty() ? code : l.sgr;
+        return l.style.empty() ? colour : l.style + ";" + colour;
+    };
+    refreshLooks();
+    const std::string frame = chrome("chrome.help.border", "38;5;141"), label = chrome("chrome.help.label", "1;38;5;183"),
+                      dim = chrome("chrome.help.text", "2"), title = chrome("chrome.help.title", "1;38;5;225");
+    std::vector<std::string> pieces = {"\u256D", "\u2500", "\u256E", "\u2502", "\u2570", "\u256F"};
+    {
+        const std::string authored = lookFor("chrome.help.border").glyph;
+        std::vector<std::string> split;
+        for (std::size_t i = 0; i < authored.size();) {
+            const std::size_t end = nextDisplayCluster(authored, i);
+            split.push_back(authored.substr(i, end - i));
+            i = end;
+        }
+        // Only single-cell pieces keep the box square.
+        if (split.size() == 6 && std::all_of(split.begin(), split.end(),
+                                             [](const std::string& g) { return visibleWidth(g) == 1; }))
+            pieces = split;
+    }
     std::vector<std::string> lines;
 
     const auto boxed = [&](const std::function<void(HelpRow&)>& fill) {
         HelpRow row{inner, _color, {}, 0};
         fill(row);
-        std::string s = (_color ? "\x1b[" + frame + "m  │\x1b[0m " : "  │ ") + row.out;
+        std::string s = (_color ? "\x1b[" + frame + "m  " + pieces[3] + "\x1b[0m " : "  " + pieces[3] + " ") + row.out;
         s += std::string(inner - std::min(inner, row.used), ' ');
-        s += _color ? " \x1b[" + frame + "m│\x1b[0m" : " │";
+        s += _color ? " \x1b[" + frame + "m" + pieces[3] + "\x1b[0m" : " " + pieces[3];
         lines.push_back(s);
     };
     const auto blank = [&] { boxed([](HelpRow&) {}); };
-    const auto rule = [&](const std::string& left, const std::string& title, const std::string& right) {
+    const auto rule = [&](const std::string& left, const std::string& heading, const std::string& right) {
         std::string s = "  " + left;
-        std::string t = title.empty() ? "" : "─ " + title + " ";
-        std::size_t width = 0;
-        for (unsigned char c : t) if ((c & 0xC0) != 0x80) ++width;
+        std::string t = heading.empty() ? "" : clipToCells(pieces[1] + " " + heading + " ", inner + 2, true);
+        const std::size_t width = visibleWidth(t);
         std::string fill;
-        for (std::size_t i = width; i < inner + 2; ++i) fill += "─";
-        lines.push_back(_color ? "\x1b[" + frame + "m" + s + "\x1b[1;38;5;225m" + t + "\x1b[0m\x1b[" + frame + "m" +
+        for (std::size_t i = width; i < inner + 2; ++i) fill += pieces[1];
+        lines.push_back(_color ? "\x1b[" + frame + "m" + s + "\x1b[" + title + "m" + t + "\x1b[0m\x1b[" + frame + "m" +
                                      fill + right + "\x1b[0m"
                                : s + t + fill + right);
     };
@@ -2350,7 +2498,7 @@ void TerminalChannel::showHelp() {
             fill(r);
         });
     };
-    const auto colorOf = [](const std::string& role) {
+    const auto builtIn = [](const std::string& role) {
         if (role == "preset") return std::string("1;95");
         if (role == "action") return std::string("32");
         if (role == "operator") return std::string("33");
@@ -2361,7 +2509,13 @@ void TerminalChannel::showHelp() {
         return std::string("97");
     };
 
-    rule("╭", "✦ The Law Line", "╮");
+    const auto colorOf = [&](const std::string& role) {
+        const LineEditor::Look l = lookFor("role." + role);
+        const std::string colour = l.sgr.empty() ? builtIn(role) : l.sgr;
+        return l.style.empty() ? colour : l.style + ";" + colour;
+    };
+    const std::string mark = lookFor("chrome.help.mark").glyph.empty() ? "\u2726" : lookFor("chrome.help.mark").glyph;   // ✦
+    rule(pieces[0], mark + " The Law Line", pieces[2]);
     boxed([&](HelpRow& r) { r.add("Speak a Law in a sentence. The world keeps it.", "3"); });
     blank();
     section("SHAPE", [&](HelpRow& r) {
@@ -2454,8 +2608,9 @@ void TerminalChannel::showHelp() {
     blank();
     bool hears = false;
     const std::string where = footerText(hears);
-    section("HERE", [&](HelpRow& r) { r.add("◆ ", hears ? "32" : "33"); r.add(where, dim); });
-    rule("╰", "", "╯");
+    const std::string footerGlyph = lookFor("chrome.footer").glyph.empty() ? "\u25C6" : lookFor("chrome.footer").glyph;
+    section("HERE", [&](HelpRow& r) { r.add(footerGlyph + " ", hears ? "32" : "33"); r.add(where, dim); });
+    rule(pieces[4], "", pieces[5]);
 
     _editor.showOverlay(std::move(lines));
     if (_attached) draw();
@@ -2515,6 +2670,7 @@ void TerminalChannel::buildProperties() {
     writable("color", &_color);
     writable("hints", &_hints);
     writable("relayLogs", &_relayLogs);
+    writable("colorDepth", &_colorDepth);
 
     registerProperty(std::make_unique<ComputedProperty<TerminalChannel, std::string>>(
         "output", this, &TerminalChannel::propOutput, &TerminalChannel::propSetOutput));

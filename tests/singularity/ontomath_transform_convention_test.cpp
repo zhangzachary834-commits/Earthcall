@@ -142,7 +142,7 @@ int main() {
     partWorld = glm::rotate(partWorld, glm::radians(27.0f), glm::vec3(0, 1, 0));
     BodyPart part("ontomath-rung6-bodypart", BodyPart::Type::Arm,
                   ObjectTypes::ShapeKind::Cube, partDims, partWorld);
-    assert(nearMat4(part.getRaycastTransform(),
+    assert(nearMat4(part.scaledTransform(),
                     partWorld * glm::scale(glm::mat4(1.0f), partDims)));
 
     glm::mat4 localOffset =

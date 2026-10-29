@@ -4,15 +4,15 @@
     "id": "material.sky.sanctuary.gold",
     "name": "sky.sanctuary.gold",
     "baseColor": [
-      0.96,
-      0.74,
-      0.26
+      0.88,
+      0.66,
+      0.22
     ],
     "opacity": 1.0,
-    "ambient": 0.4,
-    "diffuse": 0.85,
-    "specular": 0.92,
-    "shininess": 96.0,
+    "ambient": 0.18,
+    "diffuse": 0.76,
+    "specular": 0.74,
+    "shininess": 88.0,
     "textureResolution": 16,
     "colorExpr": {
       "input": "y",
@@ -28,7 +28,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.96,
+                      "c": 0.88,
                       "factors": {}
                     },
                     {
@@ -51,7 +51,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.74,
+                      "c": 0.66,
                       "factors": {}
                     },
                     {
@@ -74,7 +74,7 @@
                 "scalarForm": {
                   "terms": [
                     {
-                      "c": 0.26,
+                      "c": 0.22,
                       "factors": {}
                     },
                     {

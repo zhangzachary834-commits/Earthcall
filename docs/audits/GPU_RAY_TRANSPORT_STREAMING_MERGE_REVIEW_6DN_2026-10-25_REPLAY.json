@@ -1,0 +1,1156 @@
+{
+  "pass": true,
+  "new_native_execution": false,
+  "qualified_speedup": false,
+  "production_changed": false,
+  "variants": {
+    "disjoint": {
+      "producer_sha256": "c6b1fb98203db296921ef0d183ee076384481e49cfcad39217a33bd6365a5d53",
+      "series": [
+        {
+          "pass": true,
+          "queries": 32784,
+          "reference_queries": 192,
+          "all_query_native_AST_assertions_recorded": true,
+          "raw_AST_nodes_independently_recomputed_offline": false,
+          "accuracy": {
+            "finest": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.2083436005461535e-05,
+                    "p99": 0.0008628445430308024,
+                    "max": 0.0014908520057793223
+                  },
+                  "T": {
+                    "mean": 0.00013126131932741114,
+                    "p99": 0.0014545230908419304,
+                    "max": 0.0023179769068414346
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.501119626747072e-06,
+                    "p99": 4.565286806328117e-05,
+                    "max": 4.794852177492093e-05
+                  },
+                  "T": {
+                    "mean": 1.8915837015402726e-05,
+                    "p99": 6.906425235697622e-05,
+                    "max": 6.965939815839484e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "half": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.208338561012038e-05,
+                    "p99": 0.000862840739760784,
+                    "max": 0.0014908546309912868
+                  },
+                  "T": {
+                    "mean": 0.00013126103989875444,
+                    "p99": 0.001454485602050748,
+                    "max": 0.002317992236419375
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.500785360810754e-06,
+                    "p99": 4.565106607549996e-05,
+                    "max": 4.79552170917219e-05
+                  },
+                  "T": {
+                    "mean": 1.891577045932437e-05,
+                    "p99": 6.909112370445669e-05,
+                    "max": 6.96698785114247e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "reference_convergence": {
+              "T_max_delta": 7.156688219822627e-08,
+              "RGB_max_delta": 4.409033641655791e-08
+            },
+            "both_resolutions_pass": true
+          },
+          "contemporary_accuracy": {
+            "finest": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.2083361199522314e-05,
+                    "p99": 0.0008628445430308024,
+                    "max": 0.0014908445551987254
+                  },
+                  "T": {
+                    "mean": 0.00013126131932741114,
+                    "p99": 0.0014545230908419304,
+                    "max": 0.0023179769068414346
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.501119626747072e-06,
+                    "p99": 4.565286806328117e-05,
+                    "max": 4.794852177492093e-05
+                  },
+                  "T": {
+                    "mean": 1.8915837015402726e-05,
+                    "p99": 6.906425235697622e-05,
+                    "max": 6.965939815839484e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "half": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.208331080418116e-05,
+                    "p99": 0.000862840739760784,
+                    "max": 0.0014908471804106899
+                  },
+                  "T": {
+                    "mean": 0.00013126103989875444,
+                    "p99": 0.001454485602050748,
+                    "max": 0.002317992236419375
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.500785360810754e-06,
+                    "p99": 4.565106607549996e-05,
+                    "max": 4.79552170917219e-05
+                  },
+                  "T": {
+                    "mean": 1.891577045932437e-05,
+                    "p99": 6.909112370445669e-05,
+                    "max": 6.96698785114247e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "reference_convergence": {
+              "T_max_delta": 7.156688219822627e-08,
+              "RGB_max_delta": 4.409033641655791e-08
+            },
+            "both_resolutions_pass": true
+          },
+          "clocks": [
+            {
+              "repeats": 1,
+              "per_complete_query_ms": {
+                "0": 2.5533799999999998,
+                "1": 2.5555575,
+                "2": 2.560562125,
+                "3": 2.544599
+              },
+              "candidate_slower_percent_vs_current": -0.3438971089301246,
+              "candidate_slower_percent_vs_stream": -0.6234226791119291
+            },
+            {
+              "repeats": 2,
+              "per_complete_query_ms": {
+                "0": 1.8976353125,
+                "1": 2.4343698125,
+                "2": 2.376973875,
+                "3": 2.1865860625
+              },
+              "candidate_slower_percent_vs_current": 15.22688517106734,
+              "candidate_slower_percent_vs_stream": -8.009672066757567
+            },
+            {
+              "repeats": 4,
+              "per_complete_query_ms": {
+                "0": 2.24431121875,
+                "1": 2.6509036249999998,
+                "2": 2.571726625,
+                "3": 2.44738803125
+              },
+              "candidate_slower_percent_vs_current": 9.04851389608552,
+              "candidate_slower_percent_vs_stream": -4.834829353217129
+            }
+          ],
+          "normal_fallbacks": 0,
+          "singles": 247326,
+          "overlaps": 1799,
+          "no_full_frame_or_hardware_cause_claim": true,
+          "affine": {
+            "matched": 12102,
+            "missing": 0,
+            "examples": [],
+            "scope": "Nearest original GPU endpoint within2ULP of CPU-f32 affine formula; exact-bit endpoint retention, not an exact CPU/GPU division claim."
+          },
+          "stream_merge_scope": {
+            "qualification_lane": "strict_bit_exact_to_guarded_schedule_and_transport",
+            "candidate_timing": "streamed_schedule.cases[].series[].samples mode3",
+            "legacy_batch_timing": "unchanged cpProducer; not the streaming merge candidate",
+            "host_certificate_creation_and_initial_upload_in_mode3_timing": false,
+            "member_knots_capacity": 70,
+            "member_knots_required_upper_bound": 69,
+            "merge_knots_eliminated": true,
+            "physical_bytes_saved_established": false,
+            "shipping_performance_qualified": false
+          },
+          "resident_medians": [
+            {
+              "repeats": 1,
+              "median_total_submission_ms": {
+                "0": 2.5471665,
+                "1": 2.5461665,
+                "2": 2.5416245,
+                "3": 2.551729
+              },
+              "median_per_complete_query_ms": {
+                "0": 2.5471665,
+                "1": 2.5461665,
+                "2": 2.5416245,
+                "3": 2.551729
+              },
+              "candidate_slower_percent_vs_current": 0.1791206032271564
+            },
+            {
+              "repeats": 2,
+              "median_total_submission_ms": {
+                "0": 3.804833,
+                "1": 5.1098125,
+                "2": 5.024416499999999,
+                "3": 4.370813
+              },
+              "median_per_complete_query_ms": {
+                "0": 1.9024165,
+                "1": 2.55490625,
+                "2": 2.5122082499999996,
+                "3": 2.1854065
+              },
+              "candidate_slower_percent_vs_current": 14.875291504252619
+            },
+            {
+              "repeats": 4,
+              "median_total_submission_ms": {
+                "0": 8.9178335,
+                "1": 10.245792000000002,
+                "2": 9.5494795,
+                "3": 10.234333
+              },
+              "median_per_complete_query_ms": {
+                "0": 2.229458375,
+                "1": 2.5614480000000004,
+                "2": 2.387369875,
+                "3": 2.55858325
+              },
+              "candidate_slower_percent_vs_current": 14.762548549487931
+            }
+          ]
+        },
+        {
+          "pass": true,
+          "queries": 32784,
+          "reference_queries": 192,
+          "all_query_native_AST_assertions_recorded": true,
+          "raw_AST_nodes_independently_recomputed_offline": false,
+          "accuracy": {
+            "finest": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.2083436005461535e-05,
+                    "p99": 0.0008628445430308024,
+                    "max": 0.0014908520057793223
+                  },
+                  "T": {
+                    "mean": 0.00013126131932741114,
+                    "p99": 0.0014545230908419304,
+                    "max": 0.0023179769068414346
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.501119626747072e-06,
+                    "p99": 4.565286806328117e-05,
+                    "max": 4.794852177492093e-05
+                  },
+                  "T": {
+                    "mean": 1.8915837015402726e-05,
+                    "p99": 6.906425235697622e-05,
+                    "max": 6.965939815839484e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "half": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.208338561012038e-05,
+                    "p99": 0.000862840739760784,
+                    "max": 0.0014908546309912868
+                  },
+                  "T": {
+                    "mean": 0.00013126103989875444,
+                    "p99": 0.001454485602050748,
+                    "max": 0.002317992236419375
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.500785360810754e-06,
+                    "p99": 4.565106607549996e-05,
+                    "max": 4.79552170917219e-05
+                  },
+                  "T": {
+                    "mean": 1.891577045932437e-05,
+                    "p99": 6.909112370445669e-05,
+                    "max": 6.96698785114247e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "reference_convergence": {
+              "T_max_delta": 7.156688219822627e-08,
+              "RGB_max_delta": 4.409033641655791e-08
+            },
+            "both_resolutions_pass": true
+          },
+          "contemporary_accuracy": {
+            "finest": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.2083361199522314e-05,
+                    "p99": 0.0008628445430308024,
+                    "max": 0.0014908445551987254
+                  },
+                  "T": {
+                    "mean": 0.00013126131932741114,
+                    "p99": 0.0014545230908419304,
+                    "max": 0.0023179769068414346
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.501119626747072e-06,
+                    "p99": 4.565286806328117e-05,
+                    "max": 4.794852177492093e-05
+                  },
+                  "T": {
+                    "mean": 1.8915837015402726e-05,
+                    "p99": 6.906425235697622e-05,
+                    "max": 6.965939815839484e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "half": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.208331080418116e-05,
+                    "p99": 0.000862840739760784,
+                    "max": 0.0014908471804106899
+                  },
+                  "T": {
+                    "mean": 0.00013126103989875444,
+                    "p99": 0.001454485602050748,
+                    "max": 0.002317992236419375
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.500785360810754e-06,
+                    "p99": 4.565106607549996e-05,
+                    "max": 4.79552170917219e-05
+                  },
+                  "T": {
+                    "mean": 1.891577045932437e-05,
+                    "p99": 6.909112370445669e-05,
+                    "max": 6.96698785114247e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "reference_convergence": {
+              "T_max_delta": 7.156688219822627e-08,
+              "RGB_max_delta": 4.409033641655791e-08
+            },
+            "both_resolutions_pass": true
+          },
+          "clocks": [
+            {
+              "repeats": 1,
+              "per_complete_query_ms": {
+                "0": 2.5480001249999997,
+                "1": 2.543875,
+                "2": 2.529302,
+                "3": 2.545119875
+              },
+              "candidate_slower_percent_vs_current": -0.11303963338696876,
+              "candidate_slower_percent_vs_stream": 0.6253849876369122
+            },
+            {
+              "repeats": 2,
+              "per_complete_query_ms": {
+                "0": 1.9024895,
+                "1": 1.9956170625,
+                "2": 1.9276614375,
+                "3": 1.907283875
+              },
+              "candidate_slower_percent_vs_current": 0.2520053330123506,
+              "candidate_slower_percent_vs_stream": -1.0571131477541962
+            },
+            {
+              "repeats": 4,
+              "per_complete_query_ms": {
+                "0": 1.66413540625,
+                "1": 1.971763,
+                "2": 1.9095885625,
+                "3": 1.9099010625
+              },
+              "candidate_slower_percent_vs_current": 14.768368927611109,
+              "candidate_slower_percent_vs_stream": 0.01636478171982425
+            }
+          ],
+          "normal_fallbacks": 0,
+          "singles": 247326,
+          "overlaps": 1799,
+          "no_full_frame_or_hardware_cause_claim": true,
+          "affine": {
+            "matched": 12102,
+            "missing": 0,
+            "examples": [],
+            "scope": "Nearest original GPU endpoint within2ULP of CPU-f32 affine formula; exact-bit endpoint retention, not an exact CPU/GPU division claim."
+          },
+          "stream_merge_scope": {
+            "qualification_lane": "strict_bit_exact_to_guarded_schedule_and_transport",
+            "candidate_timing": "streamed_schedule.cases[].series[].samples mode3",
+            "legacy_batch_timing": "unchanged cpProducer; not the streaming merge candidate",
+            "host_certificate_creation_and_initial_upload_in_mode3_timing": false,
+            "member_knots_capacity": 70,
+            "member_knots_required_upper_bound": 69,
+            "merge_knots_eliminated": true,
+            "physical_bytes_saved_established": false,
+            "shipping_performance_qualified": false
+          },
+          "resident_medians": [
+            {
+              "repeats": 1,
+              "median_total_submission_ms": {
+                "0": 2.548292,
+                "1": 2.5620000000000003,
+                "2": 2.552479,
+                "3": 2.5615835000000002
+              },
+              "median_per_complete_query_ms": {
+                "0": 2.548292,
+                "1": 2.5620000000000003,
+                "2": 2.552479,
+                "3": 2.5615835000000002
+              },
+              "candidate_slower_percent_vs_current": 0.5215846535640445
+            },
+            {
+              "repeats": 2,
+              "median_total_submission_ms": {
+                "0": 3.807125,
+                "1": 3.8415204999999997,
+                "2": 3.8415,
+                "3": 3.833729
+              },
+              "median_per_complete_query_ms": {
+                "0": 1.9035625,
+                "1": 1.9207602499999998,
+                "2": 1.92075,
+                "3": 1.9168645
+              },
+              "candidate_slower_percent_vs_current": 0.698795022490728
+            },
+            {
+              "repeats": 4,
+              "median_total_submission_ms": {
+                "0": 6.349375,
+                "1": 7.6593955000000005,
+                "2": 7.661104,
+                "3": 7.6609795
+              },
+              "median_per_complete_query_ms": {
+                "0": 1.58734375,
+                "1": 1.9148488750000001,
+                "2": 1.915276,
+                "3": 1.915244875
+              },
+              "candidate_slower_percent_vs_current": 20.657222167536162
+            }
+          ]
+        }
+      ],
+      "corruption_refusals": [
+        {
+          "case": "candidate endpoint",
+          "rejected": true,
+          "reason": "actual coarse packet parity"
+        },
+        {
+          "case": "missing capacity coverage",
+          "rejected": true,
+          "reason": "coarse raw capacity coverage"
+        },
+        {
+          "case": "negative clock",
+          "rejected": true,
+          "reason": "clock finiteness"
+        }
+      ]
+    },
+    "cert": {
+      "producer_sha256": "3d6d29f35f431fce79779c070ae4170772a5adc10dc543b33d5be02b2dbae338",
+      "series": [
+        {
+          "pass": true,
+          "queries": 32784,
+          "reference_queries": 192,
+          "all_query_native_AST_assertions_recorded": true,
+          "raw_AST_nodes_independently_recomputed_offline": false,
+          "accuracy": {
+            "finest": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.2083436005461535e-05,
+                    "p99": 0.0008628445430308024,
+                    "max": 0.0014908520057793223
+                  },
+                  "T": {
+                    "mean": 0.00013126131932741114,
+                    "p99": 0.0014545230908419304,
+                    "max": 0.0023179769068414346
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.501119626747072e-06,
+                    "p99": 4.565286806328117e-05,
+                    "max": 4.794852177492093e-05
+                  },
+                  "T": {
+                    "mean": 1.8915837015402726e-05,
+                    "p99": 6.906425235697622e-05,
+                    "max": 6.965939815839484e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "half": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.208338561012038e-05,
+                    "p99": 0.000862840739760784,
+                    "max": 0.0014908546309912868
+                  },
+                  "T": {
+                    "mean": 0.00013126103989875444,
+                    "p99": 0.001454485602050748,
+                    "max": 0.002317992236419375
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.500785360810754e-06,
+                    "p99": 4.565106607549996e-05,
+                    "max": 4.79552170917219e-05
+                  },
+                  "T": {
+                    "mean": 1.891577045932437e-05,
+                    "p99": 6.909112370445669e-05,
+                    "max": 6.96698785114247e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "reference_convergence": {
+              "T_max_delta": 7.156688219822627e-08,
+              "RGB_max_delta": 4.409033641655791e-08
+            },
+            "both_resolutions_pass": true
+          },
+          "contemporary_accuracy": {
+            "finest": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.2083361199522314e-05,
+                    "p99": 0.0008628445430308024,
+                    "max": 0.0014908445551987254
+                  },
+                  "T": {
+                    "mean": 0.00013126131932741114,
+                    "p99": 0.0014545230908419304,
+                    "max": 0.0023179769068414346
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.501119626747072e-06,
+                    "p99": 4.565286806328117e-05,
+                    "max": 4.794852177492093e-05
+                  },
+                  "T": {
+                    "mean": 1.8915837015402726e-05,
+                    "p99": 6.906425235697622e-05,
+                    "max": 6.965939815839484e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "half": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.208331080418116e-05,
+                    "p99": 0.000862840739760784,
+                    "max": 0.0014908471804106899
+                  },
+                  "T": {
+                    "mean": 0.00013126103989875444,
+                    "p99": 0.001454485602050748,
+                    "max": 0.002317992236419375
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.500785360810754e-06,
+                    "p99": 4.565106607549996e-05,
+                    "max": 4.79552170917219e-05
+                  },
+                  "T": {
+                    "mean": 1.891577045932437e-05,
+                    "p99": 6.909112370445669e-05,
+                    "max": 6.96698785114247e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "reference_convergence": {
+              "T_max_delta": 7.156688219822627e-08,
+              "RGB_max_delta": 4.409033641655791e-08
+            },
+            "both_resolutions_pass": true
+          },
+          "clocks": [
+            {
+              "repeats": 1,
+              "per_complete_query_ms": {
+                "0": 2.544864375,
+                "1": 2.552875,
+                "2": 2.554619875,
+                "3": 2.529385375
+              },
+              "candidate_slower_percent_vs_current": -0.6082445945670534,
+              "candidate_slower_percent_vs_stream": -0.9877986250302784
+            },
+            {
+              "repeats": 2,
+              "per_complete_query_ms": {
+                "0": 2.136307375,
+                "1": 2.5733255,
+                "2": 2.4683255,
+                "3": 2.0925051875
+              },
+              "candidate_slower_percent_vs_current": -2.05036915626432,
+              "candidate_slower_percent_vs_stream": -15.2257193186231
+            },
+            {
+              "repeats": 4,
+              "per_complete_query_ms": {
+                "0": 2.213931,
+                "1": 2.4450234375,
+                "2": 2.399947875,
+                "3": 2.30264446875
+              },
+              "candidate_slower_percent_vs_current": 4.0070566223608495,
+              "candidate_slower_percent_vs_stream": -4.0543966501772495
+            }
+          ],
+          "normal_fallbacks": 0,
+          "singles": 247326,
+          "overlaps": 1799,
+          "no_full_frame_or_hardware_cause_claim": true,
+          "affine": {
+            "matched": 12102,
+            "missing": 0,
+            "examples": [],
+            "scope": "Nearest original GPU endpoint within2ULP of CPU-f32 affine formula; exact-bit endpoint retention, not an exact CPU/GPU division claim."
+          },
+          "stream_merge_scope": {
+            "qualification_lane": "strict_bit_exact_to_guarded_schedule_and_transport",
+            "candidate_timing": "streamed_schedule.cases[].series[].samples mode3",
+            "legacy_batch_timing": "unchanged cpProducer; not the streaming merge candidate",
+            "host_certificate_creation_and_initial_upload_in_mode3_timing": false,
+            "member_knots_capacity": 70,
+            "member_knots_required_upper_bound": 69,
+            "merge_knots_eliminated": true,
+            "physical_bytes_saved_established": false,
+            "shipping_performance_qualified": false
+          },
+          "resident_medians": [
+            {
+              "repeats": 1,
+              "median_total_submission_ms": {
+                "0": 2.5429165,
+                "1": 2.5491875,
+                "2": 2.5536250000000003,
+                "3": 2.5452915000000003
+              },
+              "median_per_complete_query_ms": {
+                "0": 2.5429165,
+                "1": 2.5491875,
+                "2": 2.5536250000000003,
+                "3": 2.5452915000000003
+              },
+              "candidate_slower_percent_vs_current": 0.09339669627375091
+            },
+            {
+              "repeats": 2,
+              "median_total_submission_ms": {
+                "0": 3.8668335000000003,
+                "1": 5.1033539999999995,
+                "2": 5.1029165,
+                "3": 3.889125
+              },
+              "median_per_complete_query_ms": {
+                "0": 1.9334167500000001,
+                "1": 2.5516769999999998,
+                "2": 2.55145825,
+                "3": 1.9445625
+              },
+              "candidate_slower_percent_vs_current": 0.57647943724497
+            },
+            {
+              "repeats": 4,
+              "median_total_submission_ms": {
+                "0": 8.8870835,
+                "1": 10.1687705,
+                "2": 9.5672295,
+                "3": 9.1536455
+              },
+              "median_per_complete_query_ms": {
+                "0": 2.221770875,
+                "1": 2.542192625,
+                "2": 2.391807375,
+                "3": 2.288411375
+              },
+              "candidate_slower_percent_vs_current": 2.9994317033253948
+            }
+          ]
+        },
+        {
+          "pass": true,
+          "queries": 32784,
+          "reference_queries": 192,
+          "all_query_native_AST_assertions_recorded": true,
+          "raw_AST_nodes_independently_recomputed_offline": false,
+          "accuracy": {
+            "finest": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.2083436005461535e-05,
+                    "p99": 0.0008628445430308024,
+                    "max": 0.0014908520057793223
+                  },
+                  "T": {
+                    "mean": 0.00013126131932741114,
+                    "p99": 0.0014545230908419304,
+                    "max": 0.0023179769068414346
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.501119626747072e-06,
+                    "p99": 4.565286806328117e-05,
+                    "max": 4.794852177492093e-05
+                  },
+                  "T": {
+                    "mean": 1.8915837015402726e-05,
+                    "p99": 6.906425235697622e-05,
+                    "max": 6.965939815839484e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "half": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.208338561012038e-05,
+                    "p99": 0.000862840739760784,
+                    "max": 0.0014908546309912868
+                  },
+                  "T": {
+                    "mean": 0.00013126103989875444,
+                    "p99": 0.001454485602050748,
+                    "max": 0.002317992236419375
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.500785360810754e-06,
+                    "p99": 4.565106607549996e-05,
+                    "max": 4.79552170917219e-05
+                  },
+                  "T": {
+                    "mean": 1.891577045932437e-05,
+                    "p99": 6.909112370445669e-05,
+                    "max": 6.96698785114247e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "reference_convergence": {
+              "T_max_delta": 7.156688219822627e-08,
+              "RGB_max_delta": 4.409033641655791e-08
+            },
+            "both_resolutions_pass": true
+          },
+          "contemporary_accuracy": {
+            "finest": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.2083361199522314e-05,
+                    "p99": 0.0008628445430308024,
+                    "max": 0.0014908445551987254
+                  },
+                  "T": {
+                    "mean": 0.00013126131932741114,
+                    "p99": 0.0014545230908419304,
+                    "max": 0.0023179769068414346
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.501119626747072e-06,
+                    "p99": 4.565286806328117e-05,
+                    "max": 4.794852177492093e-05
+                  },
+                  "T": {
+                    "mean": 1.8915837015402726e-05,
+                    "p99": 6.906425235697622e-05,
+                    "max": 6.965939815839484e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "half": {
+              "metrics": {
+                "current": {
+                  "RGB_pooled_channels": {
+                    "mean": 5.208331080418116e-05,
+                    "p99": 0.000862840739760784,
+                    "max": 0.0014908471804106899
+                  },
+                  "T": {
+                    "mean": 0.00013126103989875444,
+                    "p99": 0.001454485602050748,
+                    "max": 0.002317992236419375
+                  }
+                },
+                "candidate": {
+                  "RGB_pooled_channels": {
+                    "mean": 6.500785360810754e-06,
+                    "p99": 4.565106607549996e-05,
+                    "max": 4.79552170917219e-05
+                  },
+                  "T": {
+                    "mean": 1.891577045932437e-05,
+                    "p99": 6.909112370445669e-05,
+                    "max": 6.96698785114247e-05
+                  }
+                }
+              },
+              "gates": {
+                "RGB_pooled_channels.mean": true,
+                "RGB_pooled_channels.p99": true,
+                "RGB_pooled_channels.max": true,
+                "T.mean": true,
+                "T.p99": true,
+                "T.max": true
+              },
+              "all_six_pass": true
+            },
+            "reference_convergence": {
+              "T_max_delta": 7.156688219822627e-08,
+              "RGB_max_delta": 4.409033641655791e-08
+            },
+            "both_resolutions_pass": true
+          },
+          "clocks": [
+            {
+              "repeats": 1,
+              "per_complete_query_ms": {
+                "0": 2.6257289999999998,
+                "1": 2.692255125,
+                "2": 2.554698,
+                "3": 2.886760375
+              },
+              "candidate_slower_percent_vs_current": 9.941291542272657,
+              "candidate_slower_percent_vs_stream": 12.998106821236789
+            },
+            {
+              "repeats": 2,
+              "per_complete_query_ms": {
+                "0": 2.4790495,
+                "1": 2.6744739375,
+                "2": 2.7234921875,
+                "3": 2.764822875
+              },
+              "candidate_slower_percent_vs_current": 11.52753807457254,
+              "candidate_slower_percent_vs_stream": 1.5175621832034247
+            },
+            {
+              "repeats": 4,
+              "per_complete_query_ms": {
+                "0": 2.5489674375,
+                "1": 2.9028854375,
+                "2": 3.1187955,
+                "3": 2.6353463437499998
+              },
+              "candidate_slower_percent_vs_current": 3.388780295079763,
+              "candidate_slower_percent_vs_stream": -15.501149602466736
+            }
+          ],
+          "normal_fallbacks": 0,
+          "singles": 247326,
+          "overlaps": 1799,
+          "no_full_frame_or_hardware_cause_claim": true,
+          "affine": {
+            "matched": 12102,
+            "missing": 0,
+            "examples": [],
+            "scope": "Nearest original GPU endpoint within2ULP of CPU-f32 affine formula; exact-bit endpoint retention, not an exact CPU/GPU division claim."
+          },
+          "stream_merge_scope": {
+            "qualification_lane": "strict_bit_exact_to_guarded_schedule_and_transport",
+            "candidate_timing": "streamed_schedule.cases[].series[].samples mode3",
+            "legacy_batch_timing": "unchanged cpProducer; not the streaming merge candidate",
+            "host_certificate_creation_and_initial_upload_in_mode3_timing": false,
+            "member_knots_capacity": 70,
+            "member_knots_required_upper_bound": 69,
+            "merge_knots_eliminated": true,
+            "physical_bytes_saved_established": false,
+            "shipping_performance_qualified": false
+          },
+          "resident_medians": [
+            {
+              "repeats": 1,
+              "median_total_submission_ms": {
+                "0": 2.6177289999999998,
+                "1": 2.6856665,
+                "2": 2.583438,
+                "3": 2.671271
+              },
+              "median_per_complete_query_ms": {
+                "0": 2.6177289999999998,
+                "1": 2.6856665,
+                "2": 2.583438,
+                "3": 2.671271
+              },
+              "candidate_slower_percent_vs_current": 2.0453606924169865
+            },
+            {
+              "repeats": 2,
+              "median_total_submission_ms": {
+                "0": 5.1334585,
+                "1": 5.227896,
+                "2": 5.2585835,
+                "3": 5.196187500000001
+              },
+              "median_per_complete_query_ms": {
+                "0": 2.56672925,
+                "1": 2.613948,
+                "2": 2.62929175,
+                "3": 2.5980937500000003
+              },
+              "candidate_slower_percent_vs_current": 1.2219637112095283
+            },
+            {
+              "repeats": 4,
+              "median_total_submission_ms": {
+                "0": 10.2138955,
+                "1": 11.889375000000001,
+                "2": 11.195541500000001,
+                "3": 10.285854
+              },
+              "median_per_complete_query_ms": {
+                "0": 2.553473875,
+                "1": 2.9723437500000003,
+                "2": 2.7988853750000002,
+                "3": 2.5714635
+              },
+              "candidate_slower_percent_vs_current": 0.7045157256602153
+            }
+          ]
+        }
+      ],
+      "corruption_refusals": [
+        {
+          "case": "candidate endpoint",
+          "rejected": true,
+          "reason": "actual coarse packet parity"
+        },
+        {
+          "case": "missing capacity coverage",
+          "rejected": true,
+          "reason": "coarse raw capacity coverage"
+        },
+        {
+          "case": "negative clock",
+          "rejected": true,
+          "reason": "clock finiteness"
+        }
+      ]
+    }
+  },
+  "documents_verified": 39,
+  "corruption_refusals": 6,
+  "mean_candidate_slower_cases": 8,
+  "median_candidate_slower_cases": 12
+}

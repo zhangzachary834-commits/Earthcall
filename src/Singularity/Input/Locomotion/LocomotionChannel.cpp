@@ -61,15 +61,15 @@ void LocomotionChannel::buildProperties() {
 
 void LocomotionChannel::tickAutomations(Person& person, float dt) {
     for (auto* part : person.getBody().parts) {
-        if (!part || !part->hasAutomations()) continue;
-        part->setAutomationRest(part->localTransform());
-        part->advanceAutomations(dt);
+        if (!part || !part->getPrimaryObject()->hasAutomations()) continue;
+        part->getPrimaryObject()->setAutomationRest(part->localTransform());
+        part->getPrimaryObject()->advanceAutomations(dt);
     }
 }
 
 void LocomotionChannel::stopClips(Person& person) {
     for (auto* part : person.getBody().parts) {
-        if (part) part->clearAutomations();
+        if (part) part->getPrimaryObject()->clearAutomations();
     }
     _idleActive = false;
     _walkActive = false;
@@ -107,8 +107,8 @@ void LocomotionChannel::playIdle(Person& person) {
                 continue;
         }
 
-        part->addAutomation(clip);
-        part->setAutomationRest(part->localTransform());
+        part->getPrimaryObject()->addAutomation(clip);
+        part->getPrimaryObject()->setAutomationRest(part->localTransform());
     }
 }
 
@@ -151,14 +151,14 @@ void LocomotionChannel::playWalk(Person& person, float travelSpeed) {
                     continue;
             }
 
-            part->addAutomation(clip);
-            part->setAutomationRest(part->localTransform());
+            part->getPrimaryObject()->addAutomation(clip);
+            part->getPrimaryObject()->setAutomationRest(part->localTransform());
         }
     }
 
     for (auto* part : person.getBody().parts) {
         if (!part) continue;
-        for (auto& clip : part->automationState().clips) {
+        for (auto& clip : part->getPrimaryObject()->automationState().clips) {
             if (clip.name == "walk") clip.speed = tempo;
         }
     }
