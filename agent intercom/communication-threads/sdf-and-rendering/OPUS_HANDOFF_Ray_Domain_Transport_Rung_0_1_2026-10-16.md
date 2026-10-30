@@ -11845,3 +11845,70 @@ Signed: Claude Code / Sonnet 5.5 / session `78cc5135-a805-4233-84ab-54fb16681c11
 [Audit](../../../docs/audits/GPU_RAY_TRANSPORT_6FD_SKIP_EMPTY_TILES_2026-10-29.md). Parity (7.6 s, no validation errors): at pose 32 publication/snapshot bit-identical to original routed incl. poisoned-scratch, zero-budget refusal (== Current) and poisoned refusal; production fallback 189,828→122,122 = exactly the 67,706 observer-counted empties. Pose 0 has no empties (inert), so coverage is effectively one pose with empties — wider-pose parity needed. (A first parity attempt failed on my own check requiring empties at pose 0; fixed and re-run.) Timing (113.8 s, Current / coalesced / skip, ms/frame): queued 61.616 / 62.291 / **60.357** (−3.10% vs coalesced, −2.04% vs Current); fenced 65.317 / 65.246 / **63.319** (−2.95%, −3.06%); 4/4 blocks each series. First measured gain over Current, ≈1.9 ms/frame; not inhabited-30-FPS, not Person acceptance. **Needs a decision from Sixth-One Sun/Zach:** contract = budget bounds work performed (budgets <96, diagnostic-only, no longer refuse for charged-but-skipped empty members; 0 and 1024 identical). Toggle remains default OFF. Next: wider-pose parity, then verify `ecConsume`-carries-member-ID before step 2b. Cumulative native: 6fb file 167/600 s, 6fd file 123/300 s.
 
 Signed: Claude Code / Sonnet 5.5 / session `78cc5135-a805-4233-84ab-54fb16681c11` / 2026-10-29 (PDT).
+
+
+---
+
+## Sonnet 5.5 → Sixth-One Sun: authorable GPU Runs quest, Pass A result — the continuation queue is rejected on this workload (§6fe)
+
+**Where I worked.** Worktree `/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/.claude/worktrees/authorable-gpu-runs-268d29`, branch `claude/authorable-gpu-runs-268d29`, based on `claude/ray-domain-transport-rung0` @ `301304eed` (identical to your source checkout HEAD). I copied your uncommitted spec (`AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md`, attribution untouched), the Firmament §6fd answer, and your uncommitted task/Intercom/README diffs into the worktree as context; no merges, resets, live saves, installs or push.
+
+**What changed.** Default-OFF Rung 0 instrument `KernelRoutedTransport::enableWorkTrace` (producer variants derived by substitution; per-lane `work`/`reason` trace), 6fe harness modes `worktrace` / `worktrace_in`, offline analyzer, audit `GPU_RAY_TRANSPORT_6FE_WORK_TRACE_CENSUS_2026-10-29.{md,json}`, task-doc addendum.
+
+**What ran.** Real Release Engine, 2560×1440, wgpu-native/Metal, 16 outside + 16 inside poses at the production configuration. Observer-ON publication == observer-OFF (pose 0 `de154bd4fd9d2c0b`, pose 32 `7c14eadd2a2e79c9`, both equal to your §6fd originals). ≈118 M lanes: max work 208 of 1024, zero budget exhaustion (6 reason-4 refusals), SIMD-32 efficiency 93–97%, modeled continuation lockstep reduction ≤0.3% aggregate (≤0.7% single pose) even with zero overhead.
+
+**Decision.** Pass B not built — no work eliminated-versus-scheduled case: Fallback is expensive by *quantity* (4×24 empty proofs), not by tail. Persisting ≈1.4 KB/ray of root-search state (source estimate) for nothing to reclaim fails the Rung 1 premise. No ScreenChannel/Law mode added; no inert controls. Nothing promised about FPS.
+
+**Not shown.** One authored field; work units ≠ cycles; no same-process economics (nothing to compare). A field with deep subdivision could differ — re-run the retained instrument rather than assume.
+
+**For your review.** Check (1) the substitution anchors in `enableWorkTrace` really cover every producer exit (it requires ≥3 sites and the output control passes), (2) that my `worktrace_in` pose set is a fair "hard" case (it is mine, not an existing authored view), (3) the model's equating of work with lockstep time. **Next target I recommend:** §6fd step 2b (single-member fallback tiles → S1 with member id, per the Firmament blueprint) — work elimination on 59–95% of producer units. Not started. No Person-only acceptance added to the Person Verification List (no visible change).
+
+Signed: Claude Code / Sonnet 5.5 / session `authorable-gpu-runs-268d29` (worktree) / 2026-10-29 (PDT).
+
+
+---
+
+## Sonnet 5.5 → Sixth-One Sun: step 2b implemented behind a default-OFF toggle; parity is exact except one refusal→accept pixel (pose 40)
+
+Zach said "start 2b" after my census. Implemented the Firmament blueprint (`setRoutedSingleMemberS1ForDiagnostics`, implies 2a). Native Metal parity on poses {0,8,16,24,32,40,48,56}: identical publication on 7; pose 40 pixel (797,463) was refused by the original and published by 2b (0 accepted rays changed, 0 newly refused). Pose 32 fallback tiles 189,828→11,344 as the Firmament predicted. Poisoned and zero-budget controls pass. **Decision needed:** accept that a proof-skipped member's refusal no longer forces Current (mechanism inferred from the census's single reason-4 ray, not isolated), or require exactness and drop 2b. Timing was not run (needs a focused window); command in the audit. Details: `docs/audits/GPU_RAY_TRANSPORT_6FE_STEP2B_SINGLE_MEMBER_S1_2026-10-29.md`.
+
+Signed: Claude Code / Sonnet 5.5 / worktree `authorable-gpu-runs-268d29` / 2026-10-29 (PDT).
+
+
+---
+
+## Sonnet 5.5: Zach accepted the step 2b refusal contract
+
+Zach answered "Accept change" in chat: proof-skipped members' refusals no longer force Current under 2b. Default remains OFF; remaining gates are same-process timing (Person-run, focused window), parity on poses 20/28/36/44 and the inside population, and isolating the pose-40 refusal.
+
+Signed: Claude Code / Sonnet 5.5 / worktree `authorable-gpu-runs-268d29` / 2026-10-29 (PDT).
+
+## Sonnet 5.5: step 2b same-process timing recorded (Zach had me run the focused window)
+
+Zach said "do focused window", then "Reset and rerun" after the first attempt timed out at the foreground gate and used native budget (reset to 0 on his say-so). Result, real Release Engine 2560×1440, ms/frame queued/fenced: coalesced 90.54/86.50, 2a 87.11/84.28, 2b 85.21/81.25. 2b/coalesced 0.942/0.939; 2b/2a 0.980/0.964 (7 of 8 paired blocks better; queued block 3 is 1.043, so the queued margin over 2a is within noise). No Current lane in this mode, so "beats Current" is unmeasured. Default stays OFF; wider-pose/inside parity and the pose-40 refusal isolation remain. Details: docs/audits/GPU_RAY_TRANSPORT_6FE_STEP2B_SINGLE_MEMBER_S1_2026-10-29.md ("Timing result").
+
+Signed: Claude Code / Sonnet 5.5 / worktree `authorable-gpu-runs-268d29` / 2026-10-30 (PDT).
+
+## Sonnet 5.5: step 2b wider-pose and inside parity recorded
+
+Zach said "Run parity". New mode `parity2b_more`: outside poses 20/28/36/44 and 8 inside-population poses, all gates PASS. Publication is bit-identical to the original routed lane on 11 of 12 poses (all 8 inside, outside 20/28/36); pose 44 has 2 refusal-to-accept pixels, the same class as pose 40's one. No accepted ray changed or became refused. Across 20 poses: 3 pixels in ≈74 M rays, all refusal-to-accept, as the accepted contract permits. Remaining gates: Current-vs-2b same-process timing (Person list) and isolating the refusing member. Details: 2b audit, "Wider-pose and inside parity".
+
+Signed: Claude Code / Sonnet 5.5 / worktree `authorable-gpu-runs-268d29` / 2026-10-30 (PDT).
+
+## Sonnet 5.5: step 2b refusal-to-accept pixels isolated
+
+Zach said "Isolate refusals". By-ray Fallback trace (diagnostic, default OFF) + mode `refusal2b`: the three differing pixels (pose 40 (797,463); pose 44 (757,552) and (1404,794)) are the only fallback refusals on those poses; each is reason 4 raised in one curtain (1, 1, 2) at work 26/28/85, in a tile the classifier proves single-active-member, so 2b sends it to S1 and accepts. Because 2b accepted, the refusing curtain is not the tile's active one: the original's refusal came from a curtain the proof had excluded, as the accepted contract says. Remaining before any default change: Current-vs-2b same-process timing (Person list). Details: 2b audit, "Refusal isolation".
+
+Signed: Claude Code / Sonnet 5.5 / worktree `authorable-gpu-runs-268d29` / 2026-10-30 (PDT).
+
+## Sonnet 5.5: correction to my 2b timing entry — lane 0 is Current
+
+In my 2b timing entry above I called lane 0 "original routed (uncoalesced)" and said the mode had no Current lane. Wrong: lane 0 is Current (`frame(i, l!=0)` turns routed transport off). Same numbers, right labels: ms/frame queued/fenced Current 96.43/87.81, coalesced 90.54/86.50, 2a 87.11/84.28, 2b 85.21/81.25. 2b/Current = 0.884 queued, 0.925 fenced (below Current in all 8 blocks); 2a/Current 0.904/0.960. Also: parity2b re-run after the refusal-isolation edit passes with unchanged diffs. One run, one device; the default stays OFF pending a repeat and a Person look at the live window.
+
+Signed: Claude Code / Sonnet 5.5 / worktree `authorable-gpu-runs-268d29` / 2026-10-30 (PDT).
+
+## Sonnet 5.5: step 2b timing repeated — ordering holds, the Current gap is smaller and baseline-dependent
+
+Zach said "Repeat timing". Run 2 (focused, 248.8 s): ms/frame queued/fenced Current 99.93/102.72, coalesced 104.58/106.64, 2a 100.63/103.81, 2b 96.20/100.52. 2b/Current 0.963/0.979 (run 1: 0.884/0.925), 2b/2a 0.956/0.968, 2b/coalesced 0.920/0.943. 2b is the cheapest routed lane in both runs and below Current in all 16 paired blocks, but the baseline drifted 5–17% between runs, so the Current gap is ≈2–12%, not the 11.6% of run 1. Default stays OFF. Details: 2b audit, "Timing repeat".
+
+Signed: Claude Code / Sonnet 5.5 / worktree `authorable-gpu-runs-268d29` / 2026-10-30 (PDT).

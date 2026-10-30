@@ -1807,3 +1807,9 @@ Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729
 
 
 **§6fc review:** No foreground app launched in this corrective pass. Sonnet's retained captures/route costs are independently verified, but full-route authored accuracy, physical movement, appearance, agency and inhabited FPS acceptance remain open. The0.768s native boundary witness is offscreen and proves no visual judgment. [Scope](../../../audits/GPU_RAY_TRANSPORT_6FC_SONNET_REVIEW_AND_ROUTING_BOUNDARIES_2026-10-29.md). Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T11:19:46.729976-07:00.
+
+## Ray transport step 2b timing (§6fe)
+
+*Claude Code / Sonnet 5.5 / worktree `authorable-gpu-runs-268d29` / 2026-10-29 — timing needs a focused window, so only a Person can run it.*
+
+- [x] Timing run by Sonnet 5.5 on 2026-10-30 at Zach's request (window confirmed frontmost): 2b is 0.942/0.939 of coalesced and 0.980/0.964 of 2a (queued/fenced); see the 2b audit "Timing result". Lane 0 of that mode is Current: 2b was 0.884/0.925 of Current (queued/fenced) in run 1 and 0.963/0.979 in a repeat (run 2; the Current baseline drifted between runs, so quote the Current gap as ≈2–12%). Still for a Person: confirm in the live window that nothing looks different with 2b on, and repeat the timing once more before any default change.
