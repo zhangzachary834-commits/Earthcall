@@ -1,5 +1,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
+#include "Relation/Relation.hpp"
 #include "Time/timeline.hpp"
 
 void Universe::setTimeline(Timeline* timelineBeing) {
@@ -37,4 +38,20 @@ double Universe::now() const {
 
 double Universe::dt() const {
     return _timeline ? _timeline->delta() : _dt;
+}
+
+bool Universe::isRelationSuperseded(const Relation& r) const {
+    const std::string myId = r.getIdentifier();
+    for (const auto* rel : relations()) {
+        if (rel && rel->type == "superseded-by") {
+            if ((rel->a() == &r) || (rel->aId() == myId)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool Universe::isRelationCurrent(const Relation& r) const {
+    return !isRelationSuperseded(r);
 }
