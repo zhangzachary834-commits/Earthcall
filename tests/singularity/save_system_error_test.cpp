@@ -6,6 +6,8 @@
 #include <vector>
 #include <algorithm>
 #include <sstream>
+#include <chrono>
+#include <thread>
 
 int main() {
     auto sandbox = std::filesystem::temp_directory_path() / "earthcall_savesystem_error";
@@ -373,6 +375,39 @@ int main() {
     }
     check(!hasTempFiles,
           "No temporary save/unpack artifacts remain after all transaction paths");
+
+#ifndef __EMSCRIPTEN__
+    // Test 17: the save-status flag must be true at native async dispatch,
+    // remain true while either overlapping save is still pending, and clear
+    // after both workers complete. Distinct labels prevent write collisions.
+    const auto largePath = sandbox / "worlds" / "async_status_large.ecmatter";
+    const auto smallPath = sandbox / "worlds" / "async_status_small.ecmatter";
+    const std::vector<uint8_t> largeMatter(16 * 1024 * 1024, 0x5a);
+    const std::vector<uint8_t> smallMatter(256, 0x7a);
+    check(!SaveSystem::isSaving(), "No async save active before status witness");
+    SaveSystem::writeMatterDataAsync(largeMatter, "async_status_large");
+    check(SaveSystem::isSaving(), "Async save is reported active on dispatch return");
+    SaveSystem::writeMatterDataAsync(smallMatter, "async_status_small");
+    check(SaveSystem::isSaving(), "Overlapping async save is reported active");
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
+    bool clearedWhilePending = false;
+    while (std::chrono::steady_clock::now() < deadline) {
+        const bool largeDone = std::filesystem::exists(largePath);
+        const bool smallDone = std::filesystem::exists(smallPath);
+        const bool busy = SaveSystem::isSaving();
+        if (!busy && (!largeDone || !smallDone)) clearedWhilePending = true;
+        if (!busy && largeDone && smallDone) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+    check(!clearedWhilePending,
+          "Save status cannot clear while either overlapping output is missing");
+    check(!SaveSystem::isSaving(), "Save status clears after both workers finish");
+    check(std::filesystem::exists(largePath) &&
+              std::filesystem::file_size(largePath) == largeMatter.size() &&
+              std::filesystem::exists(smallPath) &&
+              std::filesystem::file_size(smallPath) == smallMatter.size(),
+          "Both asynchronous matter saves committed complete isolated outputs");
+#endif
 
     // Cleanup
     std::filesystem::remove_all(sandbox);
