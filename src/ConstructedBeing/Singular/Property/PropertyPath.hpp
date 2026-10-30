@@ -76,7 +76,7 @@ public:
         PropertyValue* dynamicSlot = nullptr;
         Singular* owner = nullptr;
         std::string trailingComponent;
-        std::string dynamicKey;
+        Earthcall::StringId dynamicKey;
         Property* containerProperty = nullptr;
         // Operation-local lifetime pins, beneath the Kernel: a getter may
         // return the only strong reference to a list/dict. These keep the
