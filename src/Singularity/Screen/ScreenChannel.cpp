@@ -349,6 +349,9 @@ void ScreenChannel::buildProperties() {
     boolean("sdfRangeProxyEnabled", &ScreenChannel::sdfRangeProxyEnabled);
     boolean("volumeZeroProofEnabled", &ScreenChannel::volumeZeroProofEnabled);
     boolean("volumeRoutedTransportEnabled", &ScreenChannel::volumeRoutedTransportEnabled);
+    boolean("volumeRoutedCoalescedPasses", &ScreenChannel::volumeRoutedCoalescedPasses);
+    boolean("volumeRoutedSkipEmptyTiles", &ScreenChannel::volumeRoutedSkipEmptyTiles);
+    boolean("volumeRoutedSingleMemberS1", &ScreenChannel::volumeRoutedSingleMemberS1);
     readOnlyInt("volumeRoutedSets", &ScreenChannel::getVolumeRoutedSets);
     readOnlyInt("volumeRoutedPixels", &ScreenChannel::getVolumeRoutedPixels);
     readOnlyDouble("volumeRoutedWorkingSetBytes", &ScreenChannel::getVolumeRoutedWorkingSetBytes);

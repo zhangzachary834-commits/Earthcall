@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 
 #include "Singularity/Screen/RenderMaterial.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/SmoothSurface.hpp" // geom::TessMesh
@@ -324,6 +325,9 @@ public:
     // Experimental feature-branch transport; unsupported sets/rays retain Current.
     void setVolumeRoutedTransportEnabled(bool on) { _volumeRoutedTransportEnabled = on; }
     bool volumeRoutedTransportEnabled() const { return _volumeRoutedTransportEnabled; }
+    // Routed-transport variants requested by the ScreenChannel properties; the WebGPU renderer applies them to its Kernel only when they change (so harness diagnostics setters are not overwritten).
+    void setVolumeRoutedVariants(bool coalesced, bool skipEmpty, bool singleMemberS1) { _volumeRoutedVariants = {coalesced, skipEmpty, singleMemberS1}; }
+    const std::array<bool,3>& volumeRoutedVariants() const { return _volumeRoutedVariants; }
     void setVolumeSupportCertificatesEnabled(bool on) { _volumeSupportCertificatesEnabled = on; }
     bool volumeSupportCertificatesEnabled() const { return _volumeSupportCertificatesEnabled; }
     // Auto eligibility (default on): within an enabled lane, a medium gets its
@@ -563,6 +567,7 @@ private:
     bool _radianceVisibilityEnabled = false;
     bool _volumeZeroProofEnabled = true;
     bool _volumeRoutedTransportEnabled = true; // Zach, direct branch-default authorization 2026-10-28
+    std::array<bool,3> _volumeRoutedVariants{true,false,false}; // coalesced, skip-empty (2a), single-member S1 (2b); defaults equal the Kernel's
     bool _volumeSupportCertificatesEnabled = false;
     bool _volumeSupportCertificatesAutoEligibility = true;
     int _volumeSamplesPerChord = 96;

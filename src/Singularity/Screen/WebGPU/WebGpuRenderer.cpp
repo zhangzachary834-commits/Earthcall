@@ -3186,6 +3186,13 @@ void WebGpuRenderer::flushVolumeComposite() {
         frameSpecs[i]={glm::vec4(m.origin,0),glm::vec4(glm::abs(m.scale),0),vector4(recipe->limits),vector4(recipe->curvature),vector4(recipe->amplitudes),vector4(recipe->frequencies),vector4(recipe->phases)};
     }
     if(wantRouted){if(!_kernelRouted)_kernelRouted=std::make_unique<KernelRoutedTransport>();wantRouted=_kernelRouted->ensure(_device,_queue,_depthW,_depthH);}
+    if(wantRouted&&volumeRoutedVariants()!=_routedVariantsApplied){ // Developer Tools / ScreenChannel request; applied on change only, after ensure() built the variant pipelines
+        const auto want=volumeRoutedVariants();
+        _kernelRouted->coalescePasses=want[0];
+        _kernelRouted->skipEmptyTiles=want[1]&&_kernelRouted->classifySkip;
+        _kernelRouted->singleMemberS1=want[2]&&_kernelRouted->classifyS1&&_kernelRouted->s1Member;
+        _routedVariantsApplied=want;
+    }
     if (activeMedia.size() > 1) {
         VolumeSetProgramKey setKey;
         setKey.reserve(activeMedia.size());

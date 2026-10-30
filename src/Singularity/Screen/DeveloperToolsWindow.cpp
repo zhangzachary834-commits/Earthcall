@@ -4,6 +4,7 @@
 #include "GLFW/glfw3.h"
 
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
+#include "Singularity/Screen/ScreenChannel.hpp"
 
 
 #include "Singularity/Core/Engine.hpp"
@@ -88,6 +89,35 @@ void renderDeveloperToolsContent(GLFWwindow* window, Core::Engine* engine) {
             } else {
                 ImGui::TextDisabled("InteractionChannel not found.");
             }
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Routed Volume Transport (Northern Veil)", ImGuiTreeNodeFlags_DefaultOpen)) {
+        // These write the ScreenChannel's registered properties (the same paths Law and the CLI reach); the renderer applies them next frame.
+        auto* screen = engine->getLawManager() ? Singularity::Screen::ScreenChannel::find(*engine->getLawManager()) : nullptr;
+        if (!screen) {
+            ImGui::TextDisabled("ScreenChannel not found.");
+        } else {
+            ImGui::TextWrapped(
+                "A/B the routed-ray transport on the live view. Only applies when four-curtain routed "
+                "transport is active; the readouts below show whether it ran. Watch the Performance Metrics window for ms/frame.");
+            ImGui::Checkbox("Routed transport  (off = Current renderer)", &screen->volumeRoutedTransportEnabled);
+            ImGui::Checkbox("Coalesced single compute pass  (default on; off = original 8 passes/strip)", &screen->volumeRoutedCoalescedPasses);
+            ImGui::Checkbox("Skip wave-empty tiles  (2a, default off)", &screen->volumeRoutedSkipEmptyTiles);
+            ImGui::Checkbox("Single-member tiles to S1  (2b, default off; includes 2a)", &screen->volumeRoutedSingleMemberS1);
+            if (screen->volumeRoutedSingleMemberS1 && !screen->volumeRoutedSkipEmptyTiles) {
+                ImGui::TextDisabled("2b also skips wave-empty tiles, so it behaves as 2a + 2b regardless of the 2a box.");
+            }
+            ImGui::TextDisabled("2b: refusals come only from curtains the tile proof marks active (accepted contract); measured 2-12%% under Current, one device.");
+            if (ImGui::Button("Reset to defaults")) {
+                screen->volumeRoutedTransportEnabled = true;
+                screen->volumeRoutedCoalescedPasses = true;
+                screen->volumeRoutedSkipEmptyTiles = false;
+                screen->volumeRoutedSingleMemberS1 = false;
+            }
+            ImGui::Text("Last frame: routed sets %d, routed pixels %d, working set %.1f MB",
+                        screen->volumeRoutedSets, screen->volumeRoutedPixels,
+                        screen->volumeRoutedWorkingSetBytes / (1024.0 * 1024.0));
         }
     }
 

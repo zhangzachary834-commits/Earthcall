@@ -300,6 +300,9 @@ namespace Core {
                 currentRenderer().setSdfRangeProxyEnabled(screenChannel->sdfRangeProxyEnabled);
                 currentRenderer().setVolumeZeroProofEnabled(screenChannel->volumeZeroProofEnabled);
                 currentRenderer().setVolumeRoutedTransportEnabled(screenChannel->volumeRoutedTransportEnabled);
+                currentRenderer().setVolumeRoutedVariants(screenChannel->volumeRoutedCoalescedPasses,
+                                                          screenChannel->volumeRoutedSkipEmptyTiles,
+                                                          screenChannel->volumeRoutedSingleMemberS1);
                 currentRenderer().setVolumeSupportCertificatesEnabled(screenChannel->volumeSupportCertificatesEnabled);
                 currentRenderer().setVolumeSupportCertificatesAutoEligibility(screenChannel->volumeSupportCertificatesAutoEligibility);
                 currentRenderer().setVolumeSamplesPerChord(screenChannel->volumeSamplesPerChord);

@@ -388,6 +388,7 @@ private:
     // Kernel-only device cache, released on shutdown; viewport resources rebuild
     // on resize. Mathematical support recipes are rederived each frame.
     std::unique_ptr<KernelRoutedTransport> _kernelRouted;
+    std::array<bool,3> _routedVariantsApplied{true,false,false}; // last ScreenChannel variant request applied to _kernelRouted
     struct VolumePipeline {
         bool routed = false; // compiled layout, never authored medium state
         std::string routedSource; // Kernel key; exact production evaluator source

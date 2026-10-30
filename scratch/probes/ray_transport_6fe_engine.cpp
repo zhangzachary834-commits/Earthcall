@@ -104,7 +104,7 @@ int main(int argc,char**argv){
   };
   Json result={{"schema","6ey-actual-engine-release-scripted-path-1"},{"mode",mode},{"init_ms",initMs},{"framebuffer",{2560,1440}},{"objects",24},{"media",4},{"foreign_network_service",false},{"fixed_step",dt},{"snapshot_scope","3D scene before ImGui overlay, through actual ScreenRecorder"}};
   const auto gate=output.parent_path()/"foreground-ready";auto gateStart=Clock::now();
-  if(mode!="worktrace"&&mode!="worktrace_in"&&mode!="parity2b"&&mode!="parity2b_more"&&mode!="refusal2b"){std::cout<<"WAIT_FOREGROUND "<<gate<<'\n';
+  if(mode!="worktrace"&&mode!="worktrace_in"&&mode!="parity2b"&&mode!="parity2b_more"&&mode!="refusal2b"&&mode!="uitoggles"){std::cout<<"WAIT_FOREGROUND "<<gate<<'\n';
   while(!fs::exists(gate)||glfwGetWindowAttrib(e.window(),GLFW_FOCUSED)!=GLFW_TRUE){need(elapsed(gateStart)<120000,"foreground handoff timeout");glfwPollEvents();std::this_thread::sleep_for(std::chrono::milliseconds(10));}
   need(glfwGetWindowAttrib(e.window(),GLFW_FOCUSED)==GLFW_TRUE,"foreground handoff did not focus native window");
   requireFocus=true;result["foreground_handoff_ms"]=elapsed(gateStart);result["foreground_required"]=true;}
@@ -193,6 +193,16 @@ int main(int argc,char**argv){
     caps.push_back(Json{{"index",index},{"file",name},{"fnv",hex(fnv(w.data(),w.size()*4))},{"publication_fnv",pubHash()}});
    }
    result["traces"]=caps;need(r->setRoutedWorkTraceForDiagnostics(false),"trace off");
+  }
+  if(mode=="uitoggles"){
+   // Developer Tools toggles are ScreenChannel properties applied by the renderer on change: each must reach the Kernel next frame, defaults must restore, and 2b must publish like the diagnostics path.
+   frame(32,true);fence(k);need(k->coalescePasses&&!k->skipEmptyTiles&&!k->singleMemberS1,"defaults must be coalesced/no skip/no 2b");
+   sc->volumeRoutedSkipEmptyTiles=true;frame(32,true);fence(k);need(k->skipEmptyTiles&&!k->singleMemberS1&&k->coalescePasses,"2a toggle did not reach the Kernel");auto h2a=hex(fnv(rawPublication(k).data(),rawPublication(k).size()*4));
+   sc->volumeRoutedSkipEmptyTiles=false;sc->volumeRoutedSingleMemberS1=true;frame(32,true);fence(k);need(k->singleMemberS1&&!k->skipEmptyTiles,"2b toggle did not reach the Kernel");auto h2b=hex(fnv(rawPublication(k).data(),rawPublication(k).size()*4));
+   sc->volumeRoutedCoalescedPasses=false;frame(32,true);fence(k);need(!k->coalescePasses,"coalesce toggle did not reach the Kernel");
+   sc->volumeRoutedCoalescedPasses=true;sc->volumeRoutedSingleMemberS1=false;frame(32,true);fence(k);need(k->coalescePasses&&!k->skipEmptyTiles&&!k->singleMemberS1,"defaults did not restore");auto h0=hex(fnv(rawPublication(k).data(),rawPublication(k).size()*4));
+   need(h2a==h0&&h2b==h0,"UI-path publications at pose 32 must equal the default publication");
+   result["ui_toggle_hashes"]=Json{{"default",h0},{"2a",h2a},{"2b",h2b}};
   }
   if(mode=="refusal2b"){
    // §6fe refusal isolation: poses where 2b published a ray the original refused (40: 1 px, 44: 2 px). Fallback trace indexed by ray id with the member at the lane's exit

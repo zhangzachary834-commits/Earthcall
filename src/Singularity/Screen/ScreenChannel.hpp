@@ -114,6 +114,11 @@ public:
     // Zach authorized default ON in the ray-transport feature branch (2026-10-28).
     // EngineRender forwards this to Renderer; unknown sets/rays use Current.
     bool      volumeRoutedTransportEnabled = true;
+    // Routed-transport variants (Developer Tools; Renderer Kernel ablations, each exact on the checked poses, see docs/audits/GPU_RAY_TRANSPORT_6FE_STEP2B_*).
+    // Coalesced = one compute pass per strip (default ON). Skip-empty (2a) and single-member S1 (2b, implies 2a) default OFF; 2b's refusal contract was accepted by Zach 2026-10-29.
+    bool      volumeRoutedCoalescedPasses = true;
+    bool      volumeRoutedSkipEmptyTiles = false;
+    bool      volumeRoutedSingleMemberS1 = false;
     int       volumeRoutedSets = 0; // derived actual dispatched sets last frame
     int       volumeRoutedPixels = 0;
     double    volumeRoutedWorkingSetBytes = 0;
