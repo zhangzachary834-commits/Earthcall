@@ -41,8 +41,9 @@ static void write(const fs::path& p,const Json& j){std::ofstream(p)<<j.dump(2)<<
 static Json vec(glm::vec3 p){return Json::array({p.x,p.y,p.z});}
 static bool g_inside=false; // §6fe 'worktrace_in': hard-case population — eye placed at the route's aim point (inside/among the curtains), yaw sweeping 360 degrees.
 static std::pair<glm::vec3,glm::vec3> pose(int i){
+ const bool inside=g_inside||i>=1000; if(i>=1000)i-=1000; // §6fe parity2b_more: pose index 1000+k is inside-population pose k
  const double a=6.2831853071795864769*i/64.0;
- if(g_inside){glm::vec3 eye(float(40+6*std::sin(a*.5)),float(62+2*std::cos(a)),float(110+8*std::sin(a)));glm::vec3 f(float(std::cos(a)*std::cos(.17*std::sin(a*2))),float(std::sin(.17*std::sin(a*2))),float(std::sin(a)*std::cos(.17*std::sin(a*2))));return {eye,glm::normalize(f)};}
+ if(inside){glm::vec3 eye(float(40+6*std::sin(a*.5)),float(62+2*std::cos(a)),float(110+8*std::sin(a)));glm::vec3 f(float(std::cos(a)*std::cos(.17*std::sin(a*2))),float(std::sin(.17*std::sin(a*2))),float(std::sin(a)*std::cos(.17*std::sin(a*2))));return {eye,glm::normalize(f)};}
  glm::vec3 eye(float(8*std::sin(a)),float(50+2*std::sin(a*.5)),float(75+8*(1-std::cos(a))));
  glm::vec3 aim(float(40+8*std::sin(a*.5)),float(62+2*std::cos(a)),110);
  return {eye,glm::normalize(aim-eye)};
@@ -103,7 +104,7 @@ int main(int argc,char**argv){
   };
   Json result={{"schema","6ey-actual-engine-release-scripted-path-1"},{"mode",mode},{"init_ms",initMs},{"framebuffer",{2560,1440}},{"objects",24},{"media",4},{"foreign_network_service",false},{"fixed_step",dt},{"snapshot_scope","3D scene before ImGui overlay, through actual ScreenRecorder"}};
   const auto gate=output.parent_path()/"foreground-ready";auto gateStart=Clock::now();
-  if(mode!="worktrace"&&mode!="worktrace_in"&&mode!="parity2b"){std::cout<<"WAIT_FOREGROUND "<<gate<<'\n';
+  if(mode!="worktrace"&&mode!="worktrace_in"&&mode!="parity2b"&&mode!="parity2b_more"){std::cout<<"WAIT_FOREGROUND "<<gate<<'\n';
   while(!fs::exists(gate)||glfwGetWindowAttrib(e.window(),GLFW_FOCUSED)!=GLFW_TRUE){need(elapsed(gateStart)<120000,"foreground handoff timeout");glfwPollEvents();std::this_thread::sleep_for(std::chrono::milliseconds(10));}
   need(glfwGetWindowAttrib(e.window(),GLFW_FOCUSED)==GLFW_TRUE,"foreground handoff did not focus native window");
   requireFocus=true;result["foreground_handoff_ms"]=elapsed(gateStart);result["foreground_required"]=true;}
@@ -117,8 +118,8 @@ int main(int argc,char**argv){
   need(k&&startup.back()["routed_sets"].get<uint32_t>()>0,"native window did not become ready");
   result["startup_attempts"]=startup;requireRoute=true;fence(k);
   if(mode=="negative"){frame(1,true);throw std::runtime_error("negative failed to reject");}
-  if(mode=="parity"||mode=="parity2b"){
-   const bool p2b=mode=="parity2b";
+  if(mode=="parity"||mode=="parity2b"||mode=="parity2b_more"){
+   const bool p2b=mode!="parity";
    // §6fb: original routed (separate compute passes) vs coalesced (one pass), same process/device/camera/clock.
    need(lawSetValue(*rec,PropertyPath::parse("outputPath"),(fs::current_path()/"captures").string()),"recorder output");need(lawSetValue(*rec,PropertyPath::parse("recordCursor"),false),"recorder cursor");
    const uint32_t strips=(k->height+k->stripRows-1)/k->stripRows,expectDispatch=8*strips;Json caps=Json::array();std::map<std::string,uint64_t> pubHash,snapHash;std::map<std::string,uint64_t> traceHash;
@@ -135,7 +136,7 @@ int main(int argc,char**argv){
      if(limit==0)need(nonempty==0,"forced refusal must not publish partial transport");else need(nonempty>100,"normal transport must contribute");}
     caps.push_back(row);
    };
-   const std::vector<int> poseList=p2b?std::vector<int>{0,8,16,24,32,40,48,56}:std::vector<int>{0,32};Json eff2b=Json::array(),diffs=Json::array();
+   const std::vector<int> poseList=mode=="parity2b_more"?std::vector<int>{20,28,36,44,1000,1008,1016,1024,1032,1040,1048,1056}:p2b?std::vector<int>{0,8,16,24,32,40,48,56}:std::vector<int>{0,32};Json eff2b=Json::array(),diffs=Json::array();
    for(int index:poseList){
     const std::string I=std::to_string(index);
     if(p2b){
