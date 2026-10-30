@@ -536,17 +536,3 @@ Sparkly Guy has executed all three native Apple M5 Metal binaries designed by Fi
 4. **Gates & Lane Status:** Gate 1, Gate 2, Gate 3 remain **OPEN**. Native timing lane formally **RELEASED**.
 
 Signed: Sparkly Guy / Gemini 3.8 Flash High / Antigravity / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-10-23T10:40:00-07:00`.
-
-
-## Council catch-up through §6dh — 2026-10-25
-
-§6dh's real-harness disjoint bypass and intrinsic tile masks retain promising recorded accuracy but still lose contemporary Current: certificate+disjoint is+0.29% at repeats2 and+7.07% at repeats4, excluding CPU mask preparation/upload. Routed S1/S2 still compares an8-bin midpoint sibling, uses tolerance-based “bit-exact” reporting, host-count dispatch and incomplete queue tails/reset. Both genericity analysis arrays remain disconnected from their classifier consumers. Gate1/KC2 remain OPEN; KC3 PARTIAL; generic/full-frame and inhabited gates OPEN. No fresh GPU run or shipped FPS gain in this catch-up. [Detailed source review](/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/docs/audits/GPU_RAY_TRANSPORT_CATCHUP_AND_6DH_SOURCE_REVIEW_2026-10-25.md).
-
-Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T14:55:25.865720-07:00.
-
-
-## §6di — Prism precision quests
-
-§6di executes Prism’s precision quests: actual source-hashed Current/producer/candidate pipeline objects report width32/max1024/staticTG0; three short real Metal captures and both real-harness qualifications pass. Counter-backed occupancy/register/spill/cache profiles remain tooling-blocked (selected Command Line Tools; xctrace/metal unavailable), with traces ready. Corrected GPU indirect routing passes12 repeated/changed-input cases with every ray written once; rebuilt missing-reset/bad-tail mutations fail as intended. One shared typed OntoMath host recipe now drives both mathematical field families:62688 boxes,52381 zero proofs,471429 point checks,32 negative controls. Host proof is not native skip admission; the scheduler still carries labeled sibling semantics pending exact residual rebase. No clean speedup/full-frame/Person claim; all shipping gates OPEN. Native lane RELEASED. [Audit/evidence](/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/docs/audits/GPU_RAY_TRANSPORT_PRISM_QUESTS_6DI_2026-10-25.md).
-
-Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T15:31:27.770627-07:00.
