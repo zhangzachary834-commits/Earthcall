@@ -10,7 +10,6 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Relation/Formation/Formation.hpp"
 
-#include <GLFW/glfw3.h>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -25,18 +24,8 @@ struct Pong { int depth = 0; };
 } // namespace
 
 int main() {
-    if (!glfwInit()) {
-        std::fprintf(stderr, "law_loop_test: glfwInit failed\n");
-        return 1;
-    }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "law_loop_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "law_loop_test: no GL context\n");
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
+    // Headless CPU witness: Object texture uploads are guarded without a GL context.
+
 
     {
         // ------------------------------------------------------------------
@@ -141,8 +130,6 @@ int main() {
         assert(nearf(std::get<float>(fillet), 0.0f));  // gildLaw no longer hears
     }
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
     std::puts("law_loop_test: ALL OK");
     return 0;
 }
