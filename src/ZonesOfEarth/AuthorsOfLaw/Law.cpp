@@ -513,7 +513,10 @@ Law::ApplicationResult Law::applyToImpl(
     } else if (!conditionsAlreadySatisfied && !conditionsSatisfied(target)) {
         result = ApplicationResult::ConditionsFailed;
         if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
-            ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
+            // Concise summary for aggregate log
+            ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED");
+            // Detailed durable history
+            ECA::LawAuditLogger::instance().logForLaw(getIdentifier(), "LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
                 {"lawId", getIdentifier()},
                 {"targetId", target.getIdentifier()},
                 {"result", "ConditionsFailed"}
@@ -522,7 +525,8 @@ Law::ApplicationResult Law::applyToImpl(
     } else if (_actions.empty()) {
         result = ApplicationResult::NoAction;
         if (ECA::LawAuditLogger::instance().level() == ECA::LawAuditLogger::Level::Verbose) {
-            ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - NO ACTIONS", {
+            ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - NO ACTIONS");
+            ECA::LawAuditLogger::instance().logForLaw(getIdentifier(), "LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - NO ACTIONS", {
                 {"lawId", getIdentifier()},
                 {"targetId", target.getIdentifier()},
                 {"result", "NoAction"}
@@ -615,6 +619,13 @@ Law::ApplicationResult Law::applyToImpl(
                                          : node.note)}});
             }
             ECA::LawAuditLogger::instance().log("LAW", message, {
+                {"lawId", getIdentifier()},
+                {"targetId", target.getIdentifier()},
+                {"result", "Applied"},
+                {"changed", wrote}
+                // nodesJson intentionally removed from aggregate log to reduce verbosity
+            });
+            ECA::LawAuditLogger::instance().logForLaw(getIdentifier(), "LAW", message, {
                 {"lawId", getIdentifier()},
                 {"targetId", target.getIdentifier()},
                 {"result", "Applied"},
@@ -2049,6 +2060,9 @@ void LawManager::connectToEventBus() {
                 {"objectId", objectId},
                 {"timestamp", e.timestamp().toJson()}
             });
+            // Events are broadcast to all laws, not specifically owned by a single law unless we are inside applyTo.
+            // In applyTo we already added logForLaw.
+            // This is the global event subscription, so it doesn't belong to one law.
         }
 
         // A being that has just left the world is released from every law
@@ -2170,6 +2184,12 @@ void LawManager::syncProphetic() {
     for (const auto& finding : _prophetic.unreachable()) {
         if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
             ECA::LawAuditLogger::instance().log(
+                "LAW",
+                std::string(finding.selfImpossible ? "Law \"" : "Law \"") + finding.lawId +
+                    "\" has a condition on " + finding.path + " that cannot be satisfied: " +
+                    finding.why);
+            ECA::LawAuditLogger::instance().logForLaw(
+                finding.lawId,
                 "LAW",
                 std::string(finding.selfImpossible ? "Law \"" : "Law \"") + finding.lawId +
                     "\" has a condition on " + finding.path + " that cannot be satisfied: " +

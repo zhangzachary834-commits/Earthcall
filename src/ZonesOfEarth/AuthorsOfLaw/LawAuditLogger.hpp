@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Singularity/Core/Logger.hpp"
+#include "Singularity/Core/Logging/DurableLogger.hpp"
+#include <memory>
 
 namespace ECA {
 
@@ -32,19 +34,28 @@ public:
         Logger::instance().setActiveWorld(worldName);
     }
 
+    // Keep the aggregate log (which is still valuable as a chronicle)
     void log(const std::string& type, const std::string& message, const nlohmann::json& details = nlohmann::json::object()) {
         Logger::instance().log(LogCategory::Laws, type, message, details);
     }
 
+    // New API for durable, per-Law logs
+    void logForLaw(const std::string& lawIdentity, const std::string& type, const std::string& message, const nlohmann::json& details = nlohmann::json::object()) {
+        _durableLogger->log(lawIdentity, type, message, details);
+    }
+
     void shutdown() {
         Logger::instance().shutdown();
+        _durableLogger->closeAll();
     }
 
     static constexpr std::size_t kMaxLinesPerRun = Logger::kMaxLinesPerRun;
     static constexpr std::uintmax_t kMaxFileBytes = Logger::kMaxFileBytes;
 
 private:
-    LawAuditLogger() = default;
+    LawAuditLogger() : _durableLogger(std::make_unique<Logging::DurableLogger>("laws")) {}
+
+    std::unique_ptr<Logging::DurableLogger> _durableLogger;
 };
 
 } // namespace ECA
