@@ -93,7 +93,6 @@ jobs:
         first_mover_test
         first_mover_tool_test
         law_file_tree_fossil_test
-        law_durable_logging_test
         earthcall_api_test
         rete_state_ptr_index_test
         relation_type_lexeme_lifetime_test

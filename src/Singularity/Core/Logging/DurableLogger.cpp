@@ -1,93 +1,129 @@
+#include <iostream>
 #include "Singularity/Core/Logging/DurableLogger.hpp"
+#include "Singularity/Core/Logger.hpp"
 #include <chrono>
-#include <ctime>
 #include <iomanip>
 #include <sstream>
-#include <stdexcept>
-#include <system_error>
 
-namespace ECA::Logging {
+namespace ECA {
+namespace Logging {
 
-namespace {
-std::string currentTimestamp() {
-    const auto now = std::chrono::system_clock::now();
-    const auto epoch = std::chrono::system_clock::to_time_t(now);
-    std::tm utc{};
+static std::string currentTimestamp() {
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    std::tm tm_buf{};
 #if defined(_WIN32)
-    gmtime_s(&utc, &epoch);
+    localtime_s(&tm_buf, &in_time_t);
 #else
-    gmtime_r(&epoch, &utc);
+    localtime_r(&in_time_t, &tm_buf);
 #endif
-    std::ostringstream out;
-    out << std::put_time(&utc, "%Y-%m-%dT%H:%M:%SZ");
-    return out.str();
+    std::stringstream ss;
+    ss << std::put_time(&tm_buf, "%Y-%m-%d %X");
+    return ss.str();
 }
 
-bool safeDomain(const std::string& domain) {
-    if (domain.empty() || domain == "." || domain == "..") return false;
-    for (unsigned char c : domain) {
-        if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-              (c >= '0' && c <= '9') || c == '-' || c == '_')) return false;
+std::filesystem::path DurableLogger::resolvePath(const std::string& stableIdentity) const {
+    auto logDir = AppPaths::logDirectory() / _domain;
+    std::error_code ec;
+    std::filesystem::create_directories(logDir, ec);
+
+    // new identity filenames use reversible byte-hex with an `id-` prefix, reject overlong/empty IDs rather than truncating
+    if (stableIdentity.empty() || stableIdentity.length() > 128) {
+        // Return a dummy path or throw, let's use a safe fallback or throw.
+        // Actually, reject means it shouldn't log or throws an error. Let's return empty path.
+        return {};
     }
-    return true;
-}
-} // namespace
 
-std::filesystem::path DurableLogger::resolvePath(const std::string& identity) const {
-    // Reject rather than truncate: truncation would alias two Law identities.
-    if (!safeDomain(_domain) || identity.empty() || identity.size() > 110)
-        throw std::invalid_argument("Invalid durable log domain or identity length");
-    static constexpr char hex[] = "0123456789abcdef";
-    std::string encoded = "id-";
-    encoded.reserve(3 + identity.size() * 2);
-    for (unsigned char c : identity) {
-        encoded.push_back(hex[c >> 4]);
-        encoded.push_back(hex[c & 15]);
+    std::stringstream hex;
+    for (unsigned char c : stableIdentity) {
+        hex << std::hex << std::setw(2) << std::setfill('0') << (int)c;
     }
-    // Prefix prevents collision with laws.jsonl, the aggregate log.
-    return _root / _domain / (encoded + ".jsonl");
+    std::string safeId = "id-" + hex.str();
+
+    return logDir / (safeId + ".jsonl");
 }
 
-bool DurableLogger::log(const std::string& identity, const std::string& type,
-                        const std::string& message, const nlohmann::json& details) {
-    std::lock_guard<std::mutex> lock(_mutex);
-    try {
-        auto it = _streams.find(identity);
-        if (it == _streams.end()) {
-            const auto path = resolvePath(identity);
-            std::error_code ec;
-            std::filesystem::create_directories(path.parent_path(), ec);
-            if (ec) return false;
-            // Bound open file descriptors; evicted streams reopen in append mode.
-            if (_streams.size() >= kMaxOpenStreams) _streams.erase(_streams.begin());
-            auto inserted = _streams.try_emplace(identity);
-            it = inserted.first;
-            it->second.open(path, std::ios::out | std::ios::app);
+void DurableLogger::evictIfNeeded() {
+    while (_streams.size() >= kMaxStreams && !_lru.empty()) {
+        std::string lruId = _lru.back();
+        _lru.pop_back();
+        auto it = _streams.find(lruId);
+        if (it != _streams.end()) {
+            if (it->second.is_open()) {
+                it->second.flush();
+                it->second.close();
+            }
+            _streams.erase(it);
         }
-        if (!it->second.is_open() || !it->second.good()) return false;
-        nlohmann::json entry = {
-            {"timestamp", currentTimestamp()},
-            {"identity", identity},
-            {"type", type},
-            {"message", message}
-        };
-        if (!details.empty()) entry["details"] = details;
-        it->second << entry.dump() << '\n';
-        it->second.flush();
-        return it->second.good();
-    } catch (const std::exception&) {
-        return false; // logging must not abort Law execution
     }
 }
 
-void DurableLogger::close(const std::string& identity) {
+std::ofstream& DurableLogger::getStream(const std::string& stableIdentity) {
+    auto it = _streams.find(stableIdentity);
+    if (it == _streams.end()) {
+        evictIfNeeded();
+        auto path = resolvePath(stableIdentity);
+        // append mode preserves history
+        auto result = _streams.emplace(stableIdentity, std::ofstream(path, std::ios::app));
+        _lru.push_front(stableIdentity);
+
+        if (!result.first->second.is_open()) {
+            std::cerr << "[DurableLogger] Failed to open durable log: " << path << "\n";
+        }
+
+        return result.first->second;
+    }
+
+    // update LRU
+    _lru.remove(stableIdentity);
+    _lru.push_front(stableIdentity);
+    return it->second;
+}
+
+void DurableLogger::log(const std::string& stableIdentity, const std::string& type, const std::string& message, const nlohmann::json& details) {
     std::lock_guard<std::mutex> lock(_mutex);
-    _streams.erase(identity); // ofstream destructor flushes/closes
+    auto& stream = getStream(stableIdentity);
+
+    nlohmann::json entry;
+    entry["timestamp"] = currentTimestamp();
+    entry["type"] = type;
+    entry["message"] = message;
+    if (!details.empty()) {
+        entry["details"] = details;
+    }
+
+    if (stream.is_open()) {
+        if (!(stream << entry.dump() << "\n")) {
+            std::cerr << "[DurableLogger] Write failed for identity: " << stableIdentity << "\n";
+        }
+        stream.flush(); // ensure durability
+    }
+}
+
+void DurableLogger::close(const std::string& stableIdentity) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    auto it = _streams.find(stableIdentity);
+    if (it != _streams.end()) {
+        if (it->second.is_open()) {
+            it->second.flush();
+            it->second.close();
+        }
+        _streams.erase(it);
+        _lru.remove(stableIdentity);
+    }
 }
 
 void DurableLogger::closeAll() {
     std::lock_guard<std::mutex> lock(_mutex);
+    for (auto& pair : _streams) {
+        if (pair.second.is_open()) {
+            pair.second.flush();
+            pair.second.close();
+        }
+    }
     _streams.clear();
+    _lru.clear();
 }
 
-} // namespace ECA::Logging
+} // namespace Logging
+} // namespace ECA

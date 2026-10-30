@@ -1,41 +1,36 @@
 #pragma once
-
 #include "Singularity/Core/AppPaths.hpp"
-#include "json.hpp"
+#include <string>
 #include <filesystem>
 #include <fstream>
-#include <mutex>
-#include <string>
 #include <unordered_map>
-#include <utility>
+#include <list>
+#include <mutex>
+#include "json.hpp"
 
-namespace ECA::Logging {
+namespace ECA {
+namespace Logging {
 
-// Per-identity append-only JSONL, separate from aggregate category logs.
-// The root may be injected by tests; production uses AppPaths::logDirectory().
 class DurableLogger {
 public:
-    explicit DurableLogger(std::string domain,
-                           std::filesystem::path root = AppPaths::logDirectory())
-        : _domain(std::move(domain)), _root(std::filesystem::absolute(root)) {}
+    DurableLogger(const std::string& domain) : _domain(domain) {}
     ~DurableLogger() { closeAll(); }
-    DurableLogger(const DurableLogger&) = delete;
-    DurableLogger& operator=(const DurableLogger&) = delete;
 
-    // False means the record was NOT appended; flush is not fsync.
-    bool log(const std::string& stableIdentity, const std::string& type,
-             const std::string& message,
-             const nlohmann::json& details = nlohmann::json::object());
-    void close(const std::string& stableIdentity);
+    void log(const std::string& stableIdentity, const std::string& type, const std::string& message, const nlohmann::json& details = nlohmann::json::object());
     void closeAll();
+    void close(const std::string& stableIdentity);
 
 private:
     std::filesystem::path resolvePath(const std::string& stableIdentity) const;
-    static constexpr std::size_t kMaxOpenStreams = 32;
+    std::ofstream& getStream(const std::string& stableIdentity);
+
     std::string _domain;
-    std::filesystem::path _root;
     std::unordered_map<std::string, std::ofstream> _streams;
+    std::list<std::string> _lru;
+    static constexpr size_t kMaxStreams = 32;
+    void evictIfNeeded();
     std::mutex _mutex;
 };
 
-} // namespace ECA::Logging
+} // namespace Logging
+} // namespace ECA
