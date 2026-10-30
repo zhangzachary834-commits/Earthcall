@@ -1,12 +1,19 @@
 # Interaction-as-Law and Direct Screen Forms
 
-**Status:** Architectural cross-check
-**Related:** `law/INTERACTION_AS_LAW.md`, `mathematics/ONTOMATH_FRAMEWORK.md`, `Singularity/Screen/ScreenChannel.cpp`
+**Status:** Architectural cross-check — two implemented seams; their direct-screen interaction bridge is **not yet established**.
 
-## The Interrelation
+**Sources:** [Interaction as Law](../law/INTERACTION_AS_LAW.md), [OntoMath](../mathematics/ONTOMATH_FRAMEWORK.md), [Direct Screen forms](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md), [native verification](../../audits/DIRECT_SCREEN_FORMS_NATIVE_VERIFICATION_2026-10-04.md), [ScreenChannel](../../../src/Singularity/Screen/ScreenChannel.hpp), [InteractionChannel](../../../src/Singularity/Input/Interaction/InteractionChannel.hpp).
 
-`INTERACTION_AS_LAW.md` dictates that Earthcall rejects traditional UI widgets. Instead, interfaces are constructed by pointer events (like `object-hover-entered` or `object-clicked`) interacting with authored Laws.
+## What exists
 
-Concurrently, Direct Screen Forms allow mathematical expressions (OntoMath) to directly evaluate colors and opacities at framebuffer sample centers via the `ScreenChannel`, bypassing the need for physical Objects or Meshes.
+- **Interaction-as-Law:** `InteractionChannel` senses pointer gestures and picks spatial `Object` bearers; it publishes events such as `object-clicked` that authored Laws can interpret. A control need not be a special `Button` or `Widget` kind.
+- **Direct Screen manifestation:** `ScreenChannel::manifestOutput` renders authored typed color/opacity fields at physical framebuffer sample centers. Their source may be any addressable Singular, without requiring an `Object`, mesh, or texture as the authored carrier. The production renderer calls this path.
+- **Screen observation:** `ScreenChannel::senseOutput` can sample selected pixels of the completed viewport on an explicit request. This is an observation contract, **not** automatic pointer picking or a screen-region click dispatcher.
 
-These two mechanisms interrelate to fulfill the minimum-maximum principle for user interfaces. By projecting OntoMath color fields directly to the screen and using Interaction-as-Law to observe pointer intersections with those mathematical regions, Earthcall achieves fully interactive UIs without manufacturing bespoke UI state or importing foreign widget toolkits. The interface is purely the intersection of mathematical manifestation (`ScreenChannel`) and logical observation (`Law`), perfectly aligning the UX with Earthcall's ontological semantics.
+## The missing interrelation
+
+A mathematical region drawn directly onto the screen is **not thereby an interactable target** of the current spatial-Object picking channel. In particular, rendering a field and publishing `object-clicked` for a spatial `Object` do not prove that a pointer intersection with a screen-only region generates a Law event. Nor does native pixel-parity verification establish hit-test parity.
+
+**Proposed bridge, not a shipped guarantee:** preserve the authored region selector as meaning; convert pointer coordinates from window points to physical framebuffer samples with explicit viewport bounds; evaluate membership against that selector; publish a provenance-bearing observation/event through the existing Interaction/Law machinery. Specify overlap, occlusion, focus, event ordering, and UI-capture behavior before declaring it complete. Do not invent a bespoke widget type, duplicate event system, or separate source of region truth.
+
+This synthesis therefore joins two real capabilities and identifies their remaining boundary. It does **not** claim a fully interactive direct-screen UI is already implemented, or that compatibility HUD/ImGui surfaces have vanished.
