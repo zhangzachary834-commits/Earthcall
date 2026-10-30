@@ -1,0 +1,64 @@
+{
+ "schema": "earthcall.6fe.step2b.timing.summary/1",
+ "run": 2,
+ "signed": "Claude Code / Sonnet 5.5 / 2026-10-30",
+ "source_result_sha256": "1d3a14496f094e6b501d9c78cc451fc281d4a9b3b9cbd7b5e0aeb04fed2ed99f",
+ "lanes": {
+  "0": "Current (routed off)",
+  "1": "coalesced",
+  "2": "coalesced + skip-empty (2a)",
+  "3": "coalesced + single-member S1 (2b)"
+ },
+ "units": "ms per frame (64-frame interval total / 64), 2560x1440, real Release Engine, foreground required, all frames focused",
+ "foreground_handoff_ms": 2006.847666,
+ "blocks": {
+  "fenced/0": {
+   "0": 101.251,
+   "1": 105.109,
+   "2": 103.793,
+   "3": 99.601
+  },
+  "fenced/1": {
+   "1": 105.702,
+   "2": 103.939,
+   "3": 99.867,
+   "0": 101.981
+  },
+  "fenced/2": {
+   "2": 102.46,
+   "3": 101.367,
+   "0": 101.677,
+   "1": 106.434
+  },
+  "fenced/3": {
+   "3": 101.235,
+   "0": 105.959,
+   "1": 109.296,
+   "2": 105.059
+  },
+  "queued/0": {
+   "0": 102.742,
+   "1": 107.034,
+   "2": 102.34,
+   "3": 98.595
+  },
+  "queued/1": {
+   "1": 104.563,
+   "2": 103.005,
+   "3": 96.605,
+   "0": 99.334
+  },
+  "queued/2": {
+   "2": 98.845,
+   "3": 94.744,
+   "0": 98.981,
+   "1": 101.642
+  },
+  "queued/3": {
+   "3": 94.868,
+   "0": 98.659,
+   "1": 105.078,
+   "2": 98.332
+  }
+ }
+}

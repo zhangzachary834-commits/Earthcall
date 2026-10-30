@@ -73,3 +73,25 @@ Zach, in chat: "Isolate refusals". Instrument: the work-trace Fallback producer 
 ### Correction (2026-10-30, same day)
 I first labeled lane 0 "original routed (uncoalesced)" and wrote that the mode had no Current lane. That was wrong: the harness calls `frame(i, l!=0)`, so lane 0 runs with `volumeRoutedTransportEnabled=false`, i.e. **Current**, and lanes 1–3 are routed. The numbers above were right; the label and the "no Current lane" claim were not. Ratios to Current from the same run (mean of 4 paired blocks): coalesced 0.939 queued / 0.985 fenced; skip-empty 0.904 / 0.960; **2b 0.884 queued / 0.925 fenced** (2b below Current in all 8 blocks: queued 0.87–0.91, fenced 0.90–0.94). So in this one run 2b is ≈11.6% (queued) and ≈7.5% (fenced) cheaper per frame than Current, and the fenced coalesced lane is the only routed lane that is not clearly below it (blocks 0.95–1.00). Same limits as before: one process, one device, one repetition of the series, a 64-frame route interval; not a Person verdict.
 Re-run of `parity2b` after the refusal-isolation edit (8 poses, 23.3 s native): all gates PASS and the diffs are unchanged (pose 40: 1 refusal-to-accept pixel; others 0).
+
+## Timing repeat (2026-10-30)
+Zach, in chat: "Repeat timing" (budget file reset to 0 again with his OK; fresh work dir; window frontmost on two consecutive `lsappinfo` checks before I created the gate; every frame `focused: true`; 248.8 s). [JSON](GPU_RAY_TRANSPORT_6FE_STEP2B_TIMING_RUN2_2026-10-30.json).
+
+| ms/frame (mean of 4) | run 1 queued | run 1 fenced | run 2 queued | run 2 fenced |
+|---|---:|---:|---:|---:|
+| Current | 96.43 | 87.81 | 99.93 | 102.72 |
+| coalesced | 90.54 | 86.50 | 104.58 | 106.64 |
+| skip-empty (2a) | 87.11 | 84.28 | 100.63 | 103.81 |
+| 2b | 85.21 | 81.25 | 96.20 | 100.52 |
+
+| Ratio (mean of 4 paired blocks) | run 1 q / f | run 2 q / f |
+|---|---|---|
+| 2b / Current | 0.884 / 0.925 | **0.963 / 0.979** |
+| 2b / 2a | 0.980 / 0.964 | 0.956 / 0.968 |
+| 2b / coalesced | 0.942 / 0.939 | 0.920 / 0.943 |
+| coalesced / Current | 0.939 / 0.985 | 1.047 / 1.038 |
+
+- **Stable:** the ordering 2b < 2a < coalesced held in every block of both runs except run 1 queued block 3 (2b/2a 1.043); 2b/coalesced is 0.92–0.95 in both runs (all 16 blocks < 1); 2b/2a is 0.95–0.99 in run 2 (all 8 blocks < 1).
+- **Not stable:** the baseline moved. Current was 5–17% slower in run 2 (queued 96→100, fenced 88→103 ms/frame) and coalesced went from below Current (run 1) to above it (run 2; §6fb had coalesced slower than Current, so run 2 resembles that finding more). Consequently 2b vs Current is **3.7% / 2.1% (run 2) versus 11.6% / 7.5% (run 1)**: 2b was below Current in all 16 blocks (run 2 range 0.955–0.997), but the margin is a few percent, with two fenced blocks at 0.997 and 0.984, and the earlier 11.6% should not be quoted as the expected gain. Between-run drift (thermal/background load; I did not control or measure it) is larger than the within-run spread.
+- **Reading:** 2b is reliably the cheapest routed lane (≈6–8% under coalesced, ≈2–4% under 2a) and, on both runs, under Current by roughly 2–12%, with the Current gap the least well established number. Two runs, one device, one route.
+- Default stays OFF. What a default flip would still need: a Person look at the live window with 2b on, the Person-list item, and ideally a quieter-machine run or more repetitions to pin the Current gap.
