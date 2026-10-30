@@ -494,7 +494,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Select supported Python runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - name: Install focused Python dependencies
-        run: python3 -m pip install --user Flask==3.0.0 websockets==15.0.1
+        run: python -m pip install Flask==3.0.0 websockets==15.0.1
       - name: Run portfolio bridge regression witnesses
-        run: python3 -m unittest discover -s tests/singularity/py -p 'test_portfolio_bridge.py' -v
+        run: python -m unittest discover -s tests/singularity/py -p 'test_portfolio_bridge.py' -v
