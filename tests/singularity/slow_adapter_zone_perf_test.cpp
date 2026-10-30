@@ -72,20 +72,9 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    TempSaveRoot tempSaveRoot;
-    std::error_code copyEc;
-    const std::filesystem::path savesDir = "saves";
-    if (std::filesystem::exists(savesDir, copyEc)) {
-        for (const std::string& dirName : {"worlds", "zones", "homes"}) {
-            const auto srcPath = savesDir / dirName;
-            if (std::filesystem::exists(srcPath, copyEc)) {
-                std::filesystem::copy(srcPath, tempSaveRoot.path / dirName,
-                                      std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing, copyEc);
-            }
-        }
-    }
-
-    TestSupport::BootedEngineHarness h("Player", "humanoid", /*hydrateAllZones=*/false);
+    // Protect the real Zone identity store exactly like frame_lag_test.
+    TestSupport::RealSaveTreeGuard saveGuard(world);
+    TestSupport::BootedEngineHarness h;
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);

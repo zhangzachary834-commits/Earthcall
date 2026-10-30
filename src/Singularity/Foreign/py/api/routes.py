@@ -4,7 +4,8 @@ from pathlib import Path
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
-PORTFOLIO_ALLOWED_ORIGINS = {
+# Immutable defaults; environment overrides remain authoritative at request time.
+PORTFOLIO_ALLOWED_ORIGINS = frozenset({
     "https://zhangzachary834-commits.github.io",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
@@ -12,7 +13,7 @@ PORTFOLIO_ALLOWED_ORIGINS = {
     "http://127.0.0.1:3000",
     "http://localhost:5005",
     "http://127.0.0.1:5005",
-}
+})
 
 def _portfolio_allowed_origins():
     configured = os.environ.get("PORTFOLIO_ALLOWED_ORIGINS", "")
