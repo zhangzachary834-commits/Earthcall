@@ -41,6 +41,9 @@ struct KernelRoutedTransport {
     // workTrace is cleared at the start of every encode(), so it holds the last frame's complete per-lane trace. It never changes what the producers publish.
     bool observeWork=false;std::array<WGPUComputePipeline,3> workPipes{};WGPUBuffer workTrace=nullptr;uint64_t workTraceBytes=0;
     bool enableWorkTrace(bool on);
+    // §6fe refusal isolation (same Kernel diagnostic, default OFF; rebuild by enableWorkTrace(false) then (true)): when traceFallbackByRay is set, the Fallback producer's trace is indexed by ray id
+    // instead of tileSlot*16+rayInTile (so the same ray can be compared across routing variants) and bits 23..24 hold the member index being evaluated at the lane's exit (the refusing member on a refusal).
+    bool traceFallbackByRay=false;
     // §6fe step 2b (Kernel ablation toggle, default OFF; implies the step-2a empty-tile skip): tiles with exactly one wave-active member and no overlap route to the S1 producer
     // with the member id packed in bits 28..31 of the list entry (producer variant derived by substitution: member from the entry, stack 20 = the fallback producer's, Subpanel info.x = member).
     // ecConsume reads only Subpanel.info.x, so the consumer is unchanged. Same classifier proof S1/S2 already trust for their other members.

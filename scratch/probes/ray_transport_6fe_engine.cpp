@@ -104,7 +104,7 @@ int main(int argc,char**argv){
   };
   Json result={{"schema","6ey-actual-engine-release-scripted-path-1"},{"mode",mode},{"init_ms",initMs},{"framebuffer",{2560,1440}},{"objects",24},{"media",4},{"foreign_network_service",false},{"fixed_step",dt},{"snapshot_scope","3D scene before ImGui overlay, through actual ScreenRecorder"}};
   const auto gate=output.parent_path()/"foreground-ready";auto gateStart=Clock::now();
-  if(mode!="worktrace"&&mode!="worktrace_in"&&mode!="parity2b"&&mode!="parity2b_more"){std::cout<<"WAIT_FOREGROUND "<<gate<<'\n';
+  if(mode!="worktrace"&&mode!="worktrace_in"&&mode!="parity2b"&&mode!="parity2b_more"&&mode!="refusal2b"){std::cout<<"WAIT_FOREGROUND "<<gate<<'\n';
   while(!fs::exists(gate)||glfwGetWindowAttrib(e.window(),GLFW_FOCUSED)!=GLFW_TRUE){need(elapsed(gateStart)<120000,"foreground handoff timeout");glfwPollEvents();std::this_thread::sleep_for(std::chrono::milliseconds(10));}
   need(glfwGetWindowAttrib(e.window(),GLFW_FOCUSED)==GLFW_TRUE,"foreground handoff did not focus native window");
   requireFocus=true;result["foreground_handoff_ms"]=elapsed(gateStart);result["foreground_required"]=true;}
@@ -193,6 +193,26 @@ int main(int argc,char**argv){
     caps.push_back(Json{{"index",index},{"file",name},{"fnv",hex(fnv(w.data(),w.size()*4))},{"publication_fnv",pubHash()}});
    }
    result["traces"]=caps;need(r->setRoutedWorkTraceForDiagnostics(false),"trace off");
+  }
+  if(mode=="refusal2b"){
+   // §6fe refusal isolation: poses where 2b published a ray the original refused (40: 1 px, 44: 2 px). Fallback trace indexed by ray id with the member at the lane's exit
+   // (the refusing member on a refusal). Same ray compared across original / skip-empty (2a) / 2b: a ray absent from the 2a fallback trace was in a wave-empty tile; present in 2a but
+   // absent in 2b was in a single-active-member tile (S1). Trace words: work bits 0..15, reason 16..21, written bit 22, member 23..24.
+   const uint32_t strips=(k->height+k->stripRows-1)/k->stripRows;const uint64_t stride=uint64_t(k->tiles)*16;Json rows=Json::array();
+   r->setRoutedCoalescedPassesForDiagnostics(true);r->setRoutedWorkLimitForDiagnostics(1024);
+   need(r->setRoutedWorkTraceForDiagnostics(false),"trace off");r->setRoutedFallbackTraceByRayForDiagnostics(true);need(r->setRoutedWorkTraceForDiagnostics(true)&&k->observeWork&&k->traceFallbackByRay,"by-ray trace on");
+   for(int index:{40,44}){
+    auto grab=[&](bool skip,bool one){r->setRoutedSkipEmptyTilesForDiagnostics(skip);r->setRoutedSingleMemberS1ForDiagnostics(one);frame(index,true);fence(k);auto w=readWords(k,k->workTrace,k->workTraceBytes);return w;};
+    auto t0=grab(false,false);auto t2=grab(true,false);auto t3=grab(false,true);r->setRoutedSkipEmptyTilesForDiagnostics(false);r->setRoutedSingleMemberS1ForDiagnostics(false);
+    const auto at=[&](const std::vector<uint32_t>& t,uint64_t s,uint64_t id){return t[s*3*stride+2*stride+id];};
+    uint64_t refusals=0,fallbackLanes=0;
+    for(uint64_t s=0;s<strips;++s)for(uint64_t id=0;id<stride;++id){const uint32_t v=at(t0,s,id);if(!(v>>22&1))continue;++fallbackLanes;const uint32_t reason=(v>>16)&63u;if(!reason)continue;++refusals;
+     const uint32_t v2=at(t2,s,id),v3=at(t3,s,id);
+     const char* route=(v2>>22&1)?((v3>>22&1)?"still-fallback-in-2b":"single-active-member S1 in 2b"):"wave-empty tile skipped by 2a";
+     rows.push_back(Json{{"index",index},{"strip",s},{"ray_id",id},{"approx_pixel",Json::array({id%k->width,s*k->stripRows+id/k->width})},{"orig_reason",reason},{"orig_work",v&0xFFFF},{"refusing_member",(v>>23)&3u},{"in_2a_fallback",bool(v2>>22&1)},{"in_2b_fallback",bool(v3>>22&1)},{"2b_fallback_reason",(v3>>16)&63u},{"route_under_2b",route}});}
+    result["pose_"+std::to_string(index)]=Json{{"fallback_lanes",fallbackLanes},{"refusals",refusals}};
+   }
+   result["refusals"]=rows;result["strips"]=strips;need(r->setRoutedWorkTraceForDiagnostics(false),"trace off");r->setRoutedFallbackTraceByRayForDiagnostics(false);
   }
   if(mode=="census"){
    // §6fd: actual route masks on the frozen 64-pose route, observer-controlled. Every observer-ON frame is cross-checked against the production list counters.

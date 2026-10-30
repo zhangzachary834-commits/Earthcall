@@ -1,0 +1,63 @@
+{
+ "schema": "earthcall.6fe.step2b.refusal_isolation/1",
+ "signed": "Claude Code / Sonnet 5.5 / 2026-10-30",
+ "source_result_sha256": "f401ca484432bc7be3d012756120a6022905a3114cd5c4a9026982d19b171b9d",
+ "pose_40": {
+  "fallback_lanes": 3115280,
+  "refusals": 1
+ },
+ "pose_44": {
+  "fallback_lanes": 3144960,
+  "refusals": 2
+ },
+ "refusals": [
+  {
+   "2b_fallback_reason": 0,
+   "approx_pixel": [
+    797,
+    463
+   ],
+   "in_2a_fallback": true,
+   "in_2b_fallback": false,
+   "index": 40,
+   "orig_reason": 4,
+   "orig_work": 26,
+   "ray_id": 80157,
+   "refusing_member": 1,
+   "route_under_2b": "single-active-member S1 in 2b",
+   "strip": 9
+  },
+  {
+   "2b_fallback_reason": 0,
+   "approx_pixel": [
+    757,
+    552
+   ],
+   "in_2a_fallback": true,
+   "in_2b_fallback": false,
+   "index": 44,
+   "orig_reason": 4,
+   "orig_work": 28,
+   "ray_id": 62197,
+   "refusing_member": 1,
+   "route_under_2b": "single-active-member S1 in 2b",
+   "strip": 11
+  },
+  {
+   "2b_fallback_reason": 0,
+   "approx_pixel": [
+    1404,
+    794
+   ],
+   "in_2a_fallback": true,
+   "in_2b_fallback": false,
+   "index": 44,
+   "orig_reason": 4,
+   "orig_work": 85,
+   "ray_id": 67964,
+   "refusing_member": 2,
+   "route_under_2b": "single-active-member S1 in 2b",
+   "strip": 16
+  }
+ ]
+}

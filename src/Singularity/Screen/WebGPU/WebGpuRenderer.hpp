@@ -52,6 +52,8 @@ public:
     void resetRoutedRouteObserverForDiagnostics() { if(_kernelRouted)_kernelRouted->resetRouteHistogram(); }
     void setRoutedSingleMemberS1ForDiagnostics(bool on) { if(_kernelRouted)_kernelRouted->singleMemberS1=on&&_kernelRouted->classifyS1&&_kernelRouted->s1Member; }
     bool setRoutedWorkTraceForDiagnostics(bool on) { return _kernelRouted && _kernelRouted->enableWorkTrace(on); }
+    // §6fe refusal isolation: index the Fallback trace by ray id and record the member being evaluated at exit (call with the trace off, then turn it on).
+    void setRoutedFallbackTraceByRayForDiagnostics(bool on) { if (_kernelRouted) _kernelRouted->traceFallbackByRay = on; }
     void setRoutedSkipEmptyTilesForDiagnostics(bool on) { if(_kernelRouted)_kernelRouted->skipEmptyTiles=on&&_kernelRouted->classifySkip; }
     void setRoutedWorkLimitForDiagnostics(uint32_t limit) { if(_kernelRouted)_kernelRouted->workLimit=std::min(limit,1024u); }
 

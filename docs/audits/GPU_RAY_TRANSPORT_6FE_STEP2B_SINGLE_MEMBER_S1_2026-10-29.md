@@ -55,3 +55,17 @@ Zach, in chat: "Run parity". New harness mode `parity2b_more` (same per-pose gat
 - Across all 20 poses now checked (8 earlier + 12 here), 3 pixels of ≈74 M rays change, all refusal→accept. This is exactly the behavior of the contract Zach accepted ("refusals decided by classifier-proved active members").
 - **Still not done:** which member refused on the pose-40/44 pixels (inferred from the contract, not proven); 44 of 64 outside poses and the 8 other inside poses were not run; one device.
 - Decision: parity gate is now met on 20 poses under the accepted contract; the remaining gate before a default change is the Current-vs-2b same-process comparison (Person list).
+
+## Refusal isolation (2026-10-30)
+Zach, in chat: "Isolate refusals". Instrument: the work-trace Fallback producer variant can now be indexed by ray id (`traceFallbackByRay`, default OFF, Kernel diagnostic, named in the header comment) and records the member being evaluated at the lane's exit; harness mode `refusal2b` (2.9 s native) reads that trace for the original, skip-empty (2a) and 2b routings on poses 40 and 44. [JSON](GPU_RAY_TRANSPORT_6FE_STEP2B_REFUSAL_ISOLATION_2026-10-30.json).
+
+| Pose | Pixel | Original refusal | Refusing curtain (member) | Original work at exit | Route in 2a / 2b |
+|---|---|---|---|---:|---|
+| 40 | (797,463) | reason 4 (degenerate coarse interval) | 1 | 26 | present in 2a fallback (not wave-empty) / not in 2b fallback: single-active-member tile → S1 |
+| 44 | (757,552) | reason 4 | 1 | 28 | same |
+| 44 | (1404,794) | reason 4 | 2 | 85 | same |
+
+- **Validation:** the three ray ids map back to exactly the three pixels the parity diffs reported (so the by-ray mapping is right), and those are the only fallback refusals on those two poses (3.1 M fallback lanes each).
+- **Finding:** all three refusals are reason 4 raised while evaluating a single curtain (1, 1, 2), at low work (26, 28, 85), and in tiles the classifier proves have exactly one active curtain. Under 2b the tile's S1 producer evaluates only that active curtain q and the ray is accepted; had q been the refusing curtain 2b would have refused the same ray, so **the refusing curtain is not the tile's active one**. That proves the mechanism this note previously inferred: the original's refusals come from a curtain the wave-mask proof had already excluded for the tile, which S1/S2 already ignore. It is exactly the contract Zach accepted, and no other refusal/accept change exists on these poses.
+- **Not done:** I did not read q itself (the 2b S1 variant is untraced), so q≠member is inferred from the accepted publication, not read directly; only poses 40 and 44 were isolated (they are the only ones with differing pixels among the 20 checked).
+- The Pass A trace default (tile-slot indexing) is unchanged; the renderer-path edit is only `tracing` no longer being disabled for S2/Fallback when 2b is on (matters only while `observeWork` is set). I did not re-run `parity2b` after this edit.

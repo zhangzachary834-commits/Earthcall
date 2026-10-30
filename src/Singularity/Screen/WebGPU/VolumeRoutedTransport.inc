@@ -145,7 +145,9 @@ bool KernelRoutedTransport::enableWorkTrace(bool on){
   if(!replace(src,"struct Config {rayCount:u32,maxSubPerRay:u32,maxOverPerRay:u32,budget:u32};","struct Config {rayCount:u32,maxSubPerRay:u32,maxOverPerRay:u32,budget:u32,width:u32,height:u32,start:u32,stripRows:u32};"))return enableWorkTrace(false);
   if(!replace(src,"@group(0) @binding(8) var<storage, read> routeCounts: array<u32>;","@group(0) @binding(8) var<storage, read> routeCounts: array<u32>;\n@group(0) @binding(9) var<storage, read_write> workTrace: array<u32>;"))return enableWorkTrace(false);
   // Every producer exit path writes its counts through exactly one 'rays[id].counts = ' statement inside a braced block; record (work, reason) just before it.
-  const std::string site="rays[id].counts = ";const std::string record="workTrace[(cfg.start/cfg.stripRows)*3u*((arrayLength(&tileOffsets)-1u)*16u)+"+std::to_string(i)+"u*((arrayLength(&tileOffsets)-1u)*16u)+tileSlot*16u+rayInTile]=(work&0xFFFFu)|((reason&63u)<<16)|(1u<<22); ";
+  const bool byRay=traceFallbackByRay&&i==2;
+  if(byRay){if(!replace(src," var memStart = vec4u(0u);"," var memStart = vec4u(0u); var dbgMember = 0u;")||!replace(src,"memStart[member] = count;","memStart[member] = count; dbgMember = member;"))return enableWorkTrace(false);}
+  const std::string site="rays[id].counts = ";const std::string record="workTrace[(cfg.start/cfg.stripRows)*3u*((arrayLength(&tileOffsets)-1u)*16u)+"+std::to_string(i)+"u*((arrayLength(&tileOffsets)-1u)*16u)+"+(byRay?"id":"tileSlot*16u+rayInTile")+"]=(work&0xFFFFu)|((reason&63u)<<16)|(1u<<22)"+(byRay?"|((dbgMember&3u)<<23u)":"")+"; ";
   size_t n=0;for(size_t p=0;(p=src.find(site,p))!=std::string::npos;p+=site.size()+record.size()){src.insert(p,record);++n;}
   if(n<3)return enableWorkTrace(false);
   workPipes[i]=pipeline(device,src,entries[i]);if(!workPipes[i])return enableWorkTrace(false);
@@ -218,7 +220,7 @@ bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const K
    auto ag=group(device,accumPipe,{entry(0,counts,16),entry(1,routeHistogram,1032*4)});dispatch(observerPipe,og,(tiles+63)/64);dispatch(accumPipe,ag,1);wgpuBindGroupRelease(og);wgpuBindGroupRelease(ag);
   }
   for(unsigned i=0;i<3;++i){auto entries=std::vector<WGPUBindGroupEntry>{entry(0,u.buffer,u.size,u.offset),entry(1,uniformSpecs.buffer,uniformSpecs.size,uniformSpecs.offset),entry(2,rays,uint64_t(capacity)*48),entry(3,singles,uint64_t(capacity)*64*16)};if(i==2)entries.push_back(entry(4,overlaps,uint64_t(capacity)*16*16));entries.push_back(entry(5,offsets,uint64_t(tiles+1)*4));entries.push_back(entry(6,indices,uint64_t(capacity)*4));entries.push_back(entry(7,lists[i],uint64_t(tiles)*4));entries.push_back(entry(8,counts,16));
-   const bool tracing=observeWork&&workTrace&&workPipes[i]&&!oneS1;auto producer=tracing?workPipes[i]:(i==0&&oneS1?s1Member:common[i+3]);if(tracing)entries.push_back(entry(9,workTrace,workTraceBytes));
+   const bool tracing=observeWork&&workTrace&&workPipes[i]&&!(oneS1&&i==0);auto producer=tracing?workPipes[i]:(i==0&&oneS1?s1Member:common[i+3]);if(tracing)entries.push_back(entry(9,workTrace,workTraceBytes));
    auto bg=group(device,producer,entries);auto pass=open();wgpuComputePassEncoderSetPipeline(pass,producer);wgpuComputePassEncoderSetBindGroup(pass,0,bg,0,nullptr);note(producer,i*12,3);wgpuComputePassEncoderDispatchWorkgroupsIndirect(pass,args,i*12);close(pass);wgpuBindGroupRelease(bg);
   }
   withContext(p.consumer);wgpuBindGroupRelease(localGroup);
