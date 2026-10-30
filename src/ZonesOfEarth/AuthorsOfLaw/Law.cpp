@@ -833,9 +833,8 @@ void ReteNetwork::refillBetaMemory(BetaNode& beta) {
     if (!right) return;
     
     if (beta.leftIsBeta) {
-        auto it = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == beta.leftId; });
-        if (it == _betaNodes.end()) return;
-        const BetaNode* left = &(*it);
+        const BetaNode* left = findBeta(beta.leftId);
+        if (!left) return;
         
         for (const auto& leftToken : left->memory) {
             for (const auto& rightFact : right->memory) {
@@ -925,9 +924,8 @@ void ReteNetwork::propagateFact(const FactPtr& f) {
         bool betaActivated = false;
 
         if (beta.leftIsBeta) {
-            auto it = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == beta.leftId; });
-            if (it == _betaNodes.end()) continue;
-            const BetaNode* left = &(*it);
+            const BetaNode* left = findBeta(beta.leftId);
+            if (!left) continue;
             
             if (inLeftBeta) {
                 for (const auto& leftToken : newBetaTokens[beta.leftId]) {
@@ -1079,13 +1077,13 @@ void ReteNetwork::retractFirst(std::size_t count) {
         }
     }
     for (std::size_t betaId : affectedBetas) {
-        auto it = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == betaId; });
-        if (it != _betaNodes.end()) {
-            it->memory.erase(std::remove_if(it->memory.begin(), it->memory.end(), 
+        BetaNode* beta = findBeta(betaId);
+        if (beta) {
+            beta->memory.erase(std::remove_if(beta->memory.begin(), beta->memory.end(),
                 [&](const ReteToken& t) { 
                     for (const auto& f : t.facts) if (removedIds.count(f->id)) return true;
                     return false;
-                }), it->memory.end());
+                }), beta->memory.end());
         }
     }
     if (anyInAgenda) {
@@ -1125,14 +1123,14 @@ void ReteNetwork::detachFactConsequences(const FactPtr& fact) {
     auto bIt = _factBetaNodes.find(factId);
     if (bIt != _factBetaNodes.end()) {
         for (std::size_t betaId : bIt->second) {
-            auto bNodeIt = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == betaId; });
-            if (bNodeIt != _betaNodes.end()) {
-                bNodeIt->memory.erase(std::remove_if(bNodeIt->memory.begin(), bNodeIt->memory.end(),
+            BetaNode* bNode = findBeta(betaId);
+            if (bNode) {
+                bNode->memory.erase(std::remove_if(bNode->memory.begin(), bNode->memory.end(),
                                                     [&](const ReteToken& token) {
                                                         for (const auto& f : token.facts) if (f->id == factId) return true;
                                                         return false;
                                                     }),
-                                      bNodeIt->memory.end());
+                                      bNode->memory.end());
             }
         }
         _factBetaNodes.erase(bIt);
@@ -1299,13 +1297,13 @@ void ReteNetwork::retractStateFactsBySubject(const std::string& subjectId) {
         }
     }
     for (std::size_t betaId : affectedBetas) {
-        auto it = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == betaId; });
-        if (it != _betaNodes.end()) {
-            it->memory.erase(std::remove_if(it->memory.begin(), it->memory.end(), 
+        BetaNode* beta = findBeta(betaId);
+        if (beta) {
+            beta->memory.erase(std::remove_if(beta->memory.begin(), beta->memory.end(),
                 [&](const ReteToken& t) { 
                     for (const auto& f : t.facts) if (removedIds.count(f->id)) return true;
                     return false;
-                }), it->memory.end());
+                }), beta->memory.end());
         }
     }
     if (anyInAgenda) {
@@ -1459,14 +1457,14 @@ std::vector<std::string> ReteNetwork::retractFactsAbout(const Singular* being) {
         }
     }
     for (std::size_t betaId : affectedBetas) {
-        auto it = std::find_if(_betaNodes.begin(), _betaNodes.end(), [&](const BetaNode& b) { return b.id == betaId; });
-        if (it != _betaNodes.end()) {
-            it->memory.erase(std::remove_if(it->memory.begin(), it->memory.end(),
+        BetaNode* beta = findBeta(betaId);
+        if (beta) {
+            beta->memory.erase(std::remove_if(beta->memory.begin(), beta->memory.end(),
                                             [&](const ReteToken& token) {
                                                 for (const auto& f : token.facts) if (removedIds.count(f->id)) return true;
                                                 return false;
                                             }),
-                             it->memory.end());
+                             beta->memory.end());
         }
     }
     if (anyInAgenda) {
@@ -1529,7 +1527,12 @@ std::size_t ReteNetwork::addBetaNode(const std::string& description,
     node.leftId = leftId;
     node.rightAlphaId = rightAlphaId;
     node.join = std::move(join);
+    const std::size_t id = node.id;
     _betaNodes.push_back(std::move(node));
+    if (id >= _betaIndexById.size()) {
+        _betaIndexById.resize(id + 1, static_cast<std::size_t>(-1));
+    }
+    _betaIndexById[id] = _betaNodes.size() - 1;
     BetaNode& added = _betaNodes.back();
 
     // Creating the beta is what makes its two alphas read. Until now they may
@@ -1581,12 +1584,10 @@ void ReteNetwork::bindLawToBeta(const std::string& lawId, std::size_t betaNodeId
     // Beta memory is kept current from creation onward (addBetaNode refills
     // it), so the backlog is simply whatever the join already holds.
     const std::time_t now = std::time(nullptr);
-    for (const auto& beta : _betaNodes) {
-        if (beta.id != betaNodeId) continue;
-        for (const auto& token : beta.memory) {
+    if (const BetaNode* beta = findBeta(betaNodeId)) {
+        for (const auto& token : beta->memory) {
             _agenda.push_back(ReteActivation{lawId, token, now});
         }
-        break;
     }
 }
 
@@ -1811,6 +1812,24 @@ const ReteNetwork::AlphaNode* ReteNetwork::findAlpha(std::size_t id) const {
         return nullptr;
     }
     return &_alphaNodes[index];
+}
+
+const ReteNetwork::BetaNode* ReteNetwork::findBeta(std::size_t id) const {
+    if (id >= _betaIndexById.size()) return nullptr;
+    const std::size_t index = _betaIndexById[id];
+    if (index == static_cast<std::size_t>(-1) || index >= _betaNodes.size()) {
+        return nullptr;
+    }
+    return &_betaNodes[index];
+}
+
+ReteNetwork::BetaNode* ReteNetwork::findBeta(std::size_t id) {
+    if (id >= _betaIndexById.size()) return nullptr;
+    const std::size_t index = _betaIndexById[id];
+    if (index == static_cast<std::size_t>(-1) || index >= _betaNodes.size()) {
+        return nullptr;
+    }
+    return &_betaNodes[index];
 }
 
 ReteNetwork::AlphaNode* ReteNetwork::findAlpha(std::size_t id) {
