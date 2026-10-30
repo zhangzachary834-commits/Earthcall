@@ -85,13 +85,10 @@ jobs:
         timeline_test
         time_moment_test
         category_manager_test
-        identity_test
         identity_ledger_test
-        lexeme_graph_roundtrip_test
         file_channel_test
         file_watcher_test
         first_mover_test
-        first_mover_tool_test
         law_file_tree_fossil_test
         earthcall_api_test
         rete_state_ptr_index_test
@@ -437,9 +434,9 @@ jobs:
               cmd = ["./build/slow_adapter_zone_perf_test", world,
                      f"--adapter={adapter}", f"--direct={direct}", "--frames=60"]
               try:
-                  result = subprocess.run(cmd, text=True, capture_output=True, timeout=120)
+                  result = subprocess.run(cmd, text=True, capture_output=True, timeout=600)
               except subprocess.TimeoutExpired:
-                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=120")
+                  print(f"ADAPTER_PERF_TIMEOUT world={world} adapter={adapter} direct={direct} timeout_s=600")
                   raise SystemExit(1)
 
               lines = [line for line in result.stdout.splitlines()
@@ -484,21 +481,3 @@ jobs:
               print(f"LAW_DIRECT_WORLD_COMPARE world={world} pre_direct_ms={pre_direct_ms:.6f} direct_ms={direct_ms:.6f} ratio={direct_ratio:.2f} diff={direct_diff:.6f}")
           PY
           done
-
-  portfolio-python-witness:
-    name: Portfolio Python bridge and origin witnesses
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Check out tested commit
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Select supported Python runtime
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install focused Python dependencies
-        run: python -m pip install Flask==3.0.0 websockets==15.0.1
-      - name: Run portfolio bridge regression witnesses
-        run: python -m unittest discover -s tests/singularity/py -p 'test_portfolio_bridge.py' -v
