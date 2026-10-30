@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+"""Independent analysis command; no Earthcall app imports or runtime hooks.
+Codex / GPT-6.1 Sol / 01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca / 2026-10-14 PDT.
+"""
+from performance_analysis.cli import main
+
+if __name__ == '__main__':
+    main()

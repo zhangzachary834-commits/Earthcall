@@ -11,6 +11,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
 #include "Singularity/Screen/VolumeDensity.hpp"
+#include "Singularity/Screen/VolumeZeroProof.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "support/test_harness.hpp"
@@ -51,6 +52,8 @@ struct Frame {
     uint64_t lit = 0;
     double ms = 0.0;
     uint32_t proven = 0;
+    double firstPrepareMs = 0;
+    size_t firstParameterBytes = 0, firstProofBytes = 0;
     uint32_t firstCompiles = 0;
     uint32_t firstProofBuilds = 0;   // zero-density proofs built by the first frame after a change
     uint32_t warmCompiles = 0;
@@ -171,7 +174,11 @@ int main() {
             return {hash, lit};
         };
         Frame frame;
+        const auto firstStart=std::chrono::steady_clock::now();
         drawOnce();
+        frame.firstPrepareMs=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-firstStart).count();
+        frame.firstParameterBytes=renderer.frameStats().volumeParameterBytesUploaded;
+        frame.firstProofBytes=renderer.frameStats().volumeProofBytesUploaded;
         frame.firstCompiles = renderer.frameStats().volumeProgramCompiles;
         frame.firstProofBuilds = renderer.frameStats().volumeZeroProofBuilds;
         sync();   // warm: compile, build proofs
@@ -261,6 +268,25 @@ int main() {
         }
     }
 
+    // Proof coordinates are local to each translated medium. Sample near the
+    // certified support envelope without treating it as the bitmap domain. Odd-sized images also
+    // include exact axis-parallel centre rays, which must retain the box path.
+    for (const auto shift : {glm::vec3(100,-50,200),glm::vec3(-1024,32,-512)}) {
+        auto translated=geom::FieldNode::fromJson(zone.at("spatialFields").front());
+        translated->origin+=shift;
+        const auto grid=Rendering::buildVolumeZeroProof(*translated->volumeDensity,glm::abs(translated->scale));
+        const glm::vec3 eyes[]={shift+glm::vec3(0,50,0),translated->origin+grid.supportMin-glm::vec3(.0001f)};
+        const glm::vec3 looks[]={shift+glm::vec3(0,50,100),translated->origin};
+        for(int edge=0;edge<2;++edge) {
+            renderer.setCamera(glm::lookAt(eyes[edge],looks[edge],glm::vec3(0,1,0)),
+                glm::perspectiveZO(glm::radians(60.0f),float(width)/height,.1f,10000.0f),eyes[edge]);
+            const auto exact=render({translated},false,7.25,1);
+            const auto candidate=render({translated},true,7.25,1);
+            check(exact.lit>0 && candidate.proven>0 && exact.rgba==candidate.rgba,
+                  "translated medium/parallel-or-support-edge sample retains every byte");
+        }
+    }
+
     // Keep the Piecewise address while changing all-empty density to positive.
     // Render proof-on first after the edit: an intervening proof-off frame
     // would evict the old memo and conceal a stale empty-envelope regression.
@@ -316,6 +342,9 @@ int main() {
               "density accepts another medium's density tree");
         const Frame afterDensity = render({edited}, true, 7.25, 1);
         const Frame afterDensityExact = render({edited}, false, 7.25, 1);
+        std::printf("EDIT density cpu_ms=%.9f compiles=%u proof_builds=%u parameter_bytes=%zu proof_bytes=%zu\n",
+            afterDensity.firstPrepareMs,afterDensity.firstCompiles,afterDensity.firstProofBuilds,
+            afterDensity.firstParameterBytes,afterDensity.firstProofBytes);
         check(afterDensity.firstProofBuilds == 1 && afterDensity.rgba == afterDensityExact.rgba,
               "a density edit rebuilds exactly one proof and stays byte-identical to exact");
     }

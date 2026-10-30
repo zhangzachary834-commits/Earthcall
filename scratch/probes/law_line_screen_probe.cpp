@@ -12,7 +12,11 @@
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Singularity/OntoMath/Field.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include <GLFW/glfw3.h>
 #include "../../third_party/stb/stb_image.h"
 #include <filesystem>
 #include <fstream>
@@ -29,6 +33,7 @@ int main(int argc, char** argv) {
     std::cout.setf(std::ios::unitbuf);
     require(argc == 2 || argc == 3, "source repository argument supplied");
     const bool artEditor=argc==3 && std::string(argv[2])=="--art-editor";
+    const bool propertyBearers=argc==3 && std::string(argv[2])=="--property-bearers";
     const std::filesystem::path root = argv[1], saves = root / "saves";
     const auto stage = std::filesystem::current_path() / "saves";
     std::filesystem::create_directories(stage / "zones/LawLine");
@@ -53,6 +58,10 @@ int main(int argc, char** argv) {
     engine.getKeyboardHandler()->disable();
     engine.getMouseHandler()->disable();
     engine.getMainMenu().close();
+    if (propertyBearers) {
+        glfwShowWindow(engine.window());
+        glfwFocusWindow(engine.window());
+    }
     auto& laws = *engine.getLawManager();
     auto* terminal = Singularity::Terminal::TerminalChannel::find(laws);
     auto* screen = Singularity::Screen::ScreenChannel::find(laws);
@@ -93,7 +102,7 @@ int main(int argc, char** argv) {
         const auto before = laws.getAll().size();
         PropertyValue previous;lawGetValue(*terminal,PropertyPath::parse("lastCreated"),previous);
         terminal->inject(line);
-        captureSensedFrame=line.find("ScreenRegion")!=std::string::npos || line.find("Recolour My Region")!=std::string::npos;
+        captureSensedFrame=!propertyBearers && (line.find("ScreenRegion")!=std::string::npos || line.find("Recolour My Region")!=std::string::npos);
         for (int i=0;i<4;++i) tick(.016f);
         captureSensedFrame=false;
         PropertyValue created;lawGetValue(*terminal,PropertyPath::parse("lastCreated"),created);
@@ -111,8 +120,24 @@ int main(int argc, char** argv) {
         {"session","01a10992-828e-7e80-890c-c64b09141e18"},{"date","2026-10-07"},
         {"author",engine.getPerson()->getIdentifier()},{"presence","C++ test seam; no human private key"}};
     auto capture = [&](const char* name, auto expected) {
-        lawSetValue(*recorder,PropertyPath::parse("snapshot"),true); tick(.016f);
         PropertyValue path,drawn;
+        PropertyValue previous;lawGetValue(*recorder,PropertyPath::parse("lastSnapshotPath"),previous);
+        // Native drawable acquisition may skip a startup/occluded frame. Wait
+        // a bounded number of actual ticks; a stale PNG is never accepted.
+        for(int attempt=0;attempt<(propertyBearers?30:1);++attempt) {
+            lawSetValue(*recorder,PropertyPath::parse("snapshot"),true); tick(.016f);
+            lawGetValue(*recorder,PropertyPath::parse("lastSnapshotPath"),path);
+            if(path!=previous && std::holds_alternative<std::string>(path) &&
+               std::filesystem::exists(std::get<std::string>(path))) break;
+        }
+        if(propertyBearers && path==previous) {
+            PropertyValue status,error;
+            lawGetValue(*recorder,PropertyPath::parse("status"),status);
+            lawGetValue(*recorder,PropertyPath::parse("lastError"),error);
+            std::cerr << "Recorder status: " << std::get<std::string>(status)
+                      << "; error: " << std::get<std::string>(error) << '\n';
+        }
+        require(path!=previous,"capture belongs to a fresh completed frame");
         lawGetValue(*recorder,PropertyPath::parse("lastSnapshotPath"),path);
         lawGetValue(*screen,PropertyPath::parse("output.drawn"),drawn);
         require(std::get<bool>(drawn),"Engine reports a submitted direct field");
@@ -132,6 +157,93 @@ int main(int argc, char** argv) {
         require(maxError<=1,"decoded pixels match independent mathematical expectation");
         evidence[name]={{"width",w},{"height",h},{"pixels",pixels},{"maxByteError",maxError}};
     };
+    if (propertyBearers) {
+        // Zach's October 17 requirement: identity + added Properties only.
+        // Singular is abstract; use an existing non-Object concrete Singular and
+        // a plain Object, retaining both through the common Singular interface.
+        // Neither is put in the geometry-render list. No shape/material setter
+        // participates: all visible form is authored by the Terminal sentences.
+        // These first-seed fixture identities stand under the fixture author's
+        // authority; no inhabited save or human private key is touched.
+        const auto objectCount=mgr.active().getOwnedObjects().size();
+        std::vector<std::shared_ptr<Singular>> bearers{
+            std::make_shared<Singularity::Language::Lexeme>("property-only source","property-screen-singular"),
+            std::make_shared<Object>("property-screen-object")};
+        evidence["session"]="01a10a2b-a247-7c11-9d5f-7a8b89df6cfc";
+        evidence["date"]="2026-10-17";
+        evidence["scope"]="Singular-interface source and ordinary Object; added region Properties only";
+        std::ofstream programs("property-bearer-programs.txt");
+        const auto author=[&](const std::string& program) {
+            require(program.find("shape")==std::string::npos && program.find("Shape")==std::string::npos &&
+                    program.find("material")==std::string::npos && program.find("Material")==std::string::npos,
+                    "authored program specifies no shape or material");
+            programs << program << '\n'; programs.flush();
+            speak(program);
+        };
+        // Independent expected sets: two separated normalized vertical bands.
+        // The authored polynomial below selects them without a region-kind tag.
+        const std::string bounds="(u - 0.125) * (u - 0.25) * (u - 0.625) * (u - 0.75)";
+        const auto expectedBand=[](int x,int y,int w,int h,float blue) {
+            const float u=(x+.5f)/w,v=(y+.5f)/h;
+            const bool inside=(u>=.125f && u<=.25f)||(u>=.625f && u<=.75f);
+            return inside?glm::vec3(u,v,blue):glm::vec3(0,0,1);
+        };
+        for (const auto& retained : bearers) {
+            Singular& bearer=*retained;
+            const std::string id=bearer.getIdentifier(), region="@"+id+".region";
+            require(mgr.active().retainSingular(retained),"fixture source retained as a Singular in the Zone");
+            const std::string record="ScreenRegion <color: VectorField <pieces: [Piece <value: $((u, v, 0.25)), where: $("+bounds+")>, Piece <value: $((0, 0, 1))>]>, selector: ScalarField <pieces: [Piece <value: $("+bounds+")>]>>";
+            author("called \""+id+" grant\" becomes true if is a Person then Sequence <children: [add property "+region+" to "+record+", add property @screen-channel.output.colorPath to \""+region+".color\"]>");
+            require(bearer.dynamicProperties().size()==1 && bearer.hasDynamicProperty("region"),
+                    "source gains only its authored region Property");
+            PropertyValue colorValue,selectorValue;
+            require(lawGetValue(bearer,PropertyPath::parse("region.color"),colorValue) &&
+                    lawGetValue(bearer,PropertyPath::parse("region.selector"),selectorValue),
+                    "base Singular property paths resolve typed color and selector");
+            auto color=std::get<std::shared_ptr<OntoMath::VectorField>>(colorValue);
+            auto selector=std::get<std::shared_ptr<OntoMath::ScalarField>>(selectorValue);
+            for (int x=0;x<64;++x) {
+                const double u=(x+.5)/64;
+                auto rgb=color->astDefinition.evaluate({{"u",u},{"v",.5}});
+                auto mask=selector->astDefinition.evaluate({{"u",u}});
+                double signedValue=0;
+                require(rgb && mask && std::holds_alternative<glm::vec3>(*rgb) &&
+                        propertyValueToNumber(*mask,signedValue),"isolated authored mathematics is defined");
+                const bool inside=(u>=.125 && u<=.25)||(u>=.625 && u<=.75);
+                require((signedValue<=0)==inside &&
+                        glm::length(std::get<glm::vec3>(*rgb)-expectedBand(x,0,64,1,.25f))<1e-6f,
+                        "CPU color/support and observation selector agree with independent band definition");
+            }
+            capture((id+"-bands").c_str(),[&](int x,int y,int w,int h)->std::optional<glm::vec3>{return expectedBand(x,y,w,h,.25f);});
+            int width=0,height=0;glfwGetFramebufferSize(engine.window(),&width,&height);
+            const int sx=width*3/16,sy=height/2;
+            author("called \""+id+" edit\" becomes true if is a Person then Sequence <children: [set "+region+".color.astDefinition.pieces.0.mathNode.children.2.scalarForm.terms.0.c to 0.75, add property @screen-channel.sample.request to ScreenSample <region: \""+region+"\", x: "+std::to_string(sx)+", y: "+std::to_string(sy)+", width: 1, height: 1, limit: 1, token: \""+id+"-edited\">]>");
+            PropertyValue observed,ok;
+            require(lawGetValue(*screen,PropertyPath::parse("sample.result.ok"),ok) && ok==PropertyValue(true) &&
+                    lawGetValue(*screen,PropertyPath::parse("sample.result.samples.0.color"),observed),
+                    "edited Singular source produces an actual completed-viewport sample");
+            require(glm::length(std::get<glm::vec3>(observed)-expectedBand(sx,sy,width,height,.75f))<=.007f,
+                    "sensed pixel agrees with the authored edit rather than an unevaluated source recipe");
+            capture((id+"-edited").c_str(),[&](int x,int y,int w,int h)->std::optional<glm::vec3>{return expectedBand(x,y,w,h,.75f);});
+            const std::string single="Distance <a: $(p), b: $((7.5, 9.5, 0))> - 0.1";
+            author("called \""+id+" one pixel\" becomes true if is a Person then Sequence <children: [add property "+region+" to ScreenRegion <color: VectorField <pieces: [Piece <value: $((1, 0, 0)), where: $("+single+")>, Piece <value: $((0, 0, 1))>]>, selector: ScalarField <pieces: [Piece <value: $("+single+")>]>>, add property @screen-channel.sample.request to ScreenSample <region: \""+region+"\", x: 7, y: 9, width: 2, height: 1, limit: 1, token: \""+id+"-single\">]>");
+            PropertyValue count;
+            require(lawGetValue(*screen,PropertyPath::parse("sample.result.count"),count) &&
+                    count==PropertyValue(1),"single-pixel selector excludes the adjacent physical sample");
+            capture((id+"-pixel").c_str(),[](int x,int y,int,int)->std::optional<glm::vec3>{
+                return x==7 && y==9?glm::vec3(1,0,0):glm::vec3(0,0,1);});
+            evidence["bearers"][id]={{"authoredProperties",bearer.dynamicProperties().size()},
+                {"geometryListMember",false},{"region",propertyValueToJson(bearer.dynamicProperties().begin()->second)}};
+        }
+        require(mgr.active().getOwnedObjects().size()==objectCount,"no geometric render carrier was added");
+        author("called \"Withdraw property sources\" becomes true if is a Person then Sequence <children: [remove property @screen-channel.output.colorPath, remove property @screen-channel.sample.request]>");
+        PropertyValue drawn;lawGetValue(*screen,PropertyPath::parse("output.drawn"),drawn);
+        require(drawn==PropertyValue(false),"withdrawing the binding leaves no stale direct manifestation");
+        std::ofstream("result.json") << evidence.dump(2);
+        engine.shutdown();
+        std::cout << "SINGULAR_SCREEN_PROPERTIES_RESULT PASS\n";
+        return 0;
+    }
     speak("called \"CLI Gradient\" becomes true if is a Person then add property @screen-channel.output.color to VectorField <pieces: [Piece <value: $((u, v, 0.25))>]>");
     capture("gradient",[](int x,int y,int w,int h)->std::optional<glm::vec3>{return glm::vec3((x+.5f)/w,(y+.5f)/h,.25f);});
     speak(file("law_line_screen_pixel.txt"));

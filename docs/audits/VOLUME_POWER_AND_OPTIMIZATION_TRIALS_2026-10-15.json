@@ -1,0 +1,2152 @@
+{
+  "signature": {
+    "harness": "Codex",
+    "model": "GPT-6.1 Sol",
+    "session": "01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca",
+    "at": "2026-10-15T05:58:21.541374-07:00"
+  },
+  "retained": [
+    "route-aware power lowering",
+    "CPU and native power witnesses",
+    "external read-only fixture/experiment tools"
+  ],
+  "not_claimed": [
+    "new FPS improvement",
+    "live movement p95",
+    "full-suite pass",
+    "universal CPU-double/native parity",
+    "subnormal CPU parity",
+    "new native support certificate",
+    "author-decision verdict"
+  ],
+  "baseline_head": "edccd0968cd3f24bb5d027e7b6dd5982e51b914a",
+  "artifact_root": "/private/tmp/earthcall-volume-demand-20261015",
+  "platform_at_record": "macOS-26.6-arm64-arm-64bit-Mach-O",
+  "inputs": {
+    "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": {
+      "before": "06699f509b1d2b90ed2fb5de6904fe580d9b20ff1b97aa56a6e60210b87e2cfa",
+      "after": "e63f9d14ce7ee648b8ffe1a8c545fa9ebcaa8ad58cee8856bc4d58806db4d1f4"
+    },
+    "src/Singularity/Screen/WebGPU/SdfWgsl.hpp": {
+      "before": "1cc6d9b137b3b8239e3797001b8a919f075491d435793cc713357870df6b9b3a",
+      "after": "1cc6d9b137b3b8239e3797001b8a919f075491d435793cc713357870df6b9b3a"
+    },
+    "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": {
+      "before": "5461e0c27416de6d1c80aa5240565b3d7710ddf33a9beb8d1772cdbd2b11b497",
+      "after": "5461e0c27416de6d1c80aa5240565b3d7710ddf33a9beb8d1772cdbd2b11b497"
+    },
+    "src/Singularity/OntoMath/ScalarForm.cpp": {
+      "before": "c2d55d8cf9c4e25c7f4a1afb667a39d5e1bf1bd867cc20b057095be20db7b3ac",
+      "after": "c2d55d8cf9c4e25c7f4a1afb667a39d5e1bf1bd867cc20b057095be20db7b3ac"
+    },
+    "src/Singularity/Screen/VolumeZeroProof.cpp": {
+      "before": "45e49256a003b2bcdf4b6e498217e6780142f781676c3714c9516fb60067d4b9",
+      "after": "45e49256a003b2bcdf4b6e498217e6780142f781676c3714c9516fb60067d4b9"
+    },
+    "saves/zones/Northern Veil/zone.ecform": {
+      "before": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+      "after": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496"
+    },
+    "saves/zones/Sky-Island Sanctuary/zone.json": {
+      "before": "864a48ef4f8f9cdb7d8bf96059b630cd22a7f66029e3afdba588503a317430e6",
+      "after": "864a48ef4f8f9cdb7d8bf96059b630cd22a7f66029e3afdba588503a317430e6"
+    },
+    "/private/tmp/firmament_radial_and_aniso_probe.cpp": {
+      "before": "74785c20ddf430cd2560fee5e99b5bddb6732cad78366065564ed3705de280fd",
+      "after": "74785c20ddf430cd2560fee5e99b5bddb6732cad78366065564ed3705de280fd"
+    },
+    "/private/tmp/firmament_northern_veil_subbox_probe.cpp": {
+      "before": "c46c9ee996c0b716c9ae8d684635b32092132fd18ffb2fc2d8feaa22f2691da3",
+      "after": "c46c9ee996c0b716c9ae8d684635b32092132fd18ffb2fc2d8feaa22f2691da3"
+    }
+  },
+  "final_images": {
+    "dimensions": [
+      2560,
+      1440
+    ],
+    "comparisons": [
+      {
+        "label": "aurora-inside-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3665184,
+        "control_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20",
+        "candidate_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20"
+      },
+      {
+        "label": "aurora-inside-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3659303,
+        "control_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac",
+        "candidate_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac"
+      },
+      {
+        "label": "aurora-inside-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3665184,
+        "control_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20",
+        "candidate_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20"
+      },
+      {
+        "label": "aurora-inside-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3659303,
+        "control_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac",
+        "candidate_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac"
+      },
+      {
+        "label": "aurora-spawn-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1502891,
+        "control_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d",
+        "candidate_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d"
+      },
+      {
+        "label": "aurora-spawn-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1491491,
+        "control_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69",
+        "candidate_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69"
+      },
+      {
+        "label": "aurora-spawn-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1502891,
+        "control_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d",
+        "candidate_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d"
+      },
+      {
+        "label": "aurora-spawn-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1491491,
+        "control_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69",
+        "candidate_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69"
+      },
+      {
+        "label": "aurora-reverse-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126",
+        "candidate_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126"
+      },
+      {
+        "label": "aurora-reverse-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8",
+        "candidate_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8"
+      },
+      {
+        "label": "aurora-reverse-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126",
+        "candidate_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126"
+      },
+      {
+        "label": "aurora-reverse-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8",
+        "candidate_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8"
+      },
+      {
+        "label": "aurora-side-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1754865,
+        "control_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+        "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64"
+      },
+      {
+        "label": "aurora-side-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1724083,
+        "control_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d",
+        "candidate_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d"
+      },
+      {
+        "label": "aurora-side-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1754865,
+        "control_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+        "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64"
+      },
+      {
+        "label": "aurora-side-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1724083,
+        "control_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d",
+        "candidate_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d"
+      },
+      {
+        "label": "cloud-inside-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+      },
+      {
+        "label": "cloud-inside-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+      },
+      {
+        "label": "cloud-inside-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+      },
+      {
+        "label": "cloud-inside-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+      },
+      {
+        "label": "cloud-spawn-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+      },
+      {
+        "label": "cloud-spawn-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+      },
+      {
+        "label": "cloud-spawn-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+      },
+      {
+        "label": "cloud-spawn-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+      },
+      {
+        "label": "cloud-reverse-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+      },
+      {
+        "label": "cloud-reverse-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+      },
+      {
+        "label": "cloud-reverse-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+      },
+      {
+        "label": "cloud-reverse-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+      },
+      {
+        "label": "cloud-side-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+      },
+      {
+        "label": "cloud-side-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+      },
+      {
+        "label": "cloud-side-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+      },
+      {
+        "label": "cloud-side-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+      }
+    ],
+    "provenance": {
+      "at": "2026-10-15T05:53:10.786237-07:00",
+      "mode": "images",
+      "dimensions": [
+        2560,
+        1440
+      ],
+      "suite": "all",
+      "source_sha256": {
+        "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "e63f9d14ce7ee648b8ffe1a8c545fa9ebcaa8ad58cee8856bc4d58806db4d1f4",
+        "src/Singularity/Screen/WebGPU/SdfWgsl.hpp": "1cc6d9b137b3b8239e3797001b8a919f075491d435793cc713357870df6b9b3a",
+        "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "5461e0c27416de6d1c80aa5240565b3d7710ddf33a9beb8d1772cdbd2b11b497",
+        "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "7a5088637a3a1e04d7c39d6688e01fe4bc57ef515db5ff828f59b9d63fb965c1",
+        "src/Singularity/Screen/VolumeZeroProof.cpp": "45e49256a003b2bcdf4b6e498217e6780142f781676c3714c9516fb60067d4b9",
+        "src/Singularity/Screen/VolumeZeroProof.hpp": "b730919be4110df16191441e9d77156775d091bcabe05645b37e3100f41f86ad",
+        "scratch/probes/volume_demand_probe.cpp": "8729f3ebf4ac1ed12b1a449c68a8df417bea34d75e1d338f0a7e4eb9add1c723",
+        "saves/zones/Northern Veil/zone.ecform": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+        "saves/zones/Sky-Island Sanctuary/zone.json": "864a48ef4f8f9cdb7d8bf96059b630cd22a7f66029e3afdba588503a317430e6"
+      },
+      "binaries": {
+        "control": "b0b1de2302544f65e3bb630abcbff5167b638d88b269488c42994aa266a7085f",
+        "candidate": "9af3a292896f25ef3523e8c7d12d169536b80eb62c38a305806d6296b0567857"
+      },
+      "head": "edccd0968cd3f24bb5d027e7b6dd5982e51b914a",
+      "control_sources_sha256": {
+        "SdfWgsl": "06699f509b1d2b90ed2fb5de6904fe580d9b20ff1b97aa56a6e60210b87e2cfa",
+        "WebGpuRenderer": "5461e0c27416de6d1c80aa5240565b3d7710ddf33a9beb8d1772cdbd2b11b497"
+      },
+      "timestamps": false,
+      "cost_scope": "completion-fenced offscreen batch throughput; no isolated volume time or live FPS",
+      "primary_context": [
+        "aurora",
+        "inside"
+      ]
+    }
+  },
+  "focused_cpu": [
+    {
+      "test": "volume_shared_subexpression_test",
+      "exit": 0,
+      "tail": "nsity, extinction, scattering and emission\n  ok: northern_veil.aurora.deep-crimson-fringe: the medium compiles\n  ok: northern_veil.aurora.deep-crimson-fringe: the shader evaluates Perlin noise once\n  ok: northern_veil.aurora.deep-crimson-fringe: shared values are filled once per sample\n  ok: northern_veil.aurora.deep-crimson-fringe: collectVolumeParams matches the compiled parameter block\n  ok: northern_veil.aurora.deep-crimson-fringe: extinction's own 0.10 factor can be edited\n  ok: northern_veil.aurora.deep-crimson-fringe: editing extinction's own factor keeps the shape shared\n  ok: northern_veil.aurora.deep-crimson-fringe: extinction's copy of the shape has a constant to edit\n  ok: northern_veil.aurora.deep-crimson-fringe: extinction diverging from the shared shape changes the sharing signature\n  ok: northern_veil.aurora.deep-crimson-fringe: extinction no longer shares the stale value\n  ok: the saved Zone has participating media\nvolume_shared_subexpression_test: 60/60 checks passed\n"
+    },
+    {
+      "test": "sdf_wgsl_parameter_refresh_test",
+      "exit": 0,
+      "tail": "compile\n  ok: absent response preserves the explicit legacy Blinn-Phong compatibility path\n  ok: authored response is evaluated after transport reaches the receiver\n  ok: numeric response edit refreshes packed values without regenerating WGSL\n  ok: response topology edit changes WGSL structure and records wi dependence\n  ok: combined V+D shader preserves distinct visibility and density channels\n  ok: Rung-8 V does not reinterpret participating-medium D as opaque geometry\n  ok: matrix determinant lowers through the shared OntoMath WGSL emitter\n  ok: 2x2 MatrixConstruct keeps four authored numeric parameters\n  ok: numeric matrix edit preserves WGSL structure and parameter layout\n  ok: matrix-vector multiply lowers without a renderer-owned transform formula\n  ok: binding-independent inverse lowers as OntoMath-derived parameters\n  ok: singular inverse refusal survives the GPU lowering boundary\n  ok: WGSL-unsupported matrix dimensions refuse explicitly\nsdf_wgsl_parameter_refresh_test: PASS\n"
+    },
+    {
+      "test": "volume_zero_proof_test",
+      "exit": 0,
+      "tail": "     column axis=0 count=77\n  ok: northern_veil.aurora.secondary-cyan-ribbon: 4000 points in proven cells all have density <= 0\n       northern_veil.aurora.accent-violet-crest: 31830/33120 cells proven empty, 3847 range evaluations\n  ok: northern_veil.aurora.accent-violet-crest has provably empty cells\n  ok: northern_veil.aurora.accent-violet-crest: columns enclose EVERY unknown cell\n       column axis=0 count=80\n  ok: northern_veil.aurora.accent-violet-crest: 4000 points in proven cells all have density <= 0\n       northern_veil.aurora.deep-crimson-fringe: 33870/35112 cells proven empty, 3955 range evaluations\n  ok: northern_veil.aurora.deep-crimson-fringe has provably empty cells\n  ok: northern_veil.aurora.deep-crimson-fringe: columns enclose EVERY unknown cell\n       column axis=0 count=42\n  ok: northern_veil.aurora.deep-crimson-fringe: 4000 points in proven cells all have density <= 0\n  ok: the saved Zone has participating media to prove\nvolume_zero_proof_test: 32/32 checks passed\n"
+    }
+  ],
+  "focused_native": [
+    {
+      "test": "webgpu_volume_shared_subexpression_test",
+      "exit": 0,
+      "skip": false,
+      "tail": "thout compilation or CPU payload uploads\n  ok: prepared source clock advances independently without rewriting equation parameters\n  ok: prepared numeric edit refreshes its inputs without shader regeneration\n  ok: reloading clears and reconstructs prepared recipes and GPU pipelines without stale values\n  ok: device recreation cannot reuse old prepared buffers, values or compute pipelines\n  ok: output error budget defaults to compatibility integration\n  ok: nonfinite output budgets cannot enable approximate termination\n  ok: negative output budget preserves compatibility integration\n  ok: output budget is capped at one 8-bit level\n  ok: 1 media: opt-in reaches bright emission beyond the opacity cutoff\n  ok: 1 media: full transport matches analytic ramp and 6144 reference\n  ok: budget and sampling changes reuse resident equations without compilation\n  ok: tiny positive budget still selects full lattice when its GPU budget rounds to zero\n  ok: returning to zero restores the byte-identical compatibility image\n  ok: 1 media: background attenuation also follows the full lattice\n  ok: 2 media: opt-in reaches bright emission beyond the opacity cutoff\n  ok: 2 media: full transport matches analytic ramp and 6144 reference\n  ok: budget and sampling changes reuse resident equations without compilation\n  ok: tiny positive budget still selects full lattice when its GPU budget rounds to zero\n  ok: returning to zero restores the byte-identical compatibility image\n  ok: 2 media: background attenuation also follows the full lattice\nwebgpu_volume_shared_subexpression_test: 76/76 checks passed\n"
+    },
+    {
+      "test": "webgpu_volume_zero_proof_test",
+      "exit": 0,
+      "skip": false,
+      "tail": "\n  ok: all 4 media (fused set pipeline) return outside: cached kernels need no equation recompilation\n  ok: all 4 media (fused set pipeline) return inside: cached kernels need no equation recompilation\n  ok: all 4 media (fused set pipeline) return outside again: cached kernels need no equation recompilation\n  ok: one medium (single pipeline) return outside: cached kernels need no equation recompilation\n  ok: one medium (single pipeline) return inside: cached kernels need no equation recompilation\n  ok: one medium (single pipeline) return outside again: cached kernels need no equation recompilation\n  ok: zero density rejects its whole support, even with authored emission\n  ok: a density revision cannot retain the former empty support envelope\n  ok: changed half-extents cannot reuse stale column bounds or payload offsets\n  ok: emission accepts another medium's emission tree\n  ok: an emission edit rebuilds no zero-density proof (per-channel revision)\n  ok: density accepts another medium's density tree\n  ok: a density edit rebuilds exactly one proof and stays byte-identical to exact\n  ok: unknown time-dependent support retains exact inside sampling\n  ok: mixed known/unknown support preserves each member after reordering\n  ok: mixed known/unknown support preserves each member after reordering\n  ok: certified-zero traversal preserves the positive-budget full lattice\n  ok: replacement device rebuilds column payloads and retains no stale handles or pixels\n  ok: full 2560x1440 spawn preserves every RGBA byte across proof boundaries\nwebgpu_volume_zero_proof_test: 69/69 checks passed\n"
+    },
+    {
+      "test": "webgpu_volume_unified_quadrature_test",
+      "exit": 0,
+      "skip": false,
+      "tail": "Starting webgpu_volume_unified_quadrature_test...\n       spawn dais, looking up: max error 1 levels, 0 px > 1 level, mean 0.033, lit 20536\n  ok: spawn dais, looking up: the media are visible\n  ok: spawn dais, looking up: no pixel more than 2 levels from the 6144 reference\n  ok: spawn dais, looking up: at most 0.05% of lit pixels more than 1 level off\n  ok: spawn dais, looking up: changing samples per chord recompiled nothing\n  ok: spawn dais, looking up: returning to 96 restores the identical image\n       from the side: max error 1 levels, 0 px > 1 level, mean 0.041, lit 26073\n  ok: from the side: the media are visible\n  ok: from the side: no pixel more than 2 levels from the 6144 reference\n  ok: from the side: at most 0.05% of lit pixels more than 1 level off\n  ok: from the side: changing samples per chord recompiled nothing\n  ok: from the side: returning to 96 restores the identical image\n       among the media, looking along them: max error 1 levels, 0 px > 1 level, mean 0.031, lit 56443\n  ok: among the media, looking along them: the media are visible\n  ok: among the media, looking along them: no pixel more than 2 levels from the 6144 reference\n  ok: among the media, looking along them: at most 0.05% of lit pixels more than 1 level off\n  ok: among the media, looking along them: changing samples per chord recompiled nothing\n  ok: among the media, looking along them: returning to 96 restores the identical image\nwebgpu_volume_unified_quadrature_test: 15/15 checks passed\n"
+    },
+    {
+      "test": "webgpu_object_test",
+      "exit": 0,
+      "skip": false,
+      "tail": "cast requires 3 argument(s), got 0\nV2 shared-D/sigma_t red-strong=(255,0,0,255) blue-weak=(0,0,53,255) compiles=(2,2)\nV3 same-medium phase forward=92 reverse=10 compiles=(2,2)\nV4 no-source self-emission dark=(0,0,0,255) emissive=(255,45,15,255) compiles=2\nvolume density timeline t=.05:25 t=1:255 compiles=0 cacheHits=1\nfield centre        = (96,0,0,255)  corner = (0,0,0,255)\nradiance live edit centre bright=253 dim=38 compiles=0 cacheHits=1\nradiance timeline centre t=.15:38 t=1:253 compiles=0 cacheHits=1 paramBytes=0\nchroma legacy G=253 authored red=(253,0,0) compiles=1\nangular lobe centre bright=253 dim=13 compiles=0 cacheHits=1 paramBytes=36\ntwo-source radiance centre=(110,0,114) compiles=1\nRung-8 visibility off=(105,0,121) on=(0,0,121) compiles=0 cacheHits=1\nRung-9 response red=(255,8,8) compiles=1\nRung-9 response blue=(8,8,255) compiles=0 cacheHits=1 paramBytes=32\nunpainted cube draw calls = 1\nsingle-face-painted cube draw calls = 6\n10 identical toruses draw calls = 1\nwebgpu_object_test: ALL OK\n[WebGPU] SdfWgsl compile refused: radiance: Raycast has no implementation on either path: it needs a marching budget and a hit epsilon that nothing in this tree authors. It evaluates to nullopt on the CPU, so the shader declines rather than answering a number the CPU would not.\n[WebGPU] SdfWgsl compile refused: chroma: root.VectorConstruct[0]: Raycast requires 3 argument(s), got 0\n[WebGPU] SdfWgsl compile refused: angular: root: Raycast requires 3 argument(s), got 0\n[WebGPU] SdfWgsl compile refused: material response: root.VectorConstruct[0]: Raycast requires 3 argument(s), got 0\n"
+    },
+    {
+      "test": "webgpu_ontomath_native_resolution_parity_test",
+      "exit": 0,
+      "skip": false,
+      "tail": "ONTOMATH_NATIVE_RENDER_PARITY width=1280 height=720 foreground_pixels=61442 mismatch_pixels=0\nwebgpu_ontomath_native_resolution_parity_test: PASS\n"
+    }
+  ],
+  "demand": {
+    "retained": false,
+    "images": [
+      {
+        "label": "cloud-inside-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+      },
+      {
+        "label": "cloud-inside-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+      },
+      {
+        "label": "cloud-inside-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+      },
+      {
+        "label": "cloud-inside-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+      },
+      {
+        "label": "cloud-spawn-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+      },
+      {
+        "label": "cloud-spawn-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+      },
+      {
+        "label": "cloud-spawn-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+      },
+      {
+        "label": "cloud-spawn-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+      },
+      {
+        "label": "cloud-reverse-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+      },
+      {
+        "label": "cloud-reverse-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+      },
+      {
+        "label": "cloud-reverse-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+      },
+      {
+        "label": "cloud-reverse-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+      },
+      {
+        "label": "cloud-side-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+      },
+      {
+        "label": "cloud-side-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+      },
+      {
+        "label": "cloud-side-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+      },
+      {
+        "label": "cloud-side-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+      },
+      {
+        "label": "aurora-inside-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3665184,
+        "control_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20",
+        "candidate_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20"
+      },
+      {
+        "label": "aurora-inside-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3659303,
+        "control_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac",
+        "candidate_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac"
+      },
+      {
+        "label": "aurora-inside-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3665184,
+        "control_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20",
+        "candidate_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20"
+      },
+      {
+        "label": "aurora-inside-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3659303,
+        "control_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac",
+        "candidate_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac"
+      },
+      {
+        "label": "aurora-spawn-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1502891,
+        "control_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d",
+        "candidate_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d"
+      },
+      {
+        "label": "aurora-spawn-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1491491,
+        "control_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69",
+        "candidate_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69"
+      },
+      {
+        "label": "aurora-spawn-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1502891,
+        "control_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d",
+        "candidate_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d"
+      },
+      {
+        "label": "aurora-spawn-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1491491,
+        "control_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69",
+        "candidate_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69"
+      },
+      {
+        "label": "aurora-reverse-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126",
+        "candidate_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126"
+      },
+      {
+        "label": "aurora-reverse-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8",
+        "candidate_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8"
+      },
+      {
+        "label": "aurora-reverse-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126",
+        "candidate_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126"
+      },
+      {
+        "label": "aurora-reverse-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8",
+        "candidate_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8"
+      },
+      {
+        "label": "aurora-side-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1754865,
+        "control_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+        "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64"
+      },
+      {
+        "label": "aurora-side-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1724083,
+        "control_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d",
+        "candidate_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d"
+      },
+      {
+        "label": "aurora-side-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1754865,
+        "control_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+        "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64"
+      },
+      {
+        "label": "aurora-side-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1724083,
+        "control_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d",
+        "candidate_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d"
+      }
+    ],
+    "primary": {
+      "suite": "cloud",
+      "view": "inside",
+      "series_change_percent": [
+        5.40855053445759,
+        1.5236755000899826
+      ],
+      "runs": [
+        {
+          "frames": 24.0,
+          "total_ms": 431.90950175,
+          "prep_ms": 0.570727417,
+          "submit_ms": 0.321125,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "control",
+          "series": 0
+        },
+        {
+          "frames": 24.0,
+          "total_ms": 485.021182292,
+          "prep_ms": 0.61327075,
+          "submit_ms": 0.329517458,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "candidate",
+          "series": 0
+        },
+        {
+          "frames": 24.0,
+          "total_ms": 508.045329833,
+          "prep_ms": 0.590729208,
+          "submit_ms": 0.314852375,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "candidate",
+          "series": 0
+        },
+        {
+          "frames": 24.0,
+          "total_ms": 510.202411458,
+          "prep_ms": 0.609258708,
+          "submit_ms": 0.326105875,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "control",
+          "series": 0
+        },
+        {
+          "frames": 24.0,
+          "total_ms": 512.76868925,
+          "prep_ms": 0.633019125,
+          "submit_ms": 0.333855833,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "control",
+          "series": 1
+        },
+        {
+          "frames": 24.0,
+          "total_ms": 524.307663208,
+          "prep_ms": 0.609908042,
+          "submit_ms": 0.332645708,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "candidate",
+          "series": 1
+        },
+        {
+          "frames": 24.0,
+          "total_ms": 529.425614583,
+          "prep_ms": 0.609625042,
+          "submit_ms": 0.320529542,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "candidate",
+          "series": 1
+        },
+        {
+          "frames": 24.0,
+          "total_ms": 525.150074625,
+          "prep_ms": 0.608062375,
+          "submit_ms": 0.329965375,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "control",
+          "series": 1
+        }
+      ]
+    },
+    "scope": "cloud inside two ABBA series completed; other views incomplete; offscreen completion throughput"
+  },
+  "coarse": {
+    "retained": false,
+    "images": [
+      {
+        "label": "aurora-inside-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3665184,
+        "control_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20",
+        "candidate_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20"
+      },
+      {
+        "label": "aurora-inside-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3659303,
+        "control_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac",
+        "candidate_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac"
+      },
+      {
+        "label": "aurora-inside-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3665184,
+        "control_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20",
+        "candidate_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20"
+      },
+      {
+        "label": "aurora-inside-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3659303,
+        "control_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac",
+        "candidate_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac"
+      },
+      {
+        "label": "aurora-spawn-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1502891,
+        "control_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d",
+        "candidate_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d"
+      },
+      {
+        "label": "aurora-spawn-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1491491,
+        "control_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69",
+        "candidate_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69"
+      },
+      {
+        "label": "aurora-spawn-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1502891,
+        "control_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d",
+        "candidate_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d"
+      },
+      {
+        "label": "aurora-spawn-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1491491,
+        "control_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69",
+        "candidate_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69"
+      },
+      {
+        "label": "aurora-reverse-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126",
+        "candidate_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126"
+      },
+      {
+        "label": "aurora-reverse-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8",
+        "candidate_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8"
+      },
+      {
+        "label": "aurora-reverse-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126",
+        "candidate_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126"
+      },
+      {
+        "label": "aurora-reverse-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8",
+        "candidate_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8"
+      },
+      {
+        "label": "aurora-side-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1754865,
+        "control_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+        "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64"
+      },
+      {
+        "label": "aurora-side-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1724083,
+        "control_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d",
+        "candidate_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d"
+      },
+      {
+        "label": "aurora-side-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1754865,
+        "control_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+        "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64"
+      },
+      {
+        "label": "aurora-side-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1724083,
+        "control_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d",
+        "candidate_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d"
+      },
+      {
+        "label": "cloud-inside-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+      },
+      {
+        "label": "cloud-inside-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+      },
+      {
+        "label": "cloud-inside-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+      },
+      {
+        "label": "cloud-inside-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031"
+      },
+      {
+        "label": "cloud-spawn-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+      },
+      {
+        "label": "cloud-spawn-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+      },
+      {
+        "label": "cloud-spawn-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+      },
+      {
+        "label": "cloud-spawn-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c"
+      },
+      {
+        "label": "cloud-reverse-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+      },
+      {
+        "label": "cloud-reverse-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+      },
+      {
+        "label": "cloud-reverse-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+      },
+      {
+        "label": "cloud-reverse-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a"
+      },
+      {
+        "label": "cloud-side-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+      },
+      {
+        "label": "cloud-side-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+      },
+      {
+        "label": "cloud-side-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+      },
+      {
+        "label": "cloud-side-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d"
+      }
+    ],
+    "primary": {
+      "suite": "aurora",
+      "view": "inside",
+      "series_change_percent": [
+        11.420842491983363,
+        9.89917019873916
+      ],
+      "runs": [
+        {
+          "frames": 24.0,
+          "total_ms": 89.7583125,
+          "prep_ms": 0.809015583,
+          "submit_ms": 0.473067667,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "control",
+          "series": 0
+        },
+        {
+          "frames": 24.0,
+          "total_ms": 106.457140625,
+          "prep_ms": 0.815039875,
+          "submit_ms": 0.357006958,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "candidate",
+          "series": 0
+        },
+        {
+          "frames": 24.0,
+          "total_ms": 112.171772583,
+          "prep_ms": 0.81583675,
+          "submit_ms": 0.376822917,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "candidate",
+          "series": 0
+        },
+        {
+          "frames": 24.0,
+          "total_ms": 106.460732625,
+          "prep_ms": 0.81963725,
+          "submit_ms": 0.441744667,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "control",
+          "series": 0
+        },
+        {
+          "frames": 24.0,
+          "total_ms": 104.147229167,
+          "prep_ms": 0.827196208,
+          "submit_ms": 0.366498333,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "control",
+          "series": 1
+        },
+        {
+          "frames": 24.0,
+          "total_ms": 120.053600708,
+          "prep_ms": 0.82259025,
+          "submit_ms": 0.372003458,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "candidate",
+          "series": 1
+        },
+        {
+          "frames": 24.0,
+          "total_ms": 120.309868042,
+          "prep_ms": 0.822296917,
+          "submit_ms": 0.359479167,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "candidate",
+          "series": 1
+        },
+        {
+          "frames": 24.0,
+          "total_ms": 114.565494792,
+          "prep_ms": 0.818255333,
+          "submit_ms": 0.361529375,
+          "compiles": 0.0,
+          "lowerings": 0.0,
+          "parameters": 0.0,
+          "proofs": 0.0,
+          "lane": "control",
+          "series": 1
+        }
+      ]
+    },
+    "scope": "aurora inside two ABBA series; remaining views not run after rejection; no new mathematical proofs"
+  },
+  "alias": {
+    "retained": false,
+    "images": [
+      {
+        "label": "aurora-inside-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3665184,
+        "control_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20",
+        "candidate_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20"
+      },
+      {
+        "label": "aurora-inside-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3659303,
+        "control_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac",
+        "candidate_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac"
+      },
+      {
+        "label": "aurora-inside-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3665184,
+        "control_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20",
+        "candidate_sha256": "4495141ce86ebb671304681bd2313826a63e7f45e93de7f9948f508f31a21a20"
+      },
+      {
+        "label": "aurora-inside-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3659303,
+        "control_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac",
+        "candidate_sha256": "266ad4fd662ba3788a1ed02d98d9dee8cde566174a7945f957444ff9637d58ac"
+      },
+      {
+        "label": "aurora-spawn-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1502891,
+        "control_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d",
+        "candidate_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d"
+      },
+      {
+        "label": "aurora-spawn-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1491491,
+        "control_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69",
+        "candidate_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69"
+      },
+      {
+        "label": "aurora-spawn-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1502891,
+        "control_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d",
+        "candidate_sha256": "d133b5d5ea3244064b56d897a0625d7be6bfc25a742f1eabce87fa87ee832b9d"
+      },
+      {
+        "label": "aurora-spawn-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1491491,
+        "control_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69",
+        "candidate_sha256": "33188cae8c8f36cf629331d8a440472794400e0d8a2da32e2b06c1c716cd8a69"
+      },
+      {
+        "label": "aurora-reverse-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126",
+        "candidate_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126"
+      },
+      {
+        "label": "aurora-reverse-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8",
+        "candidate_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8"
+      },
+      {
+        "label": "aurora-reverse-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126",
+        "candidate_sha256": "f4ec0b262eaf1eebd057e431b931c3f65f5d8d2bf74e70bf68eb85fe5447f126"
+      },
+      {
+        "label": "aurora-reverse-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 3686400,
+        "control_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8",
+        "candidate_sha256": "74dc9cadecf7854603b08a37372921bc4b18a3612c8c7c372aecf55b1d07afe8"
+      },
+      {
+        "label": "aurora-side-0-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1754865,
+        "control_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+        "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64"
+      },
+      {
+        "label": "aurora-side-7.25-full0",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1724083,
+        "control_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d",
+        "candidate_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d"
+      },
+      {
+        "label": "aurora-side-0-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1754865,
+        "control_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+        "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64"
+      },
+      {
+        "label": "aurora-side-7.25-full1",
+        "changed_bytes": 0,
+        "max_error": 0,
+        "lit_pixels": 1724083,
+        "control_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d",
+        "candidate_sha256": "9645d14b52cd4fc16c09d39afcd3ecda2a3ca89490ab221c280d8ef1467e675d"
+      },
+      {
+        "label": "cloud-inside-0-full0",
+        "changed_bytes": 17,
+        "max_error": 1,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "51313eb06d0e5ce38c7323525a687598084027880c2807afe81af931fac72e63"
+      },
+      {
+        "label": "cloud-inside-7.25-full0",
+        "changed_bytes": 17,
+        "max_error": 1,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "51313eb06d0e5ce38c7323525a687598084027880c2807afe81af931fac72e63"
+      },
+      {
+        "label": "cloud-inside-0-full1",
+        "changed_bytes": 17,
+        "max_error": 1,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "51313eb06d0e5ce38c7323525a687598084027880c2807afe81af931fac72e63"
+      },
+      {
+        "label": "cloud-inside-7.25-full1",
+        "changed_bytes": 17,
+        "max_error": 1,
+        "lit_pixels": 3686400,
+        "control_sha256": "81ea7f765b6abcdbd54fa72b6535235ac353bedc52968ee691a04945ab8fe031",
+        "candidate_sha256": "51313eb06d0e5ce38c7323525a687598084027880c2807afe81af931fac72e63"
+      },
+      {
+        "label": "cloud-spawn-0-full0",
+        "changed_bytes": 8,
+        "max_error": 1,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "6381ed033716421ec20637973b02bd8ddaae7dbaec0c09fe5a41e983c1b15139"
+      },
+      {
+        "label": "cloud-spawn-7.25-full0",
+        "changed_bytes": 8,
+        "max_error": 1,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "6381ed033716421ec20637973b02bd8ddaae7dbaec0c09fe5a41e983c1b15139"
+      },
+      {
+        "label": "cloud-spawn-0-full1",
+        "changed_bytes": 8,
+        "max_error": 1,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "6381ed033716421ec20637973b02bd8ddaae7dbaec0c09fe5a41e983c1b15139"
+      },
+      {
+        "label": "cloud-spawn-7.25-full1",
+        "changed_bytes": 8,
+        "max_error": 1,
+        "lit_pixels": 2546454,
+        "control_sha256": "818d01693cdff393bc9bd07d0f76cc9ee4e7c2bcc376d5364b7255382d74cc4c",
+        "candidate_sha256": "6381ed033716421ec20637973b02bd8ddaae7dbaec0c09fe5a41e983c1b15139"
+      },
+      {
+        "label": "cloud-reverse-0-full0",
+        "changed_bytes": 6,
+        "max_error": 1,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "d3e5ee7dbc7e4a65817fe4279947fed62f7143c9e319946447d5eb70960ede68"
+      },
+      {
+        "label": "cloud-reverse-7.25-full0",
+        "changed_bytes": 6,
+        "max_error": 1,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "d3e5ee7dbc7e4a65817fe4279947fed62f7143c9e319946447d5eb70960ede68"
+      },
+      {
+        "label": "cloud-reverse-0-full1",
+        "changed_bytes": 6,
+        "max_error": 1,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "d3e5ee7dbc7e4a65817fe4279947fed62f7143c9e319946447d5eb70960ede68"
+      },
+      {
+        "label": "cloud-reverse-7.25-full1",
+        "changed_bytes": 6,
+        "max_error": 1,
+        "lit_pixels": 2019987,
+        "control_sha256": "58400aca7315078c346a1af7d5efd6179f89b8e693d6132443889aca06a80d5a",
+        "candidate_sha256": "d3e5ee7dbc7e4a65817fe4279947fed62f7143c9e319946447d5eb70960ede68"
+      },
+      {
+        "label": "cloud-side-0-full0",
+        "changed_bytes": 2,
+        "max_error": 1,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "8b75b67c9885a9f48bc749faf0d41c2ffe13ed42ff17359991975a4063d95ef3"
+      },
+      {
+        "label": "cloud-side-7.25-full0",
+        "changed_bytes": 2,
+        "max_error": 1,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "8b75b67c9885a9f48bc749faf0d41c2ffe13ed42ff17359991975a4063d95ef3"
+      },
+      {
+        "label": "cloud-side-0-full1",
+        "changed_bytes": 2,
+        "max_error": 1,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "8b75b67c9885a9f48bc749faf0d41c2ffe13ed42ff17359991975a4063d95ef3"
+      },
+      {
+        "label": "cloud-side-7.25-full1",
+        "changed_bytes": 2,
+        "max_error": 1,
+        "lit_pixels": 776510,
+        "control_sha256": "1a12a17bae29857fb8500cb6c65fe4fff4ec52d81f09d189c0cb44bc98b2a31d",
+        "candidate_sha256": "8b75b67c9885a9f48bc749faf0d41c2ffe13ed42ff17359991975a4063d95ef3"
+      }
+    ],
+    "codegen": [
+      {
+        "suite": "aurora",
+        "member": "0",
+        "module_identical": true,
+        "params_identical": true,
+        "parameter_count": 64,
+        "distance_calls_control": 0,
+        "distance_calls_candidate": 0
+      },
+      {
+        "suite": "aurora",
+        "member": "1",
+        "module_identical": true,
+        "params_identical": true,
+        "parameter_count": 64,
+        "distance_calls_control": 0,
+        "distance_calls_candidate": 0
+      },
+      {
+        "suite": "aurora",
+        "member": "2",
+        "module_identical": true,
+        "params_identical": true,
+        "parameter_count": 63,
+        "distance_calls_control": 0,
+        "distance_calls_candidate": 0
+      },
+      {
+        "suite": "aurora",
+        "member": "3",
+        "module_identical": true,
+        "params_identical": true,
+        "parameter_count": 64,
+        "distance_calls_control": 0,
+        "distance_calls_candidate": 0
+      },
+      {
+        "suite": "cloud",
+        "member": "0",
+        "module_identical": false,
+        "params_identical": true,
+        "parameter_count": 66,
+        "distance_calls_control": 2,
+        "distance_calls_candidate": 1
+      },
+      {
+        "suite": "cloud",
+        "member": "1",
+        "module_identical": true,
+        "params_identical": true,
+        "parameter_count": 167,
+        "distance_calls_control": 8,
+        "distance_calls_candidate": 8
+      },
+      {
+        "suite": "cloud",
+        "member": "2",
+        "module_identical": true,
+        "params_identical": true,
+        "parameter_count": 1,
+        "distance_calls_control": 0,
+        "distance_calls_candidate": 0
+      },
+      {
+        "suite": "cloud",
+        "member": "3",
+        "module_identical": true,
+        "params_identical": true,
+        "parameter_count": 1,
+        "distance_calls_control": 0,
+        "distance_calls_candidate": 0
+      }
+    ],
+    "timing": "not run; exact image gate failed"
+  },
+  "rejected_sources": [
+    {
+      "candidate": "demand",
+      "directory": "/private/tmp/earthcall-volume-demand-20261015/rejected-demand-source",
+      "files_sha256": {
+        "scripts/volume_demand_experiment.py": "0e3e5f72efb7552cabd80c54ec8adcffaf50dbdd58bc47a1ace81f7cb64dde3a",
+        "src/Singularity/Screen/WebGPU/SdfWgsl.hpp": "54d3f6e778f4450f311df89be452d8586438b8ba1fc0dd5facc6998c04fba78e",
+        "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "0dc03f2e2a4dd38f4dca96593f5af96f7b7df876570be19be7cab44a703d77c3",
+        "scratch/probes/volume_demand_probe.cpp": "615fc827b8271cca0e6436b7d428631061c97b8a434b9495f84db5698881b2cd",
+        "tests/support/webgpu_power_witness.hpp": "6af0b797b8410e83c9f34759701e042efa1f73aa004c6bb1a45673d12f39787b",
+        "tests/singularity/webgpu_volume_shared_subexpression_test.cpp": "c7b2cb8fcf28316df6a833003ba2e0b19956057aca3ae5c8cfccbbd94259bc78",
+        "tests/singularity/volume_shared_subexpression_test.cpp": "27e3f60e7bbcfb24a5518547a8cebabdc87903916df4b068ee813fa60c825908"
+      }
+    },
+    {
+      "candidate": "coarse",
+      "directory": "/private/tmp/earthcall-volume-demand-20261015/rejected-macro-source",
+      "files_sha256": {
+        "scripts/volume_traversal_experiment.py": "a7f0b44b008d3e05bc79111dc51324db2fc6a0efda1d9d91ad6690ba1df4621d",
+        "src/Singularity/Screen/VolumeZeroProof.hpp": "ba1f87795cc21e58cdfb6a0e623ab309ad503702030846624783067233e14b6d",
+        "src/Singularity/Screen/VolumeZeroProof.cpp": "629b3f09ec4ad5a9262efbac8c4785664f85233db8d8c2f5ab15854ad0fbeb76",
+        "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "750f1b013eb5cb94dfbe187d1b20a5187de0d91afa8fc08c6643b5ab3a8a0b02",
+        "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "d678268b4d3b9c20144b3b995d96c470884f2f3b14636496f2b239c380bcc0a2",
+        "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "1f4661d1a4831659ec16b30e11707c08f939d759859b5f3b2b7ce71386849658",
+        "tests/singularity/volume_zero_proof_test.cpp": "1d0d8438222582e7f8493e4484565cc6695a8c64cafbc9d73d2489781a96ddda"
+      }
+    },
+    {
+      "candidate": "alias",
+      "directory": "/private/tmp/earthcall-volume-demand-20261015/rejected-alias-source",
+      "files_sha256": {
+        "scripts/volume_traversal_experiment.py": "9457b79a85237164c1795eece529850cc183ece66659a9f8cb3d8164d2ea3f53",
+        "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "036e35c543657998fde65a406247a4def874158b0ded295a29f4ea89646cf680",
+        "scratch/probes/volume_demand_probe.cpp": "8729f3ebf4ac1ed12b1a449c68a8df417bea34d75e1d338f0a7e4eb9add1c723",
+        "tests/singularity/volume_shared_subexpression_test.cpp": "3a596eaf22ea36fd5f3ff165defdc289972e72272667186dca647a15f7fd5c4d"
+      }
+    }
+  ],
+  "power_boundary": {
+    "case": "ScalarForm FLT_MAX^-1",
+    "CPU_f32_result_approx": 2.93874e-39,
+    "retained_native_result": 0,
+    "direct_native_intrinsic_result": 0,
+    "first_expanded_witness": "74/75; preserved subnormal-first-macro-final-webgpu_volume_shared_subexpression_test.log",
+    "interpretation": "native profile boundary, not CPU parity"
+  },
+  "probe_reproduction": {
+    "firmament_radial_and_aniso_probe": {
+      "commands": {
+        "compile": [
+          "/usr/bin/c++",
+          "-DASIO_STANDALONE",
+          "-DGL_SILENCE_DEPRECATION",
+          "-D_WEBSOCKETPP_CPP11_STL_",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/src",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/src/s",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/imgui",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/third_party/miniaudio",
+          "-I/include",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/build/_deps/flatbuffers-src/include",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/build/_deps/asio-src/asio/include",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/build/_deps/websocketpp-src",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/build/_deps/vhacd-src/include",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/third_party/wgpu/include",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/tests",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/tests/support",
+          "-iframework",
+          "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks",
+          "-isystem",
+          "/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/glfw_install/include",
+          "-isystem",
+          "/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.22/include",
+          "-g",
+          "-std=gnu++17",
+          "-Wall",
+          "-Wextra",
+          "-UNDEBUG",
+          "-o",
+          "/private/tmp/earthcall-volume-demand-20261015/firmament_radial_and_aniso_probe.o",
+          "-c",
+          "/private/tmp/earthcall-volume-demand-20261015/firmament_radial_and_aniso_probe.cpp"
+        ],
+        "link": [
+          "/usr/bin/c++",
+          "-g",
+          "-Wl,-search_paths_first",
+          "-Wl,-headerpad_max_install_names",
+          "/private/tmp/earthcall-volume-demand-20261015/firmament_radial_and_aniso_probe.o",
+          "CMakeFiles/volume_shared_subexpression_test.dir/src/Singularity/Screen/WebGPU/SdfWgsl.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/CategoryManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Form.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Material/Material.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Material/PaintToolSurface.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Creation/SingularSetToSetCreation.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Lexeme/Lexeme.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/AngleTools.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Automation/Automation.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Contour.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Creation/ObjectConcept.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Geometry/ComplexShape.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Geometry/FieldNode.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Geometry/Patch.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Geometry/Sdf.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Geometry/SdfJson.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Geometry/SmoothSurface.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Geometry/TriGrid.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Object.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Object/FaceTexture.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Object/ObjectComposition.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Object/ObjectCore.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Object/ObjectEvents.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Object/ObjectProperties.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Object/PolyhedronData.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/ObjectCollision.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/ObjectMotion.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/ObjectRaycast.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/ObjectRender.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Singular.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/Claim.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/FirstMoverRegister.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/IdentityLedger.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/KeyPair.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/KeyStore.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/PersonMigration.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/PersonPresence.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/SingularId.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/Body.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/BodyPart.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Arm.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Finger.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Foot.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/ForeArm.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/ForeLeg.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Hand.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Leg.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Neck.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Shoulder.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Torso.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/Head/Head.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Person.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/PersonDatabase.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Perspective/AvatarHandler.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Perspective/PersonPerspective.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Perspective/PerspectiveManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Relationship/Community/Community.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Relationship/Relationship.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Soul/Soul.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Voice/Voice.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Voice/VoicePart/VoicePart.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Relation/Formation/Formation.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Relation/Relation.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Relation/RelationManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Relation/Traversal/RelevanceTraversal.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Relation/Traversal/SlowAdapter.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Audio/AudioChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Audio/AudioRecorder.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Audio/AudioSystem.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/AppPaths.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/CodecChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/CreationChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/Engine.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/EngineInit.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/EngineRender.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/EngineUpdate.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/EventBus.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/EventHandler.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/Logger.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/StringId.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Execution/ExecutionChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Execution/JITBridge.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Execution/NativeBytecodeVM.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Execution/PropheticJIT.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Execution/PropheticJIT_LLVM.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/AdvancedFacePaint.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Chat.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Controls.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/AssetsConsole.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CharacterConsole.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/Create3DConsole.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleFixtureLaw.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/PaintConsole.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/RelationsConsole.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/WorldConsole.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/ZonesConsole.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CursorTools.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/ElementalToolHandler.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/IDEDockManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Menu/Menu.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/API/EarthcallAPI.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/API/SecurityManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Adapters/MacOSAccessibilityAdapter.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/ForeignActuationGuard.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/ForeignChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Shell/ShellChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Sync/AsyncStateLogger.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Sync/ForeignSyncManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Sync/InferenceLawBridge.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/DomMirrorBridge.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/DomMirrorProtocol.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/DomMirrorTranslator.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/IntegrationManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/RealWebView.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/WebBindings.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/WebIntegration.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/WindowManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Input/Interaction/ControlPatterns.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Input/Interaction/InteractionChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Input/Keyboard/KeyboardHandler.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Input/Locomotion/LocomotionChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Input/Mouse/MouseHandler.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Language/JoyHierarchy.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Language/LanguageSystem.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Language/SyntacticParser.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Language/Utterance.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Network/Http/HttpChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Network/Osc/OscChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Network/WebSocketClient.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Network/WebSocketClient_wasm.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Network/WebSocketServer.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/Affine.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/CurveModel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/Field.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/Function.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/LinearAlgebra.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/Operations.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/ProbabilityForm.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/ScalarForm.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Physical/Adapters/SerialAdapter.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Physical/PhysicalChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/AuthorableLight.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/BrushSystem.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/Camera.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/CardTreeLayout.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/CreationWindow.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/DeveloperToolsWindow.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/DrawAdapters.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/ElementalToolWindows.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/GL/GluCompat.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/GL/OpenGLRenderer.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/HighlightSystem.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/ImageCodecChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/LawGraphWindow.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/MathEditors.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/RelationManagerWindow.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/RenderMaterial.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/Renderer.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/ScreenChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/ScreenRecorder.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/ShadingSystem.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/VolumeZeroProof.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Singularity.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/CloudStorage.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/FileChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/FileWatcher.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/MigrationFramework.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/SaveSystem.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/BinarySerializer.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/Person/BodySerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/Person/PersonSerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/Relation/FormationSerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/Relation/RelationSerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/Serialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/SessionSemanticRoots.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/ZonesOfEarth/HomeSerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/ZonesOfEarth/OurverseSerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/StreamChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/VirtualFileSystem.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Terminal/LawSentence.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Terminal/LineEditor.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Terminal/TerminalChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/TransferPolicy.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Time/Event/Event.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Time/Moment/Moment.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Time/timeline.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/PropheticIndexBridge.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/PropheticRete.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/SecondNatureLawAuthoring.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/Universe.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/HomesOfEarth/Home.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Ourverse/Ourverse.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Physics/AuthoredPhysicsLaws.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Physics/Physics.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Zone/Zone.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/ZoneBounds.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/ZoneLawMembership.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/ZoneManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/ZoneNativePersistence.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/globals.cpp.o",
+          "CMakeFiles/earthcall_core.dir/imgui/imgui.cpp.o",
+          "CMakeFiles/earthcall_core.dir/imgui/imgui_demo.cpp.o",
+          "CMakeFiles/earthcall_core.dir/imgui/imgui_draw.cpp.o",
+          "CMakeFiles/earthcall_core.dir/imgui/imgui_tables.cpp.o",
+          "CMakeFiles/earthcall_core.dir/imgui/imgui_widgets.cpp.o",
+          "CMakeFiles/earthcall_core.dir/imgui/backends/imgui_impl_glfw.cpp.o",
+          "CMakeFiles/earthcall_core.dir/imgui/backends/imgui_impl_opengl2.cpp.o",
+          "-o",
+          "/private/tmp/earthcall-volume-demand-20261015/firmament_radial_and_aniso_probe",
+          "/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/glfw_install/lib/libglfw3.a",
+          "/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.22/libssl.a",
+          "/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.22/libcrypto.a",
+          "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libz.tbd",
+          "libearthcall_utf8proc.a",
+          "-framework",
+          "OpenGL",
+          "-framework",
+          "Cocoa",
+          "-framework",
+          "WebKit",
+          "-framework",
+          "CoreAudio",
+          "-framework",
+          "AudioToolbox",
+          "-framework",
+          "Security",
+          "-framework",
+          "IOKit",
+          "-framework",
+          "CoreFoundation",
+          "-framework",
+          "Foundation"
+        ]
+      },
+      "results": "=== 1. SKY-ISLAND SANCTUARY RADIAL PROOF WITNESS ===\nField: sky.sanctuary.sea-of-clouds | dims=(76,6,76) total=34656 words=1444\n  Production (Op::Distance unbounded): proven=0/34656 (0.00%) | inside |y|<2.3 slab: 0/34656 (0.00%)\n  With Op::Distance/Length bounded:    proven=10968/34656 (31.65%) | inside |y|<2.3 slab: 10968/34656 (31.65%)\nField: sky.sanctuary.sunlit-halo-mist | dims=(40,22,40) total=35200 words=1467\n  Production (Op::Distance unbounded): proven=6400/35200 (18.18%) | inside |y|<2.1 slab: 0/28800 (0.00%)\n  With Op::Distance/Length bounded:    proven=19648/35200 (55.82%) | inside |y|<2.1 slab: 13248/28800 (46.00%)\n\n=== 2. NORTHERN VEIL ANISOTROPIC GRID SCREENING (FIXED ~32K BUDGET) ===\n\n--- Family: Baseline Isotropic (1.0, 1.0, 1.0) ---\n  Curtain 0 (northern_veil.aurora.primary-emerald-curtain): dims=( 80,18,23) cells=33120 words=1380 proven=31920 (96.38%) unproven=1200 (3.62%) evals= 3891 build=235.9ms\n  Curtain 1 (northern_veil.aurora.secondary-cyan-ribbon): dims=( 77,20,23) cells=35420 words=1476 proven=34240 (96.67%) unproven=1180 (3.33%) evals= 3607 build=279.5ms\n  Curtain 2 (northern_veil.aurora.accent-violet-crest): dims=( 80,18,23) cells=33120 words=1380 proven=31830 (96.11%) unproven=1290 (3.89%) evals= 3847 build=213.3ms\n  Curtain 3 (northern_veil.aurora.deep-crimson-fringe): dims=( 42,38,22) cells=35112 words=1463 proven=33870 (96.46%) unproven=1242 (3.54%) evals= 3955 build=311.1ms\n  TOTALS: cells=136772 words=5699 (22796 bytes) proven=131860 (96.41%) unproven=4912 (3.59%) evals=15300 build=1039.8ms\n  INSIDE 2304-RAY DEMAND: loopVisits=173409 allProvenJumps=40635 proofQueries=228908 unknownDensityDemands=147710\n\n--- Family: Aniso A (XZx1.4, Yx0.5, cellMargin=1%) ---\n  Curtain 0 (northern_veil.aurora.primary-emerald-curtain): dims=(113, 9,32) cells=32544 words=1356 proven=31509 (96.82%) unproven=1035 (3.18%) evals= 3303 build=228.9ms\n  Curtain 1 (northern_veil.aurora.secondary-cyan-ribbon): dims=(109,10,32) cells=34880 words=1454 proven=33710 (96.65%) unproven=1170 (3.35%) evals= 3429 build=251.4ms\n  Curtain 2 (northern_veil.aurora.accent-violet-crest): dims=(113, 9,32) cells=32544 words=1356 proven=31449 (96.64%) unproven=1095 (3.36%) evals= 3401 build=204.0ms\n  Curtain 3 (northern_veil.aurora.deep-crimson-fringe): dims=( 59,19,31) cells=34751 words=1448 proven=33671 (96.89%) unproven=1080 (3.11%) evals= 3179 build=228.8ms\n  TOTALS: cells=134719 words=5614 (22456 bytes) proven=130339 (96.75%) unproven=4380 (3.25%) evals=13312 build=913.1ms\n  INSIDE 2304-RAY DEMAND: loopVisits=179820 allProvenJumps=51639 proofQueries=246086 unknownDensityDemands=141337\n\n--- Family: Aniso B (XZx1.4, Yx0.5, margin>=base) ---\n  Curtain 0 (northern_veil.aurora.primary-emerald-curtain): dims=(113, 9,32) cells=32544 words=1356 proven=31504 (96.80%) unproven=1040 (3.20%) evals= 3303 build=208.3ms\n  Curtain 1 (northern_veil.aurora.secondary-cyan-ribbon): dims=(109,10,32) cells=34880 words=1454 proven=33704 (96.63%) unproven=1176 (3.37%) evals= 3445 build=251.7ms\n  Curtain 2 (northern_veil.aurora.accent-violet-crest): dims=(113, 9,32) cells=32544 words=1356 proven=31449 (96.64%) unproven=1095 (3.36%) evals= 3401 build=204.8ms\n  Curtain 3 (northern_veil.aurora.deep-crimson-fringe): dims=( 59,19,31) cells=34751 words=1448 proven=33671 (96.89%) unproven=1080 (3.11%) evals= 3191 build=241.4ms\n  TOTALS: cells=134719 words=5614 (22456 bytes) proven=130328 (96.74%) unproven=4391 (3.26%) evals=13340 build=906.2ms\n  INSIDE 2304-RAY DEMAND: loopVisits=180007 allProvenJumps=51548 proofQueries=246503 unknownDensityDemands=141820\n\n--- Family: Aniso C (Xx1.25, Yx0.5, Zx1.6, cellMargin=1%) ---\n  Curtain 0 (northern_veil.aurora.primary-emerald-curtain): dims=( 99, 9,37) cells=32967 words=1374 proven=31922 (96.83%) unproven=1045 (3.17%) evals= 3349 build=200.7ms\n  Curtain 1 (northern_veil.aurora.secondary-cyan-ribbon): dims=( 95,10,37) cells=35150 words=1465 proven=33956 (96.60%) unproven=1194 (3.40%) evals= 3579 build=254.4ms\n  Curtain 2 (northern_veil.aurora.accent-violet-crest): dims=( 99, 9,37) cells=32967 words=1374 proven=31862 (96.65%) unproven=1105 (3.35%) evals= 3341 build=185.9ms\n  Curtain 3 (northern_veil.aurora.deep-crimson-fringe): dims=( 52,19,35) cells=34580 words=1441 proven=33527 (96.95%) unproven=1053 (3.05%) evals= 3161 build=231.1ms\n  TOTALS: cells=135664 words=5654 (22616 bytes) proven=131267 (96.76%) unproven=4397 (3.24%) evals=13430 build=872.1ms\n  INSIDE 2304-RAY DEMAND: loopVisits=179642 allProvenJumps=50963 proofQueries=252533 unknownDensityDemands=139477\n\n--- Family: Aniso D (Xx1.25, Yx0.5, Zx1.6, margin>=base) ---\n  Curtain 0 (northern_veil.aurora.primary-emerald-curtain): dims=( 99, 9,37) cells=32967 words=1374 proven=31917 (96.81%) unproven=1050 (3.19%) evals= 3405 build=203.7ms\n  Curtain 1 (northern_veil.aurora.secondary-cyan-ribbon): dims=( 95,10,37) cells=35150 words=1465 proven=33956 (96.60%) unproven=1194 (3.40%) evals= 3579 build=251.5ms\n  Curtain 2 (northern_veil.aurora.accent-violet-crest): dims=( 99, 9,37) cells=32967 words=1374 proven=31852 (96.62%) unproven=1115 (3.38%) evals= 3341 build=185.1ms\n  Curtain 3 (northern_veil.aurora.deep-crimson-fringe): dims=( 52,19,35) cells=34580 words=1441 proven=33527 (96.95%) unproven=1053 (3.05%) evals= 3161 build=231.4ms\n  TOTALS: cells=135664 words=5654 (22616 bytes) proven=131252 (96.75%) unproven=4412 (3.25%) evals=13486 build=871.7ms\n  INSIDE 2304-RAY DEMAND: loopVisits=180048 allProvenJumps=50821 proofQueries=253372 unknownDensityDemands=140025\n\n=== 3. NORTHERN VEIL INSIDE-LANE SUPPORT-TRIM 2304-RAY SCREEN ===\n  Current (trimProofSupport=false): activeRays=2304 discarded=0 segEntries=10523 loopVisits=173409 jumps=40635 proofQueries=228908 unknownDemands=147710\n  With supportStart/End trim:       activeRays=2304 discarded=0 segEntries=10523 loopVisits=167997 jumps=35223 proofQueries=228908 unknownDemands=147710\n"
+    },
+    "firmament_northern_veil_subbox_probe": {
+      "commands": {
+        "compile": [
+          "/usr/bin/c++",
+          "-DASIO_STANDALONE",
+          "-DGL_SILENCE_DEPRECATION",
+          "-D_WEBSOCKETPP_CPP11_STL_",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/src",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/src/s",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/src/ZonesOfEarth",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/src/Person/Body",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/imgui",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/third_party/miniaudio",
+          "-I/include",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/build/_deps/flatbuffers-src/include",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/build/_deps/asio-src/asio/include",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/build/_deps/websocketpp-src",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/build/_deps/vhacd-src/include",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/third_party/wgpu/include",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/tests",
+          "-I/Users/zacharyzhang/Documents/GitHub/Earthcall/tests/support",
+          "-iframework",
+          "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks",
+          "-isystem",
+          "/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/glfw_install/include",
+          "-isystem",
+          "/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.22/include",
+          "-g",
+          "-std=gnu++17",
+          "-Wall",
+          "-Wextra",
+          "-UNDEBUG",
+          "-o",
+          "/private/tmp/earthcall-volume-demand-20261015/firmament_northern_veil_subbox_probe.o",
+          "-c",
+          "/private/tmp/earthcall-volume-demand-20261015/firmament_northern_veil_subbox_probe.cpp"
+        ],
+        "link": [
+          "/usr/bin/c++",
+          "-g",
+          "-Wl,-search_paths_first",
+          "-Wl,-headerpad_max_install_names",
+          "/private/tmp/earthcall-volume-demand-20261015/firmament_northern_veil_subbox_probe.o",
+          "CMakeFiles/volume_shared_subexpression_test.dir/src/Singularity/Screen/WebGPU/SdfWgsl.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/CategoryManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Form.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Material/Material.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Material/MaterialManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Material/PaintToolSurface.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Creation/SingularSetToSetCreation.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Lexeme/Lexeme.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/AngleTools.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Automation/Automation.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Contour.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Creation/ObjectConcept.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Geometry/ComplexShape.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Geometry/FieldNode.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Geometry/Patch.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Geometry/Sdf.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Geometry/SdfJson.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Geometry/SmoothSurface.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Geometry/TriGrid.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Object.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Object/FaceTexture.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Object/ObjectComposition.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Object/ObjectCore.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Object/ObjectEvents.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Object/ObjectProperties.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/Object/PolyhedronData.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/ObjectCollision.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/ObjectMotion.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/ObjectRaycast.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Object/ObjectRender.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/Property.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/PropertyPath.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Property/PropertyValueJson.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ConstructedBeing/Singular/Singular.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/Claim.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/FirstMoverRegister.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/IdentityLedger.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/KeyPair.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/KeyStore.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/PersonMigration.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/PersonPresence.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Identity/SingularId.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/Body.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/BodyPart.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Arm.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Finger.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Foot.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/ForeArm.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/ForeLeg.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Hand.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Leg.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Neck.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Shoulder.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/BodyPart/Limb/Torso.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Body/Head/Head.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Person.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/PersonDatabase.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Perspective/AvatarHandler.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Perspective/PersonPerspective.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Perspective/PerspectiveManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Relationship/Community/Community.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Relationship/Relationship.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Soul/Soul.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Voice/Voice.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Person/Voice/VoicePart/VoicePart.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Relation/Formation/Formation.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Relation/Relation.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Relation/RelationManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Relation/Traversal/RelevanceTraversal.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Relation/Traversal/SlowAdapter.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Audio/AudioChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Audio/AudioRecorder.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Audio/AudioSystem.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/AppPaths.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/CodecChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/CreationChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/Engine.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/EngineInit.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/EngineRender.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/EngineUpdate.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/EventBus.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/EventHandler.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/Logger.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Core/StringId.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Execution/ExecutionChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Execution/JITBridge.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Execution/NativeBytecodeVM.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Execution/PropheticJIT.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Execution/PropheticJIT_LLVM.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/AdvancedFacePaint.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Chat.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Controls.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/AssetsConsole.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CharacterConsole.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/Create3DConsole.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleFixtureLaw.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/PaintConsole.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/RelationsConsole.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/WorldConsole.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/ZonesConsole.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CursorTools.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/ElementalToolHandler.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/IDEDockManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Menu/Menu.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/FirstMoverOntology/FirstMoverWindowTools/Tool.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/API/EarthcallAPI.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/API/SecurityManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Adapters/MacOSAccessibilityAdapter.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/ForeignActuationGuard.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/ForeignChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Shell/ShellChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Sync/AsyncStateLogger.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Sync/ForeignSyncManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Sync/InferenceLawBridge.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/DomMirrorBridge.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/DomMirrorProtocol.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/DomMirrorTranslator.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/IntegrationManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/RealWebView.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/WebBindings.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/WebIntegration.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Foreign/Web/WindowManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Input/Interaction/ControlPatterns.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Input/Interaction/InteractionChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Input/Keyboard/KeyboardHandler.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Input/Locomotion/LocomotionChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Input/Mouse/MouseHandler.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Language/JoyHierarchy.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Language/LanguageSystem.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Language/SyntacticParser.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Language/Utterance.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Network/Http/HttpChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Network/Osc/OscChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Network/WebSocketClient.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Network/WebSocketClient_wasm.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Network/WebSocketServer.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/Affine.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/CurveModel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/Field.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/Function.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/LinearAlgebra.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/Operations.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/ProbabilityForm.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/OntoMath/ScalarForm.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Physical/Adapters/SerialAdapter.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Physical/PhysicalChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/AuthorableLight.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/BrushSystem.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/Camera.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/CardTreeLayout.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/CreationWindow.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/DeveloperToolsWindow.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/DrawAdapters.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/ElementalToolWindows.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/GL/GluCompat.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/GL/OpenGLRenderer.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/HighlightSystem.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/ImageCodecChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/LawGraphWindow.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/MathEditors.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/RelationManagerWindow.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/RenderMaterial.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/Renderer.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/ScreenChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/ScreenRecorder.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/ShadingSystem.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Screen/VolumeZeroProof.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Singularity.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/CloudStorage.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/FileChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/FileWatcher.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/MigrationFramework.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/SaveSystem.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/BinarySerializer.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/Person/BodySerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/Person/PersonSerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/Relation/FormationSerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/Relation/RelationSerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/Serialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/SessionSemanticRoots.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/ZonesOfEarth/HomeSerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/ZonesOfEarth/OurverseSerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/StreamChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Storage/VirtualFileSystem.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Terminal/LawSentence.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Terminal/LineEditor.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/Terminal/TerminalChannel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Singularity/TransferPolicy.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Time/Event/Event.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Time/Moment/Moment.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/Time/timeline.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/ChangeRecorder.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/ConditionModel.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/ECA.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/LawSynthesis.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/PhysicsLawBridge.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/PropheticIndexBridge.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/PropheticRete.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/SecondNatureLawAuthoring.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/AuthorsOfLaw/Universe.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/HomesOfEarth/Home.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Ourverse/Ourverse.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Physics/AuthoredPhysicsLaws.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Physics/CollisionDispatcher.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Physics/DefaultPhysicsLaws.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Physics/Physics.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/Zone/Zone.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/ZoneBounds.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/ZoneLawMembership.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/ZoneManager.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/ZonesOfEarth/ZoneNativePersistence.cpp.o",
+          "CMakeFiles/earthcall_core.dir/src/globals.cpp.o",
+          "CMakeFiles/earthcall_core.dir/imgui/imgui.cpp.o",
+          "CMakeFiles/earthcall_core.dir/imgui/imgui_demo.cpp.o",
+          "CMakeFiles/earthcall_core.dir/imgui/imgui_draw.cpp.o",
+          "CMakeFiles/earthcall_core.dir/imgui/imgui_tables.cpp.o",
+          "CMakeFiles/earthcall_core.dir/imgui/imgui_widgets.cpp.o",
+          "CMakeFiles/earthcall_core.dir/imgui/backends/imgui_impl_glfw.cpp.o",
+          "CMakeFiles/earthcall_core.dir/imgui/backends/imgui_impl_opengl2.cpp.o",
+          "-o",
+          "/private/tmp/earthcall-volume-demand-20261015/firmament_northern_veil_subbox_probe",
+          "/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/glfw_install/lib/libglfw3.a",
+          "/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.22/libssl.a",
+          "/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.22/libcrypto.a",
+          "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/libz.tbd",
+          "libearthcall_utf8proc.a",
+          "-framework",
+          "OpenGL",
+          "-framework",
+          "Cocoa",
+          "-framework",
+          "WebKit",
+          "-framework",
+          "CoreAudio",
+          "-framework",
+          "AudioToolbox",
+          "-framework",
+          "Security",
+          "-framework",
+          "IOKit",
+          "-framework",
+          "CoreFoundation",
+          "-framework",
+          "Foundation"
+        ]
+      },
+      "results": "Curtain 0: fine+macro bits = 30616 + 784 = 31400 (<= 32,768) | proven holes inside Z-interval per X-slice = 0\nCurtain 1: fine+macro bits = 30616 + 784 = 31400 (<= 32,768) | proven holes inside Z-interval per X-slice = 0\nCurtain 2: fine+macro bits = 30616 + 784 = 31400 (<= 32,768) | proven holes inside Z-interval per X-slice = 0\nCurtain 3: fine+macro bits = 30616 + 784 = 31400 (<= 32,768) | proven holes inside Z-interval per X-slice = 0\n\nView inside  (2,304 rays):\n  Baseline Full-Box 32k:              visits=173409 queries=228908 unknown=147710 | foldTrig=132725 foldZero=65526 noise=67199\n  Tight-Subbox 32k Iso (+bands):      visits=161869 (-6.7%) queries=202946 (-11.3%) unknown=106481 (-27.9%) | foldTrig=105962 (-20.2%) foldZero=38763 (-40.8%) noise=67199\n  Tight-Subbox 2-Level XZ (<=32k bit):visits=140890 (-18.8%) queries=168354 (-26.5%) unknown= 79024 (-46.5%) | foldTrig= 76401 (-42.4%) foldZero= 9202 (-86.0%) noise=67199\n\nView spawn   (2,304 rays):\n  Baseline Full-Box 32k:              visits= 63373 queries= 67002 unknown= 35936 | foldTrig= 30318 foldZero=14740 noise=15578\n  Tight-Subbox 32k Iso (+bands):      visits= 57330 (-9.5%) queries= 53796 (-19.7%) unknown= 22990 (-36.0%) | foldTrig= 22776 (-24.9%) foldZero= 7198 (-51.2%) noise=15578\n  Tight-Subbox 2-Level XZ (<=32k bit):visits= 53643 (-15.4%) queries= 49916 (-25.5%) unknown= 18693 (-48.0%) | foldTrig= 17232 (-43.2%) foldZero= 1654 (-88.8%) noise=15578\n\nView reverse (2,304 rays):\n  Baseline Full-Box 32k:              visits=146834 queries=154072 unknown=100199 | foldTrig= 93235 foldZero=47002 noise=46233\n  Tight-Subbox 32k Iso (+bands):      visits=140422 (-4.4%) queries=136713 (-11.3%) unknown= 72288 (-27.9%) | foldTrig= 71870 (-22.9%) foldZero=25637 (-45.5%) noise=46233\n  Tight-Subbox 2-Level XZ (<=32k bit):visits=131536 (-10.4%) queries=129474 (-16.0%) unknown= 56342 (-43.8%) | foldTrig= 53182 (-43.0%) foldZero= 6949 (-85.2%) noise=46233\n\nView side    (2,304 rays):\n  Baseline Full-Box 32k:              visits=112080 queries=135753 unknown= 69662 | foldTrig= 58731 foldZero=29116 noise=29615\n  Tight-Subbox 32k Iso (+bands):      visits=111593 (-0.4%) queries=121829 (-10.3%) unknown= 45772 (-34.3%) | foldTrig= 44560 (-24.1%) foldZero=14945 (-48.7%) noise=29615\n  Tight-Subbox 2-Level XZ (<=32k bit):visits= 90681 (-19.1%) queries= 99434 (-26.8%) unknown= 36301 (-47.9%) | foldTrig= 33258 (-43.4%) foldZero= 3643 (-87.5%) noise=29615\n"
+    }
+  },
+  "measurement_limits": [
+    "batch counters are recorded from final frame, not summed over every measured frame",
+    "four warm draws; startup/first-use preparation not isolated here",
+    "offscreen fixture has no visible surface or Zone activation; it reads explicit frozen Zone fixtures",
+    "no isolated volume GPU timestamps",
+    "no p95 from batch means",
+    "load/thermal drift limits causal claims"
+  ],
+  "preservation": {
+    "power_only_source_matches_reference": true,
+    "no_save_writes": true,
+    "no_install_commit_or_push": true
+  },
+  "final_source_sha256": {
+    "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "e63f9d14ce7ee648b8ffe1a8c545fa9ebcaa8ad58cee8856bc4d58806db4d1f4",
+    "tests/support/webgpu_power_witness.hpp": "74a97b698265c28873299582339ffbe26e53dbf96964b677a163d08a83f40a7e",
+    "scripts/volume_traversal_experiment.py": "9457b79a85237164c1795eece529850cc183ece66659a9f8cb3d8164d2ea3f53",
+    "scratch/probes/volume_demand_probe.cpp": "8729f3ebf4ac1ed12b1a449c68a8df417bea34d75e1d338f0a7e4eb9add1c723"
+  }
+}
