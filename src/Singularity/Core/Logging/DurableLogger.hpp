@@ -1,32 +1,41 @@
 #pragma once
+
 #include "Singularity/Core/AppPaths.hpp"
-#include <string>
+#include "json.hpp"
 #include <filesystem>
 #include <fstream>
-#include <unordered_map>
 #include <mutex>
-#include "json.hpp"
+#include <string>
+#include <unordered_map>
+#include <utility>
 
-namespace ECA {
-namespace Logging {
+namespace ECA::Logging {
 
+// Per-identity append-only JSONL, separate from aggregate category logs.
+// The root may be injected by tests; production uses AppPaths::logDirectory().
 class DurableLogger {
 public:
-    DurableLogger(const std::string& domain) : _domain(domain) {}
+    explicit DurableLogger(std::string domain,
+                           std::filesystem::path root = AppPaths::logDirectory())
+        : _domain(std::move(domain)), _root(std::filesystem::absolute(root)) {}
     ~DurableLogger() { closeAll(); }
+    DurableLogger(const DurableLogger&) = delete;
+    DurableLogger& operator=(const DurableLogger&) = delete;
 
-    void log(const std::string& stableIdentity, const std::string& type, const std::string& message, const nlohmann::json& details = nlohmann::json::object());
-    void closeAll();
+    // False means the record was NOT appended; flush is not fsync.
+    bool log(const std::string& stableIdentity, const std::string& type,
+             const std::string& message,
+             const nlohmann::json& details = nlohmann::json::object());
     void close(const std::string& stableIdentity);
+    void closeAll();
 
 private:
     std::filesystem::path resolvePath(const std::string& stableIdentity) const;
-    std::ofstream& getStream(const std::string& stableIdentity);
-
+    static constexpr std::size_t kMaxOpenStreams = 32;
     std::string _domain;
+    std::filesystem::path _root;
     std::unordered_map<std::string, std::ofstream> _streams;
     std::mutex _mutex;
 };
 
-} // namespace Logging
-} // namespace ECA
+} // namespace ECA::Logging
