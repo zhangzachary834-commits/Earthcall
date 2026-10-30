@@ -29,6 +29,33 @@ bool isPersonMotionProperty(const std::string& property) {
            property == "acceleration";
 }
 
+// Conservative, compile-time destination filter: only skip the expensive
+// per-target Person/qualified-root check when no action can write motion.
+// This is deliberately allowed to over-approximate, never under-approximate.
+bool actionTreeMayWritePersonMotion(const ActionNode& action) {
+    switch (action.kind) {
+        case ActionNode::Kind::Set:
+        case ActionNode::Kind::Add:
+        case ActionNode::Kind::Scale:
+        case ActionNode::Kind::Lerp:
+        case ActionNode::Kind::Drive:
+        case ActionNode::Kind::Map:
+        case ActionNode::Kind::Flow:
+        case ActionNode::Kind::RemoveProperty:
+            if (isPersonMotionProperty(action.propertyName)) return true;
+            for (const auto& segment : action.path.segments) {
+                if (isPersonMotionProperty(segment)) return true;
+            }
+            break;
+        default:
+            break;
+    }
+    for (const auto& child : action.children) {
+        if (actionTreeMayWritePersonMotion(child)) return true;
+    }
+    return false;
+}
+
 bool writesPersonsMotionWithoutActuationConsent(const ActionNode& action,
                                                 Singular& subject,
                                                 bool childrenOnNewborn = false) {
@@ -286,6 +313,9 @@ void Law::setActionModel(ActionModel model) {
 void Law::recompile() {
     _compiledGates.clear();
     _writesQualifiedRoots = false;
+    _writesMotionProperties = false;
+    _writesZoneCanExit = false;
+    _writesZoneOwner = false;
     if (_conditionModel) {
         _conditionPredicates.clear();
         addCondition(_conditionModel->describe(), _conditionModel->compile());
@@ -303,12 +333,13 @@ void Law::recompile() {
         std::vector<PropertyPath> writes;
         _actionModel->collectPaths(writes);
         for (const PropertyPath& w : writes) {
-            if (!w.segments.empty() && !w.segments.front().empty() &&
-                w.segments.front()[0] == '@') {
-                _writesQualifiedRoots = true;
-                break;
-            }
+            if (w.segments.empty()) continue;
+            const std::string& root = w.segments.front();
+            if (!root.empty() && root[0] == '@') _writesQualifiedRoots = true;
+            if (root == "canExit") _writesZoneCanExit = true;
+            if (root == "owner") _writesZoneOwner = true;
         }
+        _writesMotionProperties = actionTreeMayWritePersonMotion(*_actionModel);
     }
     rebuildRequiredProperties();
 }
@@ -470,33 +501,15 @@ Law::ApplicationResult Law::applyToImpl(
     const Law* targetLaw = dynamic_cast<const Law*>(&target);
     const Zone* targetZone = dynamic_cast<const Zone*>(&target);
 
-    const bool lacksPersonMotionConsent = _actionModel &&
+    const bool lacksPersonMotionConsent = _actionModel && _writesMotionProperties &&
         writesPersonsMotionWithoutActuationConsent(*_actionModel, target);
     bool violatesKernelBoundary = lacksPersonMotionConsent;
     bool personMotionRefused = false;
-    if (_actionModel) {
-        std::vector<PropertyPath> paths;
-        _actionModel->collectPaths(paths);
-
-        for (const auto& p : paths) {
-            if (p.segments.empty()) continue;
-            const std::string& root = p.segments.front();
-
-            // 3. Zone Exit Lock Rejection: Nobody can be locked in a zone against their will.
-            if (targetZone) {
-                if (root == "canExit") {
-                    violatesKernelBoundary = true;
-                    break;
-                }
-                // Local Ourverse gathering: no one may own it. Owner is
-                // already read-only on Zone; this refuses any write path
-                // that would seat a Singular over the gathering place.
-                if (targetZone->isOurverseGathering() && root == "owner") {
-                    violatesKernelBoundary = true;
-                    break;
-                }
-            }
-        }
+    // Same collected-path semantics as before, but derived once per model edit.
+    // A cleared model must not inherit a stale cached Zone prohibition.
+    if (_actionModel && targetZone &&
+        (_writesZoneCanExit || (_writesZoneOwner && targetZone->isOurverseGathering()))) {
+        violatesKernelBoundary = true;
     }
 
     if (!_enabled) {
