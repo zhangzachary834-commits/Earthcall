@@ -729,14 +729,14 @@ public:
     // True when the given ID belongs to an alpha node (not beta).
     bool isAlphaNode(std::size_t id) const { return findAlpha(id) != nullptr; }
 
+    const AlphaNode* findAlpha(std::size_t id) const;
+    AlphaNode* findAlpha(std::size_t id);
     const BetaNode* findBeta(std::size_t id) const;
     BetaNode* findBeta(std::size_t id);
 
     nlohmann::json toJson() const;
 
 private:
-    const AlphaNode* findAlpha(std::size_t id) const;
-    AlphaNode* findAlpha(std::size_t id);
     void propagateFact(const FactPtr& fact);
     void detachFactConsequences(const FactPtr& fact);
     void refreshStateFact(const FactPtr& fact, nlohmann::json newValue);
