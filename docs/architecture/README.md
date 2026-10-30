@@ -22,6 +22,8 @@ A **framework name is not a directory name.** `Integration/` stays
 
 Cross-cutting historical observability is governed by [`PER_SINGULAR_DURABLE_LOGGING.md`](PER_SINGULAR_DURABLE_LOGGING.md): the console is an immediate observation surface, while meaningful history is routed toward durable subsystem chronicles and per-Singular histories that survive process shutdown.
 
+GPU execution policy is governed by [Authorable GPU Runs Between CPU Cycles](AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md): bounded GPU-resident continuation, compaction, indirect redispatch and authorable scheduling policy; implementation status and the next measured slice are tracked in the [ray-transport task](../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md#authorable-gpu-runs-implementation-priority--2026-10-29).
+
 Bare filenames in older notes (`NEW_KIND_FRAMEWORK.md`) mean the file in the
 folder above. Prefer the folder-qualified path from now on.
 
