@@ -661,14 +661,20 @@ std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& c
 
 std::atomic<bool> g_isSaving{false};
 
+struct SavingScopeGuard {
+    SavingScopeGuard() { g_isSaving.store(true); }
+    ~SavingScopeGuard() { g_isSaving.store(false); }
+    SavingScopeGuard(const SavingScopeGuard&) = delete;
+    SavingScopeGuard& operator=(const SavingScopeGuard&) = delete;
+};
+
 bool isSaving() {
     return g_isSaving.load();
 }
 
 void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
-    g_isSaving.store(true);
-    
 #ifdef __EMSCRIPTEN__
+    SavingScopeGuard guard;
     try {
         writeSaveData(j, customLabel, type);
     } catch (const std::exception& e) {
@@ -676,13 +682,13 @@ void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel,
     } catch (...) {
         std::cerr << "[SaveSystem] save failed: unknown error\n";
     }
-    g_isSaving.store(false);
 #else
     // We deep copy the JSON object to pass it safely to the detached thread.
     // Nothing may escape this lambda: an exception crossing the top of a
     // thread is std::terminate, and the flag must clear on every path or the
     // UI reports a save that is still in flight forever.
     std::thread([j_copy = j, customLabel, type]() {
+        SavingScopeGuard guard;
         try {
             writeSaveData(j_copy, customLabel, type);
         } catch (const std::exception& e) {
@@ -690,7 +696,6 @@ void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel,
         } catch (...) {
             std::cerr << "[SaveSystem] Async save failed: unknown error\n";
         }
-        g_isSaving.store(false);
     }).detach();
 #endif
 }
@@ -718,8 +723,8 @@ std::string writeMatterData(const std::vector<uint8_t>& data, const std::string&
 }
 
 void writeMatterDataAsync(const std::vector<uint8_t>& data, const std::string& customLabel, SaveType type) {
-    g_isSaving.store(true);
 #ifdef __EMSCRIPTEN__
+    SavingScopeGuard guard;
     try {
         writeMatterData(data, customLabel, type);
     } catch (const std::exception& e) {
@@ -727,9 +732,9 @@ void writeMatterDataAsync(const std::vector<uint8_t>& data, const std::string& c
     } catch (...) {
         std::cerr << "[SaveSystem] writeMatterData failed: unknown error\n";
     }
-    g_isSaving.store(false);
 #else
     std::thread([data_copy = data, customLabel, type]() {
+        SavingScopeGuard guard;
         try {
             writeMatterData(data_copy, customLabel, type);
         } catch (const std::exception& e) {
@@ -737,7 +742,6 @@ void writeMatterDataAsync(const std::vector<uint8_t>& data, const std::string& c
         } catch (...) {
             std::cerr << "[SaveSystem] Async writeMatterData failed: unknown error\n";
         }
-        g_isSaving.store(false);
     }).detach();
 #endif
 }
