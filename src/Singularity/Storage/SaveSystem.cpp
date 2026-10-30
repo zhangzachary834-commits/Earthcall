@@ -27,6 +27,7 @@ extern char** environ;
 #include <zlib.h>
 #include <thread>
 #include <atomic>
+#include <memory>
 
 namespace SaveSystem {
 
@@ -659,17 +660,19 @@ std::string writeSaveData(const std::vector<uint8_t>& data, const std::string& c
     return filename;
 }
 
-std::atomic<bool> g_isSaving{false};
+// Count in-flight saves, not just the most recently started worker.
+// A boolean can become false while another detached save is still active.
+std::atomic<unsigned> g_activeSaves{0};
 
 struct SavingScopeGuard {
-    SavingScopeGuard() { g_isSaving.store(true); }
-    ~SavingScopeGuard() { g_isSaving.store(false); }
+    SavingScopeGuard() { g_activeSaves.fetch_add(1, std::memory_order_acq_rel); }
+    ~SavingScopeGuard() { g_activeSaves.fetch_sub(1, std::memory_order_acq_rel); }
     SavingScopeGuard(const SavingScopeGuard&) = delete;
     SavingScopeGuard& operator=(const SavingScopeGuard&) = delete;
 };
 
 bool isSaving() {
-    return g_isSaving.load();
+    return g_activeSaves.load(std::memory_order_acquire) != 0;
 }
 
 void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel, SaveType type) {
@@ -687,8 +690,12 @@ void writeSaveDataAsync(const nlohmann::json& j, const std::string& customLabel,
     // Nothing may escape this lambda: an exception crossing the top of a
     // thread is std::terminate, and the flag must clear on every path or the
     // UI reports a save that is still in flight forever.
-    std::thread([j_copy = j, customLabel, type]() {
-        SavingScopeGuard guard;
+    // Construct the guard before launching the worker: isSaving() must be
+    // observable as true as soon as this function returns. Capturing shared
+    // ownership also releases the count if copying or thread launch throws.
+    std::thread([j_copy = j, customLabel, type,
+                 guard = std::make_shared<SavingScopeGuard>()]() {
+        (void)guard;
         try {
             writeSaveData(j_copy, customLabel, type);
         } catch (const std::exception& e) {
@@ -733,8 +740,9 @@ void writeMatterDataAsync(const std::vector<uint8_t>& data, const std::string& c
         std::cerr << "[SaveSystem] writeMatterData failed: unknown error\n";
     }
 #else
-    std::thread([data_copy = data, customLabel, type]() {
-        SavingScopeGuard guard;
+    std::thread([data_copy = data, customLabel, type,
+                 guard = std::make_shared<SavingScopeGuard>()]() {
+        (void)guard;
         try {
             writeMatterData(data_copy, customLabel, type);
         } catch (const std::exception& e) {
