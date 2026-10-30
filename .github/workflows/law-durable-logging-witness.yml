@@ -1,0 +1,62 @@
+name: Law durable logging isolated witness
+
+# An independent, read-only witness. The broad focused workflow uses
+# cancel-in-progress across the PR ref; that must not erase this test's evidence.
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/law-durable-logging-witness.yml'
+      - 'src/Singularity/Core/Logging/DurableLogger.cpp'
+      - 'src/Singularity/Core/Logging/DurableLogger.hpp'
+      - 'src/ZonesOfEarth/AuthorsOfLaw/Law.cpp'
+      - 'src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp'
+      - 'tests/law/law_durable_logging_test.cpp'
+      - 'CMakeLists.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Intentionally no concurrency cancellation: retain exact-head compile,
+# link and CTest evidence even if another workflow run supersedes broad CI.
+jobs:
+  durable-law-witness:
+    name: Compile, link and execute Law durable logging (macOS)
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - name: Check out tested commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Record checked-out SHA
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git rev-parse HEAD
+          git status --short
+
+      - name: Configure Earthcall
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a"
+
+      - name: Compile and link durable logging regression
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build --parallel 4 --target law_durable_logging_test
+
+      - name: Execute exact durable logging regression
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ctest --test-dir build --output-on-failure --no-tests=error \
+            -R '^law_durable_logging_test$'
