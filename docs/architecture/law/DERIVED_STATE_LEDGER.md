@@ -390,3 +390,92 @@ The compiler observer adds no production derived state. Its concrete-device meth
 No production derived state is added. A separately generated scratch wrapper copies options only for volume-containing modules, forwards unchanged MSL once, releases the copied options after library creation, and ends all hooks/record state at process teardown. Fresh observations depend on exact fixture, binaries, native device, module hashes, effective options, framebuffer, clock and reference budget; reports are not reusable support certificates. Non-volume options and source hashes are checked. Both Safe arithmetic candidates fail pixel gates, including a full-lattice native-size counterexample; no production guard/cache/profile is installed. Original read-only observer and existing lifetime/invalidation contracts are unchanged. [Failure evidence, dependency hashes and reproduction](../../audits/VOLUME_ARITHMETIC_PROFILE_FIDELITY_2026-10-12.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T17:13:57.815427-07:00 (PDT).
+
+
+### Standalone offline performance reports — October 14
+
+No app/being state, runtime cache or GPU resource is added. Analyzer dictionaries, trace stacks, source-frame indices and structural call graphs live only in the separate process. Every invocation reads explicit input files, fingerprints them before/after analysis and writes a new output directory; existing output is refused. Reports are immutable observations of those inputs, not reusable rendering proofs or automatically refreshed views of the live app. Reanalysis requires a new report, and a source change requires rebuilding any packaged executable. No per-frame instrumentation or device lifetime is introduced. Unknown metadata and unsupported timing retain unknown status; malformed/ambiguous data refuses attribution rather than becoming zero cost. [Contracts](../../Agenda/Tasks/Specific%20Tasks/Performance%20and%20Runtime/Standalone_Performance_Analysis/Standalone_Performance_Analysis.md) and [executed witnesses](../../audits/STANDALONE_PERFORMANCE_ANALYSIS_2026-10-14.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-14T22:37:18.690115-07:00 (PDT).
+
+
+### Planned group-demand and qualified-support work — October 15
+
+The [implementation plan](../../plans/VOLUME_DEMAND_AND_SUPPORT_IMPLEMENTATION_2026-10-15.md#9-derived-state-and-compatibility-requirements) describes proposed retained group dependencies/placement, product-local aliases, qualified proof payloads and direct parameter recipes, with owners, reuse predicates and invalidation. **No new cache, native proof eligibility or GPU resource is installed by this documentation pass.** Existing residency, camera lanes and exact fallbacks remain the current contract. Adding finite shared `evalRange` results can immediately strengthen existing proof consumers, so future mathematical coverage must inventory consumers and preserve Unknown native eligibility until the selected AD-30/36 obligations hold. Earlier ADs may be planned through for Zach's later verdicts; new decisions are not pre-approved.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T03:21:44.030398-07:00 (PDT).
+
+### Power correction and rejected derived-state trials — October 15
+
+[Executed record](../../audits/VOLUME_POWER_AND_OPTIMIZATION_TRIALS_2026-10-15.md): no new production cache, schedule metadata, proof format or GPU resource remains from these trials. Demand-group placement, local aliases and macro occupancy storage were implemented with their candidate dependency/lifetime contracts, failed retention gates, and were removed. Existing program/proof caches, parameter slots, residency, membership offsets, revision gates and device invalidation retain their prior contracts.
+
+The retained shared power helper is immutable Kernel shader-library text, embedded at module generation, with no new authored/serialized state or persistent numerical cache. Changed generated WGSL still requires affected native modules to compile; unchanged media use existing revision gates. The external experiment process owns temporary comparison/readback buffers, releases native resources at process exit and never supplies a proof to the app. Its reports are frozen observations, not refreshable runtime state. Native subnormal consistency is not a complete numerical certificate; unresolved execution/consumer contracts remain Unknown.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T05:56:25.134858-07:00 (PDT).
+
+
+### Explicit Euclidean host range context — October 15
+
+[Executed contract](../../audits/VOLUME_EUCLIDEAN_RANGE_2026-10-15.md): `MathNode::evalMathematicalRange` selects extra host Length/Distance rules through a private invocation-local context shared by recursive calls. No memo, persistent cache, authored/serialized field, GPU allocation or device-dependent object is introduced. Inputs are the current authored node tree and explicit variable intervals; every invocation reads them afresh, so there is no cross-revision reuse or stale-data path. Bounds/temporary maps expire with the call. Unsupported/type/nonfinite/overflow cases return Unknown.
+
+The old `evalRange` entrypoint explicitly selects its previous rules. VolumeZeroProof, Sdf and PropheticRete continue calling it; they receive no new Euclidean theorem. Future production promotion must explicitly qualify the native consumer/scope rather than treating this host result as a complete backend certificate. Census reports and fingerprints are immutable external observations, not live proof caches. Existing GPU residency/invalidation contracts stay unchanged.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).
+
+
+### Support-allocation/traversal experiments restored — October 15
+
+[Three rejected increments](../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) temporarily added explicit bitmap-domain metadata, two-pass allocation, a resource hint and an AND-parent bank with distinct storage/instance eligibility. Their dependency was density revision + half extent; device/camera lanes and membership offsets were tested. None remains in production: the producer, proof header, renderer and shader hashes match the starting retained source, so previous cache/format/lifetime contracts remain authoritative. No new runtime memo, GPU resource, flag or omission permission is retained.
+
+Source patches are explicitly experimental/rejected evidence. New native tests exercise actual translated/parallel/support-edge rendering; they are no certificate reusable at runtime. The external cost process records immutable source/binary/input hashes and explicit metadata sizes. Its optional hierarchy-word inspection is compile-time developer tooling, not authored state or a second authority office. Unsupported native numerical/scope contracts remain unqualified; the host Euclidean entrypoint is still not consumed by GPU proofs.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+
+### §6cm — Distinct-ray accuracy holds; large-query economics fail
+
+[Executed evidence and remaining bridge](../../audits/GPU_RAY_TRANSPORT_WIDE_QUERY_SCREEN_2026-10-22.md). The newly written Firmament review is preserved and answered. All32,784 distinct native queries pass original-AST checks and nine large-ring normal/bulk plus forced/native bitwise cases;192 predetermined holdout rays pass both-resolution independent transport gates in all three variants. Unlike the earlier sparse result, every matched bulk/streamed lane loses cost on this workload (streaming +18–63%). Tight harmonic-envelope and adaptive1..16-bin screens pass accuracy but recover no economic win. A normalized cosine+linear witness refutes endpoint-change>2ε as a monotonicity proof; the conservative derivative enclosure stays. Six external-case and ten replay-corruption refusals plus four capture controls pass. No promotion/default/save/app/FPS change. Next: generic density/root/lifetimes and a demonstrably profitable distinct-query representation, then unique full viewport/depth/composition/complete frame costs and moving inhabited Person acceptance.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T11:52:54.393507-07:00`.
+
+
+### §6cn — compact numerical transport passes accuracy, loses economics
+
+[Executed evidence and next hypothesis](../../audits/GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22.md). 128-byte full-f32 event packets reduce schedule-only ring storage10×, but are not bit-lossless: strict native endpoint/output witnesses refuse. The separate numerical candidate passes original-AST1e-5 across32,784 actual queries, both dense-reference resolutions on192 predetermined rays, exact forced native fallback and10 corruption refusals;241 codec round trips pass. No normal fallback (max14 events), so native15-entry overflow remains unexercised. Primary compact costs are73%/45% slower than current. Same-query component clocks show comparable producer cost and33% more consumer cost at4 repetitions; phases are non-additive and hardware causes unmeasured. New Firmament counsel is answered: test shared Φ/coarse endpoints first with current capacities and cheaper consumer, preserve per-level execution error, and do not infer cache/spill behavior or capacity bounds from source/merged spans. No promotion/default/save/app/FPS change. Profitable connected execution, generic math/lifetimes, full viewport/frame and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:06:29.632017-07:00`.
+
+
+## §6cq — guarded sliver review and economic standing
+
+Width-only merging drops63 matching affine endpoints; guarded provenance and affine/apex protection retainsall12102 matched endpoints with unchanged support unions and passes two native accuracy/fallback series. The first-win timings were global bulk controls; bounded streaming loses all nine original cases, and both corrected connected lanes lose cost. No qualified connected gain or measured spill/occupancy cause. [Executed evidence and remaining gates](../../audits/GPU_RAY_TRANSPORT_SLIVER_REVIEW_2026-10-22.md). Zero-band provenance and merge flags are ephemeral per-ray GPU scratch, rebuilt each dispatch from current fixture/specs/ray/config; no persistent cache or new law-facing state. Generic math/lifetimes, full-frame economics and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T17:04:46.369117-07:00`.
+
+
+## §6cu — reviewed root/sweep contract and remaining bridge
+
+§6cu reproduces/repairs the24-unit shortcut fallback regression on Metal. Merge/sweep and original cs capture parity replay; all-level secant is structurally refused (6 affine endpoints/47084 unions). Zero-only secant retainsall12102 matched affine endpoints and unchanged outer unions, passes original-AST/reference/fallback gates, but still loses connected cost. SIMD causation and additive phase lower bounds are unestablished. [Evidence, repairs and next lowering experiment](../../audits/GPU_RAY_TRANSPORT_ROOT_REVIEW_2026-10-22.md). Exact-budget tests guard both culling shortcuts; standalone runners now enforce the independent frozen affine/support admission gate. Additional subdivision-cache/zero-band state is per-member/ray GPU scratch, reinitialized from specs/ray/config each dispatch; no persistent cache or law-facing state is added. Generic mathematical meaning remains OntoMath’s office. Full-frame integration and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T18:21:23.901547-07:00`.
+
+
+## §6cw — fused review and measured-work next step
+
+Actual fused outputs/forced fallback replay bit-exact on32784 rays, and192 holdouts pass both reference resolutions, but the tested32/8 implementation changes the assigned64/16 contract and exports no fused packets/normal headers. The runner now refuses incomplete admission; counts/AST fields are scoped to the unfused control. Connected primary cost remains2.070ms vs current1.583ms (+30.76%). Allocated bytes are not measured traffic; spill/occupancy causation is unmeasured and batching has one host completion. No new native run or production gain. Next Sparkly execution is a bounded work/resource census with Firmament reviewing; all three shipping gates remain OPEN. [Audit and replay](../../audits/GPU_RAY_TRANSPORT_FUSED_REVIEW_2026-10-22.md).
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-22T19:31:41.653259-07:00.
+
+
+## §6cy — census review and on-the-fly experiment contract
+
+§6cx actual fused packets/outputs qualify on32784 rays; corrective native diagnostics make controls fatal/poisoned, export raw per-ray counters/outputs and actual headers, and correct coarse rejects2389859→2332420 and initial stack use0→1. Noise496468 vs956301 and Phi2606763 counts survive, but work counts do not establish elapsed cost or spilling; narrow widths do not identify root provenance. Three historical/eight corrected refusal checks pass. Next Sparkly experiment consumes the chronological sweep directly while preserving exact n-way panels, overlap attenuation and late native fallback; Firmament reviews. All three shipping gates remain OPEN, with no new renderer/FPS gain. [Executed evidence/next steps](../../audits/GPU_RAY_TRANSPORT_CENSUS_REVIEW_2026-10-23.md).
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T00:40:20.361400-07:00.
+
+
+## §6dc — completed review and isolated native continuation
+
+Separate `Documents/GitHub/Earthcall-ray-transport` clone is active on `claude/ray-domain-transport-rung0` (base `d4963d062`), with selected Firmament files relayed from default `cd05acd19`. CPU census did not establish native parity: corrected parallel roots fail strict RGB parity by2–3ULP before endpoint/accuracy qualification. Isolated original-predicate coarse peeling and a65536-tile scheduling check pass32784 actual packets/outputs,192 dual-resolution holdouts, six exact-budget and two poisoned capacity controls, but lose current cost (+2.50%/+6.35% in the respective four-repeat observations). Stop those candidates. Portable31-document replay rejects14 corruptions. Historical on-the-fly slowdown is43.63%; hardware causal claims remain hypotheses. All3 shipping gates OPEN; no engine/save/default/app or new FPS gain. Native lane RELEASED in all3 local copies. [Evidence and next directions](../../audits/GPU_RAY_TRANSPORT_CONTINUATION_REVIEW_2026-10-23.md).
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T09:30:58.150880-07:00.

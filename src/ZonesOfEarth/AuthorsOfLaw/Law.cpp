@@ -522,13 +522,11 @@ Law::ApplicationResult Law::applyToImpl(
     } else if (_actions.empty()) {
         result = ApplicationResult::NoAction;
         if (ECA::LawAuditLogger::instance().level() == ECA::LawAuditLogger::Level::Verbose) {
-            if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
-                ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - NO ACTIONS", {
-                    {"lawId", getIdentifier()},
-                    {"targetId", target.getIdentifier()},
-                    {"result", "NoAction"}
-                });
-            }
+            ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - NO ACTIONS", {
+                {"lawId", getIdentifier()},
+                {"targetId", target.getIdentifier()},
+                {"result", "NoAction"}
+            });
         }
     } else {
         ECA::Event event;
@@ -581,7 +579,6 @@ Law::ApplicationResult Law::applyToImpl(
         // every write failed used to log SUCCESS; now it says so, names the
         // first reason, and the record carries the rest.
         const bool wrote = trace.anyWrote();
-
         if (wrote) {
             for (const auto& node : trace.nodes) {
                 if (node.wrote && !node.path.empty()) {
@@ -594,7 +591,10 @@ Law::ApplicationResult Law::applyToImpl(
             }
         }
 
-        if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+        // WhileTrue that wrote nothing is a level, not an event. Logging it
+        // every tick is the disk stall after loading a world of servos.
+        const bool skipAudit = _activation == Activation::WhileTrue && !wrote;
+        if (!skipAudit && ECA::LawAuditLogger::instance().wouldLog("LAW")) {
             std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
                                   target.getIdentifier() + "\" - " +
                                   (trace.fired() ? (wrote ? "SUCCESS" : "NO EFFECT") : "NO NODES");
@@ -605,27 +605,22 @@ Law::ApplicationResult Law::applyToImpl(
                                                : first.note) + ")";
             }
 
-            // WhileTrue that wrote nothing is a level, not an event. Logging it
-            // every tick is the disk stall after loading a world of servos.
-            const bool skipAudit = _activation == Activation::WhileTrue && !wrote;
-            if (!skipAudit) {
-                nlohmann::json nodesJson = nlohmann::json::array();
-                for (const auto& node : trace.nodes) {
-                    nodesJson.push_back({{"action", node.actionName},
-                                         {"path", node.path},
-                                         {"wrote", node.wrote},
-                                         {"reason", node.wrote ? "" : (node.note.empty()
-                                             ? std::string(ActionNode::reasonName(node.reason))
-                                             : node.note)}});
-                }
-                ECA::LawAuditLogger::instance().log("LAW", message, {
-                    {"lawId", getIdentifier()},
-                    {"targetId", target.getIdentifier()},
-                    {"result", "Applied"},
-                    {"changed", wrote},
-                    {"nodes", nodesJson}
-                });
+            nlohmann::json nodesJson = nlohmann::json::array();
+            for (const auto& node : trace.nodes) {
+                nodesJson.push_back({{"action", node.actionName},
+                                     {"path", node.path},
+                                     {"wrote", node.wrote},
+                                     {"reason", node.wrote ? "" : (node.note.empty()
+                                         ? std::string(ActionNode::reasonName(node.reason))
+                                         : node.note)}});
             }
+            ECA::LawAuditLogger::instance().log("LAW", message, {
+                {"lawId", getIdentifier()},
+                {"targetId", target.getIdentifier()},
+                {"result", "Applied"},
+                {"changed", wrote},
+                {"nodes", nodesJson}
+            });
         }
     }
     // Bounded memory: a WhileTrue law applies every tick — the log is a
@@ -2043,9 +2038,10 @@ void LawManager::connectToEventBus() {
 
     _ecaEventSubscription = Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
         std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
-        std::string objectId = e.object ? e.object->getIdentifier() : "null";
 
         if (ECA::LawAuditLogger::instance().wouldLog("EVENT")) {
+            // Only the audit payload needs the object identifier; Rete uses subjectId.
+            std::string objectId = e.object ? e.object->getIdentifier() : "null";
             ECA::LawAuditLogger::instance().log("EVENT", "Event \"" + e.type + "\" triggered (Subject: " + subjectId + ", Object: " + objectId + ")", {
                 {"eventType", e.type},
                 {"eventId", e.getIdentifier()},
@@ -2171,8 +2167,8 @@ void LawManager::syncProphetic() {
     // Say what was concluded. A condition no authored law can drive into its
     // satisfying range is exactly the thing an author stares at wondering why
     // their law never fires, and the engine already knows.
-    if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
-        for (const auto& finding : _prophetic.unreachable()) {
+    for (const auto& finding : _prophetic.unreachable()) {
+        if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
             ECA::LawAuditLogger::instance().log(
                 "LAW",
                 std::string(finding.selfImpossible ? "Law \"" : "Law \"") + finding.lawId +

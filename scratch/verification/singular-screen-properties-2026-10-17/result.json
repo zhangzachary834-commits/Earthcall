@@ -1,0 +1,591 @@
+{
+  "author": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
+  "bearers": {
+    "property-screen-object": {
+      "authoredProperties": 1,
+      "geometryListMember": false,
+      "region": {
+        "t": "dict",
+        "v": {
+          "color": {
+            "t": "vector_field",
+            "v": {
+              "amplitude": 1.0,
+              "astDefinition": {
+                "input": "x",
+                "pieces": [
+                  {
+                    "mathNode": {
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 1.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "op": 2
+                    },
+                    "where": {
+                      "children": [
+                        {
+                          "children": [
+                            {
+                              "op": 1,
+                              "var": "p"
+                            },
+                            {
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 7.5,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 9.5,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
+                              "op": 2
+                            }
+                          ],
+                          "op": 15
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.1,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "op": 5
+                    }
+                  },
+                  {
+                    "mathNode": {
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 1.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "op": 2
+                    },
+                    "where": {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.0,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              "baseFlowX": 0.0,
+              "baseFlowY": 0.0,
+              "baseFlowZ": 0.0,
+              "frequency": 1.0,
+              "mode": "AST"
+            }
+          },
+          "selector": {
+            "t": "scalar_field",
+            "v": {
+              "amplitude": 1.0,
+              "astDefinition": {
+                "input": "x",
+                "pieces": [
+                  {
+                    "mathNode": {
+                      "children": [
+                        {
+                          "children": [
+                            {
+                              "op": 1,
+                              "var": "p"
+                            },
+                            {
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 7.5,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 9.5,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
+                              "op": 2
+                            }
+                          ],
+                          "op": 15
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.1,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "op": 5
+                    },
+                    "where": {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.0,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              "baseDensity": 1.0,
+              "frequency": 1.0,
+              "mode": "AST"
+            }
+          }
+        }
+      }
+    },
+    "property-screen-singular": {
+      "authoredProperties": 1,
+      "geometryListMember": false,
+      "region": {
+        "t": "dict",
+        "v": {
+          "color": {
+            "t": "vector_field",
+            "v": {
+              "amplitude": 1.0,
+              "astDefinition": {
+                "input": "x",
+                "pieces": [
+                  {
+                    "mathNode": {
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 1.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "op": 2
+                    },
+                    "where": {
+                      "children": [
+                        {
+                          "children": [
+                            {
+                              "op": 1,
+                              "var": "p"
+                            },
+                            {
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 7.5,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 9.5,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
+                              "op": 2
+                            }
+                          ],
+                          "op": 15
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.1,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "op": 5
+                    }
+                  },
+                  {
+                    "mathNode": {
+                      "children": [
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 1.0,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "op": 2
+                    },
+                    "where": {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.0,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              "baseFlowX": 0.0,
+              "baseFlowY": 0.0,
+              "baseFlowZ": 0.0,
+              "frequency": 1.0,
+              "mode": "AST"
+            }
+          },
+          "selector": {
+            "t": "scalar_field",
+            "v": {
+              "amplitude": 1.0,
+              "astDefinition": {
+                "input": "x",
+                "pieces": [
+                  {
+                    "mathNode": {
+                      "children": [
+                        {
+                          "children": [
+                            {
+                              "op": 1,
+                              "var": "p"
+                            },
+                            {
+                              "children": [
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 7.5,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 9.5,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "op": 0,
+                                  "scalarForm": {
+                                    "terms": [
+                                      {
+                                        "c": 0.0,
+                                        "factors": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
+                              "op": 2
+                            }
+                          ],
+                          "op": 15
+                        },
+                        {
+                          "op": 0,
+                          "scalarForm": {
+                            "terms": [
+                              {
+                                "c": 0.1,
+                                "factors": {}
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "op": 5
+                    },
+                    "where": {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.0,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              "baseDensity": 1.0,
+              "frequency": 1.0,
+              "mode": "AST"
+            }
+          }
+        }
+      }
+    }
+  },
+  "date": "2026-10-17",
+  "harness": "Codex",
+  "model": "GPT-6.1 Sol",
+  "presence": "C++ test seam; no human private key",
+  "property-screen-object-bands": {
+    "height": 1440,
+    "maxByteError": 0,
+    "pixels": 3686400,
+    "width": 2560
+  },
+  "property-screen-object-edited": {
+    "height": 1440,
+    "maxByteError": 0,
+    "pixels": 3686400,
+    "width": 2560
+  },
+  "property-screen-object-pixel": {
+    "height": 1440,
+    "maxByteError": 0,
+    "pixels": 3686400,
+    "width": 2560
+  },
+  "property-screen-singular-bands": {
+    "height": 1440,
+    "maxByteError": 0,
+    "pixels": 3686400,
+    "width": 2560
+  },
+  "property-screen-singular-edited": {
+    "height": 1440,
+    "maxByteError": 0,
+    "pixels": 3686400,
+    "width": 2560
+  },
+  "property-screen-singular-pixel": {
+    "height": 1440,
+    "maxByteError": 0,
+    "pixels": 3686400,
+    "width": 2560
+  },
+  "scope": "Singular-interface source and ordinary Object; added region Properties only",
+  "session": "01a10a2b-a247-7c11-9d5f-7a8b89df6cfc",
+  "checkout": "/Users/zacharyzhang/Documents/GitHub/Earthcall",
+  "capturedAt": "2026-10-17T23:26:33.866704+00:00",
+  "head": "63f1c03c145080029b96c31d7d8814716d17d005",
+  "branch": "sync-from-earthcall-main",
+  "fixtureRoot": "/var/folders/xs/21wyg25d1sqgqhfv5td0jdwr0000gn/T/earthcall-cli-screen-6fz0zibz/saves",
+  "probeSourceSha256": "e8bc6123b7e8d72c376368a27aadcadfbe81c03d5a70120aa4f27bfc1e6fa0a3"
+}
