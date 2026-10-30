@@ -16,9 +16,15 @@
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include <iostream>
-#include <cassert>
 #include <vector>
 #include <memory>
+
+namespace {
+bool require(bool condition, const char* message) {
+    if (!condition) std::cerr << "FAILED: " << message << '\n';
+    return condition;
+}
+}
 
 using namespace Physics;
 
@@ -32,8 +38,8 @@ int main() {
         glm::mat4 t = glm::mat4(1.0f); t[3] = glm::vec4(0.5f, 0.0f, 0.0f, 1.0f);
         b.setTransform(t);
         CollisionResult r = dispatchCollision(a, b);
-        assert(r.hit == true);
-        assert(r.method == CollisionMethod::PolyhedronSAT);
+        if (!require(r.hit == true, "r.hit == true")) return 1;
+        if (!require(r.method == CollisionMethod::PolyhedronSAT, "r.method == CollisionMethod::PolyhedronSAT")) return 1;
     }
 
     // 3. GJK EPA
@@ -43,8 +49,8 @@ int main() {
         glm::mat4 t = glm::mat4(1.0f); t[3] = glm::vec4(0.5f, 0.0f, 0.0f, 1.0f);
         b.setTransform(t);
         CollisionResult r = dispatchCollision(a, b);
-        assert(r.hit == true);
-        assert(r.method == CollisionMethod::GjkEpa);
+        if (!require(r.hit == true, "r.hit == true")) return 1;
+        if (!require(r.method == CollisionMethod::GjkEpa, "r.method == CollisionMethod::GjkEpa")) return 1;
     }
 
     // --- Real Application Physics Runtime Event & Registry Witness Verification ---
@@ -56,19 +62,19 @@ int main() {
         Physics::registry() = RelationManager();
         Physics::setupPhysicsEventListeners();
 
-        bool physicsCollisionEventReceived = false;
-        bool ecaCollisionEventReceived = false;
-        bool contactBeganEventReceived = false;
-        bool contactEndedEventReceived = false;
+        int physicsCollisionEventCount = 0;
+        int ecaCollisionEventCount = 0;
+        int contactBeganEventCount = 0;
+        int contactEndedEventCount = 0;
 
-        Core::EventBus::instance().subscribe<PhysicsCollisionEvent>([&](const PhysicsCollisionEvent&) {
-            physicsCollisionEventReceived = true;
+        const auto physicsToken = Core::EventBus::instance().subscribe<PhysicsCollisionEvent>([&](const PhysicsCollisionEvent&) {
+            ++physicsCollisionEventCount;
         });
 
-        Core::EventBus::instance().subscribe<ECA::Event>([&](const ECA::Event& ev) {
-            if (ev.type == "collision") ecaCollisionEventReceived = true;
-            if (ev.type == "contact-began") contactBeganEventReceived = true;
-            if (ev.type == "contact-ended") contactEndedEventReceived = true;
+        const auto ecaToken = Core::EventBus::instance().subscribe<ECA::Event>([&](const ECA::Event& ev) {
+            if (ev.type == "collision") ++ecaCollisionEventCount;
+            if (ev.type == "contact-began") ++contactBeganEventCount;
+            if (ev.type == "contact-ended") ++contactEndedEventCount;
         });
 
         // Instantiate two overlapping objects in a physics update set
@@ -87,9 +93,10 @@ int main() {
         // Frame 1: Collide objects via updateBodies
         Physics::updateBodies(objects, 0.016f, 9.81f, 0.1f, -10.0f);
 
-        assert(physicsCollisionEventReceived);
-        assert(ecaCollisionEventReceived);
-        assert(contactBeganEventReceived);
+        if (!require(physicsCollisionEventCount == 1, "expected one typed collision event")) return 1;
+        if (!require(ecaCollisionEventCount == 1, "expected one ECA collision level event")) return 1;
+        if (!require(contactBeganEventCount == 1, "expected one contact-began edge")) return 1;
+        if (!require(contactEndedEventCount == 0, "contact-ended fired before separation")) return 1;
 
         // Verify Physics::registry() was populated via setupPhysicsEventListeners() -> recordCollision()
         bool relationFound = false;
@@ -101,7 +108,7 @@ int main() {
                 break;
             }
         }
-        assert(relationFound);
+        if (!require(relationFound, "relationFound")) return 1;
 
         // Frame 2: Separate objects and updateBodies to trigger contact-ended
         glm::mat4 tB_far = glm::mat4(1.0f);
@@ -109,7 +116,13 @@ int main() {
         objB->setTransform(tB_far);
 
         Physics::updateBodies(objects, 0.016f, 9.81f, 0.1f, -10.0f);
-        assert(contactEndedEventReceived);
+        if (!require(physicsCollisionEventCount == 1 && ecaCollisionEventCount == 1 &&
+                     contactBeganEventCount == 1 && contactEndedEventCount == 1,
+                     "expected no new collision and exactly one contact-ended edge")) return 1;
+        if (!require(Core::EventBus::instance().unsubscribe(physicsToken),
+                     "physics witness subscription cleanup failed")) return 1;
+        if (!require(Core::EventBus::instance().unsubscribe(ecaToken),
+                     "ECA witness subscription cleanup failed")) return 1;
 
         std::cout << "  ok: Physics::updateBodies dispatches PhysicsCollisionEvent, contact-began, contact-ended, and records collision relation in registry" << std::endl;
     }
