@@ -23,7 +23,7 @@ Pose 32 fallback 189,828→11,344 matches the Firmament's prediction exactly. S2
 **The deviation.** At pose 40 pixel (797,463) the original routed lane refused (published `w = -1`, so Current paints it) while 2b published transport `(0.0281, 0.0043, 0.0290, 0.0426)`. No accepted ray changed and no accepted ray became refused (0 and 0 on all poses). The §6fe census found exactly one reason-4 (degenerate coarse interval) fallback refusal at pose 40, consistent with a refusal that arises in a member the tile-level proof calls empty — which 2b, like S1/S2 already do for their unprocessed members, no longer evaluates. I did not isolate that ray's refusing member, so that mechanism is inferred, not proven. Consequence: 2b is **not** claimed bit-identical; it is exact except that a proof-skipped member's refusal can no longer force Current. That widens the §6fd budget contract ("work bounds work performed") to "refusals are decided by evaluated members" — a decision for Sixth-One Sun/Zach, not mine. Coverage: 8 poses of 64, 3.7 M rays each; poses 20,28,36,44 and the inside population are unchecked.
 
 ## Not done / handoff
-- **Timing: see "Timing result (2026-10-30)" below.** Compare against Current is still not measured by this mode.
+- **Timing: see "Timing result (2026-10-30)" below.** Lane 0 of this mode is Current (see the correction below).
 - Defaults unchanged; no ScreenChannel/Law exposure; wider-pose and inside-population parity still open.
 
 Evidence class: native Metal bitwise publication/snapshot comparison (not timing, not Person evidence).
@@ -38,14 +38,14 @@ Zach, in chat: "Reset and rerun" (after a first attempt timed out at the focus g
 
 | Lane (ms/frame, mean of 4) | queued | fenced |
 |---|---:|---:|
-| 0 original routed (uncoalesced) | 96.43 | 87.81 |
+| 0 **Current** (routed transport off) | 96.43 | 87.81 |
 | 1 coalesced | 90.54 | 86.50 |
 | 2 coalesced + skip-empty (2a) | 87.11 | 84.28 |
 | 3 coalesced + 2b | 85.21 | 81.25 |
 
 Paired per-block ratios (mean): 2b/coalesced **0.942 queued, 0.939 fenced**; 2b/2a **0.980 queued, 0.964 fenced**; 2a/coalesced 0.962 / 0.974. 2b beat 2a in 7 of 8 paired blocks; the exception is queued block 3 (1.043), so the queued 2b-vs-2a margin (≈2%) is within that run-to-run spread, while fenced (all four blocks 0.95–0.98) is cleaner. 2b/coalesced was below 1 in all 8 blocks (0.92–0.97).
 
-**What this establishes:** with the pose-40 refusal contract, 2b is ≈6% cheaper than coalesced routed and ≈2–4% cheaper than 2a on this route, in one process, one device, one run (single repetition of the whole series). **What it does not:** this mode has no Current lane, so it does not say whether routed now beats Current (§6fb found coalesced slower than Current); poses 20/28/36/44 and the inside population are unchecked for parity, so 2b stays default OFF.
+**What this establishes:** with the pose-40 refusal contract, 2b is ≈6% cheaper than coalesced routed and ≈2–4% cheaper than 2a on this route, in one process, one device, one run (single repetition of the whole series). **What it does not (as first written; see correction):** poses 20/28/36/44 and the inside population are unchecked for parity, so 2b stays default OFF.
 
 ## Wider-pose and inside parity (2026-10-30)
 Zach, in chat: "Run parity". New harness mode `parity2b_more` (same per-pose gates as `parity2b`: original vs skip-empty publication hash, clean vs poisoned 2b, forced zero-budget refusal equals Current, accepted-ray diff classification, S1-up/fallback-down list counters) on **outside poses 20, 28, 36, 44** and **eight inside-population poses** (route poses 0, 8, … 56 with the eye among the curtains; harness index 1000+k). 2560×1440, real Release Engine, 32.5 s native, all 12 poses PASS. [JSON](GPU_RAY_TRANSPORT_6FE_STEP2B_PARITY_MORE_2026-10-30.json).
@@ -69,3 +69,7 @@ Zach, in chat: "Isolate refusals". Instrument: the work-trace Fallback producer 
 - **Finding:** all three refusals are reason 4 raised while evaluating a single curtain (1, 1, 2), at low work (26, 28, 85), and in tiles the classifier proves have exactly one active curtain. Under 2b the tile's S1 producer evaluates only that active curtain q and the ray is accepted; had q been the refusing curtain 2b would have refused the same ray, so **the refusing curtain is not the tile's active one**. That proves the mechanism this note previously inferred: the original's refusals come from a curtain the wave-mask proof had already excluded for the tile, which S1/S2 already ignore. It is exactly the contract Zach accepted, and no other refusal/accept change exists on these poses.
 - **Not done:** I did not read q itself (the 2b S1 variant is untraced), so q≠member is inferred from the accepted publication, not read directly; only poses 40 and 44 were isolated (they are the only ones with differing pixels among the 20 checked).
 - The Pass A trace default (tile-slot indexing) is unchanged; the renderer-path edit is only `tracing` no longer being disabled for S2/Fallback when 2b is on (matters only while `observeWork` is set). I did not re-run `parity2b` after this edit.
+
+### Correction (2026-10-30, same day)
+I first labeled lane 0 "original routed (uncoalesced)" and wrote that the mode had no Current lane. That was wrong: the harness calls `frame(i, l!=0)`, so lane 0 runs with `volumeRoutedTransportEnabled=false`, i.e. **Current**, and lanes 1–3 are routed. The numbers above were right; the label and the "no Current lane" claim were not. Ratios to Current from the same run (mean of 4 paired blocks): coalesced 0.939 queued / 0.985 fenced; skip-empty 0.904 / 0.960; **2b 0.884 queued / 0.925 fenced** (2b below Current in all 8 blocks: queued 0.87–0.91, fenced 0.90–0.94). So in this one run 2b is ≈11.6% (queued) and ≈7.5% (fenced) cheaper per frame than Current, and the fenced coalesced lane is the only routed lane that is not clearly below it (blocks 0.95–1.00). Same limits as before: one process, one device, one repetition of the series, a 64-frame route interval; not a Person verdict.
+Re-run of `parity2b` after the refusal-isolation edit (8 poses, 23.3 s native): all gates PASS and the diffs are unchanged (pose 40: 1 refusal-to-accept pixel; others 0).
