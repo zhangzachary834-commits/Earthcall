@@ -21,8 +21,10 @@ permissions:
 # link and CTest evidence even if another workflow run supersedes broad CI.
 jobs:
   durable-law-witness:
-    name: Compile, link and execute Law durable logging (macOS)
-    runs-on: macos-14
+    name: Compile, link and execute Law durable logging (macOS 15)
+    # macOS 14 brownouts include 2026-10-30; image retires 2026-11-02.
+    # Use the supported pinned image rather than retrying a retired runner.
+    runs-on: macos-15
     timeout-minutes: 45
     steps:
       - name: Check out tested commit
