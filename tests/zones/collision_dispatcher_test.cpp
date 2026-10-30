@@ -96,6 +96,7 @@ int main() {
         if (!require(physicsCollisionEventCount == 1, "expected one typed collision event")) return 1;
         if (!require(ecaCollisionEventCount == 1, "expected one ECA collision level event")) return 1;
         if (!require(contactBeganEventCount == 1, "expected one contact-began edge")) return 1;
+        if (!require(contactEndedEventCount == 0, "contact-ended fired before separation")) return 1;
 
         // Verify Physics::registry() was populated via setupPhysicsEventListeners() -> recordCollision()
         bool relationFound = false;
