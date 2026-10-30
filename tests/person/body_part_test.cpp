@@ -1,5 +1,8 @@
 #include "Person/Body/BodyPart/BodyPart.hpp"
+#include "Person/Body/Body.hpp"
+#include "Person/Voice/Voice.hpp"
 #include "Singularity/Screen/Renderer.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 #include <cassert>
 #include <cmath>
 #include <iostream>
@@ -31,7 +34,7 @@ static void testInitialState() {
     BodyPart bodyPart;
     assert(bodyPart.getName() == "");
     assert(bodyPart.getType() == BodyPart::Type::Undefined);
-    assert(bodyPart.getPrimaryShape() == ObjectTypes::ShapeKind::Cube);
+    assert(bodyPart.getPrimaryObject()->getShapeKind() == ObjectTypes::ShapeKind::Cube);
 
     // Check default color
     const float* color = bodyPart.getColor();
@@ -50,7 +53,7 @@ static void testCustomInitialization() {
     BodyPart bodyPart("RightArm", BodyPart::Type::Arm, ObjectTypes::ShapeKind::Sphere, glm::vec3(2.0f, 3.0f, 4.0f));
     assert(bodyPart.getName() == "RightArm");
     assert(bodyPart.getType() == BodyPart::Type::Arm);
-    assert(bodyPart.getPrimaryShape() == ObjectTypes::ShapeKind::Sphere);
+    assert(bodyPart.getPrimaryObject()->getShapeKind() == ObjectTypes::ShapeKind::Sphere);
 
     glm::vec3 dims = bodyPart.getDimensions();
     assert(dims.x == 2.0f);
@@ -78,7 +81,9 @@ static void testAccessorsAndMutators() {
     BodyPart bodyPart("Head", BodyPart::Type::Head, ObjectTypes::ShapeKind::Sphere, glm::vec3(1.0f));
 
     // Identifier check
-    assert(bodyPart.getIdentifier() == "Head");
+    assert(!bodyPart.getIdentifier().empty());
+    assert(bodyPart.getIdentifier() != bodyPart.getName());
+    assert(bodyPart.getIdentifier() == bodyPart.Formation::getIdentifier());
 
     // Color mutator/accessor
     bodyPart.setColor(0.5f, 0.6f, 0.7f);
@@ -99,11 +104,12 @@ static void testAccessorsAndMutators() {
     assert(bodyPart.localTransform() == localT);
     assert(bodyPart.getTransform() == localT);
 
-    // Custom textures check
-    assert(bodyPart.hasCustomTextures() == false);
-
-    // Face color setter
-    bodyPart.setFaceColor(0, 0.1f, 0.2f, 0.3f);
+    // setColor PAINTS the primary manifestation through its own Material
+    // (it used to only remember the value; updateColor() was never defined).
+    const float* painted = bodyPart.getPrimaryObject()->faceColors[0];
+    assert(std::abs(painted[0] - 0.5f) < 1e-5f);
+    assert(std::abs(painted[1] - 0.6f) < 1e-5f);
+    assert(std::abs(painted[2] - 0.7f) < 1e-5f);
 
     std::cout << "  testAccessorsAndMutators OK\n";
 }
@@ -119,30 +125,12 @@ static void testPrimaryObjectAndShapes() {
     assert(constPrimary == primary);
 
     // Primary shape mutation
-    assert(bodyPart.getPrimaryShape() == ObjectTypes::ShapeKind::Cube);
+    assert(bodyPart.getPrimaryObject()->getShapeKind() == ObjectTypes::ShapeKind::Cube);
     bodyPart.setPrimaryShape(ObjectTypes::ShapeKind::Cylinder);
-    assert(bodyPart.getPrimaryShape() == ObjectTypes::ShapeKind::Cylinder);
+    assert(bodyPart.getPrimaryObject()->getShapeKind() == ObjectTypes::ShapeKind::Cylinder);
     assert(primary->getShapeKind() == ObjectTypes::ShapeKind::Cylinder);
 
     std::cout << "  testPrimaryObjectAndShapes OK\n";
-}
-
-static void testRaycastTransform() {
-    glm::vec3 dims(2.0f, 3.0f, 4.0f);
-    glm::mat4 transform = glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, -2.0f));
-    BodyPart bodyPart("Hand", BodyPart::Type::Hand, ObjectTypes::ShapeKind::Cube, dims, transform);
-
-    glm::mat4 raycastT = bodyPart.getRaycastTransform();
-    glm::mat4 expected = transform * glm::scale(glm::mat4(1.0f), dims);
-
-    // Matrix equivalence check
-    for (int r = 0; r < 4; ++r) {
-        for (int c = 0; c < 4; ++c) {
-            assert(std::abs(raycastT[r][c] - expected[r][c]) < 1e-5f);
-        }
-    }
-
-    std::cout << "  testRaycastTransform OK\n";
 }
 
 static void testSubObjects() {
@@ -237,40 +225,36 @@ static void testTransformPropagation() {
 }
 
 static void testAutomations() {
+    // Automation clips animate the manifestation; they are the Object's
+    // affordance, reached through it — BodyPart no longer forwards them.
     BodyPart bodyPart("Foot", BodyPart::Type::Foot, ObjectTypes::ShapeKind::Cube, glm::vec3(1.0f));
-    assert(bodyPart.hasAutomations() == false);
+    Object& manifestation = *bodyPart.getPrimaryObject();
+    assert(manifestation.hasAutomations() == false);
 
     Automation::Clip clip;
     clip.name = "walk_step";
-    bodyPart.addAutomation(clip);
-    assert(bodyPart.hasAutomations() == true);
+    manifestation.addAutomation(clip);
+    assert(manifestation.hasAutomations() == true);
 
     glm::mat4 rest(1.0f);
-    bodyPart.setAutomationRest(rest);
-    glm::mat4 sampled = bodyPart.sampleAutomations(rest);
+    manifestation.setAutomationRest(rest);
+    glm::mat4 sampled = manifestation.sampleAutomations(rest);
     (void)sampled;
 
-    bodyPart.advanceAutomations(0.016f);
+    manifestation.advanceAutomations(0.016f);
 
-    // Const and non-const automationState accessors
-    auto& state = bodyPart.automationState();
+    auto& state = manifestation.automationState();
     (void)state;
-    const BodyPart& constBP = bodyPart;
-    const auto& constState = constBP.automationState();
-    (void)constState;
 
-    bodyPart.clearAutomations();
-    assert(bodyPart.hasAutomations() == false);
+    manifestation.clearAutomations();
+    assert(manifestation.hasAutomations() == false);
 
     std::cout << "  testAutomations OK\n";
 }
 
-static void testDrawAndUpdate() {
+static void testDraw() {
     BodyPart bodyPart("Arm", BodyPart::Type::Arm, ObjectTypes::ShapeKind::Cube, glm::vec3(1.0f));
     bodyPart.addSubObject(ObjectTypes::ShapeKind::Sphere);
-
-    // Update call
-    bodyPart.update(0.016f);
 
     // Draw call using MockRenderer
     MockRenderer mockRenderer;
@@ -282,7 +266,102 @@ static void testDrawAndUpdate() {
 
     setCurrentRenderer(nullptr);
 
-    std::cout << "  testDrawAndUpdate OK\n";
+    std::cout << "  testDraw OK\n";
+}
+
+// BodyPart_Constitution_As_Explicit_Relation (Zach, 2026-10-13): constitution
+// is a first-class `constituted-by` Relation, constitution does not imply
+// identity, and replacing a manifestation does not change the part.
+static void testConstitutionIsExplicitRelation() {
+    BodyPart part("LeftHand", BodyPart::Type::Hand, ObjectTypes::ShapeKind::Cube, glm::vec3(1.0f));
+    Object* primary = part.getPrimaryObject();
+
+    Relation* edge = part.constitutionOf(primary);
+    assert(edge != nullptr);
+    assert(edge->type == BodyPart::kConstitutedByType);
+    assert(edge->directed);
+    assert(edge->a() == &part && edge->b() == primary);
+    // A manifestation is not the part: distinct beings, distinct names.
+    assert(primary->getIdentifier() != part.getIdentifier());
+
+    // Traversal from the visual Object back to the part, through the
+    // graph's own endpoint index (what the `Related` condition uses).
+    std::vector<Relation*> involving;
+    part.relations().relationsInvolving(*primary, involving);
+    bool foundPart = false;
+    for (Relation* rel : involving)
+        if (rel && rel->type == BodyPart::kConstitutedByType && rel->a() == &part) foundPart = true;
+    assert(foundPart);
+
+    // Replace a manifestation: the part's identity is untouched, the old
+    // edge dissolves, the new one forms.
+    const std::string identity = part.getIdentifier();
+    Object* first = part.addSubObject(ObjectTypes::ShapeKind::Sphere);
+    assert(part.constitutionOf(first) != nullptr);
+    part.removeSubObject(0);
+    assert(part.constitutionOf(first) == nullptr);
+    Object* second = part.addSubObject(ObjectTypes::ShapeKind::Cylinder);
+    assert(part.constitutionOf(second) != nullptr);
+    assert(part.getIdentifier() == identity);
+
+    // Registered, not hidden (Refusal 6): the constitution reads as a path.
+    auto* constitutedBy = part.findProperty("constitutedBy");
+    assert(constitutedBy != nullptr);
+    auto list = std::get<std::shared_ptr<PropertyList>>(constitutedBy->value());
+    assert(list && list->elements.size() == 2);   // primary + the replacement
+    auto* primaryPath = part.findProperty("primaryObject");
+    assert(primaryPath != nullptr);
+    assert(std::get<std::string>(primaryPath->value()) == primary->getIdentifier());
+
+    std::cout << "  testConstitutionIsExplicitRelation OK\n";
+}
+
+
+static void testBodyAndVoiceIdentityDistinctFromSpelling() {
+    BodyPart left("Wing", BodyPart::Type::Arm);
+    BodyPart right("Wing", BodyPart::Type::Arm);
+    assert(left.getName() == right.getName());
+    assert(left.getIdentifier() != right.getIdentifier());
+    assert(left.getIdentifier() == left.Formation::getIdentifier());
+
+    Body body("Humanoid", "Voxel");
+    body.addPart(&left);
+    body.addPart(&right);
+    assert(body.formation.hasMember(&left) && body.formation.hasMember(&right));
+    assert(body.getBodyPart(left.getIdentifier()) == &left);
+    assert(body.getBodyPart(right.getIdentifier()) == &right);
+    assert(body.getBodyPart("Wing") == &left); // legacy display-name lookup
+    const std::string leftId = left.getIdentifier();
+    body.removeBodyPart(leftId);
+    assert(body.getBodyPart(leftId) == nullptr);
+    assert(body.getBodyPart(right.getIdentifier()) == &right);
+    assert(!body.formation.hasMember(&left));
+    body.removeBodyPart("Wing");
+    assert(body.getBodyPart("Wing") == nullptr);
+    assert(!body.formation.hasMember(&right));
+
+    VoicePart first("Resonance", VoicePart::Type::Resonance);
+    VoicePart second("Resonance", VoicePart::Type::Resonance);
+    assert(first.getIdentifier() != second.getIdentifier());
+    assert(first.getIdentifier() == first.Formation::getIdentifier());
+    first.setIdentifier("voice-part-id-1");
+    second.setIdentifier("voice-part-id-2");
+    Voice voice;
+    voice.addPart(&first);
+    voice.addPart(&second);
+    assert(voice.formation.hasMember(&first) && voice.formation.hasMember(&second));
+    assert(voice.getVoicePart("voice-part-id-1") == &first);
+    assert(voice.getVoicePart("voice-part-id-2") == &second);
+    assert(voice.getVoicePart("Resonance") == &first);
+    voice.removeVoicePart("voice-part-id-1");
+    assert(voice.getVoicePart("voice-part-id-1") == nullptr);
+    assert(voice.getVoicePart("voice-part-id-2") == &second);
+    assert(!voice.formation.hasMember(&first));
+    voice.removeVoicePart("Resonance");
+    assert(voice.getVoicePart("Resonance") == nullptr);
+    assert(!voice.formation.hasMember(&second));
+
+    std::cout << "  testBodyAndVoiceIdentityDistinctFromSpelling OK\\n";
 }
 
 int main() {
@@ -291,11 +370,12 @@ int main() {
     testCustomInitialization();
     testAccessorsAndMutators();
     testPrimaryObjectAndShapes();
-    testRaycastTransform();
     testSubObjects();
     testTransformPropagation();
     testAutomations();
-    testDrawAndUpdate();
+    testDraw();
+    testConstitutionIsExplicitRelation();
+    testBodyAndVoiceIdentityDistinctFromSpelling();
     std::cout << "body_part_test: ALL OK\n";
     return 0;
 }

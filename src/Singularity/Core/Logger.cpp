@@ -1,4 +1,5 @@
 #include "Logger.hpp"
+#include "Singularity/Core/AppPaths.hpp"
 #include <filesystem>
 #include <iostream>
 #include <chrono>
@@ -49,7 +50,7 @@ void Logger::ensureCategoryStreams(LogCategory cat) {
     if (_streams[idx].logFile.is_open() || _streams[idx].jsonlFile.is_open()) return;
 
     std::string catName = categoryToString(cat);
-    std::string dirPath = "logs/" + catName;
+    std::string dirPath = (AppPaths::logDirectory() / catName).string();
     std::filesystem::create_directories(dirPath);
 
     std::string logPath = dirPath + "/" + catName + ".log";
@@ -69,11 +70,13 @@ Logger::Logger() {
         _categoryLevels[i].store(-1);
     }
 
-    std::filesystem::create_directories("logs");
+    const auto logDir = AppPaths::logDirectory();
+    std::error_code dirEc;
+    std::filesystem::create_directories(logDir, dirEc);
 
     // Mirror for backwards compatibility with legacy law audit logs
-    std::string legacyLog = "logs/law_audit.log";
-    std::string legacyJsonl = "logs/law_audit.jsonl";
+    std::string legacyLog = (logDir / "law_audit.log").string();
+    std::string legacyJsonl = (logDir / "law_audit.jsonl").string();
     _legacyLawLogFile.open(legacyLog, openModeFor(legacyLog));
     _legacyLawJsonlFile.open(legacyJsonl, openModeFor(legacyJsonl));
 

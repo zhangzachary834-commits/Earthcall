@@ -131,6 +131,36 @@ void test_clear() {
     assert(manager.isActive());
 }
 
+void test_distinct_perspectives_same_spelling() {
+    PerspectiveManager manager;
+    // Two distinct perspectives that share the same display name ("Overhead View")
+    manager.addPerspective(std::make_unique<PersonPerspective>("p1_cam", "Overhead View", PersonPerspective::PerspectiveType::TopDown));
+    manager.addPerspective(std::make_unique<PersonPerspective>("p2_cam", "Overhead View", PersonPerspective::PerspectiveType::Isometric));
+
+    assert(manager.count() == 2);
+    assert(manager.hasPerspective("p1_cam"));
+    assert(manager.hasPerspective("p2_cam"));
+
+    // Verify distinct identifiers and shared display name
+    assert(manager.get(0)->getIdentifier() == "p1_cam");
+    assert(manager.get(0)->getName() == "Overhead View");
+    assert(manager.get(1)->getIdentifier() == "p2_cam");
+    assert(manager.get(1)->getName() == "Overhead View");
+
+    // Switching by unique identifier targets the specific perspective
+    manager.switchTo("p2_cam");
+    assert(manager.currentIndex() == 1);
+    assert(manager.current()->getType() == PersonPerspective::PerspectiveType::Isometric);
+
+    manager.switchTo("p1_cam");
+    assert(manager.currentIndex() == 0);
+    assert(manager.current()->getType() == PersonPerspective::PerspectiveType::TopDown);
+
+    // Duplicate identifier should still be rejected
+    manager.addPerspective(std::make_unique<PersonPerspective>("p1_cam", "Overhead View", PersonPerspective::PerspectiveType::FreeCamera));
+    assert(manager.count() == 2);
+}
+
 } // namespace
 
 int main() {
@@ -140,6 +170,7 @@ int main() {
     test_remove_perspective();
     test_state_management();
     test_clear();
+    test_distinct_perspectives_same_spelling();
 
     std::puts("perspective_manager_test: ALL OK");
     return 0;

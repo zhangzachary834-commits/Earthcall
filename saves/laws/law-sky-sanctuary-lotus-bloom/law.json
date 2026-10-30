@@ -1,0 +1,231 @@
+{
+  "identifier": "law-sky-sanctuary-lotus-bloom",
+  "injected_by": {
+    "agent": "Gemini 4 Argon (Spark)",
+    "session": "argon-sky-island-sanctuary-20261013",
+    "timestamp": "2026-10-13T11:40:00-07:00"
+  },
+  "authors": [
+    "Zach"
+  ],
+  "law": {
+    "id": "law-sky-sanctuary-lotus-bloom",
+    "name": "Sky-Island Sanctuary: Twelve Lotus Petals bloom and gather with Sanctuary Resonance",
+    "enabled": true,
+    "authority": 0,
+    "activation": 1,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "Zach"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "applicationLog": [],
+    "conditionModel": {
+      "kind": 0,
+      "path": "sanctuaryPetal",
+      "op": 0,
+      "operand": {
+        "t": "bool",
+        "v": true
+      }
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "position.x",
+          "bindings": {
+            "a": "@sky.sanctuary.touchstone.resonance",
+            "s": "radialX",
+            "c": "radialZ",
+            "r": "azimuth"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.95,
+                      "factors": {
+                        "s": 1.0
+                      }
+                    },
+                    {
+                      "c": 1.75,
+                      "factors": {
+                        "s": 1.0,
+                        "a": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "position.z",
+          "bindings": {
+            "a": "@sky.sanctuary.touchstone.resonance",
+            "s": "radialX",
+            "c": "radialZ",
+            "r": "azimuth"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.95,
+                      "factors": {
+                        "c": 1.0
+                      }
+                    },
+                    {
+                      "c": 1.75,
+                      "factors": {
+                        "c": 1.0,
+                        "a": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "position.y",
+          "bindings": {
+            "a": "@sky.sanctuary.touchstone.resonance",
+            "s": "radialX",
+            "c": "radialZ",
+            "r": "azimuth"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 3.25,
+                      "factors": {}
+                    },
+                    {
+                      "c": -0.42,
+                      "factors": {
+                        "a": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": 8,
+          "path": "rotation",
+          "bindings": {
+            "a": "@sky.sanctuary.touchstone.resonance",
+            "s": "radialX",
+            "c": "radialZ",
+            "r": "azimuth"
+          },
+          "function": {
+            "pieces": [
+              {
+                "mathNode": {
+                  "op": 2,
+                  "children": [
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 8.0,
+                            "factors": {}
+                          },
+                          {
+                            "c": 36.0,
+                            "factors": {
+                              "a": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 1.0,
+                            "factors": {
+                              "r": 1.0
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "op": 0,
+                      "scalarForm": {
+                        "terms": [
+                          {
+                            "c": 0.0,
+                            "factors": {}
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "entityA": "law-sky-sanctuary-lotus-bloom",
+        "entityB": "lexeme.argon.sky_sanctuary.commission",
+        "type": "commissioned-under",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "commissioned-under",
+            "deltaWeight": 1.0,
+            "timestamp": 1791916800
+          }
+        ]
+      },
+      {
+        "entityA": "law-sky-sanctuary-lotus-bloom",
+        "entityB": "Zach",
+        "type": "authored-by",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1791916800
+          }
+        ]
+      }
+    ]
+  },
+  "triggers": []
+}

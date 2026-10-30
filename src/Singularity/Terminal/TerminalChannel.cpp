@@ -1,3 +1,4 @@
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Singularity/Terminal/TerminalChannel.hpp"
 
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
@@ -9,17 +10,23 @@
 #include "Relation/Relation.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Core/StringId.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
+#include "Identity/FirstMoverRegister.hpp"
+#include "Identity/PersonPresence.hpp"
+#include "Singularity/Core/Engine.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
 
 #include <algorithm>
 #include <cerrno>
 #include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
@@ -31,6 +38,7 @@
 #include <thread>
 #include <type_traits>
 #include <typeinfo>
+#include <unordered_map>
 #include <uuid/uuid.h>
 
 #if !defined(_WIN32) && !defined(__EMSCRIPTEN__)
@@ -52,9 +60,13 @@ constexpr const char* kLineEntered = "terminal-line-entered";
 // tests must never write into — or clear — the Person's own history).
 std::string historyFile() {
     const char* override = std::getenv("EARTHCALL_TERMINAL_HISTORY");
-    return override && *override ? override : "saves/logs/terminal-history.txt";
+    return override && *override
+        ? std::string(override)
+        : (SaveSystem::rootPath() / "logs" / "terminal-history.txt").string();
 }
-constexpr const char* kLogFile = "saves/logs/earthcall-terminal.log";
+std::string logFile() {
+    return (SaveSystem::rootPath() / "logs" / "earthcall-terminal.log").string();
+}
 
 // The event vocabulary, as it actually occurs: every event type the world has
 // published this session, and how often. No central list of event names.
@@ -75,6 +87,16 @@ void listenForEvents() {
 
 // Individuated like a Lexeme (`lexeme_<uuid>`): the display name a sentence
 // gives may be shared by many Laws; the identifier never is.
+// `enter`, `enter <zone>`: the line's move, readable before any grammar.
+bool isEnterLine(const std::string& text) {
+    const std::size_t b = text.find_first_not_of(" \t");
+    if (b == std::string::npos || text.size() - b < 5) return false;
+    for (std::size_t i = 0; i < 5; ++i) {
+        if (std::tolower(static_cast<unsigned char>(text[b + i])) != "enter"[i]) return false;
+    }
+    return text.size() == b + 5 || text[b + 5] == ' ';
+}
+
 std::string mintLawId() {
     uuid_t uuid;
     uuid_generate(uuid);
@@ -114,6 +136,22 @@ std::string number(double d) {
     char buf[32];
     std::snprintf(buf, sizeof buf, "%g", d);
     return buf;
+}
+
+bool isEventPath(const PropertyPath& path) {
+    const std::string text = path.toString();
+    return text.rfind("@event.", 0) == 0;
+}
+
+bool readsEventContext(const ConditionNode& node) {
+    if (isEventPath(node.path) || isEventPath(node.operandPath) || isEventPath(node.probe)) return true;
+    for (const auto& binding : node.bindings) {
+        if (isEventPath(binding.second)) return true;
+    }
+    for (const auto& child : node.children) {
+        if (readsEventContext(child)) return true;
+    }
+    return false;
 }
 
 // What a value looks like in the menu.
@@ -207,6 +245,7 @@ public:
     Earthcall::StringId nameId() const override { return _id; }
     std::string typeName() const override { return typeid(T).name(); }
     PropertyValue value() const override { return PropertyValue(*_member); }
+    bool isStructurallyWritable() const override { return _writable; }
     bool setValue(const PropertyValue& v) override {
         if (!_writable) return false;
         if (const auto* t = std::get_if<T>(&v)) {
@@ -263,7 +302,7 @@ struct LogRelay {
 LogRelay* g_relay = nullptr;
 
 void relayLoop(LogRelay* relay, int fd) {
-    std::ofstream log(kLogFile, std::ios::trunc);
+    std::ofstream log(logFile(), std::ios::trunc);
     std::string partial;
     char buf[4096];
     while (true) {
@@ -323,6 +362,12 @@ TerminalChannel::TerminalChannel() : Law("terminal-channel") {
     setName("Terminal Channel");
     listenForEvents();
     if (std::getenv("NO_COLOR")) _color = false;   // the no-color.org convention
+    // The de-facto convention for 24-bit colour (iTerm2, kitty, WezTerm,
+    // VS Code, Windows Terminal set it; Apple Terminal does not).
+    if (const char* depth = std::getenv("COLORTERM")) {
+        const std::string d = depth;
+        if (d == "truecolor" || d == "24bit") _colorDepth = "truecolor";
+    }
 }
 
 TerminalChannel::~TerminalChannel() { detach(); }
@@ -336,9 +381,139 @@ TerminalChannel* TerminalChannel::find(LawManager& laws) {
     return dynamic_cast<TerminalChannel*>(laws.find("terminal-channel"));
 }
 
+std::vector<LawSentence::Suggestion> TerminalChannel::completionSuggestions(const std::string& before) {
+    std::vector<LawSentence::Suggestion> out;
+    if (!_completionItems || _editor.secret) return out;
+    for (const auto& stored : _completionItems->elements) {
+        PropertyValue candidate = stored;
+        // An authored menu may carry values directly or readable PropertyPaths.
+        // No Lexeme/Law/template schema is scanned or inferred here.
+        if (const auto* path = std::get_if<std::string>(&stored); path && !path->empty() && path->front() == '@') {
+            if (!lawGetValue(*this, PropertyPath::parse(*path), candidate)) continue;
+        }
+        std::string text, description, snippet;
+        if (const auto* value = std::get_if<std::string>(&candidate)) text = *value;
+        else if (const auto* dict = std::get_if<std::shared_ptr<PropertyDict>>(&candidate); dict && *dict) {
+            const auto read = [&](const char* name) {
+                auto it = (*dict)->elements.find(name);
+                if (it == (*dict)->elements.end()) return std::string{};
+                const auto* v = std::get_if<std::string>(&it->second);
+                return v ? *v : std::string{};
+            };
+            text = read("text"); description = read("description"); snippet = read("snippet");
+        }
+        const std::string full = snippet.empty() ? text : text + " " + snippet;
+        if (full.empty() || lowerCopy(full).rfind(lowerCopy(before), 0) != 0) continue;
+        out.push_back({0, full, description, "value", 1, description, {}});
+    }
+    return out;
+}
+
+void TerminalChannel::configureEditor() {
+    _editor.look = [this](const std::string& key) { return lookFor(key); };
+    _editor.setProviders(
+        [this](const std::string& before) {
+            if (_completionActive && !awaitingAnswer()) return completionSuggestions(before);
+            if (!awaitingAnswer() && isEnterLine(before)) {
+                // `enter <zone>`: the menu offers the Zones the line can enter.
+                std::vector<LawSentence::Suggestion> out;
+                const std::size_t b = before.find_first_not_of(" \t");
+                std::size_t from = b + 5;
+                while (from < before.size() && before[from] == ' ') ++from;
+                if (from > before.size() || before.size() == b + 5) return out;
+                const std::string typed = lowerCopy(before.substr(from));
+                if (ZoneManager* zones = ZoneManager::live()) {
+                    for (const auto& z : zones->zones()) {
+                        if (!z) continue;
+                        const std::string name = z->name();
+                        if (lowerCopy(name).rfind(typed, 0) != 0 &&
+                            lowerCopy(z->getIdentifier()).rfind(typed, 0) != 0) continue;
+                        out.push_back({from, z->getIdentifier(), name == z->getIdentifier() ? "a Zone" : name,
+                                       "being", 1, "move the line (not your body) into " + name, {}});
+                    }
+                }
+                return out;
+            }
+            if (!awaitingAnswer() && !lawGrammarHere()) return std::vector<LawSentence::Suggestion>{};
+            if (!awaitingAnswer()) {
+                long shift = 0;
+                const std::string context = blockContext(before, shift);
+                auto out = LawSentence::suggest(context, liveVocabulary());
+                if (shift == 0) return out;
+                std::vector<LawSentence::Suggestion> mapped;
+                for (auto& sg : out) {
+                    const long from = static_cast<long>(sg.from) - shift;
+                    if (from < 0) continue;   // belongs to an earlier line of the block
+                    sg.from = static_cast<std::size_t>(from);
+                    mapped.push_back(std::move(sg));
+                }
+                return mapped;
+            }
+            // Answering a question: the only words are its answers.
+            const std::size_t space = before.find_last_of(' ');
+            const std::string word = space == std::string::npos ? before : before.substr(space + 1);
+            const std::size_t from = before.size() - word.size();
+            std::vector<LawSentence::Suggestion> out;
+            const auto offer = [&](const std::string& text, const std::string& what) {
+                if (lowerCopy(text).rfind(lowerCopy(word), 0) == 0) out.push_back({from, text, what, "value", 1, what, {}});
+            };
+            if (_pendingTargets.size() > 1) {
+                for (std::size_t i = 0; i < _pendingTargets.size(); ++i) {
+                    Law* law = _laws ? _laws->find(_pendingTargets[i]) : nullptr;
+                    offer(std::to_string(i + 1), law ? law->name() + " · " + lawSummary(*law, *_laws) : _pendingTargets[i]);
+                }
+            } else {
+                offer("yes", "delete it");
+            }
+            offer("no", "keep it");
+            return out;
+        },
+        [this](const std::string& text) {
+            if (isEnterLine(text) || !lawGrammarHere()) return std::vector<LawSentence::Span>{};
+            long shift = 0;
+            const std::string context = blockContext(text, shift);
+            if (shift == 0) return liveParse(context).spans;
+            std::vector<LawSentence::Span> mapped;
+            for (auto span : liveParse(context).spans) {
+                const long start = static_cast<long>(span.start) - shift;
+                if (start < 0) continue;
+                span.start = static_cast<std::size_t>(start);
+                span.end = static_cast<std::size_t>(static_cast<long>(span.end) - shift);
+                mapped.push_back(span);
+            }
+            return mapped;
+        },
+        [this](const std::string& text) {
+            if (_completionActive) return std::vector<LineEditor::Status>{{
+                completionSuggestions(_editor.buffer().substr(0, _editor.cursor())).empty()
+                    ? "No stored completions match this prefix · Esc returns to the sentence menu"
+                    : "Stored completions · arrows choose · Tab/Enter insert · Esc closes",
+                "note", std::string::npos}};
+            long shift = 0;
+            const std::string context = blockContext(text, shift);
+            auto status = statusOf(context);
+            if (_block.empty()) return status;
+            for (auto& line : status) {
+                if (line.errorOffset == std::string::npos) continue;
+                const long at = static_cast<long>(line.errorOffset) - shift;
+                line.errorOffset = at < 0 ? std::string::npos : static_cast<std::size_t>(at);   // caret only on this line
+            }
+            status.insert(status.begin(), LineEditor::Status{
+                "block · line " + std::to_string(_block.size() + 1) + " · an empty line authors it · ctrl-c discards it",
+                "note", std::string::npos});
+            return status;
+        });
+    // Enter on a sentence that cannot be authored yet keeps the line and says
+    // what is missing, instead of filling the scrollback with refusals.
+    _editor.submitGate = [this](const std::string& text) { return submitRefusal(text); };
+
+    _editor.accepted = [this] { _completionActive = false; };
+}
+
 void TerminalChannel::attach(LawManager& laws) {
     _attachTried = true;
     _laws = &laws;
+    configureEditor();
 #ifdef EARTHCALL_TERMINAL_POSIX
     // Only a real terminal: under ctest, an IDE, or Finder there is no
     // keyboard on stdin, and the channel stays quiet — and says why, once.
@@ -369,7 +544,7 @@ void TerminalChannel::attach(LawManager& laws) {
     std::atexit(restoreTerminal);
 
     std::error_code ec;
-    std::filesystem::create_directories("saves/logs", ec);
+    std::filesystem::create_directories(SaveSystem::rootPath() / "logs", ec);
     if (_relayLogs) {
         int fds[2];
         if (::pipe(fds) == 0) {
@@ -395,48 +570,6 @@ void TerminalChannel::attach(LawManager& laws) {
     if (history.size() > 1000) history.erase(history.begin(), history.end() - 1000);
     _editor.setHistory(std::move(history));
 
-    _editor.setProviders(
-        [this](const std::string& before) {
-            if (!awaitingAnswer()) return LawSentence::suggest(before, liveVocabulary());
-            // Answering a question: the only words are its answers.
-            const std::size_t space = before.find_last_of(' ');
-            const std::string word = space == std::string::npos ? before : before.substr(space + 1);
-            const std::size_t from = before.size() - word.size();
-            std::vector<LawSentence::Suggestion> out;
-            const auto offer = [&](const std::string& text, const std::string& what) {
-                if (lowerCopy(text).rfind(lowerCopy(word), 0) == 0) out.push_back({from, text, what, "value", 1, what, {}});
-            };
-            if (_pendingTargets.size() > 1) {
-                for (std::size_t i = 0; i < _pendingTargets.size(); ++i) {
-                    Law* law = _laws ? _laws->find(_pendingTargets[i]) : nullptr;
-                    offer(std::to_string(i + 1), law ? law->name() + " · " + lawSummary(*law, *_laws) : _pendingTargets[i]);
-                }
-            } else {
-                offer("yes", "delete it");
-            }
-            offer("no", "keep it");
-            return out;
-        },
-        [this](const std::string& text) { return liveParse(text).spans; },
-        [this](const std::string& text) { return statusOf(text); });
-    // Enter on a sentence that cannot be authored yet keeps the line and says
-    // what is missing, instead of filling the scrollback with refusals.
-    _editor.submitGate = [this](const std::string& text) -> std::string {
-        const std::string t = text.substr(text.find_first_not_of(" \t"));
-        if (awaitingAnswer() || t == "help" || t == "help " || t == "?") return {};
-        if (t.rfind("??", 0) == 0 || t.back() == '?') return {};
-        const LawSentence::Parse p = LawSentence::parse(text, liveVocabulary());
-        if (p.ok || p.error.find("Metalaw") != std::string::npos) return {};   // Metalaws decide when spoken
-        if (p.error.rfind("still open:", 0) == 0) {
-            for (const auto& clause : p.openClauses) {
-                if (clause.find("(optional)") != std::string::npos) continue;
-                const std::string eg = exampleFor(clause, liveVocabulary());
-                return "not yet — add " + clause + (eg.empty() ? "" : ", e.g.  " + eg) +
-                       "   (or end with ? to preview)";
-            }
-        }
-        return "not yet — " + p.error;
-    };
 
     writeTty("\x1b[?2004h");   // bracketed paste: a pasted sentence arrives as one
     _attached = true;
@@ -480,7 +613,25 @@ void TerminalChannel::draw() {
 #ifdef EARTHCALL_TERMINAL_POSIX
     if (!_attached) return;
     _editor.prompt = _prompt;
-    if (awaitingAnswer()) {
+    if (!_zone.empty()) {
+        // "earthcall> " -> "earthcall[LawLine]> "
+        std::string base = _prompt;
+        std::string tail;
+        const std::size_t gt = base.rfind('>');
+        if (gt != std::string::npos) { tail = base.substr(gt); base = base.substr(0, gt); }
+        _editor.prompt = base + "[" + zoneLabel() + "]" + tail;
+    }
+    _editor.secret = _secretStage != 0;
+    _editor.submitEmpty = !_block.empty();
+    if (!_block.empty()) {
+        // Python's continuation prompt, as wide as the real one.
+        const std::size_t width = visibleWidth(_editor.prompt);
+        _editor.prompt = std::string(width > 4 ? width - 4 : 0, ' ') + "... ";
+    }
+    if (_secretStage == 1) _editor.prompt = "passphrase (hidden) › ";
+    if (_secretStage == 2) _editor.prompt = "choose a passphrase for your new key (hidden) › ";
+    if (_secretStage == 3) _editor.prompt = "type it again (hidden) › ";
+    if (awaitingAnswer() && _secretStage == 0) {
         // The Metalaw's question, about what was named, as the prompt itself.
         const std::string about = _pendingTargets.size() > 1 ? "one of these" : "“" + _pendingNames + "”";
         _editor.prompt = _question + " " + about + "? " +
@@ -489,6 +640,7 @@ void TerminalChannel::draw() {
                          " › ";
     }
     bool hears = false;
+    refreshLooks();
     _editor.footer = footerText(hears);
     _editor.footerMark = hears ? "32" : "33";
     _editor.menuRows = std::max(1, _menuRows);
@@ -541,6 +693,23 @@ void TerminalChannel::printAbove(const std::string& text) {
 
 void TerminalChannel::handleKeys(const std::vector<Key>& keys, double now) {
     for (Key key : keys) {
+        if (key.kind == Key::Kind::Chord) {
+            if (_editor.secret || awaitingAnswer()) continue;
+            if (_lastChord != key.text) {
+                _lastChord = key.text;
+                Singular::notifyPropertyChanged(this, "key.chord");
+            }
+            _keyPresses += 1;
+            Singular::notifyPropertyChanged(this, "key.presses");
+            Singular::notifyPropertyChanged(this, "draft");
+            Singular::notifyPropertyChanged(this, "cursor");
+            Core::EventBus::instance().publish(ECA::Event{"terminal-key-pressed", this, nullptr, std::time(nullptr), key.text});
+            continue;
+        }
+        if (key.kind == Key::Kind::Escape || key.kind == Key::Kind::Interrupt) {
+            _completionActive = false;
+            _editor.refresh();
+        }
         if (key.kind == Key::Kind::CursorReport) {
             _reportScreenRow = key.y;   // 1-based screen row of the cursor, drawn at _reportRegionRow
             continue;
@@ -557,7 +726,14 @@ void TerminalChannel::handleKeys(const std::vector<Key>& keys, double now) {
         }
         switch (_editor.press(key)) {
             case LineEditor::Outcome::Submitted: {
-                const std::string line = _editor.takeSubmitted();
+                std::string line = _editor.takeSubmitted();
+                if (_secretStage != 0) {
+                    // Never echoed, never in history: bullets and a note only.
+                    printAbove((_color ? "\x1b[2m" : "") + std::string("(passphrase entered · hidden)") +
+                               (_color ? "\x1b[0m" : ""));
+                    _pending.push_back(std::move(line));
+                    break;
+                }
                 printAbove(_editor.echo(line));
                 std::string t = line;
                 t.erase(0, t.find_first_not_of(" \t"));
@@ -578,8 +754,18 @@ void TerminalChannel::handleKeys(const std::vector<Key>& keys, double now) {
                 showHelp();
                 break;
             case LineEditor::Outcome::Interrupt:
+                if (_secretStage != 0) {
+                    cancelSecret("nothing unlocked");
+                    break;
+                }
                 if (awaitingAnswer()) {          // Ctrl-C is a no
                     cancelDeletion("nothing deleted");
+                    break;
+                }
+                if (!_block.empty()) {
+                    _block.clear();
+                    _editor.prefill("");
+                    printAbove("(block discarded; nothing authored)");
                     break;
                 }
                 if (now - _lastInterrupt < 2.0) {
@@ -613,6 +799,8 @@ void TerminalChannel::sense(LawManager& laws) {
     ++_frame;
     if (!isEnabled()) return;
     if (!_attachTried) attach(laws);
+    placeLine();
+    _looksChanged = refreshLooks();
 
 #ifdef EARTHCALL_TERMINAL_POSIX
     if (_attached && g_attached == this) {
@@ -634,7 +822,7 @@ void TerminalChannel::sense(LawManager& laws) {
         if (!bytes.empty()) keys = _decoder.feed(bytes, now);
         for (auto& k : _decoder.flush(now)) keys.push_back(std::move(k));
         bool dirty = !keys.empty();
-        if (!keys.empty()) handleKeys(keys, now);
+        for (auto& key : keys) _keyQueue.push_back(std::move(key));
 
         // The app's own output, above the line, dimmed.
         if (g_relay && _attached) {
@@ -657,13 +845,45 @@ void TerminalChannel::sense(LawManager& laws) {
             }
         }
         if (_attached && width() != _lastWidth) dirty = true;
+        if (_attached) {
+            bool hears = false;
+            const std::string liveFooter = footerText(hears);
+            const std::string liveMark = hears ? "32" : "33";
+            if (_editor.footer != liveFooter || _editor.footerMark != liveMark) dirty = true;
+            if (_looksChanged) dirty = true;   // a Law re-authored how the line looks
+        }
         if (_attached && (dirty || !_drawn)) draw();
     }
 #endif
 
+    if (!_injectedBytes.empty()) {
+        for (auto& key : _decoder.feed(_injectedBytes, secondsNow())) _keyQueue.push_back(std::move(key));
+        _injectedBytes.clear();
+    }
+    const bool hadKeys = !_keyQueue.empty();
+    // Compare once per read, not once per byte of a large bracketed paste.
+    const std::string oldDraft = hadKeys ? propDraft() : std::string{};
+    const double oldCursor = propCursor();
+    while (!_keyQueue.empty()) {
+        Key key = std::move(_keyQueue.front()); _keyQueue.pop_front();
+        const auto pendingBefore = _pending.size();
+        handleKeys({key}, secondsNow());
+        if ((key.kind == Key::Kind::Chord && !_editor.secret) || _pending.size() != pendingBefore) break;
+    }
+    if (hadKeys && oldDraft != propDraft()) Singular::notifyPropertyChanged(this, "draft");
+    if (hadKeys && oldCursor != propCursor()) Singular::notifyPropertyChanged(this, "cursor");
+    if (_attached && hadKeys) draw();
     if (_pending.empty()) return;
+    placeLine();   // a line typed in the very first frame still has a location
     std::string line = _pending.front();
     _pending.pop_front();
+    // A secret line (Identity) is consumed here and nowhere else: never
+    // published, never _lastLine, never history, never a property.
+    if (_secretStage != 0) {
+        takeSecret(line);
+        if (_attached) draw();
+        return;
+    }
     // While a Metalaw's question waits, the next line is its answer — never a
     // new sentence. An empty line answers too: it is not a yes.
     if (awaitingAnswer()) {
@@ -671,20 +891,64 @@ void TerminalChannel::sense(LawManager& laws) {
         if (_attached) draw();
         return;
     }
+    // A Python-style block: a line ending in ':' opens it, every line joins
+    // it, and an empty line folds it into one sentence of the same grammar.
+    if (lawGrammarHere()) {
+        std::string t = line;
+        while (!t.empty() && (t.back() == ' ' || t.back() == '\t')) t.pop_back();
+        const bool blank = t.find_first_not_of(" \t") == std::string::npos;
+        if (!_block.empty() || (!blank && t.back() == ':')) {
+            if (!blank) {
+                _block.push_back(t);
+                // Auto-indent: under a header, two deeper; otherwise the same.
+                const std::size_t indent = t.find_first_not_of(" \t");
+                if (_attached) {
+                    _editor.prefill(std::string(indent + (t.back() == ':' ? 2 : 0), ' '));
+                    draw();
+                }
+                return;
+            }
+            std::string error;
+            const std::string folded = LawSentence::unfoldBlock(_block, liveVocabulary(), error);
+            _block.clear();
+            if (!error.empty() || folded.empty()) {
+                say("refused: " + (error.empty() ? std::string("the block is empty") : error));
+                if (_attached) draw();
+                return;
+            }
+            say("⤷ " + folded);
+            line = folded;
+        }
+    }
     if (line.find_first_not_of(" \t") == std::string::npos) return;
+    {
+        std::string t = line;
+        t.erase(0, t.find_first_not_of(" \t"));
+        while (!t.empty() && (t.back() == ' ' || t.back() == '\t')) t.pop_back();
+        if (handleEnter(t)) {
+            if (_attached) draw();
+            return;
+        }
+    }
 
     _lastLine = line;
     _linesEntered += 1.0;
     Core::EventBus::instance().publish(
         ECA::Event{kLineEntered, this, nullptr, std::time(nullptr), std::string{}});
     if (!laws.rete().hearsType(kLineEntered)) {
-        say("(no Law in this Zone hears terminal-line-entered, so nothing will act on that line. "
-            "The LawLine Zone carries the seed Laws that do.)");
+        say("(no Law where the line is hears terminal-line-entered, so nothing will act on that line. "
+            "`enter LawLine` to author Laws, `enter Identity` to become present, `enter` to list Zones.)");
     }
 }
 
 void TerminalChannel::act(LawManager& laws) {
     _laws = &laws;
+    placeLine();
+    // A Law asked the kernel to take one secret line (the Identity Zone).
+    if (_unlockRequests != _unlocksHandled) {
+        _unlocksHandled = _unlockRequests;
+        beginSecret();
+    }
     // A confirmed deletion: the deleting Metalaw ran this tick (or did not).
     if (!_deletingId.empty()) {
         const bool gone = laws.find(_deletingId) == nullptr && findBeing(_deletingId) == nullptr;
@@ -702,6 +966,13 @@ void TerminalChannel::act(LawManager& laws) {
             draw();
         }
     }
+    if (_completionRequests != _completionHandled) {
+        _completionHandled = _completionRequests;
+        // An output request cannot reveal or change a secret or confirmation.
+        _completionActive = !_editor.secret && !awaitingAnswer();
+        if (_completionActive) _editor.openMenu();
+        if (_attached) draw();
+    }
     if (_speakRequests == _spoken) return;
     _spoken = _speakRequests;
     speak(laws, _lastLine);
@@ -713,9 +984,20 @@ void TerminalChannel::act(LawManager& laws) {
     }
 }
 
-LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
+LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws, const std::string& speakingAuthor) {
     LawSentence::Vocabulary v;
     v.words = LawSentence::canonicalWords();
+    v.compileInvocation = [this, &laws](const nlohmann::json& input, bool readOnly) {
+        return compileByMetalaw(laws, input, readOnly);
+    };
+    std::string authorId = speakingAuthor;
+    if (authorId.empty()) {
+        PropertyValue author;
+        if (lawGetValue(*this, PropertyPath::parse(_authorPath), author))
+            if (auto id = std::get_if<std::string>(&author)) {
+                if (auto being = findBeing(*id)) authorId = being->getIdentifier();
+            }
+    }
 
     // Lexeme <--denotes--> Law: the Law holds the opcode, and its name is what
     // the menu says the word means.
@@ -727,6 +1009,18 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
         LawSentence::Preset preset;
         const std::string opcode = LawSentence::classify(*law, laws.triggersOf(law->getIdentifier()), preset);
         if (opcode.empty()) continue;
+        // A root pronoun is authored vocabulary too, not a Create special case.
+        PropertyValue rootMarker;
+        if (preset.value && law->getDynamicProperty("sentence.root", rootMarker) &&
+            rootMarker == PropertyValue(true)) {
+            if (auto root = std::get_if<std::string>(&*preset.value)) {
+                const auto resolved = *root == "$author" ? (authorId.empty() ? "" : "@" + authorId) : *root;
+                if (!resolved.empty()) {
+                    auto [entry, inserted] = v.pathRoots.emplace(lexeme->getSymbol(), resolved);
+                    if (!inserted && entry->second != resolved) entry->second.clear(); // ambiguity refuses; no last-writer selection
+                }
+            }
+        }
         // The menu's detail line says what the denoted Law actually holds.
         std::string detail;
         if (opcode == "value" && preset.value) {
@@ -738,6 +1032,12 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
         }
         v.words.push_back({lexeme->getSymbol(), opcode, lexeme->getIdentifier(), law->getIdentifier(),
                            law->name(), detail});
+        PropertyValue expression;
+        if (law->getDynamicProperty("sentence.math", expression))
+            if (auto text = std::get_if<std::string>(&expression)) v.words.back().expression = *text;
+        PropertyValue arguments;
+        if (law->getDynamicProperty("sentence.arguments", arguments))
+            if (auto text = std::get_if<std::string>(&arguments)) v.words.back().arguments = *text;
         if (opcode == "preset" || opcode == "value" ||
             (opcode.rfind("action.", 0) == 0 && preset.action)) {
             v.presets.push_back(preset);
@@ -768,20 +1068,24 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
         v.laws.push_back({law->getIdentifier(), law->name(), lawSummary(*law, laws)});
     }
 
+    // One walk over the Universe, describing each being as it passes. The menu
+    // used to call describeBeing(id) per offered being, and each call rebuilt
+    // and scanned the whole Universe: O(N^2) per keystroke after '@' (Zach,
+    // 2026-10-05: "whenever I enter @ its really laggy"; 708 beings, ~0.5 s).
+    // Only STRINGS are kept, never Singular*: a vocabulary can outlive a tick,
+    // and Laws/Relations may leave without a structural-revision bump, so a
+    // cached pointer could dangle. A stale string is merely an old label.
     std::set<std::string> beings;
+    auto described = std::make_shared<std::unordered_map<std::string, std::string>>();
     for (Singular* being : Universe::instance().beings()) {
-        if (being && !being->getIdentifier().empty()) beings.insert(being->getIdentifier());
+        if (!being || being->getIdentifier().empty()) continue;
+        if (beings.insert(being->getIdentifier()).second)
+            (*described)[being->getIdentifier()] = describeSingular(being);
     }
     v.beings.assign(beings.begin(), beings.end());
-    // Bare paths complete against the authored scope being — or, when none
-    // is set, against whatever the Person last clicked in the world.
-    v.scopeBeing = _scopeBeing;
-    if (v.scopeBeing.empty()) {
-        PropertyValue focused;
-        if (lawGetValue(*this, PropertyPath::parse("@interaction-channel.focusedId"), focused)) {
-            if (const auto* id = std::get_if<std::string>(&focused)) v.scopeBeing = *id;
-        }
-    }
+    // Bare paths complete against the authored suggestion being — or, when
+    // none is set, against whatever the Person last clicked in the world.
+    v.scopeBeing = propertySuggestionBeing();
 
     v.propertiesOf = [](const std::string& id) {
         std::vector<std::string> names;
@@ -798,14 +1102,99 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws) {
         return names;
     };
     v.describeProperty = [this](const std::string& b, const std::string& p) { return describeProperty(b, p); };
-    v.describeBeing = [this](const std::string& b) { return describeBeing(b); };
-    v.describeEvent = [](const std::string& e) {
+    v.describeBeing = [this, described](const std::string& b) {
+        const auto it = described->find(b);
+        return it != described->end() ? it->second : describeBeing(b);   // e.g. a Lexeme only a Relation holds
+    };
+    // A being's properties with their current values, from ONE lookup (the
+    // per-property describeProperty re-found the being for every name).
+    v.describedPropertiesOf = [](const std::string& id) {
+        std::vector<std::pair<std::string, std::string>> out;
+        Singular* being = findBeing(id);
+        if (!being) return out;
+        std::vector<std::string> names;
+        for (Property* p : being->listProperties()) if (p) names.push_back(p->name());
+        for (const auto& entry : being->dynamicProperties())
+            names.push_back(Earthcall::StringInterner::resolve(entry.first));
+        std::sort(names.begin(), names.end());
+        names.erase(std::unique(names.begin(), names.end()), names.end());
+        for (const auto& name : names) {
+            PropertyValue value;
+            std::string shown;
+            if (lawGetValue(*being, PropertyPath::parse(name), value)) {
+                shown = showValue(value);
+                if (!shown.empty()) shown = "= " + shown;
+            }
+            out.emplace_back(name, std::move(shown));
+        }
+        return out;
+    };
+    // What an event means is AUTHORED, on the Zone: the string property
+    // `meaning.<event>` (Zach, 2026-10-05: "just give events authored string
+    // property now no new fields"; "The Zone"). Written by an ordinary
+    // AddProperty Law, saved with the Zone, and different Zones may mean
+    // different things. The line's own Zone speaks first, then the body's.
+    auto meanings = std::make_shared<std::map<std::string, std::string>>();
+    if (ZoneManager* zones = ZoneManager::live()) {
+        std::vector<Zone*> readers;
+        if (!_zone.empty()) if (Zone* line = zones->findZone(_zone)) readers.push_back(line);
+        if (!zones->zones().empty()) readers.push_back(&zones->active());
+        for (const auto& e : v.events) {
+            for (Zone* zone : readers) {
+                PropertyValue meaning;
+                if (lawGetValue(*zone, PropertyPath::parse("meaning." + e), meaning))
+                    if (const auto* text = std::get_if<std::string>(&meaning); text && !text->empty()) {
+                        (*meanings)[e] = *text;
+                        break;
+                    }
+            }
+        }
+    }
+    v.describeEvent = [meanings](const std::string& e) {
+        const auto m = meanings->find(e);
+        std::string out = m == meanings->end() ? std::string("event") : "event · " + m->second;
         const auto it = heardEvents().find(e);
-        return it == heardEvents().end() ? std::string("event")
-                                         : "event · heard " + std::to_string(it->second) + "×";
+        if (it != heardEvents().end()) out += " · heard " + std::to_string(it->second) + "×";
+        return out;
     };
     v.resolve = [this, &laws](const LawSentence::Ambiguity& a) { return resolveByMetalaw(laws, a); };
     return v;
+}
+
+std::string TerminalChannel::propBlock() const {
+    std::string out;
+    for (const auto& l : _block) out += (out.empty() ? "" : "\n") + l;
+    return out;
+}
+
+std::string TerminalChannel::blockContext(const std::string& line, long& shift) {
+    shift = 0;
+    if (_block.empty() || !lawGrammarHere()) return line;
+    const std::size_t lead = line.find_first_not_of(" \t");
+    if (lead == std::string::npos) return line;
+    std::string own = line.substr(lead);
+    if (!own.empty() && own.back() == ':') return line;   // a header in progress reads alone
+    std::vector<std::string> lines = _block;
+    lines.push_back(line);
+    std::string error;
+    const std::string folded = LawSentence::unfoldBlock(lines, liveVocabulary(), error);
+    // The line's own text, trimmed by the fold, ends the folded sentence.
+    while (!own.empty() && (own.back() == ' ' || own.back() == '\t')) own.pop_back();
+    if (!error.empty() || folded.size() < own.size() ||
+        folded.compare(folded.size() - own.size(), own.size(), own) != 0) return line;
+    // Keep the typed trailing space: it means "the word is finished".
+    const std::string tail = line.substr(lead + own.size());
+    shift = static_cast<long>(folded.size() - own.size()) - static_cast<long>(lead);
+    return folded + tail;
+}
+
+std::string TerminalChannel::propertySuggestionBeing() const {
+    if (!_scopeBeing.empty()) return _scopeBeing;
+    PropertyValue focused;
+    if (lawGetValue(const_cast<TerminalChannel&>(*this), PropertyPath::parse("@interaction-channel.focusedId"), focused)) {
+        if (const auto* id = std::get_if<std::string>(&focused)) return *id;
+    }
+    return {};
 }
 
 std::string TerminalChannel::describeProperty(const std::string& beingId, const std::string& property) const {
@@ -819,6 +1208,27 @@ std::string TerminalChannel::describeProperty(const std::string& beingId, const 
 
 std::string TerminalChannel::describeBeing(const std::string& beingId) const {
     Singular* being = findBeing(beingId);
+    if (!being) {
+        // Lexemes are authored Relation endpoints and need not be registered as
+        // standalone Universe beings. They are still individuated beings that
+        // Law Line must be able to describe by their authored symbol.
+        for (Relation* relation : Universe::instance().relations()) {
+            if (!relation) continue;
+            for (Singular* endpoint : {relation->a(), relation->b()}) {
+                if (endpoint && endpoint->getIdentifier() == beingId &&
+                    dynamic_cast<Singularity::Language::Lexeme*>(endpoint)) {
+                    being = endpoint;
+                    break;
+                }
+            }
+            if (being) break;
+        }
+    }
+    return describeSingular(being);
+}
+
+// What the menu says a being is, from the being itself (no lookup).
+std::string TerminalChannel::describeSingular(Singular* being) {
     if (!being) return {};
     std::string kind = dynamic_cast<Person*>(being)                              ? "person"
                      : dynamic_cast<Zone*>(being)                                ? "zone"
@@ -827,6 +1237,7 @@ std::string TerminalChannel::describeBeing(const std::string& beingId) const {
                      : dynamic_cast<Singularity::Language::Lexeme*>(being)       ? "lexeme"
                      : dynamic_cast<Object*>(being)                              ? "object"
                                                                                  : "being";
+    if (auto* lex = dynamic_cast<Singularity::Language::Lexeme*>(being)) return kind + " · " + lex->getSymbol();
     PropertyValue name;
     if (being->getDynamicProperty("displayName", name)) {
         if (const auto* s = std::get_if<std::string>(&name); s && !s->empty()) return kind + " · " + *s;
@@ -835,14 +1246,142 @@ std::string TerminalChannel::describeBeing(const std::string& beingId) const {
     return kind;
 }
 
+namespace {
+
+// An authored colour as SGR foreground parameters. vec3 is the codebase's own
+// colour (Object `color`, Material `baseColor`, components 0..1); "#rrggbb"
+// is admitted for hand authoring. At "truecolor" it is exact (38;2;r;g;b);
+// otherwise the nearest entry of xterm's 6x6x6 cube or 24-step grey ramp.
+std::string sgrForColor(const PropertyValue& v, const std::string& depth) {
+    int rgb[3] = {0, 0, 0};
+    if (const auto* c = std::get_if<glm::vec3>(&v)) {
+        for (int k = 0; k < 3; ++k)
+            rgb[k] = static_cast<int>(std::lround(std::clamp((*c)[k], 0.0f, 1.0f) * 255.0f));
+    } else if (const auto* text = std::get_if<std::string>(&v);
+               text && text->size() == 7 && (*text)[0] == '#' &&
+               text->find_first_not_of("0123456789abcdefABCDEF", 1) == std::string::npos) {
+        for (int k = 0; k < 3; ++k) rgb[k] = std::stoi(text->substr(1 + 2 * k, 2), nullptr, 16);
+    } else {
+        return {};
+    }
+    if (depth == "truecolor")
+        return "38;2;" + std::to_string(rgb[0]) + ";" + std::to_string(rgb[1]) + ";" + std::to_string(rgb[2]);
+    static const int kLevel[6] = {0, 95, 135, 175, 215, 255};
+    const auto step = [](int c) { return c < 48 ? 0 : c < 115 ? 1 : (c - 35) / 40; };
+    const int cube[3] = {step(rgb[0]), step(rgb[1]), step(rgb[2])};
+    const int average = (rgb[0] + rgb[1] + rgb[2]) / 3;
+    const int greyStep = average > 238 ? 23 : std::max(0, (average - 3) / 10);
+    const int grey = 8 + 10 * greyStep;
+    const auto distance = [&](int r, int g, int b) {
+        return (r - rgb[0]) * (r - rgb[0]) + (g - rgb[1]) * (g - rgb[1]) + (b - rgb[2]) * (b - rgb[2]);
+    };
+    const int cubeIndex = 16 + 36 * cube[0] + 6 * cube[1] + cube[2];
+    const bool useGrey = distance(grey, grey, grey) < distance(kLevel[cube[0]], kLevel[cube[1]], kLevel[cube[2]]);
+    return "38;5;" + std::to_string(useGrey ? 232 + greyStep : cubeIndex);
+}
+
+// "bold italic", "dim, underline" -> "1;3". Unknown words are ignored.
+std::string sgrForStyle(const PropertyValue& v) {
+    const auto* text = std::get_if<std::string>(&v);
+    if (!text) return {};
+    static const std::map<std::string, std::string> kAttribute = {
+        {"bold", "1"}, {"dim", "2"}, {"faint", "2"}, {"italic", "3"}, {"underline", "4"},
+        {"reverse", "7"}, {"strike", "9"}, {"strikethrough", "9"}, {"overline", "53"},
+    };
+    std::string out, word;
+    const auto flush = [&] {
+        const auto it = kAttribute.find(lowerCopy(word));
+        if (it != kAttribute.end()) out += (out.empty() ? "" : ";") + it->second;
+        word.clear();
+    };
+    for (char c : *text) {
+        if (c == ' ' || c == ',' || c == '\t') flush();
+        else word += c;
+    }
+    flush();
+    return out;
+}
+
+} // namespace
+
+// The appearance the line wears is AUTHORED (Zach, 2026-10-14: "more
+// beautiful using Lexeme symbols or objects with symbolic properties over the
+// terminal channel"). A Lexeme carries its own `appearance.glyph`,
+// `appearance.color` (vec3 or "#rrggbb"), `appearance.style` and
+// `appearance.glyphColor` (the glyph's own colour, e.g. a swatch); a Zone
+// carries `appearance.<key>.<field>` for roles ("role.action"), chrome
+// ("chrome.selected") or a Lexeme in that Zone's context
+// ("lexeme.<identifier>"). Read order: the Lexeme, then the body's Zone, then
+// the line's own Zone -- the line's Zone speaks last, as for `meaning.*`.
+bool TerminalChannel::refreshLooks() {
+    if (_looksFrame == _frame && _looksDepth == _colorDepth) return false;
+    _looksFrame = _frame;
+    _looksDepth = _colorDepth;
+    static const std::string kPrefix = "appearance.";
+    std::map<std::string, LineEditor::Look> next;
+    const auto apply = [&](const std::string& key, const std::string& field, const PropertyValue& value) {
+        if (field == "color") {
+            const std::string code = sgrForColor(value, _colorDepth);
+            if (!code.empty()) next[key].sgr = code;
+        } else if (field == "style") {
+            const std::string code = sgrForStyle(value);
+            if (!code.empty()) next[key].style = code;
+        } else if (field == "glyphColor") {
+            const std::string code = sgrForColor(value, _colorDepth);
+            if (!code.empty()) next[key].glyphSgr = code;
+        } else if (field == "glyph") {
+            if (const auto* g = std::get_if<std::string>(&value); g && !g->empty() && isPrintableGlyph(*g)) next[key].glyph = *g;
+        }
+    };
+    for (const auto& lexeme : Singularity::Language::LanguageSystem::instance().getAll()) {
+        if (!lexeme) continue;
+        for (const auto& [id, value] : lexeme->dynamicProperties()) {
+            const std::string name = Earthcall::StringInterner::resolve(id);
+            if (name.rfind(kPrefix, 0) != 0 || name.find('.', kPrefix.size()) != std::string::npos) continue;
+            apply("lexeme." + lexeme->getIdentifier(), name.substr(kPrefix.size()), value);
+        }
+    }
+    if (ZoneManager* zones = ZoneManager::live()) {
+        std::vector<Zone*> readers;
+        if (!zones->zones().empty()) readers.push_back(&zones->active());
+        if (!_zone.empty())
+            if (Zone* line = zones->findZone(_zone); line && (readers.empty() || readers.front() != line))
+                readers.push_back(line);
+        for (Zone* zone : readers) {
+            for (const auto& [id, value] : zone->dynamicProperties()) {
+                const std::string name = Earthcall::StringInterner::resolve(id);
+                if (name.rfind(kPrefix, 0) != 0) continue;
+                const std::size_t dot = name.rfind('.');
+                if (dot <= kPrefix.size()) continue;
+                apply(name.substr(kPrefix.size(), dot - kPrefix.size()), name.substr(dot + 1), value);
+            }
+        }
+    }
+    if (next == _looks) return false;
+    _looks = std::move(next);
+    return true;
+}
+
+LineEditor::Look TerminalChannel::lookFor(const std::string& key) const {
+    const auto it = _looks.find(key);
+    return it == _looks.end() ? LineEditor::Look{} : it->second;
+}
+
 const LawSentence::Vocabulary& TerminalChannel::liveVocabulary() {
     if (!_vocab || _vocabFrame != _frame) {
         _vocab = vocabulary(*_laws);
-        // Live reading must not act: a shared spelling is shown with its first
-        // meaning; the Metalaws decide for real when the sentence is spoken.
-        _vocab->resolve = [](const LawSentence::Ambiguity& a) {
-            return LawSentence::Resolution{a.candidates.front().individual(),
-                                           "a Metalaw decides which when it is spoken"};
+        // Live reading must not act OR pretend to resolve meaning. Preserve
+        // every grammar-admissible denotation while the Person is typing; the
+        // actual vocabulary() resolver invokes the world's Metalaws only when
+        // the sentence is spoken.
+        _vocab->compileInvocation = [](const nlohmann::json& input, bool) {
+            LawSentence::Compilation placeholder{std::nullopt, "", {}, std::nullopt};
+            if (input.value("slot", "") == "condition") placeholder.condition = ConditionNode::all({});
+            else placeholder.action = ActionNode::sequence({});
+            return placeholder;
+        };
+        _vocab->resolve = [](const LawSentence::Ambiguity&) {
+            return LawSentence::Resolution{"", "a Metalaw decides which when it is spoken"};
         };
         _vocabFrame = _frame;
         _parse.reset();
@@ -855,7 +1394,16 @@ const LawSentence::Parse& TerminalChannel::liveParse(const std::string& text) {
         const bool question = !text.empty() && text.find_last_not_of(" \t") != std::string::npos &&
                               text[text.find_last_not_of(" \t")] == '?';
         // Read as a preview while typing: an unfinished sentence is not an error.
-        _parse = LawSentence::parse(question ? text : text + "?", liveVocabulary());
+        std::string splitError;
+        auto parts = LawSentence::sentences(question ? text : text + "?", splitError);
+        std::string tail = parts.size() > 1 ? parts.back() : (question ? text : text + "?");
+        _parse = LawSentence::parse(tail, liveVocabulary());
+        if (parts.size() > 1) {
+            auto offset = text.rfind(tail.substr(0, tail.size() - (tail.back() == '?' ? 1 : 0)));
+            if (offset != std::string::npos) {
+                for (auto& span : _parse->spans) { span.start += offset; span.end += offset; }
+            }
+        }
         _parseText = text;
     }
     return *_parse;
@@ -874,6 +1422,26 @@ std::vector<LineEditor::Status> TerminalChannel::statusOf(const std::string& tex
             }
         }
         out.push_back({"only yes deletes · no, Esc or Ctrl-C keeps it", "note"});
+        return out;
+    }
+    if (isEnterLine(text)) {
+        std::string target = text.substr(text.find_first_not_of(" \t") + 5);
+        target.erase(0, target.find_first_not_of(" \t"));
+        while (!target.empty() && target.back() == ' ') target.pop_back();
+        ZoneManager* zones = ZoneManager::live();
+        if (target.empty()) {
+            out.push_back({"↵ lists the Zones the line can enter", "note"});
+        } else if (zones && zones->findZoneIndex(target) != static_cast<size_t>(-1)) {
+            out.push_back({"↵ moves the line into " + zones->zones()[zones->findZoneIndex(target)]->name() +
+                               " (your body stays where it is)", "preview"});
+        } else {
+            out.push_back({"no single Zone is named '" + target + "' · `enter` lists them", "error"});
+        }
+        return out;
+    }
+    if (!lawGrammarHere()) {
+        out.push_back({"the line is in " + zoneLabel() + ": the Law grammar is not read here · "
+                       "`enter LawLine` to author Laws", "note"});
         return out;
     }
     if (const std::size_t blank = text.find("\u2039"); blank != std::string::npos) {
@@ -900,6 +1468,14 @@ std::vector<LineEditor::Status> TerminalChannel::statusOf(const std::string& tex
         return out;
     }
     if (!p.error.empty()) {
+        // Ambiguity during live typing is truthful semantic plurality, not a
+        // malformed sentence. Keep it visually open until a Metalaw gets the
+        // authority to choose when the sentence is actually spoken.
+        if (p.error.find("no Metalaw resolves which one") != std::string::npos) {
+            out.push_back({"meaning stays open while typing · Metalaw decides when spoken", "preview"});
+            if (!p.candidates.empty()) out.push_back({"meanings: " + join(p.candidates, ", "), "note"});
+            return out;
+        }
         const std::size_t lead = text.find_first_not_of(" \t");
         const std::size_t at = (lead == std::string::npos ? 0 : lead) + p.errorOffset;
         // Still typing is not a mistake: a sentence that merely stops early,
@@ -976,7 +1552,277 @@ LawSentence::Resolution TerminalChannel::resolveByMetalaw(LawManager& laws,
     return r;
 }
 
+namespace {
+// The terminal is a structured-text channel. Template instantiation is an
+// irreducible structural operation: $slot JSON pointers are substituted, with
+// an authored $default only when a referenced input is absent.
+// It knows no kinds, properties, creation policy, or action lowering rules.
+nlohmann::json instantiateSentenceTemplate(const nlohmann::json& pattern,
+                                           const nlohmann::json& input, unsigned depth = 0) {
+    if (depth >= 32) throw std::runtime_error("template nesting exceeds the channel's 32-level structural bound");
+    if (pattern.is_object() && pattern.contains("$slot")) {
+        if (pattern.size() > (pattern.contains("$default") ? 2 : 1) || !pattern["$slot"].is_string())
+            throw std::runtime_error("$slot must be a JSON-pointer reference with an optional $default");
+        const auto pointer = nlohmann::json::json_pointer(pattern["$slot"].get<std::string>());
+        if (!input.contains(pointer) && pattern.contains("$default")) return pattern["$default"];
+        return input.at(pointer);
+    }
+    if (pattern.is_array()) {
+        auto result = nlohmann::json::array();
+        for (const auto& child : pattern) result.push_back(instantiateSentenceTemplate(child, input, depth + 1));
+        return result;
+    }
+    if (pattern.is_object()) {
+        auto result = nlohmann::json::object();
+        for (auto it = pattern.begin(); it != pattern.end(); ++it)
+            result[it.key()] = instantiateSentenceTemplate(it.value(), input, depth + 1);
+        return result;
+    }
+    return pattern;
+}
+
+// Syntax data is reflected exactly as a tree. Do not apply the PropertyValue
+// codec's vec3/mat4 heuristics to model arrays or interpret a syntax key "t"
+// as a type tag: a sixteen-child action list is still a list of syntax nodes.
+PropertyValue sentenceSyntaxValue(const nlohmann::json& value, unsigned depth = 0) {
+    if (depth >= 32) throw std::runtime_error("syntax reflection exceeds the channel's 32-level structural bound");
+    if (value.is_object()) {
+        auto dict = std::make_shared<PropertyDict>();
+        for (auto it = value.begin(); it != value.end(); ++it)
+            dict->elements[it.key()] = sentenceSyntaxValue(it.value(), depth + 1);
+        return dict;
+    }
+    if (value.is_array()) {
+        auto list = std::make_shared<PropertyList>();
+        for (const auto& item : value) list->elements.push_back(sentenceSyntaxValue(item, depth + 1));
+        return list;
+    }
+    return propertyValueFromJson(value);
+}
+
+void validateSentenceAction(const nlohmann::json& model, unsigned depth = 0) {
+    if (depth >= 32 || !model.is_object() || !model.contains("kind") || !model["kind"].is_number_integer())
+        throw std::runtime_error("compiler output must be an ActionModel with an integer kind (depth < 32)");
+    if (model["kind"].is_number_unsigned() &&
+        model["kind"].get<unsigned long long>() > static_cast<unsigned>(ActionNode::Kind::CodecTransform))
+        throw std::runtime_error("compiler output names an unsupported ActionModel kind");
+    const auto rawKind = model["kind"].get<long long>();
+    if (rawKind < 0 || rawKind > static_cast<int>(ActionNode::Kind::CodecTransform))
+        throw std::runtime_error("compiler output names an unsupported ActionModel kind");
+    const auto kind = static_cast<ActionNode::Kind>(rawKind);
+    if ((kind == ActionNode::Kind::Set || kind == ActionNode::Kind::Add || kind == ActionNode::Kind::Scale) &&
+        (!model.contains("path") || !model["path"].is_string() || model["path"].get<std::string>().empty() || !model.contains("operand")))
+        throw std::runtime_error("compiled property action requires a path and operand");
+    if (kind == ActionNode::Kind::Map || kind == ActionNode::Kind::Flow) {
+        if (!model.contains("path") || !model["path"].is_string() || model["path"].get<std::string>().empty() ||
+            !model.contains("function") || !model.contains("bindings") || !model["bindings"].is_object())
+            throw std::runtime_error(std::string("compiled ") + ActionNode::kindName(kind) + " requires a path, function, and bindings");
+        auto function = OntoMath::Piecewise::fromJson(model["function"]);
+        if (function.pieces.empty()) throw std::runtime_error(std::string("compiled ") + ActionNode::kindName(kind) + " has no defined pieces");
+        for (const auto& piece : function.pieces) if (piece.mathNode) {
+            std::string error;
+            if (!piece.mathNode->checkTypes({}, error, nullptr, true)) throw std::runtime_error(error);
+        }
+    }
+    if (model.contains("children")) {
+        if (!model["children"].is_array()) throw std::runtime_error("action children must be an array");
+        for (const auto& child : model["children"]) validateSentenceAction(child, depth + 1);
+    }
+}
+} // namespace
+
+std::string TerminalChannel::propCompilationResult() const {
+    if (_compilationTemplate.empty() || !_compilationInput) return "";
+    // Recovered input preserves typed operands as serialization data. The
+    // raw JSON mirror is below the Kernel only while substituting this template.
+    PropertyValue raw;
+    if (!_compilationInput->elements.count("json")) return "";
+    raw = _compilationInput->elements.at("json");
+    const auto* text = std::get_if<std::string>(&raw);
+    if (!text) return "";
+    try {
+        return instantiateSentenceTemplate(nlohmann::json::parse(_compilationTemplate),
+                                           nlohmann::json::parse(*text)).dump();
+    } catch (const std::exception& e) {
+        return nlohmann::json{{"error", std::string("template refused: ") + e.what()}}.dump();
+    }
+}
+
+LawSentence::Compilation TerminalChannel::compileByMetalaw(LawManager& laws,
+                                                          const nlohmann::json& input,
+                                                          bool readOnly, nlohmann::json* document) {
+    const bool conditionSlot = input.value("slot", "") == "condition";
+    const bool valueSlot = input.value("slot", "") == "value";
+    if (readOnly) {
+        LawSentence::Compilation placeholder{std::nullopt, "", {}, std::nullopt};
+        if (valueSlot) placeholder.value = nlohmann::json{{"value", 0}};
+        else if (conditionSlot) placeholder.condition = ConditionNode::all({});
+        else placeholder.action = ActionNode::sequence({});
+        return placeholder;
+    }
+    LawSentence::Compilation result;
+    PropertyValue sensed;
+    try { sensed = sentenceSyntaxValue(input); }
+    catch (const std::exception& e) { return {std::nullopt, e.what(), {}}; }
+    auto dict = std::get_if<std::shared_ptr<PropertyDict>>(&sensed);
+    if (!dict || !*dict) return {std::nullopt, "the invocation has no structural input record", {}};
+    _compilationInput = *dict;
+    _compilationInput->elements["json"] = input.dump();
+    _compilationTemplate.clear(); _compilationError.clear();
+    std::optional<nlohmann::json> chosen;
+    // Copy the register: compiler applications may legitimately change it.
+    const auto candidates = laws.getAll();
+    for (const auto& law : candidates) {
+        if (!law || law.get() == this) continue;
+        const auto& targets = law->targets().getMembers();
+        if (std::find(targets.begin(), targets.end(), static_cast<Singular*>(this)) == targets.end()) continue;
+        _compilationTemplate.clear(); _compilationError.clear();
+        if (law->applyTo(*this) != Law::ApplicationResult::Applied) continue;
+        if (!_compilationError.empty()) {
+            result.error = "Metalaw " + law->getIdentifier() + " refused: " + _compilationError;
+            break;
+        }
+        if (_compilationTemplate.empty()) continue;
+        try {
+            auto pattern = nlohmann::json::parse(_compilationTemplate);
+            if (input.value("slot", "") == "arguments" || valueSlot) {
+                std::set<std::string> fields;
+                std::function<void(const nlohmann::json&)> collect = [&](const nlohmann::json& node) {
+                    if (node.is_object() && node.contains("$slot") && node["$slot"].is_string()) {
+                        auto pointer = node["$slot"].get<std::string>();
+                        const std::string prefix = "/arguments/";
+                        if (pointer.rfind(prefix, 0) == 0) fields.insert(pointer.substr(prefix.size()).substr(0, pointer.substr(prefix.size()).find('/')));
+                    } else if (node.is_structured()) for (const auto& child : node) collect(child);
+                };
+                collect(pattern);
+                for (auto it = input["arguments"].begin(); it != input["arguments"].end(); ++it)
+                    if (!fields.count(it.key())) throw std::runtime_error("argument '" + it.key() + "' is not consumed by the authored template");
+            }
+            auto model = nlohmann::json::parse(propCompilationResult());
+            if (model.contains("error")) throw std::runtime_error(model["error"].get<std::string>());
+            if (conditionSlot) {
+                const auto node = ConditionNode::fromJson(model);
+                if (node.kind == ConditionNode::Kind::Unsupported)
+                    throw std::runtime_error("the template is not a condition this build can read");
+            } else if (valueSlot) {
+                if (!model.is_object() || model.size() != 1 ||
+                    (!model.contains("value") && !model.contains("literal") && !model.contains("math")))
+                    throw std::runtime_error("a value compiler must return exactly one value, literal, or math envelope");
+            } else if (!document) validateSentenceAction(model);
+            if (chosen && *chosen != model) throw std::runtime_error("multiple Metalaws supplied conflicting compilation models");
+            chosen = model;
+            result.laws.push_back(law->getIdentifier());
+        } catch (const std::exception& e) {
+            result.error = "Metalaw " + law->getIdentifier() + " compilation refused: " + e.what();
+            break;
+        }
+    }
+    if (result.error.empty() && chosen) {
+        try {
+            if (document) { *document = *chosen; result.action = ActionNode::sequence({}); }
+            else if (valueSlot) result.value = *chosen;
+            else if (conditionSlot) result.condition = ConditionNode::fromJson(*chosen);
+            else result.action = ActionNode::fromJson(*chosen);
+        }
+        catch (const std::exception& e) { result.error = std::string("invalid compiled model: ") + e.what(); }
+    }
+    if (!result.action && !result.condition && !result.value && result.error.empty())
+        result.error = "no authored Metalaw compiled " + input.value("slot", "invocation") +
+                       " for " + input.value("selector", "") + "; no compiler fallback exists";
+    // Input remains legible as the last request; clear the live slot so a
+    // continuously evaluated Metalaw cannot answer a request that has ended.
+    _compilationInput->elements["slot"] = std::string{};
+    _compilationError = result.error;
+    return result;
+}
+
+std::string TerminalChannel::presenceRefusal() {
+    PropertyValue value;
+    std::string authorId;
+    if (lawGetValue(*this, PropertyPath::parse(_authorPath), value))
+        if (const auto* s = std::get_if<std::string>(&value)) authorId = *s;
+    Singular* author = findBeing(authorId);
+    if (!author)
+        return "refused: no author at " + _authorPath + " ('" + authorId + "'); nothing enters the world without one";
+    auto* person = dynamic_cast<Person*>(author);
+    if (!person)
+        return "refused: a typed line authors only as a Person (a human), and " + _authorPath +
+               " names a " + describeSingular(author) + " ('" + authorId + "')";
+    const bool present = _presenceCheck
+        ? _presenceCheck(*person)
+        : person->personId().canAuthenticate() &&
+              Identity::FirstMoverRegister::instance().isAuthenticatedPerson(person->personId());
+    if (present) return {};
+    return std::string("refused: you are not present yet, so the line will not author as you. ") +
+           (person->personId().canAuthenticate()
+                ? "`enter Identity` and type your passphrase, then `enter LawLine` again."
+                : "`enter Identity` to take a key (you have none yet), then `enter LawLine` again.") +
+           " (Previews with ?, search with ??, and help stay open.)";
+}
+
 void TerminalChannel::speak(LawManager& laws, const std::string& text) {
+    // Stdin trust (Astra's Crystal §13): whatever types here authors as the
+    // Person @interaction-channel.personId names, so it may do so only while
+    // that Person is PRESENT. Read-only lines never author and stay open.
+    if (!isReadOnlySentence(text)) {
+        const std::string refusal = presenceRefusal();
+        if (!refusal.empty()) { _status = refusal; say(_status); return; }
+    }
+    std::string splitError;
+    auto parts = LawSentence::sentences(text, splitError);
+    if (!splitError.empty()) { _status = "refused: " + splitError; say(_status); return; }
+    if (parts.size() > 1) {
+        _openClauses.clear();
+        const bool preview = isReadOnlySentence(text);
+        if (preview && !parts.back().empty() && parts.back().back() == '?') parts.back().pop_back();
+        nlohmann::json document;
+        LawSentence::Compilation compiled;
+        if (!preview) {
+            compiled = compileByMetalaw(laws, {{"slot", "sentences"}, {"opcode", "sentence.batch"}, {"sentences", parts}}, false, &document);
+            if (!compiled.error.empty()) { _status = "refused: " + compiled.error; say(_status); return; }
+            // The channel may register only the exact sensed sentences, once each,
+            // in source order. Policy must authorize that order through its template.
+            if (!document.is_object() || !document.contains("sentences") || document["sentences"] != nlohmann::json(parts)) {
+                _status = "refused: Metalaw must compile every sentence exactly once in source order"; say(_status); return;
+            }
+        }
+        auto words = preview ? liveVocabulary() : vocabulary(laws);
+        std::vector<LawSentence::Parse> parsed;
+        _preview.clear();
+        for (std::size_t i = 0; i < parts.size(); ++i) {
+            auto p = LawSentence::parse(parts[i] + (preview ? "?" : ""), words);
+            if (!p.ok || p.search || p.immediate || (!preview && p.previewOnly)) {
+                _status = "refused: sentence " + std::to_string(i + 1) + ": " +
+                          (p.error.empty() ? "batch accepts Law sentences only" : p.error);
+                say(_status); return;
+            }
+            p.presetLawIds.insert(p.presetLawIds.end(), compiled.laws.begin(), compiled.laws.end());
+            _preview += (i ? "\n" : "") + std::to_string(i + 1) + ". " + p.preview();
+            parsed.push_back(std::move(p));
+        }
+        if (preview) { _status = "preview"; say("preview: " + _preview); return; }
+        PropertyValue value;
+        std::string authorId;
+        if (lawGetValue(*this, PropertyPath::parse(_authorPath), value))
+            if (auto id = std::get_if<std::string>(&value)) authorId = *id;
+        auto author = findBeing(authorId);
+        if (!author) { _status = "refused: no author at " + _authorPath; say(_status); return; }
+        std::size_t registered = 0;
+        for (std::size_t i = 0; i < parsed.size(); ++i) {
+            auto id = mintLawId();
+            std::string persistence;
+            auto refusal = enact(laws, parsed[i], parts[i], {author}, id, persistence);
+            if (!refusal.empty()) {
+                _status = refusal + " · " + std::to_string(registered) + " earlier sentences registered";
+                say(_status); return;
+            }
+            _lastCreated = id;
+            ++registered;
+            say("authored " + id + " (sentence " + std::to_string(i + 1) + ", written by " + authorId + ")" + persistence);
+        }
+        _status = "authored " + std::to_string(registered) + " Laws in sentence order";
+        say(_status); return;
+    }
     const LawSentence::Parse p = LawSentence::parse(text, vocabulary(laws));
     _preview = p.preview();
     _openClauses = join(p.openClauses, "; ");
@@ -1018,7 +1864,26 @@ void TerminalChannel::speak(LawManager& laws, const std::string& text) {
     }
 
     const std::string id = mintLawId();
-    auto law = std::make_shared<Law>(p.name.empty() ? text : p.name, std::vector<Singular*>{author});
+    std::string persistence;
+    const std::string refusal = enact(laws, p, text, {author}, id, persistence);
+    if (!refusal.empty()) {
+        _status = refusal;
+        say(_status);
+        return;
+    }
+    _lastCreated = id;
+    _status = "authored " + id + " (written by " + author->getIdentifier() + ")" + persistence;
+    say(_status + "\n  " + _preview + notes);
+}
+
+std::string TerminalChannel::enact(LawManager& laws, const LawSentence::Parse& p,
+                                   const std::string& text,
+                                   const std::vector<Singular*>& authors,
+                                   const std::string& id, std::string& persistence) {
+    if (authors.empty()) return "refused: nothing enters the world without an author";
+    if (p.compilationDeferred) return "refused: invocation compilation is deferred; preview syntax cannot become a Law";
+    if (laws.find(id)) return "refused: a Law named " + id + " already exists";
+    auto law = std::make_shared<Law>(p.name.empty() ? text : p.name, authors);
     law->setLawIdentifier(id);
     law->setActivation(p.activation);
     law->setScope(p.scope);
@@ -1033,18 +1898,295 @@ void TerminalChannel::speak(LawManager& laws, const std::string& text) {
     laws.add(law);
     for (const auto& trigger : p.triggers) laws.bindTrigger(id, trigger);
 
-    // Keeping the Law means Zone membership, so Save Zone persists it.
+    // Keeping the Law means live Zone membership; durable persistence still
+    // requires an explicit Zone save. Say both truths instead of letting the
+    // green authored check imply that the new Law already survived a restart.
+    persistence = " · live for this session (no active Zone to save)";
     if (ZoneManager* zones = ZoneManager::live()) {
         if (!zones->adoptLawIntoActiveZone(id)) {
             laws.remove(id);
-            _status = "refused: the new Law could not enter the active Zone's authored closure";
-            say(_status);
-            return;
+            return "refused: the new Law could not enter the active Zone's authored closure";
+        }
+        persistence = " · live in " + zones->active().name() + " · Save Zone to keep it after restart";
+    }
+    return {};
+}
+
+bool TerminalChannel::isReadOnlySentence(const std::string& text) {
+    std::size_t b = text.find_first_not_of(" \t");
+    std::size_t e = text.find_last_not_of(" \t\r\n");
+    if (b == std::string::npos) return true;
+    return text.compare(b, 2, "??") == 0 || text[e] == '?';
+}
+
+TerminalChannel::ForeignSentence TerminalChannel::authorForeign(
+        LawManager& laws, const std::string& text,
+        const std::vector<Singular*>& authors, const std::string& identifier) {
+    ForeignSentence out;
+    std::string splitError;
+    auto parts = LawSentence::sentences(text, splitError);
+    if (!splitError.empty() || parts.size() > 1) {
+        out.status = "refused";
+        out.error = splitError.empty() ? "foreign authoring requires one separately authorized identifier per sentence; submit sentences individually" : splitError;
+        return out;
+    }
+    auto words = vocabulary(laws, authors.size() == 1 && authors.front() ? authors.front()->getIdentifier() : "");
+    // Several speakers provide no unique first-person referent. Never borrow
+    // the local keyboard Person's root for a foreign writer's "my".
+    if (authors.size() != 1 || !authors.front()) words.pathRoots.clear();
+    const LawSentence::Parse p = LawSentence::parse(text, words);
+    out.preview = p.preview();
+    out.openClauses = p.openClauses;
+    const std::string notes = p.notes.empty() ? std::string{} : join(p.notes, "; ");
+
+    if (p.search) {
+        out.status = "search";
+        out.candidates = p.candidates;
+        return out;
+    }
+    if (!p.ok) {
+        out.status = "refused";
+        out.error = p.error;
+        out.candidates = p.candidates;
+        return out;
+    }
+    if (p.previewOnly) {
+        out.status = "preview";
+        out.detail = dryRun(p) + (notes.empty() ? "" : "; " + notes);
+        return out;
+    }
+    if (p.immediate) {
+        out.status = "refused";
+        out.error = "an immediate act (\"delete ...\") needs the Terminal's confirming Metalaw; "
+                    "a foreign First Mover deletes a Law it may touch with delete_law";
+        return out;
+    }
+    if (identifier.empty()) {
+        out.status = "refused";
+        out.error = "an identifier is required so the act can be held to the mover's granted scope";
+        return out;
+    }
+    std::string persistence;
+    const std::string refusal = enact(laws, p, text, authors, identifier, persistence);
+    if (!refusal.empty()) {
+        out.status = "refused";
+        out.error = refusal;
+        return out;
+    }
+    out.status = "authored";
+    out.lawId = identifier;
+    out.detail = "written by " + authors.front()->getIdentifier() + persistence +
+                 (notes.empty() ? "" : "; " + notes);
+    return out;
+}
+
+// ---------------------------------------------------------------------------
+// Terminal Zones (Zach, 2026-09-30) -- Terminal_Zones.md. ⚠ GATE: nothing is
+// to be built on top of these two opcodes until Zach verifies them.
+// ---------------------------------------------------------------------------
+
+// Where the line should be, applied: the first visit puts it in the LawLine
+// Zone when there is one (the Terminal's purpose, so the Law Line keeps working
+// wherever the Person's body stands); a Law's write to `zone` moves it.
+void TerminalChannel::placeLine() {
+    if (!_zoneBootTried && ZoneManager::live()) {
+        _zoneBootTried = true;
+        if (_requestedZone.empty() && _zone.empty() &&
+            ZoneManager::live()->findZoneIndex("LawLine") != static_cast<size_t>(-1)) {
+            _requestedZone = "LawLine";
         }
     }
-    _lastCreated = id;
-    _status = "authored " + id + " (written by " + author->getIdentifier() + ")";
-    say(_status + "\n  " + _preview + notes);
+    if (!_requestedZone.empty() && _requestedZone != _zone) {
+        const std::string target = _requestedZone;
+        if (!moveLine(target)) _requestedZone = _zone;   // stayed; the reason was said
+    }
+}
+
+// Why Enter would keep this line instead of sending it ("" = it is sent).
+std::string TerminalChannel::submitRefusal(const std::string& text) {
+    const std::string t = text.substr(text.find_first_not_of(" \t"));
+    if (awaitingAnswer() || t == "help" || t == "help " || t == "?") return {};
+    // A block's lines are read together when it ends, never one by one.
+    if (lawGrammarHere() && (!_block.empty() || (!t.empty() && t.back() == ':'))) return {};
+    // The line's move is never a Law sentence, and outside the Law Line
+    // the Law grammar has no say over what may be sent.
+    if (isEnterLine(text) || !lawGrammarHere()) return {};
+    if (t.rfind("??", 0) == 0 || t.back() == '?') return {};
+    std::string splitError;
+    auto parts = LawSentence::sentences(text, splitError);
+    if (!splitError.empty()) return "not yet — " + splitError;
+    for (const auto& part : parts) {
+        const auto parsed = LawSentence::parse(part, liveVocabulary());
+        if (!parsed.ok && parsed.error.find("Metalaw") == std::string::npos)
+            return "not yet — " + parsed.error;
+    }
+    if (parts.size() > 1) return {};
+    const LawSentence::Parse p = LawSentence::parse(text, liveVocabulary());
+    if (p.ok || p.error.find("Metalaw") != std::string::npos) return {};   // Metalaws decide when spoken
+    if (p.error.rfind("still open:", 0) == 0) {
+        for (const auto& clause : p.openClauses) {
+            if (clause.find("(optional)") != std::string::npos) continue;
+            const std::string eg = exampleFor(clause, liveVocabulary());
+            return "not yet — add " + clause + (eg.empty() ? "" : ", e.g.  " + eg) +
+                   "   (or end with ? to preview)";
+        }
+    }
+    return "not yet — " + p.error;
+}
+
+std::string TerminalChannel::zoneLabel() const {
+    if (ZoneManager* zones = ZoneManager::live()) {
+        const size_t i = zones->findZoneIndex(_zone);
+        if (i != static_cast<size_t>(-1)) return zones->zones()[i]->name();
+    }
+    return _zone;
+}
+
+bool TerminalChannel::handleEnter(const std::string& t) {
+    const auto isWord = [&](const char* w) {
+        const std::size_t n = std::strlen(w);
+        if (t.size() < n) return false;
+        for (std::size_t i = 0; i < n; ++i) {
+            if (std::tolower(static_cast<unsigned char>(t[i])) != w[i]) return false;
+        }
+        return t.size() == n || t[n] == ' ';
+    };
+    if (!isWord("enter")) return false;
+    std::string target = t.size() > 5 ? t.substr(6) : std::string{};
+    target.erase(0, target.find_first_not_of(" \t"));
+    if (target.empty()) {
+        ZoneManager* zones = ZoneManager::live();
+        if (!zones) { say("(no Zones are live yet)"); return true; }
+        std::string out = "the line is in " + (_zone.empty() ? std::string("no Zone") : zoneLabel()) +
+                          ". Zones it can enter:";
+        for (const auto& z : zones->zones()) {
+            if (!z) continue;
+            out += "\n  " + z->name() + (z->name() != z->getIdentifier() ? "  (" + z->getIdentifier() + ")" : "");
+        }
+        say(out);
+        return true;
+    }
+    _requestedZone = target;
+    if (!moveLine(target)) _requestedZone = _zone;
+    return true;
+}
+
+bool TerminalChannel::moveLine(const std::string& target) {
+    ZoneManager* zones = ZoneManager::live();
+    if (!zones) {
+        say("refused: no Zones are live yet, so the line has nowhere to go");
+        return false;
+    }
+    const size_t index = zones->findZoneIndex(target);
+    if (index == static_cast<size_t>(-1)) {
+        say("refused: no single Zone is named '" + target + "' (type `enter` to list them)");
+        return false;
+    }
+    const std::string id = zones->zones()[index]->getIdentifier();
+    if (id == _zone) {
+        say("the line is already in " + zoneLabel());
+        return true;
+    }
+    // The same preflight a Person's walk uses: every Law root, author and
+    // trigger resolved before anything changes, or nothing changes.
+    if (!zones->holdZoneClosure(kLineHolder, index)) {
+        say("refused: " + zones->zones()[index]->name() +
+            "'s Laws could not be held (see the log above); the line stays in " +
+            (_zone.empty() ? std::string("no Zone") : zoneLabel()));
+        return false;
+    }
+    Singular* previous = nullptr;
+    if (!_zone.empty()) {
+        const size_t pi = zones->findZoneIndex(_zone);
+        if (pi != static_cast<size_t>(-1)) previous = zones->zones()[pi].get();
+    }
+    if (previous) {
+        Core::EventBus::instance().publish(
+            ECA::Event{"terminal-zone-exited", this, previous, std::time(nullptr), std::string{}});
+    }
+    _zone = id;
+    _requestedZone = id;
+    _vocab.reset();
+    _parse.reset();
+    say("the line is in " + zoneLabel());
+    Core::EventBus::instance().publish(
+        ECA::Event{"terminal-zone-entered", this, zones->zones()[index].get(), std::time(nullptr),
+                   std::string{}});
+    if (_laws && !_laws->rete().hearsType(kLineEntered)) {
+        say("  (nothing here hears a typed line: it will scroll and do nothing. `enter <zone>` leaves.)");
+    }
+    return true;
+}
+
+void TerminalChannel::beginSecret() {
+    Person* person = _presencePerson ? _presencePerson : Core::Engine::instance().getPerson();
+    if (!person) {
+        say("refused: no Person is loaded to become present");
+        return;
+    }
+    if (person->hasIdentity() &&
+        Identity::FirstMoverRegister::instance().isAuthenticatedPerson(person->personId())) {
+        say("'" + person->getDisplayName() + "' is already present (" +
+            person->personId().abbreviated() + ")");
+        return;
+    }
+    if (person->hasIdentity() || Identity::keyedProfileExists()) {
+        _secretStage = 1;
+        say("Identity: type your passphrase. It is hidden, never echoed, never kept. Ctrl-C cancels.");
+    } else {
+        _secretStage = 2;
+        say("Identity: '" + person->getDisplayName() + "' has no key yet. Choose a passphrase to KEY your "
+            "Person (you will type it twice). There is no recovery if it is lost. Ctrl-C cancels.");
+    }
+    _awaitingSecretFlag = true;
+    _completionActive = false;
+    _editor.secret = true;
+    _editor.refresh();
+}
+
+void TerminalChannel::cancelSecret(const std::string& why) {
+    std::fill(_pendingSecret.begin(), _pendingSecret.end(), '\0');
+    _pendingSecret.clear();
+    _secretStage = 0;
+    _awaitingSecretFlag = false;
+    _editor.secret = false;
+    say("Identity: cancelled · " + why);
+}
+
+void TerminalChannel::takeSecret(std::string& secret) {
+    const auto wipe = [](std::string& v) { std::fill(v.begin(), v.end(), '\0'); v.clear(); };
+    Person* person = _presencePerson ? _presencePerson : Core::Engine::instance().getPerson();
+    if (!person) {
+        wipe(secret);
+        cancelSecret("no Person is loaded");
+        return;
+    }
+    if (_secretStage == 1) {
+        const auto r = Identity::unlockPresentPerson(*person, secret);
+        wipe(secret);
+        _secretStage = 0;
+        _awaitingSecretFlag = false;
+        _editor.secret = false;
+        say("Identity: " + r.report);
+        return;
+    }
+    if (_secretStage == 2) {
+        _pendingSecret = std::move(secret);
+        wipe(secret);
+        _secretStage = 3;
+        _editor.refresh();
+        return;
+    }
+    // Stage 3: confirmation.
+    const bool same = (secret == _pendingSecret);
+    Identity::PresenceResult r;
+    if (same) r = Identity::keyPresentPerson(*person, _pendingSecret);
+    wipe(secret);
+    wipe(_pendingSecret);
+    _secretStage = 0;
+    _awaitingSecretFlag = false;
+    _editor.secret = false;
+    say(same ? "Identity: " + r.report : "Identity: the two passphrases differ; nothing was keyed");
 }
 
 void TerminalChannel::say(const std::string& text) { propSetOutput(text); }
@@ -1107,6 +2249,7 @@ std::string TerminalChannel::lawSummary(const Law& law, LawManager& laws) const 
 // is compiled and asked of each present being, nothing is applied.
 std::string TerminalChannel::dryRun(const LawSentence::Parse& p) {
     if (!p.condition) return "no IF: it acts on every subject it is given";
+    const bool eventRelative = readsEventContext(*p.condition);
     const auto predicate = p.condition->compile();
     std::vector<std::string> names;
     std::size_t count = 0;
@@ -1124,17 +2267,22 @@ std::string TerminalChannel::dryRun(const LawSentence::Parse& p) {
             names.push_back(label);
         }
     }
-    if (count == 0) return "right now the IF holds for nothing here";
-    return "right now the IF holds for " + std::to_string(count) + (count == 1 ? " being: " : " beings: ") +
-           join(names, ", ") + (count > names.size() ? ", …" : "");
+    const std::string caveat = eventRelative ? "hypothetical — no event supplied · " : "";
+    if (count == 0) return caveat + "right now the IF holds for nothing here";
+    return caveat + "right now the IF holds for " + std::to_string(count) +
+           (count == 1 ? " being: " : " beings: ") + join(names, ", ") +
+           (count > names.size() ? ", …" : "");
 }
 
 std::string TerminalChannel::footerText(bool& hears) {
     hears = _laws && _laws->rete().hearsType(kLineEntered);
-    std::string zone = "no Zone";
+    std::string body = "no Zone";
     if (ZoneManager* zones = ZoneManager::live()) {
-        if (!zones->zones().empty()) zone = zones->active().name();
+        if (!zones->zones().empty()) body = zones->active().name();
     }
+    // Two presences, both named: where the LINE is, and where the body is.
+    const std::string zone = "line: " + (_zone.empty() ? std::string("no Zone") : zoneLabel()) +
+                             " · body: " + body;
     std::string author = "nobody";
     PropertyValue who;
     if (lawGetValue(*this, PropertyPath::parse(_authorPath), who)) {
@@ -1146,9 +2294,9 @@ std::string TerminalChannel::footerText(bool& hears) {
             if (law && !law->isFirstMover() && law->isEnabled()) ++count;
         }
     }
-    const std::string scope = _laws ? liveVocabulary().scopeBeing : std::string{};
+    const std::string scope = _laws ? propertySuggestionBeing() : std::string{};
     return zone + " · " + (hears ? "hears the line" : "does NOT hear the line") +
-           (scope.empty() ? "" : " · scope @" + scope) + " · as " + author + " · " + std::to_string(count) +
+           (scope.empty() ? "" : " · property suggestions @" + scope) + " · as " + author + (lawGrammarHere() && !presenceRefusal().empty() ? " (not present: enter Identity)" : "") + " · " + std::to_string(count) +
            (count == 1 ? " live law" : " live laws");
 }
 
@@ -1273,15 +2421,8 @@ struct HelpRow {
     std::string out;
     std::size_t used = 0;
     void add(const std::string& text, const std::string& code = "") {
-        std::string piece;
-        for (std::size_t i = 0; i < text.size() && used < max;) {
-            std::size_t n = 1;
-            const unsigned char c = static_cast<unsigned char>(text[i]);
-            if (c >= 0xF0) n = 4; else if (c >= 0xE0) n = 3; else if (c >= 0xC0) n = 2;
-            piece += text.substr(i, n);
-            i += n;
-            ++used;
-        }
+        const std::string piece = clipToCells(text, max - used);
+        used += visibleWidth(piece);
         out += (color && !code.empty()) ? "\x1b[" + code + "m" + piece + "\x1b[0m" : piece;
     }
 };
@@ -1299,26 +2440,49 @@ void TerminalChannel::showHelp() {
     const auto& v = liveVocabulary();
     const int w = std::max(40, std::min(width() - 4, 100));
     const std::size_t inner = static_cast<std::size_t>(w - 4);   // "│ " + content + " │"
-    const std::string frame = "38;5;141", label = "1;38;5;183", dim = "2";
+    // The page's chrome is authorable like the line's: `chrome.help.border`
+    // (its glyph may be six characters, ╭─╮│╰╯ in that order), `.title`,
+    // `.label`, `.text`.
+    const auto chrome = [this](const std::string& key, const std::string& code) {
+        const LineEditor::Look l = lookFor(key);
+        const std::string colour = l.sgr.empty() ? code : l.sgr;
+        return l.style.empty() ? colour : l.style + ";" + colour;
+    };
+    refreshLooks();
+    const std::string frame = chrome("chrome.help.border", "38;5;141"), label = chrome("chrome.help.label", "1;38;5;183"),
+                      dim = chrome("chrome.help.text", "2"), title = chrome("chrome.help.title", "1;38;5;225");
+    std::vector<std::string> pieces = {"\u256D", "\u2500", "\u256E", "\u2502", "\u2570", "\u256F"};
+    {
+        const std::string authored = lookFor("chrome.help.border").glyph;
+        std::vector<std::string> split;
+        for (std::size_t i = 0; i < authored.size();) {
+            const std::size_t end = nextDisplayCluster(authored, i);
+            split.push_back(authored.substr(i, end - i));
+            i = end;
+        }
+        // Only single-cell pieces keep the box square.
+        if (split.size() == 6 && std::all_of(split.begin(), split.end(),
+                                             [](const std::string& g) { return visibleWidth(g) == 1; }))
+            pieces = split;
+    }
     std::vector<std::string> lines;
 
     const auto boxed = [&](const std::function<void(HelpRow&)>& fill) {
         HelpRow row{inner, _color, {}, 0};
         fill(row);
-        std::string s = (_color ? "\x1b[" + frame + "m  │\x1b[0m " : "  │ ") + row.out;
+        std::string s = (_color ? "\x1b[" + frame + "m  " + pieces[3] + "\x1b[0m " : "  " + pieces[3] + " ") + row.out;
         s += std::string(inner - std::min(inner, row.used), ' ');
-        s += _color ? " \x1b[" + frame + "m│\x1b[0m" : " │";
+        s += _color ? " \x1b[" + frame + "m" + pieces[3] + "\x1b[0m" : " " + pieces[3];
         lines.push_back(s);
     };
     const auto blank = [&] { boxed([](HelpRow&) {}); };
-    const auto rule = [&](const std::string& left, const std::string& title, const std::string& right) {
+    const auto rule = [&](const std::string& left, const std::string& heading, const std::string& right) {
         std::string s = "  " + left;
-        std::string t = title.empty() ? "" : "─ " + title + " ";
-        std::size_t width = 0;
-        for (unsigned char c : t) if ((c & 0xC0) != 0x80) ++width;
+        std::string t = heading.empty() ? "" : clipToCells(pieces[1] + " " + heading + " ", inner + 2, true);
+        const std::size_t width = visibleWidth(t);
         std::string fill;
-        for (std::size_t i = width; i < inner + 2; ++i) fill += "─";
-        lines.push_back(_color ? "\x1b[" + frame + "m" + s + "\x1b[1;38;5;225m" + t + "\x1b[0m\x1b[" + frame + "m" +
+        for (std::size_t i = width; i < inner + 2; ++i) fill += pieces[1];
+        lines.push_back(_color ? "\x1b[" + frame + "m" + s + "\x1b[" + title + "m" + t + "\x1b[0m\x1b[" + frame + "m" +
                                      fill + right + "\x1b[0m"
                                : s + t + fill + right);
     };
@@ -1334,7 +2498,7 @@ void TerminalChannel::showHelp() {
             fill(r);
         });
     };
-    const auto colorOf = [](const std::string& role) {
+    const auto builtIn = [](const std::string& role) {
         if (role == "preset") return std::string("1;95");
         if (role == "action") return std::string("32");
         if (role == "operator") return std::string("33");
@@ -1345,7 +2509,13 @@ void TerminalChannel::showHelp() {
         return std::string("97");
     };
 
-    rule("╭", "✦ The Law Line", "╮");
+    const auto colorOf = [&](const std::string& role) {
+        const LineEditor::Look l = lookFor("role." + role);
+        const std::string colour = l.sgr.empty() ? builtIn(role) : l.sgr;
+        return l.style.empty() ? colour : l.style + ";" + colour;
+    };
+    const std::string mark = lookFor("chrome.help.mark").glyph.empty() ? "\u2726" : lookFor("chrome.help.mark").glyph;   // ✦
+    rule(pieces[0], mark + " The Law Line", pieces[2]);
     boxed([&](HelpRow& r) { r.add("Speak a Law in a sentence. The world keeps it.", "3"); });
     blank();
     section("SHAPE", [&](HelpRow& r) {
@@ -1399,6 +2569,10 @@ void TerminalChannel::showHelp() {
             }
         });
     };
+    section("ZONES", [&](HelpRow& r) {
+        r.add("enter <zone>  moves the line (not you): LawLine authors Laws, Identity makes you present, "
+              "Quiet hears nothing · `enter` lists", "3");
+    });
     section("WORDS", [&](HelpRow& r) { r.add("every word is a Lexeme that denotes a Law — add your own", "3"); });
     sample("preset", "presets", colorOf("preset"));
     sample("action", "actions", colorOf("action"));
@@ -1434,8 +2608,9 @@ void TerminalChannel::showHelp() {
     blank();
     bool hears = false;
     const std::string where = footerText(hears);
-    section("HERE", [&](HelpRow& r) { r.add("◆ ", hears ? "32" : "33"); r.add(where, dim); });
-    rule("╰", "", "╯");
+    const std::string footerGlyph = lookFor("chrome.footer").glyph.empty() ? "\u25C6" : lookFor("chrome.footer").glyph;
+    section("HERE", [&](HelpRow& r) { r.add(footerGlyph + " ", hears ? "32" : "33"); r.add(where, dim); });
+    rule(pieces[4], "", pieces[5]);
 
     _editor.showOverlay(std::move(lines));
     if (_attached) draw();
@@ -1452,6 +2627,22 @@ void TerminalChannel::buildProperties() {
         registerProperty(std::make_unique<Level<T>>(name, member, false));
     };
     level("lastLine", &_lastLine);
+    level("key.chord", &_lastChord);
+    level("key.presses", &_keyPresses);
+    registerProperty(std::make_unique<ComputedProperty<TerminalChannel, std::string>>(
+        "draft", this, &TerminalChannel::propDraft));
+    registerProperty(std::make_unique<ComputedProperty<TerminalChannel, double>>(
+        "cursor", this, &TerminalChannel::propCursor));
+    writable("completion.items", &_completionItems);
+    writable("completion.openRequests", &_completionRequests);
+    level("completion.handledRequests", &_completionHandled);
+    writable("completion.active", &_completionActive);
+    registerProperty(std::make_unique<ComputedProperty<TerminalChannel, bool>>(
+        "completion.visible", this, &TerminalChannel::propCompletionVisible));
+    registerProperty(std::make_unique<ComputedProperty<TerminalChannel, double>>(
+        "completion.matchCount", this, &TerminalChannel::propCompletionMatches));
+    registerProperty(std::make_unique<ComputedProperty<TerminalChannel, std::string>>(
+        "block", this, &TerminalChannel::propBlock));
     writable("prompt", &_prompt);
     writable("authorPath", &_authorPath);
     writable("lexemeRelation", &_lexemeRelation);
@@ -1460,6 +2651,11 @@ void TerminalChannel::buildProperties() {
     level("preview", &_preview);
     level("openClauses", &_openClauses);
     level("lastCreated", &_lastCreated);
+    level("compilation.input", &_compilationInput);
+    writable("compilation.template", &_compilationTemplate);
+    writable("compilation.error", &_compilationError);
+    registerProperty(std::make_unique<ComputedProperty<TerminalChannel, std::string>>(
+        "compilation.result", this, &TerminalChannel::propCompilationResult));
     level("ambiguity.symbol", &_ambiguitySymbol);
     level("ambiguity.slot", &_ambiguitySlot);
     level("ambiguity.candidates", &_ambiguityCandidates);
@@ -1474,6 +2670,7 @@ void TerminalChannel::buildProperties() {
     writable("color", &_color);
     writable("hints", &_hints);
     writable("relayLogs", &_relayLogs);
+    writable("colorDepth", &_colorDepth);
 
     registerProperty(std::make_unique<ComputedProperty<TerminalChannel, std::string>>(
         "output", this, &TerminalChannel::propOutput, &TerminalChannel::propSetOutput));
@@ -1481,6 +2678,14 @@ void TerminalChannel::buildProperties() {
         "speakRequests", this, &TerminalChannel::propSpeakRequests,
         &TerminalChannel::propSetSpeakRequests));
     level("spokenRequests", &_spoken);
+    // Terminal Zones: where the line is. Writing it asks the line to move
+    // (applied in act(), through the same held-closure preflight as `enter`).
+    registerProperty(std::make_unique<ComputedProperty<TerminalChannel, std::string>>(
+        "zone", this, &TerminalChannel::propZone, &TerminalChannel::propSetZone));
+    // Identity: a Law bumps this to ask the kernel for ONE secret line.
+    writable("unlockRequests", &_unlockRequests);
+    level("unlocksHandled", &_unlocksHandled);
+    level("awaitingSecret", &_awaitingSecretFlag);
     level("linesEntered", &_linesEntered);
     level("attached", &_attached);
 }

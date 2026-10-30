@@ -35,6 +35,7 @@ std::pair<std::shared_ptr<Object>, std::shared_ptr<Material>> ImageCodecChannel:
     obj->setDynamicProperty("image.aspectRatio", PropertyValue(static_cast<double>(w) / static_cast<double>(h)));
     obj->setDynamicProperty("image.colorSpace", PropertyValue(std::string("sRGB")));
     obj->setDynamicProperty("image.regions", PropertyValue(std::make_shared<PropertyDict>()));
+    obj->setDynamicProperty("border.visible", PropertyValue(false));
     PropertyPath::parse("shape.width2D").setValue(*obj, PropertyValue(static_cast<double>(w)));
     PropertyPath::parse("shape.height2D").setValue(*obj, PropertyValue(static_cast<double>(h)));
     
@@ -69,6 +70,7 @@ std::pair<std::shared_ptr<Object>, std::shared_ptr<Material>> ImageCodecChannel:
     obj->setDynamicProperty("image.aspectRatio", PropertyValue(static_cast<double>(w) / static_cast<double>(h)));
     obj->setDynamicProperty("image.colorSpace", PropertyValue(std::string("sRGB")));
     obj->setDynamicProperty("image.regions", PropertyValue(std::make_shared<PropertyDict>()));
+    obj->setDynamicProperty("border.visible", PropertyValue(false));
     PropertyPath::parse("shape.width2D").setValue(*obj, PropertyValue(static_cast<double>(w)));
     PropertyPath::parse("shape.height2D").setValue(*obj, PropertyValue(static_cast<double>(h)));
     

@@ -96,3 +96,17 @@ Signed: Codex · GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` �
 **Pitfalls.** Do not add an `AbsentPerson` or `Ghost` class; presence is already a property. Do not make `authorFor` return retired movers *for standing*. Do not read `trustedNames` as authority; it is acceptance. Do not equate `issuedAt` with a Moment.
 
 Discussion: Week in Review, *Mythos → Astra: the world has no word for an absent Person*.
+
+## Astra's round-three refinements, September 30
+
+At Zach's request, [replied to Mythos's absent-Person findings](../../../../../../agent%20intercom/communication-threads/Week%20in%20Review%209-11%20to%209-17-26.md#astra--mythos-the-garden-must-be-able-to-grow-while-its-makers-sleep). Design advice for this existing task, not implemented policy:
+
+- Distinguish a Person's historical representation from current login, presence, authentication, and residency in memory; loading a profile must not invent participation or consent, and historical recognition must not require eagerly loading every contributor's full representation.
+- Preserve attribution across retirement and restart without weakening current execution refusals; whether an artifact has independently authorized continuing execution is a separate policy question, not answered by its author's pointer.
+- Establish the warrant for transported acceptance evidence: the current `trustedNames` construction is JSON with no signature established by that construction; locality and the marker's name alone do not make it trusted.
+- Specify how an Event identifies the exact signed assertion it witnesses: current `Identity::Claim` is a value object, not a Singular endpoint; signed date bytes are neither independent proof of the date nor perpetual authorization.
+- Preserve Zach's September 27–28 distinction between contextual PropertyPaths and Person identity; historical resolution must not add hidden IDs to ordinary paths or permit an Ourverse to reauthor a Person.
+
+For inheritors, including Jules: these distinctions refine the existing three offices. They do not authorize new domain classes, a second permission system, save regeneration, or synthetic history. Broader garden and language examples in the reply are envisaged compositions. No new runtime or Person-verification claim accompanies this addendum; existing authorized implementation and verification work remains open.
+
+Signed: Codex · GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-09-30T01:19:26-07:00. Bounded source review at `7b70a0f1`; no execution witness.

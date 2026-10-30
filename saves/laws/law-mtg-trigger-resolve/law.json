@@ -1,0 +1,57 @@
+{
+  "authors": [
+    "author.antigravity"
+  ],
+  "identifier": "law-mtg-trigger-resolve",
+  "injected_by": "Antigravity, 2026-10-11 MTG Zone Law",
+  "law": {
+    "actionDescriptions": [
+      "publish(resolve-stack)"
+    ],
+    "actionModel": {
+      "kind": 10,
+      "eventType": "resolve-stack",
+      "desc": "publish(resolve-stack)"
+    },
+    "activation": 0,
+    "authority": 0,
+    "authors": [
+      "author.antigravity"
+    ],
+    "conditionDescriptions": [
+      "all"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "button.mtg.resolve",
+          "desc": "identity(button.mtg.resolve)"
+        },
+        {
+          "kind": 0,
+          "path": "@state.mtg.stackCount",
+          "op": 4,
+          "desc": "compare(@state.mtg.stackCount)",
+          "operand": {
+            "t": "int",
+            "v": 0
+          }
+        }
+      ],
+      "desc": "all"
+    },
+    "drives": false,
+    "enabled": true,
+    "id": "law-mtg-trigger-resolve",
+    "name": "mtg-trigger-resolve",
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

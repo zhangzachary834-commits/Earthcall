@@ -1,5 +1,9 @@
 # SUN HANDOFF — V3 + V4 LANDED: authored angular scattering and self-emissive media
 
+
+
+
+
 Date: 2026-09-23
 Repository: `zhangzachary834-commits/Earthcall`
 Canonical: `sync-from-earthcall-main`

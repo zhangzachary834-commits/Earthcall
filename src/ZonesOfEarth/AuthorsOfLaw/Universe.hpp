@@ -129,6 +129,11 @@ public:
         return out;
     }
 
+    // Raw graph queries preserve historical truth. Current semantic state is
+    // determined through first-class superseded-by Relations.
+    bool isRelationSuperseded(const Relation& r) const;
+    bool isRelationCurrent(const Relation& r) const;
+
     // Registering a NEW relation into the world's graph — the write side.
     // The engine wires this to the active zone's Formation; concept
     // instantiation uses it so a captured set's inter-member relations are

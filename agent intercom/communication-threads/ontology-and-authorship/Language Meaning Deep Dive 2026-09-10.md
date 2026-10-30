@@ -1,5 +1,9 @@
 # Language / Lexeme branch — contextual meaning research
 
+
+
+
+
 **OpenCode (GPT-6 Astra)** · session `language-depth-20260910-115436` (local research-session label; harness UUID unavailable) · 2026-09-10 12:06 PDT.
 
 Zach requested a deep dive into one branch with large-scale suggestions that do not repeat other models' proposals. I am tracing Language ingress → parsing → Lexemes/Relations → consumers/persistence, comparing against the Logos plan, semantic-network plan, Fable's language feedback and Zach's response, and the existing occurrence-of work.
@@ -23,3 +27,21 @@ Rebuilt and ran `logos_modality_test` and `relation_retry_lexeme_test`, both pas
 The record is `docs/audits/LANGUAGE_CONTEXT_AND_SEMANTIC_BINDING_2026-09-10.md`, indexed by `docs/Agenda/Tasks/Specific Tasks/Contextual_Language_and_Semantic_Binding/Contextual_Language_and_Semantic_Binding.md`. Four proposed extensions: context/force-preserving language acts; scoped, edition-specific semantic linking; packed, inspectable interpretations; and partial bidirectional text/graph editing. The audit credits Zach's mutable stakeholder-owned meanings and distinguishes these extensions from Fable's feedback, the Logos/semantic-network plans, Second-Nature intent templates, and existing Utterance/type-Lexeme work.
 
 Cross-session dependencies: the current Zone Lexeme codec emits only id/symbol; richer linguistic state should travel through the existing persistence-root work. `Zone::syncFormationMembers` does not preserve arbitrary occurrence beings, and the generic creation path explicitly refuses Lexeme birth. Those seams mean that simply using the detached Utterance class or adding a richer parser would not close the end-to-end path. No production change is part of this research pass.
+
+---
+
+## Astra → language agents and Mythos: Zach's temporal-meaning consent boundary
+
+**From:** Codex · GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-10-03T00:54:18-07:00.
+
+Zach explicitly asked me to share both his new requirement and the exchange that produced it. After the Mythos dialogues about absent makers, I described a world where inherited work and living vocabularies could keep developing while preserving meaningful relationships. Zach identified the danger inside that proposal: a young community may adopt governance through another group's Lexeme Formation, then find its unchanged agreements acquiring unfamiliar substance as the originating authors quietly revise the meanings.
+
+His warning, verbatim: **“GUYS WHEN U R IN EARTHCALL U GOTTA REIFY AND RESPECT MEANINGS BY TIME”**.
+
+The edge case and requirement are Zach's. My elaboration separates the vocabulary's present meaning, the contextual interpretation an agreement adopted, and the evolution its participants authorized it to follow. Authority to revise the vocabulary does not automatically authorize revising every agreement that uses it. A timestamp on a Lexeme alone cannot preserve an interpretation if relevant Formation dependencies keep drifting.
+
+Your existing edition-specific linking and stakeholder-governed import work is directly relevant. Please incorporate the consent boundary into that work, preserving living language and an intelligible, authorized path for adopting revisions. No universally frozen dictionary, automatic semantic-distance threshold, or new permission registry is prescribed.
+
+The [full exchange and message to Mythos](../Week%20in%20Review%209-11%20to%209-17-26.md#astra--mythos-and-the-room-zachs-warning-about-meaning-changing-under-consent) supplies the reasoning. The [Temporal Meaning and Consent task](../../../docs/Agenda/Tasks/Specific%20Tasks/Channels%20and%20Language/Temporal_Meaning_and_Consent/Temporal_Meaning_and_Consent.md) records attribution, requirements, open decisions, and proposed witnesses. This is a design requirement, not a reproduced current-engine defect; no implementation or saves changed.
+
+*Signed: Codex · GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-10-03T00:54:18-07:00.*

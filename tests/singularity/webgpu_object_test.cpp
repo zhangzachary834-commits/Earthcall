@@ -402,8 +402,10 @@ int main() {
         unsigned char lowExtinction[4];
         readCentre(lowExtinction);
         const Renderer::FrameStats lowExtinctionStats = renderer.frameStats();
-        assert(lowExtinctionStats.volumeProgramCompiles == 1 &&
-               "first authored sigma_t structure did not compile exactly once");
+        // Admission prepares inside/outside modules from one retained evaluator.
+        // Warm and numeric-edit checks below must still compile zero modules.
+        assert(lowExtinctionStats.volumeProgramCompiles == 2 &&
+               "first authored sigma_t structure did not prepare both camera variants");
 
         extinctionNode->scalarForm.terms[0].coefficient = 3.0;
         extinctionMedium.extinctionRevision = 5502;
@@ -641,8 +643,8 @@ int main() {
         unsigned char fusedTimeDim[4];
         readCentre(fusedTimeDim);
         const Renderer::FrameStats fusedTimeCompileStats = renderer.frameStats();
-        assert(fusedTimeCompileStats.volumeProgramCompiles == 1 &&
-               "introducing V5 E_v(t) did not compile its fused structure exactly once");
+        assert(fusedTimeCompileStats.volumeProgramCompiles == 2 &&
+               "introducing V5 E_v(t) did not prepare both fused camera variants");
 
         timedSetA.temporalCoordinate = 1.0;
         timedSetA.temporalDelta = 0.95;
@@ -718,8 +720,8 @@ int main() {
             membershipAddStats.volumeProgramCompiles);
         assert(membershipABC[2] > fusedTimeBright[2] + 30 &&
                "adding visible medium C did not change the fused native answer");
-        assert(membershipAddStats.volumeProgramCompiles == 1 &&
-               "adding one V5 set member did not compile exactly one new fused structure");
+        assert(membershipAddStats.volumeProgramCompiles == 2 &&
+               "adding one V5 set member did not prepare both fused camera variants");
 
         // Remove C and return to the already-established {A,B} structural key.
         // The projected set revision changes, so this first restoration is a
@@ -831,7 +833,7 @@ int main() {
         renderer.composeVolumes();
         renderer.endFrame();
         const Renderer::FrameStats extinctionStructureStats = renderer.frameStats();
-        assert(extinctionStructureStats.volumeProgramCompiles == 1 &&
+        assert(extinctionStructureStats.volumeProgramCompiles == 2 &&
                "sigma_t operator-tree edit failed to regenerate volume WGSL structure");
 
         // Timeline: sigma_t=t, while D remains exactly the same authored tree.
@@ -853,8 +855,8 @@ int main() {
         unsigned char timedExtinctionLow[4];
         readCentre(timedExtinctionLow);
         const Renderer::FrameStats timedExtinctionCompileStats = renderer.frameStats();
-        assert(timedExtinctionCompileStats.volumeProgramCompiles == 1 &&
-               "introducing sigma_t(p,t) did not compile exactly once");
+        assert(timedExtinctionCompileStats.volumeProgramCompiles == 2 &&
+               "introducing sigma_t(p,t) did not prepare both camera variants");
 
         extinctionMedium.temporalCoordinate = 3.0;
         extinctionMedium.temporalDelta = 2.95;
@@ -975,8 +977,8 @@ int main() {
                "authored blue C_v did not control native medium hue");
         assert(v2RedStrongPixel[0] > v2BlueWeakPixel[2] + 80 &&
                "changing sigma_s with fixed D/sigma_t did not visibly change scattering strength");
-        assert(v2RedStrongStats.volumeProgramCompiles == 1 &&
-               v2BlueWeakStats.volumeProgramCompiles == 1 &&
+        assert(v2RedStrongStats.volumeProgramCompiles == 2 &&
+               v2BlueWeakStats.volumeProgramCompiles == 2 &&
                "distinct authored V2 medium structures were not established independently");
 
         // Return to the first medium. Its (D,sigma_t,sigma_s,C_v) program memo
@@ -1075,8 +1077,8 @@ int main() {
             phaseReverseStats.volumeProgramCompiles);
         assert(phaseForwardPixel[0] > phaseReversePixel[0] + 45 &&
                "changing only Phi with fixed D/sigma_t/sigma_s/C_v did not change native scattering");
-        assert(phaseForwardStats.volumeProgramCompiles == 1 &&
-               phaseReverseStats.volumeProgramCompiles == 1 &&
+        assert(phaseForwardStats.volumeProgramCompiles == 2 &&
+               phaseReverseStats.volumeProgramCompiles == 2 &&
                "distinct authored phase structures were not compiled independently");
 
         // Directionality itself is runtime input: keep the same Phi AST and move
@@ -1153,8 +1155,8 @@ int main() {
         renderer.composeVolumes();
         renderer.endFrame();
         const Renderer::FrameStats phaseStructureStats = renderer.frameStats();
-        assert(phaseStructureStats.volumeProgramCompiles == 1 &&
-               "structural Phi edit did not regenerate the volume program exactly once");
+        assert(phaseStructureStats.volumeProgramCompiles == 2 &&
+               "structural Phi edit did not regenerate both camera variants");
 
         // TIME: Phi=t changes only the admitted medium Timeline coordinate.
         auto phaseTimeNode = std::make_shared<OntoMath::MathNode>();
@@ -1285,7 +1287,7 @@ int main() {
                v4EmissivePixel[0] > v4EmissivePixel[1] + 35 &&
                v4EmissivePixel[0] > v4EmissivePixel[2] + 35 &&
                "authored E_v failed to produce visible native radiance without external illumination");
-        assert(v4EmissiveStats.volumeProgramCompiles == 1 &&
+        assert(v4EmissiveStats.volumeProgramCompiles == 2 &&
                "introducing independent E_v did not establish its own volume program");
 
         // VALUE ONLY on the same E_v AST: dim red emission in-place. This must
@@ -1358,8 +1360,8 @@ int main() {
         unsigned char timedDensityDim[4];
         readCentre(timedDensityDim);
         const Renderer::FrameStats timedDensityCompileStats = renderer.frameStats();
-        assert(timedDensityCompileStats.volumeProgramCompiles == 1 &&
-               "introducing D(p,t) did not compile its density structure exactly once");
+        assert(timedDensityCompileStats.volumeProgramCompiles == 2 &&
+               "introducing D(p,t) did not prepare both camera variants");
 
         timedMedium.temporalCoordinate = 1.0;
         timedMedium.temporalDelta = 0.95;
@@ -2309,6 +2311,36 @@ int main() {
 
         renderer.setRadianceField(nullptr, 0);
         renderer.setRadianceVisibilityEnabled(false);
+    }
+
+    // --- Rung-8 WebGPU begin2D native pixel witness ----------------------------
+    // Production begin2D now consumes OntoMath's top-left ZO orthographic
+    // projection. Draw only the top-left quarter and prove through GPU readback
+    // that y=0 is still the framebuffer top rather than silently flipping.
+    {
+        const float halfW = static_cast<float>(W) * 0.5f;
+        const float halfH = static_cast<float>(H) * 0.5f;
+        const std::vector<glm::vec2> topLeftQuad = {
+            {0.0f, 0.0f}, {halfW, 0.0f}, {halfW, halfH},
+            {0.0f, 0.0f}, {halfW, halfH}, {0.0f, halfH},
+        };
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.begin2D(W, H);
+        renderer.drawTris2D(topLeftQuad, glm::vec4(1, 0, 1, 1));
+        renderer.end2D();
+        renderer.endFrame();
+
+        unsigned char topLeft2D[4];
+        unsigned char bottomLeft2D[4];
+        readAt(2, 2, topLeft2D);
+        readAt(2, H - 3, bottomLeft2D);
+        assert(topLeft2D[0] > 240 && topLeft2D[2] > 240 &&
+               topLeft2D[1] < 15 &&
+               "OntoMath-authored begin2D projection did not cover the top-left quarter");
+        assert(bottomLeft2D[0] < 15 && bottomLeft2D[1] < 15 &&
+               bottomLeft2D[2] < 15 &&
+               "OntoMath-authored begin2D projection flipped or stretched screen-space Y");
     }
 
     // --- An unpainted cube draws as ONE merged mesh; painting a single face

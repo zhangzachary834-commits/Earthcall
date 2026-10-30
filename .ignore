@@ -69,9 +69,23 @@ third_party/httplib/httplib.h
 /test_eval*.cpp
 /test_perf.cpp
 /test_perf*.patch
+/scratch_test*
+/test_fmt*
+/test_lawrefs*
+/test_parse*
 /tune_math.py
 /update_hpp.py
 /update_task.py
 *.orig
 *.rej
+scratch/capture-verification/
 saves/identity/*.staged
+
+# Law Line atomic patch backups preserve Person-authored save bytes.
+scratch/backups/law-line/
+
+# Intercom navigation keeps source originals outside the live archive.
+scratch/backups/intercom-navigation/
+scratch/intercom-navigation*.html
+scratch/intercom-navigation*.jpg
+**/.intercom-write.lock

@@ -19,6 +19,7 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "json.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <filesystem>
@@ -88,11 +89,17 @@ int main() {
     ctx.lawManager = &laws;
     ctx.worldTime = &worldTime;
 
+    auto changedWord = Singularity::Language::LanguageSystem::instance().intern("Preserve glyph", "lexeme.preserve.changed");
+    auto removedWord = Singularity::Language::LanguageSystem::instance().intern("Remove glyph", "lexeme.preserve.removed");
+    changedWord->setDynamicProperty("appearance.glyph", std::string("saved-glyph"));
+    removedWord->setDynamicProperty("appearance.glyph", std::string("saved-glyph"));
     const std::string otherPath = (sandbox / "worlds" / "other.json").string();
     {
         ZoneManager writer;
         auto z = std::make_shared<Zone>("Sanctum of Beginnings", "default");
         z->addObject(makeCube("saved-cube", glm::vec3(9.0f, 0.0f, 0.0f)));
+        z->addToFormation(changedWord.get());
+        z->addToFormation(removedWord.get());
         writer.addZone(z);
         writer.saveState(otherPath, ctx);
     }
@@ -100,6 +107,10 @@ int main() {
     ZoneManager live;
     auto liveZone = std::make_shared<Zone>("Sanctum of Beginnings", "default");
     liveZone->addObject(makeCube("unsaved-cube", glm::vec3(1.0f, 0.0f, 0.0f)));
+    liveZone->addToFormation(changedWord.get());
+    liveZone->addToFormation(removedWord.get());
+    changedWord->setDynamicProperty("appearance.glyph", std::string("unsaved-glyph"));
+    removedWord->removeDynamicProperty("appearance.glyph");
     live.addZone(liveZone);
 
     check(hasObject(live, "unsaved-cube"), "live world holds unsaved work");
@@ -112,6 +123,11 @@ int main() {
           "loading another session does not replace the live Zone — unsaved work stays");
     check(!hasObject(live, "saved-cube"),
           "the other file's snapshot of the same Zone is not applied over live beings");
+    PropertyValue glyph;
+    check(changedWord->getDynamicProperty("appearance.glyph", glyph) && glyph == PropertyValue(std::string("unsaved-glyph")),
+          "ordinary session load preserves unsaved Lexeme properties");
+    check(!removedWord->getDynamicProperty("appearance.glyph", glyph),
+          "ordinary session load does not resurrect removed Lexeme properties");
     const std::string stash = ZoneManager::beforeLoadSnapshotPath();
     check(std::filesystem::exists(stash) && std::filesystem::file_size(stash) > 0,
           "unsaved work was written to the dedicated before-load slot");
@@ -148,7 +164,14 @@ int main() {
     check(std::filesystem::last_write_time(stash) == stashTime,
           "a refused load does not overwrite the before-load slot");
 
+    changedWord->setDynamicProperty("appearance.glyph", std::string("after-snapshot"));
+    changedWord->setDynamicProperty("after.snapshot", true);
+    removedWord->setDynamicProperty("appearance.glyph", std::string("after-snapshot"));
     live.loadState(stash, ctx);
+    check(changedWord->getDynamicProperty("appearance.glyph", glyph) && glyph == PropertyValue(std::string("unsaved-glyph")),
+          "Restore unsaved explicitly restores the snapshot's Lexeme value");
+    check(!removedWord->getDynamicProperty("appearance.glyph", glyph) && !changedWord->getDynamicProperty("after.snapshot", glyph),
+          "Restore unsaved also restores the snapshot's property absences");
     check(hasObject(live, "unsaved-cube"), "loading before-load restores the unsaved cube");
     check(!hasObject(live, "saved-cube"), "snapshot restore does not import the other file's cube");
     {

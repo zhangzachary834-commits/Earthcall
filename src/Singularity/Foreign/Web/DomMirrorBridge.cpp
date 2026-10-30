@@ -1,4 +1,5 @@
 #include "Singularity/Foreign/Web/DomMirrorBridge.hpp"
+#include "Singularity/Core/AppPaths.hpp"
 #include "Singularity/Foreign/Web/RealWebView.hpp"
 #include <iostream>
 #include <fstream>
@@ -40,8 +41,11 @@ void DomMirrorBridge::detachWebView() {
 bool DomMirrorBridge::injectMirrorScript() {
     if (!_webView) return false;
 
-    // Read the script from disk if available
-    std::string scriptPath = "src/Singularity/Foreign/Web/dom_mirror.js";
+    // Read the script from disk if available: shipped in the bundle's
+    // Resources/Web/, else beside this file in the checkout.
+    std::string scriptPath = AppPaths::isBundled()
+        ? (AppPaths::resourceRoot() / "Web" / "dom_mirror.js").string()
+        : (AppPaths::resourceRoot() / "src/Singularity/Foreign/Web/dom_mirror.js").string();
     std::ifstream file(scriptPath);
     std::string scriptContent;
     if (file.is_open()) {

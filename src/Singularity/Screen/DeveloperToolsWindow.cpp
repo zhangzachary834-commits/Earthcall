@@ -51,6 +51,8 @@ int countSavedObjects(const std::filesystem::path& path) {
 
 std::vector<TestSaveRow> scanTestSaves() {
     std::vector<TestSaveRow> rows;
+    // Test observations are workshop output: tests write them under the
+    // checkout's saves/tests (cwd), not the Person's data home.
     if (!std::filesystem::exists("saves/tests")) return rows;
     std::error_code ec;
     auto it = std::filesystem::directory_iterator(

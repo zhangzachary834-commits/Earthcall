@@ -1,0 +1,54 @@
+{
+    "authors": [
+        "Zach"
+    ],
+    "identifier": "law-terminal-identity-unlock",
+    "injected_by": "Claude Opus 5.5 (Claude Code), Terminal Zones seed, 2026-09-30",
+    "law": {
+        "activation": 0,
+        "applicationLog": [],
+        "authors": [
+            "Zach"
+        ],
+        "authority": 0,
+        "conditionMode": "all",
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-terminal-identity-unlock",
+        "name": "Identity \u00b7 when the line enters, ask the Terminal for a hidden passphrase",
+        "provenance": [
+            {
+                "directed": true,
+                "entityA": "law-terminal-identity-unlock",
+                "entityB": "Zach",
+                "events": [],
+                "type": "authored-by",
+                "weight": 1.0
+            }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": [],
+        "conditionModel": {
+            "kind": 0,
+            "path": "@terminal-channel.zone",
+            "op": 0,
+            "operand": {
+                "t": "string",
+                "v": "Identity"
+            }
+        },
+        "actionModel": {
+            "kind": 1,
+            "path": "@terminal-channel.unlockRequests",
+            "operand": {
+                "t": "double",
+                "v": 1.0
+            }
+        }
+    },
+    "triggers": [
+        "terminal-zone-entered"
+    ]
+}

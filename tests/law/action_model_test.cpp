@@ -57,7 +57,42 @@ int main() {
     }
     {
         ActionNode node = ActionNode::set("health", 50.0);
-        assert(node.describe().find("set health") != std::string::npos);
+        assert(node.describe() == "set health 50");
+
+        ActionNode glowNode = ActionNode::set("glow", 1.0);
+        assert(glowNode.describe() == "set glow 1");
+
+        ActionNode colorNode = ActionNode::set("color", glm::vec3(1.0f, 0.0f, 0.0f));
+        assert(colorNode.describe() == "set color (1, 0, 0)");
+
+        ActionNode toolNode = ActionNode::set("activeTool", "3DShapeGenerator");
+        assert(toolNode.describe() == "set activeTool 3DShapeGenerator");
+
+        ActionNode titleNode = ActionNode::set("title", "Hello World");
+        assert(titleNode.describe() == "set title \"Hello World\"");
+
+        assert(ActionNode::set("label", std::string{}).describe() == R"(set label "")");
+        assert(ActionNode::set("epsilon", 1e-9).describe() != "set epsilon 0");
+        assert(ActionNode::set("tinyVector", glm::vec3(1e-7f, 0.0f, 0.0f))
+                   .describe() != "set tinyVector (0, 0, 0)");
+        assert(ActionNode::set("quote", std::string("A \"quoted\" word"))
+                   .describe() == R"(set quote "A \"quoted\" word")");
+        assert(ActionNode::set("filepath", std::string("a\\b"))
+                   .describe() == R"(set filepath "a\\b")");
+        assert(ActionNode::set("note", std::string("a\nb\tc"))
+                   .describe() == R"(set note "a\nb\tc")");
+
+        ActionNode boolNode = ActionNode::set("enabled", true);
+        assert(boolNode.describe() == "set enabled true");
+
+        ActionNode addNode = ActionNode::add("health", -10.0);
+        assert(addNode.describe() == "add -10 to health");
+
+        ActionNode scaleNode = ActionNode::scale("speed", 2.0);
+        assert(scaleNode.describe() == "scale speed by 2");
+
+        ActionNode propNode = ActionNode::addProperty("target", "custom", 42.0);
+        assert(propNode.describe() == "grant property 'custom' = 42");
 
         auto rev = node.reversibility();
         assert(rev.exact == false);

@@ -162,6 +162,66 @@ void test_would_form_cycle_string_overload() {
     check(cyclesSelf, "Self-loop should be detected as a cycle (string overload)");
 }
 
+void test_string_queries_rename_and_equivalence() {
+    std::cout << "--- test_string_queries_rename_and_equivalence ---\n";
+    RelationManager rm;
+    DummySingular boundA("a-orig");
+    DummySingular boundB("b-orig");
+    DummySingular boundC("c-orig");
+
+    // 1. Add bound relations (directed and undirected)
+    auto rel1 = std::make_shared<Relation>("friend", boundA, boundB, false); // undirected
+    auto rel2 = std::make_shared<Relation>("parent", boundA, boundC, true);  // directed
+    rm.add(rel1);
+    rm.add(rel2);
+
+    // Initial check on string queries
+    check(rm.getRelationsOf("a-orig").size() == 2, "getRelationsOf(string) initial count for a-orig");
+    check(rm.getRelationsBetween("a-orig", "b-orig").size() == 1, "getRelationsBetween(string,string) initial count a-orig & b-orig");
+
+    // Adjacency initial check (directed & undirected)
+    auto adjA = rm.findAdjacentEntities("a-orig");
+    check(adjA.size() == 2, "findAdjacentEntities(a-orig) initial size");
+    auto adjB = rm.findAdjacentEntities("b-orig");
+    check(adjB.size() == 1 && adjB[0] == "a-orig", "findAdjacentEntities(b-orig) for undirected edge finds a-orig");
+    auto adjC = rm.findAdjacentEntities("c-orig");
+    check(adjC.empty(), "findAdjacentEntities(c-orig) for incoming directed edge is empty");
+
+    // 2. Rename boundA without touching manager
+    boundA.id = "a-renamed";
+
+    // Query by old identifier: rel1 and rel2 still have boundA pointing to boundA whose current ID is "a-renamed".
+    // Therefore rel->involves("a-orig") and rel->isBetween("a-orig", ...) return false.
+    check(rm.getRelationsOf("a-orig").empty(), "getRelationsOf('a-orig') returns empty after rename");
+    check(rm.getRelationsBetween("a-orig", "b-orig").empty(), "getRelationsBetween('a-orig', 'b-orig') returns empty after rename");
+
+    // Query by the NEW live identifier. These are the decisive pre-PR
+    // full-scan semantics: bound endpoints expose their current identifiers.
+    check(rm.getRelationsOf("a-renamed").size() == 2,
+          "getRelationsOf('a-renamed') finds relations after live rename");
+    check(rm.getRelationsBetween("a-renamed", "b-orig").size() == 1,
+          "getRelationsBetween('a-renamed', 'b-orig') finds relation after live rename");
+    auto adjRenamed = rm.findAdjacentEntities("a-renamed");
+    check(adjRenamed.size() == 2,
+          "findAdjacentEntities('a-renamed') finds outgoing/undirected neighbors after live rename");
+
+    // Impostor being takes the old identifier "a-orig"
+    DummySingular impostor("a-orig");
+    check(rm.getRelationsOf("a-orig").empty(), "impostor with old ID 'a-orig' does NOT falsely match rels of renamed boundA");
+
+    // 3. Loaded-unbound identifiers coverage
+    RelationManager rmUnbound;
+    rmUnbound.loadFromJson(nlohmann::json::array({
+        {{"type", "knows"}, {"entityA", "unbound1"}, {"entityB", "unbound2"}, {"directed", false}}
+    }));
+    check(rmUnbound.getRelationsOf("unbound1").size() == 1, "getRelationsOf(string) finds loaded-unbound");
+    check(rmUnbound.getRelationsBetween("unbound1", "unbound2").size() == 1, "getRelationsBetween(string,string) finds loaded-unbound");
+    auto adjUnbound1 = rmUnbound.findAdjacentEntities("unbound1");
+    check(adjUnbound1.size() == 1 && adjUnbound1[0] == "unbound2", "findAdjacentEntities(unbound1) finds unbound2");
+    auto adjUnbound2 = rmUnbound.findAdjacentEntities("unbound2");
+    check(adjUnbound2.size() == 1 && adjUnbound2[0] == "unbound1", "findAdjacentEntities(unbound2) finds unbound1 for undirected edge");
+}
+
 void test_forget_being() {
     std::cout << "--- test_forget_being ---\n";
     // Using a separate scope for the manager to ensure liveManagers behavior
@@ -272,6 +332,7 @@ int main() {
     test_relations_involving();
     test_forget_type_lexeme();
     test_would_form_cycle_string_overload();
+    test_string_queries_rename_and_equivalence();
 
     std::cout << "============================================================\n";
     std::cout << "RelationManager test summary: "

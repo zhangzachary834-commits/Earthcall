@@ -1,0 +1,67 @@
+{
+ "authors": [
+  "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+ ],
+ "identifier": "law-line-compile-condition-inrange",
+ "injected_by": "Claude Opus 5.5 (Claude Code) / 01WXmPy9U71FLqizbRYzMToZ / 2026-10-05",
+ "law": {
+  "activation": 0,
+  "applicationLog": [],
+  "authors": [
+   "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+  ],
+  "authority": 0,
+  "conditionMode": "all",
+  "conditionSubjects": [],
+  "drives": false,
+  "enabled": true,
+  "id": "law-line-compile-condition-inrange",
+  "name": "Law Line · condition-inrange",
+  "provenance": [
+   {
+    "directed": true,
+    "entityA": "law-line-compile-condition-inrange",
+    "entityB": "Zach",
+    "events": [],
+    "type": "authored-by",
+    "weight": 1.0
+   }
+  ],
+  "retrigger": 0,
+  "scope": 0,
+  "targets": [
+   "terminal-channel"
+  ],
+  "conditionModel": {
+   "kind": 3,
+   "children": [
+    {
+     "kind": 0,
+     "path": "compilation.input.slot",
+     "op": 0,
+     "operand": "condition"
+    },
+    {
+     "kind": 0,
+     "path": "compilation.input.op",
+     "op": 0,
+     "operand": "InRange"
+    },
+    {
+     "kind": 0,
+     "path": "compilation.input.opcode",
+     "op": 0,
+     "operand": "condition.compare"
+    }
+   ]
+  },
+  "actionModel": {
+   "kind": 0,
+   "path": "compilation.template",
+   "operand": "{\"kind\": 6, \"function\": {\"$slot\": \"/function\"}, \"bindings\": {\"$slot\": \"/bindings\"}, \"lo\": {\"$slot\": \"/lo\"}, \"hi\": {\"$slot\": \"/hi\"}}"
+  }
+ },
+ "triggers": [
+  "terminal-invocation-compilation-requested"
+ ]
+}

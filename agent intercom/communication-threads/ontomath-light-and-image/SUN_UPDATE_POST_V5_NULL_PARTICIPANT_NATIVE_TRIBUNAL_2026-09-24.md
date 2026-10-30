@@ -1,5 +1,9 @@
 # SUN UPDATE — Post-V5 null-participant native tribunal
 
+
+
+
+
 Date: 2026-09-24
 Owner lane: GPT-5.6 Sol
 Branch: `sol/post-v5-null-participant-stability-20260924`

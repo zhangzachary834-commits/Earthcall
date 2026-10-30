@@ -1,1 +1,199 @@
-{"authors":["grok-4.6"],"identifier":"law-chess-drag-pick","injected_by":"GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request","law":{"actionDescriptions":["sequence(3)"],"actionModel":{"children":[{"bindings":{"gx":"gridX"},"function":{"input":"x","pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":1.0,"factors":{"gx":1.0}}]}}}]},"kind":8,"path":"@state.chess.targetX"},{"bindings":{"gy":"gridY"},"function":{"input":"x","pieces":[{"mathNode":{"op":0,"scalarForm":{"terms":[{"c":1.0,"factors":{"gy":1.0}}]}}}]},"kind":8,"path":"@state.chess.targetY"},{"eventType":"square-clicked","kind":10}],"kind":5},"activation":0,"applicationLog":[],"authority":0,"authors":["grok-4.6"],"conditionDescriptions":["related[instance-of] to category.chess.piece"],"conditionMode":"all","conditionModel":{"kind":2,"otherId":"category.chess.piece","relationType":"instance-of"},"conditionSubjects":[],"drives":false,"enabled":true,"id":"law-chess-drag-pick","name":"select-dragged-piece","provenance":[{"attachment":{"childAnchor":[0.0,0.0,0.0],"enabled":false,"inheritRotation":true,"inheritScale":true,"inheritTranslation":true,"localOffset":[1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0],"parentAnchor":[0.0,0.0,0.0]},"directed":true,"entityA":"law-chess-drag-pick","entityB":"grok-4.6","events":[{"deltaWeight":1.0,"description":"authored-by","timestamp":1787390000}],"type":"authored-by","weight":1.0},{"attachment":{"childAnchor":[0.0,0.0,0.0],"enabled":false,"inheritRotation":true,"inheritScale":true,"inheritTranslation":true,"localOffset":[1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,1.0],"parentAnchor":[0.0,0.0,0.0]},"directed":true,"entityA":"law-chess-drag-pick","entityB":"grok-4.6","events":[{"deltaWeight":1.0,"description":"authored-by","timestamp":1790460881}],"type":"authored-by","weight":1.0}],"retrigger":0,"scope":0,"targets":[]},"triggers":["object-drag-started"]}
+{
+    "authors": [
+        "grok-4.6"
+    ],
+    "identifier": "law-chess-drag-pick",
+    "injected_by": "GPT-5.6 Sol, 2026-09-18 Zone-native packaging of the existing grok-4.6 Chess injection at Zach's request",
+    "law": {
+        "actionDescriptions": [
+            "sequence(3)"
+        ],
+        "actionModel": {
+            "children": [
+                {
+                    "bindings": {
+                        "gx": "gridX"
+                    },
+                    "function": {
+                        "input": "x",
+                        "pieces": [
+                            {
+                                "mathNode": {
+                                    "op": 0,
+                                    "scalarForm": {
+                                        "terms": [
+                                            {
+                                                "c": 1.0,
+                                                "factors": {
+                                                    "gx": 1.0
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "kind": 8,
+                    "path": "@state.chess.targetX"
+                },
+                {
+                    "bindings": {
+                        "gy": "gridY"
+                    },
+                    "function": {
+                        "input": "x",
+                        "pieces": [
+                            {
+                                "mathNode": {
+                                    "op": 0,
+                                    "scalarForm": {
+                                        "terms": [
+                                            {
+                                                "c": 1.0,
+                                                "factors": {
+                                                    "gy": 1.0
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "kind": 8,
+                    "path": "@state.chess.targetY"
+                },
+                {
+                    "eventType": "square-clicked",
+                    "kind": 10
+                }
+            ],
+            "kind": 5
+        },
+        "activation": 0,
+        "applicationLog": [],
+        "authority": 0,
+        "authors": [
+            "grok-4.6"
+        ],
+        "conditionDescriptions": [
+            "related[instance-of] to category.chess.piece"
+        ],
+        "conditionMode": "all",
+        "conditionModel": {
+            "kind": 2,
+            "otherId": "category.chess.piece",
+            "relationType": "instance-of"
+        },
+        "conditionSubjects": [],
+        "drives": false,
+        "enabled": true,
+        "id": "law-chess-drag-pick",
+        "name": "select-dragged-piece",
+        "provenance": [
+            {
+                "attachment": {
+                    "childAnchor": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "enabled": false,
+                    "inheritRotation": true,
+                    "inheritScale": true,
+                    "inheritTranslation": true,
+                    "localOffset": [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "parentAnchor": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "directed": true,
+                "entityA": "law-chess-drag-pick",
+                "entityB": "grok-4.6",
+                "events": [
+                    {
+                        "deltaWeight": 1.0,
+                        "description": "authored-by",
+                        "timestamp": 1787390000
+                    }
+                ],
+                "type": "authored-by",
+                "weight": 1.0
+            },
+            {
+                "attachment": {
+                    "childAnchor": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "enabled": false,
+                    "inheritRotation": true,
+                    "inheritScale": true,
+                    "inheritTranslation": true,
+                    "localOffset": [
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        1.0
+                    ],
+                    "parentAnchor": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ]
+                },
+                "directed": true,
+                "entityA": "law-chess-drag-pick",
+                "entityB": "grok-4.6",
+                "events": [
+                    {
+                        "deltaWeight": 1.0,
+                        "description": "authored-by",
+                        "timestamp": 1790460881
+                    }
+                ],
+                "type": "authored-by",
+                "weight": 1.0
+            }
+        ],
+        "retrigger": 0,
+        "scope": 0,
+        "targets": []
+    },
+    "triggers": [
+        "object-drag-started"
+    ]
+}
