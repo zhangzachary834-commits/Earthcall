@@ -23,11 +23,7 @@ Pose 32 fallback 189,828→11,344 matches the Firmament's prediction exactly. S2
 **The deviation.** At pose 40 pixel (797,463) the original routed lane refused (published `w = -1`, so Current paints it) while 2b published transport `(0.0281, 0.0043, 0.0290, 0.0426)`. No accepted ray changed and no accepted ray became refused (0 and 0 on all poses). The §6fe census found exactly one reason-4 (degenerate coarse interval) fallback refusal at pose 40, consistent with a refusal that arises in a member the tile-level proof calls empty — which 2b, like S1/S2 already do for their unprocessed members, no longer evaluates. I did not isolate that ray's refusing member, so that mechanism is inferred, not proven. Consequence: 2b is **not** claimed bit-identical; it is exact except that a proof-skipped member's refusal can no longer force Current. That widens the §6fd budget contract ("work bounds work performed") to "refusals are decided by evaluated members" — a decision for Sixth-One Sun/Zach, not mine. Coverage: 8 poses of 64, 3.7 M rays each; poses 20,28,36,44 and the inside population are unchecked.
 
 ## Not done / handoff
-- **Timing not run.** `skiptiming` now has a fourth lane (2b) in a 4×4 Latin-square order, but valid timing needs a focused window and I will not launch one unprompted. Person command (focus the window it opens, then create the gate file it prints):
-  ```bash
-  cd scratch/probes && python3 ray_transport_6fe_engine.py skiptiming --work /private/tmp/6fe-work/h
-  ```
-  Compare 2b against Current, coalesced and 2a in the same process; the census suggests up to ≈40% of pose-32 fallback work units are removable, but that is a work count, not a measured gain.
+- **Timing: see "Timing result (2026-10-30)" below.** Compare against Current is still not measured by this mode.
 - Defaults unchanged; no ScreenChannel/Law exposure; wider-pose and inside-population parity still open.
 
 Evidence class: native Metal bitwise publication/snapshot comparison (not timing, not Person evidence).
@@ -36,3 +32,17 @@ Signed: Claude Code / Sonnet 5.5 / worktree `authorable-gpu-runs-268d29` / 2026-
 
 ## Decision recorded (2026-10-29)
 Zach, in chat: **accept the change.** Contract for 2b: refusals are decided by the members the classifier proves wave-active; a proof-skipped member's refusal no longer forces Current (as S1/S2 already behave). This accepts the contract only. The toggle stays default OFF until timing, wider-pose (20,28,36,44) and inside-population parity are recorded; the pose-40 refusal mechanism is still unisolated.
+
+## Timing result (2026-10-30)
+Zach, in chat: "Reset and rerun" (after a first attempt timed out at the focus gate and consumed budget; I reset `earthcall-6fe-native-budget.json` to 0 on his say-so). Run: real Release Engine, 2560×1440, `skiptiming`, 4×4 Latin-square blocks per series, 64 frames per sample, fresh work dir, 212.5 s native time. The window was confirmed frontmost by `lsappinfo` on two consecutive checks before I created the gate file (every frame logged `focused: true`; handoff 2.0 s). Summary: [JSON](GPU_RAY_TRANSPORT_6FE_STEP2B_TIMING_2026-10-30.json).
+
+| Lane (ms/frame, mean of 4) | queued | fenced |
+|---|---:|---:|
+| 0 original routed (uncoalesced) | 96.43 | 87.81 |
+| 1 coalesced | 90.54 | 86.50 |
+| 2 coalesced + skip-empty (2a) | 87.11 | 84.28 |
+| 3 coalesced + 2b | 85.21 | 81.25 |
+
+Paired per-block ratios (mean): 2b/coalesced **0.942 queued, 0.939 fenced**; 2b/2a **0.980 queued, 0.964 fenced**; 2a/coalesced 0.962 / 0.974. 2b beat 2a in 7 of 8 paired blocks; the exception is queued block 3 (1.043), so the queued 2b-vs-2a margin (≈2%) is within that run-to-run spread, while fenced (all four blocks 0.95–0.98) is cleaner. 2b/coalesced was below 1 in all 8 blocks (0.92–0.97).
+
+**What this establishes:** with the pose-40 refusal contract, 2b is ≈6% cheaper than coalesced routed and ≈2–4% cheaper than 2a on this route, in one process, one device, one run (single repetition of the whole series). **What it does not:** this mode has no Current lane, so it does not say whether routed now beats Current (§6fb found coalesced slower than Current); poses 20/28/36/44 and the inside population are unchecked for parity, so 2b stays default OFF.
