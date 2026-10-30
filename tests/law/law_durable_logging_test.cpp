@@ -102,6 +102,18 @@ int main() {
         DurableLogger failing("laws", blocked);
         check(!failing.log("any", "LAW", "nope"), "Unwritable path falsely succeeded");
 
+        // A full historical file must be preserved, never truncated or extended.
+        const auto capRoot = sandbox.root / "capacity";
+        fs::create_directories(capRoot / "laws");
+        const auto capPath = capRoot / "laws" / encoded("at-cap");
+        { std::ofstream out(capPath, std::ios::binary); check(out.good(), "Cannot seed cap"); }
+        fs::resize_file(capPath, DurableLogger::kMaxFileBytes);
+        DurableLogger capped("laws", capRoot);
+        check(!capped.log("at-cap", "LAW", "must be rejected"),
+              "Per-identity file budget did not refuse append");
+        check(fs::file_size(capPath) == DurableLogger::kMaxFileBytes,
+              "Existing log was truncated or exceeded its budget");
+
         // Exercise the public LawAuditLogger bridge with muted aggregate logging.
         auto& lawLogger = ECA::LawAuditLogger::instance();
         lawLogger.setLevel(ECA::LogLevel::Off);

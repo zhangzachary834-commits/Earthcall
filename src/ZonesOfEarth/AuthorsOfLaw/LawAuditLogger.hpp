@@ -2,6 +2,7 @@
 
 #include "Singularity/Core/Logger.hpp"
 #include "Singularity/Core/Logging/DurableLogger.hpp"
+#include <atomic>
 #include <iostream>
 
 namespace ECA {
@@ -45,9 +46,10 @@ public:
                    const std::string& message,
                    const nlohmann::json& details = nlohmann::json::object()) {
         const bool ok = _durableLogger.log(lawIdentity, type, message, details);
-        if (!ok) {
-            std::cerr << "[LawAuditLogger] per-Law log append failed for "
-                      << lawIdentity << '\n';
+        if (!ok && !_reportedDurableFailure.exchange(true)) {
+            std::cerr << "[LawAuditLogger] per-Law history append unconfirmed "
+                         "or budget exhausted; further warnings suppressed (first Law: "
+                      << lawIdentity << ")\n";
         }
         return ok;
     }
@@ -63,6 +65,7 @@ public:
 private:
     LawAuditLogger() : _durableLogger("laws") {}
     Logging::DurableLogger _durableLogger;
+    std::atomic<bool> _reportedDurableFailure{false};
 };
 
 } // namespace ECA

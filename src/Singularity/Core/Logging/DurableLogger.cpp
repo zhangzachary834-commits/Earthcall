@@ -52,19 +52,29 @@ bool DurableLogger::log(const std::string& identity, const std::string& type,
                         const std::string& message, const nlohmann::json& details) {
     std::lock_guard<std::mutex> lock(_mutex);
     try {
+        if (_linesThisRun >= kMaxLinesPerRun ||
+            _bytesThisRun >= kMaxBytesPerRun) return false;
         auto it = _streams.find(identity);
         if (it == _streams.end()) {
             const auto path = resolvePath(identity);
             std::error_code ec;
             std::filesystem::create_directories(path.parent_path(), ec);
             if (ec) return false;
+            // Read the existing size before opening: never truncate prior history.
+            auto existingBytes = std::filesystem::file_size(path, ec);
+            if (ec) {
+                if (ec != std::errc::no_such_file_or_directory) return false;
+                existingBytes = 0;
+            }
+            if (existingBytes >= kMaxFileBytes) return false;
             // Bound open file descriptors; evicted streams reopen in append mode.
             if (_streams.size() >= kMaxOpenStreams) _streams.erase(_streams.begin());
             auto inserted = _streams.try_emplace(identity);
             it = inserted.first;
-            it->second.open(path, std::ios::out | std::ios::app);
+            it->second.bytes = existingBytes;
+            it->second.file.open(path, std::ios::out | std::ios::app);
         }
-        if (!it->second.is_open() || !it->second.good()) return false;
+        if (!it->second.file.is_open() || !it->second.file.good()) return false;
         nlohmann::json entry = {
             {"timestamp", currentTimestamp()},
             {"identity", identity},
@@ -72,9 +82,20 @@ bool DurableLogger::log(const std::string& identity, const std::string& type,
             {"message", message}
         };
         if (!details.empty()) entry["details"] = details;
-        it->second << entry.dump() << '\n';
-        it->second.flush();
-        return it->second.good();
+        const std::string record = entry.dump() + '\n';
+        const auto bytes = static_cast<std::uintmax_t>(record.size());
+        // Finite per-identity and per-process budgets prevent a hot Law from
+        // exhausting disk. Exhaustion never deletes existing authored history.
+        if (bytes > kMaxFileBytes || it->second.bytes > kMaxFileBytes - bytes ||
+            bytes > kMaxBytesPerRun || _bytesThisRun > kMaxBytesPerRun - bytes)
+            return false;
+        it->second.file << record;
+        it->second.file.flush();
+        if (!it->second.file.good()) return false;
+        it->second.bytes += bytes;
+        _bytesThisRun += bytes;
+        ++_linesThisRun;
+        return true;
     } catch (const std::exception&) {
         return false; // logging must not abort Law execution
     }
