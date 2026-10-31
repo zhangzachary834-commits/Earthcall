@@ -1,0 +1,12 @@
+--- tests/law/law_persistence_test.cpp
++++ tests/law/law_persistence_test.cpp
+@@ -35,6 +35,9 @@
+         return 1;
+     }
+     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
++#ifdef GLFW_OSMESA_CONTEXT_API
++    glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_OSMESA_CONTEXT_API);
++#endif
+     GLFWwindow* window = glfwCreateWindow(64, 64, "law_persistence_test", nullptr, nullptr);
+     if (!window) {
+         std::fprintf(stderr, "law_persistence_test: no GL context\n");
