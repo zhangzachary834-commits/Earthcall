@@ -5,6 +5,7 @@
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include <cassert>
+#include <stdexcept>
 #include <iostream>
 
 using namespace Earthcall;
@@ -291,7 +292,7 @@ void testLongestPrefixSelection() {
     // 1. Resolve "shape.color": MUST select the longer key "shape.color" over "shape"
     auto slot1 = pathShapeColor.resolve(obj);
     assert(slot1.dynamicSlot != nullptr);
-    assert(slot1.dynamicKey == "shape.color");
+    assert(StringInterner::resolve(slot1.dynamicKey) == "shape.color");
     PropertyValue val1;
     assert(pathShapeColor.getValue(obj, val1) == PropertyPath::PathResult::Ok);
     assert(std::get<std::string>(val1) == "red");
@@ -318,7 +319,7 @@ void testLongestPrefixSelection() {
     PropertyPath pathPosCustom = PropertyPath::parse("position.x.custom");
     auto slot2 = pathPosCustom.resolve(obj);
     assert(slot2.dynamicSlot != nullptr);
-    assert(slot2.dynamicKey == "position.x.custom");
+    assert(StringInterner::resolve(slot2.dynamicKey) == "position.x.custom");
     PropertyValue val4;
     assert(pathPosCustom.getValue(obj, val4) == PropertyPath::PathResult::Ok);
     assert(std::get<int>(val4) == 999);
@@ -385,6 +386,50 @@ void testOrdinaryAccessOpenUnlessExplicitlyClosed() {
     assert(kernelGate.setValue(policy, PropertyValue(false)) == PropertyPath::PathResult::ReadOnly);
 }
 
+
+void testInternedDynamicKeyWitness() {
+    // Fail closed in Release/NDEBUG too: a benchmark printout is not a witness.
+    StringInterner::clear();
+    TestRoot root;
+    if (!root.setDynamicProperty("shape", PropertyValue(10)) ||
+        !root.setDynamicProperty("shape.color", PropertyValue(std::string("red"))))
+        throw std::runtime_error("dynamic-key witness setup failed");
+
+    const PropertyPath path = PropertyPath::parse("shape.color");
+    const StringId longest = StringInterner::intern("shape.color");
+    const std::size_t before = StringInterner::internedCount();
+    for (int i = 0; i < 64; ++i) {
+        const auto slot = path.resolve(root);
+        if (!slot.dynamicSlot || slot.owner != &root || slot.dynamicKey != longest)
+            throw std::runtime_error("longest dynamic key did not resolve as its interned ID");
+    }
+    if (StringInterner::internedCount() != before)
+        throw std::runtime_error("dynamic-key resolve unexpectedly interned new strings");
+
+    if (path.setValue(root, PropertyValue(std::string("blue"))) != PropertyPath::PathResult::Ok)
+        throw std::runtime_error("direct dynamic-key write failed");
+    PropertyValue updated;
+    if (!root.getDynamicProperty("shape.color", updated) ||
+        !std::holds_alternative<std::string>(updated) ||
+        std::get<std::string>(updated) != "blue")
+        throw std::runtime_error("direct dynamic-key write targeted the wrong property");
+
+    // A dictionary element is not the root dynamic property. Its mutation must
+    // not be mistaken for a direct StringId-keyed write.
+    root.removeDynamicProperty("shape.color");
+    auto dict = std::make_shared<PropertyDict>();
+    dict->elements["color"] = PropertyValue(std::string("old"));
+    if (!root.setDynamicProperty("shape", PropertyValue(dict)))
+        throw std::runtime_error("nested dynamic-key witness setup failed");
+    const auto nested = path.resolve(root);
+    if (!nested.dynamicSlot || nested.dynamicKey != StringInterner::intern("shape"))
+        throw std::runtime_error("nested dictionary path lost its matched outer key");
+    if (path.setValue(root, PropertyValue(std::string("green"))) != PropertyPath::PathResult::Ok ||
+        !std::holds_alternative<std::string>(dict->elements.at("color")) ||
+        std::get<std::string>(dict->elements.at("color")) != "green")
+        throw std::runtime_error("nested dictionary write failed or targeted outer dynamic key");
+}
+
 int main() {
     std::cout << "\n=== PropertyPath Pre-Calculation Test ===\n\n";
 
@@ -397,6 +442,7 @@ int main() {
     testEmptyPath();
     testDynamicPropertyPath();
     testLongestPrefixSelection();
+    testInternedDynamicKeyWitness();
     testAmbiguousQualifiedRootRefuses();
     testOrdinaryAccessOpenUnlessExplicitlyClosed();
 
