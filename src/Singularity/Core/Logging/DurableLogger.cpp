@@ -74,7 +74,12 @@ bool DurableLogger::log(const std::string& identity, const std::string& type,
             it->second.bytes = existingBytes;
             it->second.file.open(path, std::ios::out | std::ios::app);
         }
-        if (!it->second.file.is_open() || !it->second.file.good()) return false;
+        if (!it->second.file.is_open() || !it->second.file.good()) {
+            // A failed open must not poison this identity permanently.
+            // The next call should retry after permissions or disk recover.
+            _streams.erase(it);
+            return false;
+        }
         nlohmann::json entry = {
             {"timestamp", currentTimestamp()},
             {"identity", identity},
@@ -91,7 +96,12 @@ bool DurableLogger::log(const std::string& identity, const std::string& type,
             return false;
         it->second.file << record;
         it->second.file.flush();
-        if (!it->second.file.good()) return false;
+        if (!it->second.file.good()) {
+            // Reopen on the next attempt and re-read the actual file size;
+            // a failed write may have left a partial record on disk.
+            _streams.erase(it);
+            return false;
+        }
         it->second.bytes += bytes;
         _bytesThisRun += bytes;
         ++_linesThisRun;

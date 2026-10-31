@@ -102,6 +102,27 @@ int main() {
         { std::ofstream out(blocked); out << "sentinel"; }
         DurableLogger failing("laws", blocked);
         check(!failing.log("any", "LAW", "nope"), "Unwritable path falsely succeeded");
+        // An open failure is transient: the same logger must retry this
+        // identity after filesystem permissions are restored.
+        const auto recoveryRoot = sandbox.root / "recovery";
+        const auto recoveryDir = recoveryRoot / "laws";
+        fs::create_directories(recoveryDir);
+        const auto originalPermissions = fs::status(recoveryDir).permissions();
+        fs::permissions(recoveryDir, fs::perms::owner_read | fs::perms::owner_exec,
+                        fs::perm_options::replace);
+        DurableLogger recovering("laws", recoveryRoot);
+        const bool denied = !recovering.log("retry", "LAW", "denied");
+        fs::permissions(recoveryDir, originalPermissions, fs::perm_options::replace);
+        if (denied) {
+            check(recovering.log("retry", "LAW", "recovered"),
+                  "Failed stream was retained after permissions recovered");
+            const auto recovered = readEntries(recoveryDir / encoded("retry"));
+            check(recovered.size() == 1 && recovered[0].at("message") == "recovered",
+                  "Retry did not produce exactly one durable record");
+        } else {
+            // Privileged environments may ignore directory write permissions.
+            std::cout << "Open-failure retry witness skipped: permissions not enforced\n";
+        }
 
         // A full historical file must be preserved, never truncated or extended.
         const auto capRoot = sandbox.root / "capacity";
