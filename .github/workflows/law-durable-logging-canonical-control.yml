@@ -65,6 +65,9 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
+          # GitHub's bash runner starts with -e; disable it so an expected
+          # canonical CTest failure cannot skip the independent chess control.
+          set +e
           ctest --test-dir build --output-on-failure --no-tests=error \
             -R '^(second_nature_law_forge_zone_test|first_mover_test|person_ecform_propagation_test|authorable_light_contract_test)$' \
             2>&1 | tee canonical-focused.log
