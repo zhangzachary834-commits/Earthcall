@@ -30,6 +30,7 @@
 #include "Singularity/Terminal/TerminalChannel.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
+#include "ConstructedBeing/Singular/Property/Property.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
@@ -37,6 +38,7 @@
 
 #include <GLFW/glfw3.h>
 #include <cstdio>
+#include <set>
 #include <string>
 
 namespace {
@@ -123,7 +125,7 @@ int main() {
     Singularity::Language::Lexeme lexemeProbe("probe");
 
     int skipped = 0;
-    int terminalPickerCount = 0;
+    std::set<std::string> terminalPickerPaths;
     bool sawCompletionItems = false;
     bool sawCompletionVisible = false;
     for (const Rendering::PathOption& option : Rendering::knownPathOptions()) {
@@ -137,7 +139,8 @@ int main() {
         else if (groupIs(option.group, "Channel — Screen")) check(option, screen);
         else if (groupIs(option.group, "Channel — Audio"))  check(option, audio);
         else if (groupIs(option.group, "Channel — Terminal")) {
-            ++terminalPickerCount;
+            if (!terminalPickerPaths.insert(option.path).second)
+                fail(option.path, option.group, "duplicate Terminal path in the picker");
             if (option.path == "completion.items" && std::string(option.type) == "list")
                 sawCompletionItems = true;
             if (option.path == "completion.visible" && std::string(option.type) == "toggle")
@@ -182,10 +185,17 @@ int main() {
     // A per-entry check alone passes vacuously if the Terminal group vanishes
     // from the picker. Hold both the registry coverage and representative
     // container/derived type contracts, without hand-listing its full schema.
-    const int registeredTerminalPaths = static_cast<int>(terminal.listProperties().size());
-    if (terminalPickerCount == 0 || terminalPickerCount != registeredTerminalPaths) {
+    const auto registeredTerminalProperties = terminal.listProperties();
+    if (terminalPickerPaths.empty() ||
+        terminalPickerPaths.size() != registeredTerminalProperties.size()) {
         fail("Terminal registry", "Channel — Terminal",
-             "picker must advertise every registered TerminalChannel property");
+             "picker property count differs from TerminalChannel registry");
+    }
+    for (Property* property : registeredTerminalProperties) {
+        if (!terminalPickerPaths.count(property->name())) {
+            fail(property->name(), "Channel — Terminal",
+                 "registered TerminalChannel property is absent from the picker");
+        }
     }
     if (!sawCompletionItems || !sawCompletionVisible) {
         fail("completion.items / completion.visible", "Channel — Terminal",
