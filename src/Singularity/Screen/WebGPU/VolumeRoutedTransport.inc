@@ -59,6 +59,7 @@ fn ecAdvanceOverlap(stateIn:vec4<f32>,ro:vec3<f32>,rd:vec3<f32>,span:ECSpan)->ve
  let id=gid.x;if(id>=ecWindow.control.x||id/ecWindow.window.x+ecWindow.window.z>=ecWindow.window.y){return;}
  let ray=ecRays[id];if((ray.counts.w&0xc0000000u)!=0u){return;}
  if(ray.counts.y>64u||ray.counts.w>16u){return;}
+ if((ray.counts.y|ray.counts.w)==0u){ecPublication[ecPixel(id)]=vec4<f32>(0.0);return;}
  let ro=ray.ro_clipA.xyz;let rd=ray.rd_clipB.xyz;var state=vec4<f32>(0,0,0,1);var single=0u;var overlap=0u;
  let gx0=.5*(1.0-.5773502691896257);let gx1=.5*(1.0+.5773502691896257);
  loop{
@@ -84,6 +85,10 @@ void KernelRoutedTransport::releaseBuffers(){
  for(auto* p:{&publication,&rays,&singles,&overlaps,&offsets,&indices,&counts,&args,&stripUniform,&specsUniform})if(*p){wgpuBufferRelease(*p);*p=nullptr;}
  for(auto& p:lists)if(p){wgpuBufferRelease(p);p=nullptr;}
  for(auto& cohort:prodGroups)for(auto& bg:cohort)if(bg){wgpuBindGroupRelease(bg);bg=nullptr;}
+ if(resetGroup){wgpuBindGroupRelease(resetGroup);resetGroup=nullptr;}
+ if(argsGroup){wgpuBindGroupRelease(argsGroup);argsGroup=nullptr;}
+ if(cachedClassifyGroup){wgpuBindGroupRelease(cachedClassifyGroup);cachedClassifyGroup=nullptr;}
+ cachedSpecsBuffer=nullptr;cachedClassifyPipe=nullptr;
  cachedWorkLimit=0xFFFFFFFFu;cachedSkipEmpty=false;
  for(auto& [key,p]:programs){for(auto& bg:p.localGroups)if(bg){wgpuBindGroupRelease(bg);bg=nullptr;}p.localGroupsBuilt=false;}
  width=height=capacity=tiles=stripRows=maxStrips=0;
@@ -111,6 +116,8 @@ bool KernelRoutedTransport::ensure(WGPUDevice d,WGPUQueue q,uint32_t w,uint32_t 
   for(int i=0;i<6;++i){common[i]=pipeline(d,codes[i],entries[i]);if(!common[i])return false;}
   classifySkip=pipeline(d,routed_wgsl::kClassifyWgsl,"classifyTilesMain");if(!classifySkip)return false;
  }
+ if(!resetGroup)resetGroup=group(device,common[0],{entry(0,counts,16)});
+ if(!argsGroup)argsGroup=group(device,common[2],{entry(0,counts,16),entry(1,args,36)});
  for(uint32_t stripIdx=0,start=0;start<height&&stripIdx<maxStrips;start+=stripRows,++stripIdx){
   for(unsigned i=0;i<3;++i){
    auto entries=std::vector<WGPUBindGroupEntry>{entry(0,stripUniform,48,uint64_t(stripIdx)*kUniformStride),entry(1,specsUniform,sizeof(KernelRoutedSpec)*4,0),entry(2,rays,uint64_t(capacity)*48),entry(3,singles,uint64_t(capacity)*64*16)};
@@ -203,9 +210,15 @@ bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const K
  WGPUComputePassEncoder shared=coalescePasses?begin():nullptr;
  auto open=[&](){return shared?shared:begin();};
  auto close=[&](WGPUComputePassEncoder pass){if(pass==shared)return;wgpuComputePassEncoderEnd(pass);wgpuComputePassEncoderRelease(pass);};
- auto resetGroup=group(device,common[0],{entry(0,counts,16)});
- auto classifyPipe=skipEmptyTiles&&classifySkip?classifySkip:common[1];auto classifyGroup=group(device,classifyPipe,{entry(0,specs.buffer,specs.size,specs.offset),entry(1,rays,uint64_t(capacity)*48),entry(2,offsets,uint64_t(tiles+1)*4),entry(3,indices,uint64_t(capacity)*4),entry(4,lists[0],uint64_t(tiles)*4),entry(5,lists[1],uint64_t(tiles)*4),entry(6,lists[2],uint64_t(tiles)*4),entry(7,counts,16)});
- auto argsGroup=group(device,common[2],{entry(0,counts,16),entry(1,args,36)});
+ auto resetGroup=this->resetGroup?this->resetGroup:group(device,common[0],{entry(0,counts,16)});
+ auto classifyPipe=skipEmptyTiles&&classifySkip?classifySkip:common[1];
+ if(!cachedClassifyGroup||cachedSpecsBuffer!=specs.buffer||cachedClassifyPipe!=classifyPipe){
+  if(cachedClassifyGroup)wgpuBindGroupRelease(cachedClassifyGroup);
+  cachedClassifyGroup=group(device,classifyPipe,{entry(0,specs.buffer,specs.size,specs.offset),entry(1,rays,uint64_t(capacity)*48),entry(2,offsets,uint64_t(tiles+1)*4),entry(3,indices,uint64_t(capacity)*4),entry(4,lists[0],uint64_t(tiles)*4),entry(5,lists[1],uint64_t(tiles)*4),entry(6,lists[2],uint64_t(tiles)*4),entry(7,counts,16)});
+  cachedSpecsBuffer=specs.buffer;cachedClassifyPipe=classifyPipe;
+ }
+ auto classifyGroup=cachedClassifyGroup;
+ auto argsGroup=this->argsGroup?this->argsGroup:group(device,common[2],{entry(0,counts,16),entry(1,args,36)});
  for(uint32_t stripIdx=0,start=0;start<height;start+=stripRows,++stripIdx){
   auto dispatch=[&](WGPUComputePipeline cp,WGPUBindGroup bg,uint32_t n){auto pass=open();wgpuComputePassEncoderSetPipeline(pass,cp);wgpuComputePassEncoderSetBindGroup(pass,0,bg,0,nullptr);note(cp,n,1);wgpuComputePassEncoderDispatchWorkgroups(pass,n,1,1);close(pass);};
   auto withContext=[&](WGPUComputePipeline cp){auto pass=open();wgpuComputePassEncoderSetPipeline(pass,cp);wgpuComputePassEncoderSetBindGroup(pass,0,globalGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,1,instanceGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,2,p.localGroups[stripIdx],0,nullptr);note(cp,(capacity+63)/64,2);wgpuComputePassEncoderDispatchWorkgroups(pass,(capacity+63)/64,1,1);close(pass);};
@@ -218,5 +231,5 @@ bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const K
   withContext(p.consumer);
  }
  if(shared){wgpuComputePassEncoderEnd(shared);wgpuComputePassEncoderRelease(shared);}
- for(auto g:{globalGroup,instanceGroup,resetGroup,classifyGroup,argsGroup})wgpuBindGroupRelease(g);return true;
+ for(auto g:{globalGroup,instanceGroup})wgpuBindGroupRelease(g);return true;
 }

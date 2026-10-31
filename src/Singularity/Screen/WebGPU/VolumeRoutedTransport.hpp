@@ -24,6 +24,9 @@ struct KernelRoutedTransport {
     uint32_t width=0,height=0,stripRows=0,capacity=0,tiles=0,maxStrips=0;
     static constexpr uint32_t kUniformStride=256;
     std::array<std::array<WGPUBindGroup,64>,3> prodGroups{};
+    WGPUBindGroup resetGroup=nullptr,argsGroup=nullptr,cachedClassifyGroup=nullptr;
+    WGPUBuffer cachedSpecsBuffer=nullptr;
+    WGPUComputePipeline cachedClassifyPipe=nullptr;
     uint32_t cachedWorkLimit=0xFFFFFFFFu;bool cachedSkipEmpty=false;
     bool coalescePasses=true; // §6fb: one compute pass for the identical ordered dispatch stream (default ON after native parity); false = original 8 passes/strip, kept for A/B.
     // Kernel diagnostics (beneath Screen, like the GPU handles above; not being state): last encode()'s compute-pass count, dispatch count and FNV-1a order hash of (pipeline,workgroups/indirect offset,kind).

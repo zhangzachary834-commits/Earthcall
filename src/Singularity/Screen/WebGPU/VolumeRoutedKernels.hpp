@@ -63,6 +63,7 @@ var<workgroup> wgTileAnyHit: array<u32, 4>;
 var<workgroup> wgEnter: array<f32, 64>;
 var<workgroup> wgExit: array<f32, 64>;
 var<workgroup> wgState: array<u32, 64>;
+var<workgroup> wgAnyValidRay: u32;
 
 fn evalWave(cur: CurtainSpec, x: f32) -> f32 {
     return cur.amps.x * sin(cur.freqs.x * x + cur.phases.x) +
@@ -91,6 +92,7 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
     var rd = vec3f(0.0);
     var clipA = 0.0;
     var clipB = 0.0;
+    var rayActive = false;
     if (validRay) {
         let rIdx = tileRayIndices[rayStart + lane];
         let ray = rays[rIdx];
@@ -98,7 +100,13 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
         clipA = ray.ro_clipA.w;
         rd = ray.rd_clipB.xyz;
         clipB = ray.rd_clipB.w;
+        rayActive = ((ray.counts.w & 0x40000000u) == 0u) && (clipB > clipA);
     }
+
+    if (lid == 0u) { wgAnyValidRay = 0u; }
+    workgroupBarrier();
+    if (rayActive) { wgAnyValidRay = 1u; }
+    workgroupBarrier();
 
     var activeMemberMask = 0u;
     var tileCanOverlap = false;
@@ -106,14 +114,15 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
     var exitArr: array<f32, 4>;
     var memberHit: array<bool, 4>;
 
+    if (wgAnyValidRay != 0u) {
     for (var m = 0u; m < 4u; m++) {
         let cur = curtains[m];
         let oRel = ro - cur.origin.xyz;
         var a = clipA;
         var b = clipB;
-        var hit = validRay;
+        var hit = rayActive;
 
-        if (validRay) {
+        if (rayActive) {
             for (var axis = 0; axis < 3; axis++) {
                 var half = cur.half[axis];
                 if (axis == 0) { half = min(half, cur.limits.x); }
@@ -255,6 +264,7 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
         }
         }
     }
+    }
 
     if (!validTile || lane != 0u) { return; }
 
@@ -324,8 +334,8 @@ fn evalWave(m:CurtainSpec,x:f32)->f32 {
 }
 fn evalPhi(m:CurtainSpec,o:vec3f,d:vec3f,s:f32)->f32{return o.z+s*d.z+evalWave(m,o.x+s*d.x);}
 
-fn putBand(lo:f32,hi:f32,bounds:ptr<function,array<f32,96>>,nb:ptr<function,u32>,
- bands:ptr<function,array<vec2f,32>>,nr:ptr<function,u32>,reason:ptr<function,u32>){
+fn putBand(lo:f32,hi:f32,bounds:ptr<function,array<f32,48>>,nb:ptr<function,u32>,
+ bands:ptr<function,array<vec2f,24>>,nr:ptr<function,u32>,reason:ptr<function,u32>){
  if(*nr>0u){
   let last=(*bands)[*nr-1u];
   if(lo<=last.y && hi>=last.x){
@@ -334,7 +344,7 @@ fn putBand(lo:f32,hi:f32,bounds:ptr<function,array<f32,96>>,nb:ptr<function,u32>
    (*bounds)[*nb-2u]=merged.x;(*bounds)[*nb-1u]=merged.y;return;
   }
  }
- if(*nb+2u>92u || *nr>=32u){*reason|=2u;return;}
+ if(*nb+2u>44u || *nr>=24u){*reason|=2u;return;}
  (*bounds)[*nb]=lo;(*bounds)[*nb+1u]=hi;*nb+=2u;
  (*bands)[*nr]=vec2f(lo,hi);*nr+=1u;
 }
@@ -346,8 +356,8 @@ fn mayAbsorb(previous: vec2f, current: vec2f, previousShortBand: bool,
  return (previousShortBand && !currentUncertain) || (previousPositive && currentShortBand);
 }
 
-fn putBandTagged(lo: f32, hi: f32, bounds: ptr<function, array<f32, 96>>,
- nb: ptr<function, u32>, bands: ptr<function, array<vec2f, 32>>,
+fn putBandTagged(lo: f32, hi: f32, bounds: ptr<function, array<f32, 48>>,
+ nb: ptr<function, u32>, bands: ptr<function, array<vec2f, 24>>,
  nr: ptr<function, u32>, reason: ptr<function, u32>,
  zeroBands: ptr<function, u32>, isZeroLevel: bool) {
  putBand(lo, hi, bounds, nb, bands, nr, reason);
@@ -364,8 +374,8 @@ fn setDepth(bits: ptr<function, vec3u>, idx: u32, d: u32) {
 
 fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
  va: f32, vb: f32, error: f32, minSlope: f32,
- bounds: ptr<function, array<f32, 96>>, nb: ptr<function, u32>,
- bands: ptr<function, array<vec2f, 32>>, nr: ptr<function, u32>,
+ bounds: ptr<function, array<f32, 48>>, nb: ptr<function, u32>,
+ bands: ptr<function, array<vec2f, 24>>, nr: ptr<function, u32>,
  reason: ptr<function, u32>, work: ptr<function, u32>,
  zeroBands: ptr<function, u32>, isZeroLevel: bool) {
  if (abs(va) <= error) { let w = 2.0 * error / minSlope; putBandTagged(a, min(b, a + w), bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); }
@@ -384,8 +394,20 @@ fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
  }
 }
 
+fn emitPieceSubpanels(p: vec2f, member: u32, id: u32, singles: ptr<function, u32>, reason: ptr<function, u32>) {
+ let a = p.x; let b = p.y;
+ let n = max(1u, u32(ceil((b - a) / 4.0)));
+ if (*singles + n > cfg.maxSubPerRay) { *reason |= 16u; return; }
+ for (var k = 0u; k < n; k++) {
+  let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
+  let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
+  subpanels[*singles * cfg.rayCount + id] = Subpanel(vec2f(l, r), vec2u(member, 0u));
+  *singles += 1u;
+ }
+}
+
 fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
- bounds: ptr<function, array<f32, 96>>, nb: ptr<function, u32>, bands: ptr<function, array<vec2f, 32>>,
+ bounds: ptr<function, array<f32, 48>>, nb: ptr<function, u32>, bands: ptr<function, array<vec2f, 24>>,
  nr: ptr<function, u32>, reason: ptr<function, u32>, work: ptr<function, u32>,
  phi_knots: ptr<function, array<f32, 9>>, zeroBands: ptr<function, u32>, isZeroLevel: bool,
  levelActiveMask: u32) {
@@ -505,9 +527,8 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
  let input = rays[id];
     if((input.counts.w & 0x40000000u)!=0u){return;}
  let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
- var reason = 0u; var work = 0u; var count = 0u;
- var pieces: array<vec2f, 48>;
- var knots: array<f32, 96>;
+ var reason = 0u; var work = 0u; var singles = 0u;
+ var knots: array<f32, 48>;
  if (cfg.budget == 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | 1u); return; }
  for (var _i = 0u; _i < 1u; _i++) {
   let m = curtains[activeMember]; let o = ro - m.origin.xyz;
@@ -538,57 +559,53 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
    continue;
   }
   var nb = 1u; knots[0] = a;
-  var bands: array<vec2f, 32>; var nr = 0u; var zeroBands = 0u;
+  var bands: array<vec2f, 24>; var nr = 0u; var zeroBands = 0u;
   roots(m, o, d, a, b, -m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask0);
   if (reason != 0u) { break; }
   roots(m, o, d, a, b, 0.0, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, true, mask1);
   if (reason != 0u) { break; }
   roots(m, o, d, a, b, m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask2);
   if (reason != 0u) { break; }
-  if (d.x != 0.0) { let x = -o.x / d.x; if (x > a && x < b) { knots[nb] = x; nb++; } }
+  var kx = 0.0; var ky0 = 0.0; var ky1 = 0.0;
+  if (d.x != 0.0) { kx = -o.x / d.x; if (kx > a && kx < b) { knots[nb] = kx; nb++; } }
   if (d.y != 0.0) {
-   let y = -o.y / d.y; if (y > a && y < b) { knots[nb] = y; nb++; }
-   let k = (m.limits.z - o.y) / d.y; if (k > a && k < b) { knots[nb] = k; nb++; }
+   ky0 = -o.y / d.y; if (ky0 > a && ky0 < b) { knots[nb] = ky0; nb++; }
+   ky1 = (m.limits.z - o.y) / d.y; if (ky1 > a && ky1 < b) { knots[nb] = ky1; nb++; }
   }
   knots[nb] = b; nb++;
   for (var i = 1u; i < nb; i++) {
    let v = knots[i]; var j = i; loop { if (j == 0u || knots[j - 1u] <= v) { break; } knots[j] = knots[j - 1u]; j--; }
    knots[j] = v;
   }
-  let memberStart = count; var previousShortBand = false; var previousPositive = false;
+  var curPiece = vec2f(0.0); var hasPiece = false;
+  var previousShortBand = false; var previousPositive = false;
   for (var i = 1u; i < nb; i++) {
    let l = knots[i - 1u]; let r = knots[i]; if (!(r > l)) { continue; }
    let mid = l + 0.5 * (r - l); var uncertain = false; var protectedBoundary = false;
-   if (d.x != 0.0) { protectedBoundary = l == -o.x / d.x; }
-   if (d.y != 0.0) { protectedBoundary = protectedBoundary || l == -o.y / d.y || l == (m.limits.z - o.y) / d.y; }
+   if (d.x != 0.0) { protectedBoundary = (l == kx); }
+   if (d.y != 0.0) { protectedBoundary = protectedBoundary || (l == ky0) || (l == ky1); }
    for (var k = 0u; k < nr; k++) {
     uncertain = uncertain || (l < bands[k].y && r > bands[k].x);
     if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) { protectedBoundary = true; }
    }
    if (uncertain || abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
-    if (count > memberStart && mayAbsorb(pieces[count - 1u], vec2f(l, r),
+    if (hasPiece && mayAbsorb(curPiece, vec2f(l, r),
          previousShortBand, previousPositive, uncertain, protectedBoundary)) {
-     pieces[count - 1u].y = r; previousShortBand = false; previousPositive = true;
+     curPiece.y = r; previousShortBand = false; previousPositive = true;
     } else {
-     if (count >= 48u) { reason |= 8u; break; }
-     pieces[count] = vec2f(l, r);
-     count++; previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
+     if (hasPiece) {
+      emitPieceSubpanels(curPiece, activeMember, id, &singles, &reason);
+      if (reason != 0u) { break; }
+     }
+     curPiece = vec2f(l, r); hasPiece = true;
+     previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
     }
    }
   }
-  if (reason != 0u) { break; }
- }
- if (reason != 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | reason); return; }
- var singles = 0u;
- for (var p = 0u; p < count; p++) {
-  let a = pieces[p].x; let b = pieces[p].y;
-  let n = max(1u, u32(ceil((b - a) / 4.0)));
-  if (singles + n > cfg.maxSubPerRay) { reason |= 16u; break; }
-  for (var k = 0u; k < n; k++) {
-   let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
-   let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
-   subpanels[singles * cfg.rayCount + id] = Subpanel(vec2f(l, r), vec2u(activeMember, 0u)); singles++;
+  if (hasPiece && reason == 0u) {
+   emitPieceSubpanels(curPiece, activeMember, id, &singles, &reason);
   }
+  if (reason != 0u) { break; }
  }
  if (reason != 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | reason); }
  else { rays[id].counts = vec4u(0, singles, 0, 0u); }
@@ -611,8 +628,8 @@ fn evalWave(m:CurtainSpec,x:f32)->f32 {
 }
 fn evalPhi(m:CurtainSpec,o:vec3f,d:vec3f,s:f32)->f32{return o.z+s*d.z+evalWave(m,o.x+s*d.x);}
 
-fn putBand(lo:f32,hi:f32,bounds:ptr<function,array<f32,96>>,nb:ptr<function,u32>,
- bands:ptr<function,array<vec2f,32>>,nr:ptr<function,u32>,reason:ptr<function,u32>){
+fn putBand(lo:f32,hi:f32,bounds:ptr<function,array<f32,48>>,nb:ptr<function,u32>,
+ bands:ptr<function,array<vec2f,24>>,nr:ptr<function,u32>,reason:ptr<function,u32>){
  if(*nr>0u){
   let last=(*bands)[*nr-1u];
   if(lo<=last.y && hi>=last.x){
@@ -621,7 +638,7 @@ fn putBand(lo:f32,hi:f32,bounds:ptr<function,array<f32,96>>,nb:ptr<function,u32>
    (*bounds)[*nb-2u]=merged.x;(*bounds)[*nb-1u]=merged.y;return;
   }
  }
- if(*nb+2u>92u || *nr>=32u){*reason|=2u;return;}
+ if(*nb+2u>44u || *nr>=24u){*reason|=2u;return;}
  (*bounds)[*nb]=lo;(*bounds)[*nb+1u]=hi;*nb+=2u;
  (*bands)[*nr]=vec2f(lo,hi);*nr+=1u;
 }
@@ -633,8 +650,8 @@ fn mayAbsorb(previous: vec2f, current: vec2f, previousShortBand: bool,
  return (previousShortBand && !currentUncertain) || (previousPositive && currentShortBand);
 }
 
-fn putBandTagged(lo: f32, hi: f32, bounds: ptr<function, array<f32, 96>>,
- nb: ptr<function, u32>, bands: ptr<function, array<vec2f, 32>>,
+fn putBandTagged(lo: f32, hi: f32, bounds: ptr<function, array<f32, 48>>,
+ nb: ptr<function, u32>, bands: ptr<function, array<vec2f, 24>>,
  nr: ptr<function, u32>, reason: ptr<function, u32>,
  zeroBands: ptr<function, u32>, isZeroLevel: bool) {
  putBand(lo, hi, bounds, nb, bands, nr, reason);
@@ -651,8 +668,8 @@ fn setDepth(bits: ptr<function, vec3u>, idx: u32, d: u32) {
 
 fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
  va: f32, vb: f32, error: f32, minSlope: f32,
- bounds: ptr<function, array<f32, 96>>, nb: ptr<function, u32>,
- bands: ptr<function, array<vec2f, 32>>, nr: ptr<function, u32>,
+ bounds: ptr<function, array<f32, 48>>, nb: ptr<function, u32>,
+ bands: ptr<function, array<vec2f, 24>>, nr: ptr<function, u32>,
  reason: ptr<function, u32>, work: ptr<function, u32>,
  zeroBands: ptr<function, u32>, isZeroLevel: bool) {
  if (abs(va) <= error) { let w = 2.0 * error / minSlope; putBandTagged(a, min(b, a + w), bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); }
@@ -671,8 +688,20 @@ fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
  }
 }
 
+fn emitPieceSubpanels(p: vec2f, member: u32, id: u32, singles: ptr<function, u32>, reason: ptr<function, u32>) {
+ let a = p.x; let b = p.y;
+ let n = max(1u, u32(ceil((b - a) / 4.0)));
+ if (*singles + n > cfg.maxSubPerRay) { *reason |= 16u; return; }
+ for (var k = 0u; k < n; k++) {
+  let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
+  let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
+  subpanels[*singles * cfg.rayCount + id] = Subpanel(vec2f(l, r), vec2u(member, 0u));
+  *singles += 1u;
+ }
+}
+
 fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
- bounds: ptr<function, array<f32, 96>>, nb: ptr<function, u32>, bands: ptr<function, array<vec2f, 32>>,
+ bounds: ptr<function, array<f32, 48>>, nb: ptr<function, u32>, bands: ptr<function, array<vec2f, 24>>,
  nr: ptr<function, u32>, reason: ptr<function, u32>, work: ptr<function, u32>,
  phi_knots: ptr<function, array<f32, 9>>, zeroBands: ptr<function, u32>, isZeroLevel: bool,
  levelActiveMask: u32) {
@@ -793,15 +822,15 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
 
     let input = rays[id];
     if((input.counts.w & 0x40000000u)!=0u){return;}
- let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
-    var reason = 0u; var work = 0u; var count = 0u;
-    var pieces: array<vec2f, 48>;
-    var knots: array<f32, 96>;
+    let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
+    var reason = 0u; var work = 0u; var singles = 0u;
+    var knots: array<f32, 48>;
     if (cfg.budget == 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | 1u); return; }
 
-    var count0 = 0u;
+    let firstM = select(rawM0, rawM1, m1First);
+    let secondM = select(rawM1, rawM0, m1First);
     for (var memberIdx = 0u; memberIdx < 2u; memberIdx++) {
-        let member = select(rawM0, rawM1, memberIdx == 1u);
+        let member = select(firstM, secondM, memberIdx == 1u);
         let m = curtains[member]; let o = ro - m.origin.xyz;
         var a = input.ro_clipA.w; var b = input.rd_clipB.w; var hit = true;
         for (var axis = 0u; axis < 3u; axis++) {
@@ -814,7 +843,6 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
             }
         }
         if (!hit || !(b > a)) {
-            if (memberIdx == 0u) { count0 = count; }
             continue;
         }
         var phi_knots: array<f32, 9>;
@@ -830,69 +858,54 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
         if (allPositiveH && (mask0 | mask1 | mask2) == 0u && abs(phi_knots[0]) > m.limits.w + m.curv.y) {
             if (work + 24u > cfg.budget) { reason |= 1u; break; }
             work += 24u;
-            if (memberIdx == 0u) { count0 = count; }
             continue;
         }
         var nb = 1u; knots[0] = a;
-        var bands: array<vec2f, 32>; var nr = 0u; var zeroBands = 0u;
+        var bands: array<vec2f, 24>; var nr = 0u; var zeroBands = 0u;
         roots(m, o, d, a, b, -m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask0);
         if (reason != 0u) { break; }
         roots(m, o, d, a, b, 0.0, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, true, mask1);
         if (reason != 0u) { break; }
         roots(m, o, d, a, b, m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask2);
         if (reason != 0u) { break; }
-        if (d.x != 0.0) { let x = -o.x / d.x; if (x > a && x < b) { knots[nb] = x; nb++; } }
+        var kx = 0.0; var ky0 = 0.0; var ky1 = 0.0;
+        if (d.x != 0.0) { kx = -o.x / d.x; if (kx > a && kx < b) { knots[nb] = kx; nb++; } }
         if (d.y != 0.0) {
-            let y = -o.y / d.y; if (y > a && y < b) { knots[nb] = y; nb++; }
-            let k = (m.limits.z - o.y) / d.y; if (k > a && k < b) { knots[nb] = k; nb++; }
+            ky0 = -o.y / d.y; if (ky0 > a && ky0 < b) { knots[nb] = ky0; nb++; }
+            ky1 = (m.limits.z - o.y) / d.y; if (ky1 > a && ky1 < b) { knots[nb] = ky1; nb++; }
         }
         knots[nb] = b; nb++;
         for (var i = 1u; i < nb; i++) {
             let v = knots[i]; var j = i; loop { if (j == 0u || knots[j - 1u] <= v) { break; } knots[j] = knots[j - 1u]; j--; }
             knots[j] = v;
         }
-        let memberStart = count;
+        var curPiece = vec2f(0.0); var hasPiece = false;
         var previousShortBand = false; var previousPositive = false;
         for (var i = 1u; i < nb; i++) {
             let l = knots[i - 1u]; let r = knots[i]; if (!(r > l)) { continue; }
             let mid = l + 0.5 * (r - l); var uncertain = false; var protectedBoundary = false;
-            if (d.x != 0.0) { protectedBoundary = l == -o.x / d.x; }
-            if (d.y != 0.0) { protectedBoundary = protectedBoundary || l == -o.y / d.y || l == (m.limits.z - o.y) / d.y; }
+            if (d.x != 0.0) { protectedBoundary = (l == kx); }
+            if (d.y != 0.0) { protectedBoundary = protectedBoundary || (l == ky0) || (l == ky1); }
             for (var k = 0u; k < nr; k++) {
                 uncertain = uncertain || (l < bands[k].y && r > bands[k].x);
                 if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) { protectedBoundary = true; }
             }
             if (uncertain || abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
-                if (count > memberStart && mayAbsorb(pieces[count - 1u], vec2f(l, r),
+                if (hasPiece && mayAbsorb(curPiece, vec2f(l, r),
                      previousShortBand, previousPositive, uncertain, protectedBoundary)) {
-                    pieces[count - 1u].y = r; previousShortBand = false; previousPositive = true;
+                    curPiece.y = r; previousShortBand = false; previousPositive = true;
                 } else {
-                    if (count >= 48u) { reason |= 8u; break; }
-                    pieces[count] = vec2f(l, r);
-                    count++; previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
+                    if (hasPiece) {
+                        emitPieceSubpanels(curPiece, member, id, &singles, &reason);
+                        if (reason != 0u) { break; }
+                    }
+                    curPiece = vec2f(l, r); hasPiece = true;
+                    previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
                 }
             }
         }
-        if (memberIdx == 0u) { count0 = count; }
-        if (reason != 0u) { break; }
-    }
-    if (reason != 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | reason); return; }
-    var singles = 0u;
-    for (var ordPass = 0u; ordPass < 2u; ordPass++) {
-        let emitM1 = (ordPass == 0u) == m1First;
-        let emitMember = select(rawM0, rawM1, emitM1);
-        let pStart = select(0u, count0, emitM1);
-        let pEnd = select(count0, count, emitM1);
-        for (var p = pStart; p < pEnd; p++) {
-            let pa = pieces[p].x; let pb = pieces[p].y;
-            let n = max(1u, u32(ceil((pb - pa) / 4.0)));
-            if (singles + n > cfg.maxSubPerRay) { reason |= 16u; break; }
-            for (var k = 0u; k < n; k++) {
-                let sl = select(pa + f32(k) * (pb - pa) / f32(n), pa, k == 0u);
-                let sr = select(pa + f32(k + 1u) * (pb - pa) / f32(n), pb, k + 1u == n);
-                subpanels[singles * cfg.rayCount + id] = Subpanel(vec2f(sl, sr), vec2u(emitMember, 0u));
-                singles++;
-            }
+        if (hasPiece && reason == 0u) {
+            emitPieceSubpanels(curPiece, member, id, &singles, &reason);
         }
         if (reason != 0u) { break; }
     }
@@ -1150,10 +1163,11 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
   if (reason != 0u) { break; }
   roots(m, o, d, a, b, m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask2);
   if (reason != 0u) { break; }
-  if (d.x != 0.0) { let x = -o.x / d.x; if (x > a && x < b) { knots[nb] = x; nb++; } }
+  var kx = 0.0; var ky0 = 0.0; var ky1 = 0.0;
+  if (d.x != 0.0) { kx = -o.x / d.x; if (kx > a && kx < b) { knots[nb] = kx; nb++; } }
   if (d.y != 0.0) {
-   let y = -o.y / d.y; if (y > a && y < b) { knots[nb] = y; nb++; }
-   let k = (m.limits.z - o.y) / d.y; if (k > a && k < b) { knots[nb] = k; nb++; }
+   ky0 = -o.y / d.y; if (ky0 > a && ky0 < b) { knots[nb] = ky0; nb++; }
+   ky1 = (m.limits.z - o.y) / d.y; if (ky1 > a && ky1 < b) { knots[nb] = ky1; nb++; }
   }
   knots[nb] = b; nb++;
   for (var i = 1u; i < nb; i++) {
@@ -1164,8 +1178,8 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
   for (var i = 1u; i < nb; i++) {
    let l = knots[i - 1u]; let r = knots[i]; if (!(r > l)) { continue; }
    let mid = l + 0.5 * (r - l); var uncertain = false; var protectedBoundary = false;
-   if (d.x != 0.0) { protectedBoundary = l == -o.x / d.x; }
-   if (d.y != 0.0) { protectedBoundary = protectedBoundary || l == -o.y / d.y || l == (m.limits.z - o.y) / d.y; }
+   if (d.x != 0.0) { protectedBoundary = (l == kx); }
+   if (d.y != 0.0) { protectedBoundary = protectedBoundary || (l == ky0) || (l == ky1); }
    for (var k = 0u; k < nr; k++) {
     uncertain = uncertain || (l < bands[k].y && r > bands[k].x);
     if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) { protectedBoundary = true; }
