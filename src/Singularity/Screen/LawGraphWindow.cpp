@@ -20,6 +20,7 @@
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/Audio/AudioChannel.hpp"
+#include "Singularity/Terminal/TerminalChannel.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
@@ -247,6 +248,17 @@ const std::vector<PathOption>& knownPathOptions() {
             if (std::holds_alternative<std::string>(probe)) type = "text";
             else if (std::holds_alternative<bool>(probe)) type = "toggle";
             options.push_back({property->name(), "Channel — Audio", type, false});
+        }
+
+        static Singularity::Terminal::TerminalChannel terminalPrototype;
+        for (Property* property : terminalPrototype.listProperties()) {
+            const PropertyValue probe = property->value();
+            const char* type = "number";
+            if (std::holds_alternative<std::string>(probe)) type = "text";
+            else if (std::holds_alternative<bool>(probe)) type = "toggle";
+            else if (std::holds_alternative<std::shared_ptr<PropertyList>>(probe)) type = "list";
+            else if (std::holds_alternative<std::shared_ptr<PropertyDict>>(probe)) type = "dictionary";
+            options.push_back({property->name(), "Channel — Terminal", type, false});
         }
 
         static Singularity::Language::Lexeme lexemePrototype("prototype");

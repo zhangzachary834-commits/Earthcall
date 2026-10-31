@@ -27,8 +27,10 @@
 #include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/Audio/AudioChannel.hpp"
 #include "Singularity/Screen/LawGraphWindow.hpp"
+#include "Singularity/Terminal/TerminalChannel.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
+#include "ConstructedBeing/Singular/Property/Property.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/Ourverse/Ourverse.hpp"
@@ -36,6 +38,7 @@
 
 #include <GLFW/glfw3.h>
 #include <cstdio>
+#include <set>
 #include <string>
 
 namespace {
@@ -112,6 +115,7 @@ int main() {
     Singularity::Screen::ScreenChannel screen;
     Singularity::Screen::ScreenRecorder recorder;
     Singularity::Audio::AudioChannel audio;
+    Singularity::Terminal::TerminalChannel terminal;
     // The readings must be installed before the picker's "@world.*" entries can
     // be answered for — that is the whole point of checking them.
     interaction.installWorldReadings();
@@ -121,6 +125,9 @@ int main() {
     Singularity::Language::Lexeme lexemeProbe("probe");
 
     int skipped = 0;
+    std::set<std::string> terminalPickerPaths;
+    bool sawCompletionItems = false;
+    bool sawCompletionVisible = false;
     for (const Rendering::PathOption& option : Rendering::knownPathOptions()) {
         if (groupIs(option.group, "Object"))              check(option, object);
         else if (groupIs(option.group, "Law"))            check(option, law);
@@ -131,6 +138,15 @@ int main() {
         else if (groupIs(option.group, "Channel — Screen Recorder")) check(option, recorder);
         else if (groupIs(option.group, "Channel — Screen")) check(option, screen);
         else if (groupIs(option.group, "Channel — Audio"))  check(option, audio);
+        else if (groupIs(option.group, "Channel — Terminal")) {
+            if (!terminalPickerPaths.insert(option.path).second)
+                fail(option.path, option.group, "duplicate Terminal path in the picker");
+            if (option.path == "completion.items" && std::string(option.type) == "list")
+                sawCompletionItems = true;
+            if (option.path == "completion.visible" && std::string(option.type) == "toggle")
+                sawCompletionVisible = true;
+            check(option, terminal);
+        }
         else if (groupIs(option.group, "Reading —")) {
             // A world reading has no owning being to resolve against: it is a
             // closure a modality channel registered, answering ABOUT whatever
@@ -164,6 +180,26 @@ int main() {
                  "is offered under a group this test does not know how to own — "
                  "add the being here, or the path is homeless");
         }
+    }
+
+    // A per-entry check alone passes vacuously if the Terminal group vanishes
+    // from the picker. Hold both the registry coverage and representative
+    // container/derived type contracts, without hand-listing its full schema.
+    const auto registeredTerminalProperties = terminal.listProperties();
+    if (terminalPickerPaths.empty() ||
+        terminalPickerPaths.size() != registeredTerminalProperties.size()) {
+        fail("Terminal registry", "Channel — Terminal",
+             "picker property count differs from TerminalChannel registry");
+    }
+    for (Property* property : registeredTerminalProperties) {
+        if (!terminalPickerPaths.count(property->name())) {
+            fail(property->name(), "Channel — Terminal",
+                 "registered TerminalChannel property is absent from the picker");
+        }
+    }
+    if (!sawCompletionItems || !sawCompletionVisible) {
+        fail("completion.items / completion.visible", "Channel — Terminal",
+             "must advertise the list and derived toggle with their actual types");
     }
 
     // Volume zero-density proof governance: the same authored ScreenChannel
