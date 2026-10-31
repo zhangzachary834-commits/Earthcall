@@ -13,7 +13,6 @@
 // it to an independent same-thread clock.
 
 #include "support/test_harness.hpp"
-#include "support/test_save_helper.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <algorithm>
@@ -75,34 +74,10 @@ int main(int argc, char** argv) {
 
     // Protect the real Zone identity store exactly like frame_lag_test.
     TestSupport::RealSaveTreeGuard saveGuard(world);
-    TempSaveRoot tempRoot; // sandbox the global setSaveRoot for isolated loadState
-
-    // In order for loadWorld to succeed in finding referenced zones/laws/materials, we have to
-    // copy them into the sandbox temp root first.
-    std::filesystem::path realSaves = std::filesystem::path(world).parent_path().parent_path();
-    std::filesystem::copy(realSaves / "worlds", tempRoot.path / "worlds", std::filesystem::copy_options::recursive);
-    std::filesystem::copy(realSaves / "laws", tempRoot.path / "laws", std::filesystem::copy_options::recursive);
-    std::filesystem::copy(realSaves / "materials", tempRoot.path / "materials", std::filesystem::copy_options::recursive);
-    std::filesystem::copy(realSaves / "homes", tempRoot.path / "homes", std::filesystem::copy_options::recursive);
-    std::filesystem::copy(realSaves / "identity", tempRoot.path / "identity", std::filesystem::copy_options::recursive);
-
-    // Copy ONLY the target zone directory to avoid scanning all 50+ unrelated zones.
-    nlohmann::json worldData = SaveSystem::readSaveData(world);
-    std::filesystem::create_directories(tempRoot.path / "zones");
-    for (const auto& zoneDef : worldData.value("zones", nlohmann::json::array())) {
-        std::string zoneId = zoneDef.value("identifier", "");
-        if (!zoneId.empty()) {
-            std::filesystem::path zoneSrc = realSaves / "zones" / zoneId;
-            if (std::filesystem::exists(zoneSrc)) {
-                std::filesystem::copy(zoneSrc, tempRoot.path / "zones" / zoneId, std::filesystem::copy_options::recursive);
-            }
-        }
-    }
-
-    TestSupport::BootedEngineHarness h("Player", "humanoid", false);
+    TestSupport::BootedEngineHarness h;
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld((tempRoot.path / "worlds" / std::filesystem::path(world).filename()).string());
+    h.loadWorld(world);
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
