@@ -241,6 +241,33 @@ int main() {
         check(fs::file_size(capPath) == DurableLogger::kMaxFileBytes,
               "Existing log was truncated or exceeded its budget");
 
+        // Reach the exact file cap through an already-open stream, then
+        // confirm that subsequent appends are rejected without modifying it.
+        // A same-identity probe gives the precise serialized record length;
+        // timestamps have a fixed 20-character UTC representation.
+        const auto probeRoot = sandbox.root / "capacity-probe";
+        DurableLogger capProbe("laws", probeRoot);
+        check(capProbe.log("exact-cap", "LAW", "last fitting record"),
+              "Cannot measure exact-cap record size");
+        const auto fittingBytes = fs::file_size(probeRoot / "laws" / encoded("exact-cap"));
+        check(fittingBytes < DurableLogger::kMaxFileBytes,
+              "Exact-cap record unexpectedly exceeds file budget");
+        const auto openCapRoot = sandbox.root / "capacity-open";
+        fs::create_directories(openCapRoot / "laws");
+        const auto openCapPath = openCapRoot / "laws" / encoded("exact-cap");
+        { std::ofstream out(openCapPath, std::ios::binary);
+          check(out.good(), "Cannot seed open-stream cap"); }
+        fs::resize_file(openCapPath, DurableLogger::kMaxFileBytes - fittingBytes);
+        DurableLogger openCapped("laws", openCapRoot);
+        check(openCapped.log("exact-cap", "LAW", "last fitting record"),
+              "Last record did not fit exactly to file cap");
+        check(fs::file_size(openCapPath) == DurableLogger::kMaxFileBytes,
+              "Last fitting record did not reach exact cap");
+        check(!openCapped.log("exact-cap", "LAW", "must be rejected"),
+              "Open stream accepted record after reaching exact cap");
+        check(fs::file_size(openCapPath) == DurableLogger::kMaxFileBytes,
+              "Rejected open-stream append modified capped history");
+
         // Exercise the public LawAuditLogger bridge with muted aggregate logging.
         auto& lawLogger = ECA::LawAuditLogger::instance();
         lawLogger.setLevel(ECA::LogLevel::Off);
