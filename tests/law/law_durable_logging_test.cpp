@@ -5,14 +5,17 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp"
+#include <atomic>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -107,6 +110,51 @@ int main() {
         for (const auto& entry : a) check(entry.at("identity") == idA, "A identity mixed");
         for (const auto& entry : b) check(entry.at("identity") == idB, "B identity mixed");
         check(!fs::exists(root / "laws" / "laws.jsonl"), "Aggregate filename collision");
+
+        // Parallel callers must not interleave JSONL fragments, duplicate
+        // records, or route one Law's history into another Law's file.
+        // Check every message, not merely the final file length.
+        constexpr int kConcurrentWorkers = 4;
+        constexpr int kConcurrentEventsPerWorker = 64;
+        const auto concurrentRoot = sandbox.root / "concurrent";
+        std::atomic<bool> concurrentAppendFailed{false};
+        {
+            DurableLogger concurrentLogger("laws", concurrentRoot);
+            std::vector<std::thread> workers;
+            workers.reserve(kConcurrentWorkers);
+            for (int worker = 0; worker < kConcurrentWorkers; ++worker) {
+                workers.emplace_back([&, worker] {
+                    const std::string identity = "concurrent-law-" + std::to_string(worker % 2);
+                    for (int event = 0; event < kConcurrentEventsPerWorker; ++event) {
+                        const std::string message =
+                            "worker-" + std::to_string(worker) + "-event-" + std::to_string(event);
+                        if (!concurrentLogger.log(identity, "LAW", message))
+                            concurrentAppendFailed.store(true);
+                    }
+                });
+            }
+            for (auto& worker : workers) worker.join();
+            check(!concurrentAppendFailed.load(), "Concurrent durable append failed");
+        }
+        for (int identityIndex = 0; identityIndex < 2; ++identityIndex) {
+            const std::string identity = "concurrent-law-" + std::to_string(identityIndex);
+            const auto entries = readEntries(concurrentRoot / "laws" / encoded(identity));
+            check(entries.size() == kConcurrentWorkers * kConcurrentEventsPerWorker / 2,
+                  "Concurrent append count wrong");
+            std::set<std::string> messages;
+            for (const auto& entry : entries) {
+                check(entry.at("identity") == identity, "Concurrent histories mixed identities");
+                check(messages.insert(entry.at("message").get<std::string>()).second,
+                      "Concurrent history contains duplicate records");
+            }
+            for (int worker = identityIndex; worker < kConcurrentWorkers; worker += 2) {
+                for (int event = 0; event < kConcurrentEventsPerWorker; ++event) {
+                    const std::string expected =
+                        "worker-" + std::to_string(worker) + "-event-" + std::to_string(event);
+                    check(messages.count(expected) == 1, "Concurrent history lost a record");
+                }
+            }
+        }
 
         // An invalid log destination must report failure, never silently pass.
         const auto blocked = sandbox.root / "not-a-directory";
