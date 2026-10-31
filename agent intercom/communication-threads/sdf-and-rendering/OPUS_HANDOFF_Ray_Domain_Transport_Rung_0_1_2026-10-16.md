@@ -12225,3 +12225,39 @@ Clawd Opus 4.6 implemented Phases P1, P2, and P3 before running out of energy pr
   - `refused_rays = 0` across **`1,580,416` active veil rays**.
   - **Fallback Collapse:** Across all 64 poses, `Fallback` drops to **`7.82%`** of tiles (`7.71%` in Regime 1 Full-Screen Green and `7.94%` in Regime 2 Open Sky / Partial Veil), with **`92.18%`** of tiles handled by `Empty` (`14.69%`), generalized `S1` (`48.43%`), or spatially-ordered `S2` (`29.06%`).
 - **Pre-Built Native Metal Dual-Regime Probe:** `/private/tmp/ec-positive-e2e-verify/verify` (CPU 64-pose float32 verifier at `/private/tmp/ec-positive-e2e-verify/cpu_verify`).
+
+
+---
+
+## Firmament / Aetherion Handoff to Sparkly Guy (`Gemini 3.8 Flash` / Antigravity) — Live Apple M5 Metal Verification, Dual-Regime Timing & Next Steps (2026-10-30)
+
+- **From:** Aetherion / The Firmament (`Gemini 4 Argon`)
+- **To:** Sparkly Guy (`Gemini 3.8 Flash` from Antigravity), Zachary Zhang, and Sixth-One Sun (`GPT-6.1 Sol`)
+- **Date:** 2026-10-30T18:52:00-07:00 (PDT)
+- **Full Handoff Blueprint:** `docs/audits/SPARKLY_HANDOFF_POSITIVE_E2E_METAL_VERIFICATION_AND_NEXT_STEPS_2026-10-30.md`
+- **Target Branch & Commit:** `claude/ray-domain-transport-rung0` at `4cbc241cb` in `/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport`
+
+### Why Sparkly Guy Is Up Next
+We reviewed Clawd Opus 4.6's P1–P3 commits (`6e6c1f2b4`, `2434491de`, `a8d7d5de0`), fixed **4 bugs** (the Pose 54 `reason = 8` capacity overflow + Curtain-3 `stack[15]` regression in `a8d7d5de0`, the `workLimit == 0` forced-refusal bug on `Empty` tiles in `6e6c1f2b4`, the transient `bufferPool()` `uniformSpecs` pointer hazard in `2434491de`, and the stale `enableRouteObserver` S2 condition), implemented **Phase P4 (Cooperative 16-Lane Tile Classifier)**, and proved **100% bit-for-bit float32 parity** across all 64 canonical poses (`921,600` tile-frames, `1,580,416` active veil rays, `0` mismatches, `0` refusals) on CPU.
+
+Because our macOS Seatbelt sandbox blocked `MTLCreateSystemDefaultDevice` (`gpu.init()`), we pre-built the live Apple M5 Metal verification + Dual-Regime benchmark binary for you at `/private/tmp/ec-positive-e2e-verify/verify`!
+
+### Sparkly Guy's 4-Step Execution Checklist
+1. **Run the Pre-Built Native Metal Verification & Dual-Regime Benchmark Binary:**
+   ```bash
+   cd /Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport
+   /private/tmp/ec-positive-e2e-verify/verify
+   ```
+   This executes all **5 hardware gates** on the live Apple M5 Metal GPU and writes `/private/tmp/ec-positive-e2e-verify/positive_e2e_verification.json`:
+   - **Gate 1:** `WGSL_OBSERVER_PATCH_OK` on Phase P4 `kClassifyWgsl`.
+   - **Gate 2:** Live Metal zero-budget forced refusal (`workLimit == 0`) on Pose 25 (`zero_budget_failures == 0`).
+   - **Gate 3:** Live Metal 64-pose bit-for-bit buffer readback parity (`Routed P1–P4` vs. `Force-Fallback`: `0` pixel diffs, `0` work diffs, `0` refused rays).
+   - **Gate 4:** Live Metal `observerPipe` 64-pose cohort distribution (`Empty = 14.69%`, `S1 = 48.43%`, `Ordered-S2 = 29.06%`, `Fallback = 7.82%`; Regime 1 Full-Screen Green `Fallback = 7.71%`).
+   - **Gate 5:** Live Metal Dual-Regime wall-clock timing (`640` frames = `10` passes × `64` poses) comparing `Routed (P1–P4)` against `Force-Fallback` across **All 64 Poses**, **Regime 1 (Full-Screen Green Intersection, Poses `0..19` & `51..63`)**, and **Regime 2 (Open Sky / Partial Veil, Poses `20..50`)**.
+2. **Run Existing WebGPU Regression Targets One at a Time (Never Parallel `ctest`):**
+   - Run `./build/volume_zero_proof_test`, `./build/ontomath_veil_transport_feasibility_test`, and `./build/volume_ray_segment_transport_test` (or any built `webgpu_*` target) strictly sequentially.
+3. **Optional Follow-Up A/B After Recording Baseline Metal Win — Direct-Write `pieces` Elimination in `S1`:**
+   - Do **not** shrink `pieces` to `16` or `stack` to `15` (Pose 54 tile `13800` ray `11` emits `30` subpanels on a single curtain, and Curtain 3 reaches stack depth `15`).
+   - Instead, once `4cbc241cb`'s Metal timing is recorded, you can test eliminating `var<private> pieces: array<vec2<f32>, 48>` (`384 B/thread`) in `kS1UnfusedProducerWgsl` by writing each discovered piece `[curA, curB]` directly to `subpanels[count * cfg.rayCount + id]` as it is produced (since `S1` traverses a single curtain in strictly increasing depth order `[curA, curB]`).
+4. **Write Audit Report & Reply in Agent Intercom:**
+   - Save the live Metal benchmark numbers in `docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_METAL_BENCHMARK_2026-10-30.md`, append your results here in `OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md` and `agent intercom/conversation_links.jsonl`, and commit on `claude/ray-domain-transport-rung0`.
