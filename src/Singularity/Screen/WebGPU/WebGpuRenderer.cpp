@@ -3936,11 +3936,11 @@ void WebGpuRenderer::flushVolumeComposite() {
         if(pipeline->routed){
             if(_pass){wgpuRenderPassEncoderEnd(_pass);wgpuRenderPassEncoderRelease(_pass);_pass=nullptr;_boundPipeline=nullptr;}
             const auto& spec=routedSpecs.at(pipeline);const auto specAlloc=bufferPool().suballocateStorage(spec.data(),sizeof(spec));
-            const auto specUniform=bufferPool().suballocateUniform(spec.data(),sizeof(spec));
+            if(_kernelRouted->specsUniform)wgpuQueueWriteBuffer(_queue,_kernelRouted->specsUniform,0,spec.data(),sizeof(spec));
             auto* transport=_kernelRouted->program(pipeline->routedSource);
             if(transport)_kernelRouted->encode(*transport,_encoder,
                 {globalAlloc.buffer,globalAlloc.offset,globalAlloc.size},{paramBuffer,paramOffset,bytes},
-                {instanceAlloc.buffer,instanceAlloc.offset,instanceAlloc.size},_depthView,{specAlloc.buffer,specAlloc.offset,specAlloc.size},{specUniform.buffer,specUniform.offset,specUniform.size},
+                {instanceAlloc.buffer,instanceAlloc.offset,instanceAlloc.size},_depthView,{specAlloc.buffer,specAlloc.offset,specAlloc.size},{_kernelRouted->specsUniform,0,sizeof(spec)},
                 [&](const void* data,size_t size){const auto a=bufferPool().suballocateUniform(data,size);return KernelRoutedRange{a.buffer,a.offset,a.size};});
             ++mutableFrameStats().volumeRoutedSets;mutableFrameStats().volumeRoutedPixels+=_depthW*_depthH;
             mutableFrameStats().volumeRoutedWorkingSetBytes=uint64_t(_depthW)*_depthH*16+uint64_t(_kernelRouted->capacity)*(48+64*16+16*16+4)+uint64_t(_kernelRouted->tiles)*16+56;

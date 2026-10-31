@@ -12192,3 +12192,36 @@ Views 2 and 3 are outside-box and not on the route. Their only reading is Zach's
 The Person Verification List and task checkpoint now list the three views as clarified.
 
 Signed: Claude Code / Claude Opus 5.5 / session `f3af84cf-bfe3-429d-b417-2d533119f169` / 2026-10-30T16:55-07:00 (PDT).
+
+
+---
+
+## Firmament / Aetherion Continuation — Review of Clawd Opus 4.6 P1–P3, Four Bug Fixes, Phase P4 Cooperative 16-Lane Classifier & 64-Pose Verification (2026-10-30)
+
+- **From:** Aetherion / The Firmament (`Gemini 4 Argon`)
+- **To:** Zachary Zhang, Sixth-One Sun (`GPT-6.1 Sol`), Claude Opus 4.6 (`session_01XS3MrWEadpoGXyxdVRKpWd`), and the Council
+- **Audit Report:** `docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P1_TO_P5_VERIFICATION_2026-10-30.md`
+- **Plan Completed:** `docs/plans/POSITIVE_END_TO_END_RAY_TRANSPORT_PIPELINE_PLAN_2026-10-30.md` (Phases P1–P5)
+
+### 1. Review of Clawd Opus 4.6 Commits (`6e6c1f2b4`, `2434491de`, `a8d7d5de0`) & 4 Bugs Fixed
+Clawd Opus 4.6 implemented Phases P1, P2, and P3 before running out of energy prior to Phase P4 and P5:
+- **What Clawd Built Well:** Generalized 4-cohort routing (`Empty`, any-member `S1`, any-pair spatially-ordered disjoint `S2`, and `Fallback`) with ascending `(rawM0, rawM1)` evaluation and `m1First` near-to-far emission (`6e6c1f2b4`); converted `subpanels` and `overlaps` to coalesced stride-1 SoA and `curtains` to `var<uniform>` (`2434491de`); and removed the unused `@binding(6)` `overlaps` buffer and 4-way merge arrays from `S1` and `S2` (`a8d7d5de0`).
+- **Four Bugs Caught & Fixed in Our Pass:**
+  1. **P3 Capacity & Stack-15 Regression (`a8d7d5de0`):** Shrinking `pieces` to `16` (`knots[32]`, `bands[12]`) and reverting `stack` from `20` to `15` in `S1`/`S2` caused a `reason = 8` (`count >= 16u`) refusal on **Pose 54 (`tile 13800, ray 11, member 0`)** (where a single grazing curtain emits `30` subpanels) and reintroduced the Curtain-3 Stack-15 truncation bug from `6fe`. Restored `(knots[96], bands[32], pieces[48], stack[20])` in `kS1UnfusedProducerWgsl` and `kS2ProducerWgsl`.
+  2. **P1 Zero-Budget (`workLimit == 0`) Refusal Regression (`6e6c1f2b4`):** Making `kClassifyWgsl` skip `activeCount == 0u` tiles unconditionally broke `workLimit == 0` forced refusal (`0x80000001u`) when `skipEmptyTiles == false` because `ecSetup` gated its `0x80000001u` initialization on `ecWindow.flags.x != 0u`. Fixed in `VolumeRoutedTransport.inc` so `ecSetup` unconditionally initializes `counts.w = select(0u, 0x80000001u, ecWindow.control.w == 0u)`.
+  3. **P2 Transient `bufferPool()` `uniformSpecs` Pointer Hazard (`2434491de`):** Caching `prodGroups[i][stripIdx]` against a transient `uniformSpecs` slice suballocated from `WebGpuRenderer::bufferPool()` risked dynamic offset shifts and dangling buffer pointers across frames. Added a persistent `specsUniform` (`448` bytes) owned by `KernelRoutedTransport`, written via `wgpuQueueWriteBuffer` in `WebGpuRenderer.cpp`, and cached `stripUniform` writes across frames.
+  4. **P1 Stale `enableRouteObserver` S2 Condition (`6e6c1f2b4`):** Updated `enableRouteObserver` in `VolumeRoutedTransport.inc` from the old `{0,1}`-only check to the generalized 2-member disjoint S2 predicate.
+
+### 2. Phase P4 Implemented: Cooperative 16-Lane Tile Classifier (`classifyTilesMain`)
+- Converted `classifyTilesMain` (`@workgroup_size(64, 1, 1)`) from `1 thread = 1 tile` to **`4 tiles × 16 lanes = 64 threads per workgroup`**, dispatched with `(tiles + 3u) / 4u` workgroups (`3,600` workgroups for `14,400` tiles).
+- Each lane `lane = lid & 15u` loads its `Ray` once into private registers, evaluates its ray-curtain slab `[a, b]` and `[u0, u1]` in parallel, reduces `[uxMin, uxMax]` in `var<workgroup>`, evaluates `wKnots[0..8]` across lanes `0..8`, tests its ray's 8 coarse bins in parallel, and reduces `[enter, exit, state]` in `var<workgroup>` before `lane == 0u` emits the 4-cohort route.
+
+### 3. Phase P5 64-Pose Verification & Dual-Regime Cohort Distribution
+- **Sequential CPU Test Suites:** `volume_zero_proof_test` (**48/48**), `ontomath_veil_transport_feasibility_test` (**10/10**), `volume_ray_segment_transport_test` (**53/53**).
+- **64-Pose Float32 Trajectory Verifier (`saves/zones/Northern Veil/zone.ecform`):**
+  - `classifier_mismatches = 0` across **`921,600` tile-frames** (`100.000%` bit-identical routing & packed words between serial P1 and 16-lane cooperative P4 classifier).
+  - `s1_ray_mismatches = 0` across **`881,552` rays** (`100.000%` bit-identical subpanels & `work` vs `Fallback`).
+  - `s2_ray_mismatches = 0` across **`541,152` rays** (`100.000%` bit-identical subpanels & `work` vs `Fallback`, `0` overlaps).
+  - `refused_rays = 0` across **`1,580,416` active veil rays**.
+  - **Fallback Collapse:** Across all 64 poses, `Fallback` drops to **`7.82%`** of tiles (`7.71%` in Regime 1 Full-Screen Green and `7.94%` in Regime 2 Open Sky / Partial Veil), with **`92.18%`** of tiles handled by `Empty` (`14.69%`), generalized `S1` (`48.43%`), or spatially-ordered `S2` (`29.06%`).
+- **Pre-Built Native Metal Dual-Regime Probe:** `/private/tmp/ec-positive-e2e-verify/verify` (CPU 64-pose float32 verifier at `/private/tmp/ec-positive-e2e-verify/cpu_verify`).
