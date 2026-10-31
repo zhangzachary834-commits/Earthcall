@@ -4,6 +4,7 @@
 #include "GLFW/glfw3.h"
 
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
+#include "Singularity/Screen/ScreenChannel.hpp"
 
 
 #include "Singularity/Core/Engine.hpp"
@@ -88,6 +89,35 @@ void renderDeveloperToolsContent(GLFWwindow* window, Core::Engine* engine) {
             } else {
                 ImGui::TextDisabled("InteractionChannel not found.");
             }
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Routed Volume Transport", ImGuiTreeNodeFlags_DefaultOpen)) {
+        // First Mover diagnostic chrome over the existing registered property;
+        // EngineRender forwards it to Renderer each frame. No second switch.
+        auto* screen = engine->getLawManager()
+            ? Singularity::Screen::ScreenChannel::find(*engine->getLawManager()) : nullptr;
+        if (!screen) {
+            ImGui::TextDisabled("ScreenChannel not found.");
+        } else {
+            ImGui::Checkbox("Routed transport (off = Current renderer)",
+                            &screen->volumeRoutedTransportEnabled);
+            ImGui::Text("Requested renderer: %s",
+                        screen->volumeRoutedTransportEnabled ? "Routed with Current fallback" : "Current");
+            ImGui::Text("Frame rate: %.1f FPS", ImGui::GetIO().Framerate);
+            // Compile-time executable metadata, not authored world state.
+#ifdef NDEBUG
+            ImGui::TextDisabled("Build: Release-style (NDEBUG)");
+#else
+            ImGui::TextDisabled("Build: Debug-style (assertions enabled)");
+#endif
+            ImGui::Text("Last render: %d routed sets, %d viewport pixels",
+                        screen->volumeRoutedSets, screen->volumeRoutedPixels);
+            if (screen->volumeRoutedTransportEnabled && screen->volumeRoutedSets == 0) {
+                ImGui::TextDisabled("No routed set dispatched in the last render.");
+            }
+            ImGui::TextWrapped("Keep the camera and window size fixed while comparing. "
+                               "Routed sets can still contain rays handled by Current.");
         }
     }
 

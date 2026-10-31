@@ -205,12 +205,25 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
         }
     }
 
-    if (activeMemberMask == 1u && !tileCanOverlap) {
+    if (activeCount == 0u) {
+        // wave-proved empty: no producer work needed
+    } else if (activeCount == 1u) {
+        let onlyMember = firstTrailingBit(activeMemberMask);
         let slot = atomicAdd(&counters.s1Count, 1u);
-        s1TileList[slot] = tileId;
-    } else if (activeMemberMask == 3u && !tileCanOverlap && exitArr[0u] <= enterArr[1u]) {
-        let slot = atomicAdd(&counters.s2Count, 1u);
-        s2TileList[slot] = tileId;
+        s1TileList[slot] = (onlyMember << 28u) | tileId;
+    } else if (activeCount == 2u && !tileCanOverlap) {
+        let m0 = firstTrailingBit(activeMemberMask);
+        let m1 = firstTrailingBit(activeMemberMask & ~(1u << m0));
+        let order01 = exitArr[m0] <= enterArr[m1];
+        let order10 = exitArr[m1] <= enterArr[m0];
+        if (order01 || order10) {
+            let m1First = select(0u, 1u, order10 && !order01);
+            let slot = atomicAdd(&counters.s2Count, 1u);
+            s2TileList[slot] = (m0 << 28u) | (m1 << 24u) | (m1First << 20u) | tileId;
+        } else {
+            let slot = atomicAdd(&counters.fallbackCount, 1u);
+            fallbackTileList[slot] = tileId;
+        }
     } else {
         let slot = atomicAdd(&counters.fallbackCount, 1u);
         fallbackTileList[slot] = tileId;
@@ -423,7 +436,9 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
     let rayInTile = lid & 15u;
     let tileSlot = wid.x * 4u + localTile;
     if (tileSlot >= min(routeCounts[0u], totalTiles)) { return; }
-    let tileId = s1TileList[tileSlot];
+    let packedTile = s1TileList[tileSlot];
+    let tileId = packedTile & 0x0FFFFFFFu;
+    let activeMember = packedTile >> 28u;
     if (tileId >= totalTiles) { return; }
     let rayStart = tileOffsets[tileId];
     let rayCount = tileOffsets[tileId + 1u] - rayStart;
@@ -437,13 +452,11 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
  let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
  let subBase = id * cfg.maxSubPerRay; let overBase = id * cfg.maxOverPerRay;
  var reason = 0u; var work = 0u; var count = 0u;
- var pieces: array<vec2f, 48>; var pieceMembers = vec3u(0u);
+ var pieces: array<vec2f, 48>;
  var knots: array<f32, 96>;
- var memStart = vec4u(0u); var memCount = vec4u(0u);
  if (cfg.budget == 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | 1u); return; }
- for (var member = 0u; member < 1u; member++) {
-  memStart[member] = count;
-  let m = curtains[member]; let o = ro - m.origin.xyz;
+ for (var _i = 0u; _i < 1u; _i++) {
+  let m = curtains[activeMember]; let o = ro - m.origin.xyz;
   var a = input.ro_clipA.w; var b = input.rd_clipB.w; var hit = true;
   for (var axis = 0u; axis < 3u; axis++) {
    var half = m.half[axis];
@@ -468,7 +481,6 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
   if (allPositiveH && (mask0 | mask1 | mask2) == 0u && abs(phi_knots[0]) > m.limits.w + m.curv.y) {
    if (work + 24u > cfg.budget) { reason |= 1u; break; }
    work += 24u;
-   memCount[member] = 0u;
    continue;
   }
   var nb = 1u; knots[0] = a;
@@ -506,12 +518,10 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
     } else {
      if (count >= 48u) { reason |= 8u; break; }
      pieces[count] = vec2f(l, r);
-     setMember(&pieceMembers, count, member);
      count++; previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
     }
    }
   }
-  memCount[member] = count - memStart[member];
   if (reason != 0u) { break; }
  }
  if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }
@@ -523,7 +533,7 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
   for (var k = 0u; k < n; k++) {
    let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
    let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
-   subpanels[subBase + singles] = Subpanel(vec2f(l, r), vec2u(0u, 0u)); singles++;
+   subpanels[subBase + singles] = Subpanel(vec2f(l, r), vec2u(activeMember, 0u)); singles++;
   }
  }
  if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); }
@@ -616,7 +626,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
  levelActiveMask: u32) {
  let M = m.curv.x * d.x * d.x * 1.00002;
  let err = m.curv.y;
- var stack: array<vec4f, 20>; var depthBits = vec3u(0u); var top = 0u;
+ var stack: array<vec4f, 15>; var depthBits = vec3u(0u); var top = 0u;
  for (var bin = 0u; bin < 8u; bin++) {
   var a = lo + (hi - lo) * f32(bin) / 8.0; var b = lo + (hi - lo) * f32(bin + 1u) / 8.0;
   if (bin == 0u) { a = lo; } if (bin == 7u) { b = hi; }
@@ -673,7 +683,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
     continue;
    }
    if (0.125 * M * h * h <= error) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
-   if (f32(depth) >= 14.0 || top + 2u > 20u) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
+   if (f32(depth) >= 14.0 || top + 2u > 15u) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
    let mid = a + 0.5 * h; if (mid <= a || mid >= b) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
    let phi_mid = evalPhi(m, o, d, mid);
    stack[top] = vec4f(mid, b, phi_mid, cell.w); setDepth(&depthBits, top, depth + 1u);
@@ -725,7 +735,11 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
     let rayInTile = lid & 15u;
     let tileSlot = wid.x * 4u + localTile;
     if (tileSlot >= min(routeCounts[1u], totalTiles)) { return; }
-    let tileId = s2TileList[tileSlot];
+    let packedTile = s2TileList[tileSlot];
+    let tileId = packedTile & 0x000FFFFFu;
+    let m1First = ((packedTile >> 20u) & 1u) != 0u;
+    let rawM0 = (packedTile >> 28u) & 0xFu;
+    let rawM1 = (packedTile >> 24u) & 0xFu;
     if (tileId >= totalTiles) { return; }
     let rayStart = tileOffsets[tileId];
     let rayCount = tileOffsets[tileId + 1u] - rayStart;
@@ -733,7 +747,7 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
     let id = tileRayIndices[rayStart + rayInTile];
     if (id >= cfg.rayCount) { return; }
 
-    
+
     let input = rays[id];
     if((input.counts.w & 0x40000000u)!=0u){return;}
  let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
@@ -743,8 +757,9 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
     var knots: array<f32, 96>;
     if (cfg.budget == 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | 1u); return; }
 
-    var singles = 0u;
-    for (var member = 0u; member < 2u; member++) {
+    var count0 = 0u;
+    for (var memberIdx = 0u; memberIdx < 2u; memberIdx++) {
+        let member = select(rawM0, rawM1, memberIdx == 1u);
         let m = curtains[member]; let o = ro - m.origin.xyz;
         var a = input.ro_clipA.w; var b = input.rd_clipB.w; var hit = true;
         for (var axis = 0u; axis < 3u; axis++) {
@@ -756,7 +771,10 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
                 a = max(a, min(q0, q1)); b = min(b, max(q0, q1));
             }
         }
-        if (!hit || !(b > a)) { continue; }
+        if (!hit || !(b > a)) {
+            if (memberIdx == 0u) { count0 = count; }
+            continue;
+        }
         var phi_knots: array<f32, 9>;
         for (var k = 0u; k < 9u; k++) {
             var s = a + (b - a) * f32(k) / 8.0;
@@ -770,6 +788,7 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
         if (allPositiveH && (mask0 | mask1 | mask2) == 0u && abs(phi_knots[0]) > m.limits.w + m.curv.y) {
             if (work + 24u > cfg.budget) { reason |= 1u; break; }
             work += 24u;
+            if (memberIdx == 0u) { count0 = count; }
             continue;
         }
         var nb = 1u; knots[0] = a;
@@ -790,7 +809,7 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
             let v = knots[i]; var j = i; loop { if (j == 0u || knots[j - 1u] <= v) { break; } knots[j] = knots[j - 1u]; j--; }
             knots[j] = v;
         }
-        var memPieces = 0u;
+        let memberStart = count;
         var previousShortBand = false; var previousPositive = false;
         for (var i = 1u; i < nb; i++) {
             let l = knots[i - 1u]; let r = knots[i]; if (!(r > l)) { continue; }
@@ -802,30 +821,38 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
                 if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) { protectedBoundary = true; }
             }
             if (uncertain || abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
-                if (memPieces > 0u && mayAbsorb(pieces[memPieces - 1u], vec2f(l, r),
+                if (count > memberStart && mayAbsorb(pieces[count - 1u], vec2f(l, r),
                      previousShortBand, previousPositive, uncertain, protectedBoundary)) {
-                    pieces[memPieces - 1u].y = r; previousShortBand = false; previousPositive = true;
+                    pieces[count - 1u].y = r; previousShortBand = false; previousPositive = true;
                 } else {
-                    // Capacity is shared across both members in the bulk producer.
                     if (count >= 48u) { reason |= 8u; break; }
-                    pieces[memPieces] = vec2f(l, r);
-                    memPieces++; count++; previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
+                    pieces[count] = vec2f(l, r);
+                    count++; previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
                 }
             }
         }
+        if (memberIdx == 0u) { count0 = count; }
         if (reason != 0u) { break; }
-
-        for (var p = 0u; p < memPieces; p++) {
+    }
+    if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }
+    var singles = 0u;
+    for (var pass = 0u; pass < 2u; pass++) {
+        let emitM1 = (pass == 0u) == m1First;
+        let emitMember = select(rawM0, rawM1, emitM1);
+        let pStart = select(0u, count0, emitM1);
+        let pEnd = select(count0, count, emitM1);
+        for (var p = pStart; p < pEnd; p++) {
             let pa = pieces[p].x; let pb = pieces[p].y;
             let n = max(1u, u32(ceil((pb - pa) / 4.0)));
             if (singles + n > cfg.maxSubPerRay) { reason |= 16u; break; }
             for (var k = 0u; k < n; k++) {
                 let sl = select(pa + f32(k) * (pb - pa) / f32(n), pa, k == 0u);
                 let sr = select(pa + f32(k + 1u) * (pb - pa) / f32(n), pb, k + 1u == n);
-                subpanels[subBase + singles] = Subpanel(vec2f(sl, sr), vec2u(member, 0u));
+                subpanels[subBase + singles] = Subpanel(vec2f(sl, sr), vec2u(emitMember, 0u));
                 singles++;
             }
         }
+        if (reason != 0u) { break; }
     }
     if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); }
     else { rays[id].counts = vec4u(subBase, singles, overBase, 0u); }

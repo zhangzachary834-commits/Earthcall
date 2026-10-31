@@ -113,7 +113,7 @@ bool KernelRoutedTransport::enableRouteObserver(bool on){
  if(!on){observeRoutes=false;if(observerPipe){wgpuComputePipelineRelease(observerPipe);observerPipe=nullptr;}if(accumPipe){wgpuComputePipelineRelease(accumPipe);accumPipe=nullptr;}if(routeHistogram){wgpuBufferRelease(routeHistogram);routeHistogram=nullptr;}return true;}
  if(!device||!common[1])return false;if(observerPipe&&accumPipe&&routeHistogram){observeRoutes=true;return true;}
  std::string src=routed_wgsl::kClassifyWgsl;
- const std::string tailAnchor="    if (activeMemberMask == 1u && !tileCanOverlap) {";const auto tail=src.find(tailAnchor);if(tail==std::string::npos)return false;
+ const std::string tailAnchor="    if (activeCount == 0u) {\n";const auto tail=src.find(tailAnchor);if(tail==std::string::npos)return false;
  src.erase(tail);src+="    let ordered = activeMemberMask == 3u && !tileCanOverlap && exitArr[0u] <= enterArr[1u];\n    let key = activeMemberMask | (aabbMask << 4u) | (select(0u, 1u, tileCanOverlap) << 8u) | (select(0u, 1u, ordered) << 9u);\n    atomicAdd(&routeHist[key], 1u);\n}\n";
  if(!replace(src,"var activeMemberMask = 0u;","var activeMemberMask = 0u;\n    var aabbMask = 0u;")||!replace(src,"        if (anyRayHit && uxMax > uxMin) {","        if (anyRayHit) { aabbMask |= (1u << m); }\n        if (anyRayHit && uxMax > uxMin) {")||
     !replace(src,"@group(0) @binding(7) var<storage, read_write> counters: DispatchCounters;","@group(0) @binding(8) var<storage, read_write> routeHist: array<atomic<u32>>;"))return false;

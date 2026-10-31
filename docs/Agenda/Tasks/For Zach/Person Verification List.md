@@ -1807,3 +1807,45 @@ Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729
 
 
 **§6fc review:** No foreground app launched in this corrective pass. Sonnet's retained captures/route costs are independently verified, but full-route authored accuracy, physical movement, appearance, agency and inhabited FPS acceptance remain open. The0.768s native boundary witness is offscreen and proves no visual judgment. [Scope](../../../audits/GPU_RAY_TRANSPORT_6FC_SONNET_REVIEW_AND_ROUTING_BOUNDARIES_2026-10-29.md). Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T11:19:46.729976-07:00.
+
+
+- [ ] **Northern Veil ground/spawn upward-view performance:** Zach reported about12FPS on the main ray branch (2026-10-30); the inhabited speed target remains unmet. Revisit that same camera in a verified Release build and compare Current/routed baseline/single-member candidate at the same viewport/time, recording lane/readout identity and appearance. [Observation and limits](../../../audits/GPU_RAY_TRANSPORT_6FE_COUNCIL_CATCHUP_2026-10-30.md#person-report-about12fps-looking-up-near-groundspawn-on-the-main-ray-branch). Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-30T12:49:57-07:00.
+
+
+- [ ] **Main ray checkout renderer checkbox:** Relaunch `/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/build/earthcall_webgpu`, press backtick, open **Routed Volume Transport**, and compare **Routed transport** ON versus OFF (Current) from the same upward ground/spawn view and window size after the frame-rate display settles. Confirm the requested-mode label changes, OFF produces0routedsets in subsequent renders, and qualifying ON views dispatch routedsets; check image continuity and report FPS in both modes. This build is Debug; shader speed versus Release is not established. Build/source/binary-string verification passed; live clicking and Person acceptance are pending. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-30T12:57:41-07:00.
+
+
+- [x] **Main checkout Debug same-view renderer/FPS comparison performed:** Zach reports Current and routed requested from the exact same view both about 12 FPS, with no perceptible difference (2026-10-30). This completes the clicking/FPS-comparison portion of the preceding checkbox check. Actual routed-set count and appearance remain unconfirmed; Release comparison and inhabited performance acceptance remain open. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-30T13:46:32-07:00.
+
+
+- [x] **Main-checkout second Debug comparison and positive routed dispatch:** Zach reports both Current and routed about5–6FPS, with more than0routedsets when ON. This confirms the ON dispatch portion of the checkbox check for this run; the earlier12FPSrun is separate. Accepted-ray/fallback fraction, appearance and Release/inhabited-performance acceptance remain open. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-30T14:47:06-07:00.
+
+
+- [x] **Main-checkout Release comparison performed:** Zach reports both Current and routed requested about19–20FPS from a similar view; improved over Debug but still below30FPS (2026-10-30). The current build cache and checkbox binary are verified Release. This completes the live Release comparison portion, not exact-view timing, fallback attribution, appearance approval or the inhabited-performance milestone. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-30T14:58:24-07:00.
+
+
+## Northern Veil incremental merge gate — any one view at about28–30FPS
+
+Zach's2026-10-30decision: meeting **any one** of the following is sufficient for this checkpoint's performance acceptance;28or29FPScounts. Use Release, normal native resolution/settings and a settled live reading, and identify actual renderer/pose/extent/time. These are alternatives, **not three mandatory boxes**. Standing accuracy and safe Current fallback remain; full-campaign certification and universal30FPSare not checkpoint prerequisites. The prior near-ground19–20FPSresult has not passed this gate.
+
+- [ ] **Inside the Veil** (Zach's clarified view 1; earlier recorded as "above/high") shows the gain below.
+- [ ] **Diagonal view from the spawn dais** toward the Veils shows the gain below.
+- [ ] **Directly below the Veils looking straight up**, with most of all four in view, shows the gain below.
+
+**Zach's correction (2026-10-30):** “i didnt mean a view high above the veils because thats not where I'm looking to view it from soon, and merging if only that one got a pre-existing 30 fps there would miss the point because we are trying to ship a gain”. The gate therefore measures a **shipped gain**: with routed ON, a qualifying view must reach about 28–30 FPS where Current does not, both read in the same Release build and the same view. Your spawn is the Observation Dais at (0, −0.4, 0), on the ground between the ridge silhouettes, looking diagonally at the Veils. It and the ground directly under the Veils are both outside every curtain admission box. Recorded by Claude Code / Claude Opus 5.5 / session `f3af84cf-bfe3-429d-b417-2d533119f169` / 2026-10-30T16:40-07:00 (PDT).
+
+**Zach's clarification (2026-10-30):** “the three candidate 30 fps views I said are either 1. the "high view from top" I didn't say clearly earlier so misunderstood what i meant was just inside the veil 2. diagonal view from spawn or 3. below the veils so taht most of all four are in view when looking directly up”. View 1 is restored as *inside the Veil*. The gain requirement above still applies to all three views. Recorded by Claude Code / Claude Opus 5.5 / session `f3af84cf-bfe3-429d-b417-2d533119f169` / 2026-10-30T16:55-07:00 (PDT).
+
+Once one alternative qualifies and the bounded change's existing correctness/fallback requirements are satisfied, Zach has authorized the checkpoint merge to default; do not ask for all three or silently reimpose exact30FPS. [Decision](../Specific%20Tasks/Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md#checkpoint-merge-criterion--zachs-october-30-author-decision). Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-30T15:05:55-07:00.
+
+## Phase P1: 4-Cohort Routing (Complete Routing + Stack-15 Fix + Ordered S2)
+
+*Claude Code / Claude Opus 4.6 / session `c0dad6a4-46aa-4671-8d19-b98b7646ac04` / 2026-10-30*
+
+Phase P1 of the Positive End-to-End Ray-Domain Transport Pipeline. Changes compile; GPU correctness verification requires Zach to run the app.
+
+- [ ] **Route Census:** Launch `./build/earthcall_webgpu`, enable route observer (Developer Tools > Volume Diagnostics), and check that the 4-cohort split matches expectations: Empty ~37%, S1 ~31%, S2 ~27%, Fallback ~4.5%. The Fallback percentage dropping from the old ~32% (S2+Fallback combined) to ~4.5% confirms the S2 spatially-ordered disjoint routing works.
+- [ ] **Zero Refused Rays:** Confirm 0 refused rays across all poses (the S2 producer's near-to-far emission must not trigger any FALLBACK reason bits). Check that `rays[id].counts.w` shows no FALLBACK flags for S1 or S2 routed tiles.
+- [ ] **Pixel Parity:** Compare rendered output with route observer OFF (base classifier) vs the previous commit. The Northern Veil should look identical — no missing curtain segments, no ordering artifacts (dark seams between S2 members).
+- [ ] **Regime 1 (Full-Screen Green Poses 0..19 & 51..63):** Must not regress vs the prior commit. The stack[20]→stack[15] fix in S2's `roots()` should recover the +2 to +3.7 ms/frame regression documented in the Firmament's regime decomposition.
+- [ ] **Regime 2 (Open Sky Poses 20..50):** S2 disjoint routing should show measurable improvement as tiles previously sent to Fallback (4-curtain) are now handled by the 2-curtain S2 producer.
