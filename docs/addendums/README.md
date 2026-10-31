@@ -37,3 +37,5 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Unified Brush System and CPU-GPU Micro-Mastery](unified_brush_and_micro_mastery_addendum.md)
 *   [Integrating the Event Bus, Discrete Moments, and Continuous Time](event_bus_and_time_moment_addendum.md)
 *   [The Slow Adapter and the Architecture of Understanding](slow_adapter_and_architectural_interrelations_addendum.md)
+*   [Integrating Authorable GPU Runs Between CPU Cycles and Adaptive Compute Moments](authorable_gpu_runs_and_adaptive_compute_addendum.md)
+*   [Integrating Authorable GPU Runs and Per-Singular Durable Logging](gpu_runs_and_per_singular_logging_addendum.md)
