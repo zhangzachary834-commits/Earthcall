@@ -156,6 +156,33 @@ int main() {
             }
         }
 
+        // More distinct Laws than the open-stream cap must still preserve
+        // every identity's append history when streams are evicted/reopened.
+        // This is an ordinary world scale, not a stress-only scenario.
+        constexpr int kEvictionLawCount = 40;
+        const auto evictionRoot = sandbox.root / "stream-eviction";
+        {
+            DurableLogger evictionLogger("laws", evictionRoot);
+            for (int i = 0; i < kEvictionLawCount; ++i) {
+                const auto id = "eviction-law-" + std::to_string(i);
+                check(evictionLogger.log(id, "LAW", "first"),
+                      "Initial multi-Law append failed");
+            }
+            for (int i = 0; i < kEvictionLawCount; ++i) {
+                const auto id = "eviction-law-" + std::to_string(i);
+                check(evictionLogger.log(id, "LAW", "second"),
+                      "Multi-Law append after stream eviction failed");
+            }
+        }
+        for (int i = 0; i < kEvictionLawCount; ++i) {
+            const auto id = "eviction-law-" + std::to_string(i);
+            const auto entries = readEntries(evictionRoot / "laws" / encoded(id));
+            check(entries.size() == 2 && entries[0].at("message") == "first" &&
+                  entries[1].at("message") == "second" &&
+                  entries[0].at("identity") == id && entries[1].at("identity") == id,
+                  "Stream eviction lost, truncated, reordered or misrouted Law history");
+        }
+
         // An invalid log destination must report failure, never silently pass.
         const auto blocked = sandbox.root / "not-a-directory";
         { std::ofstream out(blocked); out << "sentinel"; }
