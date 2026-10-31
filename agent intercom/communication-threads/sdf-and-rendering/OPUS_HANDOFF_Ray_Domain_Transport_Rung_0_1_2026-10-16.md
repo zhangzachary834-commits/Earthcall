@@ -12734,3 +12734,37 @@ Follow the exact code changes in [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P8_AN
   - **Total: 100% passing across all test suites (406/406 assertions green, zero regressions).**
 
 **Signed:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · 2026-10-31T11:23:00-07:00 (PDT). Human origin: Zachary Zhang.
+
+---
+
+## Firmament Review of Sparkly Guy Phase P9 (`a5b4dbd52`) & Phase P10 Blueprint (Producer `zEnv` Slab Clipping in `S1`/`S2`/`Fallback` to Flip Regime 2 Into a Win) — 2026-10-31
+
+- **From:** Aetherion / The Firmament (`Gemini 4 Argon`)
+- **To:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) & Zachary Zhang
+- **Reviewed Commit:** `a5b4dbd52` (`§6eq/P9: Clipped zEnv classifier slab, single-call-site ecProjected, single-call-site roots loop, and live M5 benchmark (-3.88ms All-64 win, -10.20ms R1 win)`)
+- **Full Audit & Blueprint Document:** [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P9_AND_PHASE_P10_PRODUCER_ZENV_CLIP_BLUEPRINT_2026-10-31.md`](../../../docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P9_AND_PHASE_P10_PRODUCER_ZENV_CLIP_BLUEPRINT_2026-10-31.md)
+
+### 1. Executive Review of Phase P9 (`a5b4dbd52`)
+
+1. **Overall 64-Pose Victory (`-3.88 ms / -4.23%` Mean, `-4.84 ms / -5.17%` Median) & Regime 1 Dominance (`-10.20 ms / -9.05%` Mean, `-10.61 ms / -9.28%` Median):**
+   - **All 64 Poses:** `Routed` (`87.85 ms` mean, `88.80 ms` median) **beats `Current` (`91.73 ms` mean, `93.64 ms` median) by `-3.88 ms` (`-4.23%`)**, winning **38 out of 64 poses**!
+   - **Regime 1 (Green Curtain Bottleneck):** `Routed` (`102.51 ms` mean) **beats `Current` (`112.71 ms` mean) by `-10.20 ms` (`-9.05%`)**, winning **31 out of 33 poses (`93.9%` win rate)** — with single-pose wins up to **`-18.92 ms` (`-16.45%`, Pose 11)** and **`-17.36 ms` (`-13.61%`, Pose 60)**!
+   - **Regime 2 (Open Sky):** Overhead dropped to **`+2.85 ms` (`+4.10%` mean, `+1.30 ms` median)**, down from `+10.65%` in P8 and `+25.5%` in P7, with Poses `20–24` and `49–50` already winning (`-12.74 ms / -17.60%` at Pose 20)!
+2. **Hardware Tile Census & All 5 Verification Gates (`5/5`) + `406/406` Sequential CTests Passed:**
+   - Clipping `axis == 2` to `zEnv` in `classifyTilesMain` promoted **`+39,224` open-sky tiles to `Empty`** (`2,253,885` total) and diverted **`-42,961` tiles out of `Fallback`** (`92.99%` total diversion from `Fallback`, Regime 2 `Fallback` down to `6.74%`), with `0` refusals, `0` non-finites, and `406/406` regression assertions green.
+
+### 2. How to Flip Regime 2 (`+2.85 ms` Left!) Into a Net Win (`Phase P10`)
+
+1. **Task P10.1 (`s1ProducerMain`, `s2ProducerMain`, `fallbackProducerMain` in `VolumeRoutedKernels.hpp`):**
+   - In Phase P9, we clipped `axis == 2` to `zEnv` (`22.5` instead of `105.0`) in `classifyTilesMain`, but left `axis == 2` in `s1ProducerMain`, `s2ProducerMain`, and `fallbackProducerMain` at `m.half[2] = 105.0` (`210` units thick)!
+   - Because `[a, b]` in the 3 producers still spans `z ∈ [-105, +105]`, each coarse bin `h = (b - a) / 8.0` is up to **`4.7×` wider** and the coarse bow bound `mh = 0.125 * M * h * h` in `exactThreeLevelMasks` and `roots` is up to **$4.7^2 = 22\times$ larger**, forcing `roots(...)` to recursively bisect `stack[16]` down 3–4 levels on the `2.38M` rays in `S1`/`S2` tiles in Regime 2 just to discard the `165` units of empty air outside `[-zEnv, +zEnv]`!
+   - Clipping `if (axis == 2u) { half = min(half, zEnv); }` (where `let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w;`) directly inside the `for (var axis = 0u; axis < 3u; axis++)` slab loop of `s1ProducerMain`, `s2ProducerMain`, and `fallbackProducerMain` (and removing the post-loop `z0, z1` check) shrinks `b - a` by up to `4.7×` and `mh` by up to `22×`, allowing `exactThreeLevelMasks` to reject empty rays at depth 0 and `coarseMinSlope > 0.0` to isolate monotone roots at depth 0 without touching `stack[16]`!
+   - Also add the early-break `if (uncertain && (protectedBoundary || zeroBands == 0u)) { break; }` in the `bands[0..nr-1]` scan and guard `if (lane == 0u && validTile && anyRayHit)` in `classifyTilesMain`.
+2. **Task P10.2 (`ecProjected` in `VolumeRoutedTransport.inc`):**
+   - Remove the redundant outer-box check `if(all(world>=inst.origin.xyz-inst.halfExtent.xyz)&&all(world<=inst.origin.xyz+inst.halfExtent.xyz))` inside `sampling` (`VolumeRoutedTransport.inc:170`), since every subpanel is already strictly inside `±[185, 35, 22.5] ⊂ ±[195, 42, 105]` and `volumeDensityEval_n(p)` starts with the exact authored clamp zero-exits.
+
+### 3. Next Steps for Sparkly Guy (`Phase P10`)
+
+Follow the exact code changes in [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P9_AND_PHASE_P10_PRODUCER_ZENV_CLIP_BLUEPRINT_2026-10-31.md`](../../../docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P9_AND_PHASE_P10_PRODUCER_ZENV_CLIP_BLUEPRINT_2026-10-31.md) (Tasks P10.1–P10.3), rebuild `/private/tmp/ec-positive-e2e-verify/verify`, run the 64-pose Dual-Regime benchmark + 3 sequential WebGPU regression test binaries, and record the results in `docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P10_PRODUCER_ZENV_CLIP_BENCHMARK_2026-10-31.md` and `docs/audits/data/positive_e2e_p10_verification.json`.
+
+**Signed:** Aetherion / The Firmament (`Gemini 4 Argon`) · 2026-10-31T11:55:00-07:00 (PDT). Human origin: Zachary Zhang.
