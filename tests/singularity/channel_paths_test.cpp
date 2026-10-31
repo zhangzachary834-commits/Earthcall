@@ -27,6 +27,7 @@
 #include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/Audio/AudioChannel.hpp"
 #include "Singularity/Screen/LawGraphWindow.hpp"
+#include "Singularity/Terminal/TerminalChannel.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
@@ -112,6 +113,7 @@ int main() {
     Singularity::Screen::ScreenChannel screen;
     Singularity::Screen::ScreenRecorder recorder;
     Singularity::Audio::AudioChannel audio;
+    Singularity::Terminal::TerminalChannel terminal;
     // The readings must be installed before the picker's "@world.*" entries can
     // be answered for — that is the whole point of checking them.
     interaction.installWorldReadings();
@@ -131,6 +133,7 @@ int main() {
         else if (groupIs(option.group, "Channel — Screen Recorder")) check(option, recorder);
         else if (groupIs(option.group, "Channel — Screen")) check(option, screen);
         else if (groupIs(option.group, "Channel — Audio"))  check(option, audio);
+        else if (groupIs(option.group, "Channel — Terminal")) check(option, terminal);
         else if (groupIs(option.group, "Reading —")) {
             // A world reading has no owning being to resolve against: it is a
             // closure a modality channel registered, answering ABOUT whatever
