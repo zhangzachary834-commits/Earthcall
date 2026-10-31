@@ -59,11 +59,7 @@ int main() {
         {"zones", nlohmann::json::array({{{"identifier", "Zone1"}, {"owner", "OldName"}}})}
     };
     std::string ecformPath = (env.tempDir / "worlds" / "world1.ecform").string();
-    std::string written = SaveSystem::writeSaveData(worldData, "world1", SaveSystem::SaveType::WORLD);
-    if (written != ecformPath) {
-        std::error_code ec;
-        std::filesystem::rename(written, ecformPath, ec);
-    }
+    SaveSystem::writeSaveData(worldData, "world1", SaveSystem::SaveType::WORLD);
 
     assert(std::filesystem::exists(ecformPath));
     assert(isBinaryMsgpack(ecformPath));
