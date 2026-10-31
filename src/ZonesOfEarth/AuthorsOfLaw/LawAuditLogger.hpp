@@ -3,6 +3,7 @@
 #include "Singularity/Core/Logger.hpp"
 #include "Singularity/Core/Logging/DurableLogger.hpp"
 #include <atomic>
+#include <cstdint>
 #include <iostream>
 
 namespace ECA {
@@ -46,12 +47,25 @@ public:
                    const std::string& message,
                    const nlohmann::json& details = nlohmann::json::object()) {
         const bool ok = _durableLogger.log(lawIdentity, type, message, details);
-        if (!ok && !_reportedDurableFailure.exchange(true)) {
-            std::cerr << "[LawAuditLogger] per-Law history append unconfirmed "
-                         "or budget exhausted; further warnings suppressed (first Law: "
-                      << lawIdentity << ")\n";
+        if (!ok) {
+            // Count every unconfirmed attempt, including budget exhaustion.
+            // Report the first and exponentially spaced later failures:
+            // observability without flooding the simulation's hot path.
+            const auto count = _unconfirmedDurableAppends.fetch_add(
+                1, std::memory_order_relaxed) + 1;
+            if (count == 1 || (count >= 1024 && (count & (count - 1)) == 0)) {
+                std::cerr << "[LawAuditLogger] per-Law history append unconfirmed "
+                             "or budget exhausted (cumulative attempts: "
+                          << count << "; latest Law: " << lawIdentity << ")\n";
+            }
         }
         return ok;
+    }
+
+    // Counts unsuccessful confirmations, not necessarily lost records.
+    // A successful flush is not a stable-storage (fsync) guarantee.
+    std::uint64_t unconfirmedDurableAppendCount() const noexcept {
+        return _unconfirmedDurableAppends.load(std::memory_order_relaxed);
     }
 
     void shutdown() {
@@ -65,7 +79,7 @@ public:
 private:
     LawAuditLogger() : _durableLogger("laws") {}
     Logging::DurableLogger _durableLogger;
-    std::atomic<bool> _reportedDurableFailure{false};
+    std::atomic<std::uint64_t> _unconfirmedDurableAppends{0};
 };
 
 } // namespace ECA

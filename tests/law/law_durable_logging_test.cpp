@@ -285,6 +285,7 @@ int main() {
         }
         fs::resize_file(noAppendPath, DurableLogger::kMaxFileBytes);
         refusalLaw.setLawIdentifier(noAppendId);
+        const auto unconfirmedBefore = lawLogger.unconfirmedDurableAppendCount();
         // Prime the first failure warning outside the timed region.
         check(refusalLaw.applyTo(refusalTarget) == Law::ApplicationResult::ConditionsFailed,
               "Capped-file control did not exercise the same Law refusal");
@@ -294,6 +295,9 @@ int main() {
                   "Capped-file control unexpectedly changed Law result");
         }
         const auto noAppendStop = std::chrono::steady_clock::now();
+        check(lawLogger.unconfirmedDurableAppendCount() ==
+                  unconfirmedBefore + kRealRefusals + 1,
+              "Capped Law refusals did not increment unconfirmed-append telemetry");
         const double noAppendMicros = std::chrono::duration<double, std::micro>(
             noAppendStop - noAppendStart).count() / kRealRefusals;
         check(fs::file_size(noAppendPath) == DurableLogger::kMaxFileBytes,
