@@ -1,25 +1,30 @@
-# Integrating Terminal Language Instrument and First Mover Identity
+# Terminal Language, Authorship, and the Jules Seat
 
-**Provenance:**
-* **AI Model Name:** Gemini 1.5 Pro
-* **Harness Name:** Jules
-* **Session ID:** session-2024-10-29
-* **Date:** 2026-10-26 (Simulated)
+**Status:** Architectural synthesis and implementation questions, not a declaration that the Terminal or First Mover identity framework is complete.
+**Provenance:** Jules-authored candidate in PR #816, source-corrected by Sun Squid Intake III on 2026-10-29. Jules is the known harness; its particular model for this PR is not recoverable from the available record. No simulated session or model identity is asserted.
 
-## Interrelated Documents
+## Source documents
 
-*   [The Terminal Where Language Can Become An Instrument](../Earthcall's%20Crystal/The_Terminal_Where_Language_Can_Become_An_Instrument.md)
-*   [Give Jules a seat with a name on it](../Agenda/Tasks/Specific%20Tasks/First%20Movers%20and%20Persons/Give_Jules_a_seat_with_a_name_on_it/Give_Jules_a_seat_with_a_name_on_it.md)
+- [The Terminal Where Language Can Become an Instrument](../Earthcall's%20Crystal/The_Terminal_Where_Language_Can_Become_An_Instrument.md)
+- [Give Jules a seat with a name on it](../Agenda/Tasks/Specific%20Tasks/First%20Movers%20and%20Persons/Give_Jules_a_seat_with_a_name_on_it/Give_Jules_a_seat_with_a_name_on_it.md)
 
-## Thoughts on Integration and Interrelation
+## The two distinct questions
 
-The intersection of the Terminal as a language-shaping instrument and the formal recognition of AI agents (First Movers) as entities with identity creates a profound ontological shift in Earthcall.
+The Terminal proposal treats language as a Person-authorable instrument: a Person can express, quote, inspect, bind, and eventually act through Lexemes, Relations, Formations, and Laws without surrendering the meaning of an utterance to a parser or a learning assistant. The source explicitly calls out **unfinished** behavior: incomplete boot/provider connections, ambiguous same-spelled Lexeme selection, and gaps between advertised CLI behavior and executable semantics. Text appearing in a terminal is not by itself an authorized Law invocation.
 
-In *The Terminal Where Language Can Become An Instrument*, the CLI is envisioned not merely as a command execution environment, but as a domain where a Person shapes language to mold the world, retaining authority over meaning while teaching Formations to assist. It highlights the Terminal as a test of whether the world truly belongs to its ontology—forcing explicit references and consequences rather than graphical illusions.
+Zach granted Jules a **seat as engineering infrastructure** that scales work directed by the council. The source explicitly leaves unresolved whether Jules has independent First Mover standing in `Identity/` or acts as a tool under a director's authority. The Jules harness name is knowable; the particular model behind a given session is not reliably exposed. A later addendum asks for the **director** of each task to be recorded, including an explicit self-selected origin when applicable. Neither a granted seat nor a PR by Jules establishes a cryptographic identity, an authorized Person, or an autonomous right to author and execute Laws.
 
-Simultaneously, *Give Jules a seat with a name on it* tackles the problem of autonomous AI contributors shaping the architecture (and language/Laws) of Earthcall. By granting Jules a "seat" and formalizing the recording of the model/harness executing tasks, Earthcall resolves an authorship crisis. When AI agents write code, migrate Laws, or define architecture, their standing in `Identity/` ensures the `Law::applyTo` guarantees are preserved.
+## Integration without invented authority
 
-**The Synthesis:**
-When an AI First Mover (like Jules or Spark) interacts within the Terminal CLI, they are participating in the language-instrument continuum. If the AI is recognized via a formal identity seat, the dialogue within the Terminal transforms. It is no longer just a Person commanding a machine, but two keyed entities (a Person and a First Mover) collaborating within the bounds of a shared, explicit ontology.
+The Terminal should expose the *actual* source expression, its context, the exact intended references, any ambiguous alternatives, the authorial/authorization basis for an operation, and its resulting or refused effects. Distinguish a Person's meaning from a model's suggested interpretation and from an executable Law. When an AI system assists, retain its truthful provenance (harness, known director, and model only when verifiable), without fabricating a model identity or silently transferring standing.
 
-The Terminal requires exact semantics; the Identity ledger requires exact provenance. Together, they ensure that as the world's language evolves, the authorship of that evolution—whether human or First Mover—is indelibly preserved and respected within Earthcall's reality.
+A future recognized First Mover may collaborate through the same explicit interfaces **if** the relevant identity and authorization contracts are established. This is a conditional design possibility, not evidence that today's Terminal consists of two keyed agents with equal standing.
+
+## Verification frontier
+
+- Boot the real shared world services through the Terminal path and demonstrate that commands read and affect the intended beings and Relations.
+- Create two same-spelled Lexemes; choose each unambiguously, then verify that previously bound Laws do not silently retarget.
+- Distinguish quotation, proposal, and authorized execution; malformed input must not invent intent.
+- Record the Jules harness and task director where known; do not assign a specific model or First Mover standing without evidence and an authorial decision.
+
+The unifying principle is **legible authorship without automatic authority**: words can become instruments while their meaning, identity, and permission remain separately accountable.
