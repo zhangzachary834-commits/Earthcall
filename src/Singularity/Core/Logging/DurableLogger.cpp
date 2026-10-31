@@ -81,6 +81,10 @@ bool DurableLogger::log(const std::string& identity, const std::string& type,
             _streams.erase(it);
             return false;
         }
+        // A stream that has reached its exact file cap cannot accept another
+        // record. Reject before timestamp creation and JSON serialization;
+        // preserve all existing bytes and report the unconfirmed append.
+        if (it->second.bytes >= kMaxFileBytes) return false;
         nlohmann::json entry = {
             {"timestamp", currentTimestamp()},
             {"identity", identity},
