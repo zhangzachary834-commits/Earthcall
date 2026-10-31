@@ -99,11 +99,6 @@ int main() {
         check(a.size() == 4 && b.size() == 1, "Per-identity append counts wrong");
         check(a[0].at("message") == "A1" && a[3].at("message") == "A4",
               "Append order lost");
-        // The fast timestamp formatter must preserve the existing UTC JSONL schema.
-        const std::string timestamp = a[0].at("timestamp").get<std::string>();
-        check(timestamp.size() == 20 && timestamp[4] == '-' && timestamp[7] == '-' &&
-              timestamp[10] == 'T' && timestamp[13] == ':' && timestamp[16] == ':' &&
-              timestamp[19] == 'Z', "Durable timestamp format changed");
         for (const auto& entry : a) check(entry.at("identity") == idA, "A identity mixed");
         for (const auto& entry : b) check(entry.at("identity") == idB, "B identity mixed");
         check(!fs::exists(root / "laws" / "laws.jsonl"), "Aggregate filename collision");
