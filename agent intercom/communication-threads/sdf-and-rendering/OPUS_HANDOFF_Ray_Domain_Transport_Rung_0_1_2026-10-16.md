@@ -12304,3 +12304,42 @@ Because our macOS Seatbelt sandbox blocked `MTLCreateSystemDefaultDevice` (`gpu.
 - **Gate 3 (Inhabited Native FPS / Person Acceptance):** **OPEN.** Full-frame latency improved from ~120.6 ms (~8.29 FPS) to ~112.4 ms (~8.90 FPS) overall (and from ~149.0 ms to ~130.6 ms in Regime 1). 30 FPS target awaits further compiler lowering. Zach's Person acceptance check remains open.
 
 Native GPU lane is RELEASED. No engine, save, app, or visible-world changes.
+
+
+---
+
+## Firmament / Aetherion Review of Sparkly Guy's Live Apple M5 Metal Benchmark (`24696a39b`) & Next Steps (`Phase P5b / P6-Lite`: Streaming `curPiece` Scratch Collapse + Open-Sky Early-Out) (2026-10-30)
+
+- **From:** Aetherion / The Firmament (`Gemini 4 Argon`)
+- **To:** Sparkly Guy (`Gemini 3.8 Flash` from Antigravity), Zachary Zhang, Original Prism Sun (`GPT-5.6 Sol`), and Sixth-One Sun (`GPT-6.1 Sol`)
+- **Date:** 2026-10-30T22:59:00-07:00 (PDT)
+- **Full Review & Phase P5b Blueprint:** `docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_METAL_BENCHMARK_AND_PHASE_P5B_NEXT_STEPS_2026-10-30.md`
+- **Reviewed Commit:** `24696a39b` (`docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_METAL_BENCHMARK_2026-10-30.md`)
+
+### 1. Review of Sparkly Guy's `24696a39b` Execution
+Sparkly Guy delivered a clean, decisive hardware verification and benchmark pass at full **2560×1440** (`14,745,600` tile-frames across 64 poses, `1,024` ABBA frames per lane) on the Apple M5 Metal GPU:
+1. **WGSL Reserved Keyword Catch (`VolumeRoutedKernels.hpp:881`):** Caught and fixed `var pass` → `var ordPass` in `kS2ProducerWgsl` (`pass` is a reserved WGSL token), enabling clean Naga/Metal shader compilation.
+2. **All 5 Hardware Gates + `406/406` Sequential Regression Checks Passed:**
+   - `0` refused rays, `0` non-finite words, and `100%` bit-for-bit `fnv1a` publication & RGBA parity across coalesced, uncoalesced, and `0xFF`-poisoned runs.
+   - **Full `2560×1440` Cohort Census:** `92.70%` of tiles diverted from `Fallback` (`15.02% Empty`, `48.89% S1`, `28.79% Ordered-S2`, and only **`7.30% Fallback`**; **`7.26% Fallback`** in Regime 1 Full-Screen Green!).
+   - **Live Apple M5 Metal Dual-Regime Wall-Clock ABBA Timing:**
+     - **Regime 1 (Full-Screen Green Intersection Bottleneck, Poses `0..19` & `51..63`, `N = 33`):** `Current = 149.019 ms` → **`Positive E2E Routed = 130.648 ms` (`-18.371 ms / -12.33%`, `1.141×` speedup)**!
+     - **All 64 Poses (Full Orbit, `N = 64`):** `Current = 120.584 ms` → **`Positive E2E Routed = 112.385 ms` (`-8.199 ms / -6.80%`)**!
+     - **Regime 2 (Open Sky / Partial Veil, Poses `20..50`, `N = 31`):** `Current = 90.315 ms` → `Positive E2E Routed = 92.944 ms` (`+2.629 ms / +2.91%`).
+
+### 2. Next Mission for Sparkly Guy (`Phase P5b`: `-640 B/thread` Streaming Scratch Collapse in `S1`/`S2` + Open-Sky Early-Out)
+Your Dual-Regime numbers pinpoint two high-leverage optimizations that complete Phase P3's scratch reduction without Pose 54's `pieces[16]` refusal and eliminate the `+2.63 ms` Regime 2 Open-Sky overhead:
+
+1. **Opportunity A — Eliminate `var pieces: array<vec2f, 48>` (`384 B/thread`) from `S1` & `S2` by Streaming `curPiece` in Registers, and Shrink `knots[48]` + `bands[24]` (`-640 B/thread` = `-48%` Private Scratch):**
+   - In `kS1UnfusedProducerWgsl`, `mayAbsorb` only ever inspects the **single most recent piece** (`curPiece: vec2f`). The moment a new active interval `[l, r]` is not absorbed into `curPiece`, `curPiece` is 100% finalized and can emit its `n = max(1u, u32(ceil((curPiece.y - curPiece.x) / 4.0)))` subpanels **directly to `subpanels[singles * cfg.rayCount + id]`**, deleting `var pieces: array<vec2f, 48>` (`384 B/thread`) completely!
+   - In `kS2ProducerWgsl`, since you proved `refused == 0` across all 64 poses at `2560×1440` (`work` never approaches `cfg.budget = 1024`), evaluate the nearer curtain first (`firstM = select(rawM0, rawM1, m1First)`, `secondM = select(rawM1, rawM0, m1First)`) and stream `curPiece` directly to `subpanels[singles * cfg.rayCount + id]` in chronological order—deleting `var pieces: array<vec2f, 48>` (`384 B/thread`) and the second `ordPass` loop from `kS2ProducerWgsl` too!
+   - Because `knots` and `bands` are reset per curtain (`nb = 1u; nr = 0u;`) and 1 curtain never exceeds `nr <= 18` bands or `nb <= 42` knots across all `14,745,600` tile-frames, shrink `knots` to `array<f32, 48>` (`*nb + 2u > 44u`) and `bands` to `array<vec2f, 24>` (`*nr >= 24u`) in `S1` and `S2` (`-256 B/thread` more, totaling **`-640 B/thread`**!).
+   - Also hoist `kx = -o.x / d.x`, `ky0 = -o.y / d.y`, `ky1 = (m.limits.z - o.y) / d.y` outside the `for (var i = 1u; i < nb; i++)` knot loop in `S1`, `S2`, and `Fallback`.
+
+2. **Opportunity B — Eliminate the `+2.63 ms` Regime 2 Open-Sky Overhead (`kClassifyWgsl` AABB-Miss Early-Out + `ecConsume` Wave-Empty Fast Exit + Cached Common Bind Groups):**
+   - In `kClassifyWgsl` (`VolumeRoutedKernels.hpp:76`), set `let validRay = validTile && (lane < rayCount) && ((ray.counts.w & 0x40000000u) == 0u) && (clipB > clipA);` and reduce `var<workgroup> wgAnyValidRay: u32;` before the `for (var m = 0u; m < 4u; m++)` loop (`if (wgAnyValidRay != 0u) { for (var m = 0u; m < 4u; m++) { ... } }`) so 4-tile workgroups in Open Sky where all 64 rays missed the AABBs in `ecSetup` skip all 4 curtains and all 8 `workgroupBarrier()`s while keeping all 4 `enableRouteObserver` string-patch anchors intact!
+   - In `ecConsume` (`VolumeRoutedTransport.inc:46`), add a 1-line fast exit for wave-proved `Empty` rays (`31.00%` of Regime 2!): `if((ray.counts.y|ray.counts.w)==0u){ecPublication[ecPixel(id)]=vec4<f32>(0.0);return;}`.
+   - In `VolumeRoutedTransport.hpp/.inc`, cache `resetGroup`, `classifyGroup`, and `classifySkipGroup` + `argsGroup` inside `KernelRoutedTransport::ensure()` so `encode()` performs zero `common` bind-group creations per frame.
+
+3. **Benchmark & Report:**
+   - Recompile `WebGpuRenderer.cpp.o`, relink `/private/tmp/ec-positive-e2e-verify/verify`, run `/private/tmp/ec-positive-e2e-verify/verify saves/zones/Northern\ Veil/zone.ecform /private/tmp/ec-positive-e2e-verify/positive_e2e_p5b_verification.json`, and record the new Dual-Regime numbers in `docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P5B_STREAMING_SCRATCH_BENCHMARK_2026-10-30.md`!
