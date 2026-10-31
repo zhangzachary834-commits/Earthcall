@@ -512,21 +512,29 @@ Law::ApplicationResult Law::applyToImpl(
         result = ApplicationResult::AuthorityDenied;
     } else if (!conditionsAlreadySatisfied && !conditionsSatisfied(target)) {
         result = ApplicationResult::ConditionsFailed;
+        const std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
+                                    target.getIdentifier() + "\" - CONDITIONS FAILED";
+        const nlohmann::json details = {
+            {"lawId", getIdentifier()},
+            {"targetId", target.getIdentifier()},
+            {"result", "ConditionsFailed"}
+        };
+        ECA::LawAuditLogger::instance().logForLaw(getIdentifier(), "LAW", message, details);
         if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
-            ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
-                {"lawId", getIdentifier()},
-                {"targetId", target.getIdentifier()},
-                {"result", "ConditionsFailed"}
-            });
+            ECA::LawAuditLogger::instance().log("LAW", message, details);
         }
     } else if (_actions.empty()) {
         result = ApplicationResult::NoAction;
+        const std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
+                                    target.getIdentifier() + "\" - NO ACTIONS";
+        const nlohmann::json details = {
+            {"lawId", getIdentifier()},
+            {"targetId", target.getIdentifier()},
+            {"result", "NoAction"}
+        };
+        ECA::LawAuditLogger::instance().logForLaw(getIdentifier(), "LAW", message, details);
         if (ECA::LawAuditLogger::instance().level() == ECA::LawAuditLogger::Level::Verbose) {
-            ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - NO ACTIONS", {
-                {"lawId", getIdentifier()},
-                {"targetId", target.getIdentifier()},
-                {"result", "NoAction"}
-            });
+            ECA::LawAuditLogger::instance().log("LAW", message, details);
         }
     } else {
         ECA::Event event;
@@ -594,7 +602,7 @@ Law::ApplicationResult Law::applyToImpl(
         // WhileTrue that wrote nothing is a level, not an event. Logging it
         // every tick is the disk stall after loading a world of servos.
         const bool skipAudit = _activation == Activation::WhileTrue && !wrote;
-        if (!skipAudit && ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+        if (!skipAudit) {
             std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
                                   target.getIdentifier() + "\" - " +
                                   (trace.fired() ? (wrote ? "SUCCESS" : "NO EFFECT") : "NO NODES");
@@ -614,7 +622,17 @@ Law::ApplicationResult Law::applyToImpl(
                                          ? std::string(ActionNode::reasonName(node.reason))
                                          : node.note)}});
             }
-            ECA::LawAuditLogger::instance().log("LAW", message, {
+            if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+                // Preserve the existing aggregate JSONL schema, including node trace.
+                ECA::LawAuditLogger::instance().log("LAW", message, {
+                    {"lawId", getIdentifier()},
+                    {"targetId", target.getIdentifier()},
+                    {"result", "Applied"},
+                    {"changed", wrote},
+                    {"nodes", nodesJson}
+                });
+            }
+            ECA::LawAuditLogger::instance().logForLaw(getIdentifier(), "LAW", message, {
                 {"lawId", getIdentifier()},
                 {"targetId", target.getIdentifier()},
                 {"result", "Applied"},
@@ -2049,6 +2067,9 @@ void LawManager::connectToEventBus() {
                 {"objectId", objectId},
                 {"timestamp", e.timestamp().toJson()}
             });
+            // Events are broadcast to all laws, not specifically owned by a single law unless we are inside applyTo.
+            // In applyTo we already added logForLaw.
+            // This is the global event subscription, so it doesn't belong to one law.
         }
 
         // A being that has just left the world is released from every law
@@ -2168,16 +2189,17 @@ void LawManager::syncProphetic() {
     // satisfying range is exactly the thing an author stares at wondering why
     // their law never fires, and the engine already knows.
     for (const auto& finding : _prophetic.unreachable()) {
+        const std::string message = "Law \"" + finding.lawId +
+            "\" has a condition on " + finding.path + " that cannot be satisfied: " + finding.why;
+        const nlohmann::json details = {
+            {"lawId", finding.lawId},
+            {"path", finding.path},
+            {"why", finding.why},
+            {"selfImpossible", finding.selfImpossible}
+        };
+        ECA::LawAuditLogger::instance().logForLaw(finding.lawId, "LAW", message, details);
         if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
-            ECA::LawAuditLogger::instance().log(
-                "LAW",
-                std::string(finding.selfImpossible ? "Law \"" : "Law \"") + finding.lawId +
-                    "\" has a condition on " + finding.path + " that cannot be satisfied: " +
-                    finding.why,
-                {{"lawId", finding.lawId},
-                 {"path", finding.path},
-                 {"why", finding.why},
-                 {"selfImpossible", finding.selfImpossible}});
+            ECA::LawAuditLogger::instance().log("LAW", message, details);
         }
     }
 }

@@ -17,7 +17,7 @@ concurrency:
 jobs:
   focused-cpu-tests:
     name: Focused CPU tests (macOS)
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 45
     # The focused witnesses: ONE test per line, read by both the build step and
     # the ctest step. Add a test by adding one line here; never a second list.
@@ -93,6 +93,7 @@ jobs:
         first_mover_test
         first_mover_tool_test
         law_file_tree_fossil_test
+        law_durable_logging_test
         earthcall_api_test
         rete_state_ptr_index_test
         relation_type_lexeme_lifetime_test
@@ -184,7 +185,7 @@ jobs:
 
   sdf-range-proxy-verification:
     name: SDF range-proxy verification (macOS)
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 35
 
     steps:
@@ -320,7 +321,7 @@ jobs:
 
   sdf-range-perf:
     name: SDF authored-Perlin A/B (macOS Release)
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 25
     needs: sdf-range-proxy-verification
 
@@ -372,7 +373,7 @@ jobs:
 
   slow-adapter-independent-clock:
     name: Slow Adapter independent clock (macOS)
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 25
 
     steps:
