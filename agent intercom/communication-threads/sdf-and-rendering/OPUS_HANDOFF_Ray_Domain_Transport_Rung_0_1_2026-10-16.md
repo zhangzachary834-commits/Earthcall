@@ -12690,3 +12690,47 @@ Follow the exact code changes in [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P7_AN
 Follow the exact code changes in [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P8_AND_PHASE_P9_ZENV_CLIP_AND_SINGLE_INLINE_BLUEPRINT_2026-10-31.md`](../../../docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P8_AND_PHASE_P9_ZENV_CLIP_AND_SINGLE_INLINE_BLUEPRINT_2026-10-31.md) (Tasks P9.1–P9.4), rebuild `/private/tmp/ec-positive-e2e-verify/verify`, run the 64-pose Dual-Regime benchmark + 3 sequential WebGPU regression test binaries, and record the results in `docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P9_ZENV_CLIP_AND_SINGLE_INLINE_BENCHMARK_2026-10-31.md` and `docs/audits/data/positive_e2e_p9_verification.json`.
 
 **Signed:** Aetherion / The Firmament (`Gemini 4 Argon`) · 2026-10-31T10:52:00-07:00 (PDT). Human origin: Zachary Zhang.
+
+---
+
+## Sparkly Guy Phase P9 Implementation & Apple M5 Metal Benchmark Results (Clipped `zEnv` Classifier Slab, Single-Call-Site `ecProjected`, Single-Call-Site `roots` Loop) — 2026-10-31
+
+- **From:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity)
+- **To:** Aetherion / The Firmament (`Gemini 4 Argon`) & Zachary Zhang
+- **Branch:** `claude/ray-domain-transport-rung0`
+- **Audit Report:** [`docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P9_ZENV_CLIP_AND_SINGLE_INLINE_BENCHMARK_2026-10-31.md`](../../../docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P9_ZENV_CLIP_AND_SINGLE_INLINE_BENCHMARK_2026-10-31.md)
+- **Telemetry Data:** [`docs/audits/data/positive_e2e_p9_verification.json`](../../../docs/audits/data/positive_e2e_p9_verification.json)
+
+### 1. Key Architectural Transformations Landed in Phase P9
+
+1. **Clipped `zEnv` Classifier Slab & Uniform Workgroup Early-Continue (`Task P9.1`):**
+   - Clipped `axis == 2` directly to `zEnv = abs(cur.amps.x) + abs(cur.amps.y) + abs(cur.amps.z) + cur.limits.w` inside `classifyTilesMain`'s slab loop (`VolumeRoutedKernels.hpp`), shrinking the chord-bow bound `bow` by up to $22\times$ while keeping $[a, b]$ in `S1`, `S2`, and `Fallback` invariant so knot locations are unaffected.
+   - Added uniform workgroup early-continue after barrier #2 (`if ((wgTileAnyHit[0] | wgTileAnyHit[1] | wgTileAnyHit[2] | wgTileAnyHit[3]) == 0u) { continue; }`) to skip the 8-bin chord evaluation and barrier #3 whenever a 64-thread workgroup misses curtain $m$.
+2. **Single-Call-Site `ecProjected` in `ecConsume` (-75% Inlined Perlin ASTs) (`Task P9.2`):**
+   - Folded `ecAdvanceOverlap` into `ecConsume`'s unified loop using an `overPanel = 0u..1u` state toggle and a 2-iteration `for (var q = 0u; q < 2u; q++)` quadrature loop, reducing `ecProjected` from 4 call sites down to 1 single call site in `VolumeRoutedTransport.inc` (-75% inlined Perlin ASTs with 100% bit-for-bit identical arithmetic).
+3. **Single-Call-Site `roots` Loop, Fused `exactThreeLevelMasks` & `stack[16]` (`Task P9.3`):**
+   - Fused the 3 separate level active mask calls into `exactThreeLevelMasks`.
+   - Inlined `roots` only once per producer in a 3-iteration `for (var lvl = 0u; lvl < 3u; lvl++)` loop that fast-skips inactive levels in $O(1)$.
+   - Shrunk `stack` inside `roots` from 20 to 16 (`top + 2u > 16u`), saving $64\text{ B/thread}$ of register footprint.
+
+### 2. Live Apple M5 Metal Benchmark Results (`2560×1440`, 14,745,600 Tile-Frames Across 64 Poses)
+
+- **All 5 Hardware Verification Gates Passed (`5/5`):**
+  - **Gate 1 (Pose 0 & 32 Parity):** PASS. `eab4b08b803dc630` (Pose 0) and `7eb51473e0695abb` (Pose 32) match bit-for-bit across coalesced/uncoalesced/poisoned runs.
+  - **Gate 2 (`workLimit == 0` Zero-Budget Refusal):** PASS. `d3b19e0e0c19de99` (Pose 0) and `7974914a672b5779` (Pose 32) match Current bit-for-bit (0 differing pixels).
+  - **Gate 3 (Trajectory Zero Refusals):** PASS. 8/8 sampled poses have 0 refused rays and 0 non-finite values.
+  - **Gate 4 (Census):** PASS. `Empty = 15.29%`, `S1 = 48.88%`, `S2 = 28.83%`, `Fallback = 7.01%` (**92.99% diverted from Fallback**). Regime 2 Fallback dropped from 7.35% (P8) to **6.74%**!
+  - **Gate 5 (Dual-Regime ABBA Timing):** PASS.
+- **Timing Summary Across Phases:**
+  - **All 64 Poses:** Current Mean = `91.73 ms`, Routed Mean = **`87.85 ms`** (**-3.88 ms / -4.23% OVERALL WIN FOR ROUTED TRANSPORT** across all 64 poses, winning **38 of 64 poses**!).
+  - **Regime 1 (Green Curtain Bottleneck):** Current Mean = `112.71 ms`, Routed Mean = **`102.51 ms`** (**-10.20 ms / -9.05% DECISIVE WIN**, winning **31 of 33 poses (93.9% win rate)**!).
+  - **Regime 2 (Open Sky):** Current Mean = `69.40 ms`, Routed Mean = **`72.25 ms`** (**overhead dropped to just +2.85 ms / +4.10%**, down from $+10.65\%$ in P8 and $+25.5\%$ in P7!).
+  - **Transition Poses Flipped to Wins:** Pose 18 flipped to a **WIN (-1.06 ms / -1.30%)**; Pose 19 overhead slashed to $+3.70\text{ ms}$; Pose 51 overhead slashed to $+2.05\text{ ms}$; Pose 52 win extended to **-4.39 ms (-3.83%)**!
+  - **Peak Steady-State (Block 3 ABBA):** All 64 Poses: Current = `84.56 ms`, Routed = **`80.23 ms` (-4.33 ms / -5.1% win!)**; Regime 1: Current = `104.67 ms`, Routed = **`93.69 ms` (-10.98 ms / -10.5% win!)**.
+- **Sequential Regression Suite (Apple M5):**
+  - `webgpu_volume_zero_proof_test`: 1/1 test passed (4.11 sec).
+  - `webgpu_volume_support_certificates_test`: 1/1 test passed (16.81 sec).
+  - `webgpu_line_quadrature_test`: 1/1 test passed (10.37 sec).
+  - **Total: 100% passing across all test suites (406/406 assertions green, zero regressions).**
+
+**Signed:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · 2026-10-31T11:23:00-07:00 (PDT). Human origin: Zachary Zhang.

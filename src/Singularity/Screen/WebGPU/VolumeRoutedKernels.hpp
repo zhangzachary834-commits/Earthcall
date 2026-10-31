@@ -114,12 +114,14 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
         var a = clipA;
         var b = clipB;
         var hit = rayActive;
+        let zEnv = abs(cur.amps.x) + abs(cur.amps.y) + abs(cur.amps.z) + cur.limits.w;
 
         if (rayActive) {
             for (var axis = 0; axis < 3; axis++) {
                 var half = cur.half[axis];
                 if (axis == 0) { half = min(half, cur.limits.x); }
                 if (axis == 1) { half = min(half, cur.limits.y); }
+                if (axis == 2) { half = min(half, zEnv); }
                 let d = rd[axis];
                 let o = oRel[axis];
                 if (d == 0.0) {
@@ -130,17 +132,6 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
                     a = max(a, min(q0, q1));
                     b = min(b, max(q0, q1));
                 }
-            }
-        }
-
-        if (hit && (b > a)) {
-            let oz = oRel.z;
-            let dz = rd.z;
-            let zEnv = abs(cur.amps.x) + abs(cur.amps.y) + abs(cur.amps.z) + cur.limits.w + cur.curv.y;
-            let z0 = oz + a * dz;
-            let z1 = oz + b * dz;
-            if (min(z0, z1) > zEnv || max(z0, z1) < -zEnv) {
-                hit = false;
             }
         }
 
@@ -180,6 +171,10 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
             }
         }
         workgroupBarrier();
+
+        if ((wgTileAnyHit[0] | wgTileAnyHit[1] | wgTileAnyHit[2] | wgTileAnyHit[3]) == 0u) {
+            continue;
+        }
 
         let anyRayHit = wgTileAnyHit[localTile] != 0u;
         let uxMin = wgTileUxMin[localTile];
@@ -230,16 +225,9 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
                 }
             }
         } else if (anyRayHit && rHit) {
-            let oz = oRel.z;
-            let dz = rd.z;
-            let zEnv = abs(cur.amps.x) + abs(cur.amps.y) + abs(cur.amps.z) + cur.limits.w + cur.curv.y;
-            let z0 = oz + a * dz;
-            let z1 = oz + b * dz;
-            if (min(z0, z1) <= zEnv && max(z0, z1) >= -zEnv) {
-                myState = 1u;
-                myEnter = a;
-                myExit = b;
-            }
+            myState = 1u;
+            myEnter = a;
+            myExit = b;
         }
 
         wgEnter[lid] = myEnter;
@@ -431,7 +419,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
  levelActiveMask: u32) {
  let M = m.curv.x * d.x * d.x * 1.00002;
  let err = m.curv.y;
- var stack: array<vec4f, 20>; var depthBits = vec3u(0u); var top = 0u;
+ var stack: array<vec4f, 16>; var depthBits = vec3u(0u); var top = 0u;
  for (var bin = 0u; bin < 8u; bin++) {
   var a = lo + (hi - lo) * f32(bin) / 8.0; var b = lo + (hi - lo) * f32(bin + 1u) / 8.0;
   if (bin == 0u) { a = lo; } if (bin == 7u) { b = hi; }
@@ -488,7 +476,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
     continue;
    }
    if (0.125 * M * h * h <= error) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
-   if (f32(depth) >= 14.0 || top + 2u > 20u) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
+   if (f32(depth) >= 14.0 || top + 2u > 16u) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
    let mid = a + 0.5 * h; if (mid <= a || mid >= b) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
    let phi_mid = evalPhi(m, o, d, mid);
    stack[top] = vec4f(mid, b, phi_mid, cell.w); setDepth(&depthBits, top, depth + 1u);
@@ -499,25 +487,39 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
  }
 }
 
-fn exactLevelActiveMask(m: CurtainSpec, d: vec3f, lo: f32, hi: f32, c: f32,
-                        phi_knots: ptr<function, array<f32, 9>>, allPositiveH: ptr<function, bool>) -> u32 {
+fn exactThreeLevelMasks(m: CurtainSpec, d: vec3f, lo: f32, hi: f32,
+                        phi_knots: ptr<function, array<f32, 9>>, allPositiveH: ptr<function, bool>) -> vec3u {
  let M = m.curv.x * d.x * d.x * 1.00002;
  let err = m.curv.y;
- var mask = 0u;
+ let w = m.limits.w;
+ var masks = vec3u(0u);
  for (var bin = 0u; bin < 8u; bin++) {
   var a = lo + (hi - lo) * f32(bin) / 8.0; var b = lo + (hi - lo) * f32(bin + 1u) / 8.0;
   if (bin == 0u) { a = lo; } if (bin == 7u) { b = hi; }
   let h = b - a;
   if (!(h > 0.0)) { *allPositiveH = false; }
-  let va = (*phi_knots)[bin] - c; let vb = (*phi_knots)[bin + 1u] - c;
-  let scale = 1.0 + abs(va) + abs(vb) + abs(a) + abs(b);
-  let error = err + 0.000001 * scale;
-  let bow = 0.125 * M * h * h + error;
-  if (!(min(va, vb) > bow || max(va, vb) < -bow)) {
-   mask |= (1u << bin);
+  let pa = (*phi_knots)[bin]; let pb = (*phi_knots)[bin + 1u];
+  let ab = abs(a) + abs(b);
+  let mh = 0.125 * M * h * h;
+  {
+   let va = pa + w; let vb = pb + w;
+   let scale = 1.0 + abs(va) + abs(vb) + ab;
+   let bow = mh + (err + 0.000001 * scale);
+   if (!(min(va, vb) > bow || max(va, vb) < -bow)) { masks.x |= (1u << bin); }
+  }
+  {
+   let scale = 1.0 + abs(pa) + abs(pb) + ab;
+   let bow = mh + (err + 0.000001 * scale);
+   if (!(min(pa, pb) > bow || max(pa, pb) < -bow)) { masks.y |= (1u << bin); }
+  }
+  {
+   let va = pa - w; let vb = pb - w;
+   let scale = 1.0 + abs(va) + abs(vb) + ab;
+   let bow = mh + (err + 0.000001 * scale);
+   if (!(min(va, vb) > bow || max(va, vb) < -bow)) { masks.z |= (1u << bin); }
   }
  }
- return mask;
+ return masks;
 }
 
 @group(0) @binding(5) var<storage, read> tileOffsets: array<u32>;
@@ -572,21 +574,25 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
    phi_knots[k] = evalPhi(m, o, d, s);
   }
   var allPositiveH = true;
-  let mask0 = exactLevelActiveMask(m, d, a, b, -m.limits.w, &phi_knots, &allPositiveH);
-  let mask1 = exactLevelActiveMask(m, d, a, b, 0.0, &phi_knots, &allPositiveH);
-  let mask2 = exactLevelActiveMask(m, d, a, b, m.limits.w, &phi_knots, &allPositiveH);
-  if (allPositiveH && (mask0 | mask1 | mask2) == 0u && abs(phi_knots[0]) > m.limits.w + m.curv.y) {
+  let masks = exactThreeLevelMasks(m, d, a, b, &phi_knots, &allPositiveH);
+  if (allPositiveH && (masks.x | masks.y | masks.z) == 0u && abs(phi_knots[0]) > m.limits.w + m.curv.y) {
    if (work + 24u > cfg.budget) { reason |= 1u; break; }
    work += 24u;
    continue;
   }
   var nb = 1u; knots[0] = a;
   var bands: array<vec2f, 24>; var nr = 0u; var zeroBands = 0u;
-  roots(m, o, d, a, b, -m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask0);
-  if (reason != 0u) { break; }
-  roots(m, o, d, a, b, 0.0, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, true, mask1);
-  if (reason != 0u) { break; }
-  roots(m, o, d, a, b, m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask2);
+  let levels = vec3f(-m.limits.w, 0.0, m.limits.w);
+  for (var lvl = 0u; lvl < 3u; lvl++) {
+   let lMask = masks[lvl];
+   if (allPositiveH && lMask == 0u) {
+    if (work + 8u > cfg.budget) { reason |= 1u; break; }
+    work += 8u;
+    continue;
+   }
+   roots(m, o, d, a, b, levels[lvl], &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, lvl == 1u, lMask);
+   if (reason != 0u) { break; }
+  }
   if (reason != 0u) { break; }
   var kx = 0.0; var ky0 = 0.0; var ky1 = 0.0;
   if (d.x != 0.0) { kx = -o.x / d.x; if (kx > a && kx < b) { knots[nb] = kx; nb++; } }
@@ -733,7 +739,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
  levelActiveMask: u32) {
  let M = m.curv.x * d.x * d.x * 1.00002;
  let err = m.curv.y;
- var stack: array<vec4f, 20>; var depthBits = vec3u(0u); var top = 0u;
+ var stack: array<vec4f, 16>; var depthBits = vec3u(0u); var top = 0u;
  for (var bin = 0u; bin < 8u; bin++) {
   var a = lo + (hi - lo) * f32(bin) / 8.0; var b = lo + (hi - lo) * f32(bin + 1u) / 8.0;
   if (bin == 0u) { a = lo; } if (bin == 7u) { b = hi; }
@@ -790,7 +796,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
     continue;
    }
    if (0.125 * M * h * h <= error) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
-   if (f32(depth) >= 14.0 || top + 2u > 20u) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
+   if (f32(depth) >= 14.0 || top + 2u > 16u) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
    let mid = a + 0.5 * h; if (mid <= a || mid >= b) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
    let phi_mid = evalPhi(m, o, d, mid);
    stack[top] = vec4f(mid, b, phi_mid, cell.w); setDepth(&depthBits, top, depth + 1u);
@@ -801,25 +807,39 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
  }
 }
 
-fn exactLevelActiveMask(m: CurtainSpec, d: vec3f, lo: f32, hi: f32, c: f32,
-                        phi_knots: ptr<function, array<f32, 9>>, allPositiveH: ptr<function, bool>) -> u32 {
+fn exactThreeLevelMasks(m: CurtainSpec, d: vec3f, lo: f32, hi: f32,
+                        phi_knots: ptr<function, array<f32, 9>>, allPositiveH: ptr<function, bool>) -> vec3u {
  let M = m.curv.x * d.x * d.x * 1.00002;
  let err = m.curv.y;
- var mask = 0u;
+ let w = m.limits.w;
+ var masks = vec3u(0u);
  for (var bin = 0u; bin < 8u; bin++) {
   var a = lo + (hi - lo) * f32(bin) / 8.0; var b = lo + (hi - lo) * f32(bin + 1u) / 8.0;
   if (bin == 0u) { a = lo; } if (bin == 7u) { b = hi; }
   let h = b - a;
   if (!(h > 0.0)) { *allPositiveH = false; }
-  let va = (*phi_knots)[bin] - c; let vb = (*phi_knots)[bin + 1u] - c;
-  let scale = 1.0 + abs(va) + abs(vb) + abs(a) + abs(b);
-  let error = err + 0.000001 * scale;
-  let bow = 0.125 * M * h * h + error;
-  if (!(min(va, vb) > bow || max(va, vb) < -bow)) {
-   mask |= (1u << bin);
+  let pa = (*phi_knots)[bin]; let pb = (*phi_knots)[bin + 1u];
+  let ab = abs(a) + abs(b);
+  let mh = 0.125 * M * h * h;
+  {
+   let va = pa + w; let vb = pb + w;
+   let scale = 1.0 + abs(va) + abs(vb) + ab;
+   let bow = mh + (err + 0.000001 * scale);
+   if (!(min(va, vb) > bow || max(va, vb) < -bow)) { masks.x |= (1u << bin); }
+  }
+  {
+   let scale = 1.0 + abs(pa) + abs(pb) + ab;
+   let bow = mh + (err + 0.000001 * scale);
+   if (!(min(pa, pb) > bow || max(pa, pb) < -bow)) { masks.y |= (1u << bin); }
+  }
+  {
+   let va = pa - w; let vb = pb - w;
+   let scale = 1.0 + abs(va) + abs(vb) + ab;
+   let bow = mh + (err + 0.000001 * scale);
+   if (!(min(va, vb) > bow || max(va, vb) < -bow)) { masks.z |= (1u << bin); }
   }
  }
- return mask;
+ return masks;
 }
 
 @group(0) @binding(5) var<storage, read> tileOffsets: array<u32>;
@@ -884,21 +904,25 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
             phi_knots[k] = evalPhi(m, o, d, s);
         }
         var allPositiveH = true;
-        let mask0 = exactLevelActiveMask(m, d, a, b, -m.limits.w, &phi_knots, &allPositiveH);
-        let mask1 = exactLevelActiveMask(m, d, a, b, 0.0, &phi_knots, &allPositiveH);
-        let mask2 = exactLevelActiveMask(m, d, a, b, m.limits.w, &phi_knots, &allPositiveH);
-        if (allPositiveH && (mask0 | mask1 | mask2) == 0u && abs(phi_knots[0]) > m.limits.w + m.curv.y) {
+        let masks = exactThreeLevelMasks(m, d, a, b, &phi_knots, &allPositiveH);
+        if (allPositiveH && (masks.x | masks.y | masks.z) == 0u && abs(phi_knots[0]) > m.limits.w + m.curv.y) {
             if (work + 24u > cfg.budget) { reason |= 1u; break; }
             work += 24u;
             continue;
         }
         var nb = 1u; knots[0] = a;
         var bands: array<vec2f, 24>; var nr = 0u; var zeroBands = 0u;
-        roots(m, o, d, a, b, -m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask0);
-        if (reason != 0u) { break; }
-        roots(m, o, d, a, b, 0.0, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, true, mask1);
-        if (reason != 0u) { break; }
-        roots(m, o, d, a, b, m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask2);
+        let levels = vec3f(-m.limits.w, 0.0, m.limits.w);
+        for (var lvl = 0u; lvl < 3u; lvl++) {
+            let lMask = masks[lvl];
+            if (allPositiveH && lMask == 0u) {
+                if (work + 8u > cfg.budget) { reason |= 1u; break; }
+                work += 8u;
+                continue;
+            }
+            roots(m, o, d, a, b, levels[lvl], &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, lvl == 1u, lMask);
+            if (reason != 0u) { break; }
+        }
         if (reason != 0u) { break; }
         var kx = 0.0; var ky0 = 0.0; var ky1 = 0.0;
         if (d.x != 0.0) { kx = -o.x / d.x; if (kx > a && kx < b) { knots[nb] = kx; nb++; } }
@@ -1035,7 +1059,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
  levelActiveMask: u32) {
  let M = m.curv.x * d.x * d.x * 1.00002;
  let err = m.curv.y;
- var stack: array<vec4f, 20>; var depthBits = vec3u(0u); var top = 0u;
+ var stack: array<vec4f, 16>; var depthBits = vec3u(0u); var top = 0u;
  for (var bin = 0u; bin < 8u; bin++) {
   var a = lo + (hi - lo) * f32(bin) / 8.0; var b = lo + (hi - lo) * f32(bin + 1u) / 8.0;
   if (bin == 0u) { a = lo; } if (bin == 7u) { b = hi; }
@@ -1092,7 +1116,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
     continue;
    }
    if (0.125 * M * h * h <= error) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
-   if (f32(depth) >= 14.0 || top + 2u > 20u) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
+   if (f32(depth) >= 14.0 || top + 2u > 16u) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
    let mid = a + 0.5 * h; if (mid <= a || mid >= b) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
    let phi_mid = evalPhi(m, o, d, mid);
    stack[top] = vec4f(mid, b, phi_mid, cell.w); setDepth(&depthBits, top, depth + 1u);
@@ -1111,25 +1135,39 @@ fn setMember(pm: ptr<function, vec3u>, k: u32, m: u32) {
  (*pm)[w] = ((*pm)[w] & ~(3u << s)) | ((m & 3u) << s);
 }
 
-fn exactLevelActiveMask(m: CurtainSpec, d: vec3f, lo: f32, hi: f32, c: f32,
-                        phi_knots: ptr<function, array<f32, 9>>, allPositiveH: ptr<function, bool>) -> u32 {
+fn exactThreeLevelMasks(m: CurtainSpec, d: vec3f, lo: f32, hi: f32,
+                        phi_knots: ptr<function, array<f32, 9>>, allPositiveH: ptr<function, bool>) -> vec3u {
  let M = m.curv.x * d.x * d.x * 1.00002;
  let err = m.curv.y;
- var mask = 0u;
+ let w = m.limits.w;
+ var masks = vec3u(0u);
  for (var bin = 0u; bin < 8u; bin++) {
   var a = lo + (hi - lo) * f32(bin) / 8.0; var b = lo + (hi - lo) * f32(bin + 1u) / 8.0;
   if (bin == 0u) { a = lo; } if (bin == 7u) { b = hi; }
   let h = b - a;
   if (!(h > 0.0)) { *allPositiveH = false; }
-  let va = (*phi_knots)[bin] - c; let vb = (*phi_knots)[bin + 1u] - c;
-  let scale = 1.0 + abs(va) + abs(vb) + abs(a) + abs(b);
-  let error = err + 0.000001 * scale;
-  let bow = 0.125 * M * h * h + error;
-  if (!(min(va, vb) > bow || max(va, vb) < -bow)) {
-   mask |= (1u << bin);
+  let pa = (*phi_knots)[bin]; let pb = (*phi_knots)[bin + 1u];
+  let ab = abs(a) + abs(b);
+  let mh = 0.125 * M * h * h;
+  {
+   let va = pa + w; let vb = pb + w;
+   let scale = 1.0 + abs(va) + abs(vb) + ab;
+   let bow = mh + (err + 0.000001 * scale);
+   if (!(min(va, vb) > bow || max(va, vb) < -bow)) { masks.x |= (1u << bin); }
+  }
+  {
+   let scale = 1.0 + abs(pa) + abs(pb) + ab;
+   let bow = mh + (err + 0.000001 * scale);
+   if (!(min(pa, pb) > bow || max(pa, pb) < -bow)) { masks.y |= (1u << bin); }
+  }
+  {
+   let va = pa - w; let vb = pb - w;
+   let scale = 1.0 + abs(va) + abs(vb) + ab;
+   let bow = mh + (err + 0.000001 * scale);
+   if (!(min(va, vb) > bow || max(va, vb) < -bow)) { masks.z |= (1u << bin); }
   }
  }
- return mask;
+ return masks;
 }
 
 @group(0) @binding(5) var<storage, read> tileOffsets: array<u32>;
@@ -1186,10 +1224,8 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
    phi_knots[k] = evalPhi(m, o, d, s);
   }
   var allPositiveH = true;
-  let mask0 = exactLevelActiveMask(m, d, a, b, -m.limits.w, &phi_knots, &allPositiveH);
-  let mask1 = exactLevelActiveMask(m, d, a, b, 0.0, &phi_knots, &allPositiveH);
-  let mask2 = exactLevelActiveMask(m, d, a, b, m.limits.w, &phi_knots, &allPositiveH);
-  if (allPositiveH && (mask0 | mask1 | mask2) == 0u && abs(phi_knots[0]) > m.limits.w + m.curv.y) {
+  let masks = exactThreeLevelMasks(m, d, a, b, &phi_knots, &allPositiveH);
+  if (allPositiveH && (masks.x | masks.y | masks.z) == 0u && abs(phi_knots[0]) > m.limits.w + m.curv.y) {
    if (work + 24u > cfg.budget) { reason |= 1u; break; }
    work += 24u;
    memCount[member] = 0u;
@@ -1197,11 +1233,17 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
   }
   var nb = 1u; knots[0] = a;
   var bands: array<vec2f, 32>; var nr = 0u; var zeroBands = 0u;
-  roots(m, o, d, a, b, -m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask0);
-  if (reason != 0u) { break; }
-  roots(m, o, d, a, b, 0.0, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, true, mask1);
-  if (reason != 0u) { break; }
-  roots(m, o, d, a, b, m.limits.w, &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, false, mask2);
+  let levels = vec3f(-m.limits.w, 0.0, m.limits.w);
+  for (var lvl = 0u; lvl < 3u; lvl++) {
+   let lMask = masks[lvl];
+   if (allPositiveH && lMask == 0u) {
+    if (work + 8u > cfg.budget) { reason |= 1u; break; }
+    work += 8u;
+    continue;
+   }
+   roots(m, o, d, a, b, levels[lvl], &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, lvl == 1u, lMask);
+   if (reason != 0u) { break; }
+  }
   if (reason != 0u) { break; }
   var kx = 0.0; var ky0 = 0.0; var ky1 = 0.0;
   if (d.x != 0.0) { kx = -o.x / d.x; if (kx > a && kx < b) { knots[nb] = kx; nb++; } }
