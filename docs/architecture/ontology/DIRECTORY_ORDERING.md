@@ -163,10 +163,10 @@ Earthcall/
         FlatBuffers/
         Schema/
         Serialization/
-          ConstructedBeing/
-          Person/
-          Relation/
-          ZonesOfEarth/
+          ConstructedBeing/  (ObjectSerialization)
+          Person/            (BodySerialization · PersonSerialization)
+          Relation/          (FormationSerialization · RelationSerialization)
+          ZonesOfEarth/      (HomeSerialization · OurverseSerialization · ZoneSerialization)
       Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence [legacy name: TerminalLine])
     Time/                  Timeline · Moment · Event
       Event/               (the distinguished Moment: occurrence in time)
