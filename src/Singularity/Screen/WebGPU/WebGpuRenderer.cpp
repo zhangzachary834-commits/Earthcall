@@ -1313,12 +1313,16 @@ WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program, bool routed) {
     std::string wgsl = program.wgsl;
     if (routed) {
         const std::string binding = "@group(0) @binding(2) var sceneDepthTex: texture_depth_2d;";
-        const std::string anchor = "    var transmittance = 1.0;";
+        const std::string anchor = "    let ro = u.eyePos.xyz;";
         const std::string publish = R"WGSL(    {
-        let answer = routedPublication[u32(px.y)*u32(u.viewport.x)+u32(px.x)];
-        if (answer.w >= 0.0) {
-            if (answer.w <= 1e-5 && max(max(abs(answer.x),abs(answer.y)),abs(answer.z)) <= 1e-6) { discard; }
-            return answer;
+        let px = vec2<i32>(in.position.xy);
+        if (px.x >= 0 && px.x < i32(u.viewport.x) && px.y >= 0 && px.y < i32(u.viewport.y)) {
+            let routedIdx = u32(px.y) * u32(max(u.viewport.x, 1.0)) + u32(px.x);
+            let answer = routedPublication[routedIdx];
+            if (answer.w >= 0.0) {
+                if (answer.w <= 1e-5 && max(max(abs(answer.x), abs(answer.y)), abs(answer.z)) <= 1e-6) { discard; }
+                return answer;
+            }
         }
     }
 )WGSL";

@@ -140,6 +140,17 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
             }
         }
 
+        if (hit && (b > a)) {
+            let oz = oRel.z;
+            let dz = rd.z;
+            let zEnv = abs(cur.amps.x) + abs(cur.amps.y) + abs(cur.amps.z) + cur.limits.w + cur.curv.y;
+            let z0 = oz + a * dz;
+            let z1 = oz + b * dz;
+            if (min(z0, z1) > zEnv || max(z0, z1) < -zEnv) {
+                hit = false;
+            }
+        }
+
         let rHit = hit && (b > a);
         var myUxMin = 1e9f;
         var myUxMax = -1e9f;
@@ -195,7 +206,7 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
             } else {
                 let h_ux = (uxMax - uxMin) / 8.0;
                 let bow = 0.125 * cur.curv.x * h_ux * h_ux;
-                let thresh = bow + cur.limits.w + 0.001;
+                let thresh = bow + cur.limits.w + cur.curv.y + 0.001;
                 let knotBase = localTile * 9u;
 
                 for (var bin = 0u; bin < 8u; bin++) {
@@ -226,9 +237,16 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
                 }
             }
         } else if (anyRayHit && rHit) {
-            myState = 1u;
-            myEnter = a;
-            myExit = b;
+            let oz = oRel.z;
+            let dz = rd.z;
+            let zEnv = abs(cur.amps.x) + abs(cur.amps.y) + abs(cur.amps.z) + cur.limits.w + cur.curv.y;
+            let z0 = oz + a * dz;
+            let z1 = oz + b * dz;
+            if (min(z0, z1) <= zEnv && max(z0, z1) >= -zEnv) {
+                myState = 1u;
+                myEnter = a;
+                myExit = b;
+            }
         }
 
         wgEnter[lid] = myEnter;
@@ -257,10 +275,12 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
                 exitArr[m] = exit;
             }
         } else if (anyRayHit) {
-            activeMemberMask |= (1u << m);
-            memberHit[m] = true;
-            enterArr[m] = enter;
-            exitArr[m] = exit;
+            if (curActive) {
+                activeMemberMask |= (1u << m);
+                memberHit[m] = true;
+                enterArr[m] = enter;
+                exitArr[m] = exit;
+            }
         }
         }
     }
@@ -311,10 +331,16 @@ inline constexpr const char* kRouteArgsWgsl=R"WGSL(
 @group(0) @binding(1) var<storage, read_write> args: array<u32>;
 @compute @workgroup_size(1) fn routeArgs(@builtin(global_invocation_id) id: vec3u) {
     if (id.x >= 4u) { return; }
-    let n = select(counts[id.x], counts[0] + counts[1] + counts[2], id.x == 3u);
-    args[3u * id.x] = (n + 3u) / 4u;
-    args[3u * id.x + 1u] = 1u;
-    args[3u * id.x + 2u] = 1u;
+    if (id.x < 3u) {
+        args[3u * id.x] = (counts[id.x] + 3u) / 4u;
+        args[3u * id.x + 1u] = 1u;
+        args[3u * id.x + 2u] = 1u;
+    } else {
+        let totalActiveTiles = counts[0] + counts[1] + counts[2];
+        args[9u] = select(0u, CAPACITY_WORKGROUPS, totalActiveTiles > 0u);
+        args[10u] = 1u;
+        args[11u] = 1u;
+    }
 }
 )WGSL";
 inline constexpr const char* kS1UnfusedProducerWgsl=R"WGSL(
