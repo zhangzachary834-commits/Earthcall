@@ -1,0 +1,17 @@
+<<<<<<< SEARCH
+        out.push_back({0, full, description, "value", 1, description});
+=======
+        out.push_back({0, full, description, "value", 1, description, {}});
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+                        out.push_back({from, z->getIdentifier(), name == z->getIdentifier() ? "a Zone" : name,
+                                       "being", 1, "move the line (not your body) into " + name});
+=======
+                        out.push_back({from, z->getIdentifier(), name == z->getIdentifier() ? "a Zone" : name,
+                                       "being", 1, "move the line (not your body) into " + name, {}});
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+                if (lowerCopy(text).rfind(lowerCopy(word), 0) == 0) out.push_back({from, text, what, "value", 1, what});
+=======
+                if (lowerCopy(text).rfind(lowerCopy(word), 0) == 0) out.push_back({from, text, what, "value", 1, what, {}});
+>>>>>>> REPLACE
