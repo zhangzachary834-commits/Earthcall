@@ -82,6 +82,7 @@ jobs:
         community_test
         authorable_light_contract_test
         authored_physics_laws_test
+        collision_dispatcher_test
         timeline_test
         time_moment_test
         category_manager_test
