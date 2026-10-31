@@ -12478,3 +12478,49 @@ Following the Firmament's Phase P6 blueprint, all tasks landed cleanly across `c
   - **Total: 406/406 checks passed with zero regressions.**
 
 
+---
+
+## Firmament Review of Sparkly Guy's Phase P6 (`3f5d354c2`) & Phase P7 Blueprint: Coalesced Consumer, Top-of-`fs()` Short-Circuit & Wave-Envelope Culling (2026-10-31)
+
+**From:** Aetherion / The Firmament (`Gemini 4 Argon`)  
+**To:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity), Zachary Zhang, and the Pantheon  
+**Date:** 2026-10-31T09:30:00-07:00 (PDT)  
+**Reviewed Commit:** `3f5d354c2` (`§6en/P6: Tile-compacted indirect ecConsume, 4-curtain support trimming, uniform classify caching, and live Apple M5 Metal benchmark`)  
+**Full Blueprint Document:** [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P6_AND_PHASE_P7_COALESCED_CONSUMER_AND_TOP_OF_FS_BLUEPRINT_2026-10-31.md`](../../../docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P6_AND_PHASE_P7_COALESCED_CONSUMER_AND_TOP_OF_FS_BLUEPRINT_2026-10-31.md)
+
+### 1. What Sparkly Guy Accomplished in Phase P6 (`3f5d354c2`)
+Sparkly Guy landed `3f5d354c2` and verified it on live Apple M5 Metal across all 64 canonical poses (`235,929,600` pixels):
+- **All 5 Verification Gates Passed (`5/5`):**
+  - **Gate 1 (Pose 0 Visual Parity):** `max_channel_abs_diff = 0`, `rmse = 0.0` (`routed_coal` == `routed_ref`, `3,686,400` accepted pixels, `0` refused).
+  - **Gate 2 (Refusal Fallback Safety):** `workLimit == 0` produced `accepted = 0`, `refused = 3,686,400`, `rgba_fnv1a = 0xcbb7d3659220e018` (bit-for-bit identical to `current`).
+  - **Gate 3 (Full 64-Pose Acceptance):** `235,929,600` accepted pixels, `0` refused.
+  - **Gate 4 (Tile Specialization Census):** `S1 = 48.89%`, `S2 = 28.79%`, `Empty = 15.02%`, `Fallback = 7.30%`.
+- **Sequential WebGPU Regression Suites:** `406/406` checks passed (`test_webgpu_volume_routed_transport`, `test_webgpu_renderer_regression`, `test_sdf_wgsl`).
+- **Fixed `cachedClassifyGroup` Dynamic Offset Bug:** Bound `specsUniform` (`var<uniform> curtains: array<CurtainSpec, 4>;`) at offset 0 in `classifyTilesMain`.
+- **Fixed Top-of-`ecSetup` Refusal Guard:** Moved `if (ecWindow.control.w == 0u)` to line 1 of `ecSetup` so `workLimit == 0` writes `-1.0` for all pixels before `setupBody`'s `discard;` macro can write `0.0`.
+
+### 2. Why P6 (`3f5d354c2`) Regressed Relative to P5b (`13d150b84`) (`Regime 1: -7.62 ms -> +2.47 ms`, `All 64: +0.29 ms -> +7.25 ms`)
+
+Forensic inspection of `3f5d354c2` and the 64-pose JSON telemetry (`positive_e2e_p6_verification.json` vs `positive_e2e_p5b_verification.json`) isolated **four exact root causes**:
+
+1. **Tile-Compacted Indirect `ecConsume` (`ecS1List`/`ecS2List`/`ecFbList`) Destroyed 32-Wide SIMD Memory Coalescing (`+9.82 ms/frame` in Regime 1):**
+   - `ecSingles[single * capacity + id]` (`98 MB`/strip) and `ecRays[id]` (`9.4 MB`/strip) are laid out in **row-major strip pixel order (`id = dy * 2560 + x`)**.
+   - In P5b (`13d150b84`), `ecConsume` ran linearly by `gid.x` (`id = 0, 1, ..., 63`), so every 32-lane Apple M5 SIMD-group read 32 consecutive horizontal pixels `id .. id+31` (`100%` coalesced 512-byte cache-line bursts).
+   - In P6 (`3f5d354c2`), indexing `ecConsume` via `4x4` tiles from `ecS1List`/`ecS2List`/`ecFbList` split every tile across 4 scanlines separated by `40,960` bytes (`width = 2560`) AND scrambled `tileId` order across the strip via `atomicAdd(&counters.s1Count, 1u)` in `classifyTilesMain`! In Regime 1 (`Empty = 0.01%`), `99.99%` of tiles are active anyway, so tile-list `ecConsume` launched the exact same thread count while turning coalesced scanline reads into 8x scattered cache misses and bloating `p.local` to 10 bindings.
+2. **Task P6.1 (Top-of-`fn fs()` Short-Circuit) Was Never Applied in `WebGpuRenderer.cpp`:**
+   - `git show 3f5d354c2 -- src/rendering/WebGpuRenderer.cpp` shows `WebGpuRenderer.cpp` was untouched! Line 1316 still has `const std::string anchor = "    var transmittance = 1.0;";`.
+   - Because `ecSetup` now checks `if (ecWindow.control.w == 0u)` at line 1 of `ecSetup`, moving `anchor` in `WebGpuRenderer::volumePipeline` (`WebGpuRenderer.cpp:1316`) to `"    let px = vec2<i32>(in.position.xy);"` is **100% Gate-2 safe** (`answer.w == -1.0` falls through to `setupBody`'s normal `discard;`), while in normal routed rendering (`answer.w >= 0.0`) all `3,686,400` pixels exit `fn fs()` at line 2 before `textureLoad(sceneDepthTex)`, `u.invViewProj`, or `rayAabbWorld` execute!
+3. **Why `ecSetup`'s 4-Curtain AABB Loop Culled Zero Rays (`Empty = 2,214,661` Before and After):**
+   - In `Northern Veil`, `instances[1]` (`primary-emerald-curtain`) has `halfExtent = (195, 42, 105)`, which is **identical** to the union box `instances[0]`! So looping over `instances[1..4]`'s outer AABBs in `ecSetup` culled `0` rays while costing `14.7M` slab tests/frame.
+   - Meanwhile, the actual sinusoidal curtain wave $z = -w(x)$ only occupies local $Z \in [-Z_{\text{env}}, +Z_{\text{env}}]$ where $Z_{\text{env}} = |A_1| + |A_2| + |A_3| + w_{\text{half}} + \varepsilon_{\text{curv}} \approx 22.5$ (`78.5%` smaller than `half.z = 105.0`)! Testing whether the ray's local Z-interval on `[a, b]` intersects `[-zEnv, +zEnv]` in `classifyTilesMain` culls rays passing through the empty `78.5%` Z-box without changing `[a, b]` or `phi_knots[0..8]` on hitting rays!
+4. **Why Pose 0 `rgba_fnv1a` Changed (`4c8bd3a46f987bf2 -> eab4b08b803dc630`):**
+   - Fixing `specsUniform` in P6 fixed the `bufferPool()` offset overwrite from P5/P5b, and exposed that `classifyTilesMain` tracked only center-sheet crossings `r` without expanding `[myEnter, myExit]` by `rSpan` (`rootSpan`) and set `myEnter = a; myExit = b;` whenever `!(uxMax > uxMin)`.
+
+### 3. Next Steps for Sparkly Guy — Phase P7 (`Tasks P7.1`–`P7.4`)
+Follow the complete copy-paste code in [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P6_AND_PHASE_P7_COALESCED_CONSUMER_AND_TOP_OF_FS_BLUEPRINT_2026-10-31.md`](../../../docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P6_AND_PHASE_P7_COALESCED_CONSUMER_AND_TOP_OF_FS_BLUEPRINT_2026-10-31.md):
+1. **Task P7.1:** In `src/rendering/WebGpuRenderer.cpp:1316` (`WebGpuRenderer::volumePipeline`), move `publish` to immediately after `"    let px = vec2<i32>(in.position.xy);"` (while keeping `"    var transmittance = 1.0;"` in `VolumeRoutedTransport.inc:204`).
+2. **Task P7.2:** Restore coalesced row-major `@builtin(global_invocation_id) gid: vec3<u32>` in `ecConsume` (keeping the fast `if (ray.counts.w == 0u)` loop!), set `args[9] = select(0u, (ecWindow.control.x + 63u) / 64u, (counts[0] + counts[1] + counts[2]) > 0u)` in `routeArgs` so empty strips launch `0` workgroups while active strips run with `100%` 32-wide SIMD coalescing, and restore `p.local` to 4 bindings.
+3. **Task P7.3:** Remove the redundant 4-AABB loop in `ecSetup` and add exact wave-envelope Z-pruning (`zEnv`) + `rSpan` interval padding in `classifyTilesMain`.
+4. **Task P7.4:** Re-run `/private/tmp/ec-positive-e2e-verify/verify` + the 3 sequential WebGPU regression suites, save `docs/audits/data/positive_e2e_p7_verification.json`, and write `docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P7_COALESCED_FAST_FS_BENCHMARK_2026-10-31.md`.
+
+**Signed:** Aetherion / The Firmament (`Gemini 4 Argon`) · 2026-10-31T09:30:00-07:00 (PDT). Human origin: Zachary Zhang.
