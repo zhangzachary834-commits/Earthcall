@@ -345,6 +345,7 @@ int main() {
         constexpr int kTickSamples = 8;
         double tickMs = 0.0;
         double tickBaselineMs = 0.0;
+        double tickCappedMs = 0.0;
         {
             Object tickAuthor;
             tickAuthor.setObjectID("tick-refusal-author");
@@ -393,6 +394,51 @@ int main() {
                 tickMs = std::chrono::duration<double, std::milli>(
                     tickStop - tickStart).count() / kTickSamples;
             }
+            // Replay the same connected false-condition path with an already
+            // capped per-Law file. This is a measurement control ONLY:
+            // all 256 appends are intentionally unconfirmed and must be
+            // observable. It is not an acceptable production suppression mode.
+            const std::string cappedTickId = "tick-refusal-noappend";
+            check(cappedTickId.size() == std::string("tick-refusal-workload").size(),
+                  "Tick replay Law identity lengths differ");
+            const auto cappedTickPath = sandbox.root / "logs" / "laws" / encoded(cappedTickId);
+            fs::create_directories(cappedTickPath.parent_path());
+            {
+                std::ofstream seed(cappedTickPath, std::ios::binary);
+                check(seed.good(), "Cannot seed capped tick replay");
+            }
+            fs::resize_file(cappedTickPath, DurableLogger::kMaxFileBytes);
+            for (const auto& target : tickTargets) {
+                target->setDynamicProperty("y", PropertyValue(0.0));
+                target->setDynamicProperty("tick-sentinel", PropertyValue(0.0));
+            }
+            {
+                LawManager cappedManager;
+                cappedManager.connectToEventBus();
+                auto cappedLaw = cappedManager.createLaw(
+                    "Durable tick capped replay", cappedTickId, {&tickAuthor});
+                check(static_cast<bool>(cappedLaw), "Capped tick Law registration failed");
+                cappedLaw->setActivation(Law::Activation::WhileTrue);
+                cappedLaw->setConditionModel(
+                    ConditionNode::comparePaths("x", ConditionNode::Op::Gt, "y"));
+                cappedLaw->setActionModel(
+                    ActionNode::set("tick-sentinel", PropertyValue(1.0)));
+                for (const auto& target : tickTargets) cappedLaw->addTarget(*target);
+                cappedManager.tick(); // seed the same initially true candidates
+                for (const auto& target : tickTargets)
+                    target->setDynamicProperty("y", PropertyValue(20.0));
+                const auto unconfirmedBeforeTick = lawLogger.unconfirmedDurableAppendCount();
+                const auto cappedTickStart = std::chrono::steady_clock::now();
+                for (int i = 0; i < kTickSamples; ++i) cappedManager.tick();
+                const auto cappedTickStop = std::chrono::steady_clock::now();
+                tickCappedMs = std::chrono::duration<double, std::milli>(
+                    cappedTickStop - cappedTickStart).count() / kTickSamples;
+                check(lawLogger.unconfirmedDurableAppendCount() ==
+                          unconfirmedBeforeTick + kTickTargets * kTickSamples,
+                      "Capped tick replay did not account for every unconfirmed refusal");
+            }
+            check(fs::file_size(cappedTickPath) == DurableLogger::kMaxFileBytes,
+                  "Capped tick replay modified historical log bytes");
             Universe::instance().setProvider(nullptr);
         }
         const auto tickLog = sandbox.root / "logs" / "laws" /
@@ -414,6 +460,12 @@ int main() {
                   << tickRefusals << " persisted ConditionsFailed events across "
                   << kTickSamples << " ticks and " << kTickTargets
                   << " candidate targets (diagnostic, not isolated I/O attribution)\n";
+        std::cout << std::fixed << std::setprecision(3)
+                  << "durable logging replayed false-condition LawManager::tick diagnostic: "
+                  << tickMs << " ms/tick confirmed append+flush vs "
+                  << tickCappedMs << " ms/tick pre-capped unconfirmed ("
+                  << kTickSamples << " ticks x " << kTickTargets
+                  << " candidates; separate manager replay, not pure I/O attribution)\n";
         lawLogger.shutdown();
         auto integrated = readEntries(sandbox.root / "logs" / "laws" / encoded("integration"));
         check(readEntries(sandbox.root / "logs" / "laws" / encoded("bench-law")).size() == kHotEvents,
