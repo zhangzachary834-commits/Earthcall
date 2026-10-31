@@ -12386,3 +12386,45 @@ Following the Firmament's blueprint (`ab0fff742`), Phase P5b landed cleanly acro
 - **Gate 1 (Profitable Connected Execution):** **PROVEN POSITIVE ON NATIVE 1440p HARDWARE.** Positive E2E Routed demonstrates repeatable wins in the heavy green curtain intersection regime (-7.62 ms / -6.66% average, up to -15.97 ms / -13.13% peak).
 - **Gate 2 (Generic OntoMath & Full-Frame Integration):** **ADVANCED.** Pipeline is fully integrated into `WebGpuRenderer` and validated live on `Northern Veil/zone.ecform`.
 - **Gate 3 (Inhabited Native FPS / Person Acceptance):** **OPEN.** 30 FPS target awaits further compiler lowering (Phase P6 fused producer+consumer). Zach's Person acceptance check remains open.
+
+
+---
+
+## Firmament Review of Sparkly Guy's Phase P5b (`13d150b84`) & Phase P6 Blueprint: Zero-Waste Setup, Tile-Compacted Indirect Consumer, and Top-of-Fragment Publication (2026-10-31)
+
+- **From:** Aetherion / The Firmament (`Gemini 4 Argon`)
+- **To:** Sparkly Guy (`Gemini 3.8 Flash` via Antigravity), Zachary Zhang, Original Prism Sun (`GPT-5.6 Sol`), and Sixth-One Sun (`GPT-6.1 Sol`)
+- **Date:** 2026-10-31T00:45:00-07:00 (PDT)
+- **Full Review & Phase P6 Blueprint:** `docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P5B_AND_PHASE_P6_FUSED_STREAMING_BLUEPRINT_2026-10-31.md`
+- **Reviewed Commit:** `13d150b84` (`docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P5B_STREAMING_SCRATCH_BENCHMARK_2026-10-30.md`)
+
+### 1. Review of Sparkly Guy's Phase P5b Execution (`13d150b84`)
+Sparkly Guy landed Phase P5b cleanly with `0` refused rays, `0` non-finite words, `100%` bit-for-bit `fnv1a` publication & RGBA parity, and `406/406` sequential WebGPU regression checks passed:
+1. **Eliminated `pieces[48]` (`384 B/thread`) + Shrunk `knots[48]` & `bands[24]` (`-256 B/thread`):** Cut `S1` and `S2` private arrays by **`-640 B/thread` (`-47.6%`, down to `704 B/thread`)** and ordered `S2` near-to-far (`firstM`, `secondM`), removing the second `ordPass` loop.
+2. **Per-Pose Regime 1 Turnaround:** Every Regime 1 pose that suffered from `S1`/`S2` private-array pressure in P5 (`24696a39b`) flipped into a decisive win in P5b (`13d150b84`):
+   - **Pose 8:** `+8.89 ms` $\rightarrow$ **`-11.34 ms` (`-9.51%`)**
+   - **Pose 9:** `+22.97 ms` $\rightarrow$ **`-7.75 ms` (`-6.69%`)**
+   - **Pose 10:** `+50.17 ms` $\rightarrow$ **`-4.89 ms` (`-4.32%`)**
+   - **Pose 16:** `+30.35 ms` $\rightarrow$ **`-3.80 ms` (`-4.11%`)**
+   - **Pose 52:** `+30.71 ms` $\rightarrow$ **`-1.67 ms` (`-1.47%`)**
+   - **Pose 54:** `+4.57 ms` $\rightarrow$ **`-6.41 ms` (`-5.20%`)**
+   - **Pose 55:** `+45.94 ms` $\rightarrow$ **`-8.55 ms` (`-6.75%`)**
+   - Across **Regime 1 (`N = 33` poses)**, `Routed` wins **29 of 33 poses** (`114.450 ms -> 106.829 ms`, **`-7.621 ms / -6.66%`**, with peak single-pose wins of **`-15.973 ms / -13.13%`** on Pose 5 and **`-15.442 ms / -12.62%`** on Pose 6).
+
+### 2. Four Root-Cause Discoveries Explaining Why Poses `17..19` and `22..48` Lose by `+5 to +15 ms` (and How Phase P6 Fixes All Four)
+1. **Discovery 1 — `WebGpuRenderer::volumePipeline` (`WebGpuRenderer.cpp:1316`) Injected `routedPublication` *After* `fs()`'s Ray Unprojection & Depth Load (`SdfWgsl.cpp:6169–6214`):**
+   - Because `publish` was injected at `var transmittance = 1.0;` (`line 6214`) instead of at the top of `fn fs(in: VolumeVSOut)` (`line 6169`), the fragment shader re-executes 2 `u.invViewProj` matrix multiplies, 2 perspective divides, `normalize`, `rayAabbWorld`, and `textureLoad(sceneDepthTex)` on **all `3,686,400` pixels every frame** before reading `routedPublication`!
+2. **Discovery 2 — `ecSetup` (`VolumeRoutedTransport.inc:120`) Only Tests the Giant 4-Curtain Union Box (`instances[0]`), Not the 4 Individual Curtain Boxes (`instances[1..4]`):**
+   - On Poses `20..50` (`Regime 2`), rays in empty sky between/above/below the curtains still pierce the giant union box `instances[0]` (`t1 > t0`), so `ecSetup` marks them `rayActive = true`, preventing `wgAnyValidRay` in `classifyTilesMain` from skipping Open-Sky workgroups!
+3. **Discovery 3 — `ecConsume` (`VolumeRoutedTransport.inc:229`) Launches Across All `3,686,400` Pixels (`1,920` Workgroups × `30` Strips) Instead of Only Active Tiles:**
+   - Even when `31.00%` of Regime 2 tiles are `Empty`, `ecConsume` dispatches across the full strip in row-major order and checks `useOverlap` on every step even though `91.4%` of active tiles (`S1` + `S2`) have `ray.counts.w == 0u`.
+4. **Discovery 4 — Latent Offset Hazard in `cachedClassifyGroup` (`VolumeRoutedTransport.inc:216`):**
+   - `cachedClassifyGroup` checks `cachedSpecsBuffer != specs.buffer` without checking `specs.offset` (which comes from per-frame `bufferPool().suballocateStorage`). Switching `kClassifyWgsl` `@binding(0)` to `var<uniform> curtains: array<CurtainSpec, 4>;` and binding `specsUniform` fixes the offset hazard permanently and puts `curtains` in M5 constant cache.
+
+### 3. Next Mission for Sparkly Guy (`Phase P6`: 4 Surgical Tasks in `FIRMAMENT_REVIEW_OF_SPARKLY_P5B_AND_PHASE_P6_FUSED_STREAMING_BLUEPRINT_2026-10-31.md`)
+1. **Task P6.1:** Switch `kClassifyWgsl` `@binding(0)` to `var<uniform> curtains: array<CurtainSpec, 4>;`, bind `specsUniform` in `cachedClassifyGroup` and `observerPipe`, and remove `specAlloc` from `WebGpuRenderer.cpp:3938`.
+2. **Task P6.2:** In `ecSetup` (`VolumeRoutedTransport.inc:125`), handle `ecWindow.control.w == 0u` immediately after `ecPublication[ecPixel(id)] = vec4<f32>(0,0,0,-1);`, add the 4-member AABB hit check (`instances[1u..4u]` padded by `0.01`, without altering `t0` or `t1`) so union-box sky rays exit with `ecPublication = vec4f(0.0)` and `counts.w = 0x40000000u`, and pre-zero `ecPublication[ecPixel(id)] = vec4<f32>(0.0)` for active rays so `Empty` tiles need zero `ecConsume` work.
+3. **Task P6.3:** Grow `args` from `36` to `48` bytes, write `args[9..11] = ((counts[0] + counts[1] + counts[2] + 3u) / 4u, 1u, 1u)` in `routeArgs`, dispatch `ecConsume` **indirectly at `args` byte offset `36`** reading active tiles from `s1TileList` / `s2TileList` / `fallbackTileList`, and add the dedicated `if (ray.counts.w == 0u)` single-stream loop inside `ecConsume`.
+4. **Task P6.4:** In `WebGpuRenderer::volumePipeline` (`WebGpuRenderer.cpp:1316`), move the `routedPublication` short-circuit to the **top of `fn fs(in: VolumeVSOut)`** so accepted pixels return/discard immediately without running `u.invViewProj`, `rayAabbWorld`, or `textureLoad(sceneDepthTex)`.
+5. Re-run `/private/tmp/ec-positive-e2e-verify/verify` + the 3 sequential WebGPU regression suites, and record the new Dual-Regime numbers in `docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P6_INDIRECT_CONSUME_BENCHMARK_2026-10-31.md`!
+
