@@ -135,6 +135,25 @@ int main() {
             std::cout << "Open-failure retry witness skipped: permissions not enforced\n";
         }
 
+        // Deterministic obstruction/recovery witness, including environments
+        // where permission-based denial cannot be enforced (e.g. root).
+        // A file occupying the intended parent directory must not poison the
+        // logger: removing it must allow a later append to the same identity.
+        const auto obstructedRoot = sandbox.root / "obstructed-recovery";
+        fs::create_directories(obstructedRoot);
+        const auto obstructedParent = obstructedRoot / "laws";
+        { std::ofstream blocker(obstructedParent); check(blocker.good(), "Cannot seed obstruction"); }
+        DurableLogger obstructionLogger("laws", obstructedRoot);
+        check(!obstructionLogger.log("retry", "LAW", "blocked"),
+              "Parent-directory obstruction falsely succeeded");
+        fs::remove(obstructedParent);
+        check(obstructionLogger.log("retry", "LAW", "recovered"),
+              "Same-identity append did not recover after parent obstruction cleared");
+        const auto obstructionEntries = readEntries(obstructedParent / encoded("retry"));
+        check(obstructionEntries.size() == 1 &&
+              obstructionEntries[0].at("message") == "recovered",
+              "Obstruction recovery lost or duplicated durable records");
+
         // A full historical file must be preserved, never truncated or extended.
         const auto capRoot = sandbox.root / "capacity";
         fs::create_directories(capRoot / "laws");
