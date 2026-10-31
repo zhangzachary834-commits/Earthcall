@@ -1,4 +1,8 @@
 #include "Singularity/Core/Logging/DurableLogger.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp"
 #include <chrono>
 #include <filesystem>
@@ -165,10 +169,36 @@ int main() {
                   << "durable logging synthetic ConditionsFailed bridge: "
                   << hotMicros << " us/event over " << kHotEvents
                   << " synchronous append+flush events\n";
+        // Exercise the real Law::applyTo ConditionsFailed path, not only the
+        // direct logging bridge. The result is diagnostic, not a CI timing gate.
+        Object refusalAuthor;
+        refusalAuthor.setObjectID("durable-refusal-author");
+        Object refusalTarget;
+        refusalTarget.setObjectID("durable-refusal-target");
+        Law refusalLaw("Durable refusal workload", std::vector<Singular*>{&refusalAuthor});
+        refusalLaw.setLawIdentifier("durable-refusal-workload");
+        refusalLaw.setScope(Law::Scope::Subject);
+        refusalLaw.setConditionModel(ConditionNode::identity("never-matching-target"));
+        refusalLaw.setActionModel(ActionNode::set("unused", PropertyValue(1.0)));
+        constexpr int kRealRefusals = 512;
+        const auto realStart = std::chrono::steady_clock::now();
+        for (int i = 0; i < kRealRefusals; ++i) {
+            check(refusalLaw.applyTo(refusalTarget) == Law::ApplicationResult::ConditionsFailed,
+                  "Real Law refusal benchmark did not reject the target");
+        }
+        const auto realStop = std::chrono::steady_clock::now();
+        const double realMicros = std::chrono::duration<double, std::micro>(
+            realStop - realStart).count() / kRealRefusals;
+        std::cout << std::fixed << std::setprecision(2)
+                  << "durable logging real Law::applyTo ConditionsFailed: "
+                  << realMicros << " us/refusal over " << kRealRefusals
+                  << " repeated failed conditions\n";
         lawLogger.shutdown();
         auto integrated = readEntries(sandbox.root / "logs" / "laws" / encoded("integration"));
         check(readEntries(sandbox.root / "logs" / "laws" / encoded("bench-law")).size() == kHotEvents,
               "High-frequency durable event count mismatch");
+        check(readEntries(sandbox.root / "logs" / "laws" / encoded("durable-refusal-workload")).size() == kRealRefusals,
+              "Real Law ConditionsFailed durable count mismatch");
         check(integrated.size() == 1 &&
               integrated[0].at("message") == "durable with aggregate Off",
               "LawAuditLogger bridge missing durable event");
