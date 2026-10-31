@@ -3,12 +3,14 @@
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp"
 #include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -193,6 +195,72 @@ int main() {
                   << "durable logging real Law::applyTo ConditionsFailed: "
                   << realMicros << " us/refusal over " << kRealRefusals
                   << " repeated failed conditions\n";
+
+        // End-to-end tick diagnostic: a connected WhileTrue law starts with
+        // true x > y candidates, then y changes. Rete's x-filter may retain
+        // stale candidates; LawManager must recheck and record real refusals.
+        // Report observed frequency and wall time, not an invented frame budget.
+        std::size_t tickRefusals = 0;
+        constexpr int kTickTargets = 32;
+        constexpr int kTickSamples = 8;
+        double tickMs = 0.0;
+        {
+            Object tickAuthor;
+            tickAuthor.setObjectID("tick-refusal-author");
+            std::vector<std::unique_ptr<Object>> tickTargets;
+            std::vector<Singular*> tickPopulation{&tickAuthor};
+            for (int i = 0; i < kTickTargets; ++i) {
+                auto target = std::make_unique<Object>();
+                target->setObjectID("tick-refusal-target-" + std::to_string(i));
+                target->setDynamicProperty("x", PropertyValue(10.0));
+                target->setDynamicProperty("y", PropertyValue(0.0));
+                tickPopulation.push_back(target.get());
+                tickTargets.push_back(std::move(target));
+            }
+            Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+                out.insert(out.end(), tickPopulation.begin(), tickPopulation.end());
+            });
+            Universe::instance().setClock(100.0, 1.0 / 60.0);
+            {
+                LawManager manager;
+                manager.connectToEventBus();
+                auto tickLaw = manager.createLaw(
+                    "Durable tick refusal workload", "tick-refusal-workload", {&tickAuthor});
+                check(static_cast<bool>(tickLaw), "Tick benchmark Law registration failed");
+                tickLaw->setActivation(Law::Activation::WhileTrue);
+                tickLaw->setConditionModel(
+                    ConditionNode::comparePaths("x", ConditionNode::Op::Gt, "y"));
+                tickLaw->setActionModel(
+                    ActionNode::set("tick-sentinel", PropertyValue(1.0)));
+                for (const auto& target : tickTargets) tickLaw->addTarget(*target);
+                manager.tick(); // seed initially true terminal candidates
+                for (const auto& target : tickTargets) {
+                    target->setDynamicProperty("y", PropertyValue(20.0));
+                }
+                const auto tickStart = std::chrono::steady_clock::now();
+                for (int i = 0; i < kTickSamples; ++i) manager.tick();
+                const auto tickStop = std::chrono::steady_clock::now();
+                tickMs = std::chrono::duration<double, std::milli>(
+                    tickStop - tickStart).count() / kTickSamples;
+            }
+            Universe::instance().setProvider(nullptr);
+        }
+        const auto tickLog = sandbox.root / "logs" / "laws" /
+                             encoded("tick-refusal-workload");
+        if (fs::exists(tickLog)) {
+            for (const auto& entry : readEntries(tickLog)) {
+                if (entry.contains("details") &&
+                    entry.at("details").value("result", "") == "ConditionsFailed") {
+                    ++tickRefusals;
+                }
+            }
+        }
+        std::cout << std::fixed << std::setprecision(3)
+                  << "durable logging LawManager::tick diagnostic: "
+                  << tickMs << " ms/tick, " << tickRefusals
+                  << " persisted ConditionsFailed events across "
+                  << kTickSamples << " ticks and " << kTickTargets
+                  << " candidate targets (zero means this scenario did not exercise refusals)\\n";
         lawLogger.shutdown();
         auto integrated = readEntries(sandbox.root / "logs" / "laws" / encoded("integration"));
         check(readEntries(sandbox.root / "logs" / "laws" / encoded("bench-law")).size() == kHotEvents,
