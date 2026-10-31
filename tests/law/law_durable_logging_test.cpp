@@ -196,6 +196,43 @@ int main() {
                   << realMicros << " us/refusal over " << kRealRefusals
                   << " repeated failed conditions\n";
 
+        // Controlled same-Law diagnostic: compare successful append+flush above
+        // with an otherwise identical refusal whose per-Law file is already
+        // at its non-destructive 8 MiB cap. The cap is deliberately exercised
+        // ONLY in this test; rejected appends are not a production optimization.
+        // This is not a pure I/O subtraction: the capped path still checks the
+        // filesystem and returns before JSON serialization, timestamp and flush.
+        const std::string noAppendId = "durable-refusal-noappend";
+        check(noAppendId.size() == std::string("durable-refusal-workload").size(),
+              "Refusal comparison identity lengths differ");
+        const auto noAppendPath = sandbox.root / "logs" / "laws" / encoded(noAppendId);
+        fs::create_directories(noAppendPath.parent_path());
+        {
+            std::ofstream seed(noAppendPath, std::ios::binary);
+            check(seed.good(), "Cannot seed refusal no-append diagnostic");
+        }
+        fs::resize_file(noAppendPath, DurableLogger::kMaxFileBytes);
+        refusalLaw.setLawIdentifier(noAppendId);
+        // Prime the first failure warning outside the timed region.
+        check(refusalLaw.applyTo(refusalTarget) == Law::ApplicationResult::ConditionsFailed,
+              "Capped-file control did not exercise the same Law refusal");
+        const auto noAppendStart = std::chrono::steady_clock::now();
+        for (int i = 0; i < kRealRefusals; ++i) {
+            check(refusalLaw.applyTo(refusalTarget) == Law::ApplicationResult::ConditionsFailed,
+                  "Capped-file control unexpectedly changed Law result");
+        }
+        const auto noAppendStop = std::chrono::steady_clock::now();
+        const double noAppendMicros = std::chrono::duration<double, std::micro>(
+            noAppendStop - noAppendStart).count() / kRealRefusals;
+        check(fs::file_size(noAppendPath) == DurableLogger::kMaxFileBytes,
+              "Capped-file diagnostic modified historical bytes");
+        refusalLaw.setLawIdentifier("durable-refusal-workload");
+        std::cout << std::fixed << std::setprecision(2)
+                  << "durable logging same-Law append-cost diagnostic: "
+                  << realMicros << " us/refusal with confirmed append+flush, "
+                  << noAppendMicros << " us/refusal with pre-capped file ("
+                  << kRealRefusals << " calls each; test-only control, not pure I/O attribution)\\n";
+
         // End-to-end tick diagnostic: a connected WhileTrue law starts with
         // true x > y candidates, then y changes. Rete's x-filter may retain
         // stale candidates; LawManager must recheck and record real refusals.
