@@ -107,7 +107,11 @@ int main() {
               "Sun save does not use the ignored noncanonical ast key");
 
         geom::FieldNode hydrated("sun.light-field.test");
-        if (sun.contains("spatialRoot")) hydrated.applyJson(sun["spatialRoot"]);
+        if (sun.contains("spatialFields") && sun["spatialFields"].is_array() && !sun["spatialFields"].empty()) {
+            hydrated.applyJson(sun["spatialFields"][0]);
+        } else if (sun.contains("spatialRoot")) {
+            hydrated.applyJson(sun["spatialRoot"]);
+        }
 
         check(hydrated.field != nullptr, "Sun spatial root hydrates a scalar field");
         check(hydrated.field &&
