@@ -129,7 +129,7 @@ int main() {
         for (int i = 0; i < kHotEvents; ++i) {
             const std::string target = "target-" + std::to_string(i % 16);
             const std::string message =
-                "Law \\"bench-law\\" applied to \\"" + target + "\\" - CONDITIONS FAILED";
+                "Law \"bench-law\" applied to \"" + target + "\" - CONDITIONS FAILED";
             const nlohmann::json details = {
                 {"lawId", "bench-law"}, {"targetId", target},
                 {"result", "ConditionsFailed"}
@@ -143,7 +143,7 @@ int main() {
         std::cout << std::fixed << std::setprecision(2)
                   << "durable logging synthetic ConditionsFailed bridge: "
                   << hotMicros << " us/event over " << kHotEvents
-                  << " synchronous append+flush events\\n";
+                  << " synchronous append+flush events\n";
         lawLogger.shutdown();
         auto integrated = readEntries(sandbox.root / "logs" / "laws" / encoded("integration"));
         check(readEntries(sandbox.root / "logs" / "laws" / encoded("bench-law")).size() == kHotEvents,
