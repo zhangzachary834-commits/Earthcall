@@ -231,7 +231,7 @@ int main() {
                   << "durable logging same-Law append-cost diagnostic: "
                   << realMicros << " us/refusal with confirmed append+flush, "
                   << noAppendMicros << " us/refusal with pre-capped file ("
-                  << kRealRefusals << " calls each; test-only control, not pure I/O attribution)\\n";
+                  << kRealRefusals << " calls each; test-only control, not pure I/O attribution)\n";
 
         // End-to-end tick diagnostic: a connected WhileTrue law starts with
         // true x > y candidates, then y changes. Rete's x-filter may retain
