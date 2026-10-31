@@ -450,11 +450,10 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
  let input = rays[id];
     if((input.counts.w & 0x40000000u)!=0u){return;}
  let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
- let subBase = id * cfg.maxSubPerRay; let overBase = id * cfg.maxOverPerRay;
  var reason = 0u; var work = 0u; var count = 0u;
  var pieces: array<vec2f, 48>;
  var knots: array<f32, 96>;
- if (cfg.budget == 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | 1u); return; }
+ if (cfg.budget == 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | 1u); return; }
  for (var _i = 0u; _i < 1u; _i++) {
   let m = curtains[activeMember]; let o = ro - m.origin.xyz;
   var a = input.ro_clipA.w; var b = input.rd_clipB.w; var hit = true;
@@ -524,7 +523,7 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
   }
   if (reason != 0u) { break; }
  }
- if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }
+ if (reason != 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | reason); return; }
  var singles = 0u;
  for (var p = 0u; p < count; p++) {
   let a = pieces[p].x; let b = pieces[p].y;
@@ -533,11 +532,11 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
   for (var k = 0u; k < n; k++) {
    let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
    let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
-   subpanels[subBase + singles] = Subpanel(vec2f(l, r), vec2u(activeMember, 0u)); singles++;
+   subpanels[singles * cfg.rayCount + id] = Subpanel(vec2f(l, r), vec2u(activeMember, 0u)); singles++;
   }
  }
- if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); }
- else { rays[id].counts = vec4u(subBase, singles, overBase, 0u); }
+ if (reason != 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | reason); }
+ else { rays[id].counts = vec4u(0, singles, 0, 0u); }
 }
 )WGSL";
 inline constexpr const char* kS2ProducerWgsl=R"WGSL(
@@ -751,11 +750,10 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
     let input = rays[id];
     if((input.counts.w & 0x40000000u)!=0u){return;}
  let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
-    let subBase = id * cfg.maxSubPerRay; let overBase = id * cfg.maxOverPerRay;
     var reason = 0u; var work = 0u; var count = 0u;
     var pieces: array<vec2f, 48>;
     var knots: array<f32, 96>;
-    if (cfg.budget == 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | 1u); return; }
+    if (cfg.budget == 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | 1u); return; }
 
     var count0 = 0u;
     for (var memberIdx = 0u; memberIdx < 2u; memberIdx++) {
@@ -834,7 +832,7 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
         if (memberIdx == 0u) { count0 = count; }
         if (reason != 0u) { break; }
     }
-    if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }
+    if (reason != 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | reason); return; }
     var singles = 0u;
     for (var pass = 0u; pass < 2u; pass++) {
         let emitM1 = (pass == 0u) == m1First;
@@ -848,14 +846,14 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
             for (var k = 0u; k < n; k++) {
                 let sl = select(pa + f32(k) * (pb - pa) / f32(n), pa, k == 0u);
                 let sr = select(pa + f32(k + 1u) * (pb - pa) / f32(n), pb, k + 1u == n);
-                subpanels[subBase + singles] = Subpanel(vec2f(sl, sr), vec2u(emitMember, 0u));
+                subpanels[singles * cfg.rayCount + id] = Subpanel(vec2f(sl, sr), vec2u(emitMember, 0u));
                 singles++;
             }
         }
         if (reason != 0u) { break; }
     }
-    if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); }
-    else { rays[id].counts = vec4u(subBase, singles, overBase, 0u); }
+    if (reason != 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | reason); }
+    else { rays[id].counts = vec4u(0, singles, 0, 0u); }
 }
 )WGSL";
 inline constexpr const char* kFallbackProducerWgsl=R"WGSL(
@@ -1065,12 +1063,11 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
  let input = rays[id];
     if((input.counts.w & 0x40000000u)!=0u){return;}
  let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
- let subBase = id * cfg.maxSubPerRay; let overBase = id * cfg.maxOverPerRay;
  var reason = 0u; var work = 0u; var count = 0u;
  var pieces: array<vec2f, 48>; var pieceMembers = vec3u(0u);
  var knots: array<f32, 96>;
  var memStart = vec4u(0u); var memCount = vec4u(0u);
- if (cfg.budget == 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | 1u); return; }
+ if (cfg.budget == 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | 1u); return; }
  for (var member = 0u; member < 4u; member++) {
   memStart[member] = count;
   let m = curtains[member]; let o = ro - m.origin.xyz;
@@ -1144,7 +1141,7 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
   memCount[member] = count - memStart[member];
   if (reason != 0u) { break; }
  }
- if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); return; }
+ if (reason != 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | reason); return; }
  var ne = 0u;
  var head = vec4u(0u);
  let totalKnots = (memCount.x + memCount.y + memCount.z + memCount.w) * 2u;
@@ -1198,15 +1195,15 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
    for (var k = 0u; k < n; k++) {
     let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
     let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
-    subpanels[subBase + singles] = Subpanel(vec2f(l, r), vec2u(member, 0)); singles++;
+    subpanels[singles * cfg.rayCount + id] = Subpanel(vec2f(l, r), vec2u(member, 0)); singles++;
    }
   } else {
    if (overs >= cfg.maxOverPerRay) { reason |= 32u; break; }
-   overlaps[overBase + overs] = Overlap(vec2f(a, b), vec2u(mask, 0)); overs++;
+   overlaps[overs * cfg.rayCount + id] = Overlap(vec2f(a, b), vec2u(mask, 0)); overs++;
   }
  }
- if (reason != 0u) { rays[id].counts = vec4u(subBase, 0, overBase, FALLBACK | reason); }
- else { rays[id].counts = vec4u(subBase, singles, overBase, overs); }
+ if (reason != 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | reason); }
+ else { rays[id].counts = vec4u(0, singles, 0, overs); }
 }
 )WGSL";
 }
