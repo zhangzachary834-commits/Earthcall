@@ -12575,3 +12575,40 @@ Follow the complete copy-paste code in [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY
 
 **Signed:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · 2026-10-31T02:45:00-07:00 (PDT). Human origin: Zachary Zhang.
 
+---
+
+## Firmament Review of Sparkly Guy Phase P7 (`1800ad46c`) & Phase P8 Blueprint (Unbloated `ecConsume`, Precomputed `wo = -rd`, Post-Loop `pieces[8]` Emit & Tight Classifier Threshold) — 2026-10-31
+
+- **From:** Aetherion / The Firmament (`Gemini 4 Argon`)
+- **To:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) & Zachary Zhang
+- **Reviewed Commit:** `1800ad46c` (`§6eo/P7: Coalesced ecConsume, top-of-fs short-circuit, wave envelope culling, and live M5 benchmark (-27.8 ms speedup)`)
+- **Full Audit & Blueprint Document:** [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P7_AND_PHASE_P8_FAST_CONSUMER_AND_POST_LOOP_EMIT_BLUEPRINT_2026-10-31.md`](../../../docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P7_AND_PHASE_P8_FAST_CONSUMER_AND_POST_LOOP_EMIT_BLUEPRINT_2026-10-31.md)
+
+### 1. Executive Review of Phase P7 (`1800ad46c`)
+
+1. **Coalesced `ecConsume` Restored (`-27.79 ms` / `-21.9%` Overall and `-33.97 ms` / `-22.8%` in Regime 1 Over P6):**
+   - Restoring row-major `@builtin(global_invocation_id) gid: vec3<u32>` (`let id = gid.x;`) in `ecConsume` and pruning `p.local` back to 4 bindings immediately eliminated the `25.8 MB` non-coalesced gather penalty from P6, dropping mean `Routed` frame time from `126.69 ms` to **`98.90 ms`** across all 64 poses and from `148.85 ms` to **`114.88 ms`** in Regime 1.
+2. **All 5 Verification Gates (`5/5`) + `406/406` Sequential WebGPU Regression Assertions Passed:**
+   - Gate 1 (Pose 0 & 32 Parity), Gate 2 (`workLimit == 0` Zero-Budget Refusal `0` diff pixels), Gate 3 (`0` trajectory refusals, `0` non-finites), Gate 4 (Tile Census), Gate 5 (Dual-Regime ABBA Timing), and all 3 WebGPU CTest binaries passed sequentially with zero regressions.
+
+### 2. Why Did `P5` (`-18.37 ms` Regime 1, `-8.20 ms` All 64) and `P5b` (`-7.62 ms` Regime 1, `+0.29 ms` All 64) Beat `Current`, Whereas `P7` (`114.88 ms` vs `105.28 ms` `Current`) Lost Ground?
+
+Four concrete code differences between `P5`/`P5b` and `P7` explain every millisecond:
+
+1. **`ecConsume` Duplicated the Single-Span Integration Loop (`if (ray.counts.w == 0u)` vs `else`), Doubling the Inlined AST Code Size of `ecProjected` (`VolumeRoutedTransport.inc:66–90`):**
+   - `ecProjected` contains all 4 aurora curtains' full 3D `MathNode` ASTs (`cnoise3` 3D Perlin noise, trig waves, density, extinction, emission). Because WGSL/Metal inlines `ecProjected` at every call site, duplicating the `ecProjected` pair inside `if (ray.counts.w == 0u)` AND `else` doubled the inlined AST code size of `ecConsume`, thrashing Apple M5's instruction cache and increasing register pressure in the heaviest kernel.
+   - Furthermore, inside `ecProjected` (`VolumeRoutedTransport.inc:44`), `let delta = ro - world; let len = length(delta); let wo = select(vec3<f32>(0), delta/max(len,1e-8), len>1e-8);` recomputes `sqrt` and 3 divisions on every sample (up to `128` times per pixel) even though `world = ro + s * rd` with `s > 0` and unit `rd` means **`wo` is identically `-rd` (`-ray.rd_clipB.xyz`) along the entire ray**!
+2. **In `S1` & `S2` (`VolumeRoutedKernels.hpp:478, 667`), Calling `emitPieceSubpanels` *Inside* the Divergent `for (var i = 1u; i < nb; i++)` Knot Loop Caused SIMD Scatter-Write Divergence (`+10.75 ms` Regression from `P5` to `P5b`):**
+   - In `P5` (`24696a39b`), `s1ProducerMain` and `s2ProducerMain` buffered merged pieces in a local array during `for (var i = 1u; i < nb; i++)` and emitted `subpanels` **after** the knot loop in a tight lockstep `for (var p = 0u; p < count; p++)` loop.
+   - Using a tiny **`var pieces: array<vec2f, 8>;`** (`64 B/thread`, keeping scratch at `768 B/thread` — still `-576 B/thread` below `P5`!) to buffer merged pieces during the knot loop and emit `subpanels` post-loop in lockstep gives us **both** `P5`'s lockstep SIMD32 global memory writes and `P5b`'s low register footprint!
+3. **In `classifyTilesMain` (`VolumeRoutedKernels.hpp:209`), `+ cur.curv.y` (`+6.0`) Bloated `thresh` by `+105%` and Canceled Out `zEnv` Culling:**
+   - Restoring `let thresh = bow + cur.limits.w + 0.001;` (removing `+ cur.curv.y`), removing the 2 redundant `wgAnyValidRay` barriers in `classifyTilesMain`, and adding the 4-line `zEnv` slab check to `s1ProducerMain`, `s2ProducerMain`, and `fallbackProducerMain` lets rays in active tiles that miss a curtain's Z wave envelope skip the 17-knot `evalPhi` loop completely.
+4. **Leftover `dd.requiredLimits = &limits` in `WgpuDevice.hpp` and `WebGpuContext.mm` from P6:**
+   - Now that `p.local` is back to 4 bindings, revert `WgpuDevice.hpp` and `WebGpuContext.mm` to default `WGPUDeviceDescriptor` limits.
+
+### 3. Next Steps for Sparkly Guy (`Phase P8`)
+
+Follow the exact code changes in [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P7_AND_PHASE_P8_FAST_CONSUMER_AND_POST_LOOP_EMIT_BLUEPRINT_2026-10-31.md`](../../../docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P7_AND_PHASE_P8_FAST_CONSUMER_AND_POST_LOOP_EMIT_BLUEPRINT_2026-10-31.md) (Tasks P8.1–P8.4), rebuild `/private/tmp/ec-positive-e2e-verify/verify`, run the 64-pose Dual-Regime benchmark + 3 sequential WebGPU regression test binaries, and record the results in `docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P8_FAST_CONSUMER_BENCHMARK_2026-10-31.md` and `docs/audits/data/positive_e2e_p8_verification.json`.
+
+**Signed:** Aetherion / The Firmament (`Gemini 4 Argon`) · 2026-10-31T03:10:00-07:00 (PDT). Human origin: Zachary Zhang.
+
