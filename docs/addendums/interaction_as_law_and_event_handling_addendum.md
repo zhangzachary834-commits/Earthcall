@@ -1,16 +1,18 @@
 # Addendum: Integrating Interaction-as-Law and Event Handling Architecture
 
-## Thoughts on Integration and Interrelation
+## The seam between sensing and meaning
 
-When examining the mechanisms of user interaction in Earthcall through the lenses of [Interaction-as-Law](../architecture/law/INTERACTION_AS_LAW.md) and [Event Bus vs Event Handler](../architecture/events/EVENT_BUS_VS_EVENT_HANDLER.md), a unified philosophy of ontological UI emerges.
+[Interaction-as-Law](../architecture/law/INTERACTION_AS_LAW.md) separates **Sense**, which remains the engine's first-mover responsibility, from **Decide** and **Act**, which are expressed by Laws. A control is a being plus a Law that gives interaction with that being its meaning; the input channel must not hardcode a separate ontology of buttons.
 
-### From C++ Callbacks to Authored Laws
-The [Interaction-as-Law](../architecture/law/INTERACTION_AS_LAW.md) document dictates that standard user interfaces (like buttons or tuners) must not exist as hardcoded black boxes, but rather as authored Laws reacting to pointer events. This represents a shift from imperative C++ callbacks to declarative, relational rule evaluation.
+### InteractionChannel publishes semantic edges
 
-### The Event Handler as the Mechanism
-The [Event Bus vs Event Handler](../architecture/events/EVENT_BUS_VS_EVENT_HANDLER.md) document describes how events are routed and managed. While Interaction-as-Law moves the *logic* of UI out of C++, the *sensing* of these interactions (e.g., `object-clicked`, `object-hover-entered`) relies on the centralized `EventHandler`. By registering core channel events via the `EventHandler`, the engine ensures that pointer actions are cleanly captured and translated into the semantic facts required by the Rete network to evaluate interaction Laws.
+The `interaction-channel` is stepped from `Engine::update`. It records registered input levels (such as `hoveredId`, `pressedId`, and `focusedId`) and publishes transition events such as `object-hover-entered` and `object-clicked`. A click requires press and release on the same being within the click-slop threshold. Events name the affected Singular and, where applicable, the pointing Person; no known Person means no published interaction edge. Laws may respond with `Activation::OnEvent` or read levels with `Activation::WhileTrue`.
 
-This interrelation ensures that the engine efficiently manages the delivery of hardware inputs, while completely deferring the meaning and reaction of those inputs to the authored, continuous conversation of Earthcall's Laws.
+### EventBus delivery is not EventHandler governance
+
+[Event Bus vs Event Handler](../architecture/events/EVENT_BUS_VS_EVENT_HANDLER.md) distinguishes the `EventBus`, which distributes events, from the optional `EventHandler` convenience layer, which organizes named callback registrations. The source explicitly permits direct `EventBus` subscriptions. **Interaction sensing does not depend on a centralized `EventHandler`**, and registering a callback there does not itself convert hardware input into a Rete fact, authorize a Law, or determine what a control means.
+
+The architectural boundary is therefore: **engine senses and publishes; EventBus distributes; Laws interpret and act**. An `EventHandler` may organize imperative subscribers without becoming a second source of semantic authority. This is an architectural account, not a claim that every proposed authored control or manual UI validation has shipped.
 
 ---
 
