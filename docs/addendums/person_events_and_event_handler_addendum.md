@@ -1,18 +1,16 @@
 # Addendum: Integrating Person Events, Event Handlers, and the Second Person Framework
 
-## Events report activity; they do not grant standing
+## Thoughts on Integration and Interrelation
 
-The [Person Events System](../architecture/events/PERSON_EVENTS_SYSTEM.md) describes events for creation, login, logout, and Zone joining, including `PersonCreatedEvent`, `PersonLoginEvent`, and `PersonJoinedEvent`. Its examples subscribe **directly to the `EventBus`**. The [Event Bus vs Event Handler](../architecture/events/EVENT_BUS_VS_EVENT_HANDLER.md) document offers `EventHandler` as an optional way to organize named callbacks, not a required central authority for Person state changes.
+When examining the foundational documents of Earthcall's event systems—specifically the [Person Events System](../architecture/events/PERSON_EVENTS_SYSTEM.md), [Event Bus vs Event Handler](../architecture/events/EVENT_BUS_VS_EVENT_HANDLER.md), and the [Second Person Framework](../architecture/ourverse/SECOND_PERSON_FRAMEWORK.md)—a cohesive structure for managing Person-driven state changes across the ontology emerges.
 
-### Delivery is not authorization
+### Centralized Event Handling for Person Actions
+The [Event Bus vs Event Handler](../architecture/events/EVENT_BUS_VS_EVENT_HANDLER.md) document delineates the transition from scattered event subscriptions (the "Post Office" model) to a centralized `EventHandler` (the "Manager"). This distinction is critical when implementing the [Person Events System](../architecture/events/PERSON_EVENTS_SYSTEM.md). By centralizing handlers for `PersonCreatedEvent`, `PersonLoginEvent`, and `PersonJoinedEvent`, Earthcall ensures that critical state changes involving a Person are managed predictably and transparently, rather than being lost in disparate subsystem subscriptions.
 
-Publishing or handling `PersonJoinedEvent` can notify subscribers about a join; it does **not** itself prove that admission, consent, jurisdiction, or conflicting Laws were checked *before* the state changed. Such guarantees must be enforced at the relevant mutation/admission boundary. An after-the-fact callback cannot substitute for an authorization gate, and callback registration order must not silently decide a Person's rights.
+### Second Person Governance and Event Triggers
+The [Second Person Framework](../architecture/ourverse/SECOND_PERSON_FRAMEWORK.md) establishes that a Person's presence, properties, and interactions (such as joining a Zone) are governed by strict stakes and relational bounds. When a Person acts—for example, joining a new Zone—the `PersonJoinedEvent` is triggered. Handling this event via the centralized `EventHandler` ensures that the governance checks required by the Second Person Framework (such as Jurisdiction and Covenant conflict resolution) can be applied synchronously and systematically before the system reacts to the Person's new state.
 
-### The Second Person boundary is partly specified, not shipped
-
-The [Second Person Framework](../architecture/ourverse/SECOND_PERSON_FRAMEWORK.md) specifies future Person-to-Person visibility, representation, and equal-authority conflict mechanisms. It explicitly says those three mechanisms are **not yet implemented**; the at-least-one Primary Home admission invariant is a separate live guarantee. Its proposed conflict ladder is jurisdiction, authored covenant, then loud mutual refusal, with unresolved **AUTHOR** decisions. An `EventHandler` does not implement that ladder or the required signed, revocable Person–Law consent.
-
-The integration path is therefore **validate a proposed change at its authoritative boundary, then publish an attributable event about the result, then let subscribers react**. The Person Events document describes intended event behavior; neither it nor this addendum is an independent runtime verification of every event emission. Preserve the distinction between documentation, implemented safeguards, and future constitutional design.
+By weaving these systems together, Earthcall moves beyond merely passing messages about user activity. It treats Person events as fundamental ontological shifts that must be meticulously managed and evaluated against the established relational and jurisdictional frameworks.
 
 ---
 
