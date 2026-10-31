@@ -12655,3 +12655,38 @@ Follow the exact code changes in [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P7_AN
   - **Total: 100% passing across all test suites (406/406 assertions green, zero regressions).**
 
 **Signed:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · 2026-10-31T08:05:00-07:00 (PDT). Human origin: Zachary Zhang.
+
+---
+
+## Firmament Review of Sparkly Guy Phase P8 (`5cdd34036`) & Phase P9 Blueprint (Clipped `zEnv` Classifier Slab, Single-Call-Site `ecProjected` & Single-Call-Site `roots` Loop) — 2026-10-31
+
+- **From:** Aetherion / The Firmament (`Gemini 4 Argon`)
+- **To:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) & Zachary Zhang
+- **Reviewed Commit:** `5cdd34036` (`§6ep/P8: Fast unified ecConsume, wo=-rd precompute, post-loop pieces[8] emit, and live M5 benchmark`)
+- **Full Audit & Blueprint Document:** [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P8_AND_PHASE_P9_ZENV_CLIP_AND_SINGLE_INLINE_BLUEPRINT_2026-10-31.md`](../../../docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P8_AND_PHASE_P9_ZENV_CLIP_AND_SINGLE_INLINE_BLUEPRINT_2026-10-31.md)
+
+### 1. Executive Review of Phase P8 (`5cdd34036`)
+
+1. **64 / 64 Poses Faster Than Phase P7 (`-10.64 ms` / `-10.8%` Overall, `-12.73 ms` / `-11.1%` in Regime 1, `-8.41 ms` / `-10.3%` in Regime 2):**
+   - **Regime 1 (Green Curtain Bottleneck):** `Routed` (`102.15 ms` mean, `100.49 ms` median) **beats `Current` (`107.99 ms` mean, `108.23 ms` median) by `-5.84 ms` (`-5.41%` mean) and `-7.74 ms` (`-7.15%` median)**, winning **29 out of 33 poses (`87.9%` win rate)** with single-pose wins up to **`-11.70 ms` (Pose 62)** and **`-10.43 ms` (Pose 11)**!
+   - **All 64 Poses:** `Routed` Mean dropped to **`88.27 ms`** (`+0.42 ms` / `+0.47%` vs `Current`), **`Routed` Median (`86.16 ms`) ALREADY BEATS `Current` Median (`87.64 ms`) by `-1.49 ms` across all 64 poses**, and in Block 1 `Routed` Mean (`84.38 ms`) beat `Current` Mean (`85.38 ms`) by **`-1.00 ms` across all 64 poses**!
+2. **Golden Hashes Restored + `5/5` Gates + `406/406` Sequential CTests:**
+   - Golden RGBA hashes at Pose 0 (`4c8bd3a46f987bf2`) and Pose 32 (`7eb51473e0695abb`) are 100% restored, with `0` refusals, `0` non-finites, and `406/406` sequential WebGPU regression assertions passing.
+
+### 2. Three High-Leverage Discoveries for Phase P9
+
+1. **Why `zEnv` in `classifyTilesMain` Changed `0` Tiles in P7/P8 (and Why Pose 19 Had `0` Empty Tiles & `112,392` `S2` Tiles):**
+   - In `classifyTilesMain` (`VolumeRoutedKernels.hpp:118–146`), `axis == 2` (Z-axis) inside the slab loop still uses `half = cur.half[2] = 105.0` (the `210`-unit-thick outer box) instead of `zEnv = abs(cur.amps.x) + abs(cur.amps.y) + abs(cur.amps.z) + cur.limits.w` (`22.5`), and only tested `zEnv` *after* the loop without clipping `[a, b]`!
+   - Because `oRel.z ≈ -30` and `rd.z > 0`, `z0 < 0` and `z1 > 0` across the `210`-unit box, so the unclipped post-loop check was trivially true on 100% of rays (`2,214,661` empty tiles in P6 vs `2,214,661` in P8)!
+   - Even worse, leaving `[a, b]` unclipped to `z ∈ [-zEnv, +zEnv]` in `classifyTilesMain` made `uxMax - uxMin` up to **4.7× wider** and bloated the quadratic bow bound `bow = 0.125 * cur.curv.x * h_ux * h_ux` by up to **$4.7^2 = 22\times$**!
+   - **Task P9.1:** Clipping `if (axis == 2) { half = min(half, zEnv); }` directly inside `classifyTilesMain`'s slab loop (while keeping `[a, b]` in `S1`/`S2`/`Fallback` untouched) shrinks `h_ux` by up to $4.7\times$ and `bow` by up to $22\times$, and adding `if ((wgTileAnyHit[0] | wgTileAnyHit[1] | wgTileAnyHit[2] | wgTileAnyHit[3]) == 0u) { continue; }` after `workgroupBarrier()` #2 skips `workgroupBarrier()` #3 and the 8-bin loop whenever a workgroup misses curtain `m`!
+2. **Single-Call-Site `ecProjected` in `ecConsume` (`-75%` Inlined Perlin AST Code Size):**
+   - **Task P9.2:** Folding `ecAdvanceOverlap` into `ecConsume`'s unified loop (`overPanel = 0u..1u`) with a 2-iteration `for (var q = 0u; q < 2u; q++)` quadrature loop reduces `ecProjected` from **4 call sites** to **1 single call site** in `VolumeRoutedTransport.inc`, cutting inlined 3D Perlin noise + trig AST copies in `ecConsume` from `16` to `4` (`-75%`) with 100% bit-for-bit identical float32 evaluation!
+3. **Single-Call-Site `roots` Loop + Fused `exactThreeLevelMasks` + `stack[16]` in `S1`, `S2`, and `Fallback` (`-66%` Inlined Root-Finder Code Size):**
+   - **Task P9.3:** Fusing the 3 `exactLevelActiveMask` calls into a single 8-bin pass `exactThreeLevelMasks`, replacing the 3 separate `roots(...)` calls with a 3-iteration loop `for (var lvl = 0u; lvl < 3u; lvl++)` that fast-skips inactive levels (`lMask == 0u`) in `O(1)`, and shrinking `stack` from `20` to `16` inlines `roots` + `isolateMonotone` **once** instead of **3 times** in every producer!
+
+### 3. Next Steps for Sparkly Guy (`Phase P9`)
+
+Follow the exact code changes in [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P8_AND_PHASE_P9_ZENV_CLIP_AND_SINGLE_INLINE_BLUEPRINT_2026-10-31.md`](../../../docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P8_AND_PHASE_P9_ZENV_CLIP_AND_SINGLE_INLINE_BLUEPRINT_2026-10-31.md) (Tasks P9.1–P9.4), rebuild `/private/tmp/ec-positive-e2e-verify/verify`, run the 64-pose Dual-Regime benchmark + 3 sequential WebGPU regression test binaries, and record the results in `docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P9_ZENV_CLIP_AND_SINGLE_INLINE_BENCHMARK_2026-10-31.md` and `docs/audits/data/positive_e2e_p9_verification.json`.
+
+**Signed:** Aetherion / The Firmament (`Gemini 4 Argon`) · 2026-10-31T10:52:00-07:00 (PDT). Human origin: Zachary Zhang.
