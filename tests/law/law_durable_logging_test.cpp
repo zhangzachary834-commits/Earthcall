@@ -3,6 +3,7 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -119,8 +120,34 @@ int main() {
         lawLogger.setLevel(ECA::LogLevel::Off);
         check(lawLogger.logForLaw("integration", "LAW", "durable with aggregate Off"),
               "LawAuditLogger did not append with aggregate Off");
+        // Synthetic high-frequency ConditionsFailed bridge benchmark. This is
+        // a diagnostic measurement, not a machine-independent pass threshold.
+        // It includes message/details construction, JSON serialization,
+        // the logger mutex, append and synchronous flush, but not Law evaluation.
+        constexpr int kHotEvents = 2000;
+        const auto hotStart = std::chrono::steady_clock::now();
+        for (int i = 0; i < kHotEvents; ++i) {
+            const std::string target = "target-" + std::to_string(i % 16);
+            const std::string message =
+                "Law \\"bench-law\\" applied to \\"" + target + "\\" - CONDITIONS FAILED";
+            const nlohmann::json details = {
+                {"lawId", "bench-law"}, {"targetId", target},
+                {"result", "ConditionsFailed"}
+            };
+            check(lawLogger.logForLaw("bench-law", "LAW", message, details),
+                  "High-frequency bridge append failed");
+        }
+        const auto hotStop = std::chrono::steady_clock::now();
+        const double hotMicros = std::chrono::duration<double, std::micro>(
+            hotStop - hotStart).count() / kHotEvents;
+        std::cout << std::fixed << std::setprecision(2)
+                  << "durable logging synthetic ConditionsFailed bridge: "
+                  << hotMicros << " us/event over " << kHotEvents
+                  << " synchronous append+flush events\\n";
         lawLogger.shutdown();
         auto integrated = readEntries(sandbox.root / "logs" / "laws" / encoded("integration"));
+        check(readEntries(sandbox.root / "logs" / "laws" / encoded("bench-law")).size() == kHotEvents,
+              "High-frequency durable event count mismatch");
         check(integrated.size() == 1 &&
               integrated[0].at("message") == "durable with aggregate Off",
               "LawAuditLogger bridge missing durable event");
