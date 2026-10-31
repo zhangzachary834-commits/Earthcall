@@ -53,17 +53,6 @@ struct DispatchCounters {
 @group(0) @binding(6) var<storage, read_write> fallbackTileList: array<u32>;
 @group(0) @binding(7) var<storage, read_write> counters: DispatchCounters;
 
-var<workgroup> wgUxMin: array<f32, 64>;
-var<workgroup> wgUxMax: array<f32, 64>;
-var<workgroup> wgHit: array<u32, 64>;
-var<workgroup> wgWKnots: array<f32, 36>;
-var<workgroup> wgTileUxMin: array<f32, 4>;
-var<workgroup> wgTileUxMax: array<f32, 4>;
-var<workgroup> wgTileAnyHit: array<u32, 4>;
-var<workgroup> wgEnter: array<f32, 64>;
-var<workgroup> wgExit: array<f32, 64>;
-var<workgroup> wgState: array<u32, 64>;
-
 fn evalWave(cur: CurtainSpec, x: f32) -> f32 {
     return cur.amps.x * sin(cur.freqs.x * x + cur.phases.x) +
            cur.amps.y * cos(cur.freqs.y * x + cur.phases.y) +
@@ -71,36 +60,13 @@ fn evalWave(cur: CurtainSpec, x: f32) -> f32 {
 }
 
 @compute @workgroup_size(64, 1, 1)
-fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_index) lid: u32) {
+fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
+    let tileId = gid.x;
     let totalTiles = arrayLength(&tileOffsets) - 1u;
-    let localTile = lid >> 4u;
-    let lane = lid & 15u;
-    let tileId = wid.x * 4u + localTile;
-    let base = localTile * 16u;
-    let validTile = tileId < totalTiles;
+    if (tileId >= totalTiles) { return; }
 
-    var rayStart = 0u;
-    var rayCount = 0u;
-    if (validTile) {
-        rayStart = tileOffsets[tileId];
-        rayCount = min(tileOffsets[tileId + 1u] - rayStart, 16u);
-    }
-    let validRay = validTile && (lane < rayCount);
-
-    var ro = vec3f(0.0);
-    var rd = vec3f(0.0);
-    var clipA = 0.0;
-    var clipB = 0.0;
-    var rayActive = false;
-    if (validRay) {
-        let rIdx = tileRayIndices[rayStart + lane];
-        let ray = rays[rIdx];
-        ro = ray.ro_clipA.xyz;
-        clipA = ray.ro_clipA.w;
-        rd = ray.rd_clipB.xyz;
-        clipB = ray.rd_clipB.w;
-        rayActive = ((ray.counts.w & 0x40000000u) == 0u) && (clipB > clipA);
-    }
+    let rayStart = tileOffsets[tileId];
+    let rayCount = min(tileOffsets[tileId + 1u] - rayStart, 16u);
 
     var activeMemberMask = 0u;
     var tileCanOverlap = false;
@@ -110,100 +76,87 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
 
     for (var m = 0u; m < 4u; m++) {
         let cur = curtains[m];
-        let oRel = ro - cur.origin.xyz;
-        var a = clipA;
-        var b = clipB;
-        var hit = rayActive;
         let zEnv = abs(cur.amps.x) + abs(cur.amps.y) + abs(cur.amps.z) + cur.limits.w;
+        var uxMin = 1e9f;
+        var uxMax = -1e9f;
+        var anyRayHit = false;
+        var rA: array<f32, 16>;
+        var rB: array<f32, 16>;
+        var rHit: array<bool, 16>;
 
-        if (rayActive) {
-            for (var axis = 0; axis < 3; axis++) {
-                var half = cur.half[axis];
-                if (axis == 0) { half = min(half, cur.limits.x); }
-                if (axis == 1) { half = min(half, cur.limits.y); }
-                if (axis == 2) { half = min(half, zEnv); }
-                let d = rd[axis];
-                let o = oRel[axis];
-                if (d == 0.0) {
-                    if (abs(o) > half + cur.curv.y) { hit = false; break; }
-                } else {
-                    let q0 = (-half - cur.curv.y - o) / d;
-                    let q1 = (half + cur.curv.y - o) / d;
-                    a = max(a, min(q0, q1));
-                    b = min(b, max(q0, q1));
+        for (var i = 0u; i < rayCount; i++) {
+            let rIdx = tileRayIndices[rayStart + i];
+            let ray = rays[rIdx];
+            var a = ray.ro_clipA.w;
+            var b = ray.rd_clipB.w;
+            var hit = ((ray.counts.w & 0x40000000u) == 0u) && (b > a);
+            let oRel = ray.ro_clipA.xyz - cur.origin.xyz;
+
+            if (hit) {
+                for (var axis = 0; axis < 3; axis++) {
+                    var half = cur.half[axis];
+                    if (axis == 0) { half = min(half, cur.limits.x); }
+                    if (axis == 1) { half = min(half, cur.limits.y); }
+                    if (axis == 2) { half = min(half, zEnv); }
+                    let d = ray.rd_clipB[axis];
+                    let o = oRel[axis];
+                    if (d == 0.0) {
+                        if (abs(o) > half + cur.curv.y) { hit = false; break; }
+                    } else {
+                        let q0 = (-half - cur.curv.y - o) / d;
+                        let q1 = (half + cur.curv.y - o) / d;
+                        a = max(a, min(q0, q1));
+                        b = min(b, max(q0, q1));
+                    }
                 }
             }
-        }
 
-        let rHit = hit && (b > a);
-        var myUxMin = 1e9f;
-        var myUxMax = -1e9f;
-        if (rHit) {
-            let u0 = oRel.x + a * rd.x;
-            let u1 = oRel.x + b * rd.x;
-            myUxMin = min(myUxMin, min(u0, u1));
-            myUxMax = max(myUxMax, max(u0, u1));
-        }
-        wgUxMin[lid] = myUxMin;
-        wgUxMax[lid] = myUxMax;
-        wgHit[lid] = select(0u, 1u, rHit);
-        workgroupBarrier();
+            let h = hit && (b > a);
+            rA[i] = a;
+            rB[i] = b;
+            rHit[i] = h;
 
-        if (lane < 9u) {
-            var tUxMin = 1e9f;
-            var tUxMax = -1e9f;
-            var tAnyHit = false;
-            for (var i = 0u; i < 16u; i++) {
-                if (wgHit[base + i] != 0u) {
-                    tAnyHit = true;
-                    tUxMin = min(tUxMin, wgUxMin[base + i]);
-                    tUxMax = max(tUxMax, wgUxMax[base + i]);
-                }
-            }
-            if (tAnyHit && tUxMax > tUxMin) {
-                let ux = tUxMin + f32(lane) / 8.0 * (tUxMax - tUxMin);
-                wgWKnots[localTile * 9u + lane] = evalWave(cur, ux);
-            }
-            if (lane == 0u) {
-                wgTileUxMin[localTile] = tUxMin;
-                wgTileUxMax[localTile] = tUxMax;
-                wgTileAnyHit[localTile] = select(0u, 1u, tAnyHit);
+            if (h) {
+                anyRayHit = true;
+                let u0 = oRel.x + a * ray.rd_clipB.x;
+                let u1 = oRel.x + b * ray.rd_clipB.x;
+                uxMin = min(uxMin, min(u0, u1));
+                uxMax = max(uxMax, max(u0, u1));
             }
         }
-        workgroupBarrier();
 
-        if ((wgTileAnyHit[0] | wgTileAnyHit[1] | wgTileAnyHit[2] | wgTileAnyHit[3]) == 0u) {
-            continue;
-        }
+        if (anyRayHit && uxMax > uxMin) {
+            var wKnots: array<f32, 9>;
+            for (var k = 0u; k < 9u; k++) {
+                let ux = uxMin + f32(k) / 8.0 * (uxMax - uxMin);
+                wKnots[k] = evalWave(cur, ux);
+            }
+            let h_ux = (uxMax - uxMin) / 8.0;
+            let bow = 0.125 * cur.curv.x * h_ux * h_ux;
+            let thresh = bow + cur.limits.w + 0.001;
 
-        let anyRayHit = wgTileAnyHit[localTile] != 0u;
-        let uxMin = wgTileUxMin[localTile];
-        let uxMax = wgTileUxMax[localTile];
-        let hasUxSpan = anyRayHit && (uxMax > uxMin);
+            var enter = 1e9f;
+            var exit = -1e9f;
+            var curActive = false;
 
-        var myEnter = 1e9f;
-        var myExit = -1e9f;
-        var myState = 0u;
+            for (var i = 0u; i < rayCount; i++) {
+                if (!rHit[i]) { continue; }
+                let rIdx = tileRayIndices[rayStart + i];
+                let ray = rays[rIdx];
+                let oRel = ray.ro_clipA.xyz - cur.origin.xyz;
+                let dx = ray.rd_clipB.x;
+                if (abs(dx) < 1e-6) { curActive = true; enter = min(enter, rA[i]); exit = max(exit, rB[i]); break; }
 
-        if (hasUxSpan && rHit) {
-            let dx = rd.x;
-            if (abs(dx) < 1e-6) {
-                myState = 2u;
-                myEnter = a;
-                myExit = b;
-            } else {
-                let h_ux = (uxMax - uxMin) / 8.0;
-                let bow = 0.125 * cur.curv.x * h_ux * h_ux;
-                let thresh = bow + cur.limits.w + 0.001;
-                let knotBase = localTile * 9u;
+                let a = rA[i];
+                let b = rB[i];
 
                 for (var bin = 0u; bin < 8u; bin++) {
                     let u0 = uxMin + f32(bin) / 8.0 * (uxMax - uxMin);
                     let u1 = uxMin + f32(bin + 1u) / 8.0 * (uxMax - uxMin);
                     let su0 = (u0 - oRel.x) / dx;
                     let su1 = (u1 - oRel.x) / dx;
-                    let phi0 = oRel.z + su0 * rd.z + wgWKnots[knotBase + bin];
-                    let phi1 = oRel.z + su1 * rd.z + wgWKnots[knotBase + bin + 1u];
+                    let phi0 = oRel.z + su0 * ray.rd_clipB.z + wKnots[bin];
+                    let phi1 = oRel.z + su1 * ray.rd_clipB.z + wKnots[bin + 1u];
 
                     let sMin = min(su0, su1);
                     let sMax = max(su0, su1);
@@ -217,38 +170,14 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
                         let pB = phi0 + tB * (phi1 - phi0);
 
                         if (!(min(pA, pB) > thresh || max(pA, pB) < -thresh)) {
-                            myState = 1u;
-                            myEnter = min(myEnter, cLo);
-                            myExit = max(myExit, cHi);
+                            curActive = true;
+                            enter = min(enter, cLo);
+                            exit = max(exit, cHi);
                         }
                     }
                 }
             }
-        } else if (anyRayHit && rHit) {
-            myState = 1u;
-            myEnter = a;
-            myExit = b;
-        }
 
-        wgEnter[lid] = myEnter;
-        wgExit[lid] = myExit;
-        wgState[lid] = myState;
-        workgroupBarrier();
-
-        if (lane == 0u && validTile && anyRayHit) {
-            var enter = 1e9f;
-            var exit = -1e9f;
-            var curActive = false;
-            for (var i = 0u; i < 16u; i++) {
-                let st = wgState[base + i];
-                if (st != 0u) {
-                    curActive = true;
-                    enter = min(enter, wgEnter[base + i]);
-                    exit = max(exit, wgExit[base + i]);
-                    if (st == 2u) { break; }
-                }
-            }
-        if (anyRayHit && uxMax > uxMin) {
             if (curActive) {
                 activeMemberMask |= (1u << m);
                 memberHit[m] = true;
@@ -256,17 +185,15 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
                 exitArr[m] = exit;
             }
         } else if (anyRayHit) {
-            if (curActive) {
-                activeMemberMask |= (1u << m);
-                memberHit[m] = true;
-                enterArr[m] = enter;
-                exitArr[m] = exit;
+            activeMemberMask |= (1u << m);
+            memberHit[m] = true;
+            var enter = 1e9f; var exit = -1e9f;
+            for (var i = 0u; i < rayCount; i++) {
+                if (rHit[i]) { enter = min(enter, rA[i]); exit = max(exit, rB[i]); }
             }
-        }
+            enterArr[m] = enter; exitArr[m] = exit;
         }
     }
-
-    if (!validTile || lane != 0u) { return; }
 
     let activeCount = countOneBits(activeMemberMask);
     if (activeCount > 1u) {
@@ -400,14 +327,14 @@ fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
  }
 }
 
-fn emitPieceSubpanels(p: vec2f, member: u32, id: u32, singles: ptr<function, u32>, reason: ptr<function, u32>) {
+fn emitPieceSubpanels(p: vec2f, member: u32, subBase: u32, singles: ptr<function, u32>, reason: ptr<function, u32>) {
  let a = p.x; let b = p.y;
  let n = max(1u, u32(ceil((b - a) / 4.0)));
  if (*singles + n > cfg.maxSubPerRay) { *reason |= 16u; return; }
  for (var k = 0u; k < n; k++) {
   let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
   let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
-  subpanels[*singles * cfg.rayCount + id] = Subpanel(vec2f(l, r), vec2u(member, 0u));
+  subpanels[subBase + *singles] = Subpanel(vec2f(l, r), vec2u(member, 0u));
   *singles += 1u;
  }
 }
@@ -419,7 +346,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
  levelActiveMask: u32) {
  let M = m.curv.x * d.x * d.x * 1.00002;
  let err = m.curv.y;
- var stack: array<vec4f, 16>; var depthBits = vec3u(0u); var top = 0u;
+ var stack: array<vec4f, 15>; var depthBits = vec3u(0u); var top = 0u;
  for (var bin = 0u; bin < 8u; bin++) {
   var a = lo + (hi - lo) * f32(bin) / 8.0; var b = lo + (hi - lo) * f32(bin + 1u) / 8.0;
   if (bin == 0u) { a = lo; } if (bin == 7u) { b = hi; }
@@ -476,7 +403,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
     continue;
    }
    if (0.125 * M * h * h <= error) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
-   if (f32(depth) >= 14.0 || top + 2u > 16u) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
+   if (f32(depth) >= 14.0 || top + 2u > 15u) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
    let mid = a + 0.5 * h; if (mid <= a || mid >= b) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
    let phi_mid = evalPhi(m, o, d, mid);
    stack[top] = vec4f(mid, b, phi_mid, cell.w); setDepth(&depthBits, top, depth + 1u);
@@ -547,6 +474,7 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
  let input = rays[id];
     if((input.counts.w & 0x40000000u)!=0u){return;}
  let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
+ let subBase = id * cfg.maxSubPerRay;
  var reason = 0u; var work = 0u; var singles = 0u;
  var knots: array<f32, 48>;
  if (cfg.budget == 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | 1u); return; }
@@ -626,7 +554,7 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
      pieces[count] = vec2f(l, r); count++;
      previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
     } else {
-     emitPieceSubpanels(pieces[0], activeMember, id, &singles, &reason);
+     emitPieceSubpanels(pieces[0], activeMember, subBase, &singles, &reason);
      if (reason != 0u) { break; }
      for (var k = 1u; k < 8u; k++) { pieces[k - 1u] = pieces[k]; }
      pieces[7u] = vec2f(l, r);
@@ -635,7 +563,7 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
    }
   }
   for (var p = 0u; p < count; p++) {
-   emitPieceSubpanels(pieces[p], activeMember, id, &singles, &reason);
+   emitPieceSubpanels(pieces[p], activeMember, subBase, &singles, &reason);
    if (reason != 0u) { break; }
   }
   if (reason != 0u) { break; }
@@ -721,14 +649,14 @@ fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
  }
 }
 
-fn emitPieceSubpanels(p: vec2f, member: u32, id: u32, singles: ptr<function, u32>, reason: ptr<function, u32>) {
+fn emitPieceSubpanels(p: vec2f, member: u32, subBase: u32, singles: ptr<function, u32>, reason: ptr<function, u32>) {
  let a = p.x; let b = p.y;
  let n = max(1u, u32(ceil((b - a) / 4.0)));
  if (*singles + n > cfg.maxSubPerRay) { *reason |= 16u; return; }
  for (var k = 0u; k < n; k++) {
   let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
   let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
-  subpanels[*singles * cfg.rayCount + id] = Subpanel(vec2f(l, r), vec2u(member, 0u));
+  subpanels[subBase + *singles] = Subpanel(vec2f(l, r), vec2u(member, 0u));
   *singles += 1u;
  }
 }
@@ -740,7 +668,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
  levelActiveMask: u32) {
  let M = m.curv.x * d.x * d.x * 1.00002;
  let err = m.curv.y;
- var stack: array<vec4f, 16>; var depthBits = vec3u(0u); var top = 0u;
+ var stack: array<vec4f, 15>; var depthBits = vec3u(0u); var top = 0u;
  for (var bin = 0u; bin < 8u; bin++) {
   var a = lo + (hi - lo) * f32(bin) / 8.0; var b = lo + (hi - lo) * f32(bin + 1u) / 8.0;
   if (bin == 0u) { a = lo; } if (bin == 7u) { b = hi; }
@@ -797,7 +725,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
     continue;
    }
    if (0.125 * M * h * h <= error) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
-   if (f32(depth) >= 14.0 || top + 2u > 16u) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
+   if (f32(depth) >= 14.0 || top + 2u > 15u) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
    let mid = a + 0.5 * h; if (mid <= a || mid >= b) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
    let phi_mid = evalPhi(m, o, d, mid);
    stack[top] = vec4f(mid, b, phi_mid, cell.w); setDepth(&depthBits, top, depth + 1u);
@@ -870,6 +798,7 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
     let input = rays[id];
     if((input.counts.w & 0x40000000u)!=0u){return;}
     let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
+    let subBase = id * cfg.maxSubPerRay;
     var reason = 0u; var work = 0u; var singles = 0u;
     var knots: array<f32, 48>;
     if (cfg.budget == 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | 1u); return; }
@@ -955,7 +884,7 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
                     pieces[count] = vec2f(l, r); count++;
                     previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
                 } else {
-                    emitPieceSubpanels(pieces[0], member, id, &singles, &reason);
+                    emitPieceSubpanels(pieces[0], member, subBase, &singles, &reason);
                     if (reason != 0u) { break; }
                     for (var k = 1u; k < 8u; k++) { pieces[k - 1u] = pieces[k]; }
                     pieces[7u] = vec2f(l, r);
@@ -964,7 +893,7 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
             }
         }
         for (var p = 0u; p < count; p++) {
-            emitPieceSubpanels(pieces[p], member, id, &singles, &reason);
+            emitPieceSubpanels(pieces[p], member, subBase, &singles, &reason);
             if (reason != 0u) { break; }
         }
         if (reason != 0u) { break; }
@@ -1059,7 +988,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
  levelActiveMask: u32) {
  let M = m.curv.x * d.x * d.x * 1.00002;
  let err = m.curv.y;
- var stack: array<vec4f, 16>; var depthBits = vec3u(0u); var top = 0u;
+ var stack: array<vec4f, 15>; var depthBits = vec3u(0u); var top = 0u;
  for (var bin = 0u; bin < 8u; bin++) {
   var a = lo + (hi - lo) * f32(bin) / 8.0; var b = lo + (hi - lo) * f32(bin + 1u) / 8.0;
   if (bin == 0u) { a = lo; } if (bin == 7u) { b = hi; }
@@ -1116,7 +1045,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
     continue;
    }
    if (0.125 * M * h * h <= error) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
-   if (f32(depth) >= 14.0 || top + 2u > 16u) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
+   if (f32(depth) >= 14.0 || top + 2u > 15u) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
    let mid = a + 0.5 * h; if (mid <= a || mid >= b) { putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); continue; }
    let phi_mid = evalPhi(m, o, d, mid);
    stack[top] = vec4f(mid, b, phi_mid, cell.w); setDepth(&depthBits, top, depth + 1u);
@@ -1194,6 +1123,7 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
  let input = rays[id];
     if((input.counts.w & 0x40000000u)!=0u){return;}
  let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
+ let subBase = id * cfg.maxSubPerRay; let overBase = id * cfg.maxOverPerRay;
  var reason = 0u; var work = 0u; var count = 0u;
  var pieces: array<vec2f, 48>; var pieceMembers = vec3u(0u);
  var knots: array<f32, 96>;
@@ -1336,11 +1266,11 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
    for (var k = 0u; k < n; k++) {
     let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
     let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
-    subpanels[singles * cfg.rayCount + id] = Subpanel(vec2f(l, r), vec2u(member, 0)); singles++;
+    subpanels[subBase + singles] = Subpanel(vec2f(l, r), vec2u(member, 0)); singles++;
    }
   } else {
    if (overs >= cfg.maxOverPerRay) { reason |= 32u; break; }
-   overlaps[overs * cfg.rayCount + id] = Overlap(vec2f(a, b), vec2u(mask, 0)); overs++;
+   overlaps[overBase + overs] = Overlap(vec2f(a, b), vec2u(mask, 0)); overs++;
   }
  }
  if (reason != 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | reason); }
