@@ -204,6 +204,7 @@ int main() {
         constexpr int kTickTargets = 32;
         constexpr int kTickSamples = 8;
         double tickMs = 0.0;
+        double tickBaselineMs = 0.0;
         {
             Object tickAuthor;
             tickAuthor.setObjectID("tick-refusal-author");
@@ -234,6 +235,15 @@ int main() {
                     ActionNode::set("tick-sentinel", PropertyValue(1.0)));
                 for (const auto& target : tickTargets) tickLaw->addTarget(*target);
                 manager.tick(); // seed initially true terminal candidates
+                // Compare against the same connected Law and population while
+                // its condition remains true and no new writes are produced.
+                // This is a diagnostic control, not an attribution proof:
+                // true and false conditions can take different Rete paths.
+                const auto baselineStart = std::chrono::steady_clock::now();
+                for (int i = 0; i < kTickSamples; ++i) manager.tick();
+                const auto baselineStop = std::chrono::steady_clock::now();
+                tickBaselineMs = std::chrono::duration<double, std::milli>(
+                    baselineStop - baselineStart).count() / kTickSamples;
                 for (const auto& target : tickTargets) {
                     target->setDynamicProperty("y", PropertyValue(20.0));
                 }
@@ -255,12 +265,15 @@ int main() {
                 }
             }
         }
+        check(tickRefusals == static_cast<std::size_t>(kTickTargets * kTickSamples),
+              "Tick refusal diagnostic did not persist all expected events");
         std::cout << std::fixed << std::setprecision(3)
                   << "durable logging LawManager::tick diagnostic: "
-                  << tickMs << " ms/tick, " << tickRefusals
-                  << " persisted ConditionsFailed events across "
+                  << tickBaselineMs << " ms/tick with true condition/no new writes, "
+                  << tickMs << " ms/tick with repeated refusals; "
+                  << tickRefusals << " persisted ConditionsFailed events across "
                   << kTickSamples << " ticks and " << kTickTargets
-                  << " candidate targets (zero means this scenario did not exercise refusals)\\n";
+                  << " candidate targets (diagnostic, not isolated I/O attribution)\n";
         lawLogger.shutdown();
         auto integrated = readEntries(sandbox.root / "logs" / "laws" / encoded("integration"));
         check(readEntries(sandbox.root / "logs" / "laws" / encoded("bench-law")).size() == kHotEvents,
