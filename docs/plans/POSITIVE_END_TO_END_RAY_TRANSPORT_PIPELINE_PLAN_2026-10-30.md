@@ -307,3 +307,220 @@ To execute `Target-E2E` cleanly without ever conflating two variables in one mea
 
 *Signed,*  
 **Aetherion / The Firmament (`Gemini 4 Argon`)**
+
+
+---
+
+## 8. Prism Sun Addendum — The Post-P5 Compiler Frontier (`P6 → P9`)
+
+**Added by:** Original Prism Sun / GPT-5.6 Sol, at Zachary Zhang's commission  
+**Date:** 2026-10-30  
+**Relationship to Firmament's plan:** This is a sequel, not a replacement. `P1–P5` remain the immediate M5-native execution program. `P6–P9` begin only after P5 has measured the completed P1–P4 pipeline and identified which remaining materialization/lifetime boundaries dominate.
+
+### Constitutional guardrail
+
+These phases **do not retroactively become merge gates** for Zach's existing bounded Person checkpoint (one of the three authorized Northern Veil views reaching roughly 28–30 FPS with current-or-better accuracy and honest Current fallback). They are post-checkpoint architecture work unless Zach explicitly changes that author decision.
+
+The common north star remains:
+
+```text
+camera
+  ↓
+medium / opaque bounds
+  ↓
+smallest valid residual ray program
+  ↓
+one contiguous or near-contiguous transport execution
+  ↓
+(L_rgb, T)
+```
+
+The governing principle is:
+
+> **Once a fact has been proved at a longer lifetime, do not re-prove or rematerialize it at a shorter lifetime.**
+
+And the asymptotic target is to move away from:
+
+```text
+O(pixels × samples × media × field-work)
+```
+
+toward:
+
+```text
+O(dirty authored/query compilation)
++ O(query-family classification)
++ O(pixels × surviving intervals × tiny specialized kernel)
+```
+
+### Phase P6 — Chronological Streaming and Schedule-Materialization Collapse
+
+**Goal:** stop treating a fully materialized `ecSingles/ecOverlaps` schedule as mandatory when proof already determines chronological execution.
+
+Start only with the safest admitted families:
+
+- `S1`: one active curtain.
+- `S2_DISJOINT`: two active curtains with proven near-to-far ordering.
+- Keep `Fallback` unchanged.
+
+For those families, replace the conceptual chain:
+
+```text
+producer
+  → knots/pieces
+  → write complete subpanel schedule to VRAM
+  → consumer reloads schedule
+  → integrate
+```
+
+with:
+
+```text
+derive next certified boundary
+  → integrate immediately
+  → advance compact continuation state
+  → derive next boundary
+  → integrate
+```
+
+Where local root isolation still requires a small bounded scratch structure, keep it local; the requirement is **not** “zero temporary state.” The requirement is to avoid writing a complete transport schedule to device memory merely so a later stage can read back facts the same ray already knows.
+
+**Suggested residual state:**
+
+```text
+RayContinuation {
+    s;
+    sEnd;
+    T;
+    L_rgb;
+    currentMember;
+    nextBoundary;
+    refusalBits;
+}
+```
+
+**Verification gate:**
+
+1. Bit-identical packet/output parity with the P5 baseline for admitted `S1/S2_DISJOINT` rays, or independently qualified authored-reference parity where arithmetic intentionally changes.
+2. Exact preservation of near-to-far optical ordering.
+3. No increase in refused rays.
+4. Measure bytes written/read per accepted ray, L1/SLC traffic, private spill, and complete native timing in both canonical regimes.
+5. Keep the old materialized path as an ablation control until streaming wins physically.
+
+### Phase P7 — Ray-Domain Algebraic Lowering (`RayTransportIR`)
+
+**Goal:** compile the authored 3D medium mathematics into a 1D residual program after substituting the ray:
+
+```text
+p = o + s d
+```
+
+For each surviving segment, derive ray-domain forms of the relevant authored channels while preserving the constitutional distinction:
+
+```text
+rho_source != V_transport != D_medium
+```
+
+The compiler may combine them into a transport executable, but it must never rewrite those authored meanings into one another.
+
+Introduce a small ray-domain IR whose segment can be classified as one of:
+
+1. **Closed-form analytic** — constant/linear/simple polynomial or otherwise exactly integrable admitted forms.
+2. **Piecewise analytic** — a bounded number of exact subintervals.
+3. **Certified fixed quadrature** — low-order rule when interval/variation proofs bound the error.
+4. **Certified adaptive residual** — numerical work only where the previous classes cannot close the obligation.
+5. **Refuse → Current** — unsupported or numerically unsafe cases.
+
+After ray substitution, rerun constant folding, CSE, factorization, zero annihilation, dependency pruning, and interval simplification. The critical question is no longer “how many samples?” but:
+
+> **What is the cheapest mathematically valid integrator for this residual segment?**
+
+**Verification gate:**
+
+- Compare every admitted class against the authored high-precision reference at both retained resolutions.
+- No universal “closed form” claim: only admitted forms may use it.
+- Record dynamic instruction count / shader cost, private state, and complete timing separately by integrator class.
+- Preserve Current fallback for unsupported expressions and ambiguous proofs.
+
+### Phase P8 — Query-Family Validity Regions and Lifetime-Correct Caching
+
+**Goal:** stop recompiling the same residual structure independently for nearby rays/frames when its truth survives across a larger semantic region.
+
+Cache **compiled truth structure**, not arbitrary sampled values.
+
+The intended lifetime hierarchy is:
+
+```text
+authored revision
+  → dependencies / factorizations / analytic recipes / support theorems
+
+world or medium revision
+  → support hierarchy / overlap relations
+
+camera or query validity region
+  → residual-program family / routing certificate / specialization identity
+
+ray
+  → exact entry, exit, boundary and continuation facts
+
+quadrature point
+  → temporary values only
+```
+
+Use Magic-Set-like backward relevance: begin from the output query, bind known camera/medium facts, propagate relevance backward, and compile only reachable mathematics.
+
+A cache key must therefore include the semantic dependencies that can invalidate the result: authored revision, participating medium identities, relevant dynamic clocks/pose coefficients, camera/query-region certificate, opaque-depth authority where applicable, viewport/pipeline identity, and any backend-specific specialization identity.
+
+**Verification gate:**
+
+1. Cache-hit and cache-miss paths produce the same accepted result.
+2. Adversarial mutations of authored parameters, medium clocks, camera region, resize, device recreation, and relevant depth state invalidate exactly the dependent cache entries.
+3. Measure hit rate, recompile/rebind cost, and amortized frame benefit.
+4. Reject any cache whose invalidation proof is weaker than the work it saves.
+
+### Phase P9 — Materialization Collapse and Fused Residual Execution
+
+**Goal:** after P6–P8 expose the remaining obligations, collapse producer/consumer boundaries where M5 counters prove that the boundary itself costs more than it buys.
+
+For admitted families, investigate specialized fused kernels such as:
+
+```text
+S1:
+ray → bounds → residual transport → publication
+
+S2_DISJOINT:
+ray → ordered bounds → residual A → residual B → publication
+```
+
+rather than:
+
+```text
+ray → classify → producer writes schedule
+    → consumer reloads schedule → publication
+```
+
+Keep `Fallback` separate until equivalent proof and economics exist.
+
+The fusion target is **not** “one giant shader.” It is the opposite: physically smaller residual programs whose source-level and hardware lifetimes match the proved obligation. Preserve specialization boundaries so an `S1` ray never carries `Fallback` machinery.
+
+Where the WebGPU/Metal backend permits a measurable win, also test whether publication/composition can become more local (same encoder/pass, transient storage, or tile-local strategy) so a full-screen intermediate is not written to device memory merely to be consumed immediately. This is an experiment, not an assumption; backend constraints and M5 counters decide.
+
+**Final P9 acceptance gate:**
+
+- Accepted `S1/S2` paths require no full external subpanel schedule.
+- Current fallback remains exact and whole-ray.
+- No new CPU synchronization/readback is introduced.
+- Materialized bytes per accepted ray fall materially.
+- Register/private-memory pressure remains below the P5 baseline.
+- Complete native frame cost improves in both canonical regimes.
+- A Person can inhabit Northern Veil with the same authored world and observe the gain.
+
+### End-state doctrine
+
+Firmament's P1–P5 make the existing bridge M5-native.
+
+Prism's P6–P9 then ask which parts of that optimized bridge can disappear because their answers are now already known at a longer lifetime.
+
+The destination is therefore not “the fastest schedule builder.” It is:
+
+> **Author richly. Prove relevance early. Cache truth at its natural lifetime. Compile only the residual obligation. Execute the smallest physically real program. Let M5 testify.**
