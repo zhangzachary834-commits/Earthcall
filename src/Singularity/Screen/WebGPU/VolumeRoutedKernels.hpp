@@ -44,7 +44,7 @@ struct DispatchCounters {
     pad0: u32,
 };
 
-@group(0) @binding(0) var<storage, read> curtains: array<CurtainSpec, 4>;
+@group(0) @binding(0) var<uniform> curtains: array<CurtainSpec, 4>;
 @group(0) @binding(1) var<storage, read> rays: array<Ray>;
 @group(0) @binding(2) var<storage, read> tileOffsets: array<u32>;
 @group(0) @binding(3) var<storage, read> tileRayIndices: array<u32>;
@@ -310,8 +310,8 @@ inline constexpr const char* kRouteArgsWgsl=R"WGSL(
 @group(0) @binding(0) var<storage, read> counts: array<u32>;
 @group(0) @binding(1) var<storage, read_write> args: array<u32>;
 @compute @workgroup_size(1) fn routeArgs(@builtin(global_invocation_id) id: vec3u) {
-    if (id.x >= 3u) { return; }
-    let n = counts[id.x];
+    if (id.x >= 4u) { return; }
+    let n = select(counts[id.x], counts[0] + counts[1] + counts[2], id.x == 3u);
     args[3u * id.x] = (n + 3u) / 4u;
     args[3u * id.x + 1u] = 1u;
     args[3u * id.x + 2u] = 1u;

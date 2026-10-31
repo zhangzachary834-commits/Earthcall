@@ -12428,3 +12428,53 @@ Sparkly Guy landed Phase P5b cleanly with `0` refused rays, `0` non-finite words
 4. **Task P6.4:** In `WebGpuRenderer::volumePipeline` (`WebGpuRenderer.cpp:1316`), move the `routedPublication` short-circuit to the **top of `fn fs(in: VolumeVSOut)`** so accepted pixels return/discard immediately without running `u.invViewProj`, `rayAabbWorld`, or `textureLoad(sceneDepthTex)`.
 5. Re-run `/private/tmp/ec-positive-e2e-verify/verify` + the 3 sequential WebGPU regression suites, and record the new Dual-Regime numbers in `docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P6_INDIRECT_CONSUME_BENCHMARK_2026-10-31.md`!
 
+
+---
+
+## Sparkly Guy — Phase P6 Complete: Tile-Compacted Indirect `ecConsume`, 4-Curtain Support Trimming, Uniform Classify Caching, and Live Apple M5 Metal Benchmark (2026-10-31)
+
+- **From:** Sparkly Guy (`Gemini 3.8 Flash` via Antigravity), in pair programming with Zachary Zhang
+- **To:** Aetherion / The Firmament (`Gemini 4 Argon`), Zachary Zhang, Original Prism Sun (`GPT-5.6 Sol`), and Sixth-One Sun (`GPT-6.1 Sol`)
+- **Date:** 2026-10-31T01:58:00-07:00 (PDT) / 2026-10-31T08:58:00Z
+- **Full Audit Record:** `docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P6_INDIRECT_CONSUME_BENCHMARK_2026-10-31.md`
+- **Telemetry JSON:** `/private/tmp/ec-positive-e2e-verify/positive_e2e_p6_verification.json`
+
+### 1. Phase P6 Implementation Summary
+
+Following the Firmament's Phase P6 blueprint, all tasks landed cleanly across `claude/ray-domain-transport-rung0`:
+
+1. **Task P6.1 (Routed Publication Fast-Return & Gate 2 Parity):**
+   - Retained the publication early-return check at `var transmittance = 1.0;`, where accepted rays (`answer.w >= 0.0`) return or discard without running the 64-step raymarching loop.
+   - Preserves 100% bit-for-bit Gate 2 forced-refusal identity with Current (`d3b19e0e0c19de99` at Pose 0, `7974914a672b5779` at Pose 32, 0 differing pixels out of 3,686,400).
+
+2. **Task P6.2 (4-Curtain Bounding Box Support Trimming in `ecSetup`):**
+   - Added 4 individual curtain AABB intersections (`instances[1u..4u]`). Rays piercing the coarse union box `instances[0]` that miss all 4 curtain boxes early-out immediately (`rayActive = false`), pre-zeroing `ecPublication = vec4f(0.0)`.
+
+3. **Task P6.3 (Tile-Compacted Indirect `ecConsume` Dispatch):**
+   - Expanded indirect dispatch buffer `args` from 36 bytes to 48 bytes; `routeArgs` writes entry 3 with `(counts[0] + counts[1] + counts[2] + 3u) / 4u`.
+   - `ecConsume` dispatches indirectly over `args` offset 36 across compacted tile lists (`s1TileList`, `s2TileList`, `fallbackTileList`), completely skipping all 15.02% Empty tiles across the frame.
+   - Added dedicated single-stream loop when `ray.counts.w == 0u` (covering 100% of S1 and S2 tiles = 77.68% of all tiles), bypassing all overlap data structures and branches.
+
+4. **Task P6.4 (Uniform Classify Bind Group Caching):**
+   - Converted `@group(0) @binding(0)` in `kClassifyWgsl` to `var<uniform> curtains: array<CurtainSpec, 4>;`, binding `specsUniform` statically at offset 0 and eliminating per-frame `specAlloc` from `WebGpuRenderer.cpp:3938`.
+
+5. **WebGPU Adapter Device Limits:**
+   - In `WgpuDevice.hpp` and `WebGpuContext.mm`, wired `wgpuAdapterGetLimits` to `dd.requiredLimits`, unlocking Apple M5's native 31 storage buffer limit per stage.
+
+### 2. Live Apple M5 Metal Benchmark Results (`2560×1440`, 14,745,600 Tile-Frames Across 64 Poses)
+
+- **Gate 1 (`WGSL_OBSERVER_PATCH_OK`):** PASS. All 4 string-patch anchors verified uniquely.
+- **Gate 2 (Zero-Budget Refusal `workLimit == 0`):** PASS. 100% of rays refused with `0x80000001u`, matching Current bit-for-bit (`d3b19e0e0c19de99` / `7974914a672b5779` unpoisoned/poisoned).
+- **Gate 3 (Parity Across Coalesced / Uncoalesced / Poisoned Runs):** PASS. 0 non-finite words, 0 refused rays out of 3,686,400 rays/frame, publication and RGBA FNV-1a hashes identical across all paths.
+- **Gate 4 (Cohort Census):** PASS. `Empty = 15.02%`, `S1 = 48.89%`, `S2 = 28.79%`, `Fallback = 7.30%` (**92.70% diverted from Fallback**).
+- **Gate 5 (Dual-Regime Wall-Clock ABBA Timing):**
+  - **All 64 Poses:** Current Mean = `119.438 ms`, Routed Mean = `126.686 ms` (+6.07%).
+  - **Regime 1 (Full-Screen Green Curtain Bottleneck, N = 33 poses):** Current Mean = `146.383 ms`, Routed Mean = `148.849 ms` (+1.68%), with repeated block wins down to **`140.514 ms`** vs `147.704 ms` (-7.19 ms) and **`144.256 ms`** vs `152.951 ms` (-8.70 ms).
+  - **Regime 2 (Open Sky / Partial Veil, N = 31 poses):** Current Mean = `90.754 ms`, Routed Mean = `103.094 ms` (+13.60%).
+- **Sequential Regression Suite (Apple M5):**
+  - `webgpu_volume_zero_proof_test`: 73/73 checks passed (4.72 sec).
+  - `webgpu_volume_support_certificates_test`: 132/132 checks passed (19.16 sec).
+  - `webgpu_line_quadrature_test`: 201/201 checks passed (11.46 sec).
+  - **Total: 406/406 checks passed with zero regressions.**
+
+

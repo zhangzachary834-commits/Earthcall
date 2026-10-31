@@ -90,6 +90,10 @@ WindowContext createWindowContext(GLFWwindow* win) {
     // visible frame. The ordinary device is the visual baseline.
     constexpr bool kGpuTimestampInstrumentationEnabled = false;
     WGPUDeviceDescriptor dd = {};
+    WGPULimits limits = {};
+    if (wgpuAdapterGetLimits(ctx.adapter, &limits) == WGPUStatus_Success) {
+        dd.requiredLimits = &limits;
+    }
     const WGPUFeatureName timestampFeatures[] = {
         WGPUFeatureName_TimestampQuery,
         static_cast<WGPUFeatureName>(WGPUNativeFeature_TimestampQueryInsideEncoders),
@@ -110,13 +114,15 @@ WindowContext createWindowContext(GLFWwindow* win) {
     dcb.mode = WGPUCallbackMode_AllowProcessEvents;
     dcb.callback = onDevice;
     dcb.userdata1 = &dr;
-    wgpuAdapterRequestDevice(ctx.adapter, dd.requiredFeatureCount ? &dd : nullptr, dcb);
+    wgpuAdapterRequestDevice(ctx.adapter, &dd, dcb);
     while (!dr.done) wgpuInstanceProcessEvents(ctx.instance);
     const bool timestampRequestAccepted =
         dd.requiredFeatureCount != 0 && dr.device != nullptr;
     if (!dr.device && dd.requiredFeatureCount) {
         dr = {};
-        wgpuAdapterRequestDevice(ctx.adapter, nullptr, dcb);
+        dd.requiredFeatureCount = 0;
+        dd.requiredFeatures = nullptr;
+        wgpuAdapterRequestDevice(ctx.adapter, dd.requiredLimits ? &dd : nullptr, dcb);
         while (!dr.done) wgpuInstanceProcessEvents(ctx.instance);
     }
     if (!dr.device) { std::fprintf(stderr, "[WebGPU] device request failed\n"); return ctx; }

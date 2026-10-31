@@ -33,6 +33,12 @@ struct ECSpan {span:vec2<f32>,info:vec2<u32>};
 @group(2) @binding(1) var<storage,read_write> ecRays:array<ECRay>;
 @group(2) @binding(2) var<storage,read_write> ecSingles:array<ECSpan>;
 @group(2) @binding(3) var<storage,read_write> ecOverlaps:array<ECSpan>;
+@group(2) @binding(4) var<storage,read> ecOffsets:array<u32>;
+@group(2) @binding(5) var<storage,read> ecIndices:array<u32>;
+@group(2) @binding(6) var<storage,read> ecS1List:array<u32>;
+@group(2) @binding(7) var<storage,read> ecS2List:array<u32>;
+@group(2) @binding(8) var<storage,read> ecFbList:array<u32>;
+@group(2) @binding(9) var<storage,read> ecRouteCounts:array<u32>;
 fn ecPixel(id:u32)->u32 {return (id/ecWindow.window.x+ecWindow.window.z)*ecWindow.window.x+id%ecWindow.window.x;}
 fn ecMat(m:mat4x4<f32>,v:vec4<f32>)->vec4<f32>{return fma(m[0],vec4<f32>(v.x),fma(m[1],vec4<f32>(v.y),fma(m[2],vec4<f32>(v.z),m[3]*v.w)));}
 )WGSL";
@@ -55,25 +61,71 @@ fn ecAdvanceOverlap(stateIn:vec4<f32>,ro:vec3<f32>,rd:vec3<f32>,span:ECSpan)->ve
  }
  return state;
 }
-@compute @workgroup_size(64) fn ecConsume(@builtin(global_invocation_id) gid:vec3<u32>){
- let id=gid.x;if(id>=ecWindow.control.x||id/ecWindow.window.x+ecWindow.window.z>=ecWindow.window.y){return;}
- let ray=ecRays[id];if((ray.counts.w&0xc0000000u)!=0u){return;}
- if(ray.counts.y>64u||ray.counts.w>16u){return;}
- if((ray.counts.y|ray.counts.w)==0u){ecPublication[ecPixel(id)]=vec4<f32>(0.0);return;}
- let ro=ray.ro_clipA.xyz;let rd=ray.rd_clipB.xyz;var state=vec4<f32>(0,0,0,1);var single=0u;var overlap=0u;
- let gx0=.5*(1.0-.5773502691896257);let gx1=.5*(1.0+.5773502691896257);
- loop{
-  if(single>=ray.counts.y&&overlap>=ray.counts.w){break;}
-  var useOverlap=false;
-  if(overlap<ray.counts.w){if(single>=ray.counts.y){useOverlap=true;}else{useOverlap=ecOverlaps[overlap*ecWindow.control.x+id].span.x<ecSingles[single*ecWindow.control.x+id].span.x;}}
-  if(useOverlap){state=ecAdvanceOverlap(state,ro,rd,ecOverlaps[overlap*ecWindow.control.x+id]);overlap++;continue;}
-  let sub=ecSingles[single*ecWindow.control.x+id];single++;if(sub.info.x>=4u){return;}
-  let h=sub.span.y-sub.span.x;let mask=1u<<sub.info.x;
-  let minus=ecProjected(ro,rd,sub.span.x+gx0*h,mask);let plus=ecProjected(ro,rd,sub.span.x+gx1*h,mask);
-  state=ecFlow(state,.5*(minus+plus),h);
+@compute @workgroup_size(64) fn ecConsume(@builtin(workgroup_id) wid:vec3<u32>, @builtin(local_invocation_index) lid:u32){
+ let totalTiles = arrayLength(&ecOffsets) - 1u;
+ let localTile = lid >> 4u;
+ let rayInTile = lid & 15u;
+ let tileSlot = wid.x * 4u + localTile;
+ let c0 = min(ecRouteCounts[0u], totalTiles);
+ let c1 = min(ecRouteCounts[1u], totalTiles);
+ let c2 = min(ecRouteCounts[2u], totalTiles);
+ var tileId = totalTiles;
+ if (tileSlot < c0) {
+  tileId = ecS1List[tileSlot] & 0x0FFFFFFFu;
+ } else if (tileSlot < c0 + c1) {
+  tileId = ecS2List[tileSlot - c0] & 0x000FFFFFu;
+ } else if (tileSlot < c0 + c1 + c2) {
+  tileId = ecFbList[tileSlot - c0 - c1];
+ } else {
+  return;
  }
- if(any((bitcast<vec4<u32>>(state)&vec4<u32>(0x7f800000u))==vec4<u32>(0x7f800000u))||state.w<0||state.w>1){return;}
- ecPublication[ecPixel(id)]=vec4<f32>(state.xyz,1.0-state.w);
+ if (tileId >= totalTiles) { return; }
+ let rayStart = ecOffsets[tileId];
+ let rayCount = ecOffsets[tileId + 1u] - rayStart;
+ if (rayInTile >= rayCount) { return; }
+ let id = ecIndices[rayStart + rayInTile];
+ if (id >= ecWindow.control.x || id / ecWindow.window.x + ecWindow.window.z >= ecWindow.window.y) { return; }
+ let ray = ecRays[id];
+ if ((ray.counts.w & 0x40000000u) != 0u) { return; }
+ if ((ray.counts.w & 0x80000000u) != 0u || ray.counts.y > 64u || ray.counts.w > 16u) {
+  ecPublication[ecPixel(id)] = vec4<f32>(0.0, 0.0, 0.0, -1.0);
+  return;
+ }
+ if ((ray.counts.y | ray.counts.w) == 0u) { return; }
+ let ro = ray.ro_clipA.xyz; let rd = ray.rd_clipB.xyz; var state = vec4<f32>(0, 0, 0, 1);
+ let gx0 = .5 * (1.0 - .5773502691896257); let gx1 = .5 * (1.0 + .5773502691896257);
+ if (ray.counts.w == 0u) {
+  for (var single = 0u; single < ray.counts.y; single++) {
+   let sub = ecSingles[single * ecWindow.control.x + id];
+   if (sub.info.x >= 4u) { ecPublication[ecPixel(id)] = vec4<f32>(0.0, 0.0, 0.0, -1.0); return; }
+   let h = sub.span.y - sub.span.x; let mask = 1u << sub.info.x;
+   let minus = ecProjected(ro, rd, sub.span.x + gx0 * h, mask);
+   let plus = ecProjected(ro, rd, sub.span.x + gx1 * h, mask);
+   state = ecFlow(state, .5 * (minus + plus), h);
+  }
+ } else {
+  var single = 0u; var overlap = 0u;
+  loop {
+   if (single >= ray.counts.y && overlap >= ray.counts.w) { break; }
+   var useOverlap = false;
+   if (overlap < ray.counts.w) {
+    if (single >= ray.counts.y) { useOverlap = true; }
+    else { useOverlap = ecOverlaps[overlap * ecWindow.control.x + id].span.x < ecSingles[single * ecWindow.control.x + id].span.x; }
+   }
+   if (useOverlap) { state = ecAdvanceOverlap(state, ro, rd, ecOverlaps[overlap * ecWindow.control.x + id]); overlap++; continue; }
+   let sub = ecSingles[single * ecWindow.control.x + id]; single++;
+   if (sub.info.x >= 4u) { ecPublication[ecPixel(id)] = vec4<f32>(0.0, 0.0, 0.0, -1.0); return; }
+   let h = sub.span.y - sub.span.x; let mask = 1u << sub.info.x;
+   let minus = ecProjected(ro, rd, sub.span.x + gx0 * h, mask);
+   let plus = ecProjected(ro, rd, sub.span.x + gx1 * h, mask);
+   state = ecFlow(state, .5 * (minus + plus), h);
+  }
+ }
+ if (any((bitcast<vec4<u32>>(state) & vec4<u32>(0x7f800000u)) == vec4<u32>(0x7f800000u)) || state.w < 0 || state.w > 1) {
+  ecPublication[ecPixel(id)] = vec4<f32>(0.0, 0.0, 0.0, -1.0);
+  return;
+ }
+ ecPublication[ecPixel(id)] = vec4<f32>(state.xyz, 1.0 - state.w);
 }
 )WGSL";
 }
@@ -104,7 +156,7 @@ bool KernelRoutedTransport::ensure(WGPUDevice d,WGPUQueue q,uint32_t w,uint32_t 
  std::vector<uint32_t> off,idx;off.reserve(tiles+1);idx.reserve(capacity);
  for(uint32_t y=0;y<rows;y+=4)for(uint32_t x=0;x<w;x+=4){off.push_back(idx.size());for(uint32_t dy=0;dy<4;++dy)for(uint32_t dx=0;dx<4&&x+dx<w;++dx)idx.push_back((y+dy)*w+x+dx);}
  off.push_back(idx.size());publication=buffer(d,q,uint64_t(w)*h*16);rays=buffer(d,q,uint64_t(capacity)*48);singles=buffer(d,q,uint64_t(capacity)*64*16);overlaps=buffer(d,q,uint64_t(capacity)*16*16);
- offsets=buffer(d,q,off.size()*4,0,off.data());indices=buffer(d,q,idx.size()*4,0,idx.data());counts=buffer(d,q,16);args=buffer(d,q,36,WGPUBufferUsage_Indirect);
+ offsets=buffer(d,q,off.size()*4,0,off.data());indices=buffer(d,q,idx.size()*4,0,idx.data());counts=buffer(d,q,16);args=buffer(d,q,48,WGPUBufferUsage_Indirect);
  for(auto& b:lists)b=buffer(d,q,uint64_t(tiles)*4);
  maxStrips=(h+rows-1)/rows;if(maxStrips>64)maxStrips=64;
  {WGPUBufferDescriptor bd={};bd.label=wgpu::Device::str("strip uniforms");bd.size=uint64_t(maxStrips)*kUniformStride;bd.usage=WGPUBufferUsage_Uniform|WGPUBufferUsage_CopyDst;stripUniform=wgpuDeviceCreateBuffer(d,&bd);}
@@ -117,7 +169,8 @@ bool KernelRoutedTransport::ensure(WGPUDevice d,WGPUQueue q,uint32_t w,uint32_t 
   classifySkip=pipeline(d,routed_wgsl::kClassifyWgsl,"classifyTilesMain");if(!classifySkip)return false;
  }
  if(!resetGroup)resetGroup=group(device,common[0],{entry(0,counts,16)});
- if(!argsGroup)argsGroup=group(device,common[2],{entry(0,counts,16),entry(1,args,36)});
+ if(!argsGroup)argsGroup=group(device,common[2],{entry(0,counts,16),entry(1,args,48)});
+ if(!cachedClassifyGroup)cachedClassifyGroup=group(device,common[1],{entry(0,specsUniform,sizeof(KernelRoutedSpec)*4,0),entry(1,rays,uint64_t(capacity)*48),entry(2,offsets,uint64_t(tiles+1)*4),entry(3,indices,uint64_t(capacity)*4),entry(4,lists[0],uint64_t(tiles)*4),entry(5,lists[1],uint64_t(tiles)*4),entry(6,lists[2],uint64_t(tiles)*4),entry(7,counts,16)});
  for(uint32_t stripIdx=0,start=0;start<height&&stripIdx<maxStrips;start+=stripRows,++stripIdx){
   for(unsigned i=0;i<3;++i){
    auto entries=std::vector<WGPUBindGroupEntry>{entry(0,stripUniform,48,uint64_t(stripIdx)*kUniformStride),entry(1,specsUniform,sizeof(KernelRoutedSpec)*4,0),entry(2,rays,uint64_t(capacity)*48),entry(3,singles,uint64_t(capacity)*64*16)};
@@ -164,11 +217,23 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
  ecRays[id]=ECRay(vec4<f32>(0),vec4<f32>(0),vec4<u32>(0,0,0,0x40000000u));
  let x=id%ecWindow.window.x;let y=id/ecWindow.window.x+ecWindow.window.z;if(y>=ecWindow.window.y){return;}
  ecPublication[ecPixel(id)]=vec4<f32>(0,0,0,-1);
- if(any(abs(u.eyePos.xyz)>vec3<f32>(2048))){return;}
+ if(any(abs(u.eyePos.xyz)>vec3<f32>(2048))||ecWindow.control.w==0u){
+  ecRays[id]=ECRay(vec4<f32>(0),vec4<f32>(0),vec4<u32>(0u,0u,0u,select(0x40000000u,0x80000001u,ecWindow.control.w==0u)));
+  return;
+ }
  let position=vec4<f32>(f32(x)+.5,f32(y)+.5,0,1);
 )WGSL"+setupBody+R"WGSL(
  if(t1>2048.0){return;}
- ecRays[id]=ECRay(vec4<f32>(ro,t0),vec4<f32>(rd,t1),vec4<u32>(0u,0u,0u,select(0u,0x80000001u,ecWindow.control.w==0u)));
+ var anyMemberHit = false;
+ for (var m = 1u; m <= 4u; m++) {
+  let inst = instances[m];
+  let pad = vec3<f32>(0.01);
+  let mb = rayAabbWorld(ro, rd, inst.origin.xyz - inst.halfExtent.xyz - pad, inst.origin.xyz + inst.halfExtent.xyz + pad);
+  if (min(t1, mb.y) > max(t0, mb.x)) { anyMemberHit = true; break; }
+ }
+ if (!anyMemberHit) { ecPublication[ecPixel(id)] = vec4<f32>(0.0); return; }
+ ecPublication[ecPixel(id)] = vec4<f32>(0.0);
+ ecRays[id] = ECRay(vec4<f32>(ro, t0), vec4<f32>(rd, t1), vec4<u32>(0u, 0u, 0u, 0u));
  }
 )WGSL";
  std::string sampling;
@@ -180,7 +245,7 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
  g[3].binding=3;g[3].visibility=WGPUShaderStage_Compute;g[3].buffer.type=WGPUBufferBindingType_Storage;
  WGPUBindGroupLayoutDescriptor gd={};gd.entryCount=4;gd.entries=g;p.globals=wgpuDeviceCreateBindGroupLayout(device,&gd);
  WGPUBindGroupLayoutEntry inst={};inst.binding=0;inst.visibility=WGPUShaderStage_Compute;inst.buffer.type=WGPUBufferBindingType_ReadOnlyStorage;gd.entryCount=1;gd.entries=&inst;p.instances=wgpuDeviceCreateBindGroupLayout(device,&gd);
- WGPUBindGroupLayoutEntry local[4]={};for(int i=0;i<4;++i){local[i].binding=i;local[i].visibility=WGPUShaderStage_Compute;local[i].buffer.type=i==0?WGPUBufferBindingType_Uniform:WGPUBufferBindingType_Storage;}gd.entryCount=4;gd.entries=local;p.local=wgpuDeviceCreateBindGroupLayout(device,&gd);
+ WGPUBindGroupLayoutEntry local[10]={};for(int i=0;i<10;++i){local[i].binding=i;local[i].visibility=WGPUShaderStage_Compute;if(i==0)local[i].buffer.type=WGPUBufferBindingType_Uniform;else if(i<4)local[i].buffer.type=WGPUBufferBindingType_Storage;else local[i].buffer.type=WGPUBufferBindingType_ReadOnlyStorage;}gd.entryCount=10;gd.entries=local;p.local=wgpuDeviceCreateBindGroupLayout(device,&gd);
  WGPUBindGroupLayout layouts[]={p.globals,p.instances,p.local};WGPUPipelineLayoutDescriptor ld={};ld.bindGroupLayoutCount=3;ld.bindGroupLayouts=layouts;auto layout=wgpuDeviceCreatePipelineLayout(device,&ld);
  p.setup=pipeline(device,setup,"ecSetup",layout);p.consumer=pipeline(device,consume,"ecConsume",layout);wgpuPipelineLayoutRelease(layout);
  if(!p.setup||!p.consumer)return nullptr;std::fprintf(stderr,"[WebGpuRenderer] routed transport production-evaluator pipeline active\n");return &p;
@@ -199,7 +264,18 @@ bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const K
  if(!p.localGroupsBuilt){
   for(auto& bg:p.localGroups)if(bg){wgpuBindGroupRelease(bg);bg=nullptr;}
   for(uint32_t stripIdx=0,start=0;start<height&&stripIdx<maxStrips;start+=stripRows,++stripIdx)
-   p.localGroups[stripIdx]=group(device,p.local,{entry(0,stripUniform,48,uint64_t(stripIdx)*kUniformStride),entry(1,rays,uint64_t(capacity)*48),entry(2,singles,uint64_t(capacity)*64*16),entry(3,overlaps,uint64_t(capacity)*16*16)});
+   p.localGroups[stripIdx]=group(device,p.local,{
+     entry(0,stripUniform,48,uint64_t(stripIdx)*kUniformStride),
+     entry(1,rays,uint64_t(capacity)*48),
+     entry(2,singles,uint64_t(capacity)*64*16),
+     entry(3,overlaps,uint64_t(capacity)*16*16),
+     entry(4,offsets,uint64_t(tiles+1)*4),
+     entry(5,indices,uint64_t(capacity)*4),
+     entry(6,lists[0],uint64_t(tiles)*4),
+     entry(7,lists[1],uint64_t(tiles)*4),
+     entry(8,lists[2],uint64_t(tiles)*4),
+     entry(9,counts,16)
+   });
   p.localGroupsBuilt=true;
  }
  auto g=std::vector<WGPUBindGroupEntry>{entry(0,globals.buffer,globals.size,globals.offset),entry(1,params.buffer,params.size,params.offset),{},entry(3,publication,uint64_t(width)*height*16)};g[2].binding=2;g[2].textureView=depth;
@@ -212,23 +288,23 @@ bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const K
  auto close=[&](WGPUComputePassEncoder pass){if(pass==shared)return;wgpuComputePassEncoderEnd(pass);wgpuComputePassEncoderRelease(pass);};
  auto resetGroup=this->resetGroup?this->resetGroup:group(device,common[0],{entry(0,counts,16)});
  auto classifyPipe=skipEmptyTiles&&classifySkip?classifySkip:common[1];
- if(!cachedClassifyGroup||cachedSpecsBuffer!=specs.buffer||cachedClassifyPipe!=classifyPipe){
+ if(!cachedClassifyGroup||cachedClassifyPipe!=classifyPipe){
   if(cachedClassifyGroup)wgpuBindGroupRelease(cachedClassifyGroup);
-  cachedClassifyGroup=group(device,classifyPipe,{entry(0,specs.buffer,specs.size,specs.offset),entry(1,rays,uint64_t(capacity)*48),entry(2,offsets,uint64_t(tiles+1)*4),entry(3,indices,uint64_t(capacity)*4),entry(4,lists[0],uint64_t(tiles)*4),entry(5,lists[1],uint64_t(tiles)*4),entry(6,lists[2],uint64_t(tiles)*4),entry(7,counts,16)});
-  cachedSpecsBuffer=specs.buffer;cachedClassifyPipe=classifyPipe;
+  cachedClassifyGroup=group(device,classifyPipe,{entry(0,specsUniform,sizeof(KernelRoutedSpec)*4,0),entry(1,rays,uint64_t(capacity)*48),entry(2,offsets,uint64_t(tiles+1)*4),entry(3,indices,uint64_t(capacity)*4),entry(4,lists[0],uint64_t(tiles)*4),entry(5,lists[1],uint64_t(tiles)*4),entry(6,lists[2],uint64_t(tiles)*4),entry(7,counts,16)});
+  cachedClassifyPipe=classifyPipe;
  }
  auto classifyGroup=cachedClassifyGroup;
- auto argsGroup=this->argsGroup?this->argsGroup:group(device,common[2],{entry(0,counts,16),entry(1,args,36)});
+ auto argsGroup=this->argsGroup?this->argsGroup:group(device,common[2],{entry(0,counts,16),entry(1,args,48)});
  for(uint32_t stripIdx=0,start=0;start<height;start+=stripRows,++stripIdx){
   auto dispatch=[&](WGPUComputePipeline cp,WGPUBindGroup bg,uint32_t n){auto pass=open();wgpuComputePassEncoderSetPipeline(pass,cp);wgpuComputePassEncoderSetBindGroup(pass,0,bg,0,nullptr);note(cp,n,1);wgpuComputePassEncoderDispatchWorkgroups(pass,n,1,1);close(pass);};
   auto withContext=[&](WGPUComputePipeline cp){auto pass=open();wgpuComputePassEncoderSetPipeline(pass,cp);wgpuComputePassEncoderSetBindGroup(pass,0,globalGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,1,instanceGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,2,p.localGroups[stripIdx],0,nullptr);note(cp,(capacity+63)/64,2);wgpuComputePassEncoderDispatchWorkgroups(pass,(capacity+63)/64,1,1);close(pass);};
-  withContext(p.setup);dispatch(common[0],resetGroup,1);dispatch(classifyPipe,classifyGroup,(tiles+3)/4);dispatch(common[2],argsGroup,3);
+  withContext(p.setup);dispatch(common[0],resetGroup,1);dispatch(classifyPipe,classifyGroup,(tiles+3)/4);dispatch(common[2],argsGroup,4);
   if(observeRoutes&&observerPipe&&accumPipe&&routeHistogram){
-   auto og=group(device,observerPipe,{entry(0,specs.buffer,specs.size,specs.offset),entry(1,rays,uint64_t(capacity)*48),entry(2,offsets,uint64_t(tiles+1)*4),entry(3,indices,uint64_t(capacity)*4),entry(8,routeHistogram,1032*4)});
+   auto og=group(device,observerPipe,{entry(0,specsUniform,sizeof(KernelRoutedSpec)*4,0),entry(1,rays,uint64_t(capacity)*48),entry(2,offsets,uint64_t(tiles+1)*4),entry(3,indices,uint64_t(capacity)*4),entry(8,routeHistogram,1032*4)});
    auto ag=group(device,accumPipe,{entry(0,counts,16),entry(1,routeHistogram,1032*4)});dispatch(observerPipe,og,(tiles+3)/4);dispatch(accumPipe,ag,1);wgpuBindGroupRelease(og);wgpuBindGroupRelease(ag);
   }
   for(unsigned i=0;i<3;++i){auto pass=open();wgpuComputePassEncoderSetPipeline(pass,common[i+3]);wgpuComputePassEncoderSetBindGroup(pass,0,prodGroups[i][stripIdx],0,nullptr);note(common[i+3],i*12,3);wgpuComputePassEncoderDispatchWorkgroupsIndirect(pass,args,i*12);close(pass);}
-  withContext(p.consumer);
+  {auto pass=open();wgpuComputePassEncoderSetPipeline(pass,p.consumer);wgpuComputePassEncoderSetBindGroup(pass,0,globalGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,1,instanceGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,2,p.localGroups[stripIdx],0,nullptr);note(p.consumer,36,2);wgpuComputePassEncoderDispatchWorkgroupsIndirect(pass,args,36);close(pass);}
  }
  if(shared){wgpuComputePassEncoderEnd(shared);wgpuComputePassEncoderRelease(shared);}
  for(auto g:{globalGroup,instanceGroup})wgpuBindGroupRelease(g);return true;

@@ -228,7 +228,7 @@ int main(int argc, char** argv) {
     renderer.setLight(source.position, source.ambientRadiance, source.diffuseRadiance, source.specularRadiance);
     renderer.setLightingEnabled(light.enabled);
 
-    auto readRgbaHash = [&]() -> uint64_t {
+    auto readRgbaHash = [&](std::vector<uint8_t>* outBytes = nullptr) -> uint64_t {
         WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
         WGPUTexelCopyTextureInfo src = {}; src.texture = target; src.aspect = WGPUTextureAspect_All;
         WGPUTexelCopyBufferInfo dst = {}; dst.buffer = readback;
@@ -247,6 +247,9 @@ int main(int argc, char** argv) {
         wgpuBufferMapAsync(readback, WGPUMapMode_Read, 0, bd.size, cb);
         while (!r.done) wgpuInstanceProcessEvents(gpu.instance);
         const auto* px = static_cast<const unsigned char*>(wgpuBufferGetConstMappedRange(readback, 0, bd.size));
+        if (outBytes) {
+            outBytes->assign(px, px + bd.size);
+        }
         uint64_t h = 0xcbf29ce484222325ull;
         for (uint32_t y = 0; y < height; ++y) {
             const unsigned char* row = px + size_t(y) * stride;
@@ -368,6 +371,10 @@ int main(int argc, char** argv) {
         REQUIRE(imgHashes["routed_coal"] == imgHashes["routed_orig"], "coalesced vs uncoalesced RGBA parity");
         REQUIRE(imgHashes["routed_coal"] == imgHashes["routed_coal_poisoned"], "unpoisoned vs poisoned RGBA parity");
         REQUIRE(pubHashes["forced_refusal"] == pubHashes["forced_refusal_poisoned"], "forced refusal poisoned publication parity");
+        std::printf("DEBUG: current=%s forced_refusal=%s forced_ref_pub=%s\n",
+                    hex64(imgHashes["current"]).c_str(),
+                    hex64(imgHashes["forced_refusal"]).c_str(),
+                    hex64(pubHashes["forced_refusal"]).c_str());
         REQUIRE(imgHashes["current"] == imgHashes["forced_refusal"], "forced refusal must match Current RGBA exactly");
         REQUIRE(imgHashes["current"] == imgHashes["forced_refusal_poisoned"], "poisoned forced refusal must match Current RGBA exactly");
         REQUIRE(imgHashes["current"] != imgHashes["routed_coal"], "routed transport must contribute visible aurora");
