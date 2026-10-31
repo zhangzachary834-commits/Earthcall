@@ -878,8 +878,8 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
     }
     if (reason != 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | reason); return; }
     var singles = 0u;
-    for (var pass = 0u; pass < 2u; pass++) {
-        let emitM1 = (pass == 0u) == m1First;
+    for (var ordPass = 0u; ordPass < 2u; ordPass++) {
+        let emitM1 = (ordPass == 0u) == m1First;
         let emitMember = select(rawM0, rawM1, emitM1);
         let pStart = select(0u, count0, emitM1);
         let pEnd = select(count0, count, emitM1);
