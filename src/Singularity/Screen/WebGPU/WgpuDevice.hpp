@@ -64,10 +64,6 @@ struct Device {
         // request is rejected, retry the ordinary device rather than making a
         // visual Earthcall session depend on profiling support.
         WGPUDeviceDescriptor dd = {};
-        WGPULimits limits = {};
-        if (wgpuAdapterGetLimits(adapter, &limits) == WGPUStatus_Success) {
-            dd.requiredLimits = &limits;
-        }
 #ifndef __EMSCRIPTEN__
         const WGPUFeatureName requested[] = {
             WGPUFeatureName_TimestampQuery,
@@ -90,15 +86,13 @@ struct Device {
         dcb.mode = WGPUCallbackMode_AllowProcessEvents;
         dcb.callback = detail::onDevice;
         dcb.userdata1 = &dr;
-        wgpuAdapterRequestDevice(adapter, &dd, dcb);
+        wgpuAdapterRequestDevice(adapter, dd.requiredFeatureCount ? &dd : nullptr, dcb);
         while (!dr.done) wgpuInstanceProcessEvents(instance);
         const bool timestampRequestAccepted =
             dd.requiredFeatureCount != 0 && dr.d != nullptr;
         if (!dr.d && dd.requiredFeatureCount) {
             dr = {};
-            dd.requiredFeatureCount = 0;
-            dd.requiredFeatures = nullptr;
-            wgpuAdapterRequestDevice(adapter, dd.requiredLimits ? &dd : nullptr, dcb);
+            wgpuAdapterRequestDevice(adapter, nullptr, dcb);
             while (!dr.done) wgpuInstanceProcessEvents(instance);
         }
         if (!dr.d) return false;

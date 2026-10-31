@@ -39,18 +39,18 @@ fn ecMat(m:mat4x4<f32>,v:vec4<f32>)->vec4<f32>{return fma(m[0],vec4<f32>(v.x),fm
 const char* consumer=R"WGSL(
 fn ecPhi(tau:f32)->f32 {if(abs(tau)<.01){return 1.0+tau*(-.5+tau*(1.0/6.0-tau/24.0));}return (1.0-exp(-tau))/tau;}
 fn ecFlow(state:vec4<f32>,v:vec4<f32>,h:f32)->vec4<f32>{let tau=h*v.w;return vec4<f32>(state.xyz+state.w*v.xyz*(h*ecPhi(tau)),state.w*exp(-tau));}
-fn ecProjected(ro:vec3<f32>,rd:vec3<f32>,s:f32,mask:u32)->vec4<f32>{
- let world=ro+s*rd;let delta=ro-world;let len=length(delta);let wo=select(vec3<f32>(0),delta/max(len,1e-8),len>1e-8);
+fn ecProjected(ro:vec3<f32>,rd:vec3<f32>,wo:vec3<f32>,s:f32,mask:u32)->vec4<f32>{
+ let world=ro+s*rd;
  var result=vec4<f32>(0);
  EC_PROJECTED
  return result;
 }
-fn ecAdvanceOverlap(stateIn:vec4<f32>,ro:vec3<f32>,rd:vec3<f32>,span:ECSpan)->vec4<f32>{
+fn ecAdvanceOverlap(stateIn:vec4<f32>,ro:vec3<f32>,rd:vec3<f32>,wo:vec3<f32>,span:ECSpan)->vec4<f32>{
  var state=stateIn;let h=(span.span.y-span.span.x)*.5;let a=.25-sqrt(3.0)/6.0;let b=.5-a;
  for(var panel=0u;panel<2u;panel++){
   let lo=span.span.x+f32(panel)*h;
-  let minus=ecProjected(ro,rd,lo+(.5-sqrt(3.0)/6.0)*h,span.info.x);
-  let plus=ecProjected(ro,rd,lo+(.5+sqrt(3.0)/6.0)*h,span.info.x);
+  let minus=ecProjected(ro,rd,wo,lo+(.5-sqrt(3.0)/6.0)*h,span.info.x);
+  let plus=ecProjected(ro,rd,wo,lo+(.5+sqrt(3.0)/6.0)*h,span.info.x);
   state=ecFlow(state,b*minus+a*plus,h);state=ecFlow(state,a*minus+b*plus,h);
  }
  return state;
@@ -61,34 +61,20 @@ fn ecAdvanceOverlap(stateIn:vec4<f32>,ro:vec3<f32>,rd:vec3<f32>,span:ECSpan)->ve
  if((ray.counts.w&0x40000000u)!=0u){return;}
  if((ray.counts.w&0x80000000u)!=0u||ray.counts.y>64u||ray.counts.w>16u){ecPublication[ecPixel(id)]=vec4<f32>(0,0,0,-1);return;}
  if((ray.counts.y|ray.counts.w)==0u){return;}
- let ro=ray.ro_clipA.xyz;let rd=ray.rd_clipB.xyz;var state=vec4<f32>(0,0,0,1);
+ let ro=ray.ro_clipA.xyz;let rd=ray.rd_clipB.xyz;let wo=-rd;
+ var state=vec4<f32>(0,0,0,1);var single=0u;var overlap=0u;
  let gx0=.5*(1.0-.5773502691896257);let gx1=.5*(1.0+.5773502691896257);
- if (ray.counts.w == 0u) {
-  for (var single = 0u; single < ray.counts.y; single++) {
-   let sub = ecSingles[single * ecWindow.control.x + id];
-   if (sub.info.x >= 4u) { ecPublication[ecPixel(id)] = vec4<f32>(0.0, 0.0, 0.0, -1.0); return; }
-   let h = sub.span.y - sub.span.x; let mask = 1u << sub.info.x;
-   let minus = ecProjected(ro, rd, sub.span.x + gx0 * h, mask);
-   let plus = ecProjected(ro, rd, sub.span.x + gx1 * h, mask);
-   state = ecFlow(state, .5 * (minus + plus), h);
-  }
- } else {
-  var single = 0u; var overlap = 0u;
-  loop {
-   if (single >= ray.counts.y && overlap >= ray.counts.w) { break; }
-   var useOverlap = false;
-   if (overlap < ray.counts.w) {
-    if (single >= ray.counts.y) { useOverlap = true; }
-    else { useOverlap = ecOverlaps[overlap * ecWindow.control.x + id].span.x < ecSingles[single * ecWindow.control.x + id].span.x; }
-   }
-   if (useOverlap) { state = ecAdvanceOverlap(state, ro, rd, ecOverlaps[overlap * ecWindow.control.x + id]); overlap++; continue; }
-   let sub = ecSingles[single * ecWindow.control.x + id]; single++;
-   if (sub.info.x >= 4u) { ecPublication[ecPixel(id)] = vec4<f32>(0.0, 0.0, 0.0, -1.0); return; }
-   let h = sub.span.y - sub.span.x; let mask = 1u << sub.info.x;
-   let minus = ecProjected(ro, rd, sub.span.x + gx0 * h, mask);
-   let plus = ecProjected(ro, rd, sub.span.x + gx1 * h, mask);
-   state = ecFlow(state, .5 * (minus + plus), h);
-  }
+ loop{
+  if(single>=ray.counts.y&&overlap>=ray.counts.w){break;}
+  var useOverlap=false;
+  if(overlap<ray.counts.w){if(single>=ray.counts.y){useOverlap=true;}else{useOverlap=ecOverlaps[overlap*ecWindow.control.x+id].span.x<ecSingles[single*ecWindow.control.x+id].span.x;}}
+  if(useOverlap){state=ecAdvanceOverlap(state,ro,rd,wo,ecOverlaps[overlap*ecWindow.control.x+id]);overlap++;continue;}
+  let sub=ecSingles[single*ecWindow.control.x+id];single++;
+  if(sub.info.x>=4u){ecPublication[ecPixel(id)]=vec4<f32>(0,0,0,-1);return;}
+  let h=sub.span.y-sub.span.x;let mask=1u<<sub.info.x;
+  let minus=ecProjected(ro,rd,wo,sub.span.x+gx0*h,mask);
+  let plus=ecProjected(ro,rd,wo,sub.span.x+gx1*h,mask);
+  state=ecFlow(state,.5*(minus+plus),h);
  }
  if(any((bitcast<vec4<u32>>(state)&vec4<u32>(0x7f800000u))==vec4<u32>(0x7f800000u))||state.w<0||state.w>1){ecPublication[ecPixel(id)]=vec4<f32>(0,0,0,-1);return;}
  ecPublication[ecPixel(id)]=vec4<f32>(state.xyz,1.0-state.w);
@@ -197,7 +183,7 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
  }
 )WGSL";
  std::string sampling;
- for(unsigned i=0;i<4;++i){const auto n=std::to_string(i);sampling+="if((mask&"+std::to_string(1u<<i)+"u)!=0u){let inst=instances["+std::to_string(i+1)+"u];if(all(world>=inst.origin.xyz-inst.halfExtent.xyz)&&all(world<=inst.origin.xyz+inst.halfExtent.xyz)){g_instIdx="+std::to_string(i+1)+"u;let p=world-inst.origin.xyz;"+(source.find("fn volumeShared_"+n+"_Eval(")!=std::string::npos?"volumeShared_"+n+"_Eval(p);":"")+"let D=volumeDensityEval_"+n+"(p);if(D>0.0){let X=max(volumeExtinctionEval_"+n+"(p,D),1e-6);var E=vec3<f32>(0);if(!VOLUME_EMISSION_READS_OMEGA_"+n+"||len>1e-8){E=max(volumeEmissionEval_"+n+"(p,wo),vec3<f32>(0));}result+=vec4<f32>(E,X);}}}\n";}
+ for(unsigned i=0;i<4;++i){const auto n=std::to_string(i);sampling+="if((mask&"+std::to_string(1u<<i)+"u)!=0u){let inst=instances["+std::to_string(i+1)+"u];if(all(world>=inst.origin.xyz-inst.halfExtent.xyz)&&all(world<=inst.origin.xyz+inst.halfExtent.xyz)){g_instIdx="+std::to_string(i+1)+"u;let p=world-inst.origin.xyz;"+(source.find("fn volumeShared_"+n+"_Eval(")!=std::string::npos?"volumeShared_"+n+"_Eval(p);":"")+"let D=volumeDensityEval_"+n+"(p);if(D>0.0){let X=max(volumeExtinctionEval_"+n+"(p,D),1e-6);var E=vec3<f32>(0);if(!VOLUME_EMISSION_READS_OMEGA_"+n+"||s>1e-8){E=max(volumeEmissionEval_"+n+"(p,wo),vec3<f32>(0));}result+=vec4<f32>(E,X);}}}\n";}
  std::string tail=consumer;replace(tail,"EC_PROJECTED",sampling);std::string consume=prefix+commonText+tail;
  WGPUBindGroupLayoutEntry g[4]={};g[0].binding=0;g[0].visibility=WGPUShaderStage_Compute;g[0].buffer.type=WGPUBufferBindingType_Uniform;
  g[1].binding=1;g[1].visibility=WGPUShaderStage_Compute;g[1].buffer.type=WGPUBufferBindingType_ReadOnlyStorage;

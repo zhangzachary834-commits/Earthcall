@@ -63,7 +63,6 @@ var<workgroup> wgTileAnyHit: array<u32, 4>;
 var<workgroup> wgEnter: array<f32, 64>;
 var<workgroup> wgExit: array<f32, 64>;
 var<workgroup> wgState: array<u32, 64>;
-var<workgroup> wgAnyValidRay: u32;
 
 fn evalWave(cur: CurtainSpec, x: f32) -> f32 {
     return cur.amps.x * sin(cur.freqs.x * x + cur.phases.x) +
@@ -103,18 +102,12 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
         rayActive = ((ray.counts.w & 0x40000000u) == 0u) && (clipB > clipA);
     }
 
-    if (lid == 0u) { wgAnyValidRay = 0u; }
-    workgroupBarrier();
-    if (rayActive) { wgAnyValidRay = 1u; }
-    workgroupBarrier();
-
     var activeMemberMask = 0u;
     var tileCanOverlap = false;
     var enterArr: array<f32, 4>;
     var exitArr: array<f32, 4>;
     var memberHit: array<bool, 4>;
 
-    if (wgAnyValidRay != 0u) {
     for (var m = 0u; m < 4u; m++) {
         let cur = curtains[m];
         let oRel = ro - cur.origin.xyz;
@@ -206,7 +199,7 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
             } else {
                 let h_ux = (uxMax - uxMin) / 8.0;
                 let bow = 0.125 * cur.curv.x * h_ux * h_ux;
-                let thresh = bow + cur.limits.w + cur.curv.y + 0.001;
+                let thresh = bow + cur.limits.w + 0.001;
                 let knotBase = localTile * 9u;
 
                 for (var bin = 0u; bin < 8u; bin++) {
@@ -283,7 +276,6 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
             }
         }
         }
-    }
     }
 
     if (!validTile || lane != 0u) { return; }
@@ -569,6 +561,10 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
    }
   }
   if (!hit || !(b > a)) { continue; }
+  let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w + m.curv.y;
+  let z0 = o.z + a * d.z;
+  let z1 = o.z + b * d.z;
+  if (min(z0, z1) > zEnv || max(z0, z1) < -zEnv) { continue; }
   var phi_knots: array<f32, 9>;
   for (var k = 0u; k < 9u; k++) {
    var s = a + (b - a) * f32(k) / 8.0;
@@ -603,7 +599,8 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
    let v = knots[i]; var j = i; loop { if (j == 0u || knots[j - 1u] <= v) { break; } knots[j] = knots[j - 1u]; j--; }
    knots[j] = v;
   }
-  var curPiece = vec2f(0.0); var hasPiece = false;
+  var pieces: array<vec2f, 8>;
+  var count = 0u;
   var previousShortBand = false; var previousPositive = false;
   for (var i = 1u; i < nb; i++) {
    let l = knots[i - 1u]; let r = knots[i]; if (!(r > l)) { continue; }
@@ -615,21 +612,24 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
     if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) { protectedBoundary = true; }
    }
    if (uncertain || abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
-    if (hasPiece && mayAbsorb(curPiece, vec2f(l, r),
+    if (count > 0u && mayAbsorb(pieces[count - 1u], vec2f(l, r),
          previousShortBand, previousPositive, uncertain, protectedBoundary)) {
-     curPiece.y = r; previousShortBand = false; previousPositive = true;
+     pieces[count - 1u].y = r; previousShortBand = false; previousPositive = true;
+    } else if (count < 8u) {
+     pieces[count] = vec2f(l, r); count++;
+     previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
     } else {
-     if (hasPiece) {
-      emitPieceSubpanels(curPiece, activeMember, id, &singles, &reason);
-      if (reason != 0u) { break; }
-     }
-     curPiece = vec2f(l, r); hasPiece = true;
+     emitPieceSubpanels(pieces[0], activeMember, id, &singles, &reason);
+     if (reason != 0u) { break; }
+     for (var k = 1u; k < 8u; k++) { pieces[k - 1u] = pieces[k]; }
+     pieces[7u] = vec2f(l, r);
      previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
     }
    }
   }
-  if (hasPiece && reason == 0u) {
-   emitPieceSubpanels(curPiece, activeMember, id, &singles, &reason);
+  for (var p = 0u; p < count; p++) {
+   emitPieceSubpanels(pieces[p], activeMember, id, &singles, &reason);
+   if (reason != 0u) { break; }
   }
   if (reason != 0u) { break; }
  }
@@ -871,6 +871,12 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
         if (!hit || !(b > a)) {
             continue;
         }
+        let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w + m.curv.y;
+        let z0 = o.z + a * d.z;
+        let z1 = o.z + b * d.z;
+        if (min(z0, z1) > zEnv || max(z0, z1) < -zEnv) {
+            continue;
+        }
         var phi_knots: array<f32, 9>;
         for (var k = 0u; k < 9u; k++) {
             var s = a + (b - a) * f32(k) / 8.0;
@@ -905,7 +911,8 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
             let v = knots[i]; var j = i; loop { if (j == 0u || knots[j - 1u] <= v) { break; } knots[j] = knots[j - 1u]; j--; }
             knots[j] = v;
         }
-        var curPiece = vec2f(0.0); var hasPiece = false;
+        var pieces: array<vec2f, 8>;
+        var count = 0u;
         var previousShortBand = false; var previousPositive = false;
         for (var i = 1u; i < nb; i++) {
             let l = knots[i - 1u]; let r = knots[i]; if (!(r > l)) { continue; }
@@ -917,21 +924,24 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
                 if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) { protectedBoundary = true; }
             }
             if (uncertain || abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
-                if (hasPiece && mayAbsorb(curPiece, vec2f(l, r),
+                if (count > 0u && mayAbsorb(pieces[count - 1u], vec2f(l, r),
                      previousShortBand, previousPositive, uncertain, protectedBoundary)) {
-                    curPiece.y = r; previousShortBand = false; previousPositive = true;
+                    pieces[count - 1u].y = r; previousShortBand = false; previousPositive = true;
+                } else if (count < 8u) {
+                    pieces[count] = vec2f(l, r); count++;
+                    previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
                 } else {
-                    if (hasPiece) {
-                        emitPieceSubpanels(curPiece, member, id, &singles, &reason);
-                        if (reason != 0u) { break; }
-                    }
-                    curPiece = vec2f(l, r); hasPiece = true;
+                    emitPieceSubpanels(pieces[0], member, id, &singles, &reason);
+                    if (reason != 0u) { break; }
+                    for (var k = 1u; k < 8u; k++) { pieces[k - 1u] = pieces[k]; }
+                    pieces[7u] = vec2f(l, r);
                     previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
                 }
             }
         }
-        if (hasPiece && reason == 0u) {
-            emitPieceSubpanels(curPiece, member, id, &singles, &reason);
+        for (var p = 0u; p < count; p++) {
+            emitPieceSubpanels(pieces[p], member, id, &singles, &reason);
+            if (reason != 0u) { break; }
         }
         if (reason != 0u) { break; }
     }
@@ -1165,6 +1175,10 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
    }
   }
   if (!hit || !(b > a)) { continue; }
+  let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w + m.curv.y;
+  let z0 = o.z + a * d.z;
+  let z1 = o.z + b * d.z;
+  if (min(z0, z1) > zEnv || max(z0, z1) < -zEnv) { continue; }
   var phi_knots: array<f32, 9>;
   for (var k = 0u; k < 9u; k++) {
    var s = a + (b - a) * f32(k) / 8.0;
