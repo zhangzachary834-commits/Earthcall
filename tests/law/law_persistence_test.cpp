@@ -35,7 +35,6 @@ int main() {
         return 1;
     }
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     GLFWwindow* window = glfwCreateWindow(64, 64, "law_persistence_test", nullptr, nullptr);
     if (!window) {
         std::fprintf(stderr, "law_persistence_test: no GL context\n");
