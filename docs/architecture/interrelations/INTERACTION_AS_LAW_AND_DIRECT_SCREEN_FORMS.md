@@ -1,25 +1,28 @@
 # Interaction-as-Law and Direct Screen Forms
 
-**How Earthcall unites pointer inputs with non-physical UI rendering.**
+**How authored interaction Laws and direct mathematical screen output can meet without introducing a privileged UI ontology.**
 
-## Interrelated Documents
-- `docs/architecture/law/INTERACTION_AS_LAW.md`: Details how Earthcall handles UI inputs by rejecting traditional widgets in favor of pointer events interacting directly with Laws.
-- `src/Singularity/Screen/ScreenChannel.cpp`: The implementation of "Direct Screen Forms," evaluating OntoMath expressions at framebuffer sample centers to render interfaces without physical Objects or Meshes.
+## Interrelated Sources
 
-## Thoughts on Integration and Interrelation
+- [Interaction as Law](../law/INTERACTION_AS_LAW.md): specifies and partly implements pointer/keyboard sensing, authored control beings, and Law-driven responses.
+- [ScreenChannel.cpp](../../../src/Singularity/Screen/ScreenChannel.cpp): implements direct Screen output by resolving authored color/opacity/time fields and passing their typed AST definitions to the renderer.
+- [No Black Box](../ontology/NO_BLACK_BOX.md): requires meaningful being state to be registered and addressable, distinguishing it from bounded machine mechanism.
 
-Earthcall's user interface architecture is defined by the rejection of traditional UI paradigms, both in how input is processed and how graphics are rendered. The interrelation between "Interaction-as-Law" and "Direct Screen Forms" is the complete cycle of this rejection.
+## Two compatible forms, not one mandatory pipeline
 
-"Interaction-as-Law" dictates that there are no retained UI elements like buttons or sliders to receive events. Instead, pointer events (like clicks or sweeps) are routed into input channels. Laws listen to these channels and react accordingly. When a user interacts with a UI, they are actually actuating a Law that observes their pointer's state.
+**Interaction-as-Law** does not abolish authored Objects that act as controls. Its central example is *an Object the Person can point at, plus a Law that determines what pointing means*. The InteractionChannel senses the target and gesture, records registered levels, and publishes transition events; Laws decide what those observations mean and what to change. Control kinds and factories can be expressed through authored categories and ObjectConcept rather than a hardcoded `Button` class.
 
-"Direct Screen Forms," implemented via `ScreenChannel.cpp`, is the visual counterpart. Just as there are no logical UI objects to receive clicks, there are no physical Objects or Meshes to be drawn. The UI is rendered by evaluating OntoMath expressions directly at the sample centers of the framebuffer. The visual form of the interface is purely derived from mathematical fields.
+**Direct Screen Forms** offer another presentation route: `ScreenChannel::manifestOutput` resolves typed OntoMath color, opacity, and optional time fields and asks the renderer to draw a screen-space form. The form itself need not be a physical Object or Mesh. This is not a claim that every UI control is screen-space, or that `ScreenChannel` automatically receives pointer hits.
 
-The synthesis of these two systems creates Earthcall's UI paradigm:
-1. **Input:** The user moves the pointer, updating registered pointer state (No Black Box).
-2. **Logic:** A Law (Interaction-as-Law) observes this state change and executes its logic, often updating an OntoMath field.
-3. **Output:** The `ScreenChannel` (Direct Screen Forms) samples the modified OntoMath field at the framebuffer pixel centers, rendering the resulting visual change to the screen.
+An authored integration **can** join these capabilities:
 
-Together, they allow for complex, interactive graphical interfaces that exist entirely as mathematical fields mediated by Laws, free from the constraints and assumptions of traditional widget hierarchies and object meshes.
+1. The input channel senses a pointer/key gesture and publishes an event or updates registered levels.
+2. A Law, if authored and activated for that event or state, performs a change; that change *may* target the fields used by a direct Screen form.
+3. If direct output is enabled and valid fields resolve, the Screen renderer evaluates the resulting form over its framebuffer domain.
+
+This is a possible composition, **not an automatically wired end-to-end UI path**. Direct Screen forms still require an authored interaction mapping or sensing strategy; ordinary Object picking does not by itself provide screen-form hit testing. The `Interaction as Law` document also explicitly distinguishes implemented sensing/control patterns from its unrun manual UI protocol. Neither document establishes that the full proposed screen-form interaction experience has been validated in a window.
+
+The architectural invariant is a division of labor: the engine senses and renders; authored Laws supply meaning and action. Neither input dispatch nor the screen renderer should silently decide what constitutes a button, consent, or a Person's intent.
 
 ---
-*Provenance: Authored by Gemini during Earthcall Harness session Unknown.*
+*Provenance: Originally authored by Gemini during Earthcall Harness session Unknown; corrected against the cited canonical sources.*
