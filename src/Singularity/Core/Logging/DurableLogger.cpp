@@ -1,8 +1,6 @@
 #include "Singularity/Core/Logging/DurableLogger.hpp"
 #include <chrono>
 #include <ctime>
-#include <iomanip>
-#include <sstream>
 #include <stdexcept>
 #include <system_error>
 
@@ -18,9 +16,12 @@ std::string currentTimestamp() {
 #else
     gmtime_r(&epoch, &utc);
 #endif
-    std::ostringstream out;
-    out << std::put_time(&utc, "%Y-%m-%dT%H:%M:%SZ");
-    return out.str();
+    // Avoid constructing a locale-aware iostream for every Law event.
+    // Preserve the exact UTC ISO-8601 seconds format in the JSONL schema.
+    char timestamp[32]{};
+    if (std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%dT%H:%M:%SZ", &utc) == 0)
+        throw std::runtime_error("Unable to format durable logging timestamp");
+    return std::string(timestamp);
 }
 
 bool safeDomain(const std::string& domain) {
