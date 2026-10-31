@@ -235,7 +235,7 @@ fn classifyTilesMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocatio
         wgState[lid] = myState;
         workgroupBarrier();
 
-        if (lane == 0u && validTile) {
+        if (lane == 0u && validTile && anyRayHit) {
             var enter = 1e9f;
             var exit = -1e9f;
             var curActive = false;
@@ -553,9 +553,12 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
  for (var _i = 0u; _i < 1u; _i++) {
   let m = curtains[activeMember]; let o = ro - m.origin.xyz;
   var a = input.ro_clipA.w; var b = input.rd_clipB.w; var hit = true;
+  let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w;
   for (var axis = 0u; axis < 3u; axis++) {
    var half = m.half[axis];
-   if (axis == 0u) { half = min(half, m.limits.x); } if (axis == 1u) { half = min(half, m.limits.y); }
+   if (axis == 0u) { half = min(half, m.limits.x); }
+   if (axis == 1u) { half = min(half, m.limits.y); }
+   if (axis == 2u) { half = min(half, zEnv); }
    if (d[axis] == 0.0) { if (abs(o[axis]) > half + m.curv.y) { hit = false; break; } }
    else {
     let q0 = (-half - m.curv.y - o[axis]) / d[axis]; let q1 = (half + m.curv.y - o[axis]) / d[axis];
@@ -563,10 +566,6 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
    }
   }
   if (!hit || !(b > a)) { continue; }
-  let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w + m.curv.y;
-  let z0 = o.z + a * d.z;
-  let z1 = o.z + b * d.z;
-  if (min(z0, z1) > zEnv || max(z0, z1) < -zEnv) { continue; }
   var phi_knots: array<f32, 9>;
   for (var k = 0u; k < 9u; k++) {
    var s = a + (b - a) * f32(k) / 8.0;
@@ -614,8 +613,10 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
    if (d.x != 0.0) { protectedBoundary = (l == kx); }
    if (d.y != 0.0) { protectedBoundary = protectedBoundary || (l == ky0) || (l == ky1); }
    for (var k = 0u; k < nr; k++) {
-    uncertain = uncertain || (l < bands[k].y && r > bands[k].x);
-    if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) { protectedBoundary = true; }
+    let bnd = bands[k];
+    if (l < bnd.y && r > bnd.x) { uncertain = true; }
+    if ((zeroBands & (1u << k)) != 0u && (l == bnd.x || l == bnd.y)) { protectedBoundary = true; }
+    if (uncertain && (protectedBoundary || zeroBands == 0u)) { break; }
    }
    if (uncertain || abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
     if (count > 0u && mayAbsorb(pieces[count - 1u], vec2f(l, r),
@@ -879,9 +880,12 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
         let member = select(firstM, secondM, memberIdx == 1u);
         let m = curtains[member]; let o = ro - m.origin.xyz;
         var a = input.ro_clipA.w; var b = input.rd_clipB.w; var hit = true;
+        let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w;
         for (var axis = 0u; axis < 3u; axis++) {
             var half = m.half[axis];
-            if (axis == 0u) { half = min(half, m.limits.x); } if (axis == 1u) { half = min(half, m.limits.y); }
+            if (axis == 0u) { half = min(half, m.limits.x); }
+            if (axis == 1u) { half = min(half, m.limits.y); }
+            if (axis == 2u) { half = min(half, zEnv); }
             if (d[axis] == 0.0) { if (abs(o[axis]) > half + m.curv.y) { hit = false; break; } }
             else {
                 let q0 = (-half - m.curv.y - o[axis]) / d[axis]; let q1 = (half + m.curv.y - o[axis]) / d[axis];
@@ -889,12 +893,6 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
             }
         }
         if (!hit || !(b > a)) {
-            continue;
-        }
-        let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w + m.curv.y;
-        let z0 = o.z + a * d.z;
-        let z1 = o.z + b * d.z;
-        if (min(z0, z1) > zEnv || max(z0, z1) < -zEnv) {
             continue;
         }
         var phi_knots: array<f32, 9>;
@@ -944,8 +942,10 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
             if (d.x != 0.0) { protectedBoundary = (l == kx); }
             if (d.y != 0.0) { protectedBoundary = protectedBoundary || (l == ky0) || (l == ky1); }
             for (var k = 0u; k < nr; k++) {
-                uncertain = uncertain || (l < bands[k].y && r > bands[k].x);
-                if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) { protectedBoundary = true; }
+                let bnd = bands[k];
+                if (l < bnd.y && r > bnd.x) { uncertain = true; }
+                if ((zeroBands & (1u << k)) != 0u && (l == bnd.x || l == bnd.y)) { protectedBoundary = true; }
+                if (uncertain && (protectedBoundary || zeroBands == 0u)) { break; }
             }
             if (uncertain || abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
                 if (count > 0u && mayAbsorb(pieces[count - 1u], vec2f(l, r),
@@ -1203,9 +1203,12 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
   memStart[member] = count;
   let m = curtains[member]; let o = ro - m.origin.xyz;
   var a = input.ro_clipA.w; var b = input.rd_clipB.w; var hit = true;
+  let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w;
   for (var axis = 0u; axis < 3u; axis++) {
    var half = m.half[axis];
-   if (axis == 0u) { half = min(half, m.limits.x); } if (axis == 1u) { half = min(half, m.limits.y); }
+   if (axis == 0u) { half = min(half, m.limits.x); }
+   if (axis == 1u) { half = min(half, m.limits.y); }
+   if (axis == 2u) { half = min(half, zEnv); }
    if (d[axis] == 0.0) { if (abs(o[axis]) > half + m.curv.y) { hit = false; break; } }
    else {
     let q0 = (-half - m.curv.y - o[axis]) / d[axis]; let q1 = (half + m.curv.y - o[axis]) / d[axis];
@@ -1213,10 +1216,6 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
    }
   }
   if (!hit || !(b > a)) { continue; }
-  let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w + m.curv.y;
-  let z0 = o.z + a * d.z;
-  let z1 = o.z + b * d.z;
-  if (min(z0, z1) > zEnv || max(z0, z1) < -zEnv) { continue; }
   var phi_knots: array<f32, 9>;
   for (var k = 0u; k < 9u; k++) {
    var s = a + (b - a) * f32(k) / 8.0;
@@ -1263,8 +1262,10 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
    if (d.x != 0.0) { protectedBoundary = (l == kx); }
    if (d.y != 0.0) { protectedBoundary = protectedBoundary || (l == ky0) || (l == ky1); }
    for (var k = 0u; k < nr; k++) {
-    uncertain = uncertain || (l < bands[k].y && r > bands[k].x);
-    if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) { protectedBoundary = true; }
+    let bnd = bands[k];
+    if (l < bnd.y && r > bnd.x) { uncertain = true; }
+    if ((zeroBands & (1u << k)) != 0u && (l == bnd.x || l == bnd.y)) { protectedBoundary = true; }
+    if (uncertain && (protectedBoundary || zeroBands == 0u)) { break; }
    }
    if (uncertain || abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
     if (count > memberStart && mayAbsorb(pieces[count - 1u], vec2f(l, r),

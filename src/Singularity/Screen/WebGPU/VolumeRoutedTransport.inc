@@ -188,7 +188,7 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
  }
 )WGSL";
  std::string sampling;
- for(unsigned i=0;i<4;++i){const auto n=std::to_string(i);sampling+="if((mask&"+std::to_string(1u<<i)+"u)!=0u){let inst=instances["+std::to_string(i+1)+"u];if(all(world>=inst.origin.xyz-inst.halfExtent.xyz)&&all(world<=inst.origin.xyz+inst.halfExtent.xyz)){g_instIdx="+std::to_string(i+1)+"u;let p=world-inst.origin.xyz;"+(source.find("fn volumeShared_"+n+"_Eval(")!=std::string::npos?"volumeShared_"+n+"_Eval(p);":"")+"let D=volumeDensityEval_"+n+"(p);if(D>0.0){let X=max(volumeExtinctionEval_"+n+"(p,D),1e-6);var E=vec3<f32>(0);if(!VOLUME_EMISSION_READS_OMEGA_"+n+"||s>1e-8){E=max(volumeEmissionEval_"+n+"(p,wo),vec3<f32>(0));}result+=vec4<f32>(E,X);}}}\n";}
+ for(unsigned i=0;i<4;++i){const auto n=std::to_string(i);sampling+="if((mask&"+std::to_string(1u<<i)+"u)!=0u){g_instIdx="+std::to_string(i+1)+"u;let p=world-instances["+std::to_string(i+1)+"u].origin.xyz;"+(source.find("fn volumeShared_"+n+"_Eval(")!=std::string::npos?"volumeShared_"+n+"_Eval(p);":"")+"let D=volumeDensityEval_"+n+"(p);if(D>0.0){let X=max(volumeExtinctionEval_"+n+"(p,D),1e-6);var E=vec3<f32>(0);if(!VOLUME_EMISSION_READS_OMEGA_"+n+"||s>1e-8){E=max(volumeEmissionEval_"+n+"(p,wo),vec3<f32>(0));}result+=vec4<f32>(E,X);}}\n";}
  std::string tail=consumer;replace(tail,"EC_PROJECTED",sampling);std::string consume=prefix+commonText+tail;
  WGPUBindGroupLayoutEntry g[4]={};g[0].binding=0;g[0].visibility=WGPUShaderStage_Compute;g[0].buffer.type=WGPUBufferBindingType_Uniform;
  g[1].binding=1;g[1].visibility=WGPUShaderStage_Compute;g[1].buffer.type=WGPUBufferBindingType_ReadOnlyStorage;
