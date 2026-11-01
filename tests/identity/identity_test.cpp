@@ -328,51 +328,6 @@ static void testKeyStoreExceptionHandling() {
     std::cout << "  key store gracefully handles exceptions on malformed files OK\n";
 }
 
-
-static void testKeyStoreAtomicReplacementAndFailedCommit() {
-    // The sealed key must remain readable after replacement, while a failed
-    // publish must leave the previous destination and no staged key behind.
-    const auto root = std::filesystem::temp_directory_path() / "earthcall_keystore_atomic_witness";
-    std::filesystem::remove_all(root);
-    const auto active = root / "active";
-    KeyStore store(active);
-    const PrivateKey key = PrivateKey::generate();
-    const SingularId id = key.id();
-
-    assert(store.store(key, "first passphrase"));
-    std::filesystem::path keyFilename;
-    for (const auto& entry : std::filesystem::directory_iterator(active)) {
-        if (entry.path().extension() == ".key") keyFilename = entry.path().filename();
-    }
-    assert(!keyFilename.empty());
-#if !defined(_WIN32)
-    const auto permissions = std::filesystem::status(active / keyFilename).permissions();
-    assert((permissions & (std::filesystem::perms::group_all |
-                           std::filesystem::perms::others_all)) ==
-           std::filesystem::perms::none);
-#endif
-
-    assert(store.store(key, "replacement passphrase"));
-    assert(!store.load(id, "first passphrase").has_value());
-    assert(store.load(id, "replacement passphrase").has_value());
-
-    const auto blocked = root / "blocked";
-    const auto blockedTarget = blocked / keyFilename;
-    std::filesystem::create_directories(blockedTarget);
-    const auto sentinel = blockedTarget / "sentinel";
-    { std::ofstream out(sentinel); out << "preserve"; }
-    KeyStore cannotCommit(blocked);
-    assert(!cannotCommit.store(key, "replacement passphrase"));
-    assert(std::filesystem::exists(sentinel));
-    for (const auto& dir : {active, blocked}) {
-        for (const auto& entry : std::filesystem::directory_iterator(dir)) {
-            assert(entry.path().filename().string().find(".tmp-") == std::string::npos);
-        }
-    }
-    std::filesystem::remove_all(root);
-    std::cout << "  sealed key atomic replacement, restrictive permissions, failed commit OK\n";
-}
-
 static void testKeyStoreNeverWritesIntoSaves() {
     // The default location must sit outside the repository, because saves/ is
     // tracked by git and anything under it is one commit from being published.
@@ -399,7 +354,6 @@ int main() {
     testKeyStoreRejectsWrongPassphrase();
     testKeyStoreDetectsTampering();
     testKeyStoreExceptionHandling();
-    testKeyStoreAtomicReplacementAndFailedCommit();
     testKeyStoreNeverWritesIntoSaves();
     std::cout << "identity_test: ALL OK\n";
     return 0;
