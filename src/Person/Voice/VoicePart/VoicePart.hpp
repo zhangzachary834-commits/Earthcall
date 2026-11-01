@@ -18,7 +18,7 @@ public:
 
     const std::string& getName() const { return partName; }
     Type getType() const { return partType; }
-    std::string getIdentifier() const override { return partName; }
+    // Formation identity is independent of this part's display spelling.
 
     // A literal voice part is an actual audible aspect or organic capacity.
     bool isLiteral = true;
