@@ -1,544 +1,544 @@
 {
   "dual_regime_timing": {
     "all_64_poses": {
-      "current_mean_ms": 66.93062458593751,
-      "current_median_ms": 67.142732078125,
-      "delta_ms": -7.294984037109373,
-      "delta_pct": -10.899321621812698,
-      "routed_mean_ms": 59.635640548828135,
-      "routed_median_ms": 59.850935859375014
+      "current_mean_ms": 75.40180645703126,
+      "current_median_ms": 75.53853841406249,
+      "delta_ms": -9.353637914062517,
+      "delta_pct": -12.40505811938712,
+      "routed_mean_ms": 66.04816854296874,
+      "routed_median_ms": 66.3295110390625
     },
     "poses": [
       {
-        "current_mean_ms": 84.872479375,
-        "delta_ms": -13.030698000000001,
-        "delta_pct": -15.353266566451126,
+        "current_mean_ms": 96.51871362499999,
+        "delta_ms": -15.61339587499998,
+        "delta_pct": -16.17654783057101,
         "pose": 0,
         "regime": 1,
-        "routed_mean_ms": 71.841781375
+        "routed_mean_ms": 80.90531775000001
       },
       {
-        "current_mean_ms": 84.630984125,
-        "delta_ms": -13.161504999999991,
-        "delta_pct": -15.551638842531291,
+        "current_mean_ms": 95.514072625,
+        "delta_ms": -15.900020499999997,
+        "delta_pct": -16.646783100146333,
         "pose": 1,
         "regime": 1,
-        "routed_mean_ms": 71.469479125
+        "routed_mean_ms": 79.614052125
       },
       {
-        "current_mean_ms": 84.58553637499999,
-        "delta_ms": -13.61527599999998,
-        "delta_pct": -16.096458784204266,
+        "current_mean_ms": 96.91480750000001,
+        "delta_ms": -18.178599250000005,
+        "delta_pct": -18.757298001133627,
         "pose": 2,
         "regime": 1,
-        "routed_mean_ms": 70.97026037500001
+        "routed_mean_ms": 78.73620825
       },
       {
-        "current_mean_ms": 84.4730835,
-        "delta_ms": -13.286677124999997,
-        "delta_pct": -15.728888510385673,
+        "current_mean_ms": 95.992562375,
+        "delta_ms": -17.650327750000002,
+        "delta_pct": -18.387182624678843,
         "pose": 3,
         "regime": 1,
-        "routed_mean_ms": 71.186406375
+        "routed_mean_ms": 78.342234625
       },
       {
-        "current_mean_ms": 84.68133337500001,
-        "delta_ms": -13.647781125000023,
-        "delta_pct": -16.116634659686618,
+        "current_mean_ms": 95.560895625,
+        "delta_ms": -16.945979124999994,
+        "delta_pct": -17.73317319199204,
         "pose": 4,
         "regime": 1,
-        "routed_mean_ms": 71.03355224999999
+        "routed_mean_ms": 78.6149165
       },
       {
-        "current_mean_ms": 84.904484625,
-        "delta_ms": -13.718989874999991,
-        "delta_pct": -16.158145162287994,
+        "current_mean_ms": 96.077807125,
+        "delta_ms": -17.16003624999999,
+        "delta_pct": -17.86056193775768,
         "pose": 5,
         "regime": 1,
-        "routed_mean_ms": 71.18549475
+        "routed_mean_ms": 78.91777087500002
       },
       {
-        "current_mean_ms": 85.467942625,
-        "delta_ms": -14.274489500000001,
-        "delta_pct": -16.701571444899397,
+        "current_mean_ms": 96.245875,
+        "delta_ms": -17.711130124999997,
+        "delta_pct": -18.401962811393215,
         "pose": 6,
         "regime": 1,
-        "routed_mean_ms": 71.193453125
+        "routed_mean_ms": 78.534744875
       },
       {
-        "current_mean_ms": 85.085234375,
-        "delta_ms": -13.921052125000003,
-        "delta_pct": -16.361301966502346,
+        "current_mean_ms": 96.36187475,
+        "delta_ms": -17.371307124999987,
+        "delta_pct": -18.027157701184084,
         "pose": 7,
         "regime": 1,
-        "routed_mean_ms": 71.16418225
+        "routed_mean_ms": 78.99056762500001
       },
       {
-        "current_mean_ms": 84.40383337499999,
-        "delta_ms": -13.047140624999997,
-        "delta_pct": -15.457995334207768,
+        "current_mean_ms": 95.750109375,
+        "delta_ms": -16.99856262499999,
+        "delta_pct": -17.753047736401076,
         "pose": 8,
         "regime": 1,
-        "routed_mean_ms": 71.35669275
+        "routed_mean_ms": 78.75154675
       },
       {
-        "current_mean_ms": 83.082302,
-        "delta_ms": -11.938781250000005,
-        "delta_pct": -14.369824815398118,
+        "current_mean_ms": 94.31191662500001,
+        "delta_ms": -15.428036250000005,
+        "delta_pct": -16.358522657687537,
         "pose": 9,
         "regime": 1,
-        "routed_mean_ms": 71.14352075
+        "routed_mean_ms": 78.883880375
       },
       {
-        "current_mean_ms": 82.95002075,
-        "delta_ms": -12.1699165,
-        "delta_pct": -14.671384515597003,
+        "current_mean_ms": 93.39247387500001,
+        "delta_ms": -15.251187750000014,
+        "delta_pct": -16.33021068744016,
         "pose": 10,
         "regime": 1,
-        "routed_mean_ms": 70.78010425
+        "routed_mean_ms": 78.141286125
       },
       {
-        "current_mean_ms": 81.889776125,
-        "delta_ms": -17.117218750000006,
-        "delta_pct": -20.902754360778278,
+        "current_mean_ms": 92.579583375,
+        "delta_ms": -20.741979375,
+        "delta_pct": -22.404485545137074,
         "pose": 11,
         "regime": 1,
-        "routed_mean_ms": 64.77255737499999
+        "routed_mean_ms": 71.837604
       },
       {
-        "current_mean_ms": 79.17609362500001,
-        "delta_ms": -14.464046625000009,
-        "delta_pct": -18.26819935510554,
+        "current_mean_ms": 89.855182,
+        "delta_ms": -18.231604125000004,
+        "delta_pct": -20.289986308190887,
         "pose": 12,
         "regime": 1,
-        "routed_mean_ms": 64.712047
+        "routed_mean_ms": 71.623577875
       },
       {
-        "current_mean_ms": 76.441864375,
-        "delta_ms": -11.863968749999984,
-        "delta_pct": -15.52025038504954,
+        "current_mean_ms": 86.46629675,
+        "delta_ms": -15.314505249999996,
+        "delta_pct": -17.71153134299116,
         "pose": 13,
         "regime": 1,
-        "routed_mean_ms": 64.57789562500001
+        "routed_mean_ms": 71.1517915
       },
       {
-        "current_mean_ms": 72.87796337500001,
-        "delta_ms": -8.435650875000007,
-        "delta_pct": -11.575036519055315,
+        "current_mean_ms": 82.65296362500001,
+        "delta_ms": -11.176442625000007,
+        "delta_pct": -13.522131735902416,
         "pose": 14,
         "regime": 1,
-        "routed_mean_ms": 64.4423125
+        "routed_mean_ms": 71.476521
       },
       {
-        "current_mean_ms": 70.07509375000001,
-        "delta_ms": -16.03830212500001,
-        "delta_pct": -22.88730741084454,
+        "current_mean_ms": 79.33297925000001,
+        "delta_ms": -19.04176062500001,
+        "delta_pct": -24.002326403240435,
         "pose": 15,
         "regime": 1,
-        "routed_mean_ms": 54.036791625
+        "routed_mean_ms": 60.291218625
       },
       {
-        "current_mean_ms": 66.86779175,
-        "delta_ms": -13.457416874999993,
-        "delta_pct": -20.12540944273069,
+        "current_mean_ms": 75.832093625,
+        "delta_ms": -16.895567375,
+        "delta_pct": -22.280233298780953,
         "pose": 16,
         "regime": 1,
-        "routed_mean_ms": 53.410374875
+        "routed_mean_ms": 58.93652625
       },
       {
-        "current_mean_ms": 63.297984375,
-        "delta_ms": -10.311526125,
-        "delta_pct": -16.29044941448817,
+        "current_mean_ms": 71.74757274999999,
+        "delta_ms": -12.212588374999989,
+        "delta_pct": -17.02160492251634,
         "pose": 17,
         "regime": 1,
-        "routed_mean_ms": 52.98645825
+        "routed_mean_ms": 59.534984375
       },
       {
-        "current_mean_ms": 59.10303112500001,
-        "delta_ms": -6.305244750000007,
-        "delta_pct": -10.668225689922272,
+        "current_mean_ms": 66.622244875,
+        "delta_ms": -7.302755250000004,
+        "delta_pct": -10.961436774911743,
         "pose": 18,
         "regime": 1,
-        "routed_mean_ms": 52.797786375
+        "routed_mean_ms": 59.319489625
       },
       {
-        "current_mean_ms": 53.339593875,
-        "delta_ms": -2.2403333749999987,
-        "delta_pct": -4.200132044968629,
+        "current_mean_ms": 59.949,
+        "delta_ms": -2.6651404999999926,
+        "delta_pct": -4.44567966104521,
         "pose": 19,
         "regime": 1,
-        "routed_mean_ms": 51.0992605
+        "routed_mean_ms": 57.283859500000005
       },
       {
-        "current_mean_ms": 51.46308824999999,
-        "delta_ms": -12.165384874999987,
-        "delta_pct": -23.639049440450144,
+        "current_mean_ms": 58.124401125000006,
+        "delta_ms": -14.12134900000001,
+        "delta_pct": -24.295044295821995,
         "pose": 20,
         "regime": 2,
-        "routed_mean_ms": 39.297703375000005
+        "routed_mean_ms": 44.003052124999996
       },
       {
-        "current_mean_ms": 49.975583375,
-        "delta_ms": -11.017593999999995,
-        "delta_pct": -22.0459537557124,
+        "current_mean_ms": 56.240645625,
+        "delta_ms": -12.759557125,
+        "delta_pct": -22.687430030725224,
         "pose": 21,
         "regime": 2,
-        "routed_mean_ms": 38.957989375000004
+        "routed_mean_ms": 43.4810885
       },
       {
-        "current_mean_ms": 48.376760250000004,
-        "delta_ms": -9.387218500000003,
-        "delta_pct": -19.404396763009782,
+        "current_mean_ms": 53.916197624999995,
+        "delta_ms": -10.63269237499999,
+        "delta_pct": -19.720775654382937,
         "pose": 22,
         "regime": 2,
-        "routed_mean_ms": 38.98954175
+        "routed_mean_ms": 43.283505250000005
       },
       {
-        "current_mean_ms": 46.3030835,
-        "delta_ms": -7.39481275,
-        "delta_pct": -15.970454213918604,
+        "current_mean_ms": 52.53519287500001,
+        "delta_ms": -9.524937625,
+        "delta_pct": -18.13058466857299,
         "pose": 23,
         "regime": 2,
-        "routed_mean_ms": 38.90827075
+        "routed_mean_ms": 43.01025525000001
       },
       {
-        "current_mean_ms": 44.2597345,
-        "delta_ms": -5.034255124999994,
-        "delta_pct": -11.374345512623881,
+        "current_mean_ms": 49.64014050000001,
+        "delta_ms": -6.0576768749999985,
+        "delta_pct": -12.203182372136915,
         "pose": 24,
         "regime": 2,
-        "routed_mean_ms": 39.225479375000006
+        "routed_mean_ms": 43.58246362500001
       },
       {
-        "current_mean_ms": 42.8505625,
-        "delta_ms": -3.381723875000006,
-        "delta_pct": -7.891900777265189,
+        "current_mean_ms": 47.94243237500001,
+        "delta_ms": -4.510125375000008,
+        "delta_pct": -9.407377038616529,
         "pose": 25,
         "regime": 2,
-        "routed_mean_ms": 39.468838625
+        "routed_mean_ms": 43.432307
       },
       {
-        "current_mean_ms": 41.896036249999995,
-        "delta_ms": -1.837379999999989,
-        "delta_pct": -4.38557000723425,
+        "current_mean_ms": 47.16184375,
+        "delta_ms": -2.692333375000004,
+        "delta_pct": -5.708711027651466,
         "pose": 26,
         "regime": 2,
-        "routed_mean_ms": 40.058656250000006
+        "routed_mean_ms": 44.469510375
       },
       {
-        "current_mean_ms": 41.797578125,
-        "delta_ms": -1.4655572500000034,
-        "delta_pct": -3.506320977777952,
+        "current_mean_ms": 47.340036624999996,
+        "delta_ms": -2.4783542499999953,
+        "delta_pct": -5.235218277569289,
         "pose": 27,
         "regime": 2,
-        "routed_mean_ms": 40.332020875
+        "routed_mean_ms": 44.861682375
       },
       {
-        "current_mean_ms": 41.763203125000004,
-        "delta_ms": -1.100968750000007,
-        "delta_pct": -2.63621721424177,
+        "current_mean_ms": 46.76628650000001,
+        "delta_ms": -1.4837967499999962,
+        "delta_pct": -3.1727914723355166,
         "pose": 28,
         "regime": 2,
-        "routed_mean_ms": 40.662234375
+        "routed_mean_ms": 45.28248975000001
       },
       {
-        "current_mean_ms": 41.926192625,
-        "delta_ms": -0.856812374999997,
-        "delta_pct": -2.043620756751215,
+        "current_mean_ms": 47.55896375,
+        "delta_ms": -2.1503438749999972,
+        "delta_pct": -4.521427099008223,
         "pose": 29,
         "regime": 2,
-        "routed_mean_ms": 41.06938025
+        "routed_mean_ms": 45.408619875
       },
       {
-        "current_mean_ms": 41.915322874999994,
-        "delta_ms": -0.42298424999999185,
-        "delta_pct": -1.009139906333101,
+        "current_mean_ms": 46.95386975,
+        "delta_ms": -1.016952874999994,
+        "delta_pct": -2.1658552967298164,
         "pose": 30,
         "regime": 2,
-        "routed_mean_ms": 41.492338625
+        "routed_mean_ms": 45.93691687500001
       },
       {
-        "current_mean_ms": 41.868812500000004,
-        "delta_ms": 0.2520156249999985,
-        "delta_pct": 0.601917298227645,
+        "current_mean_ms": 47.20039575,
+        "delta_ms": -0.7210989999999953,
+        "delta_pct": -1.5277393092620315,
         "pose": 31,
         "regime": 2,
-        "routed_mean_ms": 42.120828125
+        "routed_mean_ms": 46.47929675
       },
       {
-        "current_mean_ms": 42.466494375,
-        "delta_ms": 0.23253700000000066,
-        "delta_pct": 0.5475775747971677,
+        "current_mean_ms": 47.342624875,
+        "delta_ms": -0.001255374999992398,
+        "delta_pct": -0.0026516801789233236,
         "pose": 32,
         "regime": 2,
-        "routed_mean_ms": 42.699031375000004
+        "routed_mean_ms": 47.341369500000006
       },
       {
-        "current_mean_ms": 43.301948,
-        "delta_ms": 0.5927343749999991,
-        "delta_pct": 1.3688399768989588,
+        "current_mean_ms": 48.616807375,
+        "delta_ms": 0.1428646250000014,
+        "delta_pct": 0.29385850843316796,
         "pose": 33,
         "regime": 2,
-        "routed_mean_ms": 43.894682375
+        "routed_mean_ms": 48.759672
       },
       {
-        "current_mean_ms": 43.433495,
-        "delta_ms": 1.0430208749999963,
-        "delta_pct": 2.401420551120734,
+        "current_mean_ms": 48.53658325,
+        "delta_ms": 0.8473750000000067,
+        "delta_pct": 1.7458480660564557,
         "pose": 34,
         "regime": 2,
-        "routed_mean_ms": 44.476515875
+        "routed_mean_ms": 49.383958250000006
       },
       {
-        "current_mean_ms": 44.744583500000005,
-        "delta_ms": 0.3739268749999951,
-        "delta_pct": 0.835691933527541,
+        "current_mean_ms": 50.364072875,
+        "delta_ms": -0.866562375000008,
+        "delta_pct": -1.7205963011584735,
         "pose": 35,
         "regime": 2,
-        "routed_mean_ms": 45.118510375
+        "routed_mean_ms": 49.49751049999999
       },
       {
-        "current_mean_ms": 44.942827875,
-        "delta_ms": 1.0221617500000022,
-        "delta_pct": 2.2743601111237424,
+        "current_mean_ms": 50.84412525,
+        "delta_ms": 0.15844750000000118,
+        "delta_pct": 0.3116338401357415,
         "pose": 36,
         "regime": 2,
-        "routed_mean_ms": 45.964989625
+        "routed_mean_ms": 51.00257275
       },
       {
-        "current_mean_ms": 46.531395999999994,
-        "delta_ms": 0.5449111250000058,
-        "delta_pct": 1.1710612013445845,
+        "current_mean_ms": 52.638765625,
+        "delta_ms": -0.48902087500000135,
+        "delta_pct": -0.929012808704139,
         "pose": 37,
         "regime": 2,
-        "routed_mean_ms": 47.076307125
+        "routed_mean_ms": 52.149744749999996
       },
       {
-        "current_mean_ms": 48.31485925,
-        "delta_ms": -0.0966873749999948,
-        "delta_pct": -0.20011933492281633,
+        "current_mean_ms": 53.995588625,
+        "delta_ms": -0.5430416250000079,
+        "delta_pct": -1.0057147978725416,
         "pose": 38,
         "regime": 2,
-        "routed_mean_ms": 48.218171875
+        "routed_mean_ms": 53.452546999999996
       },
       {
-        "current_mean_ms": 50.25990637500001,
-        "delta_ms": -0.581255375000012,
-        "delta_pct": -1.1564991201200023,
+        "current_mean_ms": 56.421114625,
+        "delta_ms": -1.472317750000002,
+        "delta_pct": -2.609515532944865,
         "pose": 39,
         "regime": 2,
-        "routed_mean_ms": 49.678650999999995
+        "routed_mean_ms": 54.948796875
       },
       {
-        "current_mean_ms": 52.033072749999995,
-        "delta_ms": -0.622249999999994,
-        "delta_pct": -1.1958740222582647,
+        "current_mean_ms": 58.665104125,
+        "delta_ms": -2.001291374999994,
+        "delta_pct": -3.4113829760461436,
         "pose": 40,
         "regime": 2,
-        "routed_mean_ms": 51.41082275
+        "routed_mean_ms": 56.663812750000005
       },
       {
-        "current_mean_ms": 53.731130375,
-        "delta_ms": -0.9239898749999966,
-        "delta_pct": -1.7196546369884493,
+        "current_mean_ms": 59.984026125,
+        "delta_ms": -2.649640874999996,
+        "delta_pct": -4.41724413342719,
         "pose": 41,
         "regime": 2,
-        "routed_mean_ms": 52.8071405
+        "routed_mean_ms": 57.334385250000004
       },
       {
-        "current_mean_ms": 55.2032915,
-        "delta_ms": -1.3705570000000051,
-        "delta_pct": -2.4827450732715914,
+        "current_mean_ms": 61.4904635,
+        "delta_ms": -1.6671768750000027,
+        "delta_pct": -2.7112771316157063,
         "pose": 42,
         "regime": 2,
-        "routed_mean_ms": 53.832734499999994
+        "routed_mean_ms": 59.823286624999994
       },
       {
-        "current_mean_ms": 56.35494799999999,
-        "delta_ms": -0.10651587499999238,
-        "delta_pct": -0.18900891364497824,
+        "current_mean_ms": 63.04044287500001,
+        "delta_ms": -0.8037865000000153,
+        "delta_pct": -1.2750330793103826,
         "pose": 43,
         "regime": 2,
-        "routed_mean_ms": 56.248432125
+        "routed_mean_ms": 62.236656374999995
       },
       {
-        "current_mean_ms": 58.070630375,
-        "delta_ms": -0.08726562499999346,
-        "delta_pct": -0.15027497452061792,
+        "current_mean_ms": 64.879218875,
+        "delta_ms": -1.4682552500000057,
+        "delta_pct": -2.2630593824331173,
         "pose": 44,
         "regime": 2,
-        "routed_mean_ms": 57.98336475000001
+        "routed_mean_ms": 63.410963625
       },
       {
-        "current_mean_ms": 59.6817135,
-        "delta_ms": -0.47300012500000577,
-        "delta_pct": -0.7925377762486758,
+        "current_mean_ms": 67.236276125,
+        "delta_ms": -1.222901250000021,
+        "delta_pct": -1.8188116898778068,
         "pose": 45,
         "regime": 2,
-        "routed_mean_ms": 59.208713374999995
+        "routed_mean_ms": 66.01337487499998
       },
       {
-        "current_mean_ms": 62.878661625,
-        "delta_ms": -0.9404740000000018,
-        "delta_pct": -1.4956965935580246,
+        "current_mean_ms": 70.598515625,
+        "delta_ms": -2.100859374999999,
+        "delta_pct": -2.9757840606156494,
         "pose": 46,
         "regime": 2,
-        "routed_mean_ms": 61.938187625
+        "routed_mean_ms": 68.49765625
       },
       {
-        "current_mean_ms": 66.40596337499998,
-        "delta_ms": -1.876140499999977,
-        "delta_pct": -2.825259065071093,
+        "current_mean_ms": 74.62229675,
+        "delta_ms": -4.190088375000002,
+        "delta_pct": -5.615062196541145,
         "pose": 47,
         "regime": 2,
-        "routed_mean_ms": 64.52982287500001
+        "routed_mean_ms": 70.432208375
       },
       {
-        "current_mean_ms": 68.971739625,
-        "delta_ms": -3.3230939999999975,
-        "delta_pct": -4.818051593402879,
+        "current_mean_ms": 76.83885399999998,
+        "delta_ms": -4.299723624999984,
+        "delta_pct": -5.5957675071520265,
         "pose": 48,
         "regime": 2,
-        "routed_mean_ms": 65.648645625
+        "routed_mean_ms": 72.539130375
       },
       {
-        "current_mean_ms": 71.428698,
-        "delta_ms": -3.781468750000002,
-        "delta_pct": -5.294046868948951,
+        "current_mean_ms": 79.97978137499999,
+        "delta_ms": -5.3528282499999875,
+        "delta_pct": -6.692726784163441,
         "pose": 49,
         "regime": 2,
-        "routed_mean_ms": 67.64722925
+        "routed_mean_ms": 74.626953125
       },
       {
-        "current_mean_ms": 74.446021,
-        "delta_ms": -4.337177374999996,
-        "delta_pct": -5.825935781040596,
+        "current_mean_ms": 84.195687375,
+        "delta_ms": -7.479932125000005,
+        "delta_pct": -8.883984866926808,
         "pose": 50,
         "regime": 2,
-        "routed_mean_ms": 70.108843625
+        "routed_mean_ms": 76.71575525
       },
       {
-        "current_mean_ms": 78.06992712499999,
-        "delta_ms": -2.747854249999989,
-        "delta_pct": -3.5197346163783667,
+        "current_mean_ms": 88.30371350000001,
+        "delta_ms": -5.183974000000006,
+        "delta_pct": -5.870618340416686,
         "pose": 51,
         "regime": 1,
-        "routed_mean_ms": 75.322072875
+        "routed_mean_ms": 83.11973950000001
       },
       {
-        "current_mean_ms": 82.7758855,
-        "delta_ms": -6.626140500000005,
-        "delta_pct": -8.004916480174659,
+        "current_mean_ms": 92.220526125,
+        "delta_ms": -8.194422000000003,
+        "delta_pct": -8.885681251582648,
         "pose": 52,
         "regime": 1,
-        "routed_mean_ms": 76.149745
+        "routed_mean_ms": 84.026104125
       },
       {
-        "current_mean_ms": 85.56857812499999,
-        "delta_ms": -8.595776124999972,
-        "delta_pct": -10.045482013786792,
+        "current_mean_ms": 96.2324635,
+        "delta_ms": -11.300739625000006,
+        "delta_pct": -11.743167756481684,
         "pose": 53,
         "regime": 1,
-        "routed_mean_ms": 76.97280200000002
+        "routed_mean_ms": 84.93172387499999
       },
       {
-        "current_mean_ms": 89.14228125,
-        "delta_ms": -10.360427000000001,
-        "delta_pct": -11.622348962490795,
+        "current_mean_ms": 100.558562375,
+        "delta_ms": -13.235916625000002,
+        "delta_pct": -13.162396430888716,
         "pose": 54,
         "regime": 1,
-        "routed_mean_ms": 78.78185425
+        "routed_mean_ms": 87.32264574999999
       },
       {
-        "current_mean_ms": 90.26066675,
-        "delta_ms": -11.420489875000001,
-        "delta_pct": -12.652786962710977,
+        "current_mean_ms": 101.48278125,
+        "delta_ms": -14.434661625000004,
+        "delta_pct": -14.223754460809086,
         "pose": 55,
         "regime": 1,
-        "routed_mean_ms": 78.840176875
+        "routed_mean_ms": 87.048119625
       },
       {
-        "current_mean_ms": 92.20200512499999,
-        "delta_ms": -13.14601524999999,
-        "delta_pct": -14.257840957122019,
+        "current_mean_ms": 103.28115625,
+        "delta_ms": -15.96067674999999,
+        "delta_pct": -15.453619352755835,
         "pose": 56,
         "regime": 1,
-        "routed_mean_ms": 79.055989875
+        "routed_mean_ms": 87.3204795
       },
       {
-        "current_mean_ms": 92.984979125,
-        "delta_ms": -13.542958374999984,
-        "delta_pct": -14.564673243400037,
+        "current_mean_ms": 104.803218875,
+        "delta_ms": -16.959979375000003,
+        "delta_pct": -16.182689384023945,
         "pose": 57,
         "regime": 1,
-        "routed_mean_ms": 79.44202075000001
+        "routed_mean_ms": 87.8432395
       },
       {
-        "current_mean_ms": 92.96280737499998,
-        "delta_ms": -13.893104374999979,
-        "delta_pct": -14.944798642920698,
+        "current_mean_ms": 104.632723875,
+        "delta_ms": -17.411859375000006,
+        "delta_pct": -16.640930991915273,
         "pose": 58,
         "regime": 1,
-        "routed_mean_ms": 79.069703
+        "routed_mean_ms": 87.22086449999999
       },
       {
-        "current_mean_ms": 91.338817625,
-        "delta_ms": -13.672703000000013,
-        "delta_pct": -14.969213917498433,
+        "current_mean_ms": 102.17487499999999,
+        "delta_ms": -16.786041499999982,
+        "delta_pct": -16.428737006039874,
         "pose": 59,
         "regime": 1,
-        "routed_mean_ms": 77.66611462499999
+        "routed_mean_ms": 85.3888335
       },
       {
-        "current_mean_ms": 90.670103875,
-        "delta_ms": -14.942296624999983,
-        "delta_pct": -16.4798494612952,
+        "current_mean_ms": 102.03240075000001,
+        "delta_ms": -17.382239125000012,
+        "delta_pct": -17.035999346511517,
         "pose": 60,
         "regime": 1,
-        "routed_mean_ms": 75.72780725000001
+        "routed_mean_ms": 84.650161625
       },
       {
-        "current_mean_ms": 90.37272399999998,
-        "delta_ms": -15.128989624999974,
-        "delta_pct": -16.7406590787282,
+        "current_mean_ms": 101.116958375,
+        "delta_ms": -16.97475,
+        "delta_pct": -16.787243478040388,
         "pose": 61,
         "regime": 1,
-        "routed_mean_ms": 75.243734375
+        "routed_mean_ms": 84.142208375
       },
       {
-        "current_mean_ms": 89.3236615,
-        "delta_ms": -14.40808337499999,
-        "delta_pct": -16.13019790394507,
+        "current_mean_ms": 100.20264075000001,
+        "delta_ms": -16.58880212500003,
+        "delta_pct": -16.555254433252077,
         "pose": 62,
         "regime": 1,
-        "routed_mean_ms": 74.91557812500001
+        "routed_mean_ms": 83.61383862499999
       },
       {
-        "current_mean_ms": 88.083770875,
-        "delta_ms": -13.82486462499999,
-        "delta_pct": -15.695132585341861,
+        "current_mean_ms": 99.323812375,
+        "delta_ms": -16.81862500000001,
+        "delta_pct": -16.93312469370466,
         "pose": 63,
         "regime": 1,
-        "routed_mean_ms": 74.25890625000001
+        "routed_mean_ms": 82.50518737499999
       }
     ],
     "regime1_full_screen_green_poses_0_19_51_63": {
-      "current_mean_ms": 81.99886773106061,
-      "current_median_ms": 82.27739830303031,
-      "delta_ms": -12.071385405303033,
-      "delta_pct": -14.721404989267278,
+      "current_mean_ms": 92.54681387121211,
+      "current_median_ms": 92.78789643939393,
+      "delta_ms": -15.00071555303029,
+      "delta_pct": -16.208786586543372,
       "poses_count": 33,
-      "routed_mean_ms": 69.92748232575758,
-      "routed_median_ms": 70.18085857575758
+      "routed_mean_ms": 77.54609831818182,
+      "routed_median_ms": 77.60273484848486
     },
     "regime2_open_sky_poses_20_50": {
-      "current_mean_ms": 50.8902367217742,
-      "current_median_ms": 51.031635774193546,
-      "delta_ms": -2.210427741935497,
-      "delta_pct": -4.34352025914183,
+      "current_mean_ms": 57.150669532258064,
+      "current_median_ms": 57.17631858064517,
+      "delta_ms": -3.3422326854838715,
+      "delta_pct": -5.848107664945877,
       "poses_count": 31,
-      "routed_mean_ms": 48.679808979838704,
-      "routed_median_ms": 48.854566516129026
+      "routed_mean_ms": 53.80843684677419,
+      "routed_median_ms": 53.83451477419355
     }
   },
   "gates": {
