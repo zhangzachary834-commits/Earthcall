@@ -435,6 +435,25 @@ int main() {
             malformedAuthored["laws"][0]["durableHistoryLineage"] = "../invalid";
             expectRejectedWithoutMutation(malformedAuthored,
                 "Malformed authored history was rejected only after live mutation");
+
+            // Persisted preflight alone is insufficient: a caller can restore
+            // one Law, rename its authored ID, then register it beside its
+            // source without passing through loadFromJson(). Fail closed and
+            // require an explicit history fork before admitting the copy.
+            auto liveCopy = Law::fromJson(authored->toJson());
+            liveCopy->setLawIdentifier("collision-live-copy");
+            bool rejectedLiveCopy = false;
+            try { collisionManager.add(liveCopy); }
+            catch (const std::invalid_argument&) { rejectedLiveCopy = true; }
+            check(rejectedLiveCopy && collisionManager.find("collision-live-copy") == nullptr &&
+                  collisionManager.find("collision-authored") == authored.get() &&
+                  authored->durableHistoryLineage() == authoredHistory,
+                  "Live registration silently admitted a copied Law history");
+            liveCopy->forkDurableHistoryLineage();
+            collisionManager.add(liveCopy);
+            check(collisionManager.find("collision-live-copy") == liveCopy.get() &&
+                  liveCopy->durableHistoryLineage() != authoredHistory,
+                  "Explicit history fork did not permit independent registration");
         }
 
         // Exercise the public LawAuditLogger bridge with muted aggregate logging.

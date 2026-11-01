@@ -1956,6 +1956,16 @@ void LawManager::add(const std::shared_ptr<Law>& law) {
     const std::string id = law->getIdentifier();
     if (_lawById.find(id) != _lawById.end()) return;
 
+    // Two simultaneously registered Laws cannot own the same durable history.
+    // A restored/copied Law must explicitly fork before being registered as
+    // another authored Law; silently sharing its JSONL file would merge lives.
+    for (const auto& registered : _laws) {
+        if (registered && registered->durableHistoryLineage() == law->durableHistoryLineage()) {
+            throw std::invalid_argument(
+                "Duplicate live Law history lineage; fork before registering a distinct Law");
+        }
+    }
+
     _laws.push_back(law);
     _lawById[id] = law.get();
     _lawFormation.addMember(law.get());
