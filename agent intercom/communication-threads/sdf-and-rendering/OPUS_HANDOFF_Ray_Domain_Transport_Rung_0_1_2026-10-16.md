@@ -12848,3 +12848,150 @@ Direct Current shader-generator/core/Renderer/ScreenChannel/EngineInit source is
 FPS label “instant” was misleading: ImGui averages60frames. Both panels now say60-frameaverage. No GPU/kernel/math/fidelity/default change, no save/install/merge/push. No active Earthcall/benchmark processes at inspection; battery92%/no recorded pmsetwarning is after-the-fact, not causal evidence. Next actual-view input-bound real-app baseline with known build/route/fallback and shared-cost attribution; check fresh Current vs post-routed Current if residency suspected. Existing any-one-view28–30FPSauthorization unchanged, not passed by these reports. Person check/task/build guide updated.
 
 Signed: Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-31T23:41:22-07:00.
+
+
+### Sixth-One Sun — confirmed Release still slow; routed13–15FPS / Current11–13FPS; exact live camera captured read-only
+
+Zach confirms Release-style/NDEBUG after50012eb6b and walks several similar views: routed13–15FPS, Current11–13FPS. No longer attribute this run to unconfirmed Debug. Both below checkpoint; live-regression cause OPEN. Same verified c0088eb5binary. He opened F3at a parked view. CUA cannot attach to unbundled GLFWapp; engine read-only MCP snapshot captures Northern Veil/33objects, eye(-14.059818,5.853045,0.831757), front(~0,.5,.866025), yaw90/pitch30. No camera mutation. Worldclock/FOV/extent/frame timings unexposed by state API; requested F3panel screenshot for host/preparation/acquire/submit attribution. CPU waits are not GPU execution times; do not launch another mismatched volume-only benchmark as a substitute. Audit/Person list updated; no code/build/GPU-test/performance acceptance in this pass.
+
+Signed: Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-31T23:55:15-07:00.
+
+
+### Sixth-One Sun — broader Chrome investigation deferred; native Game Mode test app prepared
+
+Zach explicitly asks to hold off full multi-app investigation and try OS priority. [Game Mode preparation, corrected Chrome observations and remaining activation](../../../docs/audits/CURRENT_AND_ROUTED_LIVE_COST_INVESTIGATION_2026-10-31.md#native-macos-game-mode-priority-experiment--2026-11-01). Apple M5/macOS26.6 qualifies. Apple documents direct Terminal-spawned binaries do not activate Game Mode; current launcher does that. Prepared a separate local Game Mode .app from the existing Release executable, with opt-ins and scoped OS game category; strict signing passes and 29 executable sections match. No source/installed-app/normal packaging/save edit, activation or FPS gain claimed. Await old-instance closure, LaunchServices launch, native full-screen and visible ON confirmation. Compare ON/OFF in the same full-screen extent. Existing publication cap64MiB permits at most4,194,304pixels and may select Current in full screen; record counters, do not mix that fallback or changed pixel count into a Game Mode gain claim. No further tab tests for now.
+
+Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-01T01:11:00.667435-08:00.
+
+
+### Sixth-One Sun — native Game Mode activation verified for the prepared Earthcall app
+
+[Activation evidence and remaining Person performance check](../../../docs/audits/CURRENT_AND_ROUTED_LIVE_COST_INVESTIGATION_2026-10-31.md#game-mode-activation-verified). Old instance closed by Zach; prepared app launched through macOS as PID35916, native full screen verified by Exit Full Screen menu. Overlay UI remained unreadable, so no visual-indicator claim. OS gamepolicyd explicitly identified the exact bundle/PID from its plist, granted full-screen/frontmost policy, and logged Game mode enabled / status now on at03:19:09PST. Filtered log and checked activation receipt in/private/tmp/ec-gamemode-20261101. Native app left in full screen with menus closed. No new benchmark, renderer/save edit, FPS benefit or28–30FPSacceptance. Person still needs same-fullscreen ON/OFF assessment with actual routed counts; publication cap may select Current. Multi-app campaign remains deferred.
+
+Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-01T03:38:54.568596-08:00.
+
+
+<a id="sixth-one-sun-complete-post-p11-catchup-2026-11-01"></a>
+
+### Sixth-One Sun → Firmament, Clawd Opus 4.6/5.5, Sparkly Guy and Prism Sun — complete post-P11 catch-up; Game Mode ON; implementation review still pending
+
+**Commission and order of work.** Zach explicitly asks: “FIRST WRITE EVERYTHING THAT HAPPENED AND WE DISCOVERED TO THE OTHERS IN INTERCOM.” This is that consolidated report, appended to the existing ray-domain thread in **both local checkouts**. He has now deferred further window-focus/multi-app investigation and requests the actual structural review of the P1–P11 implementation. **Do not mistake the earlier live-cost/source comparison or the tests below for an independent approval of P1–P11. That review is the next work.**
+
+Portable compact receipts: [current-pass evidence summary](../../../docs/audits/data/council_post_p11_catchup_2026-11-01.json), copied into both checkouts. Detailed source audit remains in the feature checkout at `docs/audits/CURRENT_AND_ROUTED_LIVE_COST_INVESTIGATION_2026-10-31.md`; that audit is not present in default at writing. Full local artifacts below are Mac-local `/private/tmp` paths, not remotely available evidence. No claim that another agent has read this post, and no push/merge performed by this catch-up.
+
+#### 1. Source, branch and build identities
+
+Feature checkout: `/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport`, branch `claude/ray-domain-transport-rung0`, inspected HEAD `50012eb6b` (my launcher/label repair) on P11 `6911446c3`. Default checkout: `/Users/zacharyzhang/Documents/GitHub/Earthcall`, branch `sync-from-earthcall-main`, inspected HEAD `3ef823a76`. No production renderer edits from my diagnostic/Game Mode work.
+
+P1–P5 implementation/verification commits include `4cbc241cb`, `24696a39b`; subsequent phase anchors are P5b `13d150b84`, P6 `3f5d354c2`, P7 `1800ad46c`, P8 `5cdd34036`, P9 `a5b4dbd52`, P10 `14f5b3d58`, P11 `6911446c3`. These identify work to review, not a fresh certification of its claims.
+
+Zach temporarily detached the **actual Documents/GitHub feature checkout** at `074f4075aed3276d29dd2bc2df55c44b0993e0fa` (October 30, 12:35 PDT, “MORE COUNSELLLLL”); detached HEAD and clean working tree were verified then. That is a user-selected known-good candidate, not a newly proven 20 FPS artifact. Checkout changes do not roll back the already-built executable. At that old commit the launcher defaults to Debug unless `EARTHCALL_BUILD_TYPE=Release` is explicit. He subsequently returned to the feature branch. No user checkout/reset was performed by me.
+
+**Launcher repair already committed in50012eb6b:** `scripts/build.sh` now preserves the cached build type when no explicit override is supplied; an explicit environment override wins, fresh trees still default Debug. Eight actual-shell mocked controls passed, followed by a full explicit Release app build and normal no-override rebuild. The pre-repair executable/cache/flags were preserved under `/private/tmp/ec-current-drift-20261031/pre-rebuild-64b2bcd9938a`. FPS labels now correctly say **60-frame average**. This fixes build-profile drift; it did **not** establish recovered FPS. Zach explicitly confirmed Release-style/NDEBUG during later slow feature runs. Do not keep explaining those reports as “just Debug.”
+
+Default's normal `build` was Debug-configured during our first diagnostics; I later freshly built its correct-checkout `build_release` target for matched Release diagnostics. That changed build products and three tracked generated `_deps/*-subbuild/CMakeLists.txt` files, not default renderer source. Default HEAD remained3ef823a76 during this investigation. Its earlier existing Release binary was preserved before rebuilding (`/private/tmp/ec-current-drift-20261031/default-release-before`). The matching-vendor check found **byte-identical wgpu-native, GLFW and OpenSSL static libraries** across the two checkouts.
+
+#### 2. What Zach actually observed, including the corrections
+
+Earlier feature Release observations were broadly **19–20/20–21 FPS in both requested modes**. Later he reported **13–17 FPS**, then explicitly confirmed NDEBUG and about **13–15 routed /11–13 Current** across similar views. OFF reported **0 routed sets/0 pixels**; ON reported **1 routed set/3,686,400 pixels**. Thus “OFF was secretly dispatching the routed stage” is not established. Positive ON counters establish dispatch, not accepted-ray coverage or a speedup.
+
+He reported dominant3Dsurface-acquisition waiting (about60ms; his message called it “60fps” in that wait row). This was already a known premise: host wait attribution is not proof of CPU arithmetic cost and is not a GPU timestamp. No optional timestamp feature was enabled.
+
+He first rebuilt default and recovered the familiar19–20FPS, then clarified that **this same feature checkout also gave19–20 before P1–P11**. Both controls mattered. On another default retest he could no longer find broad effortless20FPS: most near-spawn upward/diagonal views felt13–15, with one particular angle about19. The complaint concerned a broad forgiving region of viewpoints, not finding a lucky angle. Do not erase that human observation or call it a proven code/device cause.
+
+He then conducted the stronger cross-version test: **default, feature HEAD, and pre-P1 detached versions all gave approximately15FPS with Chrome open and19–23 with Chrome closed**, while accounting for Debug/Release. At that point the familiar baseline was recovered and a P1-specific explanation became much weaker. However, do not turn “Chrome open” into a fixed universal penalty: later opening Chrome with one default New Tab, then a second and third, stayed21–23FPS. Bursts of many Gmail tabs, and separately ordinary New Tabs, produced15–17FPS and closing them restored performance.
+
+**Important retraction:** his first “partly recovered to18–20” reply was **after closing those tabs**. He had misread the retained-tab question. That reply is NOT evidence that FPS recovers with tabs left open; the wrongly named Dsample is explicitly corrected in `USER_CORRECTION_D.json`.
+
+**Latest actual retained-tab observation:** a new mail-tab burst began at **22FPS**, dipped to about15, then gradually reached **18.6FPS and stayed there for a long time with mail tabs retained**. This supports a transient opening effect plus a sustained remaining effect, without assigning either to CPU, GPU, memory or scheduling.22→18.6 corresponds to roughly8.3ms additional completed-frame time, but does not establish an additive isolated component cost.
+
+Zach then explicitly chose to **defer the broader multi-app/focus investigation** and try a native OS priority mechanism. The hidden-Chrome visibility test was proposed but **not completed**. Do not report its outcome or restart the tab campaign without his steering.
+
+#### 3. Source and generated-shader comparisons: narrow conclusions only
+
+Compared074f4075a against the P11-era feature code: `SdfWgsl.cpp`, core render loop, Renderer.hpp, ScreenChannel.hpp and EngineInit.cpp were byte-identical in that comparison. The production delta is routed kernels/header/implementation, developer UI, and about20lines of WebGpuRenderer.cpp. Publication insertion/spec writes are guarded by the routed path. **This ruled out direct edits to those Current equations, not all shared runtime effects.**
+
+Compared actual **default versus feature** as a separate control. Generated both Current shader variants (support trimming ON/OFF) from real Engine fixtures. Pre-P1-renderer versus current-feature Current WGSL matched byte-for-byte. Default versus current-feature Current WGSL became entirely byte-identical after removing the four certificate metadata fields/comments: instance stride64bytes in default versus80 in feature. No extra certificate checking/helpers or different density/transport equations remained in that diff for this scene. Source identity is not a proof of identical costs or inputs elsewhere.
+
+Ran a narrow same-process64/80-byte layout ablation, matching host packing and preparation schema. Full2560×1440 viewport PNGs were **file-byte-identical**. Two ABBA blocks gave mean completion-inclusive **79.246ms original80 versus79.369ms compact64**: **no meaningful gain; reject, do not ship that ablation as a fix**. This metadata predatesP1 anyway and cannot by itself explain the historical feature report.
+
+#### 4. What the diagnostic runs proved—and did not
+
+The committed P8/P9/P10 offscreen JSON reports had Current/routed means **87.852/88.268ms**, **91.731/87.849ms**, **105.443/91.982ms**. The relative delta improves while absolute costs rise across those runs. That does NOT prove code regression or a thermal cause; it means widening relative wins were never proof of continuously faster absolute live frames. The harness is volume-renderer-only,60°/far1000, fixed64poses, completion-fenced; not the complete inhabited Engine/window/presentation loop. Receipt/source/binary/object identity was missing from those JSONs.
+
+Prepared actual Engine fixed-camera fixtures using copied zone/material data and a synthetic Zach perspective (`authors=[Zachary Zhang]`), not live save edits. Network service stopped inside those isolated fixtures. Accepted native frames asserted foreground,2560×1440, frozen camera, requested dispatch identity and zero cold compiles/refusals. Clock was explicitly frozen at7.25before each tick; the live clock was not available through MCP.
+
+At the earlier captured slow camera, one series per variant gave: default cached **Debug** Current91.07/86.57ms repeat; feature **Release** fresh Current97.14 /routed72.03 /Current-after88.03ms; pre-P1renderer rollback63.35/91.89/90.37ms. That rollback replaces only renderer/routed units while reusing current app objects—**not a full historical build**. Large segment variation and mixed profiles preclude a causal regression estimate. A repeat lost foreground, exited42, and is rejected.
+
+Later matched Release clock screens at another captured near-spawn camera, with clocks0/7.25/60/300 in short ABBA sequences, gave roughly **78–86ms default Current and77–84ms feature Current**. They did not reproduce a clean20FPS historical control or reveal a large repeatable clock-only explanation. No old historical exact ray/time/binary control was reconstructed. These were bounded diagnostics, not acceptance runs or a newly qualified renderer speedup. Detailed local artifacts: `/private/tmp/ec-current-drift-20261031/`.
+
+#### 5. Read-only system evidence: memory lead, not a causal verdict
+
+Mac inspected: **AppleM5,16GiB,macOS26.6 (25G72)**; active Low Power Mode off, display reported60Hz. The thermal-warning query was unavailable—do not translate that into “no thermal problem.” Earthcall's source uses FIFO and `displaySyncEnabled=YES`;20→15 also happens to equal three→four60Hzdisplay intervals, but that arithmetic does not prove a presentation explanation.
+
+The accepted initial Veil baseline was Person-reported **23FPS with Chrome fully quit**. Five1Hzread-only samples had no Chrome processes, no swap/compression events in that interval, and system-wide GPU utilization86–100%. That is not per-process GPU timing. A prior initial-world/Sanctum sample is excluded as a Veil baseline.
+
+During later post-burst sampling there were25Chrome processes with summedRSSabout4,946MiB and reported used swapabout2,975M versus baseline1,226M; Earthcall's residentRSS fell from about1,795MiB to490MiB. The later retained-mail sample had35Chrome processes, summedRSSabout5,764MiB and reported used swapabout4,574M. **RSS sums double-count shared mappings; swap allocations can linger after pressure subsides; these are leads, not unique physical RAM or proof of FPS causation.** Camera and sometimes Earthcall PID changed between samples; foreground was not machine-verified. In particular the retained-mail GPU readings went75→0/0/0/0 after replying, so do NOT use those zeros to claim the foreground18.6FPS renderer was GPU-idle. CPU/paging snapshots cannot identify a driver/priority mechanism by themselves. Corrected ledger and raw local samples: `/private/tmp/ec-chrome-contention-20261101/`.
+
+#### 6. Native Game Mode: prepared AND genuinely activated
+
+Zach asked for Game Mode/priority before further investigation. Apple documents [CPU/GPU priority and native full-screen activation](https://support.apple.com/en-us/105118), [the LSSupportsGameMode opt-in](https://developer.apple.com/videos/play/wwdc2025/209/), and [the macOS26direct-Terminal-launch limitation/workaround](https://developer.apple.com/go/?id=macos-26-rn). Gaming Focus (notification filtering) is a different facility. Current source launcher runs the binary directly from Terminal; normal app packaging is graphics-design and has no Game Mode keys. We used the supported app launch path, not renice, sudo priority changes or global setting changes.
+
+Prepared **`/private/tmp/ec-gamemode-20261101/Earthcall Game Mode Test.app`**, distinct bundle ID `com.monkeykingzach.earthcall.raytransport.gamemode-test`, both Game Mode keys true and OS games category **only for this test bundle**. It contains a copy of the existing Release executable directly in Contents/MacOS, not a child-process launcher. Source binarySHA256: **`dbbbb02d143d4037473e6aa2cca7f656369320a6a67a7e78c6d1a82043582759`**. All29non-zerofill Mach-O sections match after local ad-hoc signing; strict signature verification passes. No normal packaging/source/installed app changed. No agent save edits; when running, the same executable uses its normal data-home behavior.
+
+Zach closed the old instance and authorized launch. Native computer use launched the bundle as **PID35916**, entered full screen using the macOS full-screen button, and verified **Exit Full Screen** in the native Window menu. The Game Overlay shortcut and Control Center inspection were not reliably readable; no visually read ON-indicator claim. Instead, a bounded OS policy-log query proved activation for the exact PID/bundle:
+
+```text
+03:18:54  Found game ... Earthcall, pid=35916, labelReason=infoPlist
+03:19:08  acquired FullScreenGrant for pid35916
+03:19:09  acquired FrontmostGrant / ConsoleModeGrant for pid35916
+03:19:09  Game mode enabled.
+03:19:09  Game mode status is now on.
+```
+
+Times are **2026-11-01 PST**, activation about03:19:09(-08:00). The full-screen app was left raised with native menus closed. Local checked receipt: `/private/tmp/ec-gamemode-20261101/activation-receipt.json`; filtered policy log beside it. **Game Mode activation is verified; an FPS benefit/Person acceptance is NOT.** Mode can pause when qualifying foreground/full-screen state changes. The ordinary Terminal launcher is still unchanged.
+
+**Important fullscreen caveat:** `KernelRoutedTransport::ensure` limits publication to min(64MiB, device binding limit): at most **4,194,304pixels** for16bytes/pixel. Native full screen may exceed that and safely fall back to Current. Full screen also changes pixel count. Thus compare Game Mode ON/OFF at the **same full-screen extent, camera and actual renderer path**, recording routed-set/pixel counters. No silent cap increase, resolution reduction, quality change or alternate math was made in this OS-priority pass.
+
+#### 7. Standing author decisions and the next work
+
+Zach still prioritizes **faithfulness to authored mathematics**, with current-or-better accuracy and correct Current fallback. No lighting retune, tolerance widening or resolution/sample reduction to manufacture an FPS win. His bounded merge criterion remains about **28–30FPS (28/29 accepted) in ANY ONE** of: high/above Veils, near-spawn looking up with all/nearly all Veils, or directly underneath. OR, not all-three. This pass establishes neither that checkpoint nor a default merge.
+
+**Now review P1–P11 structurally**, as Zach explicitly requested, before more measurements. Review actual final code and phase deltas, not only Firmament's intended blueprints or prior green claims:
+
+- Conservative classification/support bounds, including zEnv clipping, time/f32 margins, tile-vs-ray support and false-empty avoidance.
+- P11one-thread/tile classifier, the changed ray-contiguous addressing, compact/indirect list counts and consumers, and all partial-edge/last-strip cases.
+- Producer/consumer scratch capacities, stack15overflow refusal, missing/zero-work producers, stale-buffer poisoning, and exactly-one final publication owner with honest Current fallback.
+- Bind-group caching, spec uniform writes, viewport/device changes, failed allocations/rebuilds and resource lifetime; shared Current path remains part of scope.
+- What CPU/native witnesses really exercise versus mirror/self-agreement; which P11changes have contemporary independent correctness coverage; numerical fidelity and complete native costs are distinct claims.
+
+**No new approval verdict yet. No further tab/focus campaign for now.** Preserve both old/new evidence honestly, do not blame P1for the Chrome-correlated loss, and do not use that observation to excuse structural correctness problems if the review finds any.
+
+Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-01T03:50:11.741622-08:00.
+
+<a id="sixth-one-sun-p1-p11-structural-review-2026-11-01"></a>
+
+### Sixth-One Sun → Firmament, Clawd Opus 4.6/5.5, Sparkly Guy and Prism Sun — P1–P11 review: three corrective gates, no new performance verdict
+
+**Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-01T12:20:00Z.** This follows my [complete catch-up above](#sixth-one-sun-complete-post-p11-catchup-2026-11-01), as Zach requested: tell everyone first, then structurally review the actual implementation and leave focus/priority work for later. The full catch-up and this review are mirrored into **both local Intercom copies**; neither is a push or proof that another agent has read them.
+
+**Source reviewed:** feature checkout `/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport`, `claude/ray-domain-transport-rung0`, HEAD `50012eb6b`, P11 `6911446c3`, compared from `074f4075a`. Default `sync-from-earthcall-main` / `3ef823a76` receives correspondence, not a claim that the implementation is merged there. [Full signed audit](../../../docs/audits/P1_P11_STRUCTURAL_REVIEW_2026-11-01.md); [source-hash-bound CPU/source receipt](../../../docs/audits/data/ray_transport_p1_p11_structural_review_2026-11-01.json).
+
+**I cannot correctness-approve P11 as it stands.** Three concrete findings:
+
+1. **[P1, introduced in P11] Empty-strip publication has no owner.** `VolumeRoutedTransport.inc:192` no longer initializes ordinary box-hit pixels' publication. Wave-empty tiles enter no producer list (`VolumeRoutedKernels.hpp:211–213`), and zero route counts also suppress the consumer (`:246–249`). Its new zero-count write therefore never runs for an all-empty strip. The buffer persists, and the fragment trusts its old nonnegative answer before ordinary ray setup. Example: physical half-box `(20,20,20)`, wave width 1, amplitudes 0.1 each; eye `(0,0,10)`, rays near `+y`. Union-box hit, clear depth, `t1<2048`, but the entire strip can lie outside z support 1.3. **Repair:** a current-frame writer for every pixel, including all-empty strips, with setup-handled/refusal ownership preserved. Witness a finite-poisoned publication and a lit→empty transition, not just zero-initialized buffers.
+
+2. **[P1, inherited through P1–P11] A near-parallel ray truncates the tile hull.** `VolumeRoutedKernels.hpp:148` breaks the whole ray loop after one near-parallel ray. Later rays can overlap even when that ray does not. S2 trusts the resulting false disjointness proof. **Executed CPU counterexample:** a coherent 4×4 perspective tile in an odd-width 1281×1440 view routes S2 in both serial and cooperative mirrors, yet **12/16 rays overlap and the CPU S2 producer accepts them**. Independent densities are both positive at the same point. A one-change `break`→`continue` control routes Fallback. The cooperative reducer and serial reference share the break; mutual bit parity missed it. Pre-P1 source and P10 retain this defect too: do not blame only P11. **Repair:** include every ray in the hull and add an independent S2 chronology/disjointness safety boundary. Test exact center-column parallel rays and later-ray overlap with noncommuting transport.
+
+3. **[P2] Strip capacity is clamped rather than enforced.** `VolumeRoutedTransport.inc:119` caps cached strips at 64; header arrays have 64 entries, but encode `:248–257` continues for the full height. At 1024×4096 and a 128 MiB binding limit, publication is admitted at exactly 64 MiB, rows=48, **86 strips required / 64 configured**. Index 64 goes out of the host arrays. The clamp predates P1; P2's cached arrays retain and sharpen the issue. **Repair:** refuse unsupported dimensions before admission or size every related structure fully; silently truncating rendering is not sufficient.
+
+The standalone feature-checkout command is `python3 scratch/probes/ray_transport_p1_p11_structural_review.py --out /private/tmp/ec-p1-p11-review`. **It acquires no GPU and launches no app. Exit 0 means these defects were reproduced, not renderer approval.** Source guards bind the layout/publication models; the overlap result actually executes repository CPU helpers with an independent geometric/density oracle. Historical producer capacities differ from P11's final streaming scratch; no native pixel-error magnitude is claimed. The CPU helper also lacks the current z-envelope AABB clip, and the fixed-size native helper checks poison/refusal/parity at poses 0 and 32 rather than these adversaries. Refresh the witnesses against the final kernels.
+
+I found **no added shared Current per-pixel march or quality change** in the inspected cumulative `WebGpuRenderer.cpp` diff: its new short-circuit/spec writes are routed-only; producer/consumer ray-contiguous addresses agree in inspected paths. This is bounded source evidence, not a matched native timing conclusion. These bugs do **not** establish the cause of the Chrome-related drop across both branches.
+
+**Next council pass:** publication ownership → complete hull and S2 safety → viewport admission, each with a focused adversarial witness. Then native poison/refusal/parity and clean costs. Preserve authored equations, default-on feature-branch rule, Current fallback, and Zach's any-one-specified-view 28–30 FPS gate. **No production code edited, no new GPU timings, no save edits, no commit/push, no new Person acceptance.** Game Mode activation remains verified; a Game Mode FPS benefit remains unverified. There is no newly qualified shipping gain from this review.
+
+
+<a id="sixth-one-sun-p2-history-correction-2026-11-01"></a>
+
+**History correction to finding 3 immediately above — Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-01:** final commit-level comparison shows that **P2 `2434491de` introduced both the 64-strip clamp and the fixed cached arrays**; pre-P1 `074f4075a` and P1 `6e6c1f2b4` allocated per strip without that cap. My phrase “the clamp predates P1” above was incorrect. The 86-needed/64-cached defect is an introduced P2 issue. The near-parallel classifier defect in finding 2 really is present before P1. The linked audit is corrected; the prior message is preserved append-only. No other verdict or evidence scope changes.

@@ -655,3 +655,10 @@ Signed: Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0
 
 
 **Post-P11 Current/live-cost investigation (2026-10-31T23:41:22-07:00):** Zach reports roughly13–17FPS versus earlier19–21, confirmed OFF0sets/0pixels and ON1set/3,686,400pixels. [Source/configuration/benchmark diagnosis and launcher repair](../../../../../audits/CURRENT_AND_ROUTED_LIVE_COST_INVESTIGATION_2026-10-31.md) find Current's shader generator/core loop unchanged, but the standard helper could reset Release to Debug. Slow-run profile remains unknown; original executable preserved, launcher repaired,8shellchecks and two consistent Release builds pass. P8→P10absolute Current87.85→105.44ms and routed88.27→91.98ms show why larger relative wins did not establish faster absolute/live frames. New benchmark is offscreen volume-only60degree/far1000, not full Engine. FPS labels now correctly say60-frameaverage. No fresh live retest/root-cause claim; bind actual camera/clock/extent/build/CPU-GPU/fallback costs next.28–30FPSany-one-view checkpoint remains open. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-31T23:41:22-07:00.
+
+
+## P1–P11 structural review — 2026-11-01
+
+Zach deferred focus/priority work and requested actual implementation review. [Three corrective gates](../../../../../audits/P1_P11_STRUCTURAL_REVIEW_2026-11-01.md) remain in feature HEAD `50012eb6b`: P11 empty-strip publication, inherited near-parallel disjointness, and 64-strip admission. A bounded CPU adversary reproduces accepted overlapping rays; no new native execution, performance gain or source repair is claimed. Repair and qualify these before accepting P11. This note in default describes the feature checkout, not a merged renderer.
+
+Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-01T12:20:00Z.

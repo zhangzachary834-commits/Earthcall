@@ -1,0 +1,275 @@
+{
+  "schema": "council-post-p11-catchup-1",
+  "created": "2026-11-01T03:50:11.741622-08:00",
+  "harness": "Codex / GPT-6.1 Sol / Sixth-One Sun",
+  "session": "01a148a7-bd85-7550-a416-0e859a729c1a",
+  "scope": "Consolidated current-pass report, not a P1-P11 approval or a benchmark promotion.",
+  "game_mode": {
+    "bundle": "/private/tmp/ec-gamemode-20261101/Earthcall Game Mode Test.app",
+    "source_binary_sha256": "dbbbb02d143d4037473e6aa2cca7f656369320a6a67a7e78c6d1a82043582759",
+    "source_head_observed": "50012eb6b5e16e2f70f97149e7cc774dac35a906",
+    "executable_sections_identical": true,
+    "section_count": 29,
+    "pid": 35916,
+    "checks": {
+      "recognized_game_from_plist": true,
+      "fullscreen_grant": true,
+      "frontmost_grant": true,
+      "game_mode_enabled": true,
+      "game_mode_status_on": true
+    },
+    "enable_event_local": "2026-11-01T03:19:09-08:00",
+    "limitations": "Game Overlay/Control Center UI could not be inspected reliably; activation is proven by OS policy logs, not a visually read overlay. No FPS comparison or Person acceptance. Mode may pause when game loses qualifying foreground/full-screen state."
+  },
+  "person_observations": [
+    "Across default/current/pre-P1 builds, Chrome quit recovered about19-23FPS versus about15FPS in earlier Chrome-open tests.",
+    "Later Chrome start with one New Tab and two additional New Tabs stayed21-23FPS; tab bursts of Gmail or ordinary New Tabs produced15-17FPS.",
+    "The18-20FPSresponse was AFTER CLOSING tabs; it was retracted as a retained-tab recovery observation.",
+    "Latest mail burst:22FPSbefore, about15FPSduring opening, then18.6FPSheld stable for a long time with mail tabs still open."
+  ],
+  "sample_limitations": [
+    "A_chrome_quit was Sanctum, not Northern Veil; excluded as Veil baseline.",
+    "A_veil_chrome_quit corresponds to a Person-reported23FPS near-spawn view, no Chrome processes.",
+    "C_user_tab_burst_current_unconfirmed has no confirmed contemporaneousFPS; camera differs fromA.",
+    "D_tabs_left_open_partial_recovery has an INVALIDoriginal label; user correction says tabs were closed. SeeUSER_CORRECTION_D.json.",
+    "E_mail_tabs_retained_stable_18_6 corresponds to confirmed sustained retained-mail-tab condition, but Earthcall PID and camera differ fromA. It is not a matched per-frame timing comparison.",
+    "E GPU utilization samples fell to0 after the first sample; foreground/presentation state is not machine-verified. Do NOT infer low GPU usage during the Person-observed18.6FPSrendering from those samples.",
+    "Process RSS sums double-count shared mappings; swap allocations can persist after pressure subsides; neither proves cause.",
+    "No GPU timestamp feature, settings changes, source changes, browser preference changes, app restarts or controlled tab creation by this sampler."
+  ],
+  "short_diagnostics": {
+    "fixed-default-release-sweep-camera": [
+      {
+        "label": "current_time_0.000000",
+        "mean_completion_inclusive_ms": 86.499635375,
+        "frames": 16
+      },
+      {
+        "label": "current_time_300.000000",
+        "mean_completion_inclusive_ms": 78.2996979375,
+        "frames": 16
+      },
+      {
+        "label": "current_time_300.000000",
+        "mean_completion_inclusive_ms": 81.7601301875,
+        "frames": 16
+      },
+      {
+        "label": "current_time_0.000000",
+        "mean_completion_inclusive_ms": 86.2072291875,
+        "frames": 16
+      },
+      {
+        "label": "current_time_7.250000",
+        "mean_completion_inclusive_ms": 85.0226770625,
+        "frames": 16
+      },
+      {
+        "label": "current_time_60.000000",
+        "mean_completion_inclusive_ms": 84.8078541875,
+        "frames": 16
+      },
+      {
+        "label": "current_time_60.000000",
+        "mean_completion_inclusive_ms": 83.0034479375,
+        "frames": 16
+      },
+      {
+        "label": "current_time_7.250000",
+        "mean_completion_inclusive_ms": 83.5984583125,
+        "frames": 16
+      }
+    ],
+    "fixed-feature-sweep-camera": [
+      {
+        "label": "current_time_0.000000",
+        "mean_completion_inclusive_ms": 77.28849475,
+        "frames": 16
+      },
+      {
+        "label": "current_time_300.000000",
+        "mean_completion_inclusive_ms": 79.528989625,
+        "frames": 16
+      },
+      {
+        "label": "current_time_300.000000",
+        "mean_completion_inclusive_ms": 77.97103125,
+        "frames": 16
+      },
+      {
+        "label": "current_time_0.000000",
+        "mean_completion_inclusive_ms": 84.0036015625,
+        "frames": 16
+      },
+      {
+        "label": "current_time_7.250000",
+        "mean_completion_inclusive_ms": 80.16015625,
+        "frames": 16
+      },
+      {
+        "label": "current_time_60.000000",
+        "mean_completion_inclusive_ms": 82.6658125,
+        "frames": 16
+      },
+      {
+        "label": "current_time_60.000000",
+        "mean_completion_inclusive_ms": 80.5051510625,
+        "frames": 16
+      },
+      {
+        "label": "current_time_7.250000",
+        "mean_completion_inclusive_ms": 81.3395755,
+        "frames": 16
+      }
+    ],
+    "fixed-layout-camera": [
+      {
+        "label": "original80",
+        "mean_completion_inclusive_ms": 86.07770184375,
+        "frames": 32
+      },
+      {
+        "label": "compact64",
+        "mean_completion_inclusive_ms": 76.99172525,
+        "frames": 32
+      },
+      {
+        "label": "compact64",
+        "mean_completion_inclusive_ms": 82.312415375,
+        "frames": 32
+      },
+      {
+        "label": "original80",
+        "mean_completion_inclusive_ms": 75.2863645625,
+        "frames": 32
+      },
+      {
+        "label": "original80",
+        "mean_completion_inclusive_ms": 78.1576796875,
+        "frames": 32
+      },
+      {
+        "label": "compact64",
+        "mean_completion_inclusive_ms": 77.98960678125,
+        "frames": 32
+      },
+      {
+        "label": "compact64",
+        "mean_completion_inclusive_ms": 80.181653625,
+        "frames": 32
+      },
+      {
+        "label": "original80",
+        "mean_completion_inclusive_ms": 77.46105078125,
+        "frames": 32
+      }
+    ]
+  },
+  "chrome_samples": {
+    "A_veil_chrome_quit": {
+      "chrome_processes": 0,
+      "chrome_rss_sum_mib_not_unique_physical": 0.0,
+      "earthcall_pid": [
+        31173
+      ],
+      "earthcall_rss_mib": [
+        1794.75
+      ],
+      "swap": "vm.swapusage: total = 2048.00M  used = 1226.38M  free = 821.62M  (encrypted)",
+      "system_gpu_utilization_samples": [
+        86,
+        100,
+        100,
+        100,
+        100
+      ],
+      "vm_interval_deltas": {
+        "Swapins": 0,
+        "Swapouts": 0,
+        "Pageouts": 0,
+        "Pages compressed": 0,
+        "Pages decompressed": 0
+      }
+    },
+    "C_user_tab_burst_current_unconfirmed": {
+      "chrome_processes": 25,
+      "chrome_rss_sum_mib_not_unique_physical": 4945.796875,
+      "earthcall_pid": [
+        31173
+      ],
+      "earthcall_rss_mib": [
+        490.125
+      ],
+      "swap": "vm.swapusage: total = 4096.00M  used = 2974.75M  free = 1121.25M  (encrypted)",
+      "system_gpu_utilization_samples": [
+        98,
+        100,
+        100,
+        100,
+        100
+      ],
+      "vm_interval_deltas": {
+        "Swapins": 132,
+        "Swapouts": 0,
+        "Pageouts": 37,
+        "Pages compressed": 0,
+        "Pages decompressed": 0
+      }
+    },
+    "D_tabs_left_open_partial_recovery": {
+      "chrome_processes": 26,
+      "chrome_rss_sum_mib_not_unique_physical": 4580.109375,
+      "earthcall_pid": [
+        31173
+      ],
+      "earthcall_rss_mib": [
+        648.421875
+      ],
+      "swap": "vm.swapusage: total = 4096.00M  used = 2958.75M  free = 1137.25M  (encrypted)",
+      "system_gpu_utilization_samples": [
+        70,
+        31,
+        97,
+        100,
+        100
+      ],
+      "vm_interval_deltas": {
+        "Swapins": 16,
+        "Swapouts": 0,
+        "Pageouts": 1,
+        "Pages compressed": 0,
+        "Pages decompressed": 0
+      }
+    },
+    "E_mail_tabs_retained_stable_18_6": {
+      "chrome_processes": 35,
+      "chrome_rss_sum_mib_not_unique_physical": 5763.4375,
+      "earthcall_pid": [
+        33095
+      ],
+      "earthcall_rss_mib": [
+        111.765625
+      ],
+      "swap": "vm.swapusage: total = 6144.00M  used = 4574.19M  free = 1569.81M  (encrypted)",
+      "system_gpu_utilization_samples": [
+        75,
+        0,
+        0,
+        0,
+        0
+      ],
+      "vm_interval_deltas": {
+        "Swapins": 388,
+        "Swapouts": 0,
+        "Pageouts": 28,
+        "Pages compressed": 0,
+        "Pages decompressed": 0
+      }
+    }
+  },
+  "pending_work": [
+    "P1-P11 structural implementation review requested now; no further focus/tab benchmarking.",
+    "Person has not accepted an FPS benefit from Game Mode.",
+    "28-30FPScheckpoint remains open; no default merge or push in this pass."
+  ]
+}
