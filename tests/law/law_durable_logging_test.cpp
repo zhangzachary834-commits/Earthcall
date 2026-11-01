@@ -100,6 +100,12 @@ int main() {
         auto a = readEntries(pathA);
         auto b = readEntries(pathB);
         check(a.size() == 4 && b.size() == 1, "Per-identity append counts wrong");
+        // JSONL budgets use physical bytes. Text-mode CRLF translation on
+        // Windows would make file_size exceed the serialized record lengths.
+        std::uintmax_t expectedRawBytes = 0;
+        for (const auto& entry : a) expectedRawBytes += entry.dump().size() + 1;
+        check(fs::file_size(pathA) == expectedRawBytes,
+              "JSONL disk bytes differ from serialized bytes plus LF delimiters");
         check(a[0].at("message") == "A1" && a[3].at("message") == "A4",
               "Append order lost");
         // The fast timestamp formatter must preserve the existing UTC JSONL schema.
