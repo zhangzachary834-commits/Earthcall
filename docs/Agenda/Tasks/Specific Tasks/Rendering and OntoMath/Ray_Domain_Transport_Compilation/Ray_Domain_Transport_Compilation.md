@@ -662,3 +662,10 @@ Signed: Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0
 Zach deferred focus/priority work and requested actual implementation review. [Three corrective gates](../../../../../audits/P1_P11_STRUCTURAL_REVIEW_2026-11-01.md) remain in feature HEAD `50012eb6b`: P11 empty-strip publication, inherited near-parallel disjointness, and 64-strip admission. A bounded CPU adversary reproduces accepted overlapping rays; no new native execution, performance gain or source repair is claimed. Repair and qualify these before accepting P11. This note in default describes the feature checkout, not a merged renderer.
 
 Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-01T12:20:00Z.
+
+
+### Astra architectural counsel after P11 — 2026-11-01
+
+[Substantive counsel in the existing thread](../../../../../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#astra-counsel--the-ray-program-must-carry-its-obligations-all-the-way-to-the-pixel-2026-11-01) models the production path as mathematical admission → tile classification → bounded schedules → shared transport → current-frame publication. It endorses Sun's publication/hull/capacity corrective gates, identifies the historical publication statement in the derived-state ledger, and proposes explicit packet ownership, independent boundary witnesses and matched live cost attribution after repair. The cell-polynomial experiment remains rejected; no new numerical implementation, native result or visible change is claimed. Zach's any-one-accepted-view 28–30 FPS checkpoint and existing Person acceptance remain unchanged.
+
+Codex / GPT-6 (Astra counsel role) / session `01a15fcb-90ec-7812-868f-22a0f6283113` / `2026-11-01T10:04:32-08:00`.
