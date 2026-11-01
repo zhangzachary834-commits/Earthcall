@@ -622,23 +622,20 @@ Law::ApplicationResult Law::applyToImpl(
                                          ? std::string(ActionNode::reasonName(node.reason))
                                          : node.note)}});
             }
-            if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
-                // Preserve the existing aggregate JSONL schema, including node trace.
-                ECA::LawAuditLogger::instance().log("LAW", message, {
-                    {"lawId", getIdentifier()},
-                    {"targetId", target.getIdentifier()},
-                    {"result", "Applied"},
-                    {"changed", wrote},
-                    {"nodes", nodesJson}
-                });
-            }
-            ECA::LawAuditLogger::instance().logForLaw(getIdentifier(), "LAW", message, {
+            // Construct the event payload once for both observation surfaces.
+            // The aggregate and per-Law JSONL records retain identical fields.
+            const nlohmann::json details = {
                 {"lawId", getIdentifier()},
                 {"targetId", target.getIdentifier()},
                 {"result", "Applied"},
                 {"changed", wrote},
-                {"nodes", nodesJson}
-            });
+                {"nodes", std::move(nodesJson)}
+            };
+            if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+                ECA::LawAuditLogger::instance().log("LAW", message, details);
+            }
+            ECA::LawAuditLogger::instance().logForLaw(
+                getIdentifier(), "LAW", message, details);
         }
     }
     // Bounded memory: a WhileTrue law applies every tick — the log is a
