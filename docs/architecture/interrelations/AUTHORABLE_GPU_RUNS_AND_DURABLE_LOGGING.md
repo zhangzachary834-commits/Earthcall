@@ -1,30 +1,26 @@
 # Authorable GPU Runs and Durable Logging
 
-**Date:** 2024-11-20
-**Status:** Architectural Synthesis
+**Status:** Architectural interrelation; not an implemented GPU-run/logger integration.
 
-## Interrelated Documents
-* `docs/architecture/AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md`
-* `docs/architecture/PER_SINGULAR_DURABLE_LOGGING.md`
+## Source specifications
 
-## The Interrelation
+- [Authorable GPU Runs Between CPU Cycles](../AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md)
+- [Per-Singular Durable Logging](../PER_SINGULAR_DURABLE_LOGGING.md)
 
-Authorable GPU Runs describe how computation is scheduled on the GPU, while Per-Singular Durable Logging describes how the history of entities is preserved.
+## The boundary
 
-### Execution vs Observability
+Authorable GPU Runs proposes a **host-admitted, bounded execution policy**: a workload may execute, classify unfinished work, compact continuation records, and use further GPU stages before yielding to a host boundary. The source explicitly says that a production GPU-run scheduler is **not yet wired**. Existing indirect-dispatch experiments establish feasibility, not production deployment or profitability.
 
-*   **Authorable GPU Runs** allows a Law to specify how many passes a GPU execution cohort may take without asking the CPU what to do next. It authors the boundaries of computation, moving execution away from the CPU's direct step-by-step observation.
-*   **Per-Singular Durable Logging** guarantees that the semantic history of entities is reliably recorded and persisted, maintaining Earthcall's "glass box" legibility even when processes span multiple frames or subsystem boundaries.
+Per-Singular Durable Logging is a **migration target**, initially proved subsystem by subsystem beginning with Laws. It distinguishes immediate console observations, optional subsystem chronicles, and durable semantic history attributed to stable Singular identity. It does **not** establish that every subsystem already persists such history.
 
-### How they relate
+The two specifications meet at the **host-visible semantic outcome**, not at an assumption that every intermediate GPU operation is an authored event. A physical continuation queue, dispatch, or re-cohorting decision is derived execution state, not a new Singular or Law. Whether a bounded run completed, fell back, or refused acceleration may be relevant diagnostic evidence; it becomes per-Singular semantic history only when an owning subsystem defines an attributable event and a verified durable route.
 
-If the GPU is allowed to iterate autonomously via Authorable GPU Runs, it inherently becomes a temporary "black box" to the CPU. Durable Logging is the architectural answer to retaining legibility across this gap.
+## Proposed integration contract
 
-1. **Logging GPU-side state changes:** When an Authorable GPU Run performs internal re-cohorting or yields back to the CPU after bounded execution, the semantic outcomes of those passes must be captured. The Durable Logger receives these outcomes and attributes them to the correct Singular identity, ensuring that the GPU's autonomy doesn't result in unobservable history.
-2. **Refusals and Bounding:** If a GPU Run hits its authored continuation limit and must yield unfinished work back to the "authoritative fallback," that fallback event is a critical semantic refusal/timeout. The Durable Logging layer guarantees this event is permanently recorded in the relevant entity's history, rather than just silently dropping frames or vanishing into a transient console message.
+1. Admit a GPU run under validated policy, revision/validity conditions, hard resource ceilings, and an exact or certified fallback.
+2. Publish terminal results and bounded diagnostic/fallback reasons at the host boundary; do not claim that host code has inspected every internal GPU stage.
+3. Classify events as semantic history, debug traces, or high-frequency instrumentation. Do not durably log every ray, queue operation, or dispatch by default.
+4. Route an attributable semantic event by existing stable Singular identity, never by transient GPU indices, buffer offsets, or workgroup IDs. The logger remains observational, not an authority over ontology.
+5. Verify identity isolation, append/reopen persistence, write-failure behavior, and no loss of relevant refusal records before claiming the integration works.
 
-## Thoughts on Integration and Interrelation
-
-The tension between these two architectures is the tension between performance and truth. Earthcall needs Authorable GPU Runs to hit high framerates and utilize modern hardware. But if the engine lets the GPU run completely wild, it violates the No Black Box principle.
-
-Durable Logging is the bridge. It allows Earthcall to say to the GPU: "Take this state and run with it for 3 passes." And when the GPU returns, the logging layer ensures that the *story* of what the GPU did is written down. You get the speed of bounded GPU autonomy, but the legibility and historical permanence required by Earthcall's ontology.
+**Implementation status:** These are requirements for a future bridge. The current documents do not prove that GPU fallback events are automatically logged, that every refusal is permanently stored, or that bounded GPU autonomy alone preserves complete causal history. Neither specification authorizes fabricating such guarantees.

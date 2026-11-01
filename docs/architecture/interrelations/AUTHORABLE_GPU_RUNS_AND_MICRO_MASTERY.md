@@ -1,30 +1,30 @@
-# Authorable GPU Runs and Micro-Mastery
+# Authorable GPU Runs and CPU-GPU Micro-Mastery
 
-**Date:** 2024-11-20
-**Status:** Architectural Synthesis
+**Status:** Architectural interrelation; no claim of a shipped GPU continuation scheduler.
 
-## Interrelated Documents
-* `docs/architecture/AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md`
-* `docs/architecture/Singularity/GPU_MICRO_MASTERY_ARCHITECTURE.md`
+## Source specifications
 
-## The Interrelation
+- [Authorable GPU Runs Between CPU Cycles](../AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md)
+- [CPU-GPU Micro-Mastery Memory Substrate](../Singularity/GPU_MICRO_MASTERY_ARCHITECTURE.md)
 
-Authorable GPU Runs dictate the *policy* of bounded GPU autonomy, while GPU Micro-Mastery provides the *mechanism* that makes such autonomy safe and performant.
+## Policy is not the allocation mechanism
 
-### Execution Policy vs. Data Mutability
+Authorable GPU Runs proposes a finite, kernel-owned vocabulary for work quanta, continuation stages, classification, compaction, admission, and exact fallback. A Person or Law may author **policy intent**; it does not thereby author arbitrary GPU commands or a new ontological kind of execution being. The production scheduler is not yet wired.
 
-*   **Authorable GPU Runs** allows a Law to specify how many passes a GPU execution cohort may take without asking the CPU what to do next. It authors the boundaries of computation.
-*   **GPU Micro-Mastery** demands that data structures mapped to the GPU remain strictly flat, lock-free, and bounded, avoiding any host-side allocation overhead.
+The Micro-Mastery document describes host-side GpuBufferPool suballocation from reusable GPU buffers, mesh caching, and renderer upload/draw economics. Its ring-buffer strategy reduces repeated driver allocations for supported workloads. **CPU-managed buffer suballocation is not GPU-resident continuation, device-side queue allocation, or proof that GPU work can autonomously re-cohort.**
 
-### How they relate
+## Engineering connection
 
-You cannot grant the GPU bounded autonomy if it cannot safely mutate its own working state.
+A future bounded GPU-run executor can benefit from reused resident resources, but it must separately establish:
 
-1. **Re-cohorting Requires Lock-Free Mutation:** When the GPU re-cohorts unfinished work (as specified by Authorable GPU Runs), it must write to intermediate buffers. GPU Micro-Mastery guarantees that these buffers are pre-allocated and linearly accessible, preventing the GPU from needing to wait on the CPU to allocate new memory for the next stage.
-2. **Deterministic Bounding:** The policy authored by a Person (e.g., "allow 3 continuation stages") is only respected if the time taken per stage is highly predictable. Micro-Mastery's elimination of unpredictable memory operations on the GPU ensures that a "stage" is a reliable unit of work.
+1. Capacity and overflow rules for continuation records and indirect-dispatch argument buffers.
+2. Correct ordering, synchronization, and bounded atomic/compaction behavior between stages.
+3. A hard stage/work budget and a sound path for unfinished or invalidated work to reach exact fallback.
+4. Explicit separation of derived physical queue identities from authored Singular/Relation/Law meaning.
+5. Device-measured admission economics: compaction, queue traffic, and dispatch overhead can make a theoretically valid continuation path **slower** than direct execution.
 
-## Thoughts on Integration and Interrelation
+A bound of three continuation stages is a **count**, not a deterministic wall-clock duration. Flat buffers and CPU-side reuse alone cannot guarantee predictable latency or zero GPU-side synchronization cost.
 
-The synthesis of these two architectures is what actually frees the CPU from babysitting the GPU. Without Authorable GPU Runs, the Micro-Mastery data structures are merely fast buffers. Without Micro-Mastery, the Authorable GPU Runs would immediately stall on memory allocations during re-cohorting.
+## Evidence and status
 
-By combining them, Earthcall allows a Person to author a complex computational rule (like ray marching or particle simulation), send the initial state to the GPU, and trust that the GPU will intelligently loop over the work, sorting it into coherent batches entirely on its own, before yielding back to the CPU within the prescribed budget.
+The GPU-run source reports experimental indirect continuation and a compact-indirect ray-transport candidate that lost on native economics. It explicitly distinguishes feasible dispatch machinery from a profitable, shipping scheduler. Micro-Mastery supplies a useful resource-management precedent, **not** an implementation witness for autonomous GPU continuation. Any production claim needs a real end-to-end witness for capacity, correctness, fallback, and measured profitability.

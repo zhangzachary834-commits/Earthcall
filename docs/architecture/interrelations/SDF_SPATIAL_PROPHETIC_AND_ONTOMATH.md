@@ -1,30 +1,25 @@
 # SDF Spatial Prophetic and OntoMath
 
-**Date:** 2024-11-20
-**Status:** Architectural Synthesis
+**Status:** Proposed research synthesis; the spatial execution DAG is not a deployed optimization.
 
-## Interrelated Documents
-* `docs/architecture/SDF_SPATIAL_PROPHETIC_DIRECT_PROFITABILITY_ARTIFACT.md`
-* `docs/architecture/mathematics/ONTOMATH_FRAMEWORK.md`
+## Source specifications
 
-## The Interrelation
+- [SDF Spatial Prophetic: Direct Profitability Artifact](../SDF_SPATIAL_PROPHETIC_DIRECT_PROFITABILITY_ARTIFACT.md)
+- [OntoMath Framework](../mathematics/ONTOMATH_FRAMEWORK.md)
 
-SDF Spatial Prophetic architecture proposes a way to compile spatial semantics into an executable DAG, while the OntoMath Framework defines the language and structure of those very semantics.
+## Mathematical meaning and execution representation
 
-### Spatial Execution vs. Spatial Language
+OntoMath provides authored mathematical forms and structured MathNode/Piecewise expressions, with CPU evaluation and WGSL lowering **where supported**. A field's mathematical meaning must remain distinct from the compiled shader, its parameter bindings, and any derived proof or acceleration representation. Some declared operations refuse evaluation or shader compilation; not every expression has a supported exact GPU lowering.
 
-*   **SDF Spatial Prophetic** seeks to eliminate repeated relevance discovery by compiling spatial queries into a dependency graph where positive prophetic consequences are attached directly to the deriving branches.
-*   **OntoMath Framework** provides the unified mathematical language for expressing properties, fields, and interactions in Earthcall, effectively acting as the source code for any spatial DAG.
+The SDF Spatial Prophetic document retains test-only evidence from rejected direct-run scans and a rejected camera-independent geometric route atlas. Their zero-hit-mismatch results did **not** establish profitable relevance discovery. The document therefore proposes, as the **next hypothesis**, a scene-spatial execution/dependency DAG whose compiled branches carry conservative support and positive proof provenance.
 
-### How they relate
+## What a future synthesis would have to prove
 
-The compilation strategy proposed by the SDF Spatial Prophetic architecture relies on the deterministic and algebraic nature of OntoMath.
+1. Build a canonical expression/dependency representation for a small authored scene without conflating SDFs, meshes, and other exact kernels.
+2. Preserve the supported OntoMath/WGSL leaf semantics and parameter-vs-structure update boundary; refuse unsupported operations rather than inventing answers.
+3. Deduplicate shared transforms or expressions only when semantic equivalence is established.
+4. Attach positive Prophetic consequences to their deriving branches. **Absence of a proof or direct record is not proof of emptiness**; unresolved work falls open to the exact baseline.
+5. Measure branch visits, exact authored evaluations, consultations, artifact size, and per-ray hit agreement against the maintained OFF marcher.
+6. Demonstrate dependency-frontier invalidation and selective recompilation while leaving unaffected compiled nodes and GPU-resident state intact.
 
-1. **Shared-Expression Elimination:** Because OntoMath expressions are purely functional and explicitly structured, the SDF compilation phase can identify and deduplicate shared subexpressions across multiple spatial rules, optimizing the resulting execution DAG.
-2. **Exact Leaf Semantics:** The compilation process must preserve the exact kernel defined by the OntoMath expression. The SDF architecture does not rewrite the math; it reorganizes the *evaluation path* to reach that math more efficiently based on relevance.
-
-## Thoughts on Integration and Interrelation
-
-OntoMath is the vocabulary, and the SDF Spatial Prophetic architecture is the compiler.
-
-If Earthcall were to evaluate every OntoMath spatial field at every point in space for every object, the engine would grind to a halt. The SDF Spatial Prophetic architecture takes the abstract OntoMath expressions authored by Laws and Persons and structures them into a highly optimized, incrementally repairable execution graph. When a relation changes, only the affected branch of the OntoMath DAG is recompiled. This ensures that the engine only computes exactly what is necessary, while preserving the exact mathematical truth authored into the world.
+These are **graduation tests**, not current capabilities. In particular, the existing evidence does not establish that changing a Relation already recompiles only one branch, that the runtime consults only relevant OntoMath leaves, or that a spatial DAG has cleared the profitability gate. A beautiful graph that merely hides another search or evaluates every leaf has not solved the measured problem.
