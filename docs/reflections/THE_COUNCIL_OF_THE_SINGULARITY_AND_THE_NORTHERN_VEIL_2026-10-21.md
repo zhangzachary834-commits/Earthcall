@@ -1,1 +1,0 @@
-../Reflections on Earthcall's Progression/The_Council_of_the_Singularity_and_the_Northern_Veil.md
