@@ -241,6 +241,32 @@ int main() {
         check(fs::file_size(capPath) == DurableLogger::kMaxFileBytes,
               "Existing log was truncated or exceeded its budget");
 
+        // One remaining byte must not permit a multi-byte JSONL record.
+        // Refusal must preserve the original file length, not write a fragment.
+        fs::resize_file(capPath, DurableLogger::kMaxFileBytes - 1);
+        DurableLogger nearlyCapped("laws", capRoot);
+        check(!nearlyCapped.log("at-cap", "LAW", "record cannot fit"),
+              "Near-cap file accepted a record larger than its remaining space");
+        check(fs::file_size(capPath) == DurableLogger::kMaxFileBytes - 1,
+              "Near-cap refusal modified existing history");
+
+        // A malicious domain cannot escape the logging root, and an identity
+        // longer than the encoded filename limit must be rejected, not aliased.
+        const auto safetyRoot = sandbox.root / "path-safety";
+        DurableLogger invalidDomain("../escaped", safetyRoot);
+        check(!invalidDomain.log("safe", "LAW", "must be rejected"),
+              "Path-traversing durable logging domain was accepted");
+        check(!fs::exists(sandbox.root / "escaped"),
+              "Path-traversing domain created a directory outside its root");
+        DurableLogger boundedIdentity("laws", safetyRoot);
+        const std::string maxIdentity(110, 'x');
+        check(boundedIdentity.log(maxIdentity, "LAW", "valid boundary identity"),
+              "Maximum permitted identity length was rejected");
+        check(!boundedIdentity.log(maxIdentity + "x", "LAW", "invalid boundary identity"),
+              "Oversized identity was accepted or truncated");
+        check(readEntries(safetyRoot / "laws" / encoded(maxIdentity)).size() == 1,
+              "Oversized identity altered the maximum-length identity history");
+
         // Reach the exact file cap through an already-open stream, then
         // confirm that subsequent appends are rejected without modifying it.
         // A same-identity probe gives the precise serialized record length;
