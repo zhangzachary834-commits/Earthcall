@@ -299,6 +299,43 @@ int main() {
         lawLogger.setLevel(ECA::LogLevel::Off);
         check(lawLogger.logForLaw("integration", "LAW", "durable with aggregate Off"),
               "LawAuditLogger did not append with aggregate Off");
+        // The Applied path shares one JSON payload between aggregate and
+        // per-Law logging. Exercise the real Law action with aggregate Off,
+        // then verify the durable record retains its result and node trace.
+        Object appliedAuthor;
+        appliedAuthor.setObjectID("durable-applied-author");
+        Object appliedTarget;
+        appliedTarget.setObjectID("durable-applied-target");
+        appliedTarget.setDynamicProperty("x", PropertyValue(10.0));
+        appliedTarget.setDynamicProperty("y", PropertyValue(0.0));
+        Law appliedLaw("Durable applied payload", std::vector<Singular*>{&appliedAuthor});
+        appliedLaw.setLawIdentifier("durable-applied-payload");
+        appliedLaw.setScope(Law::Scope::Subject);
+        appliedLaw.setConditionModel(
+            ConditionNode::comparePaths("x", ConditionNode::Op::Gt, "y"));
+        appliedLaw.setActionModel(
+            ActionNode::set("durable-applied-sentinel", PropertyValue(1.0)));
+        check(appliedLaw.applyTo(appliedTarget) == Law::ApplicationResult::Applied,
+              "Real Law Applied witness did not execute");
+        const auto appliedEntries = readEntries(
+            sandbox.root / "logs" / "laws" / encoded("durable-applied-payload"));
+        check(appliedEntries.size() == 1,
+              "Applied path did not persist exactly one per-Law event");
+        const auto& appliedEntry = appliedEntries.front();
+        check(appliedEntry.at("identity") == "durable-applied-payload" &&
+              appliedEntry.at("type") == "LAW" &&
+              appliedEntry.at("message").get<std::string>().find("SUCCESS") != std::string::npos,
+              "Applied durable event identity/type/success message changed");
+        const auto& appliedDetails = appliedEntry.at("details");
+        check(appliedDetails.at("lawId") == "durable-applied-payload" &&
+              appliedDetails.at("targetId") == "durable-applied-target" &&
+              appliedDetails.at("result") == "Applied" &&
+              appliedDetails.at("changed") == true &&
+              appliedDetails.at("nodes").is_array() &&
+              !appliedDetails.at("nodes").empty() &&
+              appliedDetails.at("nodes")[0].at("wrote") == true,
+              "Applied durable event lost its shared node-level payload");
+
         // Synthetic high-frequency ConditionsFailed bridge benchmark. This is
         // a diagnostic measurement, not a machine-independent pass threshold.
         // It includes message/details construction, JSON serialization,
