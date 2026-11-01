@@ -417,6 +417,9 @@ protected:
     void registerEnabledProperty();
 
 private:
+    // LawManager alone may restore an engine-owned First Mover's saved history
+    // lineage. The authored Law JSON loader cannot confer First Mover authority.
+    friend class LawManager;
     void initializeLawIdentity();
     // Stable, law-derived names for the three group Formations (see the .cpp).
     void nameGroupFormations();

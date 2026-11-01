@@ -340,6 +340,37 @@ int main() {
         catch (const std::invalid_argument&) { rejectedMalformed = true; }
         check(rejectedMalformed, "Malformed persisted lineage was accepted");
 
+        // Engine-owned First Movers are intentionally NOT in the authored
+        // "laws" array. Their history identity still must survive a world
+        // save/load; restoring it must not deserialize engine authority.
+        {
+            ECA::LawManager engineManager;
+            auto engineLaw = std::make_shared<ECA::FirstMoverLaw>("Engine Law");
+            engineLaw->setLawIdentifier("engine-stable-law");
+            engineManager.add(engineLaw);
+            const std::string engineLineage = engineLaw->durableHistoryLineage();
+            const auto savedEngine = engineManager.toJson();
+            check(savedEngine.at("laws").empty() &&
+                  savedEngine.at("firstMoverHistoryLineages").at("engine-stable-law") ==
+                      engineLineage,
+                  "Engine-owned First Mover history was not saved separately");
+            engineLaw->forkDurableHistoryLineage();
+            check(engineLaw->durableHistoryLineage() != engineLineage,
+                  "First Mover replay setup failed to change lineage");
+            engineManager.loadFromJson(savedEngine);
+            check(engineLaw->durableHistoryLineage() == engineLineage &&
+                  engineLaw->isFirstMover(),
+                  "First Mover load fragmented history or lost engine ownership");
+            auto invalidEngine = savedEngine;
+            invalidEngine["firstMoverHistoryLineages"]["engine-stable-law"] =
+                "../invalid";
+            bool rejectedEngine = false;
+            try { engineManager.loadFromJson(invalidEngine); }
+            catch (const std::invalid_argument&) { rejectedEngine = true; }
+            check(rejectedEngine && engineLaw->durableHistoryLineage() == engineLineage,
+                  "Malformed First Mover lineage changed live world before rejection");
+        }
+
         // Exercise the public LawAuditLogger bridge with muted aggregate logging.
         auto& lawLogger = ECA::LawAuditLogger::instance();
         lawLogger.setLevel(ECA::LogLevel::Off);

@@ -3622,6 +3622,25 @@ void LawManager::compileConditionsToRete(Law& law) {
 }
 
 void LawManager::loadFromJson(const nlohmann::json& j) {
+    // Preflight persisted engine-owned Law history before modifying the live
+    // register. First Movers are deliberately absent from the authored "laws"
+    // array, but their per-world durable lineage must survive save/load too.
+    if (j.contains("firstMoverHistoryLineages")) {
+        const auto& histories = j["firstMoverHistoryLineages"];
+        if (!histories.is_object())
+            throw std::invalid_argument("Invalid First Mover history lineage map");
+        std::unordered_set<std::string> seen;
+        for (const auto& law : _laws) {
+            if (!law || !law->isFirstMover()) continue;
+            auto it = histories.find(law->getIdentifier());
+            if (it == histories.end()) continue;
+            if (!it->is_string() ||
+                !validDurableHistoryLineage(it->get<std::string>()))
+                throw std::invalid_argument("Invalid First Mover history lineage");
+            if (!seen.insert(it->get<std::string>()).second)
+                throw std::invalid_argument("Duplicate First Mover history lineage");
+        }
+    }
     // Replace-all, like the world loader — EXCEPT first movers, whose truth
     // lives in the engine and survives every load.
     std::vector<std::shared_ptr<Law>> firstMovers;
@@ -3707,6 +3726,20 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
         }
     }
 
+    // Restore the persisted per-world history of each engine-owned First Mover
+    // without serializing its engine authority or executable Law definition.
+    // Legacy worlds without this map retain a fresh, unclaimed lineage until
+    // their next save; no ambiguous identifier-keyed history is imported.
+    if (j.contains("firstMoverHistoryLineages")) {
+        const auto& histories = j["firstMoverHistoryLineages"];
+        for (const auto& law : _laws) {
+            if (!law || !law->isFirstMover()) continue;
+            auto it = histories.find(law->getIdentifier());
+            if (it != histories.end())
+                law->_durableHistoryLineage = it->get<std::string>();
+        }
+    }
+
     // Re-apply the Person's first-mover gates onto the engine-owned survivors.
     // Missing keys leave the first mover at its boot default (on, except
     // channels that opt in disabled). A first mover that is not in this
@@ -3775,6 +3808,7 @@ std::vector<Law::ApplicationRecord> LawManager::applyAllToTargets() {
 nlohmann::json LawManager::toJson() const {
     nlohmann::json arr = nlohmann::json::array();
     nlohmann::json firstMoverEnabled = nlohmann::json::object();
+    nlohmann::json firstMoverHistoryLineages = nlohmann::json::object();
     for (const auto& law : _laws) {
         if (!law) continue;
         // First movers' truth lives in the engine (physics laws persist in
@@ -3784,6 +3818,7 @@ nlohmann::json LawManager::toJson() const {
         // only that bit, keyed by the stable slug.
         if (law->isFirstMover()) {
             firstMoverEnabled[law->getIdentifier()] = law->isEnabled();
+            firstMoverHistoryLineages[law->getIdentifier()] = law->durableHistoryLineage();
             continue;
         }
         arr.push_back(law->toJson());
@@ -3798,6 +3833,7 @@ nlohmann::json LawManager::toJson() const {
         {"formationMembers", formationMemberIds(_lawFormation)},
         {"rete", _rete.toJson()},
         {"firstMoverEnabled", firstMoverEnabled},
+        {"firstMoverHistoryLineages", firstMoverHistoryLineages},
         {"maxChainRounds", _maxChainRounds}
     };
 }
