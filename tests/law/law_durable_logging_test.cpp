@@ -344,8 +344,8 @@ int main() {
         // "laws" array. Their history identity still must survive a world
         // save/load; restoring it must not deserialize engine authority.
         {
-            ECA::LawManager engineManager;
-            auto engineLaw = std::make_shared<ECA::FirstMoverLaw>("Engine Law");
+            LawManager engineManager;
+            auto engineLaw = std::make_shared<FirstMoverLaw>("Engine Law");
             engineLaw->setLawIdentifier("engine-stable-law");
             engineManager.add(engineLaw);
             const std::string engineLineage = engineLaw->durableHistoryLineage();

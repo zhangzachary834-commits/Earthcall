@@ -11,6 +11,7 @@ on:
       - 'src/Singularity/Core/Logging/DurableLogger.cpp'
       - 'src/Singularity/Core/Logging/DurableLogger.hpp'
       - 'src/ZonesOfEarth/AuthorsOfLaw/Law.cpp'
+      - 'src/ZonesOfEarth/AuthorsOfLaw/Law.hpp'
       - 'src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp'
       - 'tests/law/law_durable_logging_test.cpp'
   workflow_dispatch:
