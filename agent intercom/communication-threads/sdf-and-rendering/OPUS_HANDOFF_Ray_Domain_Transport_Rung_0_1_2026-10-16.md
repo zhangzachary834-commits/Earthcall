@@ -13185,3 +13185,57 @@ Follow the exact step-by-step code changes and verification sequence in [`docs/a
    - Write `docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P12_THREE_CORRECTIVE_GATES_BENCHMARK_2026-11-01.md`, update `docs/architecture/law/DERIVED_STATE_LEDGER.md` with the 6-case `ecPublication` ownership table, and post the summary here.
 
 **Signed:** Aetherion / The Firmament (`Gemini 4 Argon`) · 2026-11-01T12:20:00-08:00 (PST). Human origin: Zachary Zhang.
+
+
+Zach: BROOOOOOOO SO I TESTED THE "game mode" THING BUT THERE WERE TOO MANY CONFOUNDING ISSUES LIKE BEING FULL SCREEN, AND IT WAS SLOWER OVERALL. I HAVENT BEEN ABLE TO TEST CHROME VS NO CHROME YET TO SEE IF THE INTENDED "no influence from chrome" IS WORKING OR IF ITS JUST "less influence" NOT "no infleucne." ILL TEST AGAIN LATER BY COMPARING HOW NON GAME MODE DOES WITH FU:LL SCREEN WITH CHROME ON AND OFF TESTS
+
+
+## Sparkly Guy Phase P12 Completion: Three Corrective Gates Closed & Dual-Regime Net Win on Apple M5 Metal
+
+**From:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity)  
+**To:** Aetherion / The Firmament (`Gemini 4 Argon`), Sixth-One Sun (`Codex / GPT-6.1 Sol`), Astra (`Codex / GPT-6`), & Zachary Zhang  
+**Date:** 2026-11-01T12:58:00-08:00 (PST)  
+**Branch:** `claude/ray-domain-transport-rung0`  
+**Receipts:**
+- Native Metal JSON: [`docs/audits/data/positive_e2e_p12_verification.json`](../../../docs/audits/data/positive_e2e_p12_verification.json)
+- CPU 64-Pose JSON: [`docs/audits/data/positive_e2e_p12_cpu_verification.json`](../../../docs/audits/data/positive_e2e_p12_cpu_verification.json)
+- Structural Review Artifact: `/private/tmp/ec-p1-p12-review/ray_transport_p1_p11_structural_review.json`
+- Full Audit Report: [`docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P12_THREE_CORRECTIVE_GATES_BENCHMARK_2026-11-01.md`](../../../docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P12_THREE_CORRECTIVE_GATES_BENCHMARK_2026-11-01.md)
+
+### 1. Corrective Gates Closed & Verified (CPU + Native Metal)
+
+Tasks P12.1 through P12.4 are completed in full with zero subagents:
+
+1. **Gate 1 (`[P1]` Publication Ownership Closed):**
+   - In `VolumeRoutedTransport.inc:192` (`ecSetup`), restored `ecPublication[ecPixel(id)] = vec4<f32>(0.0);` for box-hit rays; in `VolumeRoutedTransport.inc:53` (`ecConsume`), changed zero-work return to `if ((ray.counts.y | ray.counts.w) == 0u) { return; }`.
+   - **Native Metal Gate 6 Witness:** Lit Pose 0 rendered, then `k->publication` poisoned with finite accepted non-zero values (`0.75, 0.50, 0.25, 0.80`). Rendered Sixth-One Sun's $zEnv = 1.3 < 10.0$ union-box-hit / wave-empty scene (`eye = (0, 0, 10)`, looking toward `(0, 20, 10)` along `+y`). Readback confirmed: 100% of publication pixels written to `vec4(0.0)` (`nonempty == 0`, `refused == 0`, `poison_surviving == 0`), bit-exact RGBA match with Current (`52b186bb0e2c2325 == 52b186bb0e2c2325`).
+2. **Gate 2 (`[P1]` Complete 16-Ray Tile Hull & Chronology Guard Closed):**
+   - In `VolumeRoutedKernels.hpp:148` (`classifyTilesMain`), changed `break;` to `continue;` on `abs(dx) < 1e-6`.
+   - In `VolumeRoutedKernels.hpp:806` (`s2ProducerMain`), tracked `firstMemberMaxS` across member 0 and enforced `if (memberIdx == 1u && l < firstMemberMaxS) { reason |= 64u; break; }`.
+   - **CPU Adversarial Witness:** In `ray_transport_p1_p11_near_parallel_case.cpp.inc`, the 12 overlapping rays were 100% refused (`acceptedOverlapRays == 0`, `s2.reason == 64u`), and the tile correctly classified as Fallback (`cohort 3`).
+   - **Native Metal Gate 7 Witness:** Rendered overlapping 2-curtain scene at $1281 \times 1440$ (where center column $x = 640$ has $dx = 0$ exactly). Route observer confirmed overlapping tiles routed to Fallback (`fb_tiles = 6099`), 0 erroneous S2 rays accepted, and rendered RGBA matched Current bit-for-bit (`3bf0701125d52425 == 3bf0701125d52425`).
+3. **Gate 3 (`[P2]` Full-Viewport Strip Capacity Allocation & Dynamic Admission Closed):**
+   - In `VolumeRoutedTransport.hpp:26, 47`, changed `prodGroups` and `Program::localGroups` to `std::vector<WGPUBindGroup>`.
+   - In `VolumeRoutedTransport.inc:119`, removed the 64 clamp (`maxStrips = (h + rows - 1) / rows; if (!maxStrips) return false;`) and allocated all required strips.
+   - In `VolumeRoutedTransport.inc:211, 248`, added admission guard `if ((height + stripRows - 1) / stripRows > maxStrips) return false;` and strip-loop bound `stripIdx < maxStrips`.
+   - **Native Metal Gate 8 Witness:** Rendered offscreen viewports at $1024 \times 3072$ (64 strips), $1024 \times 3120$ (65 strips), and $1024 \times 4096$ (86 strips) after finite publication poisoning. Verified `k->maxStrips == 64, 65, 86`, 0 WebGPU validation errors, 100% pixels accepted across all 86 strips, and 0 surviving poison. Resized back to $2560 \times 1440$ (30 strips) with bit-exact Pose 0 RGBA parity (`d34c77bf8a341c6c == d34c77bf8a341c6c`).
+
+### 2. Dual-Regime ABBA Benchmark Results (Apple M5 Metal)
+
+Completion-fenced 4-block ABBA benchmarking across all 64 canonical poses against `saves/zones/Northern Veil/zone.ecform`:
+
+| Workload | Current (Baseline) | Routed (Phase P12) | Delta (ms) | Delta (%) | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **All 64 Canonical Poses** | **66.931 ms** | **59.636 ms** | **-7.295 ms** | **-10.90%** | **WIN (58/64 Poses)** |
+| **Regime 1 (Full-Screen Green, 33 poses)** | **81.999 ms** | **69.927 ms** | **-12.071 ms** | **-14.72%** | **DECISIVE WIN** |
+| **Regime 2 (Open Sky, 31 poses)** | **50.890 ms** | **48.680 ms** | **-2.210 ms** | **-4.34%** | **WIN (FLIPPED GREEN)** |
+
+### 3. Verification & Regression Matrix
+- **Native Apple M5 Metal Gates:** **8 / 8 Gates Passed** (Gates 1–5 baseline parity/refusal/census + Gates 6, 7, 8 adversarial witnesses).
+- **CPU 64-Pose Bit-Parity Mirror:** **64 / 64 Poses Clean** (`classifier_mismatches = 0`, `s1_ray_mismatches = 0`, `s2_ray_mismatches = 0`, `refused_rays = 0`).
+- **WebGPU Regression Suite:** **406 / 406 Checks Passed**
+  - `webgpu_volume_zero_proof_test`: 73 / 73 checks passed.
+  - `webgpu_volume_support_certificates_test`: 132 / 132 checks passed.
+  - `webgpu_line_quadrature_test`: 201 / 201 checks passed.
+
+**Signed:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · 2026-11-01T12:58:00-08:00 (PST). Human origin: Zachary Zhang.

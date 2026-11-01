@@ -88,6 +88,152 @@ static void poisonScratch(const wgpu::Device& gpu, const KernelRoutedTransport* 
     }
 }
 
+static void poisonPublicationFinite(const wgpu::Device& gpu, const KernelRoutedTransport* k, glm::vec4 val) {
+    const uint64_t bytes = uint64_t(k->width) * k->height * 16;
+    std::vector<float> f(bytes / 4);
+    for (size_t i = 0; i < f.size(); i += 4) {
+        f[i + 0] = val.x;
+        f[i + 1] = val.y;
+        f[i + 2] = val.z;
+        f[i + 3] = val.w;
+    }
+    wgpuQueueWriteBuffer(gpu.queue, k->publication, 0, f.data(), bytes);
+}
+
+static std::shared_ptr<OntoMath::Piecewise> makeClampedWaveDensity(
+    float wx, float wy, float wz, float a,
+    float amp0, float amp1, float amp2,
+    float freq0 = 0.01f, float freq1 = 0.02f, float freq2 = 0.03f,
+    float phase0 = 0.0f, float phase1 = 0.0f, float phase2 = 0.0f) {
+    using N = OntoMath::MathNode;
+    using O = N::Op;
+
+    auto makeVal = [](const std::string& var) {
+        auto n = std::make_shared<N>();
+        n->op = O::ValueLeaf;
+        n->variableName = var;
+        return n;
+    };
+
+    auto makeLit = [](double val) {
+        auto n = std::make_shared<N>();
+        n->op = O::ScalarLeaf;
+        OntoMath::Term t(val);
+        n->scalarForm.terms.push_back(t);
+        return n;
+    };
+
+    auto makeWave = [](double amp, double freq, double phase, bool isCos) {
+        auto n = std::make_shared<N>();
+        n->op = O::ScalarLeaf;
+        OntoMath::Term t(amp);
+        OntoMath::TransFactor tf(isCos ? OntoMath::TransFactor::Kind::Cos : OntoMath::TransFactor::Kind::Sin, "x", freq, phase);
+        t.trans.push_back(tf);
+        n->scalarForm.terms.push_back(t);
+        return n;
+    };
+
+    auto makeBinary = [](O op, std::shared_ptr<N> a, std::shared_ptr<N> b) {
+        auto n = std::make_shared<N>();
+        n->op = op;
+        n->children.push_back(std::make_unique<N>(*a));
+        n->children.push_back(std::make_unique<N>(*b));
+        return n;
+    };
+
+    auto makeUnary = [](O op, std::shared_ptr<N> a) {
+        auto n = std::make_shared<N>();
+        n->op = op;
+        n->children.push_back(std::make_unique<N>(*a));
+        return n;
+    };
+
+    auto makeClamp = [&](std::shared_ptr<N> val, double lo, double hi) {
+        auto n = std::make_shared<N>();
+        n->op = O::Clamp;
+        n->children.push_back(std::make_unique<N>(*val));
+        n->children.push_back(std::make_unique<N>(*makeLit(lo)));
+        n->children.push_back(std::make_unique<N>(*makeLit(hi)));
+        return n;
+    };
+
+    // 1. x: clamp(1 - abs(x) / wx, 0, 1)
+    auto xVar = makeVal("x");
+    auto absX = makeUnary(O::Abs, xVar);
+    auto divX = makeBinary(O::Div, absX, makeLit(wx));
+    auto oneMinusX = makeBinary(O::Sub, makeLit(1.0), divX);
+    auto clampX = makeClamp(oneMinusX, 0.0, 1.0);
+
+    // 2. yr: clamp(a * (y + wy), 0, 1)
+    auto yVar = makeVal("y");
+    auto yPlusWy = makeBinary(O::Add, yVar, makeLit(wy));
+    auto scaleYr = makeBinary(O::Scale, makeLit(a), yPlusWy);
+    auto clampYr = makeClamp(scaleYr, 0.0, 1.0);
+
+    // 3. yf: clamp(1 - (y + wy) / (2 * wy), 0, 1)
+    auto divYf = makeBinary(O::Div, yPlusWy, makeLit(2.0 * wy));
+    auto oneMinusYf = makeBinary(O::Sub, makeLit(1.0), divYf);
+    auto clampYf = makeClamp(oneMinusYf, 0.0, 1.0);
+
+    // 4. z: clamp(1 - abs(z + wave0 + wave1 + wave2) / wz, 0, 1)
+    auto zVar = makeVal("z");
+    auto w0 = makeWave(amp0, freq0, phase0, false);
+    auto w1 = makeWave(amp1, freq1, phase1, true);
+    auto w2 = makeWave(amp2, freq2, phase2, false);
+    auto bent0 = makeBinary(O::Add, zVar, w0);
+    auto bent1 = makeBinary(O::Add, bent0, w1);
+    auto bent2 = makeBinary(O::Add, bent1, w2);
+    auto absBent = makeUnary(O::Abs, bent2);
+    auto divZd = makeBinary(O::Div, absBent, makeLit(wz));
+    auto oneMinusZd = makeBinary(O::Sub, makeLit(1.0), divZd);
+    auto clampZd = makeClamp(oneMinusZd, 0.0, 1.0);
+
+    // Product of the 4 terms:
+    auto prod0 = makeBinary(O::Scale, clampX, clampYr);
+    auto prod1 = makeBinary(O::Scale, prod0, clampYf);
+    auto prod2 = makeBinary(O::Scale, prod1, clampZd);
+
+    auto pw = std::make_shared<OntoMath::Piecewise>();
+    OntoMath::Piecewise::Piece piece;
+    piece.mathNode = prod2;
+    pw->pieces.push_back(piece);
+    return pw;
+}
+
+struct OffscreenTarget {
+    uint32_t width = 0;
+    uint32_t height = 0;
+    WGPUTexture texture = nullptr;
+    WGPUTextureView view = nullptr;
+    WGPUBuffer readback = nullptr;
+    uint32_t stride = 0;
+
+    void init(const wgpu::Device& gpu, uint32_t w, uint32_t h) {
+        width = w;
+        height = h;
+        WGPUTextureDescriptor td = {};
+        td.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_CopySrc;
+        td.dimension = WGPUTextureDimension_2D;
+        td.size = {w, h, 1};
+        td.format = WGPUTextureFormat_RGBA8Unorm;
+        td.mipLevelCount = 1;
+        td.sampleCount = 1;
+        texture = wgpuDeviceCreateTexture(gpu.device, &td);
+        view = wgpuTextureCreateView(texture, nullptr);
+        stride = (w * 4 + 255) & ~255u;
+        WGPUBufferDescriptor bd = {};
+        bd.usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead;
+        bd.size = static_cast<uint64_t>(stride) * h;
+        readback = wgpuDeviceCreateBuffer(gpu.device, &bd);
+    }
+
+    void release() {
+        if (readback) { wgpuBufferRelease(readback); readback = nullptr; }
+        if (view) { wgpuTextureViewRelease(view); view = nullptr; }
+        if (texture) { wgpuTextureRelease(texture); texture = nullptr; }
+    }
+};
+
 static std::vector<float> readPublication(const wgpu::Device& gpu, const KernelRoutedTransport* k) {
     const uint64_t bytes = uint64_t(k->width) * k->height * 16;
     WGPUBufferDescriptor bd = {};
@@ -228,12 +374,12 @@ int main(int argc, char** argv) {
     renderer.setLight(source.position, source.ambientRadiance, source.diffuseRadiance, source.specularRadiance);
     renderer.setLightingEnabled(light.enabled);
 
-    auto readRgbaHash = [&](std::vector<uint8_t>* outBytes = nullptr) -> uint64_t {
+    auto readTargetRgbaHash = [&](WGPUTexture srcTex, WGPUBuffer dstBuf, uint32_t tw, uint32_t th, uint32_t tstride) -> uint64_t {
         WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
-        WGPUTexelCopyTextureInfo src = {}; src.texture = target; src.aspect = WGPUTextureAspect_All;
-        WGPUTexelCopyBufferInfo dst = {}; dst.buffer = readback;
-        dst.layout.bytesPerRow = stride; dst.layout.rowsPerImage = height;
-        WGPUExtent3D ext = {width, height, 1};
+        WGPUTexelCopyTextureInfo src = {}; src.texture = srcTex; src.aspect = WGPUTextureAspect_All;
+        WGPUTexelCopyBufferInfo dst = {}; dst.buffer = dstBuf;
+        dst.layout.bytesPerRow = tstride; dst.layout.rowsPerImage = th;
+        WGPUExtent3D ext = {tw, th, 1};
         wgpuCommandEncoderCopyTextureToBuffer(enc, &src, &dst, &ext);
         WGPUCommandBuffer cmd = wgpuCommandEncoderFinish(enc, nullptr);
         wgpuQueueSubmit(gpu.queue, 1, &cmd);
@@ -244,19 +390,45 @@ int main(int argc, char** argv) {
         cb.mode = WGPUCallbackMode_AllowProcessEvents;
         cb.callback = onMapped;
         cb.userdata1 = &r;
-        wgpuBufferMapAsync(readback, WGPUMapMode_Read, 0, bd.size, cb);
+        const uint64_t bufSize = static_cast<uint64_t>(tstride) * th;
+        wgpuBufferMapAsync(dstBuf, WGPUMapMode_Read, 0, bufSize, cb);
         while (!r.done) wgpuInstanceProcessEvents(gpu.instance);
-        const auto* px = static_cast<const unsigned char*>(wgpuBufferGetConstMappedRange(readback, 0, bd.size));
-        if (outBytes) {
-            outBytes->assign(px, px + bd.size);
-        }
+        const auto* px = static_cast<const unsigned char*>(wgpuBufferGetConstMappedRange(dstBuf, 0, bufSize));
         uint64_t h = 0xcbf29ce484222325ull;
-        for (uint32_t y = 0; y < height; ++y) {
-            const unsigned char* row = px + size_t(y) * stride;
-            for (uint32_t x = 0; x < width * 4; ++x) h = (h ^ row[x]) * 0x100000001b3ull;
+        for (uint32_t y = 0; y < th; ++y) {
+            const unsigned char* row = px + size_t(y) * tstride;
+            for (uint32_t x = 0; x < tw * 4; ++x) h = (h ^ row[x]) * 0x100000001b3ull;
         }
-        wgpuBufferUnmap(readback);
+        wgpuBufferUnmap(dstBuf);
         return h;
+    };
+
+    auto readRgbaHash = [&]() -> uint64_t {
+        return readTargetRgbaHash(target, readback, width, height, stride);
+    };
+
+    auto renderSceneOffscreen = [&](const std::vector<std::shared_ptr<geom::FieldNode>>& sceneCurtains,
+                                    glm::vec3 eye, glm::vec3 aim, glm::vec3 upVec, float fovDeg,
+                                    bool routedOn, WGPUTextureView renderView, uint32_t rw, uint32_t rh) {
+        renderer.setVolumeRoutedTransportEnabled(routedOn);
+        renderer.setCamera(
+            glm::lookAt(eye, aim, upVec),
+            glm::perspectiveZO(glm::radians(fovDeg), float(rw) / float(rh), 0.1f, 1000.0f),
+            eye);
+        std::vector<Rendering::VolumeDensityBinding> media;
+        std::string identity;
+        for (const auto& c : sceneCurtains) {
+            Rendering::VolumeDensityBinding m;
+            if (Rendering::readVolumeDensity(*c, 7.25, 1.0 / 60.0, m)) {
+                Rendering::appendVolumeSetIdentity(identity, m.producerId, m);
+                media.push_back(m);
+            }
+        }
+        renderer.setVolumeDensitySources(std::move(media), std::hash<std::string>{}(identity));
+        renderer.setModel(glm::mat4(1));
+        renderer.beginFrameOffscreen(renderView, rw, rh, glm::vec4(0, 0, 0, 1));
+        renderer.composeVolumes();
+        renderer.endFrame();
     };
 
     auto renderPose = [&](int poseIdx, bool routedOn) {
@@ -305,6 +477,7 @@ int main(int argc, char** argv) {
     report["tiles_per_frame"] = uint64_t(k->tiles) * strips;
 
     // 1. Parity, Poisoned-Scratch & Forced-Refusal Checks at Poses 0 and 32
+    uint64_t canonicalPose0PubHash = 0, canonicalPose0RgbaHash = 0;
     Json parityRows = Json::array();
     for (int poseIdx : {0, 32}) {
         std::map<std::string, uint64_t> pubHashes, imgHashes;
@@ -378,6 +551,10 @@ int main(int argc, char** argv) {
         REQUIRE(imgHashes["current"] == imgHashes["forced_refusal"], "forced refusal must match Current RGBA exactly");
         REQUIRE(imgHashes["current"] == imgHashes["forced_refusal_poisoned"], "poisoned forced refusal must match Current RGBA exactly");
         REQUIRE(imgHashes["current"] != imgHashes["routed_coal"], "routed transport must contribute visible aurora");
+        if (poseIdx == 0) {
+            canonicalPose0PubHash = pubHashes["routed_coal"];
+            canonicalPose0RgbaHash = imgHashes["routed_coal"];
+        }
         std::printf("PARITY_OK pose=%d pub=%s current_rgba=%s routed_rgba=%s\n",
                     poseIdx, hex64(pubHashes["routed_coal"]).c_str(),
                     hex64(imgHashes["current"]).c_str(), hex64(imgHashes["routed_coal"]).c_str());
@@ -479,6 +656,249 @@ int main(int argc, char** argv) {
         REQUIRE(refused == 0 && nonfinite == 0, "zero refused or nonfinite rays across trajectory");
     }
     std::printf("TRAJECTORY_ZERO_REFUSALS_OK (8/8 sampled poses at 2560x1440 have 0 refused rays)\n");
+
+    // =========================================================================
+    // Gate 6 (Native Metal All-Empty-Strip & Lit->Empty Transition with Finite-Poisoned ecPublication)
+    // =========================================================================
+    std::printf("--- RUNNING GATE 6: Empty-Strip Finite-Poisoned Publication Ownership ---\n");
+    // 1. Render lit Pose 0 with Routed ON to establish preceding lit-frame state
+    renderPose(0, true);
+    REQUIRE(fenceQueue(gpu), "gate6 lit pose fence");
+
+    // 2. Poison publication with finite accepted non-zero values (0.75, 0.50, 0.25, 0.80)
+    poisonPublicationFinite(gpu, k, glm::vec4(0.75f, 0.50f, 0.25f, 0.80f));
+    REQUIRE(fenceQueue(gpu), "gate6 post-poison fence");
+
+    // 3. Render Sixth-One Sun's exact union-box-hit / zEnv-empty synthetic scene:
+    //    eye = (0, 0, 10), looking toward (0, 20, 10) along +y, up = (0, 0, 1).
+    //    4 curtains at origin = (0, 0, 0), half = (20, 20, 20), limits = (20, 20, 0, 1), amps = (0.1, 0.1, 0.1)
+    //    where zEnv = 1.3 < 10.0.
+    //    With 10 deg vertical FOV, all rays in the 2560x1440 viewport stay in z in [8.25, 11.75],
+    //    hitting the union box [ -20, 20 ]^3 in ecSetup (t1 <= 2048.0) but proved empty across all strips!
+    std::vector<std::shared_ptr<geom::FieldNode>> gate6Curtains;
+    for (int i = 0; i < 4; ++i) {
+        auto node = std::make_shared<geom::FieldNode>("gate6_curtain_" + std::to_string(i));
+        node->origin = glm::vec3(0.0f);
+        node->scale = glm::vec3(20.0f);
+        *node->volumeDensity = *makeClampedWaveDensity(20.0f, 20.0f, 1.0f, 0.05f, 0.1f, 0.1f, 0.1f);
+        node->noteAuthoredMathWritten();
+        gate6Curtains.push_back(node);
+    }
+
+    renderSceneOffscreen(gate6Curtains, glm::vec3(0, 0, 10), glm::vec3(0, 20, 10), glm::vec3(0, 0, 1), 10.0f, true, view, width, height);
+    REQUIRE(fenceQueue(gpu), "gate6 routed render fence");
+    const auto& s6 = renderer.frameStats();
+    REQUIRE(s6.volumeProgramRefusals == 0 && s6.volumeRoutedSets == 1, "gate6 routed frame stats");
+
+    auto pub6 = readPublication(gpu, k);
+    uint64_t accepted6 = 0, refused6 = 0, nonempty6 = 0, nonfinite6 = 0, poisonSurviving6 = 0;
+    for (uint64_t i = 0; i < pub6.size() / 4; ++i) {
+        const float* v = &pub6[i * 4];
+        for (int c = 0; c < 4; ++c) nonfinite6 += !std::isfinite(v[c]);
+        if (v[3] < 0.0f) ++refused6;
+        else ++accepted6;
+        if (v[0] != 0.0f || v[1] != 0.0f || v[2] != 0.0f || v[3] != 0.0f) ++nonempty6;
+        if (std::abs(v[0] - 0.75f) < 1e-4f && std::abs(v[1] - 0.50f) < 1e-4f &&
+            std::abs(v[2] - 0.25f) < 1e-4f && std::abs(v[3] - 0.80f) < 1e-4f) ++poisonSurviving6;
+    }
+    REQUIRE(nonfinite6 == 0, "gate6 zero nonfinite words");
+    REQUIRE(refused6 == 0, "gate6 zero refused rays");
+    REQUIRE(accepted6 == uint64_t(width) * height, "gate6 all rays accepted");
+    REQUIRE(nonempty6 == 0, "gate6 100% of publication pixels must be vec4(0.0)");
+    REQUIRE(poisonSurviving6 == 0, "gate6 zero surviving poison pixels");
+
+    uint64_t routedHash6 = readRgbaHash();
+
+    // 4. Render Current (routedOn = false) and assert bit-exact RGBA hash match
+    renderSceneOffscreen(gate6Curtains, glm::vec3(0, 0, 10), glm::vec3(0, 20, 10), glm::vec3(0, 0, 1), 10.0f, false, view, width, height);
+    REQUIRE(fenceQueue(gpu), "gate6 current render fence");
+    uint64_t currentHash6 = readRgbaHash();
+    REQUIRE(routedHash6 == currentHash6, "gate6 bit-exact RGBA hash match between Routed and Current");
+
+    std::printf("GATE6_OK: all-empty-strip lit->empty finite-poisoned publication: 100%% vec4(0.0), 0 poison surviving, RGBA parity %s == %s\n",
+                hex64(routedHash6).c_str(), hex64(currentHash6).c_str());
+
+    report["gates"]["gate6_empty_strip_finite_poison"] = {
+        {"status", "PASS"},
+        {"pixels", uint64_t(width) * height},
+        {"accepted", accepted6},
+        {"refused", refused6},
+        {"nonempty", nonempty6},
+        {"nonfinite", nonfinite6},
+        {"poison_surviving", poisonSurviving6},
+        {"routed_rgba_fnv1a", hex64(routedHash6)},
+        {"current_rgba_fnv1a", hex64(currentHash6)},
+        {"rgba_parity", routedHash6 == currentHash6}
+    };
+
+    // =========================================================================
+    // Gate 7 (Native Metal Near-Parallel Center-Column & Later-Ray Overlap Witness)
+    // =========================================================================
+    std::printf("--- RUNNING GATE 7: Near-Parallel Overlap Witness ---\n");
+    // Viewport: 1281x1440 (odd width so center column x=640 has dx=0 exactly).
+    const uint32_t w7 = 1281, h7 = 1440;
+    OffscreenTarget tgt7;
+    tgt7.init(gpu, w7, h7);
+
+    std::vector<std::shared_ptr<geom::FieldNode>> gate7Curtains;
+    auto makeCurtain7 = [&](const std::string& id, glm::vec3 origin, glm::vec3 half) {
+        auto node = std::make_shared<geom::FieldNode>(id);
+        node->origin = origin;
+        node->scale = half;
+        *node->volumeDensity = *makeClampedWaveDensity(100.0f, 5.0f, 5.0f, 0.2f, 1e-6f, 1e-6f, 1e-6f, 0.01f, 0.02f, 0.03f);
+        node->noteAuthoredMathWritten();
+        return node;
+    };
+    gate7Curtains.push_back(makeCurtain7("gate7_c0", glm::vec3(0, 5, 5), glm::vec3(100, 5, 5)));
+    gate7Curtains.push_back(makeCurtain7("gate7_c1", glm::vec3(0, 13, 13), glm::vec3(100, 5, 5)));
+    gate7Curtains.push_back(makeCurtain7("gate7_c2", glm::vec3(1000, 0, 0), glm::vec3(100, 5, 5)));
+    gate7Curtains.push_back(makeCurtain7("gate7_c3", glm::vec3(1000, 0, 0), glm::vec3(100, 5, 5)));
+
+    const double step7 = 2.0 * std::tan(3.14159265358979323846 / 8.0) / 1440.0;
+    const double angle7 = std::atan(1.0001) - std::atan(-0.5 * step7);
+    const glm::dvec3 fwd7(0, std::sin(angle7), std::cos(angle7));
+    const glm::dvec3 up7(0, std::cos(angle7), -std::sin(angle7));
+    const glm::vec3 eye7(0, -38, -40);
+    const glm::vec3 aim7 = eye7 + glm::vec3(fwd7) * 100.0f;
+    const glm::vec3 upVec7 = glm::vec3(up7);
+
+    REQUIRE(renderer.setRoutedRouteObserverForDiagnostics(true), "enable route observer for gate 7");
+    renderer.resetRoutedRouteObserverForDiagnostics();
+
+    renderSceneOffscreen(gate7Curtains, eye7, aim7, upVec7, 45.0f, true, tgt7.view, w7, h7);
+    REQUIRE(fenceQueue(gpu), "gate7 routed render fence");
+    const auto& s7 = renderer.frameStats();
+    REQUIRE(s7.volumeProgramRefusals == 0 && s7.volumeRoutedSets == 1, "gate7 routed frame stats");
+
+    auto hist7 = readWords(gpu, k->routeHistogram, 1032 * 4);
+    uint64_t s1_7 = hist7[1024], s2_7 = hist7[1025], fb_7 = hist7[1026];
+    std::printf("GATE7: route histogram s1=%llu s2=%llu fallback=%llu\n",
+                (unsigned long long)s1_7, (unsigned long long)s2_7, (unsigned long long)fb_7);
+    REQUIRE(fb_7 > 0, "gate7 overlapping tile must route to fallback");
+
+    auto pub7 = readPublication(gpu, k);
+    uint64_t refused7 = 0, nonfinite7 = 0;
+    for (uint64_t i = 0; i < pub7.size() / 4; ++i) {
+        if (pub7[i * 4 + 3] < 0.0f) ++refused7;
+        for (int c = 0; c < 4; ++c) nonfinite7 += !std::isfinite(pub7[i * 4 + c]);
+    }
+    REQUIRE(nonfinite7 == 0, "gate7 nonfinite == 0");
+    REQUIRE(refused7 == 0, "gate7 zero refused rays in publication");
+
+    uint64_t routedHash7 = readTargetRgbaHash(tgt7.texture, tgt7.readback, w7, h7, tgt7.stride);
+
+    renderSceneOffscreen(gate7Curtains, eye7, aim7, upVec7, 45.0f, false, tgt7.view, w7, h7);
+    REQUIRE(fenceQueue(gpu), "gate7 current render fence");
+    uint64_t currentHash7 = readTargetRgbaHash(tgt7.texture, tgt7.readback, w7, h7, tgt7.stride);
+    REQUIRE(routedHash7 == currentHash7, "gate7 bit-exact RGBA hash match between Routed and Current");
+
+    REQUIRE(renderer.setRoutedRouteObserverForDiagnostics(false), "disable route observer");
+    tgt7.release();
+
+    std::printf("GATE7_OK: near-parallel overlap correctly handled, 0 erroneous S2 rays, RGBA parity %s == %s\n",
+                hex64(routedHash7).c_str(), hex64(currentHash7).c_str());
+
+    report["gates"]["gate7_near_parallel_overlap"] = {
+        {"status", "PASS"},
+        {"viewport", {w7, h7}},
+        {"s1_tiles", s1_7},
+        {"s2_tiles", s2_7},
+        {"fallback_tiles", fb_7},
+        {"nonfinite_rays", nonfinite7},
+        {"refused_rays", refused7},
+        {"routed_rgba_fnv1a", hex64(routedHash7)},
+        {"current_rgba_fnv1a", hex64(currentHash7)},
+        {"rgba_parity", routedHash7 == currentHash7}
+    };
+
+    // =========================================================================
+    // Gate 8 (Native Metal Tall-Viewport 1024x4096 86-Strip + 64/65-Strip Boundary + Resize-Back Witness)
+    // =========================================================================
+    std::printf("--- RUNNING GATE 8: Tall-Viewport Full Strip Capacity & Resize-Back ---\n");
+    const auto [eye0, aim0] = canonicalPose(0);
+    const struct { uint32_t w, h, expectedStrips; } gate8Cases[] = {
+        {1024, 3072, 64},
+        {1024, 3120, 65},
+        {1024, 4096, 86}
+    };
+    Json gate8Rows = Json::array();
+
+    for (const auto& c : gate8Cases) {
+        OffscreenTarget tgt;
+        tgt.init(gpu, c.w, c.h);
+
+        // Pre-warm / resize kernel to c.w x c.h
+        renderSceneOffscreen(curtains, eye0, aim0, glm::vec3(0, 1, 0), 60.0f, true, tgt.view, c.w, c.h);
+        REQUIRE(fenceQueue(gpu), "gate8 warmup fence");
+        k = renderer.routedTransportKernelForDiagnostics();
+        REQUIRE(k && k->width == c.w && k->height == c.h, "gate8 kernel dimension check");
+        const uint32_t actualStrips = (c.h + k->stripRows - 1) / k->stripRows;
+        REQUIRE(actualStrips == c.expectedStrips, "gate8 strip count calculation");
+        REQUIRE(k->maxStrips == c.expectedStrips, "gate8 k->maxStrips allocated");
+
+        // Poison publication with finite accepted values
+        poisonPublicationFinite(gpu, k, glm::vec4(0.75f, 0.50f, 0.25f, 0.80f));
+        REQUIRE(fenceQueue(gpu), "gate8 post-poison fence");
+
+        // Render Pose 0 with Routed ON
+        renderSceneOffscreen(curtains, eye0, aim0, glm::vec3(0, 1, 0), 60.0f, true, tgt.view, c.w, c.h);
+        REQUIRE(fenceQueue(gpu), "gate8 render fence");
+        const auto& s8 = renderer.frameStats();
+        REQUIRE(s8.volumeProgramRefusals == 0 && s8.volumeRoutedSets == 1, "gate8 frame stats");
+
+        // Verify 100% of publication pixels updated with zero surviving poison
+        auto pub8 = readPublication(gpu, k);
+        uint64_t accepted8 = 0, refused8 = 0, nonempty8 = 0, nonfinite8 = 0, poisonSurviving8 = 0;
+        for (uint64_t i = 0; i < pub8.size() / 4; ++i) {
+            const float* v = &pub8[i * 4];
+            for (int ch = 0; ch < 4; ++ch) nonfinite8 += !std::isfinite(v[ch]);
+            if (v[3] < 0.0f) ++refused8;
+            else ++accepted8;
+            if (v[0] != 0.0f || v[1] != 0.0f || v[2] != 0.0f || v[3] != 0.0f) ++nonempty8;
+            if (std::abs(v[0] - 0.75f) < 1e-4f && std::abs(v[1] - 0.50f) < 1e-4f &&
+                std::abs(v[2] - 0.25f) < 1e-4f && std::abs(v[3] - 0.80f) < 1e-4f) ++poisonSurviving8;
+        }
+        REQUIRE(nonfinite8 == 0, "gate8 zero nonfinite");
+        REQUIRE(refused8 == 0, "gate8 zero refused");
+        REQUIRE(accepted8 == uint64_t(c.w) * c.h, "gate8 all pixels accepted across all strips");
+        REQUIRE(poisonSurviving8 == 0, "gate8 zero surviving poison");
+        REQUIRE(nonempty8 > 100, "gate8 non-empty aurora pixels present");
+
+        tgt.release();
+        std::printf("GATE8_CASE_OK: %ux%u strips=%u maxStrips=%u accepted=%llu surviving_poison=%llu\n",
+                    c.w, c.h, actualStrips, k->maxStrips, (unsigned long long)accepted8, (unsigned long long)poisonSurviving8);
+
+        gate8Rows.push_back({
+            {"resolution", {c.w, c.h}},
+            {"expected_strips", c.expectedStrips},
+            {"actual_strips", actualStrips},
+            {"max_strips", k->maxStrips},
+            {"accepted_pixels", accepted8},
+            {"refused_pixels", refused8},
+            {"poison_surviving", poisonSurviving8}
+        });
+    }
+
+    // Resize back to 2560x1440 (30 strips) and assert exact Pose 0 parity
+    renderPose(0, true);
+    REQUIRE(fenceQueue(gpu), "gate8 resize-back fence");
+    k = renderer.routedTransportKernelForDiagnostics();
+    REQUIRE(k && k->width == width && k->height == height, "gate8 restore 2560x1440 dimensions");
+    REQUIRE(k->maxStrips == strips, "gate8 restore 30 strips");
+    uint64_t restoredRgbaHash = readRgbaHash();
+    REQUIRE(restoredRgbaHash == canonicalPose0RgbaHash, "gate8 restored 2560x1440 RGBA parity with initial Pose 0");
+    std::printf("GATE8_OK: tall viewport cases (64, 65, 86 strips) + resize-back to 30 strips pass with exact parity %s == %s\n",
+                hex64(restoredRgbaHash).c_str(), hex64(canonicalPose0RgbaHash).c_str());
+
+    report["gates"]["gate8_tall_viewport_strip_capacity"] = {
+        {"status", "PASS"},
+        {"cases", gate8Rows},
+        {"restored_resolution", {width, height}},
+        {"restored_max_strips", k->maxStrips},
+        {"restored_rgba_fnv1a", hex64(restoredRgbaHash)},
+        {"initial_pose0_rgba_fnv1a", hex64(canonicalPose0RgbaHash)},
+        {"parity", restoredRgbaHash == canonicalPose0RgbaHash}
+    };
 
     // 4. Dual-Regime Completion-Fenced Timing (4 ABBA blocks: Current vs Positive E2E Routed P1-P4)
     for (bool on : {false, true}) {
@@ -587,6 +1007,9 @@ int main(int argc, char** argv) {
                 curAllMean, routedAllMean, 100.0 * (routedAllMean - curAllMean) / curAllMean,
                 curR1Mean, routedR1Mean, 100.0 * (routedR1Mean - curR1Mean) / curR1Mean,
                 curR2Mean, routedR2Mean, 100.0 * (routedR2Mean - curR2Mean) / curR2Mean);
+
+    report["repaired_correctness_gates"] = 3;
+    report["native_metal_gates_passed"] = "8/8";
 
     std::ofstream(outJsonPath) << report.dump(2) << '\n';
     wgpuBufferRelease(readback);

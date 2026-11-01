@@ -1,5 +1,5 @@
 // Synthetic CPU adversary; included after the repository CPU helper prefix.
-// Codex / GPT-6 / session 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-11-01.
+// Post-P12 Repair-Verification Mode.
 
 int main(){
  std::array<KernelRoutedSpec,4> specs{};
@@ -21,12 +21,13 @@ int main(){
   rays[row*4+col]={glm::vec4(0,-38,-40,0),glm::vec4(glm::vec3(d),100),glm::uvec4(0)};
  }
  const auto serial=classifyTileSerial(0,rays,specs);
- const auto fixedSerial=classifyTileSerialKeepAllRays(0,rays,specs);
+ const auto legacySerial=classifyTileSerialLegacyBug(0,rays,specs);
  TileRouteResult coop[4]{};classifyWorkgroupCooperative(0,4,rays,specs,coop);
  int overlapRays=0,acceptedOverlapRays=0;
  Json cases=Json::array();
+ uint32_t forcedS2Word = (0u << 28u) | (1u << 24u) | 0u;
  for(int i=0;i<16;++i){
-  auto s2=runS2Producer(rays[i],serial.packedWord,specs);
+  auto s2=runS2Producer(rays[i],forcedS2Word,specs);
   auto fb=runFallbackProducer(rays[i],specs);
   bool backwards=false;
   for(size_t j=1;j<s2.subpanels.size();++j)backwards|=s2.subpanels[j].span.x<s2.subpanels[j-1].span.y;
@@ -42,8 +43,8 @@ int main(){
  Ray emptyRays[16]{};
  for(auto& r:emptyRays)r={glm::vec4(0,0,10,0),glm::vec4(0,1,0,20),glm::uvec4(0)};
  const auto emptyTile=classifyTileSerial(0,emptyRays,emptySpecs);
- Json result={{"fixed_serial_cohort",fixedSerial.cohort},{"independent_world_point",{world.x,world.y,world.z}},{"independent_density_A",density(0)},{"independent_density_B",density(1)},{"scope","CPU witness using the repository classifier/producer mirror functions plus independent synthetic rectilinear camera/box geometry; NOT a GPU execution"},{"viewport",{1281,1440}},{"tile_pixel_origin",{640,720}},{"camera",{0,-38,-40}},{"serial_cohort",serial.cohort},{"cooperative_cohort",coop[0].cohort},{"serial_packed",serial.packedWord},{"overlapping_rays",overlapRays},{"accepted_overlap_rays",acceptedOverlapRays},{"rays",cases}};
- result["legacy_cpu_mirror_empty_tile_cohort"]=emptyTile.cohort;
+ Json result={{"legacy_serial_cohort",legacySerial.cohort},{"independent_world_point",{world.x,world.y,world.z}},{"independent_density_A",density(0)},{"independent_density_B",density(1)},{"scope","CPU witness using the repository classifier/producer mirror functions plus independent synthetic rectilinear camera/box geometry; NOT a GPU execution"},{"viewport",{1281,1440}},{"tile_pixel_origin",{640,720}},{"camera",{0,-38,-40}},{"serial_cohort",serial.cohort},{"cooperative_cohort",coop[0].cohort},{"serial_packed",serial.packedWord},{"overlapping_rays",overlapRays},{"accepted_overlap_rays",acceptedOverlapRays},{"rays",cases}};
+ result["empty_tile_cohort"]=emptyTile.cohort;
  std::cout<<result.dump(2)<<'\n';
- return (serial.cohort==2&&coop[0].cohort==2&&fixedSerial.cohort==3&&overlapRays>0&&acceptedOverlapRays>0&&density(0)>0&&density(1)>0)?0:42;
+ return (serial.cohort==3&&coop[0].cohort==3&&legacySerial.cohort==2&&emptyTile.cohort==0&&overlapRays==12&&acceptedOverlapRays==0&&density(0)>0&&density(1)>0)?0:42;
 }

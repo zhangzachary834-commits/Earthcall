@@ -37,18 +37,21 @@ assert 'args[9u] = select(0u, CAPACITY_WORKGROUPS, totalActiveTiles > 0u);' in s
 assert 'if (activeCount == 0u) {\n        // wave-proved empty: no producer work needed\n    }' in src['kernel']
 ordinary_setup = src['transport'].split('if(t1>2048.0)', 1)[1].split(')WGSL";', 1)[0]
 assert 'ecRays[id] = ECRay(' in ordinary_setup
-assert 'ecPublication[ecPixel(id)] = vec4<f32>(0.0);' not in ordinary_setup
-assert 'wgpuCommandEncoderClearBuffer' not in src['transport']
-assert 'maxStrips=(h+rows-1)/rows;if(maxStrips>64)maxStrips=64;' in src['transport']
-assert 'start<height;start+=stripRows,++stripIdx)' in src['transport']
-assert 'std::array<WGPUBindGroup,64> localGroups' in src['header']
+assert 'ecPublication[ecPixel(id)] = vec4<f32>(0.0);' in ordinary_setup
+assert 'if((ray.counts.y|ray.counts.w)==0u){return;}' in src['transport']
+assert 'maxStrips=(h+rows-1)/rows;if(!maxStrips)return false;' in src['transport']
+assert 'maxStrips=(h+rows-1)/rows;if(maxStrips>64)maxStrips=64;' not in src['transport']
+assert 'std::vector<WGPUBindGroup> localGroups' in src['header']
+assert 'std::array<std::vector<WGPUBindGroup>,3> prodGroups' in src['header']
+assert 'if (abs(dx) < 1e-6) { curActive = true; enter = min(enter, rA[i]); exit = max(exit, rB[i]); continue; }' in src['kernel']
+assert 'if (memberIdx == 1u && l < firstMemberMaxS)' in src['kernel']
 
 # Integer admission/indexing calculation taken from ensure()/encode().
 w, h, binding_limit = 1024, 4096, 128*1024*1024
 rows = min(48, binding_limit//(w*64*16))//4*4
 needed = (h+rows-1)//rows
-allocated = min(needed, 64)
-assert w*h*16 <= min(64*1024*1024, binding_limit) and needed == 86 and allocated == 64
+allocated = needed
+assert w*h*16 <= min(64*1024*1024, binding_limit) and needed == 86 and allocated == 86
 
 # Compile only the repository CPU helper prefix plus an independent camera and
 # true-density oracle. No production objects, native device, or saves are used.
@@ -60,11 +63,11 @@ branch = '''                if (std::abs(dx) < 1e-6f) {
                     curActive = true;
                     enter = std::min(enter, rA[i]);
                     exit = std::max(exit, rB[i]);
-                    break;
+                    continue;
                 }'''
 assert serial.count(branch) == 1
-control = serial.replace('classifyTileSerial(', 'classifyTileSerialKeepAllRays(', 1)
-control = control.replace(branch, branch.replace('break;', 'continue;'), 1)
+control = serial.replace('classifyTileSerial(', 'classifyTileSerialLegacyBug(', 1)
+control = control.replace(branch, branch.replace('continue;', 'break;'), 1)
 cpp = out/'near_parallel_witness.cpp'
 cpp.write_text('#include <iostream>\n'+prefix+'\n'+control+'\n'+src['adversary'])
 entries = json.loads((root/'build/compile_commands.json').read_text())
@@ -91,9 +94,8 @@ with (out/'cpu-build.log').open('w') as log:
     subprocess.run(link, stdout=log, stderr=log, check=True)
 r = subprocess.run([str(binary)], capture_output=True, text=True, check=True)
 near = json.loads(r.stdout)
-assert near['accepted_overlap_rays'] == 12 and near['fixed_serial_cohort'] == 3
-# The old mirror lacks P7 zEnv AABB clipping. Record that drift separately.
-assert near['legacy_cpu_mirror_empty_tile_cohort'] == 3
+assert near['accepted_overlap_rays'] == 0 and near['serial_cohort'] == 3 and near['cooperative_cohort'] == 3 and near['legacy_serial_cohort'] == 2
+assert near['empty_tile_cohort'] == 0
 assert 'if (axis == 2) { half = min(half, zEnv); }' in src['kernel']
 assert 10 > min(20, .1+.1+.1+1)+.001
 (out/'near_parallel_result.json').write_text(json.dumps(near, indent=2)+'\n')
@@ -104,15 +106,14 @@ report = {
     'near_parallel': near,
     'tall_viewport': {'width':w,'height':h,'binding_limit':binding_limit,'publication_bytes':w*h*16,
                       'strip_rows':rows,'needed_strips':needed,'allocated_cached_strips':allocated,
-                      'first_out_of_bounds_strip':allocated,'scope':'integer/source model, not native execution'},
-    'empty_strip': {'source_proven_tile_cohort':0, 'legacy_cpu_mirror_tile_cohort':near['legacy_cpu_mirror_empty_tile_cohort'],
+                      'scope':'integer/source model, verified allocated == needed == 86'},
+    'empty_strip': {'source_proven_tile_cohort':0, 'cpu_mirror_tile_cohort':near['empty_tile_cohort'],
                     'camera':[0,0,10], 'direction':[0,1,0], 'box_half':[20,20,20],
                     'z_support_envelope':1.3, 'margin':.001,
-                    'producer_workgroups':[0,0,0], 'consumer_workgroups':0,
-                    'normal_setup_publication_writes':0,
-                    'scope':'independent support geometry plus inspection of actual WGSL dispatch/write ownership; not GPU readback'},
-    'meaning_of_exit_0':'all three reviewed defects reproduced, not renderer approval',
+                    'normal_setup_publication_writes':1,
+                    'scope':'independent support geometry plus verified ecSetup publication ownership'},
+    'meaning_of_exit_0':'all three corrective gates verified repaired in source, header, and CPU adversary',
 }
 (out/'structural_review_result.json').write_text(json.dumps(report, indent=2)+'\n')
-print(json.dumps({'reproduced_findings':3,'cpu_overlap_rays':12,'needed_strips':needed,
+print(json.dumps({'repaired_gates':3,'accepted_overlap_rays':0,'needed_strips':needed,
                   'cached_strips':allocated,'report':str(out/'structural_review_result.json')}))

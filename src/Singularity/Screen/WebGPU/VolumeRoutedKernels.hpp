@@ -145,7 +145,7 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
                 let ray = rays[rIdx];
                 let oRel = ray.ro_clipA.xyz - cur.origin.xyz;
                 let dx = ray.rd_clipB.x;
-                if (abs(dx) < 1e-6) { curActive = true; enter = min(enter, rA[i]); exit = max(exit, rB[i]); break; }
+                if (abs(dx) < 1e-6) { curActive = true; enter = min(enter, rA[i]); exit = max(exit, rB[i]); continue; }
 
                 let a = rA[i];
                 let b = rB[i];
@@ -805,6 +805,7 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
 
     let firstM = select(rawM0, rawM1, m1First);
     let secondM = select(rawM1, rawM0, m1First);
+    var firstMemberMaxS = -1e9f;
     for (var memberIdx = 0u; memberIdx < 2u; memberIdx++) {
         let member = select(firstM, secondM, memberIdx == 1u);
         let m = curtains[member]; let o = ro - m.origin.xyz;
@@ -877,6 +878,13 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
                 if (uncertain && (protectedBoundary || zeroBands == 0u)) { break; }
             }
             if (uncertain || abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
+                if (memberIdx == 1u && l < firstMemberMaxS) {
+                    reason |= 64u;
+                    break;
+                }
+                if (memberIdx == 0u) {
+                    firstMemberMaxS = max(firstMemberMaxS, r);
+                }
                 if (count > 0u && mayAbsorb(pieces[count - 1u], vec2f(l, r),
                      previousShortBand, previousPositive, uncertain, protectedBoundary)) {
                     pieces[count - 1u].y = r; previousShortBand = false; previousPositive = true;

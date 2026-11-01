@@ -106,10 +106,12 @@ static TileRouteResult classifyTileSerial(
             float b = ray.rd_clipB.w;
             bool hit = true;
 
+            float zEnv = std::abs(cur.amps.x) + std::abs(cur.amps.y) + std::abs(cur.amps.z) + cur.limits.w;
             for (int axis = 0; axis < 3; axis++) {
                 float half = cur.half[axis];
                 if (axis == 0) half = std::min(half, cur.limits.x);
                 if (axis == 1) half = std::min(half, cur.limits.y);
+                if (axis == 2) half = std::min(half, zEnv);
                 float d = ray.rd_clipB[axis];
                 float o = oRel[axis];
                 if (d == 0.0f) {
@@ -159,7 +161,7 @@ static TileRouteResult classifyTileSerial(
                     curActive = true;
                     enter = std::min(enter, rA[i]);
                     exit = std::max(exit, rB[i]);
-                    break;
+                    continue;
                 }
                 float a = rA[i];
                 float b = rB[i];
@@ -308,10 +310,12 @@ static void classifyWorkgroupCooperative(
             float b = clipB[lid];
             bool hit = validRay[lid];
             if (validRay[lid]) {
+                float zEnv = std::abs(cur.amps.x) + std::abs(cur.amps.y) + std::abs(cur.amps.z) + cur.limits.w;
                 for (int axis = 0; axis < 3; axis++) {
                     float half = cur.half[axis];
                     if (axis == 0) half = std::min(half, cur.limits.x);
                     if (axis == 1) half = std::min(half, cur.limits.y);
+                    if (axis == 2) half = std::min(half, zEnv);
                     float d = rd[lid][axis];
                     float o = oRel[axis];
                     if (d == 0.0f) {
@@ -446,7 +450,6 @@ static void classifyWorkgroupCooperative(
                     curActive = true;
                     enter = std::min(enter, wgEnter[base + i]);
                     exit = std::max(exit, wgExit[base + i]);
-                    if (st == 2u) break;
                 }
             }
             if (anyRayHit) aabbMask[localTile] |= (1u << m);
@@ -733,10 +736,12 @@ static RayProducerOutput runS1Producer(const Ray& input, uint32_t activeMember,
     glm::vec3 o = ro - glm::vec3(m.origin);
     float a = input.ro_clipA.w, b = input.rd_clipB.w;
     bool hit = true;
+    float zEnv = std::abs(m.amps.x) + std::abs(m.amps.y) + std::abs(m.amps.z) + m.limits.w;
     for (int axis = 0; axis < 3; axis++) {
         float half = m.half[axis];
         if (axis == 0) half = std::min(half, m.limits.x);
         if (axis == 1) half = std::min(half, m.limits.y);
+        if (axis == 2) half = std::min(half, zEnv);
         if (d[axis] == 0.0f) {
             if (std::abs(o[axis]) > half + m.curv.y) { hit = false; break; }
         } else {
@@ -835,16 +840,22 @@ static RayProducerOutput runS2Producer(const Ray& input, uint32_t packedTile,
     glm::vec2 pieces[48];
     float knots[96];
 
+    uint32_t firstM = m1First ? rawM1 : rawM0;
+    uint32_t secondM = m1First ? rawM0 : rawM1;
+    float firstMemberMaxS = -1e9f;
+
     for (uint32_t memberIdx = 0u; memberIdx < 2u; memberIdx++) {
-        uint32_t member = (memberIdx == 1u) ? rawM1 : rawM0;
+        uint32_t member = (memberIdx == 1u) ? secondM : firstM;
         const KernelRoutedSpec& m = curtains[member];
         glm::vec3 o = ro - glm::vec3(m.origin);
         float a = input.ro_clipA.w, b = input.rd_clipB.w;
         bool hit = true;
+        float zEnv = std::abs(m.amps.x) + std::abs(m.amps.y) + std::abs(m.amps.z) + m.limits.w;
         for (int axis = 0; axis < 3; axis++) {
             float half = m.half[axis];
             if (axis == 0) half = std::min(half, m.limits.x);
             if (axis == 1) half = std::min(half, m.limits.y);
+            if (axis == 2) half = std::min(half, zEnv);
             if (d[axis] == 0.0f) {
                 if (std::abs(o[axis]) > half + m.curv.y) { hit = false; break; }
             } else {
@@ -908,6 +919,8 @@ static RayProducerOutput runS2Producer(const Ray& input, uint32_t packedTile,
                 if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) protectedBoundary = true;
             }
             if (uncertain || std::abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
+                if (memberIdx == 1u && l < firstMemberMaxS) { out.reason |= 64u; break; }
+                if (memberIdx == 0u) { firstMemberMaxS = std::max(firstMemberMaxS, r); }
                 if (count > memberStart && PM::mayAbsorb(pieces[count - 1u], glm::vec2(l, r),
                      previousShortBand, previousPositive, uncertain, protectedBoundary)) {
                     pieces[count - 1u].y = r; previousShortBand = false; previousPositive = true;
@@ -924,10 +937,9 @@ static RayProducerOutput runS2Producer(const Ray& input, uint32_t packedTile,
     }
     if (out.reason != 0u) return out;
     for (uint32_t pass = 0u; pass < 2u; pass++) {
-        bool emitM1 = ((pass == 0u) == m1First);
-        uint32_t emitMember = emitM1 ? rawM1 : rawM0;
-        uint32_t pStart = emitM1 ? count0 : 0u;
-        uint32_t pEnd = emitM1 ? count : count0;
+        uint32_t emitMember = (pass == 0u) ? firstM : secondM;
+        uint32_t pStart = (pass == 0u) ? 0u : count0;
+        uint32_t pEnd = (pass == 0u) ? count0 : count;
         for (uint32_t p = pStart; p < pEnd; p++) {
             float pa = pieces[p].x, pb = pieces[p].y;
             uint32_t n = std::max(1u, uint32_t(std::ceil((pb - pa) / 4.0f)));
@@ -966,10 +978,12 @@ static RayProducerOutput runFallbackProducer(const Ray& input,
         glm::vec3 o = ro - glm::vec3(m.origin);
         float a = input.ro_clipA.w, b = input.rd_clipB.w;
         bool hit = true;
+        float zEnv = std::abs(m.amps.x) + std::abs(m.amps.y) + std::abs(m.amps.z) + m.limits.w;
         for (int axis = 0; axis < 3; axis++) {
             float half = m.half[axis];
             if (axis == 0) half = std::min(half, m.limits.x);
             if (axis == 1) half = std::min(half, m.limits.y);
+            if (axis == 2) half = std::min(half, zEnv);
             if (d[axis] == 0.0f) {
                 if (std::abs(o[axis]) > half + m.curv.y) { hit = false; break; }
             } else {
