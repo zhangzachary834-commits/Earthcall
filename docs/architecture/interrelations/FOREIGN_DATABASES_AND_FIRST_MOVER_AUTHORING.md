@@ -1,19 +1,22 @@
 # Foreign Databases and First Mover Authoring
 
-## Interrelated Documents
-- `docs/architecture/Integration/FOREIGN_DATABASES.md`
-- `docs/architecture/law/FIRST_MOVER_AUTHORING.md`
+## Source documents
+- [Foreign Databases](../Integration/FOREIGN_DATABASES.md)
+- [First Mover Authoring](../law/FIRST_MOVER_AUTHORING.md)
 
-## The Interrelation
+## The boundary
 
-`FOREIGN_DATABASES.md` lays out the strict boundary between Earthcall's legible internal state and external relational databases, explicitly forbidding SQLite from acting as the ontological data store.
+SQLite and other relational stores may be **foreign data sources, scratchpads, query services, or telemetry sinks**, but must not become the hidden authoritative store of Earthcall's internal ontology. The authored world remains legible as Singulars, Relations, Formations, properties, and Laws.
 
-`FIRST_MOVER_AUTHORING.md` describes how external agents or scripts (First Movers) can interact with and construct the Earthcall ontology by creating JSON `.ecsave` data and directly asserting properties and Relations.
+The integration specification names **four distinct valid paths**. They must not be collapsed into a rule that every foreign database is itself a First Mover:
 
-These two concepts interrelate because the only valid way for a foreign relational database (like SQLite) to influence Earthcall's world state is by assuming the role of a First Mover. A database is not permitted to secretly hold back-end state. Instead, when data from an external database enters Earthcall, it must be translated by an intermediate process (the First Mover script) from rigid rows and columns into Earthcall's native vocabulary of beings, properties, and relationships.
+1. **Live ingestion sidecar:** a process translates rows into native creation/property/Relation operations and submits them through an authorized interface. The *process* performs the boundary crossing; the database does not thereby become an ontological being.
+2. **Offline world generation:** a human or AI First Mover writes an Earthcall-compatible world serialization from external data. JSON is a legible authoring representation; `.ecsave` is not simply a JSON file with a different extension.
+3. **Foreign modality channel:** an in-world Law can query an external service through registered channel input/output properties without importing its entire database as native world state.
+4. **Outbound audit/telemetry:** a foreign store may receive copies of events for analysis without becoming the authoritative world graph.
 
-## Thoughts on Integration and Interrelation
+## Authority and provenance
 
-When viewing database ingestion through the lens of First Mover Authoring, it ceases to be a simple data-sync problem and becomes an act of cross-boundary authorship. The python script or side-car connecting to the SQLite database is not just a connector; it is an active author translating a foreign schema into a native ontology.
+First Mover serialization injection is a privileged authorship boundary, **not** an automatic exemption from all checks. [First Mover Authoring](../law/FIRST_MOVER_AUTHORING.md) §8 documents the built register, scoped grants, quarantine, and save-path enforcement **while a FirstMoverSession is active**; it also distinguishes this from engine/in-world saves and notes remaining attestation work. An adapter must not invent Person standing, authority, or provenance merely because it can translate a foreign schema.
 
-This paradigm ensures that all state within Earthcall remains legible and manipulable. Since the foreign data must be explicitly mapped into Properties and Relations upon entry, the engine's Rete network (which monitors for changes) and Law ecosystem (which reacts to facts) can engage with the ingested data flawlessly. The external database remains outside the system's awareness, providing computational heavy-lifting offline, while its conclusions are brought into the light of the Earthcall simulation as fully-fledged, legible assertions authored by a First Mover.
+A useful integration review asks separately: **where is foreign computation performed; who authorizes its effect; which native facts are actually materialized; and which information remains external?** Only materialized native state is available to ordinary Law/Relation queries. A channel's external answer is not secretly an authored Relation until an authorized Law or other explicit operation makes it one.
