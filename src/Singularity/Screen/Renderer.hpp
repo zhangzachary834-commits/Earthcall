@@ -445,7 +445,7 @@ public:
     // world point through camera.viewport and must open the bracket in the same
     // space it projected into. Consistency is within a caller, and the unit is
     // whatever that caller picks against.
-    virtual void begin2D(uint32_t width, uint32_t height) = 0;
+    virtual void begin2D(uint32_t /*width*/, uint32_t /*height*/) = 0;
     virtual void end2D() = 0;
     virtual void drawTris2D(const std::vector<glm::vec2>& tris, const glm::vec4& color) = 0;
     virtual void drawLines2D(const std::vector<glm::vec2>& segments,
@@ -454,7 +454,7 @@ public:
     // An RGBA8 image blit into `rect` = {x0, y0, x1, y1} in screen space, tinted by
     // `tint`. Pixels are consumed during the call; callers regenerate them each
     // frame (the brush canvas), so backends upload per draw rather than caching.
-    virtual void drawImage2D(const uint8_t* rgba, uint32_t width, uint32_t height,
+    virtual void drawImage2D(const uint8_t* /*rgba*/, uint32_t /*width*/, uint32_t /*height*/,
                              const glm::vec4& rect, const glm::vec4& tint) = 0;
 
     // Irreducible Screen act: sample an authored field at physical framebuffer
@@ -476,11 +476,11 @@ public:
     // A backend that consumes RenderMaterial::albedoPixels directly rather than
     // holding GPU-side textures may return 0 — callers must treat 0 as "no handle
     // to keep", not as failure.
-    virtual TextureHandle uploadTexture(TextureHandle handle, const uint8_t* rgba,
-                                        uint32_t width, uint32_t height) = 0;
-    virtual TextureHandle uploadTextureRegion(TextureHandle handle, const uint8_t* rgba,
-                                        uint32_t texWidth, uint32_t texHeight,
-                                        uint32_t x, uint32_t y, uint32_t width, uint32_t height) { return handle; }
+    virtual TextureHandle uploadTexture(TextureHandle handle, const uint8_t* /*rgba*/,
+                                        uint32_t /*width*/, uint32_t /*height*/) = 0;
+    virtual TextureHandle uploadTextureRegion(TextureHandle handle, const uint8_t* /*rgba*/,
+                                        uint32_t /*texWidth*/, uint32_t /*texHeight*/,
+                                        uint32_t /*x*/, uint32_t /*y*/, uint32_t /*width*/, uint32_t /*height*/) { return handle; }
     virtual void releaseTexture(TextureHandle handle) = 0;
 
     // Readback the rendered framebuffer pixels as RGBA8.
