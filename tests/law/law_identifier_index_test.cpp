@@ -10,8 +10,12 @@
 // 4. Display name alone is NEVER treated as a unique identity key by LawManager::find.
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "Singularity/Core/EventBus.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include <cassert>
+#include <ctime>
+#include <vector>
 #include <iostream>
 #include <string>
 
@@ -110,6 +114,110 @@ int main() {
               "WebSocket-style Law lookup resolves an exact unique identifier");
         check(resolveSocketLaw("@law-gravity-preset") == lm.find("law-gravity-preset"),
               "WebSocket-style Law lookup resolves an @-prefixed unique identifier");
+    }
+
+
+    // ------------------------------------------------------------------
+    // 5. A drive resolves its subject and retained event participant on
+    //    later event-less ticks. Missing participants must not be invented.
+    // ------------------------------------------------------------------
+    std::cout << "\n[5] Drive-session indexed subject and event-object lookup\n";
+    {
+        Object subject, other;
+        bool subjectPresent = true, otherPresent = true;
+        Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+            if (subjectPresent) beings.push_back(&subject);
+            if (otherPresent) beings.push_back(&other);
+        });
+
+        LawManager drives;
+        drives.connectToEventBus();
+        auto law = drives.createLaw("indexed-event-object-drive", {&author});
+        law->setDrives(true);
+        law->setActionModel(ActionNode::set(
+            "@event.object.position.y", PropertyValue(19.0)));
+        const std::size_t alpha = drives.rete().addAlphaNode(
+            "type == indexed-drive", [](const FactPtr& fact) {
+                return fact->type == "indexed-drive";
+            });
+        drives.rete().bindLawToAlpha(law->getIdentifier(), alpha);
+
+        Universe::instance().setClock(1000.0, 0.1);
+        Core::EventBus::instance().publish(
+            ECA::Event{"indexed-drive", &subject, &other, std::time(nullptr)});
+        drives.tick();
+        check(drives.driveSessions().size() == 1, "event starts exactly one drive");
+        check(other.getPosition().y == 19.0f, "event action writes its object");
+
+        other.setPosition(glm::vec3(0.0f));
+        Universe::instance().setClock(1001.0, 0.1);
+        drives.tick();
+        check(other.getPosition().y == 19.0f,
+              "event object remains addressable on the next event-less tick");
+
+        otherPresent = false;
+        other.setPosition(glm::vec3(0.0f));
+        Universe::instance().setClock(1002.0, 0.1);
+        drives.tick();
+        check(other.getPosition().y == 0.0f,
+              "missing event object is not resolved from stale identity");
+
+        otherPresent = true;
+        Universe::instance().setClock(1003.0, 0.1);
+        drives.tick();
+        check(other.getPosition().y == 19.0f,
+              "restored event object resolves again by its identifier");
+
+        subjectPresent = false;
+        Universe::instance().setClock(1004.0, 0.1);
+        drives.tick();
+        check(drives.driveSessions().empty(),
+              "missing subject ends its drive session");
+        Universe::instance().setProvider(nullptr);
+    }
+
+    // ------------------------------------------------------------------
+    // 6. Duplicate identifiers are not a uniqueness guarantee. The first
+    //    being in the Universe snapshot wins, even for a drive originally
+    //    launched by a later being with the same identifier.
+    // ------------------------------------------------------------------
+    std::cout << "\n[6] Drive-session duplicate identifier first-match order\n";
+    {
+        Object first, second;
+        first.setObjectID("duplicate-drive-subject");
+        second.setObjectID("duplicate-drive-subject");
+        Universe::instance().setProvider([&](std::vector<Singular*>& beings) {
+            beings.push_back(&first);
+            beings.push_back(&second);
+        });
+
+        LawManager drives;
+        drives.connectToEventBus();
+        auto law = drives.createLaw("duplicate-id-drive", {&author});
+        law->setDrives(true);
+        law->setActionModel(ActionNode::set("position.y", PropertyValue(7.0)));
+        const std::size_t alpha = drives.rete().addAlphaNode(
+            "type == duplicate-drive", [](const FactPtr& fact) {
+                return fact->type == "duplicate-drive";
+            });
+        drives.rete().bindLawToAlpha(law->getIdentifier(), alpha);
+
+        Universe::instance().setClock(2000.0, 0.1);
+        Core::EventBus::instance().publish(
+            ECA::Event{"duplicate-drive", &second, nullptr, std::time(nullptr)});
+        drives.tick();
+        check(drives.driveSessions().size() == 1,
+              "duplicate-ID subject starts one drive");
+
+        first.setPosition(glm::vec3(0.0f));
+        second.setPosition(glm::vec3(0.0f));
+        Universe::instance().setClock(2001.0, 0.1);
+        drives.tick();
+        check(first.getPosition().y == 7.0f,
+              "first matching snapshot being receives the later drive tick");
+        check(second.getPosition().y == 0.0f,
+              "later duplicate does not override the first match");
+        Universe::instance().setProvider(nullptr);
     }
 
     std::cout << "\nSUCCESS — " << g_checks << " checks passed.\n";
