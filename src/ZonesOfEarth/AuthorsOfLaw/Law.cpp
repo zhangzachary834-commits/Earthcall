@@ -3636,12 +3636,27 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
     // live register. Two different Laws (including engine-owned First Movers)
     // must never append to the same lineage-scoped JSONL file.
     std::unordered_set<std::string> persistedLineages;
+    // Duplicate authored identifiers would otherwise be silently discarded by
+    // add(), including an authored Law that shadows an engine-owned First Mover.
+    // Reject these before replace-all can discard the previous live world.
+    std::unordered_set<std::string> persistedLawIds;
+    for (const auto& existing : _laws) {
+        if (existing && existing->isFirstMover())
+            persistedLawIds.insert(existing->getIdentifier());
+    }
     if (j.contains("laws")) {
         if (!j["laws"].is_array())
             throw std::invalid_argument("Invalid authored Laws array");
         for (const auto& savedLaw : j["laws"]) {
             if (!savedLaw.is_object())
                 throw std::invalid_argument("Invalid authored Law entry");
+            auto idIt = savedLaw.find("id");
+            if (idIt != savedLaw.end()) {
+                if (!idIt->is_string() || idIt->get<std::string>().empty())
+                    throw std::invalid_argument("Invalid authored Law identifier");
+                if (!persistedLawIds.insert(idIt->get<std::string>()).second)
+                    throw std::invalid_argument("Duplicate persisted Law identifier");
+            }
             auto it = savedLaw.find("durableHistoryLineage");
             if (it == savedLaw.end()) continue; // Legacy Law: fresh lineage on restore.
             if (!it->is_string() ||
