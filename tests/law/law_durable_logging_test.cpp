@@ -395,6 +395,48 @@ int main() {
                   "Missing First Mover lineage entry inherited stale history");
         }
 
+        // Reject collisions across authored Laws and engine-owned First Movers
+        // before replace-all can discard any live Law or change its history.
+        {
+            LawManager collisionManager;
+            auto authored = std::make_shared<Law>("Persisted collision witness");
+            authored->setLawIdentifier("collision-authored");
+            collisionManager.add(authored);
+            auto engine = std::make_shared<FirstMoverLaw>("Engine collision witness");
+            engine->setLawIdentifier("collision-engine");
+            collisionManager.add(engine);
+            const auto original = collisionManager.toJson();
+            check(original.at("laws").size() == 1,
+                  "Collision witness did not serialize its authored Law");
+            const std::string authoredHistory = authored->durableHistoryLineage();
+            const std::string engineHistory = engine->durableHistoryLineage();
+            const auto expectRejectedWithoutMutation = [&](const nlohmann::json& candidate,
+                                                           const std::string& why) {
+                bool rejected = false;
+                try { collisionManager.loadFromJson(candidate); }
+                catch (const std::invalid_argument&) { rejected = true; }
+                check(rejected && collisionManager.find("collision-authored") == authored.get() &&
+                      collisionManager.find("collision-engine") == engine.get() &&
+                      authored->durableHistoryLineage() == authoredHistory &&
+                      engine->durableHistoryLineage() == engineHistory,
+                      why);
+            };
+            auto duplicateAuthored = original;
+            auto copied = duplicateAuthored["laws"][0];
+            copied["id"] = "collision-authored-copy";
+            duplicateAuthored["laws"].push_back(copied);
+            expectRejectedWithoutMutation(duplicateAuthored,
+                "Duplicate authored Law histories were accepted or mutated live state");
+            auto crossKind = original;
+            crossKind["laws"][0]["durableHistoryLineage"] = engineHistory;
+            expectRejectedWithoutMutation(crossKind,
+                "Authored Law claimed engine First Mover history or mutated live state");
+            auto malformedAuthored = original;
+            malformedAuthored["laws"][0]["durableHistoryLineage"] = "../invalid";
+            expectRejectedWithoutMutation(malformedAuthored,
+                "Malformed authored history was rejected only after live mutation");
+        }
+
         // Exercise the public LawAuditLogger bridge with muted aggregate logging.
         auto& lawLogger = ECA::LawAuditLogger::instance();
         lawLogger.setLevel(ECA::LogLevel::Off);

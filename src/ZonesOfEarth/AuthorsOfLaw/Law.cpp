@@ -3622,14 +3622,31 @@ void LawManager::compileConditionsToRete(Law& law) {
 }
 
 void LawManager::loadFromJson(const nlohmann::json& j) {
-    // Preflight persisted engine-owned Law history before modifying the live
-    // register. First Movers are deliberately absent from the authored "laws"
-    // array, but their per-world durable lineage must survive save/load too.
+    // Reject conflicting persisted histories BEFORE replace-all mutates the
+    // live register. Two different Laws (including engine-owned First Movers)
+    // must never append to the same lineage-scoped JSONL file.
+    std::unordered_set<std::string> persistedLineages;
+    if (j.contains("laws")) {
+        if (!j["laws"].is_array())
+            throw std::invalid_argument("Invalid authored Laws array");
+        for (const auto& savedLaw : j["laws"]) {
+            if (!savedLaw.is_object())
+                throw std::invalid_argument("Invalid authored Law entry");
+            auto it = savedLaw.find("durableHistoryLineage");
+            if (it == savedLaw.end()) continue; // Legacy Law: fresh lineage on restore.
+            if (!it->is_string() ||
+                !validDurableHistoryLineage(it->get<std::string>()))
+                throw std::invalid_argument("Invalid authored Law history lineage");
+            if (!persistedLineages.insert(it->get<std::string>()).second)
+                throw std::invalid_argument("Duplicate persisted Law history lineage");
+        }
+    }
+    // First Movers are absent from authored "laws", but their persisted
+    // histories share the same uniqueness namespace.
     if (j.contains("firstMoverHistoryLineages")) {
         const auto& histories = j["firstMoverHistoryLineages"];
         if (!histories.is_object())
             throw std::invalid_argument("Invalid First Mover history lineage map");
-        std::unordered_set<std::string> seen;
         for (const auto& law : _laws) {
             if (!law || !law->isFirstMover()) continue;
             auto it = histories.find(law->getIdentifier());
@@ -3637,8 +3654,8 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
             if (!it->is_string() ||
                 !validDurableHistoryLineage(it->get<std::string>()))
                 throw std::invalid_argument("Invalid First Mover history lineage");
-            if (!seen.insert(it->get<std::string>()).second)
-                throw std::invalid_argument("Duplicate First Mover history lineage");
+            if (!persistedLineages.insert(it->get<std::string>()).second)
+                throw std::invalid_argument("Duplicate persisted Law history lineage");
         }
     }
     // Replace-all, like the world loader — EXCEPT first movers, whose truth
