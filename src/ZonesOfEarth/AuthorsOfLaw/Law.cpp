@@ -3683,6 +3683,13 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
                 throw std::invalid_argument("Duplicate persisted Law history lineage");
         }
     }
+    // Reserve every explicit authored Law identifier before constructing any
+    // legacy Law whose saved JSON omits "id". Otherwise an early legacy Law
+    // can mint a later entry's law-N identifier, and add() silently drops the
+    // explicitly identified Law. Reserve only after the full preflight passes.
+    for (const auto& reservedId : persistedLawIds) {
+        claimLawIdAtLeast(reservedId);
+    }
     // Replace-all, like the world loader — EXCEPT first movers, whose truth
     // lives in the engine and survives every load.
     std::vector<std::shared_ptr<Law>> firstMovers;

@@ -498,6 +498,33 @@ int main() {
                   "Explicit history fork did not permit independent registration");
         }
 
+        // Legacy authored JSON may omit an id. If that entry appears before
+        // an explicit future law-N id, the generated legacy id must not steal
+        // the explicit identity and cause the second Law to be dropped.
+        {
+            LawManager legacyIdManager;
+            Law idProbe("Legacy identifier reservation probe");
+            const std::string probeId = idProbe.getIdentifier();
+            check(probeId.rfind("law-", 0) == 0,
+                  "Legacy id reservation probe did not mint a numeric Law id");
+            const std::string explicitId =
+                "law-" + std::to_string(std::stoull(probeId.substr(4)) + 1);
+            nlohmann::json legacyIds = nlohmann::json::object();
+            legacyIds["laws"] = nlohmann::json::array();
+            legacyIds["laws"].push_back({{"name", "Legacy without identifier"}});
+            legacyIds["laws"].push_back(
+                {{"name", "Explicit future identifier"}, {"id", explicitId}});
+            legacyIdManager.loadFromJson(legacyIds);
+            const auto restored = legacyIdManager.toJson().at("laws");
+            std::set<std::string> ids;
+            for (const auto& lawJson : restored)
+                ids.insert(lawJson.at("id").get<std::string>());
+            check(restored.size() == 2 && ids.size() == 2 &&
+                  ids.count(explicitId) == 1 &&
+                  legacyIdManager.find(explicitId) != nullptr,
+                  "Missing-id legacy Law stole a persisted identifier or dropped a Law");
+        }
+
         // Exercise the public LawAuditLogger bridge with muted aggregate logging.
         auto& lawLogger = ECA::LawAuditLogger::instance();
         lawLogger.setLevel(ECA::LogLevel::Off);
