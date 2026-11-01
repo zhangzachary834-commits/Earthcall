@@ -73,7 +73,9 @@ bool DurableLogger::log(const std::string& identity, const std::string& type,
             auto inserted = _streams.try_emplace(identity);
             it = inserted.first;
             it->second.bytes = existingBytes;
-            it->second.file.open(path, std::ios::out | std::ios::app);
+            // Binary append preserves one-byte JSONL newlines on Windows as well as Unix.
+            // File-size budgets count serialized bytes, not text-mode CRLF expansion.
+            it->second.file.open(path, std::ios::out | std::ios::app | std::ios::binary);
         }
         if (!it->second.file.is_open() || !it->second.file.good()) {
             // A failed open must not poison this identity permanently.
