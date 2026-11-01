@@ -109,6 +109,11 @@ public:
 
     std::string getIdentifier() const override { return _lawId; }
 
+    // Opaque, persisted history lineage; unlike the authored Law identifier,
+    // it survives renames and ordinary save/load or Save As. An intentional
+    // fork must explicitly mint a new lineage rather than changing the name.
+    const std::string& durableHistoryLineage() const noexcept { return _durableHistoryLineage; }
+
     // Give an engine-instantiated law the stable slug law text names it by.
     //
     // setObjectID() is NOT this. Law inherits Object but overrides
@@ -435,6 +440,7 @@ private:
     void propSetDrives(const bool& v) { _drives = v; }
 
     std::string _lawId;
+    std::string _durableHistoryLineage;
     std::string _name;
     bool _enabled = true;
     int _authorityLevel = 0;

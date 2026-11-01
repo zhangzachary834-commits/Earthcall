@@ -300,6 +300,38 @@ int main() {
         check(fs::file_size(openCapPath) == DurableLogger::kMaxFileBytes,
               "Rejected open-stream append modified capped history");
 
+        // Identity contract before routing migration: author-facing Law IDs
+        // are reusable, but independent Laws must not share a history lineage.
+        Law lineageA("History lineage A");
+        Law lineageB("History lineage B");
+        lineageA.setLawIdentifier("same-author-facing-id");
+        lineageB.setLawIdentifier("same-author-facing-id");
+        const std::string lineageId = lineageA.durableHistoryLineage();
+        check(!lineageId.empty() && lineageId != lineageB.durableHistoryLineage(),
+              "Independent Laws with identical authored IDs share a history lineage");
+        const auto serializedLineage = lineageA.toJson();
+        check(serializedLineage.at("durableHistoryLineage") == lineageId,
+              "Law save omitted its durable-history lineage");
+        auto restoredLineage = Law::fromJson(serializedLineage);
+        check(restoredLineage->durableHistoryLineage() == lineageId,
+              "Law load changed a persisted history lineage");
+        lineageA.setLawIdentifier("renamed-author-facing-id");
+        check(lineageA.durableHistoryLineage() == lineageId,
+              "Renaming a Law split its durable-history lineage");
+        auto legacySave = serializedLineage;
+        legacySave.erase("durableHistoryLineage");
+        auto legacyRestored = Law::fromJson(legacySave);
+        check(legacyRestored->durableHistoryLineage() != lineageId,
+              "Legacy save silently claimed an existing lineage");
+        check(legacyRestored->toJson().contains("durableHistoryLineage"),
+              "Legacy save did not acquire a persistable new lineage");
+        auto malformedLineage = serializedLineage;
+        malformedLineage["durableHistoryLineage"] = "../untrusted";
+        bool rejectedMalformed = false;
+        try { (void)Law::fromJson(malformedLineage); }
+        catch (const std::invalid_argument&) { rejectedMalformed = true; }
+        check(rejectedMalformed, "Malformed persisted lineage was accepted");
+
         // Exercise the public LawAuditLogger bridge with muted aggregate logging.
         auto& lawLogger = ECA::LawAuditLogger::instance();
         lawLogger.setLevel(ECA::LogLevel::Off);

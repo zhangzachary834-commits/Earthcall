@@ -15,6 +15,9 @@
 #include <algorithm>
 #include <atomic>
 #include <cstdio>
+#include <random>
+#include <stdexcept>
+#include <string_view>
 #include <iterator>
 #include <optional>
 #include <unordered_set>
@@ -136,6 +139,39 @@ Law::Law(const std::string& name, const std::vector<Singular*>& authors)
 namespace {
 std::atomic<unsigned long long> g_nextLawId{1};
 
+// A new Law gets its own opaque 128-bit history lineage. This is NOT its
+// author-facing identifier, its world filename, or its Zone jurisdiction.
+// It is minted once at construction and restored from saved Law JSON.
+std::string mintDurableHistoryLineage() {
+    static constexpr char hex[] = "0123456789abcdef";
+    std::random_device entropy;
+    std::string lineage = "law-history-";
+    lineage.reserve(lineage.size() + 32);
+    for (int i = 0; i < 16; ++i) {
+        unsigned char byte = static_cast<unsigned char>(entropy());
+        if (i == 6) byte = static_cast<unsigned char>((byte & 0x0f) | 0x40); // v4
+        if (i == 8) byte = static_cast<unsigned char>((byte & 0x3f) | 0x80); // variant
+        lineage.push_back(hex[byte >> 4]);
+        lineage.push_back(hex[byte & 0x0f]);
+    }
+    return lineage;
+}
+
+bool validDurableHistoryLineage(const std::string& lineage) {
+    constexpr std::string_view prefix = "law-history-";
+    if (lineage.size() != prefix.size() + 32 ||
+        lineage.compare(0, prefix.size(), prefix) != 0) return false;
+    for (std::size_t i = prefix.size(); i < lineage.size(); ++i) {
+        const char c = lineage[i];
+        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return false;
+    }
+    return lineage[prefix.size() + 12] == '4' &&
+           (lineage[prefix.size() + 16] == '8' ||
+            lineage[prefix.size() + 16] == '9' ||
+            lineage[prefix.size() + 16] == 'a' ||
+            lineage[prefix.size() + 16] == 'b');
+}
+
 // A restored law id advances the fresh counter past itself — otherwise the
 // next authored law collides with a loaded one and LawManager::add silently
 // discards it (the register would "blur").
@@ -151,6 +187,7 @@ void claimLawIdAtLeast(const std::string& id) {
 
 void Law::initializeLawIdentity() {
     _lawId = "law-" + std::to_string(g_nextLawId.fetch_add(1));
+    _durableHistoryLineage = mintDurableHistoryLineage();
     nameGroupFormations();
 }
 
@@ -405,6 +442,15 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
         law->_lawId = j["id"].get<std::string>();
         law->nameGroupFormations();
         claimLawIdAtLeast(law->_lawId);   // fresh ids stay fresh after loads
+    }
+    // Legacy saves have no lineage: mint a fresh one, but NEVER infer that
+    // an unscoped identifier-keyed JSONL file belongs to it. Legacy history
+    // remains on disk for explicit provenance-aware migration.
+    if (j.contains("durableHistoryLineage")) {
+        if (!j["durableHistoryLineage"].is_string() ||
+            !validDurableHistoryLineage(j["durableHistoryLineage"].get<std::string>()))
+            throw std::invalid_argument("Invalid Law durable-history lineage");
+        law->_durableHistoryLineage = j["durableHistoryLineage"].get<std::string>();
     }
     law->setEnabled(j.value("enabled", true));
     // CLAMPED, deliberately. A save file is authored text like any other, and
@@ -726,6 +772,7 @@ nlohmann::json Law::toJson() const {
 
     nlohmann::json j{
         {"id", _lawId},
+        {"durableHistoryLineage", _durableHistoryLineage},
         {"name", _name},
         {"enabled", _enabled},
         {"authority", _authorityLevel},
