@@ -3726,18 +3726,23 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
         }
     }
 
-    // Restore the persisted per-world history of each engine-owned First Mover
-    // without serializing its engine authority or executable Law definition.
-    // Legacy worlds without this map retain a fresh, unclaimed lineage until
-    // their next save; no ambiguous identifier-keyed history is imported.
-    if (j.contains("firstMoverHistoryLineages")) {
-        const auto& histories = j["firstMoverHistoryLineages"];
-        for (const auto& law : _laws) {
-            if (!law || !law->isFirstMover()) continue;
-            auto it = histories.find(law->getIdentifier());
-            if (it != histories.end())
+    // Restore the persisted history of each engine-owned First Mover without
+    // deserializing its authority or executable definition. These engine Laws
+    // survive replace-all loads, so a legacy world (or missing map entry) must
+    // NOT inherit the previously loaded world's lineage. Mint a fresh,
+    // unclaimed history instead of attributing another world's records.
+    const nlohmann::json* histories = j.contains("firstMoverHistoryLineages")
+        ? &j["firstMoverHistoryLineages"] : nullptr;
+    for (const auto& law : _laws) {
+        if (!law || !law->isFirstMover()) continue;
+        if (histories) {
+            auto it = histories->find(law->getIdentifier());
+            if (it != histories->end()) {
                 law->_durableHistoryLineage = it->get<std::string>();
+                continue;
+            }
         }
+        law->forkDurableHistoryLineage();
     }
 
     // Re-apply the Person's first-mover gates onto the engine-owned survivors.

@@ -369,6 +369,30 @@ int main() {
             catch (const std::invalid_argument&) { rejectedEngine = true; }
             check(rejectedEngine && engineLaw->durableHistoryLineage() == engineLineage,
                   "Malformed First Mover lineage changed live world before rejection");
+
+            // The engine-owned Law object survives world changes. A legacy
+            // world has no saved lineage: it must not inherit the previous
+            // world's history merely because the same engine Law survives.
+            auto legacyEngine = savedEngine;
+            legacyEngine.erase("firstMoverHistoryLineages");
+            engineManager.loadFromJson(legacyEngine);
+            const std::string legacyLineage = engineLaw->durableHistoryLineage();
+            check(legacyLineage != engineLineage && engineLaw->isFirstMover(),
+                  "Legacy world inherited the previous First Mover history");
+            check(engineManager.toJson().at("firstMoverHistoryLineages")
+                      .at("engine-stable-law") == legacyLineage,
+                  "Fresh legacy First Mover lineage did not persist on save");
+            engineManager.loadFromJson(legacyEngine);
+            check(engineLaw->durableHistoryLineage() != legacyLineage,
+                  "Two independent legacy loads reused an unpersisted history");
+
+            // Partial maps must not preserve stale lineages for absent Laws.
+            auto missingEngine = savedEngine;
+            missingEngine["firstMoverHistoryLineages"].erase("engine-stable-law");
+            const std::string previousLineage = engineLaw->durableHistoryLineage();
+            engineManager.loadFromJson(missingEngine);
+            check(engineLaw->durableHistoryLineage() != previousLineage,
+                  "Missing First Mover lineage entry inherited stale history");
         }
 
         // Exercise the public LawAuditLogger bridge with muted aggregate logging.
