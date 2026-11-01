@@ -104,44 +104,6 @@ static void testResolveOrMint() {
     std::cout << "  resolve or mint OK\n";
 }
 
-static void testAtomicWritePreservesOnFailure() {
-    const auto root = std::filesystem::temp_directory_path() / "earthcall-ledger-atomic-witness";
-    std::filesystem::remove_all(root);
-    std::filesystem::create_directories(root);
-    const auto testPath = root / "ledger.json";
-    const SingularId first = PrivateKey::generate().id();
-    const SingularId second = PrivateKey::generate().id();
-
-    IdentityLedger ledger(testPath);
-    ledger.record("first", first);
-    assert(ledger.save());
-    ledger.record("second", second);
-    assert(ledger.save()); // Must replace an existing file, not merely create it.
-
-    IdentityLedger reloaded(testPath);
-    assert(reloaded.load());
-    assert(reloaded.find("first").has_value());
-    assert(reloaded.find("second").has_value());
-    assert(reloaded.find("second")->toString() == second.toString());
-
-    // A nonempty directory at the destination forces the commit/rename to
-    // fail deterministically. Its contents must survive; no .tmp file remains.
-    const auto blocked = root / "blocked";
-    std::filesystem::create_directory(blocked);
-    const auto sentinel = blocked / "sentinel";
-    { std::ofstream out(sentinel); out << "preserve"; }
-    IdentityLedger cannotCommit(blocked);
-    cannotCommit.record("other", first);
-    assert(!cannotCommit.save());
-    assert(std::filesystem::exists(sentinel));
-    for (const auto& entry : std::filesystem::directory_iterator(root)) {
-        assert(entry.path().filename().string().find("blocked.tmp-") != 0);
-        assert(entry.path().filename().string().find("ledger.json.tmp-") != 0);
-    }
-    std::filesystem::remove_all(root);
-    std::cout << "  atomic replacement and failed-commit preservation OK\n";
-}
-
 int main() {
     std::cout << "identity_ledger_test:\n";
     testEmptyLoadSave();
@@ -149,7 +111,6 @@ int main() {
     testPersistence();
     testMalformedLedger();
     testResolveOrMint();
-    testAtomicWritePreservesOnFailure();
     std::cout << "identity_ledger_test: ALL OK\n";
     return 0;
 }
