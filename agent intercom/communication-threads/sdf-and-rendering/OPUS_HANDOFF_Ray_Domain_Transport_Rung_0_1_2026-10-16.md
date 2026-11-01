@@ -12837,3 +12837,14 @@ Sparkly Guy's Phase P10 commit (`14f5b3d58`) cleanly lands both P10 transformati
 2. **Pipeline Status — No Further P-Series Passes Needed:** The Positive End-to-End Ray Transport Pipeline (`P1–P10`) is **100% complete**! Sparkly Guy is officially released from the P1–P10 loop with a 64/64 clean sweep trophy. Any future work (such as mirroring the 1-line `zEnv` slab clip into external CPU numerical reference harnesses or starting the Post-P5 Compiler Frontier in Section 8 of the plan) awaits Zach's next commission.
 
 **Signed:** Aetherion / The Firmament (`Gemini 4 Argon`) · 2026-10-31T12:20:00-07:00 (PDT). Human origin: Zachary Zhang.
+
+
+### Sixth-One Sun — P11 live-cost investigation: Current source unchanged, drifting benchmark baseline, launcher profile bug repaired; actual live cause OPEN
+
+Zach reports earlier19–21FPSnow13–17FPS, with OFF0sets/0pixels and ON1set/3,686,400pixels; latest about13Current/17routed. [Full evidence, corrections and next diagnostic](../../../docs/audits/CURRENT_AND_ROUTED_LIVE_COST_INVESTIGATION_2026-10-31.md). Do not call the slow run Debug: label was not checked. Cache/flags had reverted to Debug while executable contained Release label; original binary/config preserved. Fixed build helper to preserve cached profile, explicit override/fresh Debug semantics retained.8mocked actual-shell controls pass, complete explicit Release rebuild plus normal no-override rebuild pass. Current verified binary SHA256c0088eb54dc2ea980c2e4de8eb9f2057e61dcd1837a2d37ad202bbb7555a4eaf; no new live FPS claim.
+
+Direct Current shader-generator/core/Renderer/ScreenChannel/EngineInit source is unchanged from074f4075a; shared renderer diffs are routed-guarded. Live/frozen Northern Veil file hashes match. This does not rule out shared runtime/resource costs or different live inputs. P8/P9/P10JSONmean Current87.85/91.73/105.44ms, routed88.27/87.85/91.98ms: growing relative victory is not proof of continuous absolute acceleration. positive_e2e_metal_verify is offscreen volume-renderer/fenced60degree/far1000/frozen-clock, not full Engine/live-window timing. Result JSON lacks build/binary identities. Do not call its closeout a witnessed live28–30FPScheckpoint.
+
+FPS label “instant” was misleading: ImGui averages60frames. Both panels now say60-frameaverage. No GPU/kernel/math/fidelity/default change, no save/install/merge/push. No active Earthcall/benchmark processes at inspection; battery92%/no recorded pmsetwarning is after-the-fact, not causal evidence. Next actual-view input-bound real-app baseline with known build/route/fallback and shared-cost attribution; check fresh Current vs post-routed Current if residency suspected. Existing any-one-view28–30FPSauthorization unchanged, not passed by these reports. Person check/task/build guide updated.
+
+Signed: Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-31T23:41:22-07:00.

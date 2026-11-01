@@ -104,7 +104,7 @@ void renderDeveloperToolsContent(GLFWwindow* window, Core::Engine* engine) {
                             &screen->volumeRoutedTransportEnabled);
             ImGui::Text("Requested renderer: %s",
                         screen->volumeRoutedTransportEnabled ? "Routed with Current fallback" : "Current");
-            ImGui::Text("Frame rate: %.1f FPS", ImGui::GetIO().Framerate);
+            ImGui::Text("Frame rate (60-frame avg): %.1f FPS", ImGui::GetIO().Framerate);
             // Compile-time executable metadata, not authored world state.
 #ifdef NDEBUG
             ImGui::TextDisabled("Build: Release-style (NDEBUG)");

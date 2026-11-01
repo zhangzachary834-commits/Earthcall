@@ -17,7 +17,16 @@ BUILD="$ROOT/build"
 JOBS="${EARTHCALL_JOBS:-8}"
 
 configure() {
-  cmake -S "$ROOT" -B "$BUILD" -DCMAKE_BUILD_TYPE="${EARTHCALL_BUILD_TYPE:-Debug}" \
+  # The normal .command launcher calls this without an override. Preserve the
+  # configured profile so launching a Release build cannot silently select Debug.
+  # An explicit EARTHCALL_BUILD_TYPE still wins; a new build keeps the Debug default.
+  local earthcall_build_type="${EARTHCALL_BUILD_TYPE:-}"
+  if [[ -z "$earthcall_build_type" && -f "$BUILD/CMakeCache.txt" ]]; then
+    earthcall_build_type="$(sed -n 's/^CMAKE_BUILD_TYPE:STRING=//p' "$BUILD/CMakeCache.txt")"
+  fi
+  earthcall_build_type="${earthcall_build_type:-Debug}"
+  echo "Earthcall build profile: $earthcall_build_type"
+  cmake -S "$ROOT" -B "$BUILD" -DCMAKE_BUILD_TYPE="$earthcall_build_type" \
     -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
     -DOPENSSL_ROOT_DIR="$ROOT/local_deps/openssl-3.0.22" \
     -DOPENSSL_INCLUDE_DIR="$ROOT/local_deps/openssl-3.0.22/include" \
