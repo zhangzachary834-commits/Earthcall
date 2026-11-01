@@ -82,9 +82,9 @@ int main() {
     check(near3(Rendering::lightSpecularRadiance(state), glm::vec3(1.0f, 0.5f, 0.25f)),
           "specular renderer radiance is color * intensity * authored specular coefficient");
 
-    // Hydrate the actual authored Sun Zone spatial root rather than rebuilding
-    // a lookalike AST in test code. This witnesses the save -> FieldNode ->
-    // OntoMath path that EngineRender consumes.
+    // Hydrate the actual authored Sun Zone primary solar field (falling back
+    // to spatialRoot for legacy saves), rather than rebuilding a lookalike AST.
+    // This witnesses the save -> FieldNode -> OntoMath renderer path.
     {
         namespace fs = std::filesystem;
         const fs::path repoRoot = fs::path(__FILE__).parent_path().parent_path().parent_path();
@@ -93,23 +93,38 @@ int main() {
 
         nlohmann::json sun;
         if (in) in >> sun;
-        check(sun.contains("spatialRoot"), "Sun save carries a spatial root");
+        const bool hasSpatialFields =
+            sun.contains("spatialFields") && sun["spatialFields"].is_array() &&
+            !sun["spatialFields"].empty();
+        const nlohmann::json* targetFieldJson = nullptr;
+        if (hasSpatialFields) {
+            targetFieldJson = &sun["spatialFields"][0];
+        } else if (sun.contains("spatialRoot")) {
+            targetFieldJson = &sun["spatialRoot"];
+        }
+        check(targetFieldJson && targetFieldJson->is_object(),
+              "Sun save carries a valid authored spatial field");
+        if (!targetFieldJson || !targetFieldJson->is_object()) return 1;
+        if (hasSpatialFields) {
+            check(targetFieldJson->value("id", "") == "sun.citadel.solar-radiance",
+                  "Sun primary spatial field is the authored solar-radiance source");
+        }
 
         const bool hasCanonicalAstKey =
-            sun.contains("spatialRoot") && sun["spatialRoot"].contains("field") &&
-            sun["spatialRoot"]["field"].contains("astDefinition");
+            targetFieldJson->contains("field") &&
+            (*targetFieldJson)["field"].contains("astDefinition");
         const bool hasIgnoredAstKey =
-            sun.contains("spatialRoot") && sun["spatialRoot"].contains("field") &&
-            sun["spatialRoot"]["field"].contains("ast");
+            targetFieldJson->contains("field") &&
+            (*targetFieldJson)["field"].contains("ast");
         check(hasCanonicalAstKey,
               "Sun save uses ScalarField's canonical astDefinition serialization key");
         check(!hasIgnoredAstKey,
               "Sun save does not use the ignored noncanonical ast key");
 
         geom::FieldNode hydrated("sun.light-field.test");
-        if (sun.contains("spatialRoot")) hydrated.applyJson(sun["spatialRoot"]);
+        hydrated.applyJson(*targetFieldJson);
 
-        check(hydrated.field != nullptr, "Sun spatial root hydrates a scalar field");
+        check(hydrated.field != nullptr, "Sun primary spatial field hydrates a scalar field");
         check(hydrated.field &&
               hydrated.field->mode == OntoMath::ScalarField::EvaluationMode::AST,
               "Sun scalar field hydrates in AST mode");
@@ -118,7 +133,7 @@ int main() {
 
         Rendering::AuthorableLightState hydratedLight;
         check(Rendering::readAuthorableLight(hydrated, hydratedLight) && hydratedLight.source,
-              "hydrated Sun spatial root retains authored light.source");
+              "hydrated Sun primary spatial field retains authored light.source");
 
         auto eval = [&](double x, double y, double z, double t) -> double {
             if (!hydrated.field) return -1.0;
