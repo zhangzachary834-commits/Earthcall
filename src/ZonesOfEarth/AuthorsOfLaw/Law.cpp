@@ -3717,6 +3717,29 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
         return Identity::FirstMoverRegister::instance().authorFor(id);
     };
 
+    // Rebind surviving First Movers BEFORE registering authored Laws. Otherwise
+    // a stale lineage from the previous world can falsely collide with an
+    // incoming authored Law, even when the saved world assigns distinct
+    // histories to both. Preflight above validates their persisted uniqueness.
+    // Restore the persisted history of each engine-owned First Mover without
+    // deserializing its authority or executable definition. These engine Laws
+    // survive replace-all loads, so a legacy world (or missing map entry) must
+    // NOT inherit the previously loaded world's lineage. Mint a fresh,
+    // unclaimed history instead of attributing another world's records.
+    const nlohmann::json* histories = j.contains("firstMoverHistoryLineages")
+        ? &j["firstMoverHistoryLineages"] : nullptr;
+    for (const auto& law : _laws) {
+        if (!law || !law->isFirstMover()) continue;
+        if (histories) {
+            auto it = histories->find(law->getIdentifier());
+            if (it != histories->end()) {
+                law->_durableHistoryLineage = it->get<std::string>();
+                continue;
+            }
+        }
+        law->forkDurableHistoryLineage();
+    }
+
     if (j.contains("laws")) {
         for (const auto& lj : j["laws"]) {
             auto law = Law::fromJson(lj);
@@ -3751,25 +3774,6 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
                 bindTrigger(it.key(), type.get<std::string>());
             }
         }
-    }
-
-    // Restore the persisted history of each engine-owned First Mover without
-    // deserializing its authority or executable definition. These engine Laws
-    // survive replace-all loads, so a legacy world (or missing map entry) must
-    // NOT inherit the previously loaded world's lineage. Mint a fresh,
-    // unclaimed history instead of attributing another world's records.
-    const nlohmann::json* histories = j.contains("firstMoverHistoryLineages")
-        ? &j["firstMoverHistoryLineages"] : nullptr;
-    for (const auto& law : _laws) {
-        if (!law || !law->isFirstMover()) continue;
-        if (histories) {
-            auto it = histories->find(law->getIdentifier());
-            if (it != histories->end()) {
-                law->_durableHistoryLineage = it->get<std::string>();
-                continue;
-            }
-        }
-        law->forkDurableHistoryLineage();
     }
 
     // Re-apply the Person's first-mover gates onto the engine-owned survivors.

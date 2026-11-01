@@ -393,6 +393,26 @@ int main() {
             engineManager.loadFromJson(missingEngine);
             check(engineLaw->durableHistoryLineage() != previousLineage,
                   "Missing First Mover lineage entry inherited stale history");
+
+            // The previous world's live First Mover lineage is not a member
+            // of the incoming world's persisted history namespace. It must be
+            // rebound before authored Law registration checks uniqueness.
+            const std::string staleLiveFirstMoverLineage =
+                engineLaw->durableHistoryLineage();
+            check(staleLiveFirstMoverLineage != engineLineage,
+                  "Cross-world registration witness needs distinct histories");
+            auto incomingWorld = savedEngine;
+            Law incomingAuthored("Incoming world authored Law");
+            incomingAuthored.setLawIdentifier("incoming-world-authored");
+            auto incomingLawJson = incomingAuthored.toJson();
+            incomingLawJson["durableHistoryLineage"] = staleLiveFirstMoverLineage;
+            incomingWorld["laws"].push_back(incomingLawJson);
+            engineManager.loadFromJson(incomingWorld);
+            check(engineLaw->durableHistoryLineage() == engineLineage &&
+                  engineManager.find("incoming-world-authored") != nullptr &&
+                  engineManager.find("incoming-world-authored")->durableHistoryLineage() ==
+                      staleLiveFirstMoverLineage,
+                  "Stale live First Mover lineage blocked a valid incoming world");
         }
 
         // Reject collisions across authored Laws and engine-owned First Movers
