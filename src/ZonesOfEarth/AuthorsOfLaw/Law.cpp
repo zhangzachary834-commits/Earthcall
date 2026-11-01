@@ -191,6 +191,12 @@ void Law::initializeLawIdentity() {
     nameGroupFormations();
 }
 
+void Law::forkDurableHistoryLineage() {
+    // Explicit authored fork: preserve the original Law's history, but do not
+    // claim its records as the new Law's. Save As without a fork retains lineage.
+    _durableHistoryLineage = mintDurableHistoryLineage();
+}
+
 void Law::setLawIdentifier(const std::string& id) {
     if (id.empty()) return;
     _lawId = id;
@@ -565,7 +571,7 @@ Law::ApplicationResult Law::applyToImpl(
             {"targetId", target.getIdentifier()},
             {"result", "ConditionsFailed"}
         };
-        ECA::LawAuditLogger::instance().logForLaw(getIdentifier(), "LAW", message, details);
+        ECA::LawAuditLogger::instance().logForLaw(durableHistoryLineage(), "LAW", message, details);
         if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
             ECA::LawAuditLogger::instance().log("LAW", message, details);
         }
@@ -578,7 +584,7 @@ Law::ApplicationResult Law::applyToImpl(
             {"targetId", target.getIdentifier()},
             {"result", "NoAction"}
         };
-        ECA::LawAuditLogger::instance().logForLaw(getIdentifier(), "LAW", message, details);
+        ECA::LawAuditLogger::instance().logForLaw(durableHistoryLineage(), "LAW", message, details);
         if (ECA::LawAuditLogger::instance().level() == ECA::LawAuditLogger::Level::Verbose) {
             ECA::LawAuditLogger::instance().log("LAW", message, details);
         }
@@ -681,7 +687,7 @@ Law::ApplicationResult Law::applyToImpl(
                 ECA::LawAuditLogger::instance().log("LAW", message, details);
             }
             ECA::LawAuditLogger::instance().logForLaw(
-                getIdentifier(), "LAW", message, details);
+                durableHistoryLineage(), "LAW", message, details);
         }
     }
     // Bounded memory: a WhileTrue law applies every tick — the log is a
@@ -2241,7 +2247,13 @@ void LawManager::syncProphetic() {
             {"why", finding.why},
             {"selfImpossible", finding.selfImpossible}
         };
-        ECA::LawAuditLogger::instance().logForLaw(finding.lawId, "LAW", message, details);
+        // The prophetic index reports the authored id. Resolve its live Law
+        // before writing; a stale finding must never create an ambiguous
+        // identifier-keyed history file.
+        if (Law* sourceLaw = find(finding.lawId)) {
+            ECA::LawAuditLogger::instance().logForLaw(
+                sourceLaw->durableHistoryLineage(), "LAW", message, details);
+        }
         if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
             ECA::LawAuditLogger::instance().log("LAW", message, details);
         }

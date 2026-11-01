@@ -318,6 +318,14 @@ int main() {
         lineageA.setLawIdentifier("renamed-author-facing-id");
         check(lineageA.durableHistoryLineage() == lineageId,
               "Renaming a Law split its durable-history lineage");
+        auto forkedLineage = Law::fromJson(serializedLineage);
+        forkedLineage->forkDurableHistoryLineage();
+        check(forkedLineage->durableHistoryLineage() != lineageId &&
+              forkedLineage->getIdentifier() == "same-author-facing-id",
+              "Explicit Law fork retained its source history or changed authored ID");
+        check(forkedLineage->toJson().at("durableHistoryLineage") ==
+                  forkedLineage->durableHistoryLineage(),
+              "Explicitly forked lineage did not persist");
         auto legacySave = serializedLineage;
         legacySave.erase("durableHistoryLineage");
         auto legacyRestored = Law::fromJson(legacySave);
@@ -355,12 +363,13 @@ int main() {
             ActionNode::set("durable-applied-sentinel", PropertyValue(1.0)));
         check(appliedLaw.applyTo(appliedTarget) == Law::ApplicationResult::Applied,
               "Real Law Applied witness did not execute");
-        const auto appliedEntries = readEntries(
-            sandbox.root / "logs" / "laws" / encoded("durable-applied-payload"));
+        const auto appliedPath = sandbox.root / "logs" / "laws" /
+                                 encoded(appliedLaw.durableHistoryLineage());
+        const auto appliedEntries = readEntries(appliedPath);
         check(appliedEntries.size() == 1,
               "Applied path did not persist exactly one per-Law event");
         const auto& appliedEntry = appliedEntries.front();
-        check(appliedEntry.at("identity") == "durable-applied-payload" &&
+        check(appliedEntry.at("identity") == appliedLaw.durableHistoryLineage() &&
               appliedEntry.at("type") == "LAW" &&
               appliedEntry.at("message").get<std::string>().find("SUCCESS") != std::string::npos,
               "Applied durable event identity/type/success message changed");
@@ -373,6 +382,41 @@ int main() {
               !appliedDetails.at("nodes").empty() &&
               appliedDetails.at("nodes")[0].at("wrote") == true,
               "Applied durable event lost its shared node-level payload");
+        // A second Law with the same authored ID must write a different file.
+        // Renaming the first Law must continue its original lineage.
+        Law otherApplied("Independent same-ID Law", std::vector<Singular*>{&appliedAuthor});
+        otherApplied.setLawIdentifier("durable-applied-payload");
+        otherApplied.setScope(Law::Scope::Subject);
+        otherApplied.setConditionModel(
+            ConditionNode::comparePaths("x", ConditionNode::Op::Gt, "y"));
+        otherApplied.setActionModel(
+            ActionNode::set("other-durable-sentinel", PropertyValue(2.0)));
+        check(otherApplied.applyTo(appliedTarget) == Law::ApplicationResult::Applied,
+              "Independent same-ID Law did not apply");
+        const auto otherPath = sandbox.root / "logs" / "laws" /
+                               encoded(otherApplied.durableHistoryLineage());
+        check(otherPath != appliedPath && readEntries(otherPath).size() == 1,
+              "Same authored Law ID mixed two distinct durable histories");
+        appliedLaw.setLawIdentifier("durable-applied-renamed");
+        check(appliedLaw.applyTo(appliedTarget) == Law::ApplicationResult::Applied,
+              "Renamed Law did not apply");
+        const auto renamedEntries = readEntries(appliedPath);
+        check(renamedEntries.size() == 2 &&
+              renamedEntries[1].at("identity") == appliedLaw.durableHistoryLineage() &&
+              renamedEntries[1].at("details").at("lawId") == "durable-applied-renamed",
+              "Law rename fragmented its durable history");
+        // Existing identifier-keyed files are legacy evidence. Never silently
+        // append to, truncate, or claim them as lineage-scoped history.
+        const auto legacyPath = sandbox.root / "logs" / "laws" /
+                                encoded("durable-applied-payload");
+        check(!fs::exists(legacyPath),
+              "Lineage routing unexpectedly created a legacy identifier file");
+        { DurableLogger legacy("laws", sandbox.root / "logs");
+          check(legacy.log("durable-applied-payload", "LAW", "legacy sentinel"),
+                "Cannot seed legacy history witness"); }
+        check(readEntries(legacyPath).size() == 1 &&
+              readEntries(appliedPath).size() == 2,
+              "Legacy history was silently attributed to a new lineage");
 
         // Synthetic high-frequency ConditionsFailed bridge benchmark. This is
         // a diagnostic measurement, not a machine-independent pass threshold.
@@ -409,6 +453,7 @@ int main() {
         refusalLaw.setScope(Law::Scope::Subject);
         refusalLaw.setConditionModel(ConditionNode::identity("never-matching-target"));
         refusalLaw.setActionModel(ActionNode::set("unused", PropertyValue(1.0)));
+        const std::string refusalLineage = refusalLaw.durableHistoryLineage();
         constexpr int kRealRefusals = 512;
         const auto realStart = std::chrono::steady_clock::now();
         for (int i = 0; i < kRealRefusals; ++i) {
@@ -430,23 +475,26 @@ int main() {
         // This is not a pure I/O subtraction: the capped path still checks the
         // filesystem and returns before JSON serialization, timestamp and flush.
         const std::string noAppendId = "durable-refusal-noappend";
-        check(noAppendId.size() == std::string("durable-refusal-workload").size(),
-              "Refusal comparison identity lengths differ");
-        const auto noAppendPath = sandbox.root / "logs" / "laws" / encoded(noAppendId);
+        Law cappedRefusalLaw("Capped refusal control", std::vector<Singular*>{&refusalAuthor});
+        cappedRefusalLaw.setLawIdentifier(noAppendId);
+        cappedRefusalLaw.setScope(Law::Scope::Subject);
+        cappedRefusalLaw.setConditionModel(ConditionNode::identity("never-matching-target"));
+        cappedRefusalLaw.setActionModel(ActionNode::set("unused", PropertyValue(1.0)));
+        const auto noAppendPath = sandbox.root / "logs" / "laws" /
+                                  encoded(cappedRefusalLaw.durableHistoryLineage());
         fs::create_directories(noAppendPath.parent_path());
         {
             std::ofstream seed(noAppendPath, std::ios::binary);
             check(seed.good(), "Cannot seed refusal no-append diagnostic");
         }
         fs::resize_file(noAppendPath, DurableLogger::kMaxFileBytes);
-        refusalLaw.setLawIdentifier(noAppendId);
         const auto unconfirmedBefore = lawLogger.unconfirmedDurableAppendCount();
         // Prime the first failure warning outside the timed region.
-        check(refusalLaw.applyTo(refusalTarget) == Law::ApplicationResult::ConditionsFailed,
+        check(cappedRefusalLaw.applyTo(refusalTarget) == Law::ApplicationResult::ConditionsFailed,
               "Capped-file control did not exercise the same Law refusal");
         const auto noAppendStart = std::chrono::steady_clock::now();
         for (int i = 0; i < kRealRefusals; ++i) {
-            check(refusalLaw.applyTo(refusalTarget) == Law::ApplicationResult::ConditionsFailed,
+            check(cappedRefusalLaw.applyTo(refusalTarget) == Law::ApplicationResult::ConditionsFailed,
                   "Capped-file control unexpectedly changed Law result");
         }
         const auto noAppendStop = std::chrono::steady_clock::now();
@@ -457,7 +505,6 @@ int main() {
             noAppendStop - noAppendStart).count() / kRealRefusals;
         check(fs::file_size(noAppendPath) == DurableLogger::kMaxFileBytes,
               "Capped-file diagnostic modified historical bytes");
-        refusalLaw.setLawIdentifier("durable-refusal-workload");
         std::cout << std::fixed << std::setprecision(2)
                   << "durable logging same-Law append-cost diagnostic: "
                   << realMicros << " us/refusal with confirmed append+flush, "
@@ -469,6 +516,7 @@ int main() {
         // stale candidates; LawManager must recheck and record real refusals.
         // Report observed frequency and wall time, not an invented frame budget.
         std::size_t tickRefusals = 0;
+        std::string tickLineage;
         constexpr int kTickTargets = 32;
         constexpr int kTickSamples = 8;
         double tickMs = 0.0;
@@ -497,6 +545,7 @@ int main() {
                 auto tickLaw = manager.createLaw(
                     "Durable tick refusal workload", "tick-refusal-workload", {&tickAuthor});
                 check(static_cast<bool>(tickLaw), "Tick benchmark Law registration failed");
+                tickLineage = tickLaw->durableHistoryLineage();
                 tickLaw->setActivation(Law::Activation::WhileTrue);
                 tickLaw->setConditionModel(
                     ConditionNode::comparePaths("x", ConditionNode::Op::Gt, "y"));
@@ -527,15 +576,7 @@ int main() {
             // all 256 appends are intentionally unconfirmed and must be
             // observable. It is not an acceptable production suppression mode.
             const std::string cappedTickId = "tick-refusal-noappend";
-            check(cappedTickId.size() == std::string("tick-refusal-workload").size(),
-                  "Tick replay Law identity lengths differ");
-            const auto cappedTickPath = sandbox.root / "logs" / "laws" / encoded(cappedTickId);
-            fs::create_directories(cappedTickPath.parent_path());
-            {
-                std::ofstream seed(cappedTickPath, std::ios::binary);
-                check(seed.good(), "Cannot seed capped tick replay");
-            }
-            fs::resize_file(cappedTickPath, DurableLogger::kMaxFileBytes);
+            fs::path cappedTickPath;
             for (const auto& target : tickTargets) {
                 target->setDynamicProperty("y", PropertyValue(0.0));
                 target->setDynamicProperty("tick-sentinel", PropertyValue(0.0));
@@ -546,6 +587,12 @@ int main() {
                 auto cappedLaw = cappedManager.createLaw(
                     "Durable tick capped replay", cappedTickId, {&tickAuthor});
                 check(static_cast<bool>(cappedLaw), "Capped tick Law registration failed");
+                cappedTickPath = sandbox.root / "logs" / "laws" /
+                                 encoded(cappedLaw->durableHistoryLineage());
+                fs::create_directories(cappedTickPath.parent_path());
+                { std::ofstream seed(cappedTickPath, std::ios::binary);
+                  check(seed.good(), "Cannot seed capped tick replay"); }
+                fs::resize_file(cappedTickPath, DurableLogger::kMaxFileBytes);
                 cappedLaw->setActivation(Law::Activation::WhileTrue);
                 cappedLaw->setConditionModel(
                     ConditionNode::comparePaths("x", ConditionNode::Op::Gt, "y"));
@@ -570,7 +617,7 @@ int main() {
             Universe::instance().setProvider(nullptr);
         }
         const auto tickLog = sandbox.root / "logs" / "laws" /
-                             encoded("tick-refusal-workload");
+                             encoded(tickLineage);
         if (fs::exists(tickLog)) {
             for (const auto& entry : readEntries(tickLog)) {
                 if (entry.contains("details") &&
@@ -598,7 +645,7 @@ int main() {
         auto integrated = readEntries(sandbox.root / "logs" / "laws" / encoded("integration"));
         check(readEntries(sandbox.root / "logs" / "laws" / encoded("bench-law")).size() == kHotEvents,
               "High-frequency durable event count mismatch");
-        check(readEntries(sandbox.root / "logs" / "laws" / encoded("durable-refusal-workload")).size() == kRealRefusals,
+        check(readEntries(sandbox.root / "logs" / "laws" / encoded(refusalLineage)).size() == kRealRefusals,
               "Real Law ConditionsFailed durable count mismatch");
         check(integrated.size() == 1 &&
               integrated[0].at("message") == "durable with aggregate Off",

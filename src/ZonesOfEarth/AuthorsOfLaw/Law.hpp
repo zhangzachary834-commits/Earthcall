@@ -113,6 +113,9 @@ public:
     // it survives renames and ordinary save/load or Save As. An intentional
     // fork must explicitly mint a new lineage rather than changing the name.
     const std::string& durableHistoryLineage() const noexcept { return _durableHistoryLineage; }
+    // Explicitly fork durable history after copying/restoring a Law. A rename
+    // or ordinary Save As must NOT call this; both preserve the same lineage.
+    void forkDurableHistoryLineage();
 
     // Give an engine-instantiated law the stable slug law text names it by.
     //
