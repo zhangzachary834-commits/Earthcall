@@ -456,6 +456,28 @@ int main() {
             expectRejectedWithoutMutation(malformedAuthored,
                 "Malformed authored history was rejected only after live mutation");
 
+            // Distinct histories are not enough if two authored Laws claim
+            // the same authored identifier: add() would silently drop one.
+            auto duplicateIdWorld = original;
+            auto independentLaw = std::make_shared<Law>("Independent history, duplicate id");
+            auto duplicateIdLaw = independentLaw->toJson();
+            duplicateIdLaw["id"] = "collision-authored";
+            duplicateIdWorld["laws"].push_back(duplicateIdLaw);
+            expectRejectedWithoutMutation(duplicateIdWorld,
+                "Duplicate authored identifier silently discarded a Law");
+
+            // Authored JSON cannot shadow an engine-owned First Mover even
+            // when its lineage is different from the First Mover's.
+            auto shadowedFirstMover = original;
+            shadowedFirstMover["laws"][0]["id"] = "collision-engine";
+            expectRejectedWithoutMutation(shadowedFirstMover,
+                "Authored identifier shadowed an engine-owned First Mover");
+
+            auto malformedAuthoredId = original;
+            malformedAuthoredId["laws"][0]["id"] = 42;
+            expectRejectedWithoutMutation(malformedAuthoredId,
+                "Malformed authored identifier mutated live world before rejection");
+
             // Persisted preflight alone is insufficient: a caller can restore
             // one Law, rename its authored ID, then register it beside its
             // source without passing through loadFromJson(). Fail closed and
