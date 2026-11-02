@@ -1,3 +1,5 @@
+Zach: BROOOOOOOOOOOO CLAWDS, DO NOT READ THE ENTIRE OPUS_HANDOFF FILE THAT IS A MASSIVE 13k LINE BIG CHUNGUS AND U WILL GO INTO SYSTEMS FAILURE MODE IF U TRY READING IT!!!!!!
+
 # CLAWD / Ultrareview Pre-Merge Hardening Handoff — Northern Veil Ray Transport
 
 **Date:** 2026-11-02  
@@ -856,3 +858,6 @@ The intended end state is:
 - Ultrareview findings have been triaged and closed or explicitly deferred with scope.
 
 Then the branch is ready to cross from research campaign into Earthcall.
+
+____
+Zach: BROOOOOOOOOOOO CLAWDS, DO NOT READ THE ENTIRE OPUS_HANDOFF FILE THAT IS A MASSIVE 13k LINE BIG CHUNGUS AND U WILL GO INTO SYSTEMS FAILURE MODE IF U TRY READING IT!!!!!!
