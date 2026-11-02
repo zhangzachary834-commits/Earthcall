@@ -5,8 +5,99 @@
 #include "Singularity/Screen/WebGPU/VolumeRoutedKernels.hpp"
 #include <cstring>
 #include <limits>
+#include <cctype>
+#include <algorithm>
 namespace kernel_routed_detail {
 inline bool replace(std::string& s,const std::string& a,const std::string& b){auto p=s.find(a);if(p==std::string::npos||s.find(a,p+a.size())!=std::string::npos)return false;s.replace(p,a.size(),b);return true;}
+inline std::string extractFunctionBody(const std::string& src, const std::string& name) {
+    const std::string tag = "fn " + name + "(";
+    auto p = src.find(tag);
+    if (p == std::string::npos) return "";
+    auto brace = src.find('{', p);
+    if (brace == std::string::npos) return "";
+    int depth = 0;
+    for (size_t i = brace; i < src.size(); ++i) {
+        if (src[i] == '{') ++depth;
+        else if (src[i] == '}') {
+            --depth;
+            if (depth == 0) return src.substr(brace, i - brace + 1);
+        }
+    }
+    return "";
+}
+inline bool checkEvaluatorsDeduplicatable(const std::string& source, std::vector<uint32_t>& sharedGroups) {
+    for (int i = 0; i < 4; ++i) {
+        const auto n = std::to_string(i);
+        if (source.find("fn volumeDensityEval_" + n + "(") == std::string::npos) return false;
+        if (source.find("fn volumeExtinctionEval_" + n + "(") == std::string::npos) return false;
+    }
+    auto norm = [](std::string s, int idx) {
+        if (idx == 0) return s;
+        const std::string idxStr = std::to_string(idx);
+        const std::string sFrom = "volumeShared_" + idxStr + "_";
+        size_t p = 0;
+        while ((p = s.find(sFrom, p)) != std::string::npos) {
+            s.replace(p, sFrom.size(), "volumeShared_0_");
+            p += 15;
+        }
+        const std::string gFrom = "g_volumeShared_" + idxStr + "_";
+        p = 0;
+        while ((p = s.find(gFrom, p)) != std::string::npos) {
+            s.replace(p, gFrom.size(), "g_volumeShared_0_");
+            p += 17;
+        }
+        const std::string dFrom = "volumeDensityEval_" + idxStr;
+        p = 0;
+        while ((p = s.find(dFrom, p)) != std::string::npos) {
+            s.replace(p, dFrom.size(), "volumeDensityEval_0");
+            p += 19;
+        }
+        const std::string eFrom = "volumeExtinctionEval_" + idxStr;
+        p = 0;
+        while ((p = s.find(eFrom, p)) != std::string::npos) {
+            s.replace(p, eFrom.size(), "volumeExtinctionEval_0");
+            p += 22;
+        }
+        return s;
+    };
+    const std::string baseDensity = extractFunctionBody(source, "volumeDensityEval_0");
+    const std::string baseExtinction = extractFunctionBody(source, "volumeExtinctionEval_0");
+    const std::string baseSharedEval = extractFunctionBody(source, "volumeShared_0_Eval");
+    if (baseDensity.empty() || baseExtinction.empty()) return false;
+    for (int i = 1; i < 4; ++i) {
+        const auto n = std::to_string(i);
+        if (norm(extractFunctionBody(source, "volumeDensityEval_" + n), i) != baseDensity) return false;
+        if (norm(extractFunctionBody(source, "volumeExtinctionEval_" + n), i) != baseExtinction) return false;
+        if (!baseSharedEval.empty()) {
+            if (norm(extractFunctionBody(source, "volumeShared_" + n + "_Eval"), i) != baseSharedEval) return false;
+        }
+    }
+    sharedGroups.clear();
+    const std::string gPrefix = "g_volumeShared_0_G";
+    size_t pos = 0;
+    while ((pos = source.find(gPrefix, pos)) != std::string::npos) {
+        pos += gPrefix.size();
+        size_t end = pos;
+        while (end < source.size() && std::isdigit(source[end])) ++end;
+        if (end > pos) {
+            uint32_t gid = std::stoul(source.substr(pos, end - pos));
+            if (std::find(sharedGroups.begin(), sharedGroups.end(), gid) == sharedGroups.end()) {
+                sharedGroups.push_back(gid);
+            }
+        }
+        pos = end;
+    }
+    for (uint32_t gid : sharedGroups) {
+        const std::string baseG = extractFunctionBody(source, "volumeShared_0_G" + std::to_string(gid));
+        if (baseG.empty()) return false;
+        for (int i = 1; i < 4; ++i) {
+            if (norm(extractFunctionBody(source, "volumeShared_" + std::to_string(i) + "_G" + std::to_string(gid)), i) != baseG) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
 inline WGPUBuffer buffer(WGPUDevice d,WGPUQueue q,uint64_t bytes,WGPUBufferUsage extra=0,const void* data=nullptr){
  WGPUBufferDescriptor b={};b.label=wgpu::Device::str("Kernel bounded routed transport");b.size=bytes;b.usage=WGPUBufferUsage_Storage|WGPUBufferUsage_CopyDst|WGPUBufferUsage_CopySrc|extra;
  auto out=wgpuDeviceCreateBuffer(d,&b);if(out&&data)wgpuQueueWriteBuffer(q,out,0,data,bytes);return out;
@@ -39,6 +130,7 @@ fn ecMat(m:mat4x4<f32>,v:vec4<f32>)->vec4<f32>{return fma(m[0],vec4<f32>(v.x),fm
 const char* consumer=R"WGSL(
 fn ecPhi(tau:f32)->f32 {if(abs(tau)<.01){return 1.0+tau*(-.5+tau*(1.0/6.0-tau/24.0));}return (1.0-exp(-tau))/tau;}
 fn ecFlow(state:vec4<f32>,v:vec4<f32>,h:f32)->vec4<f32>{let tau=h*v.w;return vec4<f32>(state.xyz+state.w*v.xyz*(h*ecPhi(tau)),state.w*exp(-tau));}
+EC_CONSUMER_HELPERS
 fn ecProjected(ro:vec3<f32>,rd:vec3<f32>,wo:vec3<f32>,s:f32,mask:u32)->vec4<f32>{
  let world=ro+s*rd;
  var result=vec4<f32>(0);
@@ -60,19 +152,19 @@ fn ecProjected(ro:vec3<f32>,rd:vec3<f32>,wo:vec3<f32>,s:f32,mask:u32)->vec4<f32>
   if(single>=ray.counts.y&&overlap>=ray.counts.w){break;}
   var useOverlap=false;
   if(overlap<ray.counts.w){if(single>=ray.counts.y){useOverlap=true;}else{useOverlap=ecOverlaps[overBase+overlap].span.x<ecSingles[subBase+single].span.x;}}
-  var lo=0.0;var h=0.0;var mask=0u;
+  var lo=0.0;var h=0.0;var mask=0u;var subMember=0u;
   if(useOverlap){
    let sp=ecOverlaps[overBase+overlap];
    h=(sp.span.y-sp.span.x)*.5;lo=sp.span.x+f32(overPanel)*h;mask=sp.info.x;
   }else{
    let sub=ecSingles[subBase+single];single++;
    if(sub.info.x>=4u){ecPublication[ecPixel(id)]=vec4<f32>(0,0,0,-1);return;}
-   lo=sub.span.x;h=sub.span.y-sub.span.x;mask=1u<<sub.info.x;
+   lo=sub.span.x;h=sub.span.y-sub.span.x;mask=1u<<sub.info.x;subMember=sub.info.x;
   }
   var minus=vec4<f32>(0);var plus=vec4<f32>(0);
   for(var q=0u;q<2u;q++){
    let node=select(select(gx0,.5-sqrt(3.0)/6.0,useOverlap),select(gx1,.5+sqrt(3.0)/6.0,useOverlap),q==1u);
-   let val=ecProjected(ro,rd,wo,lo+node*h,mask);
+   EC_EVAL_NODE
    if(q==0u){minus=val;}else{plus=val;}
   }
   if(useOverlap){
@@ -194,9 +286,59 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
  ecRays[id] = ECRay(vec4<f32>(ro, t0), vec4<f32>(rd, t1), vec4<u32>(0u, 0u, 0u, 0u));
  }
 )WGSL";
- std::string sampling;
- for(unsigned i=0;i<4;++i){const auto n=std::to_string(i);sampling+="if((mask&"+std::to_string(1u<<i)+"u)!=0u){g_instIdx="+std::to_string(i+1)+"u;let p=world-instances["+std::to_string(i+1)+"u].origin.xyz;"+(source.find("fn volumeShared_"+n+"_Eval(")!=std::string::npos?"volumeShared_"+n+"_Eval(p);":"")+"let D=volumeDensityEval_"+n+"(p);if(D>0.0){let X=max(volumeExtinctionEval_"+n+"(p,D),1e-6);var E=vec3<f32>(0);if(!VOLUME_EMISSION_READS_OMEGA_"+n+"||s>1e-8){E=max(volumeEmissionEval_"+n+"(p,wo),vec3<f32>(0));}result+=vec4<f32>(E,X);}}\n";}
- std::string tail=consumer;replace(tail,"EC_PROJECTED",sampling);std::string consume=prefix+commonText+tail;
+ std::vector<uint32_t> sharedGroups;
+ const bool deduplicate = checkEvaluatorsDeduplicatable(source, sharedGroups);
+ std::string tail = consumer;
+ if (deduplicate) {
+  std::string helper = "fn ecSingleMember(world: vec3<f32>, wo: vec3<f32>, s: f32, m: u32) -> vec4<f32> {\n"
+                       " g_instIdx = m + 1u;\n"
+                       " let p = world - instances[g_instIdx].origin.xyz;\n";
+  if (source.find("fn volumeShared_0_Eval(") != std::string::npos) {
+   helper += " volumeShared_0_Eval(p);\n";
+  }
+  helper += " let D = volumeDensityEval_0(p);\n"
+            " if (D > 0.0) {\n"
+            "  let X = max(volumeExtinctionEval_0(p, D), 1e-6);\n"
+            "  var E = vec3<f32>(0.0);\n";
+  for (unsigned i = 0; i < 4; ++i) {
+   const auto n = std::to_string(i);
+   const std::string ifClause = (i == 0 ? "  if (m == 0u) {\n" : (i < 3 ? "  } else if (m == " + n + "u) {\n" : "  } else {\n"));
+   helper += ifClause;
+   if (i > 0) {
+    for (uint32_t gid : sharedGroups) {
+     helper += "   g_volumeShared_" + n + "_G" + std::to_string(gid) + " = g_volumeShared_0_G" + std::to_string(gid) + ";\n";
+    }
+   }
+   helper += "   if (!VOLUME_EMISSION_READS_OMEGA_" + n + " || s > 1e-8) { E = max(volumeEmissionEval_" + n + "(p, wo), vec3<f32>(0.0)); }\n";
+  }
+  helper += "  }\n"
+            "  return vec4<f32>(E, X);\n"
+            " }\n"
+            " return vec4<f32>(0.0);\n"
+            "}\n";
+  replace(tail, "EC_CONSUMER_HELPERS", helper);
+  std::string projLoop = "for (var m = 0u; m < 4u; m++) {\n"
+                         "  if ((mask & (1u << m)) != 0u) {\n"
+                         "   result += ecSingleMember(world, wo, s, m);\n"
+                         "  }\n"
+                         " }\n";
+  replace(tail, "EC_PROJECTED", projLoop);
+  replace(tail, "EC_EVAL_NODE", "var val = vec4<f32>(0);\n"
+                                "   if (useOverlap) { val = ecProjected(ro, rd, wo, lo + node * h, mask); }\n"
+                                "   else { val = ecSingleMember(ro + (lo + node * h) * rd, wo, lo + node * h, subMember); }");
+ } else {
+  replace(tail, "EC_CONSUMER_HELPERS", "");
+  std::string sampling;
+  for (unsigned i = 0; i < 4; ++i) {
+   const auto n = std::to_string(i);
+   sampling += "if((mask&" + std::to_string(1u << i) + "u)!=0u){g_instIdx=" + std::to_string(i + 1) + "u;let p=world-instances[" + std::to_string(i + 1) + "u].origin.xyz;" +
+               (source.find("fn volumeShared_" + n + "_Eval(") != std::string::npos ? "volumeShared_" + n + "_Eval(p);" : "") +
+               "let D=volumeDensityEval_" + n + "(p);if(D>0.0){let X=max(volumeExtinctionEval_" + n + "(p,D),1e-6);var E=vec3<f32>(0);if(!VOLUME_EMISSION_READS_OMEGA_" + n + "||s>1e-8){E=max(volumeEmissionEval_" + n + "(p,wo),vec3<f32>(0));}result+=vec4<f32>(E,X);}}\n";
+  }
+  replace(tail, "EC_PROJECTED", sampling);
+  replace(tail, "EC_EVAL_NODE", "let val = ecProjected(ro, rd, wo, lo + node * h, mask);");
+ }
+ std::string consume = prefix + commonText + tail;
  WGPUBindGroupLayoutEntry g[4]={};g[0].binding=0;g[0].visibility=WGPUShaderStage_Compute;g[0].buffer.type=WGPUBufferBindingType_Uniform;
  g[1].binding=1;g[1].visibility=WGPUShaderStage_Compute;g[1].buffer.type=WGPUBufferBindingType_ReadOnlyStorage;
  g[2].binding=2;g[2].visibility=WGPUShaderStage_Compute;g[2].texture.sampleType=WGPUTextureSampleType_Depth;g[2].texture.viewDimension=WGPUTextureViewDimension_2D;

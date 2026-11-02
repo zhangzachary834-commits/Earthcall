@@ -900,6 +900,7 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
                 }
             }
         }
+        if (reason != 0u) { break; }
         for (var p = 0u; p < count; p++) {
             emitPieceSubpanels(pieces[p], member, subBase, &singles, &reason);
             if (reason != 0u) { break; }

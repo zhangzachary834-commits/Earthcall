@@ -431,13 +431,11 @@ int main(int argc, char** argv) {
         renderer.endFrame();
     };
 
-    auto renderPose = [&](int poseIdx, bool routedOn) {
-        const auto [eye, aim] = canonicalPose(poseIdx);
-        const double t = 7.25 + double(poseIdx) / 60.0;
+    auto renderViewCamera = [&](glm::vec3 eye, glm::vec3 aim, glm::vec3 up, float fovDeg, double t, bool routedOn) {
         renderer.setVolumeRoutedTransportEnabled(routedOn);
         renderer.setCamera(
-            glm::lookAt(eye, aim, glm::vec3(0, 1, 0)),
-            glm::perspectiveZO(glm::radians(60.0f), float(width) / height, 0.1f, 1000.0f),
+            glm::lookAt(eye, aim, up),
+            glm::perspectiveZO(glm::radians(fovDeg), float(width) / height, 0.1f, 1000.0f),
             eye);
         std::vector<Rendering::VolumeDensityBinding> media;
         std::string identity;
@@ -455,10 +453,16 @@ int main(int argc, char** argv) {
         renderer.endFrame();
         const auto& s = renderer.frameStats();
         if (s.volumeProgramRefusals != 0 || (routedOn ? s.volumeRoutedSets != 1 : s.volumeRoutedSets != 0)) {
-            std::fprintf(stderr, "FAIL: renderPose(%d, %d) refusals=%u routedSets=%u\n",
-                         poseIdx, int(routedOn), s.volumeProgramRefusals, s.volumeRoutedSets);
+            std::fprintf(stderr, "FAIL: renderViewCamera refusals=%u routedSets=%u\n",
+                         s.volumeProgramRefusals, s.volumeRoutedSets);
             std::exit(1);
         }
+    };
+
+    auto renderPose = [&](int poseIdx, bool routedOn) {
+        const auto [eye, aim] = canonicalPose(poseIdx);
+        const double t = 7.25 + double(poseIdx) / 60.0;
+        renderViewCamera(eye, aim, glm::vec3(0, 1, 0), 60.0f, t, routedOn);
     };
 
     // Warm up 1 frame so _kernelRouted is initialized
@@ -900,6 +904,173 @@ int main(int argc, char** argv) {
         {"parity", restoredRgbaHash == canonicalPose0RgbaHash}
     };
 
+    // --- RUNNING GATE 9: Zach's 3 Northern Veil Checkpoint Views + Live Captured Camera Views ---
+    std::printf("--- RUNNING GATE 9: Checkpoint Views Parity, Census & ABBA Benchmark ---\n");
+    struct ViewSpec {
+        std::string name;
+        glm::vec3 eye;
+        glm::vec3 aim;
+        glm::vec3 up;
+        float fov;
+    };
+    std::vector<ViewSpec> gate9Views = {
+        {"Live_23FPS_View_A",
+         glm::vec3(-6.749656f, 2.397435f, 3.705208f),
+         glm::vec3(-6.749656f, 2.397435f, 3.705208f) + glm::vec3(0.0968301f, 0.5180270f, 0.8498659f),
+         glm::vec3(0, 1, 0), 45.0f},
+        {"Live_Parked_View",
+         glm::vec3(-14.059818f, 5.853045f, 0.831757f),
+         glm::vec3(-14.059818f, 5.853045f, 0.831757f) + glm::vec3(0.0f, 0.5f, 0.8660254f),
+         glm::vec3(0, 1, 0), 45.0f},
+        {"Checkpoint_View1_Inside_Veil",
+         glm::vec3(12.5f, 67.0f, 39.0f),
+         glm::vec3(12.5f, 67.0f, 184.0f),
+         glm::vec3(0, 1, 0), 45.0f},
+        {"Checkpoint_View2_Spawn_Dais_Diag",
+         glm::vec3(0.0f, 1.3f, 0.0f),
+         glm::vec3(0.0f, 72.0f, 106.5f),
+         glm::vec3(0, 1, 0), 45.0f},
+        {"Checkpoint_View3_Below_Veils_Up",
+         glm::vec3(12.5f, 0.0f, 106.5f),
+         glm::vec3(12.5f, 72.0f, 106.5f),
+         glm::vec3(0, 0, 1), 45.0f}
+    };
+
+    Json gate9Rows = Json::array();
+    for (const auto& vs : gate9Views) {
+        const double viewTime = 7.25;
+
+        // 1. Forced-Refusal Bit-Exact Parity Check
+        renderViewCamera(vs.eye, vs.aim, vs.up, vs.fov, viewTime, false);
+        REQUIRE(fenceQueue(gpu), "gate9 current fence");
+        const uint64_t curRgba = readRgbaHash();
+
+        renderer.setRoutedWorkLimitForDiagnostics(0);
+        renderViewCamera(vs.eye, vs.aim, vs.up, vs.fov, viewTime, true);
+        REQUIRE(fenceQueue(gpu), "gate9 forced-refusal fence");
+        const uint64_t refRgba = readRgbaHash();
+        renderer.setRoutedWorkLimitForDiagnostics(1024);
+        REQUIRE(curRgba == refRgba, "gate9 forced-refusal RGBA bit-exact parity with Current");
+
+        // 2. Normal Routed Render & Refusal / Finite Check
+        renderViewCamera(vs.eye, vs.aim, vs.up, vs.fov, viewTime, true);
+        REQUIRE(fenceQueue(gpu), "gate9 normal routed fence");
+        const auto& s9 = renderer.frameStats();
+        REQUIRE(s9.volumeProgramRefusals == 0 && s9.volumeRoutedSets == 1, "gate9 frame stats");
+        const uint64_t routedRgba = readRgbaHash();
+
+        auto pub9 = readPublication(gpu, k);
+        uint64_t nonfinite9 = 0, refused9 = 0, nonempty9 = 0;
+        for (uint64_t i = 0; i < pub9.size() / 4; ++i) {
+            const float* v = &pub9[i * 4];
+            for (int ch = 0; ch < 4; ++ch) nonfinite9 += !std::isfinite(v[ch]);
+            if (v[3] < 0.0f) ++refused9;
+            if (v[0] != 0.0f || v[1] != 0.0f || v[2] != 0.0f || v[3] != 0.0f) ++nonempty9;
+        }
+        REQUIRE(nonfinite9 == 0, "gate9 zero non-finite");
+        REQUIRE(refused9 == 0, "gate9 zero refused rays");
+
+        // 3. Route Census
+        REQUIRE(renderer.setRoutedRouteObserverForDiagnostics(true), "gate9 enable route observer");
+        renderer.resetRoutedRouteObserverForDiagnostics();
+        renderViewCamera(vs.eye, vs.aim, vs.up, vs.fov, viewTime, true);
+        REQUIRE(fenceQueue(gpu), "gate9 census fence");
+        auto w9 = readWords(gpu, k->routeHistogram, 1032 * 4);
+        const uint64_t totalTiles = uint64_t(k->tiles) * strips;
+        const uint64_t s1Count = w9[1024];
+        const uint64_t s2Count = w9[1025];
+        const uint64_t fbCount = w9[1026];
+        const uint64_t emptyCount = (totalTiles >= s1Count + s2Count + fbCount) ? (totalTiles - s1Count - s2Count - fbCount) : 0;
+        REQUIRE(renderer.setRoutedRouteObserverForDiagnostics(false), "gate9 disable route observer");
+
+        // 4. 4-Round Completion-Fenced ABBA Timing Comparison (8 frames per leg = 32 frames per mode)
+        std::vector<double> curTimes, routedTimes;
+        curTimes.reserve(32);
+        routedTimes.reserve(32);
+
+        // Warm up both paths for this camera
+        for (bool on : {false, true}) {
+            for (int f = 0; f < 4; ++f) renderViewCamera(vs.eye, vs.aim, vs.up, vs.fov, viewTime, on);
+            REQUIRE(fenceQueue(gpu), "gate9 warmup fence");
+        }
+
+        for (int r = 0; r < 4; ++r) {
+            // Leg 0: Current
+            for (int f = 0; f < 8; ++f) {
+                const auto t0 = Clock::now();
+                renderViewCamera(vs.eye, vs.aim, vs.up, vs.fov, viewTime, false);
+                REQUIRE(fenceQueue(gpu), "gate9 leg0 fence");
+                curTimes.push_back(elapsedMs(t0));
+            }
+            // Leg 1: Routed
+            for (int f = 0; f < 8; ++f) {
+                const auto t0 = Clock::now();
+                renderViewCamera(vs.eye, vs.aim, vs.up, vs.fov, viewTime, true);
+                REQUIRE(fenceQueue(gpu), "gate9 leg1 fence");
+                routedTimes.push_back(elapsedMs(t0));
+            }
+            // Leg 2: Routed
+            for (int f = 0; f < 8; ++f) {
+                const auto t0 = Clock::now();
+                renderViewCamera(vs.eye, vs.aim, vs.up, vs.fov, viewTime, true);
+                REQUIRE(fenceQueue(gpu), "gate9 leg2 fence");
+                routedTimes.push_back(elapsedMs(t0));
+            }
+            // Leg 3: Current
+            for (int f = 0; f < 8; ++f) {
+                const auto t0 = Clock::now();
+                renderViewCamera(vs.eye, vs.aim, vs.up, vs.fov, viewTime, false);
+                REQUIRE(fenceQueue(gpu), "gate9 leg3 fence");
+                curTimes.push_back(elapsedMs(t0));
+            }
+        }
+
+        const double curMean = std::accumulate(curTimes.begin(), curTimes.end(), 0.0) / curTimes.size();
+        const double routedMean = std::accumulate(routedTimes.begin(), routedTimes.end(), 0.0) / routedTimes.size();
+        const double deltaMs = routedMean - curMean;
+        const double deltaPct = 100.0 * deltaMs / curMean;
+        const double curFps = 1000.0 / curMean;
+        const double routedFps = 1000.0 / routedMean;
+
+        std::printf("GATE9_VIEW_OK: %-30s Cur=%6.2fms (%4.1f FPS) Routed=%6.2fms (%4.1f FPS) Delta=%+6.2fms (%+5.2f%%) | Empty=%4.1f%% S1=%4.1f%% S2=%4.1f%% FB=%4.1f%%\n",
+                    vs.name.c_str(), curMean, curFps, routedMean, routedFps, deltaMs, deltaPct,
+                    100.0 * double(emptyCount) / totalTiles,
+                    100.0 * double(s1Count) / totalTiles,
+                    100.0 * double(s2Count) / totalTiles,
+                    100.0 * double(fbCount) / totalTiles);
+
+        gate9Rows.push_back({
+            {"name", vs.name},
+            {"eye", {vs.eye.x, vs.eye.y, vs.eye.z}},
+            {"aim", {vs.aim.x, vs.aim.y, vs.aim.z}},
+            {"up", {vs.up.x, vs.up.y, vs.up.z}},
+            {"fov_deg", vs.fov},
+            {"current_mean_ms", curMean},
+            {"routed_mean_ms", routedMean},
+            {"delta_ms", deltaMs},
+            {"delta_pct", deltaPct},
+            {"implied_current_fps", curFps},
+            {"implied_routed_fps", routedFps},
+            {"forced_refusal_parity", curRgba == refRgba},
+            {"census", {
+                {"total_tiles", totalTiles},
+                {"empty_tiles", emptyCount},
+                {"s1_tiles", s1Count},
+                {"s2_tiles", s2Count},
+                {"fallback_tiles", fbCount},
+                {"empty_pct", 100.0 * double(emptyCount) / totalTiles},
+                {"s1_pct", 100.0 * double(s1Count) / totalTiles},
+                {"s2_pct", 100.0 * double(s2Count) / totalTiles},
+                {"fallback_pct", 100.0 * double(fbCount) / totalTiles}
+            }}
+        });
+    }
+
+    report["gates"]["gate9_checkpoint_views"] = {
+        {"status", "PASS"},
+        {"views", gate9Rows}
+    };
+
     // 4. Dual-Regime Completion-Fenced Timing (4 ABBA blocks: Current vs Positive E2E Routed P1-P4)
     for (bool on : {false, true}) {
         for (int i = 0; i < 64; ++i) renderPose(i, on);
@@ -1009,7 +1180,7 @@ int main(int argc, char** argv) {
                 curR2Mean, routedR2Mean, 100.0 * (routedR2Mean - curR2Mean) / curR2Mean);
 
     report["repaired_correctness_gates"] = 3;
-    report["native_metal_gates_passed"] = "8/8";
+    report["native_metal_gates_passed"] = "9/9";
 
     std::ofstream(outJsonPath) << report.dump(2) << '\n';
     wgpuBufferRelease(readback);

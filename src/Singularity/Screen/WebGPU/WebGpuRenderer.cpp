@@ -3942,12 +3942,21 @@ void WebGpuRenderer::flushVolumeComposite() {
             const auto& spec=routedSpecs.at(pipeline);
             if(_kernelRouted->specsUniform)wgpuQueueWriteBuffer(_queue,_kernelRouted->specsUniform,0,spec.data(),sizeof(spec));
             auto* transport=_kernelRouted->program(pipeline->routedSource);
-            if(transport)_kernelRouted->encode(*transport,_encoder,
+            const bool routedEncoded = transport && _kernelRouted->encode(*transport,_encoder,
                 {globalAlloc.buffer,globalAlloc.offset,globalAlloc.size},{paramBuffer,paramOffset,bytes},
                 {instanceAlloc.buffer,instanceAlloc.offset,instanceAlloc.size},_depthView,{_kernelRouted->specsUniform,0,sizeof(spec)},{_kernelRouted->specsUniform,0,sizeof(spec)},
                 [&](const void* data,size_t size){const auto a=bufferPool().suballocateUniform(data,size);return KernelRoutedRange{a.buffer,a.offset,a.size};});
-            ++mutableFrameStats().volumeRoutedSets;mutableFrameStats().volumeRoutedPixels+=_depthW*_depthH;
-            mutableFrameStats().volumeRoutedWorkingSetBytes=uint64_t(_depthW)*_depthH*16+uint64_t(_kernelRouted->capacity)*(48+64*16+16*16+4)+uint64_t(_kernelRouted->tiles)*16+56;
+            if(routedEncoded){
+                ++mutableFrameStats().volumeRoutedSets;mutableFrameStats().volumeRoutedPixels+=_depthW*_depthH;
+                mutableFrameStats().volumeRoutedWorkingSetBytes=uint64_t(_depthW)*_depthH*16+uint64_t(_kernelRouted->capacity)*(48+64*16+16*16+4)+uint64_t(_kernelRouted->tiles)*16+56;
+            }else{
+                ++mutableFrameStats().volumeProgramRefusals;
+                mutableFrameStats().volumeLastProgramRefusal="routed transport encode refused; Current retained";
+                if(_kernelRouted->publication){
+                    std::vector<uint32_t> refuseWords(size_t(_depthW)*_depthH*4, 0xbf800000u); // -1.0f in all lanes (.w < 0 => Current)
+                    wgpuQueueWriteBuffer(_queue,_kernelRouted->publication,0,refuseWords.data(),refuseWords.size()*sizeof(uint32_t));
+                }
+            }
         }
         if (!_pass) {
             _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &volumePassDesc);
