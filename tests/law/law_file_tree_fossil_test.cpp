@@ -62,6 +62,21 @@ int main() {
         }
     }
 
+    const fs::path consoleStateRelative =
+        "src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp";
+    std::ifstream consoleStateFile(root / consoleStateRelative);
+    if (!consoleStateFile) {
+        std::cerr << "FAIL: Could not open CreatorConsoleState.hpp at "
+                  << root / consoleStateRelative << "\n";
+        return 1;
+    }
+    const std::string consoleStateContent((std::istreambuf_iterator<char>(consoleStateFile)),
+                                          std::istreambuf_iterator<char>());
+    if (consoleStateContent.find("useLegacy2DTools") != std::string::npos) {
+        std::cerr << "FAIL: Legacy 2D tool fossil exists in CreatorConsoleState.hpp\n";
+        return 1;
+    }
+
     std::cout << "PASS: Legacy fossil files and stubs are absent.\n";
     return 0;
 }
