@@ -942,6 +942,22 @@ int main() {
               integrated[0].at("message") == "durable with aggregate Off",
               "LawAuditLogger bridge missing durable event");
 
+        {
+            const auto nearMax = std::numeric_limits<unsigned long long>::max() - 1;
+            Law source("Large restored identifier");
+            auto saved = source.toJson();
+            saved["id"] = "law-" + std::to_string(nearMax) + "suffix";
+            (void)Law::fromJson(saved);
+            saved["id"] = "law-" + std::to_string(nearMax);
+            (void)Law::fromJson(saved);
+            Law freshA("Generated identifier A");
+            Law freshB("Generated identifier B");
+            check(freshA.getIdentifier() != "law-0" &&
+                  freshB.getIdentifier() != "law-0" &&
+                  freshA.getIdentifier() != freshB.getIdentifier(),
+                  "Generated Law IDs wrapped after a large restored identifier");
+        }
+
         std::cout << "law_durable_logging_test PASSED\n";
         return 0;
     } catch (const std::exception& ex) {
