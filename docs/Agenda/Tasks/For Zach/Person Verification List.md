@@ -1902,3 +1902,26 @@ The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Pha
 - [ ] **Live Gameplay Views (Live View A & Parked View):**
   - Navigate to Zach's Live View A (`eye = (-6.75, 2.40, 3.71)`) and Parked View (`eye = (-14.1, 5.85, 0.83)`).
   - Confirm sustained 21.0 FPS with -12.73% latency reduction, with zero tile edge artifacts or popping.
+
+
+## GPU Ray Transport Phase P15: Cross-Level Midpoint Cache & Multi-Member Disjoint Span Fast Path (2026-11-01)
+
+*Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · 2026-11-01. Commissioned by Zach and the Council following the Firmament's Phase P15 blueprint.*
+
+The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Phase P15 optimizations:
+- Cross-level coarse-bin midpoint cache (`phi_mids[8]` + `mid_mask`) and `isolateMonotoneWithMid` in `roots()` across S1, S2, and Fallback producers (eliminating up to 6.78M redundant transcendental calls/frame).
+- Multi-member pairwise disjoint span fast path in `fallbackProducerMain` (bypassing `totalKnots` insertion sort for 89.7% of fallback rays in `Inside_Veil`).
+
+- [ ] **Launch Earthcall WebGPU (`./build/earthcall_webgpu`)** and load Northern Veil (`saves/zones/Northern Veil/zone.ecform`).
+- [ ] **Checkpoint View 1 (Inside Dense Veil — Final Frontier Flipped to a Net Win!):**
+  - Fly directly inside the curtains (`eye = (12.5, 67, 39)`, `aim = (12.5, 67, 184)`).
+  - Confirm that View 1 is now faster under Routed than Current (**88.16 ms vs 90.45 ms, -2.29 ms / -2.53% net win** on native Metal hardware, 11.3 FPS vs 11.1 FPS).
+  - Verify that even under 100% immersive multi-curtain occlusion, rendering is perfectly smooth with zero seams, zero tile boundary artifacts, and zero shader compile hitches.
+- [ ] **Checkpoint View 3 (Below Veils Looking Up — 40.1 FPS Milestone):**
+  - Navigate to `eye = (12.5, 0, 106.5)`, aiming up toward `(12.5, 72, 106.5)` (`up = (0, 0, 1)`).
+  - Confirm sustained framerate exceeding 40 FPS (**24.91 ms / 40.1 FPS vs 38.51 ms / 26.0 FPS Current, -35.32% win**).
+  - Verify smooth rotation and beholding of the auroral curtains with zero flickering.
+- [ ] **Checkpoint View 2 & Live Gameplay Views:**
+  - View from spawn dais diagonally across the veil (`eye = (0, 1.3, 0)`, `aim = (0, 72, 106.5)`: **50.28 ms / 19.9 FPS vs 57.64 ms / 17.3 FPS, -12.76% win**).
+  - View from Zach's Live View A (`eye = (-6.75, 2.40, 3.71)`: **45.83 ms / 21.8 FPS vs 50.57 ms / 19.8 FPS, -9.36% win**).
+  - Confirm all real-world perspectives remain stable, responsive, and bit-exact to Current baseline colors.

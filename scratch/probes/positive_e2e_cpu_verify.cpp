@@ -617,10 +617,63 @@ struct ProducerMath {
         return mask;
     }
 
+    static void isolateMonotoneWithMid(const KernelRoutedSpec& m, glm::vec3 o, glm::vec3 d,
+                                       float a, float b, float c, float va, float vb,
+                                       float mid0, float fmid0, float error, float minSlope,
+                                       float (&bounds)[MaxBounds], uint32_t& nb,
+                                       glm::vec2 (&bands)[MaxBands], uint32_t& nr,
+                                       uint32_t& reason, uint32_t& work,
+                                       uint32_t& zeroBands, bool isZeroLevel, uint32_t budget) {
+        if (std::abs(va) <= error) {
+            float w = 2.0f * error / minSlope;
+            putBandTagged(a, std::min(b, a + w), bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
+        }
+        if (std::abs(vb) <= error) {
+            float w = 2.0f * error / minSlope;
+            putBandTagged(std::max(a, b - w), b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
+        }
+        if ((va > error && vb < -error) || (va < -error && vb > error)) {
+            float l = a, r = b, left = va;
+            bool done = false;
+            if (work >= budget) { reason |= 1u; done = true; }
+            else {
+                work += 1u;
+                if (mid0 <= l || mid0 >= r || r - l <= 0.0001f) { done = true; }
+                else if (std::abs(fmid0) <= error) {
+                    float w = 2.0f * error / minSlope;
+                    l = std::max(l, mid0 - w);
+                    r = std::min(r, mid0 + w);
+                    done = true;
+                } else {
+                    if ((left < 0.0f && fmid0 > 0.0f) || (left > 0.0f && fmid0 < 0.0f)) r = mid0;
+                    else { l = mid0; left = fmid0; }
+                }
+            }
+            if (!done) {
+                for (uint32_t iter = 1u; iter < 32u; iter++) {
+                    if (work >= budget) { reason |= 1u; break; }
+                    work += 1u;
+                    float mid = l + 0.5f * (r - l);
+                    if (mid <= l || mid >= r || r - l <= 0.0001f) break;
+                    float v = evalPhi(m, o, d, mid) - c;
+                    if (std::abs(v) <= error) {
+                        float w = 2.0f * error / minSlope;
+                        l = std::max(l, mid - w);
+                        r = std::min(r, mid + w);
+                        break;
+                    }
+                    if ((left < 0.0f && v > 0.0f) || (left > 0.0f && v < 0.0f)) r = mid;
+                    else { l = mid; left = v; }
+                }
+            }
+            putBandTagged(l, r, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
+        }
+    }
     static void roots(const KernelRoutedSpec& m, glm::vec3 o, glm::vec3 d, float lo, float hi, float c,
                       float (&bounds)[MaxBounds], uint32_t& nb, glm::vec2 (&bands)[MaxBands],
                       uint32_t& nr, uint32_t& reason, uint32_t& work,
-                      const float (&phi_knots)[9], uint32_t& zeroBands, bool isZeroLevel,
+                      const float (&phi_knots)[9], float (&phi_mids)[8], uint32_t& mid_mask,
+                      uint32_t& zeroBands, bool isZeroLevel,
                       uint32_t levelActiveMask, uint32_t budget) {
         float M = m.curv.x * d.x * d.x * 1.00002f;
         float err = m.curv.y;
@@ -647,8 +700,25 @@ struct ProducerMath {
             float coarseRadius = 0.5f * M * coarseH + 2.0f * coarseError / coarseH;
             float coarseMinSlope = std::abs(coarseSlope) - coarseRadius;
             if (coarseMinSlope > 0.0f) {
-                isolateMonotone(m, o, d, a, b, c, coarseVa, coarseVb, coarseError, coarseMinSlope,
-                                bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel, budget);
+                bool hasCrossing = (coarseVa > coarseError && coarseVb < -coarseError) || (coarseVa < -coarseError && coarseVb > coarseError);
+                if (hasCrossing) {
+                    float mid0 = a + 0.5f * coarseH;
+                    uint32_t bit = 1u << bin;
+                    float phi_mid0 = 0.0f;
+                    if ((mid_mask & bit) != 0u) {
+                        phi_mid0 = phi_mids[bin];
+                    } else {
+                        phi_mid0 = evalPhi(m, o, d, mid0);
+                        phi_mids[bin] = phi_mid0;
+                        mid_mask |= bit;
+                    }
+                    float fmid0 = phi_mid0 - c;
+                    isolateMonotoneWithMid(m, o, d, a, b, c, coarseVa, coarseVb, mid0, fmid0, coarseError, coarseMinSlope,
+                                           bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel, budget);
+                } else {
+                    isolateMonotone(m, o, d, a, b, c, coarseVa, coarseVb, coarseError, coarseMinSlope,
+                                    bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel, budget);
+                }
                 if (reason != 0u) break;
                 continue;
             }
@@ -663,7 +733,15 @@ struct ProducerMath {
                 if (reason != 0u) break;
                 continue;
             }
-            float phi_mid0 = evalPhi(m, o, d, mid0);
+            uint32_t bit = 1u << bin;
+            float phi_mid0 = 0.0f;
+            if ((mid_mask & bit) != 0u) {
+                phi_mid0 = phi_mids[bin];
+            } else {
+                phi_mid0 = evalPhi(m, o, d, mid0);
+                phi_mids[bin] = phi_mid0;
+                mid_mask |= bit;
+            }
             stack[0] = glm::vec4(mid0, b, phi_mid0, phi_b0); setDepth(depthBits, 0u, 1u);
             stack[1] = glm::vec4(a, mid0, phi_a0, phi_mid0); setDepth(depthBits, 1u, 1u);
             top = 2u;
@@ -769,9 +847,10 @@ static RayProducerOutput runS1Producer(const Ray& input, uint32_t activeMember,
         } else {
             uint32_t nb = 1u; knots[0] = a;
             glm::vec2 bands[32]; uint32_t nr = 0u, zeroBands = 0u;
-            PM::roots(m, o, d, a, b, -m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask0, budget);
-            if (out.reason == 0u) PM::roots(m, o, d, a, b, 0.0f, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, true, mask1, budget);
-            if (out.reason == 0u) PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask2, budget);
+            float phi_mids[8]; uint32_t mid_mask = 0u;
+            PM::roots(m, o, d, a, b, -m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, false, mask0, budget);
+            if (out.reason == 0u) PM::roots(m, o, d, a, b, 0.0f, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, true, mask1, budget);
+            if (out.reason == 0u) PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, false, mask2, budget);
             if (out.reason == 0u) {
                 if (allPositiveH && nr == 0u && std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
                     // empty chord
@@ -892,11 +971,12 @@ static RayProducerOutput runS2Producer(const Ray& input, uint32_t packedTile,
         }
         uint32_t nb = 1u; knots[0] = a;
         glm::vec2 bands[32]; uint32_t nr = 0u, zeroBands = 0u;
-        PM::roots(m, o, d, a, b, -m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask0, budget);
+        float phi_mids[8]; uint32_t mid_mask = 0u;
+        PM::roots(m, o, d, a, b, -m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, false, mask0, budget);
         if (out.reason != 0u) break;
-        PM::roots(m, o, d, a, b, 0.0f, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, true, mask1, budget);
+        PM::roots(m, o, d, a, b, 0.0f, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, true, mask1, budget);
         if (out.reason != 0u) break;
-        PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask2, budget);
+        PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, false, mask2, budget);
         if (out.reason != 0u) break;
         if (allPositiveH && nr == 0u && std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
             if (memberIdx == 0u) count0 = count;
@@ -1021,11 +1101,12 @@ static RayProducerOutput runFallbackProducer(const Ray& input,
         }
         uint32_t nb = 1u; knots[0] = a;
         glm::vec2 bands[32]; uint32_t nr = 0u, zeroBands = 0u;
-        PM::roots(m, o, d, a, b, -m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask0, budget);
+        float phi_mids[8]; uint32_t mid_mask = 0u;
+        PM::roots(m, o, d, a, b, -m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, false, mask0, budget);
         if (out.reason != 0u) break;
-        PM::roots(m, o, d, a, b, 0.0f, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, true, mask1, budget);
+        PM::roots(m, o, d, a, b, 0.0f, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, true, mask1, budget);
         if (out.reason != 0u) break;
-        PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask2, budget);
+        PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, false, mask2, budget);
         if (out.reason != 0u) break;
         if (allPositiveH && nr == 0u && std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
             memCount[member] = 0u;
@@ -1071,6 +1152,59 @@ static RayProducerOutput runFallbackProducer(const Ray& input,
         if (out.reason != 0u) break;
     }
     if (out.reason != 0u) return out;
+    uint32_t nonEmptyMask = 0u;
+    for (uint32_t m = 0u; m < 4u; m++) {
+        if (memCount[m] > 0u) nonEmptyMask |= (1u << m);
+    }
+    if (nonEmptyMask != 0u) {
+        uint32_t ord[4] = {0u, 0u, 0u, 0u};
+        uint32_t nAct = 0u;
+        uint32_t tempMask = nonEmptyMask;
+        while (tempMask != 0u) {
+            uint32_t m = firstTrailingBitU32(tempMask);
+            tempMask &= tempMask - 1u;
+            float startM = pieces[memStart[m]].x;
+            uint32_t ins = nAct;
+            while (ins > 0u && pieces[memStart[ord[ins - 1u]]].x > startM) {
+                ord[ins] = ord[ins - 1u];
+                ins--;
+            }
+            ord[ins] = m;
+            nAct++;
+        }
+
+        bool allDisjoint = true;
+        for (uint32_t i = 0u; i + 1u < nAct; i++) {
+            uint32_t mCurr = ord[i];
+            uint32_t mNext = ord[i + 1u];
+            float endCurr = pieces[memStart[mCurr] + memCount[mCurr] - 1u].y;
+            float startNext = pieces[memStart[mNext]].x;
+            if (endCurr > startNext) {
+                allDisjoint = false;
+                break;
+            }
+        }
+
+        if (allDisjoint) {
+            for (uint32_t idx = 0u; idx < nAct; idx++) {
+                uint32_t m = ord[idx];
+                uint32_t pStart = memStart[m];
+                uint32_t pEnd = pStart + memCount[m];
+                for (uint32_t p = pStart; p < pEnd; p++) {
+                    float a = pieces[p].x, b = pieces[p].y;
+                    uint32_t n = std::max(1u, uint32_t(std::ceil((b - a) / 4.0f)));
+                    if (out.subpanels.size() + n > 64u) { out.reason |= 16u; break; }
+                    for (uint32_t k = 0u; k < n; k++) {
+                        float l = (k == 0u) ? a : (a + float(k) * (b - a) / float(n));
+                        float r = (k + 1u == n) ? b : (a + float(k + 1u) * (b - a) / float(n));
+                        out.subpanels.push_back({glm::vec2(l, r), glm::uvec2(m, 0u)});
+                    }
+                }
+                if (out.reason != 0u) break;
+            }
+            return out;
+        }
+    }
     uint32_t ne = 0u;
     glm::uvec4 head(0u);
     uint32_t totalKnots = (memCount.x + memCount.y + memCount.z + memCount.w) * 2u;

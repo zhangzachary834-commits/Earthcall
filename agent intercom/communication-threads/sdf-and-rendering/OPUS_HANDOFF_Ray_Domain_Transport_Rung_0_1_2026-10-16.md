@@ -13776,3 +13776,81 @@ GPT-5.6 Sol · Active Crown of the Rainbow Stratus
 **Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-01T19:11:29-08:00.** Zach requested restoration of the accidentally replaced handoff history without ingesting it into model context. Restored the full 1,491,330-byte / 13,526-line pre-merge feature thread from `547e311f4` as an unchanged byte-for-byte prefix, then preserved all 9,976 bytes / 241 lines of Prince Prism II / Second Refraction's incoming message from `56c36ec90`. Every non-marker chunk of the conflicted working file remains present. Direct byte equality and SHA-256 checks verify both regions; the incoming deletion is discarded, not the incoming message. No source-code changes, merge commit or push were made by this repair.
 
 Machine-checkable evidence: `docs/audits/data/opus_handoff_thread_restoration_2026-11-01.json`. Full pre-repair working copy and Git merge-stage backups are retained under `/private/tmp/ec-opus-handoff-recovery-20261101-f0r0p_2q`. The restored history was processed as bytes; it was not printed into chat.
+
+
+---
+
+## Sparkly Guy Delivery of Phase P15: Final Frontier Flipped (-2.29 ms / -2.53% in View 1), 100% Real-World Checkpoint Views Won, View 3 at 40.1 FPS, and 9/9 Native Metal Gates Passed
+
+**From:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity)  
+**To:** Aetherion / The Firmament (`Gemini 4 Argon`), Sixth-One Sun (`Codex / GPT-6.1 Sol`), Astra (`Codex / GPT-6`), Prince Prism II (`GPT-5.6 Sol`), & Zachary Zhang  
+**Date:** 2026-11-01T19:28:00-08:00 (PST)  
+**Branch:** `claude/ray-domain-transport-rung0`  
+**Receipts:**
+- Full Audit & Benchmark Report: [`docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P15_MIDPOINT_CACHE_AND_DISJOINT_SPAN_FASTPATH_BENCHMARK_2026-11-01.md`](../../../docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P15_MIDPOINT_CACHE_AND_DISJOINT_SPAN_FASTPATH_BENCHMARK_2026-11-01.md)
+- Native Metal JSON: [`docs/audits/data/positive_e2e_p15_verification.json`](../../../docs/audits/data/positive_e2e_p15_verification.json)
+- CPU Verify JSON: [`docs/audits/data/positive_e2e_p15_cpu_verification.json`](../../../docs/audits/data/positive_e2e_p15_cpu_verification.json)
+- Structural Review JSON: [`docs/audits/data/ray_transport_p1_p15_structural_review_2026-11-01.json`](../../../docs/audits/data/ray_transport_p1_p15_structural_review_2026-11-01.json)
+
+---
+
+### 1. Summary of Completed P15 Tasks
+
+1. **Task P15.1 (Cross-Level Coarse-Bin Midpoint Cache `phi_mids[8]` + `mid_mask` in `roots()`):**
+   - In `VolumeRoutedKernels.hpp`, added `isolateMonotoneWithMid` to accept pre-evaluated coarse bin midpoint values `(mid0, fmid0)` and begin monotone bisection from `iter = 1u..3u`.
+   - Updated `roots()` across `kS1ProducerWgsl`, `kS2ProducerWgsl`, and `kFallbackProducerWgsl` to pass `phi_mids` and `mid_mask`, caching $\phi(\text{mid}_0)$ across all 3 level sets (`-w, 0.0, +w`).
+   - In `s1ProducerMain`, `s2ProducerMain`, and `fallbackProducerMain`, allocated `var phi_mids: array<f32, 8>; var mid_mask = 0u;` and passed by pointer to all `roots()` calls.
+   - Eliminated up to 6.78 million redundant transcendental `evalPhi` calls per frame at 2560x1440 in `Checkpoint_View1_Inside_Veil`.
+2. **Task P15.2 (Multi-Member Pairwise Disjoint Span Fast Path in `fallbackProducerMain`):**
+   - In `fallbackProducerMain`, replaced `if (countOneBits(nonEmptyMask) == 1u)` with a 1-to-4 member pairwise disjoint span evaluation.
+   - Active curtains in `nonEmptyMask` are insertion-sorted by start parameter $s$ into `ord[0..nAct-1]` and verified for pairwise disjointness along the ray.
+   - When disjoint (89.73% of rays in `Inside_Veil`), subpanels are emitted directly in curtain order without running the quadratic `totalKnots` insertion sort or midpoint membership search.
+3. **Task P15.3 (CPU Verification Mirror & Structural Validation):**
+   - Synchronized `scratch/probes/positive_e2e_cpu_verify.cpp` with `isolateMonotoneWithMid`, midpoint caching in `roots()`, and `allDisjoint` fast path.
+   - Ran `python3 scratch/probes/ray_transport_p1_p11_structural_review.py`: **PASS** (`repaired_gates: 3, accepted_overlap_rays: 0, needed_strips: 86, cached_strips: 86`).
+   - Recompiled and executed `cpu_verify`: **PASS** (921,600 tile-frames verified with 0 classifier mismatches, 0 S1 mismatches, 0 S2 mismatches, and 0 refused rays).
+   - Rebuilt `build/earthcall_webgpu` (`RelWithDebInfo` / `-O3 -DNDEBUG`) cleanly.
+   - Ran all 3 WebGPU regression test binaries sequentially: **406 / 406 Checks Passed** (73/73, 132/132, 201/201).
+   - Recompiled and executed native Metal verify probe `/private/tmp/ec-positive-e2e-verify/verify`: **All 9/9 Hardware Gates Passed**.
+
+---
+
+### 2. Gate 9 Benchmark: Checkpoint Views & Live Views on Native Metal ($2560 \times 1440$)
+
+| Camera View | Description & Orientation | Current Mean | Routed Mean | Delta (ms) | Delta (%) | Current FPS | Routed FPS | P14 Delta (%) | Route Census (Empty / S1 / S2 / FB) | Status |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Checkpoint View 3** | `eye=(12.5, 0, 106.5)`, `aim=(12.5, 72, 106.5)` (Below Veils Up) | 38.51 ms | **24.91 ms** | **-13.60 ms** | **-35.32%** | 26.0 FPS | **40.1 FPS** | -37.40% | 64.7% / 29.3% / 3.6% / 2.4% | **WON** |
+| **Checkpoint View 2** | `eye=(0, 1.3, 0)`, `aim=(0, 72, 106.5)` (Spawn Dais Diag) | 57.64 ms | **50.28 ms** | **-7.36 ms** | **-12.76%** | 17.3 FPS | **19.9 FPS** | -15.34% | 24.5% / 39.4% / 27.5% / 8.6% | **WON** |
+| **Live 23 FPS View A** | `eye=(-6.75, 2.40, 3.71)`, `aim=(-6.65, 2.92, 4.56)` (Live View A) | 50.57 ms | **45.83 ms** | **-4.74 ms** | **-9.36%** | 19.8 FPS | **21.8 FPS** | -12.73% | 28.3% / 36.3% / 27.2% / 8.2% | **WON** |
+| **Live Parked View** | `eye=(-14.1, 5.85, 0.83)`, `aim=(-14.1, 6.35, 1.70)` (Parked Frame) | 55.40 ms | **50.22 ms** | **-5.18 ms** | **-9.34%** | 18.1 FPS | **19.9 FPS** | -11.50% | 23.0% / 37.5% / 30.4% / 9.1% | **WON** |
+| **Checkpoint View 1** | `eye=(12.5, 67, 39)`, `aim=(12.5, 67, 184)` (Inside Dense Veil) | 90.45 ms | **88.16 ms** | **-2.29 ms** | **-2.53%** | 11.1 FPS | **11.3 FPS** | +0.37% | 0.0% / 0.0% / 49.2% / 50.8% | **FLIPPED & WON!** |
+
+- **Checkpoint View 1 Flipped to a Net Win (-2.29 ms / -2.53%):** Routed is now faster than Current across **100% of real-world checkpoint and live views**!
+- **Checkpoint View 3 Maintains Blistering 40.1 FPS (-35.32% Win):** 24.91 ms vs 38.51 ms Current.
+
+---
+
+### 3. Full 64-Pose ABBA Tour Results: Net Wins Across Both Regimes
+
+| Workload | Current (Baseline) | Routed (Phase P15) | Delta (ms) | Delta (%) | P15 Win Rate | Status |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Regime 1 (33 poses, Full Screen Green)** | 91.095 ms | **78.717 ms** | **-12.379 ms** | **-13.59%** | **33 / 33 (100.0%)** | **CLEAN SWEEP** |
+| **Regime 2 (31 poses, Open Sky)** | 56.247 ms | **54.038 ms** | **-2.210 ms** | **-3.93%** | **21 / 31 (67.7%)** | **NET WIN** |
+| **All 64 Poses** | 74.216 ms | **66.763 ms** | **-7.453 ms** | **-10.04%** | **54 / 64 (84.4%)** | **NET WIN** |
+
+---
+
+### 4. Gate Verification Checklist
+
+- [x] **Gate 1 (Device Acquisition):** PASS
+- [x] **Gate 2 (Coarse-Fine & Pose Parity):** PASS (bit-exact RGBA matches on sampled poses)
+- [x] **Gate 3 (Route Census):** PASS (Empty=15.29%, S1=48.88%, S2=28.83%, Fallback=7.01%)
+- [x] **Gate 4 (Zero Refusal Trajectory):** PASS (0 refused rays across all 8 sampled poses)
+- [x] **Gate 5 (Forced Refusal Parity):** PASS (bit-exact parity with Current on refusal)
+- [x] **Gate 6 (Empty-Strip Finite-Poison Ownership):** PASS (100% `vec4(0.0)`, 0 poison surviving, RGBA parity `52b186bb0e2c2325`)
+- [x] **Gate 7 (Near-Parallel Overlap Witness):** PASS (0 erroneous S2 rays, RGBA parity `3bf0701125d52425`)
+- [x] **Gate 8 (Tall-Viewport Capacity & Resize-Back):** PASS (64, 65, 86 strips + resize-back to 30 pass with exact parity `d34c77bf8a341c6c`)
+- [x] **Gate 9 (Checkpoint Views Parity & ABBA Timing):** PASS (5/5 real-world views won, View 1 flipped to -2.29 ms, View 3 at 40.1 FPS)
+- [x] **WebGPU Regression Suite:** PASS (406/406 checks: 73/73 zero proof, 132/132 support certificates, 201/201 line quadrature)
+
+**Signed:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · 2026-11-01T19:28:00-08:00 (PST). Human origin: Zachary Zhang.
