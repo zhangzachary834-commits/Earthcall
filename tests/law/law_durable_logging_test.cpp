@@ -442,6 +442,15 @@ int main() {
                       engine->durableHistoryLineage() == engineHistory,
                       why);
             };
+            // A non-object top-level payload must never mean "empty world":
+            // that would erase all authored Laws without a parsing failure.
+            expectRejectedWithoutMutation(nlohmann::json::array(),
+                "Array Law world payload erased existing authored Laws");
+            expectRejectedWithoutMutation(nlohmann::json(),
+                "Null Law world payload erased existing authored Laws");
+            expectRejectedWithoutMutation(nlohmann::json("not-a-law-world"),
+                "String Law world payload erased existing authored Laws");
+
             auto duplicateAuthored = original;
             auto copied = duplicateAuthored["laws"][0];
             copied["id"] = "collision-authored-copy";
