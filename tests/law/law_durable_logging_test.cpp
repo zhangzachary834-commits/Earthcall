@@ -478,6 +478,22 @@ int main() {
             expectRejectedWithoutMutation(malformedAuthoredId,
                 "Malformed authored identifier mutated live world before rejection");
 
+            // Malformed authored references/triggers must be rejected before
+            // the replace-all loader discards live Laws or rebinds First Movers.
+            auto malformedAuthors = original;
+            malformedAuthors["laws"][0]["authors"] = nlohmann::json::array({42});
+            expectRejectedWithoutMutation(malformedAuthors,
+                "Malformed author reference mutated the live Law register");
+            auto malformedTargets = original;
+            malformedTargets["laws"][0]["targets"] = "not-an-array";
+            expectRejectedWithoutMutation(malformedTargets,
+                "Malformed target list mutated the live Law register");
+            auto malformedTriggers = original;
+            malformedTriggers["triggers"]["collision-authored"] =
+                nlohmann::json::array({false});
+            expectRejectedWithoutMutation(malformedTriggers,
+                "Malformed trigger type mutated the live Law register");
+
             // Persisted preflight alone is insufficient: a caller can restore
             // one Law, rename its authored ID, then register it beside its
             // source without passing through loadFromJson(). Fail closed and

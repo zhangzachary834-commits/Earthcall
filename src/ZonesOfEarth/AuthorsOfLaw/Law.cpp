@@ -3657,6 +3657,19 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
                 if (!persistedLawIds.insert(idIt->get<std::string>()).second)
                     throw std::invalid_argument("Duplicate persisted Law identifier");
             }
+            // A malformed reference list would otherwise throw only after
+            // replace-all has already removed the previous world's Laws.
+            // Validate the shape before mutating the live register.
+            for (const char* field : {"authors", "targets"}) {
+                auto references = savedLaw.find(field);
+                if (references == savedLaw.end()) continue;
+                if (!references->is_array())
+                    throw std::invalid_argument("Invalid authored Law reference list");
+                for (const auto& reference : *references) {
+                    if (!reference.is_string())
+                        throw std::invalid_argument("Invalid authored Law reference identifier");
+                }
+            }
             auto it = savedLaw.find("durableHistoryLineage");
             if (it == savedLaw.end()) continue; // Legacy Law: fresh lineage on restore.
             if (!it->is_string() ||
@@ -3664,6 +3677,21 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
                 throw std::invalid_argument("Invalid authored Law history lineage");
             if (!persistedLineages.insert(it->get<std::string>()).second)
                 throw std::invalid_argument("Duplicate persisted Law history lineage");
+        }
+    }
+    // Trigger payloads are consumed after replace-all too; reject malformed
+    // entries before any existing Law or First Mover history is disturbed.
+    if (j.contains("triggers")) {
+        const auto& triggers = j["triggers"];
+        if (!triggers.is_object())
+            throw std::invalid_argument("Invalid authored Law trigger map");
+        for (auto it = triggers.begin(); it != triggers.end(); ++it) {
+            if (!it.value().is_array())
+                throw std::invalid_argument("Invalid authored Law trigger list");
+            for (const auto& trigger : it.value()) {
+                if (!trigger.is_string())
+                    throw std::invalid_argument("Invalid authored Law trigger type");
+            }
         }
     }
     // First Movers are absent from authored "laws", but their persisted
