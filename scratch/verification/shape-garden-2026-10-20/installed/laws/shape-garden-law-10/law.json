@@ -1,0 +1,448 @@
+{
+  "authors": [
+    "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+  ],
+  "identifier": "shape-garden-law-10",
+  "law": {
+    "actionDescriptions": [
+      "sequence(14)"
+    ],
+    "actionModel": {
+      "children": [
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "@ShapeGarden.forge.ready"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "vec3",
+            "x": 0.9200000166893005,
+            "y": 0.30000001192092896,
+            "z": 0.47999998927116394
+          },
+          "path": "@ShapeGarden.forge.color"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.22
+          },
+          "path": "@ShapeGarden.forge.panel.astDefinition.pieces.267.mathNode.children.0.scalarForm.terms.0.c"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.28
+          },
+          "path": "@ShapeGarden.forge.panel.astDefinition.pieces.267.mathNode.children.1.scalarForm.terms.0.c"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.37
+          },
+          "path": "@ShapeGarden.forge.panel.astDefinition.pieces.267.mathNode.children.2.scalarForm.terms.0.c"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.22
+          },
+          "path": "@ShapeGarden.forge.panel.astDefinition.pieces.269.mathNode.children.0.scalarForm.terms.0.c"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.28
+          },
+          "path": "@ShapeGarden.forge.panel.astDefinition.pieces.269.mathNode.children.1.scalarForm.terms.0.c"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.37
+          },
+          "path": "@ShapeGarden.forge.panel.astDefinition.pieces.269.mathNode.children.2.scalarForm.terms.0.c"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.22
+          },
+          "path": "@ShapeGarden.forge.panel.astDefinition.pieces.271.mathNode.children.0.scalarForm.terms.0.c"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.28
+          },
+          "path": "@ShapeGarden.forge.panel.astDefinition.pieces.271.mathNode.children.1.scalarForm.terms.0.c"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.37
+          },
+          "path": "@ShapeGarden.forge.panel.astDefinition.pieces.271.mathNode.children.2.scalarForm.terms.0.c"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.98
+          },
+          "path": "@ShapeGarden.forge.panel.astDefinition.pieces.273.mathNode.children.0.scalarForm.terms.0.c"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.7
+          },
+          "path": "@ShapeGarden.forge.panel.astDefinition.pieces.273.mathNode.children.1.scalarForm.terms.0.c"
+        },
+        {
+          "kind": 0,
+          "operand": {
+            "t": "double",
+            "v": 0.32
+          },
+          "path": "@ShapeGarden.forge.panel.astDefinition.pieces.273.mathNode.children.2.scalarForm.terms.0.c"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 2,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+    ],
+    "conditionDescriptions": [
+      "all(9)"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "beingKind": 2,
+          "kind": 7
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@ShapeGarden.forge.enabled"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@ShapeGarden.forge.ready"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "@interaction-channel.pointerLocked"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@interaction-channel.leftDown"
+        },
+        {
+          "kind": 0,
+          "op": 5,
+          "operand": {
+            "t": "double",
+            "v": 0.161
+          },
+          "path": "@ShapeGarden.forge.pressU"
+        },
+        {
+          "kind": 0,
+          "op": 2,
+          "operand": {
+            "t": "double",
+            "v": 0.189
+          },
+          "path": "@ShapeGarden.forge.pressU"
+        },
+        {
+          "kind": 0,
+          "op": 5,
+          "operand": {
+            "t": "double",
+            "v": 0.722
+          },
+          "path": "@ShapeGarden.forge.pressV"
+        },
+        {
+          "kind": 0,
+          "op": 2,
+          "operand": {
+            "t": "double",
+            "v": 0.763
+          },
+          "path": "@ShapeGarden.forge.pressV"
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "shape-garden-law-10",
+    "name": "Shape Garden | Choose color 3",
+    "provenance": [
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-10",
+        "entityB": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1792529340
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-10",
+        "entityB": "law-line-preset-becomes",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792529340
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-10",
+        "entityB": "law-line-args-sequence",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792529340
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-10",
+        "entityB": "law-line-compile-args-sequence",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792529340
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": []
+}

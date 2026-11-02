@@ -152,11 +152,23 @@ int main() {
     };
     Object* pad = findObject("hud.pad.c5");
     Object* resonator = findObject("studio.resonance.c5");
+    Object* organPipeC5 = findObject("studio.organ.pipe.c5");
+    Object* gyroLeft = findObject("studio.sculpture.gyro.left");
+    Object* proscenium = findObject("studio.arch.proscenium");
     check(pad != nullptr, "C5 Living pad exists");
     check(resonator != nullptr, "C5 spatial resonator exists");
-    if (!pad || !resonator) return 1;
+    check(organPipeC5 != nullptr && !organPipeC5->getFieldData().children.empty(),
+          "C5 3D CSG Cathedral Organ Pipe exists with active SDF field model");
+    check(gyroLeft != nullptr && !gyroLeft->getFieldData().children.empty(),
+          "3D CSG Tri-Axial Cymatic Gyro-Sphere exists with active SDF field model");
+    check(proscenium != nullptr && !proscenium->getFieldData().children.empty(),
+          "3D CSG Grand Acoustic Proscenium Arch exists with active SDF field model");
+    check(zone->additionalSpatialFields().size() >= 2,
+          "Living Studio hydrates multi-layered 3D spatial light and stage haze fields");
+    if (!pad || !resonator || !organPipeC5) return 1;
 
     const double authoredBaseRadius = number(*resonator, "resonanceRadius");
+    const double organPipeRestY = number(*organPipeC5, "pipeBaseY");
     check(near(authoredBaseRadius, 0.13, 0.01), "C5 resonator keeps its authored base radius");
 
     std::vector<SoundedNote> sounded;
@@ -187,6 +199,7 @@ int main() {
     // note-played is published by the playback Law. Give that event and the
     // continuous envelope/sculpture Laws several ordinary ticks to propagate.
     double maxRadius = number(*resonator, "shape.r");
+    double maxOrganPipeY = number(*organPipeC5, "position.y");
     double struckAt = number(*resonator, "struckAt");
     for (int i = 0; i < 12; ++i) {
         time += 0.04;
@@ -194,11 +207,14 @@ int main() {
         harness.lawManager.tick();
         struckAt = number(*resonator, "struckAt");
         maxRadius = std::max(maxRadius, number(*resonator, "shape.r"));
+        maxOrganPipeY = std::max(maxOrganPipeY, number(*organPipeC5, "position.y"));
     }
     check(struckAt > 0.0,
           "note-played reaches the matching C5 resonator and records a strike");
     check(maxRadius > authoredBaseRadius + 0.01,
           "matching C5 resonance sphere grows above its authored base radius");
+    check(maxOrganPipeY > organPipeRestY + 0.10,
+          "matching C5 3D Cathedral Organ Pipe surges upward in harmony with the played note");
 
     registerAudioSink(nullptr);
     std::cout << checks - failures << "/" << checks << " checks passed\n";

@@ -1,23 +1,26 @@
 {
   "identifier": "material.studio.sign.blue",
   "material": {
-    "baseColor": [
-      0.16,
-      0.34,
-      0.52
-    ],
+    "id": "material.studio.sign.blue",
     "name": "studio.sign.blue",
-    "opacity": 1.0
+    "baseColor": [
+      0.12,
+      0.45,
+      0.8
+    ],
+    "opacity": 1.0,
+    "ambient": 0.2,
+    "diffuse": 0.74,
+    "specular": 0.48,
+    "shininess": 56.0,
+    "textureResolution": 16
   },
   "authors": [
     "Zach"
   ],
   "injected_by": {
-    "agent": "Claude Code / Claude Sonnet 5.5, session 01GxayCUN2nc7DDaeg33kXhZ",
-    "date": "2026-10-07",
-    "recovered_from": [
-      "saves/worlds/synthesis_studio.json",
-      "saves/worlds/synthesis_studio_living.json"
-    ]
+    "agent": "Gemini 4 Argon (The Firmament \u00b7 Gemini Spark), session c_d03bb5a87bbfab74",
+    "date": "2026-10-19",
+    "scope": "Synthesis Studio 3D procedural material upgrade"
   }
 }

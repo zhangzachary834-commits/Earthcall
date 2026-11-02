@@ -1,0 +1,864 @@
+{
+  "authors": [
+    "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+  ],
+  "identifier": "shape-garden-law-25",
+  "law": {
+    "actionDescriptions": [
+      "sequence(4)"
+    ],
+    "actionModel": {
+      "children": [
+        {
+          "kind": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "@ShapeGarden.forge.ready"
+        },
+        {
+          "children": [
+            {
+              "bindings": {
+                "@ShapeGarden.forge.expression": "@ShapeGarden.forge.expression"
+              },
+              "function": {
+                "input": "x",
+                "pieces": [
+                  {
+                    "mathNode": {
+                      "op": 1,
+                      "var": "@ShapeGarden.forge.expression"
+                    }
+                  }
+                ]
+              },
+              "kind": 8,
+              "path": "field.expr"
+            },
+            {
+              "kind": 0,
+              "operand": {
+                "t": "vec3",
+                "x": 1.600000023841858,
+                "y": 1.600000023841858,
+                "z": 1.600000023841858
+              },
+              "path": "field.extent"
+            },
+            {
+              "bindings": {
+                "@ShapeGarden.forge.nextX": "@ShapeGarden.forge.nextX",
+                "@ShapeGarden.forge.nextZ": "@ShapeGarden.forge.nextZ",
+                "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.cameraForward.x": "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.cameraForward.x",
+                "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.cameraForward.z": "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.cameraForward.z",
+                "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.position.x": "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.position.x",
+                "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.position.y": "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.position.y",
+                "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.position.z": "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.position.z"
+              },
+              "function": {
+                "input": "x",
+                "pieces": [
+                  {
+                    "mathNode": {
+                      "children": [
+                        {
+                          "children": [
+                            {
+                              "children": [
+                                {
+                                  "op": 1,
+                                  "var": "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.position.x"
+                                },
+                                {
+                                  "children": [
+                                    {
+                                      "op": 1,
+                                      "var": "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.cameraForward.x"
+                                    },
+                                    {
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 5.0,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "op": 1,
+                                          "var": "@ShapeGarden.forge.nextZ"
+                                        }
+                                      ],
+                                      "op": 4
+                                    }
+                                  ],
+                                  "op": 6
+                                }
+                              ],
+                              "op": 4
+                            },
+                            {
+                              "children": [
+                                {
+                                  "op": 1,
+                                  "var": "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.cameraForward.z"
+                                },
+                                {
+                                  "op": 1,
+                                  "var": "@ShapeGarden.forge.nextX"
+                                }
+                              ],
+                              "op": 6
+                            }
+                          ],
+                          "op": 5
+                        },
+                        {
+                          "children": [
+                            {
+                              "op": 1,
+                              "var": "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.position.y"
+                            },
+                            {
+                              "op": 0,
+                              "scalarForm": {
+                                "terms": [
+                                  {
+                                    "c": 1.2,
+                                    "factors": {}
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "op": 4
+                        },
+                        {
+                          "children": [
+                            {
+                              "children": [
+                                {
+                                  "op": 1,
+                                  "var": "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.position.z"
+                                },
+                                {
+                                  "children": [
+                                    {
+                                      "op": 1,
+                                      "var": "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.cameraForward.z"
+                                    },
+                                    {
+                                      "children": [
+                                        {
+                                          "op": 0,
+                                          "scalarForm": {
+                                            "terms": [
+                                              {
+                                                "c": 5.0,
+                                                "factors": {}
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "op": 1,
+                                          "var": "@ShapeGarden.forge.nextZ"
+                                        }
+                                      ],
+                                      "op": 4
+                                    }
+                                  ],
+                                  "op": 6
+                                }
+                              ],
+                              "op": 4
+                            },
+                            {
+                              "children": [
+                                {
+                                  "op": 1,
+                                  "var": "@did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga.cameraForward.x"
+                                },
+                                {
+                                  "op": 1,
+                                  "var": "@ShapeGarden.forge.nextX"
+                                }
+                              ],
+                              "op": 6
+                            }
+                          ],
+                          "op": 4
+                        }
+                      ],
+                      "op": 2
+                    }
+                  }
+                ]
+              },
+              "kind": 8,
+              "path": "position"
+            },
+            {
+              "bindings": {
+                "@ShapeGarden.forge.rotation": "@ShapeGarden.forge.rotation"
+              },
+              "function": {
+                "input": "x",
+                "pieces": [
+                  {
+                    "mathNode": {
+                      "op": 1,
+                      "var": "@ShapeGarden.forge.rotation"
+                    }
+                  }
+                ]
+              },
+              "kind": 8,
+              "path": "rotation"
+            },
+            {
+              "bindings": {
+                "@ShapeGarden.forge.color": "@ShapeGarden.forge.color"
+              },
+              "function": {
+                "input": "x",
+                "pieces": [
+                  {
+                    "mathNode": {
+                      "op": 1,
+                      "var": "@ShapeGarden.forge.color"
+                    }
+                  }
+                ]
+              },
+              "kind": 8,
+              "path": "color"
+            },
+            {
+              "kind": 12,
+              "operand": {
+                "t": "bool",
+                "v": true
+              },
+              "propertyName": "shapeGardenGenerated"
+            }
+          ],
+          "kind": 11,
+          "shapeKind": 0
+        },
+        {
+          "kind": 1,
+          "operand": {
+            "t": "double",
+            "v": 1.0
+          },
+          "path": "@ShapeGarden.forge.count"
+        },
+        {
+          "kind": 1,
+          "operand": {
+            "t": "double",
+            "v": 1.8
+          },
+          "path": "@ShapeGarden.forge.nextX"
+        }
+      ],
+      "kind": 5
+    },
+    "activation": 2,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+    ],
+    "conditionDescriptions": [
+      "all(9)"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "beingKind": 2,
+          "kind": 7
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@ShapeGarden.forge.enabled"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@ShapeGarden.forge.ready"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": false
+          },
+          "path": "@interaction-channel.pointerLocked"
+        },
+        {
+          "kind": 0,
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          },
+          "path": "@interaction-channel.leftDown"
+        },
+        {
+          "kind": 0,
+          "op": 5,
+          "operand": {
+            "t": "double",
+            "v": 0.043
+          },
+          "path": "@ShapeGarden.forge.pressU"
+        },
+        {
+          "kind": 0,
+          "op": 2,
+          "operand": {
+            "t": "double",
+            "v": 0.193
+          },
+          "path": "@ShapeGarden.forge.pressU"
+        },
+        {
+          "kind": 0,
+          "op": 5,
+          "operand": {
+            "t": "double",
+            "v": 0.79
+          },
+          "path": "@ShapeGarden.forge.pressV"
+        },
+        {
+          "kind": 0,
+          "op": 2,
+          "operand": {
+            "t": "double",
+            "v": 0.86
+          },
+          "path": "@ShapeGarden.forge.pressV"
+        }
+      ],
+      "kind": 3
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "shape-garden-law-25",
+    "name": "Shape Garden | Create solid",
+    "provenance": [
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-25",
+        "entityB": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1792528728
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-25",
+        "entityB": "law-line-preset-becomes",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792528728
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-25",
+        "entityB": "law-line-act-create",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792528728
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-25",
+        "entityB": "law-line-compile-registered-expression",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792528728
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-25",
+        "entityB": "law-line-compile-registered-value",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792528728
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-25",
+        "entityB": "law-line-compile-authored-value",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792528728
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-25",
+        "entityB": "law-line-compile-object",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792528728
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-25",
+        "entityB": "law-line-args-sequence",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792528728
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      },
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "shape-garden-law-25",
+        "entityB": "law-line-compile-args-sequence",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "branched-from",
+            "timestamp": 1792528728
+          }
+        ],
+        "type": "branched-from",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": [],
+  "injected_by": "Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-20; compiled through Law Line; first-seed application root"
+}

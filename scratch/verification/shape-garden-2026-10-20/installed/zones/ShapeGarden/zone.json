@@ -1,0 +1,75 @@
+{
+  "deletable": {
+    "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga": true
+  },
+  "formationRelations": [],
+  "identifier": "ShapeGarden",
+  "lawRefs": [
+    "shape-garden-law-0",
+    "shape-garden-law-1",
+    "shape-garden-law-2",
+    "shape-garden-law-3",
+    "shape-garden-law-4",
+    "shape-garden-law-5",
+    "shape-garden-law-6",
+    "shape-garden-law-7",
+    "shape-garden-law-8",
+    "shape-garden-law-9",
+    "shape-garden-law-10",
+    "shape-garden-law-11",
+    "shape-garden-law-12",
+    "shape-garden-law-13",
+    "shape-garden-law-14",
+    "shape-garden-law-15",
+    "shape-garden-law-16",
+    "shape-garden-law-17",
+    "shape-garden-law-18",
+    "shape-garden-law-19",
+    "shape-garden-law-20",
+    "shape-garden-law-21",
+    "shape-garden-law-22",
+    "shape-garden-law-23",
+    "shape-garden-law-24",
+    "shape-garden-law-25",
+    "shape-garden-law-26",
+    "shape-garden-law-27"
+  ],
+  "lexemes": [],
+  "name": "Shape Garden",
+  "owner": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
+  "parentZone": "",
+  "qualities": {
+    "ownerKind": "person"
+  },
+  "scope": "Local",
+  "spatialRoot": {
+    "field": {
+      "amplitude": 1.0,
+      "baseDensity": 1.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    },
+    "id": "ShapeGarden_spatialRoot",
+    "origin": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "vectorField": {
+      "amplitude": 1.0,
+      "baseFlowX": 0.0,
+      "baseFlowY": 0.0,
+      "baseFlowZ": 0.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    }
+  },
+  "world": {
+    "objects": []
+  }
+}
