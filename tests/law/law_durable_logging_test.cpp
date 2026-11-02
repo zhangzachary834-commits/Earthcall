@@ -1021,6 +1021,33 @@ int main() {
         }
 
         {
+            // A rejected two-Law load with a near-terminal explicit ID must
+            // not poison the process-global counter. Previously reservation
+            // happened before the capacity check and permanently exhausted it.
+            LawManager guarded;
+            auto existing = std::make_shared<Law>("Live before rejected ID budget");
+            existing->setLawIdentifier("budget-live-authored");
+            guarded.add(existing);
+            const auto before = guarded.toJson();
+            auto rejected = before;
+            rejected["laws"][0]["id"] = "law-" +
+                std::to_string(std::numeric_limits<unsigned long long>::max() - 1);
+            auto second = before.at("laws").at(0);
+            second["id"] = "budget-second-authored";
+            second.erase("durableHistoryLineage");
+            rejected["laws"].push_back(second);
+            bool refused = false;
+            try { guarded.loadFromJson(rejected); }
+            catch (const std::overflow_error&) { refused = true; }
+            check(refused && guarded.toJson() == before &&
+                  guarded.find("budget-live-authored") == existing.get(),
+                  "Rejected ID-budget load changed the live Law register");
+            Law stillCreatable("Generated after rejected ID-budget load");
+            check(stillCreatable.getIdentifier().rfind("law-", 0) == 0,
+                  "Rejected ID-budget load exhausted future Law construction");
+        }
+
+        {
             const auto nearMax = std::numeric_limits<unsigned long long>::max() - 1;
             Law source("Large restored identifier");
             auto saved = source.toJson();
