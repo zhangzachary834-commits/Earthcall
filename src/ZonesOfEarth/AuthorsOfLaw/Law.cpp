@@ -3700,6 +3700,21 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
                     throw std::invalid_argument("Invalid authored Law nested model");
                 }
             }
+            // Authored properties use a typed, potentially throwing codec in
+            // Law::fromJson. Preflight every present property before replace-all
+            // so malformed nested values cannot erase the previous Law register.
+            // Preserve the legacy behavior of ignoring non-object containers.
+            auto authoredProperties = savedLaw.find("authoredProperties");
+            if (authoredProperties != savedLaw.end() && authoredProperties->is_object()) {
+                for (auto property = authoredProperties->begin();
+                     property != authoredProperties->end(); ++property) {
+                    try {
+                        (void)propertyValueFromJson(property.value());
+                    } catch (const nlohmann::json::exception&) {
+                        throw std::invalid_argument("Invalid authored Law property value");
+                    }
+                }
+            }
             auto idIt = savedLaw.find("id");
             if (idIt != savedLaw.end()) {
                 if (!idIt->is_string() || idIt->get<std::string>().empty())
