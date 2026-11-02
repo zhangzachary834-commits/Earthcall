@@ -14185,3 +14185,69 @@ Signed: Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · Session `50cf28df-09e
   4. **Deliverable P19.4 (Full 10-Gate Native Apple M5 Metal Verification, CPU Mirror Verification & 406/406 WebGPU Regression Suite):**
      - Verify `positive_e2e_cpu_verify`, `positive_e2e_metal_verify` (Gates 1–10), and the sequential WebGPU regression suite (`406 / 406`), and publish the Phase P19 benchmark report and JSON receipts.
 
+
+### 10.47 Phase P19 Completion: Direct Secant Root Isolation, Bit-Scanned Active Bin Traversal & Consumer Private-State Compaction (`2026-11-02`)
+- **Author:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity)
+- **Recipients:** Aetherion / The Firmament (`Gemini 4 Argon`), Sixth-One Sun (`Codex / GPT-6.1 Sol`), Astra (`Codex / GPT-6`), Prince Prism II (`GPT-5.6 Sol`), & Zachary Zhang
+- **Base Commit:** `fa0a9d310`
+- **Audit Report:** [`docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P19_DIRECT_SECANT_BITSCAN_AND_PRIVATE_COMPACTION_BENCHMARK_2026-11-02.md`](../../docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P19_DIRECT_SECANT_BITSCAN_AND_PRIVATE_COMPACTION_BENCHMARK_2026-11-02.md)
+- **JSON Receipts:**
+  - Hardware Metal: [`docs/audits/data/positive_e2e_p19_verification.json`](../../docs/audits/data/positive_e2e_p19_verification.json)
+  - CPU Mirror: [`docs/audits/data/positive_e2e_p19_cpu_verification.json`](../../docs/audits/data/positive_e2e_p19_cpu_verification.json)
+
+#### 1. Architectural Summary of Work Completed in Phase P19
+1. **Deliverable P19.1 (Direct `iter = 0` Clamped Secant Root Isolation with Local Slope Tightening & Illinois Damping):**
+   - Completely deleted `isolateMonotoneWithMid`, `phi_mids`, and `mid_mask` across all three producer kernels (`kS1UnfusedProducerWgsl`, `kS2ProducerWgsl`, `kFallbackProducerWgsl`) in `VolumeRoutedKernels.hpp` and in `positive_e2e_cpu_verify.cpp`.
+   - Upgraded `isolateMonotone` to accept `M: f32` and apply clamped secant interpolation `tSec = clamp(-left / (right - left), 0.002, 0.998)` on `iter < 2u || (iter & 1u) == 0u`.
+   - Added Illinois `0.5` damping on consecutive evaluations from the same side (`prevSide == -1 ? left *= 0.5 : right *= 0.5`) to eliminate secant stagnation against convex curtain shoulders.
+   - Incorporated dynamic local slope tightening:
+     $$curMinSlope = \max\left(curMinSlope, \frac{|rawRight - rawLeft| - 2\epsilon}{h} - \frac{1}{2} M h\right)$$
+     accelerating bracket convergence and collapsing monotone root evaluations by over 85%.
+2. **Deliverable P19.2 (Bit-Scanned Active Bin Traversal in `roots()` via `firstTrailingBit`):**
+   - Replaced the rigid 8-iteration coarse bin loop with a bit-scanned loop using `firstTrailingBit(binMask)` when `allPositiveH == true`.
+   - Charged skipped and trailing bins against the budget identically to preserve deterministic budget accounting.
+   - Eliminated thread divergence across SIMD groups when rays traverse different numbers of active bins.
+3. **Deliverable P19.3 (Consumer Private-State Compaction & Single-`exp(-tau)` Branchless `ecFlow`):**
+   - In `src/Singularity/Screen/WebGPU/VolumeRoutedTransport.inc`, unified all `g_volumeShared_1..3_` references to `g_volumeShared_0_` in `consumePrefix` when SIMD deduplication is active.
+   - Erased 48 thread-private variable declarations from `TintPrivateVars`, eliminating per-sample copy operations in `ecSingleMember` and slashing register pressure across the consumer pipeline.
+   - Refactored `ecFlow` to compute transmittance branchlessly using a single `exp(-tau)` call and removed the obsolete `ecPhi` path.
+   - Added zero-extinction guards (`v0.w > 0.0`, `v1.w > 0.0`, `v.w > 0.0`) in the mixed multi-member consumer loop (`ray.counts.w != 0u`).
+4. **Deliverable P19.4 (Verification & Hardware Benchmarks):**
+   - Verified 10/10 Native Metal hardware gates on Apple M5 (`verify`).
+   - Verified 0 classifier mismatches, 0 S1 mismatches, 0 S2 mismatches, and 0 refused rays across 921,600 tile-frames (`cpu_verify`).
+   - Verified 406/406 WebGPU regression tests (`webgpu_volume_zero_proof_test`, `webgpu_volume_support_certificates_test`, `webgpu_line_quadrature_test`).
+
+#### 2. Gate 9 Benchmark: 7 Real-World Checkpoint Views Won Outright ($2560 \times 1440$)
+- **Checkpoint View 3A (`Below_Veils_Sparse_UpZ`):** Current 37.13 ms (26.9 FPS) vs Routed **20.97 ms (47.7 FPS)**, **-16.16 ms (-43.52%)**!
+- **Checkpoint View 2 (`Spawn Dais Diag`):** Current 56.97 ms (17.6 FPS) vs Routed **35.66 ms (28.0 FPS)**, **-21.31 ms (-37.41%)**!
+- **Checkpoint View 3C (`Pitch 75°`):** Current 58.96 ms (17.0 FPS) vs Routed **38.16 ms (26.2 FPS)**, **-20.80 ms (-35.27%)**!
+- **Live 23 FPS View A:** Current 52.25 ms (19.1 FPS) vs Routed **33.89 ms (29.5 FPS)**, **-18.36 ms (-35.15%)**!
+- **Checkpoint View 1 (`Inside_Veil`):** Current 92.62 ms (10.8 FPS) vs Routed **60.30 ms (16.6 FPS)**, **-32.32 ms (-34.89%)**!
+- **Checkpoint View 3B (`Dense UpX`):** Current 54.30 ms (18.4 FPS) vs Routed **35.74 ms (28.0 FPS)**, **-18.55 ms (-34.17%)**!
+- **Live Parked View:** Current 55.17 ms (18.1 FPS) vs Routed **36.87 ms (27.1 FPS)**, **-18.31 ms (-33.18%)**!
+
+#### 3. Gate 10 Benchmark: 12-Angle View-3 Roll Sweep ($0^\circ$ to $165^\circ$)
+- Clean **12/12 sweep**: All 12 angles won by **-29.37% to -49.13%**, peaking at **47.5 FPS** (0°, -44.01%) and **41.5 FPS** (165°, -49.13%).
+
+#### 4. Dual-Regime All-64 Poses Benchmark
+- **Regime 1 (33 poses, Full Screen Green):** Current 94.528 ms vs Routed **64.326 ms (-30.202 ms / -31.95%)**
+- **Regime 2 (31 poses, Open Sky):** Current 58.496 ms vs Routed **44.849 ms (-13.647 ms / -23.33%)**
+- **All 64 Poses (Full Tour):** Current 77.075 ms vs Routed **54.891 ms (-22.183 ms / -28.78%)** — **64 / 64 Poses Won**!
+
+#### 5. Verification Checklist & Checksums
+- [x] **Gate 1 (Device Acquisition & Fail-Closed Parity):** PASS
+- [x] **Gate 2 (Pose 0 Publication Hash `66a81d901db5d3d6`):** PASS
+- [x] **Gate 3 (Pose 32 Publication Hash `06cd87cf8d12cab5`):** PASS
+- [x] **Gate 4 (Trajectory Refusal Audit Sample):** PASS (0 refused rays across all 8 sampled poses)
+- [x] **Gate 5 (Production Route Census):** PASS (`Empty=15.28% S1=48.88% S2=30.44% Fallback=5.40%`)
+- [x] **Gate 6 (Empty-Strip Finite-Poison Ownership):** PASS (`52b186bb0e2c2325 == 52b186bb0e2c2325`, 0 poison surviving)
+- [x] **Gate 7 (Near-Parallel Overlap Witness):** PASS (`3bf0701125d52425 == 3bf0701125d52425`, 0 erroneous S2 rays)
+- [x] **Gate 8 (Tall-Viewport Capacity & Resize-Back):** PASS (64, 65, 86 strips + resize-back to 30 with exact parity `9c5521c6eaf08702`)
+- [x] **Gate 9 (7 Checkpoint Views ABBA Timing):** PASS (7/7 views won, -33.18% to -43.52%)
+- [x] **Gate 10 (12-Angle View-3 Roll Sweep):** PASS (12/12 angles won, -29.37% to -49.13%)
+- [x] **CPU Verify Mirror:** PASS (921,600 tile-frames verified, 0 classifier mismatches, 0 S1 mismatches, 0 S2 mismatches, 0 refused rays)
+- [x] **WebGPU Regression Test Suite:** PASS (406/406 checks; CTest 100% pass)
+
+Signed: Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · Session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · 2026-11-02T02:40:00-08:00 (PST).
+
+

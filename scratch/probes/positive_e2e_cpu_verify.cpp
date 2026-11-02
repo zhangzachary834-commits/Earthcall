@@ -700,7 +700,7 @@ struct ProducerMath {
 
     static void isolateMonotone(const KernelRoutedSpec& m, glm::vec3 o, glm::vec3 d,
                                 float a, float b, float c, float va, float vb,
-                                float error, float minSlope,
+                                float error, float minSlope, float M,
                                 float (&bounds)[MaxBounds], uint32_t& nb,
                                 glm::vec2 (&bands)[MaxBands], uint32_t& nr,
                                 uint32_t& reason, uint32_t& work,
@@ -715,26 +715,41 @@ struct ProducerMath {
         }
         if ((va > error && vb < -error) || (va < -error && vb > error)) {
             float l = a, r = b, left = va, right = vb;
+            float rawLeft = va, rawRight = vb;
+            float curMinSlope = minSlope;
+            int32_t prevSide = 0;
             for (uint32_t iter = 0u; iter < 32u; iter++) {
                 if (work >= budget) { reason |= 1u; break; }
                 work += 1u;
                 float mid = l + 0.5f * (r - l);
-                if ((iter & 1u) == 1u && std::abs(right - left) > 1e-6f) {
-                    float tSec = std::clamp(-left / (right - left), 0.05f, 0.95f);
+                if ((iter < 2u || (iter & 1u) == 0u) && std::abs(right - left) > 1e-6f) {
+                    float tSec = std::clamp(-left / (right - left), 0.002f, 0.998f);
                     mid = l + tSec * (r - l);
                 }
                 if (mid <= l || mid >= r || r - l <= 0.0001f) break;
                 float v = evalPhi(m, o, d, mid) - c;
                 if (std::abs(v) <= error) {
-                    float w = 2.0f * error / minSlope;
+                    float w = 2.0f * error / curMinSlope;
                     if (w <= 0.0095f && w < 0.5f * (r - l)) {
                         l = std::max(l, mid - w);
                         r = std::min(r, mid + w);
                         break;
                     }
                 }
-                if ((left < 0.0f && v > 0.0f) || (left > 0.0f && v < 0.0f)) { r = mid; right = v; }
-                else { l = mid; left = v; }
+                if ((rawLeft < 0.0f && v > 0.0f) || (rawLeft > 0.0f && v < 0.0f)) {
+                    r = mid; right = v; rawRight = v;
+                    if (prevSide == -1) { left *= 0.5f; }
+                    prevSide = -1;
+                } else {
+                    l = mid; left = v; rawLeft = v;
+                    if (prevSide == 1) { right *= 0.5f; }
+                    prevSide = 1;
+                }
+                float h = r - l;
+                if (h > 1e-5f) {
+                    float localMinSlope = (std::abs(rawRight - rawLeft) - 2.0f * error) / h - 0.5f * M * h;
+                    curMinSlope = std::max(curMinSlope, localMinSlope);
+                }
             }
             putBandTagged(l, r, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
         }
@@ -762,88 +777,35 @@ struct ProducerMath {
         return mask;
     }
 
-    static void isolateMonotoneWithMid(const KernelRoutedSpec& m, glm::vec3 o, glm::vec3 d,
-                                       float a, float b, float c, float va, float vb,
-                                       float mid0, float fmid0, float error, float minSlope,
-                                       float (&bounds)[MaxBounds], uint32_t& nb,
-                                       glm::vec2 (&bands)[MaxBands], uint32_t& nr,
-                                       uint32_t& reason, uint32_t& work,
-                                       uint32_t& zeroBands, bool isZeroLevel, uint32_t budget) {
-        if (std::abs(va) <= error) {
-            float w = 2.0f * error / minSlope;
-            putBandTagged(a, std::min(b, a + w), bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
-        }
-        if (std::abs(vb) <= error) {
-            float w = 2.0f * error / minSlope;
-            putBandTagged(std::max(a, b - w), b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
-        }
-        if ((va > error && vb < -error) || (va < -error && vb > error)) {
-            float l = a, r = b, left = va, right = vb;
-            bool done = false;
-            if (work >= budget) { reason |= 1u; done = true; }
-            else {
-                work += 1u;
-                if (mid0 <= l || mid0 >= r || r - l <= 0.0001f) { done = true; }
-                else if (std::abs(fmid0) <= error) {
-                    float w = 2.0f * error / minSlope;
-                    if (w <= 0.0095f && w < 0.5f * (r - l)) {
-                        l = std::max(l, mid0 - w);
-                        r = std::min(r, mid0 + w);
-                        done = true;
-                    } else {
-                        if ((left < 0.0f && fmid0 > 0.0f) || (left > 0.0f && fmid0 < 0.0f)) { r = mid0; right = fmid0; }
-                        else { l = mid0; left = fmid0; }
-                    }
-                } else {
-                    if ((left < 0.0f && fmid0 > 0.0f) || (left > 0.0f && fmid0 < 0.0f)) { r = mid0; right = fmid0; }
-                    else { l = mid0; left = fmid0; }
-                }
-            }
-            if (!done) {
-                for (uint32_t iter = 1u; iter < 32u; iter++) {
-                    if (work >= budget) { reason |= 1u; break; }
-                    work += 1u;
-                    float mid = l + 0.5f * (r - l);
-                    if ((iter & 1u) == 1u && std::abs(right - left) > 1e-6f) {
-                        float tSec = std::clamp(-left / (right - left), 0.05f, 0.95f);
-                        mid = l + tSec * (r - l);
-                    }
-                    if (mid <= l || mid >= r || r - l <= 0.0001f) break;
-                    float v = evalPhi(m, o, d, mid) - c;
-                    if (std::abs(v) <= error) {
-                        float w = 2.0f * error / minSlope;
-                        if (w <= 0.0095f && w < 0.5f * (r - l)) {
-                            l = std::max(l, mid - w);
-                            r = std::min(r, mid + w);
-                            break;
-                        }
-                    }
-                    if ((left < 0.0f && v > 0.0f) || (left > 0.0f && v < 0.0f)) { r = mid; right = v; }
-                    else { l = mid; left = v; }
-                }
-            }
-            putBandTagged(l, r, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
-        }
-    }
     static void roots(const KernelRoutedSpec& m, glm::vec3 o, glm::vec3 d, float lo, float hi, float c,
                       float (&bounds)[MaxBounds], uint32_t& nb, glm::vec2 (&bands)[MaxBands],
                       uint32_t& nr, uint32_t& reason, uint32_t& work,
-                      const float (&phi_knots)[9], float (&phi_mids)[8], uint32_t& mid_mask,
+                      const float (&phi_knots)[9],
                       uint32_t& zeroBands, bool isZeroLevel,
-                      uint32_t levelActiveMask, uint32_t budget) {
+                      uint32_t levelActiveMask, bool allPositiveH, uint32_t budget) {
         float M = m.curv.x * d.x * d.x * 1.00002f;
         float err = m.curv.y;
         glm::vec4 stack[StackCap];
         glm::uvec3 depthBits(0u);
         uint32_t top = 0u;
-        for (uint32_t bin = 0u; bin < 8u; bin++) {
+        uint32_t binMask = allPositiveH ? levelActiveMask : 0xFFu;
+        uint32_t nextChargeBin = 0u;
+        while (binMask != 0u) {
+            uint32_t bin = static_cast<uint32_t>(__builtin_ctz(binMask));
+            binMask &= binMask - 1u;
+            if (allPositiveH) {
+                uint32_t skipped = bin - nextChargeBin;
+                if (work + skipped >= budget) { reason |= 1u; return; }
+                work += skipped;
+                nextChargeBin = bin + 1u;
+            }
             float a = lo + (hi - lo) * float(bin) / 8.0f;
             float b = lo + (hi - lo) * float(bin + 1u) / 8.0f;
             if (bin == 0u) a = lo;
             if (bin == 7u) b = hi;
-            if (work >= budget) { reason |= 1u; break; }
+            if (work >= budget) { reason |= 1u; return; }
             float coarseH = b - a;
-            if (!(coarseH > 0.0f)) { work += 1u; reason |= 4u; break; }
+            if (!(coarseH > 0.0f)) { work += 1u; reason |= 4u; return; }
             if ((levelActiveMask & (1u << bin)) == 0u) { work += 1u; continue; }
             work += 1u;
             float phi_a0 = phi_knots[bin];
@@ -856,48 +818,23 @@ struct ProducerMath {
             float coarseRadius = 0.5f * M * coarseH + 2.0f * coarseError / coarseH;
             float coarseMinSlope = std::abs(coarseSlope) - coarseRadius;
             if (coarseMinSlope > 0.0f) {
-                bool hasCrossing = (coarseVa > coarseError && coarseVb < -coarseError) || (coarseVa < -coarseError && coarseVb > coarseError);
-                if (hasCrossing) {
-                    float mid0 = a + 0.5f * coarseH;
-                    uint32_t bit = 1u << bin;
-                    float phi_mid0 = 0.0f;
-                    if ((mid_mask & bit) != 0u) {
-                        phi_mid0 = phi_mids[bin];
-                    } else {
-                        phi_mid0 = evalPhi(m, o, d, mid0);
-                        phi_mids[bin] = phi_mid0;
-                        mid_mask |= bit;
-                    }
-                    float fmid0 = phi_mid0 - c;
-                    isolateMonotoneWithMid(m, o, d, a, b, c, coarseVa, coarseVb, mid0, fmid0, coarseError, coarseMinSlope,
-                                           bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel, budget);
-                } else {
-                    isolateMonotone(m, o, d, a, b, c, coarseVa, coarseVb, coarseError, coarseMinSlope,
-                                    bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel, budget);
-                }
-                if (reason != 0u) break;
+                isolateMonotone(m, o, d, a, b, c, coarseVa, coarseVb, coarseError, coarseMinSlope, M,
+                                bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel, budget);
+                if (reason != 0u) return;
                 continue;
             }
             if (0.125f * M * coarseH * coarseH <= coarseError) {
                 putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
-                if (reason != 0u) break;
+                if (reason != 0u) return;
                 continue;
             }
             float mid0 = a + 0.5f * coarseH;
             if (mid0 <= a || mid0 >= b) {
                 putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
-                if (reason != 0u) break;
+                if (reason != 0u) return;
                 continue;
             }
-            uint32_t bit = 1u << bin;
-            float phi_mid0 = 0.0f;
-            if ((mid_mask & bit) != 0u) {
-                phi_mid0 = phi_mids[bin];
-            } else {
-                phi_mid0 = evalPhi(m, o, d, mid0);
-                phi_mids[bin] = phi_mid0;
-                mid_mask |= bit;
-            }
+            float phi_mid0 = evalPhi(m, o, d, mid0);
             stack[0] = glm::vec4(mid0, b, phi_mid0, phi_b0); setDepth(depthBits, 0u, 1u);
             stack[1] = glm::vec4(a, mid0, phi_a0, phi_mid0); setDepth(depthBits, 1u, 1u);
             top = 2u;
@@ -921,7 +858,7 @@ struct ProducerMath {
                 float radius = 0.5f * M * h + 2.0f * error / h;
                 float minSlope = std::abs(slope) - radius;
                 if (minSlope > 0.0f) {
-                    isolateMonotone(m, o, d, a, b, c, va, vb, error, minSlope,
+                    isolateMonotone(m, o, d, a, b, c, va, vb, error, minSlope, M,
                                     bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel, budget);
                     continue;
                 }
@@ -943,7 +880,12 @@ struct ProducerMath {
                 stack[top + 1u] = glm::vec4(a, mid, cell.z, phi_mid); setDepth(depthBits, top + 1u, depth + 1u);
                 top += 2u;
             }
-            if (reason != 0u) break;
+            if (reason != 0u) return;
+        }
+        if (allPositiveH && nextChargeBin < 8u) {
+            uint32_t trailing = 8u - nextChargeBin;
+            if (work + trailing > budget) { reason |= 1u; return; }
+            work += trailing;
         }
     }
 };
@@ -1003,10 +945,9 @@ static RayProducerOutput runS1Producer(const Ray& input, uint32_t activeMember,
         } else {
             uint32_t nb = 1u; knots[0] = a;
             glm::vec2 bands[32]; uint32_t nr = 0u, zeroBands = 0u;
-            float phi_mids[8]; uint32_t mid_mask = 0u;
-            PM::roots(m, o, d, a, b, -m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, false, mask0, budget);
-            if (out.reason == 0u) PM::roots(m, o, d, a, b, 0.0f, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, true, mask1, budget);
-            if (out.reason == 0u) PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, false, mask2, budget);
+            PM::roots(m, o, d, a, b, -m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask0, allPositiveH, budget);
+            if (out.reason == 0u) PM::roots(m, o, d, a, b, 0.0f, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, true, mask1, allPositiveH, budget);
+            if (out.reason == 0u) PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask2, allPositiveH, budget);
             if (out.reason == 0u) {
                 if (allPositiveH && nr == 0u && std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
                     // empty chord
@@ -1156,12 +1097,11 @@ static RayProducerOutput runS2Producer(const Ray& input, uint32_t packedTile,
         }
         uint32_t nb = 1u; knots[0] = a;
         glm::vec2 bands[32]; uint32_t nr = 0u, zeroBands = 0u;
-        float phi_mids[8]; uint32_t mid_mask = 0u;
-        PM::roots(m, o, d, a, b, -m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, false, mask0, budget);
+        PM::roots(m, o, d, a, b, -m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask0, allPositiveH, budget);
         if (out.reason != 0u) break;
-        PM::roots(m, o, d, a, b, 0.0f, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, true, mask1, budget);
+        PM::roots(m, o, d, a, b, 0.0f, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, true, mask1, allPositiveH, budget);
         if (out.reason != 0u) break;
-        PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, false, mask2, budget);
+        PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask2, allPositiveH, budget);
         if (out.reason != 0u) break;
         if (allPositiveH && nr == 0u && std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
             memberCount[memberIdx] = count;
@@ -1303,12 +1243,11 @@ static RayProducerOutput runFallbackProducer(const Ray& input,
         }
         uint32_t nb = 1u; knots[0] = a;
         glm::vec2 bands[32]; uint32_t nr = 0u, zeroBands = 0u;
-        float phi_mids[8]; uint32_t mid_mask = 0u;
-        PM::roots(m, o, d, a, b, -m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, false, mask0, budget);
+        PM::roots(m, o, d, a, b, -m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask0, allPositiveH, budget);
         if (out.reason != 0u) break;
-        PM::roots(m, o, d, a, b, 0.0f, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, true, mask1, budget);
+        PM::roots(m, o, d, a, b, 0.0f, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, true, mask1, allPositiveH, budget);
         if (out.reason != 0u) break;
-        PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, false, mask2, budget);
+        PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask2, allPositiveH, budget);
         if (out.reason != 0u) break;
         if (allPositiveH && nr == 0u && std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
             memCount[member] = 0u;

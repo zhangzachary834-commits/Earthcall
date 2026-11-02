@@ -128,8 +128,11 @@ fn ecPixel(id:u32)->u32 {return (id/ecWindow.window.x+ecWindow.window.z)*ecWindo
 fn ecMat(m:mat4x4<f32>,v:vec4<f32>)->vec4<f32>{return fma(m[0],vec4<f32>(v.x),fma(m[1],vec4<f32>(v.y),fma(m[2],vec4<f32>(v.z),m[3]*v.w)));}
 )WGSL";
 const char* consumer=R"WGSL(
-fn ecPhi(tau:f32)->f32 {if(abs(tau)<.01){return 1.0+tau*(-.5+tau*(1.0/6.0-tau/24.0));}return (1.0-exp(-tau))/tau;}
-fn ecFlow(state:vec4<f32>,v:vec4<f32>,h:f32)->vec4<f32>{let tau=h*v.w;return vec4<f32>(state.xyz+state.w*v.xyz*(h*ecPhi(tau)),state.w*exp(-tau));}
+fn ecFlow(state:vec4<f32>,v:vec4<f32>,h:f32)->vec4<f32>{
+ let tau=h*v.w;let e=exp(-tau);
+ let phi=select((1.0-e)/tau,1.0+tau*(-.5+tau*(1.0/6.0-tau/24.0)),abs(tau)<.01);
+ return vec4<f32>(state.xyz+state.w*v.xyz*(h*phi),state.w*e);
+}
 EC_CONSUMER_HELPERS
 fn ecProjected(ro:vec3<f32>,rd:vec3<f32>,wo:vec3<f32>,s:f32,mask:u32)->vec4<f32>{
  let world=ro+s*rd;
@@ -179,10 +182,11 @@ fn ecProjected(ro:vec3<f32>,rd:vec3<f32>,wo:vec3<f32>,s:f32,mask:u32)->vec4<f32>
     if(q==0u){minus=val;}else{plus=val;}
    }
    if(useOverlap){
-    state=ecFlow(state,ob*minus+oa*plus,h);state=ecFlow(state,oa*minus+ob*plus,h);
+    let v0=ob*minus+oa*plus;if(v0.w>0.0){state=ecFlow(state,v0,h);}
+    let v1=oa*minus+ob*plus;if(v1.w>0.0){state=ecFlow(state,v1,h);}
     if(overPanel==0u){overPanel=1u;}else{overPanel=0u;overlap++;}
    }else{
-    state=ecFlow(state,.5*(minus+plus),h);
+    let v=.5*(minus+plus);if(v.w>0.0){state=ecFlow(state,v,h);}
    }
   }
  }
@@ -300,6 +304,25 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
 )WGSL";
  std::vector<uint32_t> sharedGroups;
  const bool deduplicate = checkEvaluatorsDeduplicatable(source, sharedGroups);
+ auto consumePrefix = prefix;
+ if (deduplicate) {
+  for (int i = 1; i < 4; ++i) {
+   const std::string n = std::to_string(i);
+   for (uint32_t gid : sharedGroups) {
+    const std::string decl = "var<private> g_volumeShared_" + n + "_G" + std::to_string(gid) + ": f32;\n";
+    size_t dp = 0;
+    while ((dp = consumePrefix.find(decl, dp)) != std::string::npos) {
+     consumePrefix.erase(dp, decl.size());
+    }
+   }
+   const std::string gFrom = "g_volumeShared_" + n + "_";
+   size_t gp = 0;
+   while ((gp = consumePrefix.find(gFrom, gp)) != std::string::npos) {
+    consumePrefix.replace(gp, gFrom.size(), "g_volumeShared_0_");
+    gp += 17;
+   }
+  }
+ }
  std::string tail = consumer;
  if (deduplicate) {
   std::string helper = "fn ecSingleMember(world: vec3<f32>, wo: vec3<f32>, s: f32, m: u32) -> vec4<f32> {\n"
@@ -316,11 +339,6 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
    const auto n = std::to_string(i);
    const std::string ifClause = (i == 0 ? "  if (m == 0u) {\n" : (i < 3 ? "  } else if (m == " + n + "u) {\n" : "  } else {\n"));
    helper += ifClause;
-   if (i > 0) {
-    for (uint32_t gid : sharedGroups) {
-     helper += "   g_volumeShared_" + n + "_G" + std::to_string(gid) + " = g_volumeShared_0_G" + std::to_string(gid) + ";\n";
-    }
-   }
    helper += "   if (!VOLUME_EMISSION_READS_OMEGA_" + n + " || s > 1e-8) { E = max(volumeEmissionEval_" + n + "(p, wo), vec3<f32>(0.0)); }\n";
   }
   helper += "  }\n"
@@ -362,7 +380,7 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
                                        "   let plus = ecProjected(ro, rd, wo, lo + gx1 * h, mask);");
   replace(tail, "EC_EVAL_NODE", "let val = ecProjected(ro, rd, wo, lo + node * h, mask);");
  }
- std::string consume = prefix + commonText + tail;
+ std::string consume = consumePrefix + commonText + tail;
  WGPUBindGroupLayoutEntry g[4]={};g[0].binding=0;g[0].visibility=WGPUShaderStage_Compute;g[0].buffer.type=WGPUBufferBindingType_Uniform;
  g[1].binding=1;g[1].visibility=WGPUShaderStage_Compute;g[1].buffer.type=WGPUBufferBindingType_ReadOnlyStorage;
  g[2].binding=2;g[2].visibility=WGPUShaderStage_Compute;g[2].texture.sampleType=WGPUTextureSampleType_Depth;g[2].texture.viewDimension=WGPUTextureViewDimension_2D;

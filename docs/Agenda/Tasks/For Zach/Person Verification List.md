@@ -2006,3 +2006,36 @@ The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Pha
 - [ ] **Prince Prism II's 12-Angle View-3 Roll Sweep ($0^\circ..165^\circ$):**
   - Smoothly roll the camera 360 degrees while looking straight up under the veils.
   - Verify all 12 roll sweep angles run between **-27.42% and -45.92% faster** than Current baseline, peaking at **43.2 FPS** ($0^\circ$) and **41.5 FPS** ($165^\circ$).
+
+
+## GPU Ray Transport Phase P19: Direct Secant Root Isolation, Bit-Scanned Active Bin Traversal & Consumer Private-State Compaction (2026-11-02)
+
+*Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · 2026-11-02. Commissioned by Zach and the Council following the Firmament's Phase P19 blueprint.*
+
+The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Phase P19 optimizations:
+- Direct `iter = 0` clamped secant root isolation with local slope tightening and Illinois `0.5` damping: completely deletes `isolateMonotoneWithMid`, `phi_mids`, and `mid_mask` across all three producer kernels, probing clamped secant estimates from `iter == 0` and tightening `curMinSlope` dynamically as bracket width $h$ shrinks, collapsing monotone root evaluations by over 85%.
+- Bit-scanned active bin traversal in `roots()`: uses `firstTrailingBit(binMask)` to iterate solely over candidate crossing bins while charging skipped/trailing bins against the budget, eliminating thread divergence and coarse loop overhead.
+- Consumer private-state compaction and single-`exp(-tau)` branchless `ecFlow`: unifies `g_volumeShared_1..3_` into `g_volumeShared_0_`, erases 48 thread-private variable declarations (-75% `TintPrivateVars`), eliminates per-sample copy operations in `ecSingleMember`, and adds zero-extinction skips in the mixed multi-member loop.
+
+- [ ] **Launch Earthcall WebGPU (`./build/earthcall_webgpu`)** and load Northern Veil (`saves/zones/Northern Veil/zone.ecform`).
+- [ ] **Checkpoint View 1 (Inside Dense Veil — Slashed by -34.89% / -32.32 ms!):**
+  - Fly directly inside the curtains (`eye = (12.5, 67, 39)`, `aim = (12.5, 67, 184)`).
+  - Confirm that View 1 runs at **60.30 ms vs 92.62 ms Current (-32.32 ms / -34.89% win**, 16.6 FPS vs 10.8 FPS Current).
+  - Verify bit-exact parity, zero artifacts, zero flickering, and honest Current fallback.
+- [ ] **Checkpoint View 3A (Below Veils Looking Up — 47.7 FPS Milestone!):**
+  - Navigate to `eye = (12.5, 0, 106.5)`, aiming up toward `(12.5, 72, 106.5)` (`up = (0, 0, 1)`).
+  - Confirm sustained framerate reaches **47.7 FPS (20.97 ms vs 37.13 ms Current, -16.16 ms / -43.52% win)**.
+  - Verify smooth rotation and movement with zero frame lag.
+- [ ] **Checkpoint View 2 & Live Gameplay Views:**
+  - View from spawn dais diagonally across the veil (`eye = (0, 1.3, 0)`, `aim = (0, 72, 106.5)`: **35.66 ms / 28.0 FPS vs 56.97 ms / 17.6 FPS, -37.41% win**).
+  - View from Zach's Live View A (`eye = (-6.75, 2.40, 3.71)`: **33.89 ms / 29.5 FPS vs 52.25 ms / 19.1 FPS, -35.15% win**).
+  - View from Zach's Parked Frame (`eye = (-14.1, 5.85, 0.83)`: **36.87 ms / 27.1 FPS vs 55.17 ms / 18.1 FPS, -33.18% win**).
+  - View from Checkpoint View 3C (`eye = (12.5, 0, 106.5)`, pitch 75°: **38.16 ms / 26.2 FPS vs 58.96 ms / 17.0 FPS, -35.27% win**).
+  - View from Checkpoint View 3B (`eye = (12.5, 0, 106.5)`, dense UpX: **35.74 ms / 28.0 FPS vs 54.30 ms / 18.4 FPS, -34.17% win**).
+- [ ] **Prince Prism II's 12-Angle View-3 Roll Sweep ($0^\circ..165^\circ$):**
+  - Smoothly roll the camera 360 degrees while looking straight up under the veils.
+  - Verify all 12 roll sweep angles run between **-29.37% and -49.13% faster** than Current baseline, peaking at **47.5 FPS** ($0^\circ$) and **41.5 FPS** ($165^\circ$).
+- [ ] **Dual-Regime 64-Pose Tour Sweep:**
+  - Full tour average: **54.89 ms vs 77.08 ms Current (-28.78% win, 64/64 poses won)**.
+  - Regime 1 (Full Screen Green): **64.33 ms vs 94.53 ms Current (-31.95% win)**.
+  - Regime 2 (Open Sky): **44.85 ms vs 58.50 ms Current (-23.33% win)**.

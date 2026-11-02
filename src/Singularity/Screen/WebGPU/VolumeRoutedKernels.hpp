@@ -394,7 +394,7 @@ fn setDepth(bits: ptr<function, vec3u>, idx: u32, d: u32) {
 }
 
 fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
- va: f32, vb: f32, error: f32, minSlope: f32,
+ va: f32, vb: f32, error: f32, minSlope: f32, M: f32,
  bounds: ptr<function, array<f32, 48>>, nb: ptr<function, u32>,
  bands: ptr<function, array<vec2f, 24>>, nr: ptr<function, u32>,
  reason: ptr<function, u32>, work: ptr<function, u32>,
@@ -403,20 +403,36 @@ fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
  if (abs(vb) <= error) { let w = 2.0 * error / minSlope; putBandTagged(max(a, b - w), b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); }
  if ((va > error && vb < -error) || (va < -error && vb > error)) {
   var l = a; var r = b; var left = va; var right = vb;
+  var rawLeft = va; var rawRight = vb;
+  var curMinSlope = minSlope;
+  var prevSide = 0i;
   for (var iter = 0u; iter < 32u; iter++) {
    if (*work >= cfg.budget) { *reason |= 1u; break; } *work += 1u;
    var mid = l + 0.5 * (r - l);
-   if ((iter & 1u) == 1u && abs(right - left) > 1e-6) {
-    let tSec = clamp(-left / (right - left), 0.05, 0.95);
+   if ((iter < 2u || (iter & 1u) == 0u) && abs(right - left) > 1e-6) {
+    let tSec = clamp(-left / (right - left), 0.002, 0.998);
     mid = l + tSec * (r - l);
    }
    if (mid <= l || mid >= r || r - l <= 0.0001) { break; }
    let v = evalPhi(m, o, d, mid) - c;
    if (abs(v) <= error) {
-    let w = 2.0 * error / minSlope;
+    let w = 2.0 * error / curMinSlope;
     if (w <= 0.0095 && w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
    }
-   if ((left < 0.0 && v > 0.0) || (left > 0.0 && v < 0.0)) { r = mid; right = v; } else { l = mid; left = v; }
+   if ((rawLeft < 0.0 && v > 0.0) || (rawLeft > 0.0 && v < 0.0)) {
+    r = mid; right = v; rawRight = v;
+    if (prevSide == -1i) { left *= 0.5; }
+    prevSide = -1i;
+   } else {
+    l = mid; left = v; rawLeft = v;
+    if (prevSide == 1i) { right *= 0.5; }
+    prevSide = 1i;
+   }
+   let h = r - l;
+   if (h > 1e-5) {
+    let localMinSlope = (abs(rawRight - rawLeft) - 2.0 * error) / h - 0.5 * M * h;
+    curMinSlope = max(curMinSlope, localMinSlope);
+   }
   }
   putBandTagged(l, r, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
  }
@@ -434,78 +450,31 @@ fn emitPieceSubpanels(p: vec2f, member: u32, rayId: u32, singles: ptr<function, 
  }
 }
 
-fn isolateMonotoneWithMid(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
- va: f32, vb: f32, mid0: f32, fmid0: f32, error: f32, minSlope: f32,
- bounds: ptr<function, array<f32, 48>>, nb: ptr<function, u32>,
- bands: ptr<function, array<vec2f, 24>>, nr: ptr<function, u32>,
- reason: ptr<function, u32>, work: ptr<function, u32>,
- zeroBands: ptr<function, u32>, isZeroLevel: bool) {
- if (abs(va) <= error) { let w = 2.0 * error / minSlope; putBandTagged(a, min(b, a + w), bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); }
- if (abs(vb) <= error) { let w = 2.0 * error / minSlope; putBandTagged(max(a, b - w), b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); }
- if ((va > error && vb < -error) || (va < -error && vb > error)) {
-  var l = a; var r = b; var left = va; var right = vb;
-  var done = false;
-  if (*work >= cfg.budget) { *reason |= 1u; done = true; }
-  else {
-   *work += 1u;
-   if (mid0 <= l || mid0 >= r || r - l <= 0.0001) { done = true; }
-   else if (abs(fmid0) <= error) {
-    let w = 2.0 * error / minSlope;
-    if (w <= 0.0095 && w < 0.5 * (r - l)) {
-     l = max(l, mid0 - w);
-     r = min(r, mid0 + w);
-     done = true;
-    } else {
-     if ((left < 0.0 && fmid0 > 0.0) || (left > 0.0 && fmid0 < 0.0)) {
-      r = mid0; right = fmid0;
-     } else {
-      l = mid0; left = fmid0;
-     }
-    }
-   } else {
-    if ((left < 0.0 && fmid0 > 0.0) || (left > 0.0 && fmid0 < 0.0)) {
-     r = mid0; right = fmid0;
-    } else {
-     l = mid0; left = fmid0;
-    }
-   }
-  }
-  if (!done) {
-   for (var iter = 1u; iter < 32u; iter++) {
-    if (*work >= cfg.budget) { *reason |= 1u; break; } *work += 1u;
-    var mid = l + 0.5 * (r - l);
-    if ((iter & 1u) == 1u && abs(right - left) > 1e-6) {
-     let tSec = clamp(-left / (right - left), 0.05, 0.95);
-     mid = l + tSec * (r - l);
-    }
-    if (mid <= l || mid >= r || r - l <= 0.0001) { break; }
-    let v = evalPhi(m, o, d, mid) - c;
-    if (abs(v) <= error) {
-     let w = 2.0 * error / minSlope;
-     if (w <= 0.0095 && w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
-    }
-    if ((left < 0.0 && v > 0.0) || (left > 0.0 && v < 0.0)) { r = mid; right = v; } else { l = mid; left = v; }
-   }
-  }
-  putBandTagged(l, r, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
- }
-}
-
 fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
  bounds: ptr<function, array<f32, 48>>, nb: ptr<function, u32>, bands: ptr<function, array<vec2f, 24>>,
  nr: ptr<function, u32>, reason: ptr<function, u32>, work: ptr<function, u32>,
- phi_knots: ptr<function, array<f32, 9>>, phi_mids: ptr<function, array<f32, 8>>, mid_mask: ptr<function, u32>,
+ phi_knots: ptr<function, array<f32, 9>>,
  zeroBands: ptr<function, u32>, isZeroLevel: bool,
- levelActiveMask: u32) {
+ levelActiveMask: u32, allPositiveH: bool) {
  let M = m.curv.x * d.x * d.x * 1.00002;
  let err = m.curv.y;
  var stack: array<vec4f, 15>; var depthBits = vec3u(0u); var top = 0u;
- for (var bin = 0u; bin < 8u; bin++) {
+ var binMask = select(0xFFu, levelActiveMask, allPositiveH);
+ var nextChargeBin = 0u;
+ while (binMask != 0u) {
+  let bin = firstTrailingBit(binMask);
+  binMask &= binMask - 1u;
+  if (allPositiveH) {
+   let skipped = bin - nextChargeBin;
+   if (*work + skipped >= cfg.budget) { *reason |= 1u; return; }
+   *work += skipped;
+   nextChargeBin = bin + 1u;
+  }
   var a = lo + (hi - lo) * f32(bin) / 8.0; var b = lo + (hi - lo) * f32(bin + 1u) / 8.0;
   if (bin == 0u) { a = lo; } if (bin == 7u) { b = hi; }
-  if (*work >= cfg.budget) { *reason |= 1u; break; }
+  if (*work >= cfg.budget) { *reason |= 1u; return; }
   let coarseH = b - a;
-  if (!(coarseH > 0.0)) { *work += 1u; *reason |= 4u; break; }
+  if (!(coarseH > 0.0)) { *work += 1u; *reason |= 4u; return; }
   if ((levelActiveMask & (1u << bin)) == 0u) { *work += 1u; continue; }
   *work += 1u;
   let phi_a0 = (*phi_knots)[bin]; let phi_b0 = (*phi_knots)[bin + 1u];
@@ -516,48 +485,23 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
   let coarseRadius = 0.5 * M * coarseH + 2.0 * coarseError / coarseH;
   let coarseMinSlope = abs(coarseSlope) - coarseRadius;
   if (coarseMinSlope > 0.0) {
-   let hasCrossing = (coarseVa > coarseError && coarseVb < -coarseError) || (coarseVa < -coarseError && coarseVb > coarseError);
-   if (hasCrossing) {
-    let mid0 = a + 0.5 * coarseH;
-    let bit = 1u << bin;
-    var phi_mid0 = 0.0;
-    if (((*mid_mask) & bit) != 0u) {
-     phi_mid0 = (*phi_mids)[bin];
-    } else {
-     phi_mid0 = evalPhi(m, o, d, mid0);
-     (*phi_mids)[bin] = phi_mid0;
-     *mid_mask |= bit;
-    }
-    let fmid0 = phi_mid0 - c;
-    isolateMonotoneWithMid(m, o, d, a, b, c, coarseVa, coarseVb, mid0, fmid0, coarseError, coarseMinSlope,
-                           bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel);
-   } else {
-    isolateMonotone(m, o, d, a, b, c, coarseVa, coarseVb, coarseError, coarseMinSlope,
-                    bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel);
-   }
-   if (*reason != 0u) { break; }
+   isolateMonotone(m, o, d, a, b, c, coarseVa, coarseVb, coarseError, coarseMinSlope, M,
+                   bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel);
+   if (*reason != 0u) { return; }
    continue;
   }
   if (0.125 * M * coarseH * coarseH <= coarseError) {
    putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
-   if (*reason != 0u) { break; }
+   if (*reason != 0u) { return; }
    continue;
   }
   let mid0 = a + 0.5 * coarseH;
   if (mid0 <= a || mid0 >= b) {
    putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
-   if (*reason != 0u) { break; }
+   if (*reason != 0u) { return; }
    continue;
   }
-  let bit = 1u << bin;
-  var phi_mid0 = 0.0;
-  if (((*mid_mask) & bit) != 0u) {
-   phi_mid0 = (*phi_mids)[bin];
-  } else {
-   phi_mid0 = evalPhi(m, o, d, mid0);
-   (*phi_mids)[bin] = phi_mid0;
-   *mid_mask |= bit;
-  }
+  let phi_mid0 = evalPhi(m, o, d, mid0);
   stack[0] = vec4f(mid0, b, phi_mid0, phi_b0); setDepth(&depthBits, 0u, 1u);
   stack[1] = vec4f(a, mid0, phi_a0, phi_mid0); setDepth(&depthBits, 1u, 1u);
   top = 2u;
@@ -576,7 +520,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
    let slope = (vb - va) / h; let radius = 0.5 * M * h + 2.0 * error / h;
    let minSlope = abs(slope) - radius;
    if (minSlope > 0.0) {
-    isolateMonotone(m, o, d, a, b, c, va, vb, error, minSlope,
+    isolateMonotone(m, o, d, a, b, c, va, vb, error, minSlope, M,
                     bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel);
     continue;
    }
@@ -588,7 +532,12 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
    stack[top + 1u] = vec4f(a, mid, cell.z, phi_mid); setDepth(&depthBits, top + 1u, depth + 1u);
    top += 2u;
   }
-  if (*reason != 0u) { break; }
+  if (*reason != 0u) { return; }
+ }
+ if (allPositiveH && nextChargeBin < 8u) {
+  let trailing = 8u - nextChargeBin;
+  if (*work + trailing > cfg.budget) { *reason |= 1u; return; }
+  *work += trailing;
  }
 }
 
@@ -670,8 +619,6 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
   }
   if (!hit || !(b > a)) { continue; }
   var phi_knots: array<f32, 9>;
-  var phi_mids: array<f32, 8>;
-  var mid_mask = 0u;
   for (var k = 0u; k < 9u; k++) {
    var s = a + (b - a) * f32(k) / 8.0;
    if (k == 0u) { s = a; } if (k == 8u) { s = b; }
@@ -694,7 +641,7 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
     work += 8u;
     continue;
    }
-   roots(m, o, d, a, b, levels[lvl], &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &phi_mids, &mid_mask, &zeroBands, lvl == 1u, lMask);
+   roots(m, o, d, a, b, levels[lvl], &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, lvl == 1u, lMask, allPositiveH);
    if (reason != 0u) { break; }
   }
   if (reason != 0u) { break; }
@@ -824,7 +771,7 @@ fn setDepth(bits: ptr<function, vec3u>, idx: u32, d: u32) {
 }
 
 fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
- va: f32, vb: f32, error: f32, minSlope: f32,
+ va: f32, vb: f32, error: f32, minSlope: f32, M: f32,
  bounds: ptr<function, array<f32, 48>>, nb: ptr<function, u32>,
  bands: ptr<function, array<vec2f, 24>>, nr: ptr<function, u32>,
  reason: ptr<function, u32>, work: ptr<function, u32>,
@@ -833,20 +780,36 @@ fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
  if (abs(vb) <= error) { let w = 2.0 * error / minSlope; putBandTagged(max(a, b - w), b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); }
  if ((va > error && vb < -error) || (va < -error && vb > error)) {
   var l = a; var r = b; var left = va; var right = vb;
+  var rawLeft = va; var rawRight = vb;
+  var curMinSlope = minSlope;
+  var prevSide = 0i;
   for (var iter = 0u; iter < 32u; iter++) {
    if (*work >= cfg.budget) { *reason |= 1u; break; } *work += 1u;
    var mid = l + 0.5 * (r - l);
-   if ((iter & 1u) == 1u && abs(right - left) > 1e-6) {
-    let tSec = clamp(-left / (right - left), 0.05, 0.95);
+   if ((iter < 2u || (iter & 1u) == 0u) && abs(right - left) > 1e-6) {
+    let tSec = clamp(-left / (right - left), 0.002, 0.998);
     mid = l + tSec * (r - l);
    }
    if (mid <= l || mid >= r || r - l <= 0.0001) { break; }
    let v = evalPhi(m, o, d, mid) - c;
    if (abs(v) <= error) {
-    let w = 2.0 * error / minSlope;
+    let w = 2.0 * error / curMinSlope;
     if (w <= 0.0095 && w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
    }
-   if ((left < 0.0 && v > 0.0) || (left > 0.0 && v < 0.0)) { r = mid; right = v; } else { l = mid; left = v; }
+   if ((rawLeft < 0.0 && v > 0.0) || (rawLeft > 0.0 && v < 0.0)) {
+    r = mid; right = v; rawRight = v;
+    if (prevSide == -1i) { left *= 0.5; }
+    prevSide = -1i;
+   } else {
+    l = mid; left = v; rawLeft = v;
+    if (prevSide == 1i) { right *= 0.5; }
+    prevSide = 1i;
+   }
+   let h = r - l;
+   if (h > 1e-5) {
+    let localMinSlope = (abs(rawRight - rawLeft) - 2.0 * error) / h - 0.5 * M * h;
+    curMinSlope = max(curMinSlope, localMinSlope);
+   }
   }
   putBandTagged(l, r, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
  }
@@ -864,78 +827,31 @@ fn emitPieceSubpanels(p: vec2f, member: u32, rayId: u32, singles: ptr<function, 
  }
 }
 
-fn isolateMonotoneWithMid(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
- va: f32, vb: f32, mid0: f32, fmid0: f32, error: f32, minSlope: f32,
- bounds: ptr<function, array<f32, 48>>, nb: ptr<function, u32>,
- bands: ptr<function, array<vec2f, 24>>, nr: ptr<function, u32>,
- reason: ptr<function, u32>, work: ptr<function, u32>,
- zeroBands: ptr<function, u32>, isZeroLevel: bool) {
- if (abs(va) <= error) { let w = 2.0 * error / minSlope; putBandTagged(a, min(b, a + w), bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); }
- if (abs(vb) <= error) { let w = 2.0 * error / minSlope; putBandTagged(max(a, b - w), b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); }
- if ((va > error && vb < -error) || (va < -error && vb > error)) {
-  var l = a; var r = b; var left = va; var right = vb;
-  var done = false;
-  if (*work >= cfg.budget) { *reason |= 1u; done = true; }
-  else {
-   *work += 1u;
-   if (mid0 <= l || mid0 >= r || r - l <= 0.0001) { done = true; }
-   else if (abs(fmid0) <= error) {
-    let w = 2.0 * error / minSlope;
-    if (w <= 0.0095 && w < 0.5 * (r - l)) {
-     l = max(l, mid0 - w);
-     r = min(r, mid0 + w);
-     done = true;
-    } else {
-     if ((left < 0.0 && fmid0 > 0.0) || (left > 0.0 && fmid0 < 0.0)) {
-      r = mid0; right = fmid0;
-     } else {
-      l = mid0; left = fmid0;
-     }
-    }
-   } else {
-    if ((left < 0.0 && fmid0 > 0.0) || (left > 0.0 && fmid0 < 0.0)) {
-     r = mid0; right = fmid0;
-    } else {
-     l = mid0; left = fmid0;
-    }
-   }
-  }
-  if (!done) {
-   for (var iter = 1u; iter < 32u; iter++) {
-    if (*work >= cfg.budget) { *reason |= 1u; break; } *work += 1u;
-    var mid = l + 0.5 * (r - l);
-    if ((iter & 1u) == 1u && abs(right - left) > 1e-6) {
-     let tSec = clamp(-left / (right - left), 0.05, 0.95);
-     mid = l + tSec * (r - l);
-    }
-    if (mid <= l || mid >= r || r - l <= 0.0001) { break; }
-    let v = evalPhi(m, o, d, mid) - c;
-    if (abs(v) <= error) {
-     let w = 2.0 * error / minSlope;
-     if (w <= 0.0095 && w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
-    }
-    if ((left < 0.0 && v > 0.0) || (left > 0.0 && v < 0.0)) { r = mid; right = v; } else { l = mid; left = v; }
-   }
-  }
-  putBandTagged(l, r, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
- }
-}
-
 fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
  bounds: ptr<function, array<f32, 48>>, nb: ptr<function, u32>, bands: ptr<function, array<vec2f, 24>>,
  nr: ptr<function, u32>, reason: ptr<function, u32>, work: ptr<function, u32>,
- phi_knots: ptr<function, array<f32, 9>>, phi_mids: ptr<function, array<f32, 8>>, mid_mask: ptr<function, u32>,
+ phi_knots: ptr<function, array<f32, 9>>,
  zeroBands: ptr<function, u32>, isZeroLevel: bool,
- levelActiveMask: u32) {
+ levelActiveMask: u32, allPositiveH: bool) {
  let M = m.curv.x * d.x * d.x * 1.00002;
  let err = m.curv.y;
  var stack: array<vec4f, 15>; var depthBits = vec3u(0u); var top = 0u;
- for (var bin = 0u; bin < 8u; bin++) {
+ var binMask = select(0xFFu, levelActiveMask, allPositiveH);
+ var nextChargeBin = 0u;
+ while (binMask != 0u) {
+  let bin = firstTrailingBit(binMask);
+  binMask &= binMask - 1u;
+  if (allPositiveH) {
+   let skipped = bin - nextChargeBin;
+   if (*work + skipped >= cfg.budget) { *reason |= 1u; return; }
+   *work += skipped;
+   nextChargeBin = bin + 1u;
+  }
   var a = lo + (hi - lo) * f32(bin) / 8.0; var b = lo + (hi - lo) * f32(bin + 1u) / 8.0;
   if (bin == 0u) { a = lo; } if (bin == 7u) { b = hi; }
-  if (*work >= cfg.budget) { *reason |= 1u; break; }
+  if (*work >= cfg.budget) { *reason |= 1u; return; }
   let coarseH = b - a;
-  if (!(coarseH > 0.0)) { *work += 1u; *reason |= 4u; break; }
+  if (!(coarseH > 0.0)) { *work += 1u; *reason |= 4u; return; }
   if ((levelActiveMask & (1u << bin)) == 0u) { *work += 1u; continue; }
   *work += 1u;
   let phi_a0 = (*phi_knots)[bin]; let phi_b0 = (*phi_knots)[bin + 1u];
@@ -946,48 +862,23 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
   let coarseRadius = 0.5 * M * coarseH + 2.0 * coarseError / coarseH;
   let coarseMinSlope = abs(coarseSlope) - coarseRadius;
   if (coarseMinSlope > 0.0) {
-   let hasCrossing = (coarseVa > coarseError && coarseVb < -coarseError) || (coarseVa < -coarseError && coarseVb > coarseError);
-   if (hasCrossing) {
-    let mid0 = a + 0.5 * coarseH;
-    let bit = 1u << bin;
-    var phi_mid0 = 0.0;
-    if (((*mid_mask) & bit) != 0u) {
-     phi_mid0 = (*phi_mids)[bin];
-    } else {
-     phi_mid0 = evalPhi(m, o, d, mid0);
-     (*phi_mids)[bin] = phi_mid0;
-     *mid_mask |= bit;
-    }
-    let fmid0 = phi_mid0 - c;
-    isolateMonotoneWithMid(m, o, d, a, b, c, coarseVa, coarseVb, mid0, fmid0, coarseError, coarseMinSlope,
-                           bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel);
-   } else {
-    isolateMonotone(m, o, d, a, b, c, coarseVa, coarseVb, coarseError, coarseMinSlope,
-                    bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel);
-   }
-   if (*reason != 0u) { break; }
+   isolateMonotone(m, o, d, a, b, c, coarseVa, coarseVb, coarseError, coarseMinSlope, M,
+                   bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel);
+   if (*reason != 0u) { return; }
    continue;
   }
   if (0.125 * M * coarseH * coarseH <= coarseError) {
    putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
-   if (*reason != 0u) { break; }
+   if (*reason != 0u) { return; }
    continue;
   }
   let mid0 = a + 0.5 * coarseH;
   if (mid0 <= a || mid0 >= b) {
    putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
-   if (*reason != 0u) { break; }
+   if (*reason != 0u) { return; }
    continue;
   }
-  let bit = 1u << bin;
-  var phi_mid0 = 0.0;
-  if (((*mid_mask) & bit) != 0u) {
-   phi_mid0 = (*phi_mids)[bin];
-  } else {
-   phi_mid0 = evalPhi(m, o, d, mid0);
-   (*phi_mids)[bin] = phi_mid0;
-   *mid_mask |= bit;
-  }
+  let phi_mid0 = evalPhi(m, o, d, mid0);
   stack[0] = vec4f(mid0, b, phi_mid0, phi_b0); setDepth(&depthBits, 0u, 1u);
   stack[1] = vec4f(a, mid0, phi_a0, phi_mid0); setDepth(&depthBits, 1u, 1u);
   top = 2u;
@@ -1006,7 +897,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
    let slope = (vb - va) / h; let radius = 0.5 * M * h + 2.0 * error / h;
    let minSlope = abs(slope) - radius;
    if (minSlope > 0.0) {
-    isolateMonotone(m, o, d, a, b, c, va, vb, error, minSlope,
+    isolateMonotone(m, o, d, a, b, c, va, vb, error, minSlope, M,
                     bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel);
     continue;
    }
@@ -1018,7 +909,12 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
    stack[top + 1u] = vec4f(a, mid, cell.z, phi_mid); setDepth(&depthBits, top + 1u, depth + 1u);
    top += 2u;
   }
-  if (*reason != 0u) { break; }
+  if (*reason != 0u) { return; }
+ }
+ if (allPositiveH && nextChargeBin < 8u) {
+  let trailing = 8u - nextChargeBin;
+  if (*work + trailing > cfg.budget) { *reason |= 1u; return; }
+  *work += trailing;
  }
 }
 
@@ -1120,8 +1016,6 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
             continue;
         }
         var phi_knots: array<f32, 9>;
-  var phi_mids: array<f32, 8>;
-  var mid_mask = 0u;
         for (var k = 0u; k < 9u; k++) {
             var s = a + (b - a) * f32(k) / 8.0;
             if (k == 0u) { s = a; } if (k == 8u) { s = b; }
@@ -1144,7 +1038,7 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
                 work += 8u;
                 continue;
             }
-            roots(m, o, d, a, b, levels[lvl], &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &phi_mids, &mid_mask, &zeroBands, lvl == 1u, lMask);
+            roots(m, o, d, a, b, levels[lvl], &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, lvl == 1u, lMask, allPositiveH);
             if (reason != 0u) { break; }
         }
         if (reason != 0u) { break; }
@@ -1283,7 +1177,7 @@ fn setDepth(bits: ptr<function, vec3u>, idx: u32, d: u32) {
 }
 
 fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
- va: f32, vb: f32, error: f32, minSlope: f32,
+ va: f32, vb: f32, error: f32, minSlope: f32, M: f32,
  bounds: ptr<function, array<f32, 48>>, nb: ptr<function, u32>,
  bands: ptr<function, array<vec2f, 24>>, nr: ptr<function, u32>,
  reason: ptr<function, u32>, work: ptr<function, u32>,
@@ -1292,76 +1186,35 @@ fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
  if (abs(vb) <= error) { let w = 2.0 * error / minSlope; putBandTagged(max(a, b - w), b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); }
  if ((va > error && vb < -error) || (va < -error && vb > error)) {
   var l = a; var r = b; var left = va; var right = vb;
+  var rawLeft = va; var rawRight = vb;
+  var curMinSlope = minSlope;
+  var prevSide = 0i;
   for (var iter = 0u; iter < 32u; iter++) {
    if (*work >= cfg.budget) { *reason |= 1u; break; } *work += 1u;
    var mid = l + 0.5 * (r - l);
-   if ((iter & 1u) == 1u && abs(right - left) > 1e-6) {
-    let tSec = clamp(-left / (right - left), 0.05, 0.95);
+   if ((iter < 2u || (iter & 1u) == 0u) && abs(right - left) > 1e-6) {
+    let tSec = clamp(-left / (right - left), 0.002, 0.998);
     mid = l + tSec * (r - l);
    }
    if (mid <= l || mid >= r || r - l <= 0.0001) { break; }
    let v = evalPhi(m, o, d, mid) - c;
    if (abs(v) <= error) {
-    let w = 2.0 * error / minSlope;
+    let w = 2.0 * error / curMinSlope;
     if (w <= 0.0095 && w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
    }
-   if ((left < 0.0 && v > 0.0) || (left > 0.0 && v < 0.0)) { r = mid; right = v; } else { l = mid; left = v; }
-  }
-  putBandTagged(l, r, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
- }
-}
-
-fn isolateMonotoneWithMid(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
- va: f32, vb: f32, mid0: f32, fmid0: f32, error: f32, minSlope: f32,
- bounds: ptr<function, array<f32, 48>>, nb: ptr<function, u32>,
- bands: ptr<function, array<vec2f, 24>>, nr: ptr<function, u32>,
- reason: ptr<function, u32>, work: ptr<function, u32>,
- zeroBands: ptr<function, u32>, isZeroLevel: bool) {
- if (abs(va) <= error) { let w = 2.0 * error / minSlope; putBandTagged(a, min(b, a + w), bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); }
- if (abs(vb) <= error) { let w = 2.0 * error / minSlope; putBandTagged(max(a, b - w), b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel); }
- if ((va > error && vb < -error) || (va < -error && vb > error)) {
-  var l = a; var r = b; var left = va; var right = vb;
-  var done = false;
-  if (*work >= cfg.budget) { *reason |= 1u; done = true; }
-  else {
-   *work += 1u;
-   if (mid0 <= l || mid0 >= r || r - l <= 0.0001) { done = true; }
-   else if (abs(fmid0) <= error) {
-    let w = 2.0 * error / minSlope;
-    if (w <= 0.0095 && w < 0.5 * (r - l)) {
-     l = max(l, mid0 - w);
-     r = min(r, mid0 + w);
-     done = true;
-    } else {
-     if ((left < 0.0 && fmid0 > 0.0) || (left > 0.0 && fmid0 < 0.0)) {
-      r = mid0; right = fmid0;
-     } else {
-      l = mid0; left = fmid0;
-     }
-    }
+   if ((rawLeft < 0.0 && v > 0.0) || (rawLeft > 0.0 && v < 0.0)) {
+    r = mid; right = v; rawRight = v;
+    if (prevSide == -1i) { left *= 0.5; }
+    prevSide = -1i;
    } else {
-    if ((left < 0.0 && fmid0 > 0.0) || (left > 0.0 && fmid0 < 0.0)) {
-     r = mid0; right = fmid0;
-    } else {
-     l = mid0; left = fmid0;
-    }
+    l = mid; left = v; rawLeft = v;
+    if (prevSide == 1i) { right *= 0.5; }
+    prevSide = 1i;
    }
-  }
-  if (!done) {
-   for (var iter = 1u; iter < 32u; iter++) {
-    if (*work >= cfg.budget) { *reason |= 1u; break; } *work += 1u;
-    var mid = l + 0.5 * (r - l);
-    if ((iter & 1u) == 1u && abs(right - left) > 1e-6) {
-     let tSec = clamp(-left / (right - left), 0.05, 0.95);
-     mid = l + tSec * (r - l);
-    }
-    if (mid <= l || mid >= r || r - l <= 0.0001) { break; }
-    let v = evalPhi(m, o, d, mid) - c;
-    if (abs(v) <= error) {
-     let w = 2.0 * error / minSlope;
-     if (w <= 0.0095 && w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
-    }
-    if ((left < 0.0 && v > 0.0) || (left > 0.0 && v < 0.0)) { r = mid; right = v; } else { l = mid; left = v; }
+   let h = r - l;
+   if (h > 1e-5) {
+    let localMinSlope = (abs(rawRight - rawLeft) - 2.0 * error) / h - 0.5 * M * h;
+    curMinSlope = max(curMinSlope, localMinSlope);
    }
   }
   putBandTagged(l, r, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
@@ -1371,18 +1224,28 @@ fn isolateMonotoneWithMid(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c:
 fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
  bounds: ptr<function, array<f32, 48>>, nb: ptr<function, u32>, bands: ptr<function, array<vec2f, 24>>,
  nr: ptr<function, u32>, reason: ptr<function, u32>, work: ptr<function, u32>,
- phi_knots: ptr<function, array<f32, 9>>, phi_mids: ptr<function, array<f32, 8>>, mid_mask: ptr<function, u32>,
+ phi_knots: ptr<function, array<f32, 9>>,
  zeroBands: ptr<function, u32>, isZeroLevel: bool,
- levelActiveMask: u32) {
+ levelActiveMask: u32, allPositiveH: bool) {
  let M = m.curv.x * d.x * d.x * 1.00002;
  let err = m.curv.y;
  var stack: array<vec4f, 15>; var depthBits = vec3u(0u); var top = 0u;
- for (var bin = 0u; bin < 8u; bin++) {
+ var binMask = select(0xFFu, levelActiveMask, allPositiveH);
+ var nextChargeBin = 0u;
+ while (binMask != 0u) {
+  let bin = firstTrailingBit(binMask);
+  binMask &= binMask - 1u;
+  if (allPositiveH) {
+   let skipped = bin - nextChargeBin;
+   if (*work + skipped >= cfg.budget) { *reason |= 1u; return; }
+   *work += skipped;
+   nextChargeBin = bin + 1u;
+  }
   var a = lo + (hi - lo) * f32(bin) / 8.0; var b = lo + (hi - lo) * f32(bin + 1u) / 8.0;
   if (bin == 0u) { a = lo; } if (bin == 7u) { b = hi; }
-  if (*work >= cfg.budget) { *reason |= 1u; break; }
+  if (*work >= cfg.budget) { *reason |= 1u; return; }
   let coarseH = b - a;
-  if (!(coarseH > 0.0)) { *work += 1u; *reason |= 4u; break; }
+  if (!(coarseH > 0.0)) { *work += 1u; *reason |= 4u; return; }
   if ((levelActiveMask & (1u << bin)) == 0u) { *work += 1u; continue; }
   *work += 1u;
   let phi_a0 = (*phi_knots)[bin]; let phi_b0 = (*phi_knots)[bin + 1u];
@@ -1393,48 +1256,23 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
   let coarseRadius = 0.5 * M * coarseH + 2.0 * coarseError / coarseH;
   let coarseMinSlope = abs(coarseSlope) - coarseRadius;
   if (coarseMinSlope > 0.0) {
-   let hasCrossing = (coarseVa > coarseError && coarseVb < -coarseError) || (coarseVa < -coarseError && coarseVb > coarseError);
-   if (hasCrossing) {
-    let mid0 = a + 0.5 * coarseH;
-    let bit = 1u << bin;
-    var phi_mid0 = 0.0;
-    if (((*mid_mask) & bit) != 0u) {
-     phi_mid0 = (*phi_mids)[bin];
-    } else {
-     phi_mid0 = evalPhi(m, o, d, mid0);
-     (*phi_mids)[bin] = phi_mid0;
-     *mid_mask |= bit;
-    }
-    let fmid0 = phi_mid0 - c;
-    isolateMonotoneWithMid(m, o, d, a, b, c, coarseVa, coarseVb, mid0, fmid0, coarseError, coarseMinSlope,
-                           bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel);
-   } else {
-    isolateMonotone(m, o, d, a, b, c, coarseVa, coarseVb, coarseError, coarseMinSlope,
-                    bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel);
-   }
-   if (*reason != 0u) { break; }
+   isolateMonotone(m, o, d, a, b, c, coarseVa, coarseVb, coarseError, coarseMinSlope, M,
+                   bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel);
+   if (*reason != 0u) { return; }
    continue;
   }
   if (0.125 * M * coarseH * coarseH <= coarseError) {
    putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
-   if (*reason != 0u) { break; }
+   if (*reason != 0u) { return; }
    continue;
   }
   let mid0 = a + 0.5 * coarseH;
   if (mid0 <= a || mid0 >= b) {
    putBandTagged(a, b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
-   if (*reason != 0u) { break; }
+   if (*reason != 0u) { return; }
    continue;
   }
-  let bit = 1u << bin;
-  var phi_mid0 = 0.0;
-  if (((*mid_mask) & bit) != 0u) {
-   phi_mid0 = (*phi_mids)[bin];
-  } else {
-   phi_mid0 = evalPhi(m, o, d, mid0);
-   (*phi_mids)[bin] = phi_mid0;
-   *mid_mask |= bit;
-  }
+  let phi_mid0 = evalPhi(m, o, d, mid0);
   stack[0] = vec4f(mid0, b, phi_mid0, phi_b0); setDepth(&depthBits, 0u, 1u);
   stack[1] = vec4f(a, mid0, phi_a0, phi_mid0); setDepth(&depthBits, 1u, 1u);
   top = 2u;
@@ -1453,7 +1291,7 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
    let slope = (vb - va) / h; let radius = 0.5 * M * h + 2.0 * error / h;
    let minSlope = abs(slope) - radius;
    if (minSlope > 0.0) {
-    isolateMonotone(m, o, d, a, b, c, va, vb, error, minSlope,
+    isolateMonotone(m, o, d, a, b, c, va, vb, error, minSlope, M,
                     bounds, nb, bands, nr, reason, work, zeroBands, isZeroLevel);
     continue;
    }
@@ -1465,7 +1303,12 @@ fn roots(m: CurtainSpec, o: vec3f, d: vec3f, lo: f32, hi: f32, c: f32,
    stack[top + 1u] = vec4f(a, mid, cell.z, phi_mid); setDepth(&depthBits, top + 1u, depth + 1u);
    top += 2u;
   }
-  if (*reason != 0u) { break; }
+  if (*reason != 0u) { return; }
+ }
+ if (allPositiveH && nextChargeBin < 8u) {
+  let trailing = 8u - nextChargeBin;
+  if (*work + trailing > cfg.budget) { *reason |= 1u; return; }
+  *work += trailing;
  }
 }
 
@@ -1553,8 +1396,6 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
   }
   if (!hit || !(b > a)) { continue; }
   var phi_knots: array<f32, 9>;
-  var phi_mids: array<f32, 8>;
-  var mid_mask = 0u;
   for (var k = 0u; k < 9u; k++) {
    var s = a + (b - a) * f32(k) / 8.0;
    if (k == 0u) { s = a; } if (k == 8u) { s = b; }
@@ -1578,7 +1419,7 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
     work += 8u;
     continue;
    }
-   roots(m, o, d, a, b, levels[lvl], &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &phi_mids, &mid_mask, &zeroBands, lvl == 1u, lMask);
+   roots(m, o, d, a, b, levels[lvl], &knots, &nb, &bands, &nr, &reason, &work, &phi_knots, &zeroBands, lvl == 1u, lMask, allPositiveH);
    if (reason != 0u) { break; }
   }
   if (reason != 0u) { break; }
