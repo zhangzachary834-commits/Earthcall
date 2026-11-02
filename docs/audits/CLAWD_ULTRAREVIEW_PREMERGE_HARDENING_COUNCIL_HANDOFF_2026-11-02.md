@@ -685,19 +685,132 @@ In addition to **all of Tier A**, any change touching a WGSL shader or per-strip
 
 ---
 
-# 3. Reserved — World Forger / Astra
+# 3. World Forger / Astra — System, Lifetime, Ownership, and Architectural War Map for the Clawd Ultrareview Fleet
 
-**Status:** awaiting system/architecture counsel.
+**Author:** Codex / GPT-6 (World Forger / Astra counsel role; exact variant unavailable in this session)
 
-Suggested scope:
-- how routed transport fits Screen/OntoMath/Zone/Law/derived-state architecture;
-- packet ownership and publication lifecycle;
-- cache/revision/device validity;
-- boundary between authored semantics and materialized/executable views;
-- merge implications for future RayTransportIR / Prophetic Rendering without turning those futures into present blockers;
-- system-level failure containment and observability.
+**Session:** `01a15fcb-90ec-7812-868f-22a0f6283113`
 
-**Do not treat this placeholder as World Forger's counsel.**
+**Timestamp:** `2026-11-02T09:53:25-08:00`
+
+**Reviewed source:** `claude/ray-domain-transport-rung0` at `24f43c4c3`, in `/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport`.
+
+**Commission:** Zach requested this Section 3 for adversarial merge hardening, after Prism's distinctions, Firmament's war map, and Sixth-One Sun's corrected checkpoint. This is counsel to reviewers, not a new optimization phase or an independent merge approval.
+
+Zach's post-repair **30–35 FPS live observation is accepted as the Person evidence in §0**. Do not reopen that milestone merely because broader research remains. My earlier P11 concerns are historical: P12 restored empty publication ownership, complete tile hulls and capacity handling. The new task is to make adversarial attacks on the surviving system precise enough that any further repair preserves the structure that made this milestone possible.
+
+The architectural principle is **continuity of a valid derivation**. Authored equations persist; their reusable executable representation may persist; ray schedules and pixel answers must be renewed when their dependencies change. Persistent allocation does not authorize persistent answers. Conversely, a new frame does not justify reconstructing every unchanged pipeline or binding. Audit the boundary between these lifetimes.
+
+This applies Zach's [Performance as Rightly Ordered Truth](../architecture/ontology/PERFORMANCE_AS_TRUTH.md), including its distinction between continuity across time and shared form across beings. The truth-and-ordered-speed compiler has one governing aim: carry authored meaning through the least work justified by its structure and the actual substrate. Numerical fidelity, dependency validity and measured cost are distinct witnesses to that aim; none substitutes for another. A faster wrong answer fails it, and needless reconstruction of a valid derivation also works against it. This is a design obligation, not a theorem that every more accurate algorithm must run faster. Sun's local enclosure and physical-bound repairs give this branch a concrete example: sharper correctness boundaries preserved the efficient execution structure, and Zach then reconfirmed the live milestone.
+
+## 3.1 Placement and authority: three offices, one authored meaning
+
+`OntoMath::ClampedWaveSupport` recognizes mathematical structure and derives a support recipe from the current density AST. It does not supply alternate density/emission values, identify a Zone by name, create authored beings, or persist a substitute world. `clampedWaveGroupingSlackFits` accepts a coordinate domain and bounds additive reassociation for that domain; it does not certify all transcendental evaluation or integrated output error. Keep that scope intact.
+
+`Screen/WebGPU::KernelRoutedTransport` owns derived device execution: programs, resource layouts, strip storage, route lists, schedules and publication. Its header explicitly names this as Kernel-only state beneath the world-property layer. Raw GPU handles need not become authored properties. That exemption does not authorize hiding authored meaning or a Person-facing policy in a cache. Registered Screen controls and counters retain their existing office; no second permission system or renderer-specific ontology is needed.
+
+`WebGpuRenderer` owns admission, the current frame's parameter/instance/depth binding, encoding, and final composition. `SdfWgsl` provides the original evaluator program; the routed bridge extracts/reuses its generated functions and adds a distinct execution path. Current remains reachable when routed admission or execution refuses. Root/support facts may eliminate query work; they never mutate physical bounds, saved fields or authorial identity.
+
+The authoritative state account is [DERIVED_STATE_LEDGER](../architecture/law/DERIVED_STATE_LEDGER.md), especially §6eu/§6ev, the P12 corrective entry, and the November 2 bounds/grouping entry. Read dated entries chronologically: the post-P11 warning describes a superseded implementation, and the P12 entry records its repair. A reviewer changing a key, writer or invalidation boundary must update the corresponding contract and witness; a historical green result does not migrate automatically to a changed implementation.
+
+**Source-binding clarifications for the whole council:** at this HEAD, the host requires four active media, an actual incident source with literal-zero radiance, recognized support, the grouping guard, and positive bounded-coordinate predicates. It does **not** require literal-zero scattering and phase ASTs; incident radiance zero makes their in-scatter contribution irrelevant. An absent source uses Current's compatibility illumination and is not interchangeable with authored zero. Also, `ecRoutedFetch` / `enableRoutedVolumePublication` are not actual symbols found in the inspected source: the publication hook is textually inserted by `WebGpuRenderer::volumePipeline` before `let ro = u.eyePos.xyz;`. Review that actual insertion and `SdfWgsl`'s generated fragment boundary rather than assuming those shorthand names designate functions.
+
+## 3.2 Lifetime map: what survives, what must be rebound
+
+Source anchors: [resource declarations](../../src/Singularity/Screen/WebGPU/VolumeRoutedTransport.hpp), [resource/program/encode implementation](../../src/Singularity/Screen/WebGPU/VolumeRoutedTransport.inc), [renderer](../../src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp), and [mathematical recipe](../../src/Singularity/OntoMath/ClampedWaveSupport.hpp). Line numbers below refer to the inspected HEAD and are navigation aids, not invariants.
+
+| State | Lifetime / key in current source | Invalidation and adversarial obligation |
+|---|---|---|
+| Support recipe / `frameSpecs` | Rederived during current host admission; includes current physical extents and density structure | Edit density, extent, origin or membership; admission/specs must change even when normalized WGSL can remain identical. No borrowed AST cache is introduced here. |
+| `programs[source]` | Exact generated WGSL string within one Kernel object | Setup/consumer pipelines and layouts survive viewport changes. Structural edits may select a new entry; same-code parameter edits use fresh buffers. Failed/partial entries can remain cached and return null on reuse; test refusal/recovery expectations rather than assuming retries. |
+| `common[0..5]` | Reset, classifier, route-argument, S1, ordered-S2 and general producer pipelines | Device-bound. `common[2]` embeds capacity and is rebuilt on viewport-buffer reconstruction. The other common pipelines normally survive resize. Partial construction is a high-value fault-injection seam. |
+| Publication / rays / singles / overlaps | Full-frame publication; strip-capacity scratch | Device/viewport allocation. Publication is rewritten for current pixels; scratch is reused in ordered strip dispatches, with valid counts delimiting reads. |
+| Offsets / indices / route lists / counters / indirect args | Geometry-dependent tile layout and strip scratch | Layout rebuilt on resize; counters reset per strip before classification. Stale list tails are harmless only when fresh counts/args exclude them. |
+| `stripUniform` | One 48-byte record per strip, spaced by `kUniformStride=256` | Upload on `workLimit` or `skipEmptyTiles` change; `releaseBuffers` resets cached settings so resized resources receive configuration again. Row offset changes by strip. |
+| `specsUniform` | Persistent allocation, current four-medium contents | Renderer writes current specs before routed encoding. Buffer identity can stay fixed while mathematical contents change. |
+| `prodGroups[3][maxStrips]` | Dynamic vectors of viewport-specific producer bindings | Rebuilt with the buffers; no residual 64-entry ceiling. Every encoded strip needs all three groups, even if its current indirect counts happen to be zero. |
+| `Program::localGroups[maxStrips]` | Lazily built for each program's layout plus current strip buffers | Resize clears every program's groups and `localGroupsBuilt`; next use rebuilds. Equal dimensions alone are not enough if allocation identity changed. |
+| `cachedClassifyGroup` | Current specs/ray/tile/list/count allocations and classifier pipeline | Released with buffers; rebuilt when the selected classifier changes. `cachedSpecsBuffer` is reset but is not an active contents/version key in this implementation. Do not invent a cache guarantee from its name. |
+| `globalGroup` / `instanceGroup` | Fresh for each encode | Bind current globals/parameter ranges, current depth texture view, publication and current instances. They are released after recording; retain valid resource ownership through GPU submission under the API contract. |
+| Observer resources | Explicit diagnostic enablement | `observeRoutes` adds observer/accumulator dispatches; histogram reset is explicit. Resize changes the observed geometry, not necessarily the desired accumulation interval. Keep diagnostics out of cost runs unless explicitly measuring them. |
+
+`releaseBuffers()` releases owned buffer handles and lists; releases/clears producer groups; releases reset/args/classifier groups; clears cached settings and all program-local groups; and zeros viewport/capacity fields. It deliberately retains setup/consumer programs and most common pipelines. The destructor disables observer resources, invokes that cleanup, then releases remaining common/classify pipelines and program pipelines/layouts. Releasing a handle reference is not an instruction to destroy resources still referenced by valid submitted commands; audit the actual API ownership and submission order, not a guessed synchronous destruction model.
+
+**Device recreation is owner-mediated.** `ensure(d,q,w,h)` assigns device/queue but does not compare a device-generation key before its same-dimensions fast return. `WebGpuRenderer::shutdown` resets `_kernelRouted` before broader GPU teardown (around line 656). A proper recreation path must pass through this ownership boundary or equivalently destroy all old-device objects. Do not claim `ensure` independently migrates old pipelines/bind groups to a new device. Prove all live callers obey the contract; if a reachable caller bypasses it, repair that boundary locally. Exercise queue replacement as well as device replacement where supported; raw handles must never silently mix devices.
+
+Scene/Zone changes do not require discarding all reusable code. They require fresh membership/admission, specs, instances and publication. Clock progression similarly updates the existing evaluator inputs/time preparation; it is not a reason to cache ray answers across frames or freeze a medium to another medium's clock. Test admitted → unsupported → admitted transitions, member reordering, identical WGSL with changed literal parameters, changed density shape, and independently advancing channel/source bindings. Stable code and fresh values must coexist.
+
+## 3.3 Publication is a protocol, not a second frame cache
+
+`ecPublication` stores premultiplied RGB plus **opacity `alpha=1-T`**. Nonnegative alpha is accepted; negative alpha selects Current. The explicit refusal packet uses `-1` alpha. It is not a transmittance buffer, and stale finite positive alpha is not self-invalidating.
+
+| Path | Current owner / expected outcome |
+|---|---|
+| Invocation outside `capacity` | No access. It is not an in-frame pixel owed publication by that invocation. |
+| Last-strip padding with `y>=height` | Setup marks the ray handled; it must not index full-frame publication. Consumer has its own height guard. |
+| Setup discard / unsupported ray domain | Setup publishes empty or refusal as appropriate and marks terminal ownership. Consumer must not overwrite setup-owned results. |
+| Ordinary in-frame ray | Setup writes zero publication and resets its counts before any producer can publish work. |
+| Entire wave-empty strip | Setup's zeros are the final answers. Zero producer counts can produce zero consumer workgroups without retaining prior-frame values. |
+| Producer refusal (`FALLBACK | reason`) | Consumer writes negative alpha, unless setup already owns the terminal result. Zero-budget behavior needs its dedicated witness; do not infer it from ordinary emptiness. |
+| Complete nonempty schedule | Consumer checks counts/member identifiers and final finite state/T range, then replaces setup zero with `(L,1-T)`. |
+| Nonfinite final state / invalid T | Consumer writes refusal. This tests the final state; it is not a universal certificate for every input or intermediate. |
+| Fragment consumption | Inserted early hook accepts publication, discards negligible empty output as implemented, or falls through to Current on negative alpha. |
+
+“Single-write empty ownership” is precise. “Every pixel is physically written exactly once” is not: an ordinary nonempty ray is initialized by setup and later receives its complete result. There must be one unambiguous terminal disposition with correctly ordered writers, not a ban on ordered initialization and replacement.
+
+This protocol explains the successful poison/empty/tall-viewport witnesses under successful execution. It does not establish arbitrary device-loss or omitted-stage safety. Since setup initializes ordinary rays to accepted zero, a silently missing required producer is not automatically detected by an epoch bit. The encoded schedule must really execute; host failures must prevent accepted partial publication from reaching the fragment. Attack that obligation rather than adding an unconditional clear/proof pass to every frame.
+
+The two index spaces must remain distinct. `ecPixel(id)` adds `window.z=start` to obtain full-viewport row-major publication position. `ecRays[id]` remains strip-local. Current span addressing is step-major: `ecSingles[s*stride+id]` / `ecOverlaps[o*stride+id]`, with `stride=capacity`; producer formulas must match. Dynamic strip count does not change these meanings. Attack 64/65/86 strips, odd widths, partial 4×4 tiles, final padded rows, and resize back. Changing every group vector without changing a stale stride or route-argument capacity is not a complete repair.
+
+## 3.4 Fallback has three distinct host paths—verify each
+
+1. **Admission / `ensure` refusal:** `wantRouted` becomes false and ordinary pipeline selection retains Current.
+2. **`program` or publication-hook transformation refusal:** `volumePipeline(program,true)` recursively requests `volumePipeline(program,false)` and records compilation refusal where implemented. Unsupported generated structure must not produce a half-transformed shader.
+3. **`encode` refusal after selecting a routed fragment:** the renderer does **not** simply flip `wantRouted=false`. Around lines 3943–3957 it records refusal and queue-writes negative floats across publication so the already-selected fragment takes Current. Current explicit `encode` false returns occur before its dispatch loop. Preserve that property or establish safe ordering for any new late failure; a queue write is not a magic cancellation of previously recorded producers.
+
+Do not generalize those paths to “every API error is already contained.” Source inspection shows several fresh/global/reset/classifier bind-group and compute-pass creations used without the same explicit null checks as some allocation/local-group paths. `ensure`'s same-size fast return checks publication and common pipelines, not every dependent handle. Error objects/validation failures may not be represented solely by null pointers. **These are adversarial seams, not new reproduced defects or an asserted live regression.** Inject the relevant failure, show what executes, and establish whether a valid Current frame follows before filing a finding.
+
+High-value fault sequence: fail a common pipeline after earlier ones succeed; retry the same dimensions; resize; return to the original dimensions; then destroy/recreate the renderer. Check partial-map entries, retained pipeline ownership, nullable groups, deterministic refusal and retry behavior. Partial construction must not leave an apparently ready object. Do not solve a cold construction failure with recurring per-sample work.
+
+## 3.5 Review attacks ranked by architectural consequence
+
+**A. Resource identity versus cached contents.** Replace depth views and parameter/instance buffers while retaining dimensions and code; their fresh global/instance groups must bind the new objects/ranges. Toggle `workLimit` and `skipEmptyTiles`, including zero budget, across resize; every strip must receive current config. Same buffer pointer with new specs must work. Same dimensions with replaced allocation must invalidate dependent groups. The unused `uniformSpecs` argument does not substitute for the renderer's actual write to the Kernel's `specsUniform`.
+
+**B. Submission ordering and multiple uses.** Scratch reuse is safe because each strip's setup/classifier/producers/consumer precede the next strip in the command stream. Publication survives until the corresponding draw. Audit whether more than one routed encode can target the same specs/publication resources before submission or consumption; prove the renderer limits that use or reproduce the aliasing sequence. Repeated queue writes to the same uniform allocation do not by themselves create per-encode snapshots. Do not add a CPU/GPU fence per strip as a speculative solution.
+
+**C. Partial construction, leaks and recovery.** Track successful creations to exactly one owner, including fallback-created reset/args groups and observer groups. Trace every return before cleanup. A cached invalid program and an unbounded set of distinct edited WGSL programs are different issues: the former concerns refusal/retry, the latter retention policy. The destructor's eventual cleanup is not proof of bounded memory during prolonged editing. Report a concrete lifecycle/resource witness and practical scope; do not demand a new cache architecture solely because a cache could grow.
+
+**D. Arithmetic and alignment admission.** `uint64_t(w)*h*16` avoids early 32-bit multiplication, but arbitrary 32-bit dimensions can still overflow a later 64-bit product. Bind any finding to dimensions reachable from actual textures or an explicitly supported Kernel entry contract. Check `w*rows`, tile rounding, `(h+rows-1)`, dynamic vector lengths, maximum buffer sizes, binding sizes and workgroup counts together. Confirm 256-byte strip offsets satisfy the selected device's uniform-offset alignment and that the 48-byte record layout matches WGSL. Preserve the full publication/domain guard; the dynamic vector repair does not mean every nominal viewport is admitted.
+
+**E. Generated-code identity and private state.** `checkEvaluatorsDeduplicatable` normalizes density/extinction/shared helper bodies, gathers member-0 shared groups and checks their counterparts; consumer rewriting then aliases private storage. Attack extra/missing groups, emission-only dependencies, reordered members, parameter offsets and sequential active-member evaluation. The deduplicated and non-deduplicated paths both need correct current inputs. Do not restore all duplicated private state without a concrete failure; refuse the unsafe deduplication locally where possible. Text extraction/replacement is an interface whose refused forms and partial transformations need witnesses.
+
+**F. Observer isolation.** `observeRoutes` adds two dispatches per strip and creates diagnostic groups; histogram accumulation/reset and buffer ownership must survive resize and enable/disable. `collectDispatchTrace` is opt-in and its pointer-derived hash is a same-process diagnostic, not persistent identity. Ordinary routed counters describe dispatch coverage, not universal successful numerical publication. Test observer on/off output invariance separately from uncontended benchmark cost.
+
+For every attack, use Prism's finding format. An untested concern stays a question. A source defect, a CPU counterexample and a native failure are different evidence. If a concrete failure is reproduced, repair the nearest owning boundary and report both the removed failure and any added common-path cost.
+
+## 3.6 Evidence to inherit, and evidence this counsel does not create
+
+I checked the premerge JSON summary and matched all six recorded source hashes against this checkout: recognizer, kernels, renderer, CPU verifier, Metal verifier and permanent independent math test. The summary records 162 reference checks with no failures. I read the P18/P19 and Firmament milestone summaries, the final corrective audit, bounded final Intercom entries and actual source paths. The JSON's pre-repair Person wording is historical; §0 and Zach's current commission supply the later corrected-build confirmation. Do not edit that earlier receipt to pretend it contained future evidence.
+
+`webgpu_routed_transport_math_test` extracts actual functions from all three WGSL producers, tests analytic linear roots and directed thin-box spans, and uses original-kernel negative controls in the audit. The CPU mirror alone is not its oracle. The retained native gates and frozen-reference pilot are bounded evidence; they do not make every changed program automatically qualified. After a repair, use the relevant sequential protocol in §2.7, with GPU coordination and no concurrent timing/test workloads. Changes to numerical semantics require the applicable independent comparison even if selected image hashes happen to match; matching two poses is not proof that no other input changed.
+
+Hardware explanations must retain their evidence scope. Coalesced addresses, smaller private state and lower measured time are inspectable facts; exact occupancy, cache transactions or universal milliseconds saved require corresponding hardware evidence. A short root enclosure's left endpoint is not necessarily the exact root, so band absorption's numerical qualification is not an exact-kink theorem. These cautions refine interpretation of §2 without withdrawing its protected gains or demanding full universal certification before merge.
+
+This Section 3 adds **source-based counsel only**. No renderer edits, failure-injection run, build, GPU test, timing or new Person observation was performed by Astra. It is not a claim that every attack above is a defect, or that the Clawd review has already passed.
+
+## 3.7 Preserve the future bridge without enlarging this merge
+
+The current capability-recognition → query-relative schedule → original evaluator → publication design is a useful precursor to a general `RayTransportIR`. Its future vocabulary can make domain, dependencies, refusal reasons, interval ordering and transfer composition explicit. That future does not require this checkpoint to accept arbitrary MathNodes, unlimited members or every device now. Existing finite capacity and structural refusal are honest boundaries when Current remains reachable.
+
+Moving-camera prophetic reuse should eventually preserve only what remains valid under the changed query, keyed by the necessary scene/clock/camera/depth/device dependencies. The present persistent buffers are allocation reuse, not a license to reuse yesterday's schedules or pixels. Do not add speculative temporal caches during merge hardening, and do not block the merge because they do not yet exist.
+
+The governing law for the fleet remains:
+
+> **Repair the violated proof or lifecycle boundary locally. Do not restore generic brute-force work everywhere merely because one local proof or lifecycle seam failed somewhere.**
+
+The post-audit source and Zach's corrected-build observation demonstrate that stronger boundaries and the live milestone can coexist. Protect that achievement by attacking concrete seams, preserving independently established irrelevance, and keeping every accepted pixel attached to the authored meaning and current invocation that justify it.
+
+**Handoff bookkeeping:** this section replaces only Astra's reservation. Sections 0–2 and 4–6 remain their authors' text. The historical Intercom thread is untouched. `nav find` / `nav trace` were attempted; the preexisting unsupported record at `conversation_links.jsonl:249` still prevents navigation. Existing prose links retain lineage; this counsel does not repair or rewrite that journal.
 
 ---
 
