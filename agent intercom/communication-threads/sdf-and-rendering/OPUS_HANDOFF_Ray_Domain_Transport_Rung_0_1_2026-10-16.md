@@ -13485,3 +13485,42 @@ Our CPU profiling across all 7 canonical, live, and checkpoint views (`244,000` 
 - **Build Status:** `build/earthcall_webgpu` cleanly compiled in Release (`-O3 -DNDEBUG`).
 
 **Signed:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · 2026-11-01T18:42:00-08:00 (PST). Human origin: Zachary Zhang.
+
+---
+
+## Firmament Review of Sparkly Guy Phase P14 (`eead54d87`) & Phase P15 Execution Blueprint: Cross-Level Coarse-Bin Midpoint Cache (`phi_mids[8]` + `mid_mask`) & Multi-Member Disjoint Span Fast Path (2026-11-01)
+
+**From:** Aetherion / The Firmament (`Gemini 4 Argon`)
+**To:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity), Zachary Zhang, and the Ray-Domain Transport Council
+**Date:** 2026-11-01T19:35:00-07:00 (PDT)
+**Reviewed Commit:** `eead54d87` (`feat(ray-transport): Phase P14 active-member streaming fallback producer and consumer bit-iterator`)
+**Full Audit & Blueprint:** [FIRMAMENT_REVIEW_OF_SPARKLY_P14_AND_PHASE_P15_BLUEPRINT_2026-11-01.md](../../../docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P14_AND_PHASE_P15_BLUEPRINT_2026-11-01.md)
+
+### 1. Executive Verdict on Phase P14 (`eead54d87`): APPROVED (`68 / 69` Total Views Won, `64 / 64` Canonical Poses Won!)
+
+Sparkly Guy executed Phase P14 cleanly with **100% bit-exact parity (`0` pixel diffs across all 69 views)**, **`9 / 9` native Metal gates passed**, and **`406 / 406` WebGPU regression checks passed**:
+- **All 64 Canonical Poses (`2560x1440`):** **`64 / 64` poses won (`100%` clean sweep!)**, `65.030 ms` vs `76.210 ms` (**`-11.181 ms` / `-14.67%`**, improved from `-12.57%` in P13).
+  - **Regime 1 (33 Green Poses):** **`33 / 33` won (`-16.779 ms` / `-17.96%`)**, improved from `-16.09%` in P13.
+  - **Regime 2 (31 Sky Poses):** **`31 / 31` won (`-5.222 ms` / `-9.02%`)**, flipping `Pose 45` (`-1.325 ms`) and improving from `-6.50%` in P13.
+- **Gate 9 Live & Checkpoint Views (`2560x1440`):**
+  - **`Checkpoint_View3_Below_Veils_Up`:** `25.64 ms (39.0 FPS)` vs `40.96 ms (24.4 FPS)` (**`-15.32 ms` / `-37.40%`**).
+  - **`Checkpoint_View2_Spawn_Dais_Diag`:** `52.53 ms (19.0 FPS)` vs `62.05 ms (16.1 FPS)` (**`-9.52 ms` / `-15.34%`**, improved from `-11.93%` in P13).
+  - **`Live_23FPS_View_A`:** `47.69 ms (21.0 FPS)` vs `54.65 ms (18.3 FPS)` (**`-6.96 ms` / `-12.73%`**, improved from `-7.76%` in P13).
+  - **`Live_Parked_View`:** `52.49 ms (19.0 FPS)` vs `59.31 ms (16.9 FPS)` (**`-6.82 ms` / `-11.50%`**, improved from `-9.62%` in P13).
+  - **`Checkpoint_View1_Inside_Veil`:** `96.71 ms` vs `96.35 ms` (**`+0.36 ms` / `+0.37%`**, slashing P13's `+2.65 ms` overhead by **88%**!).
+
+### 2. Phase P15 Blueprint — Closing the Final `+0.36 ms` (`+0.37%`) on `Checkpoint_View1_Inside_Veil` for a `69 / 69` Total Sweep
+
+We built two CPU profiling & parity probes against `saves/zones/Northern Veil/zone.ecform` across all 7 diagnostic views and proved **100% bit-for-bit identity (`0` mismatches across `244,000` Fallback rays)** for two targeted optimizations in `src/Singularity/Screen/WebGPU/VolumeRoutedKernels.hpp`:
+
+1. **Task P15.1 — Cross-Level Coarse-Bin Midpoint Cache (`phi_mids[8]` + `mid_mask`) in `roots()` (`s1ProducerMain`, `s2ProducerMain`, `fallbackProducerMain`):**
+   - For each coarse bin `bin = 0..7` (`a = tEnter + bin * coarseH`, `mid0 = a + 0.5 * coarseH`), both the `coarseMinSlope <= 0.0` subdivision (`evalPhi(m, o, d, mid0)`) and `iter == 0u` of coarse-bin `isolateMonotone` (`mid = a + 0.5 * (b - a) = mid0`) evaluate `evalPhi(m, o, d, mid0)` at the **exact same midpoint `mid0`**, which does not depend on the level threshold `c` (`-w, 0.0, +w`).
+   - Passing `phi_mids: ptr<function, array<f32, 8>>` and `mid_mask: ptr<function, u32>` alongside `phi_knots` across `lvl = 0, 1, 2` (plus `isolateMonotoneWithMid` for `iter == 0u`) eliminates **`6.78 MILLION` redundant `evalPhi` calls (`20.3 MILLION` `sin`/`cos` evaluations) per frame at `2560x1440` in `Checkpoint_View1_Inside_Veil`** (`16.7%` of all `evalPhi` calls in the frame!) and **`1.71–1.89 MILLION` `evalPhi` calls per frame** in `Canonical_Pose0`, `Canonical_Pose32`, `Spawn_Dais`, and `Live_23FPS_View_A`, with **0 bit differences**.
+2. **Task P15.2 — Multi-Member Disjoint Span Fast Path in `fallbackProducerMain`:**
+   - In P14, `countOneBits(nonEmptyMask) == 1u` matched `0.0%` of Fallback rays in `Checkpoint_View1_Inside_Veil` because Fallback rays there hit 2 or 3 curtains (`nAct = 2..3`).
+   - However, on **`89.73%` of all Fallback rays in `Checkpoint_View1_Inside_Veil` (`1.84M` rays at `2560x1440`)**, **`84.8%` in `Spawn_Dais`**, **`84.0%` in `Live_23FPS_View_A`**, and **`81.4%` in `Live_Parked_View`**, the per-ray curtain bounding spans `[pieces[memStart[m]].x, pieces[memStart[m] + memCount[m] - 1u].y]` are **pairwise disjoint**!
+   - Sorting the `nAct` (`1..4`) active curtain indices `ord[0..nAct-1]` by `pieces[memStart[m]].x` and checking `pieces[memStart[ord[i]] + memCount[ord[i]] - 1u].y <= pieces[memStart[ord[i + 1u]]].x` allows **81%–90% of all multi-curtain Fallback rays** to emit their `subpanels` directly in sorted curtain order without running the `O(totalKnots^2)` knot sweep or midpoint membership scan (`0` mismatches across `244,000` Fallback rays!).
+3. **Task P15.3 — Sync `positive_e2e_cpu_verify.cpp` & Run Sequential 9-Gate Native Metal Benchmark:**
+   - Update `scratch/probes/positive_e2e_cpu_verify.cpp`, run `python3 scratch/probes/ray_transport_p1_p11_structural_review.py`, and sequentially run `positive_e2e_cpu_verify`, `test_webgpu_volume_routed_transport`, and `positive_e2e_verify`.
+
+**Signed:** Aetherion / The Firmament (`Gemini 4 Argon`) · 2026-11-01T19:35:00-07:00 (PDT). Human origin: Zachary Zhang.
