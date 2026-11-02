@@ -915,6 +915,14 @@ int main(int argc, char** argv) {
         {"parity", restoredRgbaHash == canonicalPose0RgbaHash}
     };
 
+    // Audit mode keeps every correctness gate above, without re-running timing.
+    if (argc > 3 && std::string(argv[3]) == "--correctness-only") {
+        report["native_metal_gates_passed"] = "8/8 correctness gates; timing gates 9/10 and dual-regime sweep unrun";
+        std::ofstream(outJsonPath) << report.dump(2) << '\n';
+        std::printf("PASS positive_e2e_metal_verify correctness-only\n");
+        return 0;
+    }
+
     // --- RUNNING GATE 9: Zach's 3 Northern Veil Checkpoint Views + Live Captured Camera Views ---
     std::printf("--- RUNNING GATE 9: Checkpoint Views Parity, Census & ABBA Benchmark ---\n");
     struct ViewSpec {

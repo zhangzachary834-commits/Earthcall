@@ -2041,3 +2041,11 @@ The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Pha
   - Full tour average: **54.89 ms vs 77.08 ms Current (-28.78% win, 64/64 poses won)**.
   - Regime 1 (Full Screen Green): **64.33 ms vs 94.53 ms Current (-31.95% win)**.
   - Regime 2 (Open Sky): **44.85 ms vs 58.50 ms Current (-23.33% win)**.
+
+
+## Northern Veil — final corrective build, 2026-11-02
+
+- [x] **Person-reported P19 milestone:** Zach reports consistent 30 FPS near spawn, up to 35 FPS in some views, and ~30 FPS in unobstructed flight; this is pre-audit acceptance, not a new fixed-camera measurement.
+- [ ] **When next opening the corrected Release build:** revisit that accepted view and confirm the inhabited appearance remains sound, especially at curtain edges and while crossing overlaps; Current fallback should remain usable. Native tests/accuracy pilot pass, but no post-repair Person observation is invented. This is a brief confirmation, not a requirement to reproduce every old camera/roll benchmark.
+
+[Corrective audit and remaining scope](../../../audits/GPU_RAY_TRANSPORT_PREMERGE_CORRECTNESS_AUDIT_2026-11-02.md). Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-02T04:05:24-08:00.

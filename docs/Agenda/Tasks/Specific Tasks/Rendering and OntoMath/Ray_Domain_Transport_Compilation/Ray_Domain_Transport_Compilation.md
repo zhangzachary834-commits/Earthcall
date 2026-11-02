@@ -669,3 +669,10 @@ Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-01T12:2
 [Substantive counsel in the existing thread](../../../../../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#astra-counsel--the-ray-program-must-carry-its-obligations-all-the-way-to-the-pixel-2026-11-01) models the production path as mathematical admission → tile classification → bounded schedules → shared transport → current-frame publication. It endorses Sun's publication/hull/capacity corrective gates, identifies the historical publication statement in the derived-state ledger, and proposes explicit packet ownership, independent boundary witnesses and matched live cost attribution after repair. The cell-polynomial experiment remains rejected; no new numerical implementation, native result or visible change is claimed. Zach's any-one-accepted-view 28–30 FPS checkpoint and existing Person acceptance remain unchanged.
 
 Codex / GPT-6 (Astra counsel role) / session `01a15fcb-90ec-7812-868f-22a0f6283113` / `2026-11-01T10:04:32-08:00`.
+
+
+## Pre-merge checkpoint audit — 2026-11-02
+
+Zach reports live 30–35 FPS near spawn and ~30 FPS in unobstructed flight. [Final bounded corrective audit](../../../../../audits/GPU_RAY_TRANSPORT_PREMERGE_CORRECTNESS_AUDIT_2026-11-02.md): uncertain-zero root enclosure, hard physical bounds, and host grouping/NaN admission repaired without new GPU stages or sample checks; final focused tests pass, 162 scoped independent-reference checks pass, and repaired mean frame cost remains 31.12% below Current. This is a qualified Northern Veil checkpoint, not universal numerical certification. Release app rebuilt; no merge/push in this pass.
+
+Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-02T04:05:24-08:00.

@@ -92,7 +92,8 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
     for (var m = 0u; m < 4u; m++) {
         let cur = curtains[m];
         let zEnv = abs(cur.amps.x) + abs(cur.amps.y) + abs(cur.amps.z) + cur.limits.w;
-        let halfVec = min(cur.half.xyz, vec3f(cur.limits.x, cur.limits.y, zEnv));
+        // Expand derived support only; authored physical boxes remain hard bounds.
+        let halfVec = min(cur.half.xyz, vec3f(cur.limits.x, cur.limits.y, zEnv) + vec3f(cur.curv.y));
         var uxMin = 1e9f;
         var uxMax = -1e9f;
         var anyRayHit = false;
@@ -112,10 +113,10 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
                     let d = tileRdClipB[i][axis];
                     let o = oRel[axis];
                     if (d == 0.0) {
-                        if (abs(o) > half + cur.curv.y) { hit = false; break; }
+                        if (abs(o) > half) { hit = false; break; }
                     } else {
-                        let q0 = (-half - cur.curv.y - o) / d;
-                        let q1 = (half + cur.curv.y - o) / d;
+                        let q0 = (-half - o) / d;
+                        let q1 = (half - o) / d;
                         a = max(a, min(q0, q1));
                         b = min(b, max(q0, q1));
                     }
@@ -417,7 +418,9 @@ fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
    let v = evalPhi(m, o, d, mid) - c;
    if (abs(v) <= error) {
     let w = 2.0 * error / curMinSlope;
-    if (w <= 0.0095 && w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
+    // An unresolved sign cannot discard either side, even at an exact zero.
+    // Enclose it with the existing slope/error bound; never refine on that sign.
+    l = max(l, mid - w); r = min(r, mid + w); break;
    }
    if ((rawLeft < 0.0 && v > 0.0) || (rawLeft > 0.0 && v < 0.0)) {
     r = mid; right = v; rawRight = v;
@@ -608,12 +611,12 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
   let m = curtains[activeMember]; let o = ro - m.origin.xyz;
   var a = input.ro_clipA.w; var b = input.rd_clipB.w; var hit = true;
   let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w;
-  let halfVec = min(m.half.xyz, vec3f(m.limits.x, m.limits.y, zEnv));
+  let halfVec = min(m.half.xyz, vec3f(m.limits.x, m.limits.y, zEnv) + vec3f(m.curv.y));
   for (var axis = 0u; axis < 3u; axis++) {
    let half = halfVec[axis];
-   if (d[axis] == 0.0) { if (abs(o[axis]) > half + m.curv.y) { hit = false; break; } }
+   if (d[axis] == 0.0) { if (abs(o[axis]) > half) { hit = false; break; } }
    else {
-    let q0 = (-half - m.curv.y - o[axis]) / d[axis]; let q1 = (half + m.curv.y - o[axis]) / d[axis];
+    let q0 = (-half - o[axis]) / d[axis]; let q1 = (half - o[axis]) / d[axis];
     a = max(a, min(q0, q1)); b = min(b, max(q0, q1));
    }
   }
@@ -794,7 +797,9 @@ fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
    let v = evalPhi(m, o, d, mid) - c;
    if (abs(v) <= error) {
     let w = 2.0 * error / curMinSlope;
-    if (w <= 0.0095 && w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
+    // An unresolved sign cannot discard either side, even at an exact zero.
+    // Enclose it with the existing slope/error bound; never refine on that sign.
+    l = max(l, mid - w); r = min(r, mid + w); break;
    }
    if ((rawLeft < 0.0 && v > 0.0) || (rawLeft > 0.0 && v < 0.0)) {
     r = mid; right = v; rawRight = v;
@@ -1003,12 +1008,12 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
         let m = curtains[member]; let o = ro - m.origin.xyz;
         var a = input.ro_clipA.w; var b = input.rd_clipB.w; var hit = true;
         let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w;
-        let halfVec = min(m.half.xyz, vec3f(m.limits.x, m.limits.y, zEnv));
+        let halfVec = min(m.half.xyz, vec3f(m.limits.x, m.limits.y, zEnv) + vec3f(m.curv.y));
         for (var axis = 0u; axis < 3u; axis++) {
             let half = halfVec[axis];
-            if (d[axis] == 0.0) { if (abs(o[axis]) > half + m.curv.y) { hit = false; break; } }
+            if (d[axis] == 0.0) { if (abs(o[axis]) > half) { hit = false; break; } }
             else {
-                let q0 = (-half - m.curv.y - o[axis]) / d[axis]; let q1 = (half + m.curv.y - o[axis]) / d[axis];
+                let q0 = (-half - o[axis]) / d[axis]; let q1 = (half - o[axis]) / d[axis];
                 a = max(a, min(q0, q1)); b = min(b, max(q0, q1));
             }
         }
@@ -1200,7 +1205,9 @@ fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
    let v = evalPhi(m, o, d, mid) - c;
    if (abs(v) <= error) {
     let w = 2.0 * error / curMinSlope;
-    if (w <= 0.0095 && w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
+    // An unresolved sign cannot discard either side, even at an exact zero.
+    // Enclose it with the existing slope/error bound; never refine on that sign.
+    l = max(l, mid - w); r = min(r, mid + w); break;
    }
    if ((rawLeft < 0.0 && v > 0.0) || (rawLeft > 0.0 && v < 0.0)) {
     r = mid; right = v; rawRight = v;
@@ -1385,12 +1392,12 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
   let m = curtains[member]; let o = ro - m.origin.xyz;
   var a = input.ro_clipA.w; var b = input.rd_clipB.w; var hit = true;
   let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w;
-  let halfVec = min(m.half.xyz, vec3f(m.limits.x, m.limits.y, zEnv));
+  let halfVec = min(m.half.xyz, vec3f(m.limits.x, m.limits.y, zEnv) + vec3f(m.curv.y));
   for (var axis = 0u; axis < 3u; axis++) {
    let half = halfVec[axis];
-   if (d[axis] == 0.0) { if (abs(o[axis]) > half + m.curv.y) { hit = false; break; } }
+   if (d[axis] == 0.0) { if (abs(o[axis]) > half) { hit = false; break; } }
    else {
-    let q0 = (-half - m.curv.y - o[axis]) / d[axis]; let q1 = (half + m.curv.y - o[axis]) / d[axis];
+    let q0 = (-half - o[axis]) / d[axis]; let q1 = (half - o[axis]) / d[axis];
     a = max(a, min(q0, q1)); b = min(b, max(q0, q1));
    }
   }

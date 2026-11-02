@@ -463,3 +463,10 @@ Following the evaluation by Aetherion / The Firmament (`Gemini 3.1 Pro`), all fo
 
 
 **§6fc latest review:** [Sonnet coalescing independently replays; Current/coalesced remain tied on the exact64-pose route; native budget counterexample qualifies Firmament's routing identity claim](audits/GPU_RAY_TRANSPORT_6FC_SONNET_REVIEW_AND_ROUTING_BOUNDARIES_2026-10-29.md).1536frames/206.4MdecodedRGBA comparison bytes, no new authored-reference rows. Ordinary dispatch hashing now opt-in;240logical commands unchanged, Releasebuildpasses. Historical6eytoolsrestored; successor6fbharness separated and executed sources archived. Next§6fdmaskcensus/oneguardedchange; zero-budget refusal and proof admission explicit. GPU lane RELEASED, no foreground run this pass. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T11:19:46.729976-07:00.
+
+
+### Northern Veil bounded checkpoint — 2026-11-02
+
+Zach reports live 30–35 FPS. [Pre-merge corrective audit](audits/GPU_RAY_TRANSPORT_PREMERGE_CORRECTNESS_AUDIT_2026-11-02.md) repairs root uncertainty, physical-box slack and host admission, with focused native gates and 162 scoped frozen-reference checks passing; no new GPU stage/sample-box work, no merge/push, and universal certification remains separate. Preserve the signed evidence scope and the existing thread's append-only chronology.
+
+Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-02T04:05:24-08:00.

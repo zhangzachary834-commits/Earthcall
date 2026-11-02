@@ -3186,7 +3186,7 @@ void WebGpuRenderer::flushVolumeComposite() {
     const auto vector4=[](const std::array<float,4>& v){return glm::vec4(v[0],v[1],v[2],v[3]);};
     for(size_t i=0;wantRouted && i<4;++i){
         const auto& m=*activeMedia[i];const auto recipe=OntoMath::clampedWaveSupport(m.densityExpr);
-        if(!recipe||glm::any(glm::greaterThan(glm::abs(m.origin),glm::vec3(1024)))||glm::any(glm::greaterThan(glm::abs(m.scale),glm::vec3(1024)))){wantRouted=false;break;}
+        if(!recipe||!OntoMath::clampedWaveGroupingSlackFits(*recipe,std::abs(m.scale.z))||!glm::all(glm::lessThanEqual(glm::abs(m.origin),glm::vec3(1024)))||!glm::all(glm::lessThanEqual(glm::abs(m.scale),glm::vec3(1024)))){wantRouted=false;break;}
         frameSpecs[i]={glm::vec4(m.origin,0),glm::vec4(glm::abs(m.scale),0),vector4(recipe->limits),vector4(recipe->curvature),vector4(recipe->amplitudes),vector4(recipe->frequencies),vector4(recipe->phases)};
     }
     if(wantRouted){if(!_kernelRouted)_kernelRouted=std::make_unique<KernelRoutedTransport>();wantRouted=_kernelRouted->ensure(_device,_queue,_depthW,_depthH);}

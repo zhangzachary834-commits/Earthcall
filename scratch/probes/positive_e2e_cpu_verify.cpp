@@ -101,7 +101,7 @@ static TileRouteResult classifyTileSerial(
     for (uint32_t m = 0u; m < 4u; m++) {
         const KernelRoutedSpec cur = curtains[m];
         float zEnv = std::abs(cur.amps.x) + std::abs(cur.amps.y) + std::abs(cur.amps.z) + cur.limits.w;
-        glm::vec3 halfVec = glm::min(glm::vec3(cur.half), glm::vec3(cur.limits.x, cur.limits.y, zEnv));
+        glm::vec3 halfVec = glm::min(glm::vec3(cur.half), glm::vec3(cur.limits.x, cur.limits.y, zEnv) + glm::vec3(cur.curv.y));
         float uxMin = 1e9f;
         float uxMax = -1e9f;
         bool anyRayHit = false;
@@ -121,10 +121,10 @@ static TileRouteResult classifyTileSerial(
                 float d = ray.rd_clipB[axis];
                 float o = oRel[axis];
                 if (d == 0.0f) {
-                    if (std::abs(o) > half + cur.curv.y) { hit = false; break; }
+                    if (std::abs(o) > half) { hit = false; break; }
                 } else {
-                    float q0 = (-half - cur.curv.y - o) / d;
-                    float q1 = (half + cur.curv.y - o) / d;
+                    float q0 = (-half - o) / d;
+                    float q1 = (half - o) / d;
                     a = std::max(a, std::min(q0, q1));
                     b = std::min(b, std::max(q0, q1));
                 }
@@ -382,7 +382,7 @@ static void classifyWorkgroupCooperative(
         bool rHitArr[64];
 
         float zEnv = std::abs(cur.amps.x) + std::abs(cur.amps.y) + std::abs(cur.amps.z) + cur.limits.w;
-        glm::vec3 halfVec = glm::min(glm::vec3(cur.half), glm::vec3(cur.limits.x, cur.limits.y, zEnv));
+        glm::vec3 halfVec = glm::min(glm::vec3(cur.half), glm::vec3(cur.limits.x, cur.limits.y, zEnv) + glm::vec3(cur.curv.y));
         // Barrier 1 phase: all 64 lanes compute ray-box slab
         for (uint32_t lid = 0; lid < 64; ++lid) {
             glm::vec3 oRel = ro[lid] - glm::vec3(cur.origin);
@@ -395,10 +395,10 @@ static void classifyWorkgroupCooperative(
                     float d = rd[lid][axis];
                     float o = oRel[axis];
                     if (d == 0.0f) {
-                        if (std::abs(o) > half + cur.curv.y) { hit = false; break; }
+                        if (std::abs(o) > half) { hit = false; break; }
                     } else {
-                        float q0 = (-half - cur.curv.y - o) / d;
-                        float q1 = (half + cur.curv.y - o) / d;
+                        float q0 = (-half - o) / d;
+                        float q1 = (half - o) / d;
                         a = std::max(a, std::min(q0, q1));
                         b = std::min(b, std::max(q0, q1));
                     }
@@ -730,11 +730,10 @@ struct ProducerMath {
                 float v = evalPhi(m, o, d, mid) - c;
                 if (std::abs(v) <= error) {
                     float w = 2.0f * error / curMinSlope;
-                    if (w <= 0.0095f && w < 0.5f * (r - l)) {
-                        l = std::max(l, mid - w);
-                        r = std::min(r, mid + w);
-                        break;
-                    }
+                    // Match the production uncertainty enclosure, not an uncertain sign.
+                    l = std::max(l, mid - w);
+                    r = std::min(r, mid + w);
+                    break;
                 }
                 if ((rawLeft < 0.0f && v > 0.0f) || (rawLeft > 0.0f && v < 0.0f)) {
                     r = mid; right = v; rawRight = v;
@@ -915,14 +914,14 @@ static RayProducerOutput runS1Producer(const Ray& input, uint32_t activeMember,
     float zEnv = std::abs(m.amps.x) + std::abs(m.amps.y) + std::abs(m.amps.z) + m.limits.w;
     for (int axis = 0; axis < 3; axis++) {
         float half = m.half[axis];
-        if (axis == 0) half = std::min(half, m.limits.x);
-        if (axis == 1) half = std::min(half, m.limits.y);
-        if (axis == 2) half = std::min(half, zEnv);
+        if (axis == 0) half = std::min(half, m.limits.x + m.curv.y);
+        if (axis == 1) half = std::min(half, m.limits.y + m.curv.y);
+        if (axis == 2) half = std::min(half, zEnv + m.curv.y);
         if (d[axis] == 0.0f) {
-            if (std::abs(o[axis]) > half + m.curv.y) { hit = false; break; }
+            if (std::abs(o[axis]) > half) { hit = false; break; }
         } else {
-            float q0 = (-half - m.curv.y - o[axis]) / d[axis];
-            float q1 = (half + m.curv.y - o[axis]) / d[axis];
+            float q0 = (-half - o[axis]) / d[axis];
+            float q1 = (half - o[axis]) / d[axis];
             a = std::max(a, std::min(q0, q1));
             b = std::min(b, std::max(q0, q1));
         }
@@ -1060,14 +1059,14 @@ static RayProducerOutput runS2Producer(const Ray& input, uint32_t packedTile,
         float a = input.ro_clipA.w, b = input.rd_clipB.w;
         bool hit = true;
         float zEnv = std::abs(m.amps.x) + std::abs(m.amps.y) + std::abs(m.amps.z) + m.limits.w;
-        glm::vec3 halfVec = glm::min(glm::vec3(m.half), glm::vec3(m.limits.x, m.limits.y, zEnv));
+        glm::vec3 halfVec = glm::min(glm::vec3(m.half), glm::vec3(m.limits.x, m.limits.y, zEnv) + glm::vec3(m.curv.y));
         for (int axis = 0; axis < 3; axis++) {
             float half = halfVec[axis];
             if (d[axis] == 0.0f) {
-                if (std::abs(o[axis]) > half + m.curv.y) { hit = false; break; }
+                if (std::abs(o[axis]) > half) { hit = false; break; }
             } else {
-                float q0 = (-half - m.curv.y - o[axis]) / d[axis];
-                float q1 = (half + m.curv.y - o[axis]) / d[axis];
+                float q0 = (-half - o[axis]) / d[axis];
+                float q1 = (half - o[axis]) / d[axis];
                 a = std::max(a, std::min(q0, q1));
                 b = std::min(b, std::max(q0, q1));
             }
@@ -1211,14 +1210,14 @@ static RayProducerOutput runFallbackProducer(const Ray& input,
         float a = input.ro_clipA.w, b = input.rd_clipB.w;
         bool hit = true;
         float zEnv = std::abs(m.amps.x) + std::abs(m.amps.y) + std::abs(m.amps.z) + m.limits.w;
-        glm::vec3 halfVec = glm::min(glm::vec3(m.half), glm::vec3(m.limits.x, m.limits.y, zEnv));
+        glm::vec3 halfVec = glm::min(glm::vec3(m.half), glm::vec3(m.limits.x, m.limits.y, zEnv) + glm::vec3(m.curv.y));
         for (int axis = 0; axis < 3; axis++) {
             float half = halfVec[axis];
             if (d[axis] == 0.0f) {
-                if (std::abs(o[axis]) > half + m.curv.y) { hit = false; break; }
+                if (std::abs(o[axis]) > half) { hit = false; break; }
             } else {
-                float q0 = (-half - m.curv.y - o[axis]) / d[axis];
-                float q1 = (half + m.curv.y - o[axis]) / d[axis];
+                float q0 = (-half - o[axis]) / d[axis];
+                float q1 = (half - o[axis]) / d[axis];
                 a = std::max(a, std::min(q0, q1));
                 b = std::min(b, std::max(q0, q1));
             }

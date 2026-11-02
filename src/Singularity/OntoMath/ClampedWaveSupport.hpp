@@ -87,6 +87,18 @@ inline std::optional<ClampedWaveSupport> clampedWaveSupport(const Piecewise* p){
     if(x.guard||x.call||x.fold||x.hasLo||x.hasHi||x.whereLEZero)return {};
     return clamped_wave_detail::search(x.mathNode.get(),0);
 }
+// Necessary f32 regrouping guard for a supplied coordinate domain. The authored
+// (((z+w0)+w1)+w2) and the derived z+((w0+w1)+w2) can differ through rounding.
+// gamma_8 bounds their additive-tree discrepancy for the same wave values.
+// This does not certify transcendental accuracy or the whole transport error.
+inline bool clampedWaveGroupingSlackFits(const ClampedWaveSupport& support, float maxAbsZ) {
+    if (!std::isfinite(maxAbsZ) || maxAbsZ < 0) return false;
+    double magnitude = static_cast<double>(maxAbsZ) + 1.0;
+    for (float a : support.amplitudes) magnitude += std::abs(static_cast<double>(a));
+    constexpr double u = std::numeric_limits<float>::epsilon() * 0.5;
+    constexpr double gamma8 = 8.0 * u / (1.0 - 8.0 * u);
+    return std::isfinite(magnitude) && gamma8 * magnitude <= support.curvature[1];
+}
 inline bool literalZero(const Piecewise* p){
     if(!p||p->pieces.size()!=1)return false;const auto& x=p->pieces[0];
     return !x.guard&&!x.call&&!x.fold&&!x.hasLo&&!x.hasHi&&!x.whereLEZero&&clamped_wave_detail::number(x.mathNode.get(),0);

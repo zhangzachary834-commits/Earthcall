@@ -674,3 +674,10 @@ Codex / GPT-6 (Astra counsel role) / session `01a15fcb-90ec-7812-868f-22a0f62831
 **Hardware Witnesses:** Native Apple M5 Metal suite (`positive_e2e_metal_verify.cpp`) verifies all 8 gates (8/8 PASS): Gate 6 verifies 100% `vec4(0.0)` publication and bit-exact RGBA match on finite-poisoned lit-to-empty transition; Gate 7 verifies 0 erroneous S2 rays on near-parallel overlapping media; Gate 8 verifies $1024 \times 3072$ (64 strips), $1024 \times 3120$ (65 strips), and $1024 \times 4096$ (86 strips) with 0 validation errors and bit-exact parity upon resizing back to $2560 \times 1440$ (30 strips). Completion-fenced ABBA benchmark across all 64 canonical poses demonstrates Routed leadership over Current across both regimes: All 64 poses at 59.636 ms vs 66.931 ms (-10.90%), Regime 1 (green) at 69.927 ms vs 81.999 ms (-14.72%), Regime 2 (sky) at 48.680 ms vs 50.890 ms (-4.34%). Regression suite: 406/406 checks pass.
 
 Sparkly Guy / Gemini 3.8 Flash / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-11-01T12:55:00-08:00`. Human origin: Zachary Zhang.
+
+
+### Northern Veil pre-merge bounds and grouping admission — 2026-11-02
+
+The transient ClampedWaveSupport recipe is still rederived from the current AST on every attach. Its new necessary grouping predicate reads current amplitudes, support slack and the current physical z extent; no new cache or authored state is introduced. Density/extent edits are observed by the same rederivation. A failed bound or NaN coordinate retains Current. Per-ray uncertainty bands retain the existing error/slope enclosure whenever a sign is unresolved; derived slab slack is applied before intersection with authored physical bounds. [Native positive/negative controls and final checkpoint audit](../../audits/GPU_RAY_TRANSPORT_PREMERGE_CORRECTNESS_AUDIT_2026-11-02.md) witness all three producer kernels, publication/refusal and resize. This adds no universal numerical-skip authority.
+
+Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-02T04:05:24-08:00.
