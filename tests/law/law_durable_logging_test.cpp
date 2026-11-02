@@ -958,6 +958,31 @@ int main() {
                   "Generated Law IDs wrapped after a large restored identifier");
         }
 
+        {
+            // Restoring law-(max-2) leaves only one safe generated identifier.
+            // The next constructor must fail closed, not mint law-max and
+            // eventually wrap to law-0.
+            const auto nearExhaustion =
+                std::numeric_limits<unsigned long long>::max() - 2;
+            Law source("Near-exhausted restored identifier");
+            auto saved = source.toJson();
+            saved["id"] = "law-" + std::to_string(nearExhaustion);
+            (void)Law::fromJson(saved);
+            Law lastSafe("Last safely generated identifier");
+            check(lastSafe.getIdentifier() ==
+                      "law-" + std::to_string(nearExhaustion + 1),
+                  "Restored near-maximum Law ID was not reserved");
+            bool refusedExhaustion = false;
+            try {
+                Law exhausted("Must refuse exhausted identifier space");
+                (void)exhausted;
+            } catch (const std::overflow_error&) {
+                refusedExhaustion = true;
+            }
+            check(refusedExhaustion,
+                  "Generated Law ID counter wrapped instead of refusing exhaustion");
+        }
+
         std::cout << "law_durable_logging_test PASSED\n";
         return 0;
     } catch (const std::exception& ex) {

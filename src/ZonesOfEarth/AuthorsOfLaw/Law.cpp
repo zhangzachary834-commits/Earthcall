@@ -198,7 +198,17 @@ void claimLawIdAtLeast(const std::string& id) {
 } // namespace
 
 void Law::initializeLawIdentity() {
-    _lawId = "law-" + std::to_string(g_nextLawId.fetch_add(1));
+    // Reserve a fresh identifier without allowing unsigned wraparound.
+    // Once the sequence is exhausted, fail closed instead of minting law-0
+    // or reusing a historical identifier.
+    unsigned long long next = g_nextLawId.load();
+    while (true) {
+        if (next == std::numeric_limits<unsigned long long>::max()) {
+            throw std::overflow_error("Generated Law identifiers exhausted");
+        }
+        if (g_nextLawId.compare_exchange_weak(next, next + 1)) break;
+    }
+    _lawId = "law-" + std::to_string(next);
     _durableHistoryLineage = mintDurableHistoryLineage();
     nameGroupFormations();
 }
