@@ -146,7 +146,7 @@ static TileRouteResult classifyTileSerial(
             }
             float h_ux = (uxMax - uxMin) / 8.0f;
             float bow = 0.125f * cur.curv.x * h_ux * h_ux;
-            float thresh = bow + cur.limits.w + 0.001f;
+            float thresh = bow + cur.limits.w + cur.curv.y + 0.001f;
 
             float enter = 1e9f;
             float exit = -1e9f;
@@ -183,8 +183,19 @@ static TileRouteResult classifyTileSerial(
                         float pB = phi0 + tB * (phi1 - phi0);
                         if (!(std::min(pA, pB) > thresh || std::max(pA, pB) < -thresh)) {
                             curActive = true;
-                            enter = std::min(enter, cLo);
-                            exit = std::max(exit, cHi);
+                            float dp = pB - pA;
+                            float sLo = cLo;
+                            float sHi = cHi;
+                            if (std::abs(dp) > 1e-6f) {
+                                float q0 = (-thresh - pA) / dp;
+                                float q1 = (thresh - pA) / dp;
+                                float uLo = std::clamp(std::min(q0, q1), 0.0f, 1.0f);
+                                float uHi = std::clamp(std::max(q0, q1), 0.0f, 1.0f);
+                                sLo = std::max(cLo, cLo + uLo * (cHi - cLo) - 0.2f);
+                                sHi = std::min(cHi, cLo + uHi * (cHi - cLo) + 0.2f);
+                            }
+                            enter = std::min(enter, sLo);
+                            exit = std::max(exit, sHi);
                         }
                     }
                 }
@@ -218,7 +229,7 @@ static TileRouteResult classifyTileSerial(
                 if (!memberHit[m2]) continue;
                 float lo = std::max(enterArr[m1], enterArr[m2]);
                 float hi = std::min(exitArr[m1], exitArr[m2]);
-                if (hi > lo) tileCanOverlap = true;
+                if (hi + 0.01f > lo) tileCanOverlap = true;
             }
         }
     }
@@ -237,8 +248,8 @@ static TileRouteResult classifyTileSerial(
     } else if (activeCount == 2u && !tileCanOverlap) {
         uint32_t m0 = firstTrailingBitU32(activeMemberMask);
         uint32_t m1 = firstTrailingBitU32(activeMemberMask & ~(1u << m0));
-        bool order01 = exitArr[m0] <= enterArr[m1];
-        bool order10 = exitArr[m1] <= enterArr[m0];
+        bool order01 = exitArr[m0] + 0.01f <= enterArr[m1];
+        bool order10 = exitArr[m1] + 0.01f <= enterArr[m0];
         if (order01 || order10) {
             uint32_t m1First = (order10 && !order01) ? 1u : 0u;
             res.cohort = 2u;
@@ -398,7 +409,7 @@ static void classifyWorkgroupCooperative(
                 } else {
                     float h_ux = (uxMax - uxMin) / 8.0f;
                     float bow = 0.125f * cur.curv.x * h_ux * h_ux;
-                    float thresh = bow + cur.limits.w + 0.001f;
+                    float thresh = bow + cur.limits.w + cur.curv.y + 0.001f;
                     uint32_t knotBase = localTile * 9u;
                     for (uint32_t bin = 0u; bin < 8u; bin++) {
                         float u0 = uxMin + float(bin) / 8.0f * (uxMax - uxMin);
@@ -418,8 +429,19 @@ static void classifyWorkgroupCooperative(
                             float pB = phi0 + tB * (phi1 - phi0);
                             if (!(std::min(pA, pB) > thresh || std::max(pA, pB) < -thresh)) {
                                 myState = 1u;
-                                myEnter = std::min(myEnter, cLo);
-                                myExit = std::max(myExit, cHi);
+                                float dp = pB - pA;
+                                float sLo = cLo;
+                                float sHi = cHi;
+                                if (std::abs(dp) > 1e-6f) {
+                                    float q0 = (-thresh - pA) / dp;
+                                    float q1 = (thresh - pA) / dp;
+                                    float uLo = std::clamp(std::min(q0, q1), 0.0f, 1.0f);
+                                    float uHi = std::clamp(std::max(q0, q1), 0.0f, 1.0f);
+                                    sLo = std::max(cLo, cLo + uLo * (cHi - cLo) - 0.2f);
+                                    sHi = std::min(cHi, cLo + uHi * (cHi - cLo) + 0.2f);
+                                }
+                                myEnter = std::min(myEnter, sLo);
+                                myExit = std::max(myExit, sHi);
                             }
                         }
                     }
@@ -482,7 +504,7 @@ static void classifyWorkgroupCooperative(
                     if (!memberHit[localTile][m2]) continue;
                     float lo = std::max(enterArr[localTile][m1], enterArr[localTile][m2]);
                     float hi = std::min(exitArr[localTile][m1], exitArr[localTile][m2]);
-                    if (hi > lo) canOverlap = true;
+                    if (hi + 0.01f > lo) canOverlap = true;
                 }
             }
         }
@@ -500,8 +522,8 @@ static void classifyWorkgroupCooperative(
         } else if (activeCount == 2u && !canOverlap) {
             uint32_t m0 = firstTrailingBitU32(mask);
             uint32_t m1 = firstTrailingBitU32(mask & ~(1u << m0));
-            bool order01 = exitArr[localTile][m0] <= enterArr[localTile][m1];
-            bool order10 = exitArr[localTile][m1] <= enterArr[localTile][m0];
+            bool order01 = exitArr[localTile][m0] + 0.01f <= enterArr[localTile][m1];
+            bool order10 = exitArr[localTile][m1] + 0.01f <= enterArr[localTile][m0];
             if (order01 || order10) {
                 uint32_t m1First = (order10 && !order01) ? 1u : 0u;
                 res.cohort = 2u;
@@ -584,9 +606,11 @@ struct ProducerMath {
                 float v = evalPhi(m, o, d, mid) - c;
                 if (std::abs(v) <= error) {
                     float w = 2.0f * error / minSlope;
-                    l = std::max(l, mid - w);
-                    r = std::min(r, mid + w);
-                    break;
+                    if (w < 0.5f * (r - l)) {
+                        l = std::max(l, mid - w);
+                        r = std::min(r, mid + w);
+                        break;
+                    }
                 }
                 if ((left < 0.0f && v > 0.0f) || (left > 0.0f && v < 0.0f)) r = mid;
                 else { l = mid; left = v; }
@@ -641,9 +665,14 @@ struct ProducerMath {
                 if (mid0 <= l || mid0 >= r || r - l <= 0.0001f) { done = true; }
                 else if (std::abs(fmid0) <= error) {
                     float w = 2.0f * error / minSlope;
-                    l = std::max(l, mid0 - w);
-                    r = std::min(r, mid0 + w);
-                    done = true;
+                    if (w < 0.5f * (r - l)) {
+                        l = std::max(l, mid0 - w);
+                        r = std::min(r, mid0 + w);
+                        done = true;
+                    } else {
+                        if ((left < 0.0f && fmid0 > 0.0f) || (left > 0.0f && fmid0 < 0.0f)) r = mid0;
+                        else { l = mid0; left = fmid0; }
+                    }
                 } else {
                     if ((left < 0.0f && fmid0 > 0.0f) || (left > 0.0f && fmid0 < 0.0f)) r = mid0;
                     else { l = mid0; left = fmid0; }
@@ -658,9 +687,11 @@ struct ProducerMath {
                     float v = evalPhi(m, o, d, mid) - c;
                     if (std::abs(v) <= error) {
                         float w = 2.0f * error / minSlope;
-                        l = std::max(l, mid - w);
-                        r = std::min(r, mid + w);
-                        break;
+                        if (w < 0.5f * (r - l)) {
+                            l = std::max(l, mid - w);
+                            r = std::min(r, mid + w);
+                            break;
+                        }
                     }
                     if ((left < 0.0f && v > 0.0f) || (left > 0.0f && v < 0.0f)) r = mid;
                     else { l = mid; left = v; }
@@ -855,12 +886,29 @@ static RayProducerOutput runS1Producer(const Ray& input, uint32_t activeMember,
                 if (allPositiveH && nr == 0u && std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
                     // empty chord
                 } else {
-                    if (d.x != 0.0f) { float x = -o.x / d.x; if (x > a && x < b && nb < 96u) knots[nb++] = x; }
-                    if (d.y != 0.0f) {
-                        float y = -o.y / d.y; if (y > a && y < b && nb < 96u) knots[nb++] = y;
-                        float k = (m.limits.z - o.y) / d.y; if (k > a && k < b && nb < 96u) knots[nb++] = k;
+                    float supportLo = a;
+                    float supportHi = b;
+                    if (allPositiveH && nr > 0u) {
+                        float minBandLo = bands[0].x;
+                        float maxBandHi = bands[0].y;
+                        for (uint32_t k = 1u; k < nr; k++) {
+                            minBandLo = std::min(minBandLo, bands[k].x);
+                            maxBandHi = std::max(maxBandHi, bands[k].y);
+                        }
+                        if (std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
+                            supportLo = minBandLo;
+                            knots[0] = minBandLo;
+                        }
+                        if (std::abs(phi_knots[8]) > m.limits.w + m.curv.y) {
+                            supportHi = maxBandHi;
+                        }
                     }
-                    if (nb < 96u) knots[nb++] = b;
+                    if (d.x != 0.0f) { float x = -o.x / d.x; if (x > supportLo && x < supportHi && nb < 96u) knots[nb++] = x; }
+                    if (d.y != 0.0f) {
+                        float y = -o.y / d.y; if (y > supportLo && y < supportHi && nb < 96u) knots[nb++] = y;
+                        float k = (m.limits.z - o.y) / d.y; if (k > supportLo && k < supportHi && nb < 96u) knots[nb++] = k;
+                    }
+                    if (supportHi == b && nb < 96u) knots[nb++] = b;
                     for (uint32_t i = 1u; i < nb; i++) {
                         float v = knots[i]; uint32_t j = i;
                         while (j > 0u && knots[j - 1u] > v) { knots[j] = knots[j - 1u]; j--; }
@@ -982,12 +1030,29 @@ static RayProducerOutput runS2Producer(const Ray& input, uint32_t packedTile,
             if (memberIdx == 0u) count0 = count;
             continue;
         }
-        if (d.x != 0.0f) { float x = -o.x / d.x; if (x > a && x < b && nb < 96u) knots[nb++] = x; }
-        if (d.y != 0.0f) {
-            float y = -o.y / d.y; if (y > a && y < b && nb < 96u) knots[nb++] = y;
-            float k = (m.limits.z - o.y) / d.y; if (k > a && k < b && nb < 96u) knots[nb++] = k;
+        float supportLo = a;
+        float supportHi = b;
+        if (allPositiveH && nr > 0u) {
+            float minBandLo = bands[0].x;
+            float maxBandHi = bands[0].y;
+            for (uint32_t k = 1u; k < nr; k++) {
+                minBandLo = std::min(minBandLo, bands[k].x);
+                maxBandHi = std::max(maxBandHi, bands[k].y);
+            }
+            if (std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
+                supportLo = minBandLo;
+                knots[0] = minBandLo;
+            }
+            if (std::abs(phi_knots[8]) > m.limits.w + m.curv.y) {
+                supportHi = maxBandHi;
+            }
         }
-        if (nb < 96u) knots[nb++] = b;
+        if (d.x != 0.0f) { float x = -o.x / d.x; if (x > supportLo && x < supportHi && nb < 96u) knots[nb++] = x; }
+        if (d.y != 0.0f) {
+            float y = -o.y / d.y; if (y > supportLo && y < supportHi && nb < 96u) knots[nb++] = y;
+            float k = (m.limits.z - o.y) / d.y; if (k > supportLo && k < supportHi && nb < 96u) knots[nb++] = k;
+        }
+        if (supportHi == b && nb < 96u) knots[nb++] = b;
         for (uint32_t i = 1u; i < nb; i++) {
             float v = knots[i]; uint32_t j = i;
             while (j > 0u && knots[j - 1u] > v) { knots[j] = knots[j - 1u]; j--; }
@@ -1112,12 +1177,29 @@ static RayProducerOutput runFallbackProducer(const Ray& input,
             memCount[member] = 0u;
             continue;
         }
-        if (d.x != 0.0f) { float x = -o.x / d.x; if (x > a && x < b) knots[nb++] = x; }
-        if (d.y != 0.0f) {
-            float y = -o.y / d.y; if (y > a && y < b) knots[nb++] = y;
-            float k = (m.limits.z - o.y) / d.y; if (k > a && k < b) knots[nb++] = k;
+        float supportLo = a;
+        float supportHi = b;
+        if (allPositiveH && nr > 0u) {
+            float minBandLo = bands[0].x;
+            float maxBandHi = bands[0].y;
+            for (uint32_t k = 1u; k < nr; k++) {
+                minBandLo = std::min(minBandLo, bands[k].x);
+                maxBandHi = std::max(maxBandHi, bands[k].y);
+            }
+            if (std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
+                supportLo = minBandLo;
+                knots[0] = minBandLo;
+            }
+            if (std::abs(phi_knots[8]) > m.limits.w + m.curv.y) {
+                supportHi = maxBandHi;
+            }
         }
-        knots[nb++] = b;
+        if (d.x != 0.0f) { float x = -o.x / d.x; if (x > supportLo && x < supportHi) knots[nb++] = x; }
+        if (d.y != 0.0f) {
+            float y = -o.y / d.y; if (y > supportLo && y < supportHi) knots[nb++] = y;
+            float k = (m.limits.z - o.y) / d.y; if (k > supportLo && k < supportHi) knots[nb++] = k;
+        }
+        if (supportHi == b) knots[nb++] = b;
         for (uint32_t i = 1u; i < nb; i++) {
             float v = knots[i]; uint32_t j = i;
             while (j > 0u && knots[j - 1u] > v) { knots[j] = knots[j - 1u]; j--; }
@@ -1494,6 +1576,7 @@ int main(int argc, char** argv) {
         }},
         {"poses", poseJson}
     };
+
     std::ofstream(argv[2]) << out.dump(2) << '\n';
     std::printf("PASS positive_e2e_cpu_verify:\n"
                 "  classifier_mismatches = %llu ( across %llu tile-frames )\n"

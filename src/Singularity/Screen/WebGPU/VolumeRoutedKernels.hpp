@@ -133,7 +133,7 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
             }
             let h_ux = (uxMax - uxMin) / 8.0;
             let bow = 0.125 * cur.curv.x * h_ux * h_ux;
-            let thresh = bow + cur.limits.w + 0.001;
+            let thresh = bow + cur.limits.w + cur.curv.y + 0.001;
 
             var enter = 1e9f;
             var exit = -1e9f;
@@ -171,8 +171,19 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
 
                         if (!(min(pA, pB) > thresh || max(pA, pB) < -thresh)) {
                             curActive = true;
-                            enter = min(enter, cLo);
-                            exit = max(exit, cHi);
+                            let dp = pB - pA;
+                            var sLo = cLo;
+                            var sHi = cHi;
+                            if (abs(dp) > 1e-6) {
+                                let q0 = (-thresh - pA) / dp;
+                                let q1 = (thresh - pA) / dp;
+                                let uLo = clamp(min(q0, q1), 0.0, 1.0);
+                                let uHi = clamp(max(q0, q1), 0.0, 1.0);
+                                sLo = max(cLo, cLo + uLo * (cHi - cLo) - 0.2);
+                                sHi = min(cHi, cLo + uHi * (cHi - cLo) + 0.2);
+                            }
+                            enter = min(enter, sLo);
+                            exit = max(exit, sHi);
                         }
                     }
                 }
@@ -203,7 +214,7 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
                 if (!memberHit[m2]) { continue; }
                 let lo = max(enterArr[m1], enterArr[m2]);
                 let hi = min(exitArr[m1], exitArr[m2]);
-                if (hi > lo) { tileCanOverlap = true; }
+                if (hi + 0.01 > lo) { tileCanOverlap = true; }
             }
         }
     }
@@ -217,8 +228,8 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
     } else if (activeCount == 2u && !tileCanOverlap) {
         let m0 = firstTrailingBit(activeMemberMask);
         let m1 = firstTrailingBit(activeMemberMask & ~(1u << m0));
-        let order01 = exitArr[m0] <= enterArr[m1];
-        let order10 = exitArr[m1] <= enterArr[m0];
+        let order01 = exitArr[m0] + 0.01 <= enterArr[m1];
+        let order10 = exitArr[m1] + 0.01 <= enterArr[m0];
         if (order01 || order10) {
             let m1First = select(0u, 1u, order10 && !order01);
             let slot = atomicAdd(&counters.s2Count, 1u);
@@ -320,21 +331,24 @@ fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
    let mid = l + 0.5 * (r - l);
    if (mid <= l || mid >= r || r - l <= 0.0001) { break; }
    let v = evalPhi(m, o, d, mid) - c;
-   if (abs(v) <= error) { let w = 2.0 * error / minSlope; l = max(l, mid - w); r = min(r, mid + w); break; }
+   if (abs(v) <= error) {
+    let w = 2.0 * error / minSlope;
+    if (w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
+   }
    if ((left < 0.0 && v > 0.0) || (left > 0.0 && v < 0.0)) { r = mid; } else { l = mid; left = v; }
   }
   putBandTagged(l, r, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
  }
 }
 
-fn emitPieceSubpanels(p: vec2f, member: u32, subBase: u32, singles: ptr<function, u32>, reason: ptr<function, u32>) {
+fn emitPieceSubpanels(p: vec2f, member: u32, rayId: u32, singles: ptr<function, u32>, reason: ptr<function, u32>) {
  let a = p.x; let b = p.y;
  let n = max(1u, u32(ceil((b - a) / 4.0)));
  if (*singles + n > cfg.maxSubPerRay) { *reason |= 16u; return; }
  for (var k = 0u; k < n; k++) {
   let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
   let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
-  subpanels[subBase + *singles] = Subpanel(vec2f(l, r), vec2u(member, 0u));
+  subpanels[(*singles) * cfg.rayCount + rayId] = Subpanel(vec2f(l, r), vec2u(member, 0u));
   *singles += 1u;
  }
 }
@@ -356,9 +370,18 @@ fn isolateMonotoneWithMid(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c:
    if (mid0 <= l || mid0 >= r || r - l <= 0.0001) { done = true; }
    else if (abs(fmid0) <= error) {
     let w = 2.0 * error / minSlope;
-    l = max(l, mid0 - w);
-    r = min(r, mid0 + w);
-    done = true;
+    if (w < 0.5 * (r - l)) {
+     l = max(l, mid0 - w);
+     r = min(r, mid0 + w);
+     done = true;
+    } else {
+     if ((left < 0.0 && fmid0 > 0.0) || (left > 0.0 && fmid0 < 0.0)) {
+      r = mid0;
+     } else {
+      l = mid0;
+      left = fmid0;
+     }
+    }
    } else {
     if ((left < 0.0 && fmid0 > 0.0) || (left > 0.0 && fmid0 < 0.0)) {
      r = mid0;
@@ -374,7 +397,10 @@ fn isolateMonotoneWithMid(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c:
     let mid = l + 0.5 * (r - l);
     if (mid <= l || mid >= r || r - l <= 0.0001) { break; }
     let v = evalPhi(m, o, d, mid) - c;
-    if (abs(v) <= error) { let w = 2.0 * error / minSlope; l = max(l, mid - w); r = min(r, mid + w); break; }
+    if (abs(v) <= error) {
+     let w = 2.0 * error / minSlope;
+     if (w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
+    }
     if ((left < 0.0 && v > 0.0) || (left > 0.0 && v < 0.0)) { r = mid; } else { l = mid; left = v; }
    }
   }
@@ -543,7 +569,6 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
  let input = rays[id];
     if((input.counts.w & 0x40000000u)!=0u){return;}
  let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
- let subBase = id * cfg.maxSubPerRay;
  var reason = 0u; var work = 0u; var singles = 0u;
  var knots: array<f32, 48>;
  if (cfg.budget == 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | 1u); return; }
@@ -593,13 +618,31 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
   }
   if (reason != 0u) { break; }
   if (allPositiveH && nr == 0u && abs(phi_knots[0]) > m.limits.w + m.curv.y) { continue; }
-  var kx = 0.0; var ky0 = 0.0; var ky1 = 0.0;
-  if (d.x != 0.0) { kx = -o.x / d.x; if (kx > a && kx < b) { knots[nb] = kx; nb++; } }
-  if (d.y != 0.0) {
-   ky0 = -o.y / d.y; if (ky0 > a && ky0 < b) { knots[nb] = ky0; nb++; }
-   ky1 = (m.limits.z - o.y) / d.y; if (ky1 > a && ky1 < b) { knots[nb] = ky1; nb++; }
+  var supportLo = a;
+  var supportHi = b;
+  if (allPositiveH && nr > 0u) {
+   var minBandLo = bands[0].x;
+   var maxBandHi = bands[0].y;
+   for (var k = 1u; k < nr; k++) {
+    let bnd = bands[k];
+    minBandLo = min(minBandLo, bnd.x);
+    maxBandHi = max(maxBandHi, bnd.y);
+   }
+   if (abs(phi_knots[0]) > m.limits.w + m.curv.y) {
+    supportLo = minBandLo;
+    knots[0] = minBandLo;
+   }
+   if (abs(phi_knots[8]) > m.limits.w + m.curv.y) {
+    supportHi = maxBandHi;
+   }
   }
-  knots[nb] = b; nb++;
+  var kx = 0.0; var ky0 = 0.0; var ky1 = 0.0;
+  if (d.x != 0.0) { kx = -o.x / d.x; if (kx > supportLo && kx < supportHi) { knots[nb] = kx; nb++; } }
+  if (d.y != 0.0) {
+   ky0 = -o.y / d.y; if (ky0 > supportLo && ky0 < supportHi) { knots[nb] = ky0; nb++; }
+   ky1 = (m.limits.z - o.y) / d.y; if (ky1 > supportLo && ky1 < supportHi) { knots[nb] = ky1; nb++; }
+  }
+  if (supportHi == b) { knots[nb] = b; nb++; }
   for (var i = 1u; i < nb; i++) {
    let v = knots[i]; var j = i; loop { if (j == 0u || knots[j - 1u] <= v) { break; } knots[j] = knots[j - 1u]; j--; }
    knots[j] = v;
@@ -626,7 +669,7 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
      pieces[count] = vec2f(l, r); count++;
      previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
     } else {
-     emitPieceSubpanels(pieces[0], activeMember, subBase, &singles, &reason);
+     emitPieceSubpanels(pieces[0], activeMember, id, &singles, &reason);
      if (reason != 0u) { break; }
      for (var k = 1u; k < 8u; k++) { pieces[k - 1u] = pieces[k]; }
      pieces[7u] = vec2f(l, r);
@@ -635,7 +678,7 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
    }
   }
   for (var p = 0u; p < count; p++) {
-   emitPieceSubpanels(pieces[p], activeMember, subBase, &singles, &reason);
+   emitPieceSubpanels(pieces[p], activeMember, id, &singles, &reason);
    if (reason != 0u) { break; }
   }
   if (reason != 0u) { break; }
@@ -714,21 +757,24 @@ fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
    let mid = l + 0.5 * (r - l);
    if (mid <= l || mid >= r || r - l <= 0.0001) { break; }
    let v = evalPhi(m, o, d, mid) - c;
-   if (abs(v) <= error) { let w = 2.0 * error / minSlope; l = max(l, mid - w); r = min(r, mid + w); break; }
+   if (abs(v) <= error) {
+    let w = 2.0 * error / minSlope;
+    if (w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
+   }
    if ((left < 0.0 && v > 0.0) || (left > 0.0 && v < 0.0)) { r = mid; } else { l = mid; left = v; }
   }
   putBandTagged(l, r, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
  }
 }
 
-fn emitPieceSubpanels(p: vec2f, member: u32, subBase: u32, singles: ptr<function, u32>, reason: ptr<function, u32>) {
+fn emitPieceSubpanels(p: vec2f, member: u32, rayId: u32, singles: ptr<function, u32>, reason: ptr<function, u32>) {
  let a = p.x; let b = p.y;
  let n = max(1u, u32(ceil((b - a) / 4.0)));
  if (*singles + n > cfg.maxSubPerRay) { *reason |= 16u; return; }
  for (var k = 0u; k < n; k++) {
   let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
   let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
-  subpanels[subBase + *singles] = Subpanel(vec2f(l, r), vec2u(member, 0u));
+  subpanels[(*singles) * cfg.rayCount + rayId] = Subpanel(vec2f(l, r), vec2u(member, 0u));
   *singles += 1u;
  }
 }
@@ -750,9 +796,18 @@ fn isolateMonotoneWithMid(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c:
    if (mid0 <= l || mid0 >= r || r - l <= 0.0001) { done = true; }
    else if (abs(fmid0) <= error) {
     let w = 2.0 * error / minSlope;
-    l = max(l, mid0 - w);
-    r = min(r, mid0 + w);
-    done = true;
+    if (w < 0.5 * (r - l)) {
+     l = max(l, mid0 - w);
+     r = min(r, mid0 + w);
+     done = true;
+    } else {
+     if ((left < 0.0 && fmid0 > 0.0) || (left > 0.0 && fmid0 < 0.0)) {
+      r = mid0;
+     } else {
+      l = mid0;
+      left = fmid0;
+     }
+    }
    } else {
     if ((left < 0.0 && fmid0 > 0.0) || (left > 0.0 && fmid0 < 0.0)) {
      r = mid0;
@@ -768,7 +823,10 @@ fn isolateMonotoneWithMid(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c:
     let mid = l + 0.5 * (r - l);
     if (mid <= l || mid >= r || r - l <= 0.0001) { break; }
     let v = evalPhi(m, o, d, mid) - c;
-    if (abs(v) <= error) { let w = 2.0 * error / minSlope; l = max(l, mid - w); r = min(r, mid + w); break; }
+    if (abs(v) <= error) {
+     let w = 2.0 * error / minSlope;
+     if (w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
+    }
     if ((left < 0.0 && v > 0.0) || (left > 0.0 && v < 0.0)) { r = mid; } else { l = mid; left = v; }
    }
   }
@@ -939,7 +997,6 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
     let input = rays[id];
     if((input.counts.w & 0x40000000u)!=0u){return;}
     let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
-    let subBase = id * cfg.maxSubPerRay;
     var reason = 0u; var work = 0u; var singles = 0u;
     var knots: array<f32, 48>;
     if (cfg.budget == 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | 1u); return; }
@@ -996,13 +1053,31 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
         }
         if (reason != 0u) { break; }
         if (allPositiveH && nr == 0u && abs(phi_knots[0]) > m.limits.w + m.curv.y) { continue; }
-        var kx = 0.0; var ky0 = 0.0; var ky1 = 0.0;
-        if (d.x != 0.0) { kx = -o.x / d.x; if (kx > a && kx < b) { knots[nb] = kx; nb++; } }
-        if (d.y != 0.0) {
-            ky0 = -o.y / d.y; if (ky0 > a && ky0 < b) { knots[nb] = ky0; nb++; }
-            ky1 = (m.limits.z - o.y) / d.y; if (ky1 > a && ky1 < b) { knots[nb] = ky1; nb++; }
+        var supportLo = a;
+        var supportHi = b;
+        if (allPositiveH && nr > 0u) {
+            var minBandLo = bands[0].x;
+            var maxBandHi = bands[0].y;
+            for (var k = 1u; k < nr; k++) {
+                let bnd = bands[k];
+                minBandLo = min(minBandLo, bnd.x);
+                maxBandHi = max(maxBandHi, bnd.y);
+            }
+            if (abs(phi_knots[0]) > m.limits.w + m.curv.y) {
+                supportLo = minBandLo;
+                knots[0] = minBandLo;
+            }
+            if (abs(phi_knots[8]) > m.limits.w + m.curv.y) {
+                supportHi = maxBandHi;
+            }
         }
-        knots[nb] = b; nb++;
+        var kx = 0.0; var ky0 = 0.0; var ky1 = 0.0;
+        if (d.x != 0.0) { kx = -o.x / d.x; if (kx > supportLo && kx < supportHi) { knots[nb] = kx; nb++; } }
+        if (d.y != 0.0) {
+            ky0 = -o.y / d.y; if (ky0 > supportLo && ky0 < supportHi) { knots[nb] = ky0; nb++; }
+            ky1 = (m.limits.z - o.y) / d.y; if (ky1 > supportLo && ky1 < supportHi) { knots[nb] = ky1; nb++; }
+        }
+        if (supportHi == b) { knots[nb] = b; nb++; }
         for (var i = 1u; i < nb; i++) {
             let v = knots[i]; var j = i; loop { if (j == 0u || knots[j - 1u] <= v) { break; } knots[j] = knots[j - 1u]; j--; }
             knots[j] = v;
@@ -1036,7 +1111,7 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
                     pieces[count] = vec2f(l, r); count++;
                     previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
                 } else {
-                    emitPieceSubpanels(pieces[0], member, subBase, &singles, &reason);
+                    emitPieceSubpanels(pieces[0], member, id, &singles, &reason);
                     if (reason != 0u) { break; }
                     for (var k = 1u; k < 8u; k++) { pieces[k - 1u] = pieces[k]; }
                     pieces[7u] = vec2f(l, r);
@@ -1046,7 +1121,7 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
         }
         if (reason != 0u) { break; }
         for (var p = 0u; p < count; p++) {
-            emitPieceSubpanels(pieces[p], member, subBase, &singles, &reason);
+            emitPieceSubpanels(pieces[p], member, id, &singles, &reason);
             if (reason != 0u) { break; }
         }
         if (reason != 0u) { break; }
@@ -1127,7 +1202,10 @@ fn isolateMonotone(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c: f32,
    let mid = l + 0.5 * (r - l);
    if (mid <= l || mid >= r || r - l <= 0.0001) { break; }
    let v = evalPhi(m, o, d, mid) - c;
-   if (abs(v) <= error) { let w = 2.0 * error / minSlope; l = max(l, mid - w); r = min(r, mid + w); break; }
+   if (abs(v) <= error) {
+    let w = 2.0 * error / minSlope;
+    if (w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
+   }
    if ((left < 0.0 && v > 0.0) || (left > 0.0 && v < 0.0)) { r = mid; } else { l = mid; left = v; }
   }
   putBandTagged(l, r, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
@@ -1151,9 +1229,18 @@ fn isolateMonotoneWithMid(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c:
    if (mid0 <= l || mid0 >= r || r - l <= 0.0001) { done = true; }
    else if (abs(fmid0) <= error) {
     let w = 2.0 * error / minSlope;
-    l = max(l, mid0 - w);
-    r = min(r, mid0 + w);
-    done = true;
+    if (w < 0.5 * (r - l)) {
+     l = max(l, mid0 - w);
+     r = min(r, mid0 + w);
+     done = true;
+    } else {
+     if ((left < 0.0 && fmid0 > 0.0) || (left > 0.0 && fmid0 < 0.0)) {
+      r = mid0;
+     } else {
+      l = mid0;
+      left = fmid0;
+     }
+    }
    } else {
     if ((left < 0.0 && fmid0 > 0.0) || (left > 0.0 && fmid0 < 0.0)) {
      r = mid0;
@@ -1169,7 +1256,10 @@ fn isolateMonotoneWithMid(m: CurtainSpec, o: vec3f, d: vec3f, a: f32, b: f32, c:
     let mid = l + 0.5 * (r - l);
     if (mid <= l || mid >= r || r - l <= 0.0001) { break; }
     let v = evalPhi(m, o, d, mid) - c;
-    if (abs(v) <= error) { let w = 2.0 * error / minSlope; l = max(l, mid - w); r = min(r, mid + w); break; }
+    if (abs(v) <= error) {
+     let w = 2.0 * error / minSlope;
+     if (w < 0.5 * (r - l)) { l = max(l, mid - w); r = min(r, mid + w); break; }
+    }
     if ((left < 0.0 && v > 0.0) || (left > 0.0 && v < 0.0)) { r = mid; } else { l = mid; left = v; }
    }
   }
@@ -1340,7 +1430,6 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
  let input = rays[id];
     if((input.counts.w & 0x40000000u)!=0u){return;}
  let ro = input.ro_clipA.xyz; let d = input.rd_clipB.xyz;
- let subBase = id * cfg.maxSubPerRay; let overBase = id * cfg.maxOverPerRay;
  var reason = 0u; var work = 0u; var count = 0u;
  var pieces: array<vec2f, 32>;
  var knots: array<f32, 48>;
@@ -1398,13 +1487,31 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
    memCount[member] = 0u;
    continue;
   }
-  var kx = 0.0; var ky0 = 0.0; var ky1 = 0.0;
-  if (d.x != 0.0) { kx = -o.x / d.x; if (kx > a && kx < b) { knots[nb] = kx; nb++; } }
-  if (d.y != 0.0) {
-   ky0 = -o.y / d.y; if (ky0 > a && ky0 < b) { knots[nb] = ky0; nb++; }
-   ky1 = (m.limits.z - o.y) / d.y; if (ky1 > a && ky1 < b) { knots[nb] = ky1; nb++; }
+  var supportLo = a;
+  var supportHi = b;
+  if (allPositiveH && nr > 0u) {
+   var minBandLo = bands[0].x;
+   var maxBandHi = bands[0].y;
+   for (var k = 1u; k < nr; k++) {
+    let bnd = bands[k];
+    minBandLo = min(minBandLo, bnd.x);
+    maxBandHi = max(maxBandHi, bnd.y);
+   }
+   if (abs(phi_knots[0]) > m.limits.w + m.curv.y) {
+    supportLo = minBandLo;
+    knots[0] = minBandLo;
+   }
+   if (abs(phi_knots[8]) > m.limits.w + m.curv.y) {
+    supportHi = maxBandHi;
+   }
   }
-  knots[nb] = b; nb++;
+  var kx = 0.0; var ky0 = 0.0; var ky1 = 0.0;
+  if (d.x != 0.0) { kx = -o.x / d.x; if (kx > supportLo && kx < supportHi) { knots[nb] = kx; nb++; } }
+  if (d.y != 0.0) {
+   ky0 = -o.y / d.y; if (ky0 > supportLo && ky0 < supportHi) { knots[nb] = ky0; nb++; }
+   ky1 = (m.limits.z - o.y) / d.y; if (ky1 > supportLo && ky1 < supportHi) { knots[nb] = ky1; nb++; }
+  }
+  if (supportHi == b) { knots[nb] = b; nb++; }
   for (var i = 1u; i < nb; i++) {
    let v = knots[i]; var j = i; loop { if (j == 0u || knots[j - 1u] <= v) { break; } knots[j] = knots[j - 1u]; j--; }
    knots[j] = v;
@@ -1482,7 +1589,7 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
     for (var k = 0u; k < n; k++) {
      let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
      let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
-     subpanels[subBase + singles] = Subpanel(vec2f(l, r), vec2u(m, 0u));
+     subpanels[singles * cfg.rayCount + id] = Subpanel(vec2f(l, r), vec2u(m, 0u));
      singles++;
     }
    }
@@ -1537,12 +1644,12 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
      for (var k = 0u; k < n; k++) {
       let l = select(a + f32(k) * (b - a) / f32(n), a, k == 0u);
       let r = select(a + f32(k + 1u) * (b - a) / f32(n), b, k + 1u == n);
-      subpanels[subBase + singles] = Subpanel(vec2f(l, r), vec2u(member, 0u));
+      subpanels[singles * cfg.rayCount + id] = Subpanel(vec2f(l, r), vec2u(member, 0u));
       singles++;
      }
     } else {
      if (overs >= cfg.maxOverPerRay) { reason |= 32u; break; }
-     overlaps[overBase + overs] = Overlap(vec2f(a, b), vec2u(mask, 0u));
+     overlaps[overs * cfg.rayCount + id] = Overlap(vec2f(a, b), vec2u(mask, 0u));
      overs++;
     }
    }

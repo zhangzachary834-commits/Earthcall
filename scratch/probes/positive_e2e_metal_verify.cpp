@@ -654,8 +654,19 @@ int main(int argc, char** argv) {
         uint64_t refused = 0, nonfinite = 0;
         for (uint64_t i = 0; i < raw.size() / 4; ++i) {
             const float* v = &raw[i * 4];
-            if (v[3] < 0.0f) ++refused;
+            if (v[3] < 0.0f) {
+                if (refused < 5) {
+                    uint32_t px = i % 2560;
+                    uint32_t py = i / 2560;
+                    std::printf("REFUSED PIXEL pose=%d idx=%llu (px=%u, py=%u) pub=(%f, %f, %f, %f)\n",
+                                poseIdx, (unsigned long long)i, px, py, v[0], v[1], v[2], v[3]);
+                }
+                ++refused;
+            }
             else for (int c = 0; c < 4; ++c) nonfinite += !std::isfinite(v[c]);
+        }
+        if (refused != 0 || nonfinite != 0) {
+            std::printf("DEBUG GATE 4 FAIL: poseIdx=%d refused=%llu nonfinite=%llu\n", poseIdx, (unsigned long long)refused, (unsigned long long)nonfinite);
         }
         REQUIRE(refused == 0 && nonfinite == 0, "zero refused or nonfinite rays across trajectory");
     }
@@ -930,10 +941,18 @@ int main(int argc, char** argv) {
          glm::vec3(0.0f, 1.3f, 0.0f),
          glm::vec3(0.0f, 72.0f, 106.5f),
          glm::vec3(0, 1, 0), 45.0f},
-        {"Checkpoint_View3_Below_Veils_Up",
+        {"Checkpoint_View3A_Below_Veils_Sparse_UpZ",
          glm::vec3(12.5f, 0.0f, 106.5f),
          glm::vec3(12.5f, 72.0f, 106.5f),
-         glm::vec3(0, 0, 1), 45.0f}
+         glm::vec3(0, 0, 1), 45.0f},
+        {"Checkpoint_View3B_Below_Veils_Dense_UpX",
+         glm::vec3(12.5f, 0.0f, 106.5f),
+         glm::vec3(12.5f, 72.0f, 106.5f),
+         glm::vec3(1, 0, 0), 45.0f},
+        {"Checkpoint_View3C_Below_Veils_PersonWalk_Pitch75",
+         glm::vec3(12.5f, 0.0f, 106.5f),
+         glm::vec3(31.135f, 69.5467f, 106.5f),
+         glm::vec3(0, 1, 0), 45.0f}
     };
 
     Json gate9Rows = Json::array();
@@ -1071,6 +1090,149 @@ int main(int argc, char** argv) {
         {"views", gate9Rows}
     };
 
+    // --- RUNNING GATE 10: Prince Prism II's 12-Angle View-3 Roll Sweep & 4-Curtain ABBA Benchmark ---
+    std::printf("--- RUNNING GATE 10: View 3 12-Angle Roll Sweep & 4-Curtain ABBA Benchmark ---\n");
+    const float rollAnglesDeg[12] = {0.0f, 15.0f, 30.0f, 45.0f, 60.0f, 75.0f, 90.0f, 105.0f, 120.0f, 135.0f, 150.0f, 165.0f};
+    Json gate10Rows = Json::array();
+    for (float rollDeg : rollAnglesDeg) {
+        const float rad = rollDeg * 3.14159265358979323846f / 180.0f;
+        const glm::vec3 up(std::sin(rad), 0.0f, std::cos(rad));
+        const glm::vec3 eye(12.5f, 0.0f, 106.5f);
+        const glm::vec3 aim(12.5f, 72.0f, 106.5f);
+        const float fov = 45.0f;
+        const double viewTime = 7.25;
+
+        // 1. Forced-Refusal Bit-Exact Parity Check
+        renderViewCamera(eye, aim, up, fov, viewTime, false);
+        REQUIRE(fenceQueue(gpu), "gate10 current fence");
+        const uint64_t curRgba = readRgbaHash();
+
+        renderer.setRoutedWorkLimitForDiagnostics(0);
+        renderViewCamera(eye, aim, up, fov, viewTime, true);
+        REQUIRE(fenceQueue(gpu), "gate10 forced-refusal fence");
+        const uint64_t refRgba = readRgbaHash();
+        renderer.setRoutedWorkLimitForDiagnostics(1024);
+        REQUIRE(curRgba == refRgba, "gate10 forced-refusal RGBA bit-exact parity with Current");
+
+        // 2. Normal Routed Render & Refusal / Finite Check
+        renderViewCamera(eye, aim, up, fov, viewTime, true);
+        REQUIRE(fenceQueue(gpu), "gate10 normal routed fence");
+        const auto& s10 = renderer.frameStats();
+        REQUIRE(s10.volumeProgramRefusals == 0 && s10.volumeRoutedSets == 1, "gate10 frame stats");
+
+        auto pub10 = readPublication(gpu, k);
+        uint64_t nonfinite10 = 0, refused10 = 0, nonempty10 = 0;
+        for (uint64_t i = 0; i < pub10.size() / 4; ++i) {
+            const float* v = &pub10[i * 4];
+            for (int ch = 0; ch < 4; ++ch) nonfinite10 += !std::isfinite(v[ch]);
+            if (v[3] < 0.0f) ++refused10;
+            if (v[0] != 0.0f || v[1] != 0.0f || v[2] != 0.0f || v[3] != 0.0f) ++nonempty10;
+        }
+        REQUIRE(nonfinite10 == 0, "gate10 zero non-finite");
+        REQUIRE(refused10 == 0, "gate10 zero refused rays");
+
+        // 3. Route Census
+        REQUIRE(renderer.setRoutedRouteObserverForDiagnostics(true), "gate10 enable route observer");
+        renderer.resetRoutedRouteObserverForDiagnostics();
+        renderViewCamera(eye, aim, up, fov, viewTime, true);
+        REQUIRE(fenceQueue(gpu), "gate10 census fence");
+        auto w10 = readWords(gpu, k->routeHistogram, 1032 * 4);
+        const uint64_t totalTiles = uint64_t(k->tiles) * strips;
+        const uint64_t s1Count = w10[1024];
+        const uint64_t s2Count = w10[1025];
+        const uint64_t fbCount = w10[1026];
+        const uint64_t emptyCount = (totalTiles >= s1Count + s2Count + fbCount) ? (totalTiles - s1Count - s2Count - fbCount) : 0;
+        REQUIRE(renderer.setRoutedRouteObserverForDiagnostics(false), "gate10 disable route observer");
+
+        // 4. Paired ABBA Timing Comparison (2 rounds = 16 frames per mode)
+        std::vector<double> curTimes, routedTimes;
+        curTimes.reserve(16);
+        routedTimes.reserve(16);
+
+        // Warmup
+        for (bool on : {false, true}) {
+            for (int f = 0; f < 2; ++f) renderViewCamera(eye, aim, up, fov, viewTime, on);
+            REQUIRE(fenceQueue(gpu), "gate10 warmup fence");
+        }
+
+        for (int r = 0; r < 2; ++r) {
+            // Leg 0: Current
+            for (int f = 0; f < 8; ++f) {
+                const auto t0 = Clock::now();
+                renderViewCamera(eye, aim, up, fov, viewTime, false);
+                REQUIRE(fenceQueue(gpu), "gate10 leg0 fence");
+                curTimes.push_back(elapsedMs(t0));
+            }
+            // Leg 1: Routed
+            for (int f = 0; f < 8; ++f) {
+                const auto t0 = Clock::now();
+                renderViewCamera(eye, aim, up, fov, viewTime, true);
+                REQUIRE(fenceQueue(gpu), "gate10 leg1 fence");
+                routedTimes.push_back(elapsedMs(t0));
+            }
+            // Leg 2: Routed
+            for (int f = 0; f < 8; ++f) {
+                const auto t0 = Clock::now();
+                renderViewCamera(eye, aim, up, fov, viewTime, true);
+                REQUIRE(fenceQueue(gpu), "gate10 leg2 fence");
+                routedTimes.push_back(elapsedMs(t0));
+            }
+            // Leg 3: Current
+            for (int f = 0; f < 8; ++f) {
+                const auto t0 = Clock::now();
+                renderViewCamera(eye, aim, up, fov, viewTime, false);
+                REQUIRE(fenceQueue(gpu), "gate10 leg3 fence");
+                curTimes.push_back(elapsedMs(t0));
+            }
+        }
+
+        const double curMean = std::accumulate(curTimes.begin(), curTimes.end(), 0.0) / curTimes.size();
+        const double routedMean = std::accumulate(routedTimes.begin(), routedTimes.end(), 0.0) / routedTimes.size();
+        const double deltaMs = routedMean - curMean;
+        const double deltaPct = 100.0 * deltaMs / curMean;
+        const double curFps = 1000.0 / curMean;
+        const double routedFps = 1000.0 / routedMean;
+        const double nonEmptyPct = 100.0 * double(nonempty10) / double(pub10.size() / 4);
+
+        std::printf("GATE10_ROLL_OK: Roll=%3.0f deg up=(%5.2f, 0, %5.2f) Cur=%6.2fms (%4.1f FPS) Routed=%6.2fms (%4.1f FPS) Delta=%+6.2fms (%+5.2f%%) | Empty=%4.1f%% S1=%4.1f%% S2=%4.1f%% FB=%4.1f%% NonEmptyPub=%4.1f%%\n",
+                    rollDeg, up.x, up.z, curMean, curFps, routedMean, routedFps, deltaMs, deltaPct,
+                    100.0 * double(emptyCount) / totalTiles,
+                    100.0 * double(s1Count) / totalTiles,
+                    100.0 * double(s2Count) / totalTiles,
+                    100.0 * double(fbCount) / totalTiles,
+                    nonEmptyPct);
+
+        gate10Rows.push_back({
+            {"roll_deg", rollDeg},
+            {"up", {up.x, up.y, up.z}},
+            {"current_mean_ms", curMean},
+            {"routed_mean_ms", routedMean},
+            {"delta_ms", deltaMs},
+            {"delta_pct", deltaPct},
+            {"implied_current_fps", curFps},
+            {"implied_routed_fps", routedFps},
+            {"forced_refusal_parity", curRgba == refRgba},
+            {"nonempty_pub_pixels", nonempty10},
+            {"nonempty_pub_pct", nonEmptyPct},
+            {"census", {
+                {"total_tiles", totalTiles},
+                {"empty_tiles", emptyCount},
+                {"s1_tiles", s1Count},
+                {"s2_tiles", s2Count},
+                {"fallback_tiles", fbCount},
+                {"empty_pct", 100.0 * double(emptyCount) / totalTiles},
+                {"s1_pct", 100.0 * double(s1Count) / totalTiles},
+                {"s2_pct", 100.0 * double(s2Count) / totalTiles},
+                {"fallback_pct", 100.0 * double(fbCount) / totalTiles}
+            }}
+        });
+    }
+
+    report["gates"]["gate10_view3_orientation_sweep"] = {
+        {"status", "PASS"},
+        {"sweep", gate10Rows}
+    };
+
     // 4. Dual-Regime Completion-Fenced Timing (4 ABBA blocks: Current vs Positive E2E Routed P1-P4)
     for (bool on : {false, true}) {
         for (int i = 0; i < 64; ++i) renderPose(i, on);
@@ -1180,7 +1342,7 @@ int main(int argc, char** argv) {
                 curR2Mean, routedR2Mean, 100.0 * (routedR2Mean - curR2Mean) / curR2Mean);
 
     report["repaired_correctness_gates"] = 3;
-    report["native_metal_gates_passed"] = "9/9";
+    report["native_metal_gates_passed"] = "10/10";
 
     std::ofstream(outJsonPath) << report.dump(2) << '\n';
     wgpuBufferRelease(readback);

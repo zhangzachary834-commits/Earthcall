@@ -1925,3 +1925,25 @@ The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Pha
   - View from spawn dais diagonally across the veil (`eye = (0, 1.3, 0)`, `aim = (0, 72, 106.5)`: **50.28 ms / 19.9 FPS vs 57.64 ms / 17.3 FPS, -12.76% win**).
   - View from Zach's Live View A (`eye = (-6.75, 2.40, 3.71)`: **45.83 ms / 21.8 FPS vs 50.57 ms / 19.8 FPS, -9.36% win**).
   - Confirm all real-world perspectives remain stable, responsive, and bit-exact to Current baseline colors.
+
+
+## GPU Ray Transport Phase P16: Secant-Clipped Classifier, Producer Support-Window Exterior Skip, Step-Major SoA Coalescing, and 12-Angle View-3 Roll Sweep (2026-11-01)
+
+*Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · 2026-11-01. Commissioned by Zach and the Council following the Firmament's Phase P16 blueprint.*
+
+The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Phase P16 optimizations:
+- Secant-clipped coarse-bin interval tightening `[sLo, sHi]` in `kClassifyWgsl` (cutting Fallback tiles by 64.3% in View 3B and 25.3% in View 1).
+- Support-window `[supportLo, supportHi]` exterior knot and `evalPhi` pruning in S1, S2, and Fallback producers, plus root-isolation derivative bracket safety guard.
+- Step-Major Structure-of-Arrays (SoA) memory coalescing for subpanels and overlaps, enabling 16-byte contiguous SIMD accesses across Apple Silicon GPU L2.
+
+- [ ] **Launch Earthcall WebGPU (`./build/earthcall_webgpu`)** and load Northern Veil (`saves/zones/Northern Veil/zone.ecform`).
+- [ ] **Gate 9: Seven Real-World Checkpoint Views Won Outright:**
+  - **View 3A (`eye = (12.5, 0, 106.5)`, `aim = (12.5, 72, 106.5)`, `up = (0, 0, 1)`):** Confirm auroral sheets render smoothly at **30.88 ms / 32.4 FPS vs 49.79 ms / 20.1 FPS Current (-37.98% win)** even under system-wide GPU load.
+  - **View 3B (`up = (1, 0, 0)`):** Rotate camera roll to align the wide 16:9 frustum along the 72-unit Z curtain spread: confirm **55.71 ms / 17.9 FPS vs 67.53 ms / 14.8 FPS Current (-17.50% win)**.
+  - **View 3C (`PersonWalk Pitch 75°`):** Look up at 75° pitch while walking on ground: confirm **61.91 ms / 16.2 FPS vs 79.31 ms / 12.6 FPS Current (-21.93% win)**.
+  - **View 1 (`Inside Dense Veil`):** Fly inside the curtains (`eye = (12.5, 67, 39)`, `aim = (12.5, 67, 184)`): confirm **112.27 ms vs 117.03 ms Current (-4.07% win)**.
+  - **View 2 (`Spawn Dais Diag`):** Confirm **63.64 ms / 15.7 FPS vs 74.69 ms / 13.4 FPS Current (-14.79% win)**.
+  - **Live View A & Parked View:** Confirm **60.44 ms / 16.5 FPS vs 70.98 ms / 14.1 FPS (-14.86% win)** and **67.10 ms vs 73.31 ms (-8.48% win)**.
+- [ ] **Gate 10: 12-Angle View-3 Roll Sweep ($0^\circ..165^\circ$):**
+  - Smoothly roll the camera 360 degrees while looking straight up under the veils.
+  - Verify zero stuttering, zero tile popping, zero visual seam artifacts, and uniform responsiveness across all camera orientations.

@@ -144,20 +144,20 @@ fn ecProjected(ro:vec3<f32>,rd:vec3<f32>,wo:vec3<f32>,s:f32,mask:u32)->vec4<f32>
  if((ray.counts.w&0x80000000u)!=0u||ray.counts.y>64u||ray.counts.w>16u){ecPublication[ecPixel(id)]=vec4<f32>(0,0,0,-1);return;}
  if((ray.counts.y|ray.counts.w)==0u){return;}
  let ro=ray.ro_clipA.xyz;let rd=ray.rd_clipB.xyz;let wo=-rd;
- let subBase=id*64u;let overBase=id*16u;
+ let stride=ecWindow.control.x;
  var state=vec4<f32>(0,0,0,1);var single=0u;var overlap=0u;var overPanel=0u;
  let gx0=.5*(1.0-.5773502691896257);let gx1=.5*(1.0+.5773502691896257);
  let oa=.25-sqrt(3.0)/6.0;let ob=.5-oa;
  loop{
   if(single>=ray.counts.y&&overlap>=ray.counts.w){break;}
   var useOverlap=false;
-  if(overlap<ray.counts.w){if(single>=ray.counts.y){useOverlap=true;}else{useOverlap=ecOverlaps[overBase+overlap].span.x<ecSingles[subBase+single].span.x;}}
+  if(overlap<ray.counts.w){if(single>=ray.counts.y){useOverlap=true;}else{useOverlap=ecOverlaps[overlap*stride+id].span.x<ecSingles[single*stride+id].span.x;}}
   var lo=0.0;var h=0.0;var mask=0u;var subMember=0u;
   if(useOverlap){
-   let sp=ecOverlaps[overBase+overlap];
+   let sp=ecOverlaps[overlap*stride+id];
    h=(sp.span.y-sp.span.x)*.5;lo=sp.span.x+f32(overPanel)*h;mask=sp.info.x;
   }else{
-   let sub=ecSingles[subBase+single];single++;
+   let sub=ecSingles[single*stride+id];single++;
    if(sub.info.x>=4u){ecPublication[ecPixel(id)]=vec4<f32>(0,0,0,-1);return;}
    lo=sub.span.x;h=sub.span.y-sub.span.x;mask=1u<<sub.info.x;subMember=sub.info.x;
   }
