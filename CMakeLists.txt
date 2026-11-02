@@ -258,9 +258,6 @@ if(NOT EMSCRIPTEN)
     add_executable(earthcall_terminal src/terminal_entry.cpp)
     target_link_libraries(earthcall_terminal PRIVATE earthcall_core)
 
-    # Optional off-Apple wgpu-native (see the webgpu_* test branch below).
-    set(EARTHCALL_WGPU_NATIVE_LIBRARY "" CACHE FILEPATH
-        "Linux/other: wgpu-native library built from the vendored tag; enables webgpu_* tests on a software Vulkan device")
     # --- wgpu-native (vendored) ---
     set(WGPU_NATIVE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/wgpu)
     include_directories(${WGPU_NATIVE_DIR}/include)
@@ -382,9 +379,7 @@ if(NOT EMSCRIPTEN)
                  ${TEST_NAME} STREQUAL "veiled_hour_test" OR
             ${TEST_NAME} STREQUAL "sky_island_sanctuary_test" OR
                  ${TEST_NAME} STREQUAL "mcp_authoring_surfaces_test" OR
-                 ${TEST_NAME} STREQUAL "volume_shared_subexpression_test" OR
-                 ${TEST_NAME} STREQUAL "volume_ray_segment_transport_test" OR
-                 ${TEST_NAME} STREQUAL "volume_ray_radial_segmentation_test")
+                 ${TEST_NAME} STREQUAL "volume_shared_subexpression_test")
             # Pure codegen witness: it exercises SdfWgsl::compile/collectParams
             # but never creates a WebGPU device. Link only the compiler source so
             # the test stays runnable on CPU-only CI instead of masquerading as
@@ -441,15 +436,6 @@ if(NOT EMSCRIPTEN)
                     OpenSSL::Crypto
                     OpenGL::GL
                 )
-            elseif(NOT APPLE AND EARTHCALL_WGPU_NATIVE_LIBRARY AND EXISTS "${EARTHCALL_WGPU_NATIVE_LIBRARY}")
-                # Off-Apple software lane (2026-10-17): a wgpu-native built from the
-                # SAME tag as third_party/wgpu/wgpu-native-meta (cargo build --release),
-                # running on Mesa lavapipe (llvmpipe Vulkan on the CPU). It executes the
-                # real WGSL pipelines offscreen: valid for same-backend A/B pixel
-                # comparisons, NOT Metal evidence. Still built by name only.
-                set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-                target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${EARTHCALL_WGPU_NATIVE_LIBRARY}
-                    ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads m)
             else()
                 set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
                 target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)

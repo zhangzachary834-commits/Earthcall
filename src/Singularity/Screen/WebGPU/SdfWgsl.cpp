@@ -2,7 +2,6 @@
 
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
-#include "Singularity/OntoMath/LineRestriction.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -415,9 +414,6 @@ struct Emit {
     // retain their existing evaluator. Recipes preserve their own time binding.
     bool prepareVolumeTime = false;
     std::vector<KernelVolumeTimeSlot> timeSlots;
-    // Names an Integral binds while its office decomposition is emitted (the
-    // interval's centre and half-width): internal, never authored names.
-    std::map<std::string, std::string> boundNames;
 
     // The refusal (see Program::ok). Once set it is never overwritten: the
     // FIRST thing the compiler could not honour is the one worth reporting;
@@ -486,7 +482,6 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
 // name but this compiler cannot bind is a REFUSAL, not "0.0": substituting zero
 // silently reinterprets f(t) as f(0), which is a different field.
 std::string pointComponent(const std::string& var, Emit& e, const std::string& pt) {
-    if (const auto bound = e.boundNames.find(var); bound != e.boundNames.end()) return bound->second;
     if (e.bindScreen) {
         // SDF/Gradient rebind only p/x/y/z on the CPU. Other admitted scalars
         // retain their original bindings, including normalized coordinates.
@@ -581,13 +576,7 @@ std::string emitScalarForm(const OntoMath::ScalarForm& sf, Emit& e, const std::s
         if (i > 0) res += " + ";
         res += "(" + termStr + ")";
     }
-    // A leaf is ONE value. Callers splice it into `(a - leaf)`, `(a * leaf)`,
-    // `(leaf / b)`: unwrapped, a − (t1 + t2) compiled as (a − t1) + t2. Volume
-    // lowering hid this for time-only leaves (prepared slots), never for spatial
-    // ones (e.g. length(p) − (2.4 + 0.3·y)). Found by the Rung 2f-native
-    // certificate witness, Claude Opus 5.5, 2026-10-17; witness in
-    // webgpu_volume_support_certificates_test ("precedence witness").
-    return sf.terms.size() > 1 ? "(" + res + ")" : res;
+    return res;
 }
 
 bool expensiveTimeOnly(const OntoMath::ScalarForm& form) {
@@ -923,96 +912,6 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
                      "authors. It evaluates to nullopt on the CPU, so the shader "
                      "declines rather than answering a number the CPU would not.");
             return "0.0";
-        case Op::Integral: {
-            // Lowered by the one antiderivative office, not by a WGSL rule:
-            // toScalarForm turns the node into its closed form F(hi) − F(lo) in
-            // the enclosing variables (nested integrals by exact substitution),
-            // and that form is emitted like any authored ScalarForm. The shader
-            // holds no antiderivative of its own (Zach, 2026-10-19: no "two
-            // competing antiderivative code"). The line route, SDF(f, q) through
-            // value-branch segmentation, needs segmentation on the device and is
-            // refused here; the CPU still evaluates it. f32 execution error is
-            // measured by webgpu_integral_operation_test, not enclosed.
-            // Step 2b (same day): the office's CENTRED decomposition, so an
-            // interval far from the origin keeps f32 accuracy (F(hi) − F(lo)
-            // measured 3e-4 relative at x ≈ 1000). m and h are formed as exact
-            // forms, (hi ± lo)/2, so hi − lo cancels symbolically before f32
-            // sees it. Each moment selects its tabular or series form by the
-            // same |z|·|h| ≤ 1 rule the CPU uses. Both forms come from the office.
-            std::string why;
-            const auto refuse = [&] {
-                e.refuse("Integral does not lower to WGSL: " + why +
-                         " (only an integral the term algebra holds in closed form lowers; a field "
-                         "along a line needs device segmentation, not yet built)");
-                return std::string("0.0");
-            };
-            if (node.children.size() != 3 || !node.children[0] || !node.children[1] || !node.children[2]) {
-                why = node.children.size() == 4
-                    ? "an authored tolerance asks for an f32 execution bound this device path cannot yet give"
-                    : "Integral needs a body, lo and hi";
-                return refuse();
-            }
-            // The same authored substitution used by CPU evaluation. Screen
-            // emits the returned ordinary tree; it owns no calculus rule.
-            // The existing tolerance guard above still applies, and unsupported
-            // inner field integrals still decline through this very office.
-            if (auto reduced = OntoMath::deriveExponentialIntegral(node))
-                return emitMathNode(*reduced, e, pt);
-            const auto body = OntoMath::toScalarForm(*node.children[0], &why);
-            const auto lo = body ? OntoMath::toScalarForm(*node.children[1], &why) : std::nullopt;
-            const auto hi = lo ? OntoMath::toScalarForm(*node.children[2], &why) : std::nullopt;
-            if (!hi) return refuse();
-            const std::string tag = std::to_string(e.next++);
-            const std::string mName = "\x01m" + tag, hName = "\x01h" + tag;
-            const auto centred = OntoMath::centredIntegral(*body, node.variableName, mName, hName, &why);
-            if (!centred) return refuse();
-            const std::string mExpr = "(" + emitScalarForm(hi->plus(*lo).scaled(0.5), e, pt) + ")";
-            const std::string hExpr = "(" + emitScalarForm(hi->plus(lo->scaled(-1.0)).scaled(0.5), e, pt) + ")";
-            e.boundNames[mName] = mExpr;
-            e.boundNames[hName] = hExpr;
-            std::string sum;
-            for (const auto& part : centred->parts) {
-                std::string moment = emitScalarForm(part.tabular, e, pt);
-                if (part.rate > 0.0)
-                    moment = "select(" + moment + ", " + emitScalarForm(part.series, e, pt) + ", " +
-                             e.param(part.rate) + " * abs" + hExpr + " <= 1.0)";
-                sum += (sum.empty() ? "" : " + ") + std::string("(") + emitScalarForm(part.outer, e, pt) + ") * (" + moment + ")";
-            }
-            e.boundNames.erase(mName);
-            e.boundNames.erase(hName);
-            if (!centred->uncentred.empty()) {
-                const auto upper = OntoMath::substitute(centred->uncentred, node.variableName, *hi, &why);
-                const auto lower = upper ? OntoMath::substitute(centred->uncentred, node.variableName, *lo, &why) : std::nullopt;
-                if (!lower) return refuse();
-                sum += (sum.empty() ? "" : " + ") + std::string("(") + emitScalarForm(*upper, e, pt) + " - " +
-                       emitScalarForm(*lower, e, pt) + ")";
-            }
-            return sum.empty() ? "0.0" : "(" + sum + ")";
-        }
-        case Op::Let: {
-            // let name = value in body (2026-10-20): the name bound to the value's
-            // expression for the body, through the same boundNames
-            // pointComponent consults first — restored afterwards, so the
-            // binding is lexical as on the CPU. An expression, not a WGSL `let`
-            // statement: screen forms keep only the returned expression, and a
-            // statement there was silently dropped (an undefined identifier;
-            // webgpu_integral_operation_test). The compiler eliminates the
-            // repeated subexpression. Binding the point itself would be
-            // shadowed by the shader's point read, so it refuses.
-            if (node.variableName.empty() || node.variableName == OntoMath::kAmbientPointVar) {
-                e.refuse("Let must name a variable other than the point '" + std::string(OntoMath::kAmbientPointVar) + "'");
-                return "0.0";
-            }
-            const std::string name = "(" + arg(0) + ")";
-            const auto previous = e.boundNames.find(node.variableName);
-            const bool shadowing = previous != e.boundNames.end();
-            const std::string saved = shadowing ? previous->second : std::string();
-            e.boundNames[node.variableName] = name;
-            const std::string body = arg(1);
-            if (shadowing) e.boundNames[node.variableName] = saved;
-            else e.boundNames.erase(node.variableName);
-            return body;
-        }
         case Op::LineIntegral:
             e.refuse("LineIntegral has no implementation on either path: it needs a "
                      "curve parameterization and a quadrature rule that nothing in "
@@ -2835,976 +2734,6 @@ var<private> screenPoint: vec3<f32>;
     return prog;
 }
 
-Program compileLineQuadrature(const OntoMath::MathNode& field, const OntoMath::LineQuadratureCertificate& cert,
-                              uint32_t maxCells) {
-    Program prog;
-    Emit e;
-    e.parameterOffset = "0u";
-    std::string why;
-    OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
-    if (!field.checkTypes({{"p", OntoMath::ValueKind::Vector}}, why, &kind, false) || kind != OntoMath::ValueKind::Scalar) {
-        prog.ok = false;
-        prog.error = "a line-quadrature field must be a Scalar of p: " + why;
-        return prog;
-    }
-    if (cert.bands.empty() || maxCells < 2) {
-        prog.ok = false;
-        prog.error = "a line quadrature needs a certificate with at least one band, and at least 2 cells";
-        return prog;
-    }
-    if (cert.sourceExpression != field.toJson().dump()) {
-        prog.ok=false; prog.error="quadrature certificate source changed; rebuild its proof"; return prog;
-    }
-    // The field's own statements stay inside lineField: statements outside a
-    // function body are dropped (the Let finding, plan §6an).
-    const std::string value = emitMathNode(field, e, "p");
-    const std::string fieldBody = e.body;
-    e.body.clear();
-    // The certificate's bands, as chained ifs on the segment's |p|∞.
-    std::string select;
-    for (std::size_t j = 0; j < cert.bands.size(); ++j) {
-        const auto& b = cert.bands[j];
-        select += std::string(j == 0 ? "    if" : "    else if") + " (M <= " + e.param(float(b.cap)) + ") { L = " +
-                  e.param(float(b.lipschitz * (1.0 + 1e-6))) + "; W = " + e.param(float(b.width * (1.0 + 1e-6))) +
-                  "; SUP = " + e.param(float(b.sup * (1.0 + 1e-6))) + "; EPS = " + e.param(float(b.execution * (1.0 + 1e-6))) +
-                  "; H = " + (std::isfinite(b.hessian) ? e.param(float(b.hessian * (1.0 + 1e-6))) : std::string("-1.0")) + "; }\n";
-    }
-    for (float number : e.params)
-        if (!std::isfinite(number)) e.refuse("a line-quadrature constant is not finite float32");
-    prog.ok = !e.refused;
-    prog.error = e.refusal;
-    prog.params = std::move(e.params);
-    if (!prog.ok) return prog;
-    const std::string nmax = std::to_string(maxCells) + ".0";
-    prog.wgsl = R"WGSL(
-struct ScreenCoordinates { size: vec4<f32>, time: vec4<f32> };
-struct Parameters { v: array<f32> };
-@group(0) @binding(0) var<uniform> screen: ScreenCoordinates;
-@group(0) @binding(1) var<storage, read> P: Parameters;
-var<private> screenPoint: vec3<f32>;
-)WGSL";
-    prog.wgsl += kPrimitives;
-    prog.wgsl += "fn lineField(p: vec3<f32>) -> f32 {\n" + fieldBody + "    return " + value + ";\n}\n";
-    prog.wgsl += "fn lineIntegral(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32) -> vec4<f32> {\n"
-                 "    let a = min(lo, hi);\n"
-                 "    let b = max(lo, hi);\n"
-                 "    let S = b - a;\n"
-                 "    let p0 = abs(o + a * d);\n"
-                 "    let p1 = abs(o + b * d);\n"
-                 "    let M = max(max(max(p0.x, p0.y), p0.z), max(max(p1.x, p1.y), p1.z));\n"
-                 "    let dn = length(d);\n"
-                 "    var L = -1.0; var W = 0.0; var SUP = 0.0; var EPS = 0.0; var H = -1.0;\n" + select +
-                 "    if (L < 0.0) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
-                 "    let u = 1.1920929e-7;\n"
-                 "    let ds = 4.0 * u * (abs(a) + S);\n"
-                 "    let fixedErr = S * EPS + S * L * dn * ds + 4.0 * u * S * SUP;\n"
-                 "    let budget = 0.9 * (tol - fixedErr);\n"
-                 "    if (!(budget > 0.0)) { return vec4<f32>(0.0, 0.0, 0.0, fixedErr); }\n"
-                 "    var n = 2.0;\n"
-                 "    if (S * 2.25 * W > budget) {\n"
-                 "        n = ceil(S * S * 2.25 * L * dn / budget);\n"
-                 "        if (H >= 0.0) { n = min(n, ceil(S * sqrt(2.25 * H * dn * dn * S / (2.0 * budget)))); }\n"
-                 "        n = max(2.0, 2.0 * ceil(0.5 * n));\n"
-                 "    }\n"
-                 "    if (n > " + nmax + ") { return vec4<f32>(0.0, 0.0, n, 0.0); }\n"
-                 "    let h = S / n;\n"
-                 "    let N = u32(n);\n"
-                 "    var acc = 0.0;\n"
-                 "    for (var j = 0u; j < N; j = j + 2u) {\n"
-                 "        let sa = a + S * (f32(j) / n);\n"
-                 "        let sm = a + S * (f32(j + 1u) / n);\n"
-                 "        let sb = a + S * (f32(j + 2u) / n);\n"
-                 "        acc = acc + (h / 3.0) * (lineField(o + sa * d) + 4.0 * lineField(o + sm * d) + lineField(o + sb * d));\n"
-                 "    }\n"
-                 "    var local = min(W, L * dn * h);\n"
-                 "    if (H >= 0.0) { local = min(local, H * dn * dn * h * h * 0.5); }\n"
-                 "    let mathematical = S * 2.25 * local;\n"
-                 "    let nn = n + 8.0;\n"
-                 "    let gamma = nn * u / (1.0 - nn * u);\n"
-                 "    let total = (mathematical + fixedErr + gamma * S * SUP) * 1.001;\n"
-                 "    if (total > tol) { return vec4<f32>(0.0, 0.0, n, total); }\n"
-                 "    return vec4<f32>(select(acc, -acc, hi < lo), 1.0, n, total);\n"
-                 "}\n";
-    return prog;
-}
-
-
-// A numeric executable plan, retained only by the compute witness today. The
-// fields/domain lowering below is shared with the ordinary line kernel; no
-// second source/attenuation law lives in this backend.
-// Shared outward-rounding bound arithmetic of every scheduled/grid transport lowering.
-static const char* kRayProofArithmetic = R"WGSL(
-struct ScheduledTransport {
-    radiance: f32, transmittance: f32, radianceError: f32, transmittanceError: f32,
-    status: f32, samples: vec2<f32>, panels: f32
-};
-fn rayProofInfinity() -> f32 { return bitcast<f32>(0x7f800000u); }
-// Outward rounding for nonnegative bound arithmetic, using observable float
-// bits between operations. A normal floor also covers flushed subnormal results.
-// Qualification still includes the backend's IEEE/basic-arithmetic premise.
-fn rayProofUp(x: f32) -> f32 {
-    if (!(x >= 0.0) || x >= 3.402823466e38) { return rayProofInfinity(); }
-    return bitcast<f32>(bitcast<u32>(max(x, bitcast<f32>(0x00800000u))) + 1u);
-}
-fn rayProofAdd(a: f32,b: f32) -> f32 { if(a==0.0 && b==0.0){return 0.0;} return rayProofUp(a+b); }
-fn rayProofMul(a: f32,b: f32) -> f32 { if(a==0.0 || b==0.0){return 0.0;} return rayProofUp(a*b); }
-fn rayProofSignedUp(x: f32) -> f32 {
-    if(x<0.0){return bitcast<f32>(bitcast<u32>(x)-1u);} return rayProofUp(x);
-}
-fn rayProofLocal(w: f32,l: f32,h: f32,step: f32) -> f32 {
-    var r=min(w,rayProofMul(l,step));
-    if(h>=0.0){r=min(r,rayProofMul(rayProofMul(rayProofMul(h,step),step),0.5));}
-    return r;
-}
-)WGSL";
-
-static Program lowerScheduledTransport(Emit& e, std::string prelude, const std::string& domain,
-                                        const OntoMath::LineTransportSchedule& plan, bool depthOnly = false) {
-    Program out;
-    auto up = [&](double x) {
-        float f = float(x);
-        if (!(std::isfinite(x) && x >= 0.0 && std::isfinite(f))) e.refuse("non-finite schedule bound");
-        if (double(f) < x) f = std::nextafter(f, INFINITY);
-        return f;
-    };
-    auto lower = [](double x) { float f=float(x); if(double(f)>x) f=std::nextafter(f,-INFINITY); return f; };
-    auto upper = [](double x) { float f=float(x); if(double(f)<x) f=std::nextafter(f,INFINITY); return f; };
-    auto exact = [&](double x) {
-        const float f=float(x);
-        if(!(std::isfinite(x) && double(f)==x)) e.refuse("schedule ray/panel is not an exact finite f32 value");
-        return e.param(f);
-    };
-    if(plan.panels.empty() || plan.panels.size()>65536) e.refuse("invalid bounded schedule size");
-    const std::string origin="vec3<f32>("+exact(plan.origin[0])+","+exact(plan.origin[1])+","+exact(plan.origin[2])+")";
-    const std::string direction="vec3<f32>("+exact(plan.direction[0])+","+exact(plan.direction[1])+","+exact(plan.direction[2])+")";
-    const std::string lo=exact(plan.lo), hi=exact(plan.hi);
-    double dn2=0;
-    std::string rayPredicate = "all(o=="+origin+") && all(d=="+direction+")";
-    if (plan.rayDomain) {
-        const auto& q=*plan.rayDomain;
-        auto vector = [&](const std::array<double,3>& v) {
-            return "vec3<f32>("+exact(v[0])+","+exact(v[1])+","+exact(v[2])+")";
-        };
-        for(int i=0;i<3;++i) {
-            if(!(q.originLo[i]<=q.originHi[i] && q.directionLo[i]<=q.directionHi[i]))
-                e.refuse("invalid ray-family qualification box");
-            const double magnitude=std::max(std::abs(q.directionLo[i]),std::abs(q.directionHi[i]));
-            dn2+=magnitude*magnitude;
-        }
-        rayPredicate = "all(o>="+vector(q.originLo)+") && all(o<="+vector(q.originHi)+") && all(d>="+
-            vector(q.directionLo)+") && all(d<="+vector(q.directionHi)+")";
-    } else for(double d:plan.direction) dn2+=d*d;
-    const std::string dn=e.param(up(std::sqrt(dn2)*(1.0+1e-12)));
-    const std::string pointError=e.param(up(plan.pointError));
-    const double a=plan.model.exponentialAbsolute(), r=plan.model.expRelative;
-    if(!(std::isfinite(a) && a>=0 && std::isfinite(r) && r>=0 && r<1)) e.refuse("invalid scheduled exponential model");
-    if (!(up(r) < 1.0f)) e.refuse("relative exponential allowance has no usable f32 upper bound below one");
-    const std::string expA=e.param(up(a)), expR=e.param(up(r));
-    const std::string expRound=e.param(up(r+4.0*std::ldexp(1.0,-23)));
-    const std::string count=e.param(float(plan.panels.size()));
-    const std::size_t base=e.params.size();
-    double previous=plan.lo;
-    for(const auto& p:plan.panels) {
-        if(p.lo!=previous || !(p.hi>p.lo)) e.refuse("schedule is not an ordered complete partition");
-        exact(p.lo); exact(p.hi); previous=p.hi;
-        for(const auto* b:{&p.sigma,&p.emission}) {
-            if(depthOnly && b==&p.emission)continue;
-            e.param(up(b->lipschitz)); e.param(up(b->width)); e.param(up(b->sup)); e.param(up(b->execution));
-            e.param(std::isfinite(b->hessian)?up(b->hessian):-1.0f);
-            e.param(lower(b->low)); e.param(upper(b->high));
-            const auto& along = b==&p.sigma ? p.sigmaAlong : p.emissionAlong;
-            if (along) {
-                const auto& dl=plan.rayDomain?plan.rayDomain->directionLo:plan.direction;
-                const auto& dh=plan.rayDomain?plan.rayDomain->directionHi:plan.direction;
-                for(int i=0;i<3;++i)
-                    if (!(dl[i]>=along->directionLo[i] && dh[i]<=along->directionHi[i]))
-                        e.refuse("directional panel evidence does not qualify this ray direction domain");
-                if (!(along->slope>=0.0) || !(along->curvature>=0.0)) e.refuse("invalid directional panel bounds");
-                e.param(std::isfinite(along->slope)?up(along->slope):-1.0f);
-                e.param(std::isfinite(along->curvature)?up(along->curvature):-1.0f);
-            } else { e.param(-1.0f);e.param(-1.0f); }
-        }
-    }
-    if(previous!=plan.hi) e.refuse("schedule leaves an uncovered ray tail");
-    for(float v:e.params) if(!std::isfinite(v)) e.refuse("schedule parameter is not finite f32");
-    out.ok=!e.refused;out.error=e.refusal;out.params=std::move(e.params);
-    if(!out.ok)return out;
-    out.wgsl=std::move(prelude);
-    out.wgsl+=kRayProofArithmetic;
-    out.wgsl+="fn rayProofExp(x:f32)->f32 { let y=max(exp(x),0.0); let denominator=bitcast<f32>(bitcast<u32>(1.0-"+expR+")-1u); return rayProofUp(rayProofAdd(y,"+expA+")/denominator); }\n";
-    if(depthOnly) {
-        // Dedicated endpoint program: no idle emission/outer-integral branch
-        // remains in the called shader. Eleven numeric scalars per panel; ray,
-        // count and bounds stay payload data, preserving program-text reuse.
-        out.wgsl+="fn lineScheduledTail()->u32{return "+std::to_string(base)+"u+11u*u32("+count+");}\n";
-        out.wgsl+="fn lineScheduledTransportAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ScheduledTransport {\n"
-            " var out=ScheduledTransport(0.0,0.0,rayProofInfinity(),rayProofInfinity(),0.0,vec2<f32>(0.0),0.0);\n"
-            " if(!("+domain+") || !("+rayPredicate+") || !(lo=="+lo+" && hi=="+hi+" && tol>0.0 && tol<=3.402823466e38 && tTol>0.0 && tTol<=3.402823466e38)){return out;}\n"
-            " let count=u32("+count+"); let base="+std::to_string(base)+"u; let dn="+dn+"; let pointError="+pointError+";\n";
-        out.wgsl+=R"WGSL(
-    let u=1.1920928955078125e-7;
-    let gu=f32(16u*count+32u)*u;
-    let gamma=rayProofUp(gu/(1.0-gu));
-    var tau=0.0;var dm=0.0;var de=0.0;var sigA=0.0;var calls=0.0;
-    for(var j=0u;j<count;j=j+1u){
-        let k=base+11u*j;
-        let sa=P.v[k];let sb=P.v[k+1u];let step=(sb-sa)*0.5;let sm=sa+(sb-sa)*0.5;
-        let width=rayProofUp(sb-sa);let hw=rayProofMul(width,0.5);
-        let l=P.v[k+2u];let w=P.v[k+3u];let sup=P.v[k+4u];let e=P.v[k+5u];let h=P.v[k+6u];let low=P.v[k+7u];let high=P.v[k+8u];
-        if(sup==0.0 && e==0.0){sigA=0.0;continue;}
-        let constant=e==0.0 && low==high;
-        if(j==0u){if(constant){sigA=low;}else{sigA=lineSigma(o+sa*d,clock,omega);calls=calls+1.0;}}
-        var sigM=low;var sigB=low;
-        if(!constant){sigM=lineSigma(o+sm*d,clock,omega);sigB=lineSigma(o+sb*d,clock,omega);calls=calls+2.0;}
-        tau=tau+(step/3.0)*(sigA+4.0*sigM+sigB);
-        var ls=rayProofMul(l,dn);var hs=-1.0;
-        if(h>=0.0){hs=rayProofMul(rayProofMul(h,dn),dn);}
-        let alongFirst=P.v[k+9u];let alongSecond=P.v[k+10u];
-        if(alongFirst>=0.0){ls=min(ls,alongFirst);}
-        if(alongSecond>=0.0){if(hs<0.0){hs=alongSecond;}else{hs=min(hs,alongSecond);}}
-        dm=rayProofAdd(dm,rayProofMul(rayProofMul(width,2.25),rayProofLocal(w,ls,hs,hw)));
-        de=rayProofAdd(de,rayProofMul(rayProofMul(1.2,width),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
-        sigA=sigB;
-    }
-    let tUpper=rayProofExp(rayProofSignedUp(-tau+rayProofAdd(dm,de)));
-)WGSL";
-        out.wgsl+="    let tError=rayProofAdd(rayProofMul(tUpper,rayProofAdd(dm,de)),rayProofAdd("+expA+",rayProofMul("+expRound+",tUpper)));\n";
-        out.wgsl+=R"WGSL(
-    out.radiance=0.0;out.radianceError=0.0;out.transmittance=exp(-tau);out.transmittanceError=tError;
-    out.samples=vec2<f32>(calls,0.0);out.panels=f32(count);
-    if(abs(out.transmittance)<=3.402823466e38 && tError<=tTol){out.status=1.0;}
-    return out;
-}
-)WGSL";
-        return out;
-    }
-    out.wgsl+="fn rayProofSample(tau:f32,dm:f32,de:f32,eps:f32,ee:f32,ep:f32)->vec2<f32> {\n"
-        " let delta=rayProofAdd(dm,de); let f=rayProofExp(rayProofSignedUp(-tau+delta));\n"
-        " let magnitude=rayProofAdd(abs(eps),rayProofAdd(ee,ep));\n"
-        " let math=rayProofMul(rayProofMul(f,dm),magnitude);\n"
-        " let execution=rayProofAdd(rayProofMul(rayProofMul(f,de),magnitude),rayProofAdd(rayProofMul(f,rayProofAdd(ee,ep)),rayProofMul(rayProofAdd("+expA+",rayProofMul("+expRound+",f)),magnitude)));\n"
-        " return vec2<f32>(math,execution); }\n";
-    out.wgsl+="fn lineScheduledTransportAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ScheduledTransport {\n"
-        " var result=ScheduledTransport(0.0,0.0,rayProofInfinity(),rayProofInfinity(),0.0,vec2<f32>(0.0),0.0);\n"
-        " if(!("+domain+") || !("+rayPredicate+") || !(lo=="+lo+" && hi=="+hi+" && tol>0.0 && tol<=3.402823466e38 && tTol>0.0 && tTol<=3.402823466e38)){return result;}\n"
-        " let count=u32("+count+"); let base="+std::to_string(base)+"u; let dn="+dn+"; let pointError="+pointError+";\n";
-    out.wgsl+=R"WGSL(
-    let u=1.1920928955078125e-7;
-    let gu=f32(16u*count+32u)*u;
-    let gamma=rayProofUp(gu/(1.0-gu));
-    var tau=0.0; var dm=0.0; var de=0.0; var L=0.0; var magnitude=0.0;
-    var mathematical=0.0; var execution=0.0; var sigA=0.0; var epsA=0.0;
-    var sCalls=0.0; var eCalls=0.0;
-    for(var j=0u;j<count;j=j+1u){
-        let k=base+20u*j;
-        let sa=P.v[k]; let sb=P.v[k+1u]; let step=(sb-sa)*0.5;
-        let sm=sa+(sb-sa)*0.5;
-        let width=rayProofUp(sb-sa); let hw=rayProofMul(width,0.5);
-        let sL=P.v[k+2u];let sW=P.v[k+3u];let sSup=P.v[k+4u];let sE=P.v[k+5u];let sH=P.v[k+6u];let sLow=P.v[k+7u];let sHigh=P.v[k+8u];
-        let eL=P.v[k+11u];let eW=P.v[k+12u];let eSup=P.v[k+13u];let eE=P.v[k+14u];let eH=P.v[k+15u];let eLow=P.v[k+16u];let eHigh=P.v[k+17u];
-        let sConstant=sE==0.0 && sLow==sHigh; let eConstant=eE==0.0 && eLow==eHigh;
-        if(sSup==0.0 && sE==0.0 && eSup==0.0 && eE==0.0){sigA=0.0;epsA=0.0;continue;}
-        if(j==0u){
-            if(sConstant){sigA=sLow;}else{sigA=lineSigma(o+sa*d,clock,omega);sCalls=sCalls+1.0;}
-            if(eConstant){epsA=eLow;}else{epsA=lineEmission(o+sa*d,clock,omega);eCalls=eCalls+1.0;}
-        }
-        var sigM=sLow;var sigB=sLow;var epsM=eLow;var epsB=eLow;
-        if(!sConstant){sigM=lineSigma(o+sm*d,clock,omega);sigB=lineSigma(o+sb*d,clock,omega);sCalls=sCalls+2.0;}
-        if(!eConstant){epsM=lineEmission(o+sm*d,clock,omega);epsB=lineEmission(o+sb*d,clock,omega);eCalls=eCalls+2.0;}
-        let tauM=tau+step*(5.0*sigA+8.0*sigM-sigB)/12.0;
-        let tauB=tau+(step/3.0)*(sigA+4.0*sigM+sigB);
-        var ls=rayProofMul(sL,dn);var le=rayProofMul(eL,dn);
-        var hs=-1.0;var he=-1.0;
-        if(sH>=0.0){hs=rayProofMul(rayProofMul(sH,dn),dn);}
-        if(eH>=0.0){he=rayProofMul(rayProofMul(eH,dn),dn);}
-        let sFirst=P.v[k+9u];let sSecond=P.v[k+10u];let eFirst=P.v[k+18u];let eSecond=P.v[k+19u];
-        if(sFirst>=0.0){ls=min(ls,sFirst);}if(eFirst>=0.0){le=min(le,eFirst);}
-        if(sSecond>=0.0){if(hs<0.0){hs=sSecond;}else{hs=min(hs,sSecond);}}
-        if(eSecond>=0.0){if(he<0.0){he=eSecond;}else{he=min(he,eSecond);}}
-        let sPoint=rayProofMul(sL,pointError);let ePoint=rayProofMul(eL,pointError);
-        let panelMath=rayProofMul(rayProofMul(width,2.25),rayProofLocal(sW,ls,hs,hw));
-        let panelExec=rayProofMul(rayProofMul(1.2,width),rayProofAdd(rayProofAdd(sE,sPoint),rayProofMul(gamma,sSup)));
-        let mathB=rayProofAdd(dm,panelMath);let execB=rayProofAdd(de,panelExec);
-        // An exact dark source still advances extinction and both depth bounds.
-        if(eSup==0.0 && eE==0.0){tau=tauB;dm=mathB;de=execB;sigA=sigB;epsA=0.0;continue;}
-        let gA=exp(-tau)*epsA;let gM=exp(-tauM)*epsM;let gB=exp(-tauB)*epsB;
-        L=L+(step/3.0)*(gA+4.0*gM+gB);
-        magnitude=rayProofAdd(magnitude,rayProofMul(rayProofUp(width/6.0),rayProofAdd(rayProofAdd(abs(gA),rayProofMul(4.0,abs(gM))),abs(gB))));
-        let a=rayProofSample(tau,dm,de,epsA,eE,ePoint);
-        let m=rayProofSample(tauM,mathB,execB,epsM,eE,ePoint);
-        let b=rayProofSample(tauB,mathB,execB,epsB,eE,ePoint);
-        let weights=vec2<f32>(rayProofAdd(rayProofAdd(a.x,rayProofMul(4.0,m.x)),b.x),rayProofAdd(rayProofAdd(a.y,rayProofMul(4.0,m.y)),b.y));
-        mathematical=rayProofAdd(mathematical,rayProofMul(rayProofUp(width/6.0),weights.x));
-        execution=rayProofAdd(execution,rayProofMul(rayProofUp(width/6.0),weights.y));
-        let grow=rayProofMul(max(0.0,-sLow),width);
-        let tUpper=rayProofExp(rayProofSignedUp(rayProofSignedUp(-tau+rayProofAdd(dm,de))+grow));
-        let gWidth=rayProofMul(tUpper,rayProofAdd(max(eHigh,0.0),max(-eLow,0.0)));
-        let gPrime=rayProofMul(tUpper,rayProofAdd(le,rayProofMul(sSup,eSup)));
-        var gSecond=-1.0;
-        if(he>=0.0){
-            let q=rayProofAdd(rayProofAdd(he,rayProofMul(rayProofMul(2.0,sSup),le)),rayProofAdd(rayProofMul(ls,eSup),rayProofMul(rayProofMul(sSup,sSup),eSup)));
-            gSecond=rayProofMul(tUpper,q);
-        }
-        mathematical=rayProofAdd(mathematical,rayProofMul(rayProofMul(width,2.25),rayProofLocal(gWidth,gPrime,gSecond,hw)));
-        tau=tauB;dm=mathB;de=execB;sigA=sigB;epsA=epsB;
-    }
-    execution=rayProofAdd(execution,rayProofMul(rayProofAdd(gamma,4.0*u),rayProofAdd(magnitude,rayProofAdd(mathematical,execution))));
-    let tUpper=rayProofExp(rayProofSignedUp(-tau+rayProofAdd(dm,de)));
-    let tMath=rayProofMul(tUpper,dm);
-)WGSL";
-    out.wgsl+="    let tExec=rayProofAdd(rayProofMul(tUpper,de),rayProofAdd("+expA+",rayProofMul("+expRound+",tUpper)));\n";
-    out.wgsl+=R"WGSL(
-    result.radiance=L;result.transmittance=exp(-tau);
-    result.radianceError=rayProofAdd(mathematical,execution);result.transmittanceError=rayProofAdd(tMath,tExec);
-    result.samples=vec2<f32>(sCalls,eCalls);result.panels=f32(count);
-    if(abs(L)<=3.402823466e38 && abs(result.transmittance)<=3.402823466e38 && result.radianceError<=tol && result.transmittanceError<=tTol){result.status=1.0;}
-    return result;
-}
-fn lineScheduledRadianceAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,clock:f32,omega:vec3<f32>)->vec4<f32>{
-    let r=lineScheduledTransportAt(o,d,lo,hi,tol,tol,clock,omega);return vec4<f32>(r.radiance,r.status,r.panels,r.radianceError);
-}
-fn lineScheduledTransmittanceAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,clock:f32,omega:vec3<f32>)->vec4<f32>{
-    let r=lineScheduledTransportAt(o,d,lo,hi,tol,tol,clock,omega);return vec4<f32>(r.transmittance,r.status,r.panels,r.transmittanceError);
-}
-fn lineScheduledWorkAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,clock:f32,omega:vec3<f32>)->vec4<f32>{
-    let r=lineScheduledTransportAt(o,d,lo,hi,tol,tol,clock,omega);return vec4<f32>(r.samples,r.panels,r.status);
-}
-)WGSL";
-    return out;
-}
-
-// Plan §6be/§6bf: σ depth and transmittance along ANY ray through a camera-
-// independent RegionProofGrid. Each ray walks the grid's cells (DDA). A cell a
-// containing proof shows ≡ 0 contributes exactly nothing and is never evaluated.
-// An occupied cell's segment uses that cell's constants in the same per-panel
-// bound arithmetic as lowerScheduledTransport's depth program. Where the host
-// supplied kink evidence (§6bf), the segment is first split into runs on which
-// every undecided switch keeps a sign the device has proved: a switch g cannot
-// change sign within (|g(a)| − its device error − L·halo)/(L·|d|) of a point a.
-// A run uses the certificate for its signs, which has a finite Hessian, and is
-// skipped outright when that certificate is exactly zero. Near a crossing a
-// short sliver keeps the cell's unconditional bound. Before a panel uses a cell,
-// the device checks that the panel's swept box, positional halo included, lies
-// inside that cell dilated by the grid margin; otherwise the ray refuses.
-// Sub-panel counts are a work choice; only the accumulated bound admits.
-// Claude Code / Claude Opus 5.5 / f3af84cf / 2026-10-20.
-static Program lowerGridDepth(Emit& e, std::string prelude, const std::string& domain,
-                              const OntoMath::RegionProofGrid& grid, const OntoMath::ExecutionModel& model,
-                              uint32_t maxPanels, const OntoMath::LineAlgebraicForm* form) {
-    Program out;
-    auto up = [&](double x) {
-        float f = float(x);
-        if (!(std::isfinite(x) && x >= 0.0 && std::isfinite(f))) e.refuse("non-finite grid bound");
-        if (double(f) < x) f = std::nextafter(f, INFINITY);
-        return f;
-    };
-    auto lower = [](double x) { float f=float(x); if(double(f)>x) f=std::nextafter(f,-INFINITY); return f; };
-    auto upper = [](double x) { float f=float(x); if(double(f)<x) f=std::nextafter(f,INFINITY); return f; };
-    auto powerOfTwo = [](double x) { int k; return std::isfinite(x) && x > 0.0 && std::frexp(x, &k) == 0.5; };
-    // Cell faces c·h ± margin must be exact f32 values on the device.
-    if (!powerOfTwo(grid.cell) || !powerOfTwo(grid.margin) || !(grid.margin < grid.cell))
-        e.refuse("grid transport needs power-of-two cell and margin, margin below the cell");
-    long long dims[3]; long long cells = 1, reach = 0;
-    for (int i = 0; i < 3; ++i) {
-        dims[i] = grid.last[i] - grid.first[i] + 1;
-        if (!(dims[i] >= 1 && dims[i] <= 4096)) { e.refuse("grid transport axis span outside 1..4096 cells"); dims[i] = 1; }
-        cells *= dims[i];
-        reach = std::max({reach, std::llabs(grid.first[i]), std::llabs(grid.last[i] + 1)});
-    }
-    if (cells > (1LL << 22)) e.refuse("grid transport index exceeds 2^22 cells");
-    if (double(reach) * grid.cell / std::max(grid.margin, 1e-300) >= 0x1p22) e.refuse("grid faces ± margin are not exact f32 values");
-    if (maxPanels < 1 || maxPanels > 65536) e.refuse("grid transport needs 1..65536 panels");
-    if (!grid.conditional.empty() && !form) e.refuse("kink evidence needs the certificate's lowered form");
-    const double a = model.exponentialAbsolute(), r = model.expRelative;
-    if (!(std::isfinite(a) && a >= 0 && std::isfinite(r) && r >= 0 && r < 1) || !(up(r) < 1.0f)) e.refuse("invalid grid exponential model");
-    const std::string h = e.param(float(grid.cell)), margin = e.param(float(grid.margin));
-    const std::string sliver = e.param(float(std::ldexp(grid.cell, -10)));
-    const std::string fx = e.param(float(grid.first[0])), fy = e.param(float(grid.first[1])), fz = e.param(float(grid.first[2]));
-    const std::string nx = e.param(float(dims[0])), ny = e.param(float(dims[1])), nz = e.param(float(dims[2]));
-    const std::string expA = e.param(up(a)), expR = e.param(up(r)), expRound = e.param(up(r + 4.0 * std::ldexp(1.0, -23)));
-    // Every switch any cell may split on, lowered from its authored operand with
-    // the production emitter (as the support killers do).
-    std::set<uint32_t> used;
-    for (const auto& [c, k] : grid.conditional) used.insert(k.switches.begin(), k.switches.end());
-    std::string switchFn = "fn lineSwitchAt(k:u32,p:vec3<f32>,clock:f32,omega:vec3<f32>)->f32 {\n";
-    for (uint32_t k : used) {
-        if (e.refused || !form || k >= form->switches.size()) { e.refuse("kink evidence names an unknown switch"); break; }
-        const auto& sw = form->switches[k];
-        const auto& node = form->nodes[sw.node];
-        if (sw.role > 3 || !node.sourceA || (sw.role == 1 && !node.sourceB)) { e.refuse("a kink switch has no device operand"); break; }
-        const std::string saved = std::move(e.body);
-        e.body.clear();
-        const std::string av = emitMathNode(*node.sourceA, e, "p");
-        const std::string bv = sw.role == 1 ? emitMathNode(*node.sourceB, e, "p") : std::string();
-        const std::string g = sw.role == 0 ? av : sw.role == 1 ? "(" + av + ") - (" + bv + ")"
-                            : "(" + av + ") - " + e.param(float(sw.role == 2 ? node.lo : node.hi));
-        switchFn += " if(k==" + std::to_string(k) + "u){\n" + e.body + "  return " + g + ";\n }\n";
-        e.body = saved;
-    }
-    switchFn += " return bitcast<f32>(0x7fc00000u);\n}\n";
-    // Dense cell → record offset (-1: inside a zero block). A record is the
-    // cell's 7 constants, its kink-switch count n, (switch, sup|∇g|, g error)×n,
-    // then 7 constants per sign assignment.
-    std::vector<float> index(std::size_t(e.refused ? 0 : cells), -1.0f);
-    std::vector<float> records;
-    auto constants = [&](const OntoMath::LineQuadratureBand& b) {
-        if (!(std::isfinite(b.low) && std::isfinite(b.high) && b.hessian >= 0.0)) e.refuse("invalid occupied cell certificate");
-        for (double v : {b.lipschitz, b.width, b.sup, b.execution}) records.push_back(up(v));
-        records.push_back(std::isfinite(b.hessian) ? up(b.hessian) : -1.0f);
-        records.push_back(lower(b.low)); records.push_back(upper(b.high));
-    };
-    if (!e.refused) {
-        for (const auto& [c, b] : grid.occupied) {
-            long long k = 0;
-            for (int i = 0; i < 3; ++i) {
-                if (c[i] < grid.first[i] || c[i] > grid.last[i]) e.refuse("occupied cell outside its grid");
-                k = k * dims[i] + (c[i] - grid.first[i]);
-            }
-            if (e.refused) break;
-            index[std::size_t(k)] = float(records.size());
-            constants(b);
-            const auto it = grid.conditional.find(c);
-            if (it == grid.conditional.end()) { records.push_back(0.0f); continue; }
-            const auto& kinks = it->second;
-            const std::size_t n = kinks.switches.size();
-            if (n == 0 || n > 8 || kinks.gradient.size() != n || kinks.execution.size() != n || kinks.bands.size() != (std::size_t(1) << n)) {
-                e.refuse("malformed kink evidence"); break;
-            }
-            records.push_back(float(n));
-            for (std::size_t q = 0; q < n; ++q) {
-                records.push_back(float(kinks.switches[q]));
-                records.push_back(up(kinks.gradient[q])); records.push_back(up(kinks.execution[q]));
-            }
-            // An unproved assignment keeps the cell's own (unconditional) constants.
-            for (const auto& band : kinks.bands) constants(band ? *band : b);
-        }
-        long long zeros = 0;
-        for (const auto& z : grid.zero) {
-            long long n = 1;
-            for (int i = 0; i < 3; ++i) n *= z.last[i] - z.first[i] + 1;
-            zeros += n;
-        }
-        if (zeros + (long long)grid.occupied.size() != cells) e.refuse("grid is not a complete partition of its cells");
-        if (records.size() >= (1u << 24)) e.refuse("grid records exceed exact f32 offsets");
-    }
-    const std::size_t indexBase = e.params.size();
-    e.params.insert(e.params.end(), index.begin(), index.end());
-    const std::size_t recordBase = e.params.size();
-    e.params.insert(e.params.end(), records.begin(), records.end());
-    for (float v : e.params) if (!std::isfinite(v)) e.refuse("grid parameter is not finite f32");
-    out.ok = !e.refused; out.error = e.refusal; out.params = std::move(e.params);
-    if (!out.ok) return out;
-    out.wgsl = std::move(prelude);
-    out.wgsl += kRayProofArithmetic;
-    out.wgsl += "fn rayProofExp(x:f32)->f32 { let y=max(exp(x),0.0); let denominator=bitcast<f32>(bitcast<u32>(1.0-"+expR+")-1u); return rayProofUp(rayProofAdd(y,"+expA+")/denominator); }\n";
-    out.wgsl += switchFn;
-    out.wgsl += R"WGSL(
-// Downward rounding by one ulp for either sign (zero steps below zero).
-fn rayProofDown(x:f32)->f32 { if(x==0.0){return -1.17549435e-38;} return -rayProofSignedUp(-x); }
-struct GridDepth { transmittance: f32, error: f32, status: f32, calls: f32, switchEvaluations: f32, skipped: f32, panels: f32,
-                   mathematical: f32, execution: f32, expFloor: f32 };
-var<private> gTau: f32; var<private> gDm: f32; var<private> gDe: f32; var<private> gSigA: f32;
-var<private> gFresh: bool; var<private> gOk: bool; var<private> gCalls: f32; var<private> gPanels: u32;
-// Direct Simpson error functional for ONE unweighted panel of width w (plan §6bi;
-// Aetherion's and Prism's review, verified against the Peano kernels):
-// |E| <= w·(high − low) (positive weights), <= (5/36)·w²·sup|f′| (C1 kernel),
-// <= w³·sup|f″|/81 (C2 kernel, only where the run is C2: hs >= 0).
-// Constants are rounded up one ulp.
-fn gridPeano(width:f32,w:f32,ls:f32,hs:f32)->f32{
-    var r=rayProofMul(width,w);
-    r=min(r,rayProofMul(rayProofMul(rayProofMul(rayProofUp(0.13888889),width),width),ls));
-    if(hs>=0.0){r=min(r,rayProofMul(rayProofMul(rayProofMul(rayProofMul(rayProofUp(0.012345679),width),width),width),hs));}
-    return r;
-}
-// One run [sa0, sb0] under the 7 constants at k: exactly zero is skipped,
-// otherwise Simpson sub-panels bounded by gridPeano.
-fn gridRun(o:vec3<f32>,d:vec3<f32>,clock:f32,omega:vec3<f32>,sa0:f32,sb0:f32,k:u32,dn:f32,pointError:f32,gamma:f32,budget:f32,span:f32,maxPanels:u32){
-    if(!(sb0>sa0)){return;}
-    let l=P.v[k];let w=P.v[k+1u];let sup=P.v[k+2u];let e=P.v[k+3u];let hh=P.v[k+4u];let low=P.v[k+5u];let high=P.v[k+6u];
-    if(low==0.0 && high==0.0){gFresh=true;return;}
-    let W=sb0-sa0;
-    let constant=e==0.0 && low==high;
-    let ls=rayProofMul(l,dn);var hs=-1.0;if(hh>=0.0){hs=rayProofMul(rayProofMul(hh,dn),dn);}
-    // Work choice: the run's share of the budget, but never below the run's own
-    // execution bound (a quarter of it); shrinking the mathematical part further buys little.
-    let execution=rayProofMul(rayProofMul(1.2,rayProofUp(W)),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup)));
-    let allowed=max(max(budget*W/span,0.25*execution),1e-30);
-    var m=1.0;
-    if(!constant && rayProofMul(W,w)>allowed){
-        // Either the first- or the second-order term may meet the share; take the cheaper.
-        m=ceil(5.0*ls*W*W/(36.0*allowed));
-        if(hs>=0.0){m=min(m,ceil(sqrt(hs*W*W*W/(81.0*allowed))));}
-        m=clamp(m,1.0,64.0);
-    }
-    let n=u32(m);
-    if(gPanels+n>maxPanels){gOk=false;return;}
-    gPanels=gPanels+n;
-    if(constant){
-        gTau=gTau+low*W;gSigA=low;gFresh=false;
-        gDe=rayProofAdd(gDe,rayProofMul(rayProofMul(1.2,rayProofUp(W)),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
-        return;
-    }
-    if(gFresh){gSigA=lineSigma(o+sa0*d,clock,omega);gCalls=gCalls+1.0;gFresh=false;}
-    for(var j=0u;j<n;j=j+1u){
-        let sa=sa0+W*f32(j)/m;var sb=sa0+W*f32(j+1u)/m;if(j+1u==n){sb=sb0;}
-        let halfStep=(sb-sa)*0.5;let sm=sa+halfStep;
-        let width=rayProofUp(sb-sa);let hw=rayProofMul(width,0.5);
-        let sigM=lineSigma(o+sm*d,clock,omega);let sigB=lineSigma(o+sb*d,clock,omega);gCalls=gCalls+2.0;
-        gTau=gTau+(halfStep/3.0)*(gSigA+4.0*sigM+sigB);
-        gDm=rayProofAdd(gDm,gridPeano(width,w,ls,hs));
-        gDe=rayProofAdd(gDe,rayProofMul(rayProofMul(1.2,width),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
-        gSigA=sigB;
-    }
-}
-)WGSL";
-    out.wgsl += "fn lineGridDepthCore(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tTol:f32,clock:f32,omega:vec3<f32>)->GridDepth {\n"
-        " var out=GridDepth(0.0,rayProofInfinity(),0.0,0.0,0.0,0.0,0.0,rayProofInfinity(),rayProofInfinity(),0.0);\n"
-        " if(!("+domain+") || !(all(abs(o)<=vec3<f32>(3.4e38)) && all(abs(d)<=vec3<f32>(3.4e38)) && hi>lo && abs(lo)<=3.4e38 && abs(hi)<=3.4e38 && tTol>0.0 && tTol<=3.402823466e38)){return out;}\n"
-        " let h="+h+"; let margin="+margin+"; let sliver="+sliver+"; let first=vec3<f32>("+fx+","+fy+","+fz+"); let dims=vec3<f32>("+nx+","+ny+","+nz+");\n"
-        " let indexBase="+std::to_string(indexBase)+"u; let recordBase="+std::to_string(recordBase)+"u; let maxPanels="+std::to_string(maxPanels)+"u;\n"
-        " let expA="+expA+"; let expRound="+expRound+";\n";
-    out.wgsl += R"WGSL(
-    let u=1.1920928955078125e-7;
-    let gu=f32(16u*maxPanels+32u)*u;
-    let gamma=rayProofUp(gu/(1.0-gu));
-    // Model-qualified (relative 2^-16 premise) upper bound of |d|; the L1 norm bounds |o|.
-    let dn=rayProofUp(rayProofMul(sqrt(rayProofAdd(rayProofAdd(rayProofMul(d.x,d.x),rayProofMul(d.y,d.y)),rayProofMul(d.z,d.z))),1.0000153));
-    let on=rayProofAdd(rayProofAdd(abs(o.x),abs(o.y)),abs(o.z));
-    let dl1=rayProofAdd(rayProofAdd(abs(d.x),abs(d.y)),abs(d.z));
-    let pointError=rayProofMul(rayProofMul(8.0,u),rayProofAdd(on,rayProofMul(rayProofAdd(abs(lo),rayProofUp(hi-lo)),dl1)));
-    let halo=rayProofMul(2.0,pointError);
-    if(!(halo<margin)){return out;}
-    gTau=0.0;gDm=0.0;gDe=0.0;gSigA=0.0;gFresh=true;gOk=true;gCalls=0.0;gPanels=0u;
-    var switchEvaluations=0.0;var skipped=0.0;
-    var s=lo;
-    var c=floor((o+lo*d)/h);
-    let budget=tTol*0.5;let span=hi-lo;
-    let maxSteps=u32(dims.x+dims.y+dims.z)+8u;
-    for(var step=0u;step<maxSteps;step=step+1u){
-        if(!(s<hi) || !gOk){break;}
-        // Exit parameter of cell c along each axis; ties advance together.
-        var sExit=hi;
-        for(var i=0;i<3;i=i+1){
-            if(d[i]>0.0){sExit=min(sExit,((c[i]+1.0)*h-o[i])/d[i]);}
-            else if(d[i]<0.0){sExit=min(sExit,(c[i]*h-o[i])/d[i]);}
-        }
-        if(!(sExit>s)){sExit=s;}
-        let rel=c-first;
-        if(any(rel<vec3<f32>(0.0)) || any(rel>=dims)){return out;}
-        if(sExit>s){
-            // The proved region is this cell dilated by margin; the segment and its halo must stay inside it.
-            let pa=o+s*d;let pb=o+sExit*d;
-            let boxLo=min(pa,pb);let boxHi=max(pa,pb);
-            for(var i=0;i<3;i=i+1){
-                if(!(rayProofDown(boxLo[i]-halo)>=c[i]*h-margin && rayProofSignedUp(boxHi[i]+halo)<=(c[i]+1.0)*h+margin)){return out;}
-            }
-            let slot=P.v[indexBase+u32((rel.x*dims.y+rel.y)*dims.z+rel.z)];
-            if(slot<0.0){skipped=skipped+1.0;gFresh=true;}
-            else{
-                let k0=recordBase+u32(slot);
-                let nu=u32(P.v[k0+7u]);
-                if(nu==0u){gridRun(o,d,clock,omega,s,sExit,k0,dn,pointError,gamma,budget,span,maxPanels);}
-                else{
-                    let bands=k0+8u+3u*nu;
-                    var a=s;var guard=0u;var width=sliver;
-                    loop{
-                        if(!(a<sExit) || !gOk){break;}
-                        if(guard>=256u){gridRun(o,d,clock,omega,a,sExit,k0,dn,pointError,gamma,budget,span,maxPanels);break;}
-                        // Signs at a, and how far every switch provably keeps its sign.
-                        var mask=0u;var reachLen=rayProofInfinity();var known=true;
-                        for(var q=0u;q<nu;q=q+1u){
-                            let kq=u32(P.v[k0+8u+3u*q]);let lq=P.v[k0+9u+3u*q];let eq=P.v[k0+10u+3u*q];
-                            let g=lineSwitchAt(kq,o+a*d,clock,omega);switchEvaluations=switchEvaluations+1.0;guard=guard+1u;
-                            let room=rayProofDown(abs(g)-rayProofAdd(eq,rayProofMul(lq,pointError)));
-                            if(!(room>0.0)){known=false;}
-                            else{
-                                let rate=rayProofMul(lq,dn);
-                                if(rate>0.0){reachLen=min(reachLen,rayProofDown(room/rate));}
-                                if(g>0.0){mask=mask|(1u<<q);}
-                            }
-                        }
-                        var b=sExit;
-                        if(known){b=min(rayProofDown(a+reachLen),sExit);}
-                        if(!known || !(b>a)){
-                            // Near a crossing: a sliver under the cell's unconditional constants,
-                            // doubling while the signs stay unproved (its bound is first-order in its width).
-                            let e2=min(a+width,sExit);
-                            gridRun(o,d,clock,omega,a,e2,k0,dn,pointError,gamma,budget,span,maxPanels);
-                            a=e2;width=width*2.0;continue;
-                        }
-                        width=sliver;
-                        // Extend the run while every switch provably keeps the same sign.
-                        loop{
-                            if(!(b<sExit) || guard>=256u){break;}
-                            var same=true;var more=rayProofInfinity();
-                            for(var q=0u;q<nu;q=q+1u){
-                                let kq=u32(P.v[k0+8u+3u*q]);let lq=P.v[k0+9u+3u*q];let eq=P.v[k0+10u+3u*q];
-                                let g=lineSwitchAt(kq,o+b*d,clock,omega);switchEvaluations=switchEvaluations+1.0;guard=guard+1u;
-                                let room=rayProofDown(abs(g)-rayProofAdd(eq,rayProofMul(lq,pointError)));
-                                let positive=((mask>>q)&1u)==1u;
-                                if(!(room>0.0) || (g>0.0)!=positive){same=false;}
-                                else{let rate=rayProofMul(lq,dn);if(rate>0.0){more=min(more,rayProofDown(room/rate));}}
-                            }
-                            if(!same){break;}
-                            let nb=min(rayProofDown(b+more),sExit);
-                            if(!(nb>b)){break;}
-                            b=nb;
-                        }
-                        gridRun(o,d,clock,omega,a,b,bands+7u*mask,dn,pointError,gamma,budget,span,maxPanels);
-                        a=b;
-                    }
-                }
-            }
-        }
-        // Advance: every axis whose face this cell exit reached (at least one).
-        var moved=false;
-        for(var i=0;i<3;i=i+1){
-            var t=hi;
-            if(d[i]>0.0){t=((c[i]+1.0)*h-o[i])/d[i];}else if(d[i]<0.0){t=(c[i]*h-o[i])/d[i];}
-            if(d[i]!=0.0 && t<=sExit){c[i]=c[i]+sign(d[i]);moved=true;}
-        }
-        s=max(s,sExit);
-        if(!moved && s<hi){return out;}
-    }
-    if(s<hi || !gOk){return out;}
-    let tUpper=rayProofExp(rayProofSignedUp(-gTau+rayProofAdd(gDm,gDe)));
-    let tError=rayProofAdd(rayProofMul(tUpper,rayProofAdd(gDm,gDe)),rayProofAdd(expA,rayProofMul(expRound,tUpper)));
-    out.transmittance=exp(-gTau);out.error=tError;
-    out.calls=gCalls;out.switchEvaluations=switchEvaluations;out.skipped=skipped;out.panels=f32(gPanels);
-    out.mathematical=gDm;out.execution=gDe;out.expFloor=expA;
-    if(abs(out.transmittance)<=3.402823466e38 && tError<=tTol){out.status=1.0;}
-    return out;
-}
-fn lineGridDepthAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ScheduledTransport {
-    let r=lineGridDepthCore(o,d,lo,hi,tTol,clock,omega);
-    return ScheduledTransport(0.0,r.transmittance,rayProofInfinity(),r.error,r.status,vec2<f32>(r.calls,r.skipped),r.panels);
-}
-// Bound decomposition: (mathematical depth bound, execution depth bound, exp model floor, status).
-fn lineGridBoundsAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tTol:f32,clock:f32,omega:vec3<f32>)->vec4<f32> {
-    let r=lineGridDepthCore(o,d,lo,hi,tTol,clock,omega);
-    return vec4<f32>(r.mathematical,r.execution,r.expFloor,r.status);
-}
-// Work diagnostics: (σ calls, switch evaluations, skipped zero cells, panels).
-fn lineGridWorkAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tTol:f32,clock:f32,omega:vec3<f32>)->vec4<f32> {
-    let r=lineGridDepthCore(o,d,lo,hi,tTol,clock,omega);
-    return vec4<f32>(r.calls,r.switchEvaluations,r.skipped,r.panels);
-}
-)WGSL";
-    return out;
-}
-
-static Program compileLineTransportImpl(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
-                             const OntoMath::LineQuadratureCertificate& sigmaCert,
-                             const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells,
-                                        const OntoMath::LineTransportSchedule* schedule, bool depthOnly = false,
-                                        const OntoMath::RegionProofGrid* grid = nullptr, uint32_t gridPanels = 0,
-                                        const OntoMath::LineAlgebraicForm* gridForm = nullptr) {
-    Program prog;
-    Emit e;
-    e.parameterOffset = "0u";
-    // The host certificate retains the domain it proved. Runtime inputs must
-    // inhabit BOTH fields' domains; certification is not a clock/omega binding.
-    OntoMath::TypeEnv env{{"p", OntoMath::ValueKind::Vector}, {"x", OntoMath::ValueKind::Scalar},
-                          {"y", OntoMath::ValueKind::Scalar}, {"z", OntoMath::ValueKind::Scalar}};
-    for (const auto* cert : {&sigmaCert, &emissionCert})
-        for (const auto& [name, range] : cert->symbols) {
-            if (name == OntoMath::kTimeVar) { e.bindTime = true; e.timeExpression = "clock"; }
-            else if (name == OntoMath::kOmegaXVar || name == OntoMath::kOmegaYVar || name == OntoMath::kOmegaZVar) e.bindOmega = true;
-        }
-    for (const auto* name : {OntoMath::kTimeVar, OntoMath::kOmegaXVar, OntoMath::kOmegaYVar, OntoMath::kOmegaZVar})
-        if (sigmaCert.symbols.count(name) || emissionCert.symbols.count(name)) env[name] = OntoMath::ValueKind::Scalar;
-    for (const auto* f : {&sigma, &emission}) {
-        auto fieldEnv = env;
-        const auto& cert = f == &sigma ? sigmaCert : emissionCert;
-        for (const auto* name : {OntoMath::kTimeVar, OntoMath::kOmegaXVar, OntoMath::kOmegaYVar, OntoMath::kOmegaZVar})
-            if (!cert.symbols.count(name)) fieldEnv.erase(name);
-        if (cert.sourceExpression != f->toJson().dump()) {
-            prog.ok = false; prog.error = "transport certificate source changed; rebuild its proof"; return prog;
-        }
-        std::string why;
-        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
-        if (!f->checkTypes(fieldEnv, why, &kind, false) || kind != OntoMath::ValueKind::Scalar) {
-            prog.ok = false;
-            prog.error = "a transport field must be a Scalar with certified runtime inputs: " + why;
-            return prog;
-        }
-    }
-    if (!schedule && !grid && (sigmaCert.bands.empty() || emissionCert.bands.empty() || maxCells < 2)) {
-        prog.ok = false;
-        prog.error = "transport needs certificates with at least one band each, and at least 2 cells";
-        return prog;
-    }
-    const std::string sigmaValue = emitMathNode(sigma, e, "p");
-    const std::string sigmaBody = e.body;
-    e.body.clear();
-    const std::string emissionValue = depthOnly ? "0.0" : emitMathNode(emission, e, "p");
-    const std::string emissionBody = e.body;
-    e.body.clear();
-    std::string domainPredicate = "true";
-    for (const auto* cert : {&sigmaCert, &emissionCert})
-        for (const auto& [name, range] : cert->symbols) {
-            std::string value;
-            if (name == OntoMath::kTimeVar) value = "clock";
-            else if (name == OntoMath::kOmegaXVar) value = "omega.x";
-            else if (name == OntoMath::kOmegaYVar) value = "omega.y";
-            else if (name == OntoMath::kOmegaZVar) value = "omega.z";
-            else { e.refuse("transport cannot bind certificate symbol: " + name); continue; }
-            // Test an inward-rounded domain so nearest f32 conversion cannot
-            // accept an input just outside the mathematical qualification.
-            float lo = float(range.first), hi = float(range.second);
-            if (double(lo) < range.first) lo = std::nextafter(lo, INFINITY);
-            if (double(hi) > range.second) hi = std::nextafter(hi, -INFINITY);
-            if (!(std::isfinite(lo) && std::isfinite(hi) && lo <= hi)) {
-                e.refuse("transport certificate has no finite f32 runtime domain for " + name);
-                continue;
-            }
-            domainPredicate += " && (" + value + " >= " + e.param(lo) + " && " + value + " <= " + e.param(hi) + ")";
-        }
-    std::string prelude = R"WGSL(
-struct ScreenCoordinates { size: vec4<f32>, time: vec4<f32> };
-struct Parameters { v: array<f32> };
-@group(0) @binding(0) var<uniform> screen: ScreenCoordinates;
-@group(0) @binding(1) var<storage, read> P: Parameters;
-var<private> screenPoint: vec3<f32>;
-)WGSL";
-    prelude += kPrimitives;
-    prelude += "fn lineSigma(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + sigmaBody + "    return " + sigmaValue + ";\n}\n";
-    if(!depthOnly) prelude += "fn lineEmission(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + emissionBody + "    return " + emissionValue + ";\n}\n";
-    if (grid) return lowerGridDepth(e, std::move(prelude), domainPredicate, *grid, sigmaCert.model, gridPanels, gridForm);
-    if (schedule) return lowerScheduledTransport(e, std::move(prelude), domainPredicate, *schedule, depthOnly);
-    auto bands = [&](const OntoMath::LineQuadratureCertificate& cert, const std::string& tag) {
-        std::string out;
-        for (std::size_t j = 0; j < cert.bands.size(); ++j) {
-            const auto& b = cert.bands[j];
-            const auto up = [&](double v) { return e.param(float(v * (1.0 + 1e-6))); };
-            out += std::string(j == 0 ? "    if" : "    else if") + " (M <= " + e.param(float(b.cap)) + ") { " +
-                   tag + "L = " + up(b.lipschitz) + "; " + tag + "W = " + up(b.width) + "; " + tag + "SUP = " + up(b.sup) +
-                   "; " + tag + "EPS = " + up(b.execution) + "; " + tag + "H = " +
-                   (std::isfinite(b.hessian) ? up(b.hessian) : std::string("-1.0")) + "; " + tag + "LOW = " +
-                   e.param(float(b.low)) + "; " + tag + "HIGH = " + up(b.high) + "; " + tag + "OK = true; }\n";
-        }
-        return out;
-    };
-    const std::string sigmaBands = bands(sigmaCert, "s");
-    const std::string emissionBands = bands(emissionCert, "e");
-    const double expA = emissionCert.model.exponentialAbsolute(), expR = emissionCert.model.expRelative;
-    if (!(expA >= 0.0 && expR >= 0.0 && expR < 1.0)) e.refuse("invalid exponential error contract");
-    const std::string expAbsolute = e.param(float(expA * (1.0 + 1e-6)));
-    const std::string expRelative = e.param(float(expR * (1.0 + 1e-6)));
-    const std::string expRoundRelative = e.param(float((expR + 4.0 * std::ldexp(1.0, -23)) * (1.0 + 1e-6)));
-    for (float number : e.params)
-        if (!std::isfinite(number)) e.refuse("a transport constant is not finite float32");
-    prog.ok = !e.refused;
-    prog.error = e.refusal;
-    prog.params = std::move(e.params);
-    if (!prog.ok) return prog;
-    const std::string nmax = std::to_string(maxCells) + ".0";
-    prog.wgsl = std::move(prelude);
-    prog.wgsl += "fn transportUpperExp(x: f32) -> f32 { return (exp(x) + " + expAbsolute + ") / (1.0 - " + expRelative + ") * 1.000001; }\n";
-    prog.wgsl += "fn panelLocal(width: f32, L1: f32, H2: f32, hw: f32) -> f32 {\n"
-                 "    var l = min(width, L1 * hw);\n"
-                 "    if (H2 >= 0.0) { l = min(l, H2 * hw * hw * 0.5); }\n"
-                 "    return l;\n"
-                 "}\n";
-    prog.wgsl += "fn lineTransportAt(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32, clock: f32, omega: vec3<f32>) -> vec4<f32> {\n"
-                 "    if (!(" + domainPredicate + ")) { return vec4<f32>(0.0); }\n" +
-                 "    if (!(hi >= lo)) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
-                 "    let a = lo;\n"
-                 "    let b = hi;\n"
-                 "    let S = b - a;\n"
-                 "    let p0 = abs(o + a * d);\n"
-                 "    let p1 = abs(o + b * d);\n"
-                 "    let M = max(max(max(p0.x, p0.y), p0.z), max(max(p1.x, p1.y), p1.z));\n"
-                 "    let dn = length(d);\n"
-                 "    var sL = 0.0; var sW = 0.0; var sSUP = 0.0; var sEPS = 0.0; var sH = -1.0; var sLOW = 0.0; var sHIGH = 0.0; var sOK = false;\n"
-                 "    var eL = 0.0; var eW = 0.0; var eSUP = 0.0; var eEPS = 0.0; var eH = -1.0; var eLOW = 0.0; var eHIGH = 0.0; var eOK = false;\n" +
-                 sigmaBands + emissionBands +
-                 "    if (!sOK || !eOK) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
-                 "    let Tmax = transportUpperExp(max(0.0, -sLOW) * S);\n"
-                 "    if (!(Tmax <= 1e6)) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
-                 "    let u = 1.1920929e-7;\n"
-                 "    let lambda = 1.25;\n"
-                 "    let ds = 4.0 * u * (abs(a) + S);\n"
-                 "    let Ls = sL * dn; let Le = eL * dn;\n"
-                 "    var Hs = -1.0; if (sH >= 0.0) { Hs = sH * dn * dn; }\n"
-                 "    var gSecond = -1.0; if (eH >= 0.0) { gSecond = Tmax * (eH * dn * dn + 2.0 * sSUP * Le + Ls * eSUP + sSUP * sSUP * eSUP); }\n"
-                 "    let gWidth = Tmax * (max(eHIGH, 0.0) - min(eLOW, 0.0));\n"
-                 "    let gPrime = Tmax * (Le + sSUP * eSUP);\n"
-                 "    var n = 2.0;\n"
-                 "    var total = 1e30;\n"
-                 "    loop {\n"
-                 "        if (n > " + nmax + ") { break; }\n"
-                 "        let h = S / n;\n"
-                 "        let span = S + 2.0 * h;\n"
-                 "        let gamma = (n + 8.0) * u / (1.0 - (n + 8.0) * u);\n"
-                 "        let depthMath = span * (1.0 + lambda) * panelLocal(sW, Ls, Hs, h);\n"
-                 "        let depthExec = 1.2 * span * (sEPS + Ls * ds) + gamma * 1.2 * span * sSUP;\n"
-                 "        let F = Tmax * transportUpperExp(depthMath + depthExec);\n"
-                 "        let radius = S * (1.0 + lambda) * panelLocal(gWidth, gPrime, gSecond, h);\n"
-                 "        let mathematical = radius + S * F * depthMath * eSUP;\n"
-                 "        let sampleExecution = F * depthExec * eSUP + F * (eEPS + Le * ds) + (" + expAbsolute + " + " + expRoundRelative + " * F) * eSUP;\n"
-                 "        let execution = S * sampleExecution + (gamma + 4.0 * u) * S * (F * eSUP + sampleExecution);\n"
-                 "        total = (mathematical + execution) * 1.001;\n"
-                 "        if (total <= tol) { break; }\n"
-                 "        n = n * 2.0;\n"
-                 "    }\n"
-                 "    if (n > " + nmax + ") { return vec4<f32>(0.0, 0.0, n, total); }\n"
-                 "    let h = S / n;\n"
-                 "    let N = u32(n);\n"
-                 "    var tauA = 0.0;\n"
-                 "    var sigA = lineSigma(o + a * d, clock, omega);\n"
-                 "    var gA = lineEmission(o + a * d, clock, omega);\n"
-                 "    var L = 0.0;\n"
-                 "    for (var j = 0u; j < N; j = j + 2u) {\n"
-                 "        let sm = a + S * (f32(j + 1u) / n);\n"
-                 "        let sb = a + S * (f32(j + 2u) / n);\n"
-                 "        let sigM = lineSigma(o + sm * d, clock, omega);\n"
-                 "        let sigB = lineSigma(o + sb * d, clock, omega);\n"
-                 "        let tauM = tauA + h * (5.0 * sigA + 8.0 * sigM - sigB) / 12.0;\n"
-                 "        let tauB = tauA + (h / 3.0) * (sigA + 4.0 * sigM + sigB);\n"
-                 "        let gM = exp(-tauM) * lineEmission(o + sm * d, clock, omega);\n"
-                 "        let gB = exp(-tauB) * lineEmission(o + sb * d, clock, omega);\n"
-                 "        L = L + (h / 3.0) * (gA + 4.0 * gM + gB);\n"
-                 "        tauA = tauB; sigA = sigB; gA = gB;\n"
-                 "    }\n"
-                 "    return vec4<f32>(L, 1.0, n, total);\n"
-                 "}\n";
-    // Compatibility compute entry. A native consumer supplies its medium's
-    // own clock and emission direction explicitly through lineTransportAt.
-    prog.wgsl += "fn lineTransport(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32) -> vec4<f32> {\n"
-                 "    return lineTransportAt(o, d, lo, hi, tol, screen.time.x, -d);\n}\n";
-    return prog;
-}
-
-Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
-                             const OntoMath::LineQuadratureCertificate& sigmaCert,
-                             const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells) {
-    return compileLineTransportImpl(sigma,emission,sigmaCert,emissionCert,maxCells,nullptr);
-}
-
-Program compileScheduledLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
-                                      const OntoMath::LineTransportSchedule& schedule) {
-    OntoMath::LineQuadratureCertificate sc,ec;
-    sc.model=ec.model=schedule.model;
-    sc.symbols=schedule.sigmaSymbols; ec.symbols=schedule.emissionSymbols;
-    sc.sourceExpression=schedule.sigmaExpression; ec.sourceExpression=schedule.emissionExpression;
-    return compileLineTransportImpl(sigma,emission,sc,ec,2,&schedule);
-}
-
-Program compileGridDepthTransport(const OntoMath::MathNode& sigma, const OntoMath::RegionCertificate& certificate,
-                                  const OntoMath::RegionProofGrid& grid, uint32_t maxPanels) {
-    OntoMath::MathNode zero; zero.scalarForm = OntoMath::ScalarForm::constant(0.0);
-    OntoMath::LineQuadratureCertificate sc, ec;
-    sc.model = ec.model = certificate.model();
-    sc.symbols = certificate.symbols();
-    sc.sourceExpression = certificate.sourceExpression(); ec.sourceExpression = zero.toJson().dump();
-    if (certificate.model().restrictedForm || !(certificate.cell() == grid.cell)) {
-        Program p; p.ok = false; p.error = "grid transport needs the original-DAG model and its own certificate's grid"; return p;
-    }
-    return compileLineTransportImpl(sigma, zero, sc, ec, 2, nullptr, true, &grid, maxPanels, certificate.form());
-}
-
-Program compileScheduledProportionalIntegral(const OntoMath::MathNode& sigma,
-    const OntoMath::MathNode& vectorSource, const OntoMath::LineTransportSchedule& schedule) {
-    using Op = OntoMath::MathNode::Op;
-    OntoMath::MathNode zero; zero.scalarForm = OntoMath::ScalarForm::constant(0.0);
-    OntoMath::LineQuadratureCertificate sc,ec;
-    sc.model=ec.model=schedule.model;sc.symbols=schedule.sigmaSymbols;ec.symbols=schedule.emissionSymbols;
-    sc.sourceExpression=schedule.sigmaExpression;ec.sourceExpression=schedule.emissionExpression;
-    Program out = compileLineTransportImpl(sigma,zero,sc,ec,2,&schedule,true);
-    if (!out.ok) return out;
-    if(!(std::isfinite(schedule.model.relative) && schedule.model.relative>=0) || schedule.model.restrictedForm) {
-        out.ok=false;out.error="reduced integral needs a finite original-DAG relative execution model";return out;
-    }
-    Emit e; e.parameterOffset="lineScheduledTail()";
-    auto refuse = [&](const std::string& reason) { Program p; p.ok=false; p.error=reason; return p; };
-    OntoMath::TypeEnv env{{"p",OntoMath::ValueKind::Vector},{"x",OntoMath::ValueKind::Scalar},
-        {"y",OntoMath::ValueKind::Scalar},{"z",OntoMath::ValueKind::Scalar}};
-    std::map<std::string,double> magnitudes;
-    OntoMath::SignedRanges ranges;
-    for(const auto& [name,range]:schedule.sigmaSymbols) {
-        env[name]=OntoMath::ValueKind::Scalar;
-        magnitudes[name]=std::max(std::abs(range.first),std::abs(range.second)); ranges[name]=range;
-        if(name==OntoMath::kTimeVar){e.bindTime=true;e.timeExpression="clock";}
-        else if(name==OntoMath::kOmegaXVar || name==OntoMath::kOmegaYVar || name==OntoMath::kOmegaZVar)e.bindOmega=true;
-        else return refuse("reduced integral cannot bind symbol: "+name);
-    }
-    std::string why; OntoMath::ValueKind kind=OntoMath::ValueKind::Unknown;
-    if(!vectorSource.checkTypes(env,why,&kind,false) || kind!=OntoMath::ValueKind::Vector)
-        return refuse("reduced source needs a Vector with explicitly qualified inputs: "+why);
-    auto up=[&](double x) {
-        float f=float(x);
-        if(!(std::isfinite(x) && x>=0 && std::isfinite(f))){e.refuse("non-finite coefficient/error bound");return 0.0f;}
-        if(double(f)<x)f=std::nextafter(f,INFINITY);
-        return f;
-    };
-    std::string coefficients, errors;
-    // Coefficient proof uses the original arithmetic returned by OntoMath.
-    // Do not normalize it into a CPU-computed constant before emission.
-    for(const char* axis:{"x","y","z"}) {
-        OntoMath::MathNode component; component.op=Op::Component; component.stringArg=axis;
-        component.children.push_back(std::make_unique<OntoMath::MathNode>(vectorSource));
-        const auto coefficient=OntoMath::deriveProportionalFieldCoefficient(sigma,component,&why);
-        if(!coefficient)return refuse("no exact proportional component "+std::string(axis)+": "+why);
-        const auto bound=OntoMath::executionBound(*coefficient,magnitudes,schedule.model,-1,OntoMath::kAmbientPointVar,&ranges);
-        if(!bound || !(std::isfinite(bound->magnitude) && std::isfinite(bound->slack) && bound->slack>=0))
-            return refuse("the proportional coefficient has no finite execution enclosure");
-        // The relative execution premise does not cover arbitrary flush-to-zero
-        // amplification. Unknown tiny intermediate ranges decline; no device
-        // allowance is silently tightened to make a coefficient fit.
-        auto normal=[&](auto&& self,const OntoMath::MathNode& n)->bool{
-            const auto b=OntoMath::executionBound(n,magnitudes,schedule.model,-1,OntoMath::kAmbientPointVar,&ranges);
-            const double tiny=std::numeric_limits<float>::min();
-            if(!b || (b->magnitude>0 && b->magnitude<tiny) || (b->slack>0 && b->slack<tiny))return false;
-            for(const auto& c:n.children)if(!c || !self(self,*c))return false;
-            return true;
-        };
-        if(!normal(normal,*coefficient))return refuse("coefficient subnormal amplification is not qualified by the execution model");
-        if(!coefficients.empty()){coefficients+=",";errors+=",";}
-        coefficients+=emitMathNode(*coefficient,e,"p");
-        errors+=e.param(up(bound->slack*(1.0+1e-12)));
-    }
-    const std::string relative=e.param(up(std::max(schedule.model.relative,std::ldexp(1.0,-23))));
-    for(float p:e.params)if(!std::isfinite(p))e.refuse("coefficient parameter is not finite f32");
-    if(e.refused)return refuse(e.refusal);
-    out.params.insert(out.params.end(),e.params.begin(),e.params.end());
-    out.wgsl+="\nfn lineReductionCoefficient(clock:f32,omega:vec3<f32>)->vec3<f32>{\n"+e.body+"return vec3<f32>("+coefficients+");\n}\n";
-    // This is the arithmetic lowering of OntoMath::boundComplementProduct,
-    // not an independent transport identity. T's whole bound already includes
-    // inner quadrature, field execution and the absolute exp library allowance.
-    out.wgsl+=R"WGSL(
-struct ReducedIntegral {
-    value:vec3<f32>, transmittance:f32, error:vec3<f32>, transmittanceError:f32,
-    status:f32, samples:vec2<f32>, panels:f32
-};
-fn lineReducedIntegralAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ReducedIntegral {
-    var out=ReducedIntegral(vec3<f32>(0.0),0.0,vec3<f32>(rayProofInfinity()),rayProofInfinity(),0.0,vec2<f32>(0.0),0.0);
-    let depth=lineScheduledTransportAt(o,d,lo,hi,tol,tTol,clock,omega);
-    if(depth.status!=1.0){return out;}
-    let coefficient=lineReductionCoefficient(clock,omega);
-    let difference=1.0-depth.transmittance;
-    out.value=coefficient*difference;out.transmittance=depth.transmittance;
-    out.transmittanceError=depth.transmittanceError;out.samples=depth.samples;out.panels=depth.panels;
-)WGSL";
-    out.wgsl+="    let coefficientError=vec3<f32>("+errors+");let relative="+relative+";\n";
-    out.wgsl+=R"WGSL(
-    let normalFloor=bitcast<f32>(0x00800000u);
-    let subtraction=rayProofAdd(normalFloor,rayProofMul(relative,rayProofAdd(1.0,abs(depth.transmittance))));
-    for(var c=0u;c<3u;c=c+1u){
-        if(coefficient[c]==0.0 && coefficientError[c]==0.0){out.error[c]=0.0;continue;}
-        let k=abs(coefficient[c]);let ke=coefficientError[c];let dt=depth.transmittanceError;
-        let propagated=rayProofAdd(rayProofMul(k,dt),rayProofMul(ke,rayProofAdd(abs(difference),dt)));
-        let execution=rayProofAdd(rayProofMul(rayProofAdd(k,ke),subtraction),rayProofAdd(normalFloor,
-            rayProofMul(rayProofMul(relative,k),rayProofAdd(abs(difference),subtraction))));
-        out.error[c]=rayProofAdd(propagated,execution);
-    }
-    if(all(abs(out.value)<=vec3<f32>(3.402823466e38)) && all(out.error<=vec3<f32>(tol))){out.status=1.0;}
-    return out;
-}
-)WGSL";
-    return out;
-}
-
 ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
                                                bool bindTime) {
     Emit e;
@@ -5088,25 +4017,6 @@ std::string inspectVolumeSharing(const OntoMath::Piecewise* densityExpr,
     return planVolumeSharing(channels).signature;
 }
 
-VolumeSharedPreludeShape inspectVolumeSharedPrelude(const OntoMath::Piecewise* densityExpr,
-                                                    const OntoMath::Piecewise* extinctionExpr,
-                                                    const OntoMath::Piecewise* scatteringExpr,
-                                                    const OntoMath::Piecewise* volumeChromaExpr,
-                                                    const OntoMath::Piecewise* phaseExpr,
-                                                    const OntoMath::Piecewise* emissionExpr) {
-    const OntoMath::Piecewise* channels[6] = {densityExpr, extinctionExpr, scatteringExpr,
-                                              volumeChromaExpr, phaseExpr, emissionExpr};
-    const auto plan = planVolumeSharing(channels);
-    VolumeSharedPreludeShape out;
-    out.densityUses = plan.densityUses;
-    for (const auto& g : plan.groups) {
-        out.groups.push_back(g.node);
-        for (const auto& site : g.sites)
-            if (site.channel == 0) out.densitySites.push_back(site.node);
-    }
-    return out;
-}
-
 // Kernel lowering output: evaluator mathematics is emitted directly, independently
 // of the standalone marcher's entrypoint. Combined modules consume this boundary
 // rather than search/extract functions from a complete shader.
@@ -5152,13 +4062,6 @@ struct VolumeInstanceData {
     zeroProofOffset: u32,
     zeroProofDims: u32,
     zeroProofPresent: u32,
-    // Support certificates (Rung 2f-native, VolumeSupportKillerProgram):
-    // absolute offset of the header block in P and the enabled candidate
-    // count; 0 = none. Kernel-derived from authored density × box.
-    supportCertOffset: u32,
-    supportCertCount: u32,
-    supportClosedOffset: u32,
-    supportClosedCount: u32,
 };
 
 struct Params { v: array<f32> };
@@ -5327,171 +4230,8 @@ fn volumeZeroCellExit(inst: VolumeInstanceData, p: vec3<f32>,
     return wgsl;
 }
 
-VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* densityExpr,
-                                                     const std::vector<uint32_t>* only) {
-    VolumeSupportKillerProgram out;
-    if (!densityExpr || densityExpr->pieces.empty()) { out.error = "no authored density"; return out; }
-    const auto restricted = OntoMath::restrictAlgebraicToLine(*densityExpr, false);
-    if (!restricted) { out.error = "density has no line form: " + restricted.refusal; return out; }
-    const auto& form = *restricted.form;
-    out.formSwitches = form.switches.size();
-
-    // Own emitter state: the operands' constants land in the certificate
-    // payload, never in the authored parameter block, so the production
-    // density's slots, kernel DAG and sharing plan are untouched.
-    Emit e;
-    e.bindTime = true;
-    e.timeExpression = "instances[g_instIdx].time.x";
-    e.parameterOffset = "cb";
-    std::string blocks;
-    for (std::size_t k = 0; k < form.switches.size(); ++k) {
-        const auto& sw = form.switches[k];
-        if (sw.role > 3) continue;   // Select pieces: not yet lowered (no candidate)
-        if (only && std::find(only->begin(), only->end(), static_cast<uint32_t>(k)) == only->end()) continue;
-        const auto& node = form.nodes[sw.node];
-        if (!node.sourceA || (sw.role == 1 && !node.sourceB)) continue;
-        const std::size_t slot = out.switches.size();
-        const std::string h = "base + " + std::to_string(4u * slot) + "u";
-        const std::size_t bodyBegin = e.body.size();
-        const std::string a = emitMathNode(*node.sourceA, e, "p");
-        const std::string b = sw.role == 1 ? emitMathNode(*node.sourceB, e, "p") : std::string();
-        if (e.refused) { out.error = "certificate operand: " + e.refusal; return out; }
-        const std::string g = sw.role == 0 ? "(" + a + ")"
-                            : sw.role == 1 ? "((" + a + ") - (" + b + "))"
-                                           : "((" + a + ") - P.v[" + h + " + 3u])";
-        // The first certifying candidate answers (any one killer suffices);
-        // only a sample no candidate certifies needs them all, for the
-        // converse recheck bound (volumeSupportRecheck).
-        blocks += "    if (P.v[" + h + "] != 0.0) {\n" + e.body.substr(bodyBegin) +
-                  "        let v" + std::to_string(slot) + " = (P.v[" + h + "] * " + g + " - P.v[" + h +
-                  " + 1u]) * P.v[" + h + " + 2u];\n"
-                  "        if (v" + std::to_string(slot) + " > 0.0) { return v" + std::to_string(slot) + "; }\n"
-                  "        reach = max(reach, v" + std::to_string(slot) + ");\n    }\n";
-        out.switches.push_back(static_cast<uint32_t>(k));
-    }
-    if (out.switches.empty() && !(only && only->empty())) { out.error = "no switch with lowerable operands"; return out; }
-    out.params = e.params;
-    out.wgsl = "\nfn volumeSupportReach(p: vec3<f32>, base: u32) -> f32 {\n"
-               "    let cb = base + " + std::to_string(4u * out.switches.size()) + "u;\n"
-               "    var reach = -1.0;\n" + blocks + "    return reach;\n}\n";
-    out.ok = true;
-    return out;
-}
-
-// Certified exit along the ray for the sample at sampleT, or -1. The p-space
-// reach becomes a ray-parameter reach after a pad for f32 coordinate rounding
-// at both samples (p = ro + rd·t − origin, any grouping) and for the jump's own
-// index arithmetic; |rd| = 1 up to rounding the 2⁻¹⁶ shrink absorbs. A NaN reach
-// compares false and certifies nothing.
-static std::string volumeSupportExitWgsl() {
-    return R"WGSL(
-fn volumeSupportExit(reach: f32, inst: VolumeInstanceData, ro: vec3<f32>, sampleT: f32) -> f32 {
-    if (!(reach > 0.0)) { return -1.0; }
-    let ao = abs(inst.origin.xyz);
-    let ah = abs(inst.halfExtent.xyz);
-    let ar = abs(ro);
-    let scale = max(ao.x, max(ao.y, ao.z)) + max(ah.x, max(ah.y, ah.z)) +
-                max(ar.x, max(ar.y, ar.z)) + abs(sampleT);
-    return sampleT + max(reach * (1.0 - 1.52587890625e-5) - 4.0e-5 * scale, 0.0);
-}
-
-// Rung 2b (2026-10-18): closed-form killers, solved once per ray. The f32
-// mirror of Rendering::volumeSupportClosedInterval, widened outward under a
-// generous 2^-12 model (4096 ulps: Fast-mode reassociation, the f32 copies of
-// M, b and the thresholds, world/local coordinate rounding at |origin|, |ro|
-// and |t|) so a skipped sample is certified with margin. Returns the hull
-// (density may be nonzero only inside it) and one hole (never nonzero inside;
-// none when .z >= .w) in ray t. Payload, 16 floats per killer:
-//   radial    [1, rhoIn, rhoOut, |M|_F, m0, b0, m1, b1, m2, b2]  r = |M p + b|
-//   half      [2, 0, e, |n|, n, 0 ...]                             n·p > e
-// The closest-point form r² = A·(s − sc)² + |w|² avoids cancelling |u0|²
-// against the root, which a camera hundreds of radii away would otherwise do.
-fn volumeSupportClosed(inst: VolumeInstanceData, ro: vec3<f32>, rd: vec3<f32>, tMax: f32) -> vec4<f32> {
-    var hull = vec2<f32>(-3.0e38, 3.0e38);
-    var hole = vec2<f32>(1.0, -1.0);
-    let op = ro - inst.origin.xyz;
-    let ao = abs(inst.origin.xyz);
-    let ah = abs(inst.halfExtent.xyz);
-    let ar = abs(ro);
-    let scale = max(ao.x, max(ao.y, ao.z)) + max(ah.x, max(ah.y, ah.z)) +
-                max(ar.x, max(ar.y, ar.z)) + abs(tMax);
-    let kPad = 2.44140625e-4;
-    for (var k = 0u; k < inst.supportClosedCount; k = k + 1u) {
-        let at = inst.supportClosedOffset + 16u * k;
-        let norm = P.v[at + 3u];
-        if (P.v[at] > 1.5) {
-            // Certified where a·s − w exceeds every error, |s| ≤ scale.
-            let n = vec3<f32>(P.v[at + 4u], P.v[at + 5u], P.v[at + 6u]);
-            let e = P.v[at + 2u];
-            let a = dot(n, rd);
-            let w = e - dot(n, op);
-            let margin = kPad * (abs(e) + 2.0 * norm * scale);
-            if (abs(a) <= kPad * norm) {
-                if (-w > margin) { hull = vec2<f32>(1.0, -1.0); }
-                continue;
-            }
-            let root = (w + margin) / a;
-            let pad = kPad * (abs(root) + scale);
-            if (a > 0.0) { hull.y = min(hull.y, root + pad); }
-            else { hull.x = max(hull.x, root - pad); }
-            continue;
-        }
-        let m0 = vec3<f32>(P.v[at + 4u], P.v[at + 5u], P.v[at + 6u]);
-        let m1 = vec3<f32>(P.v[at + 8u], P.v[at + 9u], P.v[at + 10u]);
-        let m2 = vec3<f32>(P.v[at + 12u], P.v[at + 13u], P.v[at + 14u]);
-        let b = vec3<f32>(P.v[at + 7u], P.v[at + 11u], P.v[at + 15u]);
-        let u0 = vec3<f32>(dot(m0, op), dot(m1, op), dot(m2, op)) + b;
-        let du = vec3<f32>(dot(m0, rd), dot(m1, rd), dot(m2, rd));
-        let A = dot(du, du);
-        let ePos = kPad * (norm * scale + length(b));
-        let rhoIn = P.v[at + 1u];
-        let rhoOut = P.v[at + 2u];
-        if (!(A > kPad * kPad * norm * norm)) {
-            // r is nearly constant along this ray.
-            let r = length(u0);
-            let drift = sqrt(max(A, 0.0)) * scale + ePos;
-            if (r - drift > rhoOut || r + drift < rhoIn) { hull = vec2<f32>(1.0, -1.0); }
-            continue;
-        }
-        let sc = -dot(u0, du) / A;
-        let wl = length(u0 + sc * du);
-        let tPad = ePos / sqrt(A) + kPad * abs(sc);
-        if (rhoOut < 1.0e38) {
-            let outer = rhoOut + ePos;
-            let wlo = max(wl - ePos, 0.0);
-            if (rhoOut < 0.0 || wlo > outer) { hull = vec2<f32>(1.0, -1.0); continue; }
-            let h = sqrt(max(outer * outer - wlo * wlo, 0.0) / (A * (1.0 - kPad)));
-            hull = vec2<f32>(max(hull.x, sc - h - tPad), min(hull.y, sc + h + tPad));
-        }
-        if (rhoIn > 0.0) {
-            let inner = rhoIn - ePos;
-            let whi = wl + ePos;
-            if (inner > whi) {
-                let h = sqrt((inner * inner - whi * whi) / (A * (1.0 + kPad)));
-                let lo = sc - h + tPad;
-                let hi = sc + h - tPad;
-                if (hi - lo > hole.y - hole.x) { hole = vec2<f32>(lo, hi); }
-            }
-        }
-    }
-    return vec4<f32>(hull, hole);
-}
-
-// The converse bound. A non-positive reach r means every enabled killer is
-// short of its margin by at least |r|·L in g, so none can certify within |r| of
-// this sample: checks (never samples) are skipped until then. A skipped check
-// only sends the sample down the exact path, so no pad is needed; NaN stops
-// checking for the rest of the ray, which is equally safe.
-fn volumeSupportRecheck(reach: f32, sampleT: f32) -> f32 {
-    if (reach > 0.0) { return sampleT; }
-    if (reach <= 0.0) { return sampleT - reach; }
-    return 3.0e38;
-}
-)WGSL";
-}
-
 static std::string kernelVolumeSingleMarcher(bool trimProofSupport, bool hasSharing,
-                                            bool densityUsesSharing, bool supportCertificates = false) {
+                                            bool densityUsesSharing) {
     std::string wgsl;
     wgsl += R"WGSL(
 @fragment
@@ -5533,28 +4273,12 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     if (t1 <= t0) { discard; }
 
 )WGSL";
-    if (trimProofSupport && !supportCertificates) wgsl += R"WGSL(
+    if (trimProofSupport) wgsl += R"WGSL(
     let support = volumeSupportInterval(inst, ro, rd);
     let supportStart = max(t0, support.x);
     let supportEnd = min(t1, support.y);
     if (supportEnd <= supportStart) { discard; }
 )WGSL";
-    if (supportCertificates) {
-        wgsl += "    var supportStart = t0;\n    var supportEnd = t1;\n";
-        if (trimProofSupport) wgsl += R"WGSL(
-    let support = volumeSupportInterval(inst, ro, rd);
-    supportStart = max(supportStart, support.x);
-    supportEnd = min(supportEnd, support.y);
-)WGSL";
-        // Rung 2b: closed-form killers trim the prefix/tail and carry one hole;
-        // box events and sample spacing are untouched.
-        wgsl += R"WGSL(
-    let closed = volumeSupportClosed(inst, ro, rd, t1);
-    supportStart = max(supportStart, closed.x);
-    supportEnd = min(supportEnd, closed.y);
-    if (supportEnd <= supportStart) { discard; }
-)WGSL";
-    }
     wgsl += R"WGSL(
 
     let span = t1 - t0;
@@ -5568,8 +4292,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 
 )WGSL";
     if (trimProofSupport) wgsl += "    let useColumns = volumeColumnsWorthWalking(inst, rd);\n";
-    if (supportCertificates) wgsl += "    var certRecheck = -3.0e38;\n";
-    if (trimProofSupport || supportCertificates) wgsl += R"WGSL(
+    if (trimProofSupport) wgsl += R"WGSL(
     // Keep one extra prefix sample; positions still use the original chord.
     let firstSample = i32(clamp(ceil((supportStart - t0) / stepLength - 0.5) - 1.0,
                                  0.0, f32(samplesPerChord)));
@@ -5584,15 +4307,6 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     wgsl += R"WGSL(
         let worldP = ro + rd * sampleT;
         let p = worldP - inst.origin.xyz;
-)WGSL";
-    if (supportCertificates) wgsl += R"WGSL(
-        if (sampleT < closed.x || (sampleT > closed.z && sampleT < closed.w)) {
-            let closedExit = select(closed.w, closed.x, sampleT < closed.x);
-            i = max(i, i32(ceil((closedExit - t0) / stepLength - 0.5)) - 1);
-            continue;
-        }
-)WGSL";
-    wgsl += R"WGSL(
         // Grid walk: this sample and every later one before the ray leaves its
         // proven-empty cell contribute exactly nothing. Jump past them (the
         // loop's own increment then lands on the first sample beyond the exit).
@@ -5603,21 +4317,6 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             i = max(i, i32(ceil((zeroExit - t0) / stepLength - 0.5)) - 1);
             continue;
         }
-)WGSL";
-    // Rung 2f-native: no grid proof covers this sample; the certificates may
-    // (sphere tracing on the killer's argument, Hart 1996). Same jump law.
-    if (supportCertificates) wgsl += R"WGSL(
-        if (inst.supportCertCount != 0u && sampleT >= certRecheck) {
-            let certReach = volumeSupportReach(p, inst.supportCertOffset);
-            let certExit = volumeSupportExit(certReach, inst, ro, sampleT);
-            if (certExit >= 0.0) {
-                i = max(i, i32(ceil((certExit - t0) / stepLength - 0.5)) - 1);
-                continue;
-            }
-            certRecheck = volumeSupportRecheck(certReach, sampleT);
-        }
-)WGSL";
-    wgsl += R"WGSL(
         /*VOLUME_SHARED_BEFORE_DENSITY*/
         let density = max(volumeDensityEval(p), 0.0);
 
@@ -6042,20 +4741,11 @@ KernelVolumeEvaluator repairVolumeEvaluator(const VolumeProgramInput& m,
     return out;
 }
 
-Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport,
-                               const OntoMath::Piecewise* supportCertificateDensity,
-                               const std::vector<uint32_t>* supportCertificateSwitches) {
+Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport) {
     Program out = evaluator.program;
     out.kernelVolumePreparationWgsl = kernelVolumeTimePreparation({evaluator.program}, false);
-    if (!out.ok) return out;
-    std::string certificates;
-    if (supportCertificateDensity) {
-        const auto killers = lowerVolumeSupportKillers(supportCertificateDensity, supportCertificateSwitches);
-        if (killers.ok) certificates = killers.wgsl + volumeSupportExitWgsl();
-    }
-    out.wgsl = kernelVolumePrefix(trimProofSupport) + out.wgsl + certificates +
-        kernelVolumeSingleMarcher(trimProofSupport, evaluator.hasSharing, evaluator.densityUsesSharing,
-                                  !certificates.empty());
+    if (out.ok) out.wgsl = kernelVolumePrefix(trimProofSupport) + out.wgsl +
+        kernelVolumeSingleMarcher(trimProofSupport, evaluator.hasSharing, evaluator.densityUsesSharing);
     return out;
 }
 
@@ -6065,8 +4755,7 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media, bool trim
 
 Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
                          const std::vector<KernelVolumeEvaluator>& evaluators,
-                         bool trimProofSupport, const std::vector<bool>& supportCertificates,
-                         const std::vector<std::vector<uint32_t>>& supportCertificateSwitches) {
+                         bool trimProofSupport) {
     Program out;
     if (media.empty()) {
         out.ok = false;
@@ -6076,10 +4765,7 @@ Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
     }
     if (media.size() == 1) {
         return composeVolumeEvaluator(evaluators.empty() ? lowerVolumeEvaluator(media.front()) : evaluators.front(),
-                                      trimProofSupport,
-                                      !supportCertificates.empty() && supportCertificates.front()
-                                          ? media.front().densityExpr : nullptr,
-                                      supportCertificateSwitches.empty() ? nullptr : &supportCertificateSwitches.front());
+                                      trimProofSupport);
     }
 
     auto replaceAll = [](std::string& text,
@@ -6094,7 +4780,6 @@ Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
 
     std::vector<Program> members;
     members.reserve(media.size());
-    std::vector<bool> memberCertificates(media.size(), false);
 
     for (std::size_t i = 0; i < media.size(); ++i) {
         const auto& m = media[i];
@@ -6143,19 +4828,6 @@ Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
         replaceAll(evalBlock, "HAS_AUTHORED_LIGHT_ANGULAR", "HAS_AUTHORED_LIGHT_ANGULAR" + suffix);
 
         out.wgsl += evalBlock;
-        if (i < supportCertificates.size() && supportCertificates[i]) {
-            const auto killers = lowerVolumeSupportKillers(
-                m.densityExpr, i < supportCertificateSwitches.size() ? &supportCertificateSwitches[i] : nullptr);
-            if (killers.ok) {
-                std::string reach = killers.wgsl;
-                replaceAll(reach, "volumeSupportReach", "volumeSupportReach" + suffix);
-                if (std::none_of(memberCertificates.begin(), memberCertificates.end(),
-                                 [](bool b) { return b; }))
-                    out.wgsl += volumeSupportExitWgsl();
-                out.wgsl += reach;
-                memberCertificates[i] = true;
-            }
-        }
         members.push_back(std::move(member));
     }
     std::vector<KernelVolumeEvaluator> memberSharing;
@@ -6222,21 +4894,11 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         // Unknown/near-parallel intervals cannot certify absence, including
         // samples rounded onto an authored box boundary. Keep them unbounded
         // here; the existing box events still delimit their sampling domain.
-        if (!memberCertificates[i]) out.wgsl += "    let raySupport" + std::to_string(i) +
+        out.wgsl += "    let raySupport" + std::to_string(i) +
             " = select(vec2<f32>(-3.0e38, 3.0e38), volumeSupportInterval(" + inst +
             ", ro, rd), " + inst + ".zeroProofPresent != 0u && all(abs(rd) >= vec3<f32>(1e-8)));\n";
-        // Rung 2b: closed-form killers narrow the member's ray support (prefix,
-        // tail) and carry one hole the walk jumps; box events never move.
-        else out.wgsl += "    let closed" + std::to_string(i) + " = volumeSupportClosed(" + inst + ", ro, rd, t1);\n"
-            "    let raySupportGrid" + std::to_string(i) +
-            " = select(vec2<f32>(-3.0e38, 3.0e38), volumeSupportInterval(" + inst +
-            ", ro, rd), " + inst + ".zeroProofPresent != 0u && all(abs(rd) >= vec3<f32>(1e-8)));\n"
-            "    let raySupport" + std::to_string(i) + " = vec2<f32>(max(raySupportGrid" + std::to_string(i) +
-            ".x, closed" + std::to_string(i) + ".x), min(raySupportGrid" + std::to_string(i) + ".y, closed" +
-            std::to_string(i) + ".y));\n";
         if (trimProofSupport) out.wgsl += "    let useColumns" + std::to_string(i) +
             " = volumeColumnsWorthWalking(" + inst + ", rd);\n";
-        if (memberCertificates[i]) out.wgsl += "    var certRecheck" + std::to_string(i) + " = -3.0e38;\n";
     }
 
     if (trimProofSupport) {
@@ -6391,25 +5053,9 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "                    } else if (sampleT < raySupport" + n + ".x) {\n"
             "                        walkExit = min(walkExit, raySupport" + n + ".x);\n"
             "                    } else {\n"
-            "                        " + std::string(memberCertificates[i] ? "var" : "let") + " cellExit" + n +
-                " = volumeZeroCellExit(mediumInst" + n +
+            "                        let cellExit" + n + " = volumeZeroCellExit(mediumInst" + n +
                 ", worldP - mediumInst" + n + ".origin.xyz, ro, rd" +
                 (trimProofSupport ? ", sampleT, useColumns" + n : std::string{}) + ");\n"
-            // Rung 2f-native: where no grid proof covers the sample, a support
-            // certificate may; its exit joins the same collective jump.
-            + std::string(memberCertificates[i]
-                ? "                        if (cellExit" + n + " < 0.0 && sampleT > closed" + n + ".z && sampleT < closed" + n +
-                      ".w) { cellExit" + n + " = closed" + n + ".w; }\n"
-                  "                        if (cellExit" + n + " < 0.0 && mediumInst" + n + ".supportCertCount != 0u && "
-                      "sampleT >= certRecheck" + n + ") {\n"
-                  "                            g_instIdx = " + inst + ";\n"
-                  "                            let certReach" + n + " = volumeSupportReach_" + n +
-                      "(worldP - mediumInst" + n + ".origin.xyz, mediumInst" + n + ".supportCertOffset);\n"
-                  "                            cellExit" + n + " = volumeSupportExit(certReach" + n + ", mediumInst" + n +
-                      ", ro, sampleT);\n"
-                  "                            certRecheck" + n + " = volumeSupportRecheck(certReach" + n + ", sampleT);\n"
-                  "                        }\n"
-                : "") +
             "                        if (cellExit" + n + " < 0.0) {\n"
             "                            walkAllProven = false;\n"
             "                            g_instIdx = " + inst + ";\n"

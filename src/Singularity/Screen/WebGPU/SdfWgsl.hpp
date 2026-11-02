@@ -26,7 +26,6 @@
 #include "Singularity/Screen/RadianceSource.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; }
-namespace OntoMath { struct LineQuadratureCertificate; struct LineTransportSchedule; struct RegionProofGrid; class RegionCertificate; }
 
 namespace sdfwgsl {
 
@@ -162,60 +161,6 @@ struct Program {
     std::string error;   // one line, naming the op and why
 };
 
-// Step 2c, first slice (2026-10-20, plan §6ap): a DEVICE quadrature of an
-// authored scalar field f(p) along a line, certified by the host. The program
-// defines fn lineField(p) (f, lowered by the production emitter) and
-//   fn lineIntegral(o, d, lo, hi, tol) -> vec4<f32>(value, status, cells, total)
-// which picks the certificate's magnitude band from the segment's endpoints,
-// the even cell count its first-order Simpson radius needs, runs that many
-// cells in f32, and reports the proved total (mathematical + device execution
-// under the certificate's model, inflated for the bound's own f32 arithmetic).
-// status 0 is a refusal: beyond every band, or more cells than maxCells. It
-// mirrors OntoMath::planLineQuadrature. No entry point: a consumer (a compute
-// witness today, the volume renderer later) calls lineIntegral.
-Program compileLineQuadrature(const OntoMath::MathNode& field, const OntoMath::LineQuadratureCertificate& cert,
-                              uint32_t maxCells);
-// Transport along a line on the DEVICE (plan §6aq): fn lineTransport(o, d, lo,
-// hi, tol) -> vec4<f32>(L, status, cells, total) for L = ∫ exp(−∫σ)·ε ds, the
-// depth accumulated along ONE march (O(cells)), the cells and the a-priori
-// total chosen exactly as OntoMath::planLineTransport chooses them.
-// lineTransportAt adds (clock: f32, omega: vec3<f32>), explicit per-medium
-// runtime inputs. Each must lie in BOTH certificates' retained symbol domains;
-// missing bindings or an unrepresentable domain refuse compilation, runtime
-// inputs outside the domain refuse the ray. The compatibility wrapper binds
-// screen.time.x and -d. Neither route substitutes zero for a missing input.
-Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
-                             const OntoMath::LineQuadratureCertificate& sigmaCert,
-                             const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells);
-
-// Execute a host-derived nonuniform schedule with ONE attenuation prefix and
-// separate L/T bounds. This is a device execution witness, not a production
-// per-pixel CPU planner. The shader refuses other rays, stale source snapshots,
-// inputs outside the proved symbol domains and results above either tolerance.
-// Defines lineScheduledTransportAt(...,tol,tTol,clock,omega) ->
-// ScheduledTransport; ...RadianceAt / ...TransmittanceAt / ...WorkAt expose
-// vec4 projections with the existing (o,d,lo,hi,tol,clock,omega) test interface.
-Program compileScheduledLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
-                                      const OntoMath::LineTransportSchedule& schedule);
-
-// OntoMath derives each component's proportional coefficient. Execute one
-// extinction-only schedule, then its exact reduction for a vector source.
-// The schedule must certify sigma and literal zero emission. Coefficients are
-// qualified over the schedule's explicit symbol domains. Reports RGB/T and
-// separate absolute errors; no native density/floor/scattering policy implied.
-Program compileScheduledProportionalIntegral(const OntoMath::MathNode& sigma,
-    const OntoMath::MathNode& vectorSource, const OntoMath::LineTransportSchedule& depthSchedule);
-
-// Plan §6be: extinction depth and transmittance for ANY ray through a
-// camera-independent RegionProofGrid of `certificate` (proved with a dilation
-// margin). Cells inside zero blocks are skipped and contribute exactly zero;
-// occupied cells use their own constants in the scheduled depth arithmetic.
-// Defines lineGridDepthAt(o,d,lo,hi,tTol,clock,omega) -> ScheduledTransport
-// (samples = (σ calls, skipped zero cells)). A ray whose panel escapes its
-// dilated cell, leaves the grid, or exceeds `maxPanels` refuses (status 0).
-Program compileGridDepthTransport(const OntoMath::MathNode& sigma, const OntoMath::RegionCertificate& certificate,
-                                  const OntoMath::RegionProofGrid& grid, uint32_t maxPanels);
-
 // Compile a field into a raymarching shader plus its parameter block.
 // `colorFormatIsSrgb` is unused for now; kept out of the signature deliberately —
 // the fragment output convention lives with the pipeline, not the codegen.
@@ -288,22 +233,6 @@ std::string inspectVolumeSharing(const OntoMath::Piecewise* densityExpr,
                                  const OntoMath::Piecewise* volumeChromaExpr,
                                  const OntoMath::Piecewise* phaseExpr,
                                  const OntoMath::Piecewise* emissionExpr);
-// The same plan as the Kernel's cost ranking needs it (Rendering::
-// volumeDensitySampleCost): one representative node per shared group, and the
-// density nodes the emitter reads from a group's slot. When densityUses, the
-// marchers fill EVERY group before density at each undecided sample, so a
-// sample a certificate skips saves the whole prelude, not only density's text.
-struct VolumeSharedPreludeShape {
-    bool densityUses = false;
-    std::vector<const OntoMath::MathNode*> groups;
-    std::vector<const OntoMath::MathNode*> densitySites;
-};
-VolumeSharedPreludeShape inspectVolumeSharedPrelude(const OntoMath::Piecewise* densityExpr,
-                                                    const OntoMath::Piecewise* extinctionExpr,
-                                                    const OntoMath::Piecewise* scatteringExpr,
-                                                    const OntoMath::Piecewise* volumeChromaExpr,
-                                                    const OntoMath::Piecewise* phaseExpr,
-                                                    const OntoMath::Piecewise* emissionExpr);
 
 // V1 authored participating-medium extinction sigma_t(p,t). Absence is a
 // compatibility state, not a refusal: sigma_t falls back to 0.5 * D.
@@ -399,55 +328,10 @@ KernelVolumeEvaluator lowerVolumeEvaluator(const VolumeProgramInput& input);
 KernelVolumeEvaluator repairVolumeEvaluator(const VolumeProgramInput& input,
                                             const KernelVolumeEvaluator& previous,
                                             bool parametersOnly);
-// Ray-domain transport Rung 2f-native: the density's support-certificate
-// candidates lowered by the production emitter. A candidate is every switch of
-// OntoMath's line form (restrictAlgebraicToLine) whose authored operands are
-// known: |a|, sqrt(a) (role 0), min/max(a, b) (role 1), clamp(a, lo, hi) (roles
-// 2/3). WHICH candidates exist is structural (the Piecewise's shape); whether a
-// candidate kills over a box, its sign, Lipschitz bound and slack are payload
-// (Rendering::deriveVolumeSupportCertificates; revision × extent), so a box
-// resize never recompiles. `wgsl` defines
-//     fn volumeSupportReach(p: vec3<f32>, base: u32) -> f32
-// reading four header floats per candidate at P.v[base + 4k] — {sign (0 =
-// disabled), slack δ, 1/L, offset} — then `params` (the operands' own authored
-// constants, emitted under parameterOffset base + 4K). It returns the first
-// certifying candidate's p-space distance (sign·g − δ)/L > 0, or else the
-// largest non-positive one (the converse recheck bound).
-// Time-only leaves are evaluated inline (no preparation slots): a certificate
-// holds at every clock, so it may read the clock however the emitter does.
-//
-// `only` (2026-10-18, eleventh pass; the Firmament's direction 1) lowers just
-// those switch indices, in form order: the renderer passes the killers its
-// payload enables. Measured on the M5, every compiled candidate costs at each
-// check even when its sign is 0 — Northern Veil's curtains carry 12 switches
-// (one clamp around noise) for 1–2 enabled killers, and checking them ran
-// +50–60% where the two killers alone ran −8…+10%. So the enabled set is
-// structural: a box resize recompiles exactly when it changes that set.
-// nullptr lowers every candidate (the census and witnesses).
-struct VolumeSupportKillerProgram {
-    bool ok = false;
-    std::string error;
-    std::string wgsl;
-    std::vector<uint32_t> switches;   // header slot k -> line-form switch index
-    std::size_t formSwitches = 0;     // the form's switch count (identity cross-check)
-    std::vector<float> params;
-};
-VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* densityExpr,
-                                                     const std::vector<uint32_t>* only = nullptr);
-
-// `supportCertificates[i]` adds the Rung 2f-native lane to member i: it
-// consults its certificates (VolumeInstanceData supportCert*) at a sample no
-// grid proof covers, before evaluating its density. A structural lane, per
-// member: an all-false (or empty) vector emits exactly the pre-existing marcher.
-// `supportCertificateSwitches` (per member, or the one pointer) narrows the
-// lowered killers as lowerVolumeSupportKillers's `only`; absent = every candidate.
-Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport = true,
-                               const OntoMath::Piecewise* supportCertificateDensity = nullptr,
-                               const std::vector<uint32_t>* supportCertificateSwitches = nullptr);
+Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport = true);
 Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
                          const std::vector<KernelVolumeEvaluator>& evaluators,
-                         bool trimProofSupport = true, const std::vector<bool>& supportCertificates = {},
-                         const std::vector<std::vector<uint32_t>>& supportCertificateSwitches = {});
+                         bool trimProofSupport = true);
 
 // V5 exact overlap baseline. Reuses direct lowerVolumeEvaluator() output for every member's evaluator
 // semantics, then composes those evaluators into one shared ray integral. The
