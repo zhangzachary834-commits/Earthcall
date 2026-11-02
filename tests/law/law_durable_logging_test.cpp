@@ -564,6 +564,26 @@ int main() {
             expectRejectedWithoutMutation(malformedNestedProperty,
                 "Malformed nested authored property discarded live Laws");
 
+            // Provenance relations are decoded by RelationManager after
+            // replace-all. Malformed edges or nested attachment values must
+            // reject while the previous authored Law and First Mover survive.
+            auto malformedProvenance = original;
+            malformedProvenance["laws"][0]["provenance"] = nlohmann::json::array();
+            malformedProvenance["laws"][0]["provenance"].push_back(
+                {{"type", 42}, {"entityA", "author"}, {"entityB", "target"}});
+            expectRejectedWithoutMutation(malformedProvenance,
+                "Malformed provenance relation discarded live Laws");
+            auto malformedProvenanceAttachment = original;
+            malformedProvenanceAttachment["laws"][0]["provenance"] =
+                nlohmann::json::array();
+            malformedProvenanceAttachment["laws"][0]["provenance"].push_back(
+                {{"type", "authored-by"}, {"entityA", "author"},
+                 {"entityB", "target"},
+                 {"attachment", {{"parentAnchor",
+                    nlohmann::json::array({"not-a-number", 0.0, 0.0})}}}});
+            expectRejectedWithoutMutation(malformedProvenanceAttachment,
+                "Malformed provenance attachment discarded live Laws");
+
             // Persisted preflight alone is insufficient: a caller can restore
             // one Law, rename its authored ID, then register it beside its
             // source without passing through loadFromJson(). Fail closed and
