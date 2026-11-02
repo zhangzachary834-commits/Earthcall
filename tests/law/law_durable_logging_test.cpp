@@ -1026,8 +1026,8 @@ int main() {
             auto saved = source.toJson();
             saved["id"] = "law-" + std::to_string(nearMax) + "suffix";
             (void)Law::fromJson(saved);
-            saved["id"] = "law-" + std::to_string(nearMax);
-            (void)Law::fromJson(saved);
+            // Reserve the final numeric ID in the terminal regression below;
+            // doing so correctly exhausts the process-global counter.
             Law freshA("Generated identifier A");
             Law freshB("Generated identifier B");
             check(freshA.getIdentifier() != "law-0" &&
@@ -1075,19 +1075,23 @@ int main() {
                   liveEngine->durableHistoryLineage() == engineHistory &&
                   guardedLoad.toJson() == original,
                   "Exhausted Law ID counter partially replaced the live world");
-            Law lastSafe("Last safely generated identifier");
-            check(lastSafe.getIdentifier() ==
-                      "law-" + std::to_string(nearExhaustion + 1),
-                  "Restored near-maximum Law ID was not reserved");
-            bool refusedExhaustion = false;
+            // A previously constructed Law can be explicitly restored to
+            // law-(max-1) while that numeric slot is still available. It must
+            // reserve max as the exhausted sentinel; otherwise the next
+            // constructor silently mints the same ID as the restored Law.
+            const auto lastNumericId = "law-" + std::to_string(nearExhaustion + 1);
+            source.setLawIdentifier(lastNumericId);
+            check(source.getIdentifier() == lastNumericId,
+                  "Explicit last numeric Law ID was not restored");
+            bool refusedCollision = false;
             try {
-                Law exhausted("Must refuse exhausted identifier space");
-                (void)exhausted;
+                Law colliding("Must not reuse restored last numeric identifier");
+                (void)colliding;
             } catch (const std::overflow_error&) {
-                refusedExhaustion = true;
+                refusedCollision = true;
             }
-            check(refusedExhaustion,
-                  "Generated Law ID counter wrapped instead of refusing exhaustion");
+            check(refusedCollision,
+                  "Generated Law ID collided with restored law-(max-1)");
         }
 
         std::cout << "law_durable_logging_test PASSED\n";
