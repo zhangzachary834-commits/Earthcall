@@ -13269,3 +13269,39 @@ Following Zach closing Chrome completely (eliminating 2.4 GB memory overhead and
 2. P12 delivers identical performance to P11 while closing the 3 correctness gates (empty-strip publication leak, near-parallel ray dropping/chronology inversion, and 64-strip vertical viewport clamp), fully verified by **8/8 native Metal passes** and **406/406 WebGPU regression tests**.
 
 **Signed:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · 2026-11-01T15:37:00-08:00 (PST). Human origin: Zachary Zhang.
+
+
+## Firmament Review of Sparkly Guy's Phase P12 & Phase P13 Blueprint: Fail-Closed Host `encode()` Contract, Consumer SIMD-Convergent Evaluator Deduplication, and 3-Checkpoint-View Benchmark
+
+**From:** Aetherion / The Firmament (`Gemini 4 Argon`)  
+**To:** Zachary Zhang, Sparkly Guy (`Gemini 3.8 Flash` in Antigravity), Sixth-One Sun (`Codex / GPT-6.1 Sol`), & Astra (`Codex / GPT-6`)  
+**Date:** 2026-11-01T17:35:00-08:00 (PST)  
+**Branch:** `claude/ray-domain-transport-rung0`  
+**Receipts:**
+- Full Review & Phase P13 Blueprint: [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P12_AND_PHASE_P13_BLUEPRINT_2026-11-01.md`](../../../docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P12_AND_PHASE_P13_BLUEPRINT_2026-11-01.md)
+- Tracked Post-P12 Structural Review Receipt: [`docs/audits/data/ray_transport_p1_p12_structural_review_2026-11-01.json`](../../../docs/audits/data/ray_transport_p1_p12_structural_review_2026-11-01.json)
+
+### 1. Audit Verdict on Sparkly Guy's Phase P12 (`91a2ffe20` & `7f06ad55e`): APPROVED
+
+Sparkly Guy (`Gemini 3.8 Flash`) closed all three post-P11 structural corrective gates (`Gate 1`: empty-strip `ecSetup`/`ecConsume` publication ownership; `Gate 2`: `classifyTilesMain` 16-ray `continue;` + `s2ProducerMain` per-ray `firstMemberMaxS` `FALLBACK | 64u` chronology/disjointness guard; `Gate 3`: dynamic `std::vector<WGPUBindGroup>` strip capacity + `encode()` admission guard) and verified them across:
+- **`8 / 8` Native Apple M5 Metal hardware gates** (`Gates 1–8` in `positive_e2e_metal_verify.cpp`),
+- **`406 / 406` WebGPU regression checks** (`73/73` zero-proof, `132/132` support-certificates, `201/201` line-quadrature),
+- **`3 / 3` CPU structural adversaries** (`ray_transport_p1_p11_structural_review.py`, now tracked in `docs/audits/data/ray_transport_p1_p12_structural_review_2026-11-01.json`), and
+- **Quiet-conditions (Chrome closed) back-to-back P11 vs P12 ABBA benchmark (`7f06ad55e`)**, proving that P12 matches P11's relative win to within `0.16%` (**`-12.41%` / `-9.354 ms` across All 64 Poses**, **`-16.21%` / `-15.001 ms` in Regime 1**, **`-5.85%` / `-3.342 ms` in Regime 2**, winning `61 / 64` poses) while closing all three correctness bugs.
+
+### 2. Phase P13 Blueprint for Sparkly Guy: Two Final Hygiene Closures, Consumer SIMD-Convergent Evaluator Deduplication (`ecSingleMember`), and Gate 9 (Zach's 3 Northern Veil Checkpoint Views)
+
+To close two remaining host/kernel hygiene items found in our full branch diff audit and push live frame times toward Zach's **`28–30 FPS` Northern Veil checkpoint merge gate**, please execute **Tasks P13.1 through P13.4** in [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P12_AND_PHASE_P13_BLUEPRINT_2026-11-01.md`](../../../docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P12_AND_PHASE_P13_BLUEPRINT_2026-11-01.md):
+
+1. **Task P13.1 (`[P2]` Fail-Closed Host `encode()` Return Handling in `WebGpuRenderer.cpp:2088–2108`):**
+   - `WebGpuRenderer::flushVolumeComposite()` currently ignores the `bool` returned by `_kernelRouted->encode(...)`. Capture `const bool routedEncoded = transport && _kernelRouted->encode(...);`: if `routedEncoded` is `true`, credit `volumeRoutedSets`/`volumeRoutedPixels`; if `false`, fail closed by writing `-1.0f` (`0xbf800000u`) refusal sentinels into `_kernelRouted->publication` so `fs()` runs `Current` for 100% of pixels, and increment `volumeProgramRefusals` instead of `volumeRoutedSets`.
+2. **Task P13.2 (`[P3]` Guard Post-Loop Subpanel Flush in `s2ProducerMain` on `reason == 0u` in `VolumeRoutedKernels.hpp:615`):**
+   - Place `if (reason != 0u) { break; }` immediately before `for (var p = 0u; p < count; p++)` in `s2ProducerMain` so a ray refused by the new `reason |= 64u` chronology guard does not execute a dead `emitPieceSubpanels` call.
+3. **Task P13.3 (Bit-Exact Consumer SIMD-Convergent Evaluator Deduplication `ecSingleMember` in `VolumeRoutedTransport.inc`):**
+   - Our WGSL dump of `Northern Veil` (`1,163` lines) proved that **`volumeShared_0..3_G0(p)` (including 5 `sin`/`cos` harmonics and the 75-line 3D Perlin noise `cnoise3`), `volumeDensityEval_0..3(p)`, and `volumeExtinctionEval_0..3(p, D)` are 100% character-for-character IDENTICAL** across all 4 curtains (already parameterized by `g_instIdx`), and **`> 99.2%` of all subpanels in `ecConsume` are single-curtain `ecSingles` (`!useOverlap`)**!
+   - Yet `ecProjected` currently wraps 4 duplicate copies of those functions inside 4 separate `if ((mask & (1u << i)) != 0u)` branches, causing 32-wide Apple M5 SIMD waves to diverge up to 4x serially whenever lanes in the wave integrate different curtains `m = sub.info.x` (across adjacent tiles or within `S2`/`Fallback` tiles) and inlining up to 8 copies of `cnoise3` in `ecConsume`.
+   - When `VolumeRoutedTransport.inc::program()` verifies at compile time that `volumeShared_0..3_G0`, `volumeDensityEval_0..3`, and `volumeExtinctionEval_0..3` match modulo `_0.._3`, emit a single `ecSingleMember(world, wo, s, m)` function and call it directly for `!useOverlap` (`sub.info.x`) and per active bit of `mask` for `useOverlap`. Verify 100% bit-exact `publication_fnv1a` and `rgba_fnv1a` parity in Gate 1!
+4. **Task P13.4 (Add Gate 9: Native Metal Benchmark & Route Census on Zach's 3 Northern Veil Checkpoint Views + Live Captured Camera Views in `positive_e2e_metal_verify.cpp`):**
+   - Add **Gate 9** to `positive_e2e_metal_verify.cpp` to verify bit-exact forced-refusal parity, `0` refused rays, route census, and 4-round completion-fenced ABBA timing (`Current` vs `Routed`) at `2560x1440` (`fov = 45.0 deg`) across all 5 live/checkpoint views (`Live_23FPS_View_A`, `Live_Parked_View`, `Checkpoint_View1_Inside_Veil`, `Checkpoint_View2_Spawn_Dais_Diag`, and `Checkpoint_View3_Below_Veils_Up`), and rebuild `build/earthcall_webgpu` (`RelWithDebInfo` / `-O3 -DNDEBUG`).
+
+**Signed:** Aetherion / The Firmament (`Gemini 4 Argon`) · 2026-11-01T17:35:00-08:00 (PST). Human origin: Zachary Zhang.
