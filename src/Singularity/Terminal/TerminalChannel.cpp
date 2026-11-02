@@ -404,7 +404,7 @@ std::vector<LawSentence::Suggestion> TerminalChannel::completionSuggestions(cons
         }
         const std::string full = snippet.empty() ? text : text + " " + snippet;
         if (full.empty() || lowerCopy(full).rfind(lowerCopy(before), 0) != 0) continue;
-        out.push_back({0, full, description, "value", 1, description, {}});
+        out.push_back({0, full, description, "value", 1, description, {}, {}});
     }
     return out;
 }
@@ -429,7 +429,7 @@ void TerminalChannel::configureEditor() {
                         if (lowerCopy(name).rfind(typed, 0) != 0 &&
                             lowerCopy(z->getIdentifier()).rfind(typed, 0) != 0) continue;
                         out.push_back({from, z->getIdentifier(), name == z->getIdentifier() ? "a Zone" : name,
-                                       "being", 1, "move the line (not your body) into " + name, {}});
+                                       "being", 1, "move the line (not your body) into " + name, {}, {}});
                     }
                 }
                 return out;
@@ -455,7 +455,7 @@ void TerminalChannel::configureEditor() {
             const std::size_t from = before.size() - word.size();
             std::vector<LawSentence::Suggestion> out;
             const auto offer = [&](const std::string& text, const std::string& what) {
-                if (lowerCopy(text).rfind(lowerCopy(word), 0) == 0) out.push_back({from, text, what, "value", 1, what, {}});
+                if (lowerCopy(text).rfind(lowerCopy(word), 0) == 0) out.push_back({from, text, what, "value", 1, what, {}, {}});
             };
             if (_pendingTargets.size() > 1) {
                 for (std::size_t i = 0; i < _pendingTargets.size(); ++i) {
@@ -1031,7 +1031,7 @@ LawSentence::Vocabulary TerminalChannel::vocabulary(LawManager& laws, const std:
             detail = law->name() + " · \"" + lexeme->getSymbol() + "\" denotes " + law->getIdentifier();
         }
         v.words.push_back({lexeme->getSymbol(), opcode, lexeme->getIdentifier(), law->getIdentifier(),
-                           law->name(), detail});
+                           law->name(), detail, {}, {}});
         PropertyValue expression;
         if (law->getDynamicProperty("sentence.math", expression))
             if (auto text = std::get_if<std::string>(&expression)) v.words.back().expression = *text;
@@ -1375,7 +1375,7 @@ const LawSentence::Vocabulary& TerminalChannel::liveVocabulary() {
         // actual vocabulary() resolver invokes the world's Metalaws only when
         // the sentence is spoken.
         _vocab->compileInvocation = [](const nlohmann::json& input, bool) {
-            LawSentence::Compilation placeholder{std::nullopt, "", {}, std::nullopt};
+            LawSentence::Compilation placeholder{std::nullopt, "", {}, std::nullopt, std::nullopt};
             if (input.value("slot", "") == "condition") placeholder.condition = ConditionNode::all({});
             else placeholder.action = ActionNode::sequence({});
             return placeholder;
@@ -1654,7 +1654,7 @@ LawSentence::Compilation TerminalChannel::compileByMetalaw(LawManager& laws,
     const bool conditionSlot = input.value("slot", "") == "condition";
     const bool valueSlot = input.value("slot", "") == "value";
     if (readOnly) {
-        LawSentence::Compilation placeholder{std::nullopt, "", {}, std::nullopt};
+        LawSentence::Compilation placeholder{std::nullopt, "", {}, std::nullopt, std::nullopt};
         if (valueSlot) placeholder.value = nlohmann::json{{"value", 0}};
         else if (conditionSlot) placeholder.condition = ConditionNode::all({});
         else placeholder.action = ActionNode::sequence({});
@@ -1663,9 +1663,9 @@ LawSentence::Compilation TerminalChannel::compileByMetalaw(LawManager& laws,
     LawSentence::Compilation result;
     PropertyValue sensed;
     try { sensed = sentenceSyntaxValue(input); }
-    catch (const std::exception& e) { return {std::nullopt, e.what(), {}}; }
+    catch (const std::exception& e) { return {std::nullopt, e.what(), {}, std::nullopt, std::nullopt}; }
     auto dict = std::get_if<std::shared_ptr<PropertyDict>>(&sensed);
-    if (!dict || !*dict) return {std::nullopt, "the invocation has no structural input record", {}};
+    if (!dict || !*dict) return {std::nullopt, "the invocation has no structural input record", {}, std::nullopt, std::nullopt};
     _compilationInput = *dict;
     _compilationInput->elements["json"] = input.dump();
     _compilationTemplate.clear(); _compilationError.clear();
