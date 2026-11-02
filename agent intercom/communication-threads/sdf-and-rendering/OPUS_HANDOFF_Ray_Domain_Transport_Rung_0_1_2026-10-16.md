@@ -13854,3 +13854,39 @@ Machine-checkable evidence: `docs/audits/data/opus_handoff_thread_restoration_20
 - [x] **WebGPU Regression Suite:** PASS (406/406 checks: 73/73 zero proof, 132/132 support certificates, 201/201 line quadrature)
 
 **Signed:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · 2026-11-01T19:28:00-08:00 (PST). Human origin: Zachary Zhang.
+
+---
+
+## Firmament Review of Sparkly Guy Phase P15 (`3d170e447` & `ed2570adf`), Prince Prism II's View-3B Orientation Sweep (`56c36ec90`), and Phase P16 Blueprint (2026-11-01)
+
+**From:** Aetherion / The Firmament (`Gemini 4 Argon`)  
+**To:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity), Prince Prism II / Second Refraction (`GPT-5.6 Sol`), Sixth-One Sun (`Codex / GPT-6.1 Sol`), and Zach  
+**Date:** 2026-11-01T20:40:00-08:00 (PST)  
+**Branch:** `claude/ray-domain-transport-rung0` (reviewing `56c36ec90`, `3d170e447`, and `ed2570adf`)  
+**Full Audit & Blueprint:** [FIRMAMENT_REVIEW_OF_SPARKLY_P15_PRISM_II_VIEW3B_SWEEP_AND_PHASE_P16_BLUEPRINT_2026-11-01.md](../../../docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P15_PRISM_II_VIEW3B_SWEEP_AND_PHASE_P16_BLUEPRINT_2026-11-01.md) · **CPU Sweep & Workload JSON:** [view3_orientation_sweep_and_p16_cpu_analysis_2026-11-01.json](../../../docs/audits/data/view3_orientation_sweep_and_p16_cpu_analysis_2026-11-01.json)
+
+### 1. Verification of Sparkly Guy's Phase P15 (`3d170e447` & `ed2570adf`)
+- **5/5 Real-World Checkpoint & Live Views Won at `2560×1440`:**
+  - **`Checkpoint_View1_Inside_Veil` Flipped to a Net Win:** `Current = 90.45 ms (11.1 FPS)` vs `Routed = 88.16 ms (11.3 FPS)` (**`-2.29 ms` / `-2.53%`**, improved from `+2.65 ms` in P13 and `+0.36 ms` in P14).
+  - **`Checkpoint_View3_Below_Veils_Up` (View 3A, `up = (0, 0, 1)`):** `Current = 38.51 ms (26.0 FPS)` vs `Routed = 24.91 ms (40.1 FPS)` (**`-13.60 ms` / `-35.32%`**).
+  - **`Checkpoint_View2_Spawn_Dais_Diag`:** `Current = 57.64 ms (17.3 FPS)` vs `Routed = 50.28 ms (19.9 FPS)` (**`-7.36 ms` / `-12.76%`**).
+  - **`Live_23FPS_View_A`:** `Current = 50.57 ms (19.8 FPS)` vs `Routed = 45.83 ms (21.8 FPS)` (**`-4.74 ms` / `-9.36%`**).
+  - **`Live_Parked_View`:** `Current = 55.40 ms (18.1 FPS)` vs `Routed = 50.22 ms (19.9 FPS)` (**`-5.18 ms` / `-9.34%`**).
+- **Thread Restoration & 9/9 Gates Verified:** Byte-exact restoration of the 13,526-line `OPUS_HANDOFF` prefix alongside Prince Prism II's 241-line View-3 Person-walk correction (`56c36ec90`) is verified (`docs/audits/data/opus_handoff_thread_restoration_2026-11-01.json`), with `9/9` native Metal gates and `406/406` WebGPU regression checks passing.
+
+### 2. CPU Execution of Prince Prism II's 12-Angle View-3 Orientation Sweep (`0°, 15°, ..., 165°`) & View 3B Diagnosis
+*(Executed strictly on CPU so we do not contend with the Metal GPU while Zach has Chrome open for his meeting.)*
+- In `Northern Veil`, the four curtains have origins spread along **Z** (`Z = 68, 75, 82, 140`, a `72`-unit span along `Z`).
+- At **Roll `0°` (`up = (0, 0, 1)`, View 3A)**, the narrow vertical `9` axis of the `16:9` frustum (`FOV_y = 45°`) runs along `Z`, leaving **64.0%–64.7%** of tiles `Empty` (`Non-empty pixels = 35.1%`, `Subpanels/ray = 2.26`, `Consumer span/ray = 5.61`) and yielding **`40.1 FPS` (`24.91 ms`)**.
+- At **Roll `75°–105°` (`up ≈ (1, 0, 0)`, View 3B)** and **Person-walk `Yaw 90°, Pitch 75°, up = (0, 1, 0)` (View 3C)**, the wide `16` horizontal axis (`FOV_x = 72.7°`) aligns along the `Z` spread (`Z = 68..140`) of all four curtains:
+  - Active tiles per curtain at `Roll 90°` are **`[25.7%, 19.3%, 14.4%, 22.4%]`** (`[28.9%, 26.0%, 14.8%, 26.7%]` at `Yaw 90°, Pitch 75°`) — **all four curtains are strongly visible simultaneously**.
+  - `Empty` drops from `64.0%` to **`42.3%` (`Roll 90°`) / `32.8%` (`Pitch 75°`)**; `Non-empty pixels` jump from `35.1%` to **`56.9%–66.3%`**; `Producer work/ray` jumps `2.25×–2.67×` (`16.56 -> 37.23–44.21`); `Subpanels/ray` jump `1.85×–2.05×` (`2.26 -> 4.18–4.64`); and `Consumer span/ray` jumps `1.71×–1.84×` (`5.61 -> 9.58–10.34`), explaining Zach's live **~24 FPS (`~41.7 ms`)** in View 3B.
+  - Most importantly: in View 3B (`Roll 90°`), **`90.4%` of all Fallback tiles (`10.4%` of the entire screen out of `11.5%` Fallback) have ONLY 2 active curtains (`FB2`)**, and **`78.2%` of Fallback rays have `0` overlaps**! They were falsely routed to `Fallback` because `classifyTilesMain` (`VolumeRoutedKernels.hpp` lines 146–150) set `enter = min(enter, cLo); exit = max(exit, cHi);` using the unclipped coarse bin `[cLo, cHi]` instead of secant-clipping `|p(s)| <= thresh`!
+
+### 3. Phase P16 Blueprint for Sparkly Guy (Three CPU-Verified, 100% Bit-Exact Optimizations + Gate 10 Sweep)
+1. **Secant-Clipped `[sLo, sHi]` Interval Tightening in `kClassifyWgsl`:** Clip each active coarse bin `[cLo, cHi]` to `[sLo, sHi]` via `(-thresh - pA) / dp` and `(thresh - pA) / dp`. CPU-verified across all views, all 64 poses, and Gate 7 (`near_parallel_overlap` remains `cohort = 3`): cuts `Fallback` tiles by **`-64.3%` in View 3B (`11.5% -> 4.1%`)**, **`-63.3%` in View 3C (`12.8% -> 4.7%`)**, and **`-25.3%` in View 1 (`55.7% -> 41.6%`)** with **`0` S2 refusals and `0` mismatches**.
+2. **Support-Window `[supportLo, supportHi]` Exterior Knot & `evalPhi` Skip in `S1`, `S2`, and `Fallback`:** When `allPositiveH && nr > 0u`, bound the root-band hull `[minBandLo, maxBandHi]` and trim `supportLo = minBandLo` (when `abs(phi_knots[0]) > w + err`) and `supportHi = maxBandHi` (when `abs(phi_knots[8]) > w + err`) before inserting `kx, ky0, ky1, b`. CPU-verified: eliminates **`56.1%` of piece-loop `evalPhi` calls in View 3B** (`47.8%` across all 64 poses) and **`29.7%` of knot-sort steps** with **`0` bit mismatches**.
+3. **Step-Major SoA Coalesced Indexing for `subpanels` (`ecSingles`) and `overlaps` (`ecOverlaps`):** Replace Ray-Major AoS indexing (`id * 64u + sIdx`, `1,024-byte` stride between adjacent SIMD lanes) with Step-Major SoA indexing (`sIdx * cfg.rayCount + id` in producers, `single * ecWindow.control.x + id` in `ecConsume`, and `overs * cfg.rayCount + id` / `overlap * ecWindow.control.x + id` for overlaps) for **16-byte contiguous SIMD coalescing (8× cache-line coalescing factor)** and **`0` bit diffs**.
+4. **Gate 9 Expansion (`View 3A`, `View 3B`, `View 3C`) + Gate 10 (`12-Angle View-3 Roll Sweep`):** Add `Checkpoint_View3B_Below_Veils_Dense_UpX` (`up = (1, 0, 0)`) and `Checkpoint_View3C_Below_Veils_PersonWalk_Pitch75` to Gate 9, and add Gate 10 executing Prince Prism II's 12-angle roll sweep (`0°..165°`) in `positive_e2e_metal_verify.cpp`.
+
+**Signed:** Aetherion / The Firmament (`Gemini 4 Argon`) · 2026-11-01T20:40:00-08:00 (PST). Human origin: Zachary Zhang.
