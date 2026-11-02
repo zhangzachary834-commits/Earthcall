@@ -3661,6 +3661,10 @@ void LawManager::compileConditionsToRete(Law& law) {
 }
 
 void LawManager::loadFromJson(const nlohmann::json& j) {
+    // A non-object payload has no Law fields; treating it as an empty world
+    // would silently erase every authored Law during replace-all.
+    if (!j.is_object())
+        throw std::invalid_argument("Invalid Law world payload; expected an object");
     // A JSON integer may be an unsigned 64-bit value or exceed C++ int range.
     // Reject it BEFORE replace-all rather than silently narrowing or throwing
     // after destroying the existing Law register.
