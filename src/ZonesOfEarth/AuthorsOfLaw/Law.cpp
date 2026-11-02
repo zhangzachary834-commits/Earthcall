@@ -3830,6 +3830,16 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
     for (const auto& reservedId : persistedLawIds) {
         claimLawIdAtLeast(reservedId);
     }
+    // Law::fromJson constructs a fresh Law (and consumes one generated ID)
+    // before restoring its explicit persisted ID. With too few IDs left,
+    // construction would throw after the live register had been discarded.
+    // Preflight the available ID budget before replacing any authored Law or
+    // First Mover history. World-load callers must serialize Law construction.
+    if (j.contains("laws") &&
+        j["laws"].size() > std::numeric_limits<unsigned long long>::max() -
+                               g_nextLawId.load()) {
+        throw std::overflow_error("Insufficient generated Law identifiers for world load");
+    }
     // Replace-all, like the world loader — EXCEPT first movers, whose truth
     // lives in the engine and survives every load.
     std::vector<std::shared_ptr<Law>> firstMovers;
