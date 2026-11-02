@@ -584,6 +584,23 @@ int main() {
             expectRejectedWithoutMutation(malformedProvenanceAttachment,
                 "Malformed provenance attachment discarded live Laws");
 
+            // A second live Law with the same authored identifier must not
+            // disappear silently even when its history lineage is distinct.
+            // Re-registering the exact original pointer remains idempotent.
+            auto duplicateLiveId = std::make_shared<Law>("Live duplicate identifier");
+            duplicateLiveId->setLawIdentifier("collision-authored");
+            const auto liveCount = collisionManager.toJson().at("laws").size();
+            bool rejectedDuplicateLiveId = false;
+            try { collisionManager.add(duplicateLiveId); }
+            catch (const std::invalid_argument&) { rejectedDuplicateLiveId = true; }
+            check(rejectedDuplicateLiveId &&
+                  collisionManager.find("collision-authored") == authored.get() &&
+                  collisionManager.toJson().at("laws").size() == liveCount,
+                  "Distinct live Law with duplicate identifier was silently dropped");
+            collisionManager.add(authored);
+            check(collisionManager.toJson().at("laws").size() == liveCount,
+                  "Idempotent registration duplicated the original Law");
+
             // Persisted preflight alone is insufficient: a caller can restore
             // one Law, rename its authored ID, then register it beside its
             // source without passing through loadFromJson(). Fail closed and
