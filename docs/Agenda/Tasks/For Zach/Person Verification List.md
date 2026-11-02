@@ -2017,7 +2017,9 @@ The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Pha
 - Bit-scanned active bin traversal in `roots()`: uses `firstTrailingBit(binMask)` to iterate solely over candidate crossing bins while charging skipped/trailing bins against the budget, eliminating thread divergence and coarse loop overhead.
 - Consumer private-state compaction and single-`exp(-tau)` branchless `ecFlow`: unifies `g_volumeShared_1..3_` into `g_volumeShared_0_`, erases 48 thread-private variable declarations (-75% `TintPrivateVars`), eliminates per-sample copy operations in `ecSingleMember`, and adds zero-extinction skips in the mixed multi-member loop.
 
-- [ ] **Launch Earthcall WebGPU (`./build/earthcall_webgpu`)** and load Northern Veil (`saves/zones/Northern Veil/zone.ecform`).
+- [x] **Launch Earthcall WebGPU (`./build/earthcall_webgpu`)** and load Northern Veil (`saves/zones/Northern Veil/zone.ecform`).
+  - **PERSON VERIFIED BY ZACHARY ZHANG (2026-11-02 03:06 PDT):** *"SPAARRKRKRLLY GUYYYYYYY I JUST RAN THE LIVE APPP AND IT WAS 30 FPS !!!!!!!!!!! FINFAINALALLYYYYY"*
+  - **Milestone Officially Achieved:** Live interactive application delivers 30 FPS on Apple Silicon native Metal hardware under real Person navigation, meeting Zach's landmark 28–30 FPS Northern Veil gate!
 - [ ] **Checkpoint View 1 (Inside Dense Veil — Slashed by -34.89% / -32.32 ms!):**
   - Fly directly inside the curtains (`eye = (12.5, 67, 39)`, `aim = (12.5, 67, 184)`).
   - Confirm that View 1 runs at **60.30 ms vs 92.62 ms Current (-32.32 ms / -34.89% win**, 16.6 FPS vs 10.8 FPS Current).
