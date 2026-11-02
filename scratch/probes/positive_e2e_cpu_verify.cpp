@@ -245,11 +245,11 @@ static TileRouteResult classifyTileSerial(
             res.packedWord = (m0 << 28u) | (m1 << 24u) | (m1First << 20u) | tileId;
         } else {
             res.cohort = 3u;
-            res.packedWord = tileId;
+            res.packedWord = (activeMemberMask << 28u) | tileId;
         }
     } else {
         res.cohort = 3u;
-        res.packedWord = tileId;
+        res.packedWord = (activeMemberMask << 28u) | tileId;
     }
     return res;
 }
@@ -508,11 +508,11 @@ static void classifyWorkgroupCooperative(
                 res.packedWord = (m0 << 28u) | (m1 << 24u) | (m1First << 20u) | tileId;
             } else {
                 res.cohort = 3u;
-                res.packedWord = tileId;
+                res.packedWord = (mask << 28u) | tileId;
             }
         } else {
             res.cohort = 3u;
-            res.packedWord = tileId;
+            res.packedWord = (mask << 28u) | tileId;
         }
     }
 }
@@ -773,39 +773,43 @@ static RayProducerOutput runS1Producer(const Ray& input, uint32_t activeMember,
             if (out.reason == 0u) PM::roots(m, o, d, a, b, 0.0f, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, true, mask1, budget);
             if (out.reason == 0u) PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask2, budget);
             if (out.reason == 0u) {
-                if (d.x != 0.0f) { float x = -o.x / d.x; if (x > a && x < b && nb < 96u) knots[nb++] = x; }
-                if (d.y != 0.0f) {
-                    float y = -o.y / d.y; if (y > a && y < b && nb < 96u) knots[nb++] = y;
-                    float k = (m.limits.z - o.y) / d.y; if (k > a && k < b && nb < 96u) knots[nb++] = k;
-                }
-                if (nb < 96u) knots[nb++] = b;
-                for (uint32_t i = 1u; i < nb; i++) {
-                    float v = knots[i]; uint32_t j = i;
-                    while (j > 0u && knots[j - 1u] > v) { knots[j] = knots[j - 1u]; j--; }
-                    knots[j] = v;
-                }
-                uint32_t memberStart = count;
-                bool previousShortBand = false, previousPositive = false;
-                for (uint32_t i = 1u; i < nb; i++) {
-                    float l = knots[i - 1u], r = knots[i];
-                    if (!(r > l)) continue;
-                    float mid = l + 0.5f * (r - l);
-                    bool uncertain = false, protectedBoundary = false;
-                    if (d.x != 0.0f) protectedBoundary = (l == -o.x / d.x);
-                    if (d.y != 0.0f) protectedBoundary = protectedBoundary || (l == -o.y / d.y) || (l == (m.limits.z - o.y) / d.y);
-                    for (uint32_t k = 0u; k < nr; k++) {
-                        uncertain = uncertain || (l < bands[k].y && r > bands[k].x);
-                        if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) protectedBoundary = true;
+                if (allPositiveH && nr == 0u && std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
+                    // empty chord
+                } else {
+                    if (d.x != 0.0f) { float x = -o.x / d.x; if (x > a && x < b && nb < 96u) knots[nb++] = x; }
+                    if (d.y != 0.0f) {
+                        float y = -o.y / d.y; if (y > a && y < b && nb < 96u) knots[nb++] = y;
+                        float k = (m.limits.z - o.y) / d.y; if (k > a && k < b && nb < 96u) knots[nb++] = k;
                     }
-                    if (uncertain || std::abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
-                        if (count > memberStart && PM::mayAbsorb(pieces[count - 1u], glm::vec2(l, r),
-                             previousShortBand, previousPositive, uncertain, protectedBoundary)) {
-                            pieces[count - 1u].y = r; previousShortBand = false; previousPositive = true;
-                        } else {
-                            if (count >= 48u) { out.reason |= 8u; break; }
-                            pieces[count++] = glm::vec2(l, r);
-                            previousShortBand = uncertain && (r - l <= 0.02f);
-                            previousPositive = !uncertain;
+                    if (nb < 96u) knots[nb++] = b;
+                    for (uint32_t i = 1u; i < nb; i++) {
+                        float v = knots[i]; uint32_t j = i;
+                        while (j > 0u && knots[j - 1u] > v) { knots[j] = knots[j - 1u]; j--; }
+                        knots[j] = v;
+                    }
+                    uint32_t memberStart = count;
+                    bool previousShortBand = false, previousPositive = false;
+                    for (uint32_t i = 1u; i < nb; i++) {
+                        float l = knots[i - 1u], r = knots[i];
+                        if (!(r > l)) continue;
+                        float mid = l + 0.5f * (r - l);
+                        bool uncertain = false, protectedBoundary = false;
+                        if (d.x != 0.0f) protectedBoundary = (l == -o.x / d.x);
+                        if (d.y != 0.0f) protectedBoundary = protectedBoundary || (l == -o.y / d.y) || (l == (m.limits.z - o.y) / d.y);
+                        for (uint32_t k = 0u; k < nr; k++) {
+                            uncertain = uncertain || (l < bands[k].y && r > bands[k].x);
+                            if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) protectedBoundary = true;
+                        }
+                        if (uncertain || std::abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
+                            if (count > memberStart && PM::mayAbsorb(pieces[count - 1u], glm::vec2(l, r),
+                                 previousShortBand, previousPositive, uncertain, protectedBoundary)) {
+                                pieces[count - 1u].y = r; previousShortBand = false; previousPositive = true;
+                            } else {
+                                if (count >= 48u) { out.reason |= 8u; break; }
+                                pieces[count++] = glm::vec2(l, r);
+                                previousShortBand = uncertain && (r - l <= 0.02f);
+                                previousPositive = !uncertain;
+                            }
                         }
                     }
                 }
@@ -894,6 +898,10 @@ static RayProducerOutput runS2Producer(const Ray& input, uint32_t packedTile,
         if (out.reason != 0u) break;
         PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask2, budget);
         if (out.reason != 0u) break;
+        if (allPositiveH && nr == 0u && std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
+            if (memberIdx == 0u) count0 = count;
+            continue;
+        }
         if (d.x != 0.0f) { float x = -o.x / d.x; if (x > a && x < b && nb < 96u) knots[nb++] = x; }
         if (d.y != 0.0f) {
             float y = -o.y / d.y; if (y > a && y < b && nb < 96u) knots[nb++] = y;
@@ -1019,6 +1027,10 @@ static RayProducerOutput runFallbackProducer(const Ray& input,
         if (out.reason != 0u) break;
         PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, zeroBands, false, mask2, budget);
         if (out.reason != 0u) break;
+        if (allPositiveH && nr == 0u && std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
+            memCount[member] = 0u;
+            continue;
+        }
         if (d.x != 0.0f) { float x = -o.x / d.x; if (x > a && x < b) knots[nb++] = x; }
         if (d.y != 0.0f) {
             float y = -o.y / d.y; if (y > a && y < b) knots[nb++] = y;
@@ -1279,7 +1291,8 @@ int main(int argc, char** argv) {
                                         s2RayMismatches.fetch_add(1);
                                     }
                                 } else {
-                                    auto fbOut = runFallbackProducer(ray, specs, 0xFu);
+                                    uint32_t activeMask = coopRes[lt].packedWord >> 28u;
+                                    auto fbOut = runFallbackProducer(ray, specs, activeMask);
                                     fbRaysChecked.fetch_add(1);
                                     if (fbOut.reason != 0u) refusedRays.fetch_add(1);
                                 }

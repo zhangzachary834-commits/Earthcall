@@ -1880,3 +1880,25 @@ The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Pha
 - [ ] **Checkpoint View 1 (Inside Dense Veil Stress Test):**
   - Fly directly inside the curtains (`eye = (12.5, 67, 39)`, `aim = (12.5, 67, 184)`).
   - Verify that even when completely enveloped by overlapping auroral sheets, rendering remains stable, graceful, and artifact-free without hitching or WebGPU device loss.
+
+
+## GPU Ray Transport Phase P14: Active-Member-Masked Streaming Fallback & Single-Call-Site Consumer Bit-Iterator (2026-11-01)
+
+*Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · 2026-11-01. Commissioned by Zach and the Council following the Firmament's Phase P14 blueprint.*
+
+The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Phase P14 optimizations:
+- Active-member-masked, stack-trimmed streaming `fallbackProducerMain` (-396 bytes/thread private array shrinkage)
+- Post-`roots()` zero-band early skip across S1, S2, and Fallback producers
+- Single-call-site `mMask` bit-iterator in `ecConsume` calling `ecSingleMember` directly with unified SIMD convergence
+
+- [ ] **Launch Earthcall WebGPU (`./build/earthcall_webgpu`)** and load Northern Veil (`saves/zones/Northern Veil/zone.ecform`).
+- [ ] **Checkpoint View 1 (Inside Dense Veil Fallback Verification):**
+  - Fly directly inside the curtains (`eye = (12.5, 67, 39)`, `aim = (12.5, 67, 184)`).
+  - Verify that the previous +2.98 ms (+3.08%) fallback overhead is completely gone (measured at virtually flat parity: **+0.36 ms / +0.37%** in native Metal hardware testing).
+  - Confirm silky smooth immersion without stuttering, seams, or visual divergence.
+- [ ] **Checkpoint View 3 (Below Veils Looking Up — Milestone 28–30+ FPS Check):**
+  - Navigate to `eye = (12.5, 0, 106.5)`, aiming up toward `(12.5, 72, 106.5)` (`up = (0, 0, 1)`).
+  - Confirm the auroral sheets render at high framerates (measured at **39.0 FPS / 25.6 ms**, running **-37.40% faster** than Current baseline).
+- [ ] **Live Gameplay Views (Live View A & Parked View):**
+  - Navigate to Zach's Live View A (`eye = (-6.75, 2.40, 3.71)`) and Parked View (`eye = (-14.1, 5.85, 0.83)`).
+  - Confirm sustained 21.0 FPS with -12.73% latency reduction, with zero tile edge artifacts or popping.

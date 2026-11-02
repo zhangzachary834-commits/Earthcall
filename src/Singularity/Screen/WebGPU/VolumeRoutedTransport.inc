@@ -317,15 +317,17 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
             " return vec4<f32>(0.0);\n"
             "}\n";
   replace(tail, "EC_CONSUMER_HELPERS", helper);
-  std::string projLoop = "for (var m = 0u; m < 4u; m++) {\n"
-                         "  if ((mask & (1u << m)) != 0u) {\n"
-                         "   result += ecSingleMember(world, wo, s, m);\n"
-                         "  }\n"
-                         " }\n";
-  replace(tail, "EC_PROJECTED", projLoop);
-  replace(tail, "EC_EVAL_NODE", "var val = vec4<f32>(0);\n"
-                                "   if (useOverlap) { val = ecProjected(ro, rd, wo, lo + node * h, mask); }\n"
-                                "   else { val = ecSingleMember(ro + (lo + node * h) * rd, wo, lo + node * h, subMember); }");
+  replace(tail, "EC_PROJECTED", "_ = wo; _ = mask; _ = world; return result;");
+  replace(tail, "EC_EVAL_NODE", "var val = vec4<f32>(0.0);\n"
+                                "   let sNode = lo + node * h;\n"
+                                "   let worldNode = ro + sNode * rd;\n"
+                                "   var mMask = mask;\n"
+                                "   loop {\n"
+                                "    if (mMask == 0u) { break; }\n"
+                                "    let m = firstTrailingBit(mMask);\n"
+                                "    mMask &= mMask - 1u;\n"
+                                "    val += ecSingleMember(worldNode, wo, sNode, m);\n"
+                                "   }");
  } else {
   replace(tail, "EC_CONSUMER_HELPERS", "");
   std::string sampling;
