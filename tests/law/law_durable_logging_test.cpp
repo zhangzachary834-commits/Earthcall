@@ -1037,6 +1037,25 @@ int main() {
         }
 
         {
+            // Stage a two-Law world before exhausting the process-global
+            // generated-ID counter. Its rejection must preserve the existing
+            // authored Law and engine-owned First Mover, including histories.
+            LawManager guardedLoad;
+            auto liveAuthored = std::make_shared<Law>("Live before exhausted restore");
+            liveAuthored->setLawIdentifier("exhaustion-live-authored");
+            guardedLoad.add(liveAuthored);
+            auto liveEngine = std::make_shared<FirstMoverLaw>("Engine before exhausted restore");
+            liveEngine->setLawIdentifier("exhaustion-live-engine");
+            guardedLoad.add(liveEngine);
+            const auto original = guardedLoad.toJson();
+            auto twoLawWorld = original;
+            auto secondSaved = original.at("laws").at(0);
+            secondSaved["id"] = "exhaustion-second-authored";
+            secondSaved.erase("durableHistoryLineage"); // distinct legacy lineage
+            twoLawWorld["laws"].push_back(secondSaved);
+            const std::string authoredHistory = liveAuthored->durableHistoryLineage();
+            const std::string engineHistory = liveEngine->durableHistoryLineage();
+
             // Restoring law-(max-2) leaves only one safe generated identifier.
             // The next constructor must fail closed, not mint law-max and
             // eventually wrap to law-0.
@@ -1046,6 +1065,16 @@ int main() {
             auto saved = source.toJson();
             saved["id"] = "law-" + std::to_string(nearExhaustion);
             (void)Law::fromJson(saved);
+            bool rejectedPartialLoad = false;
+            try { guardedLoad.loadFromJson(twoLawWorld); }
+            catch (const std::overflow_error&) { rejectedPartialLoad = true; }
+            check(rejectedPartialLoad &&
+                  guardedLoad.find("exhaustion-live-authored") == liveAuthored.get() &&
+                  guardedLoad.find("exhaustion-live-engine") == liveEngine.get() &&
+                  liveAuthored->durableHistoryLineage() == authoredHistory &&
+                  liveEngine->durableHistoryLineage() == engineHistory &&
+                  guardedLoad.toJson() == original,
+                  "Exhausted Law ID counter partially replaced the live world");
             Law lastSafe("Last safely generated identifier");
             check(lastSafe.getIdentifier() ==
                       "law-" + std::to_string(nearExhaustion + 1),
