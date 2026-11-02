@@ -8,7 +8,7 @@
 **Primary merge-hardening tool:** Claude Code Ultrareview / multi-agent review fleet.  
 **Council order:** Original Prism Sun → Aetherion / The Firmament → World Forger / Astra → Clawd fleet.
 
-This document is not a new optimization campaign and is not authorization for speculative P20 work. The branch has crossed the bounded Northern Veil checkpoint in the live application and has now received Sixth-One Sun's final bounded correctness pass. The task is **hardening before merge**.
+This document is not a new optimization campaign and is not authorization for speculative P20 work. The branch has crossed the bounded Northern Veil checkpoint in the live application, received Sixth-One Sun's final bounded correctness pass, and then received a fresh post-repair Person confirmation that the corrected live build still runs at approximately **30–35 FPS**. The task is **hardening before merge**.
 
 ---
 
@@ -16,7 +16,7 @@ This document is not a new optimization campaign and is not authorization for sp
 
 The Clawd fleet begins from the **post-audit** branch, not from raw P19.
 
-### 0.1 Person-observed milestone
+### 0.1 Person-observed milestone — pre-audit and post-repair
 
 Before the final corrective pass, Zach reported the live Earthcall application at native resolution holding approximately:
 
@@ -24,7 +24,9 @@ Before the final corrective pass, Zach reported the live Earthcall application a
 - **up to 35 FPS in some views**,
 - approximately **30 FPS while flying upward with unobstructed Veil visibility**.
 
-This is Person-observed live evidence. It is not interchangeable with offscreen checkpoint FPS, completion-fenced benchmark FPS, or a fresh Person observation of the corrected executable.
+After Sixth-One Sun's bounded corrective pass at `02a44c0fcf`, Zach reopened the corrected live application and personally confirmed that it **still holds approximately 30–35 FPS** in the inhabited Northern Veil experience.
+
+This gives the campaign two distinct Person witnesses: the original P19 milestone and a post-repair live confirmation that the bounded correctness fixes preserved the breakthrough. Neither is interchangeable with offscreen checkpoint FPS or completion-fenced benchmark FPS.
 
 ### 0.2 Sixth-One Sun's pre-merge corrective audit
 
@@ -64,7 +66,7 @@ The corrected build then retained the bounded checkpoint:
   - **64 / 64 poses win**.
 - Captured offscreen Live View A remains **28.4 FPS** and sparse View 3A **45.3 FPS** after repair.
 
-These measurements are bounded evidence. Do not inflate them into universal numerical certification, full-population maximum-error proof, cross-device proof, or a fresh live Person acceptance of the repaired executable.
+These measurements are bounded machine evidence. Separately, Zach has now provided a fresh live Person acceptance of the repaired executable: **the corrected app remains approximately 30–35 FPS in his hands**. Do not inflate either the machine evidence or the Person witness into universal numerical certification, full-population maximum-error proof, or cross-device proof.
 
 Primary audit:
 `docs/audits/GPU_RAY_TRANSPORT_PREMERGE_CORRECTNESS_AUDIT_2026-11-02.md`
@@ -236,11 +238,13 @@ Harness FPS != Live-App FPS != Person Acceptance
 
 Completion-fenced ABBA measurements, checkpoint-view implied FPS, native traces, and live on-screen observation answer different questions.
 
-Zach's 30–35 FPS report is a Person witness of the actual application before the final corrective pass.
+Zach's first 30–35 FPS report is a Person witness of the actual application before the final corrective pass.
 
-The corrected audit's 28.4 / 45.3 FPS captured views are offscreen benchmark witnesses.
+After the `02a44c0fcf` bounded repairs, Zach reopened the corrected live application and again observed approximately **30–35 FPS**. That is a second, post-repair Person witness.
 
-**Clawd rule:** never silently exchange one kind of evidence for another.
+The corrected audit's 28.4 / 45.3 FPS captured views remain offscreen benchmark witnesses.
+
+**Clawd rule:** never silently exchange one kind of evidence for another. The post-repair Person witness closes the inhabited-performance re-check; it does not convert the bounded audit into a universal proof.
 
 ## 1.11 Bounded checkpoint is not universal certification
 
@@ -504,7 +508,7 @@ The intended end state is:
 - accepted findings have reproducible witnesses and bounded repairs;
 - existing native/regression/fallback/publication/resize gates remain green;
 - hot-path regressions have not been smuggled in under generic safety language;
-- a brief corrected-build Person look confirms the already-accepted inhabited view remains visually sound;
+- Zach's post-repair live Person re-check already confirms the corrected build remains in the approximately **30–35 FPS** inhabited range;
 - Firmament and World Forger have appended their final counsel;
 - Ultrareview findings have been triaged and closed or explicitly deferred with scope.
 
