@@ -1,18 +1,20 @@
 # Geometry Execution and Event Bus
 
-## Source documents
-- [Geometry Execution Substrate Manifesto](../mathematics/GEOMETRY_EXECUTION_SUBSTRATE_MANIFESTO.md)
-- [Physics EventBus Integration](../events/PHYSICS_EVENTBUS_INTEGRATION.md)
-- [Physics and Collision](../events/PHYSICS_AND_COLLISION.md)
+## Interrelated Documents
+- `docs/architecture/mathematics/GEOMETRY_EXECUTION_SUBSTRATE_MANIFESTO.md`
+- `docs/architecture/events/PHYSICS_EVENTBUS_INTEGRATION.md`
+- `docs/architecture/events/PHYSICS_AND_COLLISION.md`
 
-## The interrelation
+## The Interrelation
 
-The geometry manifesto distinguishes **authored ontology**, **authored mathematical form**, **geometry execution IR**, and **execution backends**. Collision algorithms (including GJK/EPA where applicable) compute physical contacts; their representation tags do not define a being's authored category or meaning.
+The `GEOMETRY_EXECUTION_SUBSTRATE_MANIFESTO.md` establishes a strict hierarchy where mathematical forms (geometry execution substrate) exist solely to lower the authored ontology into execution. It asserts that "Execution tags must never flow upward and silently become authored meaning."
 
-Physics can publish `PhysicsCollisionEvent` notifications through the EventBus, and the collision architecture also describes `contact-began` / `contact-ended` edges and continuous `isTouching(other)` queries. These are related interfaces, **not interchangeable event names or a promise that every geometric overlap creates an authored Relation**. Contact detection and event publication belong to the sensing/actuation substrate; interpretation belongs to explicit consumers and Laws.
+Meanwhile, the `PHYSICS_EVENTBUS_INTEGRATION.md` and `PHYSICS_AND_COLLISION.md` detail how physical collisions (determined by that very geometry execution substrate) are broadcast over the `EventBus` to notify other systems.
 
-## What the EventBus does — and does not do
+These concepts intersect at the boundary between mathematical simulation and relational logic. While geometry itself is a lower-level construct with no inherent ontological meaning, *contact* between geometrical bodies is intensely meaningful in the world of Laws. The EventBus acts as the translation layer. It listens to the hard-coded execution of geometry (like GJK and EPA collision detection) and transforms those mechanical overlaps into abstract events (`PhysicsCollisionEvent`).
 
-The EventBus distributes notifications to subscribed listeners. It is **not itself an ontological author, a permission check, or a universal translation layer**. An event may be logged, used for a sound or effect, consulted by an authored Law, or explicitly recorded in a Zone/Formation relation graph. The source documents show such relation recording as a listener/integration operation; the mere existence of a collision event does not prove that every listener, relation write, or authored Law ran.
+## Thoughts on Integration and Interrelation
 
-The constitutional direction is one-way: authored meaning may lower into mathematical execution, while execution tags and incidental collision results must not silently be promoted into authored kinds or jurisdictional authority. When an event is to become durable world meaning, specify the responsible author/Law, the actual relation/property write, and its provenance. Test the concrete path from collision witness to event delivery to any claimed world mutation rather than inferring it from EventBus presence.
+The translation mechanism provided by the Event Bus guarantees that the core principle of the Geometry Execution Substrate is maintained. The geometry engine does not dictate relationships; it merely calculates overlaps and emissions. It is the Event Bus and subsequent listeners (like the Relation Event System or First Mover physics laws) that capture these "dumb" geometric collisions and formally publish them as Legible, ontologically valid Relations (e.g., `contact-began`, `contact-ended`).
+
+In this way, the Event Bus protects the No Black Box and First Mover principles. It prevents physics code from silently manipulating world meaning by forcing all physical interactions to pass through a standardized, observable event pipeline before they can become world facts.
