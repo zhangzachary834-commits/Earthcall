@@ -960,6 +960,58 @@ int main() {
               "LawAuditLogger bridge missing durable event");
 
         {
+            // A copied world is a new history only after an explicit fork.
+            // Fork authored Laws and engine-owned First Movers together,
+            // preserving their authored IDs and executable definitions.
+            LawManager copiedWorld;
+            auto authored = std::make_shared<Law>("Copied-world authored");
+            authored->setLawIdentifier("copied-world-authored");
+            auto engine = std::make_shared<FirstMoverLaw>("Copied-world engine");
+            engine->setLawIdentifier("copied-world-engine");
+            copiedWorld.add(engine);
+            copiedWorld.add(authored);
+            const auto sourceSave = copiedWorld.toJson();
+            const auto sourceAuthoredHistory =
+                sourceSave.at("laws").at(0).at("durableHistoryLineage").get<std::string>();
+            const auto sourceEngineHistory =
+                sourceSave.at("firstMoverHistoryLineages").at("copied-world-engine")
+                    .get<std::string>();
+
+            copiedWorld.forkAllDurableHistoryLineages();
+            const auto forkedSave = copiedWorld.toJson();
+            const auto forkedAuthoredHistory =
+                forkedSave.at("laws").at(0).at("durableHistoryLineage").get<std::string>();
+            const auto forkedEngineHistory =
+                forkedSave.at("firstMoverHistoryLineages").at("copied-world-engine")
+                    .get<std::string>();
+            check(forkedAuthoredHistory != sourceAuthoredHistory &&
+                  forkedEngineHistory != sourceEngineHistory &&
+                  forkedAuthoredHistory != forkedEngineHistory &&
+                  forkedSave.at("laws").at(0).at("id") == "copied-world-authored" &&
+                  copiedWorld.find("copied-world-engine") == engine.get() &&
+                  sourceSave.at("laws").at(0).at("durableHistoryLineage") ==
+                      sourceAuthoredHistory,
+                  "Copied-world fork reused history or changed authored identity");
+
+            // Ordinary load and Save As retain the new history. A second
+            // explicit fork must advance both identities once more.
+            copiedWorld.loadFromJson(forkedSave);
+            const auto roundTrip = copiedWorld.toJson();
+            check(roundTrip.at("laws").at(0).at("durableHistoryLineage") ==
+                      forkedAuthoredHistory &&
+                  roundTrip.at("firstMoverHistoryLineages").at("copied-world-engine") ==
+                      forkedEngineHistory,
+                  "Copied-world history was not stable across save/load");
+            copiedWorld.forkAllDurableHistoryLineages();
+            const auto secondFork = copiedWorld.toJson();
+            check(secondFork.at("laws").at(0).at("durableHistoryLineage") !=
+                      forkedAuthoredHistory &&
+                  secondFork.at("firstMoverHistoryLineages").at("copied-world-engine") !=
+                      forkedEngineHistory,
+                  "Second explicit copied-world fork reused the previous history");
+        }
+
+        {
             const auto nearMax = std::numeric_limits<unsigned long long>::max() - 1;
             Law source("Large restored identifier");
             auto saved = source.toJson();
