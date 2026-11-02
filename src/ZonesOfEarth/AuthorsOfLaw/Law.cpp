@@ -178,23 +178,29 @@ bool validDurableHistoryLineage(const std::string& lineage) {
 // A restored law id advances the fresh counter past itself — otherwise the
 // next authored law collides with a loaded one and LawManager::add silently
 // discards it (the register would "blur").
-void claimLawIdAtLeast(const std::string& id) {
+// Pure high-water calculation: rejected world loads must not permanently
+// consume generated Law IDs, especially the exhausted sentinel.
+std::optional<unsigned long long> nextLawIdAfterRestoring(const std::string& id) {
     constexpr std::string_view prefix = "law-";
-    if (id.compare(0, prefix.size(), prefix) != 0) return;
+    if (id.compare(0, prefix.size(), prefix) != 0) return std::nullopt;
     const char* first = id.data() + prefix.size();
     const char* last = id.data() + id.size();
-    if (first == last) return;
+    if (first == last) return std::nullopt;
     unsigned long long n = 0;
     const auto parsed = std::from_chars(first, last, n);
     // Only a complete decimal suffix reserves generated IDs. law-(max-1)
-    // must reserve max as the exhausted sentinel: otherwise the next Law
-    // constructor can reuse that restored identifier. law-max itself cannot
-    // advance the counter without wrapping, so it remains unreservable.
+    // reserves max as the exhausted sentinel; law-max cannot advance.
     if (parsed.ec != std::errc{} || parsed.ptr != last ||
-        n == std::numeric_limits<unsigned long long>::max()) return;
-    const unsigned long long next = n + 1;
+        n == std::numeric_limits<unsigned long long>::max()) return std::nullopt;
+    return n + 1;
+}
+
+void claimLawIdAtLeast(const std::string& id) {
+    const auto required = nextLawIdAfterRestoring(id);
+    if (!required) return;
     unsigned long long current = g_nextLawId.load();
-    while (next > current && !g_nextLawId.compare_exchange_weak(current, next)) {
+    while (*required > current &&
+           !g_nextLawId.compare_exchange_weak(current, *required)) {
     }
 }
 } // namespace
@@ -3825,22 +3831,27 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
                 throw std::invalid_argument("Duplicate persisted Law history lineage");
         }
     }
-    // Reserve every explicit authored Law identifier before constructing any
-    // legacy Law whose saved JSON omits "id". Otherwise an early legacy Law
-    // can mint a later entry's law-N identifier, and add() silently drops the
-    // explicitly identified Law. Reserve only after the full preflight passes.
-    for (const auto& reservedId : persistedLawIds) {
-        claimLawIdAtLeast(reservedId);
-    }
     // Law::fromJson constructs a fresh Law (and consumes one generated ID)
-    // before restoring its explicit persisted ID. With too few IDs left,
-    // construction would throw after the live register had been discarded.
+    // before restoring its explicit persisted ID. Calculate the post-reservation
+    // high-water mark WITHOUT changing the process-global counter: a rejected
+    // world must not exhaust future Law creation as a side effect.
+    unsigned long long nextAfterRestore = g_nextLawId.load();
+    for (const auto& reservedId : persistedLawIds) {
+        if (const auto required = nextLawIdAfterRestoring(reservedId))
+            nextAfterRestore = std::max(nextAfterRestore, *required);
+    }
     // Preflight the available ID budget before replacing any authored Law or
     // First Mover history. World-load callers must serialize Law construction.
     if (j.contains("laws") &&
         j["laws"].size() > std::numeric_limits<unsigned long long>::max() -
-                               g_nextLawId.load()) {
+                               nextAfterRestore) {
         throw std::overflow_error("Insufficient generated Law identifiers for world load");
+    }
+    // Only a validated, sufficiently funded world may reserve explicit IDs.
+    // Reserve them before constructing legacy Laws without an "id", or a
+    // legacy constructor could collide with a later explicit saved identifier.
+    for (const auto& reservedId : persistedLawIds) {
+        claimLawIdAtLeast(reservedId);
     }
     // Replace-all, like the world loader — EXCEPT first movers, whose truth
     // lives in the engine and survives every load.
