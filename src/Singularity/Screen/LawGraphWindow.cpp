@@ -3707,7 +3707,9 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
         ImGui::PushID(law->getIdentifier().c_str());
         bool enabled = law->isEnabled();
         if (ImGui::Checkbox("##enabled", &enabled)) law->setEnabled(enabled);
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("enabled");
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("@[%s].enabled := %s", law->getIdentifier().c_str(), enabled ? "true" : "false");
+        }
         ImGui::SameLine();
         if (ImGui::Selectable(law->name().c_str(),
                               law->getIdentifier() == g.selectedLawId)) {
@@ -3749,7 +3751,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
             ImGui::SetTooltip(
                 "Uncheck to set a first mover down so authored law can take over.\n"
                 "The engine keeps the channel; only its actuation stops.\n"
-                "Same as writing @<slug>.enabled := false.");
+                "Same as writing @[id].enabled := false.");
         }
         for (const auto& law : laws.getAll()) {
             if (law && law->isFirstMover() && passesFilter(*law)) lawRow(law);
@@ -3900,7 +3902,9 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
                 law->setEnabled(!law->isEnabled());
             }
             ImGui::PopStyleColor();
-            if (ImGui::IsItemHovered()) ImGui::SetTooltip("click to toggle");
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("@[%s].enabled := %s", law->getIdentifier().c_str(), law->isEnabled() ? "false" : "true");
+            }
             ImGui::SameLine();
             chip(kInfo, law->activation() == Law::Activation::WhileTrue
                             ? "while true"
@@ -3990,7 +3994,8 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
                     "duration, and any bound variable can cut them (time,\n"
                     "another being's position, the subject's own state).\n"
                     "Ends with a \"law-drive-finished\" event. With no bounded\n"
-                    "function it drives until disabled.");
+                    "function it drives until disabled.\n"
+                    "(evaluates @[%s].drives := %s)", law->getIdentifier().c_str(), drives ? "true" : "false");
             }
             if (drives) {
                 ImGui::TextColored(ImVec4(0.45f, 0.75f, 1.0f, 1.0f),
