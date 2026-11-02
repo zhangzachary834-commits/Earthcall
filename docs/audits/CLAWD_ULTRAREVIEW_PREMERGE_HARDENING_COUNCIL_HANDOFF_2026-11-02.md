@@ -96,7 +96,7 @@ The practical corollary is:
 ## 1.1 Authored truth is not derived support
 
 ```text
-extAuthored Physical Domain eq extDerived Support Envelope
+Authored Physical Domain != Derived Support Envelope
 ```
 
 A support certificate may prove that a smaller region contains all nonzero contribution. It may therefore reduce runtime work. It does **not** have authority to enlarge, rewrite, or supersede the authored medium's hard physical bounds.
@@ -104,7 +104,7 @@ A support certificate may prove that a smaller region contains all nonzero contr
 The Sixth-One Sun repair is now a canonical witness of this distinction:
 
 ```text
-min( extphysical, extsupport+ extslack)
+min(physical, support + slack)
 ```
 
 not an expression that lets numerical slack leak outside physical authorship.
@@ -114,7 +114,7 @@ not an expression that lets numerical slack leak outside physical authorship.
 ## 1.2 Uncertainty is not a sign
 
 ```text
-extUnresolved Root Enclosure eq extDirectional Sign
+Unresolved Root Enclosure != Directional Sign
 ```
 
 A value numerically near zero, under bounded error and shallow slope, cannot be promoted to a positive/negative side merely because a loop wants to terminate.
@@ -128,7 +128,7 @@ This applies beyond roots. It includes overlap order, emptiness, disjointness, b
 ## 1.3 Authored meaning is not proof representation
 
 ```text
-extAuthored Meaning eq extProof Representation eq extExecutable Residual
+Authored Meaning != Proof Representation != Executable Residual
 ```
 
 Earthcall authors mathematical media. The renderer derives certificates and classifications from them. Those certificates may then lower into a smaller executable problem.
@@ -140,7 +140,7 @@ A bug in the certificate or executable does not authorize rewriting the authored
 ## 1.4 Medium identity is not route identity
 
 ```text
-extMedium eq extRoute Family
+Medium != Route Family
 ```
 
 `EMPTY`, `S1`, ordered/disjoint `S2`, and `GENERAL/FALLBACK` are computational residual families. They are not ontology classes and are not permanent identities of Veil members.
@@ -152,7 +152,7 @@ The same authored medium can participate in different residual families for diff
 ## 1.5 World structure is not query obligation
 
 ```text
-extEverything That Exists eq extEverything This Ray Must Evaluate
+Everything That Exists != Everything This Ray Must Evaluate
 ```
 
 The architecture is allowed to compile proven irrelevance out of the hot path.
@@ -166,7 +166,7 @@ A tile/ray with provably disjoint chronology does not owe generic overlap machin
 ## 1.6 Proof of irrelevance is not deletion of reality
 
 ```text
-extRuntime Elision eq extSemantic Erasure
+Runtime Elision != Semantic Erasure
 ```
 
 A successful certificate can remove an obligation from one executable query. It does not delete the authored medium, change its properties, or mutate the world's meaning.
@@ -174,7 +174,7 @@ A successful certificate can remove an obligation from one executable query. It 
 This is the same constitutional instinct that earlier rendering work expressed as:
 
 ```text
-ho_ extsource eq V_ exttransport eq D_ extmedium
+rho_source != V_transport != D_medium
 ```
 
 Transport may modulate manifestation without rewriting source semantics. Likewise, query specialization may remove work without rewriting authored being.
@@ -182,7 +182,7 @@ Transport may modulate manifestation without rewriting source semantics. Likewis
 ## 1.7 Classification is not consumer correctness
 
 ```text
-extSound Admission eq extCorrect Producer eq extCorrect Consumer eq extCorrect Publication
+Sound Admission != Correct Producer != Correct Consumer != Correct Publication
 ```
 
 A sound route classifier does not prove that its specialized producer emits correct schedules.
@@ -196,7 +196,7 @@ Correct internal transport does not prove that publication is current-frame, exa
 ## 1.8 Fallback is not failure
 
 ```text
-extLocal Proof Refusal eq extRenderer Failure
+Local Proof Refusal != Renderer Failure
 ```
 
 Current is the correctness backstop when the routed path cannot prove its stronger assumptions.
@@ -214,7 +214,7 @@ Do not weaken a proof condition merely to increase route coverage. Do not turn r
 ## 1.9 Current is a backstop, not the semantic definition of truth
 
 ```text
-extCurrent Output eq extMathematical Oracle
+Current Output != Mathematical Oracle
 ```
 
 The branch has multiple exact-parity contracts, but they are scoped:
@@ -231,7 +231,7 @@ This does **not** imply that all valid Routed pixels must be bit-identical to Cu
 ## 1.10 Benchmark evidence is not Person evidence
 
 ```text
-extHarness FPS eq extLive-App FPS eq extPerson Acceptance
+Harness FPS != Live-App FPS != Person Acceptance
 ```
 
 Completion-fenced ABBA measurements, checkpoint-view implied FPS, native traces, and live on-screen observation answer different questions.
@@ -245,7 +245,7 @@ The corrected audit's 28.4 / 45.3 FPS captured views are offscreen benchmark wit
 ## 1.11 Bounded checkpoint is not universal certification
 
 ```text
-extCheckpoint Pass eq extUniversal Numerical Proof
+Checkpoint Pass != Universal Numerical Proof
 ```
 
 The current branch has passed the explicitly bounded Northern Veil merge checkpoint. Universal arbitrary-expression error certification, full-population maximum error, broader devices/scenes, and future compiler generality remain separate work.
@@ -259,7 +259,7 @@ A finding blocks merge when it demonstrates a concrete defect in the branch's su
 The surviving architecture is structurally important:
 
 ```text
-extAuthored Functions + extRay / Tile Query ightarrow extProof of Relevance / Order ightarrow extResidual Family ightarrow extSpecialized Execution
+Authored Functions + Ray/Tile Query -> Proof of Relevance/Order -> Residual Family -> Specialized Execution
 ```
 
 But the present P19/post-audit implementation still contains Northern-Veil-family knowledge: finite curtain membership, level-set/root machinery, support envelopes, and route-specific producer structure.
@@ -387,7 +387,7 @@ Do not collapse them.
 A proposed fix should normally be accepted when:
 
 ```text
-extConcrete Defect + extReproducible Witness + extBounded Sound Repair + extRelevant Regression Proof
+Concrete Defect + Reproducible Witness + Bounded Sound Repair + Relevant Regression Proof
 ```
 
 is present.
