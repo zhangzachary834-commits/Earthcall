@@ -89,9 +89,19 @@ static TileRouteResult classifyTileSerial(
     float enterArr[4] = {0, 0, 0, 0};
     float exitArr[4] = {0, 0, 0, 0};
     bool memberHit[4] = {false, false, false, false};
+    float rEnter[16][4];
+    float rExit[16][4];
+    for (int i = 0; i < 16; i++) {
+        for (int m = 0; m < 4; m++) {
+            rEnter[i][m] = 1e9f;
+            rExit[i][m] = -1e9f;
+        }
+    }
 
     for (uint32_t m = 0u; m < 4u; m++) {
         const KernelRoutedSpec cur = curtains[m];
+        float zEnv = std::abs(cur.amps.x) + std::abs(cur.amps.y) + std::abs(cur.amps.z) + cur.limits.w;
+        glm::vec3 halfVec = glm::min(glm::vec3(cur.half), glm::vec3(cur.limits.x, cur.limits.y, zEnv));
         float uxMin = 1e9f;
         float uxMax = -1e9f;
         bool anyRayHit = false;
@@ -106,12 +116,8 @@ static TileRouteResult classifyTileSerial(
             float b = ray.rd_clipB.w;
             bool hit = true;
 
-            float zEnv = std::abs(cur.amps.x) + std::abs(cur.amps.y) + std::abs(cur.amps.z) + cur.limits.w;
             for (int axis = 0; axis < 3; axis++) {
-                float half = cur.half[axis];
-                if (axis == 0) half = std::min(half, cur.limits.x);
-                if (axis == 1) half = std::min(half, cur.limits.y);
-                if (axis == 2) half = std::min(half, zEnv);
+                float half = halfVec[axis];
                 float d = ray.rd_clipB[axis];
                 float o = oRel[axis];
                 if (d == 0.0f) {
@@ -161,10 +167,15 @@ static TileRouteResult classifyTileSerial(
                     curActive = true;
                     enter = std::min(enter, rA[i]);
                     exit = std::max(exit, rB[i]);
+                    rEnter[i][m] = rA[i];
+                    rExit[i][m] = rB[i];
                     continue;
                 }
                 float a = rA[i];
                 float b = rB[i];
+                float iEnter = 1e9f;
+                float iExit = -1e9f;
+                bool iHit = false;
                 for (uint32_t bin = 0u; bin < 8u; bin++) {
                     float u0 = uxMin + float(bin) / 8.0f * (uxMax - uxMin);
                     float u1 = uxMin + float(bin + 1u) / 8.0f * (uxMax - uxMin);
@@ -182,7 +193,7 @@ static TileRouteResult classifyTileSerial(
                         float pA = phi0 + tA * (phi1 - phi0);
                         float pB = phi0 + tB * (phi1 - phi0);
                         if (!(std::min(pA, pB) > thresh || std::max(pA, pB) < -thresh)) {
-                            curActive = true;
+                            iHit = true;
                             float dp = pB - pA;
                             float sLo = cLo;
                             float sHi = cHi;
@@ -194,10 +205,17 @@ static TileRouteResult classifyTileSerial(
                                 sLo = std::max(cLo, cLo + uLo * (cHi - cLo) - 0.2f);
                                 sHi = std::min(cHi, cLo + uHi * (cHi - cLo) + 0.2f);
                             }
-                            enter = std::min(enter, sLo);
-                            exit = std::max(exit, sHi);
+                            iEnter = std::min(iEnter, sLo);
+                            iExit = std::max(iExit, sHi);
                         }
                     }
+                }
+                if (iHit) {
+                    curActive = true;
+                    enter = std::min(enter, iEnter);
+                    exit = std::max(exit, iExit);
+                    rEnter[i][m] = iEnter;
+                    rExit[i][m] = iExit;
                 }
             }
             if (curActive) {
@@ -214,6 +232,8 @@ static TileRouteResult classifyTileSerial(
                 if (rHit[i]) {
                     enter = std::min(enter, rA[i]);
                     exit = std::max(exit, rB[i]);
+                    rEnter[i][m] = rA[i];
+                    rExit[i][m] = rB[i];
                 }
             }
             enterArr[m] = enter;
@@ -222,14 +242,35 @@ static TileRouteResult classifyTileSerial(
     }
 
     uint32_t activeCount = countOneBitsU32(activeMemberMask);
+    uint32_t precMask = 0u;
     if (activeCount > 1u) {
         for (uint32_t m1 = 0u; m1 < 4u; m1++) {
             if (!memberHit[m1]) continue;
             for (uint32_t m2 = m1 + 1u; m2 < 4u; m2++) {
                 if (!memberHit[m2]) continue;
-                float lo = std::max(enterArr[m1], enterArr[m2]);
-                float hi = std::min(exitArr[m1], exitArr[m2]);
-                if (hi + 0.01f > lo) tileCanOverlap = true;
+                bool pairOrder12 = true;
+                bool pairOrder21 = true;
+                bool anyBothHit = false;
+                for (uint32_t i = 0u; i < 16u; i++) {
+                    bool h1 = rEnter[i][m1] <= rExit[i][m1];
+                    bool h2 = rEnter[i][m2] <= rExit[i][m2];
+                    if (h1 && h2) {
+                        anyBothHit = true;
+                        if (!(rExit[i][m1] + 0.01f <= rEnter[i][m2])) pairOrder12 = false;
+                        if (!(rExit[i][m2] + 0.01f <= rEnter[i][m1])) pairOrder21 = false;
+                    }
+                }
+                if (!anyBothHit) {
+                    pairOrder12 = (exitArr[m1] + 0.01f <= enterArr[m2]);
+                    pairOrder21 = (exitArr[m2] + 0.01f <= enterArr[m1]);
+                }
+                if (pairOrder12 && !pairOrder21) {
+                    precMask |= (1u << (m1 * 4u + m2));
+                } else if (pairOrder21 && !pairOrder12) {
+                    precMask |= (1u << (m2 * 4u + m1));
+                } else {
+                    tileCanOverlap = true;
+                }
             }
         }
     }
@@ -248,12 +289,36 @@ static TileRouteResult classifyTileSerial(
     } else if (activeCount == 2u && !tileCanOverlap) {
         uint32_t m0 = firstTrailingBitU32(activeMemberMask);
         uint32_t m1 = firstTrailingBitU32(activeMemberMask & ~(1u << m0));
-        bool order01 = exitArr[m0] + 0.01f <= enterArr[m1];
-        bool order10 = exitArr[m1] + 0.01f <= enterArr[m0];
+        bool order01 = (precMask & (1u << (m0 * 4u + m1))) != 0u;
+        bool order10 = (precMask & (1u << (m1 * 4u + m0))) != 0u;
         if (order01 || order10) {
             uint32_t m1First = (order10 && !order01) ? 1u : 0u;
             res.cohort = 2u;
             res.packedWord = (m0 << 28u) | (m1 << 24u) | (m1First << 20u) | tileId;
+        } else {
+            res.cohort = 3u;
+            res.packedWord = (activeMemberMask << 28u) | tileId;
+        }
+    } else if (activeCount >= 3u && !tileCanOverlap) {
+        std::array<uint32_t, 4> ord = {0u, 0u, 0u, 0u};
+        uint32_t inDegMask = 0u;
+        for (uint32_t m = 0u; m < 4u; m++) {
+            if (!memberHit[m]) continue;
+            uint32_t inDeg = 0u;
+            for (uint32_t mPrev = 0u; mPrev < 4u; mPrev++) {
+                if (mPrev != m && memberHit[mPrev] && ((precMask & (1u << (mPrev * 4u + m))) != 0u)) {
+                    inDeg++;
+                }
+            }
+            if (inDeg < 4u) {
+                ord[inDeg] = m;
+                inDegMask |= (1u << inDeg);
+            }
+        }
+        if (inDegMask == ((1u << activeCount) - 1u)) {
+            uint32_t isFour = (activeCount == 4u) ? 1u : 0u;
+            res.cohort = 2u;
+            res.packedWord = (1u << 21u) | (isFour << 20u) | (ord[0] << 22u) | (ord[1] << 24u) | (ord[2] << 26u) | (ord[3] << 28u) | tileId;
         } else {
             res.cohort = 3u;
             res.packedWord = (activeMemberMask << 28u) | tileId;
@@ -283,6 +348,8 @@ static void classifyWorkgroupCooperative(
     float wgEnter[64];
     float wgExit[64];
     uint32_t wgState[64];
+    float wgEnterCurtain[4][64];
+    float wgExitCurtain[4][64];
 
     glm::vec3 ro[64], rd[64];
     float clipA[64], clipB[64];
@@ -314,6 +381,8 @@ static void classifyWorkgroupCooperative(
         float aArr[64], bArr[64];
         bool rHitArr[64];
 
+        float zEnv = std::abs(cur.amps.x) + std::abs(cur.amps.y) + std::abs(cur.amps.z) + cur.limits.w;
+        glm::vec3 halfVec = glm::min(glm::vec3(cur.half), glm::vec3(cur.limits.x, cur.limits.y, zEnv));
         // Barrier 1 phase: all 64 lanes compute ray-box slab
         for (uint32_t lid = 0; lid < 64; ++lid) {
             glm::vec3 oRel = ro[lid] - glm::vec3(cur.origin);
@@ -321,12 +390,8 @@ static void classifyWorkgroupCooperative(
             float b = clipB[lid];
             bool hit = validRay[lid];
             if (validRay[lid]) {
-                float zEnv = std::abs(cur.amps.x) + std::abs(cur.amps.y) + std::abs(cur.amps.z) + cur.limits.w;
                 for (int axis = 0; axis < 3; axis++) {
-                    float half = cur.half[axis];
-                    if (axis == 0) half = std::min(half, cur.limits.x);
-                    if (axis == 1) half = std::min(half, cur.limits.y);
-                    if (axis == 2) half = std::min(half, zEnv);
+                    float half = halfVec[axis];
                     float d = rd[lid][axis];
                     float o = oRel[axis];
                     if (d == 0.0f) {
@@ -454,6 +519,8 @@ static void classifyWorkgroupCooperative(
             wgEnter[lid] = myEnter;
             wgExit[lid] = myExit;
             wgState[lid] = myState;
+            wgEnterCurtain[m][lid] = myEnter;
+            wgExitCurtain[m][lid] = myExit;
         }
 
         // Lane 0 per tile reduces wgEnter/wgExit/wgState
@@ -497,14 +564,40 @@ static void classifyWorkgroupCooperative(
         uint32_t mask = activeMemberMask[localTile];
         uint32_t activeCount = countOneBitsU32(mask);
         bool canOverlap = false;
+        uint32_t precMask = 0u;
         if (activeCount > 1u) {
+            uint32_t base = localTile * 16u;
             for (uint32_t m1 = 0u; m1 < 4u; m1++) {
                 if (!memberHit[localTile][m1]) continue;
                 for (uint32_t m2 = m1 + 1u; m2 < 4u; m2++) {
                     if (!memberHit[localTile][m2]) continue;
-                    float lo = std::max(enterArr[localTile][m1], enterArr[localTile][m2]);
-                    float hi = std::min(exitArr[localTile][m1], exitArr[localTile][m2]);
-                    if (hi + 0.01f > lo) canOverlap = true;
+                    bool pairOrder12 = true;
+                    bool pairOrder21 = true;
+                    bool anyBothHit = false;
+                    for (uint32_t i = 0u; i < 16u; i++) {
+                        float e1 = wgEnterCurtain[m1][base + i];
+                        float x1 = wgExitCurtain[m1][base + i];
+                        float e2 = wgEnterCurtain[m2][base + i];
+                        float x2 = wgExitCurtain[m2][base + i];
+                        bool h1 = (e1 <= x1);
+                        bool h2 = (e2 <= x2);
+                        if (h1 && h2) {
+                            anyBothHit = true;
+                            if (!(x1 + 0.01f <= e2)) pairOrder12 = false;
+                            if (!(x2 + 0.01f <= e1)) pairOrder21 = false;
+                        }
+                    }
+                    if (!anyBothHit) {
+                        pairOrder12 = (exitArr[localTile][m1] + 0.01f <= enterArr[localTile][m2]);
+                        pairOrder21 = (exitArr[localTile][m2] + 0.01f <= enterArr[localTile][m1]);
+                    }
+                    if (pairOrder12 && !pairOrder21) {
+                        precMask |= (1u << (m1 * 4u + m2));
+                    } else if (pairOrder21 && !pairOrder12) {
+                        precMask |= (1u << (m2 * 4u + m1));
+                    } else {
+                        canOverlap = true;
+                    }
                 }
             }
         }
@@ -522,12 +615,36 @@ static void classifyWorkgroupCooperative(
         } else if (activeCount == 2u && !canOverlap) {
             uint32_t m0 = firstTrailingBitU32(mask);
             uint32_t m1 = firstTrailingBitU32(mask & ~(1u << m0));
-            bool order01 = exitArr[localTile][m0] + 0.01f <= enterArr[localTile][m1];
-            bool order10 = exitArr[localTile][m1] + 0.01f <= enterArr[localTile][m0];
+            bool order01 = (precMask & (1u << (m0 * 4u + m1))) != 0u;
+            bool order10 = (precMask & (1u << (m1 * 4u + m0))) != 0u;
             if (order01 || order10) {
                 uint32_t m1First = (order10 && !order01) ? 1u : 0u;
                 res.cohort = 2u;
                 res.packedWord = (m0 << 28u) | (m1 << 24u) | (m1First << 20u) | tileId;
+            } else {
+                res.cohort = 3u;
+                res.packedWord = (mask << 28u) | tileId;
+            }
+        } else if (activeCount >= 3u && !canOverlap) {
+            std::array<uint32_t, 4> ord = {0u, 0u, 0u, 0u};
+            uint32_t inDegMask = 0u;
+            for (uint32_t m = 0u; m < 4u; m++) {
+                if (!memberHit[localTile][m]) continue;
+                uint32_t inDeg = 0u;
+                for (uint32_t mPrev = 0u; mPrev < 4u; mPrev++) {
+                    if (mPrev != m && memberHit[localTile][mPrev] && ((precMask & (1u << (mPrev * 4u + m))) != 0u)) {
+                        inDeg++;
+                    }
+                }
+                if (inDeg < 4u) {
+                    ord[inDeg] = m;
+                    inDegMask |= (1u << inDeg);
+                }
+            }
+            if (inDegMask == ((1u << activeCount) - 1u)) {
+                uint32_t isFour = (activeCount == 4u) ? 1u : 0u;
+                res.cohort = 2u;
+                res.packedWord = (1u << 21u) | (isFour << 20u) | (ord[0] << 22u) | (ord[1] << 24u) | (ord[2] << 26u) | (ord[3] << 28u) | tileId;
             } else {
                 res.cohort = 3u;
                 res.packedWord = (mask << 28u) | tileId;
@@ -964,29 +1081,39 @@ static RayProducerOutput runS2Producer(const Ray& input, uint32_t packedTile,
     RayProducerOutput out;
     glm::vec3 ro = glm::vec3(input.ro_clipA);
     glm::vec3 d = glm::vec3(input.rd_clipB);
-    bool m1First = ((packedTile >> 20u) & 1u) != 0u;
-    uint32_t rawM0 = (packedTile >> 28u) & 0xFu;
-    uint32_t rawM1 = (packedTile >> 24u) & 0xFu;
-    uint32_t count = 0u, count0 = 0u;
-    glm::vec2 pieces[48];
+    bool isMulti = ((packedTile >> 21u) & 1u) != 0u;
+    uint32_t numMembers = isMulti ? (3u + ((packedTile >> 20u) & 1u)) : 2u;
+    std::array<uint32_t, 4> ord = {0u, 0u, 0u, 0u};
+    if (!isMulti) {
+        bool m1First = ((packedTile >> 20u) & 1u) != 0u;
+        uint32_t rawM0 = (packedTile >> 28u) & 0xFu;
+        uint32_t rawM1 = (packedTile >> 24u) & 0xFu;
+        ord[0] = m1First ? rawM1 : rawM0;
+        ord[1] = m1First ? rawM0 : rawM1;
+    } else {
+        ord[0] = (packedTile >> 22u) & 3u;
+        ord[1] = (packedTile >> 24u) & 3u;
+        ord[2] = (packedTile >> 26u) & 3u;
+        ord[3] = (packedTile >> 28u) & 3u;
+    }
+    uint32_t count = 0u;
+    uint32_t memberCount[4] = {0, 0, 0, 0};
+    glm::vec2 pieces[64];
     float knots[96];
 
-    uint32_t firstM = m1First ? rawM1 : rawM0;
-    uint32_t secondM = m1First ? rawM0 : rawM1;
-    float firstMemberMaxS = -1e9f;
+    float prevMemberMaxS = -1e9f;
 
-    for (uint32_t memberIdx = 0u; memberIdx < 2u; memberIdx++) {
-        uint32_t member = (memberIdx == 1u) ? secondM : firstM;
+    for (uint32_t memberIdx = 0u; memberIdx < numMembers; memberIdx++) {
+        uint32_t member = ord[memberIdx];
+        float currMemberMaxS = prevMemberMaxS;
         const KernelRoutedSpec& m = curtains[member];
         glm::vec3 o = ro - glm::vec3(m.origin);
         float a = input.ro_clipA.w, b = input.rd_clipB.w;
         bool hit = true;
         float zEnv = std::abs(m.amps.x) + std::abs(m.amps.y) + std::abs(m.amps.z) + m.limits.w;
+        glm::vec3 halfVec = glm::min(glm::vec3(m.half), glm::vec3(m.limits.x, m.limits.y, zEnv));
         for (int axis = 0; axis < 3; axis++) {
-            float half = m.half[axis];
-            if (axis == 0) half = std::min(half, m.limits.x);
-            if (axis == 1) half = std::min(half, m.limits.y);
-            if (axis == 2) half = std::min(half, zEnv);
+            float half = halfVec[axis];
             if (d[axis] == 0.0f) {
                 if (std::abs(o[axis]) > half + m.curv.y) { hit = false; break; }
             } else {
@@ -997,7 +1124,8 @@ static RayProducerOutput runS2Producer(const Ray& input, uint32_t packedTile,
             }
         }
         if (!hit || !(b > a)) {
-            if (memberIdx == 0u) count0 = count;
+            memberCount[memberIdx] = count;
+            prevMemberMaxS = currMemberMaxS;
             continue;
         }
         float phi_knots[9];
@@ -1014,7 +1142,8 @@ static RayProducerOutput runS2Producer(const Ray& input, uint32_t packedTile,
         if (allPositiveH && (mask0 | mask1 | mask2) == 0u && std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
             if (out.work + 24u > budget) { out.reason |= 1u; break; }
             out.work += 24u;
-            if (memberIdx == 0u) count0 = count;
+            memberCount[memberIdx] = count;
+            prevMemberMaxS = currMemberMaxS;
             continue;
         }
         uint32_t nb = 1u; knots[0] = a;
@@ -1027,7 +1156,8 @@ static RayProducerOutput runS2Producer(const Ray& input, uint32_t packedTile,
         PM::roots(m, o, d, a, b, m.limits.w, knots, nb, bands, nr, out.reason, out.work, phi_knots, phi_mids, mid_mask, zeroBands, false, mask2, budget);
         if (out.reason != 0u) break;
         if (allPositiveH && nr == 0u && std::abs(phi_knots[0]) > m.limits.w + m.curv.y) {
-            if (memberIdx == 0u) count0 = count;
+            memberCount[memberIdx] = count;
+            prevMemberMaxS = currMemberMaxS;
             continue;
         }
         float supportLo = a;
@@ -1072,27 +1202,28 @@ static RayProducerOutput runS2Producer(const Ray& input, uint32_t packedTile,
                 if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) protectedBoundary = true;
             }
             if (uncertain || std::abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
-                if (memberIdx == 1u && l < firstMemberMaxS) { out.reason |= 64u; break; }
-                if (memberIdx == 0u) { firstMemberMaxS = std::max(firstMemberMaxS, r); }
+                if (memberIdx > 0u && l < prevMemberMaxS) { out.reason |= 64u; break; }
+                currMemberMaxS = std::max(currMemberMaxS, r);
                 if (count > memberStart && PM::mayAbsorb(pieces[count - 1u], glm::vec2(l, r),
                      previousShortBand, previousPositive, uncertain, protectedBoundary)) {
                     pieces[count - 1u].y = r; previousShortBand = false; previousPositive = true;
                 } else {
-                    if (count >= 48u) { out.reason |= 8u; break; }
+                    if (count >= 64u) { out.reason |= 8u; break; }
                     pieces[count++] = glm::vec2(l, r);
                     previousShortBand = uncertain && (r - l <= 0.02f);
                     previousPositive = !uncertain;
                 }
             }
         }
-        if (memberIdx == 0u) count0 = count;
+        memberCount[memberIdx] = count;
         if (out.reason != 0u) break;
+        prevMemberMaxS = currMemberMaxS;
     }
     if (out.reason != 0u) return out;
-    for (uint32_t pass = 0u; pass < 2u; pass++) {
-        uint32_t emitMember = (pass == 0u) ? firstM : secondM;
-        uint32_t pStart = (pass == 0u) ? 0u : count0;
-        uint32_t pEnd = (pass == 0u) ? count0 : count;
+    for (uint32_t pass = 0u; pass < numMembers; pass++) {
+        uint32_t emitMember = ord[pass];
+        uint32_t pStart = (pass == 0u) ? 0u : memberCount[pass - 1u];
+        uint32_t pEnd = memberCount[pass];
         for (uint32_t p = pStart; p < pEnd; p++) {
             float pa = pieces[p].x, pb = pieces[p].y;
             uint32_t n = std::max(1u, uint32_t(std::ceil((pb - pa) / 4.0f)));
@@ -1132,11 +1263,9 @@ static RayProducerOutput runFallbackProducer(const Ray& input,
         float a = input.ro_clipA.w, b = input.rd_clipB.w;
         bool hit = true;
         float zEnv = std::abs(m.amps.x) + std::abs(m.amps.y) + std::abs(m.amps.z) + m.limits.w;
+        glm::vec3 halfVec = glm::min(glm::vec3(m.half), glm::vec3(m.limits.x, m.limits.y, zEnv));
         for (int axis = 0; axis < 3; axis++) {
-            float half = m.half[axis];
-            if (axis == 0) half = std::min(half, m.limits.x);
-            if (axis == 1) half = std::min(half, m.limits.y);
-            if (axis == 2) half = std::min(half, zEnv);
+            float half = halfVec[axis];
             if (d[axis] == 0.0f) {
                 if (std::abs(o[axis]) > half + m.curv.y) { hit = false; break; }
             } else {
@@ -1238,9 +1367,9 @@ static RayProducerOutput runFallbackProducer(const Ray& input,
     for (uint32_t m = 0u; m < 4u; m++) {
         if (memCount[m] > 0u) nonEmptyMask |= (1u << m);
     }
+    uint32_t ord[4] = {0u, 0u, 0u, 0u};
+    uint32_t nAct = 0u;
     if (nonEmptyMask != 0u) {
-        uint32_t ord[4] = {0u, 0u, 0u, 0u};
-        uint32_t nAct = 0u;
         uint32_t tempMask = nonEmptyMask;
         while (tempMask != 0u) {
             uint32_t m = firstTrailingBitU32(tempMask);
@@ -1293,7 +1422,8 @@ static RayProducerOutput runFallbackProducer(const Ray& input,
     while (ne < totalKnots) {
         uint32_t bestM = 4u;
         float bestVal = 0.0f;
-        for (uint32_t m = 0u; m < 4u; m++) {
+        for (uint32_t idx = 0u; idx < nAct; idx++) {
+            uint32_t m = ord[idx];
             uint32_t h = head[m];
             if (h < memCount[m] * 2u) {
                 uint32_t pIdx = memStart[m] + (h >> 1u);
@@ -1314,7 +1444,8 @@ static RayProducerOutput runFallbackProducer(const Ray& input,
         if (!(b > a)) continue;
         float mid = a + 0.5f * (b - a);
         uint32_t mask = 0u;
-        for (uint32_t m = 0u; m < 4u; m++) {
+        for (uint32_t idx = 0u; idx < nAct; idx++) {
+            uint32_t m = ord[idx];
             uint32_t start = memStart[m], numPieces = memCount[m], cur = pIdx[m];
             while (cur < numPieces && pieces[start + cur].y < mid) cur++;
             pIdx[m] = cur;

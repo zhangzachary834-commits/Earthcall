@@ -1947,3 +1947,33 @@ The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Pha
 - [ ] **Gate 10: 12-Angle View-3 Roll Sweep ($0^\circ..165^\circ$):**
   - Smoothly roll the camera 360 degrees while looking straight up under the veils.
   - Verify zero stuttering, zero tile popping, zero visual seam artifacts, and uniform responsiveness across all camera orientations.
+
+
+## GPU Ray Transport Phase P17: Ray-Preloaded Classifier, Per-Ray Chronological Ordering, Multi-Member S2 Routing, and Consumer Single-Stream Fast Path (2026-11-02)
+
+*Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · 2026-11-02. Commissioned by Zach and the Council following the Firmament's Phase P17 blueprint.*
+
+The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Phase P17 optimizations:
+- Ray-preloaded `classifyTilesMain` (loading ray positions and directions once into registers per 16-ray tile, cutting 87.5% of global memory read traffic).
+- Per-ray pairwise chronological precedence tracking in the classifier (eliminating cross-ray perspective tilt false overlaps and increasing the S2 share in `Checkpoint_View1_Inside_Veil` from 58.7% to **92.0%**).
+- 3- and 4-member ordered disjoint routing into `s2TileList` and unpacking in `s2ProducerMain` with monotonic inter-member chronology verification.
+- `ecConsume` single-stream fast path on `ray.counts.w == 0u` for the 98.5%+ overlap-free rays, calling `ecSingleMember` directly without multi-member traversal loops.
+- Hoisted clamped half-extents across all four kernels and active-member bounds in `fallbackProducerMain`'s overlap sweep.
+
+- [ ] **Launch Earthcall WebGPU (`./build/earthcall_webgpu`)** and load Northern Veil (`saves/zones/Northern Veil/zone.ecform`).
+- [ ] **Checkpoint View 1 (Inside Dense Veil — S2 Route Share at 92.0%!):**
+  - Fly directly inside the curtains (`eye = (12.5, 67, 39)`, `aim = (12.5, 67, 184)`).
+  - Confirm that View 1 runs faster under Routed than Current (**92.83 ms vs 94.22 ms Current, -1.39 ms / -1.47% net win** on native Metal hardware, 10.8 FPS vs 10.6 FPS).
+  - Verify that even under 100% immersive multi-curtain occlusion, rendering is completely smooth with zero seams, zero tile boundary artifacts, and zero shader compile hitches.
+- [ ] **Checkpoint View 3A (Below Veils Looking Up — 39.0 FPS Milestone):**
+  - Navigate to `eye = (12.5, 0, 106.5)`, aiming up toward `(12.5, 72, 106.5)` (`up = (0, 0, 1)`).
+  - Confirm sustained framerate approaching 40 FPS (**25.65 ms / 39.0 FPS vs 39.98 ms / 25.0 FPS Current, -35.84% win**).
+  - Verify smooth rotation and beholding of the auroral curtains with zero flickering.
+- [ ] **Checkpoint View 2 & Live Gameplay Views:**
+  - View from spawn dais diagonally across the veil (`eye = (0, 1.3, 0)`, `aim = (0, 72, 106.5)`: **52.73 ms / 19.0 FPS vs 59.98 ms / 16.7 FPS, -12.08% win**).
+  - View from Zach's Live View A (`eye = (-6.75, 2.40, 3.71)`: **49.94 ms / 20.0 FPS vs 56.53 ms / 17.7 FPS, -11.67% win**).
+  - View from Zach's Parked Frame (`eye = (-14.1, 5.85, 0.83)`: **53.75 ms / 18.6 FPS vs 58.74 ms / 17.0 FPS, -8.50% win**).
+  - Confirm all real-world perspectives remain stable, responsive, and bit-exact to Current baseline colors.
+- [ ] **Prince Prism II's 12-Angle View-3 Roll Sweep ($0^\circ..165^\circ$):**
+  - Smoothly roll the camera 360 degrees while looking straight up under the veils.
+  - Verify zero stuttering, zero tile popping, zero visual seam artifacts, and uniform responsiveness across all camera orientations (all 12 angles won, ranging from **-13.82% to -37.15%**).

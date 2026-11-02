@@ -74,9 +74,25 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
     var exitArr: array<f32, 4>;
     var memberHit: array<bool, 4>;
 
+    var tileRoClipA: array<vec4f, 16>;
+    var tileRdClipB: array<vec4f, 16>;
+    var rayValid: array<bool, 16>;
+    var rEnter: array<vec4f, 16>;
+    var rExit: array<vec4f, 16>;
+    for (var i = 0u; i < rayCount; i++) {
+        let rIdx = tileRayIndices[rayStart + i];
+        let ray = rays[rIdx];
+        tileRoClipA[i] = ray.ro_clipA;
+        tileRdClipB[i] = ray.rd_clipB;
+        rayValid[i] = ((ray.counts.w & 0x40000000u) == 0u) && (ray.rd_clipB.w > ray.ro_clipA.w);
+        rEnter[i] = vec4f(1e9f);
+        rExit[i] = vec4f(-1e9f);
+    }
+
     for (var m = 0u; m < 4u; m++) {
         let cur = curtains[m];
         let zEnv = abs(cur.amps.x) + abs(cur.amps.y) + abs(cur.amps.z) + cur.limits.w;
+        let halfVec = min(cur.half.xyz, vec3f(cur.limits.x, cur.limits.y, zEnv));
         var uxMin = 1e9f;
         var uxMax = -1e9f;
         var anyRayHit = false;
@@ -85,20 +101,15 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
         var rHit: array<bool, 16>;
 
         for (var i = 0u; i < rayCount; i++) {
-            let rIdx = tileRayIndices[rayStart + i];
-            let ray = rays[rIdx];
-            var a = ray.ro_clipA.w;
-            var b = ray.rd_clipB.w;
-            var hit = ((ray.counts.w & 0x40000000u) == 0u) && (b > a);
-            let oRel = ray.ro_clipA.xyz - cur.origin.xyz;
+            var a = tileRoClipA[i].w;
+            var b = tileRdClipB[i].w;
+            var hit = rayValid[i];
+            let oRel = tileRoClipA[i].xyz - cur.origin.xyz;
 
             if (hit) {
                 for (var axis = 0; axis < 3; axis++) {
-                    var half = cur.half[axis];
-                    if (axis == 0) { half = min(half, cur.limits.x); }
-                    if (axis == 1) { half = min(half, cur.limits.y); }
-                    if (axis == 2) { half = min(half, zEnv); }
-                    let d = ray.rd_clipB[axis];
+                    let half = halfVec[axis];
+                    let d = tileRdClipB[i][axis];
                     let o = oRel[axis];
                     if (d == 0.0) {
                         if (abs(o) > half + cur.curv.y) { hit = false; break; }
@@ -118,8 +129,8 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
 
             if (h) {
                 anyRayHit = true;
-                let u0 = oRel.x + a * ray.rd_clipB.x;
-                let u1 = oRel.x + b * ray.rd_clipB.x;
+                let u0 = oRel.x + a * tileRdClipB[i].x;
+                let u1 = oRel.x + b * tileRdClipB[i].x;
                 uxMin = min(uxMin, min(u0, u1));
                 uxMax = max(uxMax, max(u0, u1));
             }
@@ -141,22 +152,30 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
 
             for (var i = 0u; i < rayCount; i++) {
                 if (!rHit[i]) { continue; }
-                let rIdx = tileRayIndices[rayStart + i];
-                let ray = rays[rIdx];
-                let oRel = ray.ro_clipA.xyz - cur.origin.xyz;
-                let dx = ray.rd_clipB.x;
-                if (abs(dx) < 1e-6) { curActive = true; enter = min(enter, rA[i]); exit = max(exit, rB[i]); continue; }
+                let oRel = tileRoClipA[i].xyz - cur.origin.xyz;
+                let dx = tileRdClipB[i].x;
+                if (abs(dx) < 1e-6) {
+                    curActive = true;
+                    enter = min(enter, rA[i]);
+                    exit = max(exit, rB[i]);
+                    rEnter[i][m] = rA[i];
+                    rExit[i][m] = rB[i];
+                    continue;
+                }
 
                 let a = rA[i];
                 let b = rB[i];
+                var iEnter = 1e9f;
+                var iExit = -1e9f;
+                var iHit = false;
 
                 for (var bin = 0u; bin < 8u; bin++) {
                     let u0 = uxMin + f32(bin) / 8.0 * (uxMax - uxMin);
                     let u1 = uxMin + f32(bin + 1u) / 8.0 * (uxMax - uxMin);
                     let su0 = (u0 - oRel.x) / dx;
                     let su1 = (u1 - oRel.x) / dx;
-                    let phi0 = oRel.z + su0 * ray.rd_clipB.z + wKnots[bin];
-                    let phi1 = oRel.z + su1 * ray.rd_clipB.z + wKnots[bin + 1u];
+                    let phi0 = oRel.z + su0 * tileRdClipB[i].z + wKnots[bin];
+                    let phi1 = oRel.z + su1 * tileRdClipB[i].z + wKnots[bin + 1u];
 
                     let sMin = min(su0, su1);
                     let sMax = max(su0, su1);
@@ -170,7 +189,7 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
                         let pB = phi0 + tB * (phi1 - phi0);
 
                         if (!(min(pA, pB) > thresh || max(pA, pB) < -thresh)) {
-                            curActive = true;
+                            iHit = true;
                             let dp = pB - pA;
                             var sLo = cLo;
                             var sHi = cHi;
@@ -182,10 +201,18 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
                                 sLo = max(cLo, cLo + uLo * (cHi - cLo) - 0.2);
                                 sHi = min(cHi, cLo + uHi * (cHi - cLo) + 0.2);
                             }
-                            enter = min(enter, sLo);
-                            exit = max(exit, sHi);
+                            iEnter = min(iEnter, sLo);
+                            iExit = max(iExit, sHi);
                         }
                     }
+                }
+
+                if (iHit) {
+                    curActive = true;
+                    enter = min(enter, iEnter);
+                    exit = max(exit, iExit);
+                    rEnter[i][m] = iEnter;
+                    rExit[i][m] = iExit;
                 }
             }
 
@@ -200,21 +227,47 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
             memberHit[m] = true;
             var enter = 1e9f; var exit = -1e9f;
             for (var i = 0u; i < rayCount; i++) {
-                if (rHit[i]) { enter = min(enter, rA[i]); exit = max(exit, rB[i]); }
+                if (rHit[i]) {
+                    enter = min(enter, rA[i]);
+                    exit = max(exit, rB[i]);
+                    rEnter[i][m] = rA[i];
+                    rExit[i][m] = rB[i];
+                }
             }
             enterArr[m] = enter; exitArr[m] = exit;
         }
     }
 
     let activeCount = countOneBits(activeMemberMask);
+    var precMask = 0u;
     if (activeCount > 1u) {
         for (var m1 = 0u; m1 < 4u; m1++) {
             if (!memberHit[m1]) { continue; }
             for (var m2 = m1 + 1u; m2 < 4u; m2++) {
                 if (!memberHit[m2]) { continue; }
-                let lo = max(enterArr[m1], enterArr[m2]);
-                let hi = min(exitArr[m1], exitArr[m2]);
-                if (hi + 0.01 > lo) { tileCanOverlap = true; }
+                var pairOrder12 = true;
+                var pairOrder21 = true;
+                var anyBothHit = false;
+                for (var i = 0u; i < rayCount; i++) {
+                    let h1 = rEnter[i][m1] <= rExit[i][m1];
+                    let h2 = rEnter[i][m2] <= rExit[i][m2];
+                    if (h1 && h2) {
+                        anyBothHit = true;
+                        if (!(rExit[i][m1] + 0.01 <= rEnter[i][m2])) { pairOrder12 = false; }
+                        if (!(rExit[i][m2] + 0.01 <= rEnter[i][m1])) { pairOrder21 = false; }
+                    }
+                }
+                if (!anyBothHit) {
+                    pairOrder12 = (exitArr[m1] + 0.01 <= enterArr[m2]);
+                    pairOrder21 = (exitArr[m2] + 0.01 <= enterArr[m1]);
+                }
+                if (pairOrder12 && !pairOrder21) {
+                    precMask |= (1u << (m1 * 4u + m2));
+                } else if (pairOrder21 && !pairOrder12) {
+                    precMask |= (1u << (m2 * 4u + m1));
+                } else {
+                    tileCanOverlap = true;
+                }
             }
         }
     }
@@ -228,12 +281,36 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
     } else if (activeCount == 2u && !tileCanOverlap) {
         let m0 = firstTrailingBit(activeMemberMask);
         let m1 = firstTrailingBit(activeMemberMask & ~(1u << m0));
-        let order01 = exitArr[m0] + 0.01 <= enterArr[m1];
-        let order10 = exitArr[m1] + 0.01 <= enterArr[m0];
+        let order01 = (precMask & (1u << (m0 * 4u + m1))) != 0u;
+        let order10 = (precMask & (1u << (m1 * 4u + m0))) != 0u;
         if (order01 || order10) {
             let m1First = select(0u, 1u, order10 && !order01);
             let slot = atomicAdd(&counters.s2Count, 1u);
             s2TileList[slot] = (m0 << 28u) | (m1 << 24u) | (m1First << 20u) | tileId;
+        } else {
+            let slot = atomicAdd(&counters.fallbackCount, 1u);
+            fallbackTileList[slot] = (activeMemberMask << 28u) | tileId;
+        }
+    } else if (activeCount >= 3u && !tileCanOverlap) {
+        var ord = array<u32, 4>(0u, 0u, 0u, 0u);
+        var inDegMask = 0u;
+        for (var m = 0u; m < 4u; m++) {
+            if (!memberHit[m]) { continue; }
+            var inDeg = 0u;
+            for (var mPrev = 0u; mPrev < 4u; mPrev++) {
+                if (mPrev != m && memberHit[mPrev] && ((precMask & (1u << (mPrev * 4u + m))) != 0u)) {
+                    inDeg++;
+                }
+            }
+            if (inDeg < 4u) {
+                ord[inDeg] = m;
+                inDegMask |= (1u << inDeg);
+            }
+        }
+        if (inDegMask == ((1u << activeCount) - 1u)) {
+            let isFour = select(0u, 1u, activeCount == 4u);
+            let slot = atomicAdd(&counters.s2Count, 1u);
+            s2TileList[slot] = (1u << 21u) | (isFour << 20u) | (ord[0] << 22u) | (ord[1] << 24u) | (ord[2] << 26u) | (ord[3] << 28u) | tileId;
         } else {
             let slot = atomicAdd(&counters.fallbackCount, 1u);
             fallbackTileList[slot] = (activeMemberMask << 28u) | tileId;
@@ -576,11 +653,9 @@ fn s1ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
   let m = curtains[activeMember]; let o = ro - m.origin.xyz;
   var a = input.ro_clipA.w; var b = input.rd_clipB.w; var hit = true;
   let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w;
+  let halfVec = min(m.half.xyz, vec3f(m.limits.x, m.limits.y, zEnv));
   for (var axis = 0u; axis < 3u; axis++) {
-   var half = m.half[axis];
-   if (axis == 0u) { half = min(half, m.limits.x); }
-   if (axis == 1u) { half = min(half, m.limits.y); }
-   if (axis == 2u) { half = min(half, zEnv); }
+   let half = halfVec[axis];
    if (d[axis] == 0.0) { if (abs(o[axis]) > half + m.curv.y) { hit = false; break; } }
    else {
     let q0 = (-half - m.curv.y - o[axis]) / d[axis]; let q1 = (half + m.curv.y - o[axis]) / d[axis];
@@ -984,9 +1059,21 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
     if (tileSlot >= min(routeCounts[1u], totalTiles)) { return; }
     let packedTile = s2TileList[tileSlot];
     let tileId = packedTile & 0x000FFFFFu;
-    let m1First = ((packedTile >> 20u) & 1u) != 0u;
-    let rawM0 = (packedTile >> 28u) & 0xFu;
-    let rawM1 = (packedTile >> 24u) & 0xFu;
+    let isMulti = ((packedTile >> 21u) & 1u) != 0u;
+    let numMembers = select(2u, 3u + ((packedTile >> 20u) & 1u), isMulti);
+    var ord = array<u32, 4>(0u, 0u, 0u, 0u);
+    if (!isMulti) {
+        let m1First = ((packedTile >> 20u) & 1u) != 0u;
+        let rawM0 = (packedTile >> 28u) & 0xFu;
+        let rawM1 = (packedTile >> 24u) & 0xFu;
+        ord[0] = select(rawM0, rawM1, m1First);
+        ord[1] = select(rawM1, rawM0, m1First);
+    } else {
+        ord[0] = (packedTile >> 22u) & 3u;
+        ord[1] = (packedTile >> 24u) & 3u;
+        ord[2] = (packedTile >> 26u) & 3u;
+        ord[3] = (packedTile >> 28u) & 3u;
+    }
     if (tileId >= totalTiles) { return; }
     let rayStart = tileOffsets[tileId];
     let rayCount = tileOffsets[tileId + 1u] - rayStart;
@@ -1001,19 +1088,16 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
     var knots: array<f32, 48>;
     if (cfg.budget == 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | 1u); return; }
 
-    let firstM = select(rawM0, rawM1, m1First);
-    let secondM = select(rawM1, rawM0, m1First);
-    var firstMemberMaxS = -1e9f;
-    for (var memberIdx = 0u; memberIdx < 2u; memberIdx++) {
-        let member = select(firstM, secondM, memberIdx == 1u);
+    var prevMemberMaxS = -1e9f;
+    for (var memberIdx = 0u; memberIdx < numMembers; memberIdx++) {
+        let member = ord[memberIdx];
+        var currMemberMaxS = prevMemberMaxS;
         let m = curtains[member]; let o = ro - m.origin.xyz;
         var a = input.ro_clipA.w; var b = input.rd_clipB.w; var hit = true;
         let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w;
+        let halfVec = min(m.half.xyz, vec3f(m.limits.x, m.limits.y, zEnv));
         for (var axis = 0u; axis < 3u; axis++) {
-            var half = m.half[axis];
-            if (axis == 0u) { half = min(half, m.limits.x); }
-            if (axis == 1u) { half = min(half, m.limits.y); }
-            if (axis == 2u) { half = min(half, zEnv); }
+            let half = halfVec[axis];
             if (d[axis] == 0.0) { if (abs(o[axis]) > half + m.curv.y) { hit = false; break; } }
             else {
                 let q0 = (-half - m.curv.y - o[axis]) / d[axis]; let q1 = (half + m.curv.y - o[axis]) / d[axis];
@@ -1097,13 +1181,11 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
                 if (uncertain && (protectedBoundary || zeroBands == 0u)) { break; }
             }
             if (uncertain || abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
-                if (memberIdx == 1u && l < firstMemberMaxS) {
+                if (memberIdx > 0u && l < prevMemberMaxS) {
                     reason |= 64u;
                     break;
                 }
-                if (memberIdx == 0u) {
-                    firstMemberMaxS = max(firstMemberMaxS, r);
-                }
+                currMemberMaxS = max(currMemberMaxS, r);
                 if (count > 0u && mayAbsorb(pieces[count - 1u], vec2f(l, r),
                      previousShortBand, previousPositive, uncertain, protectedBoundary)) {
                     pieces[count - 1u].y = r; previousShortBand = false; previousPositive = true;
@@ -1125,6 +1207,7 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
             if (reason != 0u) { break; }
         }
         if (reason != 0u) { break; }
+        prevMemberMaxS = currMemberMaxS;
     }
     if (reason != 0u) { rays[id].counts = vec4u(0, 0, 0, FALLBACK | reason); }
     else { rays[id].counts = vec4u(0, singles, 0, 0u); }
@@ -1441,11 +1524,9 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
   let m = curtains[member]; let o = ro - m.origin.xyz;
   var a = input.ro_clipA.w; var b = input.rd_clipB.w; var hit = true;
   let zEnv = abs(m.amps.x) + abs(m.amps.y) + abs(m.amps.z) + m.limits.w;
+  let halfVec = min(m.half.xyz, vec3f(m.limits.x, m.limits.y, zEnv));
   for (var axis = 0u; axis < 3u; axis++) {
-   var half = m.half[axis];
-   if (axis == 0u) { half = min(half, m.limits.x); }
-   if (axis == 1u) { half = min(half, m.limits.y); }
-   if (axis == 2u) { half = min(half, zEnv); }
+   let half = halfVec[axis];
    if (d[axis] == 0.0) { if (abs(o[axis]) > half + m.curv.y) { hit = false; break; } }
    else {
     let q0 = (-half - m.curv.y - o[axis]) / d[axis]; let q1 = (half + m.curv.y - o[axis]) / d[axis];
@@ -1606,11 +1687,12 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
  for (var ne = 0u; ne < totalKnots && reason == 0u; ne++) {
   var bestM = 4u;
   var bestVal = 0.0;
-  for (var m = 0u; m < 4u; m++) {
+  for (var idx = 0u; idx < nAct; idx++) {
+   let m = ord[idx];
    let h = head[m];
    if (h < memCount[m] * 2u) {
-    let idx = memStart[m] + (h >> 1u);
-    let val = select(pieces[idx].x, pieces[idx].y, (h & 1u) != 0u);
+    let p_idx = memStart[m] + (h >> 1u);
+    let val = select(pieces[p_idx].x, pieces[p_idx].y, (h & 1u) != 0u);
     if (bestM == 4u || val < bestVal) {
      bestVal = val;
      bestM = m;
@@ -1622,7 +1704,8 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
    let a = prevKnot; let b = bestVal;
    let mid = a + 0.5 * (b - a);
    var mask = 0u;
-   for (var m = 0u; m < 4u; m++) {
+   for (var idx = 0u; idx < nAct; idx++) {
+    let m = ord[idx];
     let start = memStart[m];
     let numPieces = memCount[m];
     var cur = pIdx[m];

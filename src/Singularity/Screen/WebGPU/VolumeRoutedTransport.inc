@@ -145,33 +145,49 @@ fn ecProjected(ro:vec3<f32>,rd:vec3<f32>,wo:vec3<f32>,s:f32,mask:u32)->vec4<f32>
  if((ray.counts.y|ray.counts.w)==0u){return;}
  let ro=ray.ro_clipA.xyz;let rd=ray.rd_clipB.xyz;let wo=-rd;
  let stride=ecWindow.control.x;
- var state=vec4<f32>(0,0,0,1);var single=0u;var overlap=0u;var overPanel=0u;
+ var state=vec4<f32>(0,0,0,1);
  let gx0=.5*(1.0-.5773502691896257);let gx1=.5*(1.0+.5773502691896257);
  let oa=.25-sqrt(3.0)/6.0;let ob=.5-oa;
- loop{
-  if(single>=ray.counts.y&&overlap>=ray.counts.w){break;}
-  var useOverlap=false;
-  if(overlap<ray.counts.w){if(single>=ray.counts.y){useOverlap=true;}else{useOverlap=ecOverlaps[overlap*stride+id].span.x<ecSingles[single*stride+id].span.x;}}
-  var lo=0.0;var h=0.0;var mask=0u;var subMember=0u;
-  if(useOverlap){
-   let sp=ecOverlaps[overlap*stride+id];
-   h=(sp.span.y-sp.span.x)*.5;lo=sp.span.x+f32(overPanel)*h;mask=sp.info.x;
-  }else{
-   let sub=ecSingles[single*stride+id];single++;
+ if(ray.counts.w==0u){
+  for(var s=0u;s<ray.counts.y;s++){
+   let sub=ecSingles[s*stride+id];
    if(sub.info.x>=4u){ecPublication[ecPixel(id)]=vec4<f32>(0,0,0,-1);return;}
-   lo=sub.span.x;h=sub.span.y-sub.span.x;mask=1u<<sub.info.x;subMember=sub.info.x;
-  }
-  var minus=vec4<f32>(0);var plus=vec4<f32>(0);
-  for(var q=0u;q<2u;q++){
-   let node=select(select(gx0,.5-sqrt(3.0)/6.0,useOverlap),select(gx1,.5+sqrt(3.0)/6.0,useOverlap),q==1u);
-   EC_EVAL_NODE
-   if(q==0u){minus=val;}else{plus=val;}
-  }
-  if(useOverlap){
-   state=ecFlow(state,ob*minus+oa*plus,h);state=ecFlow(state,oa*minus+ob*plus,h);
-   if(overPanel==0u){overPanel=1u;}else{overPanel=0u;overlap++;}
-  }else{
+   let lo=sub.span.x;let h=sub.span.y-lo;let subMember=sub.info.x;let mask=1u<<subMember;
+   var minus=vec4<f32>(0);var plus=vec4<f32>(0);
+   for(var q=0u;q<2u;q++){
+    let node=select(gx0,gx1,q==1u);
+    EC_EVAL_SINGLE_NODE
+    if(q==0u){minus=val;}else{plus=val;}
+   }
    state=ecFlow(state,.5*(minus+plus),h);
+  }
+ }else{
+  var single=0u;var overlap=0u;var overPanel=0u;
+  loop{
+   if(single>=ray.counts.y&&overlap>=ray.counts.w){break;}
+   var useOverlap=false;
+   if(overlap<ray.counts.w){if(single>=ray.counts.y){useOverlap=true;}else{useOverlap=ecOverlaps[overlap*stride+id].span.x<ecSingles[single*stride+id].span.x;}}
+   var lo=0.0;var h=0.0;var mask=0u;var subMember=0u;
+   if(useOverlap){
+    let sp=ecOverlaps[overlap*stride+id];
+    h=(sp.span.y-sp.span.x)*.5;lo=sp.span.x+f32(overPanel)*h;mask=sp.info.x;
+   }else{
+    let sub=ecSingles[single*stride+id];single++;
+    if(sub.info.x>=4u){ecPublication[ecPixel(id)]=vec4<f32>(0,0,0,-1);return;}
+    lo=sub.span.x;h=sub.span.y-sub.span.x;mask=1u<<sub.info.x;subMember=sub.info.x;
+   }
+   var minus=vec4<f32>(0);var plus=vec4<f32>(0);
+   for(var q=0u;q<2u;q++){
+    let node=select(select(gx0,.5-sqrt(3.0)/6.0,useOverlap),select(gx1,.5+sqrt(3.0)/6.0,useOverlap),q==1u);
+    EC_EVAL_NODE
+    if(q==0u){minus=val;}else{plus=val;}
+   }
+   if(useOverlap){
+    state=ecFlow(state,ob*minus+oa*plus,h);state=ecFlow(state,oa*minus+ob*plus,h);
+    if(overPanel==0u){overPanel=1u;}else{overPanel=0u;overlap++;}
+   }else{
+    state=ecFlow(state,.5*(minus+plus),h);
+   }
   }
  }
  if(any((bitcast<vec4<u32>>(state)&vec4<u32>(0x7f800000u))==vec4<u32>(0x7f800000u))||state.w<0||state.w>1){ecPublication[ecPixel(id)]=vec4<f32>(0,0,0,-1);return;}
@@ -246,7 +262,7 @@ bool KernelRoutedTransport::enableRouteObserver(bool on){
  if(!device||!common[1])return false;if(observerPipe&&accumPipe&&routeHistogram){observeRoutes=true;return true;}
  std::string src=routed_wgsl::kClassifyWgsl;
  const std::string tailAnchor="    if (activeCount == 0u) {\n";const auto tail=src.find(tailAnchor);if(tail==std::string::npos)return false;
- src.erase(tail);src+="    var ordered = false;\n    if (activeCount == 2u && !tileCanOverlap) {\n        let m0 = firstTrailingBit(activeMemberMask);\n        let m1 = firstTrailingBit(activeMemberMask & ~(1u << m0));\n        ordered = (exitArr[m0] <= enterArr[m1]) || (exitArr[m1] <= enterArr[m0]);\n    }\n    let key = activeMemberMask | (aabbMask << 4u) | (select(0u, 1u, tileCanOverlap) << 8u) | (select(0u, 1u, ordered) << 9u);\n    atomicAdd(&routeHist[key], 1u);\n}\n";
+ src.erase(tail);src+="    var ordered = (activeCount >= 2u && !tileCanOverlap);\n    let key = activeMemberMask | (aabbMask << 4u) | (select(0u, 1u, tileCanOverlap) << 8u) | (select(0u, 1u, ordered) << 9u);\n    atomicAdd(&routeHist[key], 1u);\n}\n";
  if(!replace(src,"var activeMemberMask = 0u;","var activeMemberMask = 0u;\n    var aabbMask = 0u;")||!replace(src,"        if (anyRayHit && uxMax > uxMin) {","        if (anyRayHit) { aabbMask |= (1u << m); }\n        if (anyRayHit && uxMax > uxMin) {")||
     !replace(src,"@group(0) @binding(7) var<storage, read_write> counters: DispatchCounters;","@group(0) @binding(8) var<storage, read_write> routeHist: array<atomic<u32>>;"))return false;
  static const char* accum=R"WGSL(
@@ -318,15 +334,22 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
             "}\n";
   replace(tail, "EC_CONSUMER_HELPERS", helper);
   replace(tail, "EC_PROJECTED", "_ = wo; _ = mask; _ = world; return result;");
+  replace(tail, "EC_EVAL_SINGLE_NODE", "let sNode = lo + node * h;\n"
+                                       "   let worldNode = ro + sNode * rd;\n"
+                                       "   let val = ecSingleMember(worldNode, wo, sNode, subMember);");
   replace(tail, "EC_EVAL_NODE", "var val = vec4<f32>(0.0);\n"
                                 "   let sNode = lo + node * h;\n"
                                 "   let worldNode = ro + sNode * rd;\n"
-                                "   var mMask = mask;\n"
-                                "   loop {\n"
-                                "    if (mMask == 0u) { break; }\n"
-                                "    let m = firstTrailingBit(mMask);\n"
-                                "    mMask &= mMask - 1u;\n"
-                                "    val += ecSingleMember(worldNode, wo, sNode, m);\n"
+                                "   if (!useOverlap) {\n"
+                                "    val = ecSingleMember(worldNode, wo, sNode, subMember);\n"
+                                "   } else {\n"
+                                "    var mMask = mask;\n"
+                                "    loop {\n"
+                                "     if (mMask == 0u) { break; }\n"
+                                "     let m = firstTrailingBit(mMask);\n"
+                                "     mMask &= mMask - 1u;\n"
+                                "     val += ecSingleMember(worldNode, wo, sNode, m);\n"
+                                "    }\n"
                                 "   }");
  } else {
   replace(tail, "EC_CONSUMER_HELPERS", "");
@@ -338,6 +361,7 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
                "let D=volumeDensityEval_" + n + "(p);if(D>0.0){let X=max(volumeExtinctionEval_" + n + "(p,D),1e-6);var E=vec3<f32>(0);if(!VOLUME_EMISSION_READS_OMEGA_" + n + "||s>1e-8){E=max(volumeEmissionEval_" + n + "(p,wo),vec3<f32>(0));}result+=vec4<f32>(E,X);}}\n";
   }
   replace(tail, "EC_PROJECTED", sampling);
+  replace(tail, "EC_EVAL_SINGLE_NODE", "let val = ecProjected(ro, rd, wo, lo + node * h, mask);");
   replace(tail, "EC_EVAL_NODE", "let val = ecProjected(ro, rd, wo, lo + node * h, mask);");
  }
  std::string consume = prefix + commonText + tail;
