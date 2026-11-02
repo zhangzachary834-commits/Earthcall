@@ -3999,6 +3999,39 @@ std::vector<Law::ApplicationRecord> LawManager::applyAllToTargets() {
     return records;
 }
 
+void LawManager::forkAllDurableHistoryLineages() {
+    // An explicit copied-world fork must re-key BOTH authored Laws and the
+    // surviving engine-owned First Movers. Never reuse a source-world lineage,
+    // even if the copied Law was renamed or a previous fork is already live.
+    // Prepare every new identity first: failure cannot partially fork the
+    // register or rewrite any previously saved world's history.
+    std::unordered_set<std::string> forbidden;
+    for (const auto& law : _laws) {
+        if (law) forbidden.insert(law->durableHistoryLineage());
+    }
+
+    std::vector<std::pair<Law*, std::string>> staged;
+    staged.reserve(_laws.size());
+    for (const auto& law : _laws) {
+        if (!law) continue;
+        bool minted = false;
+        std::string lineage;
+        for (int attempt = 0; attempt < 8; ++attempt) {
+            lineage = mintDurableHistoryLineage();
+            if (forbidden.insert(lineage).second) {
+                minted = true;
+                break;
+            }
+        }
+        if (!minted)
+            throw std::runtime_error("Unable to mint distinct copied-world Law history");
+        staged.emplace_back(law.get(), std::move(lineage));
+    }
+    for (auto& [law, lineage] : staged) {
+        law->_durableHistoryLineage = std::move(lineage);
+    }
+}
+
 nlohmann::json LawManager::toJson() const {
     nlohmann::json arr = nlohmann::json::array();
     nlohmann::json firstMoverEnabled = nlohmann::json::object();
