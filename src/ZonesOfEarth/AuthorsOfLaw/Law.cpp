@@ -186,10 +186,12 @@ void claimLawIdAtLeast(const std::string& id) {
     if (first == last) return;
     unsigned long long n = 0;
     const auto parsed = std::from_chars(first, last, n);
-    // Only a complete decimal suffix reserves generated IDs. Never allow
-    // the next-id counter to wrap through law-0 on an extreme saved ID.
+    // Only a complete decimal suffix reserves generated IDs. law-(max-1)
+    // must reserve max as the exhausted sentinel: otherwise the next Law
+    // constructor can reuse that restored identifier. law-max itself cannot
+    // advance the counter without wrapping, so it remains unreservable.
     if (parsed.ec != std::errc{} || parsed.ptr != last ||
-        n >= std::numeric_limits<unsigned long long>::max() - 1) return;
+        n == std::numeric_limits<unsigned long long>::max()) return;
     const unsigned long long next = n + 1;
     unsigned long long current = g_nextLawId.load();
     while (next > current && !g_nextLawId.compare_exchange_weak(current, next)) {
