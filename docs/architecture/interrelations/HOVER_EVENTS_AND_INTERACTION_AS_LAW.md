@@ -1,19 +1,20 @@
 # Hover Events and Interaction as Law
 
-## Interrelated Documents
-- `docs/architecture/events/OBJECT_HOVER_EVENTS_SYSTEM.md`
-- `docs/architecture/law/INTERACTION_AS_LAW.md`
+## Source documents
+- [Object Hover Events System](../events/OBJECT_HOVER_EVENTS_SYSTEM.md)
+- [Interaction as Law](../law/INTERACTION_AS_LAW.md)
 
-## The Interrelation
+## The interrelation
 
-The `OBJECT_HOVER_EVENTS_SYSTEM.md` details how the engine monitors the pointer's location and triggers state changes (or dispatches events) when the user's cursor intersects an Object. Crucially, the latest architectural update shifted this system away from merely publishing internal C++ events and instead exposed `hovered` and `hoverPoint` as **registered, read-only property paths** on `Object`.
+`InteractionChannel::observe`, stepped from `Engine::update`, performs pointer sensing and updates the hovered Object's state. The hover specification documents both C++ enter/hover/exit events and **registered, read-only** Object paths `hovered` and `hoverPoint`. It also recommends `@world.pointerOver` when the Law only needs to identify the current pointer target, avoiding redundant per-object state.
 
-`INTERACTION_AS_LAW.md` describes Earthcall's paradigm for UI and user engagement, which rejects traditional event-listener-based widgets in favor of pointers directly interacting with the continuous evaluation of Laws via `ScreenChannel`.
+`INTERACTION_AS_LAW.md` separates **Sense** (engine input, hit testing, edges), **Decide** (authored `ConditionModel`), and **Act** (authored `ActionModel`). An Object is not automatically a button because the pointer hits it; the authored category and Law determine what that contact means. The input observer is `InteractionChannel`, not `ScreenChannel` acting as a universal pointer sensor.
 
-These two documents interrelate by illustrating how lower-level pointer logic is elevated into the ontological graph. Because hover states are now legible properties (`@world.pointerOver` or `object.hovered`), they can be consumed directly by the Interaction-as-Law system.
+## Two supported ways to respond
 
-## Thoughts on Integration and Interrelation
+- **State/condition:** an authored Law reads `@world.pointerOver` or the relevant Object's `hovered` property and, when its conditions and authority permit, changes a registered, writable property.
+- **Event/edge:** an authored `Activation::OnEvent` Law or other explicit subscriber reacts to a published input edge such as `object-clicked`; C++ hover enter/exit notifications remain available to subscribers where needed.
 
-The exposure of hover events as queryable properties is what bridges standard interactive input into the Law engine's domain. Rather than a developer writing a `onHoverEnter` C++ callback to change a button's color (creating a black box), an Author writes a Law: "When object.hovered is true, set object.material.emission to 1.0".
+A conceptual hover-highlight rule is: *when this Object is the pointer target, apply an authorized visual-property change*. This is a design example, **not** a claim that an arbitrary `object.material.emission` path exists or is writable.
 
-This integration means that UI interaction and in-world physical manipulation use the exact same evaluative substrate. The continuous space rasterized to the screen and the discrete bounds of a hovering pointer seamlessly feed facts into the Rete network. The engine's job is simply to keep `object.hovered` updated every frame; it is up to the authored Laws to decide what that spatial intersection actually *means* for the interactive experience.
+The engine senses and publishes; it does not decide that a hover must highlight, grant consent, or create a Relation. Nor does merely exposing a property guarantee that the Rete network reevaluates every such fact on every render frame. Verify the registered path, actual Law activation, and resulting mutation for each implementation. Rendering must not become a hidden input/authority loop.
