@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <set>
 #include <stdexcept>
@@ -512,6 +513,37 @@ int main() {
             malformedName["laws"][0]["name"] = 42;
             expectRejectedWithoutMutation(malformedName,
                 "Malformed Law name discarded live Laws before rejection");
+
+            // JSON can hold integers wider than C++ int. Type-only preflight
+            // would admit them and narrow after destructive replacement.
+            auto oversizedRounds = original;
+            oversizedRounds["maxChainRounds"] =
+                static_cast<std::uint64_t>(std::numeric_limits<int>::max()) + 1ULL;
+            expectRejectedWithoutMutation(oversizedRounds,
+                "Out-of-range maxChainRounds changed live Laws");
+            auto undersizedAuthority = original;
+            undersizedAuthority["laws"][0]["authority"] =
+                static_cast<std::int64_t>(std::numeric_limits<int>::min()) - 1LL;
+            expectRejectedWithoutMutation(undersizedAuthority,
+                "Out-of-range Law authority changed live Laws");
+            auto oversizedActivation = original;
+            oversizedActivation["laws"][0]["activation"] =
+                std::numeric_limits<std::uint64_t>::max();
+            expectRejectedWithoutMutation(oversizedActivation,
+                "Out-of-range Law activation changed live Laws");
+
+            // Nested model deserializers run after replacement too. A bad
+            // descendant path must be caught while the old register survives.
+            auto malformedConditionModel = original;
+            malformedConditionModel["laws"][0]["conditionModel"] =
+                {{"kind", 0}, {"path", 42}};
+            expectRejectedWithoutMutation(malformedConditionModel,
+                "Malformed nested condition discarded live Laws");
+            auto malformedActionModel = original;
+            malformedActionModel["laws"][0]["actionModel"] =
+                {{"kind", 0}, {"path", false}};
+            expectRejectedWithoutMutation(malformedActionModel,
+                "Malformed nested action discarded live Laws");
 
             // Persisted preflight alone is insufficient: a caller can restore
             // one Law, rename its authored ID, then register it beside its

@@ -19,6 +19,8 @@
 #include <stdexcept>
 #include <string_view>
 #include <iterator>
+#include <cstdint>
+#include <limits>
 #include <optional>
 #include <unordered_set>
 
@@ -3632,9 +3634,19 @@ void LawManager::compileConditionsToRete(Law& law) {
 }
 
 void LawManager::loadFromJson(const nlohmann::json& j) {
-    // maxChainRounds is read after destructive replace-all. Reject malformed
-    // input while the previous Law register and First Mover histories are intact.
-    if (j.contains("maxChainRounds") && !j["maxChainRounds"].is_number_integer())
+    // A JSON integer may be an unsigned 64-bit value or exceed C++ int range.
+    // Reject it BEFORE replace-all rather than silently narrowing or throwing
+    // after destroying the existing Law register.
+    const auto fitsPersistedInt = [](const nlohmann::json& value) {
+        if (value.is_number_unsigned())
+            return value.get<std::uint64_t>() <=
+                   static_cast<std::uint64_t>(std::numeric_limits<int>::max());
+        if (!value.is_number_integer()) return false;
+        const auto number = value.get<std::int64_t>();
+        return number >= static_cast<std::int64_t>(std::numeric_limits<int>::min()) &&
+               number <= static_cast<std::int64_t>(std::numeric_limits<int>::max());
+    };
+    if (j.contains("maxChainRounds") && !fitsPersistedInt(j["maxChainRounds"]))
         throw std::invalid_argument("Invalid Law maxChainRounds");
     // Reject conflicting persisted histories BEFORE replace-all mutates the
     // live register. Two different Laws (including engine-owned First Movers)
@@ -3668,8 +3680,25 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
             }
             for (const char* field : {"authority", "activation", "scope", "retrigger"}) {
                 auto value = savedLaw.find(field);
-                if (value != savedLaw.end() && !value->is_number_integer())
+                if (value != savedLaw.end() && !fitsPersistedInt(*value))
                     throw std::invalid_argument("Invalid authored Law integer field");
+            }
+            // Nested models are parsed by Law::fromJson after replace-all.
+            // Parse them once here as a read-only preflight, so malformed
+            // paths, kinds, bindings or descendants cannot erase live Laws.
+            for (const char* field : {"conditionModel", "actionModel"}) {
+                auto model = savedLaw.find(field);
+                if (model == savedLaw.end()) continue;
+                if (!model->is_object())
+                    throw std::invalid_argument("Invalid authored Law model object");
+                try {
+                    if (std::string_view(field) == "conditionModel")
+                        (void)ConditionNode::fromJson(*model);
+                    else
+                        (void)ActionNode::fromJson(*model);
+                } catch (const nlohmann::json::exception&) {
+                    throw std::invalid_argument("Invalid authored Law nested model");
+                }
             }
             auto idIt = savedLaw.find("id");
             if (idIt != savedLaw.end()) {
