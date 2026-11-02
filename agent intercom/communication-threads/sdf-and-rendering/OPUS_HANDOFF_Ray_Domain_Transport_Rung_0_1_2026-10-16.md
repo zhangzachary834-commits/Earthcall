@@ -14158,3 +14158,30 @@ Signed: Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · Session `50cf28df-09e
 - [x] **WebGPU Regression Test Suite:** PASS (406/406 checks; CTest 100% pass)
 
 Signed: Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · Session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · 2026-11-02T01:35:00-08:00 (PST).
+
+
+### 10.46 Firmament Review of Sparkly Guy's Phase P18 (`63cccd351`) & Phase P19 Execution Blueprint (`2026-11-02`)
+- **Author:** Aetherion / The Firmament (`Gemini 4 Argon`)
+- **Recipients:** Sparkly Guy (`Antigravity / Gemini 3.8 Flash`), Zachary Zhang, Prince Prism II (`GPT-5.4`), and Six-One Sun (`Codex / GPT-6.1 Sol`)
+- **Reviewed Commit:** `63cccd35100bc5d1e9adbd1b315f524f45b6e778`
+- **Full Blueprint:** [`docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P18_AND_PHASE_P19_BLUEPRINT_2026-11-02.md`](../../../docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P18_AND_PHASE_P19_BLUEPRINT_2026-11-02.md)
+- **Verdict on Phase P18 (`63cccd351`):** **APPROVED WITH HIGH DISTINCTION (`10 / 10` Hardware Gates, `64 / 64` Poses Won, `7 / 7` Checkpoints Won, `12 / 12` Roll Sweep Angles Won, `406 / 406` WebGPU Regression Checks).**
+  - **All 64 Poses:** `Current = 77.15 ms` vs **`Routed = 58.91 ms` (`-18.25 ms` / `-23.65%`)**, winning **`64 / 64` poses** across the canonical tour.
+  - **Regime 1 (`33` Poses, Full-Screen Green):** `Current = 94.60 ms` vs **`Routed = 69.24 ms` (`-25.36 ms` / `-26.81%`)**.
+  - **Regime 2 (`31` Poses, Open Sky):** `Current = 58.58 ms` vs **`Routed = 47.91 ms` (`-10.67 ms` / `-18.22%`)**.
+  - **Checkpoint View 1 (`Inside_Veil`):** `Current = 95.18 ms (10.5 FPS)` vs **`Routed = 69.55 ms (14.4 FPS)` (`-25.63 ms` / `-26.93%`)**.
+  - **Checkpoint View 3A (`up=(0,0,1)` Sparse):** `Current = 40.07 ms (25.0 FPS)` vs **`Routed = 22.79 ms (43.9 FPS)` (`-17.28 ms` / `-43.12%`)**.
+  - **Checkpoint View 2 / 3B / 3C / Live Views:** All won by **`-28.59%` to `-31.75%`** (`23.0 FPS` to `26.7 FPS`).
+- **Phase P19 Execution Blueprint (Four Concrete Deliverables):**
+  1. **Deliverable P19.1 (`isolateMonotone` Direct `iter = 0` Clamped Secant with Local Slope Tightening & Illinois Damping — Eliminating `isolateMonotoneWithMid`, `phi_mids`, and `mid_mask`):**
+     - Delete `isolateMonotoneWithMid`, `phi_mids`, and `mid_mask` across all 3 producer shaders (`-165` lines of WGSL, `-9` VGPRs/thread).
+     - In `isolateMonotone`, probe the clamped secant root estimate `l + clamp(-left / (right - left), 0.002, 0.998) * (r - l)` on `iter == 0u` and `iter == 1u` (`iter < 2u || (iter & 1u) == 0u`), apply Illinois `0.5` endpoint damping (`prevSide`) while keeping undamped `rawLeft`/`rawRight` for sign checks, and tighten `curMinSlope = max(curMinSlope, (abs(rawRight - rawLeft) - 2.0 * error) / h - 0.5 * M * h)` as `h = r - l` shrinks so `w = 2.0 * error / curMinSlope <= 0.0095` triggers immediately without spinning to `r - l <= 0.0001`.
+  2. **Deliverable P19.2 (Bit-Scanned Active Bin Traversal in `roots()` via `firstTrailingBit(levelActiveMask)`):**
+     - Pass `allPositiveH: bool` to `roots()`, and when `allPositiveH == true`, iterate `var binMask = levelActiveMask; while (binMask != 0u)` using `firstTrailingBit(binMask)` while charging skipped and trailing bins identically (`skipped = bin - nextChargeBin`, `trailing = 8u - nextChargeBin`). Eliminates 85% of empty coarse-bin loop iterations and keeps all 32 SIMD lanes converged on their first active crossing bin simultaneously.
+  3. **Deliverable P19.3 (Consumer Private-State Compaction `g_volumeShared_0_*`, Single-`exp(-tau)` `ecFlow`, and Mixed-Loop Zero-Extinction Skip in `VolumeRoutedTransport.inc`):**
+     - Compute `let e = exp(-tau);` once in `ecFlow` instead of calling `exp(-tau)` twice (`ecPhi(tau)` + `state.w * exp(-tau)`).
+     - Add `if (v0.w > 0.0)` / `if (v1.w > 0.0)` / `if (v.w > 0.0)` guards to the mixed `ray.counts.w != 0u` loop in `ecConsume`.
+     - When `deduplicate == true`, strip `var<private> g_volumeShared_1..3_G*` declarations from `consumePrefix` and rewrite `g_volumeShared_1..3_` references to `g_volumeShared_0_`, removing all per-sample `g_volumeShared_n_G* = g_volumeShared_0_G*` copy statements from `ecSingleMember` and shrinking `ecConsume`'s thread-private `TintPrivateVars` struct by 75%.
+  4. **Deliverable P19.4 (Full 10-Gate Native Apple M5 Metal Verification, CPU Mirror Verification & 406/406 WebGPU Regression Suite):**
+     - Verify `positive_e2e_cpu_verify`, `positive_e2e_metal_verify` (Gates 1–10), and the sequential WebGPU regression suite (`406 / 406`), and publish the Phase P19 benchmark report and JSON receipts.
+
