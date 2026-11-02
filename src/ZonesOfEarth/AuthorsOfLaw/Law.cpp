@@ -3715,6 +3715,22 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
                     }
                 }
             }
+            // RelationManager::loadFromJson deserializes each provenance edge
+            // after the previous Law register has been destroyed. Preflight
+            // the same codec without binding live endpoints, so malformed
+            // relation types, events, attachments or typed properties cannot
+            // turn a rejected world into a partially replaced one. A legacy
+            // non-array provenance payload is still ignored by that loader.
+            auto provenance = savedLaw.find("provenance");
+            if (provenance != savedLaw.end() && provenance->is_array()) {
+                for (const auto& edge : *provenance) {
+                    try {
+                        (void)Relation::fromJson(edge);
+                    } catch (const nlohmann::json::exception&) {
+                        throw std::invalid_argument("Invalid authored Law provenance relation");
+                    }
+                }
+            }
             auto idIt = savedLaw.find("id");
             if (idIt != savedLaw.end()) {
                 if (!idIt->is_string() || idIt->get<std::string>().empty())
