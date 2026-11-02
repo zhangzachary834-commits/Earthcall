@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cstdio>
+#include <charconv>
 #include <random>
 #include <stdexcept>
 #include <string_view>
@@ -178,11 +179,20 @@ bool validDurableHistoryLineage(const std::string& lineage) {
 // next authored law collides with a loaded one and LawManager::add silently
 // discards it (the register would "blur").
 void claimLawIdAtLeast(const std::string& id) {
-    const std::string prefix = "law-";
-    if (id.rfind(prefix, 0) != 0) return;
-    const unsigned long long n = std::strtoull(id.c_str() + prefix.size(), nullptr, 10);
+    constexpr std::string_view prefix = "law-";
+    if (id.compare(0, prefix.size(), prefix) != 0) return;
+    const char* first = id.data() + prefix.size();
+    const char* last = id.data() + id.size();
+    if (first == last) return;
+    unsigned long long n = 0;
+    const auto parsed = std::from_chars(first, last, n);
+    // Only a complete decimal suffix reserves generated IDs. Never allow
+    // the next-id counter to wrap through law-0 on an extreme saved ID.
+    if (parsed.ec != std::errc{} || parsed.ptr != last ||
+        n >= std::numeric_limits<unsigned long long>::max() - 1) return;
+    const unsigned long long next = n + 1;
     unsigned long long current = g_nextLawId.load();
-    while (n + 1 > current && !g_nextLawId.compare_exchange_weak(current, n + 1)) {
+    while (next > current && !g_nextLawId.compare_exchange_weak(current, next)) {
     }
 }
 } // namespace
