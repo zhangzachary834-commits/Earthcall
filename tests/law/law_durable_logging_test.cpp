@@ -545,6 +545,25 @@ int main() {
             expectRejectedWithoutMutation(malformedActionModel,
                 "Malformed nested action discarded live Laws");
 
+            // The typed authored-property codec is also invoked after
+            // replace-all. Malformed scalar and nested values must reject
+            // before the old Laws or First Mover histories can be disturbed.
+            auto malformedAuthoredProperty = original;
+            malformedAuthoredProperty["laws"][0]["authoredProperties"] = {
+                {"badVector", {{"t", "vec3"}, {"x", "not-a-number"},
+                               {"y", 0.0}, {"z", 0.0}}}
+            };
+            expectRejectedWithoutMutation(malformedAuthoredProperty,
+                "Malformed authored property discarded live Laws");
+            auto malformedNestedProperty = original;
+            malformedNestedProperty["laws"][0]["authoredProperties"] = {
+                {"nested", {{"t", "dict"}, {"v", {
+                    {"badNumber", {{"t", "double"}, {"v", "not-a-number"}}}
+                }}}}
+            };
+            expectRejectedWithoutMutation(malformedNestedProperty,
+                "Malformed nested authored property discarded live Laws");
+
             // Persisted preflight alone is insufficient: a caller can restore
             // one Law, rename its authored ID, then register it beside its
             // source without passing through loadFromJson(). Fail closed and
