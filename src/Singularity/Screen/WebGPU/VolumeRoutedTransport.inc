@@ -68,25 +68,30 @@ inline bool checkEvaluatorsDeduplicatable(const std::string& source, std::vector
         const auto n = std::to_string(i);
         if (norm(extractFunctionBody(source, "volumeDensityEval_" + n), i) != baseDensity) return false;
         if (norm(extractFunctionBody(source, "volumeExtinctionEval_" + n), i) != baseExtinction) return false;
-        if (!baseSharedEval.empty()) {
-            if (norm(extractFunctionBody(source, "volumeShared_" + n + "_Eval"), i) != baseSharedEval) return false;
-        }
+        if (norm(extractFunctionBody(source, "volumeShared_" + n + "_Eval"), i) != baseSharedEval) return false;
     }
-    sharedGroups.clear();
-    const std::string gPrefix = "g_volumeShared_0_G";
-    size_t pos = 0;
-    while ((pos = source.find(gPrefix, pos)) != std::string::npos) {
-        pos += gPrefix.size();
-        size_t end = pos;
-        while (end < source.size() && std::isdigit(source[end])) ++end;
-        if (end > pos) {
-            uint32_t gid = std::stoul(source.substr(pos, end - pos));
-            if (std::find(sharedGroups.begin(), sharedGroups.end(), gid) == sharedGroups.end()) {
-                sharedGroups.push_back(gid);
+    auto groups = [&](int member) {
+        std::vector<uint32_t> ids;
+        const std::string prefix = "g_volumeShared_" + std::to_string(member) + "_G";
+        size_t pos = 0;
+        while ((pos = source.find(prefix, pos)) != std::string::npos) {
+            pos += prefix.size(); size_t end = pos;
+            while (end < source.size() && std::isdigit(static_cast<unsigned char>(source[end]))) ++end;
+            if (end > pos) {
+                try { const auto id=std::stoul(source.substr(pos, end - pos));
+                    if(id>=UINT32_MAX)return std::vector<uint32_t>{UINT32_MAX};
+                    ids.push_back(static_cast<uint32_t>(id)); }
+                catch (const std::exception&) { return std::vector<uint32_t>{UINT32_MAX}; }
             }
+            pos = end;
         }
-        pos = end;
-    }
+        std::sort(ids.begin(), ids.end());
+        ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
+        return ids;
+    };
+    sharedGroups = groups(0);
+    if (std::find(sharedGroups.begin(), sharedGroups.end(), UINT32_MAX) != sharedGroups.end()) return false;
+    for (int i = 1; i < 4; ++i) if (groups(i) != sharedGroups) return false;
     for (uint32_t gid : sharedGroups) {
         const std::string baseG = extractFunctionBody(source, "volumeShared_0_G" + std::to_string(gid));
         if (baseG.empty()) return false;
@@ -98,22 +103,49 @@ inline bool checkEvaluatorsDeduplicatable(const std::string& source, std::vector
     }
     return true;
 }
+// Kernel resource transaction: consume validation/error objects before dispatch.
+// Polling is non-blocking; validation completion must not fence submitted GPU work.
+struct CreationScope {
+ WGPUDevice device; bool closed=false,ok=true;
+ explicit CreationScope(WGPUDevice d):device(d){wgpuDevicePushErrorScope(d,WGPUErrorFilter_OutOfMemory);wgpuDevicePushErrorScope(d,WGPUErrorFilter_Validation);}
+ bool finish(){
+  if(closed)return ok;closed=true;
+  for(int i=0;i<2;++i){
+   struct Result{bool done=false,ok=false;} result;
+   WGPUPopErrorScopeCallbackInfo cb={};cb.mode=WGPUCallbackMode_AllowProcessEvents;cb.userdata1=&result;
+   cb.callback=[](WGPUPopErrorScopeStatus status,WGPUErrorType type,WGPUStringView message,void* ptr,void*){
+    auto& r=*static_cast<Result*>(ptr);r.ok=status==WGPUPopErrorScopeStatus_Success&&type==WGPUErrorType_NoError;r.done=true;
+    if(!r.ok)std::fprintf(stderr,"[routed resource] %.*s\n",int(std::min<size_t>(message.length,1024)),message.data);
+   };
+   wgpuDevicePopErrorScope(device,cb);while(!result.done)wgpuDevicePoll(device,false,nullptr);
+   ok=ok&&result.ok;
+  }
+  return ok;
+ }
+ ~CreationScope(){finish();}
+};
+inline void releaseProgram(KernelRoutedTransport::Program& p){
+ for(auto bg:p.localGroups)if(bg)wgpuBindGroupRelease(bg);
+ if(p.setup)wgpuComputePipelineRelease(p.setup);if(p.consumer)wgpuComputePipelineRelease(p.consumer);
+ if(p.globals)wgpuBindGroupLayoutRelease(p.globals);if(p.instances)wgpuBindGroupLayoutRelease(p.instances);if(p.local)wgpuBindGroupLayoutRelease(p.local);
+ p={};
+}
+inline void releaseCommon(KernelRoutedTransport& k){
+ for(auto& p:k.common)if(p){wgpuComputePipelineRelease(p);p=nullptr;}
+ if(k.classifySkip){wgpuComputePipelineRelease(k.classifySkip);k.classifySkip=nullptr;}
+}
 inline WGPUBuffer buffer(WGPUDevice d,WGPUQueue q,uint64_t bytes,WGPUBufferUsage extra=0,const void* data=nullptr){
  WGPUBufferDescriptor b={};b.label=wgpu::Device::str("Kernel bounded routed transport");b.size=bytes;b.usage=WGPUBufferUsage_Storage|WGPUBufferUsage_CopyDst|WGPUBufferUsage_CopySrc|extra;
  auto out=wgpuDeviceCreateBuffer(d,&b);if(out&&data)wgpuQueueWriteBuffer(q,out,0,data,bytes);return out;
 }
 inline WGPUBindGroupEntry entry(uint32_t i,WGPUBuffer b,uint64_t size,uint64_t offset=0){WGPUBindGroupEntry e={};e.binding=i;e.buffer=b;e.offset=offset;e.size=size;return e;}
-inline WGPUBindGroup group(WGPUDevice d,WGPUBindGroupLayout layout,std::vector<WGPUBindGroupEntry> entries){WGPUBindGroupDescriptor x={};x.layout=layout;x.entryCount=entries.size();x.entries=entries.data();return wgpuDeviceCreateBindGroup(d,&x);}
-inline WGPUBindGroup group(WGPUDevice d,WGPUComputePipeline p,std::vector<WGPUBindGroupEntry> entries){auto l=wgpuComputePipelineGetBindGroupLayout(p,0);auto out=group(d,l,std::move(entries));wgpuBindGroupLayoutRelease(l);return out;}
+inline WGPUBindGroup group(WGPUDevice d,WGPUBindGroupLayout layout,std::vector<WGPUBindGroupEntry> entries){if(!layout)return nullptr;WGPUBindGroupDescriptor x={};x.layout=layout;x.entryCount=entries.size();x.entries=entries.data();return wgpuDeviceCreateBindGroup(d,&x);}
+inline WGPUBindGroup group(WGPUDevice d,WGPUComputePipeline p,std::vector<WGPUBindGroupEntry> entries){if(!p)return nullptr;auto l=wgpuComputePipelineGetBindGroupLayout(p,0);if(!l)return nullptr;auto out=group(d,l,std::move(entries));wgpuBindGroupLayoutRelease(l);return out;}
 inline WGPUComputePipeline pipeline(WGPUDevice d,const std::string& code,const char* name,WGPUPipelineLayout layout=nullptr){
- wgpuDevicePushErrorScope(d,WGPUErrorFilter_Validation);
+ CreationScope scope(d);
  WGPUShaderSourceWGSL s={};s.chain.sType=WGPUSType_ShaderSourceWGSL;s.code=wgpu::Device::str(code.c_str());WGPUShaderModuleDescriptor md={};md.nextInChain=&s.chain;
- auto m=wgpuDeviceCreateShaderModule(d,&md);WGPUComputePipelineDescriptor p={};p.layout=layout;p.compute.module=m;p.compute.entryPoint=wgpu::Device::str(name);auto out=wgpuDeviceCreateComputePipeline(d,&p);wgpuShaderModuleRelease(m);
- struct Error {bool done=false;WGPUErrorType type=WGPUErrorType_NoError;} error;
- WGPUPopErrorScopeCallbackInfo cb={};cb.mode=WGPUCallbackMode_AllowProcessEvents;cb.userdata1=&error;
- cb.callback=[](WGPUPopErrorScopeStatus,WGPUErrorType type,WGPUStringView message,void* user,void*){auto& e=*static_cast<Error*>(user);e.type=type;e.done=true;if(type!=WGPUErrorType_NoError)std::fprintf(stderr,"[routed compiler] %.*s\n",int(message.length),message.data);};
- wgpuDevicePopErrorScope(d,cb);while(!error.done)wgpuDevicePoll(d,true,nullptr);
- if(error.type!=WGPUErrorType_NoError){if(out)wgpuComputePipelineRelease(out);return nullptr;}return out;
+ auto m=wgpuDeviceCreateShaderModule(d,&md);if(!m){scope.finish();return nullptr;}WGPUComputePipelineDescriptor p={};p.layout=layout;p.compute.module=m;p.compute.entryPoint=wgpu::Device::str(name);auto out=wgpuDeviceCreateComputePipeline(d,&p);if(m)wgpuShaderModuleRelease(m);
+ if(!scope.finish()||!m||!out){if(out)wgpuComputePipelineRelease(out);return nullptr;}return out;
 }
 const char* auxiliary=R"WGSL(
 struct ECWindow {control:vec4<u32>,window:vec4<u32>,flags:vec4<u32>};
@@ -197,7 +229,7 @@ fn ecProjected(ro:vec3<f32>,rd:vec3<f32>,wo:vec3<f32>,s:f32,mask:u32)->vec4<f32>
 }
 KernelRoutedTransport::~KernelRoutedTransport(){
  enableRouteObserver(false);releaseBuffers();for(auto p:common)if(p)wgpuComputePipelineRelease(p);if(classifySkip)wgpuComputePipelineRelease(classifySkip);
- for(auto& [key,p]:programs){for(auto& bg:p.localGroups)if(bg)wgpuBindGroupRelease(bg);if(p.setup)wgpuComputePipelineRelease(p.setup);if(p.consumer)wgpuComputePipelineRelease(p.consumer);if(p.globals)wgpuBindGroupLayoutRelease(p.globals);if(p.instances)wgpuBindGroupLayoutRelease(p.instances);if(p.local)wgpuBindGroupLayoutRelease(p.local);}
+ for(auto& [key,p]:programs)kernel_routed_detail::releaseProgram(p);
 }
 void KernelRoutedTransport::releaseBuffers(){
  for(auto* p:{&publication,&rays,&singles,&overlaps,&offsets,&indices,&counts,&args,&stripUniform,&specsUniform})if(*p){wgpuBufferRelease(*p);*p=nullptr;}
@@ -214,7 +246,12 @@ void KernelRoutedTransport::releaseBuffers(){
 bool KernelRoutedTransport::ensure(WGPUDevice d,WGPUQueue q,uint32_t w,uint32_t h){
  using namespace kernel_routed_detail;device=d;queue=q;WGPULimits limits={};
  if(wgpuDeviceGetLimits(d,&limits)!=WGPUStatus_Success||!w||!h||uint64_t(w)*h*16>std::min<uint64_t>(64ull*1024*1024,limits.maxStorageBufferBindingSize))return false;
- if(width==w&&height==h&&publication)return std::all_of(common.begin(),common.end(),[](auto p){return p!=nullptr;});releaseBuffers();
+ const auto groupsReady=[&](){return maxStrips&&std::all_of(prodGroups.begin(),prodGroups.end(),[&](const auto& v){return v.size()==maxStrips&&std::all_of(v.begin(),v.end(),[](auto g){return g!=nullptr;});});};
+ if(width==w&&height==h&&publication&&rays&&singles&&overlaps&&offsets&&indices&&counts&&args&&stripUniform&&specsUniform&&
+    std::all_of(lists.begin(),lists.end(),[](auto b){return b!=nullptr;})&&std::all_of(common.begin(),common.end(),[](auto p){return p!=nullptr;})&&
+    classifySkip&&resetGroup&&argsGroup&&cachedClassifyGroup&&groupsReady())return true;
+ releaseBuffers();CreationScope creation(d);
+ const auto failed=[&](){creation.finish();releaseBuffers();enableRouteObserver(false);releaseCommon(*this);return false;};
  // 64 intervals/ray retained; partition work, never lower accuracy to fit.
  const auto maxRows=std::min<uint64_t>(48,limits.maxStorageBufferBindingSize/(uint64_t(w)*64*16));
  const uint32_t rows=static_cast<uint32_t>(maxRows/4*4);if(rows<4)return false;
@@ -227,23 +264,22 @@ bool KernelRoutedTransport::ensure(WGPUDevice d,WGPUQueue q,uint32_t w,uint32_t 
  maxStrips=(h+rows-1)/rows;if(!maxStrips)return false;
  {WGPUBufferDescriptor bd={};bd.label=wgpu::Device::str("strip uniforms");bd.size=uint64_t(maxStrips)*kUniformStride;bd.usage=WGPUBufferUsage_Uniform|WGPUBufferUsage_CopyDst;stripUniform=wgpuDeviceCreateBuffer(d,&bd);}
  {WGPUBufferDescriptor bd={};bd.label=wgpu::Device::str("curtain specs uniform");bd.size=sizeof(KernelRoutedSpec)*4;bd.usage=WGPUBufferUsage_Uniform|WGPUBufferUsage_CopyDst;specsUniform=wgpuDeviceCreateBuffer(d,&bd);}
- if(!publication||!rays||!singles||!overlaps||!offsets||!indices||!counts||!args||!lists[0]||!lists[1]||!lists[2]||!stripUniform||!specsUniform){releaseBuffers();return false;}
+ if(!publication||!rays||!singles||!overlaps||!offsets||!indices||!counts||!args||!lists[0]||!lists[1]||!lists[2]||!stripUniform||!specsUniform)return failed();
+ // Static pipelines may have survived a successful resize. Missing pipelines
+ // are built independently; a failed transaction releases the partial set.
  if(common[2]){wgpuComputePipelineRelease(common[2]);common[2]=nullptr;}
- if(!common[0]){
-  std::string routeArgsCode = routed_wgsl::kRouteArgsWgsl;
-  kernel_routed_detail::replace(routeArgsCode, "CAPACITY_WORKGROUPS", std::to_string((capacity + 63u) / 64u) + "u");
-  const char* codes[]={routed_wgsl::kResetCountersWgsl,routed_wgsl::kClassifyWgsl,routeArgsCode.c_str(),routed_wgsl::kS1UnfusedProducerWgsl,routed_wgsl::kS2ProducerWgsl,routed_wgsl::kFallbackProducerWgsl};
-  const char* entries[]={"resetCountersMain","classifyTilesMain","routeArgs","s1ProducerMain","s2ProducerMain","fallbackProducerMain"};
-  for(int i=0;i<6;++i){common[i]=pipeline(d,codes[i],entries[i]);if(!common[i])return false;}
-  classifySkip=pipeline(d,routed_wgsl::kClassifyWgsl,"classifyTilesMain");if(!classifySkip)return false;
- } else {
-  std::string routeArgsCode = routed_wgsl::kRouteArgsWgsl;
-  kernel_routed_detail::replace(routeArgsCode, "CAPACITY_WORKGROUPS", std::to_string((capacity + 63u) / 64u) + "u");
-  common[2]=pipeline(d,routeArgsCode,"routeArgs");if(!common[2])return false;
- }
+ std::string routeArgsCode=routed_wgsl::kRouteArgsWgsl;
+ replace(routeArgsCode,"CAPACITY_WORKGROUPS",std::to_string((capacity+63u)/64u)+"u");
+ const char* codes[]={routed_wgsl::kResetCountersWgsl,routed_wgsl::kClassifyWgsl,routeArgsCode.c_str(),routed_wgsl::kS1UnfusedProducerWgsl,routed_wgsl::kS2ProducerWgsl,routed_wgsl::kFallbackProducerWgsl};
+ const char* names[]={"resetCountersMain","classifyTilesMain","routeArgs","s1ProducerMain","s2ProducerMain","fallbackProducerMain"};
+ for(unsigned i=0;i<6;++i)if(!common[i]){common[i]=pipeline(d,codes[i],names[i]);if(!common[i])return failed();}
+ if(!classifySkip)classifySkip=pipeline(d,routed_wgsl::kClassifyWgsl,"classifyTilesMain");
+ if(!classifySkip)return failed();
  if(!resetGroup)resetGroup=group(device,common[0],{entry(0,counts,16)});
  if(!argsGroup)argsGroup=group(device,common[2],{entry(0,counts,16),entry(1,args,48)});
  if(!cachedClassifyGroup)cachedClassifyGroup=group(device,common[1],{entry(0,specsUniform,sizeof(KernelRoutedSpec)*4,0),entry(1,rays,uint64_t(capacity)*48),entry(2,offsets,uint64_t(tiles+1)*4),entry(3,indices,uint64_t(capacity)*4),entry(4,lists[0],uint64_t(tiles)*4),entry(5,lists[1],uint64_t(tiles)*4),entry(6,lists[2],uint64_t(tiles)*4),entry(7,counts,16)});
+ cachedClassifyPipe=common[1];
+ if(!resetGroup||!argsGroup||!cachedClassifyGroup)return failed();
  for(unsigned i=0;i<3;++i)prodGroups[i].assign(maxStrips,nullptr);
  for(uint32_t stripIdx=0,start=0;start<height&&stripIdx<maxStrips;start+=stripRows,++stripIdx){
   for(unsigned i=0;i<3;++i){
@@ -251,9 +287,10 @@ bool KernelRoutedTransport::ensure(WGPUDevice d,WGPUQueue q,uint32_t w,uint32_t 
    if(i==2)entries.push_back(entry(4,overlaps,uint64_t(capacity)*16*16));
    entries.push_back(entry(5,offsets,uint64_t(tiles+1)*4));entries.push_back(entry(6,indices,uint64_t(capacity)*4));entries.push_back(entry(7,lists[i],uint64_t(tiles)*4));entries.push_back(entry(8,counts,16));
    prodGroups[i][stripIdx]=group(device,common[i+3],entries);
-   if(!prodGroups[i][stripIdx]){releaseBuffers();return false;}
+   if(!prodGroups[i][stripIdx])return failed();
   }
  }
+ if(!creation.finish())return failed();
  return true;
 }
 bool KernelRoutedTransport::enableRouteObserver(bool on){
@@ -270,13 +307,17 @@ bool KernelRoutedTransport::enableRouteObserver(bool on){
 @group(0) @binding(1) var<storage, read_write> hist: array<atomic<u32>>;
 @compute @workgroup_size(1) fn accumCounts() { for (var i = 0u; i < 3u; i++) { atomicAdd(&hist[1024u + i], counts[i]); } atomicAdd(&hist[1027u], 1u); }
 )WGSL";
+ CreationScope creation(device);
  observerPipe=pipeline(device,src,"classifyTilesMain");accumPipe=pipeline(device,accum,"accumCounts");routeHistogram=buffer(device,queue,1032*4);
- if(!observerPipe||!accumPipe||!routeHistogram){enableRouteObserver(false);return false;}resetRouteHistogram();observeRoutes=true;return true;
+ if(!creation.finish()||!observerPipe||!accumPipe||!routeHistogram){enableRouteObserver(false);return false;}resetRouteHistogram();observeRoutes=true;return true;
 }
 void KernelRoutedTransport::resetRouteHistogram(){if(!routeHistogram)return;std::vector<uint32_t> z(1032,0);wgpuQueueWriteBuffer(queue,routeHistogram,0,z.data(),z.size()*4);}
 KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string& source){
  using namespace kernel_routed_detail;auto it=programs.find(source);if(it!=programs.end())return it->second.consumer&&it->second.setup?&it->second:nullptr;
- auto& p=programs[source];const auto fs=source.find("@fragment\nfn fs(");const auto brace=source.find('{',fs);const auto end=source.find("    var transmittance = 1.0;",brace);
+ if(programs.size()>=kMaxPrograms)return nullptr;
+ Program p;CreationScope creation(device);
+ const auto failed=[&]()->Program*{creation.finish();releaseProgram(p);return nullptr;};
+ const auto fs=source.find("@fragment\nfn fs(");const auto brace=source.find('{',fs);const auto end=source.find("    var transmittance = 1.0;",brace);
  if(fs==std::string::npos||brace==std::string::npos||end==std::string::npos)return nullptr;
  auto prefix=source.substr(0,fs);auto setupBody=source.substr(brace+1,end-brace-1);
  size_t pos=0;while((pos=setupBody.find("in.position",pos))!=std::string::npos){setupBody.replace(pos,11,"position");pos+=8;}
@@ -304,6 +345,7 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
 )WGSL";
  std::vector<uint32_t> sharedGroups;
  const bool deduplicate = checkEvaluatorsDeduplicatable(source, sharedGroups);
+ p.evaluatorsDeduplicated=deduplicate;
  auto consumePrefix = prefix;
  if (deduplicate) {
   for (int i = 1; i < 4; ++i) {
@@ -388,14 +430,17 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
  WGPUBindGroupLayoutDescriptor gd={};gd.entryCount=4;gd.entries=g;p.globals=wgpuDeviceCreateBindGroupLayout(device,&gd);
  WGPUBindGroupLayoutEntry inst={};inst.binding=0;inst.visibility=WGPUShaderStage_Compute;inst.buffer.type=WGPUBufferBindingType_ReadOnlyStorage;gd.entryCount=1;gd.entries=&inst;p.instances=wgpuDeviceCreateBindGroupLayout(device,&gd);
  WGPUBindGroupLayoutEntry local[4]={};for(int i=0;i<4;++i){local[i].binding=i;local[i].visibility=WGPUShaderStage_Compute;local[i].buffer.type=i==0?WGPUBufferBindingType_Uniform:WGPUBufferBindingType_Storage;}gd.entryCount=4;gd.entries=local;p.local=wgpuDeviceCreateBindGroupLayout(device,&gd);
- WGPUBindGroupLayout layouts[]={p.globals,p.instances,p.local};WGPUPipelineLayoutDescriptor ld={};ld.bindGroupLayoutCount=3;ld.bindGroupLayouts=layouts;auto layout=wgpuDeviceCreatePipelineLayout(device,&ld);
+ if(!p.globals||!p.instances||!p.local)return failed();
+ WGPUBindGroupLayout layouts[]={p.globals,p.instances,p.local};WGPUPipelineLayoutDescriptor ld={};ld.bindGroupLayoutCount=3;ld.bindGroupLayouts=layouts;auto layout=wgpuDeviceCreatePipelineLayout(device,&ld);if(!layout)return failed();
  p.setup=pipeline(device,setup,"ecSetup",layout);p.consumer=pipeline(device,consume,"ecConsume",layout);wgpuPipelineLayoutRelease(layout);
- if(!p.setup||!p.consumer)return nullptr;std::fprintf(stderr,"[WebGpuRenderer] routed transport production-evaluator pipeline active\n");return &p;
+ if(!creation.finish()||!p.setup||!p.consumer)return failed();std::fprintf(stderr,"[WebGpuRenderer] routed transport production-evaluator pipeline active\n");return &programs.emplace(source,std::move(p)).first->second;
 }
-bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth,const KernelRoutedRange& specs,const KernelRoutedRange&,const std::function<KernelRoutedRange(const void*,size_t)>&){
+bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth){
  using namespace kernel_routed_detail;
+ encodedPasses=0;encodedDispatches=0;dispatchTrace=collectDispatchTrace?0xcbf29ce484222325ull:0;
  if(!stripUniform||!specsUniform||!maxStrips)return false;
  if((height+stripRows-1)/stripRows>maxStrips)return false;
+ CreationScope creation(device);
  if(cachedWorkLimit!=workLimit||cachedSkipEmpty!=skipEmptyTiles){
   for(uint32_t stripIdx=0,start=0;start<height&&stripIdx<maxStrips;start+=stripRows,++stripIdx){
    std::array<uint32_t,12> config{capacity,64,16,workLimit,width,height,start,stripRows,skipEmptyTiles?1u:0u,0,0,0};
@@ -414,19 +459,19 @@ bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const K
      entry(2,singles,uint64_t(capacity)*64*16),
      entry(3,overlaps,uint64_t(capacity)*16*16)
    });
-   if(!p.localGroups[stripIdx]){p.localGroupsBuilt=false;return false;}
+   if(!p.localGroups[stripIdx]){
+    creation.finish();
+    for(auto bg:p.localGroups)if(bg)wgpuBindGroupRelease(bg);
+    p.localGroups.clear();p.localGroupsBuilt=false;cachedWorkLimit=0xFFFFFFFFu;
+    return false;
+   }
   }
   p.localGroupsBuilt=true;
  }
  auto g=std::vector<WGPUBindGroupEntry>{entry(0,globals.buffer,globals.size,globals.offset),entry(1,params.buffer,params.size,params.offset),{},entry(3,publication,uint64_t(width)*height*16)};g[2].binding=2;g[2].textureView=depth;
  auto globalGroup=group(device,p.globals,g),instanceGroup=group(device,p.instances,{entry(0,instances.buffer,instances.size,instances.offset)});
- encodedPasses=0;encodedDispatches=0;dispatchTrace=collectDispatchTrace?0xcbf29ce484222325ull:0;
- auto begin=[&](){++encodedPasses;return wgpuCommandEncoderBeginComputePass(encoder,nullptr);};
- auto note=[&](const void* pipe,uint32_t n,uint64_t tag){++encodedDispatches;if(!collectDispatchTrace)return;for(uint64_t v:{uint64_t(reinterpret_cast<uintptr_t>(pipe)),uint64_t(n),tag})for(int b=0;b<8;++b)dispatchTrace=(dispatchTrace^((v>>(8*b))&255))*0x100000001b3ull;};
- WGPUComputePassEncoder shared=coalescePasses?begin():nullptr;
- auto open=[&](){return shared?shared:begin();};
- auto close=[&](WGPUComputePassEncoder pass){if(pass==shared)return;wgpuComputePassEncoderEnd(pass);wgpuComputePassEncoderRelease(pass);};
- auto resetGroup=this->resetGroup?this->resetGroup:group(device,common[0],{entry(0,counts,16)});
+ if(!this->resetGroup)this->resetGroup=group(device,common[0],{entry(0,counts,16)});
+ auto resetGroup=this->resetGroup;
  auto classifyPipe=skipEmptyTiles&&classifySkip?classifySkip:common[1];
  if(!cachedClassifyGroup||cachedClassifyPipe!=classifyPipe){
   if(cachedClassifyGroup)wgpuBindGroupRelease(cachedClassifyGroup);
@@ -434,18 +479,36 @@ bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const K
   cachedClassifyPipe=classifyPipe;
  }
  auto classifyGroup=cachedClassifyGroup;
- auto argsGroup=this->argsGroup?this->argsGroup:group(device,common[2],{entry(0,counts,16),entry(1,args,48)});
+ if(!this->argsGroup)this->argsGroup=group(device,common[2],{entry(0,counts,16),entry(1,args,48)});
+ auto argsGroup=this->argsGroup;
+ WGPUBindGroup observerGroup=nullptr,accumulatorGroup=nullptr;
+ if(observeRoutes&&observerPipe&&accumPipe&&routeHistogram){
+  observerGroup=group(device,observerPipe,{entry(0,specsUniform,sizeof(KernelRoutedSpec)*4,0),entry(1,rays,uint64_t(capacity)*48),entry(2,offsets,uint64_t(tiles+1)*4),entry(3,indices,uint64_t(capacity)*4),entry(8,routeHistogram,1032*4)});
+  accumulatorGroup=group(device,accumPipe,{entry(0,counts,16),entry(1,routeHistogram,1032*4)});
+ }
+ const auto releaseTemporary=[&](){for(auto bg:{globalGroup,instanceGroup,observerGroup,accumulatorGroup})if(bg)wgpuBindGroupRelease(bg);};
+ if(!creation.finish()||!globalGroup||!instanceGroup||!resetGroup||!classifyGroup||!argsGroup||
+    (observeRoutes&&(!observerGroup||!accumulatorGroup))){
+  releaseTemporary();
+  for(auto bg:p.localGroups)if(bg)wgpuBindGroupRelease(bg);p.localGroups.clear();p.localGroupsBuilt=false;
+  if(cachedClassifyGroup){wgpuBindGroupRelease(cachedClassifyGroup);cachedClassifyGroup=nullptr;}cachedClassifyPipe=nullptr;
+  if(this->resetGroup){wgpuBindGroupRelease(this->resetGroup);this->resetGroup=nullptr;}
+  if(this->argsGroup){wgpuBindGroupRelease(this->argsGroup);this->argsGroup=nullptr;}
+  cachedWorkLimit=0xFFFFFFFFu;return false;
+ }
+ auto begin=[&](){++encodedPasses;return wgpuCommandEncoderBeginComputePass(encoder,nullptr);};
+ auto note=[&](const void* pipe,uint32_t n,uint64_t tag){++encodedDispatches;if(!collectDispatchTrace)return;for(uint64_t v:{uint64_t(reinterpret_cast<uintptr_t>(pipe)),uint64_t(n),tag})for(int b=0;b<8;++b)dispatchTrace=(dispatchTrace^((v>>(8*b))&255))*0x100000001b3ull;};
+ WGPUComputePassEncoder shared=coalescePasses?begin():nullptr;
+ auto open=[&](){return shared?shared:begin();};
+ auto close=[&](WGPUComputePassEncoder pass){if(pass==shared)return;wgpuComputePassEncoderEnd(pass);wgpuComputePassEncoderRelease(pass);};
  for(uint32_t stripIdx=0,start=0;start<height&&stripIdx<maxStrips;start+=stripRows,++stripIdx){
   auto dispatch=[&](WGPUComputePipeline cp,WGPUBindGroup bg,uint32_t n){auto pass=open();wgpuComputePassEncoderSetPipeline(pass,cp);wgpuComputePassEncoderSetBindGroup(pass,0,bg,0,nullptr);note(cp,n,1);wgpuComputePassEncoderDispatchWorkgroups(pass,n,1,1);close(pass);};
   auto withContext=[&](WGPUComputePipeline cp){auto pass=open();wgpuComputePassEncoderSetPipeline(pass,cp);wgpuComputePassEncoderSetBindGroup(pass,0,globalGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,1,instanceGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,2,p.localGroups[stripIdx],0,nullptr);note(cp,(capacity+63)/64,2);wgpuComputePassEncoderDispatchWorkgroups(pass,(capacity+63)/64,1,1);close(pass);};
   withContext(p.setup);dispatch(common[0],resetGroup,1);dispatch(classifyPipe,classifyGroup,(tiles+63)/64);dispatch(common[2],argsGroup,4);
-  if(observeRoutes&&observerPipe&&accumPipe&&routeHistogram){
-   auto og=group(device,observerPipe,{entry(0,specsUniform,sizeof(KernelRoutedSpec)*4,0),entry(1,rays,uint64_t(capacity)*48),entry(2,offsets,uint64_t(tiles+1)*4),entry(3,indices,uint64_t(capacity)*4),entry(8,routeHistogram,1032*4)});
-   auto ag=group(device,accumPipe,{entry(0,counts,16),entry(1,routeHistogram,1032*4)});dispatch(observerPipe,og,(tiles+63)/64);dispatch(accumPipe,ag,1);wgpuBindGroupRelease(og);wgpuBindGroupRelease(ag);
-  }
+  if(observerGroup){dispatch(observerPipe,observerGroup,(tiles+63)/64);dispatch(accumPipe,accumulatorGroup,1);}
   for(unsigned i=0;i<3;++i){auto pass=open();wgpuComputePassEncoderSetPipeline(pass,common[i+3]);wgpuComputePassEncoderSetBindGroup(pass,0,prodGroups[i][stripIdx],0,nullptr);note(common[i+3],i*12,3);wgpuComputePassEncoderDispatchWorkgroupsIndirect(pass,args,i*12);close(pass);}
   {auto pass=open();wgpuComputePassEncoderSetPipeline(pass,p.consumer);wgpuComputePassEncoderSetBindGroup(pass,0,globalGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,1,instanceGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,2,p.localGroups[stripIdx],0,nullptr);note(p.consumer,36,2);wgpuComputePassEncoderDispatchWorkgroupsIndirect(pass,args,36);close(pass);}
  }
  if(shared){wgpuComputePassEncoderEnd(shared);wgpuComputePassEncoderRelease(shared);}
- for(auto g:{globalGroup,instanceGroup})wgpuBindGroupRelease(g);return true;
+ releaseTemporary();return true;
 }

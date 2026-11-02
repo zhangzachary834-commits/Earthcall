@@ -3,7 +3,6 @@
 #include <glm/glm.hpp>
 #include <array>
 #include <map>
-#include <functional>
 #include <string>
 #include <vector>
 
@@ -44,12 +43,16 @@ struct KernelRoutedTransport {
     // empty-member work (the budget bounds work performed); budget 0 still forces refusal. Same classifier proof S1/S2 already trust for their other members.
     bool skipEmptyTiles=false;WGPUComputePipeline classifySkip=nullptr;
     uint32_t workLimit=1024; // Kernel search ceiling; lowering it can only force Current refusal.
-    struct Program {WGPUComputePipeline setup=nullptr,consumer=nullptr;WGPUBindGroupLayout globals=nullptr,instances=nullptr,local=nullptr;std::vector<WGPUBindGroup> localGroups{};bool localGroupsBuilt=false;};
+    struct Program {WGPUComputePipeline setup=nullptr,consumer=nullptr;WGPUBindGroupLayout globals=nullptr,instances=nullptr,local=nullptr;std::vector<WGPUBindGroup> localGroups{};bool localGroupsBuilt=false;
+        // Kernel diagnostic: records the cold compiler decision, not authored state.
+        bool evaluatorsDeduplicated=false;};
+    // Entries never move/evict while VolumePipeline borrows Program*. At the
+    // finite cache limit, new variants retain Current until explicit reload.
+    static constexpr size_t kMaxPrograms=16;
     std::map<std::string,Program> programs;
     ~KernelRoutedTransport();
     void releaseBuffers();
     bool ensure(WGPUDevice d,WGPUQueue q,uint32_t w,uint32_t h);
     Program* program(const std::string& source);
-    bool encode(Program&,WGPUCommandEncoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth,const KernelRoutedRange& specs,const KernelRoutedRange& uniformSpecs,
-                const std::function<KernelRoutedRange(const void*,size_t)>& uniform);
+    bool encode(Program&,WGPUCommandEncoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth);
 };

@@ -386,7 +386,7 @@ private:
     std::unique_ptr<KernelRoutedTransport> _kernelRouted;
     struct VolumePipeline {
         bool routed = false; // compiled layout, never authored medium state
-        std::string routedSource; // Kernel key; exact production evaluator source
+        KernelRoutedTransport::Program* routedProgram=nullptr; // Kernel owns stable entries; reload clears pipelines before owner reset
         WGPURenderPipeline pipe = nullptr;
         WGPUBindGroupLayout globalBgl = nullptr;
         WGPUBindGroupLayout instanceBgl = nullptr;

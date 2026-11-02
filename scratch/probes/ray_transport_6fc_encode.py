@@ -1,5 +1,9 @@
 """CPU interception of actual encode(): pass packaging and opt-in tracing.
 Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-10-29.
+Historical ABI: this extracted mock predates retained strip uniforms and the
+2026-11-02 resource transactions. Use webgpu_routed_transport_lifecycle_test
+and positive_e2e_metal_verify for the current implementation; retain this
+probe for its original archived receipts, not a fresh HEAD qualification.
 """
 import argparse
 import json

@@ -629,6 +629,7 @@ void WebGpuRenderer::reloadShaders() {
     _volumeParamBatches.clear();
     _volumeDrawInstanceCounts.clear();
     _activeVolumePipelines.clear();
+    _kernelRouted.reset(); // All borrowed VolumePipeline::routedProgram pointers are gone.
 }
 
 // Build-on-first-use so only the combinations the app actually draws exist.
@@ -1305,7 +1306,8 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
 
 const WebGpuRenderer::VolumePipeline*
 WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program, bool routed) {
-    if (routed && (!_kernelRouted || !_kernelRouted->program(program.wgsl))) {
+    auto* routedProgram = routed && _kernelRouted ? _kernelRouted->program(program.wgsl) : nullptr;
+    if (routed && !routedProgram) {
         ++mutableFrameStats().volumeProgramRefusals;
         mutableFrameStats().volumeLastProgramRefusal = "routed compute compilation refused; Current retained";
         return volumePipeline(program, false);
@@ -1377,7 +1379,7 @@ WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program, bool routed) {
 
     VolumePipeline out;
     out.routed = routed;
-    if(routed)out.routedSource=program.wgsl;
+    if(routed)out.routedProgram=routedProgram;
     out.globalBgl = wgpuDeviceCreateBindGroupLayout(_device, &globalDesc);
     out.instanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &instanceDesc);
     if (!out.globalBgl || !out.instanceBgl) {
@@ -2829,6 +2831,10 @@ void WebGpuRenderer::probeVolumeSupportCertificates() {
     if (!volumeSupportCertificatesEnabled() || !volumeSupportCertificatesAutoEligibility() || !_instance ||
         !_device || !_queue || !_depthView || !_inverseViewProjValid || _depthW == 0 || _depthH == 0)
         return;
+    // The actual main draw used the routed lane, which does not execute these
+    // certificate branches. Do not spend hidden probe frames measuring them.
+    // If admission/compilation fell back to Current, probing remains meaningful.
+    if (frameStats().volumeRoutedSets > 0) return;
     // One medium per frame: the first admitted, visible and unmeasured.
     const Rendering::VolumeDensityBinding* target = nullptr;
     uint64_t regime = 0;
@@ -3180,7 +3186,7 @@ void WebGpuRenderer::flushVolumeComposite() {
     }
 
     std::array<KernelRoutedSpec,4> frameSpecs{};
-    bool wantRouted = volumeRoutedTransportEnabled() && activeMedia.size()==4 &&
+    bool wantRouted = volumeRoutedTransportEnabled() && !_certificateProbeMedium && activeMedia.size()==4 &&
         incidentSource && OntoMath::literalZero(incidentSource->radianceExpr);
     // No source uses Current's unit compatibility illumination, not zero light.
     const auto vector4=[](const std::array<float,4>& v){return glm::vec4(v[0],v[1],v[2],v[3]);};
@@ -3941,11 +3947,10 @@ void WebGpuRenderer::flushVolumeComposite() {
             if(_pass){wgpuRenderPassEncoderEnd(_pass);wgpuRenderPassEncoderRelease(_pass);_pass=nullptr;_boundPipeline=nullptr;}
             const auto& spec=routedSpecs.at(pipeline);
             if(_kernelRouted->specsUniform)wgpuQueueWriteBuffer(_queue,_kernelRouted->specsUniform,0,spec.data(),sizeof(spec));
-            auto* transport=_kernelRouted->program(pipeline->routedSource);
+            auto* transport=pipeline->routedProgram;
             const bool routedEncoded = transport && _kernelRouted->encode(*transport,_encoder,
                 {globalAlloc.buffer,globalAlloc.offset,globalAlloc.size},{paramBuffer,paramOffset,bytes},
-                {instanceAlloc.buffer,instanceAlloc.offset,instanceAlloc.size},_depthView,{_kernelRouted->specsUniform,0,sizeof(spec)},{_kernelRouted->specsUniform,0,sizeof(spec)},
-                [&](const void* data,size_t size){const auto a=bufferPool().suballocateUniform(data,size);return KernelRoutedRange{a.buffer,a.offset,a.size};});
+                {instanceAlloc.buffer,instanceAlloc.offset,instanceAlloc.size},_depthView);
             if(routedEncoded){
                 ++mutableFrameStats().volumeRoutedSets;mutableFrameStats().volumeRoutedPixels+=_depthW*_depthH;
                 mutableFrameStats().volumeRoutedWorkingSetBytes=uint64_t(_depthW)*_depthH*16+uint64_t(_kernelRouted->capacity)*(48+64*16+16*16+4)+uint64_t(_kernelRouted->tiles)*16+56;

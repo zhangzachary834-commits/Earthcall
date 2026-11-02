@@ -628,6 +628,10 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
     context += e.bindPhaseDirections ? "P" : "-";
     context += e.bindMaterialResponse ? "R" : "-";
     context += e.prepareVolumeTime ? "Q" : "-";
+    // A retained fragment embeds lexical substitutions, including parameter slots.
+    for (const auto& [name, expression] : e.boundNames)
+        context += "|let:" + std::to_string(name.size()) + ":" + name + "=" +
+                   std::to_string(expression.size()) + ":" + expression;
     // A group evaluator has no self-substitution; a channel may substitute it.
     if (e.shared) {
         const auto substitution = e.shared->find(&node);
@@ -667,7 +671,7 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
 std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const std::string& pt) {
     // The table holds values at this medium's original sample p. SDF and
     // Gradient rebind their field to another point and must evaluate it there.
-    if (pt == "p" && e.shared && !e.shared->empty()) {
+    if (pt == "p" && e.boundNames.empty() && e.shared && !e.shared->empty()) {
         const auto it = e.shared->find(&node);
         if (it != e.shared->end()) return it->second;
     }
@@ -687,7 +691,7 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
     switch (node.op) {
         case Op::ScalarLeaf: {
             const auto expression = emitScalarForm(node.scalarForm, e, pt);
-            if (!e.refused && e.prepareVolumeTime && expensiveTimeOnly(node.scalarForm)) {
+            if (!e.refused && e.prepareVolumeTime && e.boundNames.find(OntoMath::kTimeVar) == e.boundNames.end() && expensiveTimeOnly(node.scalarForm)) {
                 const size_t slot = e.params.size();
                 const auto prepared = e.param(0.0f);
                 e.timeSlots.push_back({slot, expression});
@@ -1072,7 +1076,7 @@ namespace {
 // the product with the original grouping over the leaf names.
 std::string flattenScalarProduct(const OntoMath::MathNode& node, Emit& e, const std::string& pt,
                                  std::vector<std::pair<std::string, bool>>& leaves) {
-    if (pt == "p" && e.shared && !e.shared->empty()) {
+    if (pt == "p" && e.boundNames.empty() && e.shared && !e.shared->empty()) {
         const auto it = e.shared->find(&node);
         if (it != e.shared->end()) {
             // Already computed once this sample: a free, noise-free factor.
@@ -1203,7 +1207,7 @@ std::string volumeNodeIdentity(const OntoMath::MathNode& root) {
                     text(factor.variable); scalar(factor.scale); scalar(factor.shift);
                 }
             }
-        } else if (node.op == Op::ValueLeaf) text(node.variableName);
+        } else if (node.op == Op::ValueLeaf || node.op == Op::Let || node.op == Op::Integral) text(node.variableName);
         else if (node.op == Op::Component || node.op == Op::Map) text(node.stringArg);
         else if (node.op == Op::MatrixConstruct || node.op == Op::MatrixIdentity) {
             scalar(node.matrixRows); scalar(node.matrixCols);
@@ -1260,7 +1264,14 @@ std::shared_ptr<KernelVolumeCompilerDag> repairKernelVolumeDag(
             const bool rebound = i == 0 && (node.op == OntoMath::MathNode::Op::SDF ||
                                              node.op == OntoMath::MathNode::Op::Gradient);
             target.children.push_back(childPath);
-            visit(*node.children[i], childPath, rebound ? domain + "/point@" + path : domain);
+            std::string childDomain = rebound ? domain + "/point@" + path : domain;
+            if (node.op == OntoMath::MathNode::Op::Let && i == 1 && node.children[0])
+                childDomain += "/let@" + path + ":" + std::to_string(node.variableName.size()) +
+                    ":" + node.variableName + "=" + volumeNodeIdentity(*node.children[0]);
+            if (node.op == OntoMath::MathNode::Op::Integral && i == 0)
+                childDomain += "/int@" + path + ":" + std::to_string(node.variableName.size()) +
+                    ":" + node.variableName;
+            visit(*node.children[i], childPath, childDomain);
             dag->nodes[childPath].reverseDependencies.push_back(path);
         }
     };
@@ -1326,6 +1337,11 @@ VolumeSharingPlan planVolumeSharing(const OntoMath::Piecewise* const channels[6]
                 // cannot establish equality with a value at the sample p.
                 if (i == 0 && (node.op == OntoMath::MathNode::Op::SDF ||
                                node.op == OntoMath::MathNode::Op::Gradient)) continue;
+                // A lexical body is evaluated with its binding, never at the
+                // enclosing sample's unbound x/y/z/t/p. Whole self-contained
+                // Let expressions may still be shared when their free inputs match.
+                if (i == 1 && node.op == OntoMath::MathNode::Op::Let) continue;
+                if (i == 0 && node.op == OntoMath::MathNode::Op::Integral) continue;
                 if (node.children[i]) visit(*node.children[i], channel, path + "/" + std::to_string(i));
             }
         };

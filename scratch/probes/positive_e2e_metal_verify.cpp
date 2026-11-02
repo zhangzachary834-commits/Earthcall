@@ -915,6 +915,30 @@ int main(int argc, char** argv) {
         {"parity", restoredRgbaHash == canonicalPose0RgbaHash}
     };
 
+    // Hardening audit: cached Program pointers must not survive their owner.
+    renderer.reloadShaders();
+    renderPose(0, true);
+    REQUIRE(fenceQueue(gpu), "reload routed frame fence");
+    k = renderer.routedTransportKernelForDiagnostics();
+    REQUIRE(k && renderer.frameStats().volumeRoutedSets > 0, "reload reacquires routed program");
+    REQUIRE(!k->programs.empty() && std::all_of(k->programs.begin(), k->programs.end(),
+        [](const auto& entry) { return entry.second.evaluatorsDeduplicated; }),
+        "Northern Veil retains ecSingleMember evaluator deduplication");
+    const auto reloadRgba = readRgbaHash();
+    REQUIRE(reloadRgba == canonicalPose0RgbaHash, "reload exact original RGBA parity");
+    report["hardening_shader_reload"] = {{"status", "PASS"}, {"rgba_fnv1a", hex64(reloadRgba)}};
+    std::printf("HARDENING_RELOAD_OK: routed program rebuilt, exact RGBA parity\n");
+
+    renderer.setVolumeSupportCertificatesEnabled(true);
+    renderer.setVolumeSupportCertificatesAutoEligibility(true);
+    renderPose(0, true);
+    REQUIRE(fenceQueue(gpu), "routed certificate-probe suppression fence");
+    REQUIRE(renderer.frameStats().volumeSupportCertificateProbeRenders == 0,
+        "actual routed main frame never schedules unused certificate probes");
+    REQUIRE(readRgbaHash() == canonicalPose0RgbaHash, "certificate toggle preserves routed RGBA");
+    renderer.setVolumeSupportCertificatesEnabled(false);
+    report["hardening_unused_certificate_probes"] = {{"status", "PASS"}, {"probe_renders", 0}};
+
     // Audit mode keeps every correctness gate above, without re-running timing.
     if (argc > 3 && std::string(argv[3]) == "--correctness-only") {
         report["native_metal_gates_passed"] = "8/8 correctness gates; timing gates 9/10 and dual-regime sweep unrun";
