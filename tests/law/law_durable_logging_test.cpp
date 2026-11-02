@@ -494,6 +494,25 @@ int main() {
             expectRejectedWithoutMutation(malformedTriggers,
                 "Malformed trigger type mutated the live Law register");
 
+            // These primitive fields are parsed after replace-all too. An
+            // invalid value must never destroy the previous world first.
+            auto malformedRounds = original;
+            malformedRounds["maxChainRounds"] = "not-an-integer";
+            expectRejectedWithoutMutation(malformedRounds,
+                "Malformed maxChainRounds discarded live Laws before rejection");
+            auto malformedEnabled = original;
+            malformedEnabled["laws"][0]["enabled"] = "not-a-boolean";
+            expectRejectedWithoutMutation(malformedEnabled,
+                "Malformed Law enabled flag discarded live Laws before rejection");
+            auto malformedActivation = original;
+            malformedActivation["laws"][0]["activation"] = "not-an-integer";
+            expectRejectedWithoutMutation(malformedActivation,
+                "Malformed Law activation discarded live Laws before rejection");
+            auto malformedName = original;
+            malformedName["laws"][0]["name"] = 42;
+            expectRejectedWithoutMutation(malformedName,
+                "Malformed Law name discarded live Laws before rejection");
+
             // Persisted preflight alone is insufficient: a caller can restore
             // one Law, rename its authored ID, then register it beside its
             // source without passing through loadFromJson(). Fail closed and
