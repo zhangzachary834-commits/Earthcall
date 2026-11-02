@@ -13987,3 +13987,22 @@ Machine-checkable evidence: `docs/audits/data/opus_handoff_thread_restoration_20
 - [x] **WebGPU Regression Test Suite:** PASS (406/406 checks: 73/73 zero proof, 132/132 support certificates, 201/201 line quadrature)
 
 **Signed:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · 2026-11-01T23:20:00-08:00 (PST). Human origin: Zachary Zhang.
+
+### 10.42 Phase P16 Architectural Review & Phase P17 Execution Blueprint (`2026-11-01`)
+- **Author:** Aetherion / The Firmament (`Gemini 4 Argon`)
+- **Reviewed Commit:** `8c8d0274a1222f8356e48e9882034f60d7abedca` (*"feat(ray-transport): complete Phase P16 secant-clipped tile windows, support-clamped breakpoints, and coalesced SoA subpanels"*)
+- **Blueprint Artifact:** `docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P16_AND_PHASE_P17_BLUEPRINT_2026-11-01.md`
+- **Phase P16 Verification Verdict:** **APPROVED & VERIFIED (`10 / 10` Native Metal Hardware Gates Passed, `406 / 406` WebGPU Regression Checks Passed, `7 / 7` Checkpoint Views Won, `12 / 12` Roll Sweep Angles Won, `64 / 64` Poses Won)**.
+  - Secant-clipped support windows in `classifyTilesMain` cut `Fallback` in dense 4-curtain `Checkpoint_View3B` from `11.5%` to **`3.69%`** (`-17.50%` frame-time win) and in `Checkpoint_View3C` from `12.8%` to **`4.24%`** (`-21.93%` frame-time win), while compressing `Fallback` across the entire 12-angle roll sweep (`0°`–`165°`) to **`0.85% – 4.99%`** and cutting `Checkpoint_View1_Inside_Veil` `Fallback` from `50.84%` to **`41.31%`**.
+  - Coalesced SoA indexing (`[s * cfg.rayCount + id]`) and support-clamped piecewise breakpoints improved relative speedups across `Checkpoint_View3A` (`-37.98%`), `Live_23FPS_View_A` (`-14.86%`), `Checkpoint_View2` (`-14.79%`), and `Checkpoint_View1_Inside_Veil` (`-4.07%`), even while background Chrome meeting load was active during the P16 run.
+- **Phase P17 Execution Blueprint for Sparkly Guy (`Gemini 3.8 Flash`):**
+  1. **Deliverable P17.1 (Ray-Preloaded `classifyTilesMain` + Per-Ray Consistent Chronological Ordering + `2/3/4`-Member Ordered Disjoint Routing in `s2ProducerMain`):**
+     - Preload `tileRoClipA[0..15]`, `tileRdClipB[0..15]`, and `rayValid[0..15]` once per tile before the `m = 0..3` curtain loop, eliminating `87.5%` (`7 / 8`) of global ray/index memory reads in `classifyTilesMain`.
+     - Track per-ray secant-clipped `[rEnter[i][m], rExit[i][m]]` and verify pairwise chronological precedence **per ray** (`rExit[i][m1] + 0.01 <= rEnter[i][m2]` on every ray $i$ hitting both curtains) rather than cross-ray tile-wide box comparison (`max_i rExit[i][m1] <= min_j rEnter[j][m2]`), eliminating false cross-ray tilt overlaps in `Checkpoint_View1_Inside_Veil` and oblique views.
+     - Promote `3`- and `4`-member ordered disjoint tiles (`activeCount >= 3u && !tileCanOverlap`, verified acyclic via $O(1)$ tournament in-degree mask `inDegMask == (1u << activeCount) - 1u`) directly into `s2TileList` (using bit 21 = `1u` while preserving the exact P10–P16 bit pattern for `activeCount == 2u` when bit 21 = `0u`), and unpack `2/3/4`-member ordered sequences in `s2ProducerMain`.
+  2. **Deliverable P17.2 (`ecConsume` Single-Stream Fast Path for `ray.counts.w == 0u` & Direct Single-Member Evaluation):**
+     - Split `ecConsume` on `if (ray.counts.w == 0u)` (`98.5%+` of active rays) so overlap-free rays bypass `useOverlap`, `overPanel`, `ecOverlaps`, and the inner `mMask` / `firstTrailingBit` loop, calling `ecSingleMember(worldNode, wo, sNode, subMember)` directly with `0.0` ULP difference.
+  3. **Deliverable P17.3 (Hoisted Clamped Half-Extents & Active-Member Sweep Loop in `fallbackProducerMain`):**
+     - Hoist `let halfVec = min(m.half.xyz, vec3f(m.limits.x, m.limits.y, zEnv));` outside the axis loops in `classifyTilesMain`, `s1ProducerMain`, `s2ProducerMain`, and `fallbackProducerMain`, and iterate `0 .. nAct - 1` (`ord[idx]`) instead of `0 .. 3` inside `fallbackProducerMain`'s overlap sweep.
+  4. **Deliverable P17.4 (Uncontended Quiet-System Full Hardware Benchmark & Verification):**
+     - Now that Chrome meetings are closed, run the full 10-gate native Metal hardware benchmark (`positive_e2e_metal_verify`) and sequential `ctest -j1` to capture true uncontended Apple Silicon GPU frame times alongside Phase P17's algorithmic gains.
