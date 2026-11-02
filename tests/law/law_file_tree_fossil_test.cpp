@@ -67,13 +67,13 @@ int main() {
     std::ifstream consoleStateFile(root / consoleStateRelative);
     if (!consoleStateFile) {
         std::cerr << "FAIL: Could not open CreatorConsoleState.hpp at "
-                  << root / consoleStateRelative << "\\n";
+                  << root / consoleStateRelative << "\n";
         return 1;
     }
     const std::string consoleStateContent((std::istreambuf_iterator<char>(consoleStateFile)),
                                           std::istreambuf_iterator<char>());
     if (consoleStateContent.find("useLegacy2DTools") != std::string::npos) {
-        std::cerr << "FAIL: Legacy 2D tool fossil exists in CreatorConsoleState.hpp\\n";
+        std::cerr << "FAIL: Legacy 2D tool fossil exists in CreatorConsoleState.hpp\n";
         return 1;
     }
 
