@@ -1976,7 +1976,14 @@ std::shared_ptr<Law> LawManager::createLaw(const std::string& name,
 void LawManager::add(const std::shared_ptr<Law>& law) {
     if (!law) return;
     const std::string id = law->getIdentifier();
-    if (_lawById.find(id) != _lawById.end()) return;
+    // Re-registering the exact same Law is idempotent, but a distinct Law
+    // with the same authored identifier must never vanish silently. Reject
+    // before touching the register or publishing any registration event.
+    if (auto existing = _lawById.find(id); existing != _lawById.end()) {
+        if (existing->second == law.get()) return;
+        throw std::invalid_argument(
+            "Duplicate live Law identifier; choose a distinct identifier before registering");
+    }
 
     // Two simultaneously registered Laws cannot own the same durable history.
     // A restored/copied Law must explicitly fork before being registered as
