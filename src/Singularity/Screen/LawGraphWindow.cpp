@@ -3708,8 +3708,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
         bool enabled = law->isEnabled();
         if (ImGui::Checkbox("##enabled", &enabled)) law->setEnabled(enabled);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Click to set @%s.enabled := %s",
-                              law->getIdentifier().c_str(), enabled ? "false" : "true");
+            ImGui::SetTooltip("@[%s].enabled := %s", law->getIdentifier().c_str(), enabled ? "true" : "false");
         }
         ImGui::SameLine();
         if (ImGui::Selectable(law->name().c_str(),
@@ -3752,7 +3751,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
             ImGui::SetTooltip(
                 "Uncheck to set a first mover down so authored law can take over.\n"
                 "The engine keeps the channel; only its actuation stops.\n"
-                "Equivalent Law property write: @<law-id>.enabled := false.");
+                "Same as writing @[id].enabled := false.");
         }
         for (const auto& law : laws.getAll()) {
             if (law && law->isFirstMover() && passesFilter(*law)) lawRow(law);
@@ -3904,8 +3903,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
             }
             ImGui::PopStyleColor();
             if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("Click to set @%s.enabled := %s",
-                                  law->getIdentifier().c_str(), law->isEnabled() ? "false" : "true");
+                ImGui::SetTooltip("@[%s].enabled := %s", law->getIdentifier().c_str(), law->isEnabled() ? "false" : "true");
             }
             ImGui::SameLine();
             chip(kInfo, law->activation() == Law::Activation::WhileTrue
@@ -3997,8 +3995,7 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
                     "another being's position, the subject's own state).\n"
                     "Ends with a \"law-drive-finished\" event. With no bounded\n"
                     "function it drives until disabled.\n"
-                    "(click to set @%s.drives := %s)",
-                    law->getIdentifier().c_str(), drives ? "false" : "true");
+                    "(evaluates @[%s].drives := %s)", law->getIdentifier().c_str(), drives ? "true" : "false");
             }
             if (drives) {
                 ImGui::TextColored(ImVec4(0.45f, 0.75f, 1.0f, 1.0f),
