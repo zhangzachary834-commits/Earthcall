@@ -14086,3 +14086,20 @@ Across Prince Prism II's 12 roll angles ($0^\circ$ to $165^\circ$):
 - [x] **WebGPU Regression Test Suite:** PASS (406/406 checks: 73/73 zero proof, 132/132 support certificates, 201/201 line quadrature; CTest 100% pass)
 
 Signed: Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · Session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · 2026-11-02T00:30:00-08:00 (PST).
+
+### 10.44 Phase P17 Architectural Review & Phase P18 Execution Blueprint (`2026-11-02`)
+- **Author:** Aetherion / The Firmament (`Gemini 4 Argon`)
+- **Reviewed Commit:** `392867e7c307e3663a84ed686a532c976534ce35` (*"feat(ray-transport): complete Phase P17 ray-preloaded classifier, per-ray chronological ordering, multi-member S2, and consumer single-stream fast path"*)
+- **Blueprint Artifact:** `docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P17_AND_PHASE_P18_BLUEPRINT_2026-11-02.md`
+- **Phase P17 Verification Verdict:** **APPROVED & VERIFIED (`10 / 10` Native Metal Hardware Gates Passed, Dual-Regime Clean Sweep Across Both Regime 1 & Regime 2, `7 / 7` Checkpoint Views Won, `12 / 12` Roll Sweep Angles Won, `406 / 406` WebGPU Regression Checks Passed)**.
+  - Per-ray consistent chronological ordering and `2/3/4`-member `S2+` routing slashed `Fallback` in `Checkpoint_View1_Inside_Veil` from `41.31%` down to **`7.96%`** (`92.04%` S2, `212,067` tiles), in `Live_23FPS_View_A` from `6.78%` to **`2.26%`** (`20.0 FPS`), in `Checkpoint_View2` from `7.20%` to **`2.31%`** (`19.0 FPS`), and in `Live_Parked_View` from `7.33%` to **`2.74%`** (`18.6 FPS`), while pushing `Checkpoint_View3A` to **`25.65 ms` (`39.0 FPS`, `-35.84%`)**, `Checkpoint_View3B` to **`46.71 ms` (`21.4 FPS`, `-14.00%`)**, and `Checkpoint_View3C` to **`52.32 ms` (`19.1 FPS`, `-16.27%`)**.
+  - On the uncontended 64-pose canonical tour, Routed won **both** **Regime 1 (`-10.70 ms / -11.27%`)** and **Regime 2 (`-1.47 ms / -2.50%`)**, with **All 64 Poses at `-6.23 ms` (`-8.05%`)** and `Fallback = 5.40%`.
+- **Phase P18 Execution Blueprint for Sparkly Guy (`Gemini 3.8 Flash`):**
+  1. **Deliverable P18.1 (Zero-Band Micro-Sliver Absorption `l == bnd.x` in All Three Producer Kernels):**
+     - Fix `(l == bnd.x || l == bnd.y)` to `l == bnd.x` on `zeroBands` in `s1ProducerMain`, `s2ProducerMain`, `fallbackProducerMain`, and `scratch/probes/positive_e2e_cpu_verify.cpp`. Protecting only `bnd.x` keeps the left and right curtain halves strictly separated at the $\phi(s) = 0$ tent ridge while allowing the microscopic $\le 0.0001$-wide zero-crossing bracket $[b_{0,L}, b_{0,R}]$ to be absorbed into the right curtain half via `mayAbsorb`—eliminating 1 redundant micro-subpanel (and 2 full 3D procedural `ecSingleMember` evaluations in `ecConsume`) per curtain crossing (`~25–33%` fewer subpanels across all views).
+  2. **Deliverable P18.2 (Hybrid Secant-Bisection Root Isolation with `w <= 0.0095` Short-Band Guard):**
+     - In `isolateMonotone` and `isolateMonotoneWithMid`, track `var right = vb;`, probe the clamped secant root estimate `l + clamp(-left / (right - left), 0.05, 0.95) * (r - l)` on odd iterations `(iter & 1u) == 1u`, and guard early slope-width termination with `w <= 0.0095 && w < 0.5 * (r - l)` so isolated root bands always satisfy `2 * w <= 0.019 <= 0.02` (`shortBand` in `mayAbsorb`), cutting producer root-isolation `evalPhi` calls by `70–80%`.
+  3. **Deliverable P18.3 (`ecConsume` Unrolled 2-Node Single-Stream Quadrature & Zero-Extinction `ecFlow` Skip):**
+     - Unroll the 2 Gauss-Legendre nodes (`gx0`, `gx1`) in `ecConsume`'s `ray.counts.w == 0u` fast path and guard `if (v.w > 0.0) { state = ecFlow(state, v, h); }` to skip `ecPhi(tau)` and `exp(-tau)` whenever both quadrature nodes fall in zero-density pockets (`D <= 0.0`).
+  4. **Deliverable P18.4 (Full 10-Gate Native Metal Verification, CPU Mirror Verification & Sequential CTest Suite):**
+     - Verify `positive_e2e_cpu_verify`, `positive_e2e_metal_verify` (all 10 gates), and `ctest -j1 --output-on-failure` (`406 / 406` WebGPU checks, `19 / 19` targets), and publish the Phase P18 benchmark report and JSON receipts.
