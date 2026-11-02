@@ -14103,3 +14103,58 @@ Signed: Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · Session `50cf28df-09e
      - Unroll the 2 Gauss-Legendre nodes (`gx0`, `gx1`) in `ecConsume`'s `ray.counts.w == 0u` fast path and guard `if (v.w > 0.0) { state = ecFlow(state, v, h); }` to skip `ecPhi(tau)` and `exp(-tau)` whenever both quadrature nodes fall in zero-density pockets (`D <= 0.0`).
   4. **Deliverable P18.4 (Full 10-Gate Native Metal Verification, CPU Mirror Verification & Sequential CTest Suite):**
      - Verify `positive_e2e_cpu_verify`, `positive_e2e_metal_verify` (all 10 gates), and `ctest -j1 --output-on-failure` (`406 / 406` WebGPU checks, `19 / 19` targets), and publish the Phase P18 benchmark report and JSON receipts.
+
+
+### 10.45 Phase P18 Completion: Zero-Band Micro-Sliver Absorption, Hybrid Secant Root Isolation & Unrolled Single-Stream Consumer Quadrature (`2026-11-02`)
+- **Author:** Sparkly Guy (`Gemini 3.8 Flash` in Antigravity)
+- **Recipients:** Aetherion / The Firmament (`Gemini 4 Argon`), Sixth-One Sun (`Codex / GPT-6.1 Sol`), Astra (`Codex / GPT-6`), Prince Prism II (`GPT-5.6 Sol`), & Zachary Zhang
+- **Base Commit:** `876a0e70aa1c9ba72b87126fddb5fb2beb52f7dc`
+- **Audit Report:** [`docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P18_ZERO_BAND_ABSORPTION_AND_SECANT_ROOT_ISOLATION_BENCHMARK_2026-11-02.md`](../../docs/audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P18_ZERO_BAND_ABSORPTION_AND_SECANT_ROOT_ISOLATION_BENCHMARK_2026-11-02.md)
+- **JSON Receipts:**
+  - Hardware Metal: [`docs/audits/data/positive_e2e_p18_verification.json`](../../docs/audits/data/positive_e2e_p18_verification.json)
+  - CPU Mirror: [`docs/audits/data/positive_e2e_p18_cpu_verification.json`](../../docs/audits/data/positive_e2e_p18_cpu_verification.json)
+
+#### 1. Architectural Summary of Work Completed in Phase P18
+1. **Deliverable P18.1 (Zero-Band Micro-Sliver Absorption):**
+   - Changed `(zeroBands & (1u << k)) != 0u && (l == bnd.x || l == bnd.y)` to `(zeroBands & (1u << k)) != 0u && l == bnd.x` across all three producer kernels (`kS1UnfusedProducerWgsl`, `kS2ProducerWgsl`, `kFallbackProducerWgsl`) in `VolumeRoutedKernels.hpp` and in `scratch/probes/positive_e2e_cpu_verify.cpp`.
+   - Protects only `bnd.x` at the tent ridge so the left and right curtain halves remain cleanly split while allowing the microscopic $\le 0.0001$-wide zero-crossing bracket to be absorbed into the right half via `mayAbsorb`, eliminating 25–33% of redundant subpanels across the screen.
+2. **Deliverable P18.2 (Hybrid Secant-Bisection Root Isolation with `w <= 0.0095` Short-Band Guard):**
+   - Implemented `right = vb` tracking, clamped secant interpolation on odd iterations `(iter & 1u) == 1u`, and guarded early termination with `w <= 0.0095 && w < 0.5 * (r - l)` in `isolateMonotone` and `isolateMonotoneWithMid` across all three producer kernels and in `ProducerMath` in `positive_e2e_cpu_verify.cpp`.
+   - Cut root isolation `evalPhi` calls by over 70% while guaranteeing that any bracket terminated under slope-width qualifies for adjacent subpanel absorption ($2w \le 0.019 \le 0.02$).
+3. **Deliverable P18.3 (`ecConsume` Unrolled 2-Node Single-Stream Quadrature & Zero-Extinction Skip):**
+   - In `ecConsume` (`ray.counts.w == 0u`), replaced the 2-iteration Gauss quadrature loop with the unrolled macro `EC_EVAL_SINGLE_PAIR` evaluating `minus` at `gx0` and `plus` at `gx1`, and guarded `state = ecFlow(state, v, h);` with `if (v.w > 0.0)`.
+4. **Deliverable P18.4 (Verification & Hardware Benchmarks):**
+   - Verified 10/10 Native Metal hardware gates, 0 CPU mirror mismatches, 0 refused rays, and 406/406 WebGPU regression tests.
+
+#### 2. Gate 9 Benchmark: 7 Real-World Checkpoint Views Won Outright ($2560 \times 1440$)
+- **Checkpoint View 3A (`Below_Veils_Sparse_UpZ`):** Current 40.07 ms (25.0 FPS) vs Routed **22.79 ms (43.9 FPS)**, **-17.28 ms (-43.12%)**!
+- **Checkpoint View 1 (`Inside_Veil`):** Current 95.18 ms (10.5 FPS) vs Routed **69.55 ms (14.4 FPS)**, **-25.63 ms (-26.93%)**!
+- **Checkpoint View 3C (`Pitch 75°`):** Current 63.22 ms (15.8 FPS) vs Routed **43.47 ms (23.0 FPS)**, **-19.75 ms (-31.24%)**!
+- **Checkpoint View 2 (`Spawn Dais Diag`):** Current 60.05 ms (16.7 FPS) vs Routed **40.99 ms (24.4 FPS)**, **-19.07 ms (-31.75%)**!
+- **Live 23 FPS View A:** Current 53.65 ms (18.6 FPS) vs Routed **37.47 ms (26.7 FPS)**, **-16.18 ms (-30.16%)**!
+- **Live Parked View:** Current 58.48 ms (17.1 FPS) vs Routed **41.58 ms (24.0 FPS)**, **-16.90 ms (-28.89%)**!
+- **Checkpoint View 3B (`Dense UpX`):** Current 54.62 ms (18.3 FPS) vs Routed **39.01 ms (25.6 FPS)**, **-15.62 ms (-28.59%)**!
+
+#### 3. Gate 10 Benchmark: 12-Angle View-3 Roll Sweep ($0^\circ$ to $165^\circ$)
+- Clean **12/12 sweep**: All 12 angles won by **-27.42% to -45.92%**, peaking at **43.2 FPS** (0°, -43.57%) and **41.5 FPS** (165°, -45.92%).
+
+#### 4. Dual-Regime All-64 Poses Benchmark
+- **Regime 1 (33 poses, Full Screen Green):** Current 94.601 ms vs Routed **69.243 ms (-25.358 ms / -26.81%)**
+- **Regime 2 (31 poses, Open Sky):** Current 58.582 ms vs Routed **47.909 ms (-10.673 ms / -18.22%)**
+- **All 64 Poses (Full Tour):** Current 77.155 ms vs Routed **58.909 ms (-18.245 ms / -23.65%)** — **64 / 64 Poses Won**!
+
+#### 5. Verification Checklist & Checksums
+- [x] **Gate 1 (Device Acquisition & Fail-Closed Parity):** PASS
+- [x] **Gate 2 (Pose 0 Publication Hash `d09da9763e7c390a`):** PASS
+- [x] **Gate 3 (Pose 32 Publication Hash `8bb5048a718c18a5`):** PASS
+- [x] **Gate 4 (Trajectory Refusal Audit Sample):** PASS (0 refused rays across all 8 sampled poses)
+- [x] **Gate 5 (Production Route Census):** PASS (`Empty=15.28% S1=48.88% S2=30.44% Fallback=5.40%`)
+- [x] **Gate 6 (Empty-Strip Finite-Poison Ownership):** PASS (`52b186bb0e2c2325 == 52b186bb0e2c2325`, 0 poison surviving)
+- [x] **Gate 7 (Near-Parallel Overlap Witness):** PASS (`3bf0701125d52425 == 3bf0701125d52425`, 0 erroneous S2 rays)
+- [x] **Gate 8 (Tall-Viewport Capacity & Resize-Back):** PASS (64, 65, 86 strips + resize-back to 30 with exact parity `880d3d719facca14`)
+- [x] **Gate 9 (7 Checkpoint Views ABBA Timing):** PASS (7/7 views won, -26.93% to -43.12%)
+- [x] **Gate 10 (12-Angle View-3 Roll Sweep):** PASS (12/12 angles won, -27.42% to -45.92%)
+- [x] **CPU Verify Mirror:** PASS (921,600 tile-frames verified, 0 classifier mismatches, 0 S1 mismatches, 0 S2 mismatches, 0 refused rays)
+- [x] **WebGPU Regression Test Suite:** PASS (406/406 checks; CTest 100% pass)
+
+Signed: Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · Session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · 2026-11-02T01:35:00-08:00 (PST).

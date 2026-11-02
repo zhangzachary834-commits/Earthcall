@@ -714,22 +714,26 @@ struct ProducerMath {
             putBandTagged(std::max(a, b - w), b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
         }
         if ((va > error && vb < -error) || (va < -error && vb > error)) {
-            float l = a, r = b, left = va;
+            float l = a, r = b, left = va, right = vb;
             for (uint32_t iter = 0u; iter < 32u; iter++) {
                 if (work >= budget) { reason |= 1u; break; }
                 work += 1u;
                 float mid = l + 0.5f * (r - l);
+                if ((iter & 1u) == 1u && std::abs(right - left) > 1e-6f) {
+                    float tSec = std::clamp(-left / (right - left), 0.05f, 0.95f);
+                    mid = l + tSec * (r - l);
+                }
                 if (mid <= l || mid >= r || r - l <= 0.0001f) break;
                 float v = evalPhi(m, o, d, mid) - c;
                 if (std::abs(v) <= error) {
                     float w = 2.0f * error / minSlope;
-                    if (w < 0.5f * (r - l)) {
+                    if (w <= 0.0095f && w < 0.5f * (r - l)) {
                         l = std::max(l, mid - w);
                         r = std::min(r, mid + w);
                         break;
                     }
                 }
-                if ((left < 0.0f && v > 0.0f) || (left > 0.0f && v < 0.0f)) r = mid;
+                if ((left < 0.0f && v > 0.0f) || (left > 0.0f && v < 0.0f)) { r = mid; right = v; }
                 else { l = mid; left = v; }
             }
             putBandTagged(l, r, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
@@ -774,7 +778,7 @@ struct ProducerMath {
             putBandTagged(std::max(a, b - w), b, bounds, nb, bands, nr, reason, zeroBands, isZeroLevel);
         }
         if ((va > error && vb < -error) || (va < -error && vb > error)) {
-            float l = a, r = b, left = va;
+            float l = a, r = b, left = va, right = vb;
             bool done = false;
             if (work >= budget) { reason |= 1u; done = true; }
             else {
@@ -782,16 +786,16 @@ struct ProducerMath {
                 if (mid0 <= l || mid0 >= r || r - l <= 0.0001f) { done = true; }
                 else if (std::abs(fmid0) <= error) {
                     float w = 2.0f * error / minSlope;
-                    if (w < 0.5f * (r - l)) {
+                    if (w <= 0.0095f && w < 0.5f * (r - l)) {
                         l = std::max(l, mid0 - w);
                         r = std::min(r, mid0 + w);
                         done = true;
                     } else {
-                        if ((left < 0.0f && fmid0 > 0.0f) || (left > 0.0f && fmid0 < 0.0f)) r = mid0;
+                        if ((left < 0.0f && fmid0 > 0.0f) || (left > 0.0f && fmid0 < 0.0f)) { r = mid0; right = fmid0; }
                         else { l = mid0; left = fmid0; }
                     }
                 } else {
-                    if ((left < 0.0f && fmid0 > 0.0f) || (left > 0.0f && fmid0 < 0.0f)) r = mid0;
+                    if ((left < 0.0f && fmid0 > 0.0f) || (left > 0.0f && fmid0 < 0.0f)) { r = mid0; right = fmid0; }
                     else { l = mid0; left = fmid0; }
                 }
             }
@@ -800,17 +804,21 @@ struct ProducerMath {
                     if (work >= budget) { reason |= 1u; break; }
                     work += 1u;
                     float mid = l + 0.5f * (r - l);
+                    if ((iter & 1u) == 1u && std::abs(right - left) > 1e-6f) {
+                        float tSec = std::clamp(-left / (right - left), 0.05f, 0.95f);
+                        mid = l + tSec * (r - l);
+                    }
                     if (mid <= l || mid >= r || r - l <= 0.0001f) break;
                     float v = evalPhi(m, o, d, mid) - c;
                     if (std::abs(v) <= error) {
                         float w = 2.0f * error / minSlope;
-                        if (w < 0.5f * (r - l)) {
+                        if (w <= 0.0095f && w < 0.5f * (r - l)) {
                             l = std::max(l, mid - w);
                             r = std::min(r, mid + w);
                             break;
                         }
                     }
-                    if ((left < 0.0f && v > 0.0f) || (left > 0.0f && v < 0.0f)) r = mid;
+                    if ((left < 0.0f && v > 0.0f) || (left > 0.0f && v < 0.0f)) { r = mid; right = v; }
                     else { l = mid; left = v; }
                 }
             }
@@ -1042,7 +1050,7 @@ static RayProducerOutput runS1Producer(const Ray& input, uint32_t activeMember,
                         if (d.y != 0.0f) protectedBoundary = protectedBoundary || (l == -o.y / d.y) || (l == (m.limits.z - o.y) / d.y);
                         for (uint32_t k = 0u; k < nr; k++) {
                             uncertain = uncertain || (l < bands[k].y && r > bands[k].x);
-                            if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) protectedBoundary = true;
+                            if ((zeroBands & (1u << k)) != 0u && l == bands[k].x) protectedBoundary = true;
                         }
                         if (uncertain || std::abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
                             if (count > memberStart && PM::mayAbsorb(pieces[count - 1u], glm::vec2(l, r),
@@ -1199,7 +1207,7 @@ static RayProducerOutput runS2Producer(const Ray& input, uint32_t packedTile,
             if (d.y != 0.0f) protectedBoundary = protectedBoundary || (l == -o.y / d.y) || (l == (m.limits.z - o.y) / d.y);
             for (uint32_t k = 0u; k < nr; k++) {
                 uncertain = uncertain || (l < bands[k].y && r > bands[k].x);
-                if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) protectedBoundary = true;
+                if ((zeroBands & (1u << k)) != 0u && l == bands[k].x) protectedBoundary = true;
             }
             if (uncertain || std::abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
                 if (memberIdx > 0u && l < prevMemberMaxS) { out.reason |= 64u; break; }
@@ -1345,7 +1353,7 @@ static RayProducerOutput runFallbackProducer(const Ray& input,
             if (d.y != 0.0f) protectedBoundary = protectedBoundary || (l == -o.y / d.y) || (l == (m.limits.z - o.y) / d.y);
             for (uint32_t k = 0u; k < nr; k++) {
                 uncertain = uncertain || (l < bands[k].y && r > bands[k].x);
-                if ((zeroBands & (1u << k)) != 0u && (l == bands[k].x || l == bands[k].y)) protectedBoundary = true;
+                if ((zeroBands & (1u << k)) != 0u && l == bands[k].x) protectedBoundary = true;
             }
             if (uncertain || std::abs(evalPhi(m, o, d, mid)) <= m.limits.w + m.curv.y) {
                 if (count > memberStart && PM::mayAbsorb(pieces[count - 1u], glm::vec2(l, r),

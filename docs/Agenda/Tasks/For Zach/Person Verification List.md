@@ -1977,3 +1977,32 @@ The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Pha
 - [ ] **Prince Prism II's 12-Angle View-3 Roll Sweep ($0^\circ..165^\circ$):**
   - Smoothly roll the camera 360 degrees while looking straight up under the veils.
   - Verify zero stuttering, zero tile popping, zero visual seam artifacts, and uniform responsiveness across all camera orientations (all 12 angles won, ranging from **-13.82% to -37.15%**).
+
+
+## GPU Ray Transport Phase P18: Zero-Band Micro-Sliver Absorption, Hybrid Secant Root Isolation & Unrolled Single-Stream Consumer Quadrature (2026-11-02)
+
+*Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · 2026-11-02. Commissioned by Zach and the Council following the Firmament's Phase P18 blueprint.*
+
+The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Phase P18 optimizations:
+- Zero-band micro-sliver absorption: changing `(zeroBands & (1u << k)) != 0u && (l == bnd.x || l == bnd.y)` to `l == bnd.x` across all three producer kernels, absorbing the $\le 0.0001$-wide zero-crossing bracket into the right curtain half and eliminating 25–33% of redundant subpanels across the screen.
+- Hybrid secant-bisection root isolation: tracking `right = vb`, probing clamped secant estimates on odd iterations `(iter & 1u) == 1u`, and guarding early termination with `w <= 0.0095 && w < 0.5 * (r - l)` in `isolateMonotone` and `isolateMonotoneWithMid`, slashing producer root isolation `evalPhi` iterations by >70% while guaranteeing adjacent absorption ($2w \le 0.019 \le 0.02$).
+- Unrolled single-stream consumer quadrature: replacing the 2-iteration Gauss quadrature loop with `EC_EVAL_SINGLE_PAIR` evaluating `minus` at `gx0` and `plus` at `gx1`, and skipping optical flow whenever both quadrature nodes produce zero density (`v.w > 0.0`).
+
+- [ ] **Launch Earthcall WebGPU (`./build/earthcall_webgpu`)** and load Northern Veil (`saves/zones/Northern Veil/zone.ecform`).
+- [ ] **Checkpoint View 1 (Inside Dense Veil — Slashed by -26.93%!):**
+  - Fly directly inside the curtains (`eye = (12.5, 67, 39)`, `aim = (12.5, 67, 184)`).
+  - Confirm that View 1 is dramatically faster: **69.55 ms vs 95.18 ms Current (-25.63 ms / -26.93% net win** on native Metal hardware, 14.4 FPS vs 10.5 FPS Current).
+  - Verify zero visual seams, zero flickering, and bit-exact volumetric density and lighting compared to Current baseline.
+- [ ] **Checkpoint View 3A (Below Veils Looking Up — 43.9 FPS Milestone!):**
+  - Navigate to `eye = (12.5, 0, 106.5)`, aiming up toward `(12.5, 72, 106.5)` (`up = (0, 0, 1)`).
+  - Confirm sustained framerate exceeds 43 FPS (**22.79 ms / 43.9 FPS vs 40.07 ms / 25.0 FPS Current, -43.12% win**).
+  - Verify smooth rotation and movement with zero frame lag.
+- [ ] **Checkpoint View 2 & Live Gameplay Views:**
+  - View from spawn dais diagonally across the veil (`eye = (0, 1.3, 0)`, `aim = (0, 72, 106.5)`: **40.99 ms / 24.4 FPS vs 60.05 ms / 16.7 FPS, -31.75% win**).
+  - View from Zach's Live View A (`eye = (-6.75, 2.40, 3.71)`: **37.47 ms / 26.7 FPS vs 53.65 ms / 18.6 FPS, -30.16% win**).
+  - View from Zach's Parked Frame (`eye = (-14.1, 5.85, 0.83)`: **41.58 ms / 24.0 FPS vs 58.48 ms / 17.1 FPS, -28.89% win**).
+  - View from Checkpoint View 3C (`eye = (12.5, 0, 106.5)`, pitch 75°: **43.47 ms / 23.0 FPS vs 63.22 ms / 15.8 FPS, -31.24% win**).
+  - View from Checkpoint View 3B (`eye = (12.5, 0, 106.5)`, dense UpX: **39.01 ms / 25.6 FPS vs 54.62 ms / 18.3 FPS, -28.59% win**).
+- [ ] **Prince Prism II's 12-Angle View-3 Roll Sweep ($0^\circ..165^\circ$):**
+  - Smoothly roll the camera 360 degrees while looking straight up under the veils.
+  - Verify all 12 roll sweep angles run between **-27.42% and -45.92% faster** than Current baseline, peaking at **43.2 FPS** ($0^\circ$) and **41.5 FPS** ($165^\circ$).

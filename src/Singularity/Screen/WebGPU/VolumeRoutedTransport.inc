@@ -153,13 +153,9 @@ fn ecProjected(ro:vec3<f32>,rd:vec3<f32>,wo:vec3<f32>,s:f32,mask:u32)->vec4<f32>
    let sub=ecSingles[s*stride+id];
    if(sub.info.x>=4u){ecPublication[ecPixel(id)]=vec4<f32>(0,0,0,-1);return;}
    let lo=sub.span.x;let h=sub.span.y-lo;let subMember=sub.info.x;let mask=1u<<subMember;
-   var minus=vec4<f32>(0);var plus=vec4<f32>(0);
-   for(var q=0u;q<2u;q++){
-    let node=select(gx0,gx1,q==1u);
-    EC_EVAL_SINGLE_NODE
-    if(q==0u){minus=val;}else{plus=val;}
-   }
-   state=ecFlow(state,.5*(minus+plus),h);
+   EC_EVAL_SINGLE_PAIR
+   let v=.5*(minus+plus);
+   if(v.w>0.0){state=ecFlow(state,v,h);}
   }
  }else{
   var single=0u;var overlap=0u;var overPanel=0u;
@@ -334,9 +330,10 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
             "}\n";
   replace(tail, "EC_CONSUMER_HELPERS", helper);
   replace(tail, "EC_PROJECTED", "_ = wo; _ = mask; _ = world; return result;");
-  replace(tail, "EC_EVAL_SINGLE_NODE", "let sNode = lo + node * h;\n"
-                                       "   let worldNode = ro + sNode * rd;\n"
-                                       "   let val = ecSingleMember(worldNode, wo, sNode, subMember);");
+  replace(tail, "EC_EVAL_SINGLE_PAIR", "let s0 = lo + gx0 * h;\n"
+                                       "   let s1 = lo + gx1 * h;\n"
+                                       "   let minus = ecSingleMember(ro + s0 * rd, wo, s0, subMember);\n"
+                                       "   let plus = ecSingleMember(ro + s1 * rd, wo, s1, subMember);");
   replace(tail, "EC_EVAL_NODE", "var val = vec4<f32>(0.0);\n"
                                 "   let sNode = lo + node * h;\n"
                                 "   let worldNode = ro + sNode * rd;\n"
@@ -361,7 +358,8 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
                "let D=volumeDensityEval_" + n + "(p);if(D>0.0){let X=max(volumeExtinctionEval_" + n + "(p,D),1e-6);var E=vec3<f32>(0);if(!VOLUME_EMISSION_READS_OMEGA_" + n + "||s>1e-8){E=max(volumeEmissionEval_" + n + "(p,wo),vec3<f32>(0));}result+=vec4<f32>(E,X);}}\n";
   }
   replace(tail, "EC_PROJECTED", sampling);
-  replace(tail, "EC_EVAL_SINGLE_NODE", "let val = ecProjected(ro, rd, wo, lo + node * h, mask);");
+  replace(tail, "EC_EVAL_SINGLE_PAIR", "let minus = ecProjected(ro, rd, wo, lo + gx0 * h, mask);\n"
+                                       "   let plus = ecProjected(ro, rd, wo, lo + gx1 * h, mask);");
   replace(tail, "EC_EVAL_NODE", "let val = ecProjected(ro, rd, wo, lo + node * h, mask);");
  }
  std::string consume = prefix + commonText + tail;
