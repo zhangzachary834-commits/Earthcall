@@ -946,6 +946,14 @@ public:
     // world is loaded so the Universe can resolve the identifiers.
     void loadFromJson(const nlohmann::json& j);
 
+    // Explicitly turn a copied world into an independent history branch.
+    // Re-key every registered Law, including engine-owned First Movers,
+    // while retaining authored IDs, definitions, and authority. Ordinary
+    // save/load and Save As MUST NOT call this: they preserve lineage.
+    // Stage all new identities before mutation so entropy failure cannot
+    // leave a half-forked world. Call before executing the copied world.
+    void forkAllDurableHistoryLineages();
+
     // ------------------------------------------------------------------
     // Drive sessions: change over time that outlives its event. When an
     // OnEvent law whose action reads "time.sinceApplied" applies, a session
