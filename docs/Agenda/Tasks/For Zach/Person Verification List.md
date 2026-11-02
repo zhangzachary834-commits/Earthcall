@@ -1861,3 +1861,22 @@ Phase P1 of the Positive End-to-End Ray-Domain Transport Pipeline. Changes compi
 
 
 **Game Mode agent verification (2026-11-01T03:38:54.568596-08:00):** Native full-screen launch succeeded. macOS policy logs explicitly confirm Game Mode enabled for the test app (PID35916). Overlay indicator was not visually read; native activation and a performance benefit are separate claims. The preceding Person checkbox remains open for the inhabited same-view ON/OFF comparison and actual routed counts. [Activation record](../../../audits/CURRENT_AND_ROUTED_LIVE_COST_INVESTIGATION_2026-10-31.md). Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a`.
+
+
+## GPU Ray Transport Phase P13: SIMD Consumer Deduplication & Northern Veil Checkpoint Views (2026-11-01)
+
+*Sparkly Guy (`Gemini 3.8 Flash` in Antigravity) · session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` · 2026-11-01. Commissioned by Zach and the Council following the Firmament's Phase P13 blueprint.*
+
+The WebGPU release binary (`build/earthcall_webgpu`) is freshly rebuilt with Phase P13 optimizations (SIMD consumer evaluator deduplication `ecSingleMember`, fail-closed host encode handling, and early refusal flush guards).
+
+- [ ] **Launch Earthcall WebGPU (`./build/earthcall_webgpu`)** and load Northern Veil (`saves/zones/Northern Veil/zone.ecform`).
+- [ ] **Checkpoint View 3 (Below Veils Looking Up — Milestone 28–30+ FPS Check):**
+  - Navigate to `eye = (12.5, 0, 106.5)`, aiming up toward `(12.5, 72, 106.5)` (`up = (0, 0, 1)`).
+  - Confirm the auroral ribbons render smoothly with high framerate (native Metal benchmarks measured **41.8 FPS / 23.9 ms**, decisively crossing the 28–30 FPS target).
+  - Verify there is zero flicker, tearing, or missing auroral curtain segments.
+- [ ] **Checkpoint View 2 & Live Views (~20–22 FPS):**
+  - View from spawn dais diagonally across the veil (`eye = (0, 1.3, 0)`, `aim = (0, 72, 106.5)`) and Zach's parked viewpoint (`eye = (-14.1, 5.85, 0.83)`).
+  - Confirm stable, smooth gameplay navigation above 20 FPS with no sudden frame drops.
+- [ ] **Checkpoint View 1 (Inside Dense Veil Stress Test):**
+  - Fly directly inside the curtains (`eye = (12.5, 67, 39)`, `aim = (12.5, 67, 184)`).
+  - Verify that even when completely enveloped by overlapping auroral sheets, rendering remains stable, graceful, and artifact-free without hitching or WebGPU device loss.
