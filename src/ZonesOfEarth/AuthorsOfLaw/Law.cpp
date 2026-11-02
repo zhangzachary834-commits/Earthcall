@@ -3632,6 +3632,10 @@ void LawManager::compileConditionsToRete(Law& law) {
 }
 
 void LawManager::loadFromJson(const nlohmann::json& j) {
+    // maxChainRounds is read after destructive replace-all. Reject malformed
+    // input while the previous Law register and First Mover histories are intact.
+    if (j.contains("maxChainRounds") && !j["maxChainRounds"].is_number_integer())
+        throw std::invalid_argument("Invalid Law maxChainRounds");
     // Reject conflicting persisted histories BEFORE replace-all mutates the
     // live register. Two different Laws (including engine-owned First Movers)
     // must never append to the same lineage-scoped JSONL file.
@@ -3650,6 +3654,23 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
         for (const auto& savedLaw : j["laws"]) {
             if (!savedLaw.is_object())
                 throw std::invalid_argument("Invalid authored Law entry");
+            // Law::fromJson consumes these primitive fields only after the old
+            // register is destroyed. Fail closed on malformed types up front.
+            for (const char* field : {"name", "conditionMode"}) {
+                auto value = savedLaw.find(field);
+                if (value != savedLaw.end() && !value->is_string())
+                    throw std::invalid_argument("Invalid authored Law string field");
+            }
+            for (const char* field : {"enabled", "drives"}) {
+                auto value = savedLaw.find(field);
+                if (value != savedLaw.end() && !value->is_boolean())
+                    throw std::invalid_argument("Invalid authored Law boolean field");
+            }
+            for (const char* field : {"authority", "activation", "scope", "retrigger"}) {
+                auto value = savedLaw.find(field);
+                if (value != savedLaw.end() && !value->is_number_integer())
+                    throw std::invalid_argument("Invalid authored Law integer field");
+            }
             auto idIt = savedLaw.find("id");
             if (idIt != savedLaw.end()) {
                 if (!idIt->is_string() || idIt->get<std::string>().empty())
