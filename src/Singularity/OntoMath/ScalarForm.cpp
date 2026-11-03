@@ -1320,7 +1320,13 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
                       std::to_string(static_cast<int>(i)) + " is missing"});
         }
     }
-    const auto sub = [&](std::size_t i) {
+    // The pre-loop below types every child, and the operation's case asks again. sub
+    // hands back the pre-loop's answer: same env, same path, so the same result, and one
+    // visit per child. Retyping here cost 2^height, run at every node by fromJson (a deep
+    // Zone stalled load for about a minute; ontomath_typeof_depth_test).
+    std::vector<TypeResult> preTyped;
+    const auto sub = [&](std::size_t i) -> TypeResult {
+        if (i < preTyped.size()) return preTyped[i];
         return children[i]->typeOf(env, path + "." + mathOpName(op) + "[" +
                                             std::to_string(static_cast<int>(i)) + "]",
                                    allowUnbound);
@@ -1332,6 +1338,7 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
     // still refuse them. A Matrix ValueLeaf carries its dimensions forward.
     // Integral types its own children: its body in the scope that binds v.
     if (op != Op::ValueLeaf && op != Op::Integral && op != Op::Let && !isMatrixOperation(op)) {
+        preTyped.reserve(children.size());
         for (std::size_t i = 0; i < children.size(); ++i) {
             auto childType = sub(i);
             if (!childType) return childType;
@@ -1341,6 +1348,7 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
                           std::to_string(static_cast<int>(i)) +
                           " is Matrix; core matrix operations land in OntoMath Rung 2"});
             }
+            preTyped.push_back(std::move(childType));
         }
     }
 

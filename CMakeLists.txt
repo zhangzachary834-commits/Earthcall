@@ -380,6 +380,7 @@ if(NOT EMSCRIPTEN)
         elseif (${TEST_NAME} STREQUAL "sdf_wgsl_parameter_refresh_test" OR
                  ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
                  ${TEST_NAME} STREQUAL "veiled_hour_test" OR
+                 ${TEST_NAME} STREQUAL "merry_dancers_test" OR
             ${TEST_NAME} STREQUAL "sky_island_sanctuary_test" OR
                  ${TEST_NAME} STREQUAL "mcp_authoring_surfaces_test" OR
                  ${TEST_NAME} STREQUAL "volume_shared_subexpression_test" OR
@@ -503,6 +504,7 @@ if(NOT EMSCRIPTEN)
             ${TEST_NAME} STREQUAL "prism_cathedral_test" OR
             ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
             ${TEST_NAME} STREQUAL "veiled_hour_test" OR
+            ${TEST_NAME} STREQUAL "merry_dancers_test" OR
             ${TEST_NAME} STREQUAL "sky_island_sanctuary_test" OR
             ${TEST_NAME} STREQUAL "zone_material_corpus_test" OR
             ${TEST_NAME} STREQUAL "gift_shop_guardrail_test" OR

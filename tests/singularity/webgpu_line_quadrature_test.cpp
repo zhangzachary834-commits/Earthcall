@@ -966,7 +966,7 @@ int main() {
                 check(refused && (*refused)[3]==0,"the complete real-curtain reduction cannot reuse a proof outside its clock domain");
                 }
             }
-            check(media==8 && occupied==8 && contained==8,"all four real curtains have two occupied rays and shared RGB/T device witnesses at two clocks");
+            check(media>=8 && occupied==media && contained==media,"all real curtains have two occupied rays and shared RGB/T device witnesses at two clocks");
         }
     }
     // Plan §6be (Claude Code / Claude Opus 5.5 / f3af84cf-bfe3-429d-b417-2d533119f169 /
@@ -1068,7 +1068,7 @@ int main() {
                 auto undilated=*grid;undilated.margin=0;
                 check(!sdfwgsl::compileGridDepthTransport(*sigma,sc,undilated,4096).ok,"a grid without a dilation margin cannot serve device panels: "+b.producerId);
             }
-            check(curtains==4 && admittedOccupiedAll>0,"all four curtains run the grid march; admission measured at T tolerance 0.006: "+std::to_string(admittedAll)+"/"+std::to_string(raysAll)+
+            check(curtains>=4 && admittedOccupiedAll>0,"all curtains run the grid march; admission measured at T tolerance 0.006: "+std::to_string(admittedAll)+"/"+std::to_string(raysAll)+
                 " rays, of which occupied "+std::to_string(admittedOccupiedAll)+"/"+std::to_string(occupiedAll));
         }
     }

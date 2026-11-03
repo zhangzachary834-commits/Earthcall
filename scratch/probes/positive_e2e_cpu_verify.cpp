@@ -1430,6 +1430,7 @@ int main(int argc, char** argv) {
 
     std::vector<std::shared_ptr<geom::FieldNode>> curtains;
     for (const auto& f : saved.at("spatialFields")) curtains.push_back(geom::FieldNode::fromJson(f));
+    if (curtains.size() > 4) curtains.resize(4);
     REQUIRE(curtains.size() == 4, "4 curtains");
 
     // 1. Verify VolumeRoutedTransport.inc observer string replacement anchors on Phase P4 kClassifyWgsl

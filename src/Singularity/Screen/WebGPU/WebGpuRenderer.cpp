@@ -3176,43 +3176,47 @@ void WebGpuRenderer::flushVolumeComposite() {
     // The bool is a structural cache lane (VolumeProgramKey in the header):
     // crossing a boundary compiles each lane at most once per structure, then
     // reuses it. A camera change never changes the equations/parameter layout.
-    bool trimProofSupport = volumeZeroProofEnabled();
-    for (const auto* medium : activeMedia) {
-        const glm::vec3 halfExtent = glm::abs(medium->scale);
-        if (glm::all(glm::lessThanEqual(glm::abs(_eyePos - medium->origin), halfExtent))) {
-            trimProofSupport = false;
-            break;
-        }
-    }
+    auto enqueueVolumeCohort = [&](const std::vector<const Rendering::VolumeDensityBinding*>& cohortMedia,
+                                   bool allowRouted) {
+        if (cohortMedia.size() <= 1) return;
 
-    std::array<KernelRoutedSpec,4> frameSpecs{};
-    bool wantRouted = volumeRoutedTransportEnabled() && !_certificateProbeMedium && activeMedia.size()==4 &&
-        incidentSource && OntoMath::literalZero(incidentSource->radianceExpr);
-    // No source uses Current's unit compatibility illumination, not zero light.
-    const auto vector4=[](const std::array<float,4>& v){return glm::vec4(v[0],v[1],v[2],v[3]);};
-    for(size_t i=0;wantRouted && i<4;++i){
-        const auto& m=*activeMedia[i];const auto recipe=OntoMath::clampedWaveSupport(m.densityExpr);
-        if(!recipe||!OntoMath::clampedWaveGroupingSlackFits(*recipe,std::abs(m.scale.z))||!glm::all(glm::lessThanEqual(glm::abs(m.origin),glm::vec3(1024)))||!glm::all(glm::lessThanEqual(glm::abs(m.scale),glm::vec3(1024)))){wantRouted=false;break;}
-        frameSpecs[i]={glm::vec4(m.origin,0),glm::vec4(glm::abs(m.scale),0),vector4(recipe->limits),vector4(recipe->curvature),vector4(recipe->amplitudes),vector4(recipe->frequencies),vector4(recipe->phases)};
-    }
-    if(wantRouted){if(!_kernelRouted)_kernelRouted=std::make_unique<KernelRoutedTransport>();wantRouted=_kernelRouted->ensure(_device,_queue,_depthW,_depthH);}
-    if (activeMedia.size() > 1) {
+        bool cohortTrimProofSupport = volumeZeroProofEnabled();
+        for (const auto* medium : cohortMedia) {
+            const glm::vec3 halfExtent = glm::abs(medium->scale);
+            if (glm::all(glm::lessThanEqual(glm::abs(_eyePos - medium->origin), halfExtent))) {
+                cohortTrimProofSupport = false;
+                break;
+            }
+        }
+
+        std::array<KernelRoutedSpec,4> frameSpecs{};
+        bool wantRouted = allowRouted && volumeRoutedTransportEnabled() && !_certificateProbeMedium &&
+            cohortMedia.size()==4 && incidentSource && OntoMath::literalZero(incidentSource->radianceExpr);
+        // No source uses Current's unit compatibility illumination, not zero light.
+        const auto vector4=[](const std::array<float,4>& v){return glm::vec4(v[0],v[1],v[2],v[3]);};
+        for(size_t i=0;wantRouted && i<4;++i){
+            const auto& m=*cohortMedia[i];const auto recipe=OntoMath::clampedWaveSupport(m.densityExpr);
+            if(!recipe||!OntoMath::clampedWaveGroupingSlackFits(*recipe,std::abs(m.scale.z))||!glm::all(glm::lessThanEqual(glm::abs(m.origin),glm::vec3(1024)))||!glm::all(glm::lessThanEqual(glm::abs(m.scale),glm::vec3(1024)))){wantRouted=false;break;}
+            frameSpecs[i]={glm::vec4(m.origin,0),glm::vec4(glm::abs(m.scale),0),vector4(recipe->limits),vector4(recipe->curvature),vector4(recipe->amplitudes),vector4(recipe->frequencies),vector4(recipe->phases)};
+        }
+        if(wantRouted){if(!_kernelRouted)_kernelRouted=std::make_unique<KernelRoutedTransport>();wantRouted=_kernelRouted->ensure(_device,_queue,_depthW,_depthH);}
+
         VolumeSetProgramKey setKey;
-        setKey.reserve(activeMedia.size());
+        setKey.reserve(cohortMedia.size());
         std::vector<sdfwgsl::VolumeProgramInput> compilerInputs;
-        compilerInputs.reserve(activeMedia.size());
+        compilerInputs.reserve(cohortMedia.size());
         // Per-member certificate lane, decided before the key: a member whose
         // certificates are not attached carries no certificate code.
         std::vector<bool> certificateMembers;
         std::vector<std::vector<uint32_t>> certificateSwitches;   // the killers each member compiles
-        for (const auto* medium : activeMedia) {
+        for (const auto* medium : cohortMedia) {
             const bool active = volumeSupportCertificatesActive(*medium, glm::abs(medium->scale));
             certificateMembers.push_back(active);
             certificateSwitches.push_back(active ? _volumeSupportCertificates[medium->densityExpr].switches
                                                  : std::vector<uint32_t>{});
         }
-        for (std::size_t m = 0; m < activeMedia.size(); ++m) {
-            const auto* medium = activeMedia[m];
+        for (std::size_t m = 0; m < cohortMedia.size(); ++m) {
+            const auto* medium = cohortMedia[m];
             setKey.emplace_back(
                 medium->densityExpr, medium->extinctionExpr,
                 medium->scatteringExpr, medium->volumeChromaExpr,
@@ -3220,7 +3224,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                 medium->occluderSdf,
                 incidentSource ? incidentSource->radianceExpr : nullptr,
                 incidentSource ? incidentSource->chromaExpr : nullptr,
-                incidentSource ? incidentSource->angularExpr : nullptr, trimProofSupport,
+                incidentSource ? incidentSource->angularExpr : nullptr, cohortTrimProofSupport,
                 bool(certificateMembers[m]));
             compilerInputs.push_back({
                 medium->densityExpr, medium->extinctionExpr,
@@ -3236,9 +3240,11 @@ void WebGpuRenderer::flushVolumeComposite() {
         uint64_t setContentRevision = volumeDensitySourcesRevision();
         combineRevision(setContentRevision, wantRouted ? 0x524f5554ULL : 0x4c454741ULL);
         combineRevision(setContentRevision, incidentSourceContentRevision);
-        for (std::size_t m = 0; m < activeMedia.size(); ++m)
-            if (certificateMembers[m]) combineCertificateSet(setContentRevision, *activeMedia[m]);
-        if (unrevisionedSource || std::any_of(activeMedia.begin(), activeMedia.end(),
+        for (std::size_t m = 0; m < cohortMedia.size(); ++m) {
+            combineRevision(setContentRevision, reinterpret_cast< uintptr_t >(cohortMedia[m]->densityExpr));
+            if (certificateMembers[m]) combineCertificateSet(setContentRevision, *cohortMedia[m]);
+        }
+        if (unrevisionedSource || std::any_of(cohortMedia.begin(), cohortMedia.end(),
             [&](const auto* m) { return unrevisionedMedium(*m); }))
             combineRevision(setContentRevision, _volumeZeroProofFrame);
         if (setMemo.contentRevision != setContentRevision) {
@@ -3248,13 +3254,13 @@ void WebGpuRenderer::flushVolumeComposite() {
             bool layoutsOk = incidentSourceLayoutsOk;
             std::string layoutError = incidentSourceLayoutError;
             std::string structure =
-                "medium-count:" + std::to_string(activeMedia.size()) + (wantRouted ? "\nrouted\n" : "\nlegacy\n") +
+                "medium-count:" + std::to_string(cohortMedia.size()) + (wantRouted ? "\nrouted\n" : "\nlegacy\n") +
                 incidentSourceStructure + "\n";
 
             std::vector<sdfwgsl::KernelVolumeEvaluator> retainedEvaluators;
-            retainedEvaluators.reserve(activeMedia.size());
-            for (std::size_t i = 0; layoutsOk && i < activeMedia.size(); ++i) {
-                const auto& medium = *activeMedia[i];
+            retainedEvaluators.reserve(cohortMedia.size());
+            for (std::size_t i = 0; layoutsOk && i < cohortMedia.size(); ++i) {
+                const auto& medium = *cohortMedia[i];
                 auto memberKey = setKey[i];
                 std::get<10>(memberKey) = false; // equations have no camera lane
                 std::get<11>(memberKey) = false; // nor a certificate lane (compose-time only)
@@ -3355,7 +3361,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                     !setMemo.ok || setMemo.structure != structure ||
                     !setMemo.pipeline;
                 if (needsCompile) {
-                    setMemo.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, trimProofSupport,
+                    setMemo.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, cohortTrimProofSupport,
                                                              certificateMembers, certificateSwitches);
                     ++mutableFrameStats().volumeProgramCompiles;
                     mutableFrameStats().volumeWgslBytesGenerated +=
@@ -3374,8 +3380,8 @@ void WebGpuRenderer::flushVolumeComposite() {
                 if (setMemo.ok && setMemo.pipeline) {
                     std::vector<float> setParams;
                     std::vector<uint32_t> paramOffsets;
-                    paramOffsets.reserve(activeMedia.size());
-                    for (std::size_t i = 0; i < activeMedia.size(); ++i) {
+                    paramOffsets.reserve(cohortMedia.size());
+                    for (std::size_t i = 0; i < cohortMedia.size(); ++i) {
                         paramOffsets.push_back(
                             static_cast<uint32_t>(setParams.size()));
                         const auto& params = retainedEvaluators[i].program;
@@ -3394,10 +3400,10 @@ void WebGpuRenderer::flushVolumeComposite() {
                         setMemo.prog.params = std::move(setParams);
                         setMemo.paramOffsets = std::move(paramOffsets);
                         auto otherKey = setKey;
-                        for (auto& key : otherKey) std::get<10>(key) = !trimProofSupport;
+                        for (auto& key : otherKey) std::get<10>(key) = !cohortTrimProofSupport;
                         auto& other = _volumeSetProgramCache[otherKey];
                         if (!other.ok || other.structure != structure || !other.pipeline) {
-                            other.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, !trimProofSupport,
+                            other.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, !cohortTrimProofSupport,
                                                                    certificateMembers, certificateSwitches);
                             ++mutableFrameStats().volumeProgramCompiles;
                             mutableFrameStats().volumeWgslBytesGenerated += other.prog.wgsl.size();
@@ -3418,7 +3424,7 @@ void WebGpuRenderer::flushVolumeComposite() {
             // Preserve telemetry's historical meaning as useful per-medium
             // reuse even though V5 reuses one fused program for the set.
             mutableFrameStats().volumeProgramCacheHits +=
-                static_cast<uint32_t>(activeMedia.size());
+                static_cast<uint32_t>(cohortMedia.size());
         }
 
         // Missing runtime incident-source truth must not poison the compiled
@@ -3450,10 +3456,10 @@ void WebGpuRenderer::flushVolumeComposite() {
             glm::vec3 setMin(std::numeric_limits<float>::max());
             glm::vec3 setMax(std::numeric_limits<float>::lowest());
             std::vector<VolumeInstanceData> mediumInstances;
-            mediumInstances.reserve(activeMedia.size());
+            mediumInstances.reserve(cohortMedia.size());
 
-            for (std::size_t i = 0; i < activeMedia.size(); ++i) {
-                const auto& medium = *activeMedia[i];
+            for (std::size_t i = 0; i < cohortMedia.size(); ++i) {
+                const auto& medium = *cohortMedia[i];
                 const glm::vec3 halfExtent = glm::abs(medium.scale);
                 setMin = glm::min(setMin, medium.origin - halfExtent);
                 setMax = glm::max(setMax, medium.origin + halfExtent);
@@ -3478,23 +3484,23 @@ void WebGpuRenderer::flushVolumeComposite() {
             header.paramOffset = 0u;
 
             auto& payload = _kernelVolumePayloads[setMemo.pipeline];
-            auto identity = payloadIdentity(activeMedia, setMemo.contentRevision, trimProofSupport);
+            auto identity = payloadIdentity(cohortMedia, setMemo.contentRevision, cohortTrimProofSupport);
             const auto* authoredMemo = &setMemo;
             identity.append(reinterpret_cast<const char*>(&authoredMemo), sizeof(authoredMemo));
             const bool rebuildPayload = payload.layoutIdentity != identity;
             if (rebuildPayload) {
                 params = setMemo.prog.params;
-                payload.proofMetadata.resize(activeMedia.size());
+                payload.proofMetadata.resize(cohortMedia.size());
             }
-            for (std::size_t i = 0; i < activeMedia.size(); ++i) {
+            for (std::size_t i = 0; i < cohortMedia.size(); ++i) {
                 if (!rebuildPayload) {
                     mediumInstances[i].zeroProofOffset = payload.proofMetadata[i].zeroProofOffset;
                     mediumInstances[i].supportCertOffset = payload.proofMetadata[i].supportCertOffset;
                     mediumInstances[i].supportClosedOffset = payload.proofMetadata[i].supportClosedOffset;
                 }
-                attachVolumeZeroProof(*activeMedia[i], glm::abs(activeMedia[i]->scale),
-                                      params, mediumInstances[i], trimProofSupport, rebuildPayload);
-                attachVolumeSupportCertificates(*activeMedia[i], glm::abs(activeMedia[i]->scale),
+                attachVolumeZeroProof(*cohortMedia[i], glm::abs(cohortMedia[i]->scale),
+                                      params, mediumInstances[i], cohortTrimProofSupport, rebuildPayload);
+                attachVolumeSupportCertificates(*cohortMedia[i], glm::abs(cohortMedia[i]->scale),
                                                 params, mediumInstances[i], rebuildPayload);
                 payload.proofMetadata[i] = mediumInstances[i];
             }
@@ -3504,6 +3510,33 @@ void WebGpuRenderer::flushVolumeComposite() {
             instances.insert(
                 instances.end(), mediumInstances.begin(), mediumInstances.end());
             _volumeDrawInstanceCounts[setMemo.pipeline] = 1u;
+        }
+    };
+
+    bool trimProofSupport = volumeZeroProofEnabled();
+    for (const auto* medium : activeMedia) {
+        const glm::vec3 halfExtent = glm::abs(medium->scale);
+        if (glm::all(glm::lessThanEqual(glm::abs(_eyePos - medium->origin), halfExtent))) {
+            trimProofSupport = false;
+            break;
+        }
+    }
+
+    if (activeMedia.size() > 1) {
+        if (!_certificateProbeMedium && incidentSource &&
+            OntoMath::literalZero(incidentSource->radianceExpr) &&
+            activeMedia.size() >= 6) {
+            // Partition into far-side background cohort (drawn first over the opaque
+            // scene on the grid-proof fused lane) and near-side 4-curtain cohort
+            // (drawn second over the background on the hardware routed transport lane).
+            std::vector<const Rendering::VolumeDensityBinding*> nearCohort(
+                activeMedia.begin(), activeMedia.begin() + 4);
+            std::vector<const Rendering::VolumeDensityBinding*> farCohort(
+                activeMedia.begin() + 4, activeMedia.end());
+            enqueueVolumeCohort(farCohort, false);
+            enqueueVolumeCohort(nearCohort, true);
+        } else {
+            enqueueVolumeCohort(activeMedia, true);
         }
     }
 

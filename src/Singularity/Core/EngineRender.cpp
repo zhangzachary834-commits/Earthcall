@@ -3,6 +3,7 @@
 #include "../Screen/Renderer.hpp"
 #include "../Screen/ShadingSystem.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
+#include "Singularity/Screen/AuthoredView.hpp"
 #include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "Singularity/Screen/VolumeDensity.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
@@ -54,7 +55,8 @@ namespace Core {
          */
         float fov = 45.0f;
         float nearZ = 0.1f;
-        float farZ  = 100.0f;
+        // 100 is the historical reach; a Zone may author its own (AuthoredView.hpp).
+        float farZ  = Rendering::authoredFarPlane(zone.spatialRoot(), 100.0f, nearZ);
         float top   = tanf(fov * M_PI / 360.0f) * nearZ;
         float bottom = -top;
         float right  = top * aspect;
