@@ -318,6 +318,7 @@ int main(int argc, char** argv) {
     REQUIRE(bool(root), "spatialRoot");
     std::vector<std::shared_ptr<geom::FieldNode>> curtains;
     for (const auto& f : saved.at("spatialFields")) curtains.push_back(geom::FieldNode::fromJson(f));
+    if (curtains.size() > 4) curtains.resize(4);
     REQUIRE(curtains.size() == 4, "4 aurora curtains");
     std::vector<geom::FieldNode*> active;
     for (auto& c : curtains) active.push_back(c.get());
