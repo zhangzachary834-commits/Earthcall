@@ -1,18 +1,17 @@
-# Interaction-as-Law and Direct Screen Forms
+# Interaction as Law and Direct Screen Forms
 
-**How pointer events directly actuate math-based framebuffer expressions.**
+**Status:** Conceptual interrelation; not an implemented pointer-to-screen-field hit-test contract.
 
-**Status:** Conceptual interrelation.
+## Sources
 
-## Interrelated Documents
+- [Interaction as Law](../law/INTERACTION_AS_LAW.md)
+- [OntoMath Raster Formation and Property-Singular-Graphs](../Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md)
+- [Direct Screen Forms](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md)
 
-* `../law/INTERACTION_AS_LAW.md`
-* `../Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md`
+## Boundary and possible integration
 
-## Thoughts on Integration and Interrelation
+The existing interaction channel senses pointer, wheel, and key input; authored Laws can respond to addressed events and properties. A control may be an Object with an authored Law; this does **not** imply that every visible screen pixel is an Object or a pointer target.
 
-In Earthcall, the "Interaction-as-Law" architecture fundamentally rejects the use of traditional UI widgets or object-based input wrappers. Instead, user intent—such as pointer events and control patterns—interacts directly with authored Laws that govern the world.
+Direct Screen Forms evaluate authored mathematical color fields for screen samples. A rendered color is an observation, **not** automatically an addressable interaction target. The raster specification explicitly distinguishes bearer identity, source fields, sensed final pixels, and bitmap ingestion; none automatically converts into the others.
 
-This approach interrelates deeply with the concept of "Direct Screen Forms." Rather than relying on underlying physical objects or polygon meshes to construct user interfaces, Direct Screen Forms evaluate OntoMath expressions directly at framebuffer sample centers (via `ScreenChannel.cpp`).
-
-By bridging Interaction-as-Law and Direct Screen Forms, Earthcall allows raw pointer rays to cast into pure mathematical fields, resolving interactions against mathematically rasterized UIs without any intermediate black-box UI framework. The interface is simply another domain where laws meet mathematics.
+A future bridge would need an explicit authored mapping from screen coordinates and sampling context to a target bearer or region, deterministic hit/selection semantics for overlapping fields, event provenance, and an authorization path for resulting Law actions. Input sensing remains distinct from Law decisions and their effects. Neither raw pointer-ray casting into arbitrary fields nor automatic event-to-Law conversion is asserted to exist today.
