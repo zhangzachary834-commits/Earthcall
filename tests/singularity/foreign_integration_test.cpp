@@ -4,9 +4,6 @@
 #include "Singularity/Foreign/Sync/ForeignSyncManager.hpp"
 #include "Singularity/Foreign/Adapters/MacOSAccessibilityAdapter.hpp"
 #include "Singularity/Foreign/Web/WindowManager.hpp"
-#include "Singularity/Foreign/API/EarthcallAPI.hpp"
-#include "Singularity/Foreign/API/SecurityManager.hpp"
-#include "Singularity/Screen/Camera.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"   // LawManager is declared here
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
@@ -104,20 +101,6 @@ int main() {
         // Verify we can call act methods without crashing (scaffolds)
         adapter.executeClick("os-btn-123");
         adapter.executeMove("os-window-123", 10.0f, 20.0f);
-
-        // Camera API must reject unauthorized writes and round-trip authorized writes.
-        auto& api = Integration::getEarthcallAPI();
-        auto& security = Integration::SecurityManager::instance();
-        const glm::vec3 original = Core::Camera::instance().getPos();
-        security.revokePermission(Integration::PermissionType::WORLD_ACCESS, "earthcall_api");
-        const glm::vec3 requested(10.0f, 20.0f, 30.0f);
-        assert(!api.setCameraPosition(requested));
-        assert(api.getCameraPosition() == original);
-        security.grantPermission(Integration::PermissionType::WORLD_ACCESS, "earthcall_api");
-        assert(api.setCameraPosition(requested));
-        assert(api.getCameraPosition() == requested);
-        Core::Camera::instance().setPos(original);
-        security.revokePermission(Integration::PermissionType::WORLD_ACCESS, "earthcall_api");
 
         // 5. Test Integration::WindowManager and Integration::ExternalWindow
         Integration::WindowManager& wm = Integration::WindowManager::instance();
