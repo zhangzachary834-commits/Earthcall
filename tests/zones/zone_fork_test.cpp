@@ -16,6 +16,7 @@
 #include "json.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -59,8 +60,9 @@ int main() {
     std::cout << "Running dedicated ZoneManager::forkZone tests...\n";
     std::cout << "============================================================\n";
 
-    auto sandbox = std::filesystem::temp_directory_path() / "earthcall_zone_fork_test";
-    std::filesystem::remove_all(sandbox);
+    auto sandbox = std::filesystem::temp_directory_path() /
+        ("earthcall_zone_fork_test_" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
     std::filesystem::create_directories(sandbox / "worlds");
     SaveSystem::setSaveRoot(sandbox.string());
 
