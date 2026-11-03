@@ -86,6 +86,10 @@
    "light.specular": {
     "t": "float",
     "v": 0.0
+   },
+   "view.farPlane": {
+    "t": "float",
+    "v": 2000.0
    }
   }
  },

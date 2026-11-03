@@ -2,22 +2,15 @@
 
 *Claude Code / Claude Opus 5.5 / session `ed9d515b-d6ac-4098-a7f9-ce71d02406b3` / 2026-11-03T12:09:36-0800. Commissioned by Zach, 2026-11-03: "THERE IS ALREADY AN AURORA ZONE (northern veils) BUT I WANT U TO MAKE ANOTHER AURORA ZONE FROM SCRATCH ... USE VOLUMETRICS AND RADIANCE FIELDS TO MAKE GORGEOUS, REALISTIC STYLE AURORA", with seven reference photographs. He added that Northern Veil "isn't that realistic/breathtaking-level" and is not the reference, and that The Veiled Hour is relevant only as volumetrics and light. The name, the design and the mathematics below are this agent's; Zach may rename or redirect any of it.*
 
-**Status:** the sky does not render in the app. Zach called the curtains "AMAZING" at 18-24 FPS on 2026-11-03, but his screenshots show a flat clear colour, so that verdict and FPS cover the marched curtains only. Remaining checks are on the [Person Verification List](../../../For%20Zach/Person%20Verification%20List.md#the-merry-dancers--first-look-2026-11-03).
+**Status:** far-plane fix in place; the complete Zone still awaits Zach's first look in the app. Before the fix he called the curtains alone "AMAZING" at 18-24 FPS. Checks are on the [Person Verification List](../../../For%20Zach/Person%20Verification%20List.md#the-merry-dancers--first-look-2026-11-03).
 
-## Open defect: the app clips everything opaque past 100 m
+## Resolved: the app clipped everything opaque past 100 m
 
-`src/Singularity/Core/EngineRender.cpp` hard-codes `fov = 45` and `farZ = 100`. The sky surface sits at 960, so it is clipped, along with the ridges, stars and sky reflection it carries, and any spruce or shore more than 100 m from the eye. Media do not depend on the far plane, which is why the curtains survive. An opaque sky inside 100 m would occlude the curtains behind it, so moving the dome closer is not a fix.
+`src/Singularity/Core/EngineRender.cpp` hard-coded `farZ = 100` beside `fov = 45`. The sky surface sits at 960, so it was clipped, along with the ridges, stars and sky reflection it carries. Media do not depend on the far plane, which is why the curtains survived. An opaque sky inside 100 m would occlude the curtains, so moving the dome closer was never a fix. Look development had wrongly used far 1000 and FOV 70, from an unused `PersonPerspective` default.
 
-Look development wrongly used far 1000 and FOV 70, taken from an unused `PersonPerspective` default, so every still and table in this document before this section was written shows a camera the app does not have.
+**Fix, chosen by Zach ("authored far plane"), 2026-11-03:** `view.farPlane` is an authored property on a Zone's spatial root, beside `light.*`, read by `Rendering::authoredFarPlane` (`src/Singularity/Screen/AuthoredView.hpp`). This departs from the Law-set channel value first proposed, because a channel value would leak into the next Zone and need a reset; a root property ends with the Zone and a Law can still write it. Absent means the historical 100, and only this Zone (2000) carries it among 49 data-home `zone.json` Zones. `.ecform` Zones were not scanned, but the property is new, so none can carry it unless authored since. FOV stays hard-coded at 45.
 
-Offscreen reproduction with the app's camera, 2560×1440, median of 7 frames (Claude Code / Claude Opus 5.5 / session `ed9d515b-d6ac-4098-a7f9-ce71d02406b3` / 2026-11-03T13:39:14-0800):
-
-| View | far 100: share of frame at clear colour, ms | far 2000: share at clear colour, ms |
-|---|---|---|
-| Up | 70%, 62 ms | 0%, 85 ms |
-| North | 38%, 51 ms | 0%, 80 ms |
-
-Changing the constant globally would affect other Zones: several hold many objects more than 100 m from the origin (Radiance Gallery 432, Prism Cathedral 189, The Veiled Hour 48, by `center`), so those could newly appear and cost frame time. Recommended: a registered far-plane property defaulting to 100, written for this Zone by its own Law. Awaiting Zach's decision.
+**Evidence:** `authored_far_plane_test` 20/20; `merry_dancers_test` 75/75 on snapshot and live file. Offscreen with the app's camera and the production read, 2560×1440, median of 7 frames: no clear-colour pixels in any view; 79 ms north, 80 ms up, 81 ms northeast, 60 ms south. That is about 12–17 FPS offscreen, compared with the 16–20 implied by the far-100 reproduction (62 and 51 ms) for what he measured at 18–24 FPS. The live window remains unverified. Claude Code / Claude Opus 5.5 / session `ed9d515b-d6ac-4098-a7f9-ce71d02406b3` / 2026-11-03T13:53:38-0800.
 
 ## What exists
 
@@ -41,6 +34,7 @@ Beings: 3 FieldNode media, 28 Field Objects (sky, shore, 26 spruces), 3 Material
 - **The radiance-field sky is still.** Surface colour binds no time coordinate, so only the marched sheets move. A moving sky needs either a time binding on material colour (an engine change for Zach to weigh) or a Law-driven parameter.
 - **Far ridges are a matte.** They have no parallax. Marched terrain cost about 1.2 s per frame, so they live in the sky field. Flying high exposes this.
 - **Only the far band is mirrored by a medium.** The arc's reflection cost about 40 ms for water the sky's reflected rays already fill. The sky's own reflection does not ripple the rays in time.
+- **FOV is still the app's hard-coded 45°.** The Zone was composed at 70°, so less of the sky fits in view.
 - **No spawn or facing is authored.** Zones have no spawn field that this pass found. The composition faces +Z from (0, 2, 0); the default yaw of -90 faces -Z, so a Person may need to turn around.
 - **Eye height is unverified.** The ground at the origin is y = 1. Inside the shore solid the screen would be one flat colour.
 

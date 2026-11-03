@@ -26,6 +26,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include "Singularity/Screen/AuthoredView.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
@@ -134,6 +135,18 @@ int main(int argc, char** argv) {
     }
     check(materialsResolve, "every Object's material resolves");
     check(colourAuthored, "every surface carries an authored colour field");
+
+    // The sky is only visible if the Zone's sight reaches it: the app's historical far
+    // plane clipped it, invisibly to every other check in this file.
+    {
+        const float reach = Rendering::authoredFarPlane(zone->spatialRoot(), 100.0f, 0.1f);
+        std::cout << "       authored far plane = " << reach << std::endl;
+        float farthestSky = 0.f;
+        for (const auto& o : objects)
+            if (o && o->getIdentifier() == "merry.sky") farthestSky = o->getFieldExtent().x;
+        check(farthestSky > 0.f, "the sky surface is present");
+        check(reach > farthestSky * 1.5f, "the Zone's far plane reaches the sky, and past it from anywhere nearby");
+    }
 
     // --- 2. Everything compiles ---------------------------------------------------
     for (const auto& o : objects) {
@@ -328,6 +341,7 @@ int main(int argc, char** argv) {
         }
         check(provenance, "every medium and Object keeps its authors and injected_by through Save Zone");
         check(saved.value("owner", "") == "Zach", "ownership survives Save Zone");
+        check(saved["spatialRoot"]["authoredProperties"].contains("view.farPlane"), "the authored far plane survives Save Zone");
     }
 
     SaveSystem::setSaveRoot("");

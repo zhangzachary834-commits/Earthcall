@@ -650,6 +650,9 @@ def build_zone():
                 "light.ambient": pv("float", 0.2),
                 "light.diffuse": pv("float", 0.8),
                 "light.specular": pv("float", 0.0),
+                # The app's historical sight ends at 100 m. The sky is at DOME_R, and this
+                # keeps it in reach while a Person flies around inside it.
+                "view.farPlane": pv("float", 2000.0),
             },
         },
         "spatialFields": build_fields(),

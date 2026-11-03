@@ -153,7 +153,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 
 <a id="joys-ourverse-zones"></a>
 ### Joys · Ourverse · Zones
-- **The Merry Dancers aurora Zone** — Its sky is clipped by the app's hard-coded `farZ = 100`, so only the curtains have been seen, and a far-plane decision is open; [task](Specific%20Tasks/Zones%20and%20Ourverse/The_Merry_Dancers/The_Merry_Dancers.md).
+- **The Merry Dancers aurora Zone** — Its sky now has an authored `view.farPlane` past the app's historical 100 m, awaiting Zach's first look at the complete Zone; [task](Specific%20Tasks/Zones%20and%20Ourverse/The_Merry_Dancers/The_Merry_Dancers.md).
 - ⚑ ZACH'S IDEA — **Personal Ourverse Navigator: little 2D/3D islands for each world, the first thing Earthcall.app shows**; plan in its own session, attaching through the app's first-run Foundation. → [full task](Specific%20Tasks/Zones%20and%20Ourverse/Personal_Ourverse_Navigator/Personal_Ourverse_Navigator.md)
 - **The Hierarchy of Joys has no consumer** — `rankOf`/`orderMembersBy` are called only by tests, `telos` is non-empty on 2 beings across all saves and in 0 law conditions; give it one true consumer (agenda order when two laws are eligible on the same subject). → [audit §5, §9](../../audits/2026-09-24_mythos_ungoverned_governor_audit.md) — Claude Fable 5.1 (Mythos), 2026-09-24.
 - **Zones as mathematical bounds** — Rung 1 done 2026-09-23 (Dimensional Zones, `within`/`placement`/`extent`, derived location, `@world.zoneId`); Rungs 2–6 (running ≠ present, one continuum on screen, location edges, non-spatial axes, placing existing saves) planned. → [full task](Specific%20Tasks/Architecture%20and%20Ontology/Zones_As_Mathematical_Bounds/Zones_As_Mathematical_Bounds.md)

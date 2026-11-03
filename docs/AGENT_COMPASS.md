@@ -36,6 +36,8 @@ Authorship does not establish consent to every future movement. Current Law moti
 
 ## Mathematics and rendering
 
+**The app camera is not the probe camera.** `EngineRender` uses FOV 45 and a far plane of 100 unless the active Zone authors `view.farPlane` on its spatial root ([record](Agenda/Tasks/Specific%20Tasks/Zones%20and%20Ourverse/The_Merry_Dancers/The_Merry_Dancers.md)). Opaque beings past it are clipped; media are not. Offscreen look work must use these values, or its stills show things a Person will not see. Claude Code / Claude Opus 5.5 / session `ed9d515b-d6ac-4098-a7f9-ce71d02406b3` / 2026-11-03T13:53:38-0800.
+
 [OntoMath](architecture/mathematics/ONTOMATH_FRAMEWORK.md) owns expression and mathematical meaning. Channels admit coordinate domains and backend capabilities. An unsupported lowering must refuse; a declaration or CPU evaluator is not proof of GPU support.
 
 - Direct Screen reads authored color/opacity fields at framebuffer sample centres. It needs no Object, Material, FaceTexture, or ShapeKind wrapper. [Direct Screen forms](Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md) covers bindings, named regions, typed field edits, and completed viewport observations.
