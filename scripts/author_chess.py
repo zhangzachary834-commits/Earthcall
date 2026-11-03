@@ -888,18 +888,8 @@ def build_laws():
         ["object-drag-started"],
         IS_PIECE,   # NOT the board — starting a drag on empty board must not move anything
         seq(
-            {
-                "kind": 8,
-                "path": "@state.chess.targetX",
-                "bindings": {"ptrX": "@interaction-channel.pointerWorld.x"},
-                "function": {"input": "ptrX", "pieces": pointer_bins()},
-            },
-            {
-                "kind": 8,
-                "path": "@state.chess.targetY",
-                "bindings": {"ptrZ": "@interaction-channel.pointerWorld.z"},
-                "function": {"input": "ptrZ", "pieces": pointer_bins()},
-            },
+            map_path("@state.chess.targetX", {"gx": "gridX"}, copy_terms("gx")),
+            map_path("@state.chess.targetY", {"gy": "gridY"}, copy_terms("gy")),
             publish("square-clicked"),
         ),
         scope=0,

@@ -1,3 +1,4 @@
+#include "Singularity/Terminal/TerminalChannel.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
@@ -25,12 +26,14 @@
 #endif
 
 #include "Singularity/Audio/AudioSystem.hpp"
+#include "Singularity/Audio/AudioChannel.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Network/WebSocketServer.hpp"
 #include "Person/Person.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
 #include "Singularity/Input/Mouse/MouseHandler.hpp"
@@ -47,6 +50,10 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Core/Logger.hpp"
+#include "Singularity/Core/AppPaths.hpp"
+#include "Singularity/Storage/VirtualFileSystem.hpp"
+#include <unistd.h>
+#include <cstdio>
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/IDEDockManager.hpp"
 
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
@@ -55,9 +62,6 @@
 #include <vector>
 #include <climits>
 #include <chrono>
-#ifdef __APPLE__
-#include <mach-o/dyld.h>
-#endif
 
 extern ZoneManager mgr;
 
@@ -76,45 +80,41 @@ Engine& Engine::instance() {
     return s_instance;
 }
 
-namespace {
-std::filesystem::path findRepoRoot() {
-    std::error_code ec;
-    std::vector<std::filesystem::path> seeds;
-    if (auto cwd = std::filesystem::current_path(ec); !ec) seeds.push_back(cwd);
-#ifdef __APPLE__
-    char buf[PATH_MAX];
-    uint32_t sz = sizeof(buf);
-    if (_NSGetExecutablePath(buf, &sz) == 0) {
-        auto exe = std::filesystem::weakly_canonical(std::filesystem::path(buf), ec);
-        if (!ec) seeds.push_back(exe.parent_path());
-    }
-#endif
-    for (auto& dir : seeds) {
-        for (int i = 0; i < 8 && !dir.empty() && dir != dir.root_path(); ++i) {
-            if (std::filesystem::exists(dir / "AGENTS.md", ec) &&
-                std::filesystem::is_directory(dir / "saves", ec)) {
-                return dir;
-            }
-            dir = dir.parent_path();
-        }
-    }
-    return {};
-}
-} // namespace
 
 bool Engine::init(int /*argc*/, char** /*argv*/) {
     ECA::Logger::instance().log(ECA::LogCategory::System, "SYSTEM", "Engine::init starting");
     std::cout << "Engine::init starting" << std::endl;
     {
-        const auto root = findRepoRoot();
-        if (!root.empty()) {
-            std::error_code ec;
-            std::filesystem::current_path(root, ec);
-            const auto saves = (root / "saves").string();
-            SaveSystem::setSaveRoot(saves);
-            std::cout << "[Engine] repo root: " << root.string()
-                      << "  saves: " << saves << std::endl;
+        // Run from a checkout, the checkout stays the cwd and the Person's
+        // data lives in the data home once migrated (SaveSystem::chooseDataRoot
+        // falls back to the checkout's saves/ when it is not). Installed as
+        // Earthcall.app there is no checkout: Finder starts us at "/", output
+        // has no terminal, and resources ship inside the bundle.
+        std::error_code ec;
+        if (AppPaths::isBundled() && !isatty(STDOUT_FILENO)) {
+            const auto logs = AppPaths::logDirectory();
+            std::filesystem::create_directories(logs, ec);
+            const std::string log = (logs / "earthcall.log").string();
+            std::freopen(log.c_str(), "w", stdout);
+            std::freopen(log.c_str(), "a", stderr);
+            std::setvbuf(stdout, nullptr, _IOLBF, 0);
+            std::setvbuf(stderr, nullptr, _IONBF, 0);
         }
+        const auto root = AppPaths::isBundled() ? std::filesystem::path{} : AppPaths::checkoutRoot();
+        if (!root.empty()) std::filesystem::current_path(root, ec);
+        std::string note;
+        const auto saves = SaveSystem::chooseDataRoot(
+            root.empty() ? std::filesystem::path{} : root / "saves", note,
+            AppPaths::isBundled() ? AppPaths::resourceRoot() / "Foundation" : std::filesystem::path{});
+        SaveSystem::setSaveRoot(saves.string());
+        // A stray relative write must land somewhere the Person owns, not "/".
+        if (AppPaths::isBundled()) std::filesystem::current_path(saves, ec);
+        if (const auto resources = AppPaths::resourceRoot(); !resources.empty()) {
+            Singularity::Storage::VirtualFileSystem::instance().mount("resource://", resources.string());
+        }
+        std::cout << "[Engine] " << (AppPaths::isBundled() ? "installed app" : "checkout")
+                  << " root: " << (root.empty() ? AppPaths::resourceRoot().string() : root.string())
+                  << "  saves: " << saves.string() << "\n[Engine] " << note << std::endl;
     }
     if (glfwInit() == GLFW_FALSE) {
         std::cerr << "⚠️  Failed to initialise GLFW!" << std::endl;
@@ -186,6 +186,17 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
+    if (AppPaths::isBundled()) {
+        // Window layout is the Person's, beside their saves; unbundled it
+        // stays imgui.ini in the checkout as before.
+        static const std::string ini = [] {
+            std::error_code ec;
+            const auto dir = SaveSystem::rootPath() / "ui";
+            std::filesystem::create_directories(dir, ec);
+            return (dir / "imgui.ini").string();
+        }();
+        io.IniFilename = ini.c_str();
+    }
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 #ifdef ImGuiConfigFlags_DockingEnable
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -223,7 +234,6 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
 
     // Initialize audio system
     Core::Audio::AudioSystem::instance().init();
-    Core::Audio::AudioSystem::instance().setupAudioEventListeners();
 
     if (!initLogic()) {
         std::cerr << "[Engine] Logic initialization refused Person admission; "
@@ -347,6 +357,12 @@ void Engine::tick(float dt) {
 
     // 3. Audio & event modality
     auto tAudio0 = clock::now();
+    if (_lawManager) {
+        if (auto* audioChannel =
+                Singularity::Audio::AudioChannel::find(*_lawManager)) {
+            audioChannel->applyGovernance();
+        }
+    }
     Core::Audio::AudioSystem::instance().tick();
 #ifdef __EMSCRIPTEN__
     Core::EventBus::instance().tick();
@@ -369,7 +385,12 @@ void Engine::tick(float dt) {
 
     // 4. Laws: LawManager::tick() drains the Rete agenda queued by events published this frame.
     auto tLaws0 = clock::now();
+    // The terminal line is sensed just before the laws run and answered just
+    // after, so a line's authored laws (and the Law it speaks) land in one frame.
+    auto* terminal = _lawManager ? Singularity::Terminal::TerminalChannel::find(*_lawManager) : nullptr;
+    if (terminal) terminal->sense(*_lawManager);
     if (_lawManager) _lawManager->tick();
+    if (terminal) terminal->act(*_lawManager);
     auto tLaws1 = clock::now();
     g_frameTimings.laws_ms = getMs(tLaws0, tLaws1);
 
@@ -439,6 +460,11 @@ void Engine::tick(float dt) {
 }
 
 void Engine::shutdown() {
+    if (Universe::instance().timeline() == &_worldTimeline) {
+        Universe::instance().setTimeline(nullptr);
+    }
+    _worldTimelineOwnership.reset();
+
     if (_window) {
         glfwDestroyWindow(_window);
         _window = nullptr;

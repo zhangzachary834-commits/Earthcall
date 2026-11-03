@@ -2,6 +2,9 @@
 #include "../Screen/Camera.hpp"
 #include "../Screen/Renderer.hpp"
 #include "../Screen/ShadingSystem.hpp"
+#include "Singularity/Screen/AuthorableLight.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
+#include "Singularity/Screen/VolumeDensity.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
 #include "../../ZonesOfEarth/Zone/Zone.hpp"
 #include "../../Person/Person.hpp"
@@ -11,6 +14,8 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
+#include "Singularity/Input/Interaction/InteractionChannel.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
@@ -21,6 +26,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <GLFW/glfw3.h>
 #include <algorithm>
+#include <functional>
+#include <vector>
 
 extern ZoneManager mgr;
 
@@ -53,9 +60,16 @@ namespace Core {
         float right  = top * aspect;
         float left   = -right;
 
-        glm::mat4 proj = currentRenderer().zeroToOneDepth()
-            ? glm::frustumZO(left, right, bottom, top, nearZ, farZ)
-            : glm::frustumNO(left, right, bottom, top, nearZ, farZ);
+        const auto authoredProjection = OntoMath::cameraPerspective(
+            glm::radians(static_cast<double>(fov)),
+            static_cast<double>(aspect),
+            static_cast<double>(nearZ),
+            static_cast<double>(farZ),
+            currentRenderer().zeroToOneDepth());
+        if (!authoredProjection) return;
+        const auto projectionGlm = authoredProjection->toGlmMat4();
+        if (!projectionGlm) return;
+        const glm::mat4 proj = *projectionGlm;
 
         /* -------------------- */
 
@@ -71,7 +85,11 @@ namespace Core {
         }
 
         glm::vec3 lookTarget = _camera->pos + lookDir;
-        glm::mat4 view = glm::lookAt(eyePos, lookTarget, _camera->up);
+        const auto authoredView = OntoMath::cameraLookAt(eyePos, lookTarget, _camera->up);
+        if (!authoredView) return;
+        const auto viewGlm = authoredView->toGlmMat4();
+        if (!viewGlm) return;
+        const glm::mat4 view = *viewGlm;
 
         currentRenderer().setCamera(view, proj, eyePos);
 
@@ -100,29 +118,176 @@ namespace Core {
             screenChannel = Singularity::Screen::ScreenChannel::find(*_lawManager);
         }
 
-        bool persistentLightPlaced = false;
-        if (auto* root = zone.spatialRoot()) {
-            PropertyValue lightSourceValue;
-            if (root->getDynamicProperty("light.source", lightSourceValue)) {
-                if (const bool* isSource = std::get_if<bool>(&lightSourceValue);
-                    isSource && *isSource) {
-                    currentRenderer().setLight(root->origin,
-                                               currentRenderer().lightAmbient(),
-                                               currentRenderer().lightDiffuse(),
-                                               currentRenderer().lightSpecular());
-                    persistentLightPlaced = true;
-                }
-            }
+        const Universe& universe = Universe::instance();
+        const double sourceTime = universe.hasClock() ? universe.now() : 0.0;
+        const double sourceDelta = universe.hasClock() ? universe.dt() : 0.0;
+
+        // Rung 7 source discovery is over the Zone's direct FieldNode ownership
+        // index, not over every Object. The canonical spatialRoot is first so a
+        // one-source Zone remains byte-for-byte ordered like the historical path.
+        std::vector<geom::FieldNode*> candidateFields;
+        if (auto* root = zone.spatialRoot()) candidateFields.push_back(root);
+        for (const auto& field : zone.additionalSpatialFields()) {
+            if (field) candidateFields.push_back(field.get());
         }
 
-        if (!persistentLightPlaced && screenChannel) {
-            const glm::vec3 lightWorldPos = screenChannel->lightCameraRelative
-                ? _camera->pos + screenChannel->lightCameraOffset
-                : screenChannel->lightPosition;
-            currentRenderer().setLight(lightWorldPos,
-                                       currentRenderer().lightAmbient(),
-                                       currentRenderer().lightDiffuse(),
-                                       currentRenderer().lightSpecular());
+        std::vector<Rendering::RadianceSourceBinding> radiantSources;
+        radiantSources.reserve(candidateFields.size());
+        std::string sourceSetIdentity;
+
+        std::vector<Rendering::VolumeDensityBinding> volumeDensities;
+        volumeDensities.reserve(candidateFields.size());
+        std::string volumeSetIdentity;
+
+        for (geom::FieldNode* field : candidateFields) {
+            if (!field) continue;
+
+            // Volumetric truth is independent from source truth. A FieldNode may
+            // be fog without being a light, a light without being fog, or both.
+            // Therefore density discovery MUST happen before the light.source
+            // compatibility reader below.
+            Rendering::VolumeDensityBinding medium;
+            if (Rendering::readVolumeDensity(
+                    *field, sourceTime, sourceDelta, medium)) {
+                // V5 medium-set identity is centralized beside the binding so
+                // discovery cannot silently lag a newly-authored channel. In
+                // particular, V4 E_v must participate in world-set revision.
+                Rendering::appendVolumeSetIdentity(
+                    volumeSetIdentity, medium.producerId, medium);
+                volumeDensities.push_back(medium);
+            }
+
+            Rendering::AuthorableLightState light;
+            if (!Rendering::readAuthorableLight(*field, light)) continue;
+
+            Rendering::RadianceSourceBinding source;
+            source.producerId = field->getIdentifier();
+            source.position = light.position;
+            source.ambientRadiance = Rendering::lightAmbientRadiance(light);
+            source.diffuseRadiance = Rendering::lightDiffuseRadiance(light);
+            source.specularRadiance = Rendering::lightSpecularRadiance(light);
+            source.coefficients =
+                glm::vec4(light.intensity, light.ambient, light.diffuse, light.specular);
+            source.temporalCoordinate = sourceTime;
+            source.temporalDelta = sourceDelta;
+            source.enabled = light.enabled;
+
+            field->verifyAuthoredMath();
+            if (field->field &&
+                field->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
+                !field->field->astDefinition.pieces.empty()) {
+                source.radianceExpr = &field->field->astDefinition;
+                source.radianceRevision = field->authoredMathRevision(geom::FieldNode::kMathFieldAst);
+            }
+            if (field->lightChroma && !field->lightChroma->pieces.empty()) {
+                source.chromaExpr = field->lightChroma.get();
+                source.chromaRevision = field->authoredMathRevision(geom::FieldNode::kMathLightChroma);
+            }
+            if (field->lightAngular && !field->lightAngular->pieces.empty()) {
+                source.angularExpr = field->lightAngular.get();
+                source.angularRevision = field->authoredMathRevision(geom::FieldNode::kMathLightAngular);
+            }
+
+            // Rung 7 structural/value invalidation is intentionally bounded.
+            // Source membership/order plus authored rho/chi/alpha content is the
+            // parameter/compiler identity. Position, light coefficients,
+            // enablement and temporal coordinates live in the persistent source
+            // storage buffer and must NOT serialize an entire FieldNode merely
+            // to move/recolor/enable a source.
+            sourceSetIdentity += source.producerId;
+            sourceSetIdentity += ":";
+            sourceSetIdentity += std::to_string(source.radianceRevision);
+            sourceSetIdentity += ":";
+            sourceSetIdentity += std::to_string(source.chromaRevision);
+            sourceSetIdentity += ":";
+            sourceSetIdentity += std::to_string(source.angularRevision);
+            sourceSetIdentity += "\n";
+            radiantSources.push_back(source);
+        }
+
+        if (volumeDensities.empty()) {
+            currentRenderer().setVolumeDensitySources({}, 0);
+        } else {
+            const uint64_t volumeSetRevision =
+                static_cast<uint64_t>(std::hash<std::string>{}(volumeSetIdentity));
+            currentRenderer().setVolumeDensitySources(
+                std::move(volumeDensities), volumeSetRevision);
+        }
+
+        const bool persistentLightPlaced = !radiantSources.empty();
+        if (radiantSources.size() == 1) {
+            // Exact Rungs 3-6 SDF compatibility still uses the historical
+            // one-source generated path (that path only switches when size>1).
+            // Keep the renderer-facing source projection populated as well so
+            // V3 participating-media transport can truthfully consume the same
+            // admitted source without reconstructing source state.
+            const auto& source = radiantSources.front();
+            const uint64_t sourceSetRevision =
+                static_cast<uint64_t>(std::hash<std::string>{}(sourceSetIdentity));
+            currentRenderer().setRadianceSources(radiantSources, sourceSetRevision);
+            currentRenderer().setLight(source.position, source.ambientRadiance,
+                                       source.diffuseRadiance, source.specularRadiance);
+            currentRenderer().setLightingEnabled(source.enabled);
+            currentRenderer().setRadianceSourceCoefficients(
+                source.coefficients.x, source.coefficients.y,
+                source.coefficients.z, source.coefficients.w);
+            currentRenderer().setRadianceTemporalCoordinate(
+                source.temporalCoordinate, source.temporalDelta);
+            currentRenderer().setRadianceField(source.radianceExpr, source.radianceRevision);
+            currentRenderer().setRadianceChroma(source.chromaExpr, source.chromaRevision);
+            currentRenderer().setRadianceAngular(source.angularExpr, source.angularRevision);
+        } else if (radiantSources.size() > 1) {
+            const uint64_t sourceSetRevision =
+                static_cast<uint64_t>(std::hash<std::string>{}(sourceSetIdentity));
+            currentRenderer().setRadianceSources(radiantSources, sourceSetRevision);
+
+            // Legacy fixed/mesh lighting has only one source-shaped slot. Keep
+            // it deterministic by projecting the first ENABLED source there;
+            // WebGPU SDF transport below receives and sums the complete set.
+            const auto it = std::find_if(
+                radiantSources.begin(), radiantSources.end(),
+                [](const Rendering::RadianceSourceBinding& source) {
+                    return source.enabled;
+                });
+            const auto& compatibility =
+                it != radiantSources.end() ? *it : radiantSources.front();
+            currentRenderer().setLight(
+                compatibility.position, compatibility.ambientRadiance,
+                compatibility.diffuseRadiance, compatibility.specularRadiance);
+            currentRenderer().setLightingEnabled(it != radiantSources.end());
+            currentRenderer().setRadianceSourceCoefficients(
+                compatibility.coefficients.x, compatibility.coefficients.y,
+                compatibility.coefficients.z, compatibility.coefficients.w);
+            currentRenderer().setRadianceTemporalCoordinate(
+                compatibility.temporalCoordinate, compatibility.temporalDelta);
+            currentRenderer().setRadianceField(
+                compatibility.radianceExpr, compatibility.radianceRevision);
+            currentRenderer().setRadianceChroma(
+                compatibility.chromaExpr, compatibility.chromaRevision);
+            currentRenderer().setRadianceAngular(
+                compatibility.angularExpr, compatibility.angularRevision);
+        }
+
+        if (!persistentLightPlaced) {
+            currentRenderer().setRadianceSources({}, 0);
+            currentRenderer().setRadianceField(nullptr, 0);
+            currentRenderer().setRadianceChroma(nullptr, 0);
+            currentRenderer().setRadianceAngular(nullptr, 0);
+            currentRenderer().setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
+            currentRenderer().setRadianceTemporalCoordinate(0.0, 0.0);
+            // A previously active authored Zone may have disabled illumination.
+            // No-source means the historical compatibility contract, so restore
+            // enabled state even when no ScreenChannel happens to be present.
+            currentRenderer().setLightingEnabled(true);
+            if (screenChannel) {
+                const glm::vec3 lightWorldPos = screenChannel->lightCameraRelative
+                    ? _camera->pos + screenChannel->lightCameraOffset
+                    : screenChannel->lightPosition;
+                currentRenderer().setLight(lightWorldPos,
+                                           currentRenderer().lightAmbient(),
+                                           currentRenderer().lightDiffuse(),
+                                           currentRenderer().lightSpecular());
+            }
         }
 
         {
@@ -131,6 +296,14 @@ namespace Core {
                 clearColor = glm::vec4(screenChannel->backgroundColor, 1.0f);
                 currentRenderer().setWireframe(screenChannel->wireframe);
                 currentRenderer().setHeightGridDdaEnabled(screenChannel->heightGridDdaEnabled);
+                currentRenderer().setSpaceDistortion(float(screenChannel->spaceDistortion));
+                currentRenderer().setSdfRangeProxyEnabled(screenChannel->sdfRangeProxyEnabled);
+                currentRenderer().setVolumeZeroProofEnabled(screenChannel->volumeZeroProofEnabled);
+                currentRenderer().setVolumeRoutedTransportEnabled(screenChannel->volumeRoutedTransportEnabled);
+                currentRenderer().setVolumeSupportCertificatesEnabled(screenChannel->volumeSupportCertificatesEnabled);
+                currentRenderer().setVolumeSupportCertificatesAutoEligibility(screenChannel->volumeSupportCertificatesAutoEligibility);
+                currentRenderer().setVolumeSamplesPerChord(screenChannel->volumeSamplesPerChord);
+                currentRenderer().setVolumeOutputErrorBudget(screenChannel->volumeOutputErrorBudget);
             }
             auto tB0 = std::chrono::steady_clock::now();
             currentRenderer().beginFrame(static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH), clearColor);
@@ -150,12 +323,26 @@ namespace Core {
         currentRenderer().setModel(glm::mat4(1.0f)); // back to world space
 
         if (_creatorConsoleOpen) {
-            Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr);
+            Rendering::renderCreatorConsole3DPreviews(_person.get(), nullptr, this);
         }
 
-        // Draw player avatar and nametag when not in first-person
+        // Draw the embodied Person as world geometry before volumetric
+        // composition. Nametags/UI remain sensory overlays and are drawn only
+        // after the medium pass so fog never becomes a screen-space filter.
         if (_currentPerspective != PerspectiveMode::FirstPerson) {
             _person->draw();
+        }
+
+        currentRenderer().composeVolumes();
+
+        // Direct authored Screen manifestation at physical framebuffer sample
+        // centres. No Object, Material, ShapeKind, or texture is an admission
+        // requirement. Compatibility HUD/tools are drawn afterwards.
+        if (screenChannel)
+            screenChannel->manifestOutput(currentRenderer(),
+                static_cast<uint32_t>(fbW), static_cast<uint32_t>(fbH));
+
+        if (_currentPerspective != PerspectiveMode::FirstPerson) {
             _person->drawNametag();
         }
 
@@ -210,6 +397,7 @@ namespace Core {
 
         if (_lawManager) {
             if (auto* sc = Singularity::Screen::ScreenChannel::find(*_lawManager)) {
+                sc->senseOutput(currentRenderer(),static_cast<uint32_t>(fbW),static_cast<uint32_t>(fbH));
                 const auto& stats = currentRenderer().frameStats();
                 sc->updateMetrics(static_cast<int>(stats.drawCalls),
                                   static_cast<int>(stats.trianglesDrawn),
@@ -217,11 +405,46 @@ namespace Core {
                                   static_cast<double>(stats.uniformBytesWritten),
                                   static_cast<int>(stats.bufferSuballocations),
                                   static_cast<int>(stats.pipelineSwitches),
-                                  static_cast<int>(stats.cachedMeshesCount));
+                                  static_cast<int>(stats.cachedMeshesCount),
+                                  static_cast<int>(stats.sdfProgramCompiles),
+                                  static_cast<int>(stats.sdfProgramCacheHits),
+                                  static_cast<int>(stats.sdfProgramCacheMisses),
+                                  static_cast<int>(stats.sdfProgramRefusals),
+                                  stats.sdfLastProgramRefusal,
+                                  static_cast<double>(stats.sdfWgslBytesGenerated),
+                                  static_cast<double>(stats.sdfParameterBytesUploaded),
+                                  static_cast<int>(stats.sdfRangeHierarchyBuilds),
+                                  static_cast<int>(stats.sdfRangeProxyDraws),
+                                  static_cast<int>(stats.sdfRangeProxyCulledDraws),
+                                  static_cast<int>(stats.sdfRangeTraversalDraws),
+                                  static_cast<double>(stats.sdfRangeNodeBytesUploaded));
+                sc->updateVolumeZeroProofMetrics(
+                    static_cast<int>(stats.volumeZeroProofCellsProven),
+                    static_cast<int>(stats.volumeZeroProofCellsTotal));
+                sc->volumeRoutedSets = static_cast<int>(stats.volumeRoutedSets);
+                sc->volumeRoutedPixels = static_cast<int>(stats.volumeRoutedPixels);
+                sc->volumeRoutedWorkingSetBytes = static_cast<double>(stats.volumeRoutedWorkingSetBytes);
+                sc->volumeSupportCertificateKillers = static_cast<int>(stats.volumeSupportCertificateKillers);
+                sc->volumeSupportCertificateEligibleMedia = static_cast<int>(stats.volumeSupportCertificateEligibleMedia);
+                sc->volumeSupportCertificateProbeRenders = static_cast<int>(stats.volumeSupportCertificateProbeRenders);
+                sc->volumeSupportCertificateMeasuredVetoes = static_cast<int>(stats.volumeSupportCertificateMeasuredVetoes);
             }
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
+                recorder->checkPendingSnapshot(fbW, fbH);
                 if (recorder->isRecording()) {
-                    recorder->stepFrame(fbW, fbH);
+                    // GLFW reports window points; recording uses framebuffer
+                    // pixels. Use the interaction channel's sensed pointer so
+                    // pointer lock and Retina scaling agree with live aiming.
+                    int cursorX = -1, cursorY = -1;
+                    if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
+                        int winW = 0, winH = 0;
+                        glfwGetWindowSize(_window, &winW, &winH);
+                        if (winW > 0 && winH > 0) {
+                            cursorX = static_cast<int>(interaction->pointerX * fbW / winW);
+                            cursorY = static_cast<int>(interaction->pointerY * fbH / winH);
+                        }
+                    }
+                    recorder->stepFrame(fbW, fbH, nullptr, cursorX, cursorY);
                 }
             }
             if (auto* watcher = Singularity::Storage::FileWatcher::find(*_lawManager)) {

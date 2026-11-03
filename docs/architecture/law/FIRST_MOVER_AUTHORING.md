@@ -647,6 +647,46 @@ that exists."
 a world that grew that way on its own. Tell the Person which file you wrote, which
 beings you added, and which of them are authored by whom.
 
+**8. Patch the world; never regenerate it.** *(Zach's rule, 2026-09-21.)* Every save
+generator, seeding script, and injection makes **targeted modifications to the file as it
+exists now**. It never rebuilds a save from scratch over the old one. A save is not the
+output of your script. Once a Person has walked in, clicked, and saved, what the file
+holds outranks what your script would have produced. The protocol, in order:
+
+1. **Base on the file on disk.** Read the current save and treat it as the base. Your
+   script's in-memory model is never the base.
+2. **Stage beside it; keep the old file.** Write a *new* file in the same directory
+   (e.g. `.<tool>-<name>.json`). Copy the old file's full contents into it, then apply
+   only your edits, addressed by stable identifier. Do not touch beings you did not author
+   unless the Person asked. The old file is not modified, moved, or deleted at this step.
+3. **Verify in both directions.** (a) Nothing was erased: every object, material,
+   Relation, Law ref, and Lexeme in the old file is present and unchanged in the new one,
+   except for an explicit, named list of the edits and retirements you intended.
+   (b) Nothing you intended is missing from the new file. (c) The new file parses and
+   round-trips through the loader (rule 5).
+4. **Then rename.** Re-check that the old file has not changed since you read it (another
+   agent or the app may have saved it). Keep a backup of the old bytes outside `saves/`,
+   then replace atomically (`os.replace` / `SaveSystem`'s `atomicWriteFile`, the same
+   write-new-then-rename guarantee #253 gave the engine's own saves). When one change
+   spans several files, rename dependencies first and the authoritative Zone file last.
+5. **Report** per rule 7: the file, what was added, changed, or retired, the backup
+   path, and the `injected_by` / `authors` recorded.
+
+Writing from scratch is admissible only when the target file does not exist yet (a first
+seed), or into a *new* file that the Person then chooses to adopt. The reference
+implementation is `install()` in `scripts/author_cathedral_open_hand.py` (Astra): it reads
+`before`, appends by identifier, asserts that the old document is exactly recoverable from
+the new one, stages temp files in the same directory, checks for concurrent edits, and
+replaces in dependency order.
+
+**Why this rule exists.** The Cathedral of the Living Logos was written by two tools with
+opposite disciplines. `scripts/generate_cathedral.py` regenerated `zone.json` and the world
+JSON wholesale; Astra's Open Hand tool patched them. The generator knew nothing of the
+Court of the Open Hand, so its next run would have erased it silently, along with any
+Person Save-Zone edits, while producing a valid, beautiful Cathedral in which those acts
+never happened. When several tools write one save, a single whole-file writer erases all
+the others. See *What Survives Approach* §5 (`docs/Reflections on Earthcall's Progression/`).
+
 **The covenant in one line:** *a First Mover may make anything, and must therefore be
 the kind of author who says what they made.*
 
@@ -753,7 +793,28 @@ The floor, mirroring `LAW_MIGRATION_FRAMEWORK.md` §6's kernel floor:
 5. [BUILT] Enforcement at the save path, scoped to an active mover session.
            SaveSystem::writeSaveData refuses a write the register does not
            permit, and says why on stderr.
+6. [BUILT 2026-09-24] Trust root. A grant stands only while its Person has
+           proved possession of their key IN THIS PROCESS
+           (trustAuthenticatedPerson takes the PrivateKey; roots are never
+           serialized). A valid signature from an absent or self-minted
+           "person" is inert (Standing::GrantorNotAuthenticated). No mover
+           scope, even "**", may write saves/identity/ (the register).
+7. [BUILT 2026-09-24] Foreign actuation. Every WebSocket/MCP mutation
+           passes Singularity/Foreign/ForeignActuationGuard: the connection
+           proves a mover key (challenge -> signature), and each act is held
+           to that mover's scope over the act's durable resource + the
+           TransferPolicy gate. Laws a mover writes are authored by the
+           mover, never by the Person at the screen. Reads stay open.
 ```
+
+**How a Person grants a model standing (2026-09-24).** The Person's profile must be keyed
+once (`EARTHCALL_MIGRATE_PERSON_IDENTITY=1`). Then `build/earthcall_first_mover mint`
+seals a mover key in `~/.earthcall/identity`, `earthcall_first_mover grant --mover <id>
+--scope <glob>...` signs the grant into `saves/identity/first-movers.json` (Person's key
+unlocked by `EARTHCALL_KEY_PASSPHRASE`), and the engine honours it in any session where
+that same Person unlocks at boot. The MCP bridge authenticates with
+`EARTHCALL_FIRST_MOVER_ID` and signs through the same tool; it never holds the key. Full
+plan and what remains: `docs/plans/MCP_FIRST_MOVER_GOVERNANCE_IMPLEMENTATION_PLAN_2026-09-18.md`.
 
 **How enforcement is scoped.** `FirstMoverRegister` carries an *active mover*, set
 only for the duration of a `FirstMoverSession` (RAII, so a session cannot leak past
@@ -838,3 +899,7 @@ law under a human's name because that makes it fire has done the only thing in t
 entire document that the format cannot detect and no future check will catch.
 
 Say what you made. 🕊️
+
+## 9. Mover-Authored Law Reach
+
+A Law authored by a First Mover executes with the ordinary `Law` authority once placed in the world. Its reach when fired is governed entirely by standard Law targeting rules (`TransferPolicy`) and not artificially constrained by the originating First Mover's `fileScope`. We bounds-check the *act of authoring/injecting* the Law (does the Mover have authority to create a Law in this Zone?), but we do not bounds-check the Law's execution against its original author's credentials, because once authorized and authored, it is functionally a Person's authored Law.

@@ -2,6 +2,7 @@
 #include "Singularity/Storage/Serialization.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
+#include "../support/test_save_helper.hpp"
 
 #include <GLFW/glfw3.h>
 #include <cassert>

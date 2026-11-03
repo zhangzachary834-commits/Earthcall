@@ -29,6 +29,7 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -122,7 +123,7 @@ int main() {
           "saveStateWithLog wrote a report and did not refuse");
 
     const auto ecformPath = sandbox / "worlds" / "roundtrip_world.ecform";
-    const auto legacyEcformPath = sandbox / "worlds" / "legacy_player_body.ecform";
+    const auto legacyEcformPath = sandbox / "worlds" / "legacy_player_body.json";
     check(std::filesystem::exists(ecformPath), "Save As writes the .ecform semantic file");
 
     // Invariant 4 (Sol, agent intercom "Basic Pixel Changer Zone Identity
@@ -131,28 +132,24 @@ int main() {
     // "matterGeneration" metadata, not a fixed "<stem>.ecmatter" name.
     std::filesystem::path ecmatterPath;
     {
-        std::ifstream genIn(ecformPath);
-        nlohmann::json genJ;
-        genIn >> genJ;
+        nlohmann::json genJ = SaveSystem::readSaveData(ecformPath.string());
         const std::string snapshotId = genJ.value("matterGeneration", nlohmann::json{}).value("snapshotId", std::string{});
         check(!snapshotId.empty(), "Save As names a matterGeneration");
         ecmatterPath = sandbox / "worlds" / ("roundtrip_world." + snapshotId + ".ecmatter");
     }
     check(std::filesystem::exists(ecmatterPath), "Save As writes the binary .ecmatter under its generation name");
-    check(std::filesystem::exists(sandbox / "zones" / "Sanctum of Beginnings" / "zone.json"),
+    check(std::filesystem::exists(sandbox / "zones" / "Sanctum of Beginnings" / "zone.ecform"),
           "Save As also writes the Sanctum identity under saves/zones/");
-    check(std::filesystem::exists(sandbox / "homes" / "Home" / "home.json"),
+    check(std::filesystem::exists(sandbox / "homes" / "Home" / "home.ecform"),
           "Save As writes Home under saves/homes/, not as a Zone file");
 
     {
-        std::ifstream in(ecformPath);
-        nlohmann::json j;
-        in >> j;
+        nlohmann::json j = SaveSystem::readSaveData(ecformPath.string());
         check(j.contains("objects") && j["objects"].is_array() && j["objects"].size() == 3,
               "top-level objects array keeps all three spawns (not skip-2)");
         std::size_t zoneObjs = 0;
-        if (j.contains("zones") && j["zones"].is_array() && !j["zones"].empty()) {
-            const auto& w = j["zones"][0]["world"];
+        if (j.contains(kSemanticRootsKey) && j[kSemanticRootsKey].contains("zones") && j[kSemanticRootsKey]["zones"].is_array() && !j[kSemanticRootsKey]["zones"].empty()) {
+            const auto& w = j[kSemanticRootsKey]["zones"][0]["world"];
             if (w.contains("objects") && w["objects"].is_array())
                 zoneObjs = w["objects"].size();
         }
@@ -193,7 +190,23 @@ int main() {
     player.position() = glm::vec3(100.0f, 0.0f, 100.0f);
     camera.pos = glm::vec3(0.0f, 0.0f, 0.0f);
     worldTime = 0.0;
+    // Per-Zone serialization pathway proof 6 (Claude Sonnet 5.5, 2026-10-07):
+    // legacy session files stay readable and are NEVER rewritten merely by
+    // being loaded. Snapshot the bytes of the session trio, load, compare.
+    const auto slurpBytes = [](const std::filesystem::path& path) {
+        std::ifstream in(path, std::ios::binary);
+        return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    };
+    const std::string ecformBefore = slurpBytes(ecformPath);
+    const std::string matterBefore = slurpBytes(ecmatterPath);
+    const std::string legacyBefore = slurpBytes(legacyEcformPath);
     mgr.loadState(ecformPath.string(), ctx);
+    check(!ecformBefore.empty() && slurpBytes(ecformPath) == ecformBefore,
+          "loading a session leaves its .ecform byte-identical");
+    check(!matterBefore.empty() && slurpBytes(ecmatterPath) == matterBefore,
+          "loading a session leaves its .ecmatter byte-identical");
+    check(!legacyBefore.empty() && slurpBytes(legacyEcformPath) == legacyBefore,
+          "loading a session leaves other legacy world files untouched");
 
     check(countId(mgr, "first-spawned") == 1, "load restores the first spawned being");
     check(countId(mgr, "second-spawned") == 1, "load restores the second spawned being");

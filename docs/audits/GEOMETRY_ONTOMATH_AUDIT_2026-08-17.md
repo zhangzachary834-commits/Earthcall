@@ -12,7 +12,7 @@
 > CSG live as `MathNode` factories, Bernstein/quadrics/Bézier as `ScalarForm`,
 > new ops `Div`/`Pow`/`Abs`/`Clamp`/`Sqrt`/`Tan` (23–28), `evalSdf` / `emitNode`
 > prefer the OntoMath AST and keep RPN only as fallback. Executed record:
-> [`Geometry_OntoMath_Remaining_Rungs.md`](../Agenda/Tasks/Specific%20Tasks/Geometry_OntoMath_Remaining_Rungs.md).
+> [`Geometry_OntoMath_Remaining_Rungs.md`](../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Geometry_OntoMath_Remaining_Rungs/Geometry_OntoMath_Remaining_Rungs.md).
 > Plan (do not implement from its old checkboxes):
 > [`GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md`](../architecture/mathematics/GEOMETRY_ONTOMATH_UNIFICATION_PLAN.md).
 > Independent primitive probe and Div-guard verification: geometry-ontomath

@@ -1,0 +1,29 @@
+{
+  "activeZone": "Sanctuary of Sunlit Mist",
+  "cameraFront": [
+    0.0,
+    0.05,
+    -1.0
+  ],
+  "cameraPos": [
+    0.0,
+    2.2,
+    8.0
+  ],
+  "cameraUp": [
+    0.0,
+    1.0,
+    0.0
+  ],
+  "objects": [],
+  "pitch": 3.0,
+  "saveName": "sanctuary_of_sunlit_mist",
+  "version": 1,
+  "yaw": -90.0,
+  "zoneRefs": [
+    "Sanctuary of Sunlit Mist"
+  ],
+  "zones": [
+    "Sanctuary of Sunlit Mist"
+  ]
+}

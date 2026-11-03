@@ -24,6 +24,8 @@
 #include "Singularity/Input/Locomotion/LocomotionChannel.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/Screen/ScreenRecorder.hpp"
+#include "Singularity/Audio/AudioChannel.hpp"
 #include "Singularity/Screen/LawGraphWindow.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
@@ -62,6 +64,8 @@ bool typeMatches(const char* declared, const PropertyValue& v) {
     if (t == "transform") return std::holds_alternative<glm::mat4>(v);
     if (t == "text")      return std::holds_alternative<std::string>(v);
     if (t == "toggle")    return std::holds_alternative<bool>(v);
+    if (t == "list")      return std::holds_alternative<std::shared_ptr<PropertyList>>(v);
+    if (t == "dictionary") return std::holds_alternative<std::shared_ptr<PropertyDict>>(v);
     if (t == "number") {
         double n = 0.0;
         return propertyValueToNumber(v, n);
@@ -106,6 +110,8 @@ int main() {
     Singularity::Input::LocomotionChannel locomotion;
     Singularity::Input::InteractionChannel interaction;
     Singularity::Screen::ScreenChannel screen;
+    Singularity::Screen::ScreenRecorder recorder;
+    Singularity::Audio::AudioChannel audio;
     // The readings must be installed before the picker's "@world.*" entries can
     // be answered for — that is the whole point of checking them.
     interaction.installWorldReadings();
@@ -122,7 +128,9 @@ int main() {
         else if (groupIs(option.group, "Channel — Creation")) check(option, channel);
         else if (groupIs(option.group, "Channel — Locomotion")) check(option, locomotion);
         else if (groupIs(option.group, "Channel — Interaction")) check(option, interaction);
+        else if (groupIs(option.group, "Channel — Screen Recorder")) check(option, recorder);
         else if (groupIs(option.group, "Channel — Screen")) check(option, screen);
+        else if (groupIs(option.group, "Channel — Audio"))  check(option, audio);
         else if (groupIs(option.group, "Reading —")) {
             // A world reading has no owning being to resolve against: it is a
             // closure a modality channel registered, answering ABOUT whatever
@@ -155,6 +163,197 @@ int main() {
             fail(option.path, option.group,
                  "is offered under a group this test does not know how to own — "
                  "add the being here, or the path is homeless");
+        }
+    }
+
+    // Volume zero-density proof governance: the same authored ScreenChannel
+    // contract as the range proxy, but ON by default (Zach, 2026-10-09) because
+    // its native witness already proves a byte-identical framebuffer.
+    {
+        PropertyValue v;
+        const PropertyPath enabled = PropertyPath::parse("volumeZeroProofEnabled");
+        auto getRes = enabled.getValue(screen, v);
+        if (getRes != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<bool>(v) || !std::get<bool>(v)) {
+            fail("volumeZeroProofEnabled", "Channel — Screen",
+                 "must resolve as a default-true authorable toggle");
+        }
+        auto setRes = enabled.setValue(screen, PropertyValue(false));
+        if (setRes != PropertyPath::PathResult::Ok || screen.volumeZeroProofEnabled) {
+            fail("volumeZeroProofEnabled", "Channel — Screen",
+                 "must write through the registered ScreenChannel property");
+        }
+        screen.volumeZeroProofEnabled = true;
+
+        // Rung 2f-native certificates: registered, default OFF, writable.
+        PropertyValue certificates;
+        const PropertyPath certificatesPath = PropertyPath::parse("volumeSupportCertificatesEnabled");
+        if (certificatesPath.getValue(screen, certificates) != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<bool>(certificates) || std::get<bool>(certificates)) {
+            fail("volumeSupportCertificatesEnabled", "Channel — Screen",
+                 "must resolve as a default-false authorable toggle");
+        }
+        if (certificatesPath.setValue(screen, PropertyValue(true)) != PropertyPath::PathResult::Ok ||
+            !screen.volumeSupportCertificatesEnabled) {
+            fail("volumeSupportCertificatesEnabled", "Channel — Screen",
+                 "must write through the registered ScreenChannel property");
+        }
+        screen.volumeSupportCertificatesEnabled = false;
+
+        // Eligibility: auto mode is a registered, default-true authorable toggle.
+        PropertyValue autoMode;
+        const PropertyPath autoPath = PropertyPath::parse("volumeSupportCertificatesAutoEligibility");
+        if (autoPath.getValue(screen, autoMode) != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<bool>(autoMode) || !std::get<bool>(autoMode)) {
+            fail("volumeSupportCertificatesAutoEligibility", "Channel — Screen",
+                 "must resolve as a default-true authorable toggle");
+        }
+        PropertyValue eligibleMedia;
+        if (PropertyPath::parse("volumeSupportCertificateEligibleMedia").getValue(screen, eligibleMedia) !=
+            PropertyPath::PathResult::Ok) {
+            fail("volumeSupportCertificateEligibleMedia", "Channel — Screen", "must publish the eligible-media count");
+        }
+        // Measured eligibility (2026-10-18) publishes its hidden renders and vetoes.
+        for (const char* measuredPath : {"volumeSupportCertificateProbeRenders", "volumeSupportCertificateMeasuredVetoes"}) {
+            PropertyValue measured;
+            if (PropertyPath::parse(measuredPath).getValue(screen, measured) != PropertyPath::PathResult::Ok)
+                fail(measuredPath, "Channel — Screen", "must publish the measured-eligibility count");
+        }
+
+        PropertyValue samples;
+        const PropertyPath samplesPath = PropertyPath::parse("volumeSamplesPerChord");
+        if (samplesPath.getValue(screen, samples) != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<int>(samples) || std::get<int>(samples) != 96) {
+            fail("volumeSamplesPerChord", "Channel — Screen",
+                 "must resolve as an authorable int defaulting to the historical 96");
+        }
+        if (samplesPath.setValue(screen, PropertyValue(192)) != PropertyPath::PathResult::Ok ||
+            screen.volumeSamplesPerChord != 192) {
+            fail("volumeSamplesPerChord", "Channel — Screen",
+                 "must write through the registered ScreenChannel property");
+        }
+        screen.volumeSamplesPerChord = 96;
+
+        PropertyValue budget;
+        const PropertyPath budgetPath = PropertyPath::parse("volumeOutputErrorBudget");
+        if (budgetPath.getValue(screen, budget) != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<double>(budget) || std::get<double>(budget) != 0.0) {
+            fail("volumeOutputErrorBudget", "Channel — Screen",
+                 "must resolve as an authorable numeric property defaulting to zero");
+        }
+        if (budgetPath.setValue(screen, PropertyValue(1.0 / 255.0)) != PropertyPath::PathResult::Ok ||
+            screen.volumeOutputErrorBudget != 1.0 / 255.0) {
+            fail("volumeOutputErrorBudget", "Channel — Screen",
+                 "must write through the registered ScreenChannel property");
+        }
+        screen.volumeOutputErrorBudget = 0.0;
+
+        screen.updateVolumeZeroProofMetrics(31920, 33120);
+        for (const auto& [name, expected] : {std::pair<const char*, int>{"volumeZeroProofCellsProven", 31920},
+                                             std::pair<const char*, int>{"volumeZeroProofCellsTotal", 33120}}) {
+            PropertyValue metric;
+            const auto res = PropertyPath::parse(name).getValue(screen, metric);
+            if (res != PropertyPath::PathResult::Ok || !std::holds_alternative<int>(metric) ||
+                std::get<int>(metric) != expected) {
+                fail(name, "Channel — Screen", "must expose the renderer's proof counter read-only");
+            }
+            if (PropertyPath::parse(name).setValue(screen, PropertyValue(0)) == PropertyPath::PathResult::Ok) {
+                fail(name, "Channel — Screen", "is derived and must refuse writes");
+            }
+        }
+    }
+
+    // SDF range-proxy governance is a ScreenChannel contract even though the
+    // derived counters are not authoring-picker entries. Keep it here rather
+    // than in gpu_mastery_test: this witness needs property registration, not a
+    // GPU buffer cache.
+    {
+        PropertyValue v;
+        const PropertyPath enabled = PropertyPath::parse("sdfRangeProxyEnabled");
+        auto getRes = enabled.getValue(screen, v);
+        if (getRes != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<bool>(v) || std::get<bool>(v)) {
+            fail("sdfRangeProxyEnabled", "Channel — Screen",
+                 "must resolve as a default-false authorable toggle");
+        }
+        auto setRes = enabled.setValue(screen, PropertyValue(true));
+        if (setRes != PropertyPath::PathResult::Ok || !screen.sdfRangeProxyEnabled) {
+            fail("sdfRangeProxyEnabled", "Channel — Screen",
+                 "must write through the registered ScreenChannel property");
+        }
+
+        screen.updateMetrics(1, 2, 3.0, 4.0, 5, 6, 7,
+                             8, 9, 10,
+                             /*sdfProgramRefusals=*/16,
+                             /*sdfLastProgramRefusal=*/"Raycast refused",
+                             11.0, 12.0,
+                             /*rangeBuilds=*/13,
+                             /*rangeProxyDraws=*/14,
+                             /*rangeProxyCulledDraws=*/15,
+                             /*rangeTraversalDraws=*/17,
+                             /*rangeNodeBytesUploaded=*/18.0);
+        const struct {
+            const char* name;
+            int expected;
+        } counters[] = {
+            {"sdfRangeHierarchyBuilds", 13},
+            {"sdfRangeProxyDraws", 14},
+            {"sdfRangeProxyCulledDraws", 15},
+            {"sdfRangeTraversalDraws", 17},
+            {"sdfRangeNodeBytesUploaded", 18},
+        };
+        for (const auto& counter : counters) {
+            PropertyValue value;
+            const PropertyPath p = PropertyPath::parse(counter.name);
+            const auto res = p.getValue(screen, value);
+            double number = 0.0;
+            if (res != PropertyPath::PathResult::Ok ||
+                !propertyValueToNumber(value, number) ||
+                static_cast<int>(number) != counter.expected) {
+                fail(counter.name, "Channel — Screen",
+                     "must report the renderer-derived metric");
+            }
+            const PropertyValue refusedWrite =
+                std::string(counter.name) == "sdfRangeNodeBytesUploaded"
+                    ? PropertyValue(999.0)
+                    : PropertyValue(999);
+            if (p.setValue(screen, refusedWrite) !=
+                PropertyPath::PathResult::ReadOnly) {
+                fail(counter.name, "Channel — Screen",
+                     "derived renderer metric must remain read-only");
+            }
+        }
+
+        {
+            PropertyValue value;
+            const PropertyPath countPath = PropertyPath::parse("sdfProgramRefusals");
+            const auto res = countPath.getValue(screen, value);
+            double number = 0.0;
+            if (res != PropertyPath::PathResult::Ok ||
+                !propertyValueToNumber(value, number) ||
+                static_cast<int>(number) != 16) {
+                fail("sdfProgramRefusals", "Channel — Screen",
+                     "must report explicit renderer/compiler refusal count");
+            }
+            if (countPath.setValue(screen, PropertyValue(0)) !=
+                PropertyPath::PathResult::ReadOnly) {
+                fail("sdfProgramRefusals", "Channel — Screen",
+                     "renderer refusal count must remain derived/read-only");
+            }
+
+            const PropertyPath reasonPath = PropertyPath::parse("sdfLastProgramRefusal");
+            const auto reasonRes = reasonPath.getValue(screen, value);
+            if (reasonRes != PropertyPath::PathResult::Ok ||
+                !std::holds_alternative<std::string>(value) ||
+                std::get<std::string>(value) != "Raycast refused") {
+                fail("sdfLastProgramRefusal", "Channel — Screen",
+                     "must expose the latest renderer/compiler refusal reason");
+            }
+            if (reasonPath.setValue(screen, PropertyValue(std::string("hide it"))) !=
+                PropertyPath::PathResult::ReadOnly) {
+                fail("sdfLastProgramRefusal", "Channel — Screen",
+                     "renderer refusal reason must remain derived/read-only");
+            }
         }
     }
 

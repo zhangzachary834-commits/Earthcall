@@ -1,11 +1,16 @@
+// FOSSIL. Do not polish. This page is not the Earthcall app. Palette's commission
+// is the Law Graph and the Creator Console inside earthcall_webgpu. Read .Jules/palette.md (2026-09-30).
 document.addEventListener('DOMContentLoaded', () => {
     const inputField = document.getElementById('utterance-input');
     const emitBtn = document.getElementById('emit-btn');
     const statusText = document.getElementById('status-text');
     const statusContainer = document.getElementById('connection-status');
+    const form = document.getElementById('logos-interface');
+    const clearBtn = document.getElementById('clear-btn');
     
     let ws = null;
     let clientId = "client_" + Math.random().toString(36).substr(2, 9);
+    let lastAnnouncedState = null;
     
     // Check if we are running under Emscripten (WASM Mode)
     const isWasmMode = typeof Module !== 'undefined' && Module.Earthcall_EmitUtterance;
@@ -20,12 +25,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         statusContainer.classList.remove('connected', 'disconnected', 'connecting');
 
+        let currentState = 'disconnected';
+
         if (isConnected) {
             statusContainer.classList.add('connected');
+            currentState = 'connected';
         } else if (isConnecting) {
             statusContainer.classList.add('connecting');
         } else {
             statusContainer.classList.add('disconnected');
+        }
+
+        // Only announce state changes to prevent screen reader spam during retries
+        if (lastAnnouncedState !== currentState) {
+            const announcer = document.getElementById('sr-announcer');
+            if (announcer) {
+                announcer.textContent = isConnected ? "Engine connected" : "Engine disconnected";
+            }
+            lastAnnouncedState = currentState;
         }
 
         inputField.disabled = !isConnected;
@@ -72,6 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         console.log(`[Earthcall] Emitting: "${text}"`);
         
+        const announcer = document.getElementById('sr-announcer');
+
         if (isWasmMode) {
             // Path B: Embind directly to C++
             Module.Earthcall_EmitUtterance(text, clientId);
@@ -85,17 +104,38 @@ document.addEventListener('DOMContentLoaded', () => {
             ws.send(JSON.stringify(payload));
         } else {
             console.error("[Earthcall] Engine is not connected.");
+            form.classList.add('error-shake');
+            setTimeout(() => form.classList.remove('error-shake'), 400);
+            if (announcer) announcer.textContent = 'Error: Engine is disconnected.';
+            return;
         }
         
+        if (announcer) {
+            announcer.textContent = '';
+            setTimeout(() => {
+                announcer.textContent = `Emitted: ${text}`;
+            }, 50);
+        }
+
+        emitBtn.classList.add('success-flash');
+        setTimeout(() => emitBtn.classList.remove('success-flash'), 1000);
+
         inputField.value = '';
         inputField.dispatchEvent(new Event('input'));
         inputField.focus();
     }
     
-    const form = document.getElementById('logos-interface');
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         if (emitBtn.getAttribute('aria-disabled') === 'true') {
+            if (inputField.disabled) {
+                form.classList.add('error-shake');
+                setTimeout(() => form.classList.remove('error-shake'), 400);
+                const announcer = document.getElementById('sr-announcer');
+                if (announcer) announcer.textContent = 'Error: Engine is disconnected.';
+            } else {
+                inputField.focus();
+            }
             return;
         }
         emitUtterance();
@@ -113,23 +153,41 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') {
             if (document.activeElement === document.body || document.activeElement === document.getElementById('earthcall-canvas')) {
                 e.preventDefault();
-                inputField.focus();
+                if (!inputField.disabled) {
+                    inputField.focus();
+                } else {
+                    form.classList.add('error-shake');
+                    setTimeout(() => form.classList.remove('error-shake'), 400);
+                    const announcer = document.getElementById('sr-announcer');
+                    if (announcer) announcer.textContent = 'Error: Engine is disconnected.';
+                }
             }
         }
     });
 
     inputField.addEventListener('input', () => {
-        const isEmpty = inputField.value.trim() === '';
+        const hasText = inputField.value.length > 0;
+        const isTrimEmpty = inputField.value.trim() === '';
         const isDisabled = inputField.disabled;
 
-        emitBtn.setAttribute('aria-disabled', String(isEmpty || isDisabled));
+        emitBtn.setAttribute('aria-disabled', String(isTrimEmpty || isDisabled));
 
         if (isDisabled) {
             emitBtn.title = "Engine disconnected";
         } else {
-            emitBtn.title = isEmpty ? "Enter a word to emit" : "Emit word (Enter)";
+            emitBtn.title = isTrimEmpty ? "Enter a word to emit" : "Emit word (Enter)";
         }
 
-
+        if (clearBtn) {
+            clearBtn.style.visibility = hasText ? 'visible' : 'hidden';
+        }
     });
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            inputField.value = '';
+            inputField.dispatchEvent(new Event('input'));
+            inputField.focus();
+        });
+    }
 });

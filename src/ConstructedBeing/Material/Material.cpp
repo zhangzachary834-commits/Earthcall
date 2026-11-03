@@ -122,6 +122,38 @@ void faceTexturesFromJson(Material& m, const json& arr) {
         m.faceTextures.push_back(std::move(ft));
     }
 }
+class ResponseExprBridge : public Property {
+public:
+    explicit ResponseExprBridge(std::string name, Material* mat)
+        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)), _mat(mat) {}
+
+    std::string name() const override { return _name; }
+    Earthcall::StringId nameId() const override { return _nameId; }
+    std::string typeName() const override { return "string"; }
+
+    PropertyValue value() const override {
+        if (!_mat || !_mat->responseExpr) return PropertyValue(std::string("{}"));
+        return PropertyValue(_mat->responseExpr->toJson().dump());
+    }
+    bool setValue(const PropertyValue& v) override {
+        if (!_mat) return false;
+        const std::string* src = std::get_if<std::string>(&v);
+        if (!src) return false;
+        nlohmann::json parsed = nlohmann::json::parse(*src, nullptr, false);
+        if (parsed.is_discarded()) return false;
+
+        _mat->responseExpr =
+            std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(parsed));
+        _mat->bumpResponseRevision();
+        return true;
+    }
+
+private:
+    std::string _name;
+    Earthcall::StringId _nameId;
+    Material* _mat;
+};
+
 class ColorExprBridge : public Property {
 public:
     explicit ColorExprBridge(std::string name, Material* mat)
@@ -170,6 +202,8 @@ void Material::buildProperties() {
         "diffuse", this, &Material::diffuse));
     registerProperty(std::make_unique<ColorExprBridge>(
         "colorExpr", this));
+    registerProperty(std::make_unique<ResponseExprBridge>(
+        "responseExpr", this));
     registerProperty(std::make_unique<ComputedProperty<Material, int>>(
         "textureResolution", this, &Material::getTextureResolution, &Material::setTextureResolution));
     registerProperty(std::make_unique<ComputedProperty<Material, int>>(
@@ -232,6 +266,9 @@ json Material::toJson() const {
     if (colorExpr) {
         j["colorExpr"] = colorExpr->toJson();
     }
+    if (responseExpr) {
+        j["responseExpr"] = responseExpr->toJson();
+    }
     if (textureResolution != 64) {
         j["textureResolution"] = textureResolution;
     }
@@ -242,7 +279,19 @@ json Material::toJson() const {
 }
 
 Material Material::fromJson(const json& j) {
-    Material m(j.value("name", std::string("default")));
+    // A Material's identity IS its name ("material." + name). Hand-authored
+    // files (scripts/generate_prism_cathedral.py) wrote the identity under
+    // "id" and a display label under "name"; the loader ignored "id", so the
+    // 13 Prism Cathedral Materials were registered as "Cathedral Basalt Floor"
+    // and every Object naming material.cathedral_basalt resolved to nothing.
+    // An explicit "id" is the identity, and "name" is kept only when absent.
+    std::string identityName = j.value("name", std::string("default"));
+    if (j.contains("id") && j["id"].is_string() && !j["id"].get<std::string>().empty()) {
+        static const std::string prefix = "material.";
+        const std::string id = j["id"].get<std::string>();
+        identityName = id.rfind(prefix, 0) == 0 ? id.substr(prefix.size()) : id;
+    }
+    Material m(identityName);
     if (j.contains("baseColor") && j["baseColor"].is_array() && j["baseColor"].size() == 3) {
         m.baseColor = glm::vec3(j["baseColor"][0].get<float>(),
                                 j["baseColor"][1].get<float>(),
@@ -256,6 +305,10 @@ Material Material::fromJson(const json& j) {
     if (j.contains("colorExpr")) {
         m.colorExpr = std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(j["colorExpr"]));
     }
+    if (j.contains("responseExpr")) {
+        m.responseExpr =
+            std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(j["responseExpr"]));
+    }
     if (j.contains("textureResolution") && j["textureResolution"].is_number_integer()) {
         m.textureResolution = j["textureResolution"].get<int>();
         m.textureWidth = m.textureResolution;
@@ -268,16 +321,11 @@ Material Material::fromJson(const json& j) {
 }
 
 void Material::initFaceTextures(int numFaces, int defaultWidth, int defaultHeight) {
-    int w = defaultWidth > 0 ? defaultWidth : textureWidth;
-    int h = defaultHeight > 0 ? defaultHeight : textureHeight;
     if (faceTextures.size() == static_cast<size_t>(numFaces)) {
-        for (auto& ft : faceTextures) {
-            if (ft.width != w || ft.height != h) {
-                ft.resize(w, h);
-            }
-        }
         return; // Already initialised correctly
     }
+    int w = defaultWidth > 0 ? defaultWidth : textureWidth;
+    int h = defaultHeight > 0 ? defaultHeight : textureHeight;
     faceTextures.clear();
     for (int i = 0; i < numFaces; ++i) {
         FaceTexture tex;

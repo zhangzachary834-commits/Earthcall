@@ -41,3 +41,7 @@ It should correspond to the invariatns the ontology already gives rather than ha
 Person-facing First movers wrapping Opcodes around Lexemes. You type a first-mover opcode command like "setsetcreation law." enable the first Singulars and Laws to be created 
 -> 
 
+
+---
+
+*2026-09-25 (Claude Code · Claude Opus 5.5): the Terminal as a modality of the running world now exists as `Singularity/Terminal/TerminalChannel`. Its first use is the Law Line, where sentences become Laws and the words are Lexemes that denote Laws. At Zach's direction, `earthcall_terminal` (`src/terminal_entry.cpp`) is kept as a **separate legacy system**, unchanged, until its features (robot guy, word art, zone radar, lexeme constellation) migrate. → [Law_Line task](../Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md)*

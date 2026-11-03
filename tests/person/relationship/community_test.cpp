@@ -1,6 +1,7 @@
 #include "Person/Relationship/Community/Community.hpp"
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
+#include "Identity/KeyPair.hpp"
 #include "Person/Body/Body.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 
@@ -64,8 +65,21 @@ static void testAddMemberAndInvolves() {
     check(comm.involves(alice), "Community involves Alice after adding her");
     check(comm.involves("Alice"), "Community involves 'Alice' string after adding her");
 
+    // Regression test: distinct Person with same display name ("Alice")
+    Person alice2 = createDummyPerson("Alice");
+    check(!comm.involves(alice2), "Community must NOT involve distinct Person 'alice2' sharing the same display name 'Alice'");
+
     comm.addMember(&bob);
     check(comm.involves(bob), "Community involves Bob after adding him");
+
+    // Once a Person has cryptographic identity, display spelling is not identity.
+    Person keyedAlice = createDummyPerson("AliceKeyed");
+    Identity::PrivateKey priv = Identity::PrivateKey::generate();
+    keyedAlice.setPersonId(priv.publicKey().id());
+    comm.addMember(&keyedAlice);
+    check(comm.involves(keyedAlice), "Community involves keyedAlice by object reference");
+    check(comm.involves(keyedAlice.getIdentifier()), "Community involves keyedAlice by SingularId identifier");
+    check(!comm.involves(keyedAlice.getDisplayName()), "Community does not involve keyedAlice by display name string");
 
     // Add a non-Person member, it should be rejected and print a warning
     DummySingular dummy("NotAPerson");

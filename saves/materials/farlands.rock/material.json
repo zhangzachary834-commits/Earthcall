@@ -1,0 +1,26 @@
+{
+  "identifier": "material.farlands.rock",
+  "material": {
+    "name": "farlands.rock",
+    "baseColor": [
+      0.18,
+      0.2,
+      0.24
+    ],
+    "ambient": 0.22,
+    "diffuse": 0.78,
+    "specular": 0.25,
+    "shininess": 20.0,
+    "opacity": 1.0
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Claude Code / Claude Sonnet 5.5, session 01GxayCUN2nc7DDaeg33kXhZ",
+    "date": "2026-10-07",
+    "recovered_from": [
+      "saves/worlds/far_lands.json"
+    ]
+  }
+}

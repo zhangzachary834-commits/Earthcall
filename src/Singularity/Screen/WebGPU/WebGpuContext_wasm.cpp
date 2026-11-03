@@ -86,7 +86,7 @@ void configureSurface(WindowContext& ctx, uint32_t width, uint32_t height) {
     WGPUSurfaceConfiguration config = {};
     config.device = ctx.device;
     config.format = kSurfaceFormat;
-    config.usage = WGPUTextureUsage_RenderAttachment;
+    config.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_CopySrc;
     config.width = width;
     config.height = height;
     config.presentMode = WGPUPresentMode_Fifo;

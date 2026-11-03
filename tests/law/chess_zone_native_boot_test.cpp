@@ -1,3 +1,4 @@
+#include "Singularity/Storage/SaveSystem.hpp"
 // Regression witness for Zach's 2026-09-18 request: Chess must be a Zone,
 // not a world file a Person has to load through Assets first.
 //
@@ -86,11 +87,7 @@ int main() {
     check(std::filesystem::exists(sourceZone), "Zone-native Chess identity exists");
     if (!std::filesystem::exists(sourceZone)) return 1;
 
-    nlohmann::json zoneJson;
-    {
-        std::ifstream input(sourceZone);
-        input >> zoneJson;
-    }
+    nlohmann::json zoneJson = SaveSystem::readSaveData(sourceZone.string());
     check(zoneJson.value("identifier", std::string{}) == "Chess",
           "identity is exactly Chess");
     check(zoneJson.contains("lawRefs") && zoneJson["lawRefs"].is_array() &&

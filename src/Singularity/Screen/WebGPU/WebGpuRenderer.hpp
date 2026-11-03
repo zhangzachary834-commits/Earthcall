@@ -13,8 +13,13 @@
 
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/GpuBufferPool.hpp"
+#include "Singularity/Screen/WebGPU/VolumeRoutedTransport.hpp"
+#include <memory>
 #include "Singularity/Screen/WebGPU/GpuMeshCache.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
+#include "Singularity/Screen/VolumeZeroProof.hpp"
+#include "Singularity/Screen/VolumeRayTransport.hpp"
+#include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 
 #include <webgpu/webgpu.h>
 #include <array>
@@ -38,6 +43,16 @@ public:
     bool init(const wgpu::Device& gpu,
               WGPUTextureFormat colorFormat = WGPUTextureFormat_RGBA8Unorm);
     void shutdown();
+    // Kernel diagnostics: hardware publication inspection and refuse-only work
+    // ceiling. These are not authored state or an alternate transport policy.
+    const KernelRoutedTransport* routedTransportKernelForDiagnostics() const { return _kernelRouted.get(); }
+    // Opt-in dispatch tracing lives in KernelRoutedTransport::collectDispatchTrace; encode reads it.
+    void setRoutedCoalescedPassesForDiagnostics(bool on, bool trace=false) { if(_kernelRouted){_kernelRouted->coalescePasses=on;_kernelRouted->collectDispatchTrace=trace;} }
+    bool setRoutedRouteObserverForDiagnostics(bool on) { return _kernelRouted && _kernelRouted->enableRouteObserver(on); }
+    void resetRoutedRouteObserverForDiagnostics() { if(_kernelRouted)_kernelRouted->resetRouteHistogram(); }
+    void setRoutedSkipEmptyTilesForDiagnostics(bool on) { if(_kernelRouted)_kernelRouted->skipEmptyTiles=on&&_kernelRouted->classifySkip; }
+    void setRoutedWorkLimitForDiagnostics(uint32_t limit) { if(_kernelRouted)_kernelRouted->workLimit=std::min(limit,1024u); }
+
 
     // Offscreen frame: opens a pass rendering into an explicit `target` texture
     // view (used by tests and any render-to-texture). endFrame ends + submits it.
@@ -70,9 +85,7 @@ public:
     // Camera (view*proj + world eye position) is set once per frame; model is set
     // per object before its draws — together they replace the GL matrix stack. The
     // eye position drives the specular view vector.
-    void setCamera(const glm::mat4& viewProj, const glm::vec3& eyePos) {
-        _viewProj = viewProj; _eyePos = eyePos;
-    }
+    void setCamera(const glm::mat4& viewProj, const glm::vec3& eyePos);
     // Declaring the 2-arg overload above would otherwise HIDE the boundary's
     // 3-arg setCamera(view, proj, eye) for anyone holding a WebGpuRenderer by its
     // concrete type — a silent "too many arguments" at the call site.
@@ -85,7 +98,8 @@ public:
                       const geom::FieldNode* fieldNode = nullptr,
                       uint64_t memoId = 0,
                       uint32_t memoRevision = 0,
-                      const geom::HeightGrid* heightGrid = nullptr) override;
+                      const geom::HeightGrid* heightGrid = nullptr,
+                      uint32_t memoParameterRevision = 0) override;
 
     // Governs whether drawImplicit's heightGrid argument is actually honoured
     // (rendering-optimization Phase C). Read from @screen-channel.
@@ -93,6 +107,11 @@ public:
     // template as setWireframe -- disabled, every heightfield object simply
     // renders through the unmodified marcher, exactly as before this phase.
     void setHeightGridDdaEnabled(bool on) override { _heightGridDdaEnabled = on; }
+    void setSpaceDistortion(float d) override { _spaceDistortion = d; }
+    bool usesHeightGridDda() const override {
+        return kHeightGridDdaTraversalVerified && _heightGridDdaEnabled;
+    }
+    void setSdfRangeProxyEnabled(bool on) override { _sdfRangeProxyEnabled = on; }
 
     // Vector-field visualization (Milestone 6b): drawImplicit renders a SCALAR
     // field's surface; this renders a VECTOR field's flow as points. Positions are
@@ -102,6 +121,9 @@ public:
     // every frame. WebGPU-specific for now, same as the frame-lifecycle methods
     // above; not on the Renderer interface because nothing else implements it yet.
     void drawParticles(const geom::FieldNode& field, int count);
+    bool drawScreenForm(const OntoMath::Piecewise& color, const OntoMath::Piecewise* opacity,
+                        uint32_t width, uint32_t height, const double* time,
+                        std::string& reason) override;
 
     void drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>& segments,
                    const glm::vec4& color, float width, Blend blend) override;
@@ -121,6 +143,7 @@ public:
     void setWireframe(bool on) override { _wireframe = on; }
     bool zeroToOneDepth() const override { return true; }
     bool rendersImplicitExactly() const override { return true; }
+    void composeVolumes() override;
 
     // Persistent GPU textures for face paint. FaceTexture calls this only when the
     // paint actually changes, so holding the texture means a repainted surface
@@ -132,6 +155,7 @@ public:
                                 uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
     void releaseTexture(TextureHandle handle) override;
     void reloadShaders() override;
+    bool readPixels(uint8_t* outRgba, uint32_t width, uint32_t height) override;
 
     // CPU-GPU micro-mastery pool & persistent mesh cache
     Singularity::Screen::WebGPU::GpuBufferPool& bufferPool() { return _bufferPool; }
@@ -143,15 +167,20 @@ protected:
     void applyBeginFrame(uint32_t width, uint32_t height,
                          const glm::vec4& clearColor) override;
 
-    // Interface camera: view and proj stay separate for OpenGL's sake, so collapse
-    // them here to the single view*proj uniform this backend actually wants.
+    // Interface camera/model hooks derive and cache renderer-facing matrices
+    // through OntoMath; hot draw loops consume only the lowered cached values.
     void applyCamera(const glm::mat4& view, const glm::mat4& proj,
-                     const glm::vec3& eyePos) override {
-        setCamera(proj * view, eyePos);
-    }
-    void applyModel(const glm::mat4& model) override { _model = model; }
+                     const glm::vec3& eyePos) override;
+    void applyModel(const glm::mat4& model) override;
 
 private:
+    // Kernel-only driver resources, keyed by emitted structure. Numeric field
+    // edits share pipelines; no authored meaning is stored in this cache.
+    struct ScreenPipeline {
+        WGPURenderPipeline pipe = nullptr;
+        WGPUBindGroupLayout bgl = nullptr;
+    };
+    std::map<std::string, ScreenPipeline> _screenPipes;
     WGPUDevice _device = nullptr;
     WGPUQueue  _queue  = nullptr;
     WGPUTextureFormat _colorFormat = WGPUTextureFormat_RGBA8Unorm;
@@ -203,18 +232,383 @@ private:
     struct SdfPipeline {
         WGPURenderPipeline pipe = nullptr;
         WGPUBindGroupLayout bgl = nullptr;
+        bool usesRadianceSources = false;
     };
+
+    // GPU proof representation for conservative SDF range traversal.
+    // The complete adaptive hierarchy stays CPU-side as mathematical authority.
+    // GPU-side we rasterize only proved-positive OUTSIDE knowledge into a fixed
+    // depth bit grid. A zero bit never means "occupied" or "empty"; it means
+    // "no skip proof here, exact authored marching owns this cell."
+
     std::map<std::string, SdfPipeline> _sdfPipes;
     struct MemoizedProgram {
         uint32_t revision = 0xffffffff;
+        uint32_t parameterRevision = 0xffffffff;
         uint32_t colorRevision = 0xffffffff;
+        uint32_t responseRevision = 0xffffffff;
+        std::string responseStructure;
+        bool responseReadsNormal = false;
+        bool responseReadsWi = false;
+        bool responseReadsWo = false;
+        // Full authored radiance content identity. A change here means at least
+        // the parameter block must be reconsidered; whether WGSL structure also
+        // changed is decided by radianceStructure below.
+        uint64_t radianceRevision = 0xffffffffffffffffULL;
+        uint64_t radianceStructureRevision = 0xffffffffffffffffULL;
+        uint64_t chromaRevision = 0xffffffffffffffffULL;
+        uint64_t chromaStructureRevision = 0xffffffffffffffffULL;
+        uint64_t angularRevision = 0xffffffffffffffffULL;
+        uint64_t angularStructureRevision = 0xffffffffffffffffULL;
+        uint64_t densityRevision = 0xffffffffffffffffULL;
+        sdfwgsl::DensityInputKind densityKind = sdfwgsl::DensityInputKind::LegacyField;
+        std::string densityStructure;
+        uint64_t extinctionRevision = 0xffffffffffffffffULL;
+        std::string extinctionStructure;
+        uint64_t scatteringRevision = 0xffffffffffffffffULL;
+        std::string scatteringStructure;
+        uint64_t volumeChromaRevision = 0xffffffffffffffffULL;
+        std::string volumeChromaStructure;
+        uint64_t phaseRevision = 0xffffffffffffffffULL;
+        std::string phaseStructure;
+        bool phaseReadsWi = false;
+        bool phaseReadsWo = false;
+        uint64_t emissionRevision = 0xffffffffffffffffULL;
+        std::string emissionStructure;
+        bool emissionReadsOmega = false;
+        bool multiSource = false;
+        uint64_t sourceSetRevision = 0xffffffffffffffffULL;
+        uint64_t sourceSetStructureRevision = 0xffffffffffffffffULL;
         const OntoMath::Piecewise* colorExprPtr = nullptr;
         sdfwgsl::Program prog;
         const SdfPipeline* sp = nullptr;
+        // Derived solely from SDF tree structure. Compute it when this memo is
+        // compiled rather than re-walking the AST for every draw of a static field.
+        bool isProvenHeightfield = false;
+
+        // Parameter-dependent conservative spatial proof cache. It is derived
+        // substrate only; every unknown region remains represented by the proxy.
+        uint32_t rangeParameterRevision = 0xffffffff;
+        glm::vec3 rangeAuthoredExtent{0.0f};
+        geom::SdfRangeHierarchy rangeHierarchy;
+        geom::SdfZeroSetProxy rangeProxy;
+        // Fixed-depth positive-proof bit grid, rebuilt only when the range
+        // theorem invalidates. One bit corresponds to one depth-N regular cell.
+        std::vector<uint32_t> rangeProofWords;
+        bool rangeHasPositiveSkip = false;
+        bool rangeReady = false;
     };
     std::unordered_map<uint64_t, MemoizedProgram> _programCache;
-    WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by every field
+
+    // The active Zone radiance expression is shared across every SDF draw in a
+    // frame. Inspect its emitted structure once per authored content revision,
+    // not once per Object: thousands of surfaces must not mean thousands of
+    // redundant walks of the same source AST.
+    uint64_t _radianceLayoutRevision = 0xffffffffffffffffULL;
+    const OntoMath::Piecewise* _radianceLayoutExprPtr = nullptr;
+    sdfwgsl::ScalarExpressionLayout _radianceLayout;
+    uint64_t _radianceStructureRevision = 0;
+
+    // chi(p,t) has its own structural identity and content revision. A numeric
+    // recolor must not pretend rho changed, and a structural chi edit must not
+    // invalidate rho's independently memoized identity.
+    uint64_t _chromaLayoutRevision = 0xffffffffffffffffULL;
+    const OntoMath::Piecewise* _chromaLayoutExprPtr = nullptr;
+    sdfwgsl::VectorExpressionLayout _chromaLayout;
+    uint64_t _chromaStructureRevision = 0;
+
+    // alpha(p,omega,t) is a third independent source invariant. Numeric angular
+    // edits refresh only packed values; structural edits advance this identity.
+    uint64_t _angularLayoutRevision = 0xffffffffffffffffULL;
+    const OntoMath::Piecewise* _angularLayoutExprPtr = nullptr;
+    sdfwgsl::AngularExpressionLayout _angularLayout;
+    uint64_t _angularStructureRevision = 0;
+
+    // Composite structural identity for Rung 7. Source positions, colors,
+    // enablement and numeric AST parameters are values; source count and each
+    // rho/chi/alpha emitted shape are structure.
+    uint64_t _radianceSourcesLayoutRevision = 0xffffffffffffffffULL;
+    std::string _radianceSourcesLayoutStructure;
+    bool _radianceSourcesLayoutOk = true;
+    std::string _radianceSourcesLayoutError;
+    uint64_t _radianceSourcesStructureRevision = 0;
+
+    // Pipeline-local parameter storage survives frame boundaries. The frame still
+    // assembles the compact contiguous parameter vector in instance order, but an
+    // unchanged vector is not uploaded again. This is the first persistent-GPU
+    // rung; later work can eliminate the remaining CPU repack via stable slots.
+    struct PersistentSdfParams {
+        WGPUBuffer buffer = nullptr;
+        uint64_t capacityBytes = 0;
+        std::vector<float> mirror;
+    };
+    std::unordered_map<const SdfPipeline*, PersistentSdfParams> _persistentSdfParams;
+    size_t _persistentSdfParamVramBytes = 0;
+    void releasePersistentSdfParams();
+
+    // The positive-proof bit grid is static between SDF value revisions. Keep
+    // it resident so spatial Prophetic traversal does not replace evaluation
+    // debt with per-frame uploads.
+    struct PersistentSdfRangeNodes {
+        WGPUBuffer buffer = nullptr;
+        uint64_t capacityBytes = 0;
+        std::vector<uint32_t> mirror;
+    };
+    std::unordered_map<const SdfPipeline*, PersistentSdfRangeNodes> _persistentSdfRangeNodes;
+    size_t _persistentSdfRangeNodeVramBytes = 0;
+    void releasePersistentSdfRangeNodes();
+
+    struct PersistentRadianceSources {
+        WGPUBuffer buffer = nullptr;
+        uint64_t capacityBytes = 0;
+        std::vector<unsigned char> mirror;
+    };
+    PersistentRadianceSources _persistentRadianceSources;
+    size_t _persistentRadianceSourceVramBytes = 0;
+    void releasePersistentRadianceSources();
+
+    WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by SDF + volume proxies
+    void ensureSdfCubeVerts();
     const SdfPipeline* sdfPipeline(const std::string& wgsl);
+
+    // ---- Volumetric V0c composite pass ----
+    // A participating medium is composited AFTER opaque world depth is final
+    // and BEFORE HUD/2D. It therefore has its own pipeline family and never
+    // borrows the hard-surface SDF depth-writing pipeline.
+    // Kernel-derived, device-bound time preparation shared by camera lanes.
+    struct KernelVolumeTimePipeline {
+        WGPUComputePipeline pipe = nullptr;
+        WGPUBindGroupLayout globalBgl = nullptr;
+    };
+    std::map<std::string, KernelVolumeTimePipeline> _kernelVolumeTimePipes;
+    // Kernel-only device cache, released on shutdown; viewport resources rebuild
+    // on resize. Mathematical support recipes are rederived each frame.
+    std::unique_ptr<KernelRoutedTransport> _kernelRouted;
+    struct VolumePipeline {
+        bool routed = false; // compiled layout, never authored medium state
+        KernelRoutedTransport::Program* routedProgram=nullptr; // Kernel owns stable entries; reload clears pipelines before owner reset
+        WGPURenderPipeline pipe = nullptr;
+        WGPUBindGroupLayout globalBgl = nullptr;
+        WGPUBindGroupLayout instanceBgl = nullptr;
+        const KernelVolumeTimePipeline* preparation = nullptr;
+        uint32_t preparationInstanceBase = 0;
+    };
+    std::map<std::string, VolumePipeline> _volumePipes;
+
+    // Kernel-derived layouts retain source coordinate/clock domains independently.
+    struct KernelVolumeSourceLayouts {
+        std::tuple<const OntoMath::Piecewise*, const OntoMath::Piecewise*,
+                   const OntoMath::Piecewise*, uint64_t, uint64_t, uint64_t> key;
+        bool ready = false;
+        sdfwgsl::ScalarExpressionLayout radiance;
+        sdfwgsl::VectorExpressionLayout chroma;
+        sdfwgsl::AngularExpressionLayout angular;
+    } _kernelVolumeSourceLayouts;
+
+    struct VolumeProgramMemo {
+        uint64_t contentRevision = 0xffffffffffffffffULL;
+        std::string structure;
+        bool ok = false;
+        std::string error;
+        bool phaseReadsWi = false;
+        bool phaseReadsWo = false;
+        bool emissionReadsOmega = false;
+        sdfwgsl::Program prog;
+        const VolumePipeline* pipeline = nullptr;
+    };
+    // V4 program identity spans all independently authored medium channels.
+    // Shared D/sigma_t/sigma_s/C_v/Phi with different E_v must never collide or
+    // evict one another's structure/value cache every frame.
+    using VolumeProgramKey = std::tuple<
+        const OntoMath::Piecewise*, const OntoMath::Piecewise*,
+        const OntoMath::Piecewise*, const OntoMath::Piecewise*,
+        const OntoMath::Piecewise*, const OntoMath::Piecewise*,
+        const geom::SdfNode*,
+        const OntoMath::Piecewise*, const OntoMath::Piecewise*, const OntoMath::Piecewise*,
+        bool,  // Kernel-only support-trimming lane; selected in flushVolumeComposite.
+        bool>; // Rung 2f-native support-certificate lane (volumeSupportCertificatesEnabled).
+    std::map<VolumeProgramKey, VolumeProgramMemo> _volumeProgramCache;
+
+    // Kernel evaluator retention is independent of set membership and camera lane.
+    // Only a changed medium/source revision reconsiders this medium's lowering.
+    struct KernelVolumeEvaluatorMemo {
+        uint64_t revision = 0xffffffffffffffffULL;
+        std::string structure;
+        sdfwgsl::KernelVolumeEvaluator evaluator;
+        bool ready = false;
+        bool phaseReadsWi = false;
+    };
+    std::map<VolumeProgramKey, KernelVolumeEvaluatorMemo> _kernelVolumeEvaluators;
+
+    // V5 fused overlap cache. Membership/order and each member's six authored
+    // expression identities form the structural lane; content revisions decide
+    // whether numeric parameters must refresh. The shader itself sums media at
+    // each ray sample, so framebuffer draw order is no longer transport law.
+    using VolumeSetProgramKey = std::vector<VolumeProgramKey>;
+    struct VolumeSetProgramMemo {
+        uint64_t contentRevision = 0xffffffffffffffffULL;
+        std::string structure;
+        bool ok = false;
+        std::string error;
+        bool phaseReadsWi = false;
+        sdfwgsl::Program prog;
+        std::vector<uint32_t> paramOffsets;
+        const VolumePipeline* pipeline = nullptr;
+    };
+    std::map<VolumeSetProgramKey, VolumeSetProgramMemo> _volumeSetProgramCache;
+
+    struct VolumeInstanceData {
+        glm::vec4 origin;
+        glm::vec4 halfExtent;
+        glm::vec4 time;
+        uint32_t paramOffset = 0;
+        // Zero-density proof location in the params batch (see
+        // volumeZeroProven/volumeSupportInterval in SdfWgsl's volume prefix).
+        // attachVolumeZeroProof writes bit words followed by six bounds in both lanes;
+        // 0 present = none. All are Kernel-derived data, never authored bounds.
+        uint32_t zeroProofOffset = 0;
+        uint32_t zeroProofDims = 0;
+        uint32_t zeroProofPresent = 0;
+        // Rung 2f-native support certificates (attachVolumeSupportCertificates):
+        // header block offset in the params batch and enabled candidate count.
+        // Kernel-derived; the two reserved words keep the std430 16-byte stride.
+        uint32_t supportCertOffset = 0;
+        uint32_t supportCertCount = 0;
+        uint32_t supportClosedOffset = 0;   // Rung 2b closed-form killers: 16 floats each
+        uint32_t supportClosedCount = 0;
+    };
+    // Kernel-derived resident layout/bytes. No authored state is hidden here:
+    // equations remain on their registered FieldNodes; camera/clocks stream.
+    struct KernelVolumePayload {
+        WGPUBuffer buffer = nullptr;
+        uint64_t capacityBytes = 0;
+        uint64_t lastEncodedFrame = 0xffffffffffffffffULL;
+        std::vector<float> mirror;
+        std::string layoutIdentity, uploadedLayoutIdentity;
+        std::vector<VolumeInstanceData> proofMetadata;
+    };
+    std::map<const VolumePipeline*, KernelVolumePayload> _kernelVolumePayloads;
+
+    // Proofs keyed by density expression and invalidated by its revision and
+    // the box size (the grid tiles the box). Revision 0 means an unrevisioned
+    // binding, which never gets a proof: a cache it could not invalidate would
+    // be a stale theorem. Entries unused for a frame are dropped.
+    struct VolumeZeroProofMemo {
+        uint64_t densityRevision = 0;
+        glm::vec3 halfExtent{0.0f};
+        Rendering::VolumeZeroProof proof;
+        uint64_t lastUsedFrame = 0;
+    };
+    std::unordered_map<const OntoMath::Piecewise*, VolumeZeroProofMemo> _volumeZeroProofs;
+    uint64_t _volumeZeroProofFrame = 0;
+    // Rung 2f-native certificate payload, same lifetime as the zero proof:
+    // density revision × box extent × clock bucket (revision 0 never gets one). `payload` is
+    // VolumeSupportKillerProgram's header block followed by its operand
+    // constants; `count` the enabled candidates (0 = nothing to attach).
+    struct VolumeSupportCertificateMemo {
+        uint64_t densityRevision = 0;
+        glm::vec3 halfExtent{0.0f};
+        double clockBucket = 0.0;   // volumeClockMagnitudeBucket(t): slack grows with |t|
+        // Eligibility inputs (Rendering::estimateVolumeSupportCertificateGain).
+        bool autoEligibility = true;
+        bool gridProof = true;
+        int samplesPerChord = 0;
+        // Rendering::volumeDensitySampleCost, which every channel's text decides
+        // through the shared-noise prelude: re-derived when any channel revision
+        // moves (contentRevision), and the estimate re-ranks only if it changed.
+        uint64_t contentRevision = 0;
+        double densitySampleCost = -1.0;
+        Rendering::VolumeSupportCertificateEstimate estimate;
+        // The enabled killers (line-form switch indices, slot order) and their
+        // lowered WGSL: only these are compiled (sdfwgsl::lowerVolumeSupportKillers
+        // `only`), so the text is part of the program structure.
+        std::vector<uint32_t> switches;
+        std::string wgsl;
+        std::vector<float> payload;
+        uint32_t count = 0;          // per-sample (reach) killers, compiled
+        uint32_t closedCount = 0;    // Rung 2b closed forms (all closed killers'), 16 floats each after the reach block
+        uint32_t closedOffset = 0;   // within payload
+        // Bumped by every rebuild and folded into the payload identity, so a
+        // re-laid payload (killer set, closed-form block) is always re-uploaded,
+        // even when the compiled switches, and so the pipeline, stay the same.
+        uint64_t generation = 0;
+        std::string refusal;
+        uint64_t lastUsedFrame = 0;
+        // Measured eligibility (auto mode; Zach 2026-10-18: "we can do hidden
+        // render", measured once per necessary interval). The estimate admits,
+        // the device may veto: hidden renders time this frame's volume pass with
+        // the medium's certificates on and off, one pair per frame in ABBA order,
+        // and the verdict holds per regime (volumeSupportCertificateRegime) until
+        // the structure above rebuilds, which clears every regime.
+        struct Measurement {
+            int verdict = -1;          // -1 unmeasured (the estimate stands), 0 veto, 1 keep
+            bool warmed = false;       // the first pair compiles and warms; it is not recorded
+            // Height of the timed band as a fraction of the footprint: the warm-up
+            // pair uses kCertificateProbeWarmBand, then it is sized once to the budget.
+            double band = 0.0;
+            std::vector<double> onMs, offMs;
+        };
+        std::map<uint64_t, Measurement> measured;
+    };
+    std::unordered_map<const OntoMath::Piecewise*, VolumeSupportCertificateMemo> _volumeSupportCertificates;
+    bool volumeSupportCertificatesActive(const Rendering::VolumeDensityBinding& medium, const glm::vec3& halfExtent);
+    // The interval a measured verdict holds for: inside or outside the box, the
+    // camera's distance octave in box radii, the viewport's pixel octave and the
+    // set's membership. Returning to a regime reuses its verdict.
+    uint64_t volumeSupportCertificateRegime(const Rendering::VolumeDensityBinding& medium,
+                                            const glm::vec3& halfExtent) const;
+    // Whether the box covers enough of the view for a timing to mean anything,
+    // and its projected rectangle in framebuffer pixels (the whole view when the
+    // box straddles the eye plane).
+    bool volumeSupportCertificateFootprint(const glm::vec3& origin, const glm::vec3& halfExtent,
+                                           glm::uvec4& pixels) const;
+    // Runs one hidden on/off pair after endFrame's submit (CPU clock around
+    // queue completion; no timestamp queries, which stay off after flicker).
+    void probeVolumeSupportCertificates();
+    const OntoMath::Piecewise* _certificateProbeMedium = nullptr;   // set only while a hidden lane encodes
+    bool _certificateProbeOn = false;
+    glm::uvec4 _certificateProbeFootprint{0u};   // x, y, w, h in pixels (hidden lanes only)
+    uint32_t _certificateProbeStripRows = 0;      // rows per timed strip
+    static constexpr std::size_t kCertificateProbePairs = 4;     // recorded pairs after the warm-up pair
+    static constexpr double kCertificateProbeKeepRatio = 0.97;    // keep only if ≥3% faster (median)
+    static constexpr double kCertificateProbeMinCoverage = 0.02;  // of the view, by projected box rectangle
+    static constexpr std::size_t kCertificateProbeMaxRegimes = 32;
+    // The hidden pair times full-resolution rays in strips through the medium's
+    // footprint, never a smaller image: warm up on 1/16 of its height, then size
+    // the strips so one pair's work (round-trip overhead subtracted) is about the
+    // budget (2026-10-18: a full-footprint pair at 2560x1440 cost up to 80 ms per
+    // frame for five frames; one centred band misjudged edge-dominated gains).
+    static constexpr double kCertificateProbeWarmBand = 1.0 / 16.0;
+    static constexpr double kCertificateProbeMinBand = 1.0 / 64.0;
+    static constexpr double kCertificateProbePairBudgetMs = 5.0;
+    static constexpr uint32_t kCertificateProbeStrips = 8;
+    // Hidden timing target. Beneath the Kernel (GPU handles; Refusal 6 exemption):
+    // its pixels are never read, only the time the pass took to fill them.
+    WGPUTexture     _certificateProbeTex  = nullptr;
+    WGPUTextureView _certificateProbeView = nullptr;
+    uint32_t _certificateProbeW = 0, _certificateProbeH = 0;
+    void attachVolumeSupportCertificates(const Rendering::VolumeDensityBinding& medium,
+                                         const glm::vec3& halfExtent,
+                                         std::vector<float>& params,
+                                         VolumeInstanceData& instance, bool appendPayload);
+    VolumeZeroProofMemo* updateVolumeZeroProofMemo(const Rendering::VolumeDensityBinding& medium,
+                                                   const glm::vec3& halfExtent);
+    void attachVolumeZeroProof(const Rendering::VolumeDensityBinding& medium,
+                               const glm::vec3& halfExtent,
+                               std::vector<float>& params,
+                               VolumeInstanceData& instance,
+                               bool trimProofSupport, bool appendPayload = true);
+    std::map<const VolumePipeline*, std::vector<VolumeInstanceData>> _volumeBatches;
+    std::map<const VolumePipeline*, std::vector<float>> _volumeParamBatches;
+    // Ordinary V0-V4 pipelines draw one proxy instance per medium. A V5 fused
+    // set stores one union-bounds header plus N medium records but draws only
+    // the header proxy once; this map records that explicit draw count.
+    std::map<const VolumePipeline*, uint32_t> _volumeDrawInstanceCounts;
+    std::vector<const VolumePipeline*> _activeVolumePipelines;
+    const VolumePipeline* volumePipeline(const sdfwgsl::Program& program, bool routed = false);
+    const KernelVolumeTimePipeline* volumeTimePipeline(const std::string& wgsl,
+                                                     WGPUBindGroupLayout instances);
+    void flushVolumeComposite();
 
     // setWireframe: meshes draw as edges instead of filled triangles.
     bool _wireframe = false;
@@ -222,6 +616,45 @@ private:
     // (Phase C). Defaults true so the optimization is live out of the box;
     // a Person can author @screen-channel.heightGridDdaEnabled = false.
     bool _heightGridDdaEnabled = true;
+    float _spaceDistortion = 0.0f;
+    // Native Metal sweep still has an unresolved grazing-root hand-off mismatch.
+    // Keep the verification latch next to the capability query so callers can
+    // avoid building a grid that this build is forbidden to consume.
+    static constexpr bool kHeightGridDdaTraversalVerified = false;
+
+    // Activation gate for the generic conservative range hierarchy. The first
+    // rung used it only to tighten the raster proxy; the next rung also uploads
+    // the same proof tree and skips proved-zero-free ray cells before exact SDF
+    // evaluation. OFF remains the fail-open baseline and parity oracle.
+    bool _sdfRangeProxyEnabled = false;
+    // Tightening the raster cube itself is independently quarantined after the
+    // native parity corpus found a one-pixel SmoothUnion@xform edge mismatch.
+    // The proof hierarchy may still build, cull a completely zero-free draw,
+    // and accelerate rays internally; only proxy-edge shrink is disabled.
+    static constexpr bool kSdfRangeRasterTighteningVerified = false;
+    // The generic range theorem is valid for distance fields too, but the
+    // over-relaxed marcher has a separate sample-history contract. Native
+    // parity still shows a one-pixel SmoothUnion@xform difference when spatial
+    // jumps perturb that path. Keep it quarantined for this rung: expensive
+    // authored Expr fields use the gradient-corrected marcher and remain the
+    // intended acceleration target.
+    static constexpr bool kSdfRangeDistanceTraversalVerified = false;
+    // The complete CPU theorem still refines to depth 6: convex Perlin
+    // interpolation now proves a small frontier at depth 5, but the overwhelming
+    // majority of useful sign proofs still appear one rung deeper.
+    static constexpr uint8_t kSdfRangeProxyMaxDepth = 6;
+    // GPU traversal intentionally consumes a coarser regular proof grid.
+    // A target cell is marked positive only when the corresponding CPU theorem
+    // subtree proves the ENTIRE region f>0: either an ancestor/node proves it
+    // directly, or every partitioning child recursively proves it. Omitted finer
+    // positive fragments simply fall back to exact authored marching.
+    static constexpr uint8_t kSdfRangeGpuProofDepth = 4;
+    // A complete depth-6 octree contains
+    // 1+8+64+512+4096+32768+262144 = 299,593 nodes.
+    // Keep enough headroom for a complete proof tree; partial-tree budget
+    // exhaustion remains correct but can accidentally hide the useful positive
+    // cells this rung exists to discover.
+    static constexpr uint32_t kSdfRangeProxyMaxNodes = 327680;
 
     // Depth buffer, recreated when the target size changes.
     WGPUTexture     _depthTex  = nullptr;
@@ -249,13 +682,24 @@ private:
     // present() so an overlay pass can run between them.
     WGPUTexture     _surfaceTex  = nullptr;
     WGPUTextureView _surfaceView = nullptr;
+    WGPUBuffer      _readbackBuffer = nullptr;
+    uint64_t        _readbackBufferSize = 0;
+
+    // Borrowed color target for the currently recorded frame. Offscreen callers
+    // own the view; live rendering aliases _surfaceView. Held only until
+    // endFrame() so composeVolumes() can open load-preserving secondary passes.
+    WGPUTextureView _frameColorView = nullptr;
 
     // Current frame state.
     WGPUCommandEncoder   _encoder = nullptr;
     WGPURenderPassEncoder _pass   = nullptr;
     glm::mat4 _viewProj{1.0f};
+    glm::mat4 _invViewProj{1.0f};
     glm::mat4 _model{1.0f};
+    glm::mat4 _modelViewProj{1.0f};
     glm::vec3 _eyePos{0.0f};
+    bool _inverseViewProjValid = true;
+    bool _modelViewProjValid = true;
 
     // Optional execution timing. Query writes bracket the main command encoder's
     // render pass; each result is copied into a small readback ring and consumed
@@ -266,6 +710,8 @@ private:
         WGPUBuffer readback = nullptr;
         bool mapPending = false;
         bool mapReady = false;
+        bool volumeEncoded = false;
+        uint64_t frame = 0;
         WGPUMapAsyncStatus mapStatus = WGPUMapAsyncStatus_Error;
     };
     static constexpr size_t kGpuTimestampReadbackSlots = 4;
@@ -275,6 +721,9 @@ private:
     float _gpuTimestampPeriodNs = 0.0f;
     float _latestGpuMainPassMs = 0.0f;
     bool _hasGpuMainPassTiming = false;
+    float _latestGpuVolumePassMs = 0.0f;
+    bool _hasGpuVolumePassTiming = false;
+    uint64_t _latestGpuTimingFrame = 0;
     int _timestampSlotForFrame = -1;
     size_t _nextTimestampSlot = 0;
     bool initGpuTimestampQueries(bool deviceCapability);
@@ -294,6 +743,9 @@ private:
     Singularity::Screen::WebGPU::GpuBufferPool _bufferPool;
     Singularity::Screen::WebGPU::GpuMeshCache  _meshCache;
     uint64_t _frameCount = 0;
+    // One resident volume payload write per submission: every frame and every
+    // hidden certificate-timing lane is its own encoding (KernelVolumePayload).
+    uint64_t _volumePayloadEpoch = 0;
 
     // ---- Instanced mesh batching (CPU-GPU micro-mastery Phase 4.3) ----
     // drawMesh no longer draws immediately: it groups by everything that has
@@ -342,6 +794,7 @@ private:
     struct SdfInstanceData {
         glm::mat4 model;
         glm::mat4 invModel;
+        glm::mat4 normalMat;
         glm::vec4 baseColor;
         glm::vec4 shading;
         glm::vec4 extents;
@@ -359,11 +812,23 @@ private:
         uint32_t heightGridOffset = 0;
         uint32_t heightGridDimX = 0;
         uint32_t heightGridDimZ = 0;
+        // Conservative positive-proof bit grid. count==0 is the exact
+        // baseline. offset/count are u32 words in the shared proof buffer;
+        // rangeProofDepth is the regular subdivision depth used by those bits.
+        uint32_t rangeProofWordOffset = 0;
+        uint32_t rangeProofWordCount = 0;
+        uint32_t rangeTraversalEnabled = 0;
+        uint32_t rangeProofDepth = 0;
     };
     std::map<const SdfPipeline*, std::vector<SdfInstanceData>> _sdfBatches;
     std::map<const SdfPipeline*, std::vector<float>> _sdfParamsBatches;
     std::map<const SdfPipeline*, std::vector<glm::vec2>> _sdfHeightGridBatches;
-    WGPUBindGroupLayout _sdfInstanceBgl = nullptr; // group(1): instances (binding 0) + height cells (binding 1)
+    std::map<const SdfPipeline*, std::vector<uint32_t>> _sdfRangeNodeBatches;
+    // Maps retain their vectors across frames so capacity is reused. This list
+    // names only pipelines that actually received an instance this frame,
+    // avoiding an ever-growing scan of historical pipeline keys.
+    std::vector<const SdfPipeline*> _activeSdfPipelines;
+    WGPUBindGroupLayout _sdfInstanceBgl = nullptr; // group(1): instances (0) + height cells (1) + range nodes (2)
     void flushSdfDraws();
 
     // Last pipeline bound on the CURRENT pass. Kernel state: a driver-object

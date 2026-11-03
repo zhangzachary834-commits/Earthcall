@@ -2,13 +2,21 @@
 #include <vector>
 #include <string>
 #include <optional>
+#include <map>
+#include <unordered_map>
 #include <unordered_set>
 #include "json.hpp"
 #include "Zone/Zone.hpp"
 #include "SaveContext.hpp"
+#include <memory>
+
+class Material;
 
 class LawManager;
+class Law;
 class Person;
+
+bool isObservationZone(const Zone& zone);
 
 // Persistence and UI state for save/load operations
 struct SaveLoadState {
@@ -35,6 +43,42 @@ class ZoneManager {
     // remain visible in zone.json; this set only tells switchTo which runtime
     // registrations it must release on departure.
     std::unordered_set<std::string> _activeZoneLawIds;
+    // Other presences that hold a Zone's Law closure live (the Terminal line's
+    // location -- Terminal_Zones.md, Zach 2026-09-30), by holder identifier.
+    // Derived activation cache, like _activeZoneLawIds: the authored truth is
+    // each Zone's lawRefs. A Law live for several presences is shared and is
+    // removed only when none of them still needs it.
+    std::unordered_map<std::string, std::unordered_set<std::string>> _heldZoneLawIds;
+    std::unordered_map<std::string, std::string> _heldZoneOf;   // holder -> Zone identifier
+
+    struct PreparedZoneLaw {
+        std::string id;
+        std::shared_ptr<Law> law;
+        std::vector<std::string> triggers;
+    };
+    bool prepareZoneLawClosure(size_t index, std::vector<PreparedZoneLaw>& prepared,
+                               std::unordered_set<std::string>& requestedLawIds,
+                               nlohmann::json* identityOut = nullptr);
+    // The Material half of a Zone's closure (Per-Zone serialization pathway,
+    // proof 4 and 5; Claude Sonnet 5.5, 2026-10-07). Every Material an Object
+    // in the stored identity names must resolve from that identity's own
+    // embedded `materials`, a shared root named by `materialRefs`
+    // (saves/materials/<stem>/material.json), or the built-in default -- NOT from
+    // whatever another Zone happened to leave in the live register. Resolved
+    // before any live state changes; a miss refuses with the old Zone intact.
+    bool prepareZoneMaterialClosure(size_t index, const nlohmann::json& identity,
+                                    std::vector<std::shared_ptr<Material>>& sharedRoots);
+    bool lawInUse(const std::string& lawId) const;
+    bool heldByAnyone(const std::string& lawId, const std::string& exceptHolder = {}) const;
+    // Laws retired from a Zone by an authored act, by Zone identifier.
+    std::unordered_map<std::string, std::unordered_set<std::string>> _retiredLawIdsByZone;
+    // Residence index for locate(): being -> the Zone whose store holds it.
+    // Derived state (DERIVED_STATE_LEDGER): rebuilt when the Universe clock
+    // has advanced since the last build, and on any miss. Stale for at most
+    // the remainder of a tick for a being moved between stores mid-tick.
+    mutable std::unordered_map<const Singular*, Zone*> _residenceIndex;
+    mutable double _residenceStamp = -1.0;
+    mutable bool _residenceBuilt = false;
 
 public:
     std::vector<std::shared_ptr<Object>>& getGlobalObjects() { return globalObjects; }
@@ -42,6 +86,18 @@ public:
 
     void addZone(std::shared_ptr<Zone> zone);
     bool switchTo(size_t index);
+    // A presence other than the Person holds a Zone's authored Law closure
+    // live: the same preflight as switchTo (nothing half-loads; a First Mover
+    // author must stand), without moving the Person or the world in front of
+    // them. Re-holding moves the holder; its previous Zone's Laws are released
+    // unless another presence still holds them. False, with the refusal on
+    // stderr, leaves the holder where it was.
+    bool holdZoneClosure(const std::string& holder, size_t index);
+    void releaseZoneClosure(const std::string& holder);
+    std::string heldZone(const std::string& holder) const;
+    // Zone index by identifier or display name (exact, then case-insensitive);
+    // npos when none or ambiguous.
+    size_t findZoneIndex(const std::string& nameOrId) const;
     void describeCurrent() const;
 
     void loadZone();
@@ -69,6 +125,7 @@ public:
     // can mint into the live working set. Tests that fire that action bind
     // their own. Not a second registry — one live pointer.
     void bindLive();
+    void unbindLive();
     static ZoneManager* live();
 
     // Bind the one running Law register. Zone activation resolves lawRefs
@@ -81,6 +138,43 @@ public:
     // `lawRefs`, so leaving the Zone releases it and Save Zone can persist it.
     // This is authored membership, not inference from the global LawManager.
     bool adoptLawIntoActiveZone(const std::string& lawId);
+
+    // The inverse, and equally an authored act (a confirmed deletion, via a
+    // Destroy whose victim is a Law): the Law leaves the active Zone's
+    // closure. Save Zone otherwise only APPENDS to `lawRefs`, so the
+    // retirement is remembered per Zone and dropped from `lawRefs` on save —
+    // and honoured if the Zone is re-entered before a save. The Law's own
+    // file under saves/laws/ stays on disk as history.
+    bool retireLawFromActiveZone(const std::string& lawId);
+    bool isLawRetiredFrom(const std::string& zoneId, const std::string& lawId) const;
+
+    // ------------------------------------------------------------------
+    // Zones as mathematical bounds — the kernel locator
+    // (docs/plans/ZONES_AS_MATHEMATICAL_BOUNDS_PLAN_2026-09-23.md, Rung 1).
+    // A SENSE, not a decision: it answers where a being is from its authored
+    // coordinates and the Zones' authored extents. It never moves, owns, or
+    // governs anything. Implemented in ZoneBounds.cpp.
+    // ------------------------------------------------------------------
+    Zone* findZone(const std::string& identifier) const;
+    // The Zone this one is `within`, or null (a cycle or dangling id is null).
+    Zone* withinOf(const Zone& zone) const;
+    // Follow `within` to the outermost Zone: the continuum this Zone lives in.
+    Zone* dimensionalRootOf(const Zone& zone) const;
+    // Which Zone's store holds the being — the frame its coordinates are
+    // written in. A Person resides in the Zone they are present in (active,
+    // until Rung 2). A Zone's residence is the Zone it is within.
+    Zone* residenceOf(const Singular& being) const;
+    // Every Zone that contains the being, outermost first. Without axes on
+    // the continuum, location falls back to the residence chain (today's
+    // meaning), so an unauthored world answers exactly as before.
+    std::vector<Zone*> locate(const Singular& being) const;
+    // The being's coordinates in `frame`'s own frame (axis -> number).
+    // False when the continuum has no axes or an axis does not read.
+    bool coordinatesIn(const Singular& being, const Zone& frame,
+                       std::map<std::string, PropertyValue>& out) const;
+    // @world.zoneId / @world.zonePath / @world.dimensionalZoneId, answered
+    // through ZoneManager::live(). Idempotent.
+    static void installZoneReadings();
 
     // Primary Home is a kernel fact: find-or-mint the Person's dwelling,
     // not "any Zone they own". The Person-aware overload is the ordinary live

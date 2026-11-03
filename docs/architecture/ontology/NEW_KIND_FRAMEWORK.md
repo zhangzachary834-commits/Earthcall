@@ -347,8 +347,8 @@ guidelines; an agent encountering them stops and asks the world's author.
 1. **No new subclass of `Singular` or `Object` for a domain noun.** Not `Robot`, not
    `Vehicle`, not `Tree`, not `Instrument`. The existing subclasses are ontological
    categories (`Person`, `Relation`, `Formation`, `Law`, `Zone`,
-   `ObjectConcept`, `Body`, `Moment`), and the list closes to domain nouns permanently.
-   *(Exception: The human form. `BodyPart` and constitutive members for the `Person` vessel are invariant ontological structures, not domain nouns, and thus admitted in C++. `Moment` is admitted on the same footing — time's instant-or-interval structure is invariant, not a domain noun; there is no `class Duration` beside it. See `TIME_AND_MOMENT.md`.)*
+   `ObjectConcept`, `Body`, `Timeline`, `Moment`), and the list closes to domain nouns permanently.
+   *(Exception: The human form. `BodyPart` and constitutive members for the `Person` vessel are invariant ontological structures, not domain nouns, and thus admitted in C++. `Timeline` and `Moment` are admitted on the same footing: a Timeline is time's relative domain/container and a Moment is its instant-or-interval structure. Neither is a domain noun, there is no `class Duration`, and there is no enum/class family of timeline kinds. See `TIME_AND_MOMENT.md`.)*
 
 2. **`Body` is reserved for Persons.** A `Body` is the visual/physical representation
    of a Person specifically — it implies embodied personhood, a Singular that is

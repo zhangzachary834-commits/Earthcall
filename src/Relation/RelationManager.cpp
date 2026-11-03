@@ -101,6 +101,30 @@ void RelationManager::forgetBeingEverywhere(const Singular* being) {
     }
 }
 
+void RelationManager::forgetTypeLexemeEverywhere(
+    const Singularity::Language::Lexeme* lexeme) {
+    if (!lexeme) return;
+
+    // Deliberately rare-path O(total live Relations): unlike endpoints, type
+    // Lexemes are released only by LanguageSystem removal/eviction/clear.
+    // Keeping this out of Singular::~Singular preserves the endpoint register's
+    // O(1) fast path for transient Moments and ordinary beings.
+    for (RelationManager* manager : liveManagers()) {
+        if (!manager) continue;
+        for (const auto& relation : manager->relations) {
+            if (relation) relation->forgetTypeLexeme(lexeme);
+        }
+    }
+}
+
+std::shared_ptr<Relation> RelationManager::retained(const Relation* relation) {
+    if (!relation) return {};
+    for (const auto* manager : liveManagers())
+        for (const auto& owned : manager->relations)
+            if (owned.get() == relation) return owned;
+    return {};
+}
+
 RelationManager::RelationManager() { liveManagers().insert(this); }
 
 RelationManager::RelationManager(const RelationManager& other)
@@ -135,9 +159,11 @@ RelationManager::~RelationManager() { liveManagers().erase(this); }
 void RelationManager::rebuildEndpointIndex() const {
     _byEndpoint.clear();
     _byIdentifier.clear();
+    _sharedByPointer.clear();
     for (const auto& owned : relations) {
         Relation* r = owned.get();
         if (!r) continue;
+        _sharedByPointer[r] = owned;
         if (Singular* a = r->a()) _byEndpoint[a].push_back(r);
         if (Singular* b = r->b(); b && b != r->a()) _byEndpoint[b].push_back(r);
         // aId()/bId(): a bound endpoint's live name, an unbound one's kept name.
@@ -169,6 +195,23 @@ void RelationManager::relationsInvolving(const Singular& being, std::vector<Rela
     }
 }
 
+
+bool RelationManager::retain(const std::shared_ptr<Relation>& r) {
+    if (!r || !r->hasEndpoints()) return false;
+    const auto truth = r->evaluateConstitutive();
+    if (truth == Relation::ConstitutiveStatus::Invalid || truth == Relation::ConstitutiveStatus::Violated) return false;
+    for (const auto& existing : relations) {
+        if (existing == r) return true;
+        if (!existing || existing->type != r->type || existing->directed != r->directed) continue;
+        const bool forward = existing->a() == r->a() && existing->b() == r->b();
+        const bool backward = !r->directed && existing->a() == r->b() && existing->b() == r->a();
+        if (forward || backward) return false;
+    }
+    if (r->type == "subcategory-of" && wouldFormCycle(r->a(), r->b(), r->type)) return false;
+    relations.push_back(r);
+    touch();
+    return true;
+}
 
 void RelationManager::add(const std::shared_ptr<Relation>& r) {
     if (!r) return;
@@ -356,9 +399,17 @@ bool RelationManager::removeInvolving(const Singular* being) {
 }*/
 
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const Singular& being) const {
+    std::vector<Relation*> candidatePtrs;
+    relationsInvolving(being, candidatePtrs);
     std::vector<std::shared_ptr<Relation>> result;
-    for (const auto& r : relations) {
-        if (r && r->involves(being)) result.push_back(r);
+    result.reserve(candidatePtrs.size());
+    for (Relation* r : candidatePtrs) {
+        if (r && r->involves(being)) {
+            auto it = _sharedByPointer.find(r);
+            if (it != _sharedByPointer.end()) {
+                result.push_back(it->second);
+            }
+        }
     }
     return result;
 }
@@ -371,18 +422,17 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOf(const std
     return result;
 }
 
-/*std::vector<Relation> RelationManager::getRelationsBetween(const std::string& a, const std::string& b) const {
-    std::vector<Relation> result;
-    for (const auto& r : relations) {
-        if (r.isBetween(a, b)) result.push_back(r);
-    }
-    return result;
-}*/
-
 std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsBetween(const Singular& a, const Singular& b) const {
+    std::vector<Relation*> candidatePtrs;
+    relationsInvolving(a, candidatePtrs);
     std::vector<std::shared_ptr<Relation>> result;
-    for (const auto& r : relations) {
-        if (r && r->isBetween(a, b)) result.push_back(r);
+    for (Relation* r : candidatePtrs) {
+        if (r && r->isBetween(a, b)) {
+            auto sharedIt = _sharedByPointer.find(r);
+            if (sharedIt != _sharedByPointer.end()) {
+                result.push_back(sharedIt->second);
+            }
+        }
     }
     return result;
 }
@@ -401,6 +451,22 @@ std::vector<std::shared_ptr<Relation>> RelationManager::getRelationsOfType(const
         if (r && r->type == type) result.push_back(r);
     }
     return result;
+}
+
+bool RelationManager::isSuperseded(const Relation& r) const {
+    const std::string myId = r.getIdentifier();
+    for (const auto& rel : relations) {
+        if (rel && rel->type == "superseded-by") {
+            if ((rel->a() == &r) || (rel->aId() == myId)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool RelationManager::isCurrent(const Relation& r) const {
+    return !isSuperseded(r);
 }
 
 nlohmann::json RelationManager::toJson() const {
@@ -445,6 +511,16 @@ bool RelationManager::wouldFormCycle(const Singular* start, const Singular* targ
     if (!start || !target) return false;
     if (start == target) return true;
 
+    // Pre-build adjacency list to avoid O(E) scan per visited node
+    std::unordered_map<const Singular*, std::vector<const Singular*>> adj;
+    for (const auto& relPtr : relations) {
+        if (!relPtr) continue;
+        const Relation& rel = *relPtr;
+        if (rel.type == relationType && rel.a() && rel.b()) {
+            adj[rel.a()].push_back(rel.b());
+        }
+    }
+
     std::vector<const Singular*> queue = {target};
     std::unordered_set<const Singular*> visited = {target};
 
@@ -452,13 +528,12 @@ bool RelationManager::wouldFormCycle(const Singular* start, const Singular* targ
         const Singular* current = queue.back();
         queue.pop_back();
 
-        for (const auto& relPtr : relations) {
-            if (!relPtr) continue;
-            const Relation& rel = *relPtr;
-            if (rel.type == relationType && rel.a() == current) {
-                if (rel.b() == start) return true;
-                if (rel.b() && visited.insert(rel.b()).second) {
-                    queue.push_back(rel.b());
+        auto it = adj.find(current);
+        if (it != adj.end()) {
+            for (const Singular* next : it->second) {
+                if (next == start) return true;
+                if (visited.insert(next).second) {
+                    queue.push_back(next);
                 }
             }
         }
@@ -470,6 +545,20 @@ bool RelationManager::wouldFormCycle(const std::string& start, const std::string
     if (start.empty() || target.empty()) return false;
     if (start == target) return true;
     
+    // Pre-build adjacency list to avoid O(E) scan per visited node
+    std::unordered_map<std::string, std::vector<std::string>> adj;
+    for (const auto& relPtr : relations) {
+        if (!relPtr) continue;
+        const Relation& rel = *relPtr;
+        if (rel.type == relationType) {
+            std::string aId = rel.aId();
+            std::string bId = rel.bId();
+            if (!aId.empty() && !bId.empty()) {
+                adj[aId].push_back(bId);
+            }
+        }
+    }
+
     // Trace target's outgoing relations to see if we can reach start
     std::vector<std::string> queue = {target};
     std::unordered_set<std::string> visited = {target};
@@ -478,13 +567,12 @@ bool RelationManager::wouldFormCycle(const std::string& start, const std::string
         std::string current = queue.back();
         queue.pop_back();
         
-        for (const auto& relPtr : relations) {
-            if (!relPtr) continue;
-            const Relation& rel = *relPtr;
-            if (rel.type == relationType && rel.aId() == current) {
-                if (rel.bId() == start) return true;
-                if (visited.insert(rel.bId()).second) {
-                    queue.push_back(rel.bId());
+        auto it = adj.find(current);
+        if (it != adj.end()) {
+            for (const std::string& next : it->second) {
+                if (next == start) return true;
+                if (visited.insert(next).second) {
+                    queue.push_back(next);
                 }
             }
         }

@@ -1,5 +1,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "Zone.hpp"
+#include "Singularity/Core/StringId.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "Singularity/Language/JoyHierarchy.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
@@ -33,6 +35,8 @@ static const char* scopeToString(Scope scope) {
 std::string Zone::scopeName() const { return scopeToString(_scope); }
 
 void Zone::buildProperties() {
+    registerProperty(std::make_unique<ComputedProperty<Zone, std::shared_ptr<PropertyList>>>(
+        "storedSingulars", this, &Zone::propStoredSingulars));
     registerProperty(std::make_unique<ComputedProperty<Zone, std::string>>(
         "name", this, &Zone::propName));
     // Read-only: identity is set once at construction (or by
@@ -58,6 +62,69 @@ void Zone::buildProperties() {
         "spatialField", this, &Zone::_spatialField));
     registerProperty(std::make_unique<PropertyRef<Zone, std::shared_ptr<OntoMath::VectorField>>>(
         "spatialVectorField", this, &Zone::_spatialVectorField));
+
+    // Zones as mathematical bounds. `within` is the containing Zone (the
+    // historical parentZone, previously unregistered — Refusal 6). `extent`
+    // is the authored bound. `dimensional` is derived from the presence of
+    // dimension.* axes, so read-only. dimension.* / placement.* /
+    // extent.lo / extent.hi are dynamic properties: authored by AddProperty,
+    // resolved by the same PropertyPath fallback as any other.
+    registerProperty(std::make_unique<ComputedProperty<Zone, std::string>>(
+        "within", this, &Zone::propWithin, &Zone::propSetWithin));
+    registerProperty(std::make_unique<ComputedProperty<Zone, bool>>(
+        "dimensional", this, &Zone::propDimensional, nullptr));
+    registerProperty(std::make_unique<PropertyRef<Zone, std::shared_ptr<OntoMath::ScalarField>>>(
+        "extent", this, &Zone::_extent));
+}
+
+std::vector<std::pair<std::string, std::string>> Zone::dimensionAxes() const {
+    std::vector<std::pair<std::string, std::string>> axes;
+    const std::string prefix = kDimensionPrefix;
+    for (const auto& [id, value] : dynamicProperties()) {
+        const std::string& name = Earthcall::StringInterner::resolve(id);
+        if (name.size() <= prefix.size() || name.compare(0, prefix.size(), prefix) != 0) continue;
+        if (const auto* path = std::get_if<std::string>(&value)) {
+            if (!path->empty()) axes.emplace_back(name.substr(prefix.size()), *path);
+        }
+    }
+    std::sort(axes.begin(), axes.end());
+    return axes;
+}
+
+double Zone::placementAlong(const std::string& axis) const {
+    PropertyValue v;
+    double n = 0.0;
+    if (getDynamicProperty(std::string(kPlacementPrefix) + axis, v) &&
+        propertyValueToNumber(v, n)) {
+        return n;
+    }
+    return 0.0;
+}
+
+bool Zone::extentHolds(const std::map<std::string, PropertyValue>& coords) const {
+    if (!_extent) return true;   // unbounded within its parent
+    const auto value = _extent->astDefinition.evaluate(coords);
+    double f = 0.0;
+    if (!value || !propertyValueToNumber(*value, f)) return false;   // undefined math: outside
+    PropertyValue bound;
+    double b = 0.0;
+    if (getDynamicProperty(kExtentLo, bound) && propertyValueToNumber(bound, b) && f < b) return false;
+    if (getDynamicProperty(kExtentHi, bound) && propertyValueToNumber(bound, b) && f > b) return false;
+    return true;
+}
+
+void Zone::copyBoundsFrom(const Zone& other) {
+    _parentZoneName = other._parentZoneName;
+    _extent = other._extent
+        ? OntoMath::ScalarField::fromJson(other._extent->toJson())
+        : nullptr;
+    for (const auto& [id, value] : other.dynamicProperties()) {
+        const std::string& name = Earthcall::StringInterner::resolve(id);
+        if (name.rfind(kDimensionPrefix, 0) == 0 || name.rfind(kPlacementPrefix, 0) == 0 ||
+            name == kExtentLo || name == kExtentHi) {
+            setDynamicProperty(name, value);
+        }
+    }
 }
 
 namespace {
@@ -254,15 +321,6 @@ void Zone::setOwner(const std::string& ownerId, const std::string& ownerKind) {
     if (!ownerId.empty() && !isPrimaryHome()) _deletable[ownerId] = true;
 }
 
-void Zone::load() {
-    std::cout << "🌍 Zone '" << _name << "' loaded with " << _objects.size() << " objects." << std::endl;
-}
-
-void Zone::unload() {
-    _objects.clear();
-    std::cout << "🌍 Zone '" << _name << "' unloaded." << std::endl;
-}
-
 void Zone::syncFormationMembers(const std::vector<Singular*>& extraMembers) {
     std::unordered_set<const Singular*> live;
     const auto admit = [&](Singular* member) {
@@ -272,6 +330,8 @@ void Zone::syncFormationMembers(const std::vector<Singular*>& extraMembers) {
     };
 
     admit(_spatialRootObject.get());
+    for (const auto& field : _additionalSpatialFields) admit(field.get());
+    for (const auto& being : _storedSingulars) admit(being.get());
     for (const auto& up : _objects) admit(up.get());
     for (auto* member : extraMembers) admit(member);
     for (const auto& lexeme : Singularity::Language::LanguageSystem::instance().getAll()) {
@@ -313,12 +373,21 @@ Zone::Zone(const Zone& other)
     : _name(other._name), _identifier(other._identifier), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable),
       _joys(other._joys), _ownerId(other._ownerId), _formation(),
       _spatialRootObject(std::make_shared<geom::FieldNode>(other._name + "_spatialRoot")),
-      _lastUpdateTiming(other._lastUpdateTiming)
+      _lastUpdateTiming(other._lastUpdateTiming), _storedSingulars(other._storedSingulars)
 {
     _spatialField = _spatialRootObject->field;
     _spatialVectorField = _spatialRootObject->vectorField;
 
     _formation.addMember(_spatialRootObject.get());
+    copyBoundsFrom(other);
+    for (const auto& being : _storedSingulars) _formation.addMember(being.get());
+    for (const auto& field : other._additionalSpatialFields) {
+        if (!field) continue;
+        auto clone = geom::FieldNode::fromJson(field->toJson());
+        if (!clone) continue;
+        _formation.addMember(clone.get());
+        _additionalSpatialFields.push_back(std::move(clone));
+    }
     if (_joys.root()) setTelosId(_joys.root()->getIdentifier());
 }
 
@@ -336,9 +405,12 @@ Zone& Zone::operator=(const Zone& other)
     std::swap(_objects, tmp._objects);
     std::swap(_formation, tmp._formation);
     std::swap(_spatialRootObject, tmp._spatialRootObject);
+    std::swap(_additionalSpatialFields, tmp._additionalSpatialFields);
+    std::swap(_storedSingulars, tmp._storedSingulars);
     std::swap(_spatialField, tmp._spatialField);
     std::swap(_spatialVectorField, tmp._spatialVectorField);
     std::swap(_lastUpdateTiming, tmp._lastUpdateTiming);
+    copyBoundsFrom(other);
     return *this;
 }
 
@@ -360,9 +432,62 @@ void Zone::describe() const {
     }
 }
 
+void Zone::addSpatialField(std::shared_ptr<geom::FieldNode> field) {
+    if (!field || field.get() == _spatialRootObject.get()) return;
+
+    const std::string id = field->getIdentifier();
+    if (_spatialRootObject && _spatialRootObject->getIdentifier() == id) return;
+    const auto duplicate = std::find_if(
+        _additionalSpatialFields.begin(), _additionalSpatialFields.end(),
+        [&](const std::shared_ptr<geom::FieldNode>& existing) {
+            return existing && existing->getIdentifier() == id;
+        });
+    if (duplicate != _additionalSpatialFields.end()) return;
+
+    Universe::instance().bumpStructuralRevision();
+    _formation.addMember(field.get());
+    _additionalSpatialFields.push_back(std::move(field));
+}
+
+void Zone::clearAdditionalSpatialFields() {
+    if (_additionalSpatialFields.empty()) return;
+    Universe::instance().bumpStructuralRevision();
+    for (const auto& field : _additionalSpatialFields) {
+        if (field) _formation.removeMember(field.get());
+    }
+    _additionalSpatialFields.clear();
+}
+
 void Zone::addObject(std::shared_ptr<Object> obj) {
     Universe::instance().bumpStructuralRevision();
     _objects.push_back(std::move(obj));
+}
+
+bool Zone::retainSingular(std::shared_ptr<Singular> being) {
+    if (!being || being.get() == this) return false;
+    for (const auto& existing : _storedSingulars) {
+        if (existing.get() == being.get()) return true;
+        if (existing && existing->getIdentifier() == being->getIdentifier()) return false;
+    }
+    _formation.addMember(being.get());
+    _storedSingulars.push_back(std::move(being));
+    Universe::instance().bumpStructuralRevision();
+    notifyPropertyChanged(this, "storedSingulars");
+    return true;
+}
+
+void Zone::clearStoredSingulars() {
+    if (_storedSingulars.empty()) return;
+    for (const auto& being : _storedSingulars) _formation.releaseMember(being.get());
+    _storedSingulars.clear();
+    Universe::instance().bumpStructuralRevision();
+    notifyPropertyChanged(this, "storedSingulars");
+}
+
+std::shared_ptr<PropertyList> Zone::propStoredSingulars() const {
+    auto out = std::make_shared<PropertyList>();
+    for (const auto& being : _storedSingulars) out->elements.emplace_back(being.get());
+    return out;
 }
 
 bool Zone::removeObject(Object* obj) {

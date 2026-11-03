@@ -1,0 +1,49 @@
+# Sanctuary of Sunlit Mist: saved-scene rendering A/B
+
+**Codex / GPT-6 · session `01a0cfbf-c751-7af0-b160-df07da055bc0` · 2026-09-25 12:55 PDT**
+
+Zach reported that Northern Veil still looked just as laggy after the proposed resident-volume-parameter change, and that **Sanctuary of Sunlit Mist** seemed to become unresponsive sooner. He clarified that the separate **Sanctuary of Beginnings** remains around 60 FPS. Those are Person observations, not numbers to overwrite with a synthetic benchmark. This audit measures Sunlit Mist's saved light-through-mist volume only; Beginnings is a useful reported control, not a measured A/B result here.
+
+## Controlled witness
+
+I used the exact `saves/zones/Sanctuary of Sunlit Mist/zone.json` in two isolated checkouts: its introduction `1d84821f` and current merged `4b5b2a08`. The save's SHA-256 was `7102057c8a23b3ddb1f84561f257bca668c9d282a4507e29af0378fe78f4f72a` in both. A temporary native WebGPU probe parsed the saved sun and mist read-only, projected them through production `readAuthorableLight`, `readVolumeDensity`, and `WebGpuRenderer`, and rendered at the save's default eye `[0, 2.2, 8]`. It timed CPU projection, submission, and GPU-synchronized wall time after warm-up; it read the image back. The probe rendered the mist alone, without the Sanctuary's twelve objects or normal UI/simulation. Therefore these are **volume-only costs**, not whole-app FPS.
+
+The host was a MacBook Air (Mac17,3), Apple M5 with eight GPU cores and 16 GB memory, using the native Metal-backed WebGPU path. The probe's drawable dimensions are reported for each run; the display's actual pixel resolution was not recorded.
+
+The probe source is preserved at [`scratch/webgpu_sunlit_mist_perf_probe_2026_09_25.cpp`](../../../scratch/webgpu_sunlit_mist_perf_probe_2026_09_25.cpp) (SHA-256 `bba53d82f6950155922eb0419c089cf48fa927dcb175405dfcb6f718e5163e2f`). It was temporarily placed under `tests/singularity/` in both isolated checkouts so CMake could build the native target; it is intentionally not registered as a timing-gated test. Its added full-image hash code was used only on the current revision for the discarded cull experiment.
+
+At 640×360, the serial A–B–B–A run produced these synchronized milliseconds per frame (three short blocks each): original `20.81 / 24.84 / 30.51`, current `18.35 / 18.84 / 20.29`, current `24.21 / 28.65 / 32.95`, original `18.83 / 19.88 / 21.09`. Machine/load drift across adjacent runs is large. At 1280×720, original A1 was `94.88 / 108.95`, current B1 `74.08 / 75.98`, current B2 `75.94 / 80.30`, and original A2 `81.69 / 91.85`. The present revision is **not consistently slower** at this fixed camera; the original feature was already costly. This does **not** refute Zach's report of becoming unresponsive sooner during use.
+
+Current volume-only measurements also reached about `85–87 ms/frame` at 1280×720 in another run and `138–141 ms/frame` at 1920×1080. At 640×360, the cost was about `16.5–17.2 ms/frame` from eye Z=24 outside the volume and `19.4–20.7 ms/frame` near the saved eye Z=8: the work begins before entering the mist. In one 1,000-frame current-revision run, synchronized wall time rose from `18.0` to `23.8 ms/frame` across roughly 21 seconds, while measured WGSL compiles remained zero and ring allocations remained three.
+
+After Zach clarified the distinct zones, I added a serial long-run original/current comparison at 640×360, 100 frames per block for ten blocks after 12 warm-up frames. Original `1d84821f` rose from `15.50` to `20.88 ms/frame` across its roughly 19-second run. Current `4b5b2a08` started at `18.65`, peaked at `24.36` in block 6, and ended at `22.45 ms/frame` across roughly 22 seconds. Both versions exhibit a time trend in the volume-only probe; the serial pair cannot establish why the current one starts higher or whether its app becomes unresponsive sooner. Image outputs differ because the authored-absent phase contract changed. These measurements do not identify thermal load, driver behavior, cache growth, or app-level causes. Repeat on a quiet machine, with Beginnings and a control volume as separate controls and an actual app trace before attributing the experience.
+
+The original and current output is not pixel-identical: later reconciliation removed the original hardcoded phase fallback and restored the authored-absent isotropic identity. Thus the historical A/B holds save, camera, and probe constant, but compares different transport output. The current native 32×16 correctness test passes; it does not establish frame rate or long-running responsiveness.
+
+## Where the cost sits
+
+The saved mist has one authored CSG occluder. `volumeSourceVisibility` evaluates its SDF toward the light at up to 24 steps **inside each of 96 view samples per fragment**. A deliberately altered, test-only `no-occluder` binding took about `0.7–1.4 ms/frame` at 640×360 versus roughly `18–21 ms/frame` with authored occlusion, and about `2.8 ms/frame` versus `85–87 ms/frame` at 1280×720. The diagnostic makes a very different image, so removing the occluder is **not** a proposed optimization. CPU projection was generally under `0.4 ms/frame`; the nested fragment work is the first target.
+
+I tested one temporary Sanctuary-specific conservative AABB gate in the shader. It yielded no speed benefit and changed the full-image RGBA hash, so I removed it. No hardcoded scene bounds or approximation entered production code. Any future acceleration must derive a valid enclosure from the authored SDF, prove the soft-penumbra term remains unchanged, preserve exact fallback, and check full-frame parity across cameras before a cost claim.
+
+## Direct causal A/B for Codex's resident-parameter candidate
+
+Zach then clarified the chronology: Sunlit Mist was already extremely laggy **before Codex's resident-volume-parameter change**, and seemed basically unresponsive **after** it. The original-feature/current-main comparison above does not isolate that change. I therefore built its exact parent `c645315d` (A) and implementation `4874573c` (B) in separate Debug worktrees. Both contained byte-identical save SHA-256 `7102057c...f4f72a` and probe SHA-256 `bba53d82...e5163e2f`. All runs rendered the saved mist at eye Z=8. The B checkout's later `03036db0` commit changes documentation only.
+
+At 640×360 I ran **A–B–B–A**, 1,000 frames per process in ten 100-frame blocks after warm-up. A1 rose from `16.18` to `21.33 ms/frame`; B1 from `19.62` to `22.45`; B2 from `17.90` to `22.01`; A2 from `21.09` to `22.63`. Every frame readback had the same full-image RGBA hash, `fd4f2f5fe9aa25bf`. B used two ring allocations and 288 ring bytes per frame versus A's three and 408; WGSL compiles stayed zero. The first A→B pair looks slower on B, but the final B→A reversal also leaves A slow. Sustained slowing thus follows the run/machine as well as occurring on both code versions; the candidate cannot be convicted from the first pair.
+
+At 1280×720, a second A–B–B–A used four ten-frame blocks per process. The block ranges were A1 `65.69–74.89`, B1 `73.22–76.79`, B2 `77.17–84.43`, A2 `77.68–80.05 ms/frame`. The exact full-image hash was `20f01470568b41b8` in every block on both versions. B can be a few milliseconds slower in this session, yet the rising absolute cost across the sequence and the overlapping reverse pair prevent a defensible candidate-specific regression claim. The probe did not reproduce an actual app hang. The safe decision is to **withhold the resident-cache branch as a performance fix**: it demonstrably removes a small upload/allocation, but has no repeatable saved-world FPS benefit and Zach's near-unresponsive report remains unresolved. Current main `4b5b2a08` does not contain `4874573c`.
+
+## Consequences for the two Sun efforts
+
+1. **Visual/radiance Sun:** keep the authored source, medium, and occluder meanings separate. The Sanctuary requires a saved-scene, native-resolution frame-cost gate in addition to its small correctness test. The task document's earlier “60+ FPS” assertion has no matching saved-scene witness and is corrected below. A fast path that changes the beam or makes the world unresponsive does not satisfy the Person's commission.
+2. **Performance Sun:** prioritize eliminating *provably irrelevant* SDF visibility work per sample, or reuse exact shared work, ahead of parameter-residency bookkeeping. Count shadow-SDF evaluations and surface-acquire/backpressure separately. Keep an exact fallback and named unresolved result; preserve authorship and invalidation. The Northern Veil resident-parameter experiment reduced CPU transfer/allocation but did not yield a measured synthetic FPS win, and Zach reports no visual responsiveness gain there. Do not promote it as a performance fix.
+3. **Both:** run a long-duration native app trace on each saved world, including cold load, fixed camera, camera movement, image capture, CPU/GPU phase timing, shader compiles, memory/cache growth, and repeated runs with a control scene. Report the exact resolution and hardware. Separate first-frame compilation, steady rendering, and time-to-unresponsive behavior.
+
+The next gate is an authored-world optimization with image parity or an explained intentional image change, plus a repeatable native timing improvement. Zach must judge the final visual and interaction witness; benchmark numbers cannot substitute for that encounter.
+
+**Evidence limits:** volume-only harness; one machine; load drift across long and short blocks; no native whole-app capture; no saved file changed. The diagnostic cull failed and was removed. The exact parent/candidate probe cannot reproduce input latency, window-system surface acquisition, or eventual app unresponsiveness.
+
+**Signed:** Codex / GPT-6 · session `01a0cfbf-c751-7af0-b160-df07da055bc0` · 2026-09-25 12:55 PDT
+
+**Causal A/B and hardware addendum signed:** Codex / GPT-6 · same session · 2026-09-25 13:09 PDT

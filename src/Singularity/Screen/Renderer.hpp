@@ -4,8 +4,13 @@
 #include "ConstructedBeing/Singular/Object/Geometry/SmoothSurface.hpp" // geom::TessMesh
 
 #include <cstdint>
+#include <cmath>
+#include <string>
 #include <utility>
 #include <vector>
+#include "Singularity/Screen/RadianceSource.hpp"
+#include "Singularity/Screen/VolumeDensity.hpp"
+#include "Singularity/Screen/RenderedFieldSemanticObserver.hpp"
 
 namespace geom { struct SdfNode; class FieldNode; struct HeightGrid; }
 
@@ -47,12 +52,75 @@ public:
         uint32_t bufferSuballocations = 0;
         uint32_t pipelineSwitches = 0;
         uint32_t cachedMeshesCount = 0;
+        // SDF-specific observability: these distinguish structural CPU churn
+        // from ordinary draw/upload work instead of making FPS carry every cause.
+        uint32_t sdfProgramCompiles = 0;
+        uint32_t sdfProgramCacheHits = 0;
+        uint32_t sdfProgramCacheMisses = 0;
+        // Explicit compiler refusal is part of observable renderer truth. A
+        // Person-authored expression the GPU cannot honor must never disappear
+        // into stderr while the world silently keeps an old or fabricated answer.
+        uint32_t sdfProgramRefusals = 0;
+        std::string sdfLastProgramRefusal;
+        size_t   sdfWgslBytesGenerated = 0;
+        size_t   sdfParameterBytesUploaded = 0;
+        // Volumetric V0 observability. Density time belongs to per-medium
+        // instance data, so advancing only t must hit the memo and never
+        // regenerate the authored density shader.
+        uint32_t volumeRoutedSets = 0; // compute dispatched, not a claimed accepted-ray count
+        uint32_t volumeRoutedPixels = 0;
+        uint64_t volumeRoutedWorkingSetBytes = 0; // allocated descriptor bytes, not measured traffic
+        uint32_t volumeProgramCompiles = 0;
+        // Kernel diagnostics: compiler repairs, resident data transfers and
+        // CPU preparation are distinct from delayed GPU execution samples.
+        uint32_t volumeLowerings = 0;
+        uint32_t volumeRepairedNodes = 0;
+        size_t volumeParameterBytesUploaded = 0;
+        size_t volumeProofBytesUploaded = 0;
+        float volumeCpuPrepareMs = 0.0f;
+        uint32_t volumeProgramCacheHits = 0;
+        uint32_t volumeProgramRefusals = 0;
+        std::string volumeLastProgramRefusal;
+        size_t volumeWgslBytesGenerated = 0;
+        // Zero-density proofs (Rendering::VolumeZeroProof): builds this frame
+        // (each is cached by density revision), and the proven/total cells of
+        // the media drawn this frame.
+        uint32_t volumeZeroProofBuilds = 0;
+        uint32_t volumeZeroProofCellsProven = 0;
+        uint32_t volumeZeroProofCellsTotal = 0;
+        // Rung 2f-native support certificates: payload builds this frame (cached
+        // by density revision × extent) and the enabled killers of drawn media.
+        uint32_t volumeSupportCertificateBuilds = 0;
+        uint32_t volumeSupportCertificateKillers = 0;
+        uint32_t volumeSupportCertificateEligibleMedia = 0;   // media whose certificates are attached
+        uint32_t volumeSupportCertificateClosedKillers = 0;   // of those killers, Rung 2b closed forms
+        // Measured eligibility (auto mode): hidden timing renders run after this
+        // frame's submit, the compiles they caused, and media the estimate admitted
+        // whose certificates the device measurement then vetoed.
+        uint32_t volumeSupportCertificateProbeRenders = 0;
+        uint32_t volumeSupportCertificateProbeCompiles = 0;
+        uint32_t volumeSupportCertificateMeasuredVetoes = 0;
+        // Conservative SDF range-proxy observability. A build is revision-bound;
+        // an applied draw used a strictly smaller proved-may-contain-zero proxy;
+        // a culled draw was proved to contain no zero set at all.
+        uint32_t sdfRangeHierarchyBuilds = 0;
+        uint32_t sdfRangeProxyDraws = 0;
+        uint32_t sdfRangeProxyCulledDraws = 0;
+        // Next spatial-Prophetic rung: draws that actually supplied a
+        // conservative hierarchy to the fragment marcher, plus proof-buffer
+        // bytes uploaded this frame. Stable scenes should upload zero after
+        // warmup while traversalDraws remains nonzero.
+        uint32_t sdfRangeTraversalDraws = 0;
+        size_t   sdfRangeNodeBytesUploaded = 0;
         // Kernel timing, resolved asynchronously from optional GPU timestamp
         // queries. It covers the main render pass only (before the ImGui overlay)
         // and describes an earlier submitted frame, never a CPU wall-clock span.
         bool     gpuMainPassTimingSupported = false;
         bool     gpuMainPassTimingValid = false;
         float    gpuMainPassMs = 0.0f;
+        bool     gpuVolumePassTimingValid = false;
+        float    gpuVolumePassMs = 0.0f;
+        uint64_t gpuTimingSampleFrame = 0;
     };
 
     const FrameStats& frameStats() const { return _frameStats; }
@@ -111,6 +179,180 @@ public:
     const glm::vec3& lightSpecular() const { return _lightSpecular; }
     bool lightingEnabled() const           { return _lightingOn; }
 
+    // Optional authored spatial radiance function for the active Zone. The
+    // renderer borrows world-owned OntoMath and keeps a full content fingerprint.
+    // Backends use it as "authored content changed"; they may distinguish numeric
+    // parameter refresh from actual shader-structure invalidation.
+    void setRadianceField(const OntoMath::Piecewise* expr, uint64_t revision) {
+        _radianceExpr = expr;
+        _radianceRevision = revision;
+    }
+    const OntoMath::Piecewise* radianceExpr() const { return _radianceExpr; }
+    uint64_t radianceRevision() const { return _radianceRevision; }
+
+    // Optional authored source chroma chi(p,t)->vec3. Absence is semantically
+    // different from authored white: absence means the historical light.color
+    // remains the source's constant chroma. Keep chi's revision independent of
+    // rho so value/structure invalidation can remain independently observable.
+    void setRadianceChroma(const OntoMath::Piecewise* expr, uint64_t revision) {
+        _radianceChromaExpr = expr;
+        _radianceChromaRevision = revision;
+    }
+    const OntoMath::Piecewise* radianceChromaExpr() const { return _radianceChromaExpr; }
+    uint64_t radianceChromaRevision() const { return _radianceChromaRevision; }
+
+    // Optional authored angular source factor alpha(p,omega,t)->scalar. Absence
+    // is the exact multiplicative identity alpha=1. Keep its content revision
+    // independent from both rho and chi.
+    void setRadianceAngular(const OntoMath::Piecewise* expr, uint64_t revision) {
+        _radianceAngularExpr = expr;
+        _radianceAngularRevision = revision;
+    }
+    const OntoMath::Piecewise* radianceAngularExpr() const { return _radianceAngularExpr; }
+    uint64_t radianceAngularRevision() const { return _radianceAngularRevision; }
+
+    // Scalar source coefficients are the non-chromatic part of the historical
+    // light state. WebGPU uses them only when authored chi is present, so the
+    // no-chi path remains the exact pre-Rung-5 formula.
+    void setRadianceSourceCoefficients(float intensity, float ambient,
+                                       float diffuse, float specular) {
+        _radianceSourceCoefficients = glm::vec4(intensity, ambient, diffuse, specular);
+    }
+    const glm::vec4& radianceSourceCoefficients() const { return _radianceSourceCoefficients; }
+
+    // Temporal coordinate admitted by the active authored RADIANCE SOURCE.
+    // Renderer does not decide which Timeline supplies it and does not attach
+    // this coordinate to the surfaces being illuminated. Today EngineRender
+    // projects the broad compatibility Timeline for the active radiant FieldNode;
+    // a future Law/First Mover may select that source Singular's own Timeline
+    // without changing WebGPU or OntoMath. Other changing channels (material
+    // color, geometry, animation, etc.) require their own explicit bindings.
+    void setRadianceTemporalCoordinate(double t, double delta) {
+        _radianceTemporalCoordinate = t;
+        _radianceTemporalDelta = delta;
+    }
+    double radianceTemporalCoordinate() const { return _radianceTemporalCoordinate; }
+    double radianceTemporalDelta() const { return _radianceTemporalDelta; }
+
+    // Volumetric V0: participating-medium density owns a temporal coordinate
+    // independent from source radiance. Renderer does not decide which Timeline
+    // supplies it; it merely transports the coordinate admitted by D(p,t).
+    void setVolumeDensityTemporalCoordinate(double t, double delta) {
+        _volumeDensityTemporalCoordinate = t;
+        _volumeDensityTemporalDelta = delta;
+    }
+    double volumeDensityTemporalCoordinate() const { return _volumeDensityTemporalCoordinate; }
+    double volumeDensityTemporalDelta() const { return _volumeDensityTemporalDelta; }
+
+    // Rung 7: when a Zone owns two or more radiant FieldNodes, Screen projects
+    // them together instead of forcing one source AST to enumerate the world.
+    // One-source worlds intentionally keep using the historical scalar setters
+    // above, making the one-element sum an exact compatibility path.
+    void setRadianceSources(std::vector<Rendering::RadianceSourceBinding> sources,
+                            uint64_t revision) {
+        _radianceSources = std::move(sources);
+        _radianceSourcesRevision = revision;
+        _renderedFieldObserver.observeRadianceSources(_radianceSources, revision);
+    }
+    const std::vector<Rendering::RadianceSourceBinding>& radianceSources() const {
+        return _radianceSources;
+    }
+    uint64_t radianceSourcesRevision() const { return _radianceSourcesRevision; }
+
+    // Volumetric V0: authored participating media are projected as a collection
+    // above any individual density AST, exactly as Rung 7 composes light sources.
+    // Renderer receives world truth; it does not scan Zones or invent media.
+    void setVolumeDensitySources(std::vector<Rendering::VolumeDensityBinding> sources,
+                                 uint64_t revision) {
+        _volumeDensitySources = std::move(sources);
+        _volumeDensitySourcesRevision = revision;
+        _renderedFieldObserver.observeVolumeDensitySources(
+            _volumeDensitySources, revision);
+    }
+    const std::vector<Rendering::VolumeDensityBinding>& volumeDensitySources() const {
+        return _volumeDensitySources;
+    }
+    uint64_t volumeDensitySourcesRevision() const { return _volumeDensitySourcesRevision; }
+
+    // Scene-spatial synthesis Phase B: diagnostic only. The observer has no
+    // theorem-consumption API and therefore cannot alter rendered truth.
+    void setRenderedFieldSemanticObservationEnabled(bool on) {
+        const bool wasEnabled = _renderedFieldObserver.enabled();
+        if (wasEnabled == on) return;
+
+        _renderedFieldObserver.setEnabled(on);
+        if (!on) return;
+
+        // Phase-B observation must describe the scene already admitted to the
+        // Renderer, not only source-set traffic that happens after enablement.
+        // This replay is diagnostic-only: theorem state has no authority path
+        // back into pixels, marching, accumulation, visibility, or WGSL.
+        _renderedFieldObserver.observeRadianceSources(
+            _radianceSources, _radianceSourcesRevision);
+        _renderedFieldObserver.observeVolumeDensitySources(
+            _volumeDensitySources, _volumeDensitySourcesRevision);
+    }
+    bool renderedFieldSemanticObservationEnabled() const {
+        return _renderedFieldObserver.enabled();
+    }
+    const Rendering::RenderedFieldSemanticObserver::Stats&
+    renderedFieldSemanticObservationStats() const {
+        return _renderedFieldObserver.stats();
+    }
+
+    // Rung 8 execution seam: visibility is DERIVED transport truth, never an
+    // authored property of rho/chi/alpha. Keeping this as renderer state makes
+    // V=1 an exact compatibility mode and lets transport change at runtime
+    // without regenerating source WGSL or mutating any source AST. The default
+    // remains false until Screen can truthfully query the complete scene, not
+    // merely the SDF geometry owned by the currently executing pipeline.
+    void setRadianceVisibilityEnabled(bool on) { _radianceVisibilityEnabled = on; }
+    bool radianceVisibilityEnabled() const { return _radianceVisibilityEnabled; }
+
+    // Zero-density proof: skip evaluating a medium's density in cells where
+    // OntoMath interval arithmetic proved it can never be positive. Such a
+    // sample contributes nothing, so the image is unchanged; the switch exists
+    // so witnesses can A/B the exact path against the proven one.
+    void setVolumeZeroProofEnabled(bool on) { _volumeZeroProofEnabled = on; }
+    bool volumeZeroProofEnabled() const { return _volumeZeroProofEnabled; }
+
+    // Ray-domain transport Rung 2f-native: per-medium support certificates
+    // (Rendering::deriveVolumeSupportCertificates) let the marcher jump over
+    // samples whose density a Lipschitz-certified killer forces to <= 0. OFF by
+    // default: its device tolerance is declared, not proved, for Metal Fast
+    // mode (see kVolumeSupportDeviceTolerance); witnesses A/B it per backend.
+    // Experimental feature-branch transport; unsupported sets/rays retain Current.
+    void setVolumeRoutedTransportEnabled(bool on) { _volumeRoutedTransportEnabled = on; }
+    bool volumeRoutedTransportEnabled() const { return _volumeRoutedTransportEnabled; }
+    void setVolumeSupportCertificatesEnabled(bool on) { _volumeSupportCertificatesEnabled = on; }
+    bool volumeSupportCertificatesEnabled() const { return _volumeSupportCertificatesEnabled; }
+    // Auto eligibility (default on): within an enabled lane, a medium gets its
+    // certificates only where the Kernel's cost estimate says they pay
+    // (Rendering::estimateVolumeSupportCertificateGain). Off = every medium (A/B).
+    void setVolumeSupportCertificatesAutoEligibility(bool on) { _volumeSupportCertificatesAutoEligibility = on; }
+    bool volumeSupportCertificatesAutoEligibility() const { return _volumeSupportCertificatesAutoEligibility; }
+
+    // Volume quadrature resolution: samples a medium receives across its own
+    // chord along a ray (overlapping media share the finest present; see the
+    // unified quadrature in SdfWgsl's compileVolumeSet). Formerly a literal 96
+    // in the shader. It reaches the GPU as a uniform, so changing it never
+    // recompiles. Clamped to [1, 8192]: a 12288 reference render produced
+    // saturated nonsense on Metal on 2026-10-09, not yet explained.
+    void setVolumeSamplesPerChord(int samples) {
+        _volumeSamplesPerChord = samples < 1 ? 1 : (samples > 8192 ? 8192 : samples);
+    }
+    int volumeSamplesPerChord() const { return _volumeSamplesPerChord; }
+
+    // Authored ScreenChannel input mirrored beneath the Kernel boundary.
+    // A positive budget removes the uncertified opacity cutoff. Until a tail
+    // proof is available, every accepted sample is evaluated. Unknown proofs
+    // must never restore that cutoff. Zero preserves the compatibility image.
+    void setVolumeOutputErrorBudget(double budget) {
+        _volumeOutputErrorBudget = std::isfinite(budget) && budget > 0.0
+            ? (budget < 1.0 / 255.0 ? budget : 1.0 / 255.0) : 0.0;
+    }
+    double volumeOutputErrorBudget() const { return _volumeOutputErrorBudget; }
+
     // The object-to-world transform, as a stack. setModel replaces it outright;
     // pushModel/popModel compose a child transform onto its parent for the nested
     // draws — a Body's parts, a Formation's members — exactly as glPushMatrix +
@@ -138,7 +380,8 @@ public:
                               const geom::FieldNode* fieldNode = nullptr,
                               uint64_t memoId = 0,
                               uint32_t memoRevision = 0,
-                              const geom::HeightGrid* heightGrid = nullptr) = 0;
+                              const geom::HeightGrid* heightGrid = nullptr,
+                              uint32_t memoParameterRevision = 0) = 0;
 
     // Unlit, blended overlays — the selection/law-candidate highlight. These are
     // deliberately separate verbs from drawMesh: colour-only, no lighting or
@@ -166,6 +409,12 @@ public:
     // be a large regression. Hence a query rather than always preferring one.
     virtual bool rendersImplicitExactly() const { return false; }
 
+    // Sensory staging seam for participating media. The default is a no-op:
+    // backends without authored volumetric transport simply continue rendering.
+    // WebGPU overrides this to finish opaque world depth, composite the current
+    // Zone's density fields, then reopen a load-preserving pass for HUD/2D.
+    virtual void composeVolumes() {}
+
     // Draw subsequent meshes as edges instead of filled triangles. This wraps an
     // arbitrary draw — the BrushCreate hologram sets it, then calls the ordinary
     // Object draw path — which is why it is render STATE rather than a draw verb.
@@ -178,6 +427,17 @@ public:
     // WebGPU overrides it to gate whether drawImplicit's heightGrid argument
     // is honoured.
     virtual void setHeightGridDdaEnabled(bool /*on*/) {}
+    virtual void setSpaceDistortion(float /*d*/) {}
+    // True only when this backend can actually consume a supplied HeightGrid in
+    // the current build/state. This is substrate capability, distinct from the
+    // authored enable bit: a quarantined optimization must not cause callers to
+    // build derived data that no renderer can use.
+    virtual bool usesHeightGridDda() const { return false; }
+
+    // Governs the conservative zero-set proxy derived from evalRange(). This is
+    // a rendering optimization only: disabling restores the authored extent;
+    // enabling may shrink/cull raster proxy coverage only from explicit proofs.
+    virtual void setSdfRangeProxyEnabled(bool /*on*/) {}
     virtual void drawOverlay(const geom::TessMesh& mesh, const glm::vec4& color,
                              float scale, bool additive) = 0;
 
@@ -227,6 +487,15 @@ public:
     // frame (the brush canvas), so backends upload per draw rather than caching.
     virtual void drawImage2D(const uint8_t* rgba, uint32_t width, uint32_t height,
                              const glm::vec4& rect, const glm::vec4& tint) = 0;
+
+    // Irreducible Screen act: sample an authored field at physical framebuffer
+    // centres. Backends must realize it or refuse, never substitute a Shape,
+    // texture or CPU image. A null temporal coordinate leaves t unbound.
+    virtual bool drawScreenForm(const OntoMath::Piecewise&, const OntoMath::Piecewise*,
+                                uint32_t, uint32_t, const double*, std::string& reason) {
+        reason = "direct Screen fields require the WebGPU backend";
+        return false;
+    }
 
     // -----------------------------------------------------------------------
     // Persistent textures — the per-face albedo the Face Brush paints. Unlike
@@ -278,6 +547,29 @@ private:
     glm::vec3 _lightDiffuse{0.8f};
     glm::vec3 _lightSpecular{1.0f};
     bool      _lightingOn = true;
+    const OntoMath::Piecewise* _radianceExpr = nullptr;
+    uint64_t _radianceRevision = 0;
+    const OntoMath::Piecewise* _radianceChromaExpr = nullptr;
+    uint64_t _radianceChromaRevision = 0;
+    const OntoMath::Piecewise* _radianceAngularExpr = nullptr;
+    uint64_t _radianceAngularRevision = 0;
+    glm::vec4 _radianceSourceCoefficients{1.0f, 0.2f, 0.8f, 1.0f};
+    double _radianceTemporalCoordinate = 0.0;
+    double _radianceTemporalDelta = 0.0;
+    double _volumeDensityTemporalCoordinate = 0.0;
+    double _volumeDensityTemporalDelta = 0.0;
+    std::vector<Rendering::RadianceSourceBinding> _radianceSources;
+    uint64_t _radianceSourcesRevision = 0;
+    bool _radianceVisibilityEnabled = false;
+    bool _volumeZeroProofEnabled = true;
+    bool _volumeRoutedTransportEnabled = true; // Zach, direct branch-default authorization 2026-10-28
+    bool _volumeSupportCertificatesEnabled = false;
+    bool _volumeSupportCertificatesAutoEligibility = true;
+    int _volumeSamplesPerChord = 96;
+    double _volumeOutputErrorBudget = 0.0;
+    std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;
+    uint64_t _volumeDensitySourcesRevision = 0;
+    Rendering::RenderedFieldSemanticObserver _renderedFieldObserver;
     FrameStats _frameStats;
 };
 

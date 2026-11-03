@@ -10,6 +10,7 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
 #include "Singularity/Core/SdfBuild.hpp"
 #include "Singularity/Screen/GL/GluCompat.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "../../Person/Person.hpp"
 #include "../../ZonesOfEarth/ZoneManager.hpp"
 #include "../../ZonesOfEarth/Physics/Physics.hpp"
@@ -30,7 +31,15 @@ namespace Core {
         const glm::mat4 Tb = B->getTransform();
         geom::SdfNode an = objectToSdfNode(*A);
         geom::SdfNode bn = objectToSdfNode(*B);
-        bn.offset = glm::vec3(glm::inverse(Ta) * glm::vec4(glm::vec3(Tb[3]), 1.0f));
+        const auto inverseA =
+            OntoMath::inverseAffine(OntoMath::MatrixValue::fromGlmMat4(Ta));
+        const auto worldB =
+            OntoMath::affineExtractTranslation(OntoMath::MatrixValue::fromGlmMat4(Tb));
+        const auto localB = (inverseA && worldB)
+            ? OntoMath::transformPoint(*inverseA, *worldB)
+            : std::nullopt;
+        if (!localB) return;
+        bn.offset = *localB;
         const geom::SdfOp ops[] = { geom::SdfOp::Union, geom::SdfOp::Intersect,
                                     geom::SdfOp::Subtract, geom::SdfOp::SmoothUnion,
                                     geom::SdfOp::Morph };
@@ -110,8 +119,14 @@ namespace Core {
         if (mouseDown && state.fieldHandleDragging && bProj) {
             GLdouble nx, ny, nz;
             if (ecgl::unProject(winX, winY, bz, mv, pr, vp, &nx, &ny, &nz)) {
-                const glm::vec3 local = glm::vec3(glm::inverse(xf) * glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
-                o->setFieldOperandBOffset(local);
+                const auto inverseXf =
+                    OntoMath::inverseAffine(OntoMath::MatrixValue::fromGlmMat4(xf));
+                const auto local = inverseXf
+                    ? OntoMath::transformPoint(
+                          *inverseXf,
+                          glm::vec3((float)nx, (float)ny, (float)nz))
+                    : std::nullopt;
+                if (local) o->setFieldOperandBOffset(*local);
             }
             return true;
         }
@@ -197,6 +212,8 @@ namespace Core {
         auto tInteract0 = clock::now();
         if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {
             const bool shellCapturedPointer = ImGui::GetIO().WantCaptureMouse || menuOwnedThisFrame;
+            // Every pointer/key edge names the Person whose hand it is.
+            interaction->setPointingPerson(_person.get());
             interaction->step(_window, *_camera, mgr, shellCapturedPointer);
             static int frameCount = 0;
             frameCount++;
@@ -212,9 +229,9 @@ namespace Core {
         // Evict unreferenced smooth tessellation caches from destroyed or modified objects
         Object::gcSmoothTessellationCache();
 
-        // Advance time
-        _worldTime += static_cast<double>(dt);
-        Universe::instance().setClock(_worldTime, static_cast<double>(dt));
+        // Advance the world's first-class Timeline. Universe borrows this
+        // being as temporal authority, so Laws and rendering read the same head.
+        (void)_worldTimeline.advanceBy(static_cast<double>(dt));
         auto tZone1 = clock::now();
         g_frameTimings.zone_ms = getMs(tZone0, tZone1);
 

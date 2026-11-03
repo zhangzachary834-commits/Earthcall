@@ -2,13 +2,45 @@
 
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+#include "Singularity/OntoMath/LineRestriction.hpp"
 
+#include <algorithm>
 #include <cstdio>
+#include <cstring>
+#include <functional>
+#include <map>
+#include <cmath>
 #include <set>
 #include <string>
 #include <vector>
 
 namespace sdfwgsl {
+// Retained compiler state below the Kernel. Occurrence addresses are positional
+// (channel/piece/child); domains include coordinate and clock bindings. Typed
+// equality owns reuse, and emitted slot/temporary positions remain a second guard.
+struct KernelVolumeCompilerDag {
+    struct Node {
+        OntoMath::MathNode::Op op;
+        OntoMath::ValueKind type = OntoMath::ValueKind::Scalar;
+        std::string domain, valueIdentity, structuralIdentity, canonical;
+        std::vector<std::string> children, reverseDependencies;
+        std::vector<size_t> parameterSlots;
+        struct Fragment {
+            std::string context, expression, body;
+            std::vector<float> parameters;
+            std::vector<KernelVolumeTimeSlot> timeSlots;
+            size_t parameterBegin = 0;
+            int temporaryBegin = 0, temporaryEnd = 0;
+            bool ready = false, readOmega = false, readEmissionOmega = false;
+            bool readWi = false, readWo = false, readSurfaceNormal = false;
+        } fragment;
+    };
+    std::map<std::string, Node> nodes;
+    std::map<const OntoMath::MathNode*, std::string> occurrences;
+    std::string sharingSignature;
+    uint32_t repairedNodes = 0;
+};
+
 namespace {
 
 // ---------------------------------------------------------------------------
@@ -21,10 +53,11 @@ namespace {
 // WGSL note: select(falseValue, trueValue, condition) — the operand order is the
 // reverse of a C ternary, which is an easy way to invert a sign by accident.
 // ---------------------------------------------------------------------------
-const char* kPrimitives = R"WGSL(
+const char* kSdfBindings = R"WGSL(
 struct SdfInstanceData {
     model: mat4x4<f32>,
     invModel: mat4x4<f32>,
+    normalMat: mat4x4<f32>,
     baseColor: vec4<f32>,
     shading: vec4<f32>,
     extents: vec4<f32>,
@@ -38,12 +71,63 @@ struct SdfInstanceData {
     heightGridOffset: u32,
     heightGridDimX: u32,
     heightGridDimZ: u32,
+    // Fixed-depth conservative positive-proof bit grid. A zero bit means
+    // "no GPU skip proof; exact authored marching owns this cell."
+    rangeProofWordOffset: u32,
+    rangeProofWordCount: u32,
+    rangeTraversalEnabled: u32,
+    rangeProofDepth: u32,
 };
 @group(1) @binding(0) var<storage, read> instances: array<SdfInstanceData>;
 // (hMin, hMax) per cell, conservative -- see geom::computeHeightGrid.
 @group(1) @binding(1) var<storage, read> heightCells: array<vec2<f32>>;
+// Positive-outside proof bitmap, packed 32 regular depth-N cells per u32.
+@group(1) @binding(2) var<storage, read> rangeProofWords: array<u32>;
 var<private> g_instIdx: u32;
+)WGSL";
 
+// Kernel mathematical lowering shared by every shader prefix. MathNode Pow's
+// negative/noninteger zero rule differs from Term and legacy RPN std::pow.
+// Preserve those existing routes; no epsilon domain or finite infinity sentinel.
+// Codex / GPT-6.1 Sol / 01a122d7 / 2026-10-15; Power_Lowering_Parity task.
+const char* kPowerFunctions = R"WGSL(
+fn ontoRawPow(base: f32, exp: f32) -> f32 {
+    let baseBits = bitcast<u32>(base);
+    let baseAbsBits = baseBits & 0x7fffffffu;
+    let expBits = bitcast<u32>(exp);
+    let expAbsBits = expBits & 0x7fffffffu;
+    if (expAbsBits == 0u || baseBits == 0x3f800000u) { return 1.0; }
+    if (expAbsBits > 0x7f800000u) { return bitcast<f32>(0x7fc00000u); }
+    if (expAbsBits == 0x7f800000u) {
+        if (baseAbsBits == 0x3f800000u) { return 1.0; }
+        if (baseAbsBits > 0x7f800000u) { return bitcast<f32>(0x7fc00000u); }
+        let grows = (baseAbsBits > 0x3f800000u) == ((expBits & 0x80000000u) == 0u);
+        return bitcast<f32>(select(0u, 0x7f800000u, grows));
+    }
+    if (baseAbsBits > 0x7f800000u) { return bitcast<f32>(0x7fc00000u); }
+    let integral = floor(exp) == exp;
+    let odd = integral && floor(exp * 0.5) != exp * 0.5;
+    let sign = select(0u, 0x80000000u, (baseBits & 0x80000000u) != 0u && odd);
+    if (baseAbsBits == 0u || baseAbsBits == 0x7f800000u) {
+        let infinite = (baseAbsBits == 0u) == (exp < 0.0);
+        return bitcast<f32>(select(0u, 0x7f800000u, infinite) | sign);
+    }
+    if ((baseBits & 0x80000000u) != 0u && !integral) { return bitcast<f32>(0x7fc00000u); }
+    let magnitude = pow(abs(base), exp);
+    return bitcast<f32>(bitcast<u32>(magnitude) | sign);
+}
+fn ontoPow(base: f32, exp: f32) -> f32 {
+    // Matches CPU MathNode::Op::Pow, including its exact integrality predicate.
+    if (base < 0.0 && floor(exp) != exp) { return 0.0; }
+    return ontoRawPow(base, exp);
+}
+fn ontoPow3(base: vec3<f32>, exp: f32) -> vec3<f32> {
+    return vec3<f32>(ontoPow(base.x, exp), ontoPow(base.y, exp), ontoPow(base.z, exp));
+}
+)WGSL";
+
+// Pure mathematical library shared by surface and direct Screen compilation.
+const std::string kPrimitives = std::string(kPowerFunctions) + R"WGSL(
 fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
 
 fn sdSphere(p: vec3<f32>, r: f32) -> f32 { return length(p) - r; }
@@ -305,6 +389,35 @@ struct Emit {
     std::vector<float> params;
     int                next = 0; // next `let dN` temporary
     bool               sawExpr = false; // an implicit leaf appeared -> not a distance
+    bool               bindTime = false; // expression-context capability, not authored state
+    bool               bindScreen = false; // physical framebuffer coordinate context
+    std::string        parameterOffset = "instances[g_instIdx].paramOffset";
+    bool               bindOmega = false; // Rung-6 source angular radiance context
+    bool               readOmega = false; // structural witness for source singularity handling
+    bool               bindEmissionOmega = false; // V4 E_v owns a distinct omega context
+    bool               readEmissionOmega = false;
+    bool               bindPhaseDirections = false; // V3 Phi admits wi/wo, never source omega
+    bool               bindMaterialResponse = false; // Rung 9 receiver context admits n + wi/wo
+    bool               readSurfaceNormal = false;
+    bool               readWi = false;
+    bool               readWo = false;
+    // Ambient temporal coordinate for the expression currently being emitted.
+    // Rungs 3-6 use the historical global uniform; Rung 7 temporarily points
+    // this at one source record while lowering that source's rho/chi/alpha.
+    std::string        timeExpression = "u.radianceTime.x";
+    // Cross-channel shared subexpressions (volume media): typed, collision-free
+    // occurrence identity -> a value in this sample/evaluation domain.
+    const std::map<const OntoMath::MathNode*, std::string>* shared = nullptr;
+
+    KernelVolumeCompilerDag* kernel = nullptr;
+    KernelVolumeCompilerDag::Node* kernelNode = nullptr;
+    // Only volume lowering/collection enables preparation. Other modalities
+    // retain their existing evaluator. Recipes preserve their own time binding.
+    bool prepareVolumeTime = false;
+    std::vector<KernelVolumeTimeSlot> timeSlots;
+    // Names an Integral binds while its office decomposition is emitted (the
+    // interval's centre and half-width): internal, never authored names.
+    std::map<std::string, std::string> boundNames;
 
     // The refusal (see Program::ok). Once set it is never overwritten: the
     // FIRST thing the compiler could not honour is the one worth reporting;
@@ -319,7 +432,8 @@ struct Emit {
     // Record a number and return the WGSL expression that reads it.
     std::string param(float v) {
         char buf[128];
-        std::snprintf(buf, sizeof(buf), "P.v[instances[g_instIdx].paramOffset + %zu]", params.size());
+        std::snprintf(buf, sizeof(buf), "P.v[%s + %zu]", parameterOffset.c_str(), params.size());
+        if (kernelNode) kernelNode->parameterSlots.push_back(params.size());
         params.push_back(v);
         return buf;
     }
@@ -355,7 +469,7 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
             case K::Sub: { auto b = pop(); auto a = pop(); st.push_back("((" + a + ") - (" + b + "))"); break; }
             case K::Mul: { auto b = pop(); auto a = pop(); st.push_back("((" + a + ") * (" + b + "))"); break; }
             case K::Div: { auto b = pop(); auto a = pop(); st.push_back("((" + a + ") / (" + b + "))"); break; }
-            case K::Pow: { auto b = pop(); auto a = pop(); st.push_back("pow((" + a + "), (" + b + "))"); break; }
+            case K::Pow: { auto b = pop(); auto a = pop(); st.push_back("ontoRawPow((" + a + "), (" + b + "))"); break; }
             case K::Sin:  { auto a = pop(); st.push_back("sin("  + a + ")"); break; }
             case K::Cos:  { auto a = pop(); st.push_back("cos("  + a + ")"); break; }
             case K::Tan:  { auto a = pop(); st.push_back("tan("  + a + ")"); break; }
@@ -372,10 +486,76 @@ std::string emitRpn(const std::vector<geom::SdfToken>& rpn, Emit& e,
 // name but this compiler cannot bind is a REFUSAL, not "0.0": substituting zero
 // silently reinterprets f(t) as f(0), which is a different field.
 std::string pointComponent(const std::string& var, Emit& e, const std::string& pt) {
+    if (const auto bound = e.boundNames.find(var); bound != e.boundNames.end()) return bound->second;
+    if (e.bindScreen) {
+        // SDF/Gradient rebind only p/x/y/z on the CPU. Other admitted scalars
+        // retain their original bindings, including normalized coordinates.
+        if (var == "u") return "(screenPoint.x / screen.size.x)";
+        if (var == "v") return "(screenPoint.y / screen.size.y)";
+        if (var == "width") return "screen.size.x";
+        if (var == "height") return "screen.size.y";
+    }
     if (var == "x" || var == "y" || var == "z") return "(" + pt + ")." + var;
+    if (var == OntoMath::kTimeVar) {
+        if (e.bindTime) return e.timeExpression;
+        e.refuse("a field expression names temporal variable 't', but this shader "
+                 "expression context does not bind the temporal coordinate");
+        return "0.0";
+    }
+    if (var == OntoMath::kSurfaceNormalVar) {
+        e.readSurfaceNormal = true;
+        if (e.bindMaterialResponse) return "n";
+        e.refuse("an expression names receiver normal 'n', but this shader "
+                 "expression context is not material response");
+        return "vec3<f32>(0.0)";
+    }
+    if (var == OntoMath::kOmegaXVar ||
+        var == OntoMath::kOmegaYVar ||
+        var == OntoMath::kOmegaZVar) {
+        if (e.bindEmissionOmega) {
+            e.readEmissionOmega = true;
+            if (var == OntoMath::kOmegaXVar) return "omega.x";
+            if (var == OntoMath::kOmegaYVar) return "omega.y";
+            return "omega.z";
+        }
+        e.readOmega = true;
+        if (e.bindOmega) {
+            if (var == OntoMath::kOmegaXVar) return "omega.x";
+            if (var == OntoMath::kOmegaYVar) return "omega.y";
+            return "omega.z";
+        }
+        e.refuse("a field expression names angular coordinate '" + var +
+                 "', but this shader expression context does not bind omega");
+        return "0.0";
+    }
+    if (var == OntoMath::kWiXVar ||
+        var == OntoMath::kWiYVar ||
+        var == OntoMath::kWiZVar) {
+        e.readWi = true;
+        if (e.bindPhaseDirections || e.bindMaterialResponse) {
+            if (var == OntoMath::kWiXVar) return "wi.x";
+            if (var == OntoMath::kWiYVar) return "wi.y";
+            return "wi.z";
+        }
+        e.refuse("an expression names incoming direction '" + var +
+                 "', but this shader expression context does not bind wi");
+        return "0.0";
+    }
+    if (var == OntoMath::kWoXVar ||
+        var == OntoMath::kWoYVar ||
+        var == OntoMath::kWoZVar) {
+        e.readWo = true;
+        if (e.bindPhaseDirections || e.bindMaterialResponse) {
+            if (var == OntoMath::kWoXVar) return "wo.x";
+            if (var == OntoMath::kWoYVar) return "wo.y";
+            return "wo.z";
+        }
+        e.refuse("an expression names outgoing direction '" + var +
+                 "', but this shader expression context does not bind wo");
+        return "0.0";
+    }
     e.refuse("a field expression names the variable '" + var +
-             "', which has no binding in a shader; only the ambient point "
-             "(p, x, y, z) is bound here");
+             "', which has no binding in this shader expression context");
     return "0.0";
 }
 
@@ -388,7 +568,7 @@ std::string emitScalarForm(const OntoMath::ScalarForm& sf, Emit& e, const std::s
         for (const auto& [var, exp] : term.factors) {
             std::string wgslVar = pointComponent(var, e, pt);
             if (exp == 1.0) termStr += " * " + wgslVar;
-            else termStr += " * pow(" + wgslVar + ", " + e.param(exp) + ")";
+            else termStr += " * ontoRawPow(" + wgslVar + ", " + e.param(exp) + ")";
         }
         for (const auto& tr : term.trans) {
             std::string wgslVar = pointComponent(tr.variable, e, pt);
@@ -401,7 +581,26 @@ std::string emitScalarForm(const OntoMath::ScalarForm& sf, Emit& e, const std::s
         if (i > 0) res += " + ";
         res += "(" + termStr + ")";
     }
-    return res;
+    // A leaf is ONE value. Callers splice it into `(a - leaf)`, `(a * leaf)`,
+    // `(leaf / b)`: unwrapped, a − (t1 + t2) compiled as (a − t1) + t2. Volume
+    // lowering hid this for time-only leaves (prepared slots), never for spatial
+    // ones (e.g. length(p) − (2.4 + 0.3·y)). Found by the Rung 2f-native
+    // certificate witness, Claude Opus 5.5, 2026-10-17; witness in
+    // webgpu_volume_support_certificates_test ("precedence witness").
+    return sf.terms.size() > 1 ? "(" + res + ")" : res;
+}
+
+bool expensiveTimeOnly(const OntoMath::ScalarForm& form) {
+    bool expensive = false;
+    for (const auto& term : form.terms) {
+        for (const auto& [variable, exponent] : term.factors)
+            if (variable != OntoMath::kTimeVar) return false;
+        for (const auto& tr : term.trans) {
+            if (tr.variable != OntoMath::kTimeVar) return false;
+            expensive = true;
+        }
+    }
+    return expensive;
 }
 
 // THE ONE RULE OF THIS FUNCTION: never invent a number.
@@ -413,7 +612,69 @@ std::string emitScalarForm(const OntoMath::ScalarForm& sf, Emit& e, const std::s
 // this compiler cannot honour an authored expression it calls e.refuse(), and
 // the whole pipeline is declined with a reason. The string it returns after a
 // refusal exists only to keep the recursion well-formed; it is never used.
+std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const std::string& pt);
 std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::string& pt) {
+    if (!e.kernel) return emitMathNodeUncached(node, e, pt);
+    const auto occurrence = e.kernel->occurrences.find(&node);
+    if (occurrence == e.kernel->occurrences.end()) return emitMathNodeUncached(node, e, pt);
+    auto& retained = e.kernel->nodes.at(occurrence->second);
+    auto* parent = e.kernelNode;
+    e.kernelNode = &retained;
+    std::string context = pt + "|" + e.parameterOffset + "|" + e.timeExpression;
+    context += e.bindTime ? "T" : "-";
+    context += e.bindScreen ? "S" : "-";
+    context += e.bindOmega ? "O" : "-";
+    context += e.bindEmissionOmega ? "E" : "-";
+    context += e.bindPhaseDirections ? "P" : "-";
+    context += e.bindMaterialResponse ? "R" : "-";
+    context += e.prepareVolumeTime ? "Q" : "-";
+    // A retained fragment embeds lexical substitutions, including parameter slots.
+    for (const auto& [name, expression] : e.boundNames)
+        context += "|let:" + std::to_string(name.size()) + ":" + name + "=" +
+                   std::to_string(expression.size()) + ":" + expression;
+    // A group evaluator has no self-substitution; a channel may substitute it.
+    if (e.shared) {
+        const auto substitution = e.shared->find(&node);
+        if (substitution != e.shared->end()) context += "|" + substitution->second;
+    }
+    auto& fragment = retained.fragment;
+    if (!e.refused && fragment.ready && fragment.context == context &&
+        fragment.parameterBegin == e.params.size() && fragment.temporaryBegin == e.next) {
+        e.params.insert(e.params.end(), fragment.parameters.begin(), fragment.parameters.end());
+        e.timeSlots.insert(e.timeSlots.end(), fragment.timeSlots.begin(), fragment.timeSlots.end());
+        e.body += fragment.body; e.next = fragment.temporaryEnd;
+        e.readOmega |= fragment.readOmega; e.readEmissionOmega |= fragment.readEmissionOmega;
+        e.readWi |= fragment.readWi; e.readWo |= fragment.readWo;
+        e.readSurfaceNormal |= fragment.readSurfaceNormal;
+        e.kernelNode = parent;
+        return fragment.expression;
+    }
+    const size_t begin = e.params.size(), bodyBegin = e.body.size();
+    const size_t timeBegin = e.timeSlots.size();
+    const int temporaryBegin = e.next;
+    retained.parameterSlots.clear();
+    const std::string result = emitMathNodeUncached(node, e, pt);
+    if (!e.refused) {
+        fragment.context = context; fragment.expression = result;
+        fragment.parameterBegin = begin;
+        fragment.parameters.assign(e.params.begin() + begin, e.params.end());
+        fragment.timeSlots.assign(e.timeSlots.begin() + timeBegin, e.timeSlots.end());
+        fragment.body = e.body.substr(bodyBegin);
+        fragment.temporaryBegin = temporaryBegin; fragment.temporaryEnd = e.next;
+        fragment.readOmega = e.readOmega; fragment.readEmissionOmega = e.readEmissionOmega;
+        fragment.readWi = e.readWi; fragment.readWo = e.readWo;
+        fragment.readSurfaceNormal = e.readSurfaceNormal; fragment.ready = true;
+    }
+    e.kernelNode = parent;
+    return result;
+}
+std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const std::string& pt) {
+    // The table holds values at this medium's original sample p. SDF and
+    // Gradient rebind their field to another point and must evaluate it there.
+    if (pt == "p" && e.boundNames.empty() && e.shared && !e.shared->empty()) {
+        const auto it = e.shared->find(&node);
+        if (it != e.shared->end()) return it->second;
+    }
     using Op = OntoMath::MathNode::Op;
 
     // Arity is checked by the type pass before we get here, but a malformed
@@ -428,8 +689,16 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
     };
 
     switch (node.op) {
-        case Op::ScalarLeaf:
-            return emitScalarForm(node.scalarForm, e, pt);
+        case Op::ScalarLeaf: {
+            const auto expression = emitScalarForm(node.scalarForm, e, pt);
+            if (!e.refused && e.prepareVolumeTime && e.boundNames.find(OntoMath::kTimeVar) == e.boundNames.end() && expensiveTimeOnly(node.scalarForm)) {
+                const size_t slot = e.params.size();
+                const auto prepared = e.param(0.0f);
+                e.timeSlots.push_back({slot, expression});
+                return prepared;
+            }
+            return expression;
+        }
         case Op::ValueLeaf:
             if (node.variableName == OntoMath::kAmbientPointVar) return "(" + pt + ")";
             return pointComponent(node.variableName, e, pt);
@@ -497,7 +766,26 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
             const std::string b = arg(1);
             return "select(0.0, ((" + arg(0) + ") / (" + b + ")), abs(" + b + ") >= " + wgslLiteral(OntoMath::kDegenerateDivisor) + ")";
         }
-        case Op::Pow:   return "pow((" + arg(0) + "), (" + arg(1) + "))";
+        case Op::Pow: {
+            if (node.children.size() != 2 || !node.children[0] || !node.children[1]) {
+                e.refuse("Pow is missing an argument");
+                return "0.0";
+            }
+            // Type admission already checks the operands. Vector MathNode Pow
+            // is componentwise on CPU; WGSL user functions cannot overload.
+            OntoMath::TypeEnv env;
+            std::set<std::string> deps;
+            node.children[0]->collectDependencies(deps);
+            for (const auto& name : deps) {
+                const bool vector = name == "p" || name == "wi" || name == "wo" ||
+                                    name == "omega" || name == "n";
+                env[name] = vector ? OntoMath::ValueKind::Vector : OntoMath::ValueKind::Scalar;
+            }
+            const auto type = node.children[0]->typeOf(env, "pow.base", false);
+            const std::string fn = type.success && type.kind == OntoMath::ValueKind::Vector
+                ? "ontoPow3" : "ontoPow";
+            return fn + "((" + arg(0) + "), (" + arg(1) + "))";
+        }
         case Op::Abs:   return "abs(" + arg(0) + ")";
         case Op::Clamp: return "clamp((" + arg(0) + "), (" + arg(1) + "), (" + arg(2) + "))";
         case Op::Sqrt:  return "sqrt(max((" + arg(0) + "), 0.0))";
@@ -555,6 +843,83 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
                    ") / (2.0 * " + eps + "))";
         }
 
+        // --- Rung 4 matrix lowering -----------------------------------------
+        // WGSL stores matrices as columns (matCxR); MatrixConstruct authors
+        // logical rows. Reorder only at this backend boundary.
+        case Op::MatrixConstruct: {
+            if (node.matrixRows < 2 || node.matrixRows > 4 ||
+                node.matrixCols < 2 || node.matrixCols > 4) {
+                e.refuse("MatrixConstruct WGSL lowering supports dimensions 2..4");
+                return "0.0";
+            }
+            std::string out = "mat" + std::to_string(node.matrixCols) + "x" +
+                              std::to_string(node.matrixRows) + "<f32>(";
+            for (std::size_t c = 0; c < node.matrixCols; ++c) {
+                if (c) out += ", ";
+                out += "vec" + std::to_string(node.matrixRows) + "<f32>(";
+                for (std::size_t r = 0; r < node.matrixRows; ++r) {
+                    if (r) out += ", ";
+                    out += arg(r * node.matrixCols + c);
+                }
+                out += ")";
+            }
+            return out + ")";
+        }
+        case Op::MatrixIdentity: {
+            if (node.matrixRows < 2 || node.matrixRows > 4 ||
+                node.matrixRows != node.matrixCols) {
+                e.refuse("MatrixIdentity WGSL lowering supports square dimensions 2..4");
+                return "0.0";
+            }
+            const std::size_t n = node.matrixRows;
+            std::string out = "mat" + std::to_string(n) + "x" + std::to_string(n) + "<f32>(";
+            for (std::size_t c = 0; c < n; ++c) {
+                if (c) out += ", ";
+                out += "vec" + std::to_string(n) + "<f32>(";
+                for (std::size_t r = 0; r < n; ++r) {
+                    if (r) out += ", ";
+                    out += (r == c ? "1.0" : "0.0");
+                }
+                out += ")";
+            }
+            return out + ")";
+        }
+        case Op::MatrixAdd: return "(" + arg(0) + " + " + arg(1) + ")";
+        case Op::MatrixSub: return "(" + arg(0) + " - " + arg(1) + ")";
+        case Op::MatrixScale: return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixMultiply: return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixVectorMultiply: return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixTranspose: return "transpose(" + arg(0) + ")";
+        case Op::MatrixDeterminant: return "determinant(" + arg(0) + ")";
+        case Op::MatrixInverse: {
+            // WGSL has no inverse() primitive. Keep OntoMath as the sole
+            // inverse algorithm: binding-independent inverses become derived
+            // numeric parameters; a dynamic inverse refuses.
+            static const std::map<std::string, PropertyValue> kNoBindings;
+            auto value = node.evaluate(kNoBindings, nullptr);
+            if (!value || !std::holds_alternative<OntoMath::MatrixValue>(*value)) {
+                e.refuse("MatrixInverse WGSL lowering requires a binding-independent invertible matrix");
+                return "0.0";
+            }
+            const auto& inv = std::get<OntoMath::MatrixValue>(*value);
+            if (inv.rows() < 2 || inv.rows() > 4 || inv.rows() != inv.cols()) {
+                e.refuse("MatrixInverse WGSL lowering supports square dimensions 2..4");
+                return "0.0";
+            }
+            const std::size_t n = inv.rows();
+            std::string out = "mat" + std::to_string(n) + "x" + std::to_string(n) + "<f32>(";
+            for (std::size_t c = 0; c < n; ++c) {
+                if (c) out += ", ";
+                out += "vec" + std::to_string(n) + "<f32>(";
+                for (std::size_t r = 0; r < n; ++r) {
+                    if (r) out += ", ";
+                    out += e.param(static_cast<float>(inv.at(r, c)));
+                }
+                out += ")";
+            }
+            return out + ")";
+        }
+
         // --- Declared, not implemented, on EITHER path ----------------------
         case Op::Raycast:
             e.refuse("Raycast has no implementation on either path: it needs a "
@@ -562,6 +927,96 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
                      "authors. It evaluates to nullopt on the CPU, so the shader "
                      "declines rather than answering a number the CPU would not.");
             return "0.0";
+        case Op::Integral: {
+            // Lowered by the one antiderivative office, not by a WGSL rule:
+            // toScalarForm turns the node into its closed form F(hi) − F(lo) in
+            // the enclosing variables (nested integrals by exact substitution),
+            // and that form is emitted like any authored ScalarForm. The shader
+            // holds no antiderivative of its own (Zach, 2026-10-19: no "two
+            // competing antiderivative code"). The line route, SDF(f, q) through
+            // value-branch segmentation, needs segmentation on the device and is
+            // refused here; the CPU still evaluates it. f32 execution error is
+            // measured by webgpu_integral_operation_test, not enclosed.
+            // Step 2b (same day): the office's CENTRED decomposition, so an
+            // interval far from the origin keeps f32 accuracy (F(hi) − F(lo)
+            // measured 3e-4 relative at x ≈ 1000). m and h are formed as exact
+            // forms, (hi ± lo)/2, so hi − lo cancels symbolically before f32
+            // sees it. Each moment selects its tabular or series form by the
+            // same |z|·|h| ≤ 1 rule the CPU uses. Both forms come from the office.
+            std::string why;
+            const auto refuse = [&] {
+                e.refuse("Integral does not lower to WGSL: " + why +
+                         " (only an integral the term algebra holds in closed form lowers; a field "
+                         "along a line needs device segmentation, not yet built)");
+                return std::string("0.0");
+            };
+            if (node.children.size() != 3 || !node.children[0] || !node.children[1] || !node.children[2]) {
+                why = node.children.size() == 4
+                    ? "an authored tolerance asks for an f32 execution bound this device path cannot yet give"
+                    : "Integral needs a body, lo and hi";
+                return refuse();
+            }
+            // The same authored substitution used by CPU evaluation. Screen
+            // emits the returned ordinary tree; it owns no calculus rule.
+            // The existing tolerance guard above still applies, and unsupported
+            // inner field integrals still decline through this very office.
+            if (auto reduced = OntoMath::deriveExponentialIntegral(node))
+                return emitMathNode(*reduced, e, pt);
+            const auto body = OntoMath::toScalarForm(*node.children[0], &why);
+            const auto lo = body ? OntoMath::toScalarForm(*node.children[1], &why) : std::nullopt;
+            const auto hi = lo ? OntoMath::toScalarForm(*node.children[2], &why) : std::nullopt;
+            if (!hi) return refuse();
+            const std::string tag = std::to_string(e.next++);
+            const std::string mName = "\x01m" + tag, hName = "\x01h" + tag;
+            const auto centred = OntoMath::centredIntegral(*body, node.variableName, mName, hName, &why);
+            if (!centred) return refuse();
+            const std::string mExpr = "(" + emitScalarForm(hi->plus(*lo).scaled(0.5), e, pt) + ")";
+            const std::string hExpr = "(" + emitScalarForm(hi->plus(lo->scaled(-1.0)).scaled(0.5), e, pt) + ")";
+            e.boundNames[mName] = mExpr;
+            e.boundNames[hName] = hExpr;
+            std::string sum;
+            for (const auto& part : centred->parts) {
+                std::string moment = emitScalarForm(part.tabular, e, pt);
+                if (part.rate > 0.0)
+                    moment = "select(" + moment + ", " + emitScalarForm(part.series, e, pt) + ", " +
+                             e.param(part.rate) + " * abs" + hExpr + " <= 1.0)";
+                sum += (sum.empty() ? "" : " + ") + std::string("(") + emitScalarForm(part.outer, e, pt) + ") * (" + moment + ")";
+            }
+            e.boundNames.erase(mName);
+            e.boundNames.erase(hName);
+            if (!centred->uncentred.empty()) {
+                const auto upper = OntoMath::substitute(centred->uncentred, node.variableName, *hi, &why);
+                const auto lower = upper ? OntoMath::substitute(centred->uncentred, node.variableName, *lo, &why) : std::nullopt;
+                if (!lower) return refuse();
+                sum += (sum.empty() ? "" : " + ") + std::string("(") + emitScalarForm(*upper, e, pt) + " - " +
+                       emitScalarForm(*lower, e, pt) + ")";
+            }
+            return sum.empty() ? "0.0" : "(" + sum + ")";
+        }
+        case Op::Let: {
+            // let name = value in body (2026-10-20): the name bound to the value's
+            // expression for the body, through the same boundNames
+            // pointComponent consults first — restored afterwards, so the
+            // binding is lexical as on the CPU. An expression, not a WGSL `let`
+            // statement: screen forms keep only the returned expression, and a
+            // statement there was silently dropped (an undefined identifier;
+            // webgpu_integral_operation_test). The compiler eliminates the
+            // repeated subexpression. Binding the point itself would be
+            // shadowed by the shader's point read, so it refuses.
+            if (node.variableName.empty() || node.variableName == OntoMath::kAmbientPointVar) {
+                e.refuse("Let must name a variable other than the point '" + std::string(OntoMath::kAmbientPointVar) + "'");
+                return "0.0";
+            }
+            const std::string name = "(" + arg(0) + ")";
+            const auto previous = e.boundNames.find(node.variableName);
+            const bool shadowing = previous != e.boundNames.end();
+            const std::string saved = shadowing ? previous->second : std::string();
+            e.boundNames[node.variableName] = name;
+            const std::string body = arg(1);
+            if (shadowing) e.boundNames[node.variableName] = saved;
+            else e.boundNames.erase(node.variableName);
+            return body;
+        }
         case Op::LineIntegral:
             e.refuse("LineIntegral has no implementation on either path: it needs a "
                      "curve parameterization and a quadrature rule that nothing in "
@@ -578,7 +1033,11 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
 }
 
 void emitPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt, const std::string& outType, std::string& outBody) {
-    std::string inVar = (pw.inputVariable == "x") ? (pt + ".x") : (pw.inputVariable == "y") ? (pt + ".y") : (pw.inputVariable == "z") ? (pt + ".z") : "0.0";
+    // Piecewise interval bounds live on the same authored coordinate vocabulary
+    // as the value expression itself. In particular, rho(p,t) may cut pieces
+    // along t. An unbound coordinate refuses through pointComponent(); it is
+    // never silently reinterpreted as the scalar zero.
+    std::string inVar = pointComponent(pw.inputVariable, e, pt);
     
     for (size_t i = 0; i < pw.pieces.size(); ++i) {
         const auto& piece = pw.pieces[i];
@@ -607,6 +1066,356 @@ void emitPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt
         outBody += "    return 0.0;\n";
     }
 }
+
+bool astContainsNoise(const OntoMath::MathNode& node);   // defined below
+
+namespace {
+// Left-to-right flattening of a scalar product tree. Each non-product leaf is
+// emitted in the same order emitMathNode would visit it (so parameters register
+// in the same order collectVolumeParams sees), and the returned string rebuilds
+// the product with the original grouping over the leaf names.
+std::string flattenScalarProduct(const OntoMath::MathNode& node, Emit& e, const std::string& pt,
+                                 std::vector<std::pair<std::string, bool>>& leaves) {
+    if (pt == "p" && e.boundNames.empty() && e.shared && !e.shared->empty()) {
+        const auto it = e.shared->find(&node);
+        if (it != e.shared->end()) {
+            // Already computed once this sample: a free, noise-free factor.
+            const std::string name = "densityFactor" + std::to_string(leaves.size());
+            leaves.push_back({it->second, false});
+            return name;
+        }
+    }
+    if (node.op == OntoMath::MathNode::Op::Scale && node.children.size() == 2 &&
+        node.children[0] && node.children[1]) {
+        const std::string left = flattenScalarProduct(*node.children[0], e, pt, leaves);
+        const std::string right = flattenScalarProduct(*node.children[1], e, pt, leaves);
+        return "(" + left + " * " + right + ")";
+    }
+    const std::string name = "densityFactor" + std::to_string(leaves.size());
+    leaves.push_back({emitMathNode(node, e, pt), astContainsNoise(node)});
+    return name;
+}
+} // namespace
+
+// Medium density D(p). Identical to emitPiecewise, except when the answering
+// piece is a product whose factors include Perlin noise: then every noise-free
+// factor is evaluated first and an exact zero returns 0 before any noise runs.
+// A density that is 0 (or the +-0/NaN a 0 * finite product yields) contributes
+// nothing either way: callers clamp with max(D, 0) and act only on D > 0. The
+// product itself is rebuilt with its original grouping, so whenever it is
+// computed it is computed exactly as before. OntoMath knows which subtrees hold
+// noise; an opaque shader would not. Claude Opus 5.5, 2026-10-09.
+void emitProductWithZeroExits(const OntoMath::MathNode& node, Emit& e, const std::string& pt,
+                              std::string& outBody);
+
+void emitDensityPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt,
+                          std::string& outBody) {
+    const OntoMath::Piecewise::Piece* answering = nullptr;
+    for (const auto& piece : pw.pieces) {
+        if (!piece.mathNode) continue;
+        answering = &piece;
+        break;
+    }
+    if (!answering || answering != &pw.pieces.front() || answering->hasLo || answering->hasHi ||
+        answering->guard || answering->whereLEZero || answering->call || answering->fold ||
+        answering->mathNode->op != OntoMath::MathNode::Op::Scale ||
+        !astContainsNoise(*answering->mathNode)) {
+        emitPiecewise(pw, e, pt, "f32", outBody);
+        return;
+    }
+    // Mirror emitPiecewise's own visit order: the input variable first.
+    (void)pointComponent(pw.inputVariable, e, pt);
+    emitProductWithZeroExits(*answering->mathNode, e, pt, outBody);
+}
+
+// Body of a scalar function returning `node`: a product's noise-free factors
+// are evaluated first and an exact zero returns 0 before any noise runs; the
+// product is rebuilt with its original grouping (see emitDensityPiecewise).
+void emitProductWithZeroExits(const OntoMath::MathNode& node, Emit& e, const std::string& pt,
+                              std::string& outBody) {
+    std::vector<std::pair<std::string, bool>> leaves;
+    const std::string product = flattenScalarProduct(node, e, pt, leaves);
+    bool anyCheap = false;
+    for (const auto& leaf : leaves) anyCheap = anyCheap || !leaf.second;
+    if (!anyCheap) {
+        // Even an all-noise expression needs the locals named by `product`.
+        for (std::size_t i = 0; i < leaves.size(); ++i)
+            outBody += "    let densityFactor" + std::to_string(i) + " = " + leaves[i].first + ";\n";
+        outBody += "    return " + product + ";\n";
+        return;
+    }
+    for (std::size_t i = 0; i < leaves.size(); ++i) {
+        if (leaves[i].second) continue;
+        const std::string name = "densityFactor" + std::to_string(i);
+        outBody += "    let " + name + " = " + leaves[i].first + ";\n";
+        outBody += "    if (" + name + " == 0.0) { return 0.0; }\n";
+    }
+    for (std::size_t i = 0; i < leaves.size(); ++i) {
+        if (!leaves[i].second) continue;
+        outBody += "    let densityFactor" + std::to_string(i) + " = " + leaves[i].first + ";\n";
+    }
+    outBody += "    return " + product + ";\n";
+}
+
+namespace {
+// ---- Cross-channel shared subexpressions for one participating medium ------
+// Zach (2026-10-09) asked for the media's equations to be unified rather than
+// re-evaluated. Northern Veil authors each curtain's shape into four channels
+// (D = 0.75*shape, sigma_t = 0.10*shape, sigma_s = 0.04*shape, E_v = shape*...),
+// so the same Perlin-noise subtree ran up to four times per sample. Here
+// OntoMath's own structure finds subtrees that are identical (operators AND
+// constants) across a medium's channels; each is computed once per sample into
+// a private variable that every channel reads. Only scalar subtrees containing
+// Noise over p/x/y/z/t are shared: those variables mean the same thing in every
+// medium channel, while wi/wo/omega do not.
+struct SharedSite { int channel; std::string path; const OntoMath::MathNode* node; };
+struct SharedGroup {
+    std::string key;
+    const OntoMath::MathNode* node = nullptr;
+    std::size_t size = 0;
+    std::vector<SharedSite> sites;
+};
+struct VolumeSharingPlan {
+    std::vector<SharedGroup> groups;   // emission order: smaller subtrees first
+    std::string signature;             // which positions share; never constants
+    bool densityUses = false;
+};
+
+// Kernel compiler identity. Length-delimited typed bytes compare in full:
+// there is no hash-only equality and no serialization of authored data.
+std::string volumeNodeIdentity(const OntoMath::MathNode& root) {
+    std::string key;
+    auto scalar = [&](const auto& value) {
+        key.append(reinterpret_cast<const char*>(&value), sizeof(value));
+    };
+    auto text = [&](const std::string& value) {
+        const size_t size = value.size(); scalar(size); key.append(value);
+    };
+    std::function<void(const OntoMath::MathNode&)> visit = [&](const auto& node) {
+        const int op = static_cast<int>(node.op); scalar(op);
+        using Op = OntoMath::MathNode::Op;
+        if (node.op == Op::ScalarLeaf) {
+            scalar(node.scalarForm.terms.size());
+            for (const auto& term : node.scalarForm.terms) {
+                scalar(term.coefficient); scalar(term.factors.size());
+                for (const auto& [variable, exponent] : term.factors) {
+                    text(variable); scalar(exponent);
+                }
+                scalar(term.trans.size());
+                for (const auto& factor : term.trans) {
+                    const int kind = static_cast<int>(factor.kind); scalar(kind);
+                    text(factor.variable); scalar(factor.scale); scalar(factor.shift);
+                }
+            }
+        } else if (node.op == Op::ValueLeaf || node.op == Op::Let || node.op == Op::Integral) text(node.variableName);
+        else if (node.op == Op::Component || node.op == Op::Map) text(node.stringArg);
+        else if (node.op == Op::MatrixConstruct || node.op == Op::MatrixIdentity) {
+            scalar(node.matrixRows); scalar(node.matrixCols);
+        }
+        scalar(node.children.size());
+        for (const auto& child : node.children) {
+            const bool present = bool(child); scalar(present);
+            if (child) visit(*child);
+        }
+    };
+    visit(root);
+    return key;
+}
+
+std::shared_ptr<KernelVolumeCompilerDag> repairKernelVolumeDag(
+    const VolumeProgramInput& input, const std::shared_ptr<KernelVolumeCompilerDag>& previous) {
+    auto dag = std::make_shared<KernelVolumeCompilerDag>();
+    const OntoMath::Piecewise* channels[] = {input.densityExpr, input.extinctionExpr,
+        input.scatteringExpr, input.volumeChromaExpr, input.phaseExpr, input.emissionExpr,
+        input.lightRadianceExpr, input.lightChromaExpr, input.lightAngularExpr};
+    const OntoMath::Piecewise* mediumChannels[6] = {input.densityExpr, input.extinctionExpr,
+        input.scatteringExpr, input.volumeChromaExpr, input.phaseExpr, input.emissionExpr};
+    dag->sharingSignature = inspectVolumeSharing(mediumChannels[0], mediumChannels[1],
+        mediumChannels[2], mediumChannels[3], mediumChannels[4], mediumChannels[5]);
+    const bool sharingStable = previous && previous->sharingSignature == dag->sharingSignature;
+    const OntoMath::TypeEnv env{{"p", OntoMath::ValueKind::Vector}, {"x", OntoMath::ValueKind::Scalar},
+        {"y", OntoMath::ValueKind::Scalar}, {"z", OntoMath::ValueKind::Scalar},
+        {"t", OntoMath::ValueKind::Scalar}, {"wi", OntoMath::ValueKind::Vector},
+        {"wo", OntoMath::ValueKind::Vector}, {"omega", OntoMath::ValueKind::Vector}};
+    std::map<std::pair<std::string, std::string>, std::string> canonical;
+    std::function<void(const OntoMath::MathNode&, const std::string&, const std::string&)> visit;
+    visit = [&](const OntoMath::MathNode& node, const std::string& path, const std::string& domain) {
+        auto& target = dag->nodes[path]; target.op = node.op; target.domain = domain;
+        const auto type = node.typeOf(env, "root", false);
+        if (type.success) target.type = type.kind;
+        target.valueIdentity = volumeNodeIdentity(node);
+        target.structuralIdentity = std::to_string(static_cast<int>(node.op)) + ":" +
+            std::to_string(static_cast<int>(target.type)) + ":" + domain;
+        const auto key = std::make_pair(domain, target.valueIdentity);
+        auto [identity, inserted] = canonical.emplace(key, path);
+        target.canonical = identity->second;
+        dag->occurrences.emplace(&node, path);
+        if (previous) {
+            const auto old = previous->nodes.find(path);
+            if (old != previous->nodes.end() && old->second.valueIdentity == target.valueIdentity &&
+                old->second.structuralIdentity == target.structuralIdentity) {
+                if (sharingStable) target.fragment = old->second.fragment;
+                target.parameterSlots = old->second.parameterSlots;
+            } else ++dag->repairedNodes;
+        }
+        for (size_t i = 0; i < node.children.size(); ++i) {
+            if (!node.children[i]) continue;
+            const auto childPath = path + "/" + std::to_string(i);
+            const bool rebound = i == 0 && (node.op == OntoMath::MathNode::Op::SDF ||
+                                             node.op == OntoMath::MathNode::Op::Gradient);
+            target.children.push_back(childPath);
+            std::string childDomain = rebound ? domain + "/point@" + path : domain;
+            if (node.op == OntoMath::MathNode::Op::Let && i == 1 && node.children[0])
+                childDomain += "/let@" + path + ":" + std::to_string(node.variableName.size()) +
+                    ":" + node.variableName + "=" + volumeNodeIdentity(*node.children[0]);
+            if (node.op == OntoMath::MathNode::Op::Integral && i == 0)
+                childDomain += "/int@" + path + ":" + std::to_string(node.variableName.size()) +
+                    ":" + node.variableName;
+            visit(*node.children[i], childPath, childDomain);
+            dag->nodes[childPath].reverseDependencies.push_back(path);
+        }
+    };
+    for (size_t channel = 0; channel < 9; ++channel) {
+        if (!channels[channel]) continue;
+        for (size_t piece = 0; piece < channels[channel]->pieces.size(); ++piece) {
+            const auto& authored = channels[channel]->pieces[piece];
+            if (authored.mathNode) visit(*authored.mathNode,
+                "c" + std::to_string(channel) + "/" + std::to_string(piece),
+                channel < 6 ? "medium:p,medium.t" : "source:p,source.t");
+        }
+    }
+    std::function<void(const geom::SdfNode&, const std::string&)> visitOccluder;
+    visitOccluder = [&](const geom::SdfNode& sdf, const std::string& path) {
+        if (sdf.mathNode) visit(*sdf.mathNode, path + "/math", "occluder:shadow.p,medium.t");
+        if (sdf.piecewise) {
+            for (size_t piece = 0; piece < sdf.piecewise->pieces.size(); ++piece) {
+                const auto& authored = sdf.piecewise->pieces[piece];
+                if (authored.mathNode) visit(*authored.mathNode, path + "/piece/" + std::to_string(piece),
+                                           "occluder:shadow.p,medium.t");
+            }
+        }
+        for (size_t child = 0; child < sdf.children.size(); ++child)
+            if (sdf.children[child]) visitOccluder(*sdf.children[child], path + "/" + std::to_string(child));
+    };
+    if (geom::isSdfActive(input.occluderSdf)) visitOccluder(*input.occluderSdf, "occluder");
+    return dag;
+}
+
+std::size_t mathNodeSize(const OntoMath::MathNode& n) {
+    std::size_t total = 1;
+    for (const auto& c : n.children) if (c) total += mathNodeSize(*c);
+    return total;
+}
+
+VolumeSharingPlan planVolumeSharing(const OntoMath::Piecewise* const channels[6]) {
+    static const std::set<std::string> kSpatial = {
+        OntoMath::kAmbientPointVar, "x", "y", "z", OntoMath::kTimeVar};
+    const OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
+        {"x", OntoMath::ValueKind::Scalar}, {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar}, {OntoMath::kTimeVar, OntoMath::ValueKind::Scalar}};
+
+    std::map<std::string, SharedGroup> byKey;
+    std::function<void(const OntoMath::MathNode&, int, const std::string&)> visit =
+        [&](const OntoMath::MathNode& node, int channel, const std::string& path) {
+            if (astContainsNoise(node)) {
+                std::set<std::string> deps;
+                node.collectDependencies(deps);
+                bool spatial = true;
+                for (const auto& d : deps) spatial = spatial && kSpatial.count(d) > 0;
+                if (spatial) {
+                    const auto type = node.typeOf(env, "root", false);
+                    if (type.success && type.kind == OntoMath::ValueKind::Scalar) {
+                        auto& g = byKey[volumeNodeIdentity(node)];
+                        if (!g.node) { g.node = &node; g.size = mathNodeSize(node); }
+                        g.sites.push_back({channel, path, &node});
+                    }
+                }
+            }
+            for (std::size_t i = 0; i < node.children.size(); ++i) {
+                // These operators bind child 0 to another point. Its text
+                // cannot establish equality with a value at the sample p.
+                if (i == 0 && (node.op == OntoMath::MathNode::Op::SDF ||
+                               node.op == OntoMath::MathNode::Op::Gradient)) continue;
+                // A lexical body is evaluated with its binding, never at the
+                // enclosing sample's unbound x/y/z/t/p. Whole self-contained
+                // Let expressions may still be shared when their free inputs match.
+                if (i == 1 && node.op == OntoMath::MathNode::Op::Let) continue;
+                if (i == 0 && node.op == OntoMath::MathNode::Op::Integral) continue;
+                if (node.children[i]) visit(*node.children[i], channel, path + "/" + std::to_string(i));
+            }
+        };
+    for (int c = 0; c < 6; ++c) {
+        if (!channels[c]) continue;
+        for (std::size_t k = 0; k < channels[c]->pieces.size(); ++k) {
+            const auto& piece = channels[c]->pieces[k];
+            if (piece.mathNode) visit(*piece.mathNode, c, std::to_string(k));
+        }
+    }
+
+    std::vector<SharedGroup> candidates;
+    for (auto& [key, g] : byKey) {
+        if (g.sites.size() >= 2) { g.key = key; candidates.push_back(g); }
+    }
+    std::sort(candidates.begin(), candidates.end(), [](const SharedGroup& a, const SharedGroup& b) {
+        if (a.size != b.size) return a.size > b.size;
+        // Constants decide equality, not emission order. Numeric edits that
+        // retain sharing should not reorder parameter slots and recompile.
+        const auto& x = a.sites.front();
+        const auto& y = b.sites.front();
+        return x.channel != y.channel ? x.channel < y.channel : x.path < y.path;
+    });
+    std::vector<SharedSite> taken;
+    auto inside = [&](const SharedSite& s) {
+        for (const auto& t : taken)
+            if (t.channel == s.channel && s.path.rfind(t.path + "/", 0) == 0) return true;
+        return false;
+    };
+    VolumeSharingPlan plan;
+    for (auto& g : candidates) {
+        std::vector<SharedSite> live;
+        for (const auto& site : g.sites) if (!inside(site)) live.push_back(site);
+        if (live.size() < 2) continue;
+        g.sites = live;
+        for (const auto& site : live) taken.push_back(site);
+        plan.groups.push_back(g);
+    }
+    std::reverse(plan.groups.begin(), plan.groups.end());   // inner (smaller) first
+    for (std::size_t i = 0; i < plan.groups.size(); ++i) {
+        plan.signature += "g" + std::to_string(i) + ":";
+        for (const auto& site : plan.groups[i].sites) {
+            plan.signature += "c" + std::to_string(site.channel) + "@" + site.path + ",";
+            plan.densityUses = plan.densityUses || site.channel == 0;
+        }
+        plan.signature += "\n";
+    }
+    return plan;
+}
+
+// Emits each shared group's evaluator (registering its parameters first, in
+// plan order) and installs the substitution table on `e`. Returns the WGSL to
+// place after volumeDensityEval: private slots, one function per group, and
+// volumeSharedEval(p), which fills every slot once per sample.
+std::string emitVolumeSharedPrelude(const VolumeSharingPlan& plan, Emit& e, const std::string& pt,
+                                    std::map<const OntoMath::MathNode*, std::string>& names) {
+    names.clear();
+    e.shared = &names;
+    if (plan.groups.empty()) return "";
+    std::string decls, fns, call = "\nfn volumeSharedEval(p: vec3<f32>) {\n";
+    for (std::size_t i = 0; i < plan.groups.size(); ++i) {
+        const auto& g = plan.groups[i];
+        const std::string slot = "g_volumeSharedG" + std::to_string(i);
+        std::string body;
+        emitProductWithZeroExits(*g.node, e, pt, body);   // earlier groups substitute
+        decls += "var<private> " + slot + ": f32;\n";
+        fns += "\nfn volumeSharedG" + std::to_string(i) + "(p: vec3<f32>) -> f32 {\n" + body + "}\n";
+        call += "    " + slot + " = volumeSharedG" + std::to_string(i) + "(p);\n";
+        for (const auto& site : g.sites) names[site.node] = slot;
+    }
+    return "\n" + decls + fns + call + "}\n";
+}
+} // namespace
+
 
 enum class JetKind { Scalar, Vector };
 struct JetExpr {
@@ -931,6 +1740,243 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
     return out;
 }
 
+// Validate the authored vector channel before lowering it. The generic emitter
+// can print vector syntax, but a chroma expression has a stronger contract than
+// "something that happens to parse": every authored piece must actually be a
+// Vector and every Piecewise feature must have a GPU realization. An absent chi
+// is handled outside this helper as the legacy light.color default.
+bool validateVectorPiecewise(const OntoMath::Piecewise& pw, bool bindTime,
+                             std::string& error) {
+    OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
+        {"x", OntoMath::ValueKind::Scalar},
+        {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar}
+    };
+    if (bindTime) env[OntoMath::kTimeVar] = OntoMath::ValueKind::Scalar;
+
+    if (pw.pieces.empty()) {
+        error = "authored vector expression has no pieces";
+        return false;
+    }
+    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
+        const auto& piece = pw.pieces[i];
+        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
+            error = "piece " + std::to_string(i) +
+                    " uses Piecewise semantics the WGSL expression channel does not implement";
+            return false;
+        }
+        if (!piece.mathNode) {
+            error = "piece " + std::to_string(i) + " has no authored value";
+            return false;
+        }
+        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+        std::string typeError;
+        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
+            error = typeError;
+            return false;
+        }
+        if (kind != OntoMath::ValueKind::Vector) {
+            error = "piece " + std::to_string(i) + " must evaluate to Vector, got " +
+                    std::string(OntoMath::valueKindName(kind));
+            return false;
+        }
+    }
+    error.clear();
+    return true;
+}
+
+// Validate the authored angular source factor before lowering. Alpha is scalar
+// and is the only Screen-radiance expression context that admits omega.x/y/z.
+bool validateAngularPiecewise(const OntoMath::Piecewise& pw, std::string& error) {
+    OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
+        {"x", OntoMath::ValueKind::Scalar},
+        {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar},
+        {OntoMath::kTimeVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kOmegaXVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kOmegaYVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kOmegaZVar, OntoMath::ValueKind::Scalar}
+    };
+
+    if (pw.pieces.empty()) {
+        error = "authored angular expression has no pieces";
+        return false;
+    }
+    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
+        const auto& piece = pw.pieces[i];
+        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
+            error = "piece " + std::to_string(i) +
+                    " uses Piecewise semantics the WGSL expression channel does not implement";
+            return false;
+        }
+        if (!piece.mathNode) {
+            error = "piece " + std::to_string(i) + " has no authored value";
+            return false;
+        }
+        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+        std::string typeError;
+        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
+            error = typeError;
+            return false;
+        }
+        if (kind != OntoMath::ValueKind::Scalar) {
+            error = "piece " + std::to_string(i) + " must evaluate to Scalar, got " +
+                    std::string(OntoMath::valueKindName(kind));
+            return false;
+        }
+    }
+    error.clear();
+    return true;
+}
+
+
+// V3 phase has its own directional vocabulary. It is scalar medium truth and
+// therefore must never gain source-alpha's omega binding by accident.
+bool validatePhasePiecewise(const OntoMath::Piecewise& pw, std::string& error) {
+    OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
+        {"x", OntoMath::ValueKind::Scalar},
+        {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar},
+        {OntoMath::kTimeVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWiXVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWiYVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWiZVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoXVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoYVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoZVar, OntoMath::ValueKind::Scalar}
+    };
+
+    if (pw.pieces.empty()) {
+        error = "authored phase expression has no pieces";
+        return false;
+    }
+    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
+        const auto& piece = pw.pieces[i];
+        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
+            error = "piece " + std::to_string(i) +
+                    " uses Piecewise semantics the WGSL expression channel does not implement";
+            return false;
+        }
+        if (!piece.mathNode) {
+            error = "piece " + std::to_string(i) + " has no authored value";
+            return false;
+        }
+        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+        std::string typeError;
+        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
+            error = typeError;
+            return false;
+        }
+        if (kind != OntoMath::ValueKind::Scalar) {
+            error = "piece " + std::to_string(i) + " must evaluate to Scalar, got " +
+                    std::string(OntoMath::valueKindName(kind));
+            return false;
+        }
+    }
+    error.clear();
+    return true;
+}
+
+// Rung 9 material response is vector-valued receiver truth. It reuses the
+// generic directional names wi/wo but owns a separate admission environment
+// from volume phase. No t appears here: this bounded rung has not established
+// an honest Material-owned Timeline.
+bool validateResponsePiecewise(const OntoMath::Piecewise& pw, std::string& error) {
+    OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
+        {"x", OntoMath::ValueKind::Scalar},
+        {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar},
+        {OntoMath::kSurfaceNormalVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kWiXVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWiYVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWiZVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoXVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoYVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoZVar, OntoMath::ValueKind::Scalar}
+    };
+
+    if (pw.pieces.empty()) {
+        error = "authored material response expression has no pieces";
+        return false;
+    }
+    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
+        const auto& piece = pw.pieces[i];
+        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
+            error = "piece " + std::to_string(i) +
+                    " uses Piecewise semantics the WGSL response channel does not implement";
+            return false;
+        }
+        if (!piece.mathNode) {
+            error = "piece " + std::to_string(i) + " has no authored response value";
+            return false;
+        }
+        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+        std::string typeError;
+        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
+            error = typeError;
+            return false;
+        }
+        if (kind != OntoMath::ValueKind::Vector) {
+            error = "piece " + std::to_string(i) +
+                    " material response must evaluate to Vector, got " +
+                    std::string(OntoMath::valueKindName(kind));
+            return false;
+        }
+    }
+    error.clear();
+    return true;
+}
+
+// V4 self-emission is vector-valued medium truth with an emission-owned omega
+// context. Its physical omega is world-space sample -> eye; it is not source
+// alpha's source -> receiver authored invariant.
+bool validateEmissionPiecewise(const OntoMath::Piecewise& pw, std::string& error) {
+    OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
+        {"x", OntoMath::ValueKind::Scalar},
+        {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar},
+        {OntoMath::kTimeVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kOmegaXVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kOmegaYVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kOmegaZVar, OntoMath::ValueKind::Scalar}
+    };
+
+    if (pw.pieces.empty()) {
+        error = "authored volume emission expression has no pieces";
+        return false;
+    }
+    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
+        const auto& piece = pw.pieces[i];
+        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
+            error = "piece " + std::to_string(i) +
+                    " uses Piecewise semantics the WGSL expression channel does not implement";
+            return false;
+        }
+        if (!piece.mathNode) {
+            error = "piece " + std::to_string(i) + " has no authored value";
+            return false;
+        }
+        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+        std::string typeError;
+        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
+            error = typeError;
+            return false;
+        }
+        if (kind != OntoMath::ValueKind::Vector) {
+            error = "piece " + std::to_string(i) + " must evaluate to Vector, got " +
+                    std::string(OntoMath::valueKindName(kind));
+            return false;
+        }
+    }
+    error.clear();
+    return true;
+}
+
 // The raymarcher. Rasterises the field's bounding box and sphere-traces the true
 // eye ray per fragment, in FIELD space.
 //
@@ -941,14 +1987,31 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
 // and leave at the analytic AABB; the rasterised face is not the ray origin.
 const char* kMarcher = R"WGSL(
 struct RU {
-    viewProj:  mat4x4<f32>,
-    lightPos:  vec4<f32>,
-    eyePos:    vec4<f32>,
-    // x = distance to the camera's far plane, in WORLD units. Everything past it
-    // is clipped before it is ever seen, so marching there is work with no
-    // possible output. Unlike a hardcoded horizon constant this is not a quality
-    // setting -- it cannot remove anything a Person could have seen.
-    limits:    vec4<f32>,
+    viewProj:       mat4x4<f32>,
+    invViewProj:    mat4x4<f32>,
+    lightPos:       vec4<f32>,
+    eyePos:         vec4<f32>,
+    lightAmbient:   vec4<f32>,
+    lightDiffuse:   vec4<f32>,
+    lightSpecular:  vec4<f32>,
+    // x = lighting enabled; y = Rung-8 derived visibility enabled.
+    // Visibility is execution state, not authored source state.
+    lightControl:   vec4<f32>,
+    // x/y/z/w = source intensity/ambient/diffuse/specular. These are used
+    // only when authored chi is present; the no-chi branch keeps the exact
+    // pre-Rung-5 color-bearing light uniforms below.
+    radianceSourceCoefficients: vec4<f32>,
+    // x = distance to the camera's far plane, in WORLD units.
+    // y = viewport width in pixels.
+    // z = viewport height in pixels.
+    // w = authorable space distortion factor (e.g. Far Lands Zone).
+    limits:      vec4<f32>,
+    // x = admitted radiance-source temporal coordinate; y = its delta.
+    // z/w reserved. Authored rho(p,t) reads t from radianceTime.x.
+    radianceTime: vec4<f32>,
+    // Independent participating-medium coordinate. D(p,t) never borrows
+    // radianceTime merely because both channels happen to read canonical t.
+    volumeTime: vec4<f32>,
 };
 @group(0) @binding(0) var<uniform> u: RU;
 struct Params { v: array<f32> };
@@ -966,8 +2029,11 @@ fn vs(@location(0) pos: vec3<f32>, @builtin(instance_index) instIdx: u32) -> VSO
     let inst = instances[instIdx];
     let world = inst.model * vec4<f32>(pos * inst.extents.xyz, 1.0);
     o.clip = u.viewProj * world;
-    // Clamp to far plane so proxy geometry is never lost to far-plane clipping.
-    o.clip.z = min(o.clip.z, o.clip.w * 0.999999);
+    // Clamp to far plane only when in front of camera (w > 0) so proxy geometry is never
+    // lost to far-plane clipping without inverting clip depth for vertices behind the camera plane.
+    if (o.clip.w > 0.0) {
+        o.clip.z = min(o.clip.z, o.clip.w * 0.999999);
+    }
     o.worldPos = world.xyz;
     o.instIdx = instIdx;
     return o;
@@ -983,7 +2049,7 @@ struct FSOut {
 // Dual-Path WGSL Field Evaluator
 // This function is generated dynamically based on whether the Law system 
 // provides a hardcoded parameter path or an AST-driven piecewise definition.
-// fieldEval is emitted before this block.
+// volumeDensityEval is emitted before this block.
 
 fn rayAabb(ro: vec3<f32>, rd: vec3<f32>, b: vec3<f32>) -> vec2<f32> {
     // Slab method. A zero direction would NaN the inverse; nudge it.
@@ -1058,15 +2124,236 @@ fn heightGridAdvance(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
     return vec2<f32>(t, 1.0); // guard exhausted: fail open, never an unverified miss
 }
 
+// Generic spatial-Prophetic traversal over a fixed-depth proof bitmap.
+// The CPU adaptive hierarchy is still the theorem. Its proved-positive cells
+// are conservatively expanded into regular depth-N cells before upload.
+// Therefore a set bit permits skipping exactly one regular cell; a clear bit
+// carries no negative information and hands that cell to the exact marcher.
+//
+// This removes root-to-leaf pointer chasing from every hierarchy query. The
+// only slab intersection is for the one regular cell containing the current
+// ray point. Exact split-plane ownership follows ray direction so a boundary
+// cannot repeatedly select the cell the ray just exited.
+fn rangeGridAxisIndex(coord: f32, halfExtent: f32,
+                      dir: f32, dim: u32) -> u32 {
+    let e = abs(halfExtent);
+    let denom = max(2.0 * e, 1e-8);
+    let scaled = clamp(((coord + e) / denom) * f32(dim),
+                       0.0, f32(dim));
+    let floored = floor(scaled);
+    var idx = u32(min(floored, f32(dim - 1u)));
+    if (scaled == floored && dir < 0.0 && idx > 0u) {
+        idx = idx - 1u;
+    }
+    return idx;
+}
+
+fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
+                  tStart: f32, tMax: f32) -> vec3<f32> {
+    if (inst.rangeTraversalEnabled == 0u ||
+        inst.rangeProofWordCount == 0u ||
+        inst.rangeProofDepth == 0u ||
+        inst.rangeProofDepth > 10u) {
+        return vec3<f32>(tStart, tMax, 1.0);
+    }
+
+    let dim = 1u << inst.rangeProofDepth;
+    let cellCount = dim * dim * dim;
+    let neededWords = (cellCount + 31u) >> 5u;
+    if (inst.rangeProofWordCount < neededWords) {
+        return vec3<f32>(tStart, tMax, 1.0);
+    }
+
+    let extent = abs(inst.extents.xyz);
+    if (any(extent <= vec3<f32>(0.0))) {
+        return vec3<f32>(tStart, tMax, 1.0);
+    }
+    let cellSize = (2.0 * extent) / f32(dim);
+    var t = tStart;
+
+    // At depth 6 a straight ray crosses at most 190 regular cells. If a future
+    // deeper proof grid exceeds this guard, the unvisited remainder fails open
+    // to exact marching rather than silently disappearing.
+    for (var skipGuard = 0; skipGuard < 192; skipGuard = skipGuard + 1) {
+        if (t >= tMax) {
+            return vec3<f32>(tMax, tMax, 0.0);
+        }
+
+        let p = ro + rd * t;
+        if (any(p < -extent) || any(p > extent)) {
+            return vec3<f32>(t, tMax, 1.0);
+        }
+
+        let ix = rangeGridAxisIndex(p.x, extent.x, rd.x, dim);
+        let iy = rangeGridAxisIndex(p.y, extent.y, rd.y, dim);
+        let iz = rangeGridAxisIndex(p.z, extent.z, rd.z, dim);
+        let linear = ix + dim * (iy + dim * iz);
+        let localWord = linear >> 5u;
+        if (localWord >= inst.rangeProofWordCount) {
+            return vec3<f32>(t, tMax, 1.0);
+        }
+
+        let bit = 1u << (linear & 31u);
+        let provedPositive =
+            (rangeProofWords[inst.rangeProofWordOffset + localWord] & bit) != 0u;
+
+        let cellMin =
+            -extent + vec3<f32>(f32(ix), f32(iy), f32(iz)) * cellSize;
+        let cellMax = cellMin + cellSize;
+
+        // We need only the selected cell's EXIT. The old slab helper computed
+        // both entry and exit even though this ray point already owns the cell.
+        // Per axis, max((bmin-ro)/rd, (bmax-ro)/rd) is exactly the forward
+        // face: bmax for a positive safe direction, bmin for a negative one.
+        // Keep the same near-zero substitution and arithmetic order, but skip
+        // the unused entry-face work. This is not a DDA; one classified cell
+        // still hands a clear bit straight back to the exact authored marcher.
+        let rds = select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
+        let invRd = 1.0 / rds;
+        let exitFace = select(cellMin, cellMax, rds >= vec3<f32>(0.0));
+        let axisExit = (exitFace - ro) * invRd;
+        let cellExit = min(
+            min(min(axisExit.x, axisExit.y), axisExit.z),
+            tMax);
+        if (cellExit <= t) {
+            return vec3<f32>(t, tMax, 1.0);
+        }
+
+        if (!provedPositive) {
+            // A clear bit says only that the proof grid grants no skip here.
+            // Preserve the exact marcher's authority over this interval.
+            return vec3<f32>(t, cellExit, 1.0);
+        }
+
+        // The CPU theorem proved f>0 throughout this regular cell. Advance to
+        // its exact exit without evaluating the authored field.
+        t = cellExit;
+    }
+
+    return vec3<f32>(t, tMax, 1.0);
+}
+
+// Rung 8 exact baseline for the geometry this shader actually owns.
+//
+// This is deliberately DERIVED transport: it reads the already-authored SDF
+// between the receiver and source and never writes or reinterprets rho/chi/alpha.
+// lightControl.y=0 is the exact Rung-7 compatibility law V=1.
+//
+// Scope is intentionally honest. A generated SDF pipeline can evaluate its own
+// authored geometry; it cannot yet name arbitrary differently-structured SDF
+// pipelines elsewhere in the Zone. Scene-wide transport needs a shared scene
+// geometry representation rather than pretending those other beings are visible
+// here. Until that exists, this function is not enabled globally by EngineRender.
+fn sourceTransportSignedStep(p: vec3<f32>, damping: f32) -> f32 {
+    if (damping < 0.5) {
+        let s = sdfSampleStep(p);
+        var gradLen = s.gradLen;
+        if (gradLen <= 1e-6) {
+            let ge = 1e-3;
+            let raw = s.raw;
+            let g = vec3<f32>(
+                sdfEval(p + vec3<f32>(ge, 0.0, 0.0)) - raw,
+                sdfEval(p + vec3<f32>(0.0, ge, 0.0)) - raw,
+                sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
+            gradLen = length(g);
+        }
+        return select(s.raw, s.raw / max(gradLen, 1.0), gradLen > 1e-6);
+    }
+    return sdfEval(p);
+}
+
+fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
+    if (u.lightControl.y < 0.5) { return 1.0; }
+
+    let inst = instances[g_instIdx];
+    let sourceField = (inst.invModel * vec4<f32>(sourceWorld, 1.0)).xyz;
+    let toSource = sourceField - surfacePoint;
+    let sourceDistance = length(toSource);
+    let surfaceEps = max(inst.misc.y, 1e-4);
+    let bias = surfaceEps * 4.0;
+    if (sourceDistance <= bias * 2.0) { return 1.0; }
+
+    let initialDir = toSource / sourceDistance;
+    let damping = inst.misc.w;
+
+    // The primary marcher may terminate just inside the zero set (for example,
+    // over-relaxation followed by secant correction). A tiny ray-direction bias
+    // then begins the transport query inside its own receiver and manufactures a
+    // self-shadow. Escape only when the source ray points outward through the
+    // receiver's local SDF normal. Back-facing/inward rays remain inside real
+    // geometry and are therefore still blocked by the receiver itself.
+    let surfaceSignedStep = sourceTransportSignedStep(surfacePoint, damping);
+    var origin = surfacePoint + initialDir * bias;
+    if (dot(surfaceNormal, initialDir) > 0.0) {
+        let penetration = max(-surfaceSignedStep, 0.0);
+        origin = surfacePoint + surfaceNormal * (penetration + bias);
+    }
+
+    let remaining = sourceField - origin;
+    let rayLength = length(remaining);
+    if (rayLength <= bias) { return 1.0; }
+    let shadowDir = remaining / rayLength;
+
+    // Restrict the query to authored geometry inside this instance's domain.
+    // A source outside the box is fine: leaving the box unobstructed proves this
+    // instance contributes no blocker beyond that exit.
+    let bounds = rayAabb(origin, shadowDir, inst.extents.xyz);
+    if (bounds.y < bounds.x || bounds.y <= 0.0) { return 1.0; }
+
+    var tShadow = max(bounds.x, 0.0);
+    let maxShadow = min(bounds.y, rayLength - bias);
+    if (maxShadow <= tShadow) { return 1.0; }
+
+    // Match the primary renderer's finite exact-march budget. This baseline uses
+    // no proof-grid skip, no penumbra estimate, and no percentage heuristic.
+    for (var shadowStep = 0; shadowStep < 192; shadowStep = shadowStep + 1) {
+        if (tShadow >= maxShadow) { return 1.0; }
+
+        let pShadow = origin + shadowDir * tShadow;
+        let currentEps = max(surfaceEps, tShadow * 0.001);
+        let dShadow = sourceTransportSignedStep(pShadow, damping);
+
+        if (dShadow <= 0.0 || abs(dShadow) < currentEps) { return 0.0; }
+        tShadow = tShadow + max(dShadow, currentEps);
+    }
+
+    // The primary marcher uses the same bounded iteration contract. If the
+    // budget is exhausted before the segment is decided, fail conservatively:
+    // never invent an unobstructed path that was not actually traversed.
+    return 0.0;
+}
+
 @fragment
 fn fs(in: VSOut) -> FSOut {
     g_instIdx = in.instIdx;
     let inst    = instances[in.instIdx];
     let roWorld = u.eyePos.xyz;
-    let rdWorld = normalize(in.worldPos - roWorld);
+
+    // Derive primary ray direction: use exact screen NDC unprojection when viewport
+    // dimensions are available to eliminate proxy cube clipping and perspective non-linearities.
+    var rdWorld: vec3<f32>;
+    if (u.limits.y > 0.0 && u.limits.z > 0.0) {
+        let ndc = vec4<f32>(
+            (in.clip.x / u.limits.y) * 2.0 - 1.0,
+            (1.0 - (in.clip.y / u.limits.z)) * 2.0 - 1.0,
+            1.0,
+            1.0
+        );
+        let worldPt = u.invViewProj * ndc;
+        rdWorld = normalize(worldPt.xyz / worldPt.w - roWorld);
+    } else {
+        rdWorld = normalize(in.worldPos - roWorld);
+    }
+
     let ro      = (inst.invModel * vec4<f32>(roWorld, 1.0)).xyz;
     let rdField = (inst.invModel * vec4<f32>(rdWorld, 0.0)).xyz;
-    let rd      = normalize(rdField);
+    var rd      = normalize(rdField);
+
+    // Authorable Far Lands space distortion (Part 2):
+    if (u.limits.w > 1e-4) {
+        let warp = sin(ro.xyz * 0.05 + vec3<f32>(0.0, rdField.y * 2.0, 0.0)) * u.limits.w;
+        rd = normalize(rd + warp);
+    }
     // t is measured in FIELD units; the far plane is a WORLD distance. The
     // unnormalised field-space direction is exactly the conversion factor along
     // this ray, so this stays right under any invertible model transform,
@@ -1127,17 +2414,56 @@ fn fs(in: VSOut) -> FSOut {
 
     var hit = false;
     var transmittance = 1.0;
-    var volumetric_scatter = 0.0;
-    var first_hit_t = -1.0;
+    var volumetric_scatter = vec3<f32>(0.0);
+    var volumetric_emission = vec3<f32>(0.0);
+    // First ray coordinate at which the authored medium was actually sampled
+    // with positive density. This is NOT a hard-surface hit.
+    var first_density_t = -1.0;
     
     // Enhanced Sphere Tracing (Over-Relaxation) state:
     var omega = select(1.0, 1.4, damping > 0.5);
     var prev_d = 1e10;
     var candidate_step = 0.0;
+
+    // When range traversal is active, exact marching owns only the current
+    // ambiguous leaf. Crossing its exit asks the hierarchy for the next
+    // candidate interval; proved-empty cells between them are skipped without
+    // calling sdfEval/sdfSampleStep.
+    var rangeCellExit = t;
+    var rangeCandidateActive = false;
     
     for (var i = 0; i < 192; i = i + 1) {
         if (t > maxDist) { break; }
-        let p = ro + rd * t;
+
+        if (inst.rangeTraversalEnabled != 0u &&
+            (!rangeCandidateActive || t >= rangeCellExit)) {
+            let candidate = rangeCandidate(inst, ro, rd, t, maxDist);
+            if (candidate.z < 0.5) {
+                t = maxDist + 1.0;
+                break;
+            }
+            let oldT = t;
+            t = max(t, candidate.x);
+            if (t > oldT) {
+                // A proof-authorized spatial jump is not a marcher step. Any
+                // secant / over-relaxation history describes the old sample
+                // pair and must not be reused as though candidate_step bridged
+                // this larger distance.
+                prev_d = 1e10;
+                candidate_step = 0.0;
+                omega = select(1.0, 1.4, damping > 0.5);
+            }
+            rangeCellExit = max(t, candidate.y);
+            rangeCandidateActive = true;
+            if (t > maxDist) { break; }
+        }
+
+        // Keep the coordinate at which this iteration's medium sample is
+        // evaluated. Surface marching may advance t by a gradient-corrected,
+        // damped, or over-relaxed amount below; transport must integrate the
+        // interval that was ACTUALLY traversed, not reuse raw SDF magnitude.
+        let sample_t = t;
+        let p = ro + rd * sample_t;
         
         // Analytical early-exit: If ray is above maximum height and traveling upwards, it can never hit ground
         if (isHeightfield && rd.y > 1e-4 && p.y > inst.extents.y) {
@@ -1160,7 +2486,7 @@ fn fs(in: VSOut) -> FSOut {
                     sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
                 gl = length(g);
             }
-            d = select(raw, raw / gl, gl > 1e-6);
+            d = select(raw, raw / max(gl, 1.0), gl > 1e-6);
 
             if (d <= 0.0 || abs(d) < current_eps) {
                 hit = true;
@@ -1172,11 +2498,21 @@ fn fs(in: VSOut) -> FSOut {
             }
 
             candidate_step = max(d, current_eps);
+            // Do not clamp the exact marcher's lawful step to octree-cell
+            // boundaries. The hierarchy may skip cells it proved zero-free,
+            // but ambiguous space must preserve the baseline march trajectory.
             prev_d = d;
             t = t + candidate_step;
         } else {
             raw = sdfEval(p);
             d = raw;
+
+            if (omega > 1.0 && (d < 0.0 || d + prev_d < candidate_step)) {
+                t = t - candidate_step + prev_d;
+                omega = 1.0;
+                candidate_step = 0.0;
+                continue;
+            }
 
             if (d <= 0.0 || abs(d) < current_eps) {
                 hit = true;
@@ -1187,52 +2523,97 @@ fn fs(in: VSOut) -> FSOut {
                 break;
             }
 
-            if (omega > 1.0 && d + prev_d < candidate_step) {
-                t = t - candidate_step + prev_d;
-                omega = 1.0;
-                candidate_step = 0.0;
-                continue;
+            if (omega == 1.0 && damping > 0.5 && d > prev_d) {
+                omega = 1.4;
             }
-
             prev_d = d;
             candidate_step = max(omega * d, current_eps);
+            // Same rule for distance-field marching: cell boundaries are not
+            // authored geometry and may not perturb the exact baseline step.
             t = t + candidate_step;
         }
         
         // Volumetric Field Accumulation
-        let density = fieldEval(p);
-        if (density > 0.0) {
-            if (first_hit_t < 0.0) { first_hit_t = t; }
-            let step_size = max(abs(d), current_eps); // Optical depth uses absolute distance to next bound or small step
-            let extinction = max(density * 0.5, 1e-6); // Tunable constant
+        let density = volumeDensityEval(p);
+        // t may advance beyond maxDist on the last surface-march step. Medium
+        // transport owns only the bounded interval [sample_t, maxDist].
+        let marched_field_distance = max(min(t, maxDist) - sample_t, 0.0);
+        if (density > 0.0 && marched_field_distance > 0.0) {
+            if (first_density_t < 0.0) { first_density_t = sample_t; }
+            // V1: sigma_t is independently authored when present; otherwise
+            // volumeExtinctionEval preserves the exact pre-V1 0.5*D contract.
+            let extinction = max(volumeExtinctionEval(p, density), 1e-6);
             
             let old_t = transmittance;
-            transmittance *= exp(-extinction * step_size);
+            transmittance *= exp(-extinction * marched_field_distance);
             
-            // Analytical integration prevents double attenuation across large steps
-            volumetric_scatter += (density / extinction) * (old_t - transmittance);
+            // V2: sigma_s controls scattering magnitude while C_v controls medium
+            // chroma. Compatibility (sigma_s=D, C_v=white) is byte-for-byte
+            // equivalent to the historical white term.
+            let scattering = max(volumeScatteringEval(p, density), 0.0);
+            let mediumChroma = volumeChromaEval(p);
+            if (HAS_AUTHORED_VOLUME_PHASE) {
+                let mediumWorldP = (inst.model * vec4<f32>(p, 1.0)).xyz;
+                let wiDelta = mediumWorldP - u.lightPos.xyz;
+                let woDelta = u.eyePos.xyz - mediumWorldP;
+                let wiLen = length(wiDelta);
+                let woLen = length(woDelta);
+                let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, SOURCE_DIRECTION_EPS),
+                                wiLen > SOURCE_DIRECTION_EPS);
+                let wo = select(vec3<f32>(0.0), woDelta / max(woLen, SOURCE_DIRECTION_EPS),
+                                woLen > SOURCE_DIRECTION_EPS);
+                var phase = 0.0;
+                if ((!VOLUME_PHASE_READS_WI || wiLen > SOURCE_DIRECTION_EPS) &&
+                    woLen > SOURCE_DIRECTION_EPS) {
+                    phase = max(volumePhaseEval(p, wi, wo), 0.0);
+                }
+                volumetric_scatter +=
+                    mediumChroma * (scattering / extinction) * phase *
+                    (old_t - transmittance);
+            } else {
+                // Exact V2 compatibility arithmetic: no extra multiply-by-one.
+                volumetric_scatter +=
+                    mediumChroma * (scattering / extinction) * (old_t - transmittance);
+            }
+
+            if (HAS_AUTHORED_VOLUME_EMISSION) {
+                let emissionWorldP = (inst.model * vec4<f32>(p, 1.0)).xyz;
+                let emissionDelta = u.eyePos.xyz - emissionWorldP;
+                let emissionLen = length(emissionDelta);
+                let emissionOmega = select(
+                    vec3<f32>(0.0),
+                    emissionDelta / max(emissionLen, SOURCE_DIRECTION_EPS),
+                    emissionLen > SOURCE_DIRECTION_EPS);
+                var emitted = vec3<f32>(0.0);
+                if (!VOLUME_EMISSION_READS_OMEGA || emissionLen > SOURCE_DIRECTION_EPS) {
+                    emitted = max(volumeEmissionEval(p, emissionOmega), vec3<f32>(0.0));
+                }
+                volumetric_emission += emitted * ((old_t - transmittance) / extinction);
+            }
         }
         
         // Early exit if the field is fully opaque or ray exits the bounded volume
         if (transmittance < 0.01) { break; }
         if (t > maxDist) { break; }
     }
-    if (!hit && transmittance > 0.99) { discard; }
+    if (!hit && transmittance > 0.99 && !HAS_AUTHORED_VOLUME_EMISSION) { discard; }
 
     var out: FSOut;
     
     if (!hit) {
-        // Resolve depth/normal garbage when early-exiting (volumetric only, no hard surface hit)
-        // Set depth to the first volumetric hit so it occludes correctly
+        // Volumetric-only output still uses the legacy shared SDF pipeline.
+        // first_density_t records the sampled medium coordinate truthfully, but
+        // V0c MUST NOT activate this path in production until volume composition
+        // no longer treats a translucent sample as an opaque depth owner.
         let final_alpha = 1.0 - transmittance;
-        let c = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter;
+        let c = volumetric_scatter + volumetric_emission;
         if (final_alpha > 0.0) {
             out.color = vec4<f32>(c / final_alpha, final_alpha);
         } else {
             out.color = vec4<f32>(0.0);
         }
-        if (first_hit_t >= 0.0) {
-            let hit_p = ro + rd * first_hit_t;
+        if (first_density_t >= 0.0) {
+            let hit_p = ro + rd * first_density_t;
             let hit_w = (inst.model * vec4<f32>(hit_p, 1.0)).xyz;
             let hit_c = u.viewProj * vec4<f32>(hit_w, 1.0);
             out.depth = hit_c.z / hit_c.w;
@@ -1245,23 +2626,115 @@ fn fs(in: VSOut) -> FSOut {
     let pf = ro + rd * t;                                // field-space hit
     let pw = (inst.model * vec4<f32>(pf, 1.0)).xyz;         // world-space hit
     let nf = sdfNormal(pf);
-    // Normals transform by the inverse-transpose; invModel transposed gives it
-    // without shipping another matrix.
-    let nw = normalize((transpose(inst.invModel) * vec4<f32>(nf, 0.0)).xyz);
+    // OntoMath authors the inverse-transpose on CPU. The shader consumes the
+    // lowered normal matrix; it does not independently originate that meaning.
+    let nw = normalize((inst.normalMat * vec4<f32>(nf, 0.0)).xyz);
 
     let L = normalize(u.lightPos.xyz - pw);
     let V = normalize(u.eyePos.xyz - pw);
     let H = normalize(L + V);
-    
+
+    // Evaluate the Person-authored source invariants in source-relative world
+    // coordinates. rho is scalar, chi is vec3, and alpha is a third independent
+    // scalar over the normalized WORLD-space source -> receiver direction.
+    let sourceDelta = pw - u.lightPos.xyz;
+    let radialRadiance = max(lightRadiance(sourceDelta), 0.0);
+    var angularRadiance = 1.0;
+    if (HAS_AUTHORED_ANGULAR) {
+        if (ANGULAR_READS_OMEGA) {
+            let directionLength = length(sourceDelta);
+            if (directionLength > SOURCE_DIRECTION_EPS) {
+                let emissionOmega = sourceDelta / directionLength;
+                angularRadiance = max(lightAngular(sourceDelta, emissionOmega), 0.0);
+            } else {
+                // omega is undefined at the source singularity. Refuse this
+                // directional sample by contributing zero; never invent an axis.
+                angularRadiance = 0.0;
+            }
+        } else {
+            // A direction-independent authored alpha does not require omega.
+            angularRadiance = max(lightAngular(sourceDelta, vec3<f32>(0.0)), 0.0);
+        }
+    }
+    let shapedRadiance = radialRadiance * angularRadiance;
+    let pathVisibility = sourceVisibility(pf, nf, u.lightPos.xyz);
+    let directRadiance = shapedRadiance * pathVisibility;
     let diff = max(dot(nw, L), 0.0);
-    let lit  = inst.shading.x + inst.shading.y * diff;
-    let spec = inst.shading.z * pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) * step(0.0001, diff);
+    let specShape = inst.shading.z *
+        pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) *
+        step(0.0001, diff);
+
+    var ambientTerm: vec3<f32>;
+    var diffuseTerm: vec3<f32>;
+    var specTerm: vec3<f32>;
+    if (HAS_AUTHORED_CHROMA) {
+        let sourceChroma = lightChroma(pw - u.lightPos.xyz);
+        let c = u.radianceSourceCoefficients;
+        // Separate the legacy scalar coefficients from chroma only on this new
+        // path. This realizes rho * chi without multiplying legacy light.color
+        // a second time, including when one legacy color channel is exactly zero.
+        let ambientEnvelope = sourceChroma * vec3<f32>((c.x * c.y) / 0.2);
+        let diffuseEnvelope = sourceChroma * vec3<f32>((c.x * c.z) / 0.8);
+        let specularEnvelope = sourceChroma * vec3<f32>(c.x * c.w);
+        if (HAS_AUTHORED_MATERIAL_RESPONSE) {
+            let responseDistance = length(sourceDelta);
+            var responseWi = vec3<f32>(0.0);
+            var responseDefined = true;
+            if (responseDistance > SOURCE_DIRECTION_EPS) {
+                // wi keeps the canonical transport convention: source -> receiver.
+                responseWi = sourceDelta / responseDistance;
+            } else if (MATERIAL_RESPONSE_READS_WI) {
+                responseDefined = false;
+            }
+            var receiverResponse = vec3<f32>(0.0);
+            if (responseDefined) {
+                receiverResponse = materialResponseEval(pf, nw, responseWi, V);
+            }
+            ambientTerm = vec3<f32>(0.0);
+            diffuseTerm = (sourceChroma * vec3<f32>(c.x)) *
+                          receiverResponse * directRadiance;
+            specTerm = vec3<f32>(0.0);
+        } else {
+            ambientTerm = inst.shading.x * ambientEnvelope;
+            diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
+            specTerm = specularEnvelope * specShape * directRadiance;
+        }
+    } else {
+        // EXACT compatibility branch from Rung 4. No authored chi means
+        // constant legacy light.color, already carried by these uniforms.
+        let ambientEnvelope  = u.lightAmbient.rgb / vec3<f32>(0.2);
+        let diffuseEnvelope  = u.lightDiffuse.rgb / vec3<f32>(0.8);
+        let specularEnvelope = u.lightSpecular.rgb;
+        if (HAS_AUTHORED_MATERIAL_RESPONSE) {
+            let responseDistance = length(sourceDelta);
+            var responseWi = vec3<f32>(0.0);
+            var responseDefined = true;
+            if (responseDistance > SOURCE_DIRECTION_EPS) {
+                responseWi = sourceDelta / responseDistance;
+            } else if (MATERIAL_RESPONSE_READS_WI) {
+                responseDefined = false;
+            }
+            var receiverResponse = vec3<f32>(0.0);
+            if (responseDefined) {
+                receiverResponse = materialResponseEval(pf, nw, responseWi, V);
+            }
+            ambientTerm = vec3<f32>(0.0);
+            diffuseTerm = (u.lightDiffuse.rgb / vec3<f32>(0.8)) *
+                          receiverResponse * directRadiance;
+            specTerm = vec3<f32>(0.0);
+        } else {
+            ambientTerm = inst.shading.x * ambientEnvelope;
+            diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
+            specTerm = specularEnvelope * specShape * directRadiance;
+        }
+    }
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
 
-    // Combine hard surface with accumulated volumetric scatter
-    let base_rgb = sdfColor(pf) * lit + vec3<f32>(spec);
-    let field_rgb = vec3<f32>(1.0, 1.0, 1.0) * volumetric_scatter; // Could be colored by the field later
+    let surfaceColor = sdfColor(pf);
+    let litRgb = surfaceColor * (ambientTerm + diffuseTerm) + specTerm;
+    let base_rgb = mix(surfaceColor, litRgb, u.lightControl.x);
+    let field_rgb = volumetric_scatter;
     
     let final_alpha = clamp(inst.baseColor.a + (1.0 - transmittance), 0.0, 1.0);
     let final_rgb = base_rgb * transmittance + field_rgb;
@@ -1281,13 +2754,1589 @@ fn fs(in: VSOut) -> FSOut {
 
 } // namespace
 
-Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode, const OntoMath::Piecewise* colorExpr) {
+Program compileScreenForm(const OntoMath::Piecewise& color,
+                          const OntoMath::Piecewise* opacity, bool bindTime) {
+    Program prog;
+    Emit e;
+    e.bindScreen = true;
+    e.bindTime = bindTime;
+    e.timeExpression = "screen.time.x";
+    e.parameterOffset = "0u";
+    OntoMath::TypeEnv env{{"p", OntoMath::ValueKind::Vector}};
+    for (const char* name : {"x", "y", "z", "u", "v", "width", "height"})
+        env[name] = OntoMath::ValueKind::Scalar;
+    if (bindTime) env["t"] = OntoMath::ValueKind::Scalar;
+
+    // Reuse the mathematical emitter, but preserve definedness separately from
+    // value: a hole means no Screen act, not an invented black sample. Pure
+    // whereLEZero admits arbitrary regions; world guards/calls/folds must be
+    // resolved by Law before crossing this parallel fragment boundary.
+    auto lower = [&](const OntoMath::Piecewise& form, bool vector) {
+        std::string body;
+        const auto kind = vector ? OntoMath::ValueKind::Vector : OntoMath::ValueKind::Scalar;
+        if (form.pieces.empty()) e.refuse("direct Screen expression has no pieces");
+        for (const auto& piece : form.pieces) {
+            if (piece.guard || piece.call || piece.fold) {
+                e.refuse("direct Screen refuses unresolved world guards, calls and folds");
+                break;
+            }
+            std::string why;
+            OntoMath::ValueKind actual = OntoMath::ValueKind::Unknown;
+            if (!piece.mathNode || !piece.mathNode->checkTypes(env, why, &actual, false) || actual != kind) {
+                e.refuse("direct Screen value must be " + std::string(OntoMath::valueKindName(kind)) + ": " + why);
+                break;
+            }
+            std::string condition = "true";
+            if (piece.hasLo || piece.hasHi) {
+                const auto it = env.find(form.inputVariable);
+                if (it == env.end() || it->second.kind != OntoMath::ValueKind::Scalar) {
+                    e.refuse("direct Screen interval coordinate is unbound: " + form.inputVariable);
+                    break;
+                }
+                const std::string coordinate = pointComponent(form.inputVariable, e, "p");
+                if (piece.hasLo) condition += " && " + coordinate + (piece.includeLo ? " >= " : " > ") + e.param(piece.lo);
+                if (piece.hasHi) condition += " && " + coordinate + (piece.includeHi ? " <= " : " < ") + e.param(piece.hi);
+            }
+            if (piece.whereLEZero) {
+                if (!piece.whereLEZero->checkTypes(env, why, &actual, false) || actual != OntoMath::ValueKind::Scalar) {
+                    e.refuse("direct Screen region selector must be Scalar: " + why);
+                    break;
+                }
+                condition += " && (" + emitMathNode(*piece.whereLEZero, e, "p") + ") <= 0.0";
+            }
+            const std::string value = emitMathNode(*piece.mathNode, e, "p");
+            body += "    if (" + condition + ") { return " +
+                (vector ? "vec4<f32>(" + value + ", 1.0)" : value) + "; }\n";
+        }
+        body += vector ? "    return vec4<f32>(0.0);\n" : "    return 0.0;\n";
+        return body;
+    };
+    const std::string colorBody = lower(color, true);
+    const std::string opacityBody = opacity ? lower(*opacity, false) : "    return 1.0;\n";
+    for (float number : e.params)
+        if (!std::isfinite(number)) e.refuse("direct Screen parameter is not finite float32");
+    prog.ok = !e.refused;
+    prog.error = e.refusal;
+    prog.params = std::move(e.params);
+    if (!prog.ok) return prog;
+    // The fullscreen triangle merely launches one invocation per framebuffer
+    // sample. It is Kernel machinery, never an authored Shape or rectangle.
+    prog.wgsl = R"WGSL(
+struct ScreenCoordinates { size: vec4<f32>, time: vec4<f32> };
+struct Parameters { v: array<f32> };
+@group(0) @binding(0) var<uniform> screen: ScreenCoordinates;
+@group(0) @binding(1) var<storage, read> P: Parameters;
+var<private> screenPoint: vec3<f32>;
+)WGSL";
+    prog.wgsl += kPrimitives;
+    prog.wgsl += "fn screenColor(p: vec3<f32>) -> vec4<f32> {\n" + colorBody + "}\n";
+    prog.wgsl += "fn screenOpacity(p: vec3<f32>) -> f32 {\n" + opacityBody + "}\n";
+    prog.wgsl += R"WGSL(
+@vertex fn vs(@builtin(vertex_index) vertex: u32) -> @builtin(position) vec4<f32> {
+    var positions = array<vec2<f32>, 3>(vec2<f32>(-1.0,-1.0), vec2<f32>(3.0,-1.0), vec2<f32>(-1.0,3.0));
+    return vec4<f32>(positions[vertex], 0.0, 1.0);
+}
+@fragment fn fs(@builtin(position) pixel: vec4<f32>) -> @location(0) vec4<f32> {
+    let p = vec3<f32>(pixel.xy, 0.0);
+    screenPoint = p;
+    let color = screenColor(p);
+    let opacity = screenOpacity(p);
+    // Undefined, NaN and infinite samples produce no act. The destination's
+    // representable color range is the hardware UNORM conversion boundary.
+    if (color.a == 0.0 || !(opacity > 0.0) || !(opacity <= 3.402823e38) ||
+        !all(abs(color.rgb) <= vec3<f32>(3.402823e38))) { discard; }
+    return vec4<f32>(color.rgb, clamp(opacity, 0.0, 1.0));
+}
+)WGSL";
+    return prog;
+}
+
+Program compileLineQuadrature(const OntoMath::MathNode& field, const OntoMath::LineQuadratureCertificate& cert,
+                              uint32_t maxCells) {
+    Program prog;
+    Emit e;
+    e.parameterOffset = "0u";
+    std::string why;
+    OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+    if (!field.checkTypes({{"p", OntoMath::ValueKind::Vector}}, why, &kind, false) || kind != OntoMath::ValueKind::Scalar) {
+        prog.ok = false;
+        prog.error = "a line-quadrature field must be a Scalar of p: " + why;
+        return prog;
+    }
+    if (cert.bands.empty() || maxCells < 2) {
+        prog.ok = false;
+        prog.error = "a line quadrature needs a certificate with at least one band, and at least 2 cells";
+        return prog;
+    }
+    if (cert.sourceExpression != field.toJson().dump()) {
+        prog.ok=false; prog.error="quadrature certificate source changed; rebuild its proof"; return prog;
+    }
+    // The field's own statements stay inside lineField: statements outside a
+    // function body are dropped (the Let finding, plan §6an).
+    const std::string value = emitMathNode(field, e, "p");
+    const std::string fieldBody = e.body;
+    e.body.clear();
+    // The certificate's bands, as chained ifs on the segment's |p|∞.
+    std::string select;
+    for (std::size_t j = 0; j < cert.bands.size(); ++j) {
+        const auto& b = cert.bands[j];
+        select += std::string(j == 0 ? "    if" : "    else if") + " (M <= " + e.param(float(b.cap)) + ") { L = " +
+                  e.param(float(b.lipschitz * (1.0 + 1e-6))) + "; W = " + e.param(float(b.width * (1.0 + 1e-6))) +
+                  "; SUP = " + e.param(float(b.sup * (1.0 + 1e-6))) + "; EPS = " + e.param(float(b.execution * (1.0 + 1e-6))) +
+                  "; H = " + (std::isfinite(b.hessian) ? e.param(float(b.hessian * (1.0 + 1e-6))) : std::string("-1.0")) + "; }\n";
+    }
+    for (float number : e.params)
+        if (!std::isfinite(number)) e.refuse("a line-quadrature constant is not finite float32");
+    prog.ok = !e.refused;
+    prog.error = e.refusal;
+    prog.params = std::move(e.params);
+    if (!prog.ok) return prog;
+    const std::string nmax = std::to_string(maxCells) + ".0";
+    prog.wgsl = R"WGSL(
+struct ScreenCoordinates { size: vec4<f32>, time: vec4<f32> };
+struct Parameters { v: array<f32> };
+@group(0) @binding(0) var<uniform> screen: ScreenCoordinates;
+@group(0) @binding(1) var<storage, read> P: Parameters;
+var<private> screenPoint: vec3<f32>;
+)WGSL";
+    prog.wgsl += kPrimitives;
+    prog.wgsl += "fn lineField(p: vec3<f32>) -> f32 {\n" + fieldBody + "    return " + value + ";\n}\n";
+    prog.wgsl += "fn lineIntegral(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32) -> vec4<f32> {\n"
+                 "    let a = min(lo, hi);\n"
+                 "    let b = max(lo, hi);\n"
+                 "    let S = b - a;\n"
+                 "    let p0 = abs(o + a * d);\n"
+                 "    let p1 = abs(o + b * d);\n"
+                 "    let M = max(max(max(p0.x, p0.y), p0.z), max(max(p1.x, p1.y), p1.z));\n"
+                 "    let dn = length(d);\n"
+                 "    var L = -1.0; var W = 0.0; var SUP = 0.0; var EPS = 0.0; var H = -1.0;\n" + select +
+                 "    if (L < 0.0) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
+                 "    let u = 1.1920929e-7;\n"
+                 "    let ds = 4.0 * u * (abs(a) + S);\n"
+                 "    let fixedErr = S * EPS + S * L * dn * ds + 4.0 * u * S * SUP;\n"
+                 "    let budget = 0.9 * (tol - fixedErr);\n"
+                 "    if (!(budget > 0.0)) { return vec4<f32>(0.0, 0.0, 0.0, fixedErr); }\n"
+                 "    var n = 2.0;\n"
+                 "    if (S * 2.25 * W > budget) {\n"
+                 "        n = ceil(S * S * 2.25 * L * dn / budget);\n"
+                 "        if (H >= 0.0) { n = min(n, ceil(S * sqrt(2.25 * H * dn * dn * S / (2.0 * budget)))); }\n"
+                 "        n = max(2.0, 2.0 * ceil(0.5 * n));\n"
+                 "    }\n"
+                 "    if (n > " + nmax + ") { return vec4<f32>(0.0, 0.0, n, 0.0); }\n"
+                 "    let h = S / n;\n"
+                 "    let N = u32(n);\n"
+                 "    var acc = 0.0;\n"
+                 "    for (var j = 0u; j < N; j = j + 2u) {\n"
+                 "        let sa = a + S * (f32(j) / n);\n"
+                 "        let sm = a + S * (f32(j + 1u) / n);\n"
+                 "        let sb = a + S * (f32(j + 2u) / n);\n"
+                 "        acc = acc + (h / 3.0) * (lineField(o + sa * d) + 4.0 * lineField(o + sm * d) + lineField(o + sb * d));\n"
+                 "    }\n"
+                 "    var local = min(W, L * dn * h);\n"
+                 "    if (H >= 0.0) { local = min(local, H * dn * dn * h * h * 0.5); }\n"
+                 "    let mathematical = S * 2.25 * local;\n"
+                 "    let nn = n + 8.0;\n"
+                 "    let gamma = nn * u / (1.0 - nn * u);\n"
+                 "    let total = (mathematical + fixedErr + gamma * S * SUP) * 1.001;\n"
+                 "    if (total > tol) { return vec4<f32>(0.0, 0.0, n, total); }\n"
+                 "    return vec4<f32>(select(acc, -acc, hi < lo), 1.0, n, total);\n"
+                 "}\n";
+    return prog;
+}
+
+
+// A numeric executable plan, retained only by the compute witness today. The
+// fields/domain lowering below is shared with the ordinary line kernel; no
+// second source/attenuation law lives in this backend.
+// Shared outward-rounding bound arithmetic of every scheduled/grid transport lowering.
+static const char* kRayProofArithmetic = R"WGSL(
+struct ScheduledTransport {
+    radiance: f32, transmittance: f32, radianceError: f32, transmittanceError: f32,
+    status: f32, samples: vec2<f32>, panels: f32
+};
+fn rayProofInfinity() -> f32 { return bitcast<f32>(0x7f800000u); }
+// Outward rounding for nonnegative bound arithmetic, using observable float
+// bits between operations. A normal floor also covers flushed subnormal results.
+// Qualification still includes the backend's IEEE/basic-arithmetic premise.
+fn rayProofUp(x: f32) -> f32 {
+    if (!(x >= 0.0) || x >= 3.402823466e38) { return rayProofInfinity(); }
+    return bitcast<f32>(bitcast<u32>(max(x, bitcast<f32>(0x00800000u))) + 1u);
+}
+fn rayProofAdd(a: f32,b: f32) -> f32 { if(a==0.0 && b==0.0){return 0.0;} return rayProofUp(a+b); }
+fn rayProofMul(a: f32,b: f32) -> f32 { if(a==0.0 || b==0.0){return 0.0;} return rayProofUp(a*b); }
+fn rayProofSignedUp(x: f32) -> f32 {
+    if(x<0.0){return bitcast<f32>(bitcast<u32>(x)-1u);} return rayProofUp(x);
+}
+fn rayProofLocal(w: f32,l: f32,h: f32,step: f32) -> f32 {
+    var r=min(w,rayProofMul(l,step));
+    if(h>=0.0){r=min(r,rayProofMul(rayProofMul(rayProofMul(h,step),step),0.5));}
+    return r;
+}
+)WGSL";
+
+static Program lowerScheduledTransport(Emit& e, std::string prelude, const std::string& domain,
+                                        const OntoMath::LineTransportSchedule& plan, bool depthOnly = false) {
+    Program out;
+    auto up = [&](double x) {
+        float f = float(x);
+        if (!(std::isfinite(x) && x >= 0.0 && std::isfinite(f))) e.refuse("non-finite schedule bound");
+        if (double(f) < x) f = std::nextafter(f, INFINITY);
+        return f;
+    };
+    auto lower = [](double x) { float f=float(x); if(double(f)>x) f=std::nextafter(f,-INFINITY); return f; };
+    auto upper = [](double x) { float f=float(x); if(double(f)<x) f=std::nextafter(f,INFINITY); return f; };
+    auto exact = [&](double x) {
+        const float f=float(x);
+        if(!(std::isfinite(x) && double(f)==x)) e.refuse("schedule ray/panel is not an exact finite f32 value");
+        return e.param(f);
+    };
+    if(plan.panels.empty() || plan.panels.size()>65536) e.refuse("invalid bounded schedule size");
+    const std::string origin="vec3<f32>("+exact(plan.origin[0])+","+exact(plan.origin[1])+","+exact(plan.origin[2])+")";
+    const std::string direction="vec3<f32>("+exact(plan.direction[0])+","+exact(plan.direction[1])+","+exact(plan.direction[2])+")";
+    const std::string lo=exact(plan.lo), hi=exact(plan.hi);
+    double dn2=0;
+    std::string rayPredicate = "all(o=="+origin+") && all(d=="+direction+")";
+    if (plan.rayDomain) {
+        const auto& q=*plan.rayDomain;
+        auto vector = [&](const std::array<double,3>& v) {
+            return "vec3<f32>("+exact(v[0])+","+exact(v[1])+","+exact(v[2])+")";
+        };
+        for(int i=0;i<3;++i) {
+            if(!(q.originLo[i]<=q.originHi[i] && q.directionLo[i]<=q.directionHi[i]))
+                e.refuse("invalid ray-family qualification box");
+            const double magnitude=std::max(std::abs(q.directionLo[i]),std::abs(q.directionHi[i]));
+            dn2+=magnitude*magnitude;
+        }
+        rayPredicate = "all(o>="+vector(q.originLo)+") && all(o<="+vector(q.originHi)+") && all(d>="+
+            vector(q.directionLo)+") && all(d<="+vector(q.directionHi)+")";
+    } else for(double d:plan.direction) dn2+=d*d;
+    const std::string dn=e.param(up(std::sqrt(dn2)*(1.0+1e-12)));
+    const std::string pointError=e.param(up(plan.pointError));
+    const double a=plan.model.exponentialAbsolute(), r=plan.model.expRelative;
+    if(!(std::isfinite(a) && a>=0 && std::isfinite(r) && r>=0 && r<1)) e.refuse("invalid scheduled exponential model");
+    if (!(up(r) < 1.0f)) e.refuse("relative exponential allowance has no usable f32 upper bound below one");
+    const std::string expA=e.param(up(a)), expR=e.param(up(r));
+    const std::string expRound=e.param(up(r+4.0*std::ldexp(1.0,-23)));
+    const std::string count=e.param(float(plan.panels.size()));
+    const std::size_t base=e.params.size();
+    double previous=plan.lo;
+    for(const auto& p:plan.panels) {
+        if(p.lo!=previous || !(p.hi>p.lo)) e.refuse("schedule is not an ordered complete partition");
+        exact(p.lo); exact(p.hi); previous=p.hi;
+        for(const auto* b:{&p.sigma,&p.emission}) {
+            if(depthOnly && b==&p.emission)continue;
+            e.param(up(b->lipschitz)); e.param(up(b->width)); e.param(up(b->sup)); e.param(up(b->execution));
+            e.param(std::isfinite(b->hessian)?up(b->hessian):-1.0f);
+            e.param(lower(b->low)); e.param(upper(b->high));
+            const auto& along = b==&p.sigma ? p.sigmaAlong : p.emissionAlong;
+            if (along) {
+                const auto& dl=plan.rayDomain?plan.rayDomain->directionLo:plan.direction;
+                const auto& dh=plan.rayDomain?plan.rayDomain->directionHi:plan.direction;
+                for(int i=0;i<3;++i)
+                    if (!(dl[i]>=along->directionLo[i] && dh[i]<=along->directionHi[i]))
+                        e.refuse("directional panel evidence does not qualify this ray direction domain");
+                if (!(along->slope>=0.0) || !(along->curvature>=0.0)) e.refuse("invalid directional panel bounds");
+                e.param(std::isfinite(along->slope)?up(along->slope):-1.0f);
+                e.param(std::isfinite(along->curvature)?up(along->curvature):-1.0f);
+            } else { e.param(-1.0f);e.param(-1.0f); }
+        }
+    }
+    if(previous!=plan.hi) e.refuse("schedule leaves an uncovered ray tail");
+    for(float v:e.params) if(!std::isfinite(v)) e.refuse("schedule parameter is not finite f32");
+    out.ok=!e.refused;out.error=e.refusal;out.params=std::move(e.params);
+    if(!out.ok)return out;
+    out.wgsl=std::move(prelude);
+    out.wgsl+=kRayProofArithmetic;
+    out.wgsl+="fn rayProofExp(x:f32)->f32 { let y=max(exp(x),0.0); let denominator=bitcast<f32>(bitcast<u32>(1.0-"+expR+")-1u); return rayProofUp(rayProofAdd(y,"+expA+")/denominator); }\n";
+    if(depthOnly) {
+        // Dedicated endpoint program: no idle emission/outer-integral branch
+        // remains in the called shader. Eleven numeric scalars per panel; ray,
+        // count and bounds stay payload data, preserving program-text reuse.
+        out.wgsl+="fn lineScheduledTail()->u32{return "+std::to_string(base)+"u+11u*u32("+count+");}\n";
+        out.wgsl+="fn lineScheduledTransportAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ScheduledTransport {\n"
+            " var out=ScheduledTransport(0.0,0.0,rayProofInfinity(),rayProofInfinity(),0.0,vec2<f32>(0.0),0.0);\n"
+            " if(!("+domain+") || !("+rayPredicate+") || !(lo=="+lo+" && hi=="+hi+" && tol>0.0 && tol<=3.402823466e38 && tTol>0.0 && tTol<=3.402823466e38)){return out;}\n"
+            " let count=u32("+count+"); let base="+std::to_string(base)+"u; let dn="+dn+"; let pointError="+pointError+";\n";
+        out.wgsl+=R"WGSL(
+    let u=1.1920928955078125e-7;
+    let gu=f32(16u*count+32u)*u;
+    let gamma=rayProofUp(gu/(1.0-gu));
+    var tau=0.0;var dm=0.0;var de=0.0;var sigA=0.0;var calls=0.0;
+    for(var j=0u;j<count;j=j+1u){
+        let k=base+11u*j;
+        let sa=P.v[k];let sb=P.v[k+1u];let step=(sb-sa)*0.5;let sm=sa+(sb-sa)*0.5;
+        let width=rayProofUp(sb-sa);let hw=rayProofMul(width,0.5);
+        let l=P.v[k+2u];let w=P.v[k+3u];let sup=P.v[k+4u];let e=P.v[k+5u];let h=P.v[k+6u];let low=P.v[k+7u];let high=P.v[k+8u];
+        if(sup==0.0 && e==0.0){sigA=0.0;continue;}
+        let constant=e==0.0 && low==high;
+        if(j==0u){if(constant){sigA=low;}else{sigA=lineSigma(o+sa*d,clock,omega);calls=calls+1.0;}}
+        var sigM=low;var sigB=low;
+        if(!constant){sigM=lineSigma(o+sm*d,clock,omega);sigB=lineSigma(o+sb*d,clock,omega);calls=calls+2.0;}
+        tau=tau+(step/3.0)*(sigA+4.0*sigM+sigB);
+        var ls=rayProofMul(l,dn);var hs=-1.0;
+        if(h>=0.0){hs=rayProofMul(rayProofMul(h,dn),dn);}
+        let alongFirst=P.v[k+9u];let alongSecond=P.v[k+10u];
+        if(alongFirst>=0.0){ls=min(ls,alongFirst);}
+        if(alongSecond>=0.0){if(hs<0.0){hs=alongSecond;}else{hs=min(hs,alongSecond);}}
+        dm=rayProofAdd(dm,rayProofMul(rayProofMul(width,2.25),rayProofLocal(w,ls,hs,hw)));
+        de=rayProofAdd(de,rayProofMul(rayProofMul(1.2,width),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
+        sigA=sigB;
+    }
+    let tUpper=rayProofExp(rayProofSignedUp(-tau+rayProofAdd(dm,de)));
+)WGSL";
+        out.wgsl+="    let tError=rayProofAdd(rayProofMul(tUpper,rayProofAdd(dm,de)),rayProofAdd("+expA+",rayProofMul("+expRound+",tUpper)));\n";
+        out.wgsl+=R"WGSL(
+    out.radiance=0.0;out.radianceError=0.0;out.transmittance=exp(-tau);out.transmittanceError=tError;
+    out.samples=vec2<f32>(calls,0.0);out.panels=f32(count);
+    if(abs(out.transmittance)<=3.402823466e38 && tError<=tTol){out.status=1.0;}
+    return out;
+}
+)WGSL";
+        return out;
+    }
+    out.wgsl+="fn rayProofSample(tau:f32,dm:f32,de:f32,eps:f32,ee:f32,ep:f32)->vec2<f32> {\n"
+        " let delta=rayProofAdd(dm,de); let f=rayProofExp(rayProofSignedUp(-tau+delta));\n"
+        " let magnitude=rayProofAdd(abs(eps),rayProofAdd(ee,ep));\n"
+        " let math=rayProofMul(rayProofMul(f,dm),magnitude);\n"
+        " let execution=rayProofAdd(rayProofMul(rayProofMul(f,de),magnitude),rayProofAdd(rayProofMul(f,rayProofAdd(ee,ep)),rayProofMul(rayProofAdd("+expA+",rayProofMul("+expRound+",f)),magnitude)));\n"
+        " return vec2<f32>(math,execution); }\n";
+    out.wgsl+="fn lineScheduledTransportAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ScheduledTransport {\n"
+        " var result=ScheduledTransport(0.0,0.0,rayProofInfinity(),rayProofInfinity(),0.0,vec2<f32>(0.0),0.0);\n"
+        " if(!("+domain+") || !("+rayPredicate+") || !(lo=="+lo+" && hi=="+hi+" && tol>0.0 && tol<=3.402823466e38 && tTol>0.0 && tTol<=3.402823466e38)){return result;}\n"
+        " let count=u32("+count+"); let base="+std::to_string(base)+"u; let dn="+dn+"; let pointError="+pointError+";\n";
+    out.wgsl+=R"WGSL(
+    let u=1.1920928955078125e-7;
+    let gu=f32(16u*count+32u)*u;
+    let gamma=rayProofUp(gu/(1.0-gu));
+    var tau=0.0; var dm=0.0; var de=0.0; var L=0.0; var magnitude=0.0;
+    var mathematical=0.0; var execution=0.0; var sigA=0.0; var epsA=0.0;
+    var sCalls=0.0; var eCalls=0.0;
+    for(var j=0u;j<count;j=j+1u){
+        let k=base+20u*j;
+        let sa=P.v[k]; let sb=P.v[k+1u]; let step=(sb-sa)*0.5;
+        let sm=sa+(sb-sa)*0.5;
+        let width=rayProofUp(sb-sa); let hw=rayProofMul(width,0.5);
+        let sL=P.v[k+2u];let sW=P.v[k+3u];let sSup=P.v[k+4u];let sE=P.v[k+5u];let sH=P.v[k+6u];let sLow=P.v[k+7u];let sHigh=P.v[k+8u];
+        let eL=P.v[k+11u];let eW=P.v[k+12u];let eSup=P.v[k+13u];let eE=P.v[k+14u];let eH=P.v[k+15u];let eLow=P.v[k+16u];let eHigh=P.v[k+17u];
+        let sConstant=sE==0.0 && sLow==sHigh; let eConstant=eE==0.0 && eLow==eHigh;
+        if(sSup==0.0 && sE==0.0 && eSup==0.0 && eE==0.0){sigA=0.0;epsA=0.0;continue;}
+        if(j==0u){
+            if(sConstant){sigA=sLow;}else{sigA=lineSigma(o+sa*d,clock,omega);sCalls=sCalls+1.0;}
+            if(eConstant){epsA=eLow;}else{epsA=lineEmission(o+sa*d,clock,omega);eCalls=eCalls+1.0;}
+        }
+        var sigM=sLow;var sigB=sLow;var epsM=eLow;var epsB=eLow;
+        if(!sConstant){sigM=lineSigma(o+sm*d,clock,omega);sigB=lineSigma(o+sb*d,clock,omega);sCalls=sCalls+2.0;}
+        if(!eConstant){epsM=lineEmission(o+sm*d,clock,omega);epsB=lineEmission(o+sb*d,clock,omega);eCalls=eCalls+2.0;}
+        let tauM=tau+step*(5.0*sigA+8.0*sigM-sigB)/12.0;
+        let tauB=tau+(step/3.0)*(sigA+4.0*sigM+sigB);
+        var ls=rayProofMul(sL,dn);var le=rayProofMul(eL,dn);
+        var hs=-1.0;var he=-1.0;
+        if(sH>=0.0){hs=rayProofMul(rayProofMul(sH,dn),dn);}
+        if(eH>=0.0){he=rayProofMul(rayProofMul(eH,dn),dn);}
+        let sFirst=P.v[k+9u];let sSecond=P.v[k+10u];let eFirst=P.v[k+18u];let eSecond=P.v[k+19u];
+        if(sFirst>=0.0){ls=min(ls,sFirst);}if(eFirst>=0.0){le=min(le,eFirst);}
+        if(sSecond>=0.0){if(hs<0.0){hs=sSecond;}else{hs=min(hs,sSecond);}}
+        if(eSecond>=0.0){if(he<0.0){he=eSecond;}else{he=min(he,eSecond);}}
+        let sPoint=rayProofMul(sL,pointError);let ePoint=rayProofMul(eL,pointError);
+        let panelMath=rayProofMul(rayProofMul(width,2.25),rayProofLocal(sW,ls,hs,hw));
+        let panelExec=rayProofMul(rayProofMul(1.2,width),rayProofAdd(rayProofAdd(sE,sPoint),rayProofMul(gamma,sSup)));
+        let mathB=rayProofAdd(dm,panelMath);let execB=rayProofAdd(de,panelExec);
+        // An exact dark source still advances extinction and both depth bounds.
+        if(eSup==0.0 && eE==0.0){tau=tauB;dm=mathB;de=execB;sigA=sigB;epsA=0.0;continue;}
+        let gA=exp(-tau)*epsA;let gM=exp(-tauM)*epsM;let gB=exp(-tauB)*epsB;
+        L=L+(step/3.0)*(gA+4.0*gM+gB);
+        magnitude=rayProofAdd(magnitude,rayProofMul(rayProofUp(width/6.0),rayProofAdd(rayProofAdd(abs(gA),rayProofMul(4.0,abs(gM))),abs(gB))));
+        let a=rayProofSample(tau,dm,de,epsA,eE,ePoint);
+        let m=rayProofSample(tauM,mathB,execB,epsM,eE,ePoint);
+        let b=rayProofSample(tauB,mathB,execB,epsB,eE,ePoint);
+        let weights=vec2<f32>(rayProofAdd(rayProofAdd(a.x,rayProofMul(4.0,m.x)),b.x),rayProofAdd(rayProofAdd(a.y,rayProofMul(4.0,m.y)),b.y));
+        mathematical=rayProofAdd(mathematical,rayProofMul(rayProofUp(width/6.0),weights.x));
+        execution=rayProofAdd(execution,rayProofMul(rayProofUp(width/6.0),weights.y));
+        let grow=rayProofMul(max(0.0,-sLow),width);
+        let tUpper=rayProofExp(rayProofSignedUp(rayProofSignedUp(-tau+rayProofAdd(dm,de))+grow));
+        let gWidth=rayProofMul(tUpper,rayProofAdd(max(eHigh,0.0),max(-eLow,0.0)));
+        let gPrime=rayProofMul(tUpper,rayProofAdd(le,rayProofMul(sSup,eSup)));
+        var gSecond=-1.0;
+        if(he>=0.0){
+            let q=rayProofAdd(rayProofAdd(he,rayProofMul(rayProofMul(2.0,sSup),le)),rayProofAdd(rayProofMul(ls,eSup),rayProofMul(rayProofMul(sSup,sSup),eSup)));
+            gSecond=rayProofMul(tUpper,q);
+        }
+        mathematical=rayProofAdd(mathematical,rayProofMul(rayProofMul(width,2.25),rayProofLocal(gWidth,gPrime,gSecond,hw)));
+        tau=tauB;dm=mathB;de=execB;sigA=sigB;epsA=epsB;
+    }
+    execution=rayProofAdd(execution,rayProofMul(rayProofAdd(gamma,4.0*u),rayProofAdd(magnitude,rayProofAdd(mathematical,execution))));
+    let tUpper=rayProofExp(rayProofSignedUp(-tau+rayProofAdd(dm,de)));
+    let tMath=rayProofMul(tUpper,dm);
+)WGSL";
+    out.wgsl+="    let tExec=rayProofAdd(rayProofMul(tUpper,de),rayProofAdd("+expA+",rayProofMul("+expRound+",tUpper)));\n";
+    out.wgsl+=R"WGSL(
+    result.radiance=L;result.transmittance=exp(-tau);
+    result.radianceError=rayProofAdd(mathematical,execution);result.transmittanceError=rayProofAdd(tMath,tExec);
+    result.samples=vec2<f32>(sCalls,eCalls);result.panels=f32(count);
+    if(abs(L)<=3.402823466e38 && abs(result.transmittance)<=3.402823466e38 && result.radianceError<=tol && result.transmittanceError<=tTol){result.status=1.0;}
+    return result;
+}
+fn lineScheduledRadianceAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,clock:f32,omega:vec3<f32>)->vec4<f32>{
+    let r=lineScheduledTransportAt(o,d,lo,hi,tol,tol,clock,omega);return vec4<f32>(r.radiance,r.status,r.panels,r.radianceError);
+}
+fn lineScheduledTransmittanceAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,clock:f32,omega:vec3<f32>)->vec4<f32>{
+    let r=lineScheduledTransportAt(o,d,lo,hi,tol,tol,clock,omega);return vec4<f32>(r.transmittance,r.status,r.panels,r.transmittanceError);
+}
+fn lineScheduledWorkAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,clock:f32,omega:vec3<f32>)->vec4<f32>{
+    let r=lineScheduledTransportAt(o,d,lo,hi,tol,tol,clock,omega);return vec4<f32>(r.samples,r.panels,r.status);
+}
+)WGSL";
+    return out;
+}
+
+// Plan §6be/§6bf: σ depth and transmittance along ANY ray through a camera-
+// independent RegionProofGrid. Each ray walks the grid's cells (DDA). A cell a
+// containing proof shows ≡ 0 contributes exactly nothing and is never evaluated.
+// An occupied cell's segment uses that cell's constants in the same per-panel
+// bound arithmetic as lowerScheduledTransport's depth program. Where the host
+// supplied kink evidence (§6bf), the segment is first split into runs on which
+// every undecided switch keeps a sign the device has proved: a switch g cannot
+// change sign within (|g(a)| − its device error − L·halo)/(L·|d|) of a point a.
+// A run uses the certificate for its signs, which has a finite Hessian, and is
+// skipped outright when that certificate is exactly zero. Near a crossing a
+// short sliver keeps the cell's unconditional bound. Before a panel uses a cell,
+// the device checks that the panel's swept box, positional halo included, lies
+// inside that cell dilated by the grid margin; otherwise the ray refuses.
+// Sub-panel counts are a work choice; only the accumulated bound admits.
+// Claude Code / Claude Opus 5.5 / f3af84cf / 2026-10-20.
+static Program lowerGridDepth(Emit& e, std::string prelude, const std::string& domain,
+                              const OntoMath::RegionProofGrid& grid, const OntoMath::ExecutionModel& model,
+                              uint32_t maxPanels, const OntoMath::LineAlgebraicForm* form) {
+    Program out;
+    auto up = [&](double x) {
+        float f = float(x);
+        if (!(std::isfinite(x) && x >= 0.0 && std::isfinite(f))) e.refuse("non-finite grid bound");
+        if (double(f) < x) f = std::nextafter(f, INFINITY);
+        return f;
+    };
+    auto lower = [](double x) { float f=float(x); if(double(f)>x) f=std::nextafter(f,-INFINITY); return f; };
+    auto upper = [](double x) { float f=float(x); if(double(f)<x) f=std::nextafter(f,INFINITY); return f; };
+    auto powerOfTwo = [](double x) { int k; return std::isfinite(x) && x > 0.0 && std::frexp(x, &k) == 0.5; };
+    // Cell faces c·h ± margin must be exact f32 values on the device.
+    if (!powerOfTwo(grid.cell) || !powerOfTwo(grid.margin) || !(grid.margin < grid.cell))
+        e.refuse("grid transport needs power-of-two cell and margin, margin below the cell");
+    long long dims[3]; long long cells = 1, reach = 0;
+    for (int i = 0; i < 3; ++i) {
+        dims[i] = grid.last[i] - grid.first[i] + 1;
+        if (!(dims[i] >= 1 && dims[i] <= 4096)) { e.refuse("grid transport axis span outside 1..4096 cells"); dims[i] = 1; }
+        cells *= dims[i];
+        reach = std::max({reach, std::llabs(grid.first[i]), std::llabs(grid.last[i] + 1)});
+    }
+    if (cells > (1LL << 22)) e.refuse("grid transport index exceeds 2^22 cells");
+    if (double(reach) * grid.cell / std::max(grid.margin, 1e-300) >= 0x1p22) e.refuse("grid faces ± margin are not exact f32 values");
+    if (maxPanels < 1 || maxPanels > 65536) e.refuse("grid transport needs 1..65536 panels");
+    if (!grid.conditional.empty() && !form) e.refuse("kink evidence needs the certificate's lowered form");
+    const double a = model.exponentialAbsolute(), r = model.expRelative;
+    if (!(std::isfinite(a) && a >= 0 && std::isfinite(r) && r >= 0 && r < 1) || !(up(r) < 1.0f)) e.refuse("invalid grid exponential model");
+    const std::string h = e.param(float(grid.cell)), margin = e.param(float(grid.margin));
+    const std::string sliver = e.param(float(std::ldexp(grid.cell, -10)));
+    const std::string fx = e.param(float(grid.first[0])), fy = e.param(float(grid.first[1])), fz = e.param(float(grid.first[2]));
+    const std::string nx = e.param(float(dims[0])), ny = e.param(float(dims[1])), nz = e.param(float(dims[2]));
+    const std::string expA = e.param(up(a)), expR = e.param(up(r)), expRound = e.param(up(r + 4.0 * std::ldexp(1.0, -23)));
+    // Every switch any cell may split on, lowered from its authored operand with
+    // the production emitter (as the support killers do).
+    std::set<uint32_t> used;
+    for (const auto& [c, k] : grid.conditional) used.insert(k.switches.begin(), k.switches.end());
+    std::string switchFn = "fn lineSwitchAt(k:u32,p:vec3<f32>,clock:f32,omega:vec3<f32>)->f32 {\n";
+    for (uint32_t k : used) {
+        if (e.refused || !form || k >= form->switches.size()) { e.refuse("kink evidence names an unknown switch"); break; }
+        const auto& sw = form->switches[k];
+        const auto& node = form->nodes[sw.node];
+        if (sw.role > 3 || !node.sourceA || (sw.role == 1 && !node.sourceB)) { e.refuse("a kink switch has no device operand"); break; }
+        const std::string saved = std::move(e.body);
+        e.body.clear();
+        const std::string av = emitMathNode(*node.sourceA, e, "p");
+        const std::string bv = sw.role == 1 ? emitMathNode(*node.sourceB, e, "p") : std::string();
+        const std::string g = sw.role == 0 ? av : sw.role == 1 ? "(" + av + ") - (" + bv + ")"
+                            : "(" + av + ") - " + e.param(float(sw.role == 2 ? node.lo : node.hi));
+        switchFn += " if(k==" + std::to_string(k) + "u){\n" + e.body + "  return " + g + ";\n }\n";
+        e.body = saved;
+    }
+    switchFn += " return bitcast<f32>(0x7fc00000u);\n}\n";
+    // Dense cell → record offset (-1: inside a zero block). A record is the
+    // cell's 7 constants, its kink-switch count n, (switch, sup|∇g|, g error)×n,
+    // then 7 constants per sign assignment.
+    std::vector<float> index(std::size_t(e.refused ? 0 : cells), -1.0f);
+    std::vector<float> records;
+    auto constants = [&](const OntoMath::LineQuadratureBand& b) {
+        if (!(std::isfinite(b.low) && std::isfinite(b.high) && b.hessian >= 0.0)) e.refuse("invalid occupied cell certificate");
+        for (double v : {b.lipschitz, b.width, b.sup, b.execution}) records.push_back(up(v));
+        records.push_back(std::isfinite(b.hessian) ? up(b.hessian) : -1.0f);
+        records.push_back(lower(b.low)); records.push_back(upper(b.high));
+    };
+    if (!e.refused) {
+        for (const auto& [c, b] : grid.occupied) {
+            long long k = 0;
+            for (int i = 0; i < 3; ++i) {
+                if (c[i] < grid.first[i] || c[i] > grid.last[i]) e.refuse("occupied cell outside its grid");
+                k = k * dims[i] + (c[i] - grid.first[i]);
+            }
+            if (e.refused) break;
+            index[std::size_t(k)] = float(records.size());
+            constants(b);
+            const auto it = grid.conditional.find(c);
+            if (it == grid.conditional.end()) { records.push_back(0.0f); continue; }
+            const auto& kinks = it->second;
+            const std::size_t n = kinks.switches.size();
+            if (n == 0 || n > 8 || kinks.gradient.size() != n || kinks.execution.size() != n || kinks.bands.size() != (std::size_t(1) << n)) {
+                e.refuse("malformed kink evidence"); break;
+            }
+            records.push_back(float(n));
+            for (std::size_t q = 0; q < n; ++q) {
+                records.push_back(float(kinks.switches[q]));
+                records.push_back(up(kinks.gradient[q])); records.push_back(up(kinks.execution[q]));
+            }
+            // An unproved assignment keeps the cell's own (unconditional) constants.
+            for (const auto& band : kinks.bands) constants(band ? *band : b);
+        }
+        long long zeros = 0;
+        for (const auto& z : grid.zero) {
+            long long n = 1;
+            for (int i = 0; i < 3; ++i) n *= z.last[i] - z.first[i] + 1;
+            zeros += n;
+        }
+        if (zeros + (long long)grid.occupied.size() != cells) e.refuse("grid is not a complete partition of its cells");
+        if (records.size() >= (1u << 24)) e.refuse("grid records exceed exact f32 offsets");
+    }
+    const std::size_t indexBase = e.params.size();
+    e.params.insert(e.params.end(), index.begin(), index.end());
+    const std::size_t recordBase = e.params.size();
+    e.params.insert(e.params.end(), records.begin(), records.end());
+    for (float v : e.params) if (!std::isfinite(v)) e.refuse("grid parameter is not finite f32");
+    out.ok = !e.refused; out.error = e.refusal; out.params = std::move(e.params);
+    if (!out.ok) return out;
+    out.wgsl = std::move(prelude);
+    out.wgsl += kRayProofArithmetic;
+    out.wgsl += "fn rayProofExp(x:f32)->f32 { let y=max(exp(x),0.0); let denominator=bitcast<f32>(bitcast<u32>(1.0-"+expR+")-1u); return rayProofUp(rayProofAdd(y,"+expA+")/denominator); }\n";
+    out.wgsl += switchFn;
+    out.wgsl += R"WGSL(
+// Downward rounding by one ulp for either sign (zero steps below zero).
+fn rayProofDown(x:f32)->f32 { if(x==0.0){return -1.17549435e-38;} return -rayProofSignedUp(-x); }
+struct GridDepth { transmittance: f32, error: f32, status: f32, calls: f32, switchEvaluations: f32, skipped: f32, panels: f32,
+                   mathematical: f32, execution: f32, expFloor: f32 };
+var<private> gTau: f32; var<private> gDm: f32; var<private> gDe: f32; var<private> gSigA: f32;
+var<private> gFresh: bool; var<private> gOk: bool; var<private> gCalls: f32; var<private> gPanels: u32;
+// Direct Simpson error functional for ONE unweighted panel of width w (plan §6bi;
+// Aetherion's and Prism's review, verified against the Peano kernels):
+// |E| <= w·(high − low) (positive weights), <= (5/36)·w²·sup|f′| (C1 kernel),
+// <= w³·sup|f″|/81 (C2 kernel, only where the run is C2: hs >= 0).
+// Constants are rounded up one ulp.
+fn gridPeano(width:f32,w:f32,ls:f32,hs:f32)->f32{
+    var r=rayProofMul(width,w);
+    r=min(r,rayProofMul(rayProofMul(rayProofMul(rayProofUp(0.13888889),width),width),ls));
+    if(hs>=0.0){r=min(r,rayProofMul(rayProofMul(rayProofMul(rayProofMul(rayProofUp(0.012345679),width),width),width),hs));}
+    return r;
+}
+// One run [sa0, sb0] under the 7 constants at k: exactly zero is skipped,
+// otherwise Simpson sub-panels bounded by gridPeano.
+fn gridRun(o:vec3<f32>,d:vec3<f32>,clock:f32,omega:vec3<f32>,sa0:f32,sb0:f32,k:u32,dn:f32,pointError:f32,gamma:f32,budget:f32,span:f32,maxPanels:u32){
+    if(!(sb0>sa0)){return;}
+    let l=P.v[k];let w=P.v[k+1u];let sup=P.v[k+2u];let e=P.v[k+3u];let hh=P.v[k+4u];let low=P.v[k+5u];let high=P.v[k+6u];
+    if(low==0.0 && high==0.0){gFresh=true;return;}
+    let W=sb0-sa0;
+    let constant=e==0.0 && low==high;
+    let ls=rayProofMul(l,dn);var hs=-1.0;if(hh>=0.0){hs=rayProofMul(rayProofMul(hh,dn),dn);}
+    // Work choice: the run's share of the budget, but never below the run's own
+    // execution bound (a quarter of it); shrinking the mathematical part further buys little.
+    let execution=rayProofMul(rayProofMul(1.2,rayProofUp(W)),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup)));
+    let allowed=max(max(budget*W/span,0.25*execution),1e-30);
+    var m=1.0;
+    if(!constant && rayProofMul(W,w)>allowed){
+        // Either the first- or the second-order term may meet the share; take the cheaper.
+        m=ceil(5.0*ls*W*W/(36.0*allowed));
+        if(hs>=0.0){m=min(m,ceil(sqrt(hs*W*W*W/(81.0*allowed))));}
+        m=clamp(m,1.0,64.0);
+    }
+    let n=u32(m);
+    if(gPanels+n>maxPanels){gOk=false;return;}
+    gPanels=gPanels+n;
+    if(constant){
+        gTau=gTau+low*W;gSigA=low;gFresh=false;
+        gDe=rayProofAdd(gDe,rayProofMul(rayProofMul(1.2,rayProofUp(W)),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
+        return;
+    }
+    if(gFresh){gSigA=lineSigma(o+sa0*d,clock,omega);gCalls=gCalls+1.0;gFresh=false;}
+    for(var j=0u;j<n;j=j+1u){
+        let sa=sa0+W*f32(j)/m;var sb=sa0+W*f32(j+1u)/m;if(j+1u==n){sb=sb0;}
+        let halfStep=(sb-sa)*0.5;let sm=sa+halfStep;
+        let width=rayProofUp(sb-sa);let hw=rayProofMul(width,0.5);
+        let sigM=lineSigma(o+sm*d,clock,omega);let sigB=lineSigma(o+sb*d,clock,omega);gCalls=gCalls+2.0;
+        gTau=gTau+(halfStep/3.0)*(gSigA+4.0*sigM+sigB);
+        gDm=rayProofAdd(gDm,gridPeano(width,w,ls,hs));
+        gDe=rayProofAdd(gDe,rayProofMul(rayProofMul(1.2,width),rayProofAdd(rayProofAdd(e,rayProofMul(l,pointError)),rayProofMul(gamma,sup))));
+        gSigA=sigB;
+    }
+}
+)WGSL";
+    out.wgsl += "fn lineGridDepthCore(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tTol:f32,clock:f32,omega:vec3<f32>)->GridDepth {\n"
+        " var out=GridDepth(0.0,rayProofInfinity(),0.0,0.0,0.0,0.0,0.0,rayProofInfinity(),rayProofInfinity(),0.0);\n"
+        " if(!("+domain+") || !(all(abs(o)<=vec3<f32>(3.4e38)) && all(abs(d)<=vec3<f32>(3.4e38)) && hi>lo && abs(lo)<=3.4e38 && abs(hi)<=3.4e38 && tTol>0.0 && tTol<=3.402823466e38)){return out;}\n"
+        " let h="+h+"; let margin="+margin+"; let sliver="+sliver+"; let first=vec3<f32>("+fx+","+fy+","+fz+"); let dims=vec3<f32>("+nx+","+ny+","+nz+");\n"
+        " let indexBase="+std::to_string(indexBase)+"u; let recordBase="+std::to_string(recordBase)+"u; let maxPanels="+std::to_string(maxPanels)+"u;\n"
+        " let expA="+expA+"; let expRound="+expRound+";\n";
+    out.wgsl += R"WGSL(
+    let u=1.1920928955078125e-7;
+    let gu=f32(16u*maxPanels+32u)*u;
+    let gamma=rayProofUp(gu/(1.0-gu));
+    // Model-qualified (relative 2^-16 premise) upper bound of |d|; the L1 norm bounds |o|.
+    let dn=rayProofUp(rayProofMul(sqrt(rayProofAdd(rayProofAdd(rayProofMul(d.x,d.x),rayProofMul(d.y,d.y)),rayProofMul(d.z,d.z))),1.0000153));
+    let on=rayProofAdd(rayProofAdd(abs(o.x),abs(o.y)),abs(o.z));
+    let dl1=rayProofAdd(rayProofAdd(abs(d.x),abs(d.y)),abs(d.z));
+    let pointError=rayProofMul(rayProofMul(8.0,u),rayProofAdd(on,rayProofMul(rayProofAdd(abs(lo),rayProofUp(hi-lo)),dl1)));
+    let halo=rayProofMul(2.0,pointError);
+    if(!(halo<margin)){return out;}
+    gTau=0.0;gDm=0.0;gDe=0.0;gSigA=0.0;gFresh=true;gOk=true;gCalls=0.0;gPanels=0u;
+    var switchEvaluations=0.0;var skipped=0.0;
+    var s=lo;
+    var c=floor((o+lo*d)/h);
+    let budget=tTol*0.5;let span=hi-lo;
+    let maxSteps=u32(dims.x+dims.y+dims.z)+8u;
+    for(var step=0u;step<maxSteps;step=step+1u){
+        if(!(s<hi) || !gOk){break;}
+        // Exit parameter of cell c along each axis; ties advance together.
+        var sExit=hi;
+        for(var i=0;i<3;i=i+1){
+            if(d[i]>0.0){sExit=min(sExit,((c[i]+1.0)*h-o[i])/d[i]);}
+            else if(d[i]<0.0){sExit=min(sExit,(c[i]*h-o[i])/d[i]);}
+        }
+        if(!(sExit>s)){sExit=s;}
+        let rel=c-first;
+        if(any(rel<vec3<f32>(0.0)) || any(rel>=dims)){return out;}
+        if(sExit>s){
+            // The proved region is this cell dilated by margin; the segment and its halo must stay inside it.
+            let pa=o+s*d;let pb=o+sExit*d;
+            let boxLo=min(pa,pb);let boxHi=max(pa,pb);
+            for(var i=0;i<3;i=i+1){
+                if(!(rayProofDown(boxLo[i]-halo)>=c[i]*h-margin && rayProofSignedUp(boxHi[i]+halo)<=(c[i]+1.0)*h+margin)){return out;}
+            }
+            let slot=P.v[indexBase+u32((rel.x*dims.y+rel.y)*dims.z+rel.z)];
+            if(slot<0.0){skipped=skipped+1.0;gFresh=true;}
+            else{
+                let k0=recordBase+u32(slot);
+                let nu=u32(P.v[k0+7u]);
+                if(nu==0u){gridRun(o,d,clock,omega,s,sExit,k0,dn,pointError,gamma,budget,span,maxPanels);}
+                else{
+                    let bands=k0+8u+3u*nu;
+                    var a=s;var guard=0u;var width=sliver;
+                    loop{
+                        if(!(a<sExit) || !gOk){break;}
+                        if(guard>=256u){gridRun(o,d,clock,omega,a,sExit,k0,dn,pointError,gamma,budget,span,maxPanels);break;}
+                        // Signs at a, and how far every switch provably keeps its sign.
+                        var mask=0u;var reachLen=rayProofInfinity();var known=true;
+                        for(var q=0u;q<nu;q=q+1u){
+                            let kq=u32(P.v[k0+8u+3u*q]);let lq=P.v[k0+9u+3u*q];let eq=P.v[k0+10u+3u*q];
+                            let g=lineSwitchAt(kq,o+a*d,clock,omega);switchEvaluations=switchEvaluations+1.0;guard=guard+1u;
+                            let room=rayProofDown(abs(g)-rayProofAdd(eq,rayProofMul(lq,pointError)));
+                            if(!(room>0.0)){known=false;}
+                            else{
+                                let rate=rayProofMul(lq,dn);
+                                if(rate>0.0){reachLen=min(reachLen,rayProofDown(room/rate));}
+                                if(g>0.0){mask=mask|(1u<<q);}
+                            }
+                        }
+                        var b=sExit;
+                        if(known){b=min(rayProofDown(a+reachLen),sExit);}
+                        if(!known || !(b>a)){
+                            // Near a crossing: a sliver under the cell's unconditional constants,
+                            // doubling while the signs stay unproved (its bound is first-order in its width).
+                            let e2=min(a+width,sExit);
+                            gridRun(o,d,clock,omega,a,e2,k0,dn,pointError,gamma,budget,span,maxPanels);
+                            a=e2;width=width*2.0;continue;
+                        }
+                        width=sliver;
+                        // Extend the run while every switch provably keeps the same sign.
+                        loop{
+                            if(!(b<sExit) || guard>=256u){break;}
+                            var same=true;var more=rayProofInfinity();
+                            for(var q=0u;q<nu;q=q+1u){
+                                let kq=u32(P.v[k0+8u+3u*q]);let lq=P.v[k0+9u+3u*q];let eq=P.v[k0+10u+3u*q];
+                                let g=lineSwitchAt(kq,o+b*d,clock,omega);switchEvaluations=switchEvaluations+1.0;guard=guard+1u;
+                                let room=rayProofDown(abs(g)-rayProofAdd(eq,rayProofMul(lq,pointError)));
+                                let positive=((mask>>q)&1u)==1u;
+                                if(!(room>0.0) || (g>0.0)!=positive){same=false;}
+                                else{let rate=rayProofMul(lq,dn);if(rate>0.0){more=min(more,rayProofDown(room/rate));}}
+                            }
+                            if(!same){break;}
+                            let nb=min(rayProofDown(b+more),sExit);
+                            if(!(nb>b)){break;}
+                            b=nb;
+                        }
+                        gridRun(o,d,clock,omega,a,b,bands+7u*mask,dn,pointError,gamma,budget,span,maxPanels);
+                        a=b;
+                    }
+                }
+            }
+        }
+        // Advance: every axis whose face this cell exit reached (at least one).
+        var moved=false;
+        for(var i=0;i<3;i=i+1){
+            var t=hi;
+            if(d[i]>0.0){t=((c[i]+1.0)*h-o[i])/d[i];}else if(d[i]<0.0){t=(c[i]*h-o[i])/d[i];}
+            if(d[i]!=0.0 && t<=sExit){c[i]=c[i]+sign(d[i]);moved=true;}
+        }
+        s=max(s,sExit);
+        if(!moved && s<hi){return out;}
+    }
+    if(s<hi || !gOk){return out;}
+    let tUpper=rayProofExp(rayProofSignedUp(-gTau+rayProofAdd(gDm,gDe)));
+    let tError=rayProofAdd(rayProofMul(tUpper,rayProofAdd(gDm,gDe)),rayProofAdd(expA,rayProofMul(expRound,tUpper)));
+    out.transmittance=exp(-gTau);out.error=tError;
+    out.calls=gCalls;out.switchEvaluations=switchEvaluations;out.skipped=skipped;out.panels=f32(gPanels);
+    out.mathematical=gDm;out.execution=gDe;out.expFloor=expA;
+    if(abs(out.transmittance)<=3.402823466e38 && tError<=tTol){out.status=1.0;}
+    return out;
+}
+fn lineGridDepthAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ScheduledTransport {
+    let r=lineGridDepthCore(o,d,lo,hi,tTol,clock,omega);
+    return ScheduledTransport(0.0,r.transmittance,rayProofInfinity(),r.error,r.status,vec2<f32>(r.calls,r.skipped),r.panels);
+}
+// Bound decomposition: (mathematical depth bound, execution depth bound, exp model floor, status).
+fn lineGridBoundsAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tTol:f32,clock:f32,omega:vec3<f32>)->vec4<f32> {
+    let r=lineGridDepthCore(o,d,lo,hi,tTol,clock,omega);
+    return vec4<f32>(r.mathematical,r.execution,r.expFloor,r.status);
+}
+// Work diagnostics: (σ calls, switch evaluations, skipped zero cells, panels).
+fn lineGridWorkAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tTol:f32,clock:f32,omega:vec3<f32>)->vec4<f32> {
+    let r=lineGridDepthCore(o,d,lo,hi,tTol,clock,omega);
+    return vec4<f32>(r.calls,r.switchEvaluations,r.skipped,r.panels);
+}
+)WGSL";
+    return out;
+}
+
+static Program compileLineTransportImpl(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
+                             const OntoMath::LineQuadratureCertificate& sigmaCert,
+                             const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells,
+                                        const OntoMath::LineTransportSchedule* schedule, bool depthOnly = false,
+                                        const OntoMath::RegionProofGrid* grid = nullptr, uint32_t gridPanels = 0,
+                                        const OntoMath::LineAlgebraicForm* gridForm = nullptr) {
+    Program prog;
+    Emit e;
+    e.parameterOffset = "0u";
+    // The host certificate retains the domain it proved. Runtime inputs must
+    // inhabit BOTH fields' domains; certification is not a clock/omega binding.
+    OntoMath::TypeEnv env{{"p", OntoMath::ValueKind::Vector}, {"x", OntoMath::ValueKind::Scalar},
+                          {"y", OntoMath::ValueKind::Scalar}, {"z", OntoMath::ValueKind::Scalar}};
+    for (const auto* cert : {&sigmaCert, &emissionCert})
+        for (const auto& [name, range] : cert->symbols) {
+            if (name == OntoMath::kTimeVar) { e.bindTime = true; e.timeExpression = "clock"; }
+            else if (name == OntoMath::kOmegaXVar || name == OntoMath::kOmegaYVar || name == OntoMath::kOmegaZVar) e.bindOmega = true;
+        }
+    for (const auto* name : {OntoMath::kTimeVar, OntoMath::kOmegaXVar, OntoMath::kOmegaYVar, OntoMath::kOmegaZVar})
+        if (sigmaCert.symbols.count(name) || emissionCert.symbols.count(name)) env[name] = OntoMath::ValueKind::Scalar;
+    for (const auto* f : {&sigma, &emission}) {
+        auto fieldEnv = env;
+        const auto& cert = f == &sigma ? sigmaCert : emissionCert;
+        for (const auto* name : {OntoMath::kTimeVar, OntoMath::kOmegaXVar, OntoMath::kOmegaYVar, OntoMath::kOmegaZVar})
+            if (!cert.symbols.count(name)) fieldEnv.erase(name);
+        if (cert.sourceExpression != f->toJson().dump()) {
+            prog.ok = false; prog.error = "transport certificate source changed; rebuild its proof"; return prog;
+        }
+        std::string why;
+        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+        if (!f->checkTypes(fieldEnv, why, &kind, false) || kind != OntoMath::ValueKind::Scalar) {
+            prog.ok = false;
+            prog.error = "a transport field must be a Scalar with certified runtime inputs: " + why;
+            return prog;
+        }
+    }
+    if (!schedule && !grid && (sigmaCert.bands.empty() || emissionCert.bands.empty() || maxCells < 2)) {
+        prog.ok = false;
+        prog.error = "transport needs certificates with at least one band each, and at least 2 cells";
+        return prog;
+    }
+    const std::string sigmaValue = emitMathNode(sigma, e, "p");
+    const std::string sigmaBody = e.body;
+    e.body.clear();
+    const std::string emissionValue = depthOnly ? "0.0" : emitMathNode(emission, e, "p");
+    const std::string emissionBody = e.body;
+    e.body.clear();
+    std::string domainPredicate = "true";
+    for (const auto* cert : {&sigmaCert, &emissionCert})
+        for (const auto& [name, range] : cert->symbols) {
+            std::string value;
+            if (name == OntoMath::kTimeVar) value = "clock";
+            else if (name == OntoMath::kOmegaXVar) value = "omega.x";
+            else if (name == OntoMath::kOmegaYVar) value = "omega.y";
+            else if (name == OntoMath::kOmegaZVar) value = "omega.z";
+            else { e.refuse("transport cannot bind certificate symbol: " + name); continue; }
+            // Test an inward-rounded domain so nearest f32 conversion cannot
+            // accept an input just outside the mathematical qualification.
+            float lo = float(range.first), hi = float(range.second);
+            if (double(lo) < range.first) lo = std::nextafter(lo, INFINITY);
+            if (double(hi) > range.second) hi = std::nextafter(hi, -INFINITY);
+            if (!(std::isfinite(lo) && std::isfinite(hi) && lo <= hi)) {
+                e.refuse("transport certificate has no finite f32 runtime domain for " + name);
+                continue;
+            }
+            domainPredicate += " && (" + value + " >= " + e.param(lo) + " && " + value + " <= " + e.param(hi) + ")";
+        }
+    std::string prelude = R"WGSL(
+struct ScreenCoordinates { size: vec4<f32>, time: vec4<f32> };
+struct Parameters { v: array<f32> };
+@group(0) @binding(0) var<uniform> screen: ScreenCoordinates;
+@group(0) @binding(1) var<storage, read> P: Parameters;
+var<private> screenPoint: vec3<f32>;
+)WGSL";
+    prelude += kPrimitives;
+    prelude += "fn lineSigma(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + sigmaBody + "    return " + sigmaValue + ";\n}\n";
+    if(!depthOnly) prelude += "fn lineEmission(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + emissionBody + "    return " + emissionValue + ";\n}\n";
+    if (grid) return lowerGridDepth(e, std::move(prelude), domainPredicate, *grid, sigmaCert.model, gridPanels, gridForm);
+    if (schedule) return lowerScheduledTransport(e, std::move(prelude), domainPredicate, *schedule, depthOnly);
+    auto bands = [&](const OntoMath::LineQuadratureCertificate& cert, const std::string& tag) {
+        std::string out;
+        for (std::size_t j = 0; j < cert.bands.size(); ++j) {
+            const auto& b = cert.bands[j];
+            const auto up = [&](double v) { return e.param(float(v * (1.0 + 1e-6))); };
+            out += std::string(j == 0 ? "    if" : "    else if") + " (M <= " + e.param(float(b.cap)) + ") { " +
+                   tag + "L = " + up(b.lipschitz) + "; " + tag + "W = " + up(b.width) + "; " + tag + "SUP = " + up(b.sup) +
+                   "; " + tag + "EPS = " + up(b.execution) + "; " + tag + "H = " +
+                   (std::isfinite(b.hessian) ? up(b.hessian) : std::string("-1.0")) + "; " + tag + "LOW = " +
+                   e.param(float(b.low)) + "; " + tag + "HIGH = " + up(b.high) + "; " + tag + "OK = true; }\n";
+        }
+        return out;
+    };
+    const std::string sigmaBands = bands(sigmaCert, "s");
+    const std::string emissionBands = bands(emissionCert, "e");
+    const double expA = emissionCert.model.exponentialAbsolute(), expR = emissionCert.model.expRelative;
+    if (!(expA >= 0.0 && expR >= 0.0 && expR < 1.0)) e.refuse("invalid exponential error contract");
+    const std::string expAbsolute = e.param(float(expA * (1.0 + 1e-6)));
+    const std::string expRelative = e.param(float(expR * (1.0 + 1e-6)));
+    const std::string expRoundRelative = e.param(float((expR + 4.0 * std::ldexp(1.0, -23)) * (1.0 + 1e-6)));
+    for (float number : e.params)
+        if (!std::isfinite(number)) e.refuse("a transport constant is not finite float32");
+    prog.ok = !e.refused;
+    prog.error = e.refusal;
+    prog.params = std::move(e.params);
+    if (!prog.ok) return prog;
+    const std::string nmax = std::to_string(maxCells) + ".0";
+    prog.wgsl = std::move(prelude);
+    prog.wgsl += "fn transportUpperExp(x: f32) -> f32 { return (exp(x) + " + expAbsolute + ") / (1.0 - " + expRelative + ") * 1.000001; }\n";
+    prog.wgsl += "fn panelLocal(width: f32, L1: f32, H2: f32, hw: f32) -> f32 {\n"
+                 "    var l = min(width, L1 * hw);\n"
+                 "    if (H2 >= 0.0) { l = min(l, H2 * hw * hw * 0.5); }\n"
+                 "    return l;\n"
+                 "}\n";
+    prog.wgsl += "fn lineTransportAt(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32, clock: f32, omega: vec3<f32>) -> vec4<f32> {\n"
+                 "    if (!(" + domainPredicate + ")) { return vec4<f32>(0.0); }\n" +
+                 "    if (!(hi >= lo)) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
+                 "    let a = lo;\n"
+                 "    let b = hi;\n"
+                 "    let S = b - a;\n"
+                 "    let p0 = abs(o + a * d);\n"
+                 "    let p1 = abs(o + b * d);\n"
+                 "    let M = max(max(max(p0.x, p0.y), p0.z), max(max(p1.x, p1.y), p1.z));\n"
+                 "    let dn = length(d);\n"
+                 "    var sL = 0.0; var sW = 0.0; var sSUP = 0.0; var sEPS = 0.0; var sH = -1.0; var sLOW = 0.0; var sHIGH = 0.0; var sOK = false;\n"
+                 "    var eL = 0.0; var eW = 0.0; var eSUP = 0.0; var eEPS = 0.0; var eH = -1.0; var eLOW = 0.0; var eHIGH = 0.0; var eOK = false;\n" +
+                 sigmaBands + emissionBands +
+                 "    if (!sOK || !eOK) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
+                 "    let Tmax = transportUpperExp(max(0.0, -sLOW) * S);\n"
+                 "    if (!(Tmax <= 1e6)) { return vec4<f32>(0.0, 0.0, 0.0, 0.0); }\n"
+                 "    let u = 1.1920929e-7;\n"
+                 "    let lambda = 1.25;\n"
+                 "    let ds = 4.0 * u * (abs(a) + S);\n"
+                 "    let Ls = sL * dn; let Le = eL * dn;\n"
+                 "    var Hs = -1.0; if (sH >= 0.0) { Hs = sH * dn * dn; }\n"
+                 "    var gSecond = -1.0; if (eH >= 0.0) { gSecond = Tmax * (eH * dn * dn + 2.0 * sSUP * Le + Ls * eSUP + sSUP * sSUP * eSUP); }\n"
+                 "    let gWidth = Tmax * (max(eHIGH, 0.0) - min(eLOW, 0.0));\n"
+                 "    let gPrime = Tmax * (Le + sSUP * eSUP);\n"
+                 "    var n = 2.0;\n"
+                 "    var total = 1e30;\n"
+                 "    loop {\n"
+                 "        if (n > " + nmax + ") { break; }\n"
+                 "        let h = S / n;\n"
+                 "        let span = S + 2.0 * h;\n"
+                 "        let gamma = (n + 8.0) * u / (1.0 - (n + 8.0) * u);\n"
+                 "        let depthMath = span * (1.0 + lambda) * panelLocal(sW, Ls, Hs, h);\n"
+                 "        let depthExec = 1.2 * span * (sEPS + Ls * ds) + gamma * 1.2 * span * sSUP;\n"
+                 "        let F = Tmax * transportUpperExp(depthMath + depthExec);\n"
+                 "        let radius = S * (1.0 + lambda) * panelLocal(gWidth, gPrime, gSecond, h);\n"
+                 "        let mathematical = radius + S * F * depthMath * eSUP;\n"
+                 "        let sampleExecution = F * depthExec * eSUP + F * (eEPS + Le * ds) + (" + expAbsolute + " + " + expRoundRelative + " * F) * eSUP;\n"
+                 "        let execution = S * sampleExecution + (gamma + 4.0 * u) * S * (F * eSUP + sampleExecution);\n"
+                 "        total = (mathematical + execution) * 1.001;\n"
+                 "        if (total <= tol) { break; }\n"
+                 "        n = n * 2.0;\n"
+                 "    }\n"
+                 "    if (n > " + nmax + ") { return vec4<f32>(0.0, 0.0, n, total); }\n"
+                 "    let h = S / n;\n"
+                 "    let N = u32(n);\n"
+                 "    var tauA = 0.0;\n"
+                 "    var sigA = lineSigma(o + a * d, clock, omega);\n"
+                 "    var gA = lineEmission(o + a * d, clock, omega);\n"
+                 "    var L = 0.0;\n"
+                 "    for (var j = 0u; j < N; j = j + 2u) {\n"
+                 "        let sm = a + S * (f32(j + 1u) / n);\n"
+                 "        let sb = a + S * (f32(j + 2u) / n);\n"
+                 "        let sigM = lineSigma(o + sm * d, clock, omega);\n"
+                 "        let sigB = lineSigma(o + sb * d, clock, omega);\n"
+                 "        let tauM = tauA + h * (5.0 * sigA + 8.0 * sigM - sigB) / 12.0;\n"
+                 "        let tauB = tauA + (h / 3.0) * (sigA + 4.0 * sigM + sigB);\n"
+                 "        let gM = exp(-tauM) * lineEmission(o + sm * d, clock, omega);\n"
+                 "        let gB = exp(-tauB) * lineEmission(o + sb * d, clock, omega);\n"
+                 "        L = L + (h / 3.0) * (gA + 4.0 * gM + gB);\n"
+                 "        tauA = tauB; sigA = sigB; gA = gB;\n"
+                 "    }\n"
+                 "    return vec4<f32>(L, 1.0, n, total);\n"
+                 "}\n";
+    // Compatibility compute entry. A native consumer supplies its medium's
+    // own clock and emission direction explicitly through lineTransportAt.
+    prog.wgsl += "fn lineTransport(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32) -> vec4<f32> {\n"
+                 "    return lineTransportAt(o, d, lo, hi, tol, screen.time.x, -d);\n}\n";
+    return prog;
+}
+
+Program compileLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
+                             const OntoMath::LineQuadratureCertificate& sigmaCert,
+                             const OntoMath::LineQuadratureCertificate& emissionCert, uint32_t maxCells) {
+    return compileLineTransportImpl(sigma,emission,sigmaCert,emissionCert,maxCells,nullptr);
+}
+
+Program compileScheduledLineTransport(const OntoMath::MathNode& sigma, const OntoMath::MathNode& emission,
+                                      const OntoMath::LineTransportSchedule& schedule) {
+    OntoMath::LineQuadratureCertificate sc,ec;
+    sc.model=ec.model=schedule.model;
+    sc.symbols=schedule.sigmaSymbols; ec.symbols=schedule.emissionSymbols;
+    sc.sourceExpression=schedule.sigmaExpression; ec.sourceExpression=schedule.emissionExpression;
+    return compileLineTransportImpl(sigma,emission,sc,ec,2,&schedule);
+}
+
+Program compileGridDepthTransport(const OntoMath::MathNode& sigma, const OntoMath::RegionCertificate& certificate,
+                                  const OntoMath::RegionProofGrid& grid, uint32_t maxPanels) {
+    OntoMath::MathNode zero; zero.scalarForm = OntoMath::ScalarForm::constant(0.0);
+    OntoMath::LineQuadratureCertificate sc, ec;
+    sc.model = ec.model = certificate.model();
+    sc.symbols = certificate.symbols();
+    sc.sourceExpression = certificate.sourceExpression(); ec.sourceExpression = zero.toJson().dump();
+    if (certificate.model().restrictedForm || !(certificate.cell() == grid.cell)) {
+        Program p; p.ok = false; p.error = "grid transport needs the original-DAG model and its own certificate's grid"; return p;
+    }
+    return compileLineTransportImpl(sigma, zero, sc, ec, 2, nullptr, true, &grid, maxPanels, certificate.form());
+}
+
+Program compileScheduledProportionalIntegral(const OntoMath::MathNode& sigma,
+    const OntoMath::MathNode& vectorSource, const OntoMath::LineTransportSchedule& schedule) {
+    using Op = OntoMath::MathNode::Op;
+    OntoMath::MathNode zero; zero.scalarForm = OntoMath::ScalarForm::constant(0.0);
+    OntoMath::LineQuadratureCertificate sc,ec;
+    sc.model=ec.model=schedule.model;sc.symbols=schedule.sigmaSymbols;ec.symbols=schedule.emissionSymbols;
+    sc.sourceExpression=schedule.sigmaExpression;ec.sourceExpression=schedule.emissionExpression;
+    Program out = compileLineTransportImpl(sigma,zero,sc,ec,2,&schedule,true);
+    if (!out.ok) return out;
+    if(!(std::isfinite(schedule.model.relative) && schedule.model.relative>=0) || schedule.model.restrictedForm) {
+        out.ok=false;out.error="reduced integral needs a finite original-DAG relative execution model";return out;
+    }
+    Emit e; e.parameterOffset="lineScheduledTail()";
+    auto refuse = [&](const std::string& reason) { Program p; p.ok=false; p.error=reason; return p; };
+    OntoMath::TypeEnv env{{"p",OntoMath::ValueKind::Vector},{"x",OntoMath::ValueKind::Scalar},
+        {"y",OntoMath::ValueKind::Scalar},{"z",OntoMath::ValueKind::Scalar}};
+    std::map<std::string,double> magnitudes;
+    OntoMath::SignedRanges ranges;
+    for(const auto& [name,range]:schedule.sigmaSymbols) {
+        env[name]=OntoMath::ValueKind::Scalar;
+        magnitudes[name]=std::max(std::abs(range.first),std::abs(range.second)); ranges[name]=range;
+        if(name==OntoMath::kTimeVar){e.bindTime=true;e.timeExpression="clock";}
+        else if(name==OntoMath::kOmegaXVar || name==OntoMath::kOmegaYVar || name==OntoMath::kOmegaZVar)e.bindOmega=true;
+        else return refuse("reduced integral cannot bind symbol: "+name);
+    }
+    std::string why; OntoMath::ValueKind kind=OntoMath::ValueKind::Unknown;
+    if(!vectorSource.checkTypes(env,why,&kind,false) || kind!=OntoMath::ValueKind::Vector)
+        return refuse("reduced source needs a Vector with explicitly qualified inputs: "+why);
+    auto up=[&](double x) {
+        float f=float(x);
+        if(!(std::isfinite(x) && x>=0 && std::isfinite(f))){e.refuse("non-finite coefficient/error bound");return 0.0f;}
+        if(double(f)<x)f=std::nextafter(f,INFINITY);
+        return f;
+    };
+    std::string coefficients, errors;
+    // Coefficient proof uses the original arithmetic returned by OntoMath.
+    // Do not normalize it into a CPU-computed constant before emission.
+    for(const char* axis:{"x","y","z"}) {
+        OntoMath::MathNode component; component.op=Op::Component; component.stringArg=axis;
+        component.children.push_back(std::make_unique<OntoMath::MathNode>(vectorSource));
+        const auto coefficient=OntoMath::deriveProportionalFieldCoefficient(sigma,component,&why);
+        if(!coefficient)return refuse("no exact proportional component "+std::string(axis)+": "+why);
+        const auto bound=OntoMath::executionBound(*coefficient,magnitudes,schedule.model,-1,OntoMath::kAmbientPointVar,&ranges);
+        if(!bound || !(std::isfinite(bound->magnitude) && std::isfinite(bound->slack) && bound->slack>=0))
+            return refuse("the proportional coefficient has no finite execution enclosure");
+        // The relative execution premise does not cover arbitrary flush-to-zero
+        // amplification. Unknown tiny intermediate ranges decline; no device
+        // allowance is silently tightened to make a coefficient fit.
+        auto normal=[&](auto&& self,const OntoMath::MathNode& n)->bool{
+            const auto b=OntoMath::executionBound(n,magnitudes,schedule.model,-1,OntoMath::kAmbientPointVar,&ranges);
+            const double tiny=std::numeric_limits<float>::min();
+            if(!b || (b->magnitude>0 && b->magnitude<tiny) || (b->slack>0 && b->slack<tiny))return false;
+            for(const auto& c:n.children)if(!c || !self(self,*c))return false;
+            return true;
+        };
+        if(!normal(normal,*coefficient))return refuse("coefficient subnormal amplification is not qualified by the execution model");
+        if(!coefficients.empty()){coefficients+=",";errors+=",";}
+        coefficients+=emitMathNode(*coefficient,e,"p");
+        errors+=e.param(up(bound->slack*(1.0+1e-12)));
+    }
+    const std::string relative=e.param(up(std::max(schedule.model.relative,std::ldexp(1.0,-23))));
+    for(float p:e.params)if(!std::isfinite(p))e.refuse("coefficient parameter is not finite f32");
+    if(e.refused)return refuse(e.refusal);
+    out.params.insert(out.params.end(),e.params.begin(),e.params.end());
+    out.wgsl+="\nfn lineReductionCoefficient(clock:f32,omega:vec3<f32>)->vec3<f32>{\n"+e.body+"return vec3<f32>("+coefficients+");\n}\n";
+    // This is the arithmetic lowering of OntoMath::boundComplementProduct,
+    // not an independent transport identity. T's whole bound already includes
+    // inner quadrature, field execution and the absolute exp library allowance.
+    out.wgsl+=R"WGSL(
+struct ReducedIntegral {
+    value:vec3<f32>, transmittance:f32, error:vec3<f32>, transmittanceError:f32,
+    status:f32, samples:vec2<f32>, panels:f32
+};
+fn lineReducedIntegralAt(o:vec3<f32>,d:vec3<f32>,lo:f32,hi:f32,tol:f32,tTol:f32,clock:f32,omega:vec3<f32>)->ReducedIntegral {
+    var out=ReducedIntegral(vec3<f32>(0.0),0.0,vec3<f32>(rayProofInfinity()),rayProofInfinity(),0.0,vec2<f32>(0.0),0.0);
+    let depth=lineScheduledTransportAt(o,d,lo,hi,tol,tTol,clock,omega);
+    if(depth.status!=1.0){return out;}
+    let coefficient=lineReductionCoefficient(clock,omega);
+    let difference=1.0-depth.transmittance;
+    out.value=coefficient*difference;out.transmittance=depth.transmittance;
+    out.transmittanceError=depth.transmittanceError;out.samples=depth.samples;out.panels=depth.panels;
+)WGSL";
+    out.wgsl+="    let coefficientError=vec3<f32>("+errors+");let relative="+relative+";\n";
+    out.wgsl+=R"WGSL(
+    let normalFloor=bitcast<f32>(0x00800000u);
+    let subtraction=rayProofAdd(normalFloor,rayProofMul(relative,rayProofAdd(1.0,abs(depth.transmittance))));
+    for(var c=0u;c<3u;c=c+1u){
+        if(coefficient[c]==0.0 && coefficientError[c]==0.0){out.error[c]=0.0;continue;}
+        let k=abs(coefficient[c]);let ke=coefficientError[c];let dt=depth.transmittanceError;
+        let propagated=rayProofAdd(rayProofMul(k,dt),rayProofMul(ke,rayProofAdd(abs(difference),dt)));
+        let execution=rayProofAdd(rayProofMul(rayProofAdd(k,ke),subtraction),rayProofAdd(normalFloor,
+            rayProofMul(rayProofMul(relative,k),rayProofAdd(abs(difference),subtraction))));
+        out.error[c]=rayProofAdd(propagated,execution);
+    }
+    if(all(abs(out.value)<=vec3<f32>(3.402823466e38)) && all(out.error<=vec3<f32>(tol))){out.status=1.0;}
+    return out;
+}
+)WGSL";
+    return out;
+}
+
+ScalarExpressionLayout inspectScalarExpression(const OntoMath::Piecewise* expr,
+                                               bool bindTime) {
+    Emit e;
+    e.bindTime = bindTime;
+    std::string body;
+
+    // No authored expression is a real structural state: compile() emits the
+    // compatibility return 1.0 path. Give it an explicit identity so switching
+    // between no radiance and authored radiance cannot look like a value edit.
+    if (!expr || expr->pieces.empty()) {
+        return ScalarExpressionLayout{"<legacy-radiance:1.0>", 0, true, ""};
+    }
+
+    emitPiecewise(*expr, e, "p", "f32", body);
+
+    ScalarExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+ScalarExpressionLayout inspectDensityExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return ScalarExpressionLayout{"<volume-density:none>", 0, true, ""};
+    }
+
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "u.volumeTime.x";
+    std::string body;
+    emitPiecewise(*expr, e, "p", "f32", body);
+
+    ScalarExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+ScalarExpressionLayout inspectExtinctionExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return ScalarExpressionLayout{"<volume-extinction:compat-0.5-density>", 0, true, ""};
+    }
+
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "u.volumeTime.x";
+    std::string body;
+    emitPiecewise(*expr, e, "p", "f32", body);
+
+    ScalarExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+ScalarExpressionLayout inspectScatteringExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return ScalarExpressionLayout{"<volume-scattering:compat-density>", 0, true, ""};
+    }
+
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "u.volumeTime.x";
+    std::string body;
+    emitPiecewise(*expr, e, "p", "f32", body);
+
+    ScalarExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+VectorExpressionLayout inspectVolumeChromaExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return VectorExpressionLayout{"<volume-chroma:compat-white>", 0, true, ""};
+    }
+
+    std::string validationError;
+    if (!validateVectorPiecewise(*expr, true, validationError)) {
+        return VectorExpressionLayout{"", 0, false, validationError};
+    }
+
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "u.volumeTime.x";
+    std::string body;
+    emitPiecewise(*expr, e, "p", "vec3<f32>", body);
+
+    VectorExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
+                                               bool bindTime) {
+    // Absence is not refusal: it means the historical authored light.color is
+    // the constant chroma. Presence, however, must be honored or refused.
+    if (!expr || expr->pieces.empty()) {
+        return VectorExpressionLayout{"<legacy-chroma:light.color>", 0, true, ""};
+    }
+
+    std::string validationError;
+    if (!validateVectorPiecewise(*expr, bindTime, validationError)) {
+        return VectorExpressionLayout{"", 0, false, validationError};
+    }
+
+    Emit e;
+    e.bindTime = bindTime;
+    std::string body;
+    emitPiecewise(*expr, e, "p", "vec3<f32>", body);
+
+    VectorExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return AngularExpressionLayout{"<legacy-angular:1.0>", 0, false, true, ""};
+    }
+
+    std::string validationError;
+    if (!validateAngularPiecewise(*expr, validationError)) {
+        return AngularExpressionLayout{"", 0, false, false, validationError};
+    }
+
+    Emit e;
+    e.bindTime = true;
+    e.bindOmega = true;
+    std::string body;
+    emitPiecewise(*expr, e, "p", "f32", body);
+
+    AngularExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.readsOmega = e.readOmega;
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+
+// Architectural note — GPT-5.6 Sol ("The Sun"), 2026-09-24:
+// OntoMath's directional coordinates are shared mathematical grammar, not shared
+// semantic authority. Phi_medium(p, wi, wo, t) owns participating-medium
+// redirection. Rung 9 surface response f_r(p, n, wi, wo, t) may reuse this
+// directional lowering machinery, but it must enter through its own
+// material-response admission context. Reusing wi/wo must never let phase state
+// stand in for surface response, or vice versa.
+//
+// Minimum–maximum principle: keep one expressive directional language while
+// preserving distinct irreducible predicates for source emission, medium
+// scattering, and receiving-surface response.
+ResponseExpressionLayout inspectResponseExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return ResponseExpressionLayout{
+            "<material-response:legacy-blinn-phong>", 0, false, false, false, true, ""};
+    }
+
+    std::string validationError;
+    if (!validateResponsePiecewise(*expr, validationError)) {
+        return ResponseExpressionLayout{"", 0, false, false, false, false, validationError};
+    }
+
+    Emit e;
+    e.bindMaterialResponse = true;
+    std::string body;
+    emitPiecewise(*expr, e, "p", "vec3<f32>", body);
+
+    ResponseExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.readsNormal = e.readSurfaceNormal;
+    layout.readsWi = e.readWi;
+    layout.readsWo = e.readWo;
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+ParameterBlock collectResponseParams(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) return ParameterBlock{};
+
+    std::string validationError;
+    if (!validateResponsePiecewise(*expr, validationError)) {
+        return ParameterBlock{{}, false, validationError};
+    }
+
+    Emit e;
+    e.bindMaterialResponse = true;
+    std::string throwaway;
+    emitPiecewise(*expr, e, "p", "vec3<f32>", throwaway);
+    return ParameterBlock{std::move(e.params), !e.refused, e.refusal};
+}
+
+PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return PhaseExpressionLayout{"<volume-phase:1.0>", 0, false, false, true, ""};
+    }
+
+    std::string validationError;
+    if (!validatePhasePiecewise(*expr, validationError)) {
+        return PhaseExpressionLayout{"", 0, false, false, false, validationError};
+    }
+
+    Emit e;
+    e.bindTime = true;
+    e.bindPhaseDirections = true;
+    std::string body;
+    emitPiecewise(*expr, e, "p", "f32", body);
+
+    PhaseExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.readsWi = e.readWi;
+    layout.readsWo = e.readWo;
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+EmissionExpressionLayout inspectEmissionExpression(const OntoMath::Piecewise* expr) {
+    if (!expr || expr->pieces.empty()) {
+        return EmissionExpressionLayout{"<volume-emission:absent>", 0, false, true, ""};
+    }
+
+    std::string validationError;
+    if (!validateEmissionPiecewise(*expr, validationError)) {
+        return EmissionExpressionLayout{"", 0, false, false, validationError};
+    }
+
+    Emit e;
+    e.bindTime = true;
+    e.bindEmissionOmega = true;
+    std::string body;
+    emitPiecewise(*expr, e, "p", "vec3<f32>", body);
+
+    EmissionExpressionLayout layout;
+    layout.structure = std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.readsOmega = e.readEmissionOmega;
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+ScalarExpressionLayout inspectOccluderLayout(const geom::SdfNode* root) {
+    if (!geom::isSdfActive(root)) {
+        return ScalarExpressionLayout{"<volume-occluder:absent>", 0, true, ""};
+    }
+    Emit e;
+    (void)emitNode(*root, e);
+    ScalarExpressionLayout layout;
+    layout.structure = std::move(e.body);
+    layout.parameterCount = e.params.size();
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+ParameterBlock collectParams(const geom::SdfNode& root,
+                             const geom::FieldNode* fieldNode,
+                             const OntoMath::Piecewise* colorExpr,
+                             const OntoMath::Piecewise* radianceExpr,
+                             const OntoMath::Piecewise* chromaExpr,
+                             const OntoMath::Piecewise* angularExpr,
+                             const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
+                             const OntoMath::Piecewise* densityExpr,
+                             DensityInputKind densityKind,
+                             const OntoMath::Piecewise* extinctionExpr,
+                             const OntoMath::Piecewise* scatteringExpr,
+                             const OntoMath::Piecewise* volumeChromaExpr,
+                             const OntoMath::Piecewise* phaseExpr,
+                             const OntoMath::Piecewise* emissionExpr,
+                             const OntoMath::Piecewise* responseExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
                                   root.prim == geom::SdfPrim::Expr &&
                                   root.mathNode &&
-                                  astContainsNoise(*root.mathNode) &&
+                                  isDifferentiableAst(*root.mathNode));
+
+    // Follow compile()'s exact traversal order so parameter indices remain a
+    // structural contract. We deliberately do not append kPrimitives/kMarcher
+    // or assemble a complete shader module on this value-only path.
+    if (hasAnalyticGrad) {
+        e.sawExpr = true;
+        const std::string off = e.param3(root.offset);
+        const std::string lp = e.fresh();
+        std::string throwawayBody = "    let " + lp + " = p - " + off + ";\n";
+        int nextVar = 0;
+        (void)emitMathNodeGrad(*root.mathNode, e, lp, throwawayBody, nextVar);
+    } else {
+        (void)emitNode(root, e);
+    }
+
+    std::string throwaway;
+    if (densityKind == DensityInputKind::Authored &&
+        densityExpr && !densityExpr->pieces.empty()) {
+        const std::string previousTimeExpression = e.timeExpression;
+        e.timeExpression = "u.volumeTime.x";
+        e.bindTime = true;
+        emitPiecewise(*densityExpr, e, "p", "f32", throwaway);
+        e.bindTime = false;
+        e.timeExpression = previousTimeExpression;
+    } else if (densityKind == DensityInputKind::LegacyField &&
+               fieldNode && fieldNode->field) {
+        // LEGACY ONLY: old callers may still project generic ScalarField
+        // mathematics as density. Explicit None must never fall through here.
+        if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
+            emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", throwaway);
+        } else {
+            (void)e.param(fieldNode->field->baseDensity);
+            (void)e.param(fieldNode->field->frequency);
+            (void)e.param(fieldNode->field->amplitude);
+        }
+    }
+
+    if (extinctionExpr && !extinctionExpr->pieces.empty()) {
+        const std::string previousTimeExpression = e.timeExpression;
+        e.timeExpression = "u.volumeTime.x";
+        e.bindTime = true;
+        emitPiecewise(*extinctionExpr, e, "p", "f32", throwaway);
+        e.bindTime = false;
+        e.timeExpression = previousTimeExpression;
+    }
+
+    if (scatteringExpr && !scatteringExpr->pieces.empty()) {
+        const std::string previousTimeExpression = e.timeExpression;
+        e.timeExpression = "u.volumeTime.x";
+        e.bindTime = true;
+        emitPiecewise(*scatteringExpr, e, "p", "f32", throwaway);
+        e.bindTime = false;
+        e.timeExpression = previousTimeExpression;
+    }
+
+    if (volumeChromaExpr && !volumeChromaExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateVectorPiecewise(*volumeChromaExpr, true, validationError)) {
+            e.refuse("volume chroma: " + validationError);
+        } else {
+            const std::string previousTimeExpression = e.timeExpression;
+            e.timeExpression = "u.volumeTime.x";
+            e.bindTime = true;
+            emitPiecewise(*volumeChromaExpr, e, "p", "vec3<f32>", throwaway);
+            e.bindTime = false;
+            e.timeExpression = previousTimeExpression;
+        }
+    }
+
+    if (phaseExpr && !phaseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validatePhasePiecewise(*phaseExpr, validationError)) {
+            e.refuse("volume phase: " + validationError);
+        } else {
+            const std::string previousTimeExpression = e.timeExpression;
+            e.timeExpression = "u.volumeTime.x";
+            e.bindTime = true;
+            e.bindPhaseDirections = true;
+            emitPiecewise(*phaseExpr, e, "p", "f32", throwaway);
+            e.bindPhaseDirections = false;
+            e.bindTime = false;
+            e.timeExpression = previousTimeExpression;
+        }
+    }
+
+    if (emissionExpr && !emissionExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateEmissionPiecewise(*emissionExpr, validationError)) {
+            e.refuse("volume emission: " + validationError);
+        } else {
+            const std::string previousTimeExpression = e.timeExpression;
+            e.timeExpression = "u.volumeTime.x";
+            e.bindTime = true;
+            e.bindEmissionOmega = true;
+            emitPiecewise(*emissionExpr, e, "p", "vec3<f32>", throwaway);
+            e.bindEmissionOmega = false;
+            e.bindTime = false;
+            e.timeExpression = previousTimeExpression;
+        }
+    }
+
+    if (fieldNode && fieldNode->vectorField) {
+        if (fieldNode->vectorField->mode == OntoMath::VectorField::EvaluationMode::AST) {
+            emitPiecewise(fieldNode->vectorField->astDefinition, e, "p", "vec3<f32>", throwaway);
+        } else {
+            (void)e.param(fieldNode->vectorField->baseFlowX);
+            (void)e.param(fieldNode->vectorField->baseFlowY);
+            (void)e.param(fieldNode->vectorField->baseFlowZ);
+            (void)e.param(fieldNode->vectorField->frequency);
+            (void)e.param(fieldNode->vectorField->amplitude);
+        }
+    }
+
+    if (colorExpr && !colorExpr->pieces.empty()) {
+        emitPiecewise(*colorExpr, e, "p", "vec3<f32>", throwaway);
+    }
+
+    if (responseExpr && !responseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateResponsePiecewise(*responseExpr, validationError)) {
+            e.refuse("material response: " + validationError);
+        } else {
+            e.bindMaterialResponse = true;
+            emitPiecewise(*responseExpr, e, "p", "vec3<f32>", throwaway);
+            e.bindMaterialResponse = false;
+        }
+    }
+
+    const bool multiSource = radianceSources && radianceSources->size() > 1;
+    if (multiSource) {
+        for (std::size_t i = 0; i < radianceSources->size(); ++i) {
+            const auto& source = (*radianceSources)[i];
+            e.timeExpression = "RS[" + std::to_string(i) + "u].time.x";
+
+            if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
+                e.bindTime = true;
+                emitPiecewise(*source.radianceExpr, e, "p", "f32", throwaway);
+                e.bindTime = false;
+            }
+            if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
+                std::string validationError;
+                if (!validateVectorPiecewise(*source.chromaExpr, true, validationError)) {
+                    e.refuse("source[" + std::to_string(i) + "] chroma: " + validationError);
+                } else {
+                    e.bindTime = true;
+                    emitPiecewise(*source.chromaExpr, e, "p", "vec3<f32>", throwaway);
+                    e.bindTime = false;
+                }
+            }
+            if (source.angularExpr && !source.angularExpr->pieces.empty()) {
+                std::string validationError;
+                if (!validateAngularPiecewise(*source.angularExpr, validationError)) {
+                    e.refuse("source[" + std::to_string(i) + "] angular: " + validationError);
+                } else {
+                    e.bindTime = true;
+                    e.bindOmega = true;
+                    emitPiecewise(*source.angularExpr, e, "p", "f32", throwaway);
+                    e.bindOmega = false;
+                    e.bindTime = false;
+                }
+            }
+        }
+        e.timeExpression = "u.radianceTime.x";
+    } else {
+        if (radianceExpr && !radianceExpr->pieces.empty()) {
+            e.bindTime = true;
+            emitPiecewise(*radianceExpr, e, "p", "f32", throwaway);
+            e.bindTime = false;
+        }
+        if (chromaExpr && !chromaExpr->pieces.empty()) {
+            std::string validationError;
+            if (!validateVectorPiecewise(*chromaExpr, true, validationError)) {
+                e.refuse("chroma: " + validationError);
+            } else {
+                e.bindTime = true;
+                emitPiecewise(*chromaExpr, e, "p", "vec3<f32>", throwaway);
+                e.bindTime = false;
+            }
+        }
+        if (angularExpr && !angularExpr->pieces.empty()) {
+            std::string validationError;
+            if (!validateAngularPiecewise(*angularExpr, validationError)) {
+                e.refuse("angular: " + validationError);
+            } else {
+                e.bindTime = true;
+                e.bindOmega = true;
+                emitPiecewise(*angularExpr, e, "p", "f32", throwaway);
+                e.bindOmega = false;
+                e.bindTime = false;
+            }
+        }
+    }
+
+    ParameterBlock block;
+    block.ok = !e.refused;
+    block.error = e.refusal;
+    block.values = std::move(e.params);
+    if (block.values.empty()) block.values.push_back(0.0f);
+    return block;
+}
+
+Program compile(const geom::SdfNode& root,
+                const geom::FieldNode* fieldNode,
+                const OntoMath::Piecewise* colorExpr,
+                const OntoMath::Piecewise* radianceExpr,
+                const OntoMath::Piecewise* chromaExpr,
+                const OntoMath::Piecewise* angularExpr,
+                const std::vector<Rendering::RadianceSourceBinding>* radianceSources,
+                const OntoMath::Piecewise* densityExpr,
+                DensityInputKind densityKind,
+                const OntoMath::Piecewise* extinctionExpr,
+                const OntoMath::Piecewise* scatteringExpr,
+                const OntoMath::Piecewise* volumeChromaExpr,
+                const OntoMath::Piecewise* phaseExpr,
+                const OntoMath::Piecewise* emissionExpr,
+                const OntoMath::Piecewise* responseExpr) {
+    Emit e;
+
+    const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
+                                  root.prim == geom::SdfPrim::Expr &&
+                                  root.mathNode &&
                                   isDifferentiableAst(*root.mathNode));
 
     std::string evalGradFunc;
@@ -1304,7 +4353,7 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode, con
     }
 
     Program prog;
-    prog.wgsl = kPrimitives;
+    prog.wgsl = std::string(kSdfBindings) + kPrimitives;
 
     if (hasAnalyticGrad) {
         prog.wgsl += evalGradFunc;
@@ -1339,18 +4388,30 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode, con
                      "}\n";
     }
 
-    // --- Dual-Path Field Compiler ---
-    prog.wgsl += "\nfn fieldEval(p: vec3<f32>) -> f32 {\n";
-    if (fieldNode && fieldNode->field) {
+    // --- Volumetric V0 Density Compiler ---
+    // Explicit volume.density.ast wins. The generic FieldNode scalar path below
+    // is retained only as named legacy compatibility until saves migrate.
+    prog.wgsl += "\nfn volumeDensityEval(p: vec3<f32>) -> f32 {\n";
+    if (densityKind == DensityInputKind::Authored &&
+        densityExpr && !densityExpr->pieces.empty()) {
+        const std::string previousTimeExpression = e.timeExpression;
+        e.timeExpression = "u.volumeTime.x";
+        e.bindTime = true;
+        prog.wgsl += "    // V0: explicit authored D(p,t)\n";
+        emitPiecewise(*densityExpr, e, "p", "f32", prog.wgsl);
+        e.bindTime = false;
+        e.timeExpression = previousTimeExpression;
+    } else if (densityKind == DensityInputKind::LegacyField &&
+               fieldNode && fieldNode->field) {
         if (fieldNode->field->mode == OntoMath::ScalarField::EvaluationMode::AST) {
-            prog.wgsl += "    // Path B: AST-Driven evaluation\n";
+            prog.wgsl += "    // LEGACY density projection from generic field.ast\n";
             emitPiecewise(fieldNode->field->astDefinition, e, "p", "f32", prog.wgsl);
         } else {
             std::string baseDensity = e.param(fieldNode->field->baseDensity);
             std::string freq = e.param(fieldNode->field->frequency);
             std::string amp = e.param(fieldNode->field->amplitude);
-            
-            prog.wgsl += "    // Path A: Hardcoded procedural evaluation\n";
+
+            prog.wgsl += "    // LEGACY procedural density projection\n";
             prog.wgsl += "    let rawDensity = " + baseDensity + " + sin(p.x * " + freq + ") * " + amp + ";\n";
             prog.wgsl += "    return max(rawDensity, 0.0);\n";
         }
@@ -1358,6 +4419,119 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode, con
         prog.wgsl += "    return 0.0;\n";
     }
     prog.wgsl += "}\n";
+
+    // --- Volumetric V1 Extinction Compiler ---
+    // Absence is the historical compatibility law; presence is sole sigma_t authority.
+    prog.wgsl += "\nfn volumeExtinctionEval(p: vec3<f32>, compatibilityDensity: f32) -> f32 {\n";
+    if (extinctionExpr && !extinctionExpr->pieces.empty()) {
+        const std::string previousTimeExpression = e.timeExpression;
+        e.timeExpression = "u.volumeTime.x";
+        e.bindTime = true;
+        prog.wgsl += "    // V1: explicit authored sigma_t(p,t)\n";
+        emitPiecewise(*extinctionExpr, e, "p", "f32", prog.wgsl);
+        e.bindTime = false;
+        e.timeExpression = previousTimeExpression;
+    } else {
+        prog.wgsl += "    // V1 compatibility: preserve pre-V1 extinction exactly\n";
+        prog.wgsl += "    return compatibilityDensity * 0.5;\n";
+    }
+    prog.wgsl += "}\n";
+
+    // --- Volumetric V2 Scattering Compiler ---
+    // Absence preserves the historical sigma_s = D compatibility law.
+    prog.wgsl += "\nfn volumeScatteringEval(p: vec3<f32>, compatibilityDensity: f32) -> f32 {\n";
+    if (scatteringExpr && !scatteringExpr->pieces.empty()) {
+        const std::string previousTimeExpression = e.timeExpression;
+        e.timeExpression = "u.volumeTime.x";
+        e.bindTime = true;
+        prog.wgsl += "    // V2: explicit authored sigma_s(p,t)\n";
+        emitPiecewise(*scatteringExpr, e, "p", "f32", prog.wgsl);
+        e.bindTime = false;
+        e.timeExpression = previousTimeExpression;
+    } else {
+        prog.wgsl += "    // V2 compatibility: preserve pre-V2 scattering exactly\n";
+        prog.wgsl += "    return compatibilityDensity;\n";
+    }
+    prog.wgsl += "}\n";
+
+    // --- Volumetric V2 Medium Chroma Compiler ---
+    // C_v is medium-owned chroma; it does not alias source/light chi.
+    prog.wgsl += "\nfn volumeChromaEval(p: vec3<f32>) -> vec3<f32> {\n";
+    if (volumeChromaExpr && !volumeChromaExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateVectorPiecewise(*volumeChromaExpr, true, validationError)) {
+            e.refuse("volume chroma: " + validationError);
+            prog.wgsl += "    return vec3<f32>(0.0);\n";
+        } else {
+            const std::string previousTimeExpression = e.timeExpression;
+            e.timeExpression = "u.volumeTime.x";
+            e.bindTime = true;
+            prog.wgsl += "    // V2: explicit authored C_v(p,t)\n";
+            emitPiecewise(*volumeChromaExpr, e, "p", "vec3<f32>", prog.wgsl);
+            e.bindTime = false;
+            e.timeExpression = previousTimeExpression;
+        }
+    } else {
+        prog.wgsl += "    // V2 compatibility: neutral white medium chroma\n";
+        prog.wgsl += "    return vec3<f32>(1.0);\n";
+    }
+    prog.wgsl += "}\n";
+
+    // --- Volumetric V3 Phase Compiler ---
+    // Phi is medium-owned angular scattering. Absent phase is exact identity 1.
+    prog.wgsl += "\nfn volumePhaseEval(p: vec3<f32>, wi: vec3<f32>, wo: vec3<f32>) -> f32 {\n";
+    if (phaseExpr && !phaseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validatePhasePiecewise(*phaseExpr, validationError)) {
+            e.refuse("volume phase: " + validationError);
+            prog.wgsl += "    return 0.0;\n";
+        } else {
+            const std::string previousTimeExpression = e.timeExpression;
+            e.timeExpression = "u.volumeTime.x";
+            e.bindTime = true;
+            e.bindPhaseDirections = true;
+            prog.wgsl += "    // V3: explicit authored Phi(p,wi,wo,t)\n";
+            emitPiecewise(*phaseExpr, e, "p", "f32", prog.wgsl);
+            e.bindPhaseDirections = false;
+            e.bindTime = false;
+            e.timeExpression = previousTimeExpression;
+        }
+    } else {
+        prog.wgsl += "    // V3 compatibility: exact isotropic identity\n";
+        prog.wgsl += "    return 1.0;\n";
+    }
+    prog.wgsl += "}\n";
+    prog.wgsl += "\nconst HAS_AUTHORED_VOLUME_PHASE: bool = ";
+    prog.wgsl += (phaseExpr && !phaseExpr->pieces.empty()) ? "true;\n" : "false;\n";
+    prog.wgsl += "const VOLUME_PHASE_READS_WI: bool = ";
+    prog.wgsl += e.readWi ? "true;\n" : "false;\n";
+
+    // --- Volumetric V4 Self-Emission Compiler ---
+    prog.wgsl += "\nfn volumeEmissionEval(p: vec3<f32>, omega: vec3<f32>) -> vec3<f32> {\n";
+    if (emissionExpr && !emissionExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateEmissionPiecewise(*emissionExpr, validationError)) {
+            e.refuse("volume emission: " + validationError);
+            prog.wgsl += "    return vec3<f32>(0.0);\n";
+        } else {
+            const std::string previousTimeExpression = e.timeExpression;
+            e.timeExpression = "u.volumeTime.x";
+            e.bindTime = true;
+            e.bindEmissionOmega = true;
+            prog.wgsl += "    // V4: explicit authored E_v(p,omega,t)\n";
+            emitPiecewise(*emissionExpr, e, "p", "vec3<f32>", prog.wgsl);
+            e.bindEmissionOmega = false;
+            e.bindTime = false;
+            e.timeExpression = previousTimeExpression;
+        }
+    } else {
+        prog.wgsl += "    return vec3<f32>(0.0);\n";
+    }
+    prog.wgsl += "}\n";
+    prog.wgsl += "\nconst HAS_AUTHORED_VOLUME_EMISSION: bool = ";
+    prog.wgsl += (emissionExpr && !emissionExpr->pieces.empty()) ? "true;\n" : "false;\n";
+    prog.wgsl += "const VOLUME_EMISSION_READS_OMEGA: bool = ";
+    prog.wgsl += e.readEmissionOmega ? "true;\n" : "false;\n";
 
     // --- Dual-Path Vector Field Compiler ---
     prog.wgsl += "\nfn vectorFieldEval(p: vec3<f32>) -> vec3<f32> {\n";
@@ -1391,7 +4565,288 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode, con
     }
     prog.wgsl += "\nfn sdfColor(p: vec3<f32>) -> vec3<f32> {\n" + colorBody + "}\n";
 
-    prog.wgsl += kMarcher;
+    // --- Rung 9 Material Response Compiler ---
+    // Receiver response is independent of source emission, visibility and volume
+    // truth. Absence preserves the exact historical Blinn-Phong compatibility
+    // path below; authored response is evaluated only after transport reaches
+    // the receiving surface.
+    bool responseReadsNormal = false;
+    bool responseReadsWi = false;
+    bool responseReadsWo = false;
+    prog.wgsl += "\nfn materialResponseEval(p: vec3<f32>, n: vec3<f32>, "
+                 "wi: vec3<f32>, wo: vec3<f32>) -> vec3<f32> {\n";
+    if (responseExpr && !responseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateResponsePiecewise(*responseExpr, validationError)) {
+            e.refuse("material response: " + validationError);
+            prog.wgsl += "    return vec3<f32>(0.0);\n";
+        } else {
+            e.readSurfaceNormal = false;
+            e.readWi = false;
+            e.readWo = false;
+            e.bindMaterialResponse = true;
+            emitPiecewise(*responseExpr, e, "p", "vec3<f32>", prog.wgsl);
+            e.bindMaterialResponse = false;
+            responseReadsNormal = e.readSurfaceNormal;
+            responseReadsWi = e.readWi;
+            responseReadsWo = e.readWo;
+        }
+    } else {
+        prog.wgsl += "    return vec3<f32>(0.0);\n";
+    }
+    prog.wgsl += "}\n";
+    prog.wgsl += "const HAS_AUTHORED_MATERIAL_RESPONSE: bool = ";
+    prog.wgsl += (responseExpr && !responseExpr->pieces.empty()) ? "true;\n" : "false;\n";
+    prog.wgsl += "const MATERIAL_RESPONSE_READS_NORMAL: bool = ";
+    prog.wgsl += responseReadsNormal ? "true;\n" : "false;\n";
+    prog.wgsl += "const MATERIAL_RESPONSE_READS_WI: bool = ";
+    prog.wgsl += responseReadsWi ? "true;\n" : "false;\n";
+    prog.wgsl += "const MATERIAL_RESPONSE_READS_WO: bool = ";
+    prog.wgsl += responseReadsWo ? "true;\n" : "false;\n";
+
+    const bool multiSource = radianceSources && radianceSources->size() > 1;
+    if (!multiSource) {
+        std::string radianceBody;
+        if (radianceExpr && !radianceExpr->pieces.empty()) {
+            e.bindTime = true;
+            emitPiecewise(*radianceExpr, e, "p", "f32", radianceBody);
+            e.bindTime = false;
+        } else {
+            radianceBody = "    return 1.0;\n";
+        }
+        prog.wgsl += "\nfn lightRadiance(p: vec3<f32>) -> f32 {\n" + radianceBody + "}\n";
+
+        std::string chromaBody;
+        if (chromaExpr && !chromaExpr->pieces.empty()) {
+            std::string validationError;
+            if (!validateVectorPiecewise(*chromaExpr, true, validationError)) {
+                e.refuse("chroma: " + validationError);
+            } else {
+                e.bindTime = true;
+                emitPiecewise(*chromaExpr, e, "p", "vec3<f32>", chromaBody);
+                e.bindTime = false;
+            }
+        } else {
+            // Multiplicative identity. EngineRender preserves legacy light.color in
+            // the historical light uniforms when chi is absent.
+            chromaBody = "    return vec3<f32>(1.0);\n";
+        }
+        prog.wgsl += "\nfn lightChroma(p: vec3<f32>) -> vec3<f32> {\n" + chromaBody + "}\n";
+        prog.wgsl += std::string("\nconst HAS_AUTHORED_CHROMA: bool = ") +
+                     ((chromaExpr && !chromaExpr->pieces.empty()) ? "true;\n" : "false;\n");
+
+        std::string angularBody;
+        bool angularReadsOmega = false;
+        if (angularExpr && !angularExpr->pieces.empty()) {
+            std::string validationError;
+            if (!validateAngularPiecewise(*angularExpr, validationError)) {
+                e.refuse("angular: " + validationError);
+            } else {
+                e.bindTime = true;
+                e.bindOmega = true;
+                e.readOmega = false;
+                emitPiecewise(*angularExpr, e, "p", "f32", angularBody);
+                angularReadsOmega = e.readOmega;
+                e.bindOmega = false;
+                e.bindTime = false;
+            }
+        } else {
+            angularBody = "    return 1.0;\n";
+        }
+        prog.wgsl += "\nfn lightAngular(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" +
+                     angularBody + "}\n";
+        prog.wgsl += std::string("\nconst HAS_AUTHORED_ANGULAR: bool = ") +
+                     ((angularExpr && !angularExpr->pieces.empty()) ? "true;\n" : "false;\n");
+        prog.wgsl += std::string("const ANGULAR_READS_OMEGA: bool = ") +
+                     (angularReadsOmega ? "true;\n" : "false;\n");
+        prog.wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
+                     wgslLiteral(OntoMath::kDirectionEpsilon) + ";\n";
+
+        // Deliberately retain the historical marcher source verbatim in the
+        // zero/one-source case. Rung 7 is additive composition, not a rewrite
+        // of the already-proven Rungs 3-6 path.
+        prog.wgsl += kMarcher;
+    } else {
+        prog.wgsl +=
+            "\nstruct RadianceSourceData {\n"
+            "    position: vec4<f32>,\n"
+            "    ambient: vec4<f32>,\n"
+            "    diffuse: vec4<f32>,\n"
+            "    specular: vec4<f32>,\n"
+            "    coefficients: vec4<f32>,\n"
+            "    time: vec4<f32>,\n"
+            "    control: vec4<f32>,\n"
+            "};\n"
+            "@group(0) @binding(2) var<storage, read> RS: array<RadianceSourceData>;\n";
+
+        std::vector<bool> angularReadsOmega;
+        angularReadsOmega.reserve(radianceSources->size());
+
+        for (std::size_t i = 0; i < radianceSources->size(); ++i) {
+            const auto& source = (*radianceSources)[i];
+            const std::string suffix = std::to_string(i);
+            e.timeExpression = "RS[" + suffix + "u].time.x";
+
+            std::string radianceBody;
+            if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
+                e.bindTime = true;
+                emitPiecewise(*source.radianceExpr, e, "p", "f32", radianceBody);
+                e.bindTime = false;
+            } else {
+                radianceBody = "    return 1.0;\n";
+            }
+            prog.wgsl += "\nfn lightRadiance_" + suffix +
+                         "(p: vec3<f32>) -> f32 {\n" + radianceBody + "}\n";
+
+            std::string chromaBody;
+            if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
+                std::string validationError;
+                if (!validateVectorPiecewise(*source.chromaExpr, true, validationError)) {
+                    e.refuse("source[" + suffix + "] chroma: " + validationError);
+                } else {
+                    e.bindTime = true;
+                    emitPiecewise(*source.chromaExpr, e, "p", "vec3<f32>", chromaBody);
+                    e.bindTime = false;
+                }
+            } else {
+                chromaBody = "    return vec3<f32>(1.0);\n";
+            }
+            prog.wgsl += "\nfn lightChroma_" + suffix +
+                         "(p: vec3<f32>) -> vec3<f32> {\n" + chromaBody + "}\n";
+
+            std::string angularBody;
+            bool readsOmega = false;
+            if (source.angularExpr && !source.angularExpr->pieces.empty()) {
+                std::string validationError;
+                if (!validateAngularPiecewise(*source.angularExpr, validationError)) {
+                    e.refuse("source[" + suffix + "] angular: " + validationError);
+                } else {
+                    e.bindTime = true;
+                    e.bindOmega = true;
+                    e.readOmega = false;
+                    emitPiecewise(*source.angularExpr, e, "p", "f32", angularBody);
+                    readsOmega = e.readOmega;
+                    e.bindOmega = false;
+                    e.bindTime = false;
+                }
+            } else {
+                angularBody = "    return 1.0;\n";
+            }
+            angularReadsOmega.push_back(readsOmega);
+            prog.wgsl += "\nfn lightAngular_" + suffix +
+                         "(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" +
+                         angularBody + "}\n";
+        }
+        e.timeExpression = "u.radianceTime.x";
+        prog.wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
+                     wgslLiteral(OntoMath::kDirectionEpsilon) + ";\n";
+
+        std::string marcher = kMarcher;
+        const std::string lightingBegin =
+            "    let L = normalize(u.lightPos.xyz - pw);\n";
+        const std::string lightingEnd =
+            "    let clip = u.viewProj * vec4<f32>(pw, 1.0);\n";
+        const std::size_t lightAt = marcher.find(lightingBegin);
+        const std::size_t clipAt = marcher.find(lightingEnd, lightAt);
+        if (lightAt == std::string::npos || clipAt == std::string::npos) {
+            e.refuse("Rung 7 compiler could not find the historical lighting seam");
+        } else {
+            std::string sum;
+            sum += "    let V = normalize(u.eyePos.xyz - pw);\n";
+            sum += "    var ambientTerm = vec3<f32>(0.0);\n";
+            sum += "    var diffuseTerm = vec3<f32>(0.0);\n";
+            sum += "    var specTerm = vec3<f32>(0.0);\n";
+
+            for (std::size_t i = 0; i < radianceSources->size(); ++i) {
+                const auto& source = (*radianceSources)[i];
+                const std::string s = std::to_string(i);
+                sum += "    {\n";
+                sum += "        let source = RS[" + s + "u];\n";
+                sum += "        if (source.control.x > 0.5) {\n";
+                sum += "            let sourceDelta = pw - source.position.xyz;\n";
+                sum += "            let sourceDistance = length(sourceDelta);\n";
+                sum += "            var Ls = vec3<f32>(0.0);\n";
+                sum += "            if (sourceDistance > SOURCE_DIRECTION_EPS) { "
+                       "Ls = -sourceDelta / sourceDistance; }\n";
+                sum += "            var Hs = V;\n";
+                sum += "            let halfVector = Ls + V;\n";
+                sum += "            let halfLength = length(halfVector);\n";
+                sum += "            if (halfLength > SOURCE_DIRECTION_EPS) { "
+                       "Hs = halfVector / halfLength; }\n";
+                sum += "            let radialRadiance = max(lightRadiance_" + s +
+                       "(sourceDelta), 0.0);\n";
+                sum += "            var angularRadiance = 1.0;\n";
+
+                if (source.angularExpr && !source.angularExpr->pieces.empty()) {
+                    if (angularReadsOmega[i]) {
+                        sum += "            if (sourceDistance > SOURCE_DIRECTION_EPS) {\n";
+                        sum += "                angularRadiance = max(lightAngular_" + s +
+                               "(sourceDelta, sourceDelta / sourceDistance), 0.0);\n";
+                        sum += "            } else { angularRadiance = 0.0; }\n";
+                    } else {
+                        sum += "            angularRadiance = max(lightAngular_" + s +
+                               "(sourceDelta, vec3<f32>(0.0)), 0.0);\n";
+                    }
+                }
+
+                sum += "            let shapedRadiance = radialRadiance * angularRadiance;\n";
+                sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
+                sum += "            let directRadiance = shapedRadiance * pathVisibility;\n";
+                sum += "            let diff = max(dot(nw, Ls), 0.0);\n";
+                sum += "            let specShape = inst.shading.z * "
+                       "pow(max(dot(nw, Hs), 0.0), max(inst.shading.w, 1.0)) * "
+                       "step(0.0001, diff);\n";
+
+                if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
+                    sum += "            let sourceChroma = lightChroma_" + s +
+                           "(sourceDelta);\n";
+                    sum += "            let c = source.coefficients;\n";
+                    sum += "            let ambientEnvelope = sourceChroma * "
+                           "vec3<f32>((c.x * c.y) / 0.2);\n";
+                    sum += "            let diffuseEnvelope = sourceChroma * "
+                           "vec3<f32>((c.x * c.z) / 0.8);\n";
+                    sum += "            let specularEnvelope = sourceChroma * "
+                           "vec3<f32>(c.x * c.w);\n";
+                    sum += "            let incidentEnvelope = sourceChroma * "
+                           "vec3<f32>(c.x);\n";
+                } else {
+                    sum += "            let ambientEnvelope = source.ambient.rgb / "
+                           "vec3<f32>(0.2);\n";
+                    sum += "            let diffuseEnvelope = source.diffuse.rgb / "
+                           "vec3<f32>(0.8);\n";
+                    sum += "            let specularEnvelope = source.specular.rgb;\n";
+                    sum += "            let incidentEnvelope = source.diffuse.rgb / "
+                           "vec3<f32>(0.8);\n";
+                }
+                sum += "            if (HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
+                sum += "                var responseWi = vec3<f32>(0.0);\n";
+                sum += "                var responseDefined = true;\n";
+                sum += "                if (sourceDistance > SOURCE_DIRECTION_EPS) {\n";
+                sum += "                    responseWi = sourceDelta / sourceDistance;\n";
+                sum += "                } else if (MATERIAL_RESPONSE_READS_WI) {\n";
+                sum += "                    responseDefined = false;\n";
+                sum += "                }\n";
+                sum += "                if (responseDefined) {\n";
+                sum += "                    let receiverResponse = "
+                       "materialResponseEval(pf, nw, responseWi, V);\n";
+                sum += "                    diffuseTerm += incidentEnvelope * "
+                       "receiverResponse * directRadiance;\n";
+                sum += "                }\n";
+                sum += "            } else {\n";
+                sum += "                ambientTerm += inst.shading.x * ambientEnvelope;\n";
+                sum += "                diffuseTerm += inst.shading.y * diffuseEnvelope * "
+                       "diff * directRadiance;\n";
+                sum += "                specTerm += specularEnvelope * specShape * "
+                       "directRadiance;\n";
+                sum += "            }\n";
+                sum += "        }\n";
+                sum += "    }\n";
+            }
+            marcher.replace(lightAt, clipAt - lightAt, sum);
+        }
+
+        prog.wgsl += marcher;
+    }
     prog.params = std::move(e.params);
     prog.needsGradientStep = e.sawExpr;
 
@@ -1407,5 +4862,1709 @@ Program compile(const geom::SdfNode& root, const geom::FieldNode* fieldNode, con
     if (prog.params.empty()) prog.params.push_back(0.0f);
     return prog;
 }
+
+ParameterBlock collectVolumeParams(const OntoMath::Piecewise* densityExpr,
+                                   const OntoMath::Piecewise* extinctionExpr,
+                                   const OntoMath::Piecewise* scatteringExpr,
+                                   const OntoMath::Piecewise* volumeChromaExpr,
+                                   const OntoMath::Piecewise* phaseExpr,
+                                   const OntoMath::Piecewise* emissionExpr,
+                                   const geom::SdfNode* occluderSdf,
+                                   const OntoMath::Piecewise* lightRadianceExpr,
+                                   const OntoMath::Piecewise* lightChromaExpr,
+                                   const OntoMath::Piecewise* lightAngularExpr) {
+    Emit e;
+    e.prepareVolumeTime = true;
+    e.bindTime = true;
+    e.timeExpression = "instances[g_instIdx].time.x";
+
+    std::string throwaway;
+    const OntoMath::Piecewise* sharingChannels[6] = {densityExpr, extinctionExpr, scatteringExpr,
+                                                     volumeChromaExpr, phaseExpr, emissionExpr};
+    std::map<const OntoMath::MathNode*, std::string> sharedNames;
+    (void)emitVolumeSharedPrelude(planVolumeSharing(sharingChannels), e, "p", sharedNames);
+    if (densityExpr && !densityExpr->pieces.empty()) {
+        emitDensityPiecewise(*densityExpr, e, "p", throwaway);
+    }
+    if (extinctionExpr && !extinctionExpr->pieces.empty()) {
+        emitPiecewise(*extinctionExpr, e, "p", "f32", throwaway);
+    }
+    if (scatteringExpr && !scatteringExpr->pieces.empty()) {
+        emitPiecewise(*scatteringExpr, e, "p", "f32", throwaway);
+    }
+    if (volumeChromaExpr && !volumeChromaExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateVectorPiecewise(*volumeChromaExpr, true, validationError)) {
+            e.refuse("volume chroma: " + validationError);
+        } else {
+            emitPiecewise(*volumeChromaExpr, e, "p", "vec3<f32>", throwaway);
+        }
+    }
+
+    if (phaseExpr && !phaseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validatePhasePiecewise(*phaseExpr, validationError)) {
+            e.refuse("volume phase: " + validationError);
+        } else {
+            e.bindPhaseDirections = true;
+            emitPiecewise(*phaseExpr, e, "p", "f32", throwaway);
+            e.bindPhaseDirections = false;
+        }
+    }
+
+    if (emissionExpr && !emissionExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateEmissionPiecewise(*emissionExpr, validationError)) {
+            e.refuse("volume emission: " + validationError);
+        } else {
+            e.bindEmissionOmega = true;
+            emitPiecewise(*emissionExpr, e, "p", "vec3<f32>", throwaway);
+            e.bindEmissionOmega = false;
+        }
+    }
+
+    // Source clocks/coordinates and shadow-ray points are separate domains.
+    e.shared = nullptr;
+    const std::string mediumTimeExpression = e.timeExpression;
+    e.timeExpression = "u.sourceTime.x";
+    if (lightRadianceExpr && !lightRadianceExpr->pieces.empty()) {
+        emitPiecewise(*lightRadianceExpr, e, "p", "f32", throwaway);
+    }
+    if (lightChromaExpr && !lightChromaExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateVectorPiecewise(*lightChromaExpr, true, validationError)) {
+            e.refuse("light chroma: " + validationError);
+        } else {
+            emitPiecewise(*lightChromaExpr, e, "p", "vec3<f32>", throwaway);
+        }
+    }
+    if (lightAngularExpr && !lightAngularExpr->pieces.empty()) {
+        e.bindOmega = true;
+        emitPiecewise(*lightAngularExpr, e, "p", "f32", throwaway);
+        e.bindOmega = false;
+    }
+    e.timeExpression = mediumTimeExpression;
+
+    // Match compileVolume's order: medium, source, then occluder parameters.
+    if (geom::isSdfActive(occluderSdf)) {
+        (void)emitNode(*occluderSdf, e);
+    }
+
+    ParameterBlock block;
+    block.ok = !e.refused;
+    block.error = e.refusal;
+    block.values = std::move(e.params);
+    if (block.values.empty()) block.values.push_back(0.0f);
+    return block;
+}
+
+namespace {
+const char* kVolumePerlinNoise = R"WGSL(
+fn mod289(x: vec4<f32>) -> vec4<f32> {
+    return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+fn mod289_3(x: vec3<f32>) -> vec3<f32> {
+    return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+fn permute4(x: vec4<f32>) -> vec4<f32> {
+    return mod289(((x * 34.0) + 1.0) * x);
+}
+fn taylorInvSqrt(r: vec4<f32>) -> vec4<f32> {
+    return 1.79284291400159 - 0.85373472095314 * r;
+}
+fn cnoise3(P: vec3<f32>) -> f32 {
+    let Pi0 = floor(P);
+    let Pi1 = Pi0 + vec3<f32>(1.0);
+    let Pi0_mod = mod289_3(Pi0);
+    let Pi1_mod = mod289_3(Pi1);
+    let Pf0 = fract(P);
+    let Pf1 = Pf0 - vec3<f32>(1.0);
+    let ix = vec4<f32>(Pi0_mod.x, Pi1_mod.x, Pi0_mod.x, Pi1_mod.x);
+    let iy = vec4<f32>(Pi0_mod.y, Pi0_mod.y, Pi1_mod.y, Pi1_mod.y);
+    let iz0 = vec4<f32>(Pi0_mod.z);
+    let iz1 = vec4<f32>(Pi1_mod.z);
+
+    let ixy = permute4(permute4(ix) + iy);
+    let ixy0 = permute4(ixy + iz0);
+    let ixy1 = permute4(ixy + iz1);
+
+    var gx0 = ixy0 / 7.0;
+    var gy0 = fract(floor(gx0) / 7.0) - 0.5;
+    gx0 = fract(gx0);
+    var gz0 = vec4<f32>(0.5) - abs(gx0) - abs(gy0);
+    let sz0 = step(gz0, vec4<f32>(0.0));
+    gx0 = gx0 - sz0 * (step(vec4<f32>(0.0), gx0) - 0.5);
+    gy0 = gy0 - sz0 * (step(vec4<f32>(0.0), gy0) - 0.5);
+
+    var gx1 = ixy1 / 7.0;
+    var gy1 = fract(floor(gx1) / 7.0) - 0.5;
+    gx1 = fract(gx1);
+    var gz1 = vec4<f32>(0.5) - abs(gx1) - abs(gy1);
+    let sz1 = step(gz1, vec4<f32>(0.0));
+    gx1 = gx1 - sz1 * (step(vec4<f32>(0.0), gx1) - 0.5);
+    gy1 = gy1 - sz1 * (step(vec4<f32>(0.0), gy1) - 0.5);
+
+    var g000 = vec3<f32>(gx0.x,gy0.x,gz0.x);
+    var g100 = vec3<f32>(gx0.y,gy0.y,gz0.y);
+    var g010 = vec3<f32>(gx0.z,gy0.z,gz0.z);
+    var g110 = vec3<f32>(gx0.w,gy0.w,gz0.w);
+    var g001 = vec3<f32>(gx1.x,gy1.x,gz1.x);
+    var g101 = vec3<f32>(gx1.y,gy1.y,gz1.y);
+    var g011 = vec3<f32>(gx1.z,gy1.z,gz1.z);
+    var g111 = vec3<f32>(gx1.w,gy1.w,gz1.w);
+
+    let norm0 = taylorInvSqrt(vec4<f32>(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
+    g000 = g000 * norm0.x;
+    g010 = g010 * norm0.y;
+    g100 = g100 * norm0.z;
+    g110 = g110 * norm0.w;
+    let norm1 = taylorInvSqrt(vec4<f32>(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));
+    g001 = g001 * norm1.x;
+    g011 = g011 * norm1.y;
+    g101 = g101 * norm1.z;
+    g111 = g111 * norm1.w;
+
+    let n000 = dot(g000, Pf0);
+    let n100 = dot(g100, vec3<f32>(Pf1.x, Pf0.y, Pf0.z));
+    let n010 = dot(g010, vec3<f32>(Pf0.x, Pf1.y, Pf0.z));
+    let n110 = dot(g110, vec3<f32>(Pf1.x, Pf1.y, Pf0.z));
+    let n001 = dot(g001, vec3<f32>(Pf0.x, Pf0.y, Pf1.z));
+    let n101 = dot(g101, vec3<f32>(Pf1.x, Pf0.y, Pf1.z));
+    let n011 = dot(g011, vec3<f32>(Pf0.x, Pf1.y, Pf1.z));
+    let n111 = dot(g111, Pf1);
+
+    let fade_xyz = Pf0 * Pf0 * Pf0 * (Pf0 * (Pf0 * 6.0 - 15.0) + 10.0);
+    let n_z = mix(vec4<f32>(n000, n100, n010, n110), vec4<f32>(n001, n101, n011, n111), fade_xyz.z);
+    let n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);
+    let n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); 
+    return 2.2 * n_xyz;
+}
+)WGSL";
+
+const std::string kSdfPrimitivesMath = std::string(kPowerFunctions) + R"WGSL(
+fn dot2(v: vec2<f32>) -> f32 { return dot(v, v); }
+
+
+fn sdSphere(p: vec3<f32>, r: f32) -> f32 { return length(p) - r; }
+
+fn sdBox(p: vec3<f32>, b: vec3<f32>) -> f32 {
+    let q = abs(p) - b;
+    return length(max(q, vec3<f32>(0.0))) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+fn sdRoundBox(p: vec3<f32>, b: vec3<f32>, r: f32) -> f32 {
+    return sdBox(p, max(b - vec3<f32>(r), vec3<f32>(0.0))) - r;
+}
+
+fn sdEllipsoid(p: vec3<f32>, r: vec3<f32>) -> f32 {
+    let rr = max(r, vec3<f32>(1e-4));
+    let k0 = length(p / rr);
+    let k1 = length(p / (rr * rr));
+    if (k1 < 1e-8) { return -min(rr.x, min(rr.y, rr.z)); }
+    return k0 * (k0 - 1.0) / k1;
+}
+
+fn sdCylinder(p: vec3<f32>, r: f32, h: f32) -> f32 {
+    let d = abs(vec2<f32>(length(p.xy), p.z)) - vec2<f32>(r, h);
+    return min(max(d.x, d.y), 0.0) + length(max(d, vec2<f32>(0.0)));
+}
+
+fn sdCone(p: vec3<f32>, r1: f32, h: f32) -> f32 {
+    let r2 = 0.0;
+    let q = vec2<f32>(length(p.xy), p.z);
+    let k1 = vec2<f32>(r2, h);
+    let k2 = vec2<f32>(r2 - r1, 2.0 * h);
+    let ca = vec2<f32>(q.x - min(q.x, select(r2, r1, q.y < 0.0)), abs(q.y) - h);
+    let cb = q - k1 + k2 * clamp(dot(k1 - q, k2) / dot2(k2), 0.0, 1.0);
+    let s = select(1.0, -1.0, cb.x < 0.0 && ca.y < 0.0);
+    return s * sqrt(min(dot2(ca), dot2(cb)));
+}
+
+fn sdTorus(p: vec3<f32>, R: f32, r: f32) -> f32 {
+    let q = vec2<f32>(length(p.xy) - R, p.z);
+    return length(q) - r;
+}
+
+fn sminK(a: f32, b: f32, k: f32) -> f32 {
+    if (k <= 1e-5) { return min(a, b); }
+    let h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
+    return mix(b, a, h) - k * h * (1.0 - h);
+}
+)WGSL";
+} // namespace
+
+std::string inspectVolumeSharing(const OntoMath::Piecewise* densityExpr,
+                                 const OntoMath::Piecewise* extinctionExpr,
+                                 const OntoMath::Piecewise* scatteringExpr,
+                                 const OntoMath::Piecewise* volumeChromaExpr,
+                                 const OntoMath::Piecewise* phaseExpr,
+                                 const OntoMath::Piecewise* emissionExpr) {
+    const OntoMath::Piecewise* channels[6] = {densityExpr, extinctionExpr, scatteringExpr,
+                                              volumeChromaExpr, phaseExpr, emissionExpr};
+    return planVolumeSharing(channels).signature;
+}
+
+VolumeSharedPreludeShape inspectVolumeSharedPrelude(const OntoMath::Piecewise* densityExpr,
+                                                    const OntoMath::Piecewise* extinctionExpr,
+                                                    const OntoMath::Piecewise* scatteringExpr,
+                                                    const OntoMath::Piecewise* volumeChromaExpr,
+                                                    const OntoMath::Piecewise* phaseExpr,
+                                                    const OntoMath::Piecewise* emissionExpr) {
+    const OntoMath::Piecewise* channels[6] = {densityExpr, extinctionExpr, scatteringExpr,
+                                              volumeChromaExpr, phaseExpr, emissionExpr};
+    const auto plan = planVolumeSharing(channels);
+    VolumeSharedPreludeShape out;
+    out.densityUses = plan.densityUses;
+    for (const auto& g : plan.groups) {
+        out.groups.push_back(g.node);
+        for (const auto& site : g.sites)
+            if (site.channel == 0) out.densitySites.push_back(site.node);
+    }
+    return out;
+}
+
+// Kernel lowering output: evaluator mathematics is emitted directly, independently
+// of the standalone marcher's entrypoint. Combined modules consume this boundary
+// rather than search/extract functions from a complete shader.
+static std::string kernelVolumePrefix(bool trimProofSupport) {
+    std::string wgsl;
+    wgsl = kVolumePerlinNoise;
+    wgsl += kSdfPrimitivesMath;
+    wgsl += R"WGSL(
+struct VolumeGlobals {
+    viewProj: mat4x4<f32>,
+    invViewProj: mat4x4<f32>,
+    eyePos: vec4<f32>,
+    viewport: vec4<f32>,
+    // xyz = the one admitted direct source position; w=1 iff such a source exists.
+    incidentSource: vec4<f32>,
+    // xyz = source color / diffuse radiance; w = source intensity / multiplier.
+    incidentColor: vec4<f32>,
+    // xy = the admitted source's own relative Timeline coordinate/delta.
+    // Source t must never borrow a participating medium's instance time.
+    sourceTime: vec4<f32>,
+    // x = max shadow steps, y = local volumetric visibility enabled,
+    // z deliberately unused: it once carried a hardcoded HG phase g (removed in
+    // b1d16c41; sdf_wgsl_parameter_refresh_test forbids reading it),
+    // w = samples per medium chord (ScreenChannel volumeSamplesPerChord: the
+    // quadrature resolution a medium gets along a ray; a runtime value, so
+    // changing it never recompiles).
+    volumeControl: vec4<f32>,
+    // x = final-output budget, y = opt-in (also for subnormal budgets).
+    // Positive mode uses the entire accepted lattice when no certified tail
+    // bound exists. The opacity heuristic cannot certify late bright emission.
+    volumeOutputError: vec4<f32>,
+};
+
+struct VolumeInstanceData {
+    origin: vec4<f32>,
+    halfExtent: vec4<f32>,
+    time: vec4<f32>,
+    paramOffset: u32,
+    // Zero-density proof (Rendering::VolumeZeroProof): absolute offset of its
+    // bit words in P (then six support bounds, then four bounds per column),
+    // cell dims packed 10 bits per axis, and presence/column-axis bits.
+    // All are Kernel-derived proof data, never authored parameter slots.
+    zeroProofOffset: u32,
+    zeroProofDims: u32,
+    zeroProofPresent: u32,
+    // Support certificates (Rung 2f-native, VolumeSupportKillerProgram):
+    // absolute offset of the header block in P and the enabled candidate
+    // count; 0 = none. Kernel-derived from authored density × box.
+    supportCertOffset: u32,
+    supportCertCount: u32,
+    supportClosedOffset: u32,
+    supportClosedCount: u32,
+};
+
+struct Params { v: array<f32> };
+
+@group(0) @binding(0) var<uniform> u: VolumeGlobals;
+@group(0) @binding(1) var<storage, read> P: Params;
+@group(0) @binding(2) var sceneDepthTex: texture_depth_2d;
+@group(1) @binding(0) var<storage, read> instances: array<VolumeInstanceData>;
+
+var<private> g_instIdx: u32;
+
+struct VolumeVSOut {
+    @builtin(position) position: vec4<f32>,
+    @location(0) @interpolate(flat) instIdx: u32,
+};
+
+@vertex
+fn vs(@location(0) pos: vec3<f32>, @builtin(instance_index) instIdx: u32) -> VolumeVSOut {
+    let inst = instances[instIdx];
+    let world = inst.origin.xyz + pos * inst.halfExtent.xyz;
+    var out: VolumeVSOut;
+    out.position = u.viewProj * vec4<f32>(world, 1.0);
+    if (out.position.w > 0.0) {
+        out.position.z = min(out.position.z, out.position.w * 0.999999);
+    }
+    out.instIdx = instIdx;
+    return out;
+}
+
+fn rayAabbWorld(ro: vec3<f32>, rd: vec3<f32>,
+                bmin: vec3<f32>, bmax: vec3<f32>) -> vec2<f32> {
+    let safeRd = select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
+    let a = (bmin - ro) / safeRd;
+    let b = (bmax - ro) / safeRd;
+    let lo = min(a, b);
+    let hi = max(a, b);
+    return vec2<f32>(
+        max(max(lo.x, lo.y), lo.z),
+        min(min(hi.x, hi.y), hi.z));
+}
+
+fn worldAtDepth(pixel: vec2<f32>, depth: f32) -> vec3<f32> {
+    let ndc = vec4<f32>(
+        (pixel.x / u.viewport.x) * 2.0 - 1.0,
+        (1.0 - pixel.y / u.viewport.y) * 2.0 - 1.0,
+        depth,
+        1.0);
+    let h = u.invViewProj * ndc;
+    return h.xyz / h.w;
+}
+
+// True only where the CPU proved this medium's authored density <= 0 for the
+// whole cell holding local point p, so evaluating D there cannot add anything.
+// Absent proof, a point outside the box, or a clear bit: evaluate exactly.
+// xyz = the proof cell holding local point p; w = 1 iff that cell is proven.
+fn volumeZeroProofCell(inst: VolumeInstanceData, p: vec3<f32>) -> vec4<u32> {
+    if (inst.zeroProofPresent == 0u) { return vec4<u32>(0u); }
+    let dims = vec3<u32>(inst.zeroProofDims & 1023u,
+                         (inst.zeroProofDims >> 10u) & 1023u,
+                         (inst.zeroProofDims >> 20u) & 1023u);
+    let local = (p + inst.halfExtent.xyz) / (2.0 * inst.halfExtent.xyz);
+    if (any(local < vec3<f32>(0.0)) || any(local >= vec3<f32>(1.0))) { return vec4<u32>(0u); }
+    let cell = min(vec3<u32>(local * vec3<f32>(dims)), dims - vec3<u32>(1u));
+    let index = cell.x + dims.x * (cell.y + dims.y * cell.z);
+    let word = u32(P.v[inst.zeroProofOffset + index / 24u]);
+    return vec4<u32>(cell, (word >> (index % 24u)) & 1u);
+}
+
+fn volumeZeroProven(inst: VolumeInstanceData, p: vec3<f32>) -> bool {
+    return volumeZeroProofCell(inst, p).w == 1u;
+}
+
+)WGSL";
+    wgsl += R"WGSL(
+// The envelope contains every unproven cell. It may remove whole empty rays,
+// prefixes and tails, but never changes authored box events or chord spacing.
+// Near-parallel directions retain the old ray interval: rayAabbWorld's safe
+// direction substitution cannot certify a tighter support intersection.
+fn volumeSupportInterval(inst: VolumeInstanceData, ro: vec3<f32>, rd: vec3<f32>) -> vec2<f32> {
+    if (inst.zeroProofPresent == 0u || any(abs(rd) < vec3<f32>(1e-8))) {
+        return rayAabbWorld(ro, rd, inst.origin.xyz - inst.halfExtent.xyz,
+                            inst.origin.xyz + inst.halfExtent.xyz);
+    }
+    let dims = vec3<u32>(inst.zeroProofDims & 1023u,
+                         (inst.zeroProofDims >> 10u) & 1023u,
+                         (inst.zeroProofDims >> 20u) & 1023u);
+    let at = inst.zeroProofOffset + (dims.x * dims.y * dims.z + 23u) / 24u;
+    let lo = vec3<f32>(P.v[at], P.v[at + 1u], P.v[at + 2u]);
+    let hi = vec3<f32>(P.v[at + 3u], P.v[at + 4u], P.v[at + 5u]);
+    if (any(lo > hi)) { return vec2<f32>(1.0, -1.0); }
+    // Enlarge again for world/local arithmetic, including translated media.
+    let pad = (abs(inst.origin.xyz) + abs(ro) + inst.halfExtent.xyz) * 1e-6;
+    return rayAabbWorld(ro, rd, inst.origin.xyz + lo - pad, inst.origin.xyz + hi + pad);
+}
+
+)WGSL";
+    if (trimProofSupport) wgsl += R"WGSL(
+// Kernel cost eligibility is constant along this ray, so decide once. It
+// cannot certify emptiness; the reached leaf and column bounds do that.
+fn volumeColumnsWorthWalking(inst: VolumeInstanceData, rd: vec3<f32>) -> bool {
+    let axisCode = inst.zeroProofPresent >> 1u;
+    if (axisCode == 0u || any(abs(rd) < vec3<f32>(1e-8))) { return false; }
+    let dims = vec3<u32>(inst.zeroProofDims & 1023u,
+                         (inst.zeroProofDims >> 10u) & 1023u,
+                         (inst.zeroProofDims >> 20u) & 1023u);
+    let rate = abs(rd) / (2.0 * inst.halfExtent.xyz / vec3<f32>(dims));
+    let axis = axisCode - 1u;
+    return rate[axis] <= 0.5 * max(rate[(axis + 1u) % 3u], rate[(axis + 2u) % 3u]);
+}
+)WGSL";
+    wgsl += R"WGSL(
+// Grid walk: for a sample in a proven-empty cell, the ray parameter where the
+// ray leaves that cell (every sample before it lies in the same cell, so it
+// contributes exactly nothing); -1 when the cell is not proven. The proof was
+// made over each cell enlarged by 1%, which absorbs f32 rounding at the exit.
+fn volumeZeroCellExit(inst: VolumeInstanceData, p: vec3<f32>,
+                      ro: vec3<f32>, rd: vec3<f32>)WGSL";
+    if (trimProofSupport) wgsl += ", sampleT: f32, useColumns: bool";
+    wgsl += R"WGSL() -> f32 {
+    let cell = volumeZeroProofCell(inst, p);
+    if (cell.w != 1u) { return -1.0; }
+    let dims = vec3<u32>(inst.zeroProofDims & 1023u,
+                         (inst.zeroProofDims >> 10u) & 1023u,
+                         (inst.zeroProofDims >> 20u) & 1023u);
+    let cellSize = 2.0 * inst.halfExtent.xyz / vec3<f32>(dims);
+    let cellMin = inst.origin.xyz - inst.halfExtent.xyz + vec3<f32>(cell.xyz) * cellSize;
+)WGSL";
+    // Use the existing camera specialization: measured inside work regresses.
+    // Outside, consult bands only when the ray crosses at least two leaf cells
+    // on another axis before leaving this column. This ranks cost, never truth.
+    if (trimProofSupport) wgsl += R"WGSL(
+    // Consult only the reached column, and only after the existing leaf proof
+    // says this sample is empty. Unknown cells are inside its envelope. Keep
+    // near-parallel rays on the established cell walk (safeRd is no proof).
+    let axisCode = inst.zeroProofPresent >> 1u;
+    if (useColumns) {
+        let axis = axisCode - 1u;
+        let a = (axis + 1u) % 3u;
+        let b = (axis + 2u) % 3u;
+        let at = inst.zeroProofOffset + (dims.x * dims.y * dims.z + 23u) / 24u +
+                 6u + 4u * cell[axis];
+        let band = vec4<f32>(P.v[at], P.v[at + 1u], P.v[at + 2u], P.v[at + 3u]);
+        let pad = (abs(inst.origin.xyz) + abs(ro) + inst.halfExtent.xyz) * 1e-6;
+        let end = select(cellMin[axis], cellMin[axis] + cellSize[axis], rd[axis] > 0.0);
+        // Never jump into the adjacent column under this column's certificate.
+        let slabExit = (end - ro[axis]) / rd[axis] - pad[axis] / abs(rd[axis]);
+        if (slabExit > sampleT) {
+            if (any(band.xy > band.zw)) { return slabExit; }
+            var lo = cellMin;
+            var hi = cellMin + cellSize;
+            lo[a] = inst.origin[a] + band.x - pad[a];
+            lo[b] = inst.origin[b] + band.y - pad[b];
+            hi[a] = inst.origin[a] + band.z + pad[a];
+            hi[b] = inst.origin[b] + band.w + pad[b];
+            let support = rayAabbWorld(ro, rd, lo, hi);
+            if (support.y < support.x || sampleT > support.y) { return slabExit; }
+            if (sampleT < support.x) { return min(slabExit, support.x); }
+        }
+    }
+)WGSL";
+    wgsl += R"WGSL(
+    return rayAabbWorld(ro, rd, cellMin, cellMin + cellSize).y;
+}
+)WGSL";
+
+    return wgsl;
+}
+
+VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* densityExpr,
+                                                     const std::vector<uint32_t>* only) {
+    VolumeSupportKillerProgram out;
+    if (!densityExpr || densityExpr->pieces.empty()) { out.error = "no authored density"; return out; }
+    const auto restricted = OntoMath::restrictAlgebraicToLine(*densityExpr, false);
+    if (!restricted) { out.error = "density has no line form: " + restricted.refusal; return out; }
+    const auto& form = *restricted.form;
+    out.formSwitches = form.switches.size();
+
+    // Own emitter state: the operands' constants land in the certificate
+    // payload, never in the authored parameter block, so the production
+    // density's slots, kernel DAG and sharing plan are untouched.
+    Emit e;
+    e.bindTime = true;
+    e.timeExpression = "instances[g_instIdx].time.x";
+    e.parameterOffset = "cb";
+    std::string blocks;
+    for (std::size_t k = 0; k < form.switches.size(); ++k) {
+        const auto& sw = form.switches[k];
+        if (sw.role > 3) continue;   // Select pieces: not yet lowered (no candidate)
+        if (only && std::find(only->begin(), only->end(), static_cast<uint32_t>(k)) == only->end()) continue;
+        const auto& node = form.nodes[sw.node];
+        if (!node.sourceA || (sw.role == 1 && !node.sourceB)) continue;
+        const std::size_t slot = out.switches.size();
+        const std::string h = "base + " + std::to_string(4u * slot) + "u";
+        const std::size_t bodyBegin = e.body.size();
+        const std::string a = emitMathNode(*node.sourceA, e, "p");
+        const std::string b = sw.role == 1 ? emitMathNode(*node.sourceB, e, "p") : std::string();
+        if (e.refused) { out.error = "certificate operand: " + e.refusal; return out; }
+        const std::string g = sw.role == 0 ? "(" + a + ")"
+                            : sw.role == 1 ? "((" + a + ") - (" + b + "))"
+                                           : "((" + a + ") - P.v[" + h + " + 3u])";
+        // The first certifying candidate answers (any one killer suffices);
+        // only a sample no candidate certifies needs them all, for the
+        // converse recheck bound (volumeSupportRecheck).
+        blocks += "    if (P.v[" + h + "] != 0.0) {\n" + e.body.substr(bodyBegin) +
+                  "        let v" + std::to_string(slot) + " = (P.v[" + h + "] * " + g + " - P.v[" + h +
+                  " + 1u]) * P.v[" + h + " + 2u];\n"
+                  "        if (v" + std::to_string(slot) + " > 0.0) { return v" + std::to_string(slot) + "; }\n"
+                  "        reach = max(reach, v" + std::to_string(slot) + ");\n    }\n";
+        out.switches.push_back(static_cast<uint32_t>(k));
+    }
+    if (out.switches.empty() && !(only && only->empty())) { out.error = "no switch with lowerable operands"; return out; }
+    out.params = e.params;
+    out.wgsl = "\nfn volumeSupportReach(p: vec3<f32>, base: u32) -> f32 {\n"
+               "    let cb = base + " + std::to_string(4u * out.switches.size()) + "u;\n"
+               "    var reach = -1.0;\n" + blocks + "    return reach;\n}\n";
+    out.ok = true;
+    return out;
+}
+
+// Certified exit along the ray for the sample at sampleT, or -1. The p-space
+// reach becomes a ray-parameter reach after a pad for f32 coordinate rounding
+// at both samples (p = ro + rd·t − origin, any grouping) and for the jump's own
+// index arithmetic; |rd| = 1 up to rounding the 2⁻¹⁶ shrink absorbs. A NaN reach
+// compares false and certifies nothing.
+static std::string volumeSupportExitWgsl() {
+    return R"WGSL(
+fn volumeSupportExit(reach: f32, inst: VolumeInstanceData, ro: vec3<f32>, sampleT: f32) -> f32 {
+    if (!(reach > 0.0)) { return -1.0; }
+    let ao = abs(inst.origin.xyz);
+    let ah = abs(inst.halfExtent.xyz);
+    let ar = abs(ro);
+    let scale = max(ao.x, max(ao.y, ao.z)) + max(ah.x, max(ah.y, ah.z)) +
+                max(ar.x, max(ar.y, ar.z)) + abs(sampleT);
+    return sampleT + max(reach * (1.0 - 1.52587890625e-5) - 4.0e-5 * scale, 0.0);
+}
+
+// Rung 2b (2026-10-18): closed-form killers, solved once per ray. The f32
+// mirror of Rendering::volumeSupportClosedInterval, widened outward under a
+// generous 2^-12 model (4096 ulps: Fast-mode reassociation, the f32 copies of
+// M, b and the thresholds, world/local coordinate rounding at |origin|, |ro|
+// and |t|) so a skipped sample is certified with margin. Returns the hull
+// (density may be nonzero only inside it) and one hole (never nonzero inside;
+// none when .z >= .w) in ray t. Payload, 16 floats per killer:
+//   radial    [1, rhoIn, rhoOut, |M|_F, m0, b0, m1, b1, m2, b2]  r = |M p + b|
+//   half      [2, 0, e, |n|, n, 0 ...]                             n·p > e
+// The closest-point form r² = A·(s − sc)² + |w|² avoids cancelling |u0|²
+// against the root, which a camera hundreds of radii away would otherwise do.
+fn volumeSupportClosed(inst: VolumeInstanceData, ro: vec3<f32>, rd: vec3<f32>, tMax: f32) -> vec4<f32> {
+    var hull = vec2<f32>(-3.0e38, 3.0e38);
+    var hole = vec2<f32>(1.0, -1.0);
+    let op = ro - inst.origin.xyz;
+    let ao = abs(inst.origin.xyz);
+    let ah = abs(inst.halfExtent.xyz);
+    let ar = abs(ro);
+    let scale = max(ao.x, max(ao.y, ao.z)) + max(ah.x, max(ah.y, ah.z)) +
+                max(ar.x, max(ar.y, ar.z)) + abs(tMax);
+    let kPad = 2.44140625e-4;
+    for (var k = 0u; k < inst.supportClosedCount; k = k + 1u) {
+        let at = inst.supportClosedOffset + 16u * k;
+        let norm = P.v[at + 3u];
+        if (P.v[at] > 1.5) {
+            // Certified where a·s − w exceeds every error, |s| ≤ scale.
+            let n = vec3<f32>(P.v[at + 4u], P.v[at + 5u], P.v[at + 6u]);
+            let e = P.v[at + 2u];
+            let a = dot(n, rd);
+            let w = e - dot(n, op);
+            let margin = kPad * (abs(e) + 2.0 * norm * scale);
+            if (abs(a) <= kPad * norm) {
+                if (-w > margin) { hull = vec2<f32>(1.0, -1.0); }
+                continue;
+            }
+            let root = (w + margin) / a;
+            let pad = kPad * (abs(root) + scale);
+            if (a > 0.0) { hull.y = min(hull.y, root + pad); }
+            else { hull.x = max(hull.x, root - pad); }
+            continue;
+        }
+        let m0 = vec3<f32>(P.v[at + 4u], P.v[at + 5u], P.v[at + 6u]);
+        let m1 = vec3<f32>(P.v[at + 8u], P.v[at + 9u], P.v[at + 10u]);
+        let m2 = vec3<f32>(P.v[at + 12u], P.v[at + 13u], P.v[at + 14u]);
+        let b = vec3<f32>(P.v[at + 7u], P.v[at + 11u], P.v[at + 15u]);
+        let u0 = vec3<f32>(dot(m0, op), dot(m1, op), dot(m2, op)) + b;
+        let du = vec3<f32>(dot(m0, rd), dot(m1, rd), dot(m2, rd));
+        let A = dot(du, du);
+        let ePos = kPad * (norm * scale + length(b));
+        let rhoIn = P.v[at + 1u];
+        let rhoOut = P.v[at + 2u];
+        if (!(A > kPad * kPad * norm * norm)) {
+            // r is nearly constant along this ray.
+            let r = length(u0);
+            let drift = sqrt(max(A, 0.0)) * scale + ePos;
+            if (r - drift > rhoOut || r + drift < rhoIn) { hull = vec2<f32>(1.0, -1.0); }
+            continue;
+        }
+        let sc = -dot(u0, du) / A;
+        let wl = length(u0 + sc * du);
+        let tPad = ePos / sqrt(A) + kPad * abs(sc);
+        if (rhoOut < 1.0e38) {
+            let outer = rhoOut + ePos;
+            let wlo = max(wl - ePos, 0.0);
+            if (rhoOut < 0.0 || wlo > outer) { hull = vec2<f32>(1.0, -1.0); continue; }
+            let h = sqrt(max(outer * outer - wlo * wlo, 0.0) / (A * (1.0 - kPad)));
+            hull = vec2<f32>(max(hull.x, sc - h - tPad), min(hull.y, sc + h + tPad));
+        }
+        if (rhoIn > 0.0) {
+            let inner = rhoIn - ePos;
+            let whi = wl + ePos;
+            if (inner > whi) {
+                let h = sqrt((inner * inner - whi * whi) / (A * (1.0 + kPad)));
+                let lo = sc - h + tPad;
+                let hi = sc + h - tPad;
+                if (hi - lo > hole.y - hole.x) { hole = vec2<f32>(lo, hi); }
+            }
+        }
+    }
+    return vec4<f32>(hull, hole);
+}
+
+// The converse bound. A non-positive reach r means every enabled killer is
+// short of its margin by at least |r|·L in g, so none can certify within |r| of
+// this sample: checks (never samples) are skipped until then. A skipped check
+// only sends the sample down the exact path, so no pad is needed; NaN stops
+// checking for the rest of the ray, which is equally safe.
+fn volumeSupportRecheck(reach: f32, sampleT: f32) -> f32 {
+    if (reach > 0.0) { return sampleT; }
+    if (reach <= 0.0) { return sampleT - reach; }
+    return 3.0e38;
+}
+)WGSL";
+}
+
+static std::string kernelVolumeSingleMarcher(bool trimProofSupport, bool hasSharing,
+                                            bool densityUsesSharing, bool supportCertificates = false) {
+    std::string wgsl;
+    wgsl += R"WGSL(
+@fragment
+fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
+    g_instIdx = in.instIdx;
+    let inst = instances[in.instIdx];
+
+    let ro = u.eyePos.xyz;
+    let farNdc = vec4<f32>(
+        (in.position.x / u.viewport.x) * 2.0 - 1.0,
+        (1.0 - in.position.y / u.viewport.y) * 2.0 - 1.0,
+        1.0,
+        1.0);
+    let farH = u.invViewProj * farNdc;
+    let farWorld = farH.xyz / farH.w;
+    let rd = normalize(farWorld - ro);
+
+    let bounds = rayAabbWorld(
+        ro, rd,
+        inst.origin.xyz - inst.halfExtent.xyz,
+        inst.origin.xyz + inst.halfExtent.xyz);
+
+    var t0 = max(bounds.x, 0.0);
+    var t1 = bounds.y;
+    if (t1 <= t0) { discard; }
+
+    let maxX = max(i32(u.viewport.x), 1) - 1;
+    let maxY = max(i32(u.viewport.y), 1) - 1;
+    let px = vec2<i32>(
+        clamp(i32(floor(in.position.x)), 0, maxX),
+        clamp(i32(floor(in.position.y)), 0, maxY));
+    let sceneDepth = textureLoad(sceneDepthTex, px, 0);
+
+    if (sceneDepth < 0.999999) {
+        let opaqueWorld = worldAtDepth(in.position.xy, sceneDepth);
+        let opaqueT = dot(opaqueWorld - ro, rd);
+        t1 = min(t1, max(opaqueT, 0.0));
+    }
+    if (t1 <= t0) { discard; }
+
+)WGSL";
+    if (trimProofSupport && !supportCertificates) wgsl += R"WGSL(
+    let support = volumeSupportInterval(inst, ro, rd);
+    let supportStart = max(t0, support.x);
+    let supportEnd = min(t1, support.y);
+    if (supportEnd <= supportStart) { discard; }
+)WGSL";
+    if (supportCertificates) {
+        wgsl += "    var supportStart = t0;\n    var supportEnd = t1;\n";
+        if (trimProofSupport) wgsl += R"WGSL(
+    let support = volumeSupportInterval(inst, ro, rd);
+    supportStart = max(supportStart, support.x);
+    supportEnd = min(supportEnd, support.y);
+)WGSL";
+        // Rung 2b: closed-form killers trim the prefix/tail and carry one hole;
+        // box events and sample spacing are untouched.
+        wgsl += R"WGSL(
+    let closed = volumeSupportClosed(inst, ro, rd, t1);
+    supportStart = max(supportStart, closed.x);
+    supportEnd = min(supportEnd, closed.y);
+    if (supportEnd <= supportStart) { discard; }
+)WGSL";
+    }
+    wgsl += R"WGSL(
+
+    let span = t1 - t0;
+    let samplesPerChord = max(i32(u.volumeControl.w), 1);
+    let stepLength = span / f32(samplesPerChord);
+    if (stepLength <= 0.0) { discard; }
+
+    var transmittance = 1.0;
+    var volumetricScatter = vec3<f32>(0.0);
+    var volumetricEmission = vec3<f32>(0.0);
+
+)WGSL";
+    if (trimProofSupport) wgsl += "    let useColumns = volumeColumnsWorthWalking(inst, rd);\n";
+    if (supportCertificates) wgsl += "    var certRecheck = -3.0e38;\n";
+    if (trimProofSupport || supportCertificates) wgsl += R"WGSL(
+    // Keep one extra prefix sample; positions still use the original chord.
+    let firstSample = i32(clamp(ceil((supportStart - t0) / stepLength - 0.5) - 1.0,
+                                 0.0, f32(samplesPerChord)));
+    for (var i = firstSample; i < samplesPerChord; i = i + 1) {
+        let sampleT = t0 + (f32(i) + 0.5) * stepLength;
+        if (sampleT > supportEnd) { break; }
+)WGSL";
+    else wgsl += R"WGSL(
+    for (var i = 0; i < samplesPerChord; i = i + 1) {
+        let sampleT = t0 + (f32(i) + 0.5) * stepLength;
+)WGSL";
+    wgsl += R"WGSL(
+        let worldP = ro + rd * sampleT;
+        let p = worldP - inst.origin.xyz;
+)WGSL";
+    if (supportCertificates) wgsl += R"WGSL(
+        if (sampleT < closed.x || (sampleT > closed.z && sampleT < closed.w)) {
+            let closedExit = select(closed.w, closed.x, sampleT < closed.x);
+            i = max(i, i32(ceil((closedExit - t0) / stepLength - 0.5)) - 1);
+            continue;
+        }
+)WGSL";
+    wgsl += R"WGSL(
+        // Grid walk: this sample and every later one before the ray leaves its
+        // proven-empty cell contribute exactly nothing. Jump past them (the
+        // loop's own increment then lands on the first sample beyond the exit).
+        let zeroExit = volumeZeroCellExit(inst, p, ro, rd)WGSL";
+    if (trimProofSupport) wgsl += ", sampleT, useColumns";
+    wgsl += R"WGSL();
+        if (zeroExit >= 0.0) {
+            i = max(i, i32(ceil((zeroExit - t0) / stepLength - 0.5)) - 1);
+            continue;
+        }
+)WGSL";
+    // Rung 2f-native: no grid proof covers this sample; the certificates may
+    // (sphere tracing on the killer's argument, Hart 1996). Same jump law.
+    if (supportCertificates) wgsl += R"WGSL(
+        if (inst.supportCertCount != 0u && sampleT >= certRecheck) {
+            let certReach = volumeSupportReach(p, inst.supportCertOffset);
+            let certExit = volumeSupportExit(certReach, inst, ro, sampleT);
+            if (certExit >= 0.0) {
+                i = max(i, i32(ceil((certExit - t0) / stepLength - 0.5)) - 1);
+                continue;
+            }
+            certRecheck = volumeSupportRecheck(certReach, sampleT);
+        }
+)WGSL";
+    wgsl += R"WGSL(
+        /*VOLUME_SHARED_BEFORE_DENSITY*/
+        let density = max(volumeDensityEval(p), 0.0);
+
+        if (density > 0.0) {
+            /*VOLUME_SHARED_AFTER_DENSITY*/
+            // V1: authored sigma_t(p,t) is independent from D. If absent,
+            // the evaluator preserves the exact pre-V1 compatibility law.
+            let extinction = max(volumeExtinctionEval(p, density), 1e-6);
+            let oldT = transmittance;
+            transmittance *= exp(-extinction * stepLength);
+
+            // SourceRho-zero (Prism: rho_source != V_transport != D_medium).
+            // Incident light is formed first; a source whose authored rho is
+            // exactly 0 needs no chroma, angular factor or visibility, and a
+            // zero incident light makes the in-scatter increment +-0, so
+            // scattering, medium chroma and phase are not evaluated and the
+            // accumulator is left bit-identical (finite values).
+            var incidentLi = vec3<f32>(1.0);
+            if (u.incidentSource.w > 0.5) {
+                let sourceDelta = worldP - u.incidentSource.xyz;
+                let sourceDist = length(sourceDelta);
+                let lightDir = select(vec3<f32>(0.0, 1.0, 0.0), -sourceDelta / max(sourceDist, 1e-8), sourceDist > 1e-8);
+
+                var radialRad = 1.0;
+                if (HAS_AUTHORED_LIGHT_RADIANCE) {
+                    radialRad = max(lightRadianceEval(sourceDelta), 0.0);
+                }
+
+                if (radialRad == 0.0) {
+                    incidentLi = vec3<f32>(0.0);
+                } else {
+                    var chroma = vec3<f32>(1.0);
+                    if (HAS_AUTHORED_LIGHT_CHROMA) {
+                        chroma = max(lightChromaEval(sourceDelta), vec3<f32>(0.0));
+                    }
+
+                    var angular = 1.0;
+                    if (HAS_AUTHORED_LIGHT_ANGULAR) {
+                        angular = max(lightAngularEval(sourceDelta, lightDir), 0.0);
+                    }
+
+                    let vis = volumeSourceVisibility(worldP, u.incidentSource.xyz);
+                    incidentLi = chroma * (radialRad * angular * vis);
+                }
+            }
+
+            if (any(incidentLi != vec3<f32>(0.0))) {
+                let scattering = max(volumeScatteringEval(p, density), 0.0);
+                let mediumChroma = volumeChromaEval(p);
+                var phase = 1.0;
+                if (u.incidentSource.w > 0.5) {
+                    if (HAS_AUTHORED_VOLUME_PHASE) {
+                        let wiDelta = worldP - u.incidentSource.xyz;
+                        let woDelta = ro - worldP;
+                        let wiLen = length(wiDelta);
+                        let woLen = length(woDelta);
+                        let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8), wiLen > 1e-8);
+                        let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8), woLen > 1e-8);
+                        phase = 0.0;
+                        if ((!VOLUME_PHASE_READS_WI || wiLen > 1e-8) && woLen > 1e-8) {
+                            phase = max(volumePhaseEval(p, wi, wo), 0.0);
+                        }
+                    }
+                } else {
+                    if (HAS_AUTHORED_VOLUME_PHASE) {
+                        let woDelta = ro - worldP;
+                        let woLen = length(woDelta);
+                        let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8), woLen > 1e-8);
+                        phase = 0.0;
+                        if (!VOLUME_PHASE_READS_WI && woLen > 1e-8) {
+                            phase = max(volumePhaseEval(p, vec3<f32>(0.0), wo), 0.0);
+                        }
+                    }
+                }
+
+                volumetricScatter +=
+                    mediumChroma * incidentLi * (scattering / extinction) * phase *
+                    (oldT - transmittance);
+            }
+
+            if (HAS_AUTHORED_VOLUME_EMISSION) {
+                let emissionDelta = ro - worldP;
+                let emissionLen = length(emissionDelta);
+                let emissionOmega = select(
+                    vec3<f32>(0.0),
+                    emissionDelta / max(emissionLen, 1e-8),
+                    emissionLen > 1e-8);
+                var emitted = vec3<f32>(0.0);
+                if (!VOLUME_EMISSION_READS_OMEGA || emissionLen > 1e-8) {
+                    emitted = max(volumeEmissionEval(p, emissionOmega), vec3<f32>(0.0));
+                }
+                volumetricEmission += emitted * ((oldT - transmittance) / extinction);
+            }
+        }
+
+        if (u.volumeOutputError.y == 0.0 && transmittance < 0.01) { break; }
+    }
+
+    let alpha = 1.0 - transmittance;
+    let integratedRgb = volumetricScatter + volumetricEmission;
+    let emittedMagnitude = max(max(abs(volumetricEmission.x), abs(volumetricEmission.y)),
+                               abs(volumetricEmission.z));
+    if (alpha <= 1e-5 && emittedMagnitude <= 1e-6) { discard; }
+
+    // Keep the analytically integrated medium contribution premultiplied.
+    // The volume pipeline blends (ONE, ONE_MINUS_SRC_ALPHA), yielding exactly:
+    // C_out = C_medium + T * C_scene.
+    return vec4<f32>(integratedRgb, alpha);
+}
+)WGSL";
+
+    // Shared subexpressions are filled once per sample: before density when
+    // density reads one, otherwise only once density has proved positive.
+    {
+        const std::string fill = !hasSharing ? "" : "volumeSharedEval(p);";
+        const std::string before = densityUsesSharing ? fill : "";
+        const std::string after = densityUsesSharing ? "" : fill;
+        const std::pair<const char*, const std::string*> marks[] = {
+            {"/*VOLUME_SHARED_BEFORE_DENSITY*/", &before},
+            {"/*VOLUME_SHARED_AFTER_DENSITY*/", &after}};
+        for (const auto& [mark, text] : marks) {
+            const std::size_t at = wgsl.find(mark);
+            if (at != std::string::npos) wgsl.replace(at, std::strlen(mark), *text);
+        }
+    }
+
+    return wgsl;
+}
+
+static Program lowerVolumeFragment(const OntoMath::Piecewise* densityExpr,
+                      const OntoMath::Piecewise* extinctionExpr,
+                      const OntoMath::Piecewise* scatteringExpr,
+                      const OntoMath::Piecewise* volumeChromaExpr,
+                      const OntoMath::Piecewise* phaseExpr,
+                      const OntoMath::Piecewise* emissionExpr,
+                      const geom::SdfNode* occluderSdf,
+                      const OntoMath::Piecewise* lightRadianceExpr,
+                      const OntoMath::Piecewise* lightChromaExpr,
+                      const OntoMath::Piecewise* lightAngularExpr,
+                      KernelVolumeCompilerDag* kernel) {
+    Emit e;
+    e.prepareVolumeTime = true;
+    e.bindTime = true;
+    e.timeExpression = "instances[g_instIdx].time.x";
+
+    Program prog;
+    e.kernel = kernel;
+
+    // Shared subexpressions first: their parameters register before any
+    // channel's, exactly as collectVolumeParams replays.
+    const OntoMath::Piecewise* sharingChannels[6] = {densityExpr, extinctionExpr, scatteringExpr,
+                                                     volumeChromaExpr, phaseExpr, emissionExpr};
+    const VolumeSharingPlan sharing = planVolumeSharing(sharingChannels);
+    std::map<const OntoMath::MathNode*, std::string> sharedNames;
+    const std::string sharedWgsl = emitVolumeSharedPrelude(sharing, e, "p", sharedNames);
+
+    std::string densityBody;
+    if (densityExpr && !densityExpr->pieces.empty()) {
+        emitDensityPiecewise(*densityExpr, e, "p", densityBody);
+    } else {
+        densityBody = "    return 0.0;\n";
+    }
+    prog.wgsl += "\nfn volumeDensityEval(p: vec3<f32>) -> f32 {\n" +
+                 densityBody + "}\n";
+    prog.wgsl += sharedWgsl;
+
+    std::string extinctionBody;
+    if (extinctionExpr && !extinctionExpr->pieces.empty()) {
+        emitPiecewise(*extinctionExpr, e, "p", "f32", extinctionBody);
+    } else {
+        extinctionBody =
+            "    // V1 compatibility: exact pre-V1 extinction law\n"
+            "    return compatibilityDensity * 0.5;\n";
+    }
+    prog.wgsl +=
+        "\nfn volumeExtinctionEval(p: vec3<f32>, compatibilityDensity: f32) -> f32 {\n" +
+        extinctionBody + "}\n";
+
+    std::string scatteringBody;
+    if (scatteringExpr && !scatteringExpr->pieces.empty()) {
+        emitPiecewise(*scatteringExpr, e, "p", "f32", scatteringBody);
+    } else {
+        scatteringBody =
+            "    // V2 compatibility: exact pre-V2 scattering coefficient\n"
+            "    return compatibilityDensity;\n";
+    }
+    prog.wgsl +=
+        "\nfn volumeScatteringEval(p: vec3<f32>, compatibilityDensity: f32) -> f32 {\n" +
+        scatteringBody + "}\n";
+
+    std::string volumeChromaBody;
+    if (volumeChromaExpr && !volumeChromaExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateVectorPiecewise(*volumeChromaExpr, true, validationError)) {
+            e.refuse("volume chroma: " + validationError);
+            volumeChromaBody = "    return vec3<f32>(0.0);\n";
+        } else {
+            emitPiecewise(*volumeChromaExpr, e, "p", "vec3<f32>", volumeChromaBody);
+        }
+    } else {
+        volumeChromaBody =
+            "    // V2 compatibility: neutral white medium chroma\n"
+            "    return vec3<f32>(1.0);\n";
+    }
+    prog.wgsl +=
+        "\nfn volumeChromaEval(p: vec3<f32>) -> vec3<f32> {\n" +
+        volumeChromaBody + "}\n";
+
+    std::string phaseBody;
+    if (phaseExpr && !phaseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validatePhasePiecewise(*phaseExpr, validationError)) {
+            e.refuse("volume phase: " + validationError);
+            phaseBody = "    return 0.0;\n";
+        } else {
+            e.bindPhaseDirections = true;
+            emitPiecewise(*phaseExpr, e, "p", "f32", phaseBody);
+            e.bindPhaseDirections = false;
+        }
+    } else {
+        phaseBody =
+            "    // V3 compatibility: exact isotropic identity\n"
+            "    return 1.0;\n";
+    }
+    prog.wgsl +=
+        "\nfn volumePhaseEval(p: vec3<f32>, wi: vec3<f32>, wo: vec3<f32>) -> f32 {\n" +
+        phaseBody + "}\n";
+    prog.wgsl += "\nconst HAS_AUTHORED_VOLUME_PHASE: bool = ";
+    prog.wgsl += (phaseExpr && !phaseExpr->pieces.empty()) ? "true;\n" : "false;\n";
+    prog.wgsl += "const VOLUME_PHASE_READS_WI: bool = ";
+    prog.wgsl += e.readWi ? "true;\n" : "false;\n";
+
+    std::string emissionBody;
+    if (emissionExpr && !emissionExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateEmissionPiecewise(*emissionExpr, validationError)) {
+            e.refuse("volume emission: " + validationError);
+            emissionBody = "    return vec3<f32>(0.0);\n";
+        } else {
+            e.bindEmissionOmega = true;
+            emitPiecewise(*emissionExpr, e, "p", "vec3<f32>", emissionBody);
+            e.bindEmissionOmega = false;
+        }
+    } else {
+        emissionBody = "    return vec3<f32>(0.0);\n";
+    }
+    prog.wgsl +=
+        "\nfn volumeEmissionEval(p: vec3<f32>, omega: vec3<f32>) -> vec3<f32> {\n" +
+        emissionBody + "}\n";
+    prog.wgsl += "\nconst HAS_AUTHORED_VOLUME_EMISSION: bool = ";
+    prog.wgsl += (emissionExpr && !emissionExpr->pieces.empty()) ? "true;\n" : "false;\n";
+    prog.wgsl += "const VOLUME_EMISSION_READS_OMEGA: bool = ";
+    prog.wgsl += e.readEmissionOmega ? "true;\n" : "false;\n";
+
+    // Source rho/chi/alpha retain the admitted source's own Timeline even while
+    // they are consumed by participating-medium transport. The surrounding
+    // medium evaluators continue to use instances[g_instIdx].time.x.
+    e.shared = nullptr; // source and occluder have their own evaluation domains
+    const std::string mediumTimeExpression = e.timeExpression;
+    e.timeExpression = "u.sourceTime.x";
+
+    std::string lightRadianceBody;
+    if (lightRadianceExpr && !lightRadianceExpr->pieces.empty()) {
+        emitPiecewise(*lightRadianceExpr, e, "p", "f32", lightRadianceBody);
+    } else {
+        lightRadianceBody = "    return 1.0;\n";
+    }
+    prog.wgsl += "\nfn lightRadianceEval(p: vec3<f32>) -> f32 {\n" + lightRadianceBody + "}\n";
+    prog.wgsl += "const HAS_AUTHORED_LIGHT_RADIANCE: bool = ";
+    prog.wgsl += (lightRadianceExpr && !lightRadianceExpr->pieces.empty()) ? "true;\n" : "false;\n";
+
+    std::string lightChromaBody;
+    if (lightChromaExpr && !lightChromaExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateVectorPiecewise(*lightChromaExpr, true, validationError)) {
+            e.refuse("light chroma: " + validationError);
+            lightChromaBody = "    return vec3<f32>(1.0);\n";
+        } else {
+            emitPiecewise(*lightChromaExpr, e, "p", "vec3<f32>", lightChromaBody);
+        }
+    } else {
+        lightChromaBody = "    return u.incidentColor.xyz;\n";
+    }
+    prog.wgsl += "\nfn lightChromaEval(p: vec3<f32>) -> vec3<f32> {\n" + lightChromaBody + "}\n";
+    prog.wgsl += "const HAS_AUTHORED_LIGHT_CHROMA: bool = ";
+    prog.wgsl += (lightChromaExpr && !lightChromaExpr->pieces.empty()) ? "true;\n" : "false;\n";
+
+    std::string lightAngularBody;
+    if (lightAngularExpr && !lightAngularExpr->pieces.empty()) {
+        e.bindOmega = true;
+        emitPiecewise(*lightAngularExpr, e, "p", "f32", lightAngularBody);
+        e.bindOmega = false;
+    } else {
+        lightAngularBody = "    return 1.0;\n";
+    }
+    prog.wgsl += "\nfn lightAngularEval(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" + lightAngularBody + "}\n";
+    prog.wgsl += "const HAS_AUTHORED_LIGHT_ANGULAR: bool = ";
+    prog.wgsl += (lightAngularExpr && !lightAngularExpr->pieces.empty()) ? "true;\n" : "false;\n";
+    e.timeExpression = mediumTimeExpression;
+
+    const bool hasOccluder = geom::isSdfActive(occluderSdf);
+    if (hasOccluder) {
+        std::string occluderResult = emitNode(*occluderSdf, e);
+        prog.wgsl += "\nfn volumeSdfEval(p: vec3<f32>) -> f32 {\n" + e.body + "    return " + occluderResult + ";\n}\n";
+        e.body.clear();
+        prog.wgsl += R"WGSL(
+fn volumeSourceVisibility(worldP: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
+    if (u.volumeControl.y < 0.5) { return 1.0; }
+    let toLight = sourceWorld - worldP;
+    let distToLight = length(toLight);
+    if (distToLight <= 1e-4) { return 1.0; }
+    let lightDir = toLight / distToLight;
+    let inst = instances[g_instIdx];
+    var t = 0.05;
+    var vis = 1.0;
+    let maxT = distToLight - 0.05;
+    let maxSteps = i32(u.volumeControl.x);
+    let penumbraK = 16.0;
+    for (var shadowStep = 0; shadowStep < 24; shadowStep = shadowStep + 1) {
+        if (shadowStep >= maxSteps || t >= maxT) { break; }
+        let curWorld = worldP + lightDir * t;
+        let curLocal = curWorld - inst.origin.xyz;
+        let d = volumeSdfEval(curLocal);
+        if (d < 0.001) { return 0.0; }
+        vis = min(vis, penumbraK * d / t);
+        t += max(d, 0.02);
+    }
+    return clamp(vis, 0.0, 1.0);
+}
+const HAS_OCCLUDER_SDF: bool = true;
+)WGSL";
+    } else {
+        prog.wgsl += R"WGSL(
+fn volumeSdfEval(p: vec3<f32>) -> f32 { return 1e9; }
+fn volumeSourceVisibility(worldP: vec3<f32>, sourceWorld: vec3<f32>) -> f32 { return 1.0; }
+const HAS_OCCLUDER_SDF: bool = false;
+)WGSL";
+    }
+
+    prog.params = std::move(e.params);
+    prog.kernelVolumeTimeSlots = std::move(e.timeSlots);
+    prog.needsGradientStep = false;
+
+    if (e.refused) {
+        prog.ok = false;
+        prog.error = e.refusal;
+        prog.wgsl = "// REFUSED: " + e.refusal + "\n";
+    }
+
+    if (prog.params.empty()) prog.params.push_back(0.0f);
+    return prog;
+}
+
+static std::string kernelVolumeTimePreparation(const std::vector<Program>& members, bool fused) {
+    bool any = false;
+    for (const auto& member : members) any |= !member.kernelVolumeTimeSlots.empty();
+    if (!any) return {};
+    // Compose directly from retained recipes, with the exact ScalarForm order.
+    // This module does not borrow or extract the fragment marcher's functions.
+    auto source = kernelVolumePrefix(false);
+    const std::string read = "var<storage, read> P: Params;";
+    source.replace(source.find(read), read.size(), "var<storage, read_write> P: Params;");
+    source += "\n@compute @workgroup_size(1)\nfn volumeTimePrepare(@builtin(global_invocation_id) id: vec3<u32>) {\n";
+    source += fused ? "    g_instIdx = id.x + 1u;\n" : "    g_instIdx = id.x;\n";
+    source += "    if (g_instIdx >= arrayLength(&instances)) { return; }\n";
+    if (fused) source += "    switch (id.x) {\n";
+    for (size_t i = 0; i < members.size(); ++i) {
+        if (fused) source += "    case " + std::to_string(i) + "u: {\n";
+        for (const auto& recipe : members[i].kernelVolumeTimeSlots)
+            source += "        P.v[instances[g_instIdx].paramOffset + " + std::to_string(recipe.slot) +
+                "u] = " + recipe.expression + ";\n";
+        if (fused) source += "    }\n";
+    }
+    if (fused) source += "    default: {}\n    }\n";
+    source += "}\n";
+    return source;
+}
+
+Program compileVolume(const OntoMath::Piecewise* densityExpr,
+                      const OntoMath::Piecewise* extinctionExpr,
+                      const OntoMath::Piecewise* scatteringExpr,
+                      const OntoMath::Piecewise* volumeChromaExpr,
+                      const OntoMath::Piecewise* phaseExpr,
+                      const OntoMath::Piecewise* emissionExpr,
+                      const geom::SdfNode* occluderSdf,
+                      const OntoMath::Piecewise* lightRadianceExpr,
+                      const OntoMath::Piecewise* lightChromaExpr,
+                      const OntoMath::Piecewise* lightAngularExpr,
+                      bool trimProofSupport) {
+    const VolumeProgramInput input{densityExpr, extinctionExpr, scatteringExpr,
+        volumeChromaExpr, phaseExpr, emissionExpr, occluderSdf,
+        lightRadianceExpr, lightChromaExpr, lightAngularExpr};
+    return composeVolumeEvaluator(lowerVolumeEvaluator(input), trimProofSupport);
+}
+
+KernelVolumeEvaluator lowerVolumeEvaluator(const VolumeProgramInput& input) {
+    return repairVolumeEvaluator(input, {}, false);
+}
+
+KernelVolumeEvaluator repairVolumeEvaluator(const VolumeProgramInput& m,
+                                            const KernelVolumeEvaluator& previous,
+                                            bool parametersOnly) {
+    KernelVolumeEvaluator out;
+    out.kernel = repairKernelVolumeDag(m, previous.kernel);
+    out.repairedNodes = out.kernel->repairedNodes;
+    if (parametersOnly) {
+        out.program = previous.program;
+        const auto params = collectVolumeParams(m.densityExpr, m.extinctionExpr, m.scatteringExpr,
+            m.volumeChromaExpr, m.phaseExpr, m.emissionExpr, m.occluderSdf,
+            m.lightRadianceExpr, m.lightChromaExpr, m.lightAngularExpr);
+        out.program.ok = params.ok; out.program.error = params.error;
+        if (params.ok) out.program.params = params.values;
+    } else {
+        out.program = lowerVolumeFragment(m.densityExpr, m.extinctionExpr, m.scatteringExpr,
+            m.volumeChromaExpr, m.phaseExpr, m.emissionExpr, m.occluderSdf,
+            m.lightRadianceExpr, m.lightChromaExpr, m.lightAngularExpr, out.kernel.get());
+    }
+    const OntoMath::Piecewise* channels[6] = {m.densityExpr, m.extinctionExpr,
+        m.scatteringExpr, m.volumeChromaExpr, m.phaseExpr, m.emissionExpr};
+    const auto sharing = planVolumeSharing(channels);
+    out.hasSharing = !sharing.groups.empty(); out.densityUsesSharing = sharing.densityUses;
+    return out;
+}
+
+Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport,
+                               const OntoMath::Piecewise* supportCertificateDensity,
+                               const std::vector<uint32_t>* supportCertificateSwitches) {
+    Program out = evaluator.program;
+    out.kernelVolumePreparationWgsl = kernelVolumeTimePreparation({evaluator.program}, false);
+    if (!out.ok) return out;
+    std::string certificates;
+    if (supportCertificateDensity) {
+        const auto killers = lowerVolumeSupportKillers(supportCertificateDensity, supportCertificateSwitches);
+        if (killers.ok) certificates = killers.wgsl + volumeSupportExitWgsl();
+    }
+    out.wgsl = kernelVolumePrefix(trimProofSupport) + out.wgsl + certificates +
+        kernelVolumeSingleMarcher(trimProofSupport, evaluator.hasSharing, evaluator.densityUsesSharing,
+                                  !certificates.empty());
+    return out;
+}
+
+Program compileVolumeSet(const std::vector<VolumeProgramInput>& media, bool trimProofSupport) {
+    return composeVolumeSet(media, {}, trimProofSupport);
+}
+
+Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
+                         const std::vector<KernelVolumeEvaluator>& evaluators,
+                         bool trimProofSupport, const std::vector<bool>& supportCertificates,
+                         const std::vector<std::vector<uint32_t>>& supportCertificateSwitches) {
+    Program out;
+    if (media.empty()) {
+        out.ok = false;
+        out.error = "volume set: no participating media";
+        out.wgsl = "// REFUSED: " + out.error + "\n";
+        return out;
+    }
+    if (media.size() == 1) {
+        return composeVolumeEvaluator(evaluators.empty() ? lowerVolumeEvaluator(media.front()) : evaluators.front(),
+                                      trimProofSupport,
+                                      !supportCertificates.empty() && supportCertificates.front()
+                                          ? media.front().densityExpr : nullptr,
+                                      supportCertificateSwitches.empty() ? nullptr : &supportCertificateSwitches.front());
+    }
+
+    auto replaceAll = [](std::string& text,
+                         const std::string& from,
+                         const std::string& to) {
+        std::size_t pos = 0;
+        while ((pos = text.find(from, pos)) != std::string::npos) {
+            text.replace(pos, from.size(), to);
+            pos += to.size();
+        }
+    };
+
+    std::vector<Program> members;
+    members.reserve(media.size());
+    std::vector<bool> memberCertificates(media.size(), false);
+
+    for (std::size_t i = 0; i < media.size(); ++i) {
+        const auto& m = media[i];
+        KernelVolumeEvaluator lowered;
+        if (evaluators.empty()) lowered = lowerVolumeEvaluator(m);
+        const auto& evaluator = evaluators.empty() ? lowered : evaluators.at(i);
+        Program member = evaluator.program;
+        if (!member.ok) {
+            out.ok = false;
+            out.error = "volume set member " + std::to_string(i) + ": " + member.error;
+            out.wgsl = "// REFUSED: " + out.error + "\n";
+            return out;
+        }
+
+        if (i == 0) out.wgsl = kernelVolumePrefix(trimProofSupport);
+        std::string evalBlock = member.wgsl;
+        const std::string suffix = "_" + std::to_string(i);
+
+        // Rename only the per-medium evaluator/feature symbols. Shared structs,
+        // bindings, ray helpers and noise live once in the prefix from member 0.
+        replaceAll(evalBlock, "volumeDensityEval", "volumeDensityEval" + suffix);
+        // volumeSharedEval / volumeSharedG<k> / g_volumeSharedG<k> in one pass;
+        // the member index sits before the group index so names never collide.
+        replaceAll(evalBlock, "volumeShared", "volumeShared_" + std::to_string(i) + "_");
+        replaceAll(evalBlock, "volumeExtinctionEval", "volumeExtinctionEval" + suffix);
+        replaceAll(evalBlock, "volumeScatteringEval", "volumeScatteringEval" + suffix);
+        replaceAll(evalBlock, "volumeChromaEval", "volumeChromaEval" + suffix);
+        replaceAll(evalBlock, "volumePhaseEval", "volumePhaseEval" + suffix);
+        replaceAll(evalBlock, "HAS_AUTHORED_VOLUME_PHASE",
+                   "HAS_AUTHORED_VOLUME_PHASE" + suffix);
+        replaceAll(evalBlock, "VOLUME_PHASE_READS_WI",
+                   "VOLUME_PHASE_READS_WI" + suffix);
+        replaceAll(evalBlock, "volumeEmissionEval", "volumeEmissionEval" + suffix);
+        replaceAll(evalBlock, "HAS_AUTHORED_VOLUME_EMISSION",
+                   "HAS_AUTHORED_VOLUME_EMISSION" + suffix);
+        replaceAll(evalBlock, "VOLUME_EMISSION_READS_OMEGA",
+                   "VOLUME_EMISSION_READS_OMEGA" + suffix);
+        replaceAll(evalBlock, "volumeSdfEval", "volumeSdfEval" + suffix);
+        replaceAll(evalBlock, "volumeSourceVisibility", "volumeSourceVisibility" + suffix);
+        replaceAll(evalBlock, "HAS_OCCLUDER_SDF", "HAS_OCCLUDER_SDF" + suffix);
+        replaceAll(evalBlock, "lightRadianceEval", "lightRadianceEval" + suffix);
+        replaceAll(evalBlock, "HAS_AUTHORED_LIGHT_RADIANCE", "HAS_AUTHORED_LIGHT_RADIANCE" + suffix);
+        replaceAll(evalBlock, "lightChromaEval", "lightChromaEval" + suffix);
+        replaceAll(evalBlock, "HAS_AUTHORED_LIGHT_CHROMA", "HAS_AUTHORED_LIGHT_CHROMA" + suffix);
+        replaceAll(evalBlock, "lightAngularEval", "lightAngularEval" + suffix);
+        replaceAll(evalBlock, "HAS_AUTHORED_LIGHT_ANGULAR", "HAS_AUTHORED_LIGHT_ANGULAR" + suffix);
+
+        out.wgsl += evalBlock;
+        if (i < supportCertificates.size() && supportCertificates[i]) {
+            const auto killers = lowerVolumeSupportKillers(
+                m.densityExpr, i < supportCertificateSwitches.size() ? &supportCertificateSwitches[i] : nullptr);
+            if (killers.ok) {
+                std::string reach = killers.wgsl;
+                replaceAll(reach, "volumeSupportReach", "volumeSupportReach" + suffix);
+                if (std::none_of(memberCertificates.begin(), memberCertificates.end(),
+                                 [](bool b) { return b; }))
+                    out.wgsl += volumeSupportExitWgsl();
+                out.wgsl += reach;
+                memberCertificates[i] = true;
+            }
+        }
+        members.push_back(std::move(member));
+    }
+    std::vector<KernelVolumeEvaluator> memberSharing;
+    if (!evaluators.empty()) memberSharing = evaluators;
+    else for (const auto& m : media) {
+        const OntoMath::Piecewise* channels[6] = {m.densityExpr, m.extinctionExpr, m.scatteringExpr,
+            m.volumeChromaExpr, m.phaseExpr, m.emissionExpr};
+        const auto sharing = planVolumeSharing(channels);
+        KernelVolumeEvaluator info;
+        info.hasSharing = !sharing.groups.empty(); info.densityUsesSharing = sharing.densityUses;
+        memberSharing.push_back(std::move(info));
+    }
+
+    out.wgsl += R"WGSL(
+@fragment
+fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
+    // V5: instance 0 is a union-bounds header used only by the proxy vertex/ray
+    // interval. Projected media begin at instance 1 and keep their own
+    // origin/halfExtent/time/paramOffset.
+    g_instIdx = 0u;
+    let setInst = instances[0];
+
+    let ro = u.eyePos.xyz;
+    let farNdc = vec4<f32>(
+        (in.position.x / u.viewport.x) * 2.0 - 1.0,
+        (1.0 - in.position.y / u.viewport.y) * 2.0 - 1.0,
+        1.0,
+        1.0);
+    let farH = u.invViewProj * farNdc;
+    let farWorld = farH.xyz / farH.w;
+    let rd = normalize(farWorld - ro);
+
+    let bounds = rayAabbWorld(
+        ro, rd,
+        setInst.origin.xyz - setInst.halfExtent.xyz,
+        setInst.origin.xyz + setInst.halfExtent.xyz);
+
+    var t0 = max(bounds.x, 0.0);
+    var t1 = bounds.y;
+    if (t1 <= t0) { discard; }
+
+    let maxX = max(i32(u.viewport.x), 1) - 1;
+    let maxY = max(i32(u.viewport.y), 1) - 1;
+    let px = vec2<i32>(
+        clamp(i32(floor(in.position.x)), 0, maxX),
+        clamp(i32(floor(in.position.y)), 0, maxY));
+    let sceneDepth = textureLoad(sceneDepthTex, px, 0);
+
+    if (sceneDepth < 0.999999) {
+        let opaqueWorld = worldAtDepth(in.position.xy, sceneDepth);
+        let opaqueT = dot(opaqueWorld - ro, rd);
+        t1 = min(t1, max(opaqueT, 0.0));
+    }
+    if (t1 <= t0) { discard; }
+
+    var transmittance = 1.0;
+    var integratedRadiance = vec3<f32>(0.0);
+)WGSL";
+
+    // Kernel-derived per-ray support, retained through the segment walk. The
+    // lattice still comes exclusively from authored box events/chords below.
+    for (std::size_t i = 0; i < media.size(); ++i) {
+        const std::string inst = "instances[" + std::to_string(i + 1u) + "u]";
+        // Unknown/near-parallel intervals cannot certify absence, including
+        // samples rounded onto an authored box boundary. Keep them unbounded
+        // here; the existing box events still delimit their sampling domain.
+        if (!memberCertificates[i]) out.wgsl += "    let raySupport" + std::to_string(i) +
+            " = select(vec2<f32>(-3.0e38, 3.0e38), volumeSupportInterval(" + inst +
+            ", ro, rd), " + inst + ".zeroProofPresent != 0u && all(abs(rd) >= vec3<f32>(1e-8)));\n";
+        // Rung 2b: closed-form killers narrow the member's ray support (prefix,
+        // tail) and carry one hole the walk jumps; box events never move.
+        else out.wgsl += "    let closed" + std::to_string(i) + " = volumeSupportClosed(" + inst + ", ro, rd, t1);\n"
+            "    let raySupportGrid" + std::to_string(i) +
+            " = select(vec2<f32>(-3.0e38, 3.0e38), volumeSupportInterval(" + inst +
+            ", ro, rd), " + inst + ".zeroProofPresent != 0u && all(abs(rd) >= vec3<f32>(1e-8)));\n"
+            "    let raySupport" + std::to_string(i) + " = vec2<f32>(max(raySupportGrid" + std::to_string(i) +
+            ".x, closed" + std::to_string(i) + ".x), min(raySupportGrid" + std::to_string(i) + ".y, closed" +
+            std::to_string(i) + ".y));\n";
+        if (trimProofSupport) out.wgsl += "    let useColumns" + std::to_string(i) +
+            " = volumeColumnsWorthWalking(" + inst + ", rd);\n";
+        if (memberCertificates[i]) out.wgsl += "    var certRecheck" + std::to_string(i) + " = -3.0e38;\n";
+    }
+
+    if (trimProofSupport) {
+        // Union only potentially contributing intervals, independently of the
+        // authored box events below. An unknown proof retains its entire chord.
+        out.wgsl += "    var supportStart = t1;\n    var supportEnd = t0;\n";
+        for (std::size_t i = 0; i < media.size(); ++i) {
+            out.wgsl +=
+                "    {\n"
+                "        let support = raySupport" + std::to_string(i) + ";\n"
+                "        let a = max(t0, support.x);\n"
+                "        let b = min(t1, support.y);\n"
+                "        if (b > a) { supportStart = min(supportStart, a); supportEnd = max(supportEnd, b); }\n"
+                "    }\n";
+        }
+        out.wgsl += "    if (supportEnd <= supportStart) { discard; }\n";
+    }
+
+    // V5 local-quality policy: the union proxy is only a conservative draw/ray
+    // envelope. Sampling is driven by the actually occupied ray intervals of
+    // the admitted media, so empty distance between disjoint media consumes no
+    // sample budget and cannot coarsen an already-existing medium.
+    const std::size_t eventCount = media.size() * 2u;
+    out.wgsl += "    var mediumEvents: array<f32, " +
+                std::to_string(eventCount) + ">;\n";
+    // Unified quadrature: each medium's chord along this ray. Its standalone
+    // resolution is chord / samplesPerChord -- the spacing it gets alone.
+    out.wgsl += "    let samplesPerChord = max(i32(u.volumeControl.w), 1);\n";
+    out.wgsl += "    var mediumChord: array<f32, " +
+                std::to_string(media.size()) + ">;\n";
+
+    for (std::size_t i = 0; i < media.size(); ++i) {
+        const std::string n = std::to_string(i);
+        const std::string inst = std::to_string(i + 1) + "u";
+        const std::string entryIndex = std::to_string(i * 2u) + "u";
+        const std::string exitIndex = std::to_string(i * 2u + 1u) + "u";
+        out.wgsl +=
+            "    {\n"
+            "        let eventInst" + n + " = instances[" + inst + "];\n"
+            "        let eventBounds" + n + " = rayAabbWorld(\n"
+            "            ro, rd,\n"
+            "            eventInst" + n + ".origin.xyz - eventInst" + n + ".halfExtent.xyz,\n"
+            "            eventInst" + n + ".origin.xyz + eventInst" + n + ".halfExtent.xyz);\n"
+            "        var eventEnter" + n + " = max(eventBounds" + n + ".x, t0);\n"
+            "        var eventExit" + n + " = min(eventBounds" + n + ".y, t1);\n"
+            "        if (eventExit" + n + " <= eventEnter" + n + ") {\n"
+            "            eventEnter" + n + " = t1;\n"
+            "            eventExit" + n + " = t1;\n"
+            "        }\n"
+            "        mediumChord[" + n + "] = eventExit" + n + " - eventEnter" + n + ";\n"
+            "        mediumEvents[" + entryIndex + "] = eventEnter" + n + ";\n"
+            "        mediumEvents[" + exitIndex + "] = eventExit" + n + ";\n"
+            "    }\n";
+    }
+
+    out.wgsl +=
+        "    for (var eventIdx = 1u; eventIdx < " + std::to_string(eventCount) +
+        "u; eventIdx = eventIdx + 1u) {\n"
+        "        let key = mediumEvents[eventIdx];\n"
+        "        var insertIdx = eventIdx;\n"
+        "        loop {\n"
+        "            if (insertIdx == 0u) { break; }\n"
+        "            let previousIdx = insertIdx - 1u;\n"
+        "            if (mediumEvents[previousIdx] <= key) { break; }\n"
+        "            mediumEvents[insertIdx] = mediumEvents[previousIdx];\n"
+        "            insertIdx = previousIdx;\n"
+        "        }\n"
+        "        mediumEvents[insertIdx] = key;\n"
+        "    }\n"
+        "    for (var segmentIdx = 0u; segmentIdx + 1u < " +
+        std::to_string(eventCount) +
+        "u; segmentIdx = segmentIdx + 1u) {\n"
+        "        let segmentStart = max(mediumEvents[segmentIdx], t0);\n"
+        "        let segmentEnd = min(mediumEvents[segmentIdx + 1u], t1);\n"
+        "        if (segmentEnd <= segmentStart + 1e-6) { continue; }\n"
+        "        let segmentMidT = 0.5 * (segmentStart + segmentEnd);\n"
+        "        let segmentMidP = ro + rd * segmentMidT;\n"
+        "        var segmentOccupied = false;\n"
+        "        var segmentSpacing = 3.0e38;\n";
+
+    for (std::size_t i = 0; i < media.size(); ++i) {
+        const std::string n = std::to_string(i);
+        const std::string inst = std::to_string(i + 1) + "u";
+        out.wgsl +=
+            "        {\n"
+            "            let segmentInst" + n + " = instances[" + inst + "];\n"
+            "            let segmentMin" + n + " = segmentInst" + n +
+                ".origin.xyz - segmentInst" + n + ".halfExtent.xyz;\n"
+            "            let segmentMax" + n + " = segmentInst" + n +
+                ".origin.xyz + segmentInst" + n + ".halfExtent.xyz;\n"
+            "            if (all(segmentMidP >= segmentMin" + n + ") && "
+                "all(segmentMidP <= segmentMax" + n + ")) {\n"
+            "                segmentOccupied = true;\n"
+            "                segmentSpacing = min(segmentSpacing, mediumChord[" + n + "] / f32(samplesPerChord));\n"
+            "            }\n"
+            "        }\n";
+    }
+
+    out.wgsl += R"WGSL(
+        if (!segmentOccupied) { continue; }
+
+        // Unified quadrature (Zach, 2026-10-09: "a mathematical unification of
+        // the drawing functions wherever it overlaps"). The media form one
+        // field with one transmittance/radiance integral; box entry/exit are
+        // its genuine discontinuities, so segments still break there. Each
+        // segment is sampled at the finest standalone resolution of the media
+        // present in it (chord / samplesPerChord), so no medium is ever sampled
+        // more coarsely than it would be alone -- but an overlap no longer
+        // multiplies the count, and a sliver no longer receives a full chord's
+        // worth of samples. Witness: webgpu_volume_unified_quadrature_test.
+        let segmentSpan = segmentEnd - segmentStart;
+        let segmentSamples = clamp(i32(ceil(segmentSpan / segmentSpacing)), 1, samplesPerChord);
+        let stepLength = segmentSpan / f32(segmentSamples);
+        if (stepLength <= 0.0) { continue; }
+
+)WGSL";
+    if (trimProofSupport) out.wgsl += R"WGSL(
+        let firstSample = i32(clamp(ceil((supportStart - segmentStart) / stepLength - 0.5) - 1.0,
+                                     0.0, f32(segmentSamples)));
+        for (var step = firstSample; step < segmentSamples; step = step + 1) {
+            let sampleT = segmentStart + (f32(step) + 0.5) * stepLength;
+            if (sampleT > supportEnd) { break; }
+)WGSL";
+    else out.wgsl += R"WGSL(
+        for (var step = 0; step < segmentSamples; step = step + 1) {
+            let sampleT = segmentStart + (f32(step) + 0.5) * stepLength;
+)WGSL";
+    out.wgsl += R"WGSL(
+            let worldP = ro + rd * sampleT;
+
+            // Consume each medium's proof and contribution together. Unknown
+            // leaves cannot justify a collective jump; known leaves contribute
+            // only their exit. Original medium order, sample coordinates and
+            // transport arithmetic are unchanged (Astra counsel, 2026-10-11).
+            var walkAllProven = true;
+            var walkHeld = false;
+            var walkExit = segmentEnd;
+            var totalExtinction = 0.0;
+            var totalSource = vec3<f32>(0.0);
+)WGSL";
+    for (std::size_t i = 0; i < media.size(); ++i) {
+        const std::string n = std::to_string(i);
+        const std::string inst = std::to_string(i + 1) + "u";
+        out.wgsl +=
+            "            {\n"
+            "                let mediumInst" + n + " = instances[" + inst + "];\n"
+            "                if (all(worldP >= mediumInst" + n + ".origin.xyz - mediumInst" + n + ".halfExtent.xyz) && "
+                "all(worldP <= mediumInst" + n + ".origin.xyz + mediumInst" + n + ".halfExtent.xyz)) {\n"
+            "                    walkHeld = true;\n"
+            "                    if (raySupport" + n + ".y < raySupport" + n + ".x || sampleT > raySupport" + n + ".y) {\n"
+            "                        // No future support in this authored segment.\n"
+            "                    } else if (sampleT < raySupport" + n + ".x) {\n"
+            "                        walkExit = min(walkExit, raySupport" + n + ".x);\n"
+            "                    } else {\n"
+            "                        " + std::string(memberCertificates[i] ? "var" : "let") + " cellExit" + n +
+                " = volumeZeroCellExit(mediumInst" + n +
+                ", worldP - mediumInst" + n + ".origin.xyz, ro, rd" +
+                (trimProofSupport ? ", sampleT, useColumns" + n : std::string{}) + ");\n"
+            // Rung 2f-native: where no grid proof covers the sample, a support
+            // certificate may; its exit joins the same collective jump.
+            + std::string(memberCertificates[i]
+                ? "                        if (cellExit" + n + " < 0.0 && sampleT > closed" + n + ".z && sampleT < closed" + n +
+                      ".w) { cellExit" + n + " = closed" + n + ".w; }\n"
+                  "                        if (cellExit" + n + " < 0.0 && mediumInst" + n + ".supportCertCount != 0u && "
+                      "sampleT >= certRecheck" + n + ") {\n"
+                  "                            g_instIdx = " + inst + ";\n"
+                  "                            let certReach" + n + " = volumeSupportReach_" + n +
+                      "(worldP - mediumInst" + n + ".origin.xyz, mediumInst" + n + ".supportCertOffset);\n"
+                  "                            cellExit" + n + " = volumeSupportExit(certReach" + n + ", mediumInst" + n +
+                      ", ro, sampleT);\n"
+                  "                            certRecheck" + n + " = volumeSupportRecheck(certReach" + n + ", sampleT);\n"
+                  "                        }\n"
+                : "") +
+            "                        if (cellExit" + n + " < 0.0) {\n"
+            "                            walkAllProven = false;\n"
+            "                            g_instIdx = " + inst + ";\n"
+            "                            let p" + n + " = worldP - mediumInst" + n + ".origin.xyz;\n"
+            "                            var density" + n + " = 0.0;\n"
+            + std::string(memberSharing[i].densityUsesSharing ? "                            volumeShared_" + n + "_Eval(p" + n + ");\n" : "") +
+            "                            density" + n + " = max(volumeDensityEval_" + n +
+                "(p" + n + "), 0.0);\n"
+            "                            if (density" + n + " > 0.0) {\n"
+            + std::string(memberSharing[i].hasSharing && !memberSharing[i].densityUsesSharing ? "                                volumeShared_" + n + "_Eval(p" + n + ");\n" : "") +
+            "                                let extinction" + n +
+                " = max(volumeExtinctionEval_" + n + "(p" + n + ", density" + n +
+                "), 1e-6);\n"
+            "                                totalExtinction += extinction" + n + ";\n"
+            "                                let wiDelta = worldP - u.incidentSource.xyz;\n"
+            "                                let woDelta = ro - worldP;\n"
+            "                                let wiLen = length(wiDelta);\n"
+            "                                let woLen = length(woDelta);\n"
+            "                                let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, 1e-8),\n"
+            "                                                u.incidentSource.w > 0.5 && wiLen > 1e-8);\n"
+            "                                let wo = select(vec3<f32>(0.0), woDelta / max(woLen, 1e-8),\n"
+            "                                                woLen > 1e-8);\n"
+            // SourceRho-zero (Prism: rho_source != V_transport != D_medium).
+            // Incident light is formed first. When the source's authored rho is
+            // exactly 0, its chroma, angular factor and visibility cannot
+            // matter, and when incident light is exactly 0 the whole in-scatter
+            // term mediumChroma * Li * sigma_s * Phi is +-0, so scattering,
+            // medium chroma and phase are not evaluated. +-0 + E_v == E_v, so
+            // the sum is bit-identical for finite values.
+            "                                var incidentLi" + n + " = vec3<f32>(1.0);\n"
+            "                                if (u.incidentSource.w > 0.5) {\n"
+            "                                    let sourceDelta = worldP - u.incidentSource.xyz;\n"
+            "                                    let sourceDist = length(sourceDelta);\n"
+            "                                    let lightDir = select(vec3<f32>(0.0, 1.0, 0.0), -sourceDelta / max(sourceDist, 1e-8), sourceDist > 1e-8);\n"
+            "                                    var radialRad = 1.0;\n"
+            "                                    if (HAS_AUTHORED_LIGHT_RADIANCE_" + n + ") {\n"
+            "                                        radialRad = max(lightRadianceEval_" + n + "(sourceDelta), 0.0);\n"
+            "                                    }\n"
+            "                                    if (radialRad == 0.0) {\n"
+            "                                        incidentLi" + n + " = vec3<f32>(0.0);\n"
+            "                                    } else {\n"
+            "                                        var chroma = vec3<f32>(1.0);\n"
+            "                                        if (HAS_AUTHORED_LIGHT_CHROMA_" + n + ") {\n"
+            "                                            chroma = max(lightChromaEval_" + n + "(sourceDelta), vec3<f32>(0.0));\n"
+            "                                        }\n"
+            "                                        var angular = 1.0;\n"
+            "                                        if (HAS_AUTHORED_LIGHT_ANGULAR_" + n + ") {\n"
+            "                                            angular = max(lightAngularEval_" + n + "(sourceDelta, lightDir), 0.0);\n"
+            "                                        }\n"
+            "                                        let vis = volumeSourceVisibility_" + n + "(worldP, u.incidentSource.xyz);\n"
+            "                                        incidentLi" + n + " = chroma * (radialRad * angular * vis);\n"
+            "                                    }\n"
+            "                                }\n"
+            "                                var emitted" + n + " = vec3<f32>(0.0);\n"
+            "                                if (HAS_AUTHORED_VOLUME_EMISSION_" + n + ") {\n"
+            "                                    if (!VOLUME_EMISSION_READS_OMEGA_" + n +
+                " || woLen > 1e-8) {\n"
+            "                                        emitted" + n + " = max(volumeEmissionEval_" + n +
+                "(p" + n + ", wo), vec3<f32>(0.0));\n"
+            "                                    }\n"
+            "                                }\n"
+            "                                if (any(incidentLi" + n + " != vec3<f32>(0.0))) {\n"
+            "                                    let scattering" + n +
+                " = max(volumeScatteringEval_" + n + "(p" + n + ", density" + n +
+                "), 0.0);\n"
+            "                                    let mediumChroma" + n + " = volumeChromaEval_" + n +
+                "(p" + n + ");\n"
+            "                                    var phase" + n + " = 1.0;\n"
+            "                                    if (HAS_AUTHORED_VOLUME_PHASE_" + n + ") {\n"
+            "                                        phase" + n + " = 0.0;\n"
+            "                                        if ((!VOLUME_PHASE_READS_WI_" + n +
+                " || (u.incidentSource.w > 0.5 && wiLen > 1e-8)) && woLen > 1e-8) {\n"
+            "                                            phase" + n + " = max(volumePhaseEval_" + n +
+                "(p" + n + ", wi, wo), 0.0);\n"
+            "                                        }\n"
+            "                                    }\n"
+            "                                    totalSource += mediumChroma" + n + " * incidentLi" + n + " * scattering" + n +
+                " * phase" + n + " + emitted" + n + ";\n"
+            "                                } else {\n"
+            "                                    totalSource += emitted" + n + ";\n"
+            "                                }\n"
+            "                            }\n"
+            "                        } else { walkExit = min(walkExit, cellExit" + n + "); }\n"
+            "                    }\n"
+            "                }\n"
+            "            }\n";
+    }
+    out.wgsl += R"WGSL(
+            if (!walkHeld) { walkExit = sampleT; }
+            if (walkAllProven) {
+                step = max(step, i32(ceil((walkExit - segmentStart) / stepLength - 0.5)) - 1);
+                continue;
+            }
+)WGSL";
+
+    out.wgsl += R"WGSL(
+        let oldT = transmittance;
+        if (totalExtinction > 0.0) {
+            transmittance *= exp(-totalExtinction * stepLength);
+            // Shared participating-medium integral. For one active medium this
+            // algebra reduces to the V4 scatter + E_v attenuation formulas.
+            let intervalGain = (oldT - transmittance) / totalExtinction;
+            integratedRadiance += totalSource * intervalGain;
+        } else {
+            // Continuous sigma_t -> 0 limit. Usually unreachable under the
+            // current 1e-6 per-active-medium clamp, but it states the transport
+            // law rather than relying on division by an implementation epsilon.
+            integratedRadiance += oldT * totalSource * stepLength;
+        }
+
+            if (u.volumeOutputError.y == 0.0 && transmittance < 0.01) { break; }
+        }
+        if (u.volumeOutputError.y == 0.0 && transmittance < 0.01) { break; }
+    }
+
+    let alpha = 1.0 - transmittance;
+    let integratedMagnitude =
+        max(max(abs(integratedRadiance.x), abs(integratedRadiance.y)),
+            abs(integratedRadiance.z));
+    if (alpha <= 1e-5 && integratedMagnitude <= 1e-6) { discard; }
+
+    // One premultiplied answer for the whole admitted medium set:
+    // C_out = C_media_set + T_set * C_scene.
+    return vec4<f32>(integratedRadiance, alpha);
+}
+)WGSL";
+
+    out.params.clear();
+    out.kernelVolumePreparationWgsl = kernelVolumeTimePreparation(members, true);
+    out.kernelVolumePreparationInstanceBase = 1;
+    for (const auto& member : members) {
+        out.params.insert(out.params.end(), member.params.begin(), member.params.end());
+    }
+    if (out.params.empty()) out.params.push_back(0.0f);
+    out.needsGradientStep = false;
+    out.ok = true;
+    out.error.clear();
+    return out;
+}
+
 
 } // namespace sdfwgsl

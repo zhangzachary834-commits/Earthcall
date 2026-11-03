@@ -83,6 +83,31 @@ int main() {
         }
     }
 
+
+    {
+        std::cout << "\n[4] Testing isObservationZone...\n";
+        Zone z_obs("obs_zone", "strict");
+        z_obs.setQuality("kind", "test-observation");
+        check(isObservationZone(z_obs), "Zone with kind 'test-observation' is an observation zone");
+
+        Zone z_normal("normal_zone", "strict");
+        z_normal.setQuality("kind", "normal");
+        check(!isObservationZone(z_normal), "Zone with kind 'normal' is not an observation zone");
+
+        Zone z_empty("empty_zone", "strict");
+        check(!isObservationZone(z_empty), "Zone with no kind quality is not an observation zone");
+    }
+
+    {
+        std::cout << "\n[5] Testing bindLive...\n";
+        ZoneManager mgr;
+        check(ZoneManager::live() != &mgr, "Manager is not live before bindLive");
+        mgr.bindLive();
+        check(ZoneManager::live() == &mgr, "bindLive sets global live manager pointer");
+        mgr.unbindLive();
+        check(ZoneManager::live() == nullptr, "unbindLive clears binding owned by manager");
+    }
+
     std::filesystem::remove_all(sandbox);
 
     std::cout << "------------------------------------------------------------\n";

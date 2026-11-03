@@ -1,39 +1,39 @@
-## 2023-10-27 - Dynamic Status Container Accessibility
-**Learning:** For containers where text changes dynamically without user interaction (like `#connection-status` displaying "Connecting...", "Connected", "Disconnected"), screen readers will not announce the new text by default. This makes critical state invisible to visually impaired users.
-**Action:** Always add `role="status"` and `aria-live="polite"` to dynamically updated status containers that provide non-critical but useful context, so screen readers will announce changes naturally during pauses in speech.
-## 2024-11-20 - [Added WASM Start Overlay Keyboard Accessibility]
-**Learning:** Adding `tabindex="0"`, `role="button"`, and `aria-label` to custom `div` overlays is crucial for keyboard navigation. However, the `keydown` event listener for `Enter` and `Space` needs `event.preventDefault()` specifically for the spacebar to prevent page scrolling, ensuring a smooth activation experience.
-**Action:** Always include `event.preventDefault()` on spacebar `keydown` handlers for custom interactive elements.
-## 2024-11-21 - [Focus dropping on disabled buttons]
-**Learning:** If a user clicks or presses a button that modifies state in a way that causes the button to become disabled (such as submitting an utterance that clears the input), focus is dropped to the document `<body>`. This completely disrupts the keyboard navigation flow.
-**Action:** When disabling the currently focused element due to a state change, explicitly shift focus to the next logical element (e.g., the input field) using `.focus()`.
-## 2024-03-24 - Overlay Dismissal Focus Drop
-**Learning:** When dismissing full-screen overlays (like `#start-overlay` in `web_ui/wasm.html`), if the focused element is hidden (e.g., `display: none`), keyboard focus silently drops back to the document `<body>`. This breaks keyboard navigation flow for screen readers and power users.
-**Action:** Always add `tabindex="-1"` to the primary application container or canvas that replaces the overlay, and explicitly call `.focus()` on it immediately after hiding the overlay to preserve logical navigation state.
-## 2026-09-09 - Semantic Form Transformation
-**Learning:** Wrapping single-input interfaces in semantic forms is crucial for both mobile keyboard behavior (providing a native 'Go'/'Submit' button) and standardizing screen reader submission.
-**Action:** Always prefer forms over loose inputs with enter-key listeners.
-## 2024-11-25 - [Prevent Silent Data Loss on Disconnect]
-**Learning:** Leaving form inputs enabled when a backend connection is broken creates silent failure scenarios where users type and submit data that is lost. Disabling inputs during disconnected states prevents this, but you must manually trigger events (`dispatchEvent(new Event('input'))`) to update dependent button states and manually restore focus (`.focus()`) upon reconnection to preserve navigation flow.
-**Action:** Always disable inputs during disconnected states, update placeholders dynamically, trigger update events, and focus the input once the connection returns.
-## 2024-11-26 - [Dynamic Dependent Button State Under Connection Loss]
-**Learning:** Even if you dispatch an `input` event when a form input gets disabled due to a system disconnect, the dependent buttons (like a Submit button) won't automatically disable unless the input event handler specifically checks the `disabled` state of the input field. This oversight can leave a Submit button visually enabled while the system is disconnected, leading to silent data loss if clicked.
-**Action:** Always verify both the content (e.g., `value.trim() === ''`) AND the accessibility state (`disabled`) of the input when computing the dependent state of submission buttons in `input` handlers.
-## 2024-11-26 - [Three-State Network UI Model vs Boolean]
-**Learning:** Using a single boolean flag (`isConnected`) to drive network UI states often forces intermediate states (like "Connecting...") to incorrectly inherit the visual styling of the "disconnected" state (e.g., a red indicator). This confuses users who expect a distinct visual signal for in-progress operations.
-**Action:** When designing connection status indicators, always use an explicit three-state model (e.g., `connecting`, `connected`, `disconnected`) or infer the intermediate state explicitly from parameters, rather than falling back to binary boolean logic.
-## 2024-11-27 - Canvas-to-Input Keyboard Focus Flow
-**Learning:** In hybrid interfaces where a primary interaction layer is a 3D canvas but there is also a persistent command input (like `#utterance-input`), screen reader users and keyboard power users need a fast, predictable way to switch contexts. Pressing `Enter` on the body/canvas to instantly focus the input, and pressing `Escape` to clear and `.blur()` the input (returning focus to the body), creates a seamless, bidirectional keyboard workflow without requiring manual tabbing through UI layers.
-**Action:** Always provide explicit global hotkeys (like `Enter` on body/canvas) to jump into critical inputs, and `Escape` to gracefully exit focus back to the primary spatial context.
-## 2024-11-20 - Accessible Disabled Buttons and Tooltips
-**Learning:** Using the native `disabled` attribute on HTML `<button>` elements removes them from the tab order, completely hiding them from keyboard navigation and screen readers. When a button is disabled, users often need to know *why* it is disabled. If we use the native `disabled` attribute, any tooltips (like `title` attributes) explaining the state will be inaccessible to keyboard users, leading to a frustrating experience.
-**Action:** Instead of `disabled`, use `aria-disabled="true"` to communicate the state to screen readers while keeping the button focusable. Then, use CSS (`[aria-disabled="true"]`) to visually style it as disabled, and handle the logic in JavaScript to prevent the action from firing when `aria-disabled="true"`. This ensures tooltips explaining *why* the button is disabled remain accessible to all users.
-## 2024-11-27 - Accessible Keyboard Shortcut Hints
-**Learning:** When adding visual keyboard shortcut hints (like `<kbd>Enter</kbd>` or `↵`) inside interactive elements like buttons, screen readers will often append or interject the literal text of the `<kbd>` element into the button's accessible name (e.g., reading "Emit Return button" instead of "Emit button"). This creates a confusing auditory experience for users relying on assistive technologies.
-**Action:** Always include `aria-hidden="true"` on visual `<kbd>` hints embedded within buttons or links to hide them from screen readers, since the button's primary action is already understood semantically.
-## 2024-11-28 - Composite Input Focus Styling
-**Learning:** When styling a composite form input (a container with an input and a button, like `#logos-interface`), applying `:focus-visible` solely to the inner `<input>` element creates a visually disjointed highlight. Using `:focus-within` on the parent container provides a much more cohesive, aesthetically pleasing, and accessible focus indicator for keyboard users.
-**Action:** Always prefer `:focus-within` on the container for composite input designs rather than outlining just the inner text field.
-## 2024-11-28 - [Accessible Button Contrast Overlays]
-**Learning:** When layering semi-transparent backgrounds (like `.kbd-hint` over a primary `#emit-btn`), alpha-blended white (`rgba(255,255,255,0.15)`) on top of a light blue button background (`#4a90e2`) causes both the text and the hint background to fail WCAG AA contrast ratios (falling below 4.5:1).
-**Action:** Always verify contrast ratios for primary action buttons. Deepen the base button color (`#2563eb`) to provide sufficient contrast for white text, and use black with alpha (`rgba(0,0,0,0.2)`) instead of white for nested hint backgrounds to maintain legibility without blowing out the lightness.
+# Palette — read this before any PR
+
+## CRITICAL — 2026-09-30 — The commission was never the emit button
+
+**Learning:** Zach commissioned Palette with these words: "plzzzz will u halp make law authoring window and creator console and the general Earthcall experience feel nice to use." Palette spent the month manicuring root `web_ui/`, a three-file emit-utterance page (~501 lines, not in the CMake build, not in CI). Zach later named that page a fossil, and said he still merges the PRs because it feels good to watch a GitHub branch turn from green to purple. The purple is his reward. It is not evidence that Earthcall grew a face. The journal entries below taught the next session to repeat the manicure, including one misdated `2025-02-18`.
+
+There are three surfaces. Do not conflate them.
+
+1. Root `web_ui/` (`index.html`, `app.js`, `wasm.html`) — the fossil Palette actually edited. Emit Utterance. `#emit-btn`. Historically `Module.Earthcall_EmitUtterance` was always false (`docs/audits/AUDIT_2026-08-10.md` §2.6). Not the app.
+2. `src/Singularity/Foreign/Web/web_ui/` — a Vite/React paint toy (Brush, Eraser, Magic Wand) left over from a request for a Python Earthcall that came back as a bespoke interface. Zach was disappointed and did not return to it. Not the app.
+3. `src/Singularity/Foreign/py/` — a separate First Mover studio (`Run Earthcall Python.command`, Flask + Socket.IO on port 5005) that can edit engine state over a websocket. Zach called this one good, and still bespoke: it is not Earthcall's ontology. It is also not Palette's canvas.
+
+The lived app is `earthcall_webgpu` (`Run Earthcall.command`, `scripts/build.sh webgpu run`). There is no pnpm product build. The Law authoring window is `src/Singularity/Screen/LawGraphWindow.cpp`. The Creator Console is `src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.cpp`. The Law Line, which grew a real terminal on 2026-09-25, is `src/Singularity/Terminal/`. Interaction is Law, not a widget farm: `docs/architecture/law/INTERACTION_AS_LAW.md` and `AGENTS.md`.
+
+**Action:** Never edit `web_ui/**`, `src/Singularity/Foreign/Web/web_ui/**`, or `src/Singularity/Foreign/py/**`. Do not open an accessibility PR against `#emit-btn`, `#sr-announcer`, or `#logos-interface`. If a change under fifty lines cannot be made in the Law Graph, the Creator Console, or the Law Line without breaking `AGENTS.md` or Interaction-as-Law, stop. The platform prompt already says: if no suitable UX enhancement can be identified, do not create a PR. That sentence applies here. The fossil entries under FOSSIL are history. Do not repeat them.
+
+Zach merges purple for the feeling. Leave that to Zach. Do not cite a merged fossil PR as Earthcall growing an interface.
+
+## Paste this over the Google Jules task prompt
+
+The platform prompt does not live in this repo. Zach can paste the paragraph below over it. Until he does, this file is the lever, because the platform prompt says to read `.Jules/palette.md` before starting.
+
+> You are Palette, working in the Earthcall repo. Your commission, in Zach's words, is to help the law authoring window, the Creator Console, and the general Earthcall experience feel nice to use. The lived app is the native target `earthcall_webgpu` (Run Earthcall.command). The Law authoring window is `src/Singularity/Screen/LawGraphWindow.cpp`. The Creator Console is `src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.cpp`. The Law Line is `src/Singularity/Terminal/`. There is no pnpm, vitest, or tsx product build — do not go looking for one. Do not edit `web_ui/**`, `src/Singularity/Foreign/Web/web_ui/**`, or `src/Singularity/Foreign/py/**`. The first is a fossil emit-utterance page, the second is an abandoned bespoke paint UI, and the third is a separate First Mover websocket studio that is not the ontology and not your canvas. Before any edit, read `AGENTS.md`, `docs/architecture/law/INTERACTION_AS_LAW.md`, and this journal. Interaction is authored Law aimed at the pointer. Do not add widgets, a `src/UI/` tree, or a new domain class. Prefer one kindness under fifty lines in those windows. If you cannot find one that those documents allow, stop and do not open a PR. Journal only critical learnings in `.Jules/palette.md`. The critical learning already at the top of that file is binding.
+
+## FOSSIL — emit-utterance manicure, do not repeat
+
+These three entries are why Palette kept sanding a skeleton. Kept so the miss stays visible. The `2025-02-18` date is wrong; that aria-live change landed in September 2026.
+
+## 2026-09-23 - Add visual and audio feedback to Emit Utterance button
+**Learning:** Silently failing an action due to a disconnected state causes user frustration and confusion. Even when disabled, interactive elements should provide clear feedback about *why* they cannot be used, especially for keyboard and screen reader users. In this app, users could press 'Enter' or click Emit while disconnected, and nothing would visibly or audibly happen.
+**Action:** Always provide a clear, immediate error indication (like a shake animation combined with a screen reader announcement) when a primary action is blocked by application state. Additionally, always provide success feedback (like a flash and announcement) when an action completes successfully without immediate visual UI changes in the DOM.
+
+## 2026-09-24 - Add clear button to utterance input
+**Learning:** In flex layouts with dynamic inputs, toggling element visibility using `display: none` / `block` can cause visually jarring layout shifts (e.g., adjacent buttons jump sideways).
+**Action:** Use `visibility: hidden` and `visibility: visible` to toggle elements inside flex layouts when you want to reserve their space, preventing sibling elements from shifting when the element appears or disappears.
+
+## 2025-02-18 - Throttling aria-live status loop
+**Learning:** `aria-live` elements combined with an auto-reconnect retry loop in JS can spam screen readers continuously with "Connecting... Disconnected..." announcements on interval.
+**Action:** Move continuous string status updates out of `aria-live` containers and instead inject specific logical state changes into a controlled `#sr-announcer` hidden div when the binary state (connected/disconnected) explicitly flips.

@@ -627,8 +627,47 @@ int main() {
         assert(sawHighHp);
         assert(!sawLowHp);
 
-        // Opacity is GLOBAL, not local. One unreadable condition invalidates
-        // every relevance edge rather than inviting a dangerously partial graph.
+        // Pre-normalization must preserve the conservative referent-tail
+        // alias rule exactly. This is the production-path regression for the
+        // PR #386 optimization: an @-prefixed write may feed an unprefixed
+        // read through one of its normalized tails, with branch provenance,
+        // path, quantified-instance flag, and completeness all preserved.
+        auto prefixedWriter = std::make_shared<Law>("prefixed-writer");
+        prefixedWriter->setLawIdentifier("prefixed-writer");
+        prefixedWriter->setActionModel(
+            ActionNode::set("@event.subject.position.x", PropertyValue(500.0)));
+
+        auto tailReader = std::make_shared<Law>("tail-reader");
+        tailReader->setLawIdentifier("tail-reader");
+        tailReader->setConditionModel(ConditionNode::compare(
+            "position.x", ConditionNode::Op::Gt, PropertyValue(100.0)));
+
+        const Prophetic::LawFacts prefixedWriterFacts =
+            Prophetic::analyzeLaw(*prefixedWriter);
+        const Prophetic::LawFacts tailReaderFacts =
+            Prophetic::analyzeLaw(*tailReader);
+        assert(prefixedWriterFacts.writes.size() == 1);
+        assert(tailReaderFacts.branchReads.size() == 1);
+
+        Prophetic::Index normalizedTailGraph;
+        normalizedTailGraph.rebuild({prefixedWriter, tailReader});
+        assert(normalizedTailGraph.complete());
+        assert(normalizedTailGraph.relevanceComplete());
+        assert(normalizedTailGraph.relevanceEdges().size() == 1);
+
+        const auto& normalizedEdge = normalizedTailGraph.relevanceEdges().front();
+        assert(normalizedEdge.writerLawId == prefixedWriterFacts.writes[0].lawId);
+        assert(normalizedEdge.writerBranchId == prefixedWriterFacts.writes[0].branchId);
+        assert(normalizedEdge.readerLawId == tailReaderFacts.branchReads[0].lawId);
+        assert(normalizedEdge.readerBranchId == tailReaderFacts.branchReads[0].branchId);
+        assert(normalizedEdge.path == tailReaderFacts.branchReads[0].path);
+        assert(normalizedEdge.aboutInstances ==
+               tailReaderFacts.branchReads[0].aboutInstances);
+
+        // Unknown-variable model: an unreadable condition makes the graph
+        // incomplete, but it no longer erases unrelated edges that are
+        // structurally known. Those edges remain diagnostic-only until
+        // relevanceComplete() becomes true.
         auto opaqueReader = std::make_shared<Law>("opaque-reader");
         opaqueReader->setLawIdentifier("opaque-reader");
         opaqueReader->setConditionModel(ConditionNode::overlaps("@event.object"));
@@ -636,7 +675,76 @@ int main() {
         Prophetic::Index opaqueGraph;
         opaqueGraph.rebuild({high, branchReader, opaqueReader});
         assert(!opaqueGraph.relevanceComplete());
-        assert(opaqueGraph.relevanceEdges().empty());
+        bool keptKnownHighHp = false;
+        for (const auto& edge : opaqueGraph.relevanceEdges()) {
+            if (edge.writerLawId == "high-writer" &&
+                edge.readerLawId == "branch-reader" &&
+                edge.path == "hp") {
+                keptKnownHighHp = true;
+            }
+        }
+        assert(keptKnownHighHp);
+        assert(opaqueGraph.unknownWriteSources().empty());
+
+        // A FirstMoverLaw can expose modeled Action text AND still have an
+        // unknown C++ actuation surface. Preserve the modeled edge, name the
+        // unknown source, and keep the graph non-authoritative.
+        auto firstMover = std::make_shared<FirstMoverLaw>("modeled-first-mover");
+        firstMover->setLawIdentifier("modeled-first-mover");
+        firstMover->setActionModel(ActionNode::set("hp", PropertyValue(500.0)));
+
+        Prophetic::Index firstMoverGraph;
+        firstMoverGraph.rebuild({firstMover, branchReader});
+        assert(!firstMoverGraph.relevanceComplete());
+        bool keptModeledFirstMoverEdge = false;
+        for (const auto& edge : firstMoverGraph.relevanceEdges()) {
+            if (edge.writerLawId == "modeled-first-mover" &&
+                edge.readerLawId == "branch-reader" &&
+                edge.path == "hp") {
+                keptModeledFirstMoverEdge = true;
+            }
+        }
+        assert(keptModeledFirstMoverEdge);
+        assert(firstMoverGraph.unknownWriteSources().size() == 1);
+        assert(firstMoverGraph.unknownWriteSources()[0].lawId == "modeled-first-mover");
+        assert(firstMoverGraph.unknownWriteSources()[0].hasModeledWrites);
+
+        // Current C++ First Movers do NOT yet expose an exhaustive in-world
+        // actuation capability relation. Their unknown remainder is therefore
+        // still wildcard for negative reasoning, even though the modeled
+        // Action branch above remains known.
+        const auto& liveUnknown = firstMoverGraph.unknownWriteSources()[0];
+        assert(liveUnknown.knownMayWritePaths.empty());
+        assert(!liveUnknown.domainComplete);
+        assert(firstMoverGraph.unknownWriteMayReach("hp"));
+        assert(firstMoverGraph.unknownWriteMayReach("chessColor"));
+        assert(!firstMoverGraph.unknownWriteDomainCompleteFor("hp"));
+        assert(!firstMoverGraph.unknownWriteDomainCompleteFor("chessColor"));
+
+        // Path-granular abstract-domain witness. A COMPLETE source domain may
+        // prove a disjoint property unreachable; an INCOMPLETE domain may not.
+        Prophetic::Index::UnknownWriteSource boundedPointer{
+            "interaction-channel",
+            "test witness: bounded pointer actuation",
+            false,
+            {"@interaction-channel.pointerX", "@interaction-channel.leftDown"},
+            true};
+        assert(Prophetic::unknownSourceMayReach(boundedPointer, "pointerX"));
+        assert(Prophetic::unknownSourceMayReach(
+            boundedPointer, "@interaction-channel.leftDown"));
+        assert(!Prophetic::unknownSourceMayReach(boundedPointer, "chessColor"));
+
+        auto partialPointer = boundedPointer;
+        partialPointer.domainComplete = false;
+        assert(Prophetic::unknownSourceMayReach(partialPointer, "pointerX"));
+        assert(Prophetic::unknownSourceMayReach(partialPointer, "chessColor"));
+
+        const nlohmann::json firstMoverReport = firstMoverGraph.toJson();
+        assert(firstMoverReport["relevanceComplete"] == false);
+        assert(firstMoverReport["unknownWriteSources"].size() == 1);
+        assert(firstMoverReport["unknownWriteSources"][0]["domainComplete"] == false);
+        assert(firstMoverReport["unknownWriteSources"][0]["knownMayWritePaths"].empty());
+        assert(!firstMoverReport["relevanceEdges"].empty());
 
         // The same incompleteness must suppress cross-law "no lawful driver"
         // findings. Before this pass only opaque WRITES were checked here,
@@ -655,8 +763,10 @@ int main() {
 
         const nlohmann::json report = relevance.toJson();
         assert(report["relevanceComplete"] == true);
+        assert(relevance.unknownWriteDomainCompleteFor("hp"));
+        assert(!relevance.unknownWriteMayReach("hp"));
         assert(!report["relevanceEdges"].empty());
-        std::puts("  H. branch provenance / relevance graph OK");
+        std::puts("  H. branch provenance / relevance graph / unknown domains OK");
     }
 
     // ======================================================================

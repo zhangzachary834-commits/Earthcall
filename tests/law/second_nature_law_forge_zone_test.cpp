@@ -1,3 +1,4 @@
+#include "Singularity/Storage/SaveSystem.hpp"
 // End-to-end witness for the authored Second-Nature Law Forge.
 //
 // This boots ONLY the Zone-native identity + its shared Law roots, enters the
@@ -85,11 +86,7 @@ int main() {
     check(std::filesystem::exists(sourceZone), "Second-Nature Law Forge Zone identity exists");
     if (!std::filesystem::exists(sourceZone)) return 1;
 
-    nlohmann::json zoneJson;
-    {
-        std::ifstream in(sourceZone);
-        in >> zoneJson;
-    }
+    nlohmann::json zoneJson = SaveSystem::readSaveData(sourceZone.string());
     check(zoneJson.contains("lawRefs") && zoneJson["lawRefs"].is_array() &&
               zoneJson["lawRefs"].size() == 4,
           "Forge names its four authored prototype/instrument Laws through lawRefs");

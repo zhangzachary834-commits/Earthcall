@@ -19,6 +19,7 @@
 #include "Singularity/Screen/HighlightSystem.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 
 
 
@@ -28,11 +29,12 @@
 
 namespace {
 glm::vec3 transformNormalToWorld(const glm::mat4& transform, const glm::vec3& localNormal) {
-    glm::mat3 linear(transform);
-    glm::vec3 worldNormal = glm::transpose(glm::inverse(linear)) * localNormal;
-    float len = glm::length(worldNormal);
+    const auto authored = OntoMath::MatrixValue::fromGlmMat4(transform);
+    const auto worldNormal = OntoMath::transformNormal(authored, localNormal);
+    if (!worldNormal) return glm::vec3(0.0f, 1.0f, 0.0f);
+    const float len = glm::length(*worldNormal);
     if (len <= 1e-6f) return glm::vec3(0.0f, 1.0f, 0.0f);
-    return worldNormal / len;
+    return *worldNormal / len;
 }
 
 glm::vec3 closestPointOnTriangle(const glm::vec3& p,
@@ -196,8 +198,31 @@ namespace {
 // path never has to tessellate. Collision keeps its own coarser tessellation —
 // the cloud is decimated to `maxPts` anyway, and matching render resolution here
 // would change which points GJK sees for no benefit.
+void Object::invalidateFieldParameterCaches() {
+    if (!_hasField) return;
+    ++_fieldRevision;
+    ++_sdfParameterRevision;
+    _fieldMeshDirty = true;
+    _heightGridDirty = true;
+    _supportCloud.clear();
+    _localMin = -_fieldExtent;
+    _localMax = _fieldExtent;
+}
+
+void Object::invalidateFieldSamplingCaches() {
+    if (!_hasField) return;
+    ++_fieldRevision;
+    _fieldMeshDirty = true;
+    _supportCloud.clear();
+    _localMin = -_fieldExtent;
+    _localMax = _fieldExtent;
+}
+
 void Object::rebuildGeometryCaches() {
-    _fieldRevision++;
+    ++_fieldRevision;
+    ++_sdfStructureRevision;
+    ++_sdfParameterRevision;
+    _renderSdfCachesDirty = true;
     _supportCloud.clear();
     _smoothMesh.reset();
     _complexMeshes.clear();
@@ -501,11 +526,18 @@ glm::vec3 Object::getLocalSupportPoint(const glm::vec3& localDirection) const {
 }
 
 glm::vec3 Object::getSupportPointWorld(const glm::vec3& worldDirection) const {
-    glm::mat4 transform = getRaycastTransform();
-    glm::mat3 linear(transform);
-    glm::vec3 localDirection = glm::transpose(linear) * worldDirection;
-    glm::vec3 localSupport = getLocalSupportPoint(localDirection);
-    return glm::vec3(transform * glm::vec4(localSupport, 1.0f));
+    const auto authored =
+        OntoMath::MatrixValue::fromGlmMat4(getRaycastTransform());
+    const auto localDirection =
+        OntoMath::pullbackCovector(authored, worldDirection);
+    if (!localDirection) {
+        return OntoMath::affineExtractTranslation(authored).value_or(glm::vec3(0.0f));
+    }
+    const glm::vec3 localSupport = getLocalSupportPoint(*localDirection);
+    const auto worldSupport = OntoMath::transformPoint(authored, localSupport);
+    return worldSupport
+        ? *worldSupport
+        : OntoMath::affineExtractTranslation(authored).value_or(glm::vec3(0.0f));
 }
 
 bool Object::isCollisionShapeConvex() const {
@@ -727,8 +759,12 @@ bool Object::computePointPenetration(const glm::vec3& point, glm::vec3& outCorre
     }
 
     glm::mat4 collisionTransform = getRaycastTransform();
-    glm::mat4 inv = glm::inverse(collisionTransform);
-    glm::vec3 localPoint = glm::vec3(inv * glm::vec4(point, 1.0f));
+    const auto collisionAffine = OntoMath::MatrixValue::fromGlmMat4(collisionTransform);
+    const auto inverseCollision = OntoMath::inverseAffine(collisionAffine);
+    if (!inverseCollision) return false;
+    const auto localPointValue = OntoMath::transformPoint(*inverseCollision, point);
+    if (!localPointValue) return false;
+    const glm::vec3 localPoint = *localPointValue;
 
     glm::vec3 localSurface(0.0f);
     glm::vec3 localNormal(0.0f, 1.0f, 0.0f);

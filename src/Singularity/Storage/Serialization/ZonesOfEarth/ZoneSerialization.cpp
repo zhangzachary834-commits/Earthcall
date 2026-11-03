@@ -1,9 +1,15 @@
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
+
+#include "Singularity/OntoMath/Field.hpp"
+#include "Singularity/Core/StringId.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
 #include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
 #include "Singularity/Storage/Serialization/Relation/FormationSerialization.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/HomeSerialization.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Relation/Relation.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
@@ -16,6 +22,8 @@
 extern MaterialManager materials;
 
 std::string zoneIdFromJson(const nlohmann::json& zj) {
+    if (zj.is_string()) return zj.get<std::string>();
+    if (!zj.is_object()) return std::string{};
     return zj.value("identifier", zj.value("name", std::string{}));
 }
 
@@ -189,6 +197,104 @@ void mergeZoneObjectsFromJson(const nlohmann::json& j, Zone& zone) {
     }
 }
 
+// Zones as mathematical bounds (docs/plans/ZONES_AS_MATHEMATICAL_BOUNDS_PLAN_2026-09-23.md).
+// Written ONLY when authored, so a Zone that authored none of it saves
+// exactly as before; read only when present, so every older save loads
+// unchanged. `parentZone` is `within`.
+//   "dimensions": { "<axis>": "<property path>" }
+//   "placement":  { "<axis>": number }
+//   "extent":     { "field": <ScalarField>, "lo": number?, "hi": number? }
+namespace {
+void writeZoneBounds(const Zone& zone, nlohmann::json& zj) {
+    nlohmann::json dims = nlohmann::json::object();
+    for (const auto& [axis, path] : zone.dimensionAxes()) dims[axis] = path;
+    if (!dims.empty()) zj["dimensions"] = dims;
+
+    nlohmann::json placement = nlohmann::json::object();
+    const std::string prefix = Zone::kPlacementPrefix;
+    for (const auto& [id, value] : zone.dynamicProperties()) {
+        const std::string& name = Earthcall::StringInterner::resolve(id);
+        if (name.rfind(prefix, 0) != 0 || name.size() == prefix.size()) continue;
+        double n = 0.0;
+        if (propertyValueToNumber(value, n)) placement[name.substr(prefix.size())] = n;
+    }
+    if (!placement.empty()) zj["placement"] = placement;
+
+    if (zone.extent()) {
+        nlohmann::json extent;
+        extent["field"] = zone.extent()->toJson();
+        PropertyValue bound;
+        double n = 0.0;
+        if (zone.getDynamicProperty(Zone::kExtentLo, bound) && propertyValueToNumber(bound, n)) {
+            extent["lo"] = n;
+        }
+        if (zone.getDynamicProperty(Zone::kExtentHi, bound) && propertyValueToNumber(bound, n)) {
+            extent["hi"] = n;
+        }
+        zj["extent"] = extent;
+    }
+}
+
+// Every OTHER authored property a Zone carries (e.g. an event's meaning,
+// `meaning.object-clicked`, Zach 2026-10-05), under "authoredProperties" as
+// Lexemes already store theirs. Before this, AddProperty on a Zone worked
+// until Save Zone and then silently vanished. The bounds families above keep
+// their own keys and are not repeated here.
+bool isBoundsProperty(const std::string& name) {
+    return name.rfind(Zone::kDimensionPrefix, 0) == 0 || name.rfind(Zone::kPlacementPrefix, 0) == 0 ||
+           name == Zone::kExtentLo || name == Zone::kExtentHi;
+}
+
+void writeZoneAuthoredProperties(const Zone& zone, nlohmann::json& zj) {
+    nlohmann::json authored = nlohmann::json::object();
+    for (const auto& [id, value] : zone.dynamicProperties()) {
+        const std::string& name = Earthcall::StringInterner::resolve(id);
+        if (name.empty() || isBoundsProperty(name)) continue;
+        authored[name] = propertyValueToJson(value);
+    }
+    if (!authored.empty()) zj["authoredProperties"] = std::move(authored);
+}
+
+void readZoneAuthoredProperties(Zone& zone, const nlohmann::json& zj) {
+    if (!zj.contains("authoredProperties") || !zj["authoredProperties"].is_object()) return;
+    for (auto it = zj["authoredProperties"].begin(); it != zj["authoredProperties"].end(); ++it) {
+        if (isBoundsProperty(it.key())) continue;
+        zone.setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
+    }
+}
+
+void readZoneBounds(Zone& zone, const nlohmann::json& zj) {
+    if (zj.contains("dimensions") && zj["dimensions"].is_object()) {
+        for (auto it = zj["dimensions"].begin(); it != zj["dimensions"].end(); ++it) {
+            if (it.value().is_string()) {
+                zone.setDynamicProperty(std::string(Zone::kDimensionPrefix) + it.key(),
+                                        PropertyValue(it.value().get<std::string>()));
+            }
+        }
+    }
+    if (zj.contains("placement") && zj["placement"].is_object()) {
+        for (auto it = zj["placement"].begin(); it != zj["placement"].end(); ++it) {
+            if (it.value().is_number()) {
+                zone.setDynamicProperty(std::string(Zone::kPlacementPrefix) + it.key(),
+                                        PropertyValue(it.value().get<double>()));
+            }
+        }
+    }
+    if (zj.contains("extent") && zj["extent"].is_object()) {
+        const auto& extent = zj["extent"];
+        if (extent.contains("field") && extent["field"].is_object()) {
+            zone.setExtent(OntoMath::ScalarField::fromJson(extent["field"]));
+        }
+        if (extent.contains("lo") && extent["lo"].is_number()) {
+            zone.setDynamicProperty(Zone::kExtentLo, PropertyValue(extent["lo"].get<double>()));
+        }
+        if (extent.contains("hi") && extent["hi"].is_number()) {
+            zone.setDynamicProperty(Zone::kExtentHi, PropertyValue(extent["hi"].get<double>()));
+        }
+    }
+}
+} // namespace
+
 nlohmann::json zoneToJson(const Zone& zone) {
     nlohmann::json zj;
     zj["name"] = zone.name();
@@ -212,6 +318,16 @@ nlohmann::json zoneToJson(const Zone& zone) {
     }
     zj["deletable"] = del;
     zj["world"] = zoneObjectsToJson(zone);
+    if (!zone.storedSingulars().empty()) {
+        zj["storedSingulars"] = nlohmann::json::array();
+        for (const auto& being : zone.storedSingulars()) {
+            auto record = SingularSetToSetCreation::storedToJson(*being);
+            if (record.is_null()) throw std::runtime_error("stored Singular has no persistence codec");
+            zj["storedSingulars"].push_back(std::move(record));
+        }
+    }
+    writeZoneBounds(zone, zj);
+    writeZoneAuthoredProperties(zone, zj);
 
     // The Zone's continuous field root used to exist live, participate in the
     // Formation, expose PropertyPaths, and then simply disappear from saves.
@@ -222,14 +338,37 @@ nlohmann::json zoneToJson(const Zone& zone) {
         zj["spatialRoot"] = root->toJson();
     }
 
+    if (!zone.additionalSpatialFields().empty()) {
+        nlohmann::json fields = nlohmann::json::array();
+        for (const auto& field : zone.additionalSpatialFields()) {
+            if (field) fields.push_back(field->toJson());
+        }
+        if (!fields.empty()) zj["spatialFields"] = std::move(fields);
+    }
+
     nlohmann::json lexemes = nlohmann::json::array();
     for (Singular* member : zone.formation().getMembers()) {
+
         auto* lexeme = dynamic_cast<Singularity::Language::Lexeme*>(member);
         if (!lexeme) continue;
-        lexemes.push_back({
+        // Stored Lexemes have a complete codec record above. Emitting the
+        // legacy projection too would overwrite restored typed references
+        // with the old property decoder's monostate values on hydration.
+        if (std::any_of(zone.storedSingulars().begin(), zone.storedSingulars().end(),
+                        [&](const auto& stored) { return stored.get() == member; })) continue;
+        nlohmann::json item = {
             {"id", lexeme->getIdentifier()},
             {"symbol", lexeme->getSymbol()}
-        });
+        };
+        nlohmann::json dyn = nlohmann::json::object();
+        for (const auto& entry : lexeme->dynamicProperties()) {
+            dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(entry.second);
+        }
+        if (!dyn.empty()) {
+            item["authoredProperties"] = std::move(dyn);
+        }
+        lexemes.push_back(item);
+
     }
     zj["lexemes"] = lexemes;
     zj["formationRelations"] = zone.formation().relations().toJson();
@@ -254,7 +393,8 @@ nlohmann::json zoneToJson(const Zone& zone) {
     return zj;
 }
 
-void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
+void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects, bool restoreExistingLexemes) {
+    if (!zj.is_object()) return;
     if (zj.contains("materials")) {
         materials.mergeFromJson(zj["materials"]);
     }
@@ -267,6 +407,8 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
     if (zj.contains("scope") && zj["scope"].is_string()) {
         zone.setScope(scopeFromName(zj["scope"].get<std::string>()));
     }
+    readZoneBounds(zone, zj);
+    readZoneAuthoredProperties(zone, zj);
     if (zj.contains("qualities") && zj["qualities"].is_object()) {
         for (auto it = zj["qualities"].begin(); it != zj["qualities"].end(); ++it) {
             if (it.value().is_string()) {
@@ -294,6 +436,17 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
     }
 
     if (replaceObjects) {
+        zone.clearAdditionalSpatialFields();
+        if (zj.contains("spatialFields") && zj["spatialFields"].is_array()) {
+            for (const auto& fj : zj["spatialFields"]) {
+                if (!fj.is_object()) continue;
+                auto field = geom::FieldNode::fromJson(fj);
+                if (field) zone.addSpatialField(std::move(field));
+            }
+        }
+    }
+
+    if (replaceObjects) {
         zone.getOwnedObjectsMutable().clear();
     }
     if (zone.getOwnedObjects().empty()) {
@@ -302,6 +455,15 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
         } else if (zj.contains("objects")) {
             zoneObjectsFromJson(zj, zone);
         }
+    }
+    if (zj.contains("storedSingulars")) {
+        // Hydrate before stored graphs resolve source references. A second
+        // relation pass must only rebind, never replay an older snapshot.
+        hydrateZoneLexemes(zone, zj, restoreExistingLexemes);
+        SingularSetToSetCreation::restoreStored(zone, zj["storedSingulars"], replaceObjects, restoreExistingLexemes);
+    } else {
+        if (replaceObjects) zone.clearStoredSingulars();
+        hydrateZoneLexemes(zone, zj, restoreExistingLexemes);
     }
     // A non-empty zone here can mean two different things this function
     // cannot tell apart from replaceObjects alone: a Zone kept LIVE from the
@@ -322,7 +484,7 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
     }
 }
 
-std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj) {
+std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj, bool restoreExistingLexemes) {
     // Identity, not display: MUST agree with zoneIdFromJson, the same
     // resolution every admission/dedup check in ZoneManager.cpp uses to
     // ask "is a Zone with this id already live?" Before this fix, this
@@ -351,6 +513,6 @@ std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj) {
     if (!displayName.empty() && displayName != safeIdentifier) {
         zone->setName(displayName);
     }
-    applyZoneJson(*zone, zj, true);
+    applyZoneJson(*zone, zj, true, restoreExistingLexemes);
     return zone;
 }

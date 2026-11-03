@@ -26,7 +26,8 @@ public:
                       const geom::FieldNode* fieldNode = nullptr,
                       uint64_t memoId = 0,
                       uint32_t memoRevision = 0,
-                      const geom::HeightGrid* heightGrid = nullptr) override;
+                      const geom::HeightGrid* heightGrid = nullptr,
+                      uint32_t memoParameterRevision = 0) override;
     void drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>& segments,
                    const glm::vec4& color, float width, Blend blend) override;
     void setWireframe(bool on) override;

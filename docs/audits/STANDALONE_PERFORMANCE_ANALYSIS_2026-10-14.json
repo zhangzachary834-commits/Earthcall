@@ -1,0 +1,263 @@
+{
+  "signature": "Codex / GPT-6.1 Sol / 01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca",
+  "at": "2026-10-14T22:36:29.545538-07:00",
+  "head_at_verification": "edccd0968cd3f24bb5d027e7b6dd5982e51b914a",
+  "source_sha256": {
+    "scripts/earthcall-analyze": "b9f7e82024adaf5e64d3cc51aee7951747c16249619dca7976f947db3a261ef9",
+    "scripts/performance_analysis/__init__.py": "27ce077e34c7a0d6e99b6a3ffb1e3b87aa294095f3b4b69b6998c3c4b7e0e820",
+    "scripts/performance_analysis/analysis.py": "4cc7390aeb0582a299f360e3091df4755cd367bffd4cacc70cba6635587c8957",
+    "scripts/performance_analysis/cli.py": "30fa991f09f2e8a69545b9e98889514dd69cf1aa48a232ab049cb7e82cb424b4",
+    "scripts/performance_analysis/output.py": "b29d64828b97ecd392fd580f6f289766a8633a69fe9e1bca04a5f78c78167859",
+    "scripts/performance_analysis/timeline.py": "feecf1284dde97c2d1390353ea8d4113dafc35ceb75031b12af3e1698cad0110",
+    "tests/singularity/test_performance_analysis.py": "062061cb684971c3e6301612fe73fe1b9d4fc63ec0c92275bb5722587142bcbf"
+  },
+  "package": {
+    "path": "/private/tmp/earthcall-analyze-20261014-final.pyz",
+    "sha256": "badc563ecfc3073ddd577f7b53a7bf0ea6ed2b0b32713d822672dcbe1dcd4ed4"
+  },
+  "focused_tests": {
+    "command": "python3 -B tests/singularity/test_performance_analysis.py",
+    "passed": 20,
+    "failed": 0
+  },
+  "demo": {
+    "context": {
+      "label": "SYNTHETIC DEMONSTRATION \u2014 not an Earthcall measurement",
+      "comparison_contract": {
+        "backend": "synthetic",
+        "zone": "demo",
+        "width": 2560,
+        "height": 1440,
+        "route": "fixed",
+        "clock_policy": "fixed",
+        "sampling": 96,
+        "surface_policy": "offscreen",
+        "device": "synthetic",
+        "configuration": "demo"
+      }
+    },
+    "frame_count": 24,
+    "frame_p95_ms": 162.0,
+    "gpu_samples": {},
+    "gpu_unavailable": {
+      "gpuVolumePassMs": 24
+    },
+    "model": {
+      "evidence": "explicit structural model; not measured demands, GPU instructions or a proof of runtime Big-O",
+      "dimensions": {
+        "covered_pixels": {
+          "value": 3686400,
+          "meaning": "assumed full framebuffer coverage",
+          "source": "synthetic upper-bound assumption"
+        },
+        "samples": {
+          "value": 96,
+          "meaning": "assumed samples per pixel",
+          "source": "synthetic assumption"
+        },
+        "media": {
+          "value": 4,
+          "meaning": "assumed active media per sample",
+          "source": "synthetic assumption"
+        }
+      },
+      "terms": [
+        {
+          "name": "illustrative density demands",
+          "constant": 1,
+          "factors": {
+            "covered_pixels": 1,
+            "samples": 1,
+            "media": 1
+          },
+          "unit": "expression visits",
+          "cadence": "frame",
+          "assumptions": [
+            "All media demanded at all samples; no proof skips or early exits."
+          ],
+          "modeled_count": 1415577600.0,
+          "complexity": "O(covered_pixels * samples * media)"
+        }
+      ],
+      "warnings": [
+        "Counts with different units/cadences must not be summed or ranked as time."
+      ]
+    },
+    "input_provenance": [
+      {
+        "path": "/private/tmp/earthcall-analysis-demo-20261014-final/inputs/frames.json",
+        "bytes": 14647,
+        "sha256": "6d2c50fe8652dc35859c446e4aac0b05d8e9ac0dbb018efa245fc504e76897db"
+      },
+      {
+        "path": "/private/tmp/earthcall-analysis-demo-20261014-final/inputs/trace.json",
+        "bytes": 358,
+        "sha256": "a07495abbeb348af92702154165421bb0a450bbd78165aa5be87e3de1f02a13c"
+      },
+      {
+        "path": "/private/tmp/earthcall-analysis-demo-20261014-final/inputs/model.json",
+        "bytes": 807,
+        "sha256": "026995d8a7d98ff261b4037e26e0d6dad9d25164ba075df29a752bd6cc660370"
+      },
+      {
+        "path": "/private/tmp/earthcall-analysis-demo-20261014-final/inputs/context.json",
+        "bytes": 357,
+        "sha256": "4f421a700461d7ecd1c3be1bcac95f4e043fe19834a5053ca5bb24c9e05ce92d"
+      }
+    ]
+  },
+  "historical_import": {
+    "path": "/private/tmp/earthcall-analysis-historical-20261014-final/report.json",
+    "input_provenance": [
+      {
+        "path": "/private/tmp/earthcall-sixth-one-sun-01a122d7/proof-pass/fragment-demand/portable-run/results.json",
+        "bytes": 20914,
+        "sha256": "b511b3b8a2a5a557ad3f59e27170c829aa6614da5fdfc68c37e20c57dead6062"
+      },
+      {
+        "path": "/private/tmp/earthcall-sixth-one-sun-01a122d7/proof-pass/aurora-inside.wgsl",
+        "bytes": 57313,
+        "sha256": "897fda994e1d478a277e87d4ed927c04a7e93c15415bbb5c1228c80b22ab8b3f"
+      },
+      {
+        "path": "/private/tmp/earthcall-volume-arithmetic-profile-20261012-full-lattice/report.json",
+        "bytes": 30255,
+        "sha256": "ff12a003fea7a76584b576b99d7c051305df42a275236610ce70cebf7e4c494f"
+      }
+    ],
+    "demand_views_and_times": [
+      {
+        "view": "inside",
+        "time": 0.0,
+        "pixels_identical": false,
+        "max_error": 1
+      },
+      {
+        "view": "spawn",
+        "time": 0.0,
+        "pixels_identical": false,
+        "max_error": 1
+      },
+      {
+        "view": "reverse",
+        "time": 0.0,
+        "pixels_identical": false,
+        "max_error": 1
+      },
+      {
+        "view": "side",
+        "time": 0.0,
+        "pixels_identical": false,
+        "max_error": 1
+      },
+      {
+        "view": "inside",
+        "time": 7.25,
+        "pixels_identical": false,
+        "max_error": 1
+      },
+      {
+        "view": "spawn",
+        "time": 7.25,
+        "pixels_identical": false,
+        "max_error": 1
+      },
+      {
+        "view": "reverse",
+        "time": 7.25,
+        "pixels_identical": false,
+        "max_error": 1
+      },
+      {
+        "view": "side",
+        "time": 7.25,
+        "pixels_identical": false,
+        "max_error": 1
+      }
+    ],
+    "wgsl_function_count": 73,
+    "reachable_function_count": 59,
+    "native_artifact": {
+      "evidence": "historical native fidelity/compilation artifact; not timing",
+      "scope": "finite fidelity screen only; not error proof, cost or live FPS",
+      "images": [
+        {
+          "changed_bytes": 0,
+          "changed_pixels": 0,
+          "maximum_channel_difference": 0,
+          "bytes_over_one_level": 0,
+          "baseline_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+          "candidate_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+          "camera": "side",
+          "time": 0.0,
+          "lane": "observed"
+        },
+        {
+          "changed_bytes": 243300,
+          "changed_pixels": 148496,
+          "maximum_channel_difference": 12,
+          "bytes_over_one_level": 62363,
+          "baseline_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+          "candidate_sha256": "4855753d2cb646e4045963b630ca95f7d40373b3f7fb0c253879fa86684d8f9f",
+          "camera": "side",
+          "time": 0.0,
+          "lane": "safe-fast"
+        },
+        {
+          "changed_bytes": 243301,
+          "changed_pixels": 148497,
+          "maximum_channel_difference": 12,
+          "bytes_over_one_level": 62363,
+          "baseline_sha256": "28d0bdca0f4d391963f06dca0a938dfdf6d53d05505ea1ac0e54237173e33f64",
+          "candidate_sha256": "46da014461de414dfa2b0e574a6b16f40df2d2993edbaa3b9a03e558e48c3ab2",
+          "camera": "side",
+          "time": 0.0,
+          "lane": "safe-precise"
+        }
+      ],
+      "module_records": 39,
+      "summary": {
+        "safe-fast": {
+          "exact_capture_gate": false,
+          "maximum_channel_difference": 12,
+          "finite_one_level_gate": false
+        },
+        "safe-precise": {
+          "exact_capture_gate": false,
+          "maximum_channel_difference": 12,
+          "finite_one_level_gate": false
+        }
+      },
+      "performance_run": false,
+      "production_admitted_skips": 0
+    },
+    "gaps": [
+      "No frame samples supplied: no frame-time or movement-FPS verdict.",
+      "No timeline trace supplied: queue pressure, scheduling and presentation causes are unresolved.",
+      "Imported native artifact is dated evidence; its compiler records and pixels are not fresh runtime costs.",
+      "No automatic bottleneck cause is inferred from static syntax, diagnostic counts or missing measurements."
+    ]
+  },
+  "comparison_self_control": {
+    "rows": 6,
+    "all_zero_deltas": true
+  },
+  "browser_verification": {
+    "url": "http://127.0.0.1:8767/report.html",
+    "filter": "wait_surface",
+    "visible_rows_after_filter": [
+      "wait_surface_ms24131.0132.0131.0"
+    ],
+    "reset_filter": true,
+    "layout_viewport": "570px-wide screenshot observed",
+    "scope": "synthetic demonstration only",
+    "screenshot": {
+      "path": "/private/tmp/earthcall-analysis-demo-20261014-final/report-preview.png",
+      "sha256": "203aea3d7b35d32d73dbf1ce2def033f3d6549b48cd64ad92ad6d5228a5e1a52"
+    },
+    "console_warnings_and_errors": [],
+    "temporary_tab_closed": true,
+    "both_matching_preview_servers_stopped": true
+  },
+  "scope": "analyzer/tool verification only; no fresh Earthcall frame/GPU measurement, production mutation or author-decision implementation"
+}

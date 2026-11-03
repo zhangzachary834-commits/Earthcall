@@ -1,8 +1,8 @@
 #include "Singularity/Foreign/API/EarthcallAPI.hpp"
 #include "Singularity/Foreign/API/SecurityManager.hpp"
-#include "Singularity/FirstMoverOntology/Legacy/DesignSystem.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include <cassert>
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -32,7 +32,7 @@ int main() {
     );
     assert(api.hasPermission("design_system") && "Permission for design_system should now be granted");
 
-    // 2. Test creation without attached DesignSystem (data tracking mode)
+    // 2. Test creation with API-owned design-element records
     bool createdWithPerm = api.createDesignElement(elem1);
     assert(createdWithPerm && "Creation should succeed when permission is granted");
 
@@ -50,9 +50,7 @@ int main() {
     elements = api.getDesignElements();
     assert(elements[0].position.x == 50.0f);
 
-    // 4. Test creation with attached DesignSystem
-    DesignSystem ds;
-    api.setDesignSystem(&ds);
+    // 4. Test API-owned shape/text/effect records after retiring legacy DesignSystem
 
     Integration::EarthcallAPI::DesignElement shapeElem;
     shapeElem.name = "star_1";
@@ -63,8 +61,7 @@ int main() {
     shapeElem.properties["color"] = "#00ff00";
 
     bool createdShape = api.createDesignElement(shapeElem);
-    assert(createdShape && "Shape creation with DesignSystem attached should succeed");
-    assert(ds.getShapeSystem()->getShapeElements().size() == 1 && "ShapeSystem should contain 1 shape");
+    assert(createdShape && "Shape creation in EarthcallAPI should succeed");
 
     Integration::EarthcallAPI::DesignElement textElem;
     textElem.name = "label_1";
@@ -74,8 +71,7 @@ int main() {
     textElem.properties["color"] = "#ffffff";
 
     bool createdText = api.createDesignElement(textElem);
-    assert(createdText && "Text creation with DesignSystem attached should succeed");
-    assert(ds.getTextSystem()->getTextElements().size() == 1 && "TextSystem should contain 1 text element");
+    assert(createdText && "Text creation in EarthcallAPI should succeed");
 
     Integration::EarthcallAPI::DesignElement effectElem;
     effectElem.name = "glow_1";
@@ -84,8 +80,21 @@ int main() {
     effectElem.properties["intensity"] = "0.8";
 
     bool createdEffect = api.createDesignElement(effectElem);
-    assert(createdEffect && "Effect creation with DesignSystem attached should succeed");
-    assert(ds.getEffectsSystem()->getEffects().size() == 1 && "EffectsSystem should contain 1 effect");
+    assert(createdEffect && "Effect creation in EarthcallAPI should succeed");
+
+    // Each kind remains queryable without legacy graphics subsystem delegation.
+    const auto designRecords = api.getDesignElements();
+    const auto findDesign = [&](const std::string& name) {
+        return std::find_if(designRecords.begin(), designRecords.end(),
+                            [&](const auto& record) { return record.name == name; });
+    };
+    const auto shapeRecord = findDesign("star_1");
+    const auto textRecord = findDesign("label_1");
+    const auto effectRecord = findDesign("glow_1");
+    assert(shapeRecord != designRecords.end() && shapeRecord->type == "star");
+    assert(shapeRecord->rotation.z == 45.0f);
+    assert(textRecord != designRecords.end() && textRecord->properties.at("text") == "Hello World");
+    assert(effectRecord != designRecords.end() && effectRecord->properties.at("intensity") == "0.8");
 
     // 5. Test template application
     bool templateApplied = api.applyDesignTemplate("card");
@@ -100,6 +109,17 @@ int main() {
 
     bool deleteNonExistent = api.deleteDesignElement("non_existent_element");
     assert(!deleteNonExistent && "Deletion of non-existent element should fail");
+
+    // --- WITNESS ANALYSIS & DOCUMENTATION ---
+    // What the old test could prove:
+    //   A standalone EarthcallAPI object delegates object/zone operations to whatever
+    //   ZoneManager pointer is explicitly attached to it via api.setZoneManager(&zm).
+    //
+    // What the old test could NOT prove:
+    //   That the actual production engine boot sequence (Engine::initLogic()) bound the
+    //   live ZoneManager (mgr) to the global Integration::getEarthcallAPI() singleton.
+    //   Without that binding, real runtime calls from Web/foreign interfaces (e.g. RealWebView.cpp)
+    //   to getEarthcallAPI().createObject(...) silently failed on the real application path.
 
     // --- WORLD/ENVIRONMENT ACCESS TESTS ---
     std::cout << "\n--- World/Environment Access Tests ---" << std::endl;
@@ -133,6 +153,13 @@ int main() {
     assert(api.setZoneTheme("zone1", "forest"));
     assert(api.getZones().empty()); // Hardcoded to empty right now
 
+    // Test unhydrated ZoneManager (empty zones vector) safety in createObject & deleteObject
+    ZoneManager emptyZm;
+    api.setZoneManager(&emptyZm);
+    assert(!api.createObject("rock_empty_zm", glm::vec3(0.0f)) && "createObject must return false without crashing on unhydrated ZoneManager");
+    assert(!api.deleteObject("some_id") && "deleteObject must return false without crashing on unhydrated ZoneManager");
+    api.setZoneManager(&zm);
+
     // With _zoneManager attached and world_access permission granted, object operations succeed
     assert(api.createObject("rock", glm::vec3(0.0f)));
     assert(zm.active().getOwnedObjects().size() == 1);
@@ -143,6 +170,19 @@ int main() {
     assert(!api.modifyObject("non_existent_rock", glm::vec3(1.0f), glm::vec3(1.0f)));
     assert(!api.deleteObject("non_existent_rock"));
     assert(api.setCameraPosition(glm::vec3(10.0f)));
+
+    // --- REAL RUNTIME GLOBAL SINGLETON PATH TEST ---
+    // Test that the global getEarthcallAPI() singleton used by Web/foreign runtime
+    // properly receives a ZoneManager binding and performs real application calls.
+    std::cout << "\n--- Global Singleton Real Path Test ---" << std::endl;
+    Integration::EarthcallAPI& globalApi = Integration::getEarthcallAPI();
+    globalApi.setZoneManager(&zm);
+    assert(globalApi.createObject("global_rock", glm::vec3(5.0f, 0.0f, 0.0f)));
+    assert(zm.active().getOwnedObjects().size() == 1);
+    std::string globalRockId = zm.active().getOwnedObjects()[0]->getIdentifier();
+    assert(globalApi.modifyObject(globalRockId, glm::vec3(5.0f, 5.0f, 5.0f), glm::vec3(2.0f, 2.0f, 2.0f)));
+    assert(globalApi.deleteObject(globalRockId));
+    assert(zm.active().getOwnedObjects().empty());
 
     // --- DATA/SAVE ACCESS TESTS ---
     std::cout << "\n--- Data/Save Access Tests ---" << std::endl;

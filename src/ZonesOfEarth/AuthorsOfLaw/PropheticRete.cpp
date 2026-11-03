@@ -384,7 +384,16 @@ void analyzeAction(const ActionNode& node, LawFacts& out) {
         // event mints a fact of a type this walk never sees. None of that is
         // enumerable from a path walk, and pretending otherwise is how a
         // filter derived from this index would start dropping real changes.
-        case ActionNode::Kind::Create:      structural("Create mints a being"); break;
+        case ActionNode::Kind::Create:
+            structural("Create mints a being");
+            if (!node.path.empty()) {
+                // A whole prototype codec reads state beyond one leaf. Until
+                // the codec can enumerate that footprint, unknown must stay
+                // conservative; it must never turn a creation Law deaf.
+                out.opaqueReads = true;
+                out.notes.push_back("opaque read: Create derives a whole Singular prototype");
+            }
+            break;
         case ActionNode::Kind::Spawn:       structural("Spawn instantiates a concept"); break;
         case ActionNode::Kind::Synthesize:  structural("Synthesize composes creation"); break;
         case ActionNode::Kind::Destroy:     structural("Destroy unmakes a being"); break;
@@ -980,15 +989,18 @@ std::vector<std::string> normalizedPaths(const std::string& dotted) {
     return out;
 }
 
-bool pathsMayAlias(const std::string& a, const std::string& b) {
-    const auto aa = normalizedPaths(a);
-    const auto bb = normalizedPaths(b);
+bool pathsMayAlias(const std::vector<std::string>& aa,
+                   const std::vector<std::string>& bb) {
     for (const auto& left : aa) {
         for (const auto& right : bb) {
             if (left == right) return true;
         }
     }
     return false;
+}
+
+bool pathsMayAlias(const std::string& a, const std::string& b) {
+    return pathsMayAlias(normalizedPaths(a), normalizedPaths(b));
 }
 
 bool namesWorldReading(const std::string& dotted) {
@@ -1015,6 +1027,19 @@ void collectSelfImpossible(const ConditionNode& node, const std::string& lawId,
 
 } // namespace
 
+bool unknownSourceMayReach(const Index::UnknownWriteSource& source,
+                           const std::string& path) {
+    // This is the positive/negative knowledge asymmetry in executable form.
+    // A partial domain may contain useful positive facts, but absence from it
+    // proves nothing. Only a source whose domain is certified complete may
+    // use disjointness to answer "no".
+    if (!source.domainComplete) return true;
+    for (const auto& candidate : source.knownMayWritePaths) {
+        if (pathsMayAlias(candidate, path)) return true;
+    }
+    return false;
+}
+
 void Index::clear() {
     _facts.clear();
     _readNames.clear();
@@ -1022,6 +1047,7 @@ void Index::clear() {
     _writeRanges.clear();
     _unreachable.clear();
     _relevanceEdges.clear();
+    _unknownWriteSources.clear();
     _complete = true;
     _relevanceComplete = true;
 }
@@ -1041,6 +1067,16 @@ void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
         if (facts.opaqueWrites) {
             anyOpaqueWrite = true;
             _relevanceComplete = false;
+
+            std::string why = "opaque write: transform not structurally enumerable";
+            for (const auto& note : facts.notes) {
+                if (note.rfind("opaque write:", 0) == 0) {
+                    why = note;
+                    break;
+                }
+            }
+            _unknownWriteSources.push_back(
+                UnknownWriteSource{facts.lawId, why, !facts.writes.empty()});
         }
         _readNames.insert(facts.readNames.begin(), facts.readNames.end());
         _readRoots.insert(facts.readRoots.begin(), facts.readRoots.end());
@@ -1061,30 +1097,55 @@ void Index::rebuild(const std::vector<std::shared_ptr<Law>>& laws) {
     }
 
     // Pairwise Prophetic relevance graph. This is the modern descendant of
-    // the old "ActionNode -> Beta back-pointer" idea: prove which authored
-    // write branches can possibly feed which authored read branches, but do
-    // NOT yet reify the result into a Person's world or use it to narrow the
-    // hot path. Opacity invalidates the graph globally; callers then fall back
-    // to a lower complete Formation-Rete tier.
+    // the old "ActionNode -> Beta back-pointer" idea: prove which modeled
+    // write branches can possibly feed which modeled read branches.
+    //
+    // IMPORTANT: opacity no longer ERases known edges. It creates an explicit
+    // unknown frontier and leaves relevanceComplete() false. That distinction
+    // is the §20/§21 unknown-variable model: "these edges are genuinely known"
+    // and "there may also be other edges we cannot enumerate" can both be true.
+    // Runtime consumers still must fall back unless the graph is complete.
     _relevanceComplete = _complete && !anyOpaqueWrite;
-    if (_relevanceComplete) {
-        std::set<std::tuple<std::string, std::string, std::string, std::string,
-                            std::string, bool>> seen;
-        for (const auto& writerFacts : _facts) {
-            for (const auto& write : writerFacts.writes) {
-                for (const auto& readerFacts : _facts) {
-                    for (const auto& read : readerFacts.branchReads) {
-                        if (!pathsMayAlias(write.path, read.path)) continue;
-                        if (!write.range.mayIntersect(read.satisfying)) continue;
-                        const auto key = std::make_tuple(
-                            write.lawId, write.branchId, read.lawId, read.branchId,
-                            read.path, read.aboutInstances);
-                        if (!seen.insert(key).second) continue;
-                        _relevanceEdges.push_back(RelevanceEdge{
-                            write.lawId, write.branchId,
-                            read.lawId, read.branchId,
-                            read.path, read.aboutInstances});
-                    }
+
+    // Normalize every authored effect path once per rebuild. The relevance
+    // graph is pairwise in writes x branchReads; reparsing the same path in
+    // that inner product multiplies PropertyPath parsing and tail-string work
+    // by the candidate-pair count without changing the proof.
+    std::vector<std::vector<std::vector<std::string>>> writeNorms(_facts.size());
+    std::vector<std::vector<std::vector<std::string>>> readNorms(_facts.size());
+
+    for (std::size_t i = 0; i < _facts.size(); ++i) {
+        writeNorms[i].reserve(_facts[i].writes.size());
+        for (const auto& write : _facts[i].writes) {
+            writeNorms[i].push_back(normalizedPaths(write.path));
+        }
+
+        readNorms[i].reserve(_facts[i].branchReads.size());
+        for (const auto& read : _facts[i].branchReads) {
+            readNorms[i].push_back(normalizedPaths(read.path));
+        }
+    }
+
+    std::set<std::tuple<std::string, std::string, std::string, std::string,
+                        std::string, bool>> seen;
+    for (std::size_t i = 0; i < _facts.size(); ++i) {
+        const auto& writerFacts = _facts[i];
+        for (std::size_t w = 0; w < writerFacts.writes.size(); ++w) {
+            const auto& write = writerFacts.writes[w];
+            for (std::size_t j = 0; j < _facts.size(); ++j) {
+                const auto& readerFacts = _facts[j];
+                for (std::size_t r = 0; r < readerFacts.branchReads.size(); ++r) {
+                    const auto& read = readerFacts.branchReads[r];
+                    if (!pathsMayAlias(writeNorms[i][w], readNorms[j][r])) continue;
+                    if (!write.range.mayIntersect(read.satisfying)) continue;
+                    const auto key = std::make_tuple(
+                        write.lawId, write.branchId, read.lawId, read.branchId,
+                        read.path, read.aboutInstances);
+                    if (!seen.insert(key).second) continue;
+                    _relevanceEdges.push_back(RelevanceEdge{
+                        write.lawId, write.branchId,
+                        read.lawId, read.branchId,
+                        read.path, read.aboutInstances});
                 }
             }
         }
@@ -1145,6 +1206,25 @@ Range Index::writeRangeOf(const std::string& path) const {
     return found ? acc : Range::top();
 }
 
+bool Index::unknownWriteMayReach(const std::string& path) const {
+    for (const auto& source : _unknownWriteSources) {
+        if (unknownSourceMayReach(source, path)) return true;
+    }
+    return false;
+}
+
+bool Index::unknownWriteDomainCompleteFor(const std::string& path) const {
+    // The argument is intentionally present even though today's frontier has
+    // only whole-domain completeness. It makes the API property-granular now
+    // and leaves room for future provenance to certify subdomains without
+    // changing the cross-Law solver's question.
+    (void)path;
+    for (const auto& source : _unknownWriteSources) {
+        if (!source.domainComplete) return false;
+    }
+    return true;
+}
+
 nlohmann::json Index::toJson() const {
     nlohmann::json j;
     j["complete"] = _complete;
@@ -1190,6 +1270,16 @@ nlohmann::json Index::toJson() const {
         }
         lj["notes"] = facts.notes;
         j["laws"].push_back(std::move(lj));
+    }
+
+    j["unknownWriteSources"] = nlohmann::json::array();
+    for (const auto& source : _unknownWriteSources) {
+        j["unknownWriteSources"].push_back({
+            {"lawId", source.lawId},
+            {"why", source.why},
+            {"hasModeledWrites", source.hasModeledWrites},
+            {"knownMayWritePaths", source.knownMayWritePaths},
+            {"domainComplete", source.domainComplete}});
     }
 
     j["relevanceEdges"] = nlohmann::json::array();

@@ -28,6 +28,7 @@
 #include <glm/glm.hpp>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -92,13 +93,17 @@ int main() {
     const glm::mat4 viewM = glm::lookAt(eye, glm::vec3(0.0f), glm::vec3(0, 1, 0));
     const glm::mat4 invVP = glm::inverse(proj * viewM);
 
-    auto gpuMask = [&](const geom::SdfNode& field, const glm::mat4& model) {
+    auto gpuMask = [&](const geom::SdfNode& field, const glm::mat4& model,
+                       uint64_t memoId, bool rangeProxyEnabled) {
         RenderMaterial mat;
         mat.baseColor = glm::vec3(1.0f);
+        r.setSdfRangeProxyEnabled(rangeProxyEnabled);
         r.setCamera(viewM, proj, eye);
         r.setModel(model);
         r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
-        r.drawImplicit(field, glm::vec3(kExtent), mat);
+        r.drawImplicit(field, glm::vec3(kExtent), mat, nullptr,
+                       memoId, /*memoRevision=*/1, nullptr,
+                       /*memoParameterRevision=*/1);
         r.endFrame();
 
         WGPUCommandEncoder enc = wgpuDeviceCreateCommandEncoder(gpu.device, nullptr);
@@ -288,6 +293,101 @@ int main() {
         cases.push_back({ "Expr(noise_offset)", n, glm::mat4(1.0f), 10 });
     }
 
+    // Rung 4 native matrix parity: the SAME authored MathNode is evaluated by
+    // the CPU raycaster and lowered to WGSL for the GPU. The non-uniform linear
+    // map makes row/column convention errors move the visible zero set.
+    // f(p) = length(M*p) - 0.55, M = diag(1.35, 0.75, 1.10).
+    {
+        auto numberNode = [](double value) {
+            auto n = std::make_unique<OntoMath::MathNode>();
+            n->op = OntoMath::MathNode::Op::ScalarLeaf;
+            n->scalarForm.terms.push_back(OntoMath::Term(value));
+            return n;
+        };
+        auto matrix = std::make_unique<OntoMath::MathNode>();
+        matrix->op = OntoMath::MathNode::Op::MatrixConstruct;
+        matrix->matrixRows = 3;
+        matrix->matrixCols = 3;
+        const double entries[9] = {1.35,0.0,0.0, 0.0,0.75,0.0, 0.0,0.0,1.10};
+        for (double value : entries) matrix->children.push_back(numberNode(value));
+        auto point = std::make_unique<OntoMath::MathNode>();
+        point->op = OntoMath::MathNode::Op::ValueLeaf;
+        point->variableName = OntoMath::kAmbientPointVar;
+        auto mapped = std::make_unique<OntoMath::MathNode>();
+        mapped->op = OntoMath::MathNode::Op::MatrixVectorMultiply;
+        mapped->children.push_back(std::move(matrix));
+        mapped->children.push_back(std::move(point));
+        auto length = std::make_unique<OntoMath::MathNode>();
+        length->op = OntoMath::MathNode::Op::Length;
+        length->children.push_back(std::move(mapped));
+        auto field = std::make_shared<OntoMath::MathNode>();
+        field->op = OntoMath::MathNode::Op::Sub;
+        field->children.push_back(std::move(length));
+        field->children.push_back(numberNode(0.55));
+        auto n = std::make_shared<geom::SdfNode>();
+        n->op = geom::SdfOp::Leaf;
+        n->prim = geom::SdfPrim::Expr;
+        n->mathNode = std::move(field);
+        cases.push_back({ "Expr(matrix)", n });
+    }
+
+    // Transpose parity uses a non-symmetric map so transpose cannot collapse
+    // to the same coefficients. Inverse parity exercises the WGSL backend's
+    // OntoMath-derived numeric inverse path rather than a shader-owned algorithm.
+    const auto addMatrixFieldCase = [&](const char* name,
+                                        OntoMath::MathNode::Op unaryOp,
+                                        const double entries[9]) {
+        auto numberNode = [](double value) {
+            auto n = std::make_unique<OntoMath::MathNode>();
+            n->op = OntoMath::MathNode::Op::ScalarLeaf;
+            n->scalarForm.terms.push_back(OntoMath::Term(value));
+            return n;
+        };
+        auto matrix = std::make_unique<OntoMath::MathNode>();
+        matrix->op = OntoMath::MathNode::Op::MatrixConstruct;
+        matrix->matrixRows = 3;
+        matrix->matrixCols = 3;
+        for (int i = 0; i < 9; ++i) matrix->children.push_back(numberNode(entries[i]));
+        auto transformedMatrix = std::make_unique<OntoMath::MathNode>();
+        transformedMatrix->op = unaryOp;
+        transformedMatrix->children.push_back(std::move(matrix));
+        auto point = std::make_unique<OntoMath::MathNode>();
+        point->op = OntoMath::MathNode::Op::ValueLeaf;
+        point->variableName = OntoMath::kAmbientPointVar;
+        auto mapped = std::make_unique<OntoMath::MathNode>();
+        mapped->op = OntoMath::MathNode::Op::MatrixVectorMultiply;
+        mapped->children.push_back(std::move(transformedMatrix));
+        mapped->children.push_back(std::move(point));
+        auto length = std::make_unique<OntoMath::MathNode>();
+        length->op = OntoMath::MathNode::Op::Length;
+        length->children.push_back(std::move(mapped));
+        auto field = std::make_shared<OntoMath::MathNode>();
+        field->op = OntoMath::MathNode::Op::Sub;
+        field->children.push_back(std::move(length));
+        field->children.push_back(numberNode(0.55));
+        auto n = std::make_shared<geom::SdfNode>();
+        n->op = geom::SdfOp::Leaf;
+        n->prim = geom::SdfPrim::Expr;
+        n->mathNode = std::move(field);
+        cases.push_back({ name, n });
+    };
+    {
+        const double transposeEntries[9] = {
+            1.10, 0.20, 0.00,
+            0.00, 0.85, 0.15,
+            0.05, 0.00, 1.25
+        };
+        addMatrixFieldCase("Expr(transpose)", OntoMath::MathNode::Op::MatrixTranspose,
+                           transposeEntries);
+        const double inverseEntries[9] = {
+            1.40, 0.00, 0.00,
+            0.00, 0.80, 0.00,
+            0.00, 0.00, 1.20
+        };
+        addMatrixFieldCase("Expr(inverse)", OntoMath::MathNode::Op::MatrixInverse,
+                           inverseEntries);
+    }
+
     // Every operator.
     auto a = leaf(geom::SdfPrim::Sphere, glm::vec3(0.6f), 0.0f, glm::vec3(-0.25f, 0, 0));
     auto b = leaf(geom::SdfPrim::Box,    glm::vec3(0.45f), 0.0f, glm::vec3( 0.25f, 0, 0));
@@ -296,6 +396,8 @@ int main() {
     cases.push_back({ "Subtract",    binary(geom::SdfOp::Subtract,    a, b) });
     cases.push_back({ "Morph",       binary(geom::SdfOp::Morph,       a, b, 0.35f) });
     cases.push_back({ "SmoothUnion", binary(geom::SdfOp::SmoothUnion, a, b, 0.3f) });
+
+
 
     // Nesting, to prove the emitter composes rather than only handling depth 1.
     cases.push_back({ "Nested",
@@ -321,15 +423,26 @@ int main() {
     }
 
     int failures = 0;
-    for (const Case& c : cases) {
-        const std::vector<uint8_t> g = gpuMask(*c.node, c.model);
+    size_t rangeProxyAppliedCases = 0;
+    size_t rangeTraversalAppliedCases = 0;
+    for (size_t caseIndex = 0; caseIndex < cases.size(); ++caseIndex) {
+        const Case& c = cases[caseIndex];
+        const uint64_t memoId = 1000u + static_cast<uint64_t>(caseIndex);
+        const std::vector<uint8_t> baseline =
+            gpuMask(*c.node, c.model, memoId, /*rangeProxyEnabled=*/false);
+        const std::vector<uint8_t> accelerated =
+            gpuMask(*c.node, c.model, memoId, /*rangeProxyEnabled=*/true);
+        const Renderer::FrameStats proxyStats = r.frameStats();
         const std::vector<uint8_t> p = cpuMask(*c.node, c.model);
 
-        size_t gpuOn = 0, cpuOn = 0, diff = 0;
-        for (size_t i = 0; i < g.size(); ++i) {
-            gpuOn += g[i]; cpuOn += p[i];
-            if (g[i] != p[i]) ++diff;
+        size_t gpuOn = 0, cpuOn = 0, diff = 0, proxyDiff = 0;
+        for (size_t i = 0; i < baseline.size(); ++i) {
+            gpuOn += baseline[i]; cpuOn += p[i];
+            if (baseline[i] != p[i]) ++diff;
+            if (baseline[i] != accelerated[i]) ++proxyDiff;
         }
+        if (proxyStats.sdfRangeProxyDraws > 0) ++rangeProxyAppliedCases;
+        if (proxyStats.sdfRangeTraversalDraws > 0) ++rangeTraversalAppliedCases;
 
         // Scale the tolerance with the silhouette's perimeter: disagreement is a
         // boundary phenomenon, so it grows with the edge, not the area. ~sqrt(area)
@@ -359,16 +472,86 @@ int main() {
         size_t holes = 0;
         for (uint32_t y = 1; y + 1 < H; ++y)
             for (uint32_t x = 1; x + 1 < W; ++x)
-                if (!g[y * W + x] && g[(y - 1) * W + x] && g[(y + 1) * W + x] &&
-                    g[y * W + x - 1] && g[y * W + x + 1]) ++holes;
+                if (!baseline[y * W + x] &&
+                    baseline[(y - 1) * W + x] && baseline[(y + 1) * W + x] &&
+                    baseline[y * W + x - 1] && baseline[y * W + x + 1]) ++holes;
 
-        const bool ok = (cpuOn > 0) && (gpuOn > 0) && (diff <= tolerance) && (holes == 0);
+        // Range acceleration may now change both the raster proxy and where the
+        // marcher spends exact evaluations, but it may never change authored
+        // visible truth. OFF is the exact baseline oracle; ON must remain
+        // bit-for-bit identical in coverage.
+        const bool proxyExact = proxyDiff == 0;
+        const bool ok = (cpuOn > 0) && (gpuOn > 0) && (diff <= tolerance) &&
+                        (holes == 0) && proxyExact;
         if (holes != 0)
             std::printf("  %-14s %zu HOLE(S) — the marcher passed through its own surface\n",
                         c.name, holes);
-        std::printf("  %-14s gpu=%4zu cpu=%4zu diff=%3zu (tol %3zu) %s\n",
-                    c.name, gpuOn, cpuOn, diff, tolerance, ok ? "ok" : "MISMATCH");
+        if (!proxyExact)
+            std::printf("  %-14s RANGE-PROXY changed %zu pixel(s) — proof activation mismatch\n",
+                        c.name, proxyDiff);
+        std::printf("  %-14s gpu=%4zu cpu=%4zu diff=%3zu (tol %3zu) proxyDiff=%3zu %s\n",
+                    c.name, gpuOn, cpuOn, diff, tolerance, proxyDiff,
+                    ok ? "ok" : "MISMATCH");
         if (!ok) ++failures;
+    }
+
+    // Raster-box tightening is independently quarantined after a native
+    // transformed SmoothUnion edge mismatch. The active rung under test here is
+    // the proof hierarchy plus GPU ray traversal; complete zero-free culling is
+    // still covered by the strong witness below.
+    if (rangeProxyAppliedCases != 0) {
+        std::printf("  FAILED: quarantined raster proxy tightening unexpectedly activated\n");
+        ++failures;
+    }
+    // Distance-field traversal is independently quarantined after the
+    // SmoothUnion@xform one-pixel witness. Generic parity therefore does not
+    // require traversal here; the authored-Perlin six-camera corpus below the
+    // CI lane is the activation authority for the gradient-corrected Expr path.
+    (void)rangeTraversalAppliedCases;
+
+    // Sign-asymmetry witness: f(p)=-5 is also mathematically zero-free,
+    // but the baseline marcher begins inside negative space and reports an
+    // immediate hit. Range acceleration must preserve that behavior rather
+    // than treating "no zero" as synonymous with "empty outside."
+    {
+        auto constant = std::make_shared<OntoMath::MathNode>();
+        constant->op = OntoMath::MathNode::Op::ScalarLeaf;
+        constant->scalarForm.terms.push_back(OntoMath::Term(-5.0));
+        const geom::SdfNode inside = geom::makeImplicit(constant);
+        const auto off = gpuMask(inside, glm::mat4(1.0f), 999998u, false);
+        const auto on  = gpuMask(inside, glm::mat4(1.0f), 999998u, true);
+        const Renderer::FrameStats stats = r.frameStats();
+        const bool identical = off == on;
+        const bool stillRendered =
+            std::any_of(on.begin(), on.end(), [](uint8_t v) { return v != 0; });
+        const bool notCulled = stats.sdfRangeProxyCulledDraws == 0;
+        std::printf("  %-14s pixels=%s cullCounter=%u %s\n",
+                    "RangeNegative", identical ? "identical" : "MISMATCH",
+                    stats.sdfRangeProxyCulledDraws,
+                    (identical && stillRendered && notCulled) ? "ok" : "FAILED");
+        if (!identical || !stillRendered || !notCulled) ++failures;
+    }
+
+    // Strong cull witness: f(p)=5 has no zero anywhere in the render domain.
+    // OFF and ON must both produce black, and ON must report a proof-authorized
+    // culled draw rather than merely marching to the same empty answer.
+    {
+        auto constant = std::make_shared<OntoMath::MathNode>();
+        constant->op = OntoMath::MathNode::Op::ScalarLeaf;
+        constant->scalarForm.terms.push_back(OntoMath::Term(5.0));
+        const geom::SdfNode empty = geom::makeImplicit(constant);
+        const auto off = gpuMask(empty, glm::mat4(1.0f), 999999u, false);
+        const auto on  = gpuMask(empty, glm::mat4(1.0f), 999999u, true);
+        const Renderer::FrameStats stats = r.frameStats();
+        const bool bothEmpty =
+            std::all_of(off.begin(), off.end(), [](uint8_t v) { return v == 0; }) &&
+            std::all_of(on.begin(), on.end(), [](uint8_t v) { return v == 0; });
+        const bool provedCull = stats.sdfRangeProxyCulledDraws > 0;
+        std::printf("  %-14s pixels=%s cullCounter=%u %s\n",
+                    "RangeProxyEmpty", bothEmpty ? "identical-empty" : "MISMATCH",
+                    stats.sdfRangeProxyCulledDraws,
+                    (bothEmpty && provedCull) ? "ok" : "FAILED");
+        if (!bothEmpty || !provedCull) ++failures;
     }
 
     setCurrentRenderer(nullptr);

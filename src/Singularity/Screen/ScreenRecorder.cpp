@@ -1,5 +1,6 @@
 #include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 
 #include <zlib.h>
@@ -26,12 +27,76 @@
 #else
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <signal.h>
+#include <pthread.h>
+#include <fcntl.h>
 #endif
 
 namespace Singularity {
 namespace Screen {
 
 namespace fs = std::filesystem;
+
+// Subprocess I/O is Kernel substrate. A closed encoder pipe must refuse a
+// frame, never terminate the Person's whole engine with SIGPIPE.
+static bool writeProcessFrame(FILE* pipe, const std::vector<uint8_t>& pixels) {
+#if defined(__APPLE__)
+    // Darwin can deliver a pipe signal to another engine thread. Suppress it
+    // on this descriptor, rather than changing the process's signal policy.
+    if (fcntl(fileno(pipe), F_SETNOSIGPIPE, 1) == -1) return false;
+#endif
+#if !defined(_WIN32)
+    sigset_t blocked, previous, pending;
+    sigemptyset(&blocked);
+    sigaddset(&blocked, SIGPIPE);
+    if (pthread_sigmask(SIG_BLOCK, &blocked, &previous) != 0) return false;
+    sigpending(&pending);
+    bool alreadyPending = sigismember(&pending, SIGPIPE);
+#endif
+    bool ok = std::fwrite(pixels.data(), 1, pixels.size(), pipe) == pixels.size();
+    ok = std::fflush(pipe) == 0 && ok;
+#if !defined(_WIN32)
+    sigpending(&pending);
+    if (!alreadyPending && sigismember(&pending, SIGPIPE)) {
+        int signal;
+        sigwait(&blocked, &signal);
+    }
+    pthread_sigmask(SIG_SETMASK, &previous, nullptr);
+#endif
+    return ok;
+}
+
+static int closeProcessPipe(FILE* pipe) {
+#if defined(__APPLE__)
+    fcntl(fileno(pipe), F_SETNOSIGPIPE, 1);
+#endif
+#if !defined(_WIN32)
+    sigset_t blocked, previous, pending;
+    sigemptyset(&blocked);
+    sigaddset(&blocked, SIGPIPE);
+    if (pthread_sigmask(SIG_BLOCK, &blocked, &previous) != 0) return -1;
+    sigpending(&pending);
+    bool alreadyPending = sigismember(&pending, SIGPIPE);
+#endif
+    // pclose also flushes stdio's buffered tail, so it has the same broken-pipe
+    // boundary as fwrite, even after a failed explicit fflush.
+    int result = pclose(pipe);
+#if !defined(_WIN32)
+    sigpending(&pending);
+    if (!alreadyPending && sigismember(&pending, SIGPIPE)) {
+        int signal;
+        sigwait(&blocked, &signal);
+    }
+    pthread_sigmask(SIG_SETMASK, &previous, nullptr);
+#endif
+    return result;
+}
+
+static std::string shellPath(const std::string& path) {
+    std::string result = "'";
+    for (char c : path) result += c == '\'' ? "'\\''" : std::string(1, c);
+    return result + "'";
+}
 
 // ---------------------------------------------------------------------------
 // Static file export utilities
@@ -191,16 +256,30 @@ bool ScreenRecorder::requestAccessibilityPermission() {
 // ScreenRecorder Lifecycle
 // ---------------------------------------------------------------------------
 
+static ScreenRecorder* s_activeScreenRecorder = nullptr;
+
+ScreenRecorder* ScreenRecorder::activeInstance() {
+    return s_activeScreenRecorder;
+}
+
 ScreenRecorder::ScreenRecorder() : Law("screen-recorder") {
     setName("Screen Recorder");
     _enabled = true;
     _recording = false;
     _paused = false;
+    s_activeScreenRecorder = this;
 }
 
 ScreenRecorder::~ScreenRecorder() {
     if (_recording) {
         stopRecording();
+    }
+    if (_pipeProcess) {
+        closeProcessPipe(_pipeProcess);
+        _pipeProcess = nullptr;
+    }
+    if (s_activeScreenRecorder == this) {
+        s_activeScreenRecorder = nullptr;
     }
 }
 
@@ -216,6 +295,9 @@ ScreenRecorder* ScreenRecorder::find(LawManager& laws) {
 }
 
 std::string ScreenRecorder::ensureSessionDirectory() {
+    if (_format == "pipe") {
+        return "";
+    }
     auto now = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
     std::tm gm_tm;
@@ -227,11 +309,24 @@ std::string ScreenRecorder::ensureSessionDirectory() {
     char buf[64];
     std::strftime(buf, sizeof(buf), "rec_%Y%m%d_%H%M%S", &gm_tm);
 
-    fs::path baseDir = _outputPath.empty() ? "saves/recordings" : _outputPath;
-    fs::path sessionDir = baseDir / buf;
+    fs::path baseDir = Singularity::Storage::VirtualFileSystem::resolve(_outputPath.empty() ? "saves/recordings" : _outputPath);
     std::error_code ec;
-    fs::create_directories(sessionDir, ec);
-    return sessionDir.string();
+    fs::create_directories(baseDir, ec);
+    if (ec) {
+        _lastError = "Cannot create recording directory: " + ec.message();
+        return "";
+    }
+    // A new session must never truncate an earlier session's frame_000000 or
+    // append a second header to its raw stream, even within the same second.
+    for (uint64_t suffix = 0; ; ++suffix) {
+        fs::path sessionDir = baseDir / (std::string(buf) +
+            (suffix ? "_" + std::to_string(suffix) : ""));
+        if (fs::create_directory(sessionDir, ec)) return sessionDir.string();
+        if (ec) {
+            _lastError = "Cannot create recording session: " + ec.message();
+            return "";
+        }
+    }
 }
 
 bool ScreenRecorder::startRecording() {
@@ -243,6 +338,26 @@ bool ScreenRecorder::startRecording() {
 
     if (_recording) {
         return true;
+    }
+
+    _lastError.clear();
+    if (_mode != "viewport" && _mode != "display") {
+        _status = "error: unsupported capture mode";
+        _lastError = _mode == "window"
+            ? "Host window capture is not implemented; choose viewport for Earthcall or display for the host screen."
+            : "Unknown capture mode: " + _mode;
+        return false;
+    }
+    if (_format != "ppm_sequence" && _format != "png_sequence" &&
+        _format != "raw" && _format != "pipe" && _format != "mp4") {
+        _status = "error: unsupported recording format";
+        _lastError = "Unknown recording format: " + _format;
+        return false;
+    }
+    if (_format == "mp4" && std::system("command -v ffmpeg > /dev/null 2>&1") != 0) {
+        _status = "error: video encoder unavailable";
+        _lastError = "MP4 requires ffmpeg on PATH; choose png_sequence, ppm_sequence, or raw.";
+        return false;
     }
 
     // Permission and mode verification
@@ -260,6 +375,10 @@ bool ScreenRecorder::startRecording() {
     }
 
     _currentSessionDir = ensureSessionDirectory();
+    if (_format != "pipe" && _currentSessionDir.empty()) {
+        _status = "error: recording directory unavailable";
+        return false;
+    }
     _startTime = std::chrono::steady_clock::now();
     _lastFrameTime = _startTime - std::chrono::milliseconds(1000);
     _sessionFrameIndex = 0;
@@ -270,7 +389,6 @@ bool ScreenRecorder::startRecording() {
     _recording = true;
     _paused = false;
     _status = "recording";
-    _lastError = "";
     return true;
 }
 
@@ -278,10 +396,16 @@ bool ScreenRecorder::stopRecording() {
     if (!_recording) return true;
 
     _status = "finalizing";
+    bool finalized = true;
+    if (_pipeProcess) {
+        finalized = closeProcessPipe(_pipeProcess) == 0;
+        _pipeProcess = nullptr;
+    }
     _recording = false;
     _paused = false;
-    _status = "idle";
-    return true;
+    _status = finalized ? "idle" : "error: encoder failed";
+    if (!finalized) _lastError = "Recording subprocess failed; output is not verified. Inspect encoder.log for MP4.";
+    return finalized;
 }
 
 bool ScreenRecorder::pauseRecording() {
@@ -327,16 +451,19 @@ void ScreenRecorder::drawCursorOverlay(std::vector<uint8_t>& rgba, int w, int h,
 bool ScreenRecorder::captureDisplayImage(std::vector<uint8_t>& outRgba, int& outW, int& outH) {
 #if defined(__APPLE__)
     if (!hasScreenCapturePermission()) {
+        _lastError = "Host screen capture permission is not granted";
         return false;
     }
     typedef CGImageRef (*CGDisplayCreateImageFunc)(uint32_t displayID);
     static CGDisplayCreateImageFunc fnDisplayCreate = reinterpret_cast<CGDisplayCreateImageFunc>(dlsym(RTLD_DEFAULT, "CGDisplayCreateImage"));
     if (!fnDisplayCreate) {
+        _lastError = "Host display capture API unavailable";
         return false;
     }
     uint32_t displayID = CGMainDisplayID();
     CGImageRef image = fnDisplayCreate(displayID);
     if (!image) {
+        _lastError = "Host display capture returned no image";
         return false;
     }
     size_t w = CGImageGetWidth(image);
@@ -362,6 +489,7 @@ bool ScreenRecorder::captureDisplayImage(std::vector<uint8_t>& outRgba, int& out
     return true;
 #else
     (void)outRgba; (void)outW; (void)outH;
+    _lastError = "Host display capture is unsupported on this platform";
     return false;
 #endif
 }
@@ -383,20 +511,15 @@ bool ScreenRecorder::captureViewportImage(std::vector<uint8_t>& outRgba, int& ou
         return true;
     }
 
-    // Deterministic fallback test pattern for headless environments or uninitialized GPU framebuffers
-    for (int y = 0; y < h; ++y) {
-        for (int x = 0; x < w; ++x) {
-            size_t idx = (static_cast<size_t>(y) * static_cast<size_t>(w) + static_cast<size_t>(x)) * 4;
-            outRgba[idx + 0] = static_cast<uint8_t>((x * 255) / (w > 0 ? w : 1));
-            outRgba[idx + 1] = static_cast<uint8_t>((y * 255) / (h > 0 ? h : 1));
-            outRgba[idx + 2] = 128;
-            outRgba[idx + 3] = 255;
-        }
-    }
-    return true;
+    // Injected test pixels belong in the test caller. A failed GPU readback is
+    // never a screenshot, and must not publish a synthetic image as evidence.
+    outRgba.clear();
+    _lastError = "Viewport readback unavailable; no rendered frame was captured";
+    return false;
 }
 
-bool ScreenRecorder::stepFrame(int viewportW, int viewportH, const uint8_t* optionalPixels) {
+bool ScreenRecorder::stepFrame(int viewportW, int viewportH, const uint8_t* optionalPixels,
+                               int cursorX, int cursorY) {
     if (!_recording || _paused) return false;
 
     auto now = std::chrono::steady_clock::now();
@@ -416,21 +539,31 @@ bool ScreenRecorder::stepFrame(int viewportW, int viewportH, const uint8_t* opti
         captured = captureDisplayImage(framePixels, w, h);
         if (!captured && _fallbackToViewport) {
             captured = captureViewportImage(framePixels, w, h, optionalPixels);
+            if (captured) {
+                _mode = "viewport";
+                _lastError = "Host display capture unavailable; captured the Earthcall viewport instead.";
+            }
         }
     } else {
         captured = captureViewportImage(framePixels, w, h, optionalPixels);
     }
 
     if (!captured || framePixels.empty()) {
-        _lastError = "Failed to grab frame pixels";
+        if (_lastError.empty()) _lastError = "Failed to grab frame pixels";
+        return false;
+    }
+
+    if ((_format == "raw" || _format == "mp4" || _format == "pipe") &&
+        _sessionFrameIndex > 0 && (_captureWidth != w || _captureHeight != h)) {
+        _lastError = "Capture dimensions changed during a fixed-size stream; stop and start a new recording.";
         return false;
     }
 
     _captureWidth = static_cast<double>(w);
     _captureHeight = static_cast<double>(h);
 
-    if (_recordCursor) {
-        drawCursorOverlay(framePixels, w, h, w / 2, h / 2);
+    if (_recordCursor && _mode == "viewport") {
+        drawCursorOverlay(framePixels, w, h, cursorX, cursorY);
     }
 
     char frameFilename[128];
@@ -443,6 +576,35 @@ bool ScreenRecorder::stepFrame(int viewportW, int viewportH, const uint8_t* opti
     if (_format == "png_sequence") {
         framePath = fs::path(_currentSessionDir) / (std::string(frameFilename) + ".png");
         written = writePng(framePath.string(), framePixels.data(), w, h);
+    } else if (_format == "mp4") {
+        if (!_pipeProcess && _sessionFrameIndex == 0) {
+            fs::path videoPath = fs::path(_currentSessionDir) / "recording.mp4";
+            std::string cmd = "ffmpeg -y -f rawvideo -pix_fmt rgba -s " +
+                              std::to_string(w) + "x" + std::to_string(h) +
+                              " -r " + std::to_string(_fps) +
+                              " -i - -vf 'pad=ceil(iw/2)*2:ceil(ih/2)*2' -c:v libx264 -pix_fmt yuv420p " +
+                              shellPath(videoPath.string()) + " 2>" +
+                              shellPath((fs::path(_currentSessionDir) / "encoder.log").string());
+            _pipeProcess = popen(cmd.c_str(), "w");
+            if (!_pipeProcess) {
+                _lastError = "Failed to launch ffmpeg";
+                return false;
+            }
+        }
+        if (_pipeProcess) {
+            written = writeProcessFrame(_pipeProcess, framePixels);
+        } else {
+            framePath = fs::path(_currentSessionDir) / (std::string(frameFilename) + ".png");
+            written = writePng(framePath.string(), framePixels.data(), w, h);
+        }
+    } else if (_format == "pipe") {
+        if (!_pipeProcess && _sessionFrameIndex == 0) {
+            std::string cmd = _outputPath.empty() ? "cat" : _outputPath;
+            _pipeProcess = popen(cmd.c_str(), "w");
+        }
+        if (_pipeProcess) {
+            written = writeProcessFrame(_pipeProcess, framePixels);
+        }
     } else if (_format == "raw") {
         framePath = fs::path(_currentSessionDir) / "stream.raw";
         std::ofstream stream(framePath.string(), std::ios::out | std::ios::binary | std::ios::app);
@@ -477,24 +639,37 @@ bool ScreenRecorder::stepFrame(int viewportW, int viewportH, const uint8_t* opti
     }
 }
 
-bool ScreenRecorder::captureSnapshot(const std::string& customPath) {
+bool ScreenRecorder::captureSnapshot(const std::string& customPath, int viewportW, int viewportH, const uint8_t* optionalPixels) {
+    if (!_enabled || (_mode != "viewport" && _mode != "display")) {
+        _status = "error: snapshot refused";
+        _lastError = !_enabled ? "Screen recorder is disabled" : "Unsupported capture mode: " + _mode;
+        return false;
+    }
     std::vector<uint8_t> framePixels;
-    const glm::ivec4& vp = currentRenderer().viewport();
-    int w = vp.z > 0 ? vp.z : 1280;
-    int h = vp.w > 0 ? vp.w : 720;
+    int w = viewportW;
+    int h = viewportH;
+    if (w <= 0 || h <= 0) {
+        const glm::ivec4& vp = currentRenderer().viewport();
+        w = vp.z > 0 ? vp.z : 1280;
+        h = vp.w > 0 ? vp.w : 720;
+    }
 
     bool captured = false;
-    if (_mode == "display") {
+    bool usedFallback = false;
+    if (_mode == "display" || _mode == "window") {
         captured = captureDisplayImage(framePixels, w, h);
         if (!captured && _fallbackToViewport) {
-            captured = captureViewportImage(framePixels, w, h, nullptr);
+            captured = captureViewportImage(framePixels, w, h, optionalPixels);
+            usedFallback = captured;
+            if (captured) _mode = "viewport";
         }
     } else {
-        captured = captureViewportImage(framePixels, w, h, nullptr);
+        captured = captureViewportImage(framePixels, w, h, optionalPixels);
     }
 
     if (!captured || framePixels.empty()) {
-        _lastError = "Failed to capture snapshot buffer";
+        _status = "error: snapshot capture failed";
+        if (_lastError.empty()) _lastError = "Failed to capture snapshot buffer";
         return false;
     }
 
@@ -510,28 +685,48 @@ bool ScreenRecorder::captureSnapshot(const std::string& customPath) {
 #endif
         char buf[64];
         std::strftime(buf, sizeof(buf), "snapshot_%Y%m%d_%H%M%S.png", &gm_tm);
-        fs::path baseDir = _outputPath.empty() ? "saves/recordings" : _outputPath;
-        destPath = (baseDir / buf).string();
+        fs::path baseDir = Singularity::Storage::VirtualFileSystem::resolve(_outputPath.empty() ? "saves/recordings" : _outputPath);
+        std::error_code ec;
+        fs::create_directories(baseDir, ec);
+        fs::path candidate = baseDir / buf;
+        for (uint64_t suffix = 1; fs::exists(candidate, ec); ++suffix) {
+            candidate = baseDir / (fs::path(buf).stem().string() + "_" +
+                std::to_string(suffix) + ".png");
+        }
+        destPath = candidate.string();
     }
 
     bool success = false;
-    if (destPath.rfind(".ppm") != std::string::npos) {
+    if (fs::path(destPath).extension() == ".ppm") {
         success = writePpm(destPath, framePixels.data(), w, h);
     } else {
         success = writePng(destPath, framePixels.data(), w, h);
     }
 
     if (success) {
+        _captureWidth = w;
+        _captureHeight = h;
         _lastSnapshotPath = destPath;
         _bytesWritten += static_cast<double>(framePixels.size());
         _status = "snapshot-saved";
-        _lastError = "";
+        _lastError = usedFallback
+            ? "Host display capture unavailable; saved the Earthcall viewport instead."
+            : "";
         return true;
     } else {
         _status = "error: snapshot failed";
         _lastError = "Failed to save snapshot to: " + destPath;
         return false;
     }
+}
+
+bool ScreenRecorder::checkPendingSnapshot(int viewportW, int viewportH, const uint8_t* optionalPixels) {
+    if (!_pendingSnapshot) return false;
+    _pendingSnapshot = false;
+    _snapshotTrigger = false;
+    std::string path = _pendingSnapshotPath;
+    _pendingSnapshotPath.clear();
+    return captureSnapshot(path, viewportW, viewportH, optionalPixels);
 }
 
 // ---------------------------------------------------------------------------
@@ -580,10 +775,7 @@ void ScreenRecorder::propSetResumeTrigger(const bool& v) {
 
 void ScreenRecorder::propSetSnapshotTrigger(const bool& v) {
     _snapshotTrigger = v;
-    if (_snapshotTrigger) {
-        captureSnapshot();
-        _snapshotTrigger = false;
-    }
+    _pendingSnapshot = v;
 }
 
 void ScreenRecorder::propSetRequestPermissionTrigger(const bool& v) {
@@ -638,65 +830,101 @@ std::string ScreenRecorder::propAccessibilityDetails() const {
 }
 
 void ScreenRecorder::buildProperties() {
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
-        "recorder.enabled", this, &ScreenRecorder::propEnabled, &ScreenRecorder::propSetEnabled));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
-        "recorder.recording", this, &ScreenRecorder::propRecording, &ScreenRecorder::propSetRecording));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
-        "recorder.paused", this, &ScreenRecorder::propPaused, &ScreenRecorder::propSetPaused));
+    auto registerBool = [this](const std::string& name,
+                               bool (ScreenRecorder::*getter)() const,
+                               void (ScreenRecorder::*setter)(const bool&)) {
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
+            name, this, getter, setter));
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
+            "recorder." + name, this, getter, setter));
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
+            "screen-recorder." + name, this, getter, setter));
+    };
 
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, std::string>>(
-        "recorder.mode", this, &ScreenRecorder::propMode, &ScreenRecorder::propSetMode));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, std::string>>(
-        "recorder.format", this, &ScreenRecorder::propFormat, &ScreenRecorder::propSetFormat));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, std::string>>(
-        "recorder.outputPath", this, &ScreenRecorder::propOutputPath, &ScreenRecorder::propSetOutputPath));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, double>>(
-        "recorder.fps", this, &ScreenRecorder::propFps, &ScreenRecorder::propSetFps));
+    auto registerReadOnlyBool = [this](const std::string& name,
+                                       bool (ScreenRecorder::*getter)() const) {
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
+            name, this, getter, nullptr));
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
+            "recorder." + name, this, getter, nullptr));
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
+            "screen-recorder." + name, this, getter, nullptr));
+    };
 
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
-        "recorder.recordCursor", this, &ScreenRecorder::propRecordCursor, &ScreenRecorder::propSetRecordCursor));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
-        "recorder.fallbackToViewport", this, &ScreenRecorder::propFallbackToViewport, &ScreenRecorder::propSetFallbackToViewport));
+    auto registerString = [this](const std::string& name,
+                                 std::string (ScreenRecorder::*getter)() const,
+                                 void (ScreenRecorder::*setter)(const std::string&)) {
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, std::string>>(
+            name, this, getter, setter));
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, std::string>>(
+            "recorder." + name, this, getter, setter));
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, std::string>>(
+            "screen-recorder." + name, this, getter, setter));
+    };
 
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
-        "recorder.start", this, &ScreenRecorder::propStartTrigger, &ScreenRecorder::propSetStartTrigger));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
-        "recorder.stop", this, &ScreenRecorder::propStopTrigger, &ScreenRecorder::propSetStopTrigger));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
-        "recorder.pause", this, &ScreenRecorder::propPauseTrigger, &ScreenRecorder::propSetPauseTrigger));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
-        "recorder.resume", this, &ScreenRecorder::propResumeTrigger, &ScreenRecorder::propSetResumeTrigger));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
-        "recorder.snapshot", this, &ScreenRecorder::propSnapshotTrigger, &ScreenRecorder::propSetSnapshotTrigger));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
-        "recorder.requestPermission", this, &ScreenRecorder::propRequestPermissionTrigger, &ScreenRecorder::propSetRequestPermissionTrigger));
+    auto registerReadOnlyString = [this](const std::string& name,
+                                         std::string (ScreenRecorder::*getter)() const) {
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, std::string>>(
+            name, this, getter, nullptr));
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, std::string>>(
+            "recorder." + name, this, getter, nullptr));
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, std::string>>(
+            "screen-recorder." + name, this, getter, nullptr));
+    };
 
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, std::string>>(
-        "recorder.status", this, &ScreenRecorder::propStatus, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, std::string>>(
-        "recorder.lastError", this, &ScreenRecorder::propLastError, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, double>>(
-        "recorder.frameCount", this, &ScreenRecorder::propFrameCount, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, double>>(
-        "recorder.recordedDuration", this, &ScreenRecorder::propRecordedDuration, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, double>>(
-        "recorder.captureWidth", this, &ScreenRecorder::propCaptureWidth, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, double>>(
-        "recorder.captureHeight", this, &ScreenRecorder::propCaptureHeight, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, std::string>>(
-        "recorder.lastSnapshotPath", this, &ScreenRecorder::propLastSnapshotPath, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, double>>(
-        "recorder.bytesWritten", this, &ScreenRecorder::propBytesWritten, nullptr));
+    auto registerDouble = [this](const std::string& name,
+                                 double (ScreenRecorder::*getter)() const,
+                                 void (ScreenRecorder::*setter)(const double&)) {
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, double>>(
+            name, this, getter, setter));
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, double>>(
+            "recorder." + name, this, getter, setter));
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, double>>(
+            "screen-recorder." + name, this, getter, setter));
+    };
 
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
-        "recorder.hasScreenCapturePermission", this, &ScreenRecorder::propHasScreenCapturePermission, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, bool>>(
-        "recorder.hasAccessibilityPermission", this, &ScreenRecorder::propHasAccessibilityPermission, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, std::string>>(
-        "recorder.permissionStatus", this, &ScreenRecorder::propPermissionStatus, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, std::string>>(
-        "recorder.accessibilityDetails", this, &ScreenRecorder::propAccessibilityDetails, nullptr));
+    auto registerReadOnlyDouble = [this](const std::string& name,
+                                         double (ScreenRecorder::*getter)() const) {
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, double>>(
+            name, this, getter, nullptr));
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, double>>(
+            "recorder." + name, this, getter, nullptr));
+        registerProperty(std::make_unique<ComputedProperty<ScreenRecorder, double>>(
+            "screen-recorder." + name, this, getter, nullptr));
+    };
+
+    registerBool("enabled", &ScreenRecorder::propEnabled, &ScreenRecorder::propSetEnabled);
+    registerBool("recording", &ScreenRecorder::propRecording, &ScreenRecorder::propSetRecording);
+    registerBool("paused", &ScreenRecorder::propPaused, &ScreenRecorder::propSetPaused);
+
+    registerString("mode", &ScreenRecorder::propMode, &ScreenRecorder::propSetMode);
+    registerString("format", &ScreenRecorder::propFormat, &ScreenRecorder::propSetFormat);
+    registerString("outputPath", &ScreenRecorder::propOutputPath, &ScreenRecorder::propSetOutputPath);
+    registerDouble("fps", &ScreenRecorder::propFps, &ScreenRecorder::propSetFps);
+
+    registerBool("recordCursor", &ScreenRecorder::propRecordCursor, &ScreenRecorder::propSetRecordCursor);
+    registerBool("fallbackToViewport", &ScreenRecorder::propFallbackToViewport, &ScreenRecorder::propSetFallbackToViewport);
+
+    registerBool("start", &ScreenRecorder::propStartTrigger, &ScreenRecorder::propSetStartTrigger);
+    registerBool("stop", &ScreenRecorder::propStopTrigger, &ScreenRecorder::propSetStopTrigger);
+    registerBool("pause", &ScreenRecorder::propPauseTrigger, &ScreenRecorder::propSetPauseTrigger);
+    registerBool("resume", &ScreenRecorder::propResumeTrigger, &ScreenRecorder::propSetResumeTrigger);
+    registerBool("snapshot", &ScreenRecorder::propSnapshotTrigger, &ScreenRecorder::propSetSnapshotTrigger);
+    registerBool("requestPermission", &ScreenRecorder::propRequestPermissionTrigger, &ScreenRecorder::propSetRequestPermissionTrigger);
+
+    registerReadOnlyString("status", &ScreenRecorder::propStatus);
+    registerReadOnlyString("lastError", &ScreenRecorder::propLastError);
+    registerReadOnlyDouble("frameCount", &ScreenRecorder::propFrameCount);
+    registerReadOnlyDouble("recordedDuration", &ScreenRecorder::propRecordedDuration);
+    registerReadOnlyDouble("captureWidth", &ScreenRecorder::propCaptureWidth);
+    registerReadOnlyDouble("captureHeight", &ScreenRecorder::propCaptureHeight);
+    registerReadOnlyString("lastSnapshotPath", &ScreenRecorder::propLastSnapshotPath);
+    registerReadOnlyDouble("bytesWritten", &ScreenRecorder::propBytesWritten);
+
+    registerReadOnlyBool("hasScreenCapturePermission", &ScreenRecorder::propHasScreenCapturePermission);
+    registerReadOnlyBool("hasAccessibilityPermission", &ScreenRecorder::propHasAccessibilityPermission);
+    registerReadOnlyString("permissionStatus", &ScreenRecorder::propPermissionStatus);
+    registerReadOnlyString("accessibilityDetails", &ScreenRecorder::propAccessibilityDetails);
 }
 
 } // namespace Screen

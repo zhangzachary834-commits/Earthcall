@@ -33,7 +33,11 @@ __pycache__/
 # ---------------------------------------------------------------------------
 build/
 build_release/
+build-release/
 build-wasm/
+# Side configurations for measurement (e.g. a Release probe build): never source.
+build_*/
+build-*/
 *.o
 *.d
 *.gch
@@ -140,6 +144,7 @@ third_party/websocketpp/
 # ---------------------------------------------------------------------------
 saves/games/
 saves/backups/
+scratch/capture-verification/
 saves/tests/*_final.json
 
 # The law audit trail (LawAuditLogger). Regenerated every run, and at Verbose
@@ -311,6 +316,10 @@ Testing/
 /test_eval*.cpp
 /test_perf.cpp
 /test_perf*.patch
+/scratch_test*
+/test_fmt*
+/test_lawrefs*
+/test_parse*
 /tune_math.py
 /update_hpp.py
 /update_task.py
@@ -318,3 +327,26 @@ Testing/
 # Merge-conflict leftovers (Object.hpp.orig was tracked-adjacent for three days).
 *.orig
 *.rej
+
+# First Mover Register staging file (earthcall_first_mover writes then renames atomically)
+saves/identity/*.staged
+
+# The Law Line's per-machine session files (TerminalChannel): the Person's
+# command history and the relayed app output of the last run.
+saves/logs/terminal-history.txt
+saves/logs/earthcall-terminal.log
+
+# Per-machine launchers written by "Earthcall First Movers.command"
+Start *.command
+
+# Law Line atomic patch backups preserve Person-authored save bytes.
+scratch/backups/law-line/
+
+# Intercom navigation keeps source originals outside the live archive.
+scratch/backups/intercom-navigation/
+scratch/intercom-navigation*.html
+scratch/intercom-navigation*.jpg
+**/.intercom-write.lock
+
+# Local native Metal capture/log bundle; signed findings live in docs/audits.
+/scratch/verification/ray-domain-metal-2026-10-17-01a148a7/

@@ -27,6 +27,10 @@ third_party/websocketpp/
 # reason: a tool that honours only one of these two files should still skip them.
 build/
 build2/
+build-release/
+# Side configurations for measurement (e.g. a Release probe build): never source.
+build_*/
+build-*/
 build_ag/
 build_agy/
 build-*/
@@ -69,8 +73,26 @@ third_party/httplib/httplib.h
 /test_eval*.cpp
 /test_perf.cpp
 /test_perf*.patch
+/scratch_test*
+/test_fmt*
+/test_lawrefs*
+/test_parse*
 /tune_math.py
 /update_hpp.py
 /update_task.py
 *.orig
 *.rej
+scratch/capture-verification/
+saves/identity/*.staged
+
+# Law Line atomic patch backups preserve Person-authored save bytes.
+scratch/backups/law-line/
+
+# Intercom navigation keeps source originals outside the live archive.
+scratch/backups/intercom-navigation/
+scratch/intercom-navigation*.html
+scratch/intercom-navigation*.jpg
+**/.intercom-write.lock
+
+# Local native Metal capture/log bundle; signed findings live in docs/audits.
+/scratch/verification/ray-domain-metal-2026-10-17-01a148a7/

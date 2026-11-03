@@ -259,9 +259,9 @@ it could grow but never shrink.
 
 - **`Create`** — mint a generic `Object` of an authored `ShapeKind` into the World
   (the law's target when it IS a world, otherwise the world in the Universe), placed by
-  an authored path or, absent one, where the law's subject stands, and labelled with an
+  an authored path or, absent one, where the current application referent stands, and labelled with an
   authored `objectType` that `Physics::LawTarget::limitByObjectType` already selects on.
-  Its **children run with the newborn as their subject**, so the whole action
+  Its **children run with the newborn as their current referent**, so the whole action
   vocabulary shapes it at birth: `Set` its position, `Map` its radius from another
   being's, grant it properties, compose it. Publishes `object-created`.
 - **`AddProperty` / `RemoveProperty`** — the vocabulary a *Person* adds, beside the
@@ -286,7 +286,8 @@ it could grow but never shrink.
   one is a dangling pointer waiting for the next quantifier sweep.
 
 Container, element, and victim are named with the same participant tokens `Publish`
-uses — `""` = the law's subject, `@event.subject` / `@event.object`, or a being id — so
+uses — `""` = the current application referent, `@event.subject` /
+`@event.object` = legacy event participant paths, or a being id — so
 "destroy whatever I collided with" is `Destroy("@event.object")`.
 
 Test: `tests/law_creation_test.cpp` (`make test-creation`) — 37 checks over birth,
@@ -360,16 +361,18 @@ function of time. Two forms:
   each tick. The authored model is `dp/dt`; OntoMath's exact
   `derivative`/`antiderivative` make Map and Flow exact counterparts.
 
-**Referents are the author's choice — the action phase names its own.** Every
-path carries a qualifier saying WHOSE property it is: plain (the law's
-subject), `@being-id.` (one specific being, Universe lookup),
+**Referents are the author's choice — condition and action nodes read their
+own.** Every path carries a qualifier saying WHOSE property it is: plain (the
+current application referent), `@being-id.` (one specific being, Universe lookup),
 `@event.subject.` / `@event.object.` (the triggering event's participants —
 a collision has two; the LawManager arms an application-event context around
 event rounds, and drive sessions remember their launching participants by id
-for their whole life). The event's beings are thus available BY CHOICE among
-all others, never a dichotomy. In the Law Author every property picker pairs
-WHAT (the property) with an "of ..." combo choosing WHOSE (subject / event
-participants / any live being).
+for their whole life), or `@event.` (registered properties of the Event Moment
+itself during an EventBus-triggered application). The Event Moment snapshot is
+read-only, while the old participant paths retain their compatibility meaning.
+The Law Author pairs WHAT (the property) with an "of ..." choice for the current
+referent, event participants, or a live being. Traversal of the Event's defining
+Relations is a later rung.
 
 **Driving is an authored choice, and any variable can be its domain.**
 `Law::drives()` (serialized; legible as the `drives` property → metalaws can
@@ -392,8 +395,10 @@ differentiation (sin/cos/exp closed; `ln` carries no shift so its derivative
 `x⁻¹` stays inside the algebra); integration holds `∫x⁻¹ = ln x` (the old
 honest gap, closed; defined on x > 0 — ln outside its domain evaluates to
 nullopt, never a guess), single sin/cos/exp/ln factors, and
-`∫ln(ax) = x·ln(ax) − x`; products needing integration by parts refuse with
-nullopt. `Expression::sinusoid(A, f, φ, bias)` is `evalTrack`'s exact form,
+`∫ln(ax) = x·ln(ax) − x`, and (2026-10-18) integration by parts for a whole
+power times one sin/cos/exp (tabular) and any power times ln(ax). What has no
+elementary antiderivative (sin(x)/x, √x·eˣ, several transcendentals of one
+variable in a term) still refuses with nullopt. `Expression::sinusoid(A, f, φ, bias)` is `evalTrack`'s exact form,
 so recorded periodic change can retire into the exact core. The Law Author's
 term editor multiplies factors in via "+f()" (kind × bound variable) with
 scale/shift edited inline.
@@ -442,7 +447,7 @@ quantifiers.
 
 Growth path: folds inside expressions (Σ as a term factor, across
 a collection — shared machinery with pair quantification), vector-valued
-expressions, expression-valued exponents, integration by parts, richer
+expressions, expression-valued exponents, richer
 symbolic simplification (sin² + cos² = 1 and kin), RPN compilation for
 engine-grade evaluation (the `geom::SdfNode` rpn precedent).
 
@@ -518,6 +523,12 @@ void LawManager::tick() {                          // once per frame from GameUp
     _dirty = false;
 }
 ```
+
+**Current lifecycle note (2026-09-20):** the implemented `connectToEventBus()` stores the
+subscription tokens returned by EventBus, and `LawManager::~LawManager()` revokes those exact
+registrations. The sketch above is historical wiring pseudocode; ignoring the returned token in a
+transient owner would recreate the stale-callback bug guarded by
+`law_manager_eventbus_lifetime_test`.
 
 **Adapters:** each existing typed event (`ObjectHoverEvent`, PersonEvents,
 collision events, `Law::AppliedEvent`) gets a one-line echo publishing a generic

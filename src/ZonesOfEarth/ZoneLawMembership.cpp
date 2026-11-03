@@ -38,3 +38,17 @@ bool ZoneManager::adoptLawIntoActiveZone(const std::string& lawId) {
     _activeZoneLawIds.insert(lawId);
     return true;
 }
+
+bool ZoneManager::retireLawFromActiveZone(const std::string& lawId) {
+    if (lawId.empty() || _zones.empty() || _currentIndex >= _zones.size() || !_zones[_currentIndex]) {
+        return false;
+    }
+    _activeZoneLawIds.erase(lawId);
+    _retiredLawIdsByZone[_zones[_currentIndex]->getIdentifier()].insert(lawId);
+    return true;
+}
+
+bool ZoneManager::isLawRetiredFrom(const std::string& zoneId, const std::string& lawId) const {
+    const auto it = _retiredLawIdsByZone.find(zoneId);
+    return it != _retiredLawIdsByZone.end() && it->second.count(lawId) != 0;
+}

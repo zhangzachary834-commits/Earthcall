@@ -1,0 +1,129 @@
+> **TerminalLine naming correction — 2026-10-20.** Zach clarified that `LawSentence` was a slight naming imprecision. The intended concept is **`TerminalLine`**: a parser for the Terminal modality's line, not an in-world or cross-modality sentence abstraction. The existing C++ name may remain temporarily as a legacy implementation identifier. Do not route Web, Voice, Screen, or other modalities through it merely because they also involve language or Laws. Meaning remains authored through Lexemes, Relations, Laws, and Metalaws. See the [TerminalLine naming and modality-scope addendum](../../addendums/terminal_line_naming_and_modality_scope_addendum.md).
+
+> **Learning to use it?** Read [Writing Earthcall Laws: a guide for humans and agents](LAW_AUTHORING_CLI_GUIDE.md) for pasteable lessons, the action reference, and current limits (2026-10-05). Zach's original design note follows, preserved below.
+
+So I think the simplest and most elegant solution to the tedious law-authoring is not to try to figure out all the nuances of developing a mature, heavily interconnected Formation-like 2D
+interface immediately that depends on configuring numerous prior states/laws to boostrap for this is to just let me be able to author them with a natural sentence.
+Like a terminal or Minecraft slash command, with preconfigured (note I say prefigured Singulars and Laws, not hard-coded)
+tab to auto-fill, and "view-options", and a basic search bar. 
+Being pre-configured by first movers solves the bootstrapping problem because its not like i can summon a magical law terminal itself to type the laws that would have created the law terminal command xdddd
+
+IM WRITING THIS BECAUSE THE SUN WORKED SO HARD THE OTHER DAY TO MAKE "Second NAture Law Authroing Forge" ZONE AND IT TURNED OUT AS A BLUE BUTTON THT SPAMS BLUE SQUARE LAWS
+
+This dovetails perfectly with our movement on fundamental Opcodes, Lexemes, and the Earthcall CLI.
+
+The first thing I want you guys to notice is that Laws themselves work by being semantically composed of separate opcodes. 
+Look at how ConditionNode and ActionNode are implemented. 
+Every irreducible Condition and Action type gets an enum or a dedicated value. 
+
+So yeah, you say an architecture with args.
+
+Also, the order (a derived state from however author-chosen data types its ordered whether int or string or vector etc.)
+
+```
+<optional Lexeme for smooth personal experience like "My law called"> <given law name/visible identifier (not the same as the unique identifier)> <Lexeme: "fires"> <timeline authored> <on Conditions: [Condition node, condition node, condition node]> <action op set: sequence({set (property, value, Timeline) , add (property, value, Timeline), flow (however that works)}, Timeline)>
+```
+
+With streamlined variants. First-mover Configured category/concept presets like "My constantly-applied law with condition
+____" (which would be check condition on every Moment cycle regardless of events) or "My event-triggered law" or "My event-triggered" or "My law with no condition" presets the args so you don't have to retype them each time, and then only shows the remaining args that still have degrees of freedom.
+
+One especially elegant part is that the arguments would be fundamentally directing to one of the opcode invariants. Such as Conditionnode="equals" or "Conditionnode=greater than"
+
+You don't also need brackets. You could follow a python-like model where you just use colons, or have Lexeme indicators of whats inside an argument, and the futher parameters inside those arguments and etc..
+
+Sure its nuanced but its a lot better than having to click dropdowns and scroll through clunky dropdowns on an imgui each time just to author something.
+
+This isn't to say the current imgui is immediately obselete though. We still need things like it's debugging feature that tests actions independent of the condition, the law library, the display logs, and the law graphs are helpful visual representations.
+And laws with long condition or action node chains or many arguments are better served by moving along a 2D interface and typing in individual args rather than having to rigidly cram them in the same line inside the same brackets. Y'all who've done Minecraft adventure map development know how cursed those command blocks can get LMAOOOOOO 💀💀💀
+But most of the writing part is far smoother if typed in a line by line basis like the terminal. This is already far more intuitive than seeing an awkwardly stacked and poor ergonomic interface.
+
+YAh with the current interface this computer called MY BRAIN i have to spend O(n) worst case scrolling through the freaking table of contents of properties or spend O(c + mk + np) (c ofr cateofgires, k is time it takes to move my mosue from dropdown or search bar to the next needed widget and m the number of times i have to do that and np n is number of strokes i have to move my move mouse to select properteis inteface and p is how long that takes)
+
+Whereas with this command line thing I just need to type a sentence. If the property paths are named well, usually it just be me quickly typing . 
+So amortized cost assuming I don't use other presets is kinda just O(ME SPAMMING TAB THEN DEFINE THE SINGULAR THEN SPELL OUT FIRST TWO LETTERS OF PROPERTY PATH THAN SPAMMING TAB REPEAT FOR ALL THE ARGS)
+IF I HAVE PREDEFINED SINGULAR SCOPE, I DONT EVEN NEED TO TYPE IN THE SINGULAR
+
+With presets it decreases even less to soemthign more like just the remaining undefined args
+
+and I also should be able to fill an arg out by just lcicking on the 2d or 3d Singular I'm tlaking about and then selecting the property from its property list.
+
+- Zach"
+---
+
+## Implementation (rung 1, 2026-09-25)
+
+*Added below Zach's note; nothing above this line was changed.*
+
+Built terminal-first, per Zach's direction during planning. The Terminal window of `Run Earthcall.command` is now `Singularity/Terminal/TerminalChannel`, and it reads sentences into Laws in the running world. A word is a Lexeme that **denotes** a Law, and the Law holds the opcode. Presets are Laws with no open slot, and they fix clauses. Shared spellings are resolved by Metalaw, or the sentence is refused. The in-world line, the Law Line in every Zone, and `set … to @path` are the next rungs.
+
+- How to use it, and what's next: [Law_Line task](../../Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md)
+- Design, Zach's corrections, and the implementation record: [plan](../../plans/NATURAL_LANGUAGE_LAW_AUTHORING_PLAN_2026-09-25.md)
+
+*— Claude Code · Claude Opus 5.5 · session `01WXmPy9U71FLqizbRYzMToZ` · 2026-09-25*
+
+### General creation notation (2026-10-04)
+
+Zach extended the requested surface to `Create <SingularKind, properties: {registered initializers, authored: {new properties}}>`, with Metalaws compiling Create Lexemes into the resulting Law. Implemented as generic parameterized-action syntax plus an authored Metalaw template protocol, reusing existing Create/prototype and OntoMath models. Detailed syntax, boundaries, and future-agent directions are in [the Law Line task](../../Agenda/Tasks/Specific%20Tasks/Law%20and%20Reasoning/Law_Line/Law_Line.md). Syntax previews do not execute compilers; an absent or conflicting compiler refuses. This supersedes the earlier lack of general Create initializer syntax, and is extended below by named Map/Flow expressions and Drive curve arguments (2026-10-05).
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 18:46 PDT — Zach originated the creation notation and Metalaw requirement; Codex supplied the general structural substitution channel.*
+
+## Ordered sentences and property vocabulary (2026-10-04)
+
+Zach requested multiple Law sentences in one submitted line, registered in the order written, plus add/remove/modify property. Separate complete sentences with top-level `;`:
+
+```text
+called "Add Note" when clicked then add property @law-line-cube.note to "hello"; called "Change Note" when hovered then modify property @law-line-cube.note to "updated"; called "Remove Note" when the pointer leaves then remove property @law-line-cube.note
+```
+
+The saved `law-line-compile-sentences` Metalaw conditions on `compilation.input.slot = "sentences"` and `opcode = "sentence.batch"`, and supplies `{"sentences":{"$slot":"/sentences"}}` through `compilation.template`. The channel senses delimiter structure, asks the existing generic Metalaw template seam for the document, validates the exact once-only source order, parses every sentence, and registers through the existing `enact` path. Missing/disabled compiler, conflicting outputs, empty sentences, or invalid later syntax refuses registration. Compiler provenance is retained on every new Law. There is no automatic batch fallback. Registration order does not promise event agenda firing order; use `then ... and ...` within one Law when ordered action execution is required.
+
+A trailing `?` previews the whole batch without applying compiler Metalaws or registering Laws. Quoted semicolons and separators inside `()`, `[]`, or `{}` are preserved. Completion follows the final sentence. Immediate deletion/search cannot be mixed into a batch. Foreign `law_sentence` remains one separately authorized identifier per submission and explicitly refuses batches before compiling them.
+
+`add property` denotes the existing AddProperty Law, `remove property` denotes RemoveProperty, and `modify property` denotes Set. Add grants an authored property; modify uses existing Set/path semantics. A never-addressable missing path refuses; an authored accessor materialized before removal remains addressable and Set can restore its erased value. Remove erases authored properties; registered engine paths retain their existing clear-value behavior and authority gates. These aliases preserve numeric `add` and existing `remove`/Destroy spellings. Property changes happen when the resulting Law fires, not on submission. No new action kinds were added.
+
+All sentences are parsed before any are registered. Registration itself retains existing per-Law adoption semantics: a later adoption refusal reports how many earlier sentences registered; this is not a transactional mutation promise. Save Zone is still required to keep newly authored Laws after restart.
+
+The seed append adds three Lexemes and their denotes Relations to the existing LawLine Zone and adds the sentence compiler Law root. Zach is the recorded author; Codex is the injector. Old Zone bytes are preserved, backed up outside saves, and atomically patched; existing Law roots are kept.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-04 19:46 PDT — implementation of Zach's ordered sentence and property vocabulary request.*
+
+## Named arguments for the remaining action kinds (2026-10-05)
+
+Zach requested argument forms for the missing action-operator kinds. Sixteen new Lexemes denote ordinary action Laws carrying authored `sentence.arguments` signatures; sixteen `law-line-compile-args-*` Metalaws compile their argument records. Their signatures and mapping into ActionModel fields live in saved authored data, not a per-kind parser branch.
+
+| Operator | Argument form |
+|---|---|
+| Lerp | `<path: "‹path›", operand: ‹value›, factor: ‹number›>` |
+| Drive | `<path: "‹path›", curve: {form: 1, coeffs: [0, 1]}, input: "‹path›">` |
+| Sequence | `<children: [‹action›, ‹action›]>` |
+| Parallel | `<children: [‹action›, ‹action›]>` |
+| Map | `<path: "‹path›", expression: ‹expression›>` |
+| Flow | `<path: "‹path›", expression: ‹rate expression›>` |
+| AddElement | `<container: "‹being›", element: "‹being›">` |
+| RemoveElement | `<container: "‹being›", element: "‹being›">` |
+| Synthesize | `<children: [‹action›, ‹action›]>` |
+| PlayAudio | `<frequencyPath: "‹path›", amplitudePath: "‹path›", timbre: "sine">` |
+| AuthorZone | `<identifier: "‹identifier›", zoneKind: "‹authored kind›", owner: "‹being›", ownerKind: "‹kind›">` |
+| WritePixel | `<facePath: "‹path›", uPath: "‹path›", vPath: "‹path›", colorPath: "‹path›">` |
+| ElevatePixels | `<name: "‹property›", facePath: "‹path›", selector: {‹Piecewise model›}>` |
+| FileRead | `<input: "‹file path property›", path: "‹destination property›">` |
+| FileWrite | `<path: "‹file path property›", input: "‹content property›">` |
+| CodecTransform | `<operation: "‹codec operation›", input: "‹source property›", path: "‹destination property›">` |
+
+For example, these are complete Law sentences:
+
+```text
+called "Blend Glow" when clicked then Lerp <path: "@law-line-cube.glow", operand: 1, factor: 0.25>
+called "Mapped Glow" when hovered then Map <path: "@law-line-cube.glow", expression: @law-line-cube.hp + 2>
+called "Ordered Glow" when clicked then Sequence <children: [Set glow to 2, Add glow by 3]>
+```
+
+Use a top-level `;` to submit several at once. A trailing `?` remains a read-only syntax preview. Quoted path/token arguments are literal references, read later by the action; `expression:` is the generic arithmetic form for Map/Flow and builds the existing Piecewise and MathBindings. `children:` takes nested action sentences, including parameterized Create. Literal dictionaries/lists preserve model structure; vectors retain the typed vector envelope. Drive accepts its existing CurveModel record: form 0 constant, 1 polynomial, 2 sinusoid. ElevatePixels accepts the existing Piecewise selector record with local coordinates, guards, and bounds; this pass does not invent a separate region language. File and codec arguments identify properties holding file names, contents, and source values; CodecTransform operation names are existing codec properties such as `jsonCompact`, `jsonPretty`, or `base64`.
+
+The generic template seam supports `$slot` JSON pointers plus an authored `$default` for optional inputs. Missing required inputs, duplicate arguments, unconsumed arguments, malformed models, or absent compiler Metalaws refuse. Optional owner/container/input/timbre values remain visible in compiler templates. A word with an authored signature cannot become an empty action merely by omitting its arguments. Complete closed fragments without that metadata retain their exact existing models. Completion displays the authored signature and merges canonical duplicates with the same spelling/opcode rather than inventing ambiguity.
+
+Runtime execution still uses existing ActionModel behavior and channel/TransferPolicy gates. Authoring a pixel, sound, file, or Zone action does not prove the channel accepted its later execution. Flow's expression syntax is available, but bounded continuous behavior still requires an appropriately authored Piecewise domain and activation; an unbounded constant-rate sample is a syntax example, not a recommended indefinite session. Registration and Save Zone semantics are unchanged.
+
+Save additions: 16 Lexemes, 16 denotes Relations, and 32 Law roots/references, all added to the existing LawLine closure under Zach's authorship with Codex injector attribution. Existing Zone bytes and Law roots are preserved; backups remain outside saves. Native interactive verification is recorded separately in the Person Verification List.
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-05 00:09 PDT — Zach's missing action arguments request.*

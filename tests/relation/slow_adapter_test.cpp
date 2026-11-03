@@ -213,13 +213,14 @@ int main() {
             check(!served || covers(named(proposed), scanned("instance-of", "category.target")),
                   "a road built before a being arrived is refused rather than served short");
             adapter.step();
-            check(adapter.candidatesFor("law.travels", candidates) &&
-                      named(candidates) == scanned("instance-of", "category.target"),
+            const bool d2Ok = adapter.candidatesFor("law.travels", candidates);
+            check(d2Ok && named(candidates) == scanned("instance-of", "category.target"),
                   "and once rebuilt it carries the newly arrived being: " + join(named(candidates)));
             population.pop_back();
             graph.remove(unbound);
             Universe::instance().bumpStructuralRevision();
             adapter.step();
+            candidates.clear();
         }
 
         // --------------------------------------------------------------
@@ -274,10 +275,9 @@ int main() {
         graph.add(std::make_shared<Relation>("instance-of", other, target, false));     // undirected
         Universe::instance().bumpStructuralRevision();
         adapter.step();
-        check(adapter.candidatesFor("law.travels", candidates) &&
-                  named(candidates) == scanned("instance-of", "category.target"),
+        const bool gOk = adapter.candidatesFor("law.travels", candidates);
+        check(gOk && named(candidates) == scanned("instance-of", "category.target"),
               "direction is honoured exactly as the condition honours it: " + join(named(candidates)));
-
         // --------------------------------------------------------------
         // H. Two categories: answered only when both roads are current.
         // --------------------------------------------------------------

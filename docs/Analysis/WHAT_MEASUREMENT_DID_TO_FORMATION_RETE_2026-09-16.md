@@ -10,7 +10,7 @@ found not by a failing test but by measuring a thing that turned out to be measu
 same engine, read for correctness rather than cost), `../architecture/law/FORMATION_RETE.md` §8,
 `../architecture/law/FORMATION_RETE_TIERED_RELEVANCE_LADDER.md`,
 `../architecture/law/DERIVED_STATE_LEDGER.md`,
-`../Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md` (the per-rung record).
+`../Agenda/Tasks/Specific Tasks/Law and Reasoning/Formation_Rete/Formation_Rete.md` (the per-rung record).
 
 ---
 
@@ -340,5 +340,5 @@ And one rule for whoever measures next, which this week cost the most to learn:
 *Claude Opus 5, session `session_01JE2AguCX12mpJ9YwFUqgmQ`, 2026-09-16 18:15 PDT. Numbers from
 `category_membership_scaling_test`, `quantifier_scaling_test`, `frame_lag_test`,
 `endpoint_register_test`, `relation_state_index_test`, and temporary probes since removed; the
-per-rung record with dates is in `../Agenda/Tasks/Specific Tasks/Formation_Rete/Formation_Rete.md`.
+per-rung record with dates is in `../Agenda/Tasks/Specific Tasks/Law and Reasoning/Formation_Rete/Formation_Rete.md`.
 The architecture measured here is Zach's.*

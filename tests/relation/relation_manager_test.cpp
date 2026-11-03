@@ -1,6 +1,8 @@
 #include "Relation/RelationManager.hpp"
 #include "Relation/Relation.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
+#include "json.hpp"
+#include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 
 #include <iostream>
 #include <string>
@@ -114,6 +116,112 @@ void test_cycle_detection() {
     check(!noCycle, "Adding A -> C should not form a cycle");
 }
 
+void test_forget_type_lexeme() {
+    std::cout << "--- test_forget_type_lexeme ---\n";
+    RelationManager rm;
+    DummySingular a("nodeA");
+    DummySingular b("nodeB");
+
+    Singularity::Language::Lexeme lexeme("custom_relation_type");
+    auto r = std::make_shared<Relation>(lexeme, a, b, false);
+    rm.add(r);
+
+    check(r->getTypeLexeme() == &lexeme, "Relation should have the lexeme initially");
+
+    std::string expectedId = lexeme.getIdentifier();
+    check(r->type == expectedId, "Relation type string should match lexeme ID");
+
+    RelationManager::forgetTypeLexemeEverywhere(&lexeme);
+
+    check(r->getTypeLexeme() == nullptr, "Relation should forget the lexeme");
+    check(r->type == expectedId, "Relation type string should be preserved");
+}
+
+void test_would_form_cycle_string_overload() {
+    std::cout << "--- test_would_form_cycle_string_overload ---\n";
+    RelationManager rm;
+    DummySingular a("nodeA");
+    DummySingular b("nodeB");
+    DummySingular c("nodeC");
+    DummySingular d("nodeD");
+
+    // A -> B
+    rm.add(std::make_shared<Relation>("hierarchy", a, b, true));
+    // B -> C
+    rm.add(std::make_shared<Relation>("hierarchy", b, c, true));
+    // C -> D
+    rm.add(std::make_shared<Relation>("hierarchy", c, d, true));
+
+    bool cycles = rm.wouldFormCycle("nodeD", "nodeA", "hierarchy");
+    check(cycles, "Adding D -> A should form a cycle for 'hierarchy' (string overload)");
+
+    bool noCycle = rm.wouldFormCycle("nodeA", "nodeD", "hierarchy");
+    check(!noCycle, "Adding A -> D should not form a cycle (string overload)");
+
+    bool cyclesSelf = rm.wouldFormCycle("nodeB", "nodeB", "hierarchy");
+    check(cyclesSelf, "Self-loop should be detected as a cycle (string overload)");
+}
+
+void test_string_queries_rename_and_equivalence() {
+    std::cout << "--- test_string_queries_rename_and_equivalence ---\n";
+    RelationManager rm;
+    DummySingular boundA("a-orig");
+    DummySingular boundB("b-orig");
+    DummySingular boundC("c-orig");
+
+    // 1. Add bound relations (directed and undirected)
+    auto rel1 = std::make_shared<Relation>("friend", boundA, boundB, false); // undirected
+    auto rel2 = std::make_shared<Relation>("parent", boundA, boundC, true);  // directed
+    rm.add(rel1);
+    rm.add(rel2);
+
+    // Initial check on string queries
+    check(rm.getRelationsOf("a-orig").size() == 2, "getRelationsOf(string) initial count for a-orig");
+    check(rm.getRelationsBetween("a-orig", "b-orig").size() == 1, "getRelationsBetween(string,string) initial count a-orig & b-orig");
+
+    // Adjacency initial check (directed & undirected)
+    auto adjA = rm.findAdjacentEntities("a-orig");
+    check(adjA.size() == 2, "findAdjacentEntities(a-orig) initial size");
+    auto adjB = rm.findAdjacentEntities("b-orig");
+    check(adjB.size() == 1 && adjB[0] == "a-orig", "findAdjacentEntities(b-orig) for undirected edge finds a-orig");
+    auto adjC = rm.findAdjacentEntities("c-orig");
+    check(adjC.empty(), "findAdjacentEntities(c-orig) for incoming directed edge is empty");
+
+    // 2. Rename boundA without touching manager
+    boundA.id = "a-renamed";
+
+    // Query by old identifier: rel1 and rel2 still have boundA pointing to boundA whose current ID is "a-renamed".
+    // Therefore rel->involves("a-orig") and rel->isBetween("a-orig", ...) return false.
+    check(rm.getRelationsOf("a-orig").empty(), "getRelationsOf('a-orig') returns empty after rename");
+    check(rm.getRelationsBetween("a-orig", "b-orig").empty(), "getRelationsBetween('a-orig', 'b-orig') returns empty after rename");
+
+    // Query by the NEW live identifier. These are the decisive pre-PR
+    // full-scan semantics: bound endpoints expose their current identifiers.
+    check(rm.getRelationsOf("a-renamed").size() == 2,
+          "getRelationsOf('a-renamed') finds relations after live rename");
+    check(rm.getRelationsBetween("a-renamed", "b-orig").size() == 1,
+          "getRelationsBetween('a-renamed', 'b-orig') finds relation after live rename");
+    auto adjRenamed = rm.findAdjacentEntities("a-renamed");
+    check(adjRenamed.size() == 2,
+          "findAdjacentEntities('a-renamed') finds outgoing/undirected neighbors after live rename");
+
+    // Impostor being takes the old identifier "a-orig"
+    DummySingular impostor("a-orig");
+    check(rm.getRelationsOf("a-orig").empty(), "impostor with old ID 'a-orig' does NOT falsely match rels of renamed boundA");
+
+    // 3. Loaded-unbound identifiers coverage
+    RelationManager rmUnbound;
+    rmUnbound.loadFromJson(nlohmann::json::array({
+        {{"type", "knows"}, {"entityA", "unbound1"}, {"entityB", "unbound2"}, {"directed", false}}
+    }));
+    check(rmUnbound.getRelationsOf("unbound1").size() == 1, "getRelationsOf(string) finds loaded-unbound");
+    check(rmUnbound.getRelationsBetween("unbound1", "unbound2").size() == 1, "getRelationsBetween(string,string) finds loaded-unbound");
+    auto adjUnbound1 = rmUnbound.findAdjacentEntities("unbound1");
+    check(adjUnbound1.size() == 1 && adjUnbound1[0] == "unbound2", "findAdjacentEntities(unbound1) finds unbound2");
+    auto adjUnbound2 = rmUnbound.findAdjacentEntities("unbound2");
+    check(adjUnbound2.size() == 1 && adjUnbound2[0] == "unbound1", "findAdjacentEntities(unbound2) finds unbound1 for undirected edge");
+}
+
 void test_forget_being() {
     std::cout << "--- test_forget_being ---\n";
     // Using a separate scope for the manager to ensure liveManagers behavior
@@ -135,6 +243,77 @@ void test_forget_being() {
     delete b;
 }
 
+void test_get_relations_of_type() {
+    std::cout << "--- test_get_relations_of_type ---\n";
+    RelationManager rm;
+    DummySingular a("nodeA");
+    DummySingular b("nodeB");
+    rm.add(std::make_shared<Relation>("type1", a, b, true));
+    rm.add(std::make_shared<Relation>("type2", a, b, true));
+
+    auto rels = rm.getRelationsOfType("type1");
+    check(rels.size() == 1, "Should find 1 relation of type1");
+    if (rels.size() > 0) {
+        check(rels[0]->type == "type1", "Found relation should be of type1");
+    }
+}
+
+void test_find_adjacent_entities() {
+    std::cout << "--- test_find_adjacent_entities ---\n";
+    RelationManager rm;
+    DummySingular a("nodeA");
+    DummySingular b("nodeB");
+    DummySingular c("nodeC");
+
+    rm.add(std::make_shared<Relation>("link", a, b, true));
+    rm.add(std::make_shared<Relation>("friend", b, c, false)); // undirected
+
+    auto adjA = rm.findAdjacentEntities("nodeA");
+    check(adjA.size() == 1 && adjA[0] == "nodeB", "nodeA should have nodeB as adjacent");
+
+    auto adjB = rm.findAdjacentEntities("nodeB");
+    // "link" is directed nodeA -> nodeB, so nodeB does not see nodeA via findAdjacentEntities since nodeB is not the source and relation is directed
+    // "friend" is undirected nodeB <-> nodeC, so nodeB sees nodeC. Total = 1.
+    check(adjB.size() == 1 && adjB[0] == "nodeC", "nodeB should have nodeC as adjacent");
+
+    auto adjB_link = rm.findAdjacentEntities("nodeB", "link");
+    check(adjB_link.size() == 0, "nodeB has no outgoing link relation");
+}
+
+void test_json_serialization() {
+    std::cout << "--- test_json_serialization ---\n";
+    RelationManager rm;
+    DummySingular a("nodeA");
+    DummySingular b("nodeB");
+    rm.add(std::make_shared<Relation>("type1", a, b, true));
+
+    nlohmann::json j = rm.toJson();
+    RelationManager rm2;
+    rm2.loadFromJson(j);
+
+    check(rm2.getAll().size() == 1, "Loaded manager should have 1 relation");
+    if (rm2.getAll().size() > 0) {
+        check(rm2.getAll()[0]->type == "type1", "Loaded relation should have type1");
+        check(rm2.getAll()[0]->aId() == "nodeA", "Loaded relation aId should match");
+    }
+}
+
+void test_relations_involving() {
+    std::cout << "--- test_relations_involving ---\n";
+    RelationManager rm;
+    DummySingular a("nodeA");
+    DummySingular b("nodeB");
+    auto rel = std::make_shared<Relation>("type1", a, b, true);
+    rm.add(rel);
+
+    std::vector<Relation*> out;
+    rm.relationsInvolving(a, out);
+    check(out.size() == 1, "relationsInvolving should find 1 relation for a");
+    if (out.size() > 0) {
+        check(out[0] == rel.get(), "relationsInvolving should return the correct relation pointer");
+    }
+}
+
 } // namespace
 
 int main() {
@@ -147,6 +326,13 @@ int main() {
     test_remove_involving();
     test_cycle_detection();
     test_forget_being();
+    test_get_relations_of_type();
+    test_find_adjacent_entities();
+    test_json_serialization();
+    test_relations_involving();
+    test_forget_type_lexeme();
+    test_would_form_cycle_string_overload();
+    test_string_queries_rename_and_equivalence();
 
     std::cout << "============================================================\n";
     std::cout << "RelationManager test summary: "

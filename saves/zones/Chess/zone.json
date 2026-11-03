@@ -1,662 +1,18 @@
 {
-  "deletable": {
-    "Player": true,
-    "Zach": true
-  },
   "formationRelations": [
-    {
-      "attachment": {
-        "childAnchor": [
-          0,
-          0,
-          0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1
-        ],
-        "parentAnchor": [
-          0,
-          0,
-          0
-        ]
-      },
-      "directed": true,
-      "entityA": "category.control.button",
-      "entityB": "category.control",
-      "events": [
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1787390000
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1788744909
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1788744909
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1788765152
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1788765152
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1788772864
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1788772864
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1788988016
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1788988016
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1789006485
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1789006485
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1789193314
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1789193314
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1789195532
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1789195532
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1789539389
-        },
-        {
-          "deltaWeight": 1,
-          "description": "subcategory-of",
-          "timestamp": 1789539389
-        }
-      ],
-      "type": "subcategory-of",
-      "weight": 1
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0,
-          0,
-          0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1
-        ],
-        "parentAnchor": [
-          0,
-          0,
-          0
-        ]
-      },
-      "directed": true,
-      "entityA": "hud.chess.promo.queen",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1787390000
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788744909
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788744909
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788765152
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788765152
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788772864
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788772864
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788988016
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788988016
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789006485
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789006485
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789193314
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789193314
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789195532
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789195532
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789539389
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789539389
-        }
-      ],
-      "type": "instance-of",
-      "weight": 1
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0,
-          0,
-          0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1
-        ],
-        "parentAnchor": [
-          0,
-          0,
-          0
-        ]
-      },
-      "directed": true,
-      "entityA": "hud.chess.promo.knight",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1787390000
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788744909
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788744909
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788765152
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788765152
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788772864
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788772864
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788988016
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788988016
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789006485
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789006485
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789193314
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789193314
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789195532
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789195532
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789539389
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789539389
-        }
-      ],
-      "type": "instance-of",
-      "weight": 1
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0,
-          0,
-          0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1
-        ],
-        "parentAnchor": [
-          0,
-          0,
-          0
-        ]
-      },
-      "directed": true,
-      "entityA": "hud.chess.promo.rook",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1787390000
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788744909
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788744909
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788765152
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788765152
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788772864
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788772864
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788988016
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788988016
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789006485
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789006485
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789193314
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789193314
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789195532
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789195532
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789539389
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789539389
-        }
-      ],
-      "type": "instance-of",
-      "weight": 1
-    },
-    {
-      "attachment": {
-        "childAnchor": [
-          0,
-          0,
-          0
-        ],
-        "enabled": false,
-        "inheritRotation": true,
-        "inheritScale": true,
-        "inheritTranslation": true,
-        "localOffset": [
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1
-        ],
-        "parentAnchor": [
-          0,
-          0,
-          0
-        ]
-      },
-      "directed": true,
-      "entityA": "hud.chess.promo.bishop",
-      "entityB": "category.control.button",
-      "events": [
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1787390000
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788744909
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788744909
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788765152
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788765152
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788772864
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788772864
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788988016
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1788988016
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789006485
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789006485
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789193314
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789193314
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789195532
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789195532
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789539389
-        },
-        {
-          "deltaWeight": 1,
-          "description": "instance-of",
-          "timestamp": 1789539389
-        }
-      ],
-      "type": "instance-of",
-      "weight": 1
-    },
     {
       "directed": true,
       "entityA": "object.chess.board",
       "entityB": "category.chess.board",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -664,13 +20,13 @@
       "entityB": "category.chess",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1787390000
         }
       ],
       "type": "subcategory-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -678,13 +34,13 @@
       "entityB": "category.chess",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1787390000
         }
       ],
       "type": "subcategory-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -692,13 +48,27 @@
       "entityB": "category.chess",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1787390000
         }
       ],
       "type": "subcategory-of",
-      "weight": 1
+      "weight": 1.0
+    },
+    {
+      "directed": true,
+      "entityA": "category.control.button",
+      "entityB": "category.control",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "subcategory-of",
+          "timestamp": 1787390000
+        }
+      ],
+      "type": "subcategory-of",
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -706,13 +76,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -720,13 +90,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -734,13 +104,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -748,13 +118,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -762,13 +132,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -776,13 +146,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -790,13 +160,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -804,13 +174,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -818,13 +188,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -832,13 +202,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -846,13 +216,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -860,13 +230,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -874,13 +244,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -888,13 +258,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -902,13 +272,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -916,13 +286,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -930,13 +300,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -944,13 +314,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -958,13 +328,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -972,13 +342,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -986,13 +356,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1000,13 +370,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1014,13 +384,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1028,13 +398,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1042,13 +412,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1056,13 +426,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1070,13 +440,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1084,13 +454,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1098,13 +468,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1112,13 +482,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1126,13 +496,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1140,13 +510,13 @@
       "entityB": "category.chess.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1154,13 +524,13 @@
       "entityB": "category.chess.player",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1168,13 +538,69 @@
       "entityB": "category.chess.player",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
+    },
+    {
+      "directed": true,
+      "entityA": "hud.chess.promo.queen",
+      "entityB": "category.control.button",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1787390000
+        }
+      ],
+      "type": "instance-of",
+      "weight": 1.0
+    },
+    {
+      "directed": true,
+      "entityA": "hud.chess.promo.knight",
+      "entityB": "category.control.button",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1787390000
+        }
+      ],
+      "type": "instance-of",
+      "weight": 1.0
+    },
+    {
+      "directed": true,
+      "entityA": "hud.chess.promo.rook",
+      "entityB": "category.control.button",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1787390000
+        }
+      ],
+      "type": "instance-of",
+      "weight": 1.0
+    },
+    {
+      "directed": true,
+      "entityA": "hud.chess.promo.bishop",
+      "entityB": "category.control.button",
+      "events": [
+        {
+          "deltaWeight": 1.0,
+          "description": "instance-of",
+          "timestamp": 1787390000
+        }
+      ],
+      "type": "instance-of",
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1182,13 +608,13 @@
       "entityB": "codex-gpt5",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "authored-by",
           "timestamp": 1788768000
         }
       ],
       "type": "authored-by",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1196,13 +622,13 @@
       "entityB": "codex-gpt5",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "authored-by",
           "timestamp": 1788768000
         }
       ],
       "type": "authored-by",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1210,13 +636,13 @@
       "entityB": "category.chess.law",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1787390000
         }
       ],
       "type": "subcategory-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1224,13 +650,13 @@
       "entityB": "codex-gpt5",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "authored-by",
           "timestamp": 1788768000
         }
       ],
       "type": "authored-by",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1238,13 +664,13 @@
       "entityB": "category.chess.law",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1787390000
         }
       ],
       "type": "subcategory-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1252,13 +678,13 @@
       "entityB": "codex-gpt5",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "authored-by",
           "timestamp": 1788768000
         }
       ],
       "type": "authored-by",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1266,13 +692,13 @@
       "entityB": "category.chess.law.movement",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1787390000
         }
       ],
       "type": "subcategory-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1280,13 +706,13 @@
       "entityB": "codex-gpt5",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "authored-by",
           "timestamp": 1788768000
         }
       ],
       "type": "authored-by",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1294,13 +720,13 @@
       "entityB": "category.chess.law.movement",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1787390000
         }
       ],
       "type": "subcategory-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1308,13 +734,13 @@
       "entityB": "codex-gpt5",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "authored-by",
           "timestamp": 1788768000
         }
       ],
       "type": "authored-by",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1322,13 +748,13 @@
       "entityB": "category.chess.law.movement",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1787390000
         }
       ],
       "type": "subcategory-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1336,13 +762,13 @@
       "entityB": "codex-gpt5",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "authored-by",
           "timestamp": 1788768000
         }
       ],
       "type": "authored-by",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1350,13 +776,13 @@
       "entityB": "category.chess.law",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1787390000
         }
       ],
       "type": "subcategory-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1364,13 +790,13 @@
       "entityB": "codex-gpt5",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "authored-by",
           "timestamp": 1788768000
         }
       ],
       "type": "authored-by",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1378,13 +804,13 @@
       "entityB": "category.chess.law",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1787390000
         }
       ],
       "type": "subcategory-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1392,13 +818,13 @@
       "entityB": "codex-gpt5",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "authored-by",
           "timestamp": 1788768000
         }
       ],
       "type": "authored-by",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1406,13 +832,13 @@
       "entityB": "category.chess.law",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1787390000
         }
       ],
       "type": "subcategory-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1420,13 +846,13 @@
       "entityB": "codex-gpt5",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "authored-by",
           "timestamp": 1788768000
         }
       ],
       "type": "authored-by",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1434,13 +860,13 @@
       "entityB": "category.chess.law",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1787390000
         }
       ],
       "type": "subcategory-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1448,13 +874,13 @@
       "entityB": "codex-gpt5",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "authored-by",
           "timestamp": 1788768000
         }
       ],
       "type": "authored-by",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1462,13 +888,13 @@
       "entityB": "category.chess.law",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "subcategory-of",
           "timestamp": 1787390000
         }
       ],
       "type": "subcategory-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1476,13 +902,13 @@
       "entityB": "category.chess.law.interaction",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1490,13 +916,13 @@
       "entityB": "category.chess.law.interaction",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1504,13 +930,13 @@
       "entityB": "category.chess.law.interaction",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1518,13 +944,13 @@
       "entityB": "category.chess.law.interaction",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1532,13 +958,13 @@
       "entityB": "category.chess.law.interaction",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1546,13 +972,13 @@
       "entityB": "category.chess.law.movement.pawn",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1560,13 +986,13 @@
       "entityB": "category.chess.law.movement.pawn",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1574,13 +1000,13 @@
       "entityB": "category.chess.law.movement.pawn",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1588,13 +1014,13 @@
       "entityB": "category.chess.law.capture",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1602,13 +1028,13 @@
       "entityB": "category.chess.law.movement.pawn",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1616,13 +1042,13 @@
       "entityB": "category.chess.law.movement.pawn",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1630,13 +1056,13 @@
       "entityB": "category.chess.law.movement.pawn",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1644,13 +1070,13 @@
       "entityB": "category.chess.law.movement.pawn",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1658,13 +1084,13 @@
       "entityB": "category.chess.law.capture",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1672,13 +1098,13 @@
       "entityB": "category.chess.law.movement.pawn",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1686,13 +1112,13 @@
       "entityB": "category.chess.law.movement.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1700,13 +1126,13 @@
       "entityB": "category.chess.law.movement.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1714,13 +1140,13 @@
       "entityB": "category.chess.law.movement.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1728,13 +1154,13 @@
       "entityB": "category.chess.law.movement.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1742,13 +1168,13 @@
       "entityB": "category.chess.law.movement.piece",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1756,13 +1182,13 @@
       "entityB": "category.chess.law.movement.castling",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1770,13 +1196,13 @@
       "entityB": "category.chess.law.movement.castling",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1784,13 +1210,13 @@
       "entityB": "category.chess.law.movement.castling",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1798,13 +1224,13 @@
       "entityB": "category.chess.law.movement.castling",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1812,13 +1238,13 @@
       "entityB": "category.chess.law.movement.castling",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1826,13 +1252,13 @@
       "entityB": "category.chess.law.movement.castling",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1840,13 +1266,13 @@
       "entityB": "category.chess.law.movement.castling",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1854,13 +1280,13 @@
       "entityB": "category.chess.law.movement.castling",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1868,13 +1294,13 @@
       "entityB": "category.chess.law.movement.castling",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1882,13 +1308,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1896,13 +1322,13 @@
       "entityB": "category.chess.law.movement.castling",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1910,13 +1336,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1924,13 +1350,13 @@
       "entityB": "category.chess.law.movement.castling",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1938,13 +1364,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1952,13 +1378,13 @@
       "entityB": "category.chess.law.movement.castling",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1966,13 +1392,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1980,13 +1406,13 @@
       "entityB": "category.chess.law.capture",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -1994,13 +1420,13 @@
       "entityB": "category.chess.law.capture",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2008,13 +1434,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2022,13 +1448,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2036,13 +1462,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2050,13 +1476,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2064,13 +1490,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2078,13 +1504,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2092,13 +1518,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2106,13 +1532,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2120,13 +1546,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2134,13 +1560,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2148,13 +1574,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2162,13 +1588,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2176,13 +1602,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2190,13 +1616,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2204,13 +1630,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2218,13 +1644,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2232,13 +1658,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2246,13 +1672,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2260,13 +1686,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2274,13 +1700,13 @@
       "entityB": "category.chess.law.capture",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2288,13 +1714,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2302,13 +1728,13 @@
       "entityB": "category.chess.law.turn-state",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2316,13 +1742,13 @@
       "entityB": "category.chess.law.king-safety",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2330,13 +1756,13 @@
       "entityB": "category.chess.law.capture",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2344,13 +1770,13 @@
       "entityB": "category.chess.law.turn-state",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2358,13 +1784,13 @@
       "entityB": "category.chess.law.promotion",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2372,13 +1798,13 @@
       "entityB": "category.chess.law.promotion",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2386,13 +1812,13 @@
       "entityB": "category.chess.law.promotion",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2400,13 +1826,13 @@
       "entityB": "category.chess.law.promotion",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2414,13 +1840,13 @@
       "entityB": "category.chess.law.promotion",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2428,13 +1854,13 @@
       "entityB": "category.chess.law.promotion",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2442,13 +1868,13 @@
       "entityB": "category.chess.law.promotion",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2456,13 +1882,13 @@
       "entityB": "category.chess.law.promotion",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2470,13 +1896,13 @@
       "entityB": "category.chess.law.promotion",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2484,13 +1910,13 @@
       "entityB": "category.chess.law.promotion",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2498,13 +1924,13 @@
       "entityB": "category.chess.law.conclusion",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2512,13 +1938,13 @@
       "entityB": "category.chess.law.conclusion",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2526,13 +1952,13 @@
       "entityB": "category.chess.law.conclusion",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2540,13 +1966,13 @@
       "entityB": "category.chess.law.conclusion",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2554,13 +1980,13 @@
       "entityB": "category.chess.law.turn-state",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     },
     {
       "directed": true,
@@ -2568,52 +1994,213 @@
       "entityB": "category.chess.law.turn-state",
       "events": [
         {
-          "deltaWeight": 1,
+          "deltaWeight": 1.0,
           "description": "instance-of",
           "timestamp": 1787390000
         }
       ],
       "type": "instance-of",
-      "weight": 1
+      "weight": 1.0
     }
   ],
   "identifier": "Chess",
-  "lexemes": [],
+  "lawRefs": [
+    "law-chess-click",
+    "law-chess-select",
+    "law-chess-drag-pick",
+    "law-chess-drag-drop",
+    "law-chess-deselect-others",
+    "law-chess-pawn-w-step",
+    "law-chess-pawn-w-double",
+    "law-chess-pawn-w-capture",
+    "law-chess-pawn-w-en-passant",
+    "law-chess-pawn-b-step",
+    "law-chess-pawn-b-double",
+    "law-chess-pawn-b-capture",
+    "law-chess-pawn-b-en-passant",
+    "law-chess-knight",
+    "law-chess-bishop",
+    "law-chess-rook",
+    "law-chess-queen",
+    "law-chess-king",
+    "law-chess-castle-white-kingside",
+    "law-chess-castle-white-queenside",
+    "law-chess-castle-black-kingside",
+    "law-chess-castle-black-queenside",
+    "law-chess-castle-rook-wk",
+    "law-chess-castle-rook-wq",
+    "law-chess-castle-rook-bk",
+    "law-chess-castle-rook-bq",
+    "law-chess-castle-rook-revert-wk",
+    "law-chess-castle-rook-revert-wq",
+    "law-chess-castle-rook-revert-bk",
+    "law-chess-castle-rook-revert-bq",
+    "law-chess-capture",
+    "law-chess-capture-en-passant",
+    "law-chess-king-track-white",
+    "law-chess-king-track-black",
+    "law-chess-check-reset",
+    "law-chess-probe-white-king",
+    "law-chess-probe-black-king",
+    "law-chess-check-pawn-w",
+    "law-chess-check-pawn-b",
+    "law-chess-check-knight",
+    "law-chess-check-king",
+    "law-chess-check-slider-rank-candidate",
+    "law-chess-check-slider-file-candidate",
+    "law-chess-check-slider-diag-candidate",
+    "law-chess-eval-slider-rank",
+    "law-chess-eval-slider-file",
+    "law-chess-eval-slider-diag",
+    "law-chess-check-scan-complete",
+    "law-chess-check-evaluated",
+    "law-chess-revert",
+    "law-chess-revert-capture",
+    "law-chess-commit",
+    "law-chess-clear-capture-flag",
+    "law-chess-promote-white",
+    "law-chess-promote-black",
+    "law-chess-promo-btn-queen",
+    "law-chess-promo-apply-queen",
+    "law-chess-promo-btn-knight",
+    "law-chess-promo-apply-knight",
+    "law-chess-promo-btn-rook",
+    "law-chess-promo-apply-rook",
+    "law-chess-promo-btn-bishop",
+    "law-chess-promo-apply-bishop",
+    "law-chess-threefold-draw",
+    "law-chess-stalemate-draw",
+    "law-chess-claim-stalemate",
+    "law-chess-king-unmade-is-mate",
+    "law-chess-seat-white",
+    "law-chess-seat-black"
+  ],
+  "materials": [
+    {
+      "ambient": 0.25,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.85,
+      "faceTextures": [
+        {
+          "pixelsB64": "XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/w==",
+          "size": 8
+        },
+        {
+          "pixelsB64": "XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/w==",
+          "size": 8
+        },
+        {
+          "pixelsB64": "dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/w==",
+          "size": 64
+        },
+        {
+          "pixelsB64": "XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/w==",
+          "size": 8
+        },
+        {
+          "pixelsB64": "XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/w==",
+          "size": 8
+        },
+        {
+          "pixelsB64": "XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/w==",
+          "size": 8
+        }
+      ],
+      "name": "chess.board",
+      "opacity": 1.0,
+      "shininess": 12.0,
+      "specular": 0.25
+    },
+    {
+      "ambient": 0.22,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.85,
+      "faceTextures": [
+        {
+          "pixelsB64": "9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo/w==",
+          "size": 8
+        },
+        {
+          "pixelsB64": "9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo/w==",
+          "size": 8
+        },
+        {
+          "pixelsB64": "9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo/w==",
+          "size": 8
+        },
+        {
+          "pixelsB64": "9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo/w==",
+          "size": 8
+        },
+        {
+          "pixelsB64": "9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo/w==",
+          "size": 8
+        },
+        {
+          "pixelsB64": "9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo/w==",
+          "size": 8
+        }
+      ],
+      "name": "chess.white",
+      "opacity": 1.0,
+      "shininess": 48.0,
+      "specular": 0.6
+    },
+    {
+      "ambient": 0.18,
+      "baseColor": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diffuse": 0.8,
+      "faceTextures": [
+        {
+          "pixelsB64": "HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/w==",
+          "size": 8
+        },
+        {
+          "pixelsB64": "HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/w==",
+          "size": 8
+        },
+        {
+          "pixelsB64": "HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/w==",
+          "size": 8
+        },
+        {
+          "pixelsB64": "HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/w==",
+          "size": 8
+        },
+        {
+          "pixelsB64": "HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/w==",
+          "size": 8
+        },
+        {
+          "pixelsB64": "HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/w==",
+          "size": 8
+        }
+      ],
+      "name": "chess.black",
+      "opacity": 1.0,
+      "shininess": 48.0,
+      "specular": 0.45
+    }
+  ],
   "name": "Chess",
-  "owner": "Zach",
+  "owner": "Player",
   "parentZone": "",
   "qualities": {
-    "kind": "chess",
-    "ownerKind": "person"
+    "kind": "chess"
   },
   "scope": "Local",
-  "spatialRoot": {
-    "field": {
-      "amplitude": 1,
-      "baseDensity": 1,
-      "frequency": 1,
-      "mode": "Procedural"
-    },
-    "id": "Chess_spatialRoot",
-    "origin": [
-      0,
-      0,
-      0
-    ],
-    "scale": [
-      1,
-      1,
-      1
-    ],
-    "vectorField": {
-      "amplitude": 1,
-      "baseFlowX": 0,
-      "baseFlowY": 0,
-      "baseFlowZ": 0,
-      "frequency": 1,
-      "mode": "Procedural"
-    }
-  },
   "world": {
     "objects": [
       {
@@ -2625,9 +2212,9 @@
         },
         "baseline": "ground",
         "center": [
-          0,
+          0.0,
           -0.14,
-          0
+          0.0
         ],
         "faceColors": [
           [
@@ -2670,29 +2257,30 @@
           0.5,
           0.5,
           0.5,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
+        "textureResolution": 1024,
         "transform": [
-          8,
-          0,
-          0,
-          0,
-          0,
+          8.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.28,
-          0,
-          0,
-          0,
-          0,
-          8,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          8.0,
+          0.0,
+          0.0,
           -0.14,
-          0,
-          1
+          0.0,
+          1.0
         ]
       },
       {
@@ -2784,29 +2372,29 @@
           0.5,
           0.5,
           0.5,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.42,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.72,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.42,
-          0,
+          0.0,
           -3.5,
           0.36,
           -3.5,
-          1
+          1.0
         ]
       },
       {
@@ -2898,29 +2486,29 @@
           0.32,
           0.16,
           0.32,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           -2.5,
           0.32,
           -3.5,
-          1
+          1.0
         ]
       },
       {
@@ -3012,29 +2600,29 @@
           0.22,
           0.22,
           0.4,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
+          0.0,
+          0.0,
           -1,
-          0,
-          0,
+          0.0,
+          0.0,
           -1.5,
           0.4,
           -3.5,
-          1
+          1.0
         ]
       },
       {
@@ -3126,29 +2714,29 @@
           0.24,
           0.24,
           0.42,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
           0.35,
-          0
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           -0.5,
           0.42,
           -3.5,
-          1
+          1.0
         ]
       },
       {
@@ -3240,29 +2828,29 @@
           0.2,
           0.2,
           0.48,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
+          0.0,
+          0.0,
           -1,
-          0,
-          0,
+          0.0,
+          0.0,
           0.5,
           0.48,
           -3.5,
-          1
+          1.0
         ]
       },
       {
@@ -3354,29 +2942,29 @@
           0.22,
           0.22,
           0.4,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
+          0.0,
+          0.0,
           -1,
-          0,
-          0,
+          0.0,
+          0.0,
           1.5,
           0.4,
           -3.5,
-          1
+          1.0
         ]
       },
       {
@@ -3468,29 +3056,29 @@
           0.32,
           0.16,
           0.32,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           2.5,
           0.32,
           -3.5,
-          1
+          1.0
         ]
       },
       {
@@ -3582,29 +3170,29 @@
           0.5,
           0.5,
           0.5,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.42,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.72,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.42,
-          0,
+          0.0,
           3.5,
           0.36,
           -3.5,
-          1
+          1.0
         ]
       },
       {
@@ -3696,29 +3284,29 @@
           0.5,
           0.5,
           0.5,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.42,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.72,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.42,
-          0,
+          0.0,
           -3.5,
           0.36,
           3.5,
-          1
+          1.0
         ]
       },
       {
@@ -3810,29 +3398,29 @@
           0.32,
           0.16,
           0.32,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           -2.5,
           0.32,
           3.5,
-          1
+          1.0
         ]
       },
       {
@@ -3924,29 +3512,29 @@
           0.22,
           0.22,
           0.4,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
+          0.0,
+          0.0,
           -1,
-          0,
-          0,
+          0.0,
+          0.0,
           -1.5,
           0.4,
           3.5,
-          1
+          1.0
         ]
       },
       {
@@ -4038,29 +3626,29 @@
           0.24,
           0.24,
           0.42,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
           0.35,
-          0
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           -0.5,
           0.42,
           3.5,
-          1
+          1.0
         ]
       },
       {
@@ -4152,29 +3740,29 @@
           0.2,
           0.2,
           0.48,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
+          0.0,
+          0.0,
           -1,
-          0,
-          0,
+          0.0,
+          0.0,
           0.5,
           0.48,
           3.5,
-          1
+          1.0
         ]
       },
       {
@@ -4266,29 +3854,29 @@
           0.22,
           0.22,
           0.4,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
+          0.0,
+          0.0,
           -1,
-          0,
-          0,
+          0.0,
+          0.0,
           1.5,
           0.4,
           3.5,
-          1
+          1.0
         ]
       },
       {
@@ -4380,29 +3968,29 @@
           0.32,
           0.16,
           0.32,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           2.5,
           0.32,
           3.5,
-          1
+          1.0
         ]
       },
       {
@@ -4494,29 +4082,29 @@
           0.5,
           0.5,
           0.5,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.42,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.72,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.42,
-          0,
+          0.0,
           3.5,
           0.36,
           3.5,
-          1
+          1.0
         ]
       },
       {
@@ -4608,29 +4196,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           -3.5,
           0.22,
           -2.5,
-          1
+          1.0
         ]
       },
       {
@@ -4722,29 +4310,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           -3.5,
           0.22,
           2.5,
-          1
+          1.0
         ]
       },
       {
@@ -4836,29 +4424,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           -2.5,
           0.22,
           -2.5,
-          1
+          1.0
         ]
       },
       {
@@ -4950,29 +4538,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           -2.5,
           0.22,
           2.5,
-          1
+          1.0
         ]
       },
       {
@@ -5064,29 +4652,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           -1.5,
           0.22,
           -2.5,
-          1
+          1.0
         ]
       },
       {
@@ -5178,29 +4766,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           -1.5,
           0.22,
           2.5,
-          1
+          1.0
         ]
       },
       {
@@ -5292,29 +4880,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           -0.5,
           0.22,
           -2.5,
-          1
+          1.0
         ]
       },
       {
@@ -5406,29 +4994,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           -0.5,
           0.22,
           2.5,
-          1
+          1.0
         ]
       },
       {
@@ -5520,29 +5108,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           0.5,
           0.22,
           -2.5,
-          1
+          1.0
         ]
       },
       {
@@ -5634,29 +5222,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           0.5,
           0.22,
           2.5,
-          1
+          1.0
         ]
       },
       {
@@ -5748,29 +5336,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           1.5,
           0.22,
           -2.5,
-          1
+          1.0
         ]
       },
       {
@@ -5862,29 +5450,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           1.5,
           0.22,
           2.5,
-          1
+          1.0
         ]
       },
       {
@@ -5976,29 +5564,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           2.5,
           0.22,
           -2.5,
-          1
+          1.0
         ]
       },
       {
@@ -6090,29 +5678,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           2.5,
           0.22,
           2.5,
-          1
+          1.0
         ]
       },
       {
@@ -6204,29 +5792,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           3.5,
           0.22,
           -2.5,
-          1
+          1.0
         ]
       },
       {
@@ -6318,29 +5906,29 @@
           0.22,
           0.22,
           0.22,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           1,
-          0,
+          0.0,
           3.5,
           0.22,
           2.5,
-          1
+          1.0
         ]
       },
       {
@@ -6359,7 +5947,7 @@
           }
         },
         "center": [
-          0,
+          0.0,
           0.15,
           -5.4
         ],
@@ -6412,21 +6000,21 @@
         ],
         "transform": [
           0.6,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.3,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.6,
-          0,
-          0,
+          0.0,
+          0.0,
           0.15,
           -5.4,
-          1
+          1.0
         ]
       },
       {
@@ -6445,7 +6033,7 @@
           }
         },
         "center": [
-          0,
+          0.0,
           0.15,
           5.4
         ],
@@ -6498,21 +6086,21 @@
         ],
         "transform": [
           0.6,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.3,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.6,
-          0,
-          0,
+          0.0,
+          0.0,
           0.15,
           5.4,
-          1
+          1.0
         ]
       },
       {
@@ -6527,21 +6115,21 @@
           },
           "pickPriority": {
             "t": "double",
-            "v": 100
+            "v": 100.0
           },
           "shape.height2D": {
             "t": "double",
-            "v": 32
+            "v": 32.0
           },
           "shape.width2D": {
             "t": "double",
-            "v": 130
+            "v": 130.0
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "faceColors": [
           [
@@ -6580,38 +6168,38 @@
         "objectID": "hud.chess.promo.queen",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          130,
-          32
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          130.0,
+          32.0
         ],
         "transform": [
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
-        "x2D": 340,
-        "y2D": 24,
+        "x2D": 340.0,
+        "y2D": 24.0,
         "zOrder2D": 20
       },
       {
@@ -6626,21 +6214,21 @@
           },
           "pickPriority": {
             "t": "double",
-            "v": 100
+            "v": 100.0
           },
           "shape.height2D": {
             "t": "double",
-            "v": 32
+            "v": 32.0
           },
           "shape.width2D": {
             "t": "double",
-            "v": 90
+            "v": 90.0
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "faceColors": [
           [
@@ -6679,38 +6267,38 @@
         "objectID": "hud.chess.promo.knight",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          90,
-          32
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          90.0,
+          32.0
         ],
         "transform": [
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
-        "x2D": 480,
-        "y2D": 24,
+        "x2D": 480.0,
+        "y2D": 24.0,
         "zOrder2D": 20
       },
       {
@@ -6725,21 +6313,21 @@
           },
           "pickPriority": {
             "t": "double",
-            "v": 100
+            "v": 100.0
           },
           "shape.height2D": {
             "t": "double",
-            "v": 32
+            "v": 32.0
           },
           "shape.width2D": {
             "t": "double",
-            "v": 80
+            "v": 80.0
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "faceColors": [
           [
@@ -6778,38 +6366,38 @@
         "objectID": "hud.chess.promo.rook",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          80,
-          32
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          80.0,
+          32.0
         ],
         "transform": [
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
-        "x2D": 580,
-        "y2D": 24,
+        "x2D": 580.0,
+        "y2D": 24.0,
         "zOrder2D": 20
       },
       {
@@ -6824,21 +6412,21 @@
           },
           "pickPriority": {
             "t": "double",
-            "v": 100
+            "v": 100.0
           },
           "shape.height2D": {
             "t": "double",
-            "v": 32
+            "v": 32.0
           },
           "shape.width2D": {
             "t": "double",
-            "v": 90
+            "v": 90.0
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "faceColors": [
           [
@@ -6877,38 +6465,38 @@
         "objectID": "hud.chess.promo.bishop",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          90,
-          32
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          90.0,
+          32.0
         ],
         "transform": [
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1,
-          0,
-          0,
-          0,
-          0,
-          1
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ],
-        "x2D": 670,
-        "y2D": 24,
+        "x2D": 670.0,
+        "y2D": 24.0,
         "zOrder2D": 20
       },
       {
@@ -6919,42 +6507,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -6965,42 +6553,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess.piece",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -7011,42 +6599,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess.board",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -7057,42 +6645,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess.player",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -7103,42 +6691,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.control",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -7149,42 +6737,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.control.button",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -7203,42 +6791,100 @@
           }
         },
         "center": [
-          80,
-          80,
-          80
+          80.0,
+          80.0,
+          80.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "grok-4.6",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          80,
-          80,
-          80,
-          1
+          0.0,
+          80.0,
+          80.0,
+          80.0,
+          1.0
+        ]
+      },
+      {
+        "authoredProperties": {
+          "authoredWork": {
+            "t": "string",
+            "v": "Chess Law category taxonomy"
+          },
+          "displayName": {
+            "t": "string",
+            "v": "Codex GPT-5 (First Mover)"
+          },
+          "kind": {
+            "t": "string",
+            "v": "first-mover"
+          },
+          "onBehalfOf": {
+            "t": "string",
+            "v": "Zach"
+          }
+        },
+        "center": [
+          80.0,
+          80.0,
+          80.0
+        ],
+        "geometryType": 12,
+        "materialId": "",
+        "objectID": "codex-gpt5",
+        "shapeKind": 12,
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.01,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01,
+          0.0,
+          80.0,
+          80.0,
+          80.0,
+          1.0
         ]
       },
       {
@@ -7437,42 +7083,42 @@
           }
         },
         "center": [
-          80,
-          80,
-          80
+          80.0,
+          80.0,
+          80.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "state.chess",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          80,
-          80,
-          80,
-          1
+          0.0,
+          80.0,
+          80.0,
+          80.0,
+          1.0
         ]
       },
       {
@@ -7487,100 +7133,42 @@
           }
         },
         "center": [
-          80,
-          80,
-          80
+          80.0,
+          80.0,
+          80.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "object.chess.status",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          80,
-          80,
-          80,
-          1
-        ]
-      },
-      {
-        "authoredProperties": {
-          "authoredWork": {
-            "t": "string",
-            "v": "Chess Law category taxonomy"
-          },
-          "displayName": {
-            "t": "string",
-            "v": "Codex GPT-5 (First Mover)"
-          },
-          "kind": {
-            "t": "string",
-            "v": "first-mover"
-          },
-          "onBehalfOf": {
-            "t": "string",
-            "v": "Zach"
-          }
-        },
-        "center": [
-          80,
-          80,
-          80
-        ],
-        "geometryType": 12,
-        "materialId": "",
-        "objectID": "codex-gpt5",
-        "shapeKind": 12,
-        "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "transform": [
-          0.01,
-          0,
-          0,
-          0,
-          0,
-          0.01,
-          0,
-          0,
-          0,
-          0,
-          0.01,
-          0,
-          80,
-          80,
-          80,
-          1
+          0.0,
+          80.0,
+          80.0,
+          80.0,
+          1.0
         ]
       },
       {
@@ -7591,42 +7179,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess.law",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -7637,42 +7225,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess.law.interaction",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -7683,42 +7271,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess.law.movement",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -7729,42 +7317,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess.law.movement.pawn",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -7775,42 +7363,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess.law.movement.piece",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -7821,42 +7409,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess.law.movement.castling",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -7867,42 +7455,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess.law.capture",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -7913,42 +7501,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess.law.king-safety",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -7959,42 +7547,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess.law.promotion",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -8005,42 +7593,42 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess.law.turn-state",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       },
       {
@@ -8051,234 +7639,44 @@
           }
         },
         "center": [
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0
         ],
         "geometryType": 12,
         "materialId": "",
         "objectID": "category.chess.law.conclusion",
         "shapeKind": 12,
         "shapeParams": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
         ],
         "transform": [
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
           0.01,
-          0,
-          0,
-          0,
-          0,
-          1
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
         ]
       }
     ]
-  },
-  "materials": [
-    {
-      "ambient": 0.25,
-      "baseColor": [
-        1,
-        1,
-        1
-      ],
-      "diffuse": 0.85,
-      "faceTextures": [
-        {
-          "pixelsB64": "XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/w==",
-          "size": 8
-        },
-        {
-          "pixelsB64": "XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/w==",
-          "size": 8
-        },
-        {
-          "pixelsB64": "dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/7dam/+3Wpv/t1qb/7dam/+3Wpv/t1qb/7dam/+3Wpv91RSH/dUUh/3VFIf91RSH/dUUh/3VFIf91RSH/dUUh/w==",
-          "size": 64
-        },
-        {
-          "pixelsB64": "XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/w==",
-          "size": 8
-        },
-        {
-          "pixelsB64": "XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/w==",
-          "size": 8
-        },
-        {
-          "pixelsB64": "XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/1w6HP9cOhz/XDoc/w==",
-          "size": 8
-        }
-      ],
-      "name": "chess.board",
-      "opacity": 1,
-      "shininess": 12,
-      "specular": 0.25
-    },
-    {
-      "ambient": 0.22,
-      "baseColor": [
-        1,
-        1,
-        1
-      ],
-      "diffuse": 0.85,
-      "faceTextures": [
-        {
-          "pixelsB64": "9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo/w==",
-          "size": 8
-        },
-        {
-          "pixelsB64": "9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo/w==",
-          "size": 8
-        },
-        {
-          "pixelsB64": "9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo/w==",
-          "size": 8
-        },
-        {
-          "pixelsB64": "9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo/w==",
-          "size": 8
-        },
-        {
-          "pixelsB64": "9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo/w==",
-          "size": 8
-        },
-        {
-          "pixelsB64": "9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo//Tx6P/08ej/9PHo/w==",
-          "size": 8
-        }
-      ],
-      "name": "chess.white",
-      "opacity": 1,
-      "shininess": 48,
-      "specular": 0.6
-    },
-    {
-      "ambient": 0.18,
-      "baseColor": [
-        1,
-        1,
-        1
-      ],
-      "diffuse": 0.8,
-      "faceTextures": [
-        {
-          "pixelsB64": "HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/w==",
-          "size": 8
-        },
-        {
-          "pixelsB64": "HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/w==",
-          "size": 8
-        },
-        {
-          "pixelsB64": "HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/w==",
-          "size": 8
-        },
-        {
-          "pixelsB64": "HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/w==",
-          "size": 8
-        },
-        {
-          "pixelsB64": "HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/w==",
-          "size": 8
-        },
-        {
-          "pixelsB64": "HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/xwaGP8cGhj/HBoY/w==",
-          "size": 8
-        }
-      ],
-      "name": "chess.black",
-      "opacity": 1,
-      "shininess": 48,
-      "specular": 0.45
-    }
-  ],
-  "lawRefs": [
-    "law-chess-click",
-    "law-chess-select",
-    "law-chess-drag-pick",
-    "law-chess-drag-drop",
-    "law-chess-deselect-others",
-    "law-chess-pawn-w-step",
-    "law-chess-pawn-w-double",
-    "law-chess-pawn-w-capture",
-    "law-chess-pawn-w-en-passant",
-    "law-chess-pawn-b-step",
-    "law-chess-pawn-b-double",
-    "law-chess-pawn-b-capture",
-    "law-chess-pawn-b-en-passant",
-    "law-chess-knight",
-    "law-chess-bishop",
-    "law-chess-rook",
-    "law-chess-queen",
-    "law-chess-king",
-    "law-chess-castle-white-kingside",
-    "law-chess-castle-white-queenside",
-    "law-chess-castle-black-kingside",
-    "law-chess-castle-black-queenside",
-    "law-chess-castle-rook-wk",
-    "law-chess-castle-rook-wq",
-    "law-chess-castle-rook-bk",
-    "law-chess-castle-rook-bq",
-    "law-chess-castle-rook-revert-wk",
-    "law-chess-castle-rook-revert-wq",
-    "law-chess-castle-rook-revert-bk",
-    "law-chess-castle-rook-revert-bq",
-    "law-chess-capture",
-    "law-chess-capture-en-passant",
-    "law-chess-king-track-white",
-    "law-chess-king-track-black",
-    "law-chess-check-reset",
-    "law-chess-probe-white-king",
-    "law-chess-probe-black-king",
-    "law-chess-check-pawn-w",
-    "law-chess-check-pawn-b",
-    "law-chess-check-knight",
-    "law-chess-check-king",
-    "law-chess-check-slider-rank-candidate",
-    "law-chess-check-slider-file-candidate",
-    "law-chess-check-slider-diag-candidate",
-    "law-chess-eval-slider-rank",
-    "law-chess-eval-slider-file",
-    "law-chess-eval-slider-diag",
-    "law-chess-check-scan-complete",
-    "law-chess-check-evaluated",
-    "law-chess-revert",
-    "law-chess-revert-capture",
-    "law-chess-commit",
-    "law-chess-clear-capture-flag",
-    "law-chess-promote-white",
-    "law-chess-promote-black",
-    "law-chess-promo-btn-queen",
-    "law-chess-promo-apply-queen",
-    "law-chess-promo-btn-knight",
-    "law-chess-promo-apply-knight",
-    "law-chess-promo-btn-rook",
-    "law-chess-promo-apply-rook",
-    "law-chess-promo-btn-bishop",
-    "law-chess-promo-apply-bishop",
-    "law-chess-threefold-draw",
-    "law-chess-stalemate-draw",
-    "law-chess-claim-stalemate",
-    "law-chess-king-unmade-is-mate",
-    "law-chess-seat-white",
-    "law-chess-seat-black"
-  ]
+  }
 }

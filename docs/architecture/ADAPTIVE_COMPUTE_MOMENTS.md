@@ -746,3 +746,9 @@ The intended result is instead:
 That is an independent clock in Earthcall's sense.
 
 That is also what makes the "Mega Stone" and Heavy Zone charge-up lawful rather than hardcoded: they do not command a special engine mode. They author a temporary claim on the world's finite computational attention.
+
+
+## Addendum: Jules Integration Reflection
+*(Added by Jules, GPT-4o-2024-11-20, session 16433160482754132820)*
+
+The scheduling precision described in this document relies entirely on the memory predictability provided by [CPU-GPU Micro-Mastery](ontology/CPU_GPU_MICRO_MASTERY.md). Without lock-free, zero-allocation memory pools, driver stalls would introduce latency spikes that break the `ComputeScheduler`'s ability to guarantee foreground framerates. For a deeper exploration of this dependency, see [Adaptive Compute and Micro-Mastery](interrelations/ADAPTIVE_COMPUTE_AND_MICRO_MASTERY.md).

@@ -89,7 +89,8 @@ void OpenGLRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                   const geom::FieldNode* fieldNode,
                                   uint64_t memoId,
                                   uint32_t memoRevision,
-                                  const geom::HeightGrid* heightGrid) {
+                                  const geom::HeightGrid* heightGrid,
+                                  uint32_t memoParameterRevision) {
     // Fixed-function GL has no raymarcher, so a field is drawn by tessellating it
     // and reusing drawMesh. Callers that already cache a field mesh (Object holds
     // _fieldMesh) should call drawMesh directly; this exists so the interface is
@@ -353,7 +354,7 @@ bool OpenGLRenderer::readPixels(uint8_t* outRgba, uint32_t width, uint32_t heigh
 void OpenGLRenderer::applyCamera(const glm::mat4&, const glm::mat4&, const glm::vec3&) {}
 void OpenGLRenderer::applyModel(const glm::mat4&) {}
 void OpenGLRenderer::drawMesh(const geom::TessMesh&, const RenderMaterial&) {}
-void OpenGLRenderer::drawImplicit(const geom::SdfNode&, const glm::vec3&, const RenderMaterial&, const geom::FieldNode*, uint64_t, uint32_t, const geom::HeightGrid*) {}
+void OpenGLRenderer::drawImplicit(const geom::SdfNode&, const glm::vec3&, const RenderMaterial&, const geom::FieldNode*, uint64_t, uint32_t, const geom::HeightGrid*, uint32_t) {}
 void OpenGLRenderer::drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>>&, const glm::vec4&, float, Blend) {}
 void OpenGLRenderer::setWireframe(bool) {}
 void OpenGLRenderer::drawOverlay(const geom::TessMesh&, const glm::vec4&, float, bool) {}

@@ -1,0 +1,314 @@
+{
+  "identifier": "Celestial Radiance Engine",
+  "name": "Celestial Radiance Engine",
+  "objects": [
+    {
+      "identifier": "central_core",
+      "kind": 1,
+      "transform": [
+        20.0,
+        0,
+        0,
+        0,
+        0,
+        20.0,
+        0,
+        0,
+        0,
+        0,
+        20.0,
+        0,
+        0,
+        30.0,
+        0,
+        1.0
+      ],
+      "faceColors": [
+        [
+          0.0,
+          0.8,
+          1.0,
+          1.0
+        ]
+      ],
+      "physicsState": {
+        "mass": 0.0,
+        "isKinematic": true
+      },
+      "radiance": {
+        "intensity": 5.0,
+        "color": [
+          0.0,
+          0.8,
+          1.0
+        ],
+        "radius": 100.0
+      }
+    },
+    {
+      "identifier": "orbital_ring_0",
+      "kind": 4,
+      "transform": [
+        40.0,
+        0,
+        0,
+        0,
+        0,
+        40.0,
+        0,
+        0,
+        0,
+        0,
+        40.0,
+        0,
+        0,
+        30.0,
+        0,
+        1.0
+      ],
+      "faceColors": [
+        [
+          1.0,
+          0.2,
+          0.8,
+          1.0
+        ]
+      ],
+      "physicsState": {
+        "mass": 0.0,
+        "isKinematic": true
+      },
+      "radiance": {
+        "intensity": 2.0,
+        "color": [
+          1.0,
+          0.2,
+          0.8
+        ],
+        "radius": 50.0
+      }
+    },
+    {
+      "identifier": "orbital_ring_1",
+      "kind": 4,
+      "transform": [
+        55.0,
+        0,
+        0,
+        0,
+        0,
+        55.0,
+        0,
+        0,
+        0,
+        0,
+        55.0,
+        0,
+        0,
+        30.0,
+        0,
+        1.0
+      ],
+      "faceColors": [
+        [
+          1.0,
+          0.2,
+          0.8,
+          1.0
+        ]
+      ],
+      "physicsState": {
+        "mass": 0.0,
+        "isKinematic": true
+      },
+      "radiance": {
+        "intensity": 2.0,
+        "color": [
+          1.0,
+          0.2,
+          0.8
+        ],
+        "radius": 50.0
+      }
+    },
+    {
+      "identifier": "orbital_ring_2",
+      "kind": 4,
+      "transform": [
+        70.0,
+        0,
+        0,
+        0,
+        0,
+        70.0,
+        0,
+        0,
+        0,
+        0,
+        70.0,
+        0,
+        0,
+        30.0,
+        0,
+        1.0
+      ],
+      "faceColors": [
+        [
+          1.0,
+          0.2,
+          0.8,
+          1.0
+        ]
+      ],
+      "physicsState": {
+        "mass": 0.0,
+        "isKinematic": true
+      },
+      "radiance": {
+        "intensity": 2.0,
+        "color": [
+          1.0,
+          0.2,
+          0.8
+        ],
+        "radius": 50.0
+      }
+    },
+    {
+      "identifier": "pillar_-80_-80",
+      "kind": 3,
+      "transform": [
+        5.0,
+        0,
+        0,
+        0,
+        0,
+        40.0,
+        0,
+        0,
+        0,
+        0,
+        5.0,
+        0,
+        -80,
+        20.0,
+        -80,
+        1.0
+      ],
+      "faceColors": [
+        [
+          0.8,
+          0.9,
+          1.0,
+          0.9
+        ]
+      ],
+      "physicsState": {
+        "mass": 0.0,
+        "isKinematic": true
+      }
+    },
+    {
+      "identifier": "pillar_-80_80",
+      "kind": 3,
+      "transform": [
+        5.0,
+        0,
+        0,
+        0,
+        0,
+        40.0,
+        0,
+        0,
+        0,
+        0,
+        5.0,
+        0,
+        -80,
+        20.0,
+        80,
+        1.0
+      ],
+      "faceColors": [
+        [
+          0.8,
+          0.9,
+          1.0,
+          0.9
+        ]
+      ],
+      "physicsState": {
+        "mass": 0.0,
+        "isKinematic": true
+      }
+    },
+    {
+      "identifier": "pillar_80_-80",
+      "kind": 3,
+      "transform": [
+        5.0,
+        0,
+        0,
+        0,
+        0,
+        40.0,
+        0,
+        0,
+        0,
+        0,
+        5.0,
+        0,
+        80,
+        20.0,
+        -80,
+        1.0
+      ],
+      "faceColors": [
+        [
+          0.8,
+          0.9,
+          1.0,
+          0.9
+        ]
+      ],
+      "physicsState": {
+        "mass": 0.0,
+        "isKinematic": true
+      }
+    },
+    {
+      "identifier": "pillar_80_80",
+      "kind": 3,
+      "transform": [
+        5.0,
+        0,
+        0,
+        0,
+        0,
+        40.0,
+        0,
+        0,
+        0,
+        0,
+        5.0,
+        0,
+        80,
+        20.0,
+        80,
+        1.0
+      ],
+      "faceColors": [
+        [
+          0.8,
+          0.9,
+          1.0,
+          0.9
+        ]
+      ],
+      "physicsState": {
+        "mass": 0.0,
+        "isKinematic": true
+      }
+    }
+  ]
+}

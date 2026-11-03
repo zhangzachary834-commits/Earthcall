@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <functional>
 #include <limits>
 #include <map>
@@ -48,6 +49,48 @@ namespace OntoMath {
 extern thread_local uint32_t t_astEvaluations;
 extern std::atomic<uint32_t> g_astEvaluationsTotal;
 
+// Conservative contracts for the exact 3D classic Perlin implementation shared
+// by CPU glm::perlin and WebGPU cnoise3.
+//
+// VALUE: after Taylor normalization each lattice gradient has norm <= 1.
+// Inside one unit lattice cube, every corner displacement has norm <= sqrt(3),
+// so every corner dot-product lies in [-sqrt(3), +sqrt(3)]. Quintic
+// interpolation is a convex blend on each axis, so the complete unscaled
+// interpolation remains inside that interval. cnoise3/glm::perlin then scale by
+// 2.2:
+//   |noise| <= 2.2*sqrt(3) = 3.810511776...
+// This is deliberately looser than observed extrema. Sampling is corroboration,
+// not authority for a range bound that can discard authored geometry.
+//
+// GRADIENT: after cnoise3's Taylor normalization every lattice gradient has
+// norm <= 1. The quintic fade f(t)=6t^5-15t^4+10t^3 has max |f'|=1.875.
+// For one coordinate, the interpolated gradient term contributes <=1 and the
+// fade-weight derivative multiplies a difference of two convex combinations of
+// corner dot-products, each bounded by sqrt(3):
+//   |dn/dx| <= 1 + 1.875*(2*sqrt(3)) = 1 + 3.75*sqrt(3).
+// Thus ||grad n||_2 <= sqrt(3)*(1 + 3.75*sqrt(3)); cnoise3 scales by 2.2:
+//   ||grad noise||_2 <= 28.5605117...
+// Again round outward. This is deliberately loose but proved; tighter future
+// bounds may replace it only with an equally conservative derivation.
+inline constexpr float kClassicPerlin3ValueBound = 3.810512f;
+inline constexpr float kClassicPerlin3LipschitzBound = 28.561f;
+//
+// HESSIAN (2026-10-20, plan §6ak; same structure as GRADIENT). Inside a cell,
+// n = Σ_c W_c·d_c with d_c = g_c·(p − c) (|g_c| ≤ 1, |d_c| ≤ √3, ∇²d_c = 0)
+// and W_c a product of fades (|f′| ≤ 1.875, |f″| ≤ 10/√3, f‴ = 0 at
+// t = (3 ± √3)/6). Differentiating twice:
+//   ∂ii n = f″(t_i)·(B − A) + 2·f′(t_i)·(ĝ_i on face 1 − on face 0)
+//         ≤ (10/√3)(2√3) + 2·1.875·2 = 20 + 7.5 = 27.5,
+//   ∂ij n = f′f′·(a double difference of four convex blends of d) + the two
+//           cross gradient terms ≤ 1.875²·4√3 + 2·1.875·2 = 24.357 + 7.5.
+// The spectral norm is ≤ the largest row sum, 27.5 + 2·31.857 = 91.214, and
+// cnoise3/glm::perlin scale by 2.2: ‖∇²noise‖ ≤ 200.67, rounded out. The
+// quintic fade makes the noise C² across every lattice face (f′ = f″ = 0 at
+// 0 and 1), so the bound holds on whole segments, not only inside cells.
+// Corroborated, not relied on: finite differences of glm's float hash with
+// double interpolation peak at 14.8 over 2·10^6 random unit directions.
+inline constexpr float kClassicPerlin3HessianBound = 200.7f;
+
 // Interval arithmetic for conservative range evaluation
 struct Interval {
     float lo = 0.0f;
@@ -58,9 +101,41 @@ struct Interval {
     Interval(float l, float h) : lo(l), hi(h) {}
     
     static Interval infinite() { return Interval(-std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity()); }
+
+    // Directed one-ULP widening for proof-bearing arithmetic. The hierarchy may
+    // use a finite interval to discard space, so round-to-nearest endpoints are
+    // not sufficient: an inward last-bit rounding must never turn "maybe zero"
+    // into "proved nonzero".
+    static float roundDown(float v) {
+        if (std::isnan(v)) return -std::numeric_limits<float>::infinity();
+        if (!std::isfinite(v)) return v;
+        return std::nextafter(v, -std::numeric_limits<float>::infinity());
+    }
+    static float roundUp(float v) {
+        if (std::isnan(v)) return std::numeric_limits<float>::infinity();
+        if (!std::isfinite(v)) return v;
+        return std::nextafter(v, std::numeric_limits<float>::infinity());
+    }
+    static Interval outward(float l, float h) {
+        if (std::isnan(l) || std::isnan(h)) return infinite();
+        return Interval(roundDown(l), roundUp(h));
+    }
     
-    Interval operator+(const Interval& o) const { return Interval(lo + o.lo, hi + o.hi); }
-    Interval operator-(const Interval& o) const { return Interval(lo - o.hi, hi - o.lo); }
+    bool exactZero() const { return lo == 0.0f && hi == 0.0f; }
+
+    Interval operator+(const Interval& o) const {
+        // Preserve exact algebraic identities before directed widening. This is
+        // not an approximation: x+0 and 0+x are exactly x in real arithmetic,
+        // and Prophetic Rete relies on authored zero remaining a true singleton.
+        if (exactZero()) return o;
+        if (o.exactZero()) return *this;
+        return outward(lo + o.lo, hi + o.hi);
+    }
+    Interval operator-(const Interval& o) const {
+        if (o.exactZero()) return *this;
+        if (exactZero()) return -o;
+        return outward(lo - o.hi, hi - o.lo);
+    }
     Interval operator-() const { return Interval(-hi, -lo); }
     // NaN-safe. The corner products of an interval containing an infinity
     // against one containing an exact zero give 0*inf = NaN, and std::min/max
@@ -69,18 +144,25 @@ struct Interval {
     // with. The true product set contributes 0 at exactly those corners (every
     // finite element times the 0 endpoint is 0), so NaN corners read as 0.
     Interval operator*(const Interval& o) const {
+        // 0 multiplied by any real-valued interval is exactly 0, including an
+        // unbounded interval. Preserve that theorem instead of widening the
+        // representational 0 by one ULP.
+        if (exactZero() || o.exactZero()) return Interval(0.0f);
         const auto corner = [](float a, float b) {
             const float p = a * b;
             return std::isnan(p) ? 0.0f : p;
         };
         float a = corner(lo, o.lo), b = corner(lo, o.hi);
         float c = corner(hi, o.lo), d = corner(hi, o.hi);
-        return Interval(std::min({a, b, c, d}), std::max({a, b, c, d}));
+        return outward(std::min({a, b, c, d}), std::max({a, b, c, d}));
     }
     Interval operator/(const Interval& o) const {
         if (o.lo <= 0.0f && o.hi >= 0.0f) return infinite(); // includes zero
+        if (exactZero()) return Interval(0.0f);
         float a = lo / o.lo, b = lo / o.hi, c = hi / o.lo, d = hi / o.hi;
-        return Interval(std::min({a, b, c, d}), std::max({a, b, c, d}));
+        if (std::isnan(a) || std::isnan(b) || std::isnan(c) || std::isnan(d))
+            return infinite();
+        return outward(std::min({a, b, c, d}), std::max({a, b, c, d}));
     }
     
     // Scale by scalar
@@ -278,7 +360,42 @@ struct Fold {
 // binding environment exists yet). It unifies with everything, so arity and
 // structural errors are still caught while genuinely undecidable ones are
 // reported as undecided rather than invented.
-enum class ValueKind { Scalar, Vector, ScalarField, VectorField, Unknown };
+enum class ValueKind { Scalar, Vector, Matrix, ScalarField, VectorField, Unknown };
+
+// A compile-time signature for authored mathematics. Existing scalar/vector
+// callers can still construct one implicitly from ValueKind; Matrix carries
+// dimensions because "matrix" without rows/columns is not enough information
+// to prove multiplication compatibility in the next rung.
+struct MathType {
+    ValueKind kind = ValueKind::Unknown;
+    std::size_t vectorDimension = 0;
+    std::size_t rows = 0;
+    std::size_t cols = 0;
+
+    MathType() = default;
+    MathType(ValueKind k) : kind(k) {
+        if (k == ValueKind::Vector || k == ValueKind::VectorField) {
+            vectorDimension = 3; // existing authored vectors are vec3
+        }
+    }
+
+    static MathType vector(std::size_t dimension = 3) {
+        MathType t(ValueKind::Vector);
+        t.vectorDimension = dimension;
+        return t;
+    }
+
+    static MathType matrix(std::size_t r, std::size_t c) {
+        MathType t(ValueKind::Matrix);
+        t.rows = r;
+        t.cols = c;
+        return t;
+    }
+
+    bool hasValidMatrixShape() const {
+        return kind == ValueKind::Matrix && rows > 0 && cols > 0;
+    }
+};
 
 struct TypeDiagnostic {
     std::string nodePath;
@@ -292,24 +409,55 @@ const char* valueKindName(ValueKind k);
 struct TypeResult {
     bool success;
     ValueKind kind;
+    MathType type;
     TypeDiagnostic diagnostic;
 
-    static TypeResult ok(ValueKind k) { return {true, k, {}}; }
-    static TypeResult error(TypeDiagnostic d) { return {false, ValueKind::Scalar, std::move(d)}; }
+    static TypeResult ok(ValueKind k) {
+        return {true, k, MathType(k), {}};
+    }
+    static TypeResult ok(MathType t) {
+        return {true, t.kind, std::move(t), {}};
+    }
+    static TypeResult error(TypeDiagnostic d) {
+        return {false, ValueKind::Scalar, MathType(ValueKind::Scalar), std::move(d)};
+    }
     
     explicit operator bool() const { return success; }
     ValueKind operator*() const { return kind; }
 };
 
-using TypeEnv = std::map<std::string, ValueKind>;
+using TypeEnv = std::map<std::string, MathType>;
 
-// The ambient point a field expression is evaluated AT. A field AST is a
-// pointwise expression: the CPU evaluator binds these variables in its
-// variable map, and the WGSL emitter binds them to the shader's point. They
-// are the ONE convention that makes CPU and GPU evaluate the same tree.
+// Canonical ambient names available to authored mathematics. A spatial field
+// is evaluated at p/x/y/z. Channels that explicitly admit world time may also
+// bind t; OntoMath itself never invents a clock value. Radiance Rung 4 is the
+// first Screen binding of t. CPU callers bind the same name in their variable
+// map, preserving one authored tree across execution channels.
 //   "p"          the point, a Vector
 //   "x","y","z"  its components, Scalars
+//   "t"          a scalar temporal coordinate whose meaning the channel binds
+//   "omega.x/y/z" components of an explicitly admitted normalized direction.
+//                  Rung 6 Screen radiance binds them as world-space source ->
+//                  receiver direction; OntoMath itself does not invent a frame.
+//   "wi.x/y/z"    V3 participating-medium incoming propagation direction,
+//                  world-space normalized source -> sample.
+//   "wo.x/y/z"    V3 participating-medium outgoing propagation direction,
+//                  world-space normalized sample -> receiver/eye.
+//   "n"            Rung 9 receiving-surface normal, a Vector. It is admitted
+//                  only by a material-response execution context.
 inline constexpr const char* kAmbientPointVar = "p";
+inline constexpr const char* kSurfaceNormalVar = "n";
+inline constexpr const char* kTimeVar = "t";
+inline constexpr const char* kOmegaXVar = "omega.x";
+inline constexpr const char* kOmegaYVar = "omega.y";
+inline constexpr const char* kOmegaZVar = "omega.z";
+inline constexpr const char* kWiXVar = "wi.x";
+inline constexpr const char* kWiYVar = "wi.y";
+inline constexpr const char* kWiZVar = "wi.z";
+inline constexpr const char* kWoXVar = "wo.x";
+inline constexpr const char* kWoYVar = "wo.y";
+inline constexpr const char* kWoZVar = "wo.z";
+inline constexpr float kDirectionEpsilon = 1e-8f;
 
 // Central-difference step for Gradient, shared by both paths deliberately: the
 // marcher's sdfGrad/sdfNormal and geom::sdfNormal use the same 1e-3, and a
@@ -372,6 +520,41 @@ struct MathNode {
         Tan = 28,      // unary tangent (Scalar->Scalar)
         Noise = 29,    // Perlin noise (Vector->Scalar)
 
+        // Rung 2 linear algebra. APPEND-ONLY: 0..29 are already serialized.
+        MatrixConstruct = 30,       // rows*cols scalar children -> Matrix(rows, cols)
+        MatrixIdentity = 31,        // matrixRows == matrixCols, no children
+        MatrixAdd = 32,             // same-shape Matrix + Matrix
+        MatrixSub = 33,             // same-shape Matrix - Matrix
+        MatrixScale = 34,           // Scalar*Matrix or Matrix*Scalar
+        MatrixMultiply = 35,        // (m x n)(n x p) -> (m x p)
+        MatrixVectorMultiply = 36,  // current vec3 seam: Matrix(3x3) * Vector3
+        MatrixTranspose = 37,       // (m x n) -> (n x m)
+        MatrixDeterminant = 38,     // square Matrix -> Scalar
+        MatrixInverse = 39,         // invertible square Matrix -> same shape
+
+        // Integral(body, lo, hi) — ∫_lo^hi body d(v), v named by variableName
+        // (2026-10-19; Zach: "yeah lets as integral operation biuld it on top
+        // of antiderivatives so we dont have two competing antiderivative code").
+        // v is bound LEXICALLY inside body and shadows any outer v; lo and hi
+        // are read in the enclosing scope, so an inner hi may be an outer
+        // integration variable (a cumulative integral). With SDF(f, q) it says
+        // "a field along a curve" without naming a camera, a medium or a pixel.
+        // Evaluation is EXACT OR NOTHING: through the one antiderivative office
+        // (definiteIntegral), or, for SDF(f, q) with q affine in v, the line
+        // restriction's value-branch segmentation and the same office. No
+        // quadrature, no tolerance child yet: an approximated answer needs an
+        // authored error contract first (the integration hierarchy,
+        // ONTOMATH_FRAMEWORK.md §6). LineIntegral (19) stays declared for a
+        // vector line integral along an authored curve; this does not redefine it.
+        Integral = 40,
+        // let <variableName> = children[0] in children[1] (2026-10-20, Zach's
+        // choice). The value is computed once, in the enclosing scope, and the
+        // name is visible in the body only — lexical, like Integral's variable.
+        // What lets one tree say exp(−∫σ) inside an integrand: the body is an
+        // ordinary ScalarLeaf exp(−tau). Exact algebra substitutes; the report
+        // composes the value's bound into the body's (plan §6an).
+        Let = 41,
+
         // Not a kind an author picks — the landing place for an op THIS BUILD
         // does not know: a save written by another version. It never
         // evaluates (nullopt), never type-checks, and refuses to compile to
@@ -385,6 +568,10 @@ struct MathNode {
     ScalarForm scalarForm;
     std::string variableName;
     std::string stringArg; // For Component index or Map func name
+    // MatrixConstruct / MatrixIdentity shape. Serialized only for those ops.
+    // These are mathematical dimensions, not GLM storage dimensions.
+    std::size_t matrixRows = 0;
+    std::size_t matrixCols = 0;
     std::vector<std::unique_ptr<MathNode>> children;
 
     // Unsupported payload: the node's original JSON, kept verbatim.
@@ -393,7 +580,8 @@ struct MathNode {
     MathNode() = default;
     MathNode(const MathNode& o)
         : op(o.op), scalarForm(o.scalarForm), variableName(o.variableName),
-          stringArg(o.stringArg), unsupported(o.unsupported) {
+          stringArg(o.stringArg), matrixRows(o.matrixRows), matrixCols(o.matrixCols),
+          unsupported(o.unsupported) {
         children.reserve(o.children.size());
         for (const auto& c : o.children) {
             children.push_back(c ? std::make_unique<MathNode>(*c) : nullptr);
@@ -437,6 +625,15 @@ struct MathNode {
         static RangeValue makeVector(Interval x, Interval y, Interval z) { return {ValueKind::Vector, Interval(), {x, y, z}}; }
     };
     std::optional<RangeValue> evalRange(const std::map<std::string, RangeValue>& vars) const;
+
+    // Explicit host analysis with additional Euclidean Length/Distance rules.
+    // This is mathematical/host range knowledge, NOT a native execution or
+    // whole-contribution certificate. Existing VolumeZeroProof, Sdf and Rete
+    // consumers deliberately retain evalRange until their contracts admit the
+    // extension. No authored state, serialized flag or GPU resource is added.
+    // Unknown/type/nonfinite/overflow inputs cannot yield a finite norm bound.
+    std::optional<RangeValue> evalMathematicalRange(
+        const std::map<std::string, RangeValue>& vars) const;
 
     // Human-legible rendering of the tree — what a Person authoring the law
     // actually sees ("t" is not enough; "sin(2*t) * 0.5 + 0.5" is). Every
@@ -580,6 +777,241 @@ std::optional<double> definiteIntegral(const Piecewise& model, const std::string
                                        double a, double b,
                                        const std::map<std::string, double>& vars,
                                        std::string* why = nullptr);
+
+// --- One office for every exact integral (2026-10-19) -----------------------
+// Zach: "build it on top of antiderivatives so we dont have two competing
+// antiderivative code". A Law's rate read backwards, a field along a ray
+// (LineRestriction) and an authored MathNode::Op::Integral all integrate
+// through ScalarForm::antiderivative and the functions below. LineRestriction
+// keeps its own representation (dense polynomials in s, for speed and proved
+// ranges) and CONVERTS into this algebra. It holds no integration rule of its
+// own. Before this, the tabular rule and the power rule were written twice.
+
+// The product of two transcendental factors of ONE variable as Σ c·g:
+//   sin·sin = ½[cos(u−v) − cos(u+v)]   cos·cos = ½[cos(u−v) + cos(u+v)]
+//   sin·cos = ½[sin(u+v) + sin(u−v)]   exp·exp = exp(u+v)
+// nullopt for any other pair (exp·sin is integrated as it stands; ln·anything
+// has no rule here). The one copy of these identities: the antiderivative's
+// reduction and LineRestriction's wave products both read it.
+std::optional<std::vector<std::pair<double, TransFactor>>> productToSum(const TransFactor& a,
+                                                                       const TransFactor& b);
+
+// Error accounting for one evaluation (addendum C, 2026-10-20). While an
+// IntegralAccountingScope lives on this thread, the office records:
+//  · `magnitude`, Σ |summand| over every term it adds (a difference of
+//    antiderivative values, a series part, a radical moment), each scaled by
+//    whatever later multiplies it (`scale`, which the hybrid sets to |sample|);
+//  · `summands`, how many;
+//  · `seriesTail`, the proved bound on every truncated Taylor series it stopped:
+//    A·x^(K+1)/(K+1)!·1/(1 − x/(K+2)), x = |z|·h ≤ 1, A = |W|·Σ|p_j|·2h^(j+1).
+// executionBound() turns these into Higham's summation bound γ_n·magnitude,
+// n = 2·summands + 64, plus the series tails. Its PREMISE, stated rather than
+// hidden: every summand is itself computed to within γ of its magnitude (libm
+// sin/cos/exp/pow within one ulp, and the authored field's pointwise value in
+// double forward-accurate). That premise is not enclosed here.
+struct IntegralAccounting {
+    double magnitude = 0.0;
+    double seriesTail = 0.0;
+    // Σ |weight| × the sampled value's executed-vs-exact slack under the CPU
+    // execution model (cpuExecutionModel): what the samples themselves may be
+    // wrong by, e.g. Noise at binary32 positions (2026-10-20, plan §6aj).
+    double pointwise = 0.0;
+    std::uint64_t summands = 0;
+    double scale = 1.0;
+    double executionBound() const;
+};
+class IntegralAccountingScope {
+public:
+    explicit IntegralAccountingScope(IntegralAccounting& accounting);
+    ~IntegralAccountingScope();
+    IntegralAccountingScope(const IntegralAccountingScope&) = delete;
+    IntegralAccountingScope& operator=(const IntegralAccountingScope&) = delete;
+private:
+    IntegralAccounting* _previous;
+};
+// The accounting active on this thread, or nullptr.
+IntegralAccounting* activeIntegralAccounting();
+inline void recordSummand(double value) {
+    if (auto* a = activeIntegralAccounting()) { a->magnitude += std::abs(value) * a->scale; ++a->summands; }
+}
+
+// `form` with every variable except `keep` replaced by its value from `vars`
+// (a partial evaluation, exact up to the rounding of those values). nullopt
+// naming the first unbound variable, or ln outside its domain.
+std::optional<ScalarForm> bindAllBut(const ScalarForm& form, const std::string& keep,
+                                     const std::map<std::string, double>& vars,
+                                     std::string* why = nullptr);
+
+// `form` with `var` replaced by `replacement`, exactly: a whole non-negative
+// power expands, a transcendental of var needs the replacement affine in at
+// most one variable (ln: no constant term). nullopt with the reason otherwise.
+// How an Integral's F(hi) − F(lo) stays a form when hi is an outer variable.
+std::optional<ScalarForm> substitute(const ScalarForm& form, const std::string& var,
+                                     const ScalarForm& replacement, std::string* why = nullptr);
+
+// MathNode::Op::Integral evaluated, with the reason when it refuses
+// (Integral.cpp). MathNode::evaluate answers through this.
+// What an Integral's evaluation established (addendum C, 2026-10-20). In the
+// result's units: `mathematical` is what was left out or sampled (omitted
+// slivers' proved bound plus the hybrid remainder's proved radius);
+// `execution` is IntegralAccounting::executionBound(), premised as stated
+// there. Admission under a tolerance requires mathematical + execution ≤ it.
+//
+// The bound is CONDITIONAL on the execution model named below (Codex,
+// 2026-10-20: "a stated premise supports a conditional bound, not an
+// unconditional guarantee"). `certified` would mean every premise discharged —
+// input and coefficient construction, the field's pointwise evaluation, library
+// calls and summation — and no route discharges them yet: even a polynomial
+// body is evaluated through libm's pow. A consumer that requires a certified
+// bound must decline a model-qualified one.
+//
+// One premise was witnessed false and is now priced instead (plan §6ai → §6aj):
+// a sampled field reads its position as binary32, so far from the origin it is
+// evaluated at the wrong point. Every hybrid sample now carries its proved
+// executed-vs-exact slack under the CPU line model (LineRestriction.hpp,
+// cpuExecutionModel): Noise as 28.561 × the binary32 rounding of each
+// coordinate plus an allowance for glm::perlin's own float arithmetic. That
+// allowance (2^-14) is the one premise left in the sampled part, corroborated
+// by measurement (worst 2.9e-6 in 4·10^6 points), not proved.
+inline constexpr const char* kIntegralExecutionModel =
+    "ontomath-cpu/3: binary64 round-to-nearest scalar arithmetic; libm (exp, sin, cos, pow, log) within one ulp; "
+    "sampled values priced by their proved slack, with binary32 noise positions; glm::perlin's own float "
+    "arithmetic within 2^-14 (corroborated, not proved)";
+struct IntegralBounds {
+    double tolerance = 0.0;      // authored; 0 means exact only (a mode, not a claim of zero rounding)
+    bool approximate = false;    // something was omitted or sampled
+    double mathematical = 0.0;
+    double execution = 0.0;
+    std::string route;
+    std::string executionModel = kIntegralExecutionModel;
+    bool certified = false;
+    std::uint64_t samples = 0;   // remainder evaluations / sample sites in the admitted refinement
+    // Plan §6ap (Codex, 2026-10-20 16:23: the names must say what they mean).
+    // `mathematical` and `execution` are THIS integral's own; `propagated` is
+    // its samples' or limits' upstream errors, mathematical and execution
+    // together, carried conservatively (the split upstream is not kept).
+    double propagated = 0.0;
+    std::uint64_t innerSamples = 0;   // inner integrals' work behind the samples
+    double total() const { return mathematical + execution + propagated; }
+};
+// Prove integral_a^b exp(-integral_a^x g) * k*g dx = k*(1-exp(-integral_a^b g)).
+// Returns an ordinary Let/Integral expression; exact structural factors only,
+// k independent of x, lexical bindings checked. Unknown shapes return nullptr.
+// This derives mathematics only; consumers still account for execution error.
+std::unique_ptr<MathNode> deriveExponentialIntegral(const MathNode& node, std::string* why = nullptr);
+// Structural field corollary of the same authored Integral/Let derivation:
+// source(p)=k*derivative(p), with k independent of p/x/y/z. No approximate
+// equality or division by a field. Returns the original-arithmetic coefficient
+// expression, or nullptr. Channels still qualify its runtime inputs/execution.
+std::unique_ptr<MathNode> deriveProportionalFieldCoefficient(const MathNode& derivative,
+                                                           const MathNode& source, std::string* why = nullptr);
+std::optional<double> evaluateIntegral(const MathNode& node, const std::map<std::string, PropertyValue>& vars,
+                                       const Singular* subject, std::string* why = nullptr,
+                                       IntegralBounds* bounds = nullptr);
+// A value and what is known about its error (plan §6ao) — the shared office
+// for composing bounds, moved here from the evaluation report so the
+// Integral office's sampled route runs the same code. A Let hands its value's
+// bound to the body; an Integral brings its own (and declines one that reads
+// an uncertain input: that sensitivity is not composed yet); a scalar tree
+// propagates the box of the inputs it reads and adds its own execution under
+// cpuExecutionModel. Anything else, or any input without a usable bound, is
+// unavailable, never zero. `inputsOut` records each input's bound;
+// `integralsOut` each inner Integral's (value, total bound) at these bindings.
+struct InputBound {
+    double bound = 0.0;
+    bool known = true;
+    bool exact = true;
+    std::string why;   // when !known
+};
+struct BoundedValue {
+    bool computed = false, bounded = false;
+    // mathematical, execution: this value's own; propagated: its inputs'
+    // errors (each input's mathematical and execution together) carried
+    // through it. The total is conservative; the upstream split is not kept.
+    double value = 0.0, mathematical = 0.0, execution = 0.0, propagated = 0.0;
+    std::uint64_t work = 0;   // inner integrals' samples behind this value
+    std::string unavailable;
+    double total() const { return mathematical + execution + propagated; }
+};
+BoundedValue evaluateBounded(const MathNode& node, std::map<std::string, PropertyValue> vars,
+                             std::map<std::string, InputBound> inputs, const Singular* subject,
+                             PropertyDict* inputsOut = nullptr,
+                             std::map<const MathNode*, std::pair<double, double>>* integralsOut = nullptr);
+// The scalar operations evaluateBounded propagates through by its box rule.
+bool scalarComposable(const MathNode& node);
+// The exact path's rule for a contribution it would leave out (an unresolved
+// sliver): admitted only when proved zero. Exposed so the refuted "below half an
+// ulp" heuristic stays refuted by a regression (Codex's 1.5 / 5·2⁻⁵⁵ case).
+bool exactPathAdmitsOmittedContribution(double answer, double provedBound);
+
+// Σ c_k var^k as a form (coefficients low to high), and the Taylor shift: the
+// coefficients of P(m + u) from those of P(x).
+ScalarForm polynomialForm(const std::vector<double>& coefficients, const std::string& var);
+std::vector<double> shiftPolynomial(const std::vector<double>& coefficients, double m);
+
+// ∫[a, b] form d(var), every other variable bound from `vars`. The exact
+// definite integral through ScalarForm::antiderivative, EVALUATED STABLY:
+//  · each term is re-centred on the interval's midpoint (an exact shift), so
+//    an interval far from the origin does not cancel terms of size |x|^deg
+//    against each other (found on Northern Veil rays at s ≈ 500);
+//  · a slow wave (|z|·h ≤ 1, z the term's complex rate α + iω) is integrated by
+//    its Taylor series, which converges geometrically to rounding, instead of
+//    F(h) − F(−h), whose 1/z^(j+1) terms cancel catastrophically.
+// Terms the shift cannot hold (ln, a negative or fractional power) take
+// F(b) − F(a) directly. nullopt with the reason when the algebra has no
+// antiderivative or the value is not finite. b < a integrates backwards.
+std::optional<double> definiteIntegral(const ScalarForm& form, const std::string& var,
+                                       double a, double b,
+                                       const std::map<std::string, double>& vars,
+                                       std::string* why = nullptr);
+
+// ∫[a, b] R(x)·√(A x² + B x + C) dx, R = Σ r_k x^k, the caller having proved
+// Q ≥ 0 on [a, b]. The radical class this term algebra cannot hold yet (√ of a
+// quadratic is not a TransFactor), so its rule lives here as a definite rule:
+// about the midpoint u, the moments I_n = ∫ u^n √Q du follow from
+// differentiating u^(n−1)·Q^(3/2):
+//   (n + 2)·A·I_n = [u^(n−1) Q^(3/2)] − (n + ½)·B'·I_(n−1) − (n − 1)·C'·I_(n−2)
+// (for a linear Q, (n + 3/2)·B'·I_n = [u^n Q^(3/2)] − n·C'·I_(n−1)), with I_0
+// in closed form (asinh / log / asin by the sign of A and the discriminant).
+std::optional<double> definiteIntegralTimesRadical(const std::vector<double>& r, double A, double B,
+                                                   double C, double a, double b,
+                                                   std::string* why = nullptr);
+
+// ∫ over [m − h, m + h] of body d(v), decomposed for a backend that binds the
+// interval's centre m and half-width h only at run time (2026-10-19, step 2b).
+// Lowering F(hi) − F(lo) as written cancels in f32 far from the origin; it was
+// measured at 3e-4 relative at x ≈ 1000. The CPU avoids that by re-centring.
+// This gives a backend the same structure as exact forms, so it needs no rule
+// of its own. With v = m + u, every reduced term
+//   c·(m+u)^n·e^(α(m+u)+β)·g(ω(m+u)+φ)
+// becomes, by the binomial theorem and angle addition, Σ outer(m, …)·moment(h).
+// Each moment is ∫_{−h}^{h} u^k e^(αu)·{cos ωu, sin ωu, 1} du, and comes in two
+// exact forms in h:
+//  · `tabular`: F(h) − F(−h), F from ScalarForm::antiderivative. Accurate when
+//    |α + iω|·|h| > 1.
+//  · `series`: its Taylor series (24 terms; the remainder is below 2⁻⁶⁰ of the
+//    leading term while |α + iω|·|h| ≤ 1). Accurate exactly where the tabular
+//    form's 1/z^(j+1) terms cancel.
+// The backend selects between them by the same rule the CPU uses. Terms the
+// shift cannot hold (ln, negative or fractional powers) are returned as an
+// antiderivative to evaluate as F(hi) − F(lo).
+struct CentredIntegralPart {
+    ScalarForm outer;     // in the enclosing variables and m
+    ScalarForm tabular;   // in h
+    ScalarForm series;    // in h
+    double rate = 0.0;    // |α + iω|; 0 is a polynomial moment (the forms agree)
+};
+struct CentredIntegral {
+    std::vector<CentredIntegralPart> parts;
+    ScalarForm uncentred;
+};
+std::optional<CentredIntegral> centredIntegral(const ScalarForm& body, const std::string& v,
+                                               const std::string& m, const std::string& h,
+                                               std::string* why = nullptr);
+// Its value, with lo/hi giving m and h, and every other variable bound.
+std::optional<double> evaluateCentredIntegral(const CentredIntegral& centred, const std::string& v,
+                                              const std::string& m, const std::string& h, double lo,
+                                              double hi, const std::map<std::string, double>& vars);
 
 // ============================================================================
 // FunctionRegistry — the words of mathematics. A Person names a function

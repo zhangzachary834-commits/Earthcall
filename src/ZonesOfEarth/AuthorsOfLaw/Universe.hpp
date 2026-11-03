@@ -12,6 +12,8 @@
 
 class Singular;
 class Relation;
+class Timeline;
+class Event;
 
 // The law engine's working set — not a being, not the vessel (Ourverse),
 // not the womb that receives newborns (Zone). Continuous laws and quantified
@@ -40,7 +42,10 @@ public:
 
     using Provider = std::function<void(std::vector<Singular*>&)>;
 
-    void setProvider(Provider provider) { _provider = std::move(provider); }
+    void setProvider(Provider provider) {
+        _provider = std::move(provider);
+        bumpStructuralRevision();
+    }
     bool hasProvider() const { return static_cast<bool>(_provider); }
 
     std::vector<Singular*> beings() const {
@@ -124,6 +129,11 @@ public:
         return out;
     }
 
+    // Raw graph queries preserve historical truth. Current semantic state is
+    // determined through first-class superseded-by Relations.
+    bool isRelationSuperseded(const Relation& r) const;
+    bool isRelationCurrent(const Relation& r) const;
+
     // Registering a NEW relation into the world's graph — the write side.
     // The engine wires this to the active zone's Formation; concept
     // instantiation uses it so a captured set's inter-member relations are
@@ -140,20 +150,22 @@ public:
     }
 
     // ------------------------------------------------------------------
-    // The world clock. Singularity owns time: the engine sets it once per
-    // frame (accumulated seconds since the world began + that frame's dt),
-    // tests set it by hand, and laws read it through the reserved paths
-    // "time" / "time.delta" / "time.sinceApplied" (MathBinding.hpp). No law
-    // writes time.
+    // Temporal authority.
+    //
+    // Universe is still kernel working context, NOT a being. The actual clock
+    // may be a first-class Timeline Singular supplied by the engine/world.
+    // Universe BORROWS that Timeline and projects its head through the legacy
+    // now()/dt()/setClock() API so existing Law math stays source-compatible.
+    //
+    // Tests and isolated tools that do not bind a Timeline retain the scalar
+    // fallback below. This is compatibility state, not a second ontology.
     // ------------------------------------------------------------------
-    void setClock(double now, double dt) {
-        _now = now;
-        _dt = dt;
-        _clockSet = true;
-    }
-    bool hasClock() const { return _clockSet; }
-    double now() const { return _now; }
-    double dt() const { return _dt; }
+    void setTimeline(Timeline* timeline);
+    Timeline* timeline() const { return _timeline; }
+    void setClock(double now, double dt);
+    bool hasClock() const;
+    double now() const;
+    double dt() const;
 
     // The application context: while a law's actions execute, this holds the
     // world time at which that law began holding for the current subject, so
@@ -197,17 +209,20 @@ public:
 
     class EventScope {
     public:
-        EventScope(Singular* subject, Singular* object) {
+        EventScope(Singular* subject, Singular* object,
+                   const Event* occurrence = nullptr) {
             Universe& u = Universe::instance();
             _hadEvent = u._eventSet;
             _savedSubject = u._eventSubject;
             _savedObject = u._eventObject;
-            u.setApplicationEvent(subject, object);
+            _savedOccurrence = u._eventOccurrence;
+            u.setApplicationEvent(subject, object, occurrence);
         }
         ~EventScope() {
             Universe& u = Universe::instance();
             u._eventSubject = _savedSubject;
             u._eventObject = _savedObject;
+            u._eventOccurrence = _savedOccurrence;
             u._eventSet = _hadEvent;
         }
         EventScope(const EventScope&) = delete;
@@ -217,6 +232,7 @@ public:
         bool _hadEvent = false;
         Singular* _savedSubject = nullptr;
         Singular* _savedObject = nullptr;
+        const Event* _savedOccurrence = nullptr;
     };
 
     // The event context: while laws respond to an event, this holds the
@@ -226,19 +242,23 @@ public:
     // CHOICE (a collision has two participants; the law may act on either,
     // both, or someone else entirely). LawManager arms this around event
     // rounds; outside an event response the roots are undefined.
-    void setApplicationEvent(Singular* subject, Singular* object) {
+    void setApplicationEvent(Singular* subject, Singular* object,
+                             const Event* occurrence = nullptr) {
         _eventSubject = subject;
         _eventObject = object;
+        _eventOccurrence = occurrence;
         _eventSet = true;
     }
     void clearApplicationEvent() {
         _eventSubject = nullptr;
         _eventObject = nullptr;
+        _eventOccurrence = nullptr;
         _eventSet = false;
     }
     bool hasApplicationEvent() const { return _eventSet; }
     Singular* applicationEventSubject() const { return _eventSubject; }
     Singular* applicationEventObject() const { return _eventObject; }
+    const Event* applicationEvent() const { return _eventOccurrence; }
 
     // ------------------------------------------------------------------
     // Unmaking is DEFERRED. A law that destroys a being does so in the
@@ -290,7 +310,8 @@ private:
     RelationRegistrar _relationRegistrar;
     EventInterest _eventInterest;
 
-    double _now = 0.0;
+    Timeline* _timeline = nullptr; // borrowed authority; ownership is Relation truth
+    double _now = 0.0;          // compatibility fallback when no Timeline is bound
     double _dt = 0.0;
     bool _clockSet = false;
 
@@ -299,6 +320,7 @@ private:
 
     Singular* _eventSubject = nullptr;
     Singular* _eventObject = nullptr;
+    const Event* _eventOccurrence = nullptr; // borrowed from the draining Rete fact
     bool _eventSet = false;
 
     std::vector<Singular*> _unmaking;

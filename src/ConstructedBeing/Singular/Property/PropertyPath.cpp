@@ -2,12 +2,19 @@
 
 #include "ConstructedBeing/Singular/Property/Property.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "Singularity/OntoMath/Field.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Relation/Relation.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include "Singularity/Core/StringId.hpp"
 
 #include <algorithm>
+#include <charconv>
 #include <cmath>
 #include <glm/glm.hpp>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 
@@ -104,15 +111,16 @@ std::string PropertyPath::toString() const {
 }
 
 // ============================================================================
-// HOT PATH: Resolve with zero allocations
+// HOT PATH: Registered flat lookups allocate no traversal storage
 //
 // Uses pre-calculated _joinedIds for pure integer lookups. No string
-// allocations, no string comparisons. When a Law fires on 500 targets,
-// this runs 500 times with ZERO heap allocations.
+// allocations. Nested containers pin shared storage for this access. Typed
+// mathematical constituents use an operation-local codec view; a checked
+// write replaces the canonical value through its original storage/setter.
 // ============================================================================
 PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t startIndex) const {
     ResolvedSlot slot;
-    if (segments.empty() || startIndex >= segments.size()) return slot;
+    if (startIndex >= segments.size() || _joinedIds.size() != segments.size()) return slot;
 
     Singular* currentOwner = &root;
     Property* currentRegistered = nullptr;
@@ -122,71 +130,34 @@ PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t sta
     while (i < segments.size()) {
         if (currentOwner) {
             Property* foundReg = nullptr;
+            PropertyValue* foundDyn = nullptr;
             std::size_t consumed = 0;
             const auto& idsFromHere = _joinedIds[i];
-            
-            PropertyValue* foundDyn = nullptr;
-            for (std::size_t runLength = 1; runLength <= idsFromHere.size(); ++runLength) {
-                Earthcall::StringId id = idsFromHere[runLength - 1];
-                if (PropertyValue* candidate = currentOwner->getDynamicPropertyPtr(id)) {
+            for (std::size_t run = idsFromHere.size(); run > 0; --run) {
+                if (PropertyValue* candidate = currentOwner->getDynamicPropertyPtr(idsFromHere[run - 1])) {
                     foundDyn = candidate;
-                    consumed = runLength;
-                }
-            }
-
-            if (!foundDyn) {
-                for (std::size_t runLength = 1; runLength <= idsFromHere.size(); ++runLength) {
-                    Earthcall::StringId id = idsFromHere[runLength - 1];
-                    if (Property* candidate = currentOwner->findProperty(id)) {
-                        foundReg = candidate;
-                        consumed = runLength;
-                    }
-                }
-            }
-
-            if (!foundReg && !foundDyn) return slot;
-
-            i += consumed;
-            slot.owner = currentOwner;
-            if (foundDyn) {
-                slot.dynamicKey = Earthcall::StringInterner::resolve(_joinedIds[i - consumed][consumed - 1]);
-            }
-            currentRegistered = foundReg;
-            currentDynamic = foundDyn;
-            currentOwner = nullptr;
-
-        } else if (currentDynamic) {
-            std::shared_ptr<PropertyDict>* pDict = std::get_if<std::shared_ptr<PropertyDict>>(currentDynamic);
-            if (pDict && *pDict) {
-                auto it = (*pDict)->elements.find(segments[i]);
-                if (it != (*pDict)->elements.end()) {
-                    currentDynamic = &it->second;
-                    currentRegistered = nullptr;
-                    i++;
-                } else {
-                    return slot;
-                }
-            } else {
-                std::shared_ptr<PropertyList>* pList = std::get_if<std::shared_ptr<PropertyList>>(currentDynamic);
-                if (pList && *pList) {
-                    try {
-                        std::size_t idx = std::stoull(segments[i]);
-                        if (idx < (*pList)->elements.size()) {
-                            currentDynamic = &(*pList)->elements[idx];
-                            currentRegistered = nullptr;
-                            i++;
-                        } else {
-                            return slot;
-                        }
-                    } catch (...) {
-                        return slot;
-                    }
-                } else {
+                    consumed = run;
                     break;
                 }
             }
-        } else {
-            return slot;
+            if (!foundDyn) {
+                for (std::size_t run = idsFromHere.size(); run > 0; --run) {
+                    if (Property* candidate = currentOwner->findProperty(idsFromHere[run - 1])) {
+                        foundReg = candidate;
+                        consumed = run;
+                        break;
+                    }
+                }
+            }
+            if (!foundReg && !foundDyn) return {};
+            slot.owner = currentOwner;
+            slot.dynamicKey = foundDyn
+                ? Earthcall::StringInterner::resolve(idsFromHere[consumed - 1]) : std::string();
+            slot.containerProperty = nullptr;
+            currentRegistered = foundReg;
+            currentDynamic = foundDyn;
+            currentOwner = nullptr;
+            i += consumed;
         }
 
         if (i == segments.size()) {
@@ -195,7 +166,6 @@ PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t sta
             return slot;
         }
 
-        PropertyValue val;
         if (currentRegistered) {
             if (Singular* next = currentRegistered->asSingular()) {
                 currentOwner = next;
@@ -203,41 +173,157 @@ PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t sta
                 currentDynamic = nullptr;
                 continue;
             }
-            val = currentRegistered->value();
-        } else if (currentDynamic) {
-            val = *currentDynamic;
+        }
+        // Materialize only the typed view, never a deep copy. Container pins
+        // keep elements from a temporary getter alive until this access ends.
+        PropertyValue value = currentRegistered ? currentRegistered->value() : *currentDynamic;
+        if (std::holds_alternative<std::shared_ptr<OntoMath::ScalarField>>(value) ||
+            std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(value)) {
+            // Typed field constituents are the existing serialized vocabulary.
+            // The detached operation-local view never silently edits a shared
+            // tree or bypasses a registered setter. See Direct_Screen_Forms.
+            try {
+                const auto encoded=propertyValueToJson(value);
+                if (!encoded.contains("v") || encoded.at("v").is_null()) return {};
+                slot.structuredProperty=currentRegistered;
+                slot.structuredSource=currentDynamic;
+                slot.structuredOriginal=value;
+                slot.structuredView=propertyStructureFromJson(encoded.at("v"));
+            } catch (const std::exception&) { return {}; }
+            value=slot.structuredView;
+            slot.containerPins.push_back(value);
+            currentRegistered=nullptr;
+            currentDynamic=nullptr;
+        }
+        if (!currentOwner) {
+            if (auto next = std::get_if<Singular*>(&value)) currentOwner = *next;
+            else if (auto next = std::get_if<Object*>(&value)) currentOwner = static_cast<Singular*>(*next);
+            else if (auto next = std::get_if<Relation*>(&value)) currentOwner = static_cast<Singular*>(*next);
+            else if (auto next = std::get_if<Formation*>(&value)) currentOwner = static_cast<Singular*>(*next);
+        }
+        if (currentOwner) {
+            currentRegistered = nullptr;
+            currentDynamic = nullptr;
+            continue;
         }
 
-        if (Singular** nextSingular = std::get_if<Singular*>(&val)) {
-            if (*nextSingular) { currentOwner = *nextSingular; currentRegistered = nullptr; currentDynamic = nullptr; }
-        } else if (Object** nextObj = std::get_if<Object*>(&val)) {
-            if (*nextObj) { currentOwner = reinterpret_cast<Singular*>(*nextObj); currentRegistered = nullptr; currentDynamic = nullptr; }
-        } else if (Relation** nextRel = std::get_if<Relation*>(&val)) {
-            if (*nextRel) { currentOwner = reinterpret_cast<Singular*>(*nextRel); currentRegistered = nullptr; currentDynamic = nullptr; }
-        } else if (Formation** nextForm = std::get_if<Formation*>(&val)) {
-            if (*nextForm) { currentOwner = reinterpret_cast<Singular*>(*nextForm); currentRegistered = nullptr; currentDynamic = nullptr; }
+        if (i == segments.size() - 1 && std::holds_alternative<glm::vec3>(value) &&
+            isVec3Component(segments[i])) {
+            slot.prop = currentRegistered;
+            slot.dynamicSlot = currentDynamic;
+            slot.trailingComponent = segments[i];
+            return slot;
         }
 
-        if (i == segments.size() - 1 && std::holds_alternative<glm::vec3>(val)) {
-            const std::string& c = segments[i];
-            if (isVec3Component(c)) {
-                slot.prop = currentRegistered;
-                slot.dynamicSlot = currentDynamic;
-                slot.trailingComponent = c;
-                return slot;
-            }
+        PropertyValue* element = nullptr;
+        if (auto dict = std::get_if<std::shared_ptr<PropertyDict>>(&value); dict && *dict) {
+            const auto found = (*dict)->elements.find(segments[i]);
+            if (found == (*dict)->elements.end()) return {};
+            element = &found->second;
+        } else if (auto list = std::get_if<std::shared_ptr<PropertyList>>(&value); list && *list) {
+            std::size_t index = 0;
+            const std::string& text = segments[i];
+            const auto parsed = std::from_chars(text.data(), text.data() + text.size(), index);
+            if (text.empty() || parsed.ec != std::errc() || parsed.ptr != text.data() + text.size() ||
+                index >= (*list)->elements.size()) return {};
+            element = &(*list)->elements[index];
+        } else {
+            return {};
+        }
+        if (currentRegistered) slot.containerProperty = currentRegistered;
+        slot.containerPins.push_back(std::move(value));
+        currentRegistered = nullptr;
+        currentDynamic = element;
+        ++i;
+        if (i == segments.size()) {
+            slot.dynamicSlot = currentDynamic;
+            return slot;
         }
     }
-    return slot;
+    return {};
+}
+
+namespace {
+std::unordered_map<std::string, DerivedReading>& derivedReadings() {
+    static std::unordered_map<std::string, DerivedReading> readings;
+    return readings;
+}
+std::uint64_t s_derivedReadingRevision = 0;
+
+// The first segment k > startIndex naming a registered derived reading, or
+// segments.size() when none does.
+std::size_t derivedReadingIndex(const std::vector<std::string>& segments, std::size_t startIndex) {
+    const auto& readings = derivedReadings();
+    if (readings.empty()) return segments.size();
+    for (std::size_t k = startIndex + 1; k < segments.size(); ++k)
+        if (readings.count(segments[k])) return k;
+    return segments.size();
+}
+
+// Answer a path through a derived reading: compute it for the prefix, then
+// descend any remaining segments through its dictionaries and lists.
+bool readDerived(Singular& root, const std::vector<std::string>& segments, std::size_t startIndex,
+                 std::size_t k, PropertyValue& out) {
+    std::string prefix = segments[startIndex];
+    for (std::size_t i = startIndex + 1; i < k; ++i) prefix += "." + segments[i];
+    PropertyValue value;
+    if (!derivedReadings().at(segments[k])(root, prefix, value)) return false;
+    for (std::size_t i = k + 1; i < segments.size(); ++i) {
+        PropertyValue next;
+        if (auto dict = std::get_if<std::shared_ptr<PropertyDict>>(&value); dict && *dict) {
+            const auto found = (*dict)->elements.find(segments[i]);
+            if (found == (*dict)->elements.end()) return false;
+            next = found->second;
+        } else if (auto list = std::get_if<std::shared_ptr<PropertyList>>(&value); list && *list) {
+            std::size_t index = 0;
+            const std::string& text = segments[i];
+            const auto parsed = std::from_chars(text.data(), text.data() + text.size(), index);
+            if (text.empty() || parsed.ec != std::errc() || parsed.ptr != text.data() + text.size() ||
+                index >= (*list)->elements.size()) return false;
+            next = (*list)->elements[index];
+        } else {
+            return false;
+        }
+        value = std::move(next);
+    }
+    out = std::move(value);
+    return !std::holds_alternative<std::monostate>(out);
+}
+} // namespace
+
+void registerDerivedReading(const std::string& name, DerivedReading reading) {
+    if (name.empty() || name.find('.') != std::string::npos) return;   // one segment
+    ++s_derivedReadingRevision;
+    if (!reading) {
+        derivedReadings().erase(name);
+        return;
+    }
+    derivedReadings()[name] = std::move(reading);
+}
+
+bool hasDerivedReading(const std::string& name) { return derivedReadings().count(name) > 0; }
+
+std::uint64_t derivedReadingRevision() { return s_derivedReadingRevision; }
+
+bool pathReadsUntrackedDerivedReading(const PropertyPath& path) {
+    return derivedReadingIndex(path.segments, 0) < path.segments.size();
 }
 
 PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& out, std::size_t startIndex) const {
+    if (startIndex >= segments.size()) {
+        out = PropertyValue{};
+        return PathResult::NoSuchProperty;
+    }
     ResolvedSlot slot = resolve(root, startIndex);
-    
+
     if (!slot.prop && !slot.dynamicSlot) {
         if (segments.size() - startIndex == 1) {
             if (root.getDynamicProperty(segments[startIndex], out)) return PathResult::Ok;
         }
+        // Nothing stored here: a derived reading may answer (see the header).
+        const std::size_t k = derivedReadingIndex(segments, startIndex);
+        if (k < segments.size() && readDerived(root, segments, startIndex, k, out)) return PathResult::Ok;
+        out = PropertyValue{};
         return PathResult::NoSuchProperty;
     }
 
@@ -251,13 +337,33 @@ PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& o
     }
 
     glm::vec3* vec = std::get_if<glm::vec3>(&v);
-    if (!vec) return PathResult::BadComponent;
+    if (!vec) {
+        out = PropertyValue{};
+        return PathResult::BadComponent;
+    }
     out = PropertyValue(*componentOf(*vec, slot.trailingComponent));
     return PathResult::Ok;
 }
 
 PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyValue& v, std::size_t startIndex) const {
+    if (startIndex >= segments.size()) return PathResult::NoSuchProperty;
     ResolvedSlot slot = resolve(root, startIndex);
+    // A derived reading is an observation, not a dial: a write into one refuses,
+    // and never creates a stored property that would shadow it.
+    if (!slot.prop && !slot.dynamicSlot) {
+        const std::size_t k = derivedReadingIndex(segments, startIndex);
+        PropertyValue probe;
+        if (k < segments.size() && readDerived(root, segments, startIndex, k, probe)) return PathResult::ReadOnly;
+    }
+
+    // A read-only wrapper refuses even when the proposed value is identical.
+    // Equality is a value comparison, not authority to attempt a write.
+    if (slot.prop && !slot.prop->isStructurallyWritable()) return PathResult::ReadOnly;
+    if (slot.structuredProperty && !slot.structuredProperty->isStructurallyWritable()) return PathResult::ReadOnly;
+    if (slot.containerProperty) {
+        if (!slot.containerProperty->isStructurallyWritable()) return PathResult::ReadOnly;
+        if (!slot.containerProperty->exposesMutableContainer()) return PathResult::Unsupported;
+    }
 
     const auto announce = [&](PathResult result, Property* prop, Singular* on, const std::string& fallbackName = "") {
         if (result == PathResult::Ok && on) {
@@ -266,7 +372,57 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
         return result;
     };
 
-        if (!slot.prop && !slot.dynamicSlot) {
+    if (slot.structuredProperty || slot.structuredSource) {
+        if (!slot.dynamicSlot) return PathResult::NoSuchProperty;
+        double number=0;
+        if (propertyValueToNumber(v,number) && !std::isfinite(number)) return PathResult::TypeMismatch;
+        // Authored mathematics retains exact coefficients: the ordinary
+        // approximate numeric Map guard must not erase a small field edit.
+        if (propertyValueUnchanged(*slot.dynamicSlot,v)) return PathResult::Unchanged;
+        *slot.dynamicSlot=v; // detached view only; refuse before canonical commit
+        try {
+            auto original=propertyValueToJson(slot.structuredOriginal);
+            auto payload=propertyStructureToJson(slot.structuredView);
+            // These existing substrate coefficients are stored as float.
+            // Canonicalize only their named codec slots, never integer ops or
+            // the double precision authored mathematics beneath astDefinition.
+            for (const char* key : {"baseDensity", "baseFlowX", "baseFlowY", "baseFlowZ", "frequency", "amplitude"}) {
+                if (!payload.contains(key)) continue;
+                if (!payload[key].is_number()) return PathResult::TypeMismatch;
+                const float number=payload[key].get<float>();
+                if (!std::isfinite(number)) return PathResult::TypeMismatch;
+                payload[key]=number;
+            }
+            auto candidate=propertyValueFromJson({{"t",original.at("t")},{"v",payload}});
+            if (propertyValueToJson(candidate).at("v")!=payload) return PathResult::TypeMismatch;
+            const OntoMath::Piecewise* form=nullptr;
+            auto expected=OntoMath::ValueKind::Unknown;
+            if (auto field=std::get_if<std::shared_ptr<OntoMath::VectorField>>(&candidate); field && *field) {
+                form=&(*field)->astDefinition;expected=OntoMath::ValueKind::Vector;
+            } else if (auto field=std::get_if<std::shared_ptr<OntoMath::ScalarField>>(&candidate); field && *field) {
+                form=&(*field)->astDefinition;expected=OntoMath::ValueKind::Scalar;
+            } else return PathResult::TypeMismatch;
+            for (const auto& piece:form->pieces) {
+                if (piece.mathNode) {
+                    auto type=piece.mathNode->typeOf({},"root",true);
+                    if (!type || (*type!=OntoMath::ValueKind::Unknown && *type!=expected)) return PathResult::TypeMismatch;
+                }
+                if (piece.whereLEZero) {
+                    auto type=piece.whereLEZero->typeOf({},"selector",true);
+                    if (!type || (*type!=OntoMath::ValueKind::Unknown && *type!=OntoMath::ValueKind::Scalar)) return PathResult::TypeMismatch;
+                }
+            }
+            if (slot.structuredProperty)
+                return slot.structuredProperty->setValue(candidate)
+                    ? announce(PathResult::Ok,slot.structuredProperty,slot.owner) : PathResult::ReadOnly;
+            if (slot.structuredSource==slot.owner->getDynamicPropertyPtr(Earthcall::StringInterner::intern(slot.dynamicKey)))
+                return slot.owner->setDynamicProperty(slot.dynamicKey,candidate) ? PathResult::Ok : PathResult::ReadOnly;
+            *slot.structuredSource=std::move(candidate);
+            return announce(PathResult::Ok,slot.containerProperty,slot.owner,slot.dynamicKey);
+        } catch (const std::exception&) { return PathResult::TypeMismatch; }
+    }
+
+    if (!slot.prop && !slot.dynamicSlot) {
         if (segments.size() - startIndex == 1) {
             PropertyValue cur;
             if (root.getDynamicProperty(segments[startIndex], cur) && propertyValuesEquivalent(cur, v)) {
@@ -308,9 +464,7 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
                 }
             } else {
                 *slot.dynamicSlot = valToWrite;
-                if (!slot.dynamicKey.empty()) {
-                    slot.owner->notifyPropertyChanged(slot.owner, slot.dynamicKey);
-                }
+                announce(PathResult::Ok, slot.containerProperty, slot.owner, slot.dynamicKey);
                 return PathResult::Ok;
             }
             return PathResult::ReadOnly;
@@ -341,9 +495,7 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
             }
         } else {
             *slot.dynamicSlot = PropertyValue(*vec);
-            if (!slot.dynamicKey.empty()) {
-                slot.owner->notifyPropertyChanged(slot.owner, slot.dynamicKey);
-            }
+            announce(PathResult::Ok, slot.containerProperty, slot.owner, slot.dynamicKey);
             return PathResult::Ok;
         }
         return PathResult::ReadOnly;

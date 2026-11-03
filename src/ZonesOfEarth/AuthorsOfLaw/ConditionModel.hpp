@@ -146,6 +146,15 @@ struct ConditionNode {
     // the O(1) path and leaves it correct on the sweep.
     bool readsQualifiedRoot() const;
 
+    // A path anywhere in this tree that may be answered by a derived reading
+    // (`<prefix>.evaluation…`). No reading tracks its dependencies yet, so no
+    // change fact wakes an alpha over it: a subject whose report crosses the
+    // threshold because a BOUND INPUT moved would never become a candidate.
+    // LawManager declines terminals for such a law, the same honest answer as
+    // a qualified root: the sweep decides it every tick. See
+    // pathReadsUntrackedDerivedReading in PropertyPath.hpp.
+    bool readsUntrackedDerivedReading() const;
+
     // ------------------------------------------------------------------
     // A GATE: a conjunct whose truth does not depend on the subject.
     //

@@ -336,6 +336,9 @@ COREAUDIO_FW:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System
 //Path to a library.
 COREFOUNDATION_FW:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreFoundation.framework
 
+//Path to a program.
+EARTHCALL_LAW_LINE_PYTHON:FILEPATH=/Library/Frameworks/Python.framework/Versions/3.14/bin/python3
+
 //Build websocketpp with CPP11 features enabled.
 ENABLE_CPP11:BOOL=ON
 
@@ -530,16 +533,16 @@ OPENGL_gl_LIBRARY:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/S
 OPENGL_glu_LIBRARY:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework
 
 //Path to a library.
-OPENSSL_CRYPTO_LIBRARY:FILEPATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.13/libcrypto.a
+OPENSSL_CRYPTO_LIBRARY:FILEPATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.22/libcrypto.a
 
 //Path to a file.
-OPENSSL_INCLUDE_DIR:PATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.13/include
+OPENSSL_INCLUDE_DIR:PATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.22/include
 
 //No help, variable specified on the command line.
-OPENSSL_ROOT_DIR:UNINITIALIZED=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.13
+OPENSSL_ROOT_DIR:UNINITIALIZED=/Users/zacharyzhang/documents/github/earthcall/local_deps/openssl-3.0.22
 
 //Path to a library.
-OPENSSL_SSL_LIBRARY:FILEPATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.13/libssl.a
+OPENSSL_SSL_LIBRARY:FILEPATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.22/libssl.a
 
 //Arguments to supply to pkg-config
 PKG_CONFIG_ARGN:STRING=
@@ -560,6 +563,14 @@ UUID_LIB:FILEPATH=UUID_LIB-NOTFOUND
 
 //Path to a library.
 WEBKIT_FW:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/WebKit.framework
+
+X11_Xcursor_INCLUDE_PATH:PATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include
+
+X11_Xi_INCLUDE_PATH:PATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include
+
+X11_Xinerama_INCLUDE_PATH:PATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include
+
+X11_Xrandr_INCLUDE_PATH:PATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include
 
 XCURSOR_INCLUDE_DIR:PATH=/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/include
 
@@ -787,7 +798,7 @@ CMAKE_WARN_DEPRECATED:INTERNAL=ON
 //Details about finding OpenGL
 FIND_PACKAGE_MESSAGE_DETAILS_OpenGL:INTERNAL=[/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework][/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/OpenGL.framework][ ][v()]
 //Details about finding OpenSSL
-FIND_PACKAGE_MESSAGE_DETAILS_OpenSSL:INTERNAL=[/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.13/libcrypto.a][/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.13/include][ ][v3.0.13()]
+FIND_PACKAGE_MESSAGE_DETAILS_OpenSSL:INTERNAL=[/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.22/libcrypto.a][/Users/zacharyzhang/Documents/GitHub/Earthcall/local_deps/openssl-3.0.22/include][ ][v3.0.22()]
 //Details about finding Threads
 FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
 //Details about finding ZLIB

@@ -78,6 +78,9 @@ public:
         std::string lawId;
         std::string targetId;
         ApplicationResult result{ApplicationResult::NoTarget};
+        // A Kernel refusal must say what was refused without disclosing the
+        // protected Person's identifier through a qualified action path.
+        std::string refusalReason;
         std::vector<std::string> conditionDescriptions;
         std::vector<std::string> actionDescriptions;
 
@@ -476,6 +479,11 @@ struct ReteFact {
     nlohmann::json value;
     Singular* subject{nullptr};
     Singular* object{nullptr};   // the event's OTHER participant (collision has two)
+    // The actual Event Moment that emitted an edge. EventBus delivery is
+    // synchronous, but its publisher may have passed a stack temporary;
+    // retaining a value copy keeps that Singular alive through Rete drain.
+    // State facts and legacy Custom events have no Event occurrence here.
+    std::shared_ptr<const ECA::Event> occurrence;
     bool isState{false};
     bool dirty{true};
 };
@@ -540,6 +548,8 @@ public:
     // never got one: a WhileTrue law reading it stayed permanently deaf to
     // that being, silently. Same family as the relation deafness rung 0 fixed.
     // The scan was already linear over the fact list, so the answer is free.
+    // Fast-path scalar pointer overload bypassing string heap allocations and string concatenation
+    bool markFactDirty(const Singular* subject, const std::string& attribute);
     bool markFactDirty(const std::string& subjectId, const std::string& attribute);
     void evaluateDirty();
     bool hasDirtyFacts() const { return !_dirtyFacts.empty(); }
@@ -780,6 +790,7 @@ private:
     // asymmetry is why the bulk paths clear rather than try to be precise.
     std::unordered_map<const Singular*, std::unordered_set<std::string>> _relationStateIndex;
     std::unordered_map<std::string, std::vector<FactPtr>> _stateFactsBySubjectAttr;
+    std::unordered_map<const Singular*, std::unordered_map<std::string, std::vector<FactPtr>>> _stateFactsBySubjectPtrAttr;
     std::unordered_map<std::string, FactPtr> _factById;
     std::unordered_map<std::string, std::vector<std::size_t>> _factAlphaNodes;
     std::unordered_map<std::string, std::vector<std::size_t>> _factBetaNodes;
@@ -797,6 +808,11 @@ private:
     // dropUnboundAlphaNodes removes a node nobody reads; node ids are never
     // reused, so a stale entry resolves to nothing and is simply rebuilt.
     std::unordered_map<std::string, std::size_t> _authoredAlphaIndex;
+    // Direct-address index: alpha node id -> current position in _alphaNodes.
+    // Holes (including beta ids from the shared node-id namespace and pruned
+    // alpha ids) contain size_t(-1). Cost therefore follows historical max id,
+    // not only the number of currently live alpha nodes.
+    std::vector<std::size_t> _alphaIndexById;
     // ONE counter for both tables. Alpha and beta ids are handed to callers as
     // bare `std::size_t` and are told apart afterwards by isAlphaNode(), which
     // answers by looking the id up in the alpha table — so two independent
@@ -819,6 +835,9 @@ public:
 class LawManager {
 public:
     std::shared_ptr<Law> createLaw(const std::string& name,
+                                   const std::vector<Singular*>& authors = {});
+    std::shared_ptr<Law> createLaw(const std::string& name,
+                                   const std::string& identifier,
                                    const std::vector<Singular*>& authors = {});
     void add(const std::shared_ptr<Law>& law);
     bool remove(const std::string& lawId);
@@ -875,9 +894,9 @@ public:
     // evaluates the network and drains the agenda into applyTo. Event facts
     // are transient: consumed by the round that evaluates them.
     //
-    // NOTE: the EventBus has no unsubscribe, so a connected LawManager must
-    // outlive all publishing (engine-lifetime object). Handlers run on the
-    // publishing thread; keep publishing on the main thread for now.
+    // EventBus registrations are owned by this manager and revoked in its
+    // destructor. Handlers still run on the publishing thread; keep Law events
+    // on the main thread for now.
     // ------------------------------------------------------------------
     void connectToEventBus();
     bool isConnected() const { return _connected; }
@@ -935,11 +954,15 @@ public:
         std::string eventObjectId;
     };
     const std::vector<DriveSession>& driveSessions() const { return _driveSessions; }
-    bool hasDriveSession(const std::string& lawId, const std::string& subjectId) const {
-        for (const auto& session : _driveSessions) {
-            if (session.lawId == lawId && session.subjectId == subjectId) return true;
+    struct PairHash {
+        std::size_t operator()(const std::pair<std::string, std::string>& p) const {
+            std::size_t h1 = std::hash<std::string>{}(p.first);
+            std::size_t h2 = std::hash<std::string>{}(p.second);
+            return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
         }
-        return false;
+    };
+    bool hasDriveSession(const std::string& lawId, const std::string& subjectId) const {
+        return _driveSessionKeys.find({lawId, subjectId}) != _driveSessionKeys.end();
     }
 
     // Bounded law chaining per tick: a law firing an event that wakes another
@@ -1066,6 +1089,7 @@ private:
     // Deliberately a sentinel no real revision can equal, so the first tick
     // always builds rather than trusting an empty index.
     mutable uint64_t _vocabularyBuiltAt = std::numeric_limits<uint64_t>::max();
+    mutable uint64_t _lastSeededStructuralRevision = std::numeric_limits<uint64_t>::max();
     // The Law::textRevision() `_indexedNames` was read off the register at.
     // Collecting that name set is what every sweep used to pay for: a fresh
     // unordered_set<std::string> built from EVERY law's requiredProperties(),
@@ -1080,9 +1104,11 @@ private:
     void releaseFromLaws(Singular* being);
 
     std::vector<std::shared_ptr<Law>> _laws;
+    mutable std::unordered_map<std::string, Law*> _lawById;
     Formation _lawFormation;
     ReteNetwork _rete;
     std::vector<DriveSession> _driveSessions;
+    std::unordered_set<std::pair<std::string, std::string>, PairHash> _driveSessionKeys;
     std::unordered_map<std::string, std::vector<std::string>> _triggers;
     // Terminal node IDs for each law's compiled condition DAG.
     // Key: lawId, Value: {nodeId, isBeta} pairs for the DAG's terminal nodes.
@@ -1107,6 +1133,8 @@ private:
     // notice they have gone stale rather than trusting that whoever edited
     // the condition remembered to say so.
     std::unordered_map<std::string, std::uint64_t> _compiledConditionRevision;
+    // derivedReadingRevision() when the terminals above were last decided.
+    std::uint64_t _compiledDerivedReadingRevision = 0;
     // Rebuild this law's terminals if its condition changed (or drop them if
     // it no longer wants any). Cheap when nothing moved: one map lookup.
     void syncReteCompilation(Law& law);
@@ -1241,6 +1269,11 @@ private:
     // sound and why it is worth doing.
     std::unordered_set<std::string> _relationTypesInPlay;
     bool _connected = false;
+    // Beneath the Kernel (No Black Box exemption): EventBus registration
+    // handles for the two `this`-capturing listeners connectToEventBus()
+    // installs; revoked in ~LawManager.
+    Core::EventBus::SubscriptionToken _ecaEventSubscription;
+    Core::EventBus::SubscriptionToken _customEventSubscription;
     bool _dirty = false;
     TickTiming _tickTiming;
 

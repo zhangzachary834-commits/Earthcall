@@ -8,13 +8,13 @@
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/RenderMaterial.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Menu/stb_easy_font.h"   // draw2DObject's labels
 #include <string>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/quaternion.hpp>
-#include <glm/gtc/matrix_transform.hpp> // glm::translate / glm::rotate for cap placement
 #include <vector>
 #include <algorithm>
 #include <cstring>
@@ -22,6 +22,7 @@
 #include <cmath>   // for mathematical functions
 #include <limits>  // for numeric_limits
 #include <optional>
+#include <utility>
 #include <map>
 #include <stdexcept>
 #include <unordered_set>
@@ -65,12 +66,14 @@ void appendQuadStrip(geom::TessMesh& m, const std::vector<geom::TessVertex>& s) 
 // Bake a transform into a copy of a mesh (positions by xf, normals by its inverse-
 // transpose). Lets the cylinder/cone caps be positioned once instead of via the GL
 // matrix stack at draw time.
-geom::TessMesh transformedMesh(const geom::TessMesh& src, const glm::mat4& xf) {
-    glm::mat3 nrm = glm::mat3(glm::transpose(glm::inverse(xf)));
+geom::TessMesh transformedMesh(const geom::TessMesh& src, const OntoMath::MatrixValue& authoredTransform) {
     geom::TessMesh m = src;
     for (auto& v : m.tris) {
-        v.pos    = glm::vec3(xf * glm::vec4(v.pos, 1.0f));
-        v.normal = glm::normalize(nrm * v.normal);
+        const auto position = OntoMath::transformPoint(authoredTransform, v.pos);
+        const auto normal = OntoMath::transformNormal(authoredTransform, v.normal);
+        if (!position || !normal) return src;
+        v.pos = *position;
+        v.normal = glm::normalize(*normal);
     }
     return m;
 }
@@ -180,12 +183,44 @@ const geom::TessMesh& mergedCubeMesh() {
     return m;
 }
 const geom::TessMesh& sphereUnitMesh()         { static geom::TessMesh m = buildSphereMesh(0.5f, 16, 16); return m; }
-const geom::TessMesh& cylinderSideMesh()       { static geom::TessMesh m = transformedMesh(buildCylinderSideMesh(0.5f, 0.5f, 1.0f, 16, 4), glm::translate(glm::mat4(1.0f), {0,0,-0.5f})); return m; }
-const geom::TessMesh& coneSideMesh()           { static geom::TessMesh m = transformedMesh(buildCylinderSideMesh(0.5f, 0.0f, 1.0f, 16, 4), glm::translate(glm::mat4(1.0f), {0,0,-0.5f})); return m; }
+const geom::TessMesh& cylinderSideMesh() {
+    static geom::TessMesh m = [] {
+        const auto placement = OntoMath::affineTranslation({0, 0, -0.5f});
+        return placement ? transformedMesh(buildCylinderSideMesh(0.5f, 0.5f, 1.0f, 16, 4), *placement)
+                         : buildCylinderSideMesh(0.5f, 0.5f, 1.0f, 16, 4);
+    }();
+    return m;
+}
+const geom::TessMesh& coneSideMesh() {
+    static geom::TessMesh m = [] {
+        const auto placement = OntoMath::affineTranslation({0, 0, -0.5f});
+        return placement ? transformedMesh(buildCylinderSideMesh(0.5f, 0.0f, 1.0f, 16, 4), *placement)
+                         : buildCylinderSideMesh(0.5f, 0.0f, 1.0f, 16, 4);
+    }();
+    return m;
+}
 // Bottom/base cap: at local z=-0.5, flipped to face -Z (as the old glRotatef 180 did).
-const geom::TessMesh& capBottomMesh()          { static geom::TessMesh m = transformedMesh(buildDiskMesh(0.0f, 0.5f, 32, 1), glm::translate(glm::mat4(1.0f), {0,0,-0.5f}) * glm::rotate(glm::mat4(1.0f), float(M_PI), {1,0,0})); return m; }
+const geom::TessMesh& capBottomMesh() {
+    static geom::TessMesh m = [] {
+        const auto translation = OntoMath::affineTranslation({0, 0, -0.5f});
+        const auto rotation = OntoMath::affineAxisAngle({1, 0, 0}, M_PI);
+        const auto placement = translation && rotation
+            ? OntoMath::affineCompose(*translation, *rotation)
+            : std::nullopt;
+        return placement ? transformedMesh(buildDiskMesh(0.0f, 0.5f, 32, 1), *placement)
+                         : buildDiskMesh(0.0f, 0.5f, 32, 1);
+    }();
+    return m;
+}
 // Top cap: at local z=+0.5, facing +Z.
-const geom::TessMesh& capTopMesh()             { static geom::TessMesh m = transformedMesh(buildDiskMesh(0.0f, 0.5f, 32, 1), glm::translate(glm::mat4(1.0f), {0,0,0.5f})); return m; }
+const geom::TessMesh& capTopMesh() {
+    static geom::TessMesh m = [] {
+        const auto placement = OntoMath::affineTranslation({0, 0, 0.5f});
+        return placement ? transformedMesh(buildDiskMesh(0.0f, 0.5f, 32, 1), *placement)
+                         : buildDiskMesh(0.0f, 0.5f, 32, 1);
+    }();
+    return m;
+}
 
 } // namespace
 
@@ -270,6 +305,22 @@ std::shared_ptr<Material> Object::ownMaterial() {
         mine->specular     = shared->specular;
         mine->ambient      = shared->ambient;
         mine->diffuse      = shared->diffuse;
+
+        // Authored appearance mathematics is Material truth too. Copy-on-write
+        // must preserve it when paint causes an Object to diverge from a shared
+        // Material, but the new Material must own an independent AST so future
+        // Law/property edits cannot mutate the shared being through pointer aliasing.
+        if (shared->colorExpr) {
+            mine->colorExpr = std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::fromJson(shared->colorExpr->toJson()));
+            mine->bumpRevision();
+        }
+        if (shared->responseExpr) {
+            mine->responseExpr = std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::fromJson(shared->responseExpr->toJson()));
+            mine->bumpResponseRevision();
+        }
+
         mine->faceTextures = shared->faceTextures;
         // The copies are this material's own paint now; a texture handle
         // belongs to the buffer the backend uploaded, so let each re-upload
@@ -643,6 +694,33 @@ bool Object::writeAuthoredPropertyProjection(Earthcall::StringId id,
     return ft.writeSamples(selected, colors);
 }
 
+void Object::rebuildRenderSdfCaches() const {
+    if (!_renderSdfCachesDirty) return;
+
+    _smoothRenderSdf.reset();
+    _complexRenderSdf.reset();
+    _complexPatchRenderSdfs.clear();
+
+    if (_hasSmooth) {
+        _smoothRenderSdf = geom::sdfFromSmooth(smoothData);
+    } else if (_hasComplex) {
+        geom::SdfNode whole;
+        if (geom::sdfFromComplex(complexData, whole)) {
+            _complexRenderSdf = std::move(whole);
+        } else {
+            _complexPatchRenderSdfs.resize(complexData.patches.size());
+            for (size_t i = 0; i < complexData.patches.size(); ++i) {
+                const auto& patch = complexData.patches[i];
+                if (patch.type == geom::SurfacePatch::Type::Smooth) {
+                    _complexPatchRenderSdfs[i] = geom::sdfFromSmooth(patch.smooth);
+                }
+            }
+        }
+    }
+
+    _renderSdfCachesDirty = false;
+}
+
 void Object::drawSmoothModel() const {
     Renderer& r = currentRenderer();
     const RenderMaterial mat = resolveRenderMaterial(_materialId, faceAlbedo(0));
@@ -654,24 +732,32 @@ void Object::drawSmoothModel() const {
     // path only tessellated meshes get.
     bool analytic = (_renderMode == RenderMode::Analytic);
     if (_renderMode == RenderMode::Auto) {
+        // Auto follows the active backend's exact-implicit capability even in
+        // headless/native contexts where no LawManager exists. When a
+        // ScreenChannel is present its readable capability property may
+        // override that substrate default, but the channel's absence is not a
+        // reason to silently demote WebGPU to a tessellated approximation.
+        analytic = r.rendersImplicitExactly();
         if (auto* laws = Physics::getLawManager()) {
             if (auto* sc = Singularity::Screen::ScreenChannel::find(*laws)) {
                 PropertyValue v;
                 if (sc->getDynamicProperty("rendersImplicitExactly", v)) {
                     if (const bool* b = std::get_if<bool>(&v)) analytic = *b;
-                } else {
-                    analytic = r.rendersImplicitExactly();
                 }
             }
         }
     }
     
     if (analytic) {
+        rebuildRenderSdfCaches();
         const float extent = std::max(std::max(std::abs(smoothData.axes.x),
                                                std::abs(smoothData.axes.y)),
                                       std::abs(smoothData.axes.z)) + 0.25f;
-        r.drawImplicit(geom::sdfFromSmooth(smoothData), glm::vec3(std::max(extent, 0.6f)), mat, nullptr,
-                       getMemoId(), getFieldRevision());
+        if (_smoothRenderSdf) {
+            r.drawImplicit(*_smoothRenderSdf, glm::vec3(std::max(extent, 0.6f)), mat, nullptr,
+                           getMemoId(), getSdfStructureRevision(), nullptr,
+                           getSdfParameterRevision());
+        }
         return;
     }
     if (_smoothMesh) r.drawMesh(*_smoothMesh, mat);
@@ -685,24 +771,33 @@ void Object::drawComplexModel() const {
     // RenderMode::Mesh opts out of that, same reasoning as drawSmoothModel.
     bool analytic = (_renderMode == RenderMode::Analytic);
     if (_renderMode == RenderMode::Auto) {
+        // Auto follows the active backend's exact-implicit capability even in
+        // headless/native contexts where no LawManager exists. When a
+        // ScreenChannel is present its readable capability property may
+        // override that substrate default, but the channel's absence is not a
+        // reason to silently demote WebGPU to a tessellated approximation.
+        analytic = r.rendersImplicitExactly();
         if (auto* laws = Physics::getLawManager()) {
             if (auto* sc = Singularity::Screen::ScreenChannel::find(*laws)) {
                 PropertyValue v;
                 if (sc->getDynamicProperty("rendersImplicitExactly", v)) {
                     if (const bool* b = std::get_if<bool>(&v)) analytic = *b;
-                } else {
-                    analytic = r.rendersImplicitExactly();
                 }
             }
         }
     }
     if (analytic) {
-        geom::SdfNode field;
-        if (geom::sdfFromComplex(complexData, field)) {
-            const float rExt = std::max(_shapeParams.r, _shapeParams.halfH) + 0.25f;
-            r.drawImplicit(field, glm::vec3(std::max(rExt, 0.6f)),
+        rebuildRenderSdfCaches();
+        if (_complexRenderSdf) {
+            float rExt = std::max(_shapeParams.r, _shapeParams.halfH);
+            if (_shapeKind == ShapeKind::RoundedBox) {
+                rExt = 0.5f + _shapeParams.fillet;
+            }
+            rExt += 0.25f;
+            r.drawImplicit(*_complexRenderSdf, glm::vec3(std::max(rExt, 0.6f)),
                            resolveRenderMaterial(_materialId, faceAlbedo(0)), nullptr,
-                           getMemoId(), getFieldRevision());
+                           getMemoId(), getSdfStructureRevision(), nullptr,
+                           getSdfParameterRevision());
             return;
         }
         for (size_t i = 0; i < complexData.patches.size(); ++i) {
@@ -711,8 +806,12 @@ void Object::drawComplexModel() const {
             if (patch.type == geom::SurfacePatch::Type::Smooth) {
                 const float extent = std::max(std::abs(patch.smooth.axes.x),
                     std::max(std::abs(patch.smooth.zTrim.x), std::abs(patch.smooth.zTrim.y))) + 0.25f;
-                r.drawImplicit(geom::sdfFromSmooth(patch.smooth), glm::vec3(std::max(extent, 0.6f)), mat, nullptr,
-                               getMemoId(static_cast<int>(i) + 1), getFieldRevision());
+                if (i < _complexPatchRenderSdfs.size() && _complexPatchRenderSdfs[i]) {
+                    r.drawImplicit(*_complexPatchRenderSdfs[i],
+                                   glm::vec3(std::max(extent, 0.6f)), mat, nullptr,
+                                   getMemoId(static_cast<int>(i) + 1), getSdfStructureRevision(), nullptr,
+                                   getSdfParameterRevision());
+                }
             } else if (i < _complexMeshes.size()) {
                 r.drawMesh(_complexMeshes[i], mat);
             }
@@ -738,24 +837,34 @@ void Object::drawFieldModel() const {
     // always calling drawImplicit.
     bool analytic = (_renderMode == RenderMode::Analytic);
     if (_renderMode == RenderMode::Auto) {
+        // Auto follows the active backend's exact-implicit capability even in
+        // headless/native contexts where no LawManager exists. When a
+        // ScreenChannel is present its readable capability property may
+        // override that substrate default, but the channel's absence is not a
+        // reason to silently demote WebGPU to a tessellated approximation.
+        analytic = r.rendersImplicitExactly();
         if (auto* laws = Physics::getLawManager()) {
             if (auto* sc = Singularity::Screen::ScreenChannel::find(*laws)) {
                 PropertyValue v;
                 if (sc->getDynamicProperty("rendersImplicitExactly", v)) {
                     if (const bool* b = std::get_if<bool>(&v)) analytic = *b;
-                } else {
-                    analytic = r.rendersImplicitExactly();
                 }
             }
         }
     }
     if (analytic) {
-        // getHeightGrid() lazily builds the min/max heightfield grid (Phase C)
-        // on first access after a revision bump, mirroring rebuildFieldMesh();
-        // dimX==0 (not a proven heightfield) reads back as "no grid" downstream.
-        const geom::HeightGrid& hg = getHeightGrid();
+        // HeightGrid is derived acceleration data, not field identity. Demand-
+        // build it only when the active backend can actually consume it; while
+        // WebGPU's grazing-root DDA hand-off is quarantined, constructing the
+        // grid here would have no downstream reader.
+        const geom::HeightGrid* hg = nullptr;
+        if (r.usesHeightGridDda()) {
+            const geom::HeightGrid& cached = getHeightGrid();
+            if (cached.dimX > 0) hg = &cached;
+        }
         r.drawImplicit(getFieldData(), getFieldExtent(), mat, nullptr,
-                       getMemoId(), getFieldRevision(), hg.dimX > 0 ? &hg : nullptr);
+                       getMemoId(), getSdfStructureRevision(), hg,
+                       getSdfParameterRevision());
         return;
     }
     rebuildFieldMesh();
@@ -1048,7 +1157,12 @@ void Object::draw2DObject(uint32_t screenW, uint32_t screenH) const {
         {x1, y1}, {x0, y1},
         {x0, y1}, {x0, y0},
     };
-    currentRenderer().drawLines2D(border, borderColor, 1.0f);
+    // Authored raster reconstructions need adjoining regions without invented
+    // seams. Existing plates retain their border unless the author says otherwise.
+    PropertyValue borderVisible;
+    const bool showBorder = !getDynamicProperty("border.visible", borderVisible) ||
+        !std::holds_alternative<bool>(borderVisible) || std::get<bool>(borderVisible);
+    if (showBorder) currentRenderer().drawLines2D(border, borderColor, 1.0f);
 
     // …and the label centred on the plate, in whichever of black or white the
     // fill can carry. Type size is `label.size2D` when the being authored one,

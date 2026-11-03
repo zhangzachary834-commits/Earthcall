@@ -278,6 +278,129 @@ int main() {
     }
 
     // ------------------------------------------------------------------
+    // 4a. The slider. Pixels travelled × step, at ANY frame rate, and held
+    //     inside controlMin/controlMax when the being authored them. The
+    //     earlier Flow form integrated dragX (already a per-frame delta) over
+    //     dt, so it moved half as far at 120 fps and never stopped at its ends
+    //     (docs/plans/2D_Interface_Robustness_Pass_2026-09-22.md, Tier 0 #5).
+    // ------------------------------------------------------------------
+    Object slider, rangedSlider;
+    slider.setObjectID("the-slider");
+    rangedSlider.setObjectID("the-ranged-slider");
+    world.push_back(&slider);
+    world.push_back(&rangedSlider);
+    {
+        makeControl(slider, Control::kCategorySlider, cats, 1.0, 0.02);
+        makeControl(rangedSlider, Control::kCategorySlider, cats, 1.0, 0.02);
+        rangedSlider.setDynamicProperty(Control::kMin, PropertyValue(0.2));
+        rangedSlider.setDynamicProperty(Control::kMax, PropertyValue(3.0));
+
+        const auto drag = [&](const std::string& id, float pixels, double dt) {
+            Universe::instance().setClock(0.0, dt);
+            channel.pressedId = id;
+            channel.dragX = pixels;
+            laws.tick();
+            channel.dragX = 0.0f;
+            channel.pressedId.clear();
+            laws.tick();
+        };
+
+        drag("the-slider", 10.0f, 1.0 / 60.0);
+        check(nearf(valueOf(slider), 1.2), "10 px at step 0.02 moves the slider by 0.2");
+        drag("the-slider", 10.0f, 1.0 / 120.0);
+        check(nearf(valueOf(slider), 1.4),
+              "the same 10 px at 120 fps moves it the same 0.2 — frame-rate independent");
+        drag("the-slider", 1000.0f, 1.0 / 60.0);
+        check(nearf(valueOf(slider), 21.4),
+              "a slider that authored no range still moves (its clamp step cannot read)");
+        check(nearf(valueOf(rangedSlider), 1.0), "dragging one slider leaves the other alone");
+
+        drag("the-ranged-slider", 1000.0f, 1.0 / 60.0);
+        check(nearf(valueOf(rangedSlider), 3.0), "a ranged slider stops at controlMax");
+        drag("the-ranged-slider", -1000.0f, 1.0 / 60.0);
+        check(nearf(valueOf(rangedSlider), 0.2), "and at controlMin");
+        Universe::instance().setClock(0.0, 1.0 / 60.0);
+    }
+
+    // ------------------------------------------------------------------
+    // 4a'. "Cancel the press when its being leaves reach" is LAW TEXT, not
+    //      channel code. Zach, 2026-09-23: good design if authorable, too
+    //      absolute as hardcoded. The channel only senses object-left-reach;
+    //      this law answers it with Set @interaction-channel.pressedId := "",
+    //      and the channel reports the cancellation as edges — which a second
+    //      authored law hears.
+    // ------------------------------------------------------------------
+    Object farPlate;
+    {
+        farPlate.setObjectID("the-far-plate");
+        Object::ShapeParams p;
+        p.width2D = 100.0f;
+        p.height2D = 100.0f;
+        farPlate.setShape(Object::ShapeKind::Shape2D, p);
+        farPlate.setX2D(0.0f);
+        farPlate.setY2D(0.0f);
+        world.push_back(&farPlate);
+
+        auto cancelOnLeave = std::make_shared<Law>("Cancel press on leaving reach");
+        cancelOnLeave->setLawIdentifier("test-cancel-press-on-leave-law");
+        cancelOnLeave->addAuthor(author);
+        cancelOnLeave->setActivation(Law::Activation::OnEvent);
+        cancelOnLeave->setScope(Law::Scope::Subject);
+        cancelOnLeave->ecaLoop().eventType = "object-left-reach";
+        cancelOnLeave->setConditionModel(ConditionNode::isKind(ConditionNode::BeingKind::Object));
+        cancelOnLeave->setActionModel(
+            ActionNode::set("@interaction-channel.pressedId", PropertyValue(std::string())));
+        laws.add(cancelOnLeave);
+        laws.bindTrigger(cancelOnLeave->getIdentifier(), "object-left-reach");
+
+        auto hearCancel = std::make_shared<Law>("Hear the cancellation");
+        hearCancel->setLawIdentifier("test-hear-press-cancelled-law");
+        hearCancel->addAuthor(author);
+        hearCancel->setActivation(Law::Activation::OnEvent);
+        hearCancel->setScope(Law::Scope::Subject);
+        hearCancel->ecaLoop().eventType = "object-press-cancelled";
+        hearCancel->setConditionModel(ConditionNode::isKind(ConditionNode::BeingKind::Object));
+        hearCancel->setActionModel(ActionNode::publish(Control::kActivated));
+        laws.add(hearCancel);
+        laws.bindTrigger(hearCancel->getIdentifier(), "object-press-cancelled");
+
+        InteractionChannel::Sense s;
+        s.pointerX = 50.0f;
+        s.pointerY = 50.0f;
+        s.rayOrigin = glm::vec3(0.0f, 0.0f, 1e6f);
+        s.rayDirection = glm::vec3(0.0f, 0.0f, 1.0f);
+        s.left = true;
+        const std::vector<Object*> here{&farPlate};
+        const std::vector<Object*> elsewhere{};
+
+        g_activated.clear();
+        channel.observe(s, here);
+        laws.tick();
+        check(channel.pressedId == "the-far-plate", "the press lands on the plate");
+        channel.observe(s, elsewhere);   // the plate leaves reach: sensed, not cancelled
+        laws.tick();                     // the authored law answers it
+        channel.observe(s, elsewhere);   // the channel hears the authored write
+        laws.tick();
+        check(channel.pressedId.empty(), "the authored law cleared the press");
+        check(g_activated.size() == 1 && g_activated[0] == "the-far-plate",
+              "the channel reported it as object-press-cancelled, heard by a second law");
+
+        cancelOnLeave->setEnabled(false);
+        channel.observe(s, here);
+        s.left = false;
+        channel.observe(s, here);
+        s.left = true;
+        channel.observe(s, here);        // a fresh press
+        channel.observe(s, elsewhere);
+        laws.tick();
+        channel.observe(s, elsewhere);
+        check(channel.pressedId == "the-far-plate",
+              "with the law disabled, the press survives leaving reach");
+        s.left = false;
+        channel.observe(s, here);
+    }
+
+    // ------------------------------------------------------------------
     // 4b. The key command. Its subject is whoever holds focus, and the
     //     archetype is a FACTORY rather than a boot registration: which
     //     key, on which control, is an authored choice with no default
