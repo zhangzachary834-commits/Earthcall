@@ -6,7 +6,7 @@ static void testHeadConstructor() {
     Head head;
     assert(head.getName() == "Head");
     assert(head.getType() == BodyPart::Type::Head);
-    assert(head.getPrimaryShape() == ObjectTypes::ShapeKind::Cube);
+    assert(head.getPrimaryObject() != nullptr && head.getPrimaryObject()->getShapeKind() == ObjectTypes::ShapeKind::Cube);
 
     const glm::vec3 dims = head.getDimensions();
     assert(dims.x == 0.3f);
