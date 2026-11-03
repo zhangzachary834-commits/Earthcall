@@ -3,9 +3,13 @@
 #include "Person/Voice/Voice.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
+#include "../support/test_harness.hpp"
+#include <algorithm>
 #include <cassert>
+#include <cstdlib>
 #include <cmath>
 #include <iostream>
+#include <memory>
 #include <glm/gtc/matrix_transform.hpp>
 
 // MockRenderer to test draw() without needing an active OpenGL or GPU window context
@@ -361,7 +365,78 @@ static void testBodyAndVoiceIdentityDistinctFromSpelling() {
     assert(voice.getVoicePart("Resonance") == nullptr);
     assert(!voice.formation.hasMember(&second));
 
-    std::cout << "  testBodyAndVoiceIdentityDistinctFromSpelling OK\\n";
+    std::cout << "  testBodyAndVoiceIdentityDistinctFromSpelling OK\n";
+}
+
+// Witness test for BootedEngineHarness / EngineInit Universe relation parity:
+// Old unit tests (e.g. testConstitutionIsExplicitRelation above) proved that
+// BodyPart::constitute adds a constituted-by relation directly to BodyPart::relations().
+// What they COULD NOT prove was whether that relation was reachable through
+// Universe::instance() in a booted engine environment. Before the harness fix,
+// BootedEngineHarness's Universe relation provider omitted Person body parts,
+// causing a witness gap where test execution bypassed the production path (EngineInit.cpp).
+static void testBootedHarnessExposesConstitutionRelations() {
+    // These are runtime checks, not assert(): Release/NDEBUG must not turn
+    // the booted witness into a false-green test.
+    const auto require = [](bool ok, const char* detail) {
+        if (!ok) {
+            std::cerr << "body_part_test: " << detail << '\n';
+            std::exit(EXIT_FAILURE);
+        }
+    };
+    TestSupport::BootedEngineHarness harness("Zach", "humanoid", /*hydrateAllZones=*/false);
+    auto partPtr = std::make_unique<BodyPart>("RightHand", BodyPart::Type::Hand, ObjectTypes::ShapeKind::Cube, glm::vec3(1.0f));
+    BodyPart* part = partPtr.get();
+    harness.player.getBody().addPart(part);
+
+    Object* primaryObj = part->getPrimaryObject();
+    require(primaryObj != nullptr, "first body part has no primary Object");
+
+    std::vector<Relation*> edges;
+    Universe::instance().relationsInvolving(*primaryObj, edges);
+    bool foundConstitutionEdge = false;
+    for (Relation* rel : edges) {
+        if (rel && rel->type == BodyPart::kConstitutedByType && rel->a() == part && rel->b() == primaryObj) {
+            foundConstitutionEdge = true;
+            break;
+        }
+    }
+    require(foundConstitutionEdge, "first constitution edge missing from indexed Universe query");
+
+    // The indexed endpoint provider must agree with the complete graph provider.
+    // Checking only relationsInvolving would miss a partial harness installation.
+    const auto allEdges = Universe::instance().relations();
+    require(std::any_of(allEdges.begin(), allEdges.end(), [part, primaryObj](Relation* rel) {
+        return rel && rel->type == BodyPart::kConstitutedByType &&
+               rel->a() == part && rel->b() == primaryObj;
+    }), "first constitution edge missing from complete Universe graph");
+
+    // A new body part must become visible without re-installing any provider.
+    // The relation-generation stamp must change so cached graph consumers
+    // notice the additional constitution edge.
+    const std::size_t generationBefore = Universe::instance().relationGeneration();
+    auto secondPart = std::make_unique<BodyPart>(
+        "LeftHand", BodyPart::Type::Hand, ObjectTypes::ShapeKind::Cube, glm::vec3(1.0f));
+    BodyPart* second = secondPart.get();
+    harness.player.getBody().addPart(second);
+    require(Universe::instance().relationGeneration() != generationBefore,
+            "relation generation unchanged after adding body part");
+    Object* secondObject = second->getPrimaryObject();
+    require(secondObject != nullptr, "second body part has no primary Object");
+    std::vector<Relation*> secondEdges;
+    require(Universe::instance().relationsInvolving(*secondObject, secondEdges),
+            "second body part has no indexed Universe relations");
+    const auto isSecondConstitution = [second, secondObject](Relation* rel) {
+        return rel && rel->type == BodyPart::kConstitutedByType &&
+               rel->a() == second && rel->b() == secondObject;
+    };
+    require(std::count_if(secondEdges.begin(), secondEdges.end(), isSecondConstitution) == 1,
+            "second constitution edge missing or duplicated in indexed Universe query");
+    const auto allEdgesAfter = Universe::instance().relations();
+    require(std::count_if(allEdgesAfter.begin(), allEdgesAfter.end(), isSecondConstitution) == 1,
+            "second constitution edge missing or duplicated in complete Universe graph");
+
+    std::cout << "  testBootedHarnessExposesConstitutionRelations OK\n";
 }
 
 int main() {
@@ -376,6 +451,7 @@ int main() {
     testDraw();
     testConstitutionIsExplicitRelation();
     testBodyAndVoiceIdentityDistinctFromSpelling();
+    testBootedHarnessExposesConstitutionRelations();
     std::cout << "body_part_test: ALL OK\n";
     return 0;
 }
