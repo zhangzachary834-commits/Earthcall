@@ -141,6 +141,34 @@ int main(int argc, char** argv) {
     source.specularRadiance = Rendering::lightSpecularRadiance(light);
     source.coefficients = glm::vec4(light.intensity, light.ambient, light.diffuse, light.specular);
     source.enabled = light.enabled;
+    source.temporalCoordinate = fixedT;
+    source.temporalDelta = 1.0 / 60.0;
+    // Mirror EngineRender's authored source projection. The pre-2026-10-21
+    // fixture omitted these expressions and exercised compatibility lighting;
+    // preserve that workload only as an explicitly labelled counterfactual.
+    const char* sourceMode = std::getenv("EC_VOLUME_SOURCE_MODE");
+    const bool compatibilitySource = sourceMode && std::strcmp(sourceMode, "compatibility") == 0;
+    REQUIRE(!sourceMode || compatibilitySource || std::strcmp(sourceMode, "authored") == 0);
+    if (!compatibilitySource) {
+        root->verifyAuthoredMath();
+        if (root->field && root->field->mode == OntoMath::ScalarField::EvaluationMode::AST &&
+            !root->field->astDefinition.pieces.empty()) {
+            source.radianceExpr = &root->field->astDefinition;
+            source.radianceRevision = root->authoredMathRevision(geom::FieldNode::kMathFieldAst);
+        }
+        if (root->lightChroma && !root->lightChroma->pieces.empty()) {
+            source.chromaExpr = root->lightChroma.get();
+            source.chromaRevision = root->authoredMathRevision(geom::FieldNode::kMathLightChroma);
+        }
+        if (root->lightAngular && !root->lightAngular->pieces.empty()) {
+            source.angularExpr = root->lightAngular.get();
+            source.angularRevision = root->authoredMathRevision(geom::FieldNode::kMathLightAngular);
+        }
+    }
+    std::printf("SOURCE mode=%s radiance=%d chroma=%d angular=%d clock=%.9f\n",
+        compatibilitySource ? "compatibility-counterfactual" : "authored",
+        source.radianceExpr != nullptr, source.chromaExpr != nullptr,
+        source.angularExpr != nullptr, source.temporalCoordinate);
     renderer.setRadianceSources({source}, 1);
     renderer.setLight(source.position, source.ambientRadiance, source.diffuseRadiance, source.specularRadiance);
     renderer.setLightingEnabled(light.enabled);

@@ -185,6 +185,41 @@ int main() {
         }
         screen.volumeZeroProofEnabled = true;
 
+        // Rung 2f-native certificates: registered, default OFF, writable.
+        PropertyValue certificates;
+        const PropertyPath certificatesPath = PropertyPath::parse("volumeSupportCertificatesEnabled");
+        if (certificatesPath.getValue(screen, certificates) != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<bool>(certificates) || std::get<bool>(certificates)) {
+            fail("volumeSupportCertificatesEnabled", "Channel — Screen",
+                 "must resolve as a default-false authorable toggle");
+        }
+        if (certificatesPath.setValue(screen, PropertyValue(true)) != PropertyPath::PathResult::Ok ||
+            !screen.volumeSupportCertificatesEnabled) {
+            fail("volumeSupportCertificatesEnabled", "Channel — Screen",
+                 "must write through the registered ScreenChannel property");
+        }
+        screen.volumeSupportCertificatesEnabled = false;
+
+        // Eligibility: auto mode is a registered, default-true authorable toggle.
+        PropertyValue autoMode;
+        const PropertyPath autoPath = PropertyPath::parse("volumeSupportCertificatesAutoEligibility");
+        if (autoPath.getValue(screen, autoMode) != PropertyPath::PathResult::Ok ||
+            !std::holds_alternative<bool>(autoMode) || !std::get<bool>(autoMode)) {
+            fail("volumeSupportCertificatesAutoEligibility", "Channel — Screen",
+                 "must resolve as a default-true authorable toggle");
+        }
+        PropertyValue eligibleMedia;
+        if (PropertyPath::parse("volumeSupportCertificateEligibleMedia").getValue(screen, eligibleMedia) !=
+            PropertyPath::PathResult::Ok) {
+            fail("volumeSupportCertificateEligibleMedia", "Channel — Screen", "must publish the eligible-media count");
+        }
+        // Measured eligibility (2026-10-18) publishes its hidden renders and vetoes.
+        for (const char* measuredPath : {"volumeSupportCertificateProbeRenders", "volumeSupportCertificateMeasuredVetoes"}) {
+            PropertyValue measured;
+            if (PropertyPath::parse(measuredPath).getValue(screen, measured) != PropertyPath::PathResult::Ok)
+                fail(measuredPath, "Channel — Screen", "must publish the measured-eligibility count");
+        }
+
         PropertyValue samples;
         const PropertyPath samplesPath = PropertyPath::parse("volumeSamplesPerChord");
         if (samplesPath.getValue(screen, samples) != PropertyPath::PathResult::Ok ||

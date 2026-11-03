@@ -1,7 +1,5 @@
 # Ray transport — Firmament counsel, bounded packet streaming and the cost of small chunks
 
-**Default-checkout evidence relay:** implementation is on local `claude/ray-domain-transport-rung0`, commit `d4c9e07e7`. New diagnostic links below point to that ray checkout; this relay does not install or remotely publish the implementation.
-
 Zach requested the Firmament's new counsel and the next pass after [§6ck](GPU_RAY_TRANSPORT_PREPARED_COEFFICIENTS_2026-10-22.md), local checkpoint `ada9ee762`. I found his review of §6cf–§6ck in the **Gemini application conversation**, through computer use. It was not yet in either Intercom copy; Zach confirmed he was still writing and instructed me to proceed. This audit is my implementation/review response, not a substitute author post. It continues the [existing council thread](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md).
 
 **Outcome:** fixed-capacity schedule storage can be reused across separate producer/consumer/fallback dispatches without changing any output bits on the two admitted ray fixtures. All four capacities pass exact normal and forced-native-fallback comparisons, including the final 16-ray chunk. Small chunks lose substantially on native cost; a 10 MiB ring allocation control passes but does not establish large-ring throughput or a viewport result. The GPU packet census also disproves the proposed general one-active-span-per-curtain compression. Production rendering, defaults, authored equations, saves/data home and installed app are unchanged. No new shipped performance claim, push or PR.
@@ -19,7 +17,7 @@ OntoMath still owns the generic mathematical density/root recipe; Screen should 
 
 ## Executed storage contract
 
-[`ray_transport_gpu_streamed_schedule.py`](/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop/scratch/probes/ray_transport_gpu_streamed_schedule.py) consumes the §6ck authored coefficient recipe and retains the existing generated producer, full ordered A* consumer and native fallback kernels. It changes their buffer views, not the ray equations, model margin, root work bounds, integration nodes, packet format or reference thresholds.
+[`ray_transport_gpu_streamed_schedule.py`](../../scratch/probes/ray_transport_gpu_streamed_schedule.py) consumes the §6ck authored coefficient recipe and retains the existing generated producer, full ordered A* consumer and native fallback kernels. It changes their buffer views, not the ray equations, model margin, root work bounds, integration nodes, packet format or reference thresholds.
 
 A fixed pair of single/overlap buffers holds one chunk at a time. Each chunk runs producer → consumer → native fallback before the next chunk reuses that pair. Separate compute passes preserve those dependencies. Input/output views select the original pixel order; 256-byte storage offsets and explicit chunk counts prevent tail overrun. Static full/tail uniforms and bindings are built before steady measurements. Work/capacity refusals still choose actual native fallback; no partially generated schedule is accepted. Global producer offsets are restored before subsequent diagnostic consumers.
 
@@ -55,7 +53,7 @@ For pixel (260,20), member 3 retains [22.2565002,47.5980644] and [49.1091118,64.
 
 ## Reproduction and remaining bridge
 
-[Machine record](GPU_RAY_TRANSPORT_BOUNDED_STREAMING_2026-10-22.json) pins ten compressed source/raw/failure archives. [`ray_transport_streamed_schedule_evidence.py`](/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop/scratch/probes/ray_transport_streamed_schedule_evidence.py) independently replays both primary numerical reports, eight normal/forced streaming cases, strict float-bit output, the full packet census, memory/tail arithmetic and complete timing accounting. Nine corruption controls refuse missing tail output, changed pixel order, nonfinite output, inexact/missing fallback, wrong allocation, missing timing pairs, invalid clocks and a false span summary.
+[Machine record](GPU_RAY_TRANSPORT_BOUNDED_STREAMING_2026-10-22.json) pins ten compressed source/raw/failure archives. [`ray_transport_streamed_schedule_evidence.py`](../../scratch/probes/ray_transport_streamed_schedule_evidence.py) independently replays both primary numerical reports, eight normal/forced streaming cases, strict float-bit output, the full packet census, memory/tail arithmetic and complete timing accounting. Nine corruption controls refuse missing tail output, changed pixel order, nonfinite output, inexact/missing fallback, wrong allocation, missing timing pairs, invalid clocks and a false span summary.
 
 Restore the preceding §6cj fixtures with its verifier, then use fresh paths:
 

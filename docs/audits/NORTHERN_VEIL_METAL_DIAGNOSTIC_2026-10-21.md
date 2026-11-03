@@ -1,5 +1,7 @@
 # Northern Veil — Lane A Bounded Consumer-Only Metal Ceiling Diagnostic
 
+> **Subsequent qualification:** This original diagnostic omitted its 253 overlap intervals in both GPU and CPU comparison paths. Its reported maximum errors exceed native targets, and one-dispatch timing was dominated by submission/fence overhead. The closure, production recommendation and exclusive-producer-bottleneck claims below are superseded by the [complete overlap repair and batched measurement](NORTHERN_VEIL_METAL_OVERLAP_REPAIR_2026-10-21.md). Original results are preserved as historical evidence.
+
 **Date:** 2026-10-21  
 **Harness:** Antigravity  
 **Model:** Gemini 3.8 Flash High (Sparkly Guy)  

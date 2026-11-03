@@ -108,6 +108,19 @@ public:
     // framebuffer and the real Northern Veil save ran ~3x faster. A Person/Law
     // can switch it off here to compare.
     bool      volumeZeroProofEnabled = true;
+    // Rung 2f-native support certificates (Renderer::setVolumeSupportCertificatesEnabled).
+    // OFF until a Person accepts it on their own GPU: pixels are witnessed
+    // byte-identical on the cloud software lane only, never on Metal yet.
+    // Zach authorized default ON in the ray-transport feature branch (2026-10-28).
+    // EngineRender forwards this to Renderer; unknown sets/rays use Current.
+    bool      volumeRoutedTransportEnabled = true;
+    int       volumeRoutedSets = 0; // derived actual dispatched sets last frame
+    int       volumeRoutedPixels = 0;
+    double    volumeRoutedWorkingSetBytes = 0;
+    bool      volumeSupportCertificatesEnabled = false;
+    // Within the enabled lane: true = only media the Kernel's cost estimate
+    // favours (published below); false = every medium with certificates.
+    bool      volumeSupportCertificatesAutoEligibility = true;
     // Volume quadrature resolution: samples a participating medium receives
     // across its own chord along a ray. 96 reproduces the historical shader
     // constant; overlapping media share the finest present resolution instead
@@ -125,6 +138,14 @@ public:
         volumeZeroProofCellsProven = cellsProven;
         volumeZeroProofCellsTotal = cellsTotal;
     }
+    // Derived: enabled support-certificate killers over the media drawn last
+    // frame (0 while volumeSupportCertificatesEnabled is off).
+    int       volumeSupportCertificateKillers = 0;
+    int       volumeSupportCertificateEligibleMedia = 0;
+    // Derived, auto mode: hidden timing renders run after last frame (nonzero
+    // only while a measured verdict is owed) and admitted media the device vetoed.
+    int       volumeSupportCertificateProbeRenders = 0;
+    int       volumeSupportCertificateMeasuredVetoes = 0;
     bool      recording = false;
     bool      snapshotTrigger = false;
     glm::vec3 backgroundColor{0.1f, 0.1f, 0.15f};
@@ -211,8 +232,15 @@ private:
     int    getSdfRangeProxyCulledDraws() const { return sdfRangeProxyCulledDraws; }
     int    getSdfRangeTraversalDraws() const { return sdfRangeTraversalDraws; }
     double getSdfRangeNodeBytesUploaded() const { return sdfRangeNodeBytesUploaded; }
+    int    getVolumeRoutedSets() const { return volumeRoutedSets; }
+    int    getVolumeRoutedPixels() const { return volumeRoutedPixels; }
+    double getVolumeRoutedWorkingSetBytes() const { return volumeRoutedWorkingSetBytes; }
     int    getVolumeZeroProofCellsProven() const { return volumeZeroProofCellsProven; }
     int    getVolumeZeroProofCellsTotal() const { return volumeZeroProofCellsTotal; }
+    int    getVolumeSupportCertificateKillers() const { return volumeSupportCertificateKillers; }
+    int    getVolumeSupportCertificateEligibleMedia() const { return volumeSupportCertificateEligibleMedia; }
+    int    getVolumeSupportCertificateProbeRenders() const { return volumeSupportCertificateProbeRenders; }
+    int    getVolumeSupportCertificateMeasuredVetoes() const { return volumeSupportCertificateMeasuredVetoes; }
 
     std::string _name{"screen-channel"};
 };

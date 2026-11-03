@@ -299,6 +299,9 @@ namespace Core {
                 currentRenderer().setSpaceDistortion(float(screenChannel->spaceDistortion));
                 currentRenderer().setSdfRangeProxyEnabled(screenChannel->sdfRangeProxyEnabled);
                 currentRenderer().setVolumeZeroProofEnabled(screenChannel->volumeZeroProofEnabled);
+                currentRenderer().setVolumeRoutedTransportEnabled(screenChannel->volumeRoutedTransportEnabled);
+                currentRenderer().setVolumeSupportCertificatesEnabled(screenChannel->volumeSupportCertificatesEnabled);
+                currentRenderer().setVolumeSupportCertificatesAutoEligibility(screenChannel->volumeSupportCertificatesAutoEligibility);
                 currentRenderer().setVolumeSamplesPerChord(screenChannel->volumeSamplesPerChord);
                 currentRenderer().setVolumeOutputErrorBudget(screenChannel->volumeOutputErrorBudget);
             }
@@ -418,6 +421,13 @@ namespace Core {
                 sc->updateVolumeZeroProofMetrics(
                     static_cast<int>(stats.volumeZeroProofCellsProven),
                     static_cast<int>(stats.volumeZeroProofCellsTotal));
+                sc->volumeRoutedSets = static_cast<int>(stats.volumeRoutedSets);
+                sc->volumeRoutedPixels = static_cast<int>(stats.volumeRoutedPixels);
+                sc->volumeRoutedWorkingSetBytes = static_cast<double>(stats.volumeRoutedWorkingSetBytes);
+                sc->volumeSupportCertificateKillers = static_cast<int>(stats.volumeSupportCertificateKillers);
+                sc->volumeSupportCertificateEligibleMedia = static_cast<int>(stats.volumeSupportCertificateEligibleMedia);
+                sc->volumeSupportCertificateProbeRenders = static_cast<int>(stats.volumeSupportCertificateProbeRenders);
+                sc->volumeSupportCertificateMeasuredVetoes = static_cast<int>(stats.volumeSupportCertificateMeasuredVetoes);
             }
             if (auto* recorder = Singularity::Screen::ScreenRecorder::find(*_lawManager)) {
                 recorder->checkPendingSnapshot(fbW, fbH);
