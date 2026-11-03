@@ -1,0 +1,6 @@
+{
+  "exit_code": 42,
+  "expected_exit_code": 42,
+  "report_identical_to_previous_negative_control": true,
+  "note": "Explicit process exit check after the shell wrapper used zsh readonly variable status; test reports themselves were complete."
+}

@@ -3,8 +3,9 @@
 #include <string>
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
+#include "ConstructedBeing/Singular/Singular.hpp"
 
-class PersonPerspective {
+class PersonPerspective : public Singular {
 public:
     enum class PerspectiveType {
         FirstPerson,
@@ -34,6 +35,7 @@ public:
     };
 
 protected:
+    std::string _id;
     std::string _name;
     PerspectiveType _type;
     CameraSettings _settings;
@@ -42,7 +44,11 @@ protected:
 
 public:
     PersonPerspective(const std::string& name, PerspectiveType type = PerspectiveType::ThirdPerson);
+    PersonPerspective(const std::string& id, const std::string& name, PerspectiveType type);
     virtual ~PersonPerspective() = default;
+
+    // Singular interface
+    std::string getIdentifier() const override { return _id.empty() ? _name : _id; }
 
     // Core functionality
     virtual void update(float deltaTime);
@@ -80,6 +86,9 @@ public:
     // Utility
     void lockView(bool locked) { _viewState.isLocked = locked; }
     bool isViewLocked() const { return _viewState.isLocked; }
+
+protected:
+    void buildProperties() override {}
 
 private:
     // Private helper methods

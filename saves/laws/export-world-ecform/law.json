@@ -1,0 +1,26 @@
+{
+    "id": "export-world-ecform",
+    "name": "Export World to Ecform",
+    "authors": ["Zach"],
+    "enabled": true,
+    "telos": "lexeme.system",
+    "condition": {
+        "kind": 1,
+        "eventType": "export-ecform"
+    },
+    "action": {
+        "kind": 5,
+        "children": [
+            {
+                "kind": 0,
+                "path": "@state.exportPath",
+                "operand": "saves/worlds/export.ecform"
+            },
+            {
+                "kind": 24,
+                "path": "@state.exportPath",
+                "input": "@codec.codec.serializeZoneEcform"
+            }
+        ]
+    }
+}

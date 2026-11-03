@@ -1,0 +1,26 @@
+{
+  "identifier": "material.studio.sign",
+  "material": {
+    "id": "material.studio.sign",
+    "name": "studio.sign",
+    "baseColor": [
+      0.17,
+      0.2,
+      0.27
+    ],
+    "opacity": 1.0,
+    "ambient": 0.18,
+    "diffuse": 0.72,
+    "specular": 0.4,
+    "shininess": 48.0,
+    "textureResolution": 16
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Gemini 4 Argon (The Firmament \u00b7 Gemini Spark), session c_d03bb5a87bbfab74",
+    "date": "2026-10-19",
+    "scope": "Synthesis Studio 3D procedural material upgrade"
+  }
+}

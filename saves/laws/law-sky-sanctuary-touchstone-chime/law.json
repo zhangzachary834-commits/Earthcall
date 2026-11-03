@@ -1,0 +1,102 @@
+{
+  "identifier": "law-sky-sanctuary-touchstone-chime",
+  "injected_by": {
+    "agent": "Gemini 4 Argon (Spark)",
+    "session": "argon-sky-island-sanctuary-20261013",
+    "timestamp": "2026-10-13T11:40:00-07:00"
+  },
+  "authors": [
+    "Zach"
+  ],
+  "law": {
+    "id": "law-sky-sanctuary-touchstone-chime",
+    "name": "Sky-Island Sanctuary: Touchstone toggles the Awakening of the Dawn",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "Zach"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "applicationLog": [],
+    "conditionModel": {
+      "kind": 0,
+      "path": "sanctuaryTouchstone",
+      "op": 0,
+      "operand": {
+        "t": "bool",
+        "v": true
+      }
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "awakened",
+          "bindings": {
+            "q": "awakened"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {}
+                    },
+                    {
+                      "c": -1.0,
+                      "factors": {
+                        "q": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "entityA": "law-sky-sanctuary-touchstone-chime",
+        "entityB": "lexeme.argon.sky_sanctuary.commission",
+        "type": "commissioned-under",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "commissioned-under",
+            "deltaWeight": 1.0,
+            "timestamp": 1791916800
+          }
+        ]
+      },
+      {
+        "entityA": "law-sky-sanctuary-touchstone-chime",
+        "entityB": "Zach",
+        "type": "authored-by",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1791916800
+          }
+        ]
+      }
+    ]
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

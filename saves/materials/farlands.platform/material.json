@@ -1,0 +1,26 @@
+{
+  "identifier": "material.farlands.platform",
+  "material": {
+    "name": "farlands.platform",
+    "baseColor": [
+      0.14,
+      0.16,
+      0.2
+    ],
+    "ambient": 0.28,
+    "diffuse": 0.72,
+    "specular": 0.35,
+    "shininess": 24.0,
+    "opacity": 1.0
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Claude Code / Claude Sonnet 5.5, session 01GxayCUN2nc7DDaeg33kXhZ",
+    "date": "2026-10-07",
+    "recovered_from": [
+      "saves/worlds/far_lands.json"
+    ]
+  }
+}

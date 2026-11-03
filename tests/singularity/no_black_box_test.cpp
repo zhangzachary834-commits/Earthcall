@@ -39,6 +39,7 @@
 //
 // Failures are REPORTED, not asserted, so one gap does not hide the rest.
 
+#include "Person/Body/BodyPart/BodyPart.hpp"
 #include "ConstructedBeing/Material/Material.hpp"
 #include "Relation/Formation/Formation.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
@@ -175,6 +176,15 @@ std::vector<PropertyValue> candidatesFor(const PropertyValue& current) {
             glm::mat4 m = x;
             m[3][0] += 1.0f;
             out.push_back(PropertyValue(m));
+        } else if constexpr (std::is_same_v<X, OntoMath::MatrixValue>) {
+            std::vector<double> elements = x.elements();
+            if (!elements.empty()) {
+                elements[0] += 1.0;
+                if (auto matrix = OntoMath::MatrixValue::create(
+                        x.rows(), x.cols(), std::move(elements))) {
+                    out.push_back(PropertyValue(std::move(*matrix)));
+                }
+            }
         } else if constexpr (std::is_arithmetic_v<X>) {
             out.push_back(PropertyValue(static_cast<X>(x + static_cast<X>(1))));
             out.push_back(PropertyValue(static_cast<X>(1)));
@@ -198,6 +208,8 @@ bool sameValue(const PropertyValue& a, const PropertyValue& b) {
                 for (int r = 0; r < 4; ++r)
                     if (std::abs(x[c][r] - y[c][r]) > 1e-4f) return false;
             return true;
+        } else if constexpr (std::is_same_v<X, OntoMath::MatrixValue>) {
+            return x == y;
         } else if constexpr (std::is_floating_point_v<X>) {
             return std::abs(static_cast<double>(x) - static_cast<double>(y)) < 1e-4;
         } else if constexpr (std::is_same_v<X, std::monostate>) {
@@ -339,6 +351,10 @@ int main() {
         Soul soul;               audit("Soul", soul);
         Ourverse ourverse;       audit("Ourverse", ourverse);
         Body body;               audit("Body", body);
+        // Formation, not Object; its constitution is now registered too
+        // (o3 seam audit / BodyPart_Constitution_As_Explicit_Relation).
+        BodyPart part("probe-hand", BodyPart::Type::Hand);
+        audit("BodyPart", part);
     }
 
     // ---- D. reachability from the authoring surface -----------------------

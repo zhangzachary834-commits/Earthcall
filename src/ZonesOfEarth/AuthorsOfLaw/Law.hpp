@@ -894,9 +894,9 @@ public:
     // evaluates the network and drains the agenda into applyTo. Event facts
     // are transient: consumed by the round that evaluates them.
     //
-    // NOTE: the EventBus has no unsubscribe, so a connected LawManager must
-    // outlive all publishing (engine-lifetime object). Handlers run on the
-    // publishing thread; keep publishing on the main thread for now.
+    // EventBus registrations are owned by this manager and revoked in its
+    // destructor. Handlers still run on the publishing thread; keep Law events
+    // on the main thread for now.
     // ------------------------------------------------------------------
     void connectToEventBus();
     bool isConnected() const { return _connected; }
@@ -1089,6 +1089,7 @@ private:
     // Deliberately a sentinel no real revision can equal, so the first tick
     // always builds rather than trusting an empty index.
     mutable uint64_t _vocabularyBuiltAt = std::numeric_limits<uint64_t>::max();
+    mutable uint64_t _lastSeededStructuralRevision = std::numeric_limits<uint64_t>::max();
     // The Law::textRevision() `_indexedNames` was read off the register at.
     // Collecting that name set is what every sweep used to pay for: a fresh
     // unordered_set<std::string> built from EVERY law's requiredProperties(),
@@ -1132,6 +1133,8 @@ private:
     // notice they have gone stale rather than trusting that whoever edited
     // the condition remembered to say so.
     std::unordered_map<std::string, std::uint64_t> _compiledConditionRevision;
+    // derivedReadingRevision() when the terminals above were last decided.
+    std::uint64_t _compiledDerivedReadingRevision = 0;
     // Rebuild this law's terminals if its condition changed (or drop them if
     // it no longer wants any). Cheap when nothing moved: one map lookup.
     void syncReteCompilation(Law& law);
@@ -1266,6 +1269,11 @@ private:
     // sound and why it is worth doing.
     std::unordered_set<std::string> _relationTypesInPlay;
     bool _connected = false;
+    // Beneath the Kernel (No Black Box exemption): EventBus registration
+    // handles for the two `this`-capturing listeners connectToEventBus()
+    // installs; revoked in ~LawManager.
+    Core::EventBus::SubscriptionToken _ecaEventSubscription;
+    Core::EventBus::SubscriptionToken _customEventSubscription;
     bool _dirty = false;
     TickTiming _tickTiming;
 

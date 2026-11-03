@@ -1,5 +1,9 @@
 # SUN HANDOFF — Volumetric V2 authored scattering + medium chroma
 
+
+
+
+
 Date: 2026-09-22
 Branch: `sol/volumetric-v2-authored-scattering-chroma-20260922`
 Base at start: `f284b7794cd4fb8002b9e6e560cb59c26f6f21ea` (V1 merge)

@@ -1,0 +1,750 @@
+{
+  "pass": true,
+  "historical_fusion_admitted": false,
+  "actual_fused_outputs": [
+    {
+      "capacity": 8192,
+      "queries": 32784,
+      "forced_queries": 32784,
+      "reference": {
+        "finest": {
+          "metrics": {
+            "current": {
+              "RGB_pooled_channels": {
+                "mean": 5.2083436005461535e-05,
+                "p99": 0.0008628445430308024,
+                "max": 0.0014908520057793223
+              },
+              "T": {
+                "mean": 0.00013126131932741114,
+                "p99": 0.0014545230908419304,
+                "max": 0.0023179769068414346
+              }
+            },
+            "candidate": {
+              "RGB_pooled_channels": {
+                "mean": 6.501119626747072e-06,
+                "p99": 4.565286806328117e-05,
+                "max": 4.794852177492093e-05
+              },
+              "T": {
+                "mean": 1.8915837015402726e-05,
+                "p99": 6.906425235697622e-05,
+                "max": 6.965939815839484e-05
+              }
+            }
+          },
+          "gates": {
+            "RGB_pooled_channels.mean": true,
+            "RGB_pooled_channels.p99": true,
+            "RGB_pooled_channels.max": true,
+            "T.mean": true,
+            "T.p99": true,
+            "T.max": true
+          },
+          "all_six_pass": true
+        },
+        "half": {
+          "metrics": {
+            "current": {
+              "RGB_pooled_channels": {
+                "mean": 5.208338561012038e-05,
+                "p99": 0.000862840739760784,
+                "max": 0.0014908546309912868
+              },
+              "T": {
+                "mean": 0.00013126103989875444,
+                "p99": 0.001454485602050748,
+                "max": 0.002317992236419375
+              }
+            },
+            "candidate": {
+              "RGB_pooled_channels": {
+                "mean": 6.500785360810754e-06,
+                "p99": 4.565106607549996e-05,
+                "max": 4.79552170917219e-05
+              },
+              "T": {
+                "mean": 1.891577045932437e-05,
+                "p99": 6.909112370445669e-05,
+                "max": 6.96698785114247e-05
+              }
+            }
+          },
+          "gates": {
+            "RGB_pooled_channels.mean": true,
+            "RGB_pooled_channels.p99": true,
+            "RGB_pooled_channels.max": true,
+            "T.mean": true,
+            "T.p99": true,
+            "T.max": true
+          },
+          "all_six_pass": true
+        },
+        "reference_convergence": {
+          "T_max_delta": 7.156688219822627e-08,
+          "RGB_max_delta": 4.409033641655791e-08
+        },
+        "both_resolutions_pass": true
+      }
+    },
+    {
+      "capacity": 16384,
+      "queries": 32784,
+      "forced_queries": 32784,
+      "reference": {
+        "finest": {
+          "metrics": {
+            "current": {
+              "RGB_pooled_channels": {
+                "mean": 5.2083436005461535e-05,
+                "p99": 0.0008628445430308024,
+                "max": 0.0014908520057793223
+              },
+              "T": {
+                "mean": 0.00013126131932741114,
+                "p99": 0.0014545230908419304,
+                "max": 0.0023179769068414346
+              }
+            },
+            "candidate": {
+              "RGB_pooled_channels": {
+                "mean": 6.501119626747072e-06,
+                "p99": 4.565286806328117e-05,
+                "max": 4.794852177492093e-05
+              },
+              "T": {
+                "mean": 1.8915837015402726e-05,
+                "p99": 6.906425235697622e-05,
+                "max": 6.965939815839484e-05
+              }
+            }
+          },
+          "gates": {
+            "RGB_pooled_channels.mean": true,
+            "RGB_pooled_channels.p99": true,
+            "RGB_pooled_channels.max": true,
+            "T.mean": true,
+            "T.p99": true,
+            "T.max": true
+          },
+          "all_six_pass": true
+        },
+        "half": {
+          "metrics": {
+            "current": {
+              "RGB_pooled_channels": {
+                "mean": 5.208338561012038e-05,
+                "p99": 0.000862840739760784,
+                "max": 0.0014908546309912868
+              },
+              "T": {
+                "mean": 0.00013126103989875444,
+                "p99": 0.001454485602050748,
+                "max": 0.002317992236419375
+              }
+            },
+            "candidate": {
+              "RGB_pooled_channels": {
+                "mean": 6.500785360810754e-06,
+                "p99": 4.565106607549996e-05,
+                "max": 4.79552170917219e-05
+              },
+              "T": {
+                "mean": 1.891577045932437e-05,
+                "p99": 6.909112370445669e-05,
+                "max": 6.96698785114247e-05
+              }
+            }
+          },
+          "gates": {
+            "RGB_pooled_channels.mean": true,
+            "RGB_pooled_channels.p99": true,
+            "RGB_pooled_channels.max": true,
+            "T.mean": true,
+            "T.p99": true,
+            "T.max": true
+          },
+          "all_six_pass": true
+        },
+        "reference_convergence": {
+          "T_max_delta": 7.156688219822627e-08,
+          "RGB_max_delta": 4.409033641655791e-08
+        },
+        "both_resolutions_pass": true
+      }
+    },
+    {
+      "capacity": 32768,
+      "queries": 32784,
+      "forced_queries": 32784,
+      "reference": {
+        "finest": {
+          "metrics": {
+            "current": {
+              "RGB_pooled_channels": {
+                "mean": 5.2083436005461535e-05,
+                "p99": 0.0008628445430308024,
+                "max": 0.0014908520057793223
+              },
+              "T": {
+                "mean": 0.00013126131932741114,
+                "p99": 0.0014545230908419304,
+                "max": 0.0023179769068414346
+              }
+            },
+            "candidate": {
+              "RGB_pooled_channels": {
+                "mean": 6.501119626747072e-06,
+                "p99": 4.565286806328117e-05,
+                "max": 4.794852177492093e-05
+              },
+              "T": {
+                "mean": 1.8915837015402726e-05,
+                "p99": 6.906425235697622e-05,
+                "max": 6.965939815839484e-05
+              }
+            }
+          },
+          "gates": {
+            "RGB_pooled_channels.mean": true,
+            "RGB_pooled_channels.p99": true,
+            "RGB_pooled_channels.max": true,
+            "T.mean": true,
+            "T.p99": true,
+            "T.max": true
+          },
+          "all_six_pass": true
+        },
+        "half": {
+          "metrics": {
+            "current": {
+              "RGB_pooled_channels": {
+                "mean": 5.208338561012038e-05,
+                "p99": 0.000862840739760784,
+                "max": 0.0014908546309912868
+              },
+              "T": {
+                "mean": 0.00013126103989875444,
+                "p99": 0.001454485602050748,
+                "max": 0.002317992236419375
+              }
+            },
+            "candidate": {
+              "RGB_pooled_channels": {
+                "mean": 6.500785360810754e-06,
+                "p99": 4.565106607549996e-05,
+                "max": 4.79552170917219e-05
+              },
+              "T": {
+                "mean": 1.891577045932437e-05,
+                "p99": 6.909112370445669e-05,
+                "max": 6.96698785114247e-05
+              }
+            }
+          },
+          "gates": {
+            "RGB_pooled_channels.mean": true,
+            "RGB_pooled_channels.p99": true,
+            "RGB_pooled_channels.max": true,
+            "T.mean": true,
+            "T.p99": true,
+            "T.max": true
+          },
+          "all_six_pass": true
+        },
+        "reference_convergence": {
+          "T_max_delta": 7.156688219822627e-08,
+          "RGB_max_delta": 4.409033641655791e-08
+        },
+        "both_resolutions_pass": true
+      }
+    }
+  ],
+  "unfused_control": {
+    "pass": true,
+    "queries": 32784,
+    "reference_queries": 192,
+    "all_query_native_AST_assertions_recorded": true,
+    "raw_AST_nodes_independently_recomputed_offline": false,
+    "accuracy": {
+      "finest": {
+        "metrics": {
+          "current": {
+            "RGB_pooled_channels": {
+              "mean": 5.2083436005461535e-05,
+              "p99": 0.0008628445430308024,
+              "max": 0.0014908520057793223
+            },
+            "T": {
+              "mean": 0.00013126131932741114,
+              "p99": 0.0014545230908419304,
+              "max": 0.0023179769068414346
+            }
+          },
+          "candidate": {
+            "RGB_pooled_channels": {
+              "mean": 6.501119626747072e-06,
+              "p99": 4.565286806328117e-05,
+              "max": 4.794852177492093e-05
+            },
+            "T": {
+              "mean": 1.8915837015402726e-05,
+              "p99": 6.906425235697622e-05,
+              "max": 6.965939815839484e-05
+            }
+          }
+        },
+        "gates": {
+          "RGB_pooled_channels.mean": true,
+          "RGB_pooled_channels.p99": true,
+          "RGB_pooled_channels.max": true,
+          "T.mean": true,
+          "T.p99": true,
+          "T.max": true
+        },
+        "all_six_pass": true
+      },
+      "half": {
+        "metrics": {
+          "current": {
+            "RGB_pooled_channels": {
+              "mean": 5.208338561012038e-05,
+              "p99": 0.000862840739760784,
+              "max": 0.0014908546309912868
+            },
+            "T": {
+              "mean": 0.00013126103989875444,
+              "p99": 0.001454485602050748,
+              "max": 0.002317992236419375
+            }
+          },
+          "candidate": {
+            "RGB_pooled_channels": {
+              "mean": 6.500785360810754e-06,
+              "p99": 4.565106607549996e-05,
+              "max": 4.79552170917219e-05
+            },
+            "T": {
+              "mean": 1.891577045932437e-05,
+              "p99": 6.909112370445669e-05,
+              "max": 6.96698785114247e-05
+            }
+          }
+        },
+        "gates": {
+          "RGB_pooled_channels.mean": true,
+          "RGB_pooled_channels.p99": true,
+          "RGB_pooled_channels.max": true,
+          "T.mean": true,
+          "T.p99": true,
+          "T.max": true
+        },
+        "all_six_pass": true
+      },
+      "reference_convergence": {
+        "T_max_delta": 7.156688219822627e-08,
+        "RGB_max_delta": 4.409033641655791e-08
+      },
+      "both_resolutions_pass": true
+    },
+    "contemporary_accuracy": {
+      "finest": {
+        "metrics": {
+          "current": {
+            "RGB_pooled_channels": {
+              "mean": 5.2083361199522314e-05,
+              "p99": 0.0008628445430308024,
+              "max": 0.0014908445551987254
+            },
+            "T": {
+              "mean": 0.00013126131932741114,
+              "p99": 0.0014545230908419304,
+              "max": 0.0023179769068414346
+            }
+          },
+          "candidate": {
+            "RGB_pooled_channels": {
+              "mean": 6.501119626747072e-06,
+              "p99": 4.565286806328117e-05,
+              "max": 4.794852177492093e-05
+            },
+            "T": {
+              "mean": 1.8915837015402726e-05,
+              "p99": 6.906425235697622e-05,
+              "max": 6.965939815839484e-05
+            }
+          }
+        },
+        "gates": {
+          "RGB_pooled_channels.mean": true,
+          "RGB_pooled_channels.p99": true,
+          "RGB_pooled_channels.max": true,
+          "T.mean": true,
+          "T.p99": true,
+          "T.max": true
+        },
+        "all_six_pass": true
+      },
+      "half": {
+        "metrics": {
+          "current": {
+            "RGB_pooled_channels": {
+              "mean": 5.208331080418116e-05,
+              "p99": 0.000862840739760784,
+              "max": 0.0014908471804106899
+            },
+            "T": {
+              "mean": 0.00013126103989875444,
+              "p99": 0.001454485602050748,
+              "max": 0.002317992236419375
+            }
+          },
+          "candidate": {
+            "RGB_pooled_channels": {
+              "mean": 6.500785360810754e-06,
+              "p99": 4.565106607549996e-05,
+              "max": 4.79552170917219e-05
+            },
+            "T": {
+              "mean": 1.891577045932437e-05,
+              "p99": 6.909112370445669e-05,
+              "max": 6.96698785114247e-05
+            }
+          }
+        },
+        "gates": {
+          "RGB_pooled_channels.mean": true,
+          "RGB_pooled_channels.p99": true,
+          "RGB_pooled_channels.max": true,
+          "T.mean": true,
+          "T.p99": true,
+          "T.max": true
+        },
+        "all_six_pass": true
+      },
+      "reference_convergence": {
+        "T_max_delta": 7.156688219822627e-08,
+        "RGB_max_delta": 4.409033641655791e-08
+      },
+      "both_resolutions_pass": true
+    },
+    "clocks": [
+      {
+        "capacity": 8192,
+        "tiles": 5,
+        "series": [
+          {
+            "repeats": 1,
+            "per_complete_query_ms": {
+              "0": 3.8051565,
+              "1": 3.819702875,
+              "2": 5.9872028749999995
+            },
+            "bulk_mean_improvement_percent": -0.38228059739462417,
+            "stream_mean_improvement_percent": -57.344458105730986,
+            "paired_block_deltas": [
+              {
+                "bulk_minus_current_ms": 0.013332499999999747,
+                "stream_minus_current_ms": 1.9808329999999996
+              },
+              {
+                "bulk_minus_current_ms": 0.011457499999999676,
+                "stream_minus_current_ms": 1.94477
+              },
+              {
+                "bulk_minus_current_ms": 0.016728999999999772,
+                "stream_minus_current_ms": 2.409187
+              },
+              {
+                "bulk_minus_current_ms": 0.016666499999999917,
+                "stream_minus_current_ms": 2.3933955
+              }
+            ],
+            "scope": "mode1 is global bulk; capacity/tiles describe only mode2 bounded stream; single-series observations, not qualified speedup"
+          },
+          {
+            "repeats": 2,
+            "per_complete_query_ms": {
+              "0": 3.7953073125,
+              "1": 3.8107994375,
+              "2": 5.8726379375
+            },
+            "bulk_mean_improvement_percent": -0.4081915830366656,
+            "stream_mean_improvement_percent": -54.734187615274976,
+            "paired_block_deltas": [
+              {
+                "bulk_minus_current_ms": -0.0526977500000001,
+                "stream_minus_current_ms": 2.223802
+              },
+              {
+                "bulk_minus_current_ms": 0.024301750000000233,
+                "stream_minus_current_ms": 2.0247705000000007
+              },
+              {
+                "bulk_minus_current_ms": 0.1190102500000001,
+                "stream_minus_current_ms": 2.0826355
+              },
+              {
+                "bulk_minus_current_ms": -0.02864575000000036,
+                "stream_minus_current_ms": 1.9781144999999993
+              }
+            ],
+            "scope": "mode1 is global bulk; capacity/tiles describe only mode2 bounded stream; single-series observations, not qualified speedup"
+          },
+          {
+            "repeats": 4,
+            "per_complete_query_ms": {
+              "0": 2.4343645625,
+              "1": 2.62956903125,
+              "2": 4.107941375
+            },
+            "bulk_mean_improvement_percent": -8.018703186737675,
+            "stream_mean_improvement_percent": -68.74799437522623,
+            "paired_block_deltas": [
+              {
+                "bulk_minus_current_ms": 0.2060470000000003,
+                "stream_minus_current_ms": 2.5224325000000003
+              },
+              {
+                "bulk_minus_current_ms": 0.19443237499999988,
+                "stream_minus_current_ms": 1.5239946249999994
+              },
+              {
+                "bulk_minus_current_ms": 0.19627600000000012,
+                "stream_minus_current_ms": 1.3028125
+              },
+              {
+                "bulk_minus_current_ms": 0.18406249999999957,
+                "stream_minus_current_ms": 1.3450676249999995
+              }
+            ],
+            "scope": "mode1 is global bulk; capacity/tiles describe only mode2 bounded stream; single-series observations, not qualified speedup"
+          }
+        ]
+      },
+      {
+        "capacity": 16384,
+        "tiles": 3,
+        "series": [
+          {
+            "repeats": 1,
+            "per_complete_query_ms": {
+              "0": 2.531869875,
+              "1": 2.54519775,
+              "2": 3.201119875
+            },
+            "bulk_mean_improvement_percent": -0.5264044227391462,
+            "stream_mean_improvement_percent": -26.43303301675406,
+            "paired_block_deltas": [
+              {
+                "bulk_minus_current_ms": 0.007770999999999972,
+                "stream_minus_current_ms": 1.3000205
+              },
+              {
+                "bulk_minus_current_ms": 0.01954099999999981,
+                "stream_minus_current_ms": 0.6809794999999998
+              },
+              {
+                "bulk_minus_current_ms": 0.010144999999999627,
+                "stream_minus_current_ms": 0.6651664999999998
+              },
+              {
+                "bulk_minus_current_ms": 0.015854500000000105,
+                "stream_minus_current_ms": 0.030833500000000402
+              }
+            ],
+            "scope": "mode1 is global bulk; capacity/tiles describe only mode2 bounded stream; single-series observations, not qualified speedup"
+          },
+          {
+            "repeats": 2,
+            "per_complete_query_ms": {
+              "0": 1.89776825,
+              "1": 1.979640625,
+              "2": 2.6947291250000003
+            },
+            "bulk_mean_improvement_percent": -4.3141397797123116,
+            "stream_mean_improvement_percent": -41.99463633138558,
+            "paired_block_deltas": [
+              {
+                "bulk_minus_current_ms": -0.01874975000000001,
+                "stream_minus_current_ms": 0.6690625000000003
+              },
+              {
+                "bulk_minus_current_ms": 0.015177250000000031,
+                "stream_minus_current_ms": 0.8797082500000002
+              },
+              {
+                "bulk_minus_current_ms": 0.010822499999999735,
+                "stream_minus_current_ms": 0.9841247499999999
+              },
+              {
+                "bulk_minus_current_ms": 0.3202394999999998,
+                "stream_minus_current_ms": 0.6549480000000003
+              }
+            ],
+            "scope": "mode1 is global bulk; capacity/tiles describe only mode2 bounded stream; single-series observations, not qualified speedup"
+          },
+          {
+            "repeats": 4,
+            "per_complete_query_ms": {
+              "0": 1.72682546875,
+              "1": 1.9080481875,
+              "2": 2.4695065625
+            },
+            "bulk_mean_improvement_percent": -10.494559063990527,
+            "stream_mean_improvement_percent": -43.008463054903046,
+            "paired_block_deltas": [
+              {
+                "bulk_minus_current_ms": 0.01518749999999991,
+                "stream_minus_current_ms": 0.6475001250000001
+              },
+              {
+                "bulk_minus_current_ms": 0.015088500000000282,
+                "stream_minus_current_ms": 0.6303125000000003
+              },
+              {
+                "bulk_minus_current_ms": 0.3745782500000001,
+                "stream_minus_current_ms": 1.026369875
+              },
+              {
+                "bulk_minus_current_ms": 0.3200366250000002,
+                "stream_minus_current_ms": 0.6665418750000005
+              }
+            ],
+            "scope": "mode1 is global bulk; capacity/tiles describe only mode2 bounded stream; single-series observations, not qualified speedup"
+          }
+        ]
+      },
+      {
+        "capacity": 32768,
+        "tiles": 2,
+        "series": [
+          {
+            "repeats": 1,
+            "per_complete_query_ms": {
+              "0": 2.504406375,
+              "1": 2.535422,
+              "2": 2.519979125
+            },
+            "bulk_mean_improvement_percent": -1.2384421837290827,
+            "stream_mean_improvement_percent": -0.6218140216960544,
+            "paired_block_deltas": [
+              {
+                "bulk_minus_current_ms": -0.034187499999999815,
+                "stream_minus_current_ms": 0.05943750000000003
+              },
+              {
+                "bulk_minus_current_ms": -0.01391650000000011,
+                "stream_minus_current_ms": -0.004104499999999955
+              },
+              {
+                "bulk_minus_current_ms": 0.014707999999999721,
+                "stream_minus_current_ms": -0.04208349999999994
+              },
+              {
+                "bulk_minus_current_ms": 0.1574585000000006,
+                "stream_minus_current_ms": 0.049041500000000404
+              }
+            ],
+            "scope": "mode1 is global bulk; capacity/tiles describe only mode2 bounded stream; single-series observations, not qualified speedup"
+          },
+          {
+            "repeats": 2,
+            "per_complete_query_ms": {
+              "0": 1.891888,
+              "1": 1.902263125,
+              "2": 2.5469244375
+            },
+            "bulk_mean_improvement_percent": -0.5484005924240698,
+            "stream_mean_improvement_percent": -34.62342577890445,
+            "paired_block_deltas": [
+              {
+                "bulk_minus_current_ms": 0.06738549999999988,
+                "stream_minus_current_ms": 0.6898124999999999
+              },
+              {
+                "bulk_minus_current_ms": -0.022395750000000048,
+                "stream_minus_current_ms": 0.67299975
+              },
+              {
+                "bulk_minus_current_ms": -0.03540624999999986,
+                "stream_minus_current_ms": 0.6305520000000002
+              },
+              {
+                "bulk_minus_current_ms": 0.03191699999999997,
+                "stream_minus_current_ms": 0.6267815000000003
+              }
+            ],
+            "scope": "mode1 is global bulk; capacity/tiles describe only mode2 bounded stream; single-series observations, not qualified speedup"
+          },
+          {
+            "repeats": 4,
+            "per_complete_query_ms": {
+              "0": 1.58279946875,
+              "1": 1.7290755,
+              "2": 2.06967053125
+            },
+            "bulk_mean_improvement_percent": -9.241602245767755,
+            "stream_mean_improvement_percent": -30.76012294118986,
+            "paired_block_deltas": [
+              {
+                "bulk_minus_current_ms": 0.30910412499999995,
+                "stream_minus_current_ms": 0.6568645
+              },
+              {
+                "bulk_minus_current_ms": 0.11468237500000011,
+                "stream_minus_current_ms": 0.6570572499999998
+              },
+              {
+                "bulk_minus_current_ms": 0.1445362499999998,
+                "stream_minus_current_ms": 0.33130187499999986
+              },
+              {
+                "bulk_minus_current_ms": 0.016781374999999876,
+                "stream_minus_current_ms": 0.30226062500000017
+              }
+            ],
+            "scope": "mode1 is global bulk; capacity/tiles describe only mode2 bounded stream; single-series observations, not qualified speedup"
+          }
+        ]
+      }
+    ],
+    "normal_fallbacks": 0,
+    "singles": 247326,
+    "overlaps": 1799
+  },
+  "historical_private_capacities": [
+    32,
+    8
+  ],
+  "assigned_capacities": [
+    64,
+    16
+  ],
+  "unfused_max_single_packets": 26,
+  "unfused_max_overlap_packets": 4,
+  "storage_accounting": {
+    "single_packets": 247326,
+    "overlap_packets": 1799,
+    "logical_populated_packet_bytes": 3986000,
+    "one_write_plus_one_read_logical_bytes": 7972000,
+    "padded_schedule_packet_bytes": 41963520,
+    "retained_ray_header_bytes": 1573632,
+    "schedule_and_header_capacity_bytes": 43537152,
+    "device_memory_traffic_measured": false,
+    "global_control_buffers_still_allocated": true
+  },
+  "corruption_and_admission_refusals": [
+    "wrong mode order",
+    "missing forced output",
+    "forced native mismatch",
+    "nonfinite elapsed",
+    "missing query",
+    "captured baseline mismatch",
+    "native policy control changed",
+    "changed private capacities refused",
+    "missing actual fused packets refused"
+  ],
+  "limits": "Actual mode2 output/fallback parity and sparse-reference gates replay. Counts/packets/AST fields come from unfused control. No actual fused normal-header/packet readback or generic capacity failure witness. No measured spill/occupancy cause. Historical timings remain rejected; no new native run."
+}

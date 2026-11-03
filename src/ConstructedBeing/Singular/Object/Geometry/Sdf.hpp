@@ -119,6 +119,20 @@ std::vector<SdfToken> compileExpr(const std::string& src);
 SdfNode makeImplicit(const std::string& src);
 SdfNode makeImplicit(std::shared_ptr<OntoMath::MathNode> node);
 SdfNode makeImplicit(std::shared_ptr<OntoMath::Piecewise> pw);
+// The SDF shorthand an author (or a model through MCP) naturally writes:
+//   sphere(r)  box(h) | box(hx,hy,hz)  roundBox(hx,hy,hz,r)  ellipsoid(a,b,c)
+//   cylinder(r,halfH)  cone(r,halfH)  torus(R,r)          -- existing SdfPrims
+//   union(a,b,...)  intersect(a,b,...)  subtract(a,b)
+//   smoothUnion(a,b,k)  morph(a,b,t)                        -- existing SdfOps
+//   move(shape, x,y,z)                                       -- leaf offsets
+// It builds the SAME SdfNode tree the Creator tools build: no new primitive,
+// no new op. The MCP tool advertised this syntax for weeks while the only
+// string path was the implicit f(x,y,z) compiler, so every example it gave
+// spawned nothing (mcp_sdf_contract_test pinned that). False (with a reason)
+// when the text is not shorthand; callers then try makeImplicit. Opus 5.5,
+// 2026-09-30.
+bool parseSdfShorthand(const std::string& src, SdfNode& out, std::string* error = nullptr);
+
 // Named smooth surface as an SDF leaf — same mathematics the quadric
 // names, so a marching backend does not draw a UV tessellation instead.
 SdfNode sdfFromSmooth(const SmoothSurfaceData& s);

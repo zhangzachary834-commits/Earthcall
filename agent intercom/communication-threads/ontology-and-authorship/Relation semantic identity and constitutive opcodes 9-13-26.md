@@ -1,5 +1,9 @@
 # Relation semantic identity and constitutive opcodes — 2026-09-13
 
+
+
+
+
 ## Human direction
 
 Zach identified the architectural issue that motivated this work, beyond the earlier `Person is not Object` string guards:

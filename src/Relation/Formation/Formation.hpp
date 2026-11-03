@@ -141,6 +141,8 @@ public:
     // Undirected relations are unaffected: a complete graph of mutual bonds is
     // a set, not a regress.
     bool addRelation(const std::shared_ptr<Relation>& r);
+    // Restore/retain an existing bond; no new interaction has occurred.
+    bool retainRelation(const std::shared_ptr<Relation>& r);
     bool removeRelation(const std::shared_ptr<Relation>& r);
 
     // Add a relation directly (alias for addRelation)
@@ -249,11 +251,15 @@ public:
         return true;
     }
 
+protected:
+    // Protected so a Formation kind (BodyPart) registers its own state ON TOP
+    // of the Formation vocabulary instead of replacing it.
+    void buildProperties() override;
+
 private:
     static std::string nextFormationId();
     std::string _formationId = nextFormationId();
 
-    void buildProperties() override;
     std::string propRoot() const;
     int propMemberCount() const;
     std::shared_ptr<PropertyList> propMembers() const;

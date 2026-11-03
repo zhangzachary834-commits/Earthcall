@@ -1,6 +1,8 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include "Law.hpp"
+#include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 #include "Identity/FirstMoverRegister.hpp"
+#include "Identity/PersonPresence.hpp"
 #include <string_view>
 
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
@@ -424,6 +426,12 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     if (j.contains("actionModel")) {
         law->setActionModel(ActionNode::fromJson(j["actionModel"]));
     }
+    // Authored compiler/root vocabulary lives on ordinary Laws too. Preserve
+    // their granted properties through the same typed codec used by Objects.
+    if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
+        for (auto it = j["authoredProperties"].begin(); it != j["authoredProperties"].end(); ++it)
+            law->setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
+    }
     // The law's descent, restored. `toJson` has always written provenance and
     // this never read it back, so "synthesized-from" — the whole record of
     // which laws a higher law was made out of — survived exactly until the
@@ -504,11 +512,13 @@ Law::ApplicationResult Law::applyToImpl(
         result = ApplicationResult::AuthorityDenied;
     } else if (!conditionsAlreadySatisfied && !conditionsSatisfied(target)) {
         result = ApplicationResult::ConditionsFailed;
-        ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
-            {"lawId", getIdentifier()},
-            {"targetId", target.getIdentifier()},
-            {"result", "ConditionsFailed"}
-        });
+        if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+            ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
+                {"lawId", getIdentifier()},
+                {"targetId", target.getIdentifier()},
+                {"result", "ConditionsFailed"}
+            });
+        }
     } else if (_actions.empty()) {
         result = ApplicationResult::NoAction;
         if (ECA::LawAuditLogger::instance().level() == ECA::LawAuditLogger::Level::Verbose) {
@@ -539,6 +549,7 @@ Law::ApplicationResult Law::applyToImpl(
         // carries it out. This is where "did anything actually happen" is
         // answered — the application result only says the branch was reached.
         ActionNode::TraceScope traceScope;
+        SingularSetToSetCreation::AuthorScope creationAuthors(_authors.getMembers());
         for (const auto& action : _actions) {
             action.run(event, target);
         }
@@ -568,15 +579,6 @@ Law::ApplicationResult Law::applyToImpl(
         // every write failed used to log SUCCESS; now it says so, names the
         // first reason, and the record carries the rest.
         const bool wrote = trace.anyWrote();
-        std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
-                              target.getIdentifier() + "\" - " +
-                              (trace.fired() ? (wrote ? "SUCCESS" : "NO EFFECT") : "NO NODES");
-        if (!wrote && trace.fired()) {
-            const auto& first = trace.nodes.front();
-            message += " (" + first.actionName + ": " +
-                       (first.note.empty() ? std::string(ActionNode::reasonName(first.reason))
-                                           : first.note) + ")";
-        }
         if (wrote) {
             for (const auto& node : trace.nodes) {
                 if (node.wrote && !node.path.empty()) {
@@ -592,7 +594,17 @@ Law::ApplicationResult Law::applyToImpl(
         // WhileTrue that wrote nothing is a level, not an event. Logging it
         // every tick is the disk stall after loading a world of servos.
         const bool skipAudit = _activation == Activation::WhileTrue && !wrote;
-        if (!skipAudit) {
+        if (!skipAudit && ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+            std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
+                                  target.getIdentifier() + "\" - " +
+                                  (trace.fired() ? (wrote ? "SUCCESS" : "NO EFFECT") : "NO NODES");
+            if (!wrote && trace.fired()) {
+                const auto& first = trace.nodes.front();
+                message += " (" + first.actionName + ": " +
+                           (first.note.empty() ? std::string(ActionNode::reasonName(first.reason))
+                                               : first.note) + ")";
+            }
+
             nlohmann::json nodesJson = nlohmann::json::array();
             for (const auto& node : trace.nodes) {
                 nodesJson.push_back({{"action", node.actionName},
@@ -719,6 +731,12 @@ nlohmann::json Law::toJson() const {
     // survive save/load.
     if (_conditionModel) j["conditionModel"] = _conditionModel->toJson();
     if (_actionModel) j["actionModel"] = _actionModel->toJson();
+    if (!dynamicProperties().empty()) {
+        auto properties = nlohmann::json::object();
+        for (const auto& [id, value] : dynamicProperties())
+            properties[Earthcall::StringInterner::resolve(id)] = propertyValueToJson(value);
+        j["authoredProperties"] = std::move(properties);
+    }
     return j;
 }
 
@@ -1897,6 +1915,18 @@ void LawManager::add(const std::shared_ptr<Law>& law) {
 static LawManager* s_singularHookOwner = nullptr;
 
 LawManager::~LawManager() {
+    // connectToEventBus() creates two callbacks that capture this. Revoke only
+    // this manager's registrations before its storage disappears; other
+    // subsystems' listeners remain untouched.
+    if (_ecaEventSubscription || _customEventSubscription) {
+        auto& eventBus = Core::EventBus::instance();
+        eventBus.unsubscribe(_ecaEventSubscription);
+        eventBus.unsubscribe(_customEventSubscription);
+        _ecaEventSubscription = {};
+        _customEventSubscription = {};
+    }
+    _connected = false;
+
     if (s_singularHookOwner == this) {
         Singular::setPropertyChangeCallback(nullptr);
         Singular::setBeingReleasedCallback(nullptr);
@@ -1918,8 +1948,7 @@ void LawManager::connectToEventBus() {
     // rather than the trigger table, because laws can be bound to alpha
     // nodes directly (the graph editor does, and so do tests); a trigger-only
     // answer would call those laws deaf and silently stop feeding them.
-    // Captured by `this`: the LawManager is an engine-lifetime object, the
-    // same contract as the bus subscriptions below.
+    // Captured by `this`; the owning static hook is cleared by the destructor.
     Universe::instance().setEventInterest([this](const std::string& type) {
         return _rete.hearsType(type) || _rete.hasForeignBoundAlpha();
     });
@@ -2007,17 +2036,20 @@ void LawManager::connectToEventBus() {
         _dirty = true;
     });
 
-    Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
+    _ecaEventSubscription = Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
         std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
-        std::string objectId = e.object ? e.object->getIdentifier() : "null";
 
-        ECA::LawAuditLogger::instance().log("EVENT", "Event \"" + e.type + "\" triggered (Subject: " + subjectId + ", Object: " + objectId + ")", {
-            {"eventType", e.type},
-            {"eventId", e.getIdentifier()},
-            {"subjectId", subjectId},
-            {"objectId", objectId},
-            {"timestamp", e.timestamp().toJson()}
-        });
+        if (ECA::LawAuditLogger::instance().wouldLog("EVENT")) {
+            // Only the audit payload needs the object identifier; Rete uses subjectId.
+            std::string objectId = e.object ? e.object->getIdentifier() : "null";
+            ECA::LawAuditLogger::instance().log("EVENT", "Event \"" + e.type + "\" triggered (Subject: " + subjectId + ", Object: " + objectId + ")", {
+                {"eventType", e.type},
+                {"eventId", e.getIdentifier()},
+                {"subjectId", subjectId},
+                {"objectId", objectId},
+                {"timestamp", e.timestamp().toJson()}
+            });
+        }
 
         // A being that has just left the world is released from every law
         // that named it. Formations hold RAW pointers and nothing else
@@ -2078,19 +2110,21 @@ void LawManager::connectToEventBus() {
         }
     });
 
-    Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
+    _customEventSubscription = Core::EventBus::instance().subscribe<Core::Event::Custom>([this](const Core::Event::Custom& e) {
         if (!e.relation) return;
         
         std::string evType = e.relation->type;
         std::string aId = e.relation->aId();
         std::string bId = e.relation->bId();
         
-        ECA::LawAuditLogger::instance().log("EVENT", "Custom Event \"" + evType + "\" triggered (Id: " + e.relation->getIdentifier() + ")", {
-            {"eventType", evType},
-            {"eventId", e.relation->getIdentifier()},
-            {"sourceId", aId},
-            {"targetId", bId}
-        });
+        if (ECA::LawAuditLogger::instance().wouldLog("EVENT")) {
+            ECA::LawAuditLogger::instance().log("EVENT", "Custom Event \"" + evType + "\" triggered (Id: " + e.relation->getIdentifier() + ")", {
+                {"eventType", evType},
+                {"eventId", e.relation->getIdentifier()},
+                {"sourceId", aId},
+                {"targetId", bId}
+            });
+        }
         
         auto fact = std::make_shared<ReteFact>();
         fact->type = evType;
@@ -2134,15 +2168,17 @@ void LawManager::syncProphetic() {
     // satisfying range is exactly the thing an author stares at wondering why
     // their law never fires, and the engine already knows.
     for (const auto& finding : _prophetic.unreachable()) {
-        ECA::LawAuditLogger::instance().log(
-            "LAW",
-            std::string(finding.selfImpossible ? "Law \"" : "Law \"") + finding.lawId +
-                "\" has a condition on " + finding.path + " that cannot be satisfied: " +
-                finding.why,
-            {{"lawId", finding.lawId},
-             {"path", finding.path},
-             {"why", finding.why},
-             {"selfImpossible", finding.selfImpossible}});
+        if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+            ECA::LawAuditLogger::instance().log(
+                "LAW",
+                std::string(finding.selfImpossible ? "Law \"" : "Law \"") + finding.lawId +
+                    "\" has a condition on " + finding.path + " that cannot be satisfied: " +
+                    finding.why,
+                {{"lawId", finding.lawId},
+                 {"path", finding.path},
+                 {"why", finding.why},
+                 {"selfImpossible", finding.selfImpossible}});
+        }
     }
 }
 
@@ -2182,7 +2218,12 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     auto T0 = glfwGetTime();
 
     syncProphetic();
-
+    // A derived reading registered or removed since the terminals were built
+    // changes which conditions may be indexed at all: every law re-decides.
+    if (_compiledDerivedReadingRevision != derivedReadingRevision()) {
+        _compiledDerivedReadingRevision = derivedReadingRevision();
+        _compiledConditionRevision.clear();
+    }
     for (const auto& law : _laws) {
         if (law) syncReteCompilation(*law);
     }
@@ -2193,9 +2234,20 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     // a seeded fact current, and a snapshot nothing refreshes is worse than no
     // snapshot — the reactive path would answer confidently from stale values.
     // Disconnected, the sweep below reads the beings themselves and is right.
+    //
+    // The first sweep seeds every available being. Further sweeps are needed
+    // only after a structural revision: admitted/released beings or new authored
+    // property names bump that revision. In between, connectToEventBus() keeps
+    // existing facts current through the property-change and relation callbacks.
+    // This avoids the temporary Universe::beings() vector on steady frames.
+    // dynamic_property_reachability_test witnesses BOTH invalidation paths.
     if (_connected) {
-        for (Singular* being : Universe::instance().beings()) {
-            seedStateFacts(being);
+        const uint64_t currentRevision = Universe::instance().structuralRevision();
+        if (_lastSeededStructuralRevision != currentRevision) {
+            _lastSeededStructuralRevision = currentRevision;
+            for (Singular* being : Universe::instance().beings()) {
+                seedStateFacts(being);
+            }
         }
     }
 
@@ -2433,14 +2485,24 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                   ? holds
                                   : (holds && !wasHolding);
             if (!fire) continue;
+            // The condition was decided just above, on this subject, with
+            // nothing in between: deciding it again inside applyTo doubled the
+            // sweep's cost (442 vs 233 ms/tick for a bare ForAll at 320 beings,
+            // quantifier_scaling_test, once quantifiers stopped carrying an
+            // unsound alpha — disjunction_candidate_test). The reactive path
+            // already applies exactly once per candidate; this is the same rule.
+            // A restarted drive session is the one intervening step, so then
+            // the condition is re-checked as before.
+            bool decided = true;
             if (law->drives() &&
                 hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
                 if (law->retrigger() == Law::Retrigger::Absorb) {
                     continue;
                 }
                 restartDriveSession(*law, subject->getIdentifier());
+                decided = usedDirect;
             }
-            applyAndMaybeDrive(*law, *subject, records, usedDirect);
+            applyAndMaybeDrive(*law, *subject, records, decided);
         }
     }
     auto T3 = glfwGetTime();
@@ -2874,8 +2936,8 @@ void LawManager::reapUnmade() {
     // Release from OUR laws directly rather than waiting for the
     // "object-destroyed" announcement to come back around. The subscription
     // still exists — it is what catches beings the delete tool unmakes — but
-    // a LawManager's own bookkeeping must not depend on having been connected
-    // to a global bus that cannot be unsubscribed from.
+    // a LawManager's own bookkeeping must not depend on whether it is
+    // currently connected to the bus.
     // Laws among the victims are retired by THIS manager: they are ours to
     // free, not a Zone's objects. Collected before anything is released.
     std::vector<std::string> retiredLaws;
@@ -3474,6 +3536,16 @@ void LawManager::compileConditionsToRete(Law& law) {
     if (!law.conditionModel()) return;
     const ConditionModel& model = *law.conditionModel();
 
+    // A condition reading through a derived reading (`growth.evaluation.value`)
+    // reads something no change fact announces: the report moves when a BOUND
+    // INPUT does, and nothing dirties the subject's facts then. Terminals
+    // would admit the subject only on the edits that happen to touch its
+    // `growth.*` facts, and the law would go deaf to the rest. No index; the
+    // continuous sweep decides it every tick against the live reading.
+    // Codex's admission rule, 2026-10-19 23:58; witnessed by
+    // tests/law/derived_reading_law_test.cpp.
+    if (model.readsUntrackedDerivedReading()) return;
+
     // Compile the tree into the rete network, getting terminal node IDs.
     std::vector<std::size_t> terminals = model.compileToRete(_rete, lawId);
     if (terminals.empty()) return;
@@ -3534,6 +3606,12 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
     const auto findBeing = [](const std::string& id) -> Singular* {
         for (Singular* being : Universe::instance().beings()) {
             if (being && being->getIdentifier() == id) return being;
+        }
+        // A keyed Person still answers to a name the migration ledger signed
+        // over to their key (Laws authored as "Zach" before Zach had one).
+        for (Singular* being : Universe::instance().beings()) {
+            if (auto* person = dynamic_cast<Person*>(being);
+                person && Identity::personAnswersTo(*person, id)) return being;
         }
         // A Law authored by a foreign First Mover (MCP) names that mover's
         // cryptographic id. It reattaches only while the mover stands.
@@ -3673,17 +3751,24 @@ nlohmann::json LawManager::toJson() const {
 
 #include "MathBinding.hpp"
 void resolveSemanticTokenSlowPath(Singular* root, PropertyValue& out) {
-    if (out.index() == 15) {
-        const auto& dict = std::get<15>(out);
-        if (dict) {
-            auto itType = dict->elements.find("_type");
-            if (itType != dict->elements.end() && itType->second.index() == 7 && std::get<7>(itType->second) == "projection") {
-                auto itTarget = dict->elements.find("target");
-                if (itTarget != dict->elements.end() && itTarget->second.index() == 7) {
-                    root->readAuthoredPropertyProjectionColors(
-                        Earthcall::StringInterner::intern(std::get<7>(itTarget->second)), out);
-                }
-            }
-        }
+    if (!root || !std::holds_alternative<std::shared_ptr<PropertyDict>>(out)) return;
+
+    const auto& dict = std::get<std::shared_ptr<PropertyDict>>(out);
+    if (!dict) return;
+
+    auto itType = dict->elements.find("_type");
+    if (itType == dict->elements.end() ||
+        !std::holds_alternative<std::string>(itType->second) ||
+        std::get<std::string>(itType->second) != "projection") {
+        return;
     }
+
+    auto itTarget = dict->elements.find("target");
+    if (itTarget == dict->elements.end() ||
+        !std::holds_alternative<std::string>(itTarget->second)) {
+        return;
+    }
+
+    root->readAuthoredPropertyProjectionColors(
+        Earthcall::StringInterner::intern(std::get<std::string>(itTarget->second)), out);
 }

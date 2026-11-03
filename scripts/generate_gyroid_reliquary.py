@@ -847,17 +847,41 @@ def build_labyrinth_medium():
             HALF, HALF * 0.5,
             inner=(0.36, 0.30, 0.78),      # violet at the centre
             outer=(0.16, 0.20, 0.52))),    # deep indigo at the walls
+        # The membrane's own geometry, authored AGAIN here as this medium's
+        # occluder. The first version of this Zone said in writing that
+        # `volumeOccluder` was never read by the WGSL transport and left it
+        # unset. That was FALSE, and the reason it was false is worth
+        # recording: I grepped SdfWgsl.cpp for the string "volumeOccluder",
+        # found nothing, and concluded the channel was dead. But the JSON key
+        # maps to a C++ member that is called `occluderSdf` the whole way
+        # through the API — FieldNode::volumeOccluder -> MediumBinding::
+        # occluderSdf (VolumeDensity.hpp:166) -> emitted as `volumeSdfEval`
+        # (SdfWgsl.cpp:3530) -> marched by volumeSourceVisibility to shadow
+        # this medium's own incident light. I grepped the wrong name and
+        # therefore wrote a confident falsehood into a save file, which is the
+        # one thing a first mover must never do. The channel works, so the
+        # occluder is now authored, and the membrane really does cast through
+        # its own fog.
+        "volumeOccluder": sdf_expr(gyroid_shell(K, THICK, LIPSCHITZ)),
         "authoredProperties": dict(light_props(
-            "The Labyrinth Medium — indigo fog, bounded by the membrane itself",
+            "The Labyrinth Medium — indigo fog, shadowed by the membrane itself",
             (0.30, 0.30, 0.72), 0.0, ambient=0.0), **{
             "radiance.role": pv("string", "participating medium, not a source"),
             "reliquary.densityPeak": pv("float", 0.85),
             "reliquary.envelopeRadiusMetres": pv("float", HALF * 1.5),
-            "reliquary.noVolumeOccluder": pv(
+            "reliquary.occluderIs": pv(
                 "string",
-                "FieldNode serializes volumeOccluder but the WGSL volume "
-                "transport never reads it; the membrane's own opaque surface "
-                "does the occluding, so no occluder is authored."),
+                "the Membrane's own distance function, re-authored here so this "
+                "medium's incident light is shadowed by the lattice. Marched by "
+                "volumeSourceVisibility (SdfWgsl.cpp:3533-3555) via the emitted "
+                "volumeSdfEval."),
+            "reliquary.correctionNote": pv(
+                "string",
+                "An earlier version of this Zone recorded that volumeOccluder was "
+                "never read by the WGSL volume transport, and left it unset. That "
+                "was wrong: the JSON key maps to MediumBinding::occluderSdf and IS "
+                "marched. The error was grepping SdfWgsl.cpp for the JSON key "
+                "instead of the C++ member name. Corrected 2026-09-29."),
         }),
     }
 

@@ -38,12 +38,12 @@ nlohmann::json bodyPartToJson(const BodyPart& part) {
     j["type"] = static_cast<int>(part.getType());
 
     // Primary 3D shape
-    j["geometryType"] = static_cast<int>(part.getPrimaryShape());
+    j["geometryType"] = static_cast<int>(part.getPrimaryObject()->getShapeKind());
 
     // Geometry dimensions
     auto dims = part.getDimensions();
     j["dimensions"] = {dims.x, dims.y, dims.z};
-    j["geometryShape"] = static_cast<int>(part.getPrimaryShape());
+    j["geometryShape"] = static_cast<int>(part.getPrimaryObject()->getShapeKind());
 
     // Base color
     const float* col = part.getColor();

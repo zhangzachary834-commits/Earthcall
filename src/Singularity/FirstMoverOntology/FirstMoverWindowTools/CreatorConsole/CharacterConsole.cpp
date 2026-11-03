@@ -148,7 +148,7 @@ namespace Rendering {
             ImGui::BeginDisabled(state.characterDesignLocked);
 
             // Shape Selector
-            ObjectTypes::ShapeKind curShape = state.selectedCharacterPart->getPrimaryShape();
+            ObjectTypes::ShapeKind curShape = state.selectedCharacterPart->getPrimaryObject()->getShapeKind();
             const char* shapes[] = {"Cube", "Sphere", "Cylinder", "Cone", "Ellipsoid", "Rounded Box"};
             const ObjectTypes::ShapeKind shapeKinds[] = {
                 ObjectTypes::ShapeKind::Cube,
@@ -171,7 +171,6 @@ namespace Rendering {
             float dimArr[3] = {dims.x, dims.y, dims.z};
             if (ImGui::SliderFloat3("Dimensions", dimArr, 0.05f, 1.5f, "%.2f")) {
                 state.selectedCharacterPart->setDimensions({dimArr[0], dimArr[1], dimArr[2]});
-                state.selectedCharacterPart->setTransform(state.selectedCharacterPart->getTransform());
             }
 
             // Color Edit
@@ -186,7 +185,6 @@ namespace Rendering {
 
             if (ImGui::Button("Reset Dimensions to (1.0, 1.0, 1.0)")) {
                 state.selectedCharacterPart->setDimensions(glm::vec3(1.0f));
-                state.selectedCharacterPart->setTransform(state.selectedCharacterPart->getTransform());
             }
 
             ImGui::EndDisabled();

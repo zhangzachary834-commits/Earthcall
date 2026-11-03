@@ -29,11 +29,15 @@ The foundation of `OntoMath` is exact symbolic math, avoiding approximations whe
 `ScalarForm` represents a continuous algebraic expression: a sum of terms where a term is `coefficient * Π var^exp * Π trans(scale·var + shift)`. Within it, algebra (+, ×) and basic calculus (derivatives) are exact.
 
 ### `MathNode` (AST)
-When we need complex vector calculations (Dot products, Cross products) or structured combinations of scalars, we construct a tree of `MathNode`s. 
+When we need complex vector calculations (Dot products, Cross products) or structured combinations of scalars, we construct a tree of `MathNode`s.
+
+**Linear-algebra sovereignty (Rung 1, 2026-09-30).** OntoMath now has a first-class, dimension-aware `MatrixValue` in `LinearAlgebra.hpp`. Its canonical logical storage is row-major and indexed as `(row, col)`; the GLM bridge explicitly converts to/from GLM's `matrix[column][row]` representation, so storage convention is not mathematical meaning. `ValueKind::Matrix` and `MathType::matrix(rows, cols)` make matrix dimensions legible to the type judgement. Rung 1 deliberately does **not** assign matrix meaning to existing scalar/vector ops: a Matrix `ValueLeaf` type-checks, but existing operations refuse Matrix children until append-only matrix operations land in Rung 2. Legacy `glm::mat4` remains accepted at property/save boundaries for compatibility and converts only through the explicit bridge.
 
 Supported Operations (append-only `MathNode::Op`, serialized as ints):
 - Leaves: `ScalarLeaf` (a `ScalarForm`), `ValueLeaf`, `VectorConstruct`, `Component`.
-- Linear algebra: `Add`, `Sub`, `Scale`, `Dot`, `Cross`, `Hadamard`, `Normalize`, `Length`, `Project`, `Distance`, `Map`.
+- Vector/scalar algebra: `Add`, `Sub`, `Scale`, `Dot`, `Cross`, `Hadamard`, `Normalize`, `Length`, `Project`, `Distance`, `Map`.
+- Matrix algebra (Rung 2, append-only ops 30–39): `MatrixConstruct`, `MatrixIdentity`, `MatrixAdd`, `MatrixSub`, `MatrixScale`, `MatrixMultiply`, `MatrixVectorMultiply`, `MatrixTranspose`, `MatrixDeterminant`, `MatrixInverse`. Matrix dimensions are part of the type judgement. CPU evaluation is live; WGSL explicitly refuses these operations until the dedicated Rung 4 lowering lands.
+- Matrix authoring (Rung 3): the shared Math editor exposes matrix dimensions/elements plus identity, add/sub/scale/multiply, transpose, determinant, and inverse. Registered `MatrixValue` properties traverse the ordinary Law property bridge. `MathNode::evalRange` currently refuses matrix expressions because `RangeValue` has no matrix interval domain; returning a scalar infinite interval would be a type lie.
 - CSG (one vocabulary with `geom::SdfOp`, also componentwise min/max on vectors): `Union` (20), `Intersection` (21), `Difference` (22). There is no `Op::Min` / `Op::Max`.
 - Rational / non-smooth, added 2026-08-18: `Div` (23), `Pow` (24), `Abs` (25), `Clamp` (26), `Sqrt` (27), `Tan` (28). `Div` is guarded by shared `kDegenerateDivisor`; CPU and WGSL both return `0.0` below the threshold. `Abs` / `Clamp` / `Sqrt` are Scalar→Scalar and Vector→Vector (componentwise).
 - Declared, not implemented: `Raycast` (16), `LineIntegral` (19). See §5.
@@ -57,6 +61,7 @@ Mathematical laws in reality often only apply under certain conditions (e.g., gr
 - `Field`: Continuous Scalar and Vector fields.
 - `CurveModel`: 1D time-based parameter curves.
 - `ProbabilityForm`: Stochastic modeling.
+- `LinearAlgebra`: Dimension-aware matrix values, explicit substrate bridges, and the Rung 2 CPU algebra kernel (identity/add/sub/scale/multiply/vec3 application/transpose/determinant/inverse). Singular inverse and non-finite arithmetic refuse rather than fabricating values.
 
 By centralizing these in `OntoMath`, Earthcall ensures that any mathematical law authored by a `Person` can be reliably executed by any sub-system.
 
@@ -68,6 +73,11 @@ budget for one, a curve parameterization and quadrature rule for the other — s
 evaluate to `nullopt` on the CPU and **refuse to compile** to WGSL rather than emitting
 something that merely looks like an answer. The enum values are spent and stay spent;
 implementing them later needs no renumbering.
+
+`LineIntegral` (19) stays declared and refusing: its signature names no curve, limits or
+measure, so it would have to be *defined*, not implemented. Its natural future is the vector
+line integral ∫F·dr along an authored curve. The scalar definite integral is a separate,
+appended op, `Integral` (40), implemented in §6 (Zach, 2026-10-19).
 
 ## 6. Exact integration, and reading the world backwards
 
@@ -102,7 +112,7 @@ approximating:
 |---|---|
 | `Set` | the value it overwrote is not in the law text |
 | `Add` / `Scale` / `Lerp` | invertible per firing, but the text does not record how many times it fired |
-| a rate needing integration by parts | the algebra does not hold it, and will not guess |
+| a rate with no elementary antiderivative (a negative or fractional power times sin/cos/exp, e.g. sin(t)/t; several transcendentals of t in one term) | the algebra does not hold it, and will not guess. Since 2026-10-18 it does hold integration by parts for a whole power times one sin/cos/exp/ln (tabular), so a rate like t·sin t reverses exactly |
 | a piece carrying a **world guard** | answering whether it applied then needs the past being computed |
 | a piece whose value is a **fold** or a **function call** | reads world state whose past is not in the text |
 | a rate that reads what it writes | that is a differential equation, not a quadrature |
@@ -113,6 +123,54 @@ approximating:
 t−Δ, so it needs no antiderivative at all. `t·sin t` is a reversible `Map` and an
 irreversible `Flow`. `Drive` reverses too — a `CurveModel` is symbolic — but only when its
 input is the clock; driven by anything else, the past of the *input* is the unknown.
+
+**One office, and the authored `Integral` op** (2026-10-19; Zach: "yeah lets as integral operation biuld it on top of antiderivatives so we dont have two competing antiderivative code"). Every exact integral in OntoMath goes through `ScalarForm::antiderivative`:
+- a Law's rate read backwards;
+- a field along a ray (`LineRestriction`, which converts its dense polynomials and waves and holds no rule of its own);
+- the authored op `MathNode::Op::Integral` (40).
+
+**`Let` (41)** (2026-10-20; Zach chose it over a narrower Apply). `let name = value in body` computes the value once, in the enclosing scope, and binds the name for the body only, lexically like Integral's variable. It is what lets one tree say exp(−∫σ) inside an integrand: the body stays an ordinary ScalarLeaf `exp(−tau)`.
+- **Exact algebra** substitutes the value into the body (`substitute`). So homogeneous transport, ∫₀^S exp(−∫₀^s k du)·ε ds, integrates in closed form to ε(1 − e^(−kS))/k, on the CPU and through the WGSL lowering alike.
+- **WGSL** binds the name to the value's expression.
+- **The evaluation report** composes the value's bound into the body's (plan §6an).
+- **An outer Integral over approximate inner ones** (transport through noise) is admitted under a tolerance through the sampled-body route: bounded samples, derivative enclosures (τ′ = σ) and a first-order radius (plan §6ao).
+
+Before this, the power rule and the tabular rule were each written twice. The office now also holds:
+- `productToSum`, the one copy of sin·cos and exp·exp;
+- exp·sin/cos, by the complex tabular rule;
+- the stable definite evaluator `definiteIntegral(ScalarForm, …)`, which re-centres on the interval and integrates slow waves by their Taylor series. The Laws' piecewise integral now uses it too;
+- the √Q moment rule, `definiteIntegralTimesRadical`;
+- exact `substitute`.
+
+The op itself:
+- **Form:** `Integral(body, lo, hi)` integrates over the variable named in `variableName`.
+- **Scope:** the variable is bound lexically in the body and shadows any outer name. The limits are read in the enclosing scope, so an inner `hi` may be the outer variable (a cumulative integral). JSON keeps the variable.
+- **Routes:** evaluation is exact, by one of two routes:
+  - the term algebra, nested integrals included, through `definiteIntegral`;
+  - `SDF(f, q)` with q proved affine in v, through line restriction, value-branch segmentation and the same office.
+- **Slivers:** a branch switch the segmentation cannot place exactly leaves a sliver, which the exact path refuses. Leaving out a nonzero contribution is an approximation, which needs the error contract. (An earlier rule admitted slivers bounded below 0.5·ε·|answer|. Codex refuted it on 2026-10-19 with a 0.625-ulp counterexample at 1.5, which is now a regression.)
+- **Report** (addendum B; plan §6af): any being carrying `<prefix>.expression` (an authored ScalarField) and optional `<prefix>.bindings` (variable → path) answers `<prefix>.evaluation`. It is a read-only derived dictionary with these fields:
+  - status, value (when admitted) and reason (when refused);
+  - admission ("exact"), tolerance ("none");
+  - mathematical, execution and total bounds, each "unavailable" (never zero) until C;
+  - the expression digest, a bindings snapshot, and the backend.
+- **Tolerance** (addendum C; plan §6ag): an optional fourth child, absolute, in the result's units, read in the enclosing scope.
+  - Absent or 0 means exact only. Negative or non-finite refuses.
+  - Under a tolerance, the result is admitted only when its mathematical bound (omitted slivers plus the hybrid remainder's proved radius) plus its execution bound fits.
+  - The execution bound is Higham's γₙ·Σ|summand| over every summand the office added, plus proved series tails. It rests on a stated premise: libm within one ulp, and the field's pointwise value forward-accurate.
+- **No tolerance child yet** (superseded the same week by the tolerance item above): approximation (levels 4–5) waits for an authored error contract (Codex's addendum in the ray-domain plan).
+- **WGSL** (since the same day, plan §6ab): the term-algebra route lowers through the same office. `toScalarForm` gives F(hi) − F(lo), and the emitter writes it like any ScalarForm, so the shader has no antiderivative of its own. The line route refuses there until device segmentation exists. Its f32 error is measured by `webgpu_integral_operation_test`, not enclosed. Since step 2b (plan §6ac) the lowering is the office's centred decomposition, `centredIntegral`: binomial and angle addition about the interval's centre m, with moments in the half-width h given in two exact forms, tabular and Taylor series, selected by |z|·|h| ≤ 1 as on the CPU. Far-from-origin intervals keep f32 accuracy.
+- **Code and witness:** `Singularity/OntoMath/Integral.cpp`, witnessed by `ontomath_integral_operation_test`, which uses no renderer.
+
+**The integration hierarchy** (Original Prism Sun, adopted by Zach 2026-10-19: "LETS GO WITH IT"). One office integrates, for Laws and for rays alike, and names which layer an answer comes from:
+1. elementary closed form;
+2. exact special-function reduction (Carlson's R_F, R_D, R_J, R_C in `Singularity/OntoMath/EllipticIntegrals`);
+3. exact or certified piecewise integration;
+4. hybrid: closed form plus an irreducible numerical remainder (`LineAlgebraicEvaluator::hybridIntegral`);
+5. certified numerical integration;
+6. the reference lattice.
+
+A special-function reduction is exact mathematics; evaluating R_F in double precision is an execution question, like sqrt, with its error stated and witnessed (`ontomath_carlson_elliptic_test`: ≤ 3.2 ulp in every regime tested). "Elementary closed form", "exact reduction" and "quadrature" are never conflated.
 
 **Scope, stated exactly.** `reversibility()` judges whether one action's own writes can be
 carried backwards. It cannot see another law writing the same property; that is a
@@ -216,3 +274,53 @@ mathematics untouched.
 Verified by `tests/ontomath_sounding_test.cpp`; demonstrated audibly by
 `scratch/probes/one_expression_two_senses.cpp`, which prints one expression as an ASCII arch,
 writes it as a playable `.wav`, and reverses a `Flow` governed by its derivative.
+
+
+## 8. Direct Screen manifestation
+
+Zach's [pixel doctrine](../ontology/PIXEL_SUBSTRATE_PROCESS_AND_AUTHORED_IDENTITY.md)
+permits substrate Properties, authored process results and identity-bearing pixel/region
+vessels to coexist. OntoMath expresses their bounds, values and mappings as admitted;
+the channel does not choose one exclusive identity model. A source expression, its act
+of manifestation and a dated observed result retain their distinct information. This
+governs authoring direction without claiming a general live substrate locator, inverse
+compositor or automatic conversion between all views.
+
+*Codex / GPT-6.1 Sol / `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-17T16:41:45-07:00; canonized at Zach's request.*
+
+The Screen channel now reads authored `VectorField` color and optional `ScalarField`
+opacity directly at physical framebuffer sample centres. This uses the same MathNode
+calculus and WGSL emitter as surface expressions without an Object, Material, texture,
+or ShapeKind carrier. Pure `whereLEZero` guards author arbitrary regions; undefined
+regions produce no act. Its `x/y`, `u/v`, `p`, framebuffer dimension, and explicitly
+admitted `t` bindings are documented in [Direct Screen forms](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md).
+Unsupported world-dependent expressions refuse rather than inventing a result.
+The existing generic PropertyValue serializer now preserves the typed field's complete
+Field JSON payload; old tag-only records cannot recover lost mathematics.
+
+Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-04 21:10 PDT. Zach requested a directly authorable Screen medium.
+
+**Singular-borne form is the authoring route.** An addressable Singular can carry a
+named record with typed `color` VectorField and `selector` ScalarField predicates;
+the authored `ScreenRegion` constructor produces this ordinary dictionary. Bind
+`output.colorPath` explicitly to that bearer's color field. Its Piece `where`
+conditions determine drawn support, while the separately authored selector determines
+membership for dated framebuffer observations. A region record is not itself a new
+Singular, and it does not automatically become a display layer. One pixel and a
+compound region use the same admitted mathematical domain. New direct 2D form should
+start here rather than assembling ShapeKind carriers; see
+[the app guide §5.1](../Design/Building%202D%20and%203D%20Apps%20with%20Earthcall%20Guide.md#51-start-with-a-singular-and-its-mathematical-form)
+and [CLI §5b](../law/LAW_AUTHORING_CLI_GUIDE.md#5b-a-named-displayed-region-its-source-and-its-sensed-pixels).
+
+*Clarification commissioned by Zach: Codex / GPT-6.1 Sol / session
+`01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` / 2026-10-17T16:18:23-07:00;
+source inspection and documentation routing, no new runtime witness.*
+
+
+### Reusable shared scalar factors — 2026-10-22
+
+[Executed contract and continuation](../../audits/GPU_RAY_TRANSPORT_PREPARED_COEFFICIENTS_2026-10-22.md). The reusable `OntoMath::factorCommonScalar` office now derives a shared original scalar factor with explicit coefficient-symbol admission, owned original/coefficient/factor snapshots and operand order. Original-source transport policy remains in the scratch consumer. 33 registered mathematical and 52 actual-source/refusal/revision checks pass. Changing-clock CPU preparation is 0.01685 ms across four members versus 2.31086 ms old repeated binding; cold generic admission is 15.99–16.15 ms and must stay off the frame path. Same-device 7.25→0→7.25 plus forced native fallback at both clocks passes all per-frame two-resolution gates, exact return and exact fallback. A three-of-four preparation-dispatch bug was caught/refused (0.0854 stale crimson) and corrected; failed source/report retained. Final full 2,304-ray control and existing 13 case guards pass. Throughput remains the prior bounded compute result, not a new FPS gain. Generic density/root decoding, production source/revision/device lifecycle, bounded unique viewport/depth/composition/complete costs and inhabited acceptance remain open. No production/default/save/app change or push; native lane released.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T10:25:19.648159-07:00`.

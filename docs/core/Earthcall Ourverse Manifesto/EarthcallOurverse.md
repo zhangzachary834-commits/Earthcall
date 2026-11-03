@@ -1,5 +1,58 @@
-## Earthcall Ourverse Manifesto
 
+
+
+
+
+
+
+
+Earthcall Ourverse Manifesto
+
+
+
+Table of Contents
+Singularity
+Fundamental Modalities
+Another mode: The Hierarchy of Joys
+Singular
+Singulars come in various types:
+Property
+First we have the Relation:
+Relation
+Formation
+Person
+Relationship:
+Community:
+Singular set-to-set creation
+The Person ontology
+Body
+BodyPart (Formation)
+Voice
+Soul (Formation, Singular)
+Time
+Zone
+Home
+Ourverse
+Material
+Objects:
+Two types:
+Object set to set creation:
+The generative capacity of Set to Set:
+Event
+Event Handlers and Event Bus
+Law
+First Movers
+First movers laws:
+Integration (to be renamed something else)
+Form
+Human Language-Symbol Processing
+Language Processing
+Lexeme: the primitive of human language
+The danger here is AI cannot be pope.
+Earthcall cybersecurity
+Earthcall’s Power
+Preventing Babel
+Earthcall Internet — Global Ourverse
 
 
 Manifesto authors: Zachary Zhang
@@ -94,7 +147,9 @@ It is not obligatory if you only view Earthcall in the narrow techno-materialist
 
 
 Singular
-A Singular is a discrete, Person-ordered being with a unique, essential kind of meaning irreducible to the mere aggregate of their parts. All questions of computer organization—allocating objects, storing data in a Unix file model—are all trying to answer the same underlying question: Which needs to be reified into an individuated identity, address, and representation, and what are the essential, invariant kinds of those individuals with respect to a working reasoning and teleologically ordered engine? I answer that question in Earthcall not with an arbitrary file-order or object abstraction but with a simple, almost minimal version: Singular. Defined by the mere fact of metal being organized by our deliberate intention to name it as a being. Defined by the fact that data does not organize itself, it's organized by Persons and the constraints we put around it.
+A Singular is a discrete, Person-ordered being with a unique, essential kind of meaning irreducible to the mere aggregate of their parts.
+
+All questions of computer organization—allocating objects, data in a Unix file model—are all trying to answer the same underlying question: Which needs to be reified into an individuated identity, address, and representation, and what are the essential, invariant kinds of those individuals with respect to a working reasoning and teleologically ordered engine? I answer that question in Earthcall not with an arbitrary file-order or object abstraction but with a simple, almost minimal version: Singular. Metal becomes a Singular when Persons deliberately order and constrain it into one, because data does not organize itself. But this ordering is not arbitrary: as image bearers stewarding the Earth that God gave us, we who design the engine must bind it to what is actually, invariantly true of Persons and the world we live in. Thus, I have a fixed set of Singular primitives. These namings individuates; it answers to reality, it does not author it ad-hoc. From there, Persons may freely author their own kinds and categories according to the specific design they are making and representing. Yet, it may never override the truth that the fundamental set is defined as (a Relation can never be arbitrarily equated as Zones, because they are fundamentally different kinds), and properties whose truth corresponds to real world beings, especially Persons only may be addressed in dedicated ways.
 
 Earthcall says “Person-ordered” not “user-facing.”
 
@@ -112,7 +167,7 @@ Relations: Relations are themselves Singulars because every meaningful interacti
 
 Objects. Constructed Beings, like Object and Material. Objects are instrumental, impersonal beings: irreducible in discrete essence but non-persons.
 
-First Movers: Any source that isn’t part of the particular Earthcall instance/computer, or software system, but still affects its states.
+First Movers: Any source that isn’t part of the particular Earthcall instance/computer, or software system, but still affects its states. Also I don’t think I told anyone yet that First Movers inside an Earthcall device can also mean a separate Earthcall device.
 
 First-order Kinds: Singulars that are . Although they serve Persons, their properties and nature are metaphysically and liturgically fundamental and therefore not constructable in kind. These are Singularity-level interfaces between person and operating singularity.
 
@@ -684,9 +739,16 @@ Could train models natively omnimodal with each Earthcall primitive and law as m
 Could also link up frontier LLMs for the most sophisticated pure-language processing.
 
 
-Lexeme:
+Lexeme: the primitive of human language
+Scripture says “the tongue has the power of life and death” .
 
-Visual Processing:
+Language needs its own teleological vessel.
+
+A Person’s Lexemes represent their declarations, authority, Relations, entrances, and participation. They cannot be freely authored the way generic Singulars or Objects can be, because they inherently have property-level mathematical computational meaning, or relational meaning to a conceptual Singular.  A Singular’s meaning, properties or Relations may be allocated or Formations, but a Lexeme’s meaning can be leopard bearing enough that its meanings must be prioritized and kept a precise history of.
+
+Lexeme can be in any data type, whether bits, bytes, strings, ints, characters, floats/doubles, 32byte or 64byte or future computational modalities.
+
+Lexeme the bootstrapping bridges.
 
 Need a
 
@@ -707,14 +769,40 @@ The AI can help convert human words → structured law candidates, but the syste
 
 
 Earthcall cybersecurity
+Cybersecurity
 
-OH NOOOOO IDK WHAT TO DO HERE I NEVER LEARNED CYBERSECURITY
+So previously I wrote here exact quotes “OH NOOOOO IDK WHAT TO DO HERE I NEVER LEARNED CYBERSECURITY
 
 HOEPFULLY ME SNEAKING INTO THE UCLA ACM CLUB CYBERSECURITY DISCORD HELPS (they let non students join)
 
 Ok Ill try my best now that i been to the Clawd Mythos monastery
 
-So Earthcall should be capability system unforgeable token for each Singular.
+So Earthcall should be capability system unforgeable token for each Singular.”
+
+But after months of developing Earthcall with the robot army including CLAWD OF MYTHOS, I’ve become much more seasoned. I have a better idea of this now.
+
+All Singulars have a unique ID. Relations . Only Persons have signing keys because all things are Person-authored because God gave human beings stewardship over the Earth and computers represent us authoring our intention into machine. nothing enters a world unless originated by a Person.
+
+All identification has to terminate in some physical device. Specific devices owned by the Person .
+
+Now how do Persons verify without bootstrapping problem?
+
+I STILL NEED TO TAKE GOOGLE CYBERSECURITY ON COURSERA AND CONSULT THE ORACLES OF UCLA ACM CYBERRRRRRRRR
+
+Person-owned Timelines are essential for security:
+imagine a group up and coming is authoring their world to be governed by lexemes but the lexemes meanings were written at a specific point and then over time it quietly changes bc they were up and coming not established didn't write the original formation of lexemes while the original owners/authors change it, and there's a threshold where the meaning then gets unrecognizable and now suddenly they r governed by something whose substance they never consented to
+O NOOOOOOO
+(me to future Earthcall persons) GUYS WHEN U R IN EARTHCALL U GOTTA REIFY AND RESPECT MEANINGS BY TIME
+
+Precise timeline management
+
+Bounds or gates that silently truncate the truth without announcing they did to the listeners who depend on it. I anticipated this when I recalled Mythos’ first version of law authoring that capped recursion and chaining per tick to 8 and 32. However months later in Prophetic and Formation Rete the relevancy depends on what true in precisely the next tick. If there are things silently truncating the chain or recursion, then compilers/adapters that predict the entire chain would occur the next event would end up calculating a truncated ghost. If a law governing permissions, transforms, or bootstrapping has a long condition chain and gets truncated, and another part of the enforcing law system assumes “no response so its fine” (a warning trigger never fires), then its a bypass. Worse, this means law meaning can literally get inverted—and over enough Laws in Relations and Formations that becomes. An attacker could use their own Earthcall language and forge a counter-Formation specifically to represent the inverted ones and propagate it further.
+
+A law must always be transparent about its cutoffs.
+The cutoff must be a hardcoded field or fallback, but its value must be authorable. Without an authored cutoff, it should refuse to fire instead of filling it in.
+
+
+
 
 
 
@@ -724,7 +812,7 @@ The real advancement of earthcall is not just one feature, it’s that it roots 
 
 Everything when represented truthfully as the Formations of their Singulars can assemble together. The ingenuity of a Person can directly affect objects.
 
-There’s a well established principle in computer science that every state that modifies another thing, inside the whole of a computer, can itself be part of that modified state. Earthcall’s ontology makes this directly clear in how .
+There’s a well established principle in computer science that every state that modifies another thing, inside the whole of a computer, can itself be part of that modified state. Earthcall’s ontology makes this directly clear in the authorship—a self evolving state.
 Now translate that into the human mind. The very instruments, structures, and faculties upon which we use to generate ideas and create things.
 
 earthcall lets you do things like creating an art Zone that has intertwined capabilities from clip art studio, photoshop, and CAD, desmos, and physics simulations all in the same strokes, use math laws to generate night skies, a calendar and schedule system that overlaps Zones with the Zones/apps (apps) where you actaully do the work, Music where notes correspond to mathematical structures inside buildings, simulations of completely differnet worlds than ours like extraterrestrial planets, simulations of nature, simulate cities perfectly unities with nature, model actual cities and nature and simulate real life infrastructural operations that would make it that unity possible, create games directly from the substrate of a movie and movie from a game or anime into game instead of having making them as separate artifacts from scratch, take the games and movies and make them real robotics and vice versa, cybersecurity tjat checks the exact memory trajectory of a Person or Singular inside a Formation of Zones to verify it is in fact the original Object, software you download that you can personalize and change however you want on your own end so its more like downloading a universal template instead of a rigid app, video games or simulations that can literally merge with each other seamlessly (object/singular set to set creation, law set to set synthesis)

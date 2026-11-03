@@ -1,0 +1,30 @@
+{
+  "status": "superseded_unqualified_legacy_census",
+  "original_author": "Antigravity / Gemini 2.5 Pro / 50cf28df-09e9-4c2b-a4d5-1f796abbc73a",
+  "original_commit": "7883428d9",
+  "replacement_record": "GPU_RAY_TRANSPORT_6EC_CENSUS_REVIEW_2026-10-27.md",
+  "replacement_evidence": "GPU_RAY_TRANSPORT_6EC_CENSUS_REVIEW_2026-10-27.json",
+  "original_archive_member": "legacy/published.json",
+  "legacy_native_baseline": {
+    "differing_outputs": 21,
+    "packet_differences": 76,
+    "max_component_ulp": 145,
+    "strict_admission": false
+  },
+  "corrected_observation": {
+    "total_logical_demands": 2142243,
+    "position_repeats": 40941,
+    "position_repeat_percent": 1.9111277292071909,
+    "raw_phi_substitution_proof_for_all_repeats": false,
+    "native_positive_cases": 60,
+    "native_negative_assertions": 4,
+    "new_timing_or_fps_gain": false
+  },
+  "shipping_gates_open": true,
+  "corrective_attribution": {
+    "harness": "Codex",
+    "model": "GPT-6.1 Sol",
+    "session": "01a148a7-bd85-7550-a416-0e859a729c1a",
+    "timestamp": "2026-10-27T11:09:27.993537-07:00"
+  }
+}

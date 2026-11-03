@@ -130,6 +130,17 @@ void FirstMover::buildProperties() {
 
 // --- FirstMoverRegister ----------------------------------------------------
 
+void FirstMoverRegister::buildProperties() {
+    registerProperty(std::make_unique<ComputedProperty<FirstMoverRegister, double>>(
+        "moverCount", this, &FirstMoverRegister::propMoverCount, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<FirstMoverRegister, bool>>(
+        "personPresent", this, &FirstMoverRegister::propPersonPresent, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<FirstMoverRegister, std::string>>(
+        "saveRoot", this, &FirstMoverRegister::propSaveRoot, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<FirstMoverRegister, std::string>>(
+        "activeMover", this, &FirstMoverRegister::propActiveMover, nullptr));
+}
+
 FirstMoverRegister& FirstMoverRegister::instance() {
     static FirstMoverRegister reg;
     return reg;

@@ -35,6 +35,8 @@ static const char* scopeToString(Scope scope) {
 std::string Zone::scopeName() const { return scopeToString(_scope); }
 
 void Zone::buildProperties() {
+    registerProperty(std::make_unique<ComputedProperty<Zone, std::shared_ptr<PropertyList>>>(
+        "storedSingulars", this, &Zone::propStoredSingulars));
     registerProperty(std::make_unique<ComputedProperty<Zone, std::string>>(
         "name", this, &Zone::propName));
     // Read-only: identity is set once at construction (or by
@@ -329,6 +331,7 @@ void Zone::syncFormationMembers(const std::vector<Singular*>& extraMembers) {
 
     admit(_spatialRootObject.get());
     for (const auto& field : _additionalSpatialFields) admit(field.get());
+    for (const auto& being : _storedSingulars) admit(being.get());
     for (const auto& up : _objects) admit(up.get());
     for (auto* member : extraMembers) admit(member);
     for (const auto& lexeme : Singularity::Language::LanguageSystem::instance().getAll()) {
@@ -370,13 +373,14 @@ Zone::Zone(const Zone& other)
     : _name(other._name), _identifier(other._identifier), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable),
       _joys(other._joys), _ownerId(other._ownerId), _formation(),
       _spatialRootObject(std::make_shared<geom::FieldNode>(other._name + "_spatialRoot")),
-      _lastUpdateTiming(other._lastUpdateTiming)
+      _lastUpdateTiming(other._lastUpdateTiming), _storedSingulars(other._storedSingulars)
 {
     _spatialField = _spatialRootObject->field;
     _spatialVectorField = _spatialRootObject->vectorField;
 
     _formation.addMember(_spatialRootObject.get());
     copyBoundsFrom(other);
+    for (const auto& being : _storedSingulars) _formation.addMember(being.get());
     for (const auto& field : other._additionalSpatialFields) {
         if (!field) continue;
         auto clone = geom::FieldNode::fromJson(field->toJson());
@@ -402,6 +406,7 @@ Zone& Zone::operator=(const Zone& other)
     std::swap(_formation, tmp._formation);
     std::swap(_spatialRootObject, tmp._spatialRootObject);
     std::swap(_additionalSpatialFields, tmp._additionalSpatialFields);
+    std::swap(_storedSingulars, tmp._storedSingulars);
     std::swap(_spatialField, tmp._spatialField);
     std::swap(_spatialVectorField, tmp._spatialVectorField);
     std::swap(_lastUpdateTiming, tmp._lastUpdateTiming);
@@ -456,6 +461,33 @@ void Zone::clearAdditionalSpatialFields() {
 void Zone::addObject(std::shared_ptr<Object> obj) {
     Universe::instance().bumpStructuralRevision();
     _objects.push_back(std::move(obj));
+}
+
+bool Zone::retainSingular(std::shared_ptr<Singular> being) {
+    if (!being || being.get() == this) return false;
+    for (const auto& existing : _storedSingulars) {
+        if (existing.get() == being.get()) return true;
+        if (existing && existing->getIdentifier() == being->getIdentifier()) return false;
+    }
+    _formation.addMember(being.get());
+    _storedSingulars.push_back(std::move(being));
+    Universe::instance().bumpStructuralRevision();
+    notifyPropertyChanged(this, "storedSingulars");
+    return true;
+}
+
+void Zone::clearStoredSingulars() {
+    if (_storedSingulars.empty()) return;
+    for (const auto& being : _storedSingulars) _formation.releaseMember(being.get());
+    _storedSingulars.clear();
+    Universe::instance().bumpStructuralRevision();
+    notifyPropertyChanged(this, "storedSingulars");
+}
+
+std::shared_ptr<PropertyList> Zone::propStoredSingulars() const {
+    auto out = std::make_shared<PropertyList>();
+    for (const auto& being : _storedSingulars) out->elements.emplace_back(being.get());
+    return out;
 }
 
 bool Zone::removeObject(Object* obj) {

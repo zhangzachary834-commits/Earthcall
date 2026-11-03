@@ -6,6 +6,7 @@
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Screen/Camera.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -285,8 +286,16 @@ void InteractionChannel::observe(const Sense& sense,
     const glm::vec3 hitPoint = hit ? surface.point : glm::vec3(0.0f);
 
     // --- Hover edges -----------------------------------------------------------
+    const float previousU = propPointerU(), previousV = propPointerV();
+    const int previousWidth = windowWidth, previousHeight = windowHeight;
     pointerX = sense.pointerX;
     pointerY = sense.pointerY;
+    windowWidth = std::max(1, sense.windowWidth);
+    windowHeight = std::max(1, sense.windowHeight);
+    if (windowWidth != previousWidth) Singular::notifyPropertyChanged(this,"windowWidth");
+    if (windowHeight != previousHeight) Singular::notifyPropertyChanged(this,"windowHeight");
+    if (propPointerU() != previousU) Singular::notifyPropertyChanged(this,"pointerU");
+    if (propPointerV() != previousV) Singular::notifyPropertyChanged(this,"pointerV");
     hoveredId = hit ? hit->getIdentifier() : std::string();
     hoveredFace = hit ? surface.face : -1;
     hoveredU = hit ? bestUV.x : 0.0f;
@@ -595,6 +604,7 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
     glfwGetCursorPos(window, &cx, &cy);
     sense.pointerX = static_cast<float>(cx);
     sense.pointerY = static_cast<float>(cy);
+    glfwGetWindowSize(window, &sense.windowWidth, &sense.windowHeight);
 
     const bool windowFocused = (glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0);
     if (!windowFocused) {
@@ -666,19 +676,26 @@ void InteractionChannel::step(GLFWwindow* window, ::Core::Camera& camera,
                 P[c][r] = static_cast<float>(pr[c * 4 + r]);
             }
         }
-        const glm::mat4 invVP = glm::inverse(P * V);
         const float ndcX =
             ((fbX - static_cast<float>(vp[0])) / static_cast<float>(vp[2])) * 2.0f - 1.0f;
         const float ndcY =
             1.0f - ((fbY - static_cast<float>(vp[1])) / static_cast<float>(vp[3])) * 2.0f;
-        glm::vec4 nearW = invVP * glm::vec4(ndcX, ndcY, -1.0f, 1.0f);
-        glm::vec4 farW = invVP * glm::vec4(ndcX, ndcY, 1.0f, 1.0f);
-        if (nearW.w != 0.0f) nearW /= nearW.w;
-        if (farW.w != 0.0f) farW /= farW.w;
-        sense.rayOrigin = glm::vec3(nearW);
-        const glm::vec3 span = glm::vec3(farW - nearW);
-        sense.rayDirection = glm::length(span) > 1e-6f ? glm::normalize(span)
-                                                       : camera.getFront();
+        const auto authoredView = OntoMath::MatrixValue::fromGlmMat4(V);
+        const auto authoredProjection = OntoMath::MatrixValue::fromGlmMat4(P);
+        const auto nearW = OntoMath::unprojectNdcPoint(
+            authoredView, authoredProjection, glm::vec3(ndcX, ndcY, -1.0f));
+        const auto farW = OntoMath::unprojectNdcPoint(
+            authoredView, authoredProjection, glm::vec3(ndcX, ndcY, 1.0f));
+        if (nearW && farW) {
+            sense.rayOrigin = *nearW;
+            const glm::vec3 span = *farW - *nearW;
+            sense.rayDirection = glm::length(span) > 1e-6f ? glm::normalize(span)
+                                                           : camera.getFront();
+        } else {
+            // Projective refusal is explicit; interaction owns the fallback policy.
+            sense.rayOrigin = camera.getPos();
+            sense.rayDirection = camera.getFront();
+        }
     } else {
         sense.rayOrigin = camera.getPos();
         sense.rayDirection = camera.getFront();
@@ -793,6 +810,14 @@ void InteractionChannel::buildProperties() {
 
     flt("pointerX", &InteractionChannel::pointerX);
     flt("pointerY", &InteractionChannel::pointerY);
+    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, int>>(
+        "windowWidth", this, &InteractionChannel::propWindowWidth, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, int>>(
+        "windowHeight", this, &InteractionChannel::propWindowHeight, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, float>>(
+        "pointerU", this, &InteractionChannel::propPointerU, nullptr));
+    registerProperty(std::make_unique<ComputedProperty<InteractionChannel, float>>(
+        "pointerV", this, &InteractionChannel::propPointerV, nullptr));
     vector3("pointerWorld", &InteractionChannel::pointerWorld);
     // Scalar projections make the sensed point available to scalar OntoMath
     // without copying it into a second mutable channel state. Read-only is
