@@ -6,6 +6,8 @@
 
 **Current continuation (October 15):** retained compilation/residency, clock preparation and support traversal remain, with power repair and separate host Euclidean analysis. The [latest bounded allocation trials](../../../../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) pass exact captures but regress in cost; their runtime changes are restored. Live 30 FPS/movement acceptance remains open. Earlier dated sections preserve historical implementations and measurements.
 
+**Checkpoint scope update (Zach,2026-10-30):** For the incremental ray-transport merge, a settled28–30FPSor better in any ONE of the above-Veils, near-spawn/ground-looking-up with almost all Veils visible, or directly-below-looking-up views is sufficient; all three are not required. Normal native resolution and current-or-better accuracy/Current fallback remain. This supersedes treating every-view30FPSas a checkpoint prerequisite; broader inhabitation remains later work. [Exact decision and conditional merge authorization](../../Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md#checkpoint-merge-criterion--zachs-october-30-author-decision). Recorded by Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-30T15:05:55-07:00.
+
 ## Measurement (2026-10-09, MacBook Air M5, native WebGPU/Metal, Debug build)
 
 Volume-only probe over the real save, read-only: `zone.ecform` decoded to a scratch JSON copy; camera on the spawn dais looking at the curtains; GPU-synchronized. Probe source adapted from Codex's [Sunlit Mist probe](../../../../../../scratch/webgpu_sunlit_mist_perf_probe_2026_09_25.cpp); it lived only in the session scratchpad.

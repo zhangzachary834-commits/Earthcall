@@ -2218,7 +2218,12 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     auto T0 = glfwGetTime();
 
     syncProphetic();
-
+    // A derived reading registered or removed since the terminals were built
+    // changes which conditions may be indexed at all: every law re-decides.
+    if (_compiledDerivedReadingRevision != derivedReadingRevision()) {
+        _compiledDerivedReadingRevision = derivedReadingRevision();
+        _compiledConditionRevision.clear();
+    }
     for (const auto& law : _laws) {
         if (law) syncReteCompilation(*law);
     }
@@ -2480,14 +2485,24 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                   ? holds
                                   : (holds && !wasHolding);
             if (!fire) continue;
+            // The condition was decided just above, on this subject, with
+            // nothing in between: deciding it again inside applyTo doubled the
+            // sweep's cost (442 vs 233 ms/tick for a bare ForAll at 320 beings,
+            // quantifier_scaling_test, once quantifiers stopped carrying an
+            // unsound alpha — disjunction_candidate_test). The reactive path
+            // already applies exactly once per candidate; this is the same rule.
+            // A restarted drive session is the one intervening step, so then
+            // the condition is re-checked as before.
+            bool decided = true;
             if (law->drives() &&
                 hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
                 if (law->retrigger() == Law::Retrigger::Absorb) {
                     continue;
                 }
                 restartDriveSession(*law, subject->getIdentifier());
+                decided = usedDirect;
             }
-            applyAndMaybeDrive(*law, *subject, records, usedDirect);
+            applyAndMaybeDrive(*law, *subject, records, decided);
         }
     }
     auto T3 = glfwGetTime();
@@ -3520,6 +3535,16 @@ void LawManager::compileConditionsToRete(Law& law) {
 
     if (!law.conditionModel()) return;
     const ConditionModel& model = *law.conditionModel();
+
+    // A condition reading through a derived reading (`growth.evaluation.value`)
+    // reads something no change fact announces: the report moves when a BOUND
+    // INPUT does, and nothing dirties the subject's facts then. Terminals
+    // would admit the subject only on the edits that happen to touch its
+    // `growth.*` facts, and the law would go deaf to the rest. No index; the
+    // continuous sweep decides it every tick against the live reading.
+    // Codex's admission rule, 2026-10-19 23:58; witnessed by
+    // tests/law/derived_reading_law_test.cpp.
+    if (model.readsUntrackedDerivedReading()) return;
 
     // Compile the tree into the rete network, getting terminal node IDs.
     std::vector<std::size_t> terminals = model.compileToRete(_rete, lawId);

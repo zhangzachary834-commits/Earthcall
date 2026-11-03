@@ -1,18 +1,16 @@
 # Ray transport — owned mathematical factors and changing-clock GPU preparation
 
-**Default-checkout evidence relay:** implementation is on local `claude/ray-domain-transport-rung0`, commit `f590ae1e2`; new source links below point to that ray checkout. This relay does not install the implementation or publish it remotely.
-
 Zach commissioned another pass after [§6cj's multi-view checkpoint](GPU_RAY_TRANSPORT_MULTI_VIEW_QUALIFICATION_2026-10-22.md). His direction remains current-or-better authored accuracy with useful native performance, and mathematical meaning under OntoMath. This continues the [existing council thread](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md), from local ray checkpoint `b7c35e4b9`.
 
 **Outcome:** the shared-factor derivation now has a reusable OntoMath office and owns its original source snapshots. The scratch GPU consumer separates source admission from changing-clock preparation. The registered mathematical test passes 33 checks; actual four-member source/refusal/revision checks pass 52, including 257 changing bindings per member that produce exactly the previous binder's float coefficients. A same-device five-frame clock/fallback witness and the original 2,304-ray control pass unchanged numerical gates. This advances a compiler/preparation component; it changes no production rendering, default, save, data home or installed app. No FPS claim, push or PR.
 
 ## Mathematical ownership and refusal
 
-[`CommonScalarFactor.hpp`](/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop/src/Singularity/OntoMath/CommonScalarFactor.hpp) admits original binary Scale expressions sharing a structurally identical scalar child: `f_i = B · c_i`. It accepts scalar or vec3 coefficients and an explicit type environment plus admitted coefficient symbols. The test uses `theta`, rather than a built-in clock: OntoMath owns neither a Timeline nor a camera. Negative and computed coefficients can be valid mathematics; the diagnostic transport consumer separately retains its positive-literal policy. Unknown, malformed, undeclared/mistyped, nonfinite, impure/random, scoped/unsupported and over-budget forms refuse. No sampling or algebraic cancellation infers source identity.
+[`CommonScalarFactor.hpp`](../../src/Singularity/OntoMath/CommonScalarFactor.hpp) admits original binary Scale expressions sharing a structurally identical scalar child: `f_i = B · c_i`. It accepts scalar or vec3 coefficients and an explicit type environment plus admitted coefficient symbols. The test uses `theta`, rather than a built-in clock: OntoMath owns neither a Timeline nor a camera. Negative and computed coefficients can be valid mathematics; the diagnostic transport consumer separately retains its positive-literal policy. Unknown, malformed, undeclared/mistyped, nonfinite, impure/random, scoped/unsupported and over-budget forms refuse. No sampling or algebraic cancellation infers source identity.
 
 The result contains owned factor/coefficient/original-expression trees, original operand positions and coefficient dependencies/types. It remains an explicitly historical value after source mutation/destruction; changed source/binding revisions require fresh admission. This is an ordinary mathematical IR value, not a new kind of being or a persisted opcode. There is no global cache, source listener, source revision key or GPU handle inside it. `evaluateFactorCoefficients` invokes the original coefficient evaluator with explicit finite bindings, without evaluating the shared factor or repeating source JSON/type matching. It does not certify GPU reassociation, divisions, rounded constants or omissions.
 
-[`ray_transport_gpu_prepared_coefficients.py`](/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop/scratch/probes/ray_transport_gpu_prepared_coefficients.py) is a real consumer of that office. Screen's diagnostic still refuses computed/nonpositive scalar coefficients, non-vector/spatial emission coefficients and unusable backend conversions. Fixed-offset density decoding and per-member noise frequencies remain fixture-specific. **Only common-factor derivation has become reusable; generic density/root/source admission has not landed.** The compiler header hash is part of generated source replay identity, so an edited mathematical implementation cannot silently reuse an older binary.
+[`ray_transport_gpu_prepared_coefficients.py`](../../scratch/probes/ray_transport_gpu_prepared_coefficients.py) is a real consumer of that office. Screen's diagnostic still refuses computed/nonpositive scalar coefficients, non-vector/spatial emission coefficients and unusable backend conversions. Fixed-offset density decoding and per-member noise frequencies remain fixture-specific. **Only common-factor derivation has become reusable; generic density/root/source admission has not landed.** The compiler header hash is part of generated source replay identity, so an edited mathematical implementation cannot silently reuse an older binary.
 
 ## Cost: admission once, preparation per binding
 
@@ -22,7 +20,7 @@ The new cold derivation is **15.99–16.15 ms** across four source trees, includ
 
 ## Same-device clock update, return and native fallback
 
-[`ray_transport_gpu_clock_lifecycle.py`](/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop/scratch/probes/ray_transport_gpu_clock_lifecycle.py) reuses the same owned recipes, shader pipelines, device and existing buffers across:
+[`ray_transport_gpu_clock_lifecycle.py`](../../scratch/probes/ray_transport_gpu_clock_lifecycle.py) reuses the same owned recipes, shader pipelines, device and existing buffers across:
 
 1. Clock 7.25, normal GPU producer/transport.
 2. Clock 0, normal GPU producer/transport.

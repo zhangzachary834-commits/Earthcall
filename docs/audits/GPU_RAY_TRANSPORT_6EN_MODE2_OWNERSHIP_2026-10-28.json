@@ -1,0 +1,52 @@
+{
+  "scope": "instrumented native Mode2 ownership/refusal plus bounded distinct native ray capture; no clean timing or production changes",
+  "signature": "Codex/GPT-6.1 Sol/01a148a7-bd85-7550-a416-0e859a729c1a",
+  "timestamp": "2026-10-28T00:31:16.377857-07:00",
+  "archive_sha256": "e9856c760a5bc8265cddcf623f0f7b92619d861af9a56674ebcbe6585f0da395",
+  "members_sha256": {
+    "native/omit-General.log": "fe603007977be25d4f002d25eefc0a1e74e9c2e38dcdaac7e93f37c151652426",
+    "native/omit-Current.log": "4892e7c4dbce8201d997e0c1df8a9c976a0cb6ada1035d69e403a5822a61a043",
+    "native/positive.json": "d7dd5480ab0f2cc0eab3f3fc2717ac0c5bb976ba026d6b954df4faac51bc8807",
+    "native/controls.json": "8eb26b69ee573d3a88b340f20d87faa49ae553af8f0f8f9f49c1854500af664d",
+    "native/positive.log": "a84cb509f2a1563c938e245f8f4db08c4e43134498fa3f4d6bb22a9306a0b50c",
+    "native/partial-publish.log": "fa95b344471e3f6f79c4bb20781314b432f503842c1b2ac34731d2130d84d570",
+    "native/probe.cpp": "69e990f671eec8a800197d7d97af000315449f8e0303850e9c6a21a8a790e8a5",
+    "native/positive.json-baseline-rows.json": "86bcf5e9ea78cd6ab980b88ad57e22612112bb30fd1cb8b853610ac982904bc6",
+    "native/omit-consumer.log": "1fc93cb22dd2d1b44ae1696d04ee59346131248665387e9ab274bdaf3b97126c",
+    "native/omit-S2.log": "fb6af7771c372ef766f9af8ff277d42c8c62d1b895f3e19b9e8cb8ce948f10f2",
+    "native/omit-S1.log": "04cc992a8db2752cea697272a9207f741cb34a272ee751943e2285fe4e99dd58",
+    "native/accuracy.json": "7b56737a1a4502da82682492a2887c9f8fb8f18d5ebe094ecf7a3d30875da037",
+    "native/build.log": "4a69cd41cb62d006d121a7401bae4f792734f1358bddfae51cee11ffee95100f",
+    "native/double-Current.log": "28481ceb2a2b59a80db232c7dcb5364c2f7c6fa44e819f3a422b8ec0ffe38fd1",
+    "native/original-rays.json": "cd403a013e75bfa748b6fc5c60ffe74a2df2fdae5bacce73605973d447dfa402",
+    "build/source.json": "03c562ae1f0f5f680d2a99e1e7e3178c289911fb1aacf349b9bb4bb3ab292c3d",
+    "capture/census-live16.bin": "d657f2e47161cb4cc69e963ceb142c0c9733320e403a5824b560c34796710c6b",
+    "capture/metadata.json": "d78904a8c24660fc0c92295e467b5a18622d514d9273b2c76b1cf1a39c310bb3",
+    "capture/capture.log": "f8bf23e5e0813e9d792ffd455df5814ca8f85e366956b91ab0a4a6ffc6b0296b",
+    "source/ray_transport_gpu_6en_mode2_ownership.py": "bb18462f2fa754d442d243a1c22e0032abbac05dc3ebb1237aacea8f6daab731",
+    "source/ray_transport_6en_replay.py": "590c205973f6a91bdd02636bfd612cbd507a27f1f27d31c3b7f5e30526b3cdd2"
+  },
+  "reference_sha256": "cf57b2d92bb316e924183686e4dc92087aa93f3ba5aa0a108eaad9f599243cb6",
+  "capture_binary_sha256": "5a6a56a8b566aef0d20690487231d037450e2f1c3d9102a7f9fcd996e791c259",
+  "engine_src_tree": "3603add4018961529a91bc9592d76f9a553500b1",
+  "capture_scope": {
+    "distinct_rays": 230400,
+    "tiles": 14400,
+    "grid": [
+      640,
+      360
+    ],
+    "viewport": [
+      2560,
+      1440
+    ],
+    "clock": 7.25,
+    "reference_generated": false,
+    "candidate_executed_on_new_capture": false
+  },
+  "shipping_gates_open": [
+    1,
+    2,
+    3
+  ]
+}

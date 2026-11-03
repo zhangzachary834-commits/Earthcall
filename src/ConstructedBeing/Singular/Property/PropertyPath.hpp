@@ -3,6 +3,8 @@
 #include "PropertyValue.hpp"
 #include "Singularity/Core/StringId.hpp"
 
+#include <functional>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -106,3 +108,45 @@ public:
     PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex = 0) const;
     PathResult setValue(Singular& root, const PropertyValue& v, std::size_t startIndex = 0) const;
 };
+
+// ============================================================================
+// DERIVED READINGS (2026-10-19). A read-only observation that an authored
+// route carries WITHOUT storing it: `<prefix>.<name>` (and any path into its
+// result, `<prefix>.<name>.<key>…`) is answered by the registered reading,
+// from the being's own authored properties under `<prefix>`.
+//
+// Codex placed the authored Integral's evaluation report on the expression's
+// existing bearer as a read-only derived PropertyDict, not as a new kind or a
+// fixed field on every Singular (2026-10-19 21:30). This is the seam that lets
+// an authored route carry one. The rules:
+//  · It is consulted only where resolution finds NO stored property, so it
+//    never shadows authored or registered state and costs nothing on a hit.
+//  · Writes to the route refuse with ReadOnly: an observation is not a dial.
+//  · Each read computes afresh, so a refusal replaces a success and no stale
+//    report survives a changed input. The result is a fresh value, never
+//    shared canonical storage.
+//  · It is registered by a modality channel (OntoMath registers "evaluation"),
+//    like world readings. Nothing is registered by default.
+//  · No reading declares its dependencies yet, so none publishes change
+//    facts: nothing tells the Rete that `<prefix>.evaluation.value` moved when
+//    a bound input did. A consumer that indexes on change facts must
+//    therefore ask pathReadsUntrackedDerivedReading() and take its general,
+//    re-evaluating path when the answer is yes (Codex, 2026-10-19 23:58:
+//    "decline the indexed admission loudly" until dependencies are complete).
+//    LawManager does: such a law gets no Rete terminals and is decided on the
+//    continuous sweep every tick. Lasting fix, open: declared dependencies
+//    (expression, bindings record and mappings, each resolved input) that
+//    dirty the reader selectively.
+// ============================================================================
+using DerivedReading = std::function<bool(Singular& root, const std::string& prefix, PropertyValue& out)>;
+void registerDerivedReading(const std::string& name, DerivedReading reading);
+bool hasDerivedReading(const std::string& name);
+// Bumped by every registration or removal, so an index compiled against the
+// set of readings can tell the set moved and re-decide.
+std::uint64_t derivedReadingRevision();
+// True when a segment after the root names a registered reading whose
+// dependencies are not tracked (today: every reading). Static and
+// over-approximate on purpose: a stored property of the same spelling would
+// shadow the reading at run time, and this still answers yes. Yes only costs
+// the indexed path; a wrong no would make a reader deaf (PROPHETIC_RETE §2).
+bool pathReadsUntrackedDerivedReading(const PropertyPath& path);

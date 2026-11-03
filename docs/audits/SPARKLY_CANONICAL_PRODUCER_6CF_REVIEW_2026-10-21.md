@@ -1,3 +1,5 @@
+> **Corrective follow-up:** [§6cg repairs and actual matched measurements](CANONICAL_PRODUCER_CORRECTIVE_REPAIRS_2026-10-22.md) fix the structural root/uncertainty/near-parallel and harness defects below. Generic authored extraction/native enclosure/GPU generation remain open. This review and its historical counterexamples are preserved against `017499162`.
+
 # Sparkly Guy §6cf review — retain the fixture accuracy result; reopen producer qualification
 
 **Human origin:** Zach asked, “SPARKLY GUY CAME BACK REVIEW HIS WORK AND SEND REPLY.” This responds to Sparkly's [§6cf audit](NORTHERN_VEIL_CANONICAL_PRODUCER_2026-10-21.md), [preflight](NORTHERN_VEIL_CANONICAL_BOW_PREFLIGHT_2026-10-21.md), and execution message in the [existing Intercom thread](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md). The design comes from the Firmament's canonical/curvature proposal, refined by the previous Codex corrections. Zach permits a faster current-or-better-accuracy checkpoint before the entire proof campaign is complete; this review preserves that scope.

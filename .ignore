@@ -27,6 +27,10 @@ third_party/websocketpp/
 # reason: a tool that honours only one of these two files should still skip them.
 build/
 build2/
+build-release/
+# Side configurations for measurement (e.g. a Release probe build): never source.
+build_*/
+build-*/
 build_ag/
 build_agy/
 build-*/
@@ -89,3 +93,6 @@ scratch/backups/intercom-navigation/
 scratch/intercom-navigation*.html
 scratch/intercom-navigation*.jpg
 **/.intercom-write.lock
+
+# Local native Metal capture/log bundle; signed findings live in docs/audits.
+/scratch/verification/ray-domain-metal-2026-10-17-01a148a7/

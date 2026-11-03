@@ -1,8 +1,5 @@
 # Ray transport — multi-view accuracy, authored clock coefficients and native cost
 
-> Cross-worktree relay: implementation is local on `claude/ray-domain-transport-rung0`, commit `a7d3c16da`. Run code/reproduction commands in `/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop`; default receives documents and evidence only.
-
-
 Zach requested the next pass after the [overnight GPU review and retained uncertainty-band checkpoint](GPU_CANONICAL_PRODUCER_OVERNIGHT_REVIEW_2026-10-22.md), commits `55f201925` / `2ea31cf38`. This continues the [existing council thread](../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md). His commission remains a useful native speed checkpoint at current-or-better accuracy, preserving the authored equations rather than retuning a pleasing image.
 
 **Outcome:** the retained candidate now passes bounded numerical checks at four actual native camera poses and two declared clocks. A changed-clock test first exposed the prototype's clock-specific emission table; this pass binds the coefficient from the original authored expression instead. Inside/reverse/side/spawn and clock-zero cases pass all six mean/p99/max gates against **both** independent 65,536/32,768-step references. The original 2,304-ray control also passes twice. Native throughput varies substantially by view, and a tiny exact-empty control is slower; no universal enablement, full-frame/FPS or Person acceptance is established. Production/default/save/data-home/installed-app state is unchanged. No push or PR.
@@ -21,7 +18,7 @@ Every manifest pins the authored Zone, native-ray and reference bytes. Runtime v
 
 The inherited prototype stores per-member `alpha`/RGB tables computed at 7.25. Density itself is static here, but emission includes a time-dependent pulse. Executing the frozen table at clock 0 yields original-AST RGB disagreement **0.0990796** and reference RGB mean/max **0.0119359 / 0.0990529**, failing both the AST and reference gates while T remains accurate. That is a concrete numerical refusal; its apparent throughput is not a qualified performance result. The earlier frozen 7.25 result remains valid in its stated scope.
 
-[Authored-coefficient binding](/Users/zacharyzhang/.gemini/antigravity/worktrees/Earthcall/ourverse_navigator_prototype_loop/scratch/probes/ray_transport_gpu_pose_authored_coefficients.py) admits only the existing mathematical shape:
+[Authored-coefficient binding](../../scratch/probes/ray_transport_gpu_pose_authored_coefficients.py) admits only the existing mathematical shape:
 
 `D = cD · B`, `X = cX · B`, `E = B · V(t)`.
 

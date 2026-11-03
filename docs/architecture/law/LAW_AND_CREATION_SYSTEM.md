@@ -395,8 +395,10 @@ differentiation (sin/cos/exp closed; `ln` carries no shift so its derivative
 `x⁻¹` stays inside the algebra); integration holds `∫x⁻¹ = ln x` (the old
 honest gap, closed; defined on x > 0 — ln outside its domain evaluates to
 nullopt, never a guess), single sin/cos/exp/ln factors, and
-`∫ln(ax) = x·ln(ax) − x`; products needing integration by parts refuse with
-nullopt. `Expression::sinusoid(A, f, φ, bias)` is `evalTrack`'s exact form,
+`∫ln(ax) = x·ln(ax) − x`, and (2026-10-18) integration by parts for a whole
+power times one sin/cos/exp (tabular) and any power times ln(ax). What has no
+elementary antiderivative (sin(x)/x, √x·eˣ, several transcendentals of one
+variable in a term) still refuses with nullopt. `Expression::sinusoid(A, f, φ, bias)` is `evalTrack`'s exact form,
 so recorded periodic change can retire into the exact core. The Law Author's
 term editor multiplies factors in via "+f()" (kind × bound variable) with
 scale/shift edited inline.
@@ -445,7 +447,7 @@ quantifiers.
 
 Growth path: folds inside expressions (Σ as a term factor, across
 a collection — shared machinery with pair quantification), vector-valued
-expressions, expression-valued exponents, integration by parts, richer
+expressions, expression-valued exponents, richer
 symbolic simplification (sin² + cos² = 1 and kin), RPN compilation for
 engine-grade evaluation (the `geom::SdfNode` rpn precedent).
 

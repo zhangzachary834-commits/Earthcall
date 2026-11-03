@@ -348,11 +348,21 @@ void ScreenChannel::buildProperties() {
     floating("spaceDistortion", &ScreenChannel::spaceDistortion);
     boolean("sdfRangeProxyEnabled", &ScreenChannel::sdfRangeProxyEnabled);
     boolean("volumeZeroProofEnabled", &ScreenChannel::volumeZeroProofEnabled);
+    boolean("volumeRoutedTransportEnabled", &ScreenChannel::volumeRoutedTransportEnabled);
+    readOnlyInt("volumeRoutedSets", &ScreenChannel::getVolumeRoutedSets);
+    readOnlyInt("volumeRoutedPixels", &ScreenChannel::getVolumeRoutedPixels);
+    readOnlyDouble("volumeRoutedWorkingSetBytes", &ScreenChannel::getVolumeRoutedWorkingSetBytes);
+    boolean("volumeSupportCertificatesEnabled", &ScreenChannel::volumeSupportCertificatesEnabled);
+    boolean("volumeSupportCertificatesAutoEligibility", &ScreenChannel::volumeSupportCertificatesAutoEligibility);
     floating("volumeOutputErrorBudget", &ScreenChannel::volumeOutputErrorBudget);
     registerProperty(std::make_unique<PropertyRef<ScreenChannel, int>>(
         "volumeSamplesPerChord", this, &ScreenChannel::volumeSamplesPerChord));
     readOnlyInt("volumeZeroProofCellsProven", &ScreenChannel::getVolumeZeroProofCellsProven);
     readOnlyInt("volumeZeroProofCellsTotal", &ScreenChannel::getVolumeZeroProofCellsTotal);
+    readOnlyInt("volumeSupportCertificateKillers", &ScreenChannel::getVolumeSupportCertificateKillers);
+    readOnlyInt("volumeSupportCertificateEligibleMedia", &ScreenChannel::getVolumeSupportCertificateEligibleMedia);
+    readOnlyInt("volumeSupportCertificateProbeRenders", &ScreenChannel::getVolumeSupportCertificateProbeRenders);
+    readOnlyInt("volumeSupportCertificateMeasuredVetoes", &ScreenChannel::getVolumeSupportCertificateMeasuredVetoes);
     vector3("backgroundColor", &ScreenChannel::backgroundColor);
 
     // Illumination placement is first-order authored state. These names are

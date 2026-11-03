@@ -22,7 +22,7 @@ void renderPerformanceMetricsContent(Core::Engine* engine) {
     if (!engine) return;
 
     ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "Core Metrics");
-        ImGui::Text("FPS (instant): %.1f", ImGui::GetIO().Framerate);
+        ImGui::Text("FPS (60-frame avg): %.1f", ImGui::GetIO().Framerate);
 
         // 5-second rolling average FPS
         static float frameTimes[2048] = {0};

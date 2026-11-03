@@ -1133,6 +1133,8 @@ private:
     // notice they have gone stale rather than trusting that whoever edited
     // the condition remembered to say so.
     std::unordered_map<std::string, std::uint64_t> _compiledConditionRevision;
+    // derivedReadingRevision() when the terminals above were last decided.
+    std::uint64_t _compiledDerivedReadingRevision = 0;
     // Rebuild this law's terminals if its condition changed (or drop them if
     // it no longer wants any). Cheap when nothing moved: one map lookup.
     void syncReteCompilation(Law& law);

@@ -11,11 +11,17 @@ it describes the workshop, not the ontology.)*
 
 ## Build
 
+**Ray-transport feature checkout (2026-10-28):** `Earthcall-ray-transport` now has experimental routed transport defaultON, with Current fallback and default Camera speed12units/s. Rebuild/run its own `build/earthcall_webgpu`; this pass did not install `/Applications/Earthcall.app`. Use the registered `volumeRoutedTransportEnabled` property/API, not nonexistent routed CLI flags. That checkpoint used a Debug `build`; a copied `build_release` cache names the other checkout and is not qualified here. §6ey built a separate correct-checkout Release tree at `/private/tmp/earthcall-6ey-release-build`; §6ez prepares its bounded signposted Engine trace without launching it—see [review/foreground protocol](audits/GPU_RAY_TRANSPORT_6EZ_OPUS_REVIEW_AND_TRACE_PREPARATION_2026-10-29.md). [Native review, replay and remaining gates](audits/GPU_RAY_TRANSPORT_6EU_LIVE_WIRING_REVIEW_2026-10-28.md). Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T16:51:42.230711-07:00.
+
+**Main ray-transport checkout live comparison (2026-10-30):** Developer Tools (backtick) now has **Routed Volume Transport → Routed transport (off = Current renderer)**, using the existing registered `volumeRoutedTransportEnabled` property. The panel displays requested mode, 60-frame-average frame rate, Debug/Release-style assertion profile and last-render routed-set/viewport-pixel counts. This is the main checkout's baseline toggle; Sonnet's separate single-member candidate is not imported. The initial checkbox build was Debug; Zach subsequently rebuilt this exact checkout in Release and reports about 19–20 FPS in both requested modes from a similar view. Current cache/binary are verified Release. Exact-view timing, appearance and the 30 FPS milestone remain open.
+
 ### One-click WebGPU launch (macOS)
 
 Double-click `Run Earthcall.command` at the repository root. It opens Terminal, configures
 CMake with the required dependency paths below, incrementally builds `earthcall_webgpu`,
-and launches it. Keep the Terminal window open while the app runs; it displays any build
+and launches it. The helper preserves the cached CMake build profile; set
+`EARTHCALL_BUILD_TYPE=Release` or `Debug` to override it explicitly (a fresh build
+defaults to Debug). Keep the Terminal window open while the app runs; it displays any build
 or launch failure instead of closing immediately. The same action from a terminal is
 `./scripts/build.sh webgpu run`.
 
@@ -467,3 +473,49 @@ Zach commissioned a separate executable, outside the app. `./scripts/earthcall-a
 **Support-allocation diagnostics (October 15):** `volume_traversal_experiment.py` now substitutes matching `VolumeZeroProof.cpp` control objects as well as compiler/renderer sources; an old shader cannot consume a candidate grid interpreted differently. `--mode proof --proof-metadata-floats CONTROL CANDIDATE` measures direct host construction without a GPU and accounts for bitmap, optional hierarchy, metadata and bands. Optional strict image/control-regression stop gates preserve counterexamples. Native proof tests add four translated/parallel/support-edge cases and structural-edit preparation/upload diagnostics; these are correctness/diagnostic observations, not live FPS. [Three rejected variants and restored witnesses](audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md).
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+
+## Headless Linux CPU witnesses (2026-10-16)
+
+A Linux cloud container without X11 headers can configure and build CPU-only targets by switching the fetched GLFW 3.3.8 to its OSMesa (headless) platform:
+
+```sh
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DGLFW_USE_OSMESA=ON
+ninja -C build ontomath_line_restriction_test volume_ray_segment_transport_test
+```
+
+System OpenSSL/zlib/libuuid were found without the macOS `local_deps` flags. `webgpu_*` targets remain Apple-only (`EXCLUDE_FROM_ALL`), so a Linux run is never native GPU evidence. Codegen-only witnesses that link `SdfWgsl.cpp` (the named list in `CMakeLists.txt`) do build and run here. Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-16.
+
+**Disk budget (2026-10-17).** A full *Debug* default build (~840 targets, each test linking `earthcall_core` with debug info) exceeds a cloud session's disk allowance: it hit "No space left on device" at 26 GB with ~600 links still to go. For the full suite in the cloud, use a `Release` tree (`-DCMAKE_BUILD_TYPE=Release`), and keep Debug for focused targets. `earthcall_webgpu` (the app) cannot link on Linux, because it uses the vendored macOS `libwgpu_native.a` and Apple window surfaces. Pass `-k 0` so ninja continues past it, and do not count it as a regression.
+
+## Software WebGPU lane (lavapipe) — 2026-10-17
+
+Offscreen `webgpu_*` witnesses can execute Earthcall's **real WGSL pipelines** in a Linux container with no GPU, on Mesa's software Vulkan device:
+
+```sh
+apt-get update && apt-get install -y --no-install-recommends mesa-vulkan-drivers vulkan-tools
+vulkaninfo --summary | grep deviceName          # expect: llvmpipe (LLVM …)
+TAG=$(cat third_party/wgpu/wgpu-native-meta/wgpu-native-git-tag)      # v29.0.1.1 at writing
+git clone --depth 1 --branch "$TAG" --recurse-submodules --shallow-submodules \
+    https://github.com/gfx-rs/wgpu-native <scratch>/wgpu-native
+(cd <scratch>/wgpu-native && cargo build --release)                    # ~1 min; crates.io is reachable
+cmake -S . -B build -G Ninja -DGLFW_USE_OSMESA=ON \
+    -DEARTHCALL_WGPU_NATIVE_LIBRARY=<scratch>/wgpu-native/target/release/libwgpu_native.a
+ninja -C build webgpu_volume_zero_proof_test && (cd build && ./webgpu_volume_zero_proof_test)
+```
+
+Build wgpu-native from the **same tag** as the vendored headers (ABI). The GitHub *releases* download was refused by this environment's proxy (403, policy), so build from source. Targets stay `EXCLUDE_FROM_ALL`: build them by name.
+
+**What this lane proves:** functional behaviour and same-backend A/B pixel parity of the actual WGSL, on llvmpipe's arithmetic. **What it does not prove:** Metal precision or fast-math behaviour, native driver bugs, or any frame time. llvmpipe timings are CPU rasterizer timings. Label every result "lavapipe" and keep Metal verdicts for a Mac. Results observed on this lane are recorded in the [Rung 2 plan §6d](plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6d-rung-2f-native-groundwork--authored-tier-certificates-and-a-cloud-webgpu-lane-2026-10-17-fifth-pass). `webgpu_volume_support_certificates_test` (56/56, ~4 min on llvmpipe; `EARTHCALL_CERTIFICATE_TIMING=1` adds report-only ABBA timing) is the certificate lane's witness ([§6e](plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6e-rung-2f-native--the-gpu-certificate-tracer-opt-in-2026-10-17-sixth-pass)). Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX`.
+
+
+**Native ray-domain verification (2026-10-17):** [Mac record](audits/RAY_DOMAIN_TRANSPORT_METAL_VERIFICATION_2026-10-17.md) distinguishes 56/56 certificate pixels (twice), 73/73 zero-proof, 76/76 sharing, the Perlin residency abort and the overlap tribunal's black null samples. GPU witnesses require desktop access; sandbox device skips are not passes. Native surface acquisition can return `WGPUSurfaceGetCurrentTextureStatus_Occluded`; keep capture windows visible and use the Engine's synchronized recorder. Floating the isolated verification window solved this session's acquisition; screenshots are actual viewport outputs, never fabricated fallback pixels. Certificates and ordinary timestamps remain default off. **Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-17T00:18:36-07:00 (PDT).
+
+
+**§6fa profiling continuation:** [The bounded foreground native process succeeds; Instruments save times out, and documented raw `.atrc` import recovers the recording](audits/GPU_RAY_TRANSPORT_6FA_NATIVE_METAL_TRACE_2026-10-29.md). Do not require a particular console string as recording-start acknowledgment; the executed Darwin notification handshake is verified. Future runner fixes POI category and save wait, compiles/links but has not run. Raw system traces stay local; app-only normalized records and failure receipts are archived. Instrumented times are not clean economics. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T10:23:43.755139-07:00.
+
+
+**§6fc witness routing:** New packaging experiments use `scratch/probes/ray_transport_6fb_engine.py`; original§6eytoolsare restored for their hash-bound historical evidence. Exact executed Sonnet tools and source-provenance limitation are archived in [the review](audits/GPU_RAY_TRANSPORT_6FC_SONNET_REVIEW_AND_ROUTING_BOUNDARIES_2026-10-29.md). Current Release app builds after dispatch tracing becomes opt-in. No fresh native Engine execution after that host-only cleanup; no install/foreground/save change. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T11:19:46.729976-07:00.
+
+
+Prepared §6ez/§6fa trace bundles predate the coalescing/source cleanup and are historical: their identity guards must refuse the changed source tree. Prepare a fresh source-bound harness for any new run; do not force an old bundle through those guards.

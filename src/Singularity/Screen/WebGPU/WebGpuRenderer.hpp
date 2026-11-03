@@ -13,9 +13,12 @@
 
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/GpuBufferPool.hpp"
+#include "Singularity/Screen/WebGPU/VolumeRoutedTransport.hpp"
+#include <memory>
 #include "Singularity/Screen/WebGPU/GpuMeshCache.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/VolumeZeroProof.hpp"
+#include "Singularity/Screen/VolumeRayTransport.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 
 #include <webgpu/webgpu.h>
@@ -40,6 +43,16 @@ public:
     bool init(const wgpu::Device& gpu,
               WGPUTextureFormat colorFormat = WGPUTextureFormat_RGBA8Unorm);
     void shutdown();
+    // Kernel diagnostics: hardware publication inspection and refuse-only work
+    // ceiling. These are not authored state or an alternate transport policy.
+    const KernelRoutedTransport* routedTransportKernelForDiagnostics() const { return _kernelRouted.get(); }
+    // Opt-in dispatch tracing lives in KernelRoutedTransport::collectDispatchTrace; encode reads it.
+    void setRoutedCoalescedPassesForDiagnostics(bool on, bool trace=false) { if(_kernelRouted){_kernelRouted->coalescePasses=on;_kernelRouted->collectDispatchTrace=trace;} }
+    bool setRoutedRouteObserverForDiagnostics(bool on) { return _kernelRouted && _kernelRouted->enableRouteObserver(on); }
+    void resetRoutedRouteObserverForDiagnostics() { if(_kernelRouted)_kernelRouted->resetRouteHistogram(); }
+    void setRoutedSkipEmptyTilesForDiagnostics(bool on) { if(_kernelRouted)_kernelRouted->skipEmptyTiles=on&&_kernelRouted->classifySkip; }
+    void setRoutedWorkLimitForDiagnostics(uint32_t limit) { if(_kernelRouted)_kernelRouted->workLimit=std::min(limit,1024u); }
+
 
     // Offscreen frame: opens a pass rendering into an explicit `target` texture
     // view (used by tests and any render-to-texture). endFrame ends + submits it.
@@ -368,7 +381,12 @@ private:
         WGPUBindGroupLayout globalBgl = nullptr;
     };
     std::map<std::string, KernelVolumeTimePipeline> _kernelVolumeTimePipes;
+    // Kernel-only device cache, released on shutdown; viewport resources rebuild
+    // on resize. Mathematical support recipes are rederived each frame.
+    std::unique_ptr<KernelRoutedTransport> _kernelRouted;
     struct VolumePipeline {
+        bool routed = false; // compiled layout, never authored medium state
+        KernelRoutedTransport::Program* routedProgram=nullptr; // Kernel owns stable entries; reload clears pipelines before owner reset
         WGPURenderPipeline pipe = nullptr;
         WGPUBindGroupLayout globalBgl = nullptr;
         WGPUBindGroupLayout instanceBgl = nullptr;
@@ -407,7 +425,8 @@ private:
         const OntoMath::Piecewise*, const OntoMath::Piecewise*,
         const geom::SdfNode*,
         const OntoMath::Piecewise*, const OntoMath::Piecewise*, const OntoMath::Piecewise*,
-        bool>; // Kernel-only support-trimming lane; selected in flushVolumeComposite.
+        bool,  // Kernel-only support-trimming lane; selected in flushVolumeComposite.
+        bool>; // Rung 2f-native support-certificate lane (volumeSupportCertificatesEnabled).
     std::map<VolumeProgramKey, VolumeProgramMemo> _volumeProgramCache;
 
     // Kernel evaluator retention is independent of set membership and camera lane.
@@ -450,6 +469,13 @@ private:
         uint32_t zeroProofOffset = 0;
         uint32_t zeroProofDims = 0;
         uint32_t zeroProofPresent = 0;
+        // Rung 2f-native support certificates (attachVolumeSupportCertificates):
+        // header block offset in the params batch and enabled candidate count.
+        // Kernel-derived; the two reserved words keep the std430 16-byte stride.
+        uint32_t supportCertOffset = 0;
+        uint32_t supportCertCount = 0;
+        uint32_t supportClosedOffset = 0;   // Rung 2b closed-form killers: 16 floats each
+        uint32_t supportClosedCount = 0;
     };
     // Kernel-derived resident layout/bytes. No authored state is hidden here:
     // equations remain on their registered FieldNodes; camera/clocks stream.
@@ -475,6 +501,98 @@ private:
     };
     std::unordered_map<const OntoMath::Piecewise*, VolumeZeroProofMemo> _volumeZeroProofs;
     uint64_t _volumeZeroProofFrame = 0;
+    // Rung 2f-native certificate payload, same lifetime as the zero proof:
+    // density revision × box extent × clock bucket (revision 0 never gets one). `payload` is
+    // VolumeSupportKillerProgram's header block followed by its operand
+    // constants; `count` the enabled candidates (0 = nothing to attach).
+    struct VolumeSupportCertificateMemo {
+        uint64_t densityRevision = 0;
+        glm::vec3 halfExtent{0.0f};
+        double clockBucket = 0.0;   // volumeClockMagnitudeBucket(t): slack grows with |t|
+        // Eligibility inputs (Rendering::estimateVolumeSupportCertificateGain).
+        bool autoEligibility = true;
+        bool gridProof = true;
+        int samplesPerChord = 0;
+        // Rendering::volumeDensitySampleCost, which every channel's text decides
+        // through the shared-noise prelude: re-derived when any channel revision
+        // moves (contentRevision), and the estimate re-ranks only if it changed.
+        uint64_t contentRevision = 0;
+        double densitySampleCost = -1.0;
+        Rendering::VolumeSupportCertificateEstimate estimate;
+        // The enabled killers (line-form switch indices, slot order) and their
+        // lowered WGSL: only these are compiled (sdfwgsl::lowerVolumeSupportKillers
+        // `only`), so the text is part of the program structure.
+        std::vector<uint32_t> switches;
+        std::string wgsl;
+        std::vector<float> payload;
+        uint32_t count = 0;          // per-sample (reach) killers, compiled
+        uint32_t closedCount = 0;    // Rung 2b closed forms (all closed killers'), 16 floats each after the reach block
+        uint32_t closedOffset = 0;   // within payload
+        // Bumped by every rebuild and folded into the payload identity, so a
+        // re-laid payload (killer set, closed-form block) is always re-uploaded,
+        // even when the compiled switches, and so the pipeline, stay the same.
+        uint64_t generation = 0;
+        std::string refusal;
+        uint64_t lastUsedFrame = 0;
+        // Measured eligibility (auto mode; Zach 2026-10-18: "we can do hidden
+        // render", measured once per necessary interval). The estimate admits,
+        // the device may veto: hidden renders time this frame's volume pass with
+        // the medium's certificates on and off, one pair per frame in ABBA order,
+        // and the verdict holds per regime (volumeSupportCertificateRegime) until
+        // the structure above rebuilds, which clears every regime.
+        struct Measurement {
+            int verdict = -1;          // -1 unmeasured (the estimate stands), 0 veto, 1 keep
+            bool warmed = false;       // the first pair compiles and warms; it is not recorded
+            // Height of the timed band as a fraction of the footprint: the warm-up
+            // pair uses kCertificateProbeWarmBand, then it is sized once to the budget.
+            double band = 0.0;
+            std::vector<double> onMs, offMs;
+        };
+        std::map<uint64_t, Measurement> measured;
+    };
+    std::unordered_map<const OntoMath::Piecewise*, VolumeSupportCertificateMemo> _volumeSupportCertificates;
+    bool volumeSupportCertificatesActive(const Rendering::VolumeDensityBinding& medium, const glm::vec3& halfExtent);
+    // The interval a measured verdict holds for: inside or outside the box, the
+    // camera's distance octave in box radii, the viewport's pixel octave and the
+    // set's membership. Returning to a regime reuses its verdict.
+    uint64_t volumeSupportCertificateRegime(const Rendering::VolumeDensityBinding& medium,
+                                            const glm::vec3& halfExtent) const;
+    // Whether the box covers enough of the view for a timing to mean anything,
+    // and its projected rectangle in framebuffer pixels (the whole view when the
+    // box straddles the eye plane).
+    bool volumeSupportCertificateFootprint(const glm::vec3& origin, const glm::vec3& halfExtent,
+                                           glm::uvec4& pixels) const;
+    // Runs one hidden on/off pair after endFrame's submit (CPU clock around
+    // queue completion; no timestamp queries, which stay off after flicker).
+    void probeVolumeSupportCertificates();
+    const OntoMath::Piecewise* _certificateProbeMedium = nullptr;   // set only while a hidden lane encodes
+    bool _certificateProbeOn = false;
+    glm::uvec4 _certificateProbeFootprint{0u};   // x, y, w, h in pixels (hidden lanes only)
+    uint32_t _certificateProbeStripRows = 0;      // rows per timed strip
+    static constexpr std::size_t kCertificateProbePairs = 4;     // recorded pairs after the warm-up pair
+    static constexpr double kCertificateProbeKeepRatio = 0.97;    // keep only if ≥3% faster (median)
+    static constexpr double kCertificateProbeMinCoverage = 0.02;  // of the view, by projected box rectangle
+    static constexpr std::size_t kCertificateProbeMaxRegimes = 32;
+    // The hidden pair times full-resolution rays in strips through the medium's
+    // footprint, never a smaller image: warm up on 1/16 of its height, then size
+    // the strips so one pair's work (round-trip overhead subtracted) is about the
+    // budget (2026-10-18: a full-footprint pair at 2560x1440 cost up to 80 ms per
+    // frame for five frames; one centred band misjudged edge-dominated gains).
+    static constexpr double kCertificateProbeWarmBand = 1.0 / 16.0;
+    static constexpr double kCertificateProbeMinBand = 1.0 / 64.0;
+    static constexpr double kCertificateProbePairBudgetMs = 5.0;
+    static constexpr uint32_t kCertificateProbeStrips = 8;
+    // Hidden timing target. Beneath the Kernel (GPU handles; Refusal 6 exemption):
+    // its pixels are never read, only the time the pass took to fill them.
+    WGPUTexture     _certificateProbeTex  = nullptr;
+    WGPUTextureView _certificateProbeView = nullptr;
+    uint32_t _certificateProbeW = 0, _certificateProbeH = 0;
+    void attachVolumeSupportCertificates(const Rendering::VolumeDensityBinding& medium,
+                                         const glm::vec3& halfExtent,
+                                         std::vector<float>& params,
+                                         VolumeInstanceData& instance, bool appendPayload);
+    VolumeZeroProofMemo* updateVolumeZeroProofMemo(const Rendering::VolumeDensityBinding& medium,
+                                                   const glm::vec3& halfExtent);
     void attachVolumeZeroProof(const Rendering::VolumeDensityBinding& medium,
                                const glm::vec3& halfExtent,
                                std::vector<float>& params,
@@ -487,7 +605,7 @@ private:
     // the header proxy once; this map records that explicit draw count.
     std::map<const VolumePipeline*, uint32_t> _volumeDrawInstanceCounts;
     std::vector<const VolumePipeline*> _activeVolumePipelines;
-    const VolumePipeline* volumePipeline(const sdfwgsl::Program& program);
+    const VolumePipeline* volumePipeline(const sdfwgsl::Program& program, bool routed = false);
     const KernelVolumeTimePipeline* volumeTimePipeline(const std::string& wgsl,
                                                      WGPUBindGroupLayout instances);
     void flushVolumeComposite();
@@ -625,6 +743,9 @@ private:
     Singularity::Screen::WebGPU::GpuBufferPool _bufferPool;
     Singularity::Screen::WebGPU::GpuMeshCache  _meshCache;
     uint64_t _frameCount = 0;
+    // One resident volume payload write per submission: every frame and every
+    // hidden certificate-timing lane is its own encoding (KernelVolumePayload).
+    uint64_t _volumePayloadEpoch = 0;
 
     // ---- Instanced mesh batching (CPU-GPU micro-mastery Phase 4.3) ----
     // drawMesh no longer draws immediately: it groups by everything that has
