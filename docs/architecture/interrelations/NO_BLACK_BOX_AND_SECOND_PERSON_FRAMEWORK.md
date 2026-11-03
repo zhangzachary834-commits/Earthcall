@@ -1,19 +1,21 @@
 # No Black Box and the Second Person Framework
 
-**Resolving the tension between unrestricted legibility and cryptographic consent.**
+**Status:** Conceptual interrelation; Second Person visibility, representation, and conflict remain specified rather than implemented.
 
-**Status:** Conceptual interrelation.
+## Sources
 
-## Interrelated Documents
+- [No Black Box](../ontology/NO_BLACK_BOX.md)
+- [The Second Person Framework](../ourverse/SECOND_PERSON_FRAMEWORK.md)
+- [Prophetic Rete and TransferPolicy](PROPHETIC_RETE_AND_TRANSFER_POLICY.md) (conceptual proposal, not proof of implemented ACL coverage)
 
-* `../ontology/NO_BLACK_BOX.md`
-* `../ourverse/SECOND_PERSON_FRAMEWORK.md`
-* `PROPHETIC_RETE_AND_TRANSFER_POLICY.md`
+## Legibility is not authority
 
-## Thoughts on Integration and Interrelation
+No Black Box requires that a being's state be registered and legible, or explicitly identified as beneath the Kernel. This does **not** grant every actor unrestricted mutation. The distinction is between **reach** (what is addressable and inspectable) and **standing** (who may act).
 
-The "No Black Box" doctrine establishes that Earthcall's state must be completely transparent and open to direct mutation. Through mechanisms like `PropertyPath`, any part of the ontology can be legibly accessed and altered, inherently lacking the rigid actor context typical of closed systems.
+`TransferPolicy::canTransfer` currently gates set-to-set transfers; ordinary `PropertyPath` reads and writes do **not** yet pass through a general actor-aware authorization decision. Thus the presence of a PropertyPath or a TransferPolicy tier is not evidence that every unauthorized write is rejected. Do not add a competing permission system.
 
-However, this total openness creates a tension with the "Second Person Framework," which dictates that actuating a Person (and operating on their behalf) requires strict cryptographic signed consent and clear actor attribution.
+The Second Person Framework separately specifies Person-to-Person visibility, representation, and conflicting Laws. Its three mechanisms are not implemented guarantees. Constitutional Kernel guards already protect certain Person-body/location acts, but complete signed, revocable consent relations and actor attribution across every actuation channel remain unfinished. The framework distinguishes authorship, ownership, governance, dependency, and Constitution; these are not interchangeable.
 
-This philosophical interrelation—between the ability to touch any property path and the requirement to respect personal agency—is resolved by bridging structures such as `TransferPolicy`. The policy layers over the legibility of the ontology, ensuring that while the state is entirely open to inspection and addressable mutation, unauthorized actuation of a Person's governed attributes is categorically rejected. Thus, the Second Person Framework relies on the legible rules of No Black Box to prove that consent has been honored.
+## Integration proof gates
+
+A future implementation must carry authenticated actor and target identity across each relevant read, representation, and mutation channel; define the consent/revocation proof and its persistence; enforce the constitutional guards even where ordinary property writes bypass transfer policy; and test unauthorized attempts, revoked consent, and conflicting standing. Until then, transparent state enables *auditability*, not a cryptographic proof that consent was honored.
