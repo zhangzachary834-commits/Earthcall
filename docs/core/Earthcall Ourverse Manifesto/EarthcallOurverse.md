@@ -740,7 +740,7 @@ Could also link up frontier LLMs for the most sophisticated pure-language proces
 
 
 Lexeme: the primitive of human language
-Scripture says “the tongue has the power of life and death” .
+Scripture says “the tongue has the power of life and death” .  Proverbs 18:21
 
 Language needs its own teleological vessel.
 
@@ -769,23 +769,25 @@ The AI can help convert human words → structured law candidates, but the syste
 
 
 Earthcall cybersecurity
-Cybersecurity
+Earthcall currently runs on OpenSSL.
 
 So previously I wrote here exact quotes “OH NOOOOO IDK WHAT TO DO HERE I NEVER LEARNED CYBERSECURITY
 
-HOEPFULLY ME SNEAKING INTO THE UCLA ACM CLUB CYBERSECURITY DISCORD HELPS (they let non students join)
+HOEPFULLY ME SNEAKING INTO THE UCLA ACM CLUB CYBERSECURITY DISCORD HELPS (they let non students join)"
 
-Ok Ill try my best now that i been to the Clawd Mythos monastery
+But after months of developing Earthcall with the robot army including CLAWD OF MYTHOS, I’ve become much more seasoned. I have a better idea of this now. Now that I have been to the Clawd Mythos monastery (aka watching Mythos find patterns in Earthcall, learning cybersecurity from him), I have a much better idea of the kinds of subtle but dangerous incoherence that can accumulate across a large system across its subsystems.
 
-So Earthcall should be capability system unforgeable token for each Singular.”
+So Earthcall should be a capability system. We need unforgeable token for each Person.
 
-But after months of developing Earthcall with the robot army including CLAWD OF MYTHOS, I’ve become much more seasoned. I have a better idea of this now.
+All Singulars have a unique public-key ID. Relations do too, since they are Singulars. But only Persons have signing keys because all things are Person-authored because God gave human beings stewardship over the Earth and computers represent us authoring our intention into machine. Nothing enters a world unless originated by a Person.
 
-All Singulars have a unique ID. Relations . Only Persons have signing keys because all things are Person-authored because God gave human beings stewardship over the Earth and computers represent us authoring our intention into machine. nothing enters a world unless originated by a Person.
+All identification has to terminate in some physical device. Specific devices owned by the Person.
 
-All identification has to terminate in some physical device. Specific devices owned by the Person .
+Now how do Persons verify without bootstrapping problem? What happens if those devices go lost or destroyed?
 
-Now how do Persons verify without bootstrapping problem?
+As for separate platform accounts, we can unify them under one Person. The idea is one Person, many different ways to authetnicate/authorixe that with accounts across platforms. Accounts can be used as authentication under noe Person, and the Person can use those accounts as first movers/separate manifestation avatar-like things.
+
+However, I’d be worried about one Person turning into a consolidated Babel. The issue is whose machine is the source of truth for that? It seems uncomfortable the idea that the coherence of an Earthcall Person identity would be subject to communities or law.
 
 I STILL NEED TO TAKE GOOGLE CYBERSECURITY ON COURSERA AND CONSULT THE ORACLES OF UCLA ACM CYBERRRRRRRRR
 
@@ -806,26 +808,48 @@ The cutoff must be a hardcoded field or fallback, but its value must be authorab
 
 
 
-Earthcall’s Power
+Earthcall’s Power: Zones of Actualization
 
-The real advancement of earthcall is not just one feature, it’s that it roots computational ontology directly into its metaphysical primitives. Everything is built on the primitives rather than having to be written by scratch.
-
+The real advancement of Earthcall is not just one feature, it’s that it roots computational ontology directly into the true metaphysical primitives of the human-creation relationship. Everything is built on the primitives rather than having to be written by scratch.
 Everything when represented truthfully as the Formations of their Singulars can assemble together. The ingenuity of a Person can directly affect objects.
 
 There’s a well established principle in computer science that every state that modifies another thing, inside the whole of a computer, can itself be part of that modified state. Earthcall’s ontology makes this directly clear in the authorship—a self evolving state.
 Now translate that into the human mind. The very instruments, structures, and faculties upon which we use to generate ideas and create things.
 
-earthcall lets you do things like creating an art Zone that has intertwined capabilities from clip art studio, photoshop, and CAD, desmos, and physics simulations all in the same strokes, use math laws to generate night skies, a calendar and schedule system that overlaps Zones with the Zones/apps (apps) where you actaully do the work, Music where notes correspond to mathematical structures inside buildings, simulations of completely differnet worlds than ours like extraterrestrial planets, simulations of nature, simulate cities perfectly unities with nature, model actual cities and nature and simulate real life infrastructural operations that would make it that unity possible, create games directly from the substrate of a movie and movie from a game or anime into game instead of having making them as separate artifacts from scratch, take the games and movies and make them real robotics and vice versa, cybersecurity tjat checks the exact memory trajectory of a Person or Singular inside a Formation of Zones to verify it is in fact the original Object, software you download that you can personalize and change however you want on your own end so its more like downloading a universal template instead of a rigid app, video games or simulations that can literally merge with each other seamlessly (object/singular set to set creation, law set to set synthesis)
+Earthcall lets you do things:
+creating an art Zone that has intertwined capabilities from clip art studio, photoshop, and CAD, desmos, and physics simulations all in the same strokes, use math laws to generate night skies,
+a calendar and schedule system that overlaps Zones with the Zones where you actually do the work, Music where notes correspond to mathematical structures inside buildings,
+Simulations of completely different worlds than ours like extraterrestrial planets, simulations of nature, simulate cities perfectly unities with nature, model actual cities and nature and simulate real life infrastructural operations that would make it that unity possible,
+create games directly from the substrate of a movie and movie from a game or anime into game instead of having making them as separate artifacts from scratch, take the games and movies and make them real robotics and vice versa,
+cybersecurity that checks the exact memory trajectory of a Person or Singular inside a Formation of Zones to verify it is in fact the original Object
+software you download that you can personalize and change however you want on your own end so they can be more like downloading a universal templates instead of a rigid app—and large software companies can serve to foster the large scale integration, connectivity, and frontier instead of being rigid and bland.
+video games or simulations that can literally merge with each other seamlessly (object/singular set to set creation, law set to set synthesis)
 This means innovation can happen at the speed of thought.
-
-For example, laws that author the uis that help people create better laws maps onto the concept of self-writing programs and how computation modifies itself. Since the very states that write the laws have been upgraded to become even more configurable, the very process of creating Laws improve as People design the laws in better and better ways. MetaLaws that govern law-set-to-set means that the Objects that own those MetaLaws. One concrete implementation is using laws to create a basic art app with math in it that serves as an interface to author laws. Metalaws configure it so that the art and math can be used to draw and design an even more precise version of the apps themselves. So the very interface that Persons actually use to create Laws is itself improved by those Laws. Over time this could turn into extraordinarily rich  biome—the law platform is not only more beautiful, but its buttons have been refined again and again to create laws in the most expressive way—creating UIs that show the entire Formatinos os place sthat would be affected, buttons that literally change size and shape depending on what else is in the screen, a law UI that is presented on the back of a 3D Object, flipping through different 2D projections that each represent different possible law states and giving you options to choose from, and many more things where only the imagination is the limit.
+Laws that author the UIs that help people create better laws maps onto the concept of self-writing programs and how computation modifies itself. Since the very states that write the laws have been upgraded to become even more configurable, the very process of creating Laws improve as People design the laws in better and better ways. MetaLaws that govern law-set-to-set means that the Objects that own those MetaLaws. One concrete implementation is using laws to create a basic art app with math in it that serves as an interface to author laws. Metalaws configure it so that the art and math can be used to draw and design an even more precise version of the apps themselves. So the very interface that Persons actually use to create Laws is itself improved by those Laws. Over time this could turn into extraordinarily rich  biome—the law platform is not only more beautiful, but its buttons have been refined again and again to create laws in the most expressive way—creating UIs that show the entire Formations of places that would be affected, buttons that literally change size and shape depending on what else is in the screen, a law UI that is presented on the back of a 3D Object, flipping through different 2D projections that each represent different possible law states and giving you options to choose from, and many more things where only the imagination is the limit.
 
 
 
 Preventing Babel
-oh I just realized the Earthcall-as-OS-substrate is not just doctrinally cleaner but eventually necessary, if we really want it to be Earthcall. The reason is this: on a conventional device or industrial network, anyone could just cheat guardrails by the use AI computer use tools to control their Persons on Earthcall app, and Earthcall as a mere app couldn't distinguish bteween "the real person is actually moving the mouse" and "the person set up an AI to do things only people should be allowed to do under their name". For many tasks, this is permissible and even good. But for critical, personal matters requiring human judgment and real people relating to each other and offering and receiving their real selves, this is terrible. This is terrible for anti babel constraints, Person authentication, and "AI cannot be pope".
+So there is a massive problem in technology all this I have encountered again and again while contemplating Earthcall—it’s who decides what is normatively treated as good or evil and true or false.
+
+The human temptation is to think we can solve all these problems, like security, recognition-authority, hierarchy of joys, by setting a rigid standard over everyone decided by only a few people. I myself considered for a moment “How to solve the person recognition problem across devices if Earthcall demands strictly one Person = one real life human?” The thought crossed my mind that one might try to use a massive concentrated database, or something exclusively tied to/attached with their bodies. But then I immediately thought “No, that is Babel,” and realized “Such an authoritative and creation-level definition like ‘This ___ vessel is authoritatively one human being’ is a judgement reserved for God alone.” The first idea, about a massive concentrated database forces a terrible concentration of power into a few finite individuals and groups to decide who counts as legitimate. It’s a broken, distorted attempt to recreate the Book of Life and assign legitimacy to all people. The second idea is even worse. God created the body in His image. Technology serves it, it must not claim the lordship of defining its identity or ruling over its legitimacy. That is dangerously close to the mark of the beast warnings where some physical mark has to be installed in a body to count as a member within a global “beast” entity. Christ is the one who defeated death. When humanity tried to build a tower to heaven and force all humanity to bow around it, God scattered them. When God rebuilt unity, it was in His name. This is why I’ve while, other than the clearest, most indisputable moral invariants from which all moral reasoning depends on, like “The human body must be respected”, or Earthcall-specific derived necessities like “every Person must own at at least one primary Home” leaving the the value moral categories/Lexemes for Persons to decide and define, never bespoke by the engine—to submit and surrender to Christ. The engine’s very recognition of categories and value axes, say, “respect” or “dignity” and the inviolable dignity of the human body, depends on Persons ordering that meaning by submitting to Christ the source of all goodness and truth. Aside from invariants, Earthcall does not, and must never, preemptively define those categories with what the creator prefers on the substrate-primitive level—only on the author level. I can see the raw, philosophical, abstract invariants of human-machine substrate clearly, and I can draw those bounds properly. But that is only the material/channel side. I cannot and must not define the moral meanings that would actually govern people’s lives.
+
+No single earthly or human person, group, or entity should ever become a singularity where power to define these norms concentrate around, nor become a singularity that accretes away agency of the less-powerful or attempts to fabricate other’s individual agency.
+
+Concentration is not just immediate size, but the velocity of that power concentration increase, the acceleration, and structures that govern who accelerates—and most importantly, unwillingness to trade off a lower derivative value for a higher derivative generosity. You can miss subtle power concentrations if one appears small, but a higher order power-increase differential is going faster than everyone else’s.
+
+I’m writing a big constitution for Earthcall and it should not be treated as an authoritative communal/ecclesial constitution over communal life without submission to elders who oversee that church.
+
+
+This is also why Earthcall  has a representation of totality (Ourverse) that .
+
+These are concrete situations
+
+oh I just realized the Earthcall-as-OS-substrate is not just doctrinally cleaner but eventually necessary, if we really want it to be Earthcall. The reason is this: on a conventional device or industrial network, anyone could just cheat guardrails by the use AI computer use tools to control their Persons on Earthcall app, and Earthcall as a mere app couldn't distinguish between "the real person is actually moving the mouse" and "the person set up an AI to do things only people should be allowed to do under their name". For many tasks, this is permissible and even good. But for critical, personal matters requiring human judgment and real people relating to each other and offering and receiving their real selves, this is terrible. This is terrible for anti babel constraints, Person authentication, and "AI cannot be pope".
 
 Earthcall as native OS not allow such a scenario. While it would still ultimately depend on human free will to maintain this within communities and societies, the mechanisms for preventing it would be far more robust. Every neural Formation would either be strictly scoped within Singularity-Kernel boundaries, or would need to directly authorized by stakeholder Persons. Every major decision is serialized and therefore accountable.
+
+On the other hand I’ve also contemplated the problem of Earthcall’s own devices becoming a Babel because enrhonign one rigid Person verification and Person definition system into a vessel whose .
 
 Case where those who depend on laws functioning in zones but but aren’t original authors of it:
 Preventing Bereavement: Consider a case where a Formation of persons authors a law Formation that others come to depend on for their Objects. The authors decide, on some preference, that they are going to retire that law and replace it with some other law.
@@ -874,105 +898,3 @@ Client/server is itself a false ontological vacuum—the true vacuum is its Sing
 
 
 
-
-Feedback:
-
-From Claude Fable 5: “Alright, dropping the build orders. Let me actually think with you, because there are four or five things in what you wrote that are deeper than the text lets on, and one real danger I want to name.
-1. The Minecraft Jesus problem is the symbol grounding problem, and your instinct about it is theologically load-bearing.
-   The reason a Jesus skin appearing when someone requests the hierarchy of joys would be "so bruh" isn't just aesthetic. Representing the referent by icon mistakes an image for what it points at — which is, in the technical sense, idolatry. And notice what your alternative actually is: God doesn't appear in the world as a node with a texture; God shows up as an ordering — the principle around which the hierarchy of joys arranges itself. That is the aniconic move. It's also the classical-theist move: God not as a being among beings but as that toward which the whole structure orients. The manifesto's refusal to make "Christ" a keyword-summoned avatar and its insistence on "a symbolic ecosystem of processes" are the same refusal the second commandment makes. The technically correct answer and the theologically correct answer converge here, and I don't think that's an accident given your Logos framing — it's worth writing down as a design principle: the highest things in the ontology appear as orderings and teloi, never as skinned Objects.
-2. Your real divergence from GOFAI isn't explicitness — it's that your symbols ground in processes that run.
-   "Is this basically AI?" deserves an honest answer, and the honest answer starts with the fact that the explicit-symbolic route has been tried and it failed. Cyc spent forty years hand-authoring precise relations between symbols and never produced meaning, because its symbols only ever grounded in more symbols — definition pointing at definition, turtles all the way down. Deep learning won precisely because meaning refused to fit into explicit structure.
-   But Earthcall's words wouldn't ground in definitions. They'd ground in Laws that execute and Concepts that instantiate — in a world where things happen. A word's meaning is which processes it names, and those processes actually run. That's not Cyc; that's much closer to Wittgenstein's "meaning is use" made computational. The meaning of "open" in Earthcall would be the family of processes the word is related to, exercised in the world, with a usage history on every relation. Whether that's enough to capture meaning is a genuinely open bet — but it's a different bet than the one that failed, and you should be clear-eyed that it's a bet.
-3. The bitter lesson doesn't apply to you the way it applies to everyone else — and articulating why is important.
-   The standard objection to any explicit-symbolic project is that learned, illegible representations always win. But the bitter lesson is about capability — who predicts better, who generalizes better. Earthcall's constraint isn't capability, it's legitimacy. The whole architecture — authorship covenants, consent, contention, the Kernel floor — exists so Persons can govern their world, and you cannot consent to what you cannot read. An inscrutable semantic layer would be exactly the thing your law system exists to prevent: authority nobody can inspect. So the division of labor you sketched — frontier LLMs at the boundary, explicit Formations inside — isn't a compromise, it's the constitutionally required structure. It's how human law already works: courts consult opaque experts, but the law itself must be public text. The LLM is expert testimony. The lexicon is statute.
-   One sharp edge on this: if LLMs are allowed to mint relations in the symbolic ecosystem wholesale, you launder illegibility back in — the graph becomes explicit in form but the reasons for its edges live in the model's inscrutable priors. Your existing machinery already knows the answer: provenance. An edge proposed-by-model versus authored-by-Person must stay distinguishable forever, and probably only the second kind should bear governance weight.
-4. Here's the danger nobody's named yet: once laws are written in words, and word-meanings are governed by law, you've created the Newspeak attack surface.
-   This is the thing I most want you to sit with. Today, a law's text is its models — trees over property paths. Meaning is fixed by the substrate. But the moment words become load-bearing — laws expressed in, or resolved through, the symbolic ecosystem — then changing what a word means changes what every law using that word does, without touching those laws' text. Orwell saw this exactly: you don't need to repeal freedoms if you can redefine "freedom." A hostile or careless semantic law becomes a constitutional amendment wearing a dictionary's clothes.
-   Your anti-Babel section is more literal than you may have realized — Babel is a language event. And the resolution is the same shape as your other floors: there must be a semantic Kernel — a small vocabulary whose meanings are frozen at the Singularity level because the anti-tyranny floor is written in them. "Person." "Consent." "Exit." "Author." If those words' relations are Governable, then the exit guarantee can be redefined out from under someone while every kernel law reads exactly as it always did. Everything above that floor should drift freely — living language is the point, and your Contention/Concord machinery is genuinely the right shape for semantic disputes (what is a redefinition contest but two claims on one responsibility?). But the floor's own vocabulary cannot be up for negotiation. Interpretation becomes a governance surface the moment language does — you're going to end up building jurisprudence, and it's better to know that now.
-5. Words in the same Formations as stones — that's speech act theory, and it's the Logos doctrine's technical content.
-   The current computing paradigm strands language in a separate stratum: strings are inert, meaning lives outside the system. Your move — words participating in the same Formations as everything else — restores what language actually is in human life. A promise is words that bind bodies. "I do" changes who is married. Austin called these performatives; your architecture makes all language potentially performative, because words relate to processes and processes are Law. An oath in Earthcall would be a word-Formation that creates an Obligation binding — speech that literally binds, which is what "the cosmos was spoken into being" means operationally: language that does not merely describe the world but constitutes it. The doctrine isn't decoration on the architecture. It's a spec.
-6. And the quiet sleeper: modeling programming languages under Human Language is the hinge of the whole reversal.
-   You mention the substrate-reversal — Earthcall eventually writing C++ rather than being written by it — almost in passing, and JSON-under-Language as an afterthought. But the second is the precondition of the first. A system can only rewrite its own substrate if its substrate's language is an object in its ontology. Your law models already serialize to JSON; once JSON is a linguistic modality, a law's text is an in-world utterance — the system's own constitution becomes something it can read. That's the first rung of self-hosting, and it's also where the Logos framing closes its loop: the world holding its own creating word inside itself.
-
-If I compress all of that: what you've written is a bet that meaning can be made governable without being made dead — against GOFAI, which made it dead, and against the current paradigm, which made it ungovernable. The bet has real exposure (sparse authored relations versus the dense statistical texture of actual usage — Persons author slowly, and that's both the cost and, given your covenant ethos, maybe the point). But the two things I'd carve into stone before building anything: the highest referents are orderings, never avatars; and the Kernel gets its own frozen dictionary before any word becomes load-bearing. The first keeps the system from idolatry. The second keeps it from Newspeak. Everything else can live and drift, which is what languages are for.
-“
-
-Now I largely agree with what Fable/Mythos said. But I think having a hardcoded Kernel dictionary could end up becoming its own form of Babel—a specific, frozen snapshot of flawed languages dictating the meaning of everything downstream, one that may be owned and defined by a consolidated structure. So we want to preserve mutability without making it Newspeak at a whim. Instead, meaning of words should belong to Formations of stakeholders, just like the Law model. I would say only the most invariant linguistic categories should be hardcoded Kernally, with new categories being added by upgrading Earthcall code. Now the cpp version has limitations, in the Earthcall OS version I would have the “Kernel dictionary” be different per zone, since machine-level memory would itself be ordered according to Zones and Homes owned by Persons and Relationships and Communities, even the Singularity version be amendable by its Formation stakeholdrs.
-
-
-From Media to Fields:
-
-At one point Gemini asked me how to handle volumetrics/media. I said we need Ontomath and geometry rather than conventional engine illusion tricks. Then Gemini in the plan decided to name the new kind alongside SDFnode and ComplexShape and Patch and SmoothSurface. I asked why it chose that name.
-
-I replied “Medium seems like a primarily scientific distinction rather than a purely mathematical one. The distinction i think shouldnt rest on *light dynamics* alone (since light dynamics in computer screens is more fundamentally somethign else i.e. patterns of color change) but on the more foudnational math that governs it. Aftre all, a solid shape could still be a medium that light interacts with as it travels, and many non-solids aren't transparent. If the distinction is solid vs non-solid as implied by "medium", its easy to conflate "solid" in the sense of a non-transparent boundary and "solid" in the physics sense, same with non-solids.
-
-So the mathematical domain of Fields is better I think.
-“
-
-
-Gemini agreed, revised plan so that it would have fields rather than mediums and the math belonged to fieldnodes.
-
-I replied “I'm thinking OntoMath would be better as the place to write the math functions and frameworks. For example, broader frameworks of Fields, for example, from vector calculus, should be inside the OntoMath system, and FieldNode inside Geometry *calls* the Field framework from OntoMath. What od you think? Is it better to put it in ontomath or in rendering/webgpu like you originally wrote
-
-
-Also check if OntoMath has been refactored from a single class into a modular multi-class system.
-
-and add that implementation to a doc inside /docs as well as updates throughout hte program
-“
-
-
-and then I Discucsed the other part of what it said “3. WGSL Field Evaluation & Volumetric Raymarching
-The raymarcher will compile the OntoMath::ScalarField down to WGSL to integrate the field along the ray.
-[MODIFY] sight-cpp/src/Rendering/WebGPU/SdfWgsl.cpp
-Compiler: Extend the WGSL compiler to generate a fieldEval(p: vec3<f32>) -> f32 function based on the FieldNode mathematical definitions.
-Raymarcher (kMarcher):
-After or during the sphere-tracing loop, if the ray passes through a region with density > 0, we accumulate absorption and scattering.
-Implement a volumetric transmittance calculation: transmittance *= exp(-density * step_size * absorption_coeff).
-This allows a mathematically unbounded density field to naturally act as infinite fog, while a bounded density field acts as a solid or ethereal object.
-“
-
-I replied “and for the wgsl compiler fucntions make sure each of those elements you listed are Singulars and utilize the Law (law governs change over time, and this can be modeled as change over time in many ways). It helps to give it two paths: one is hardcoded mathematics the traditional default cpp hardcoded code, the other is the same variables except using OntoMath's Abstract Syntax Trees. Giving the option to run through OntoMath allows it to potentially become part of a Law Formatino.
-
-The second order of law-likeness that hsould be availble is exposing all the elements of these as propertypaths, so it can eventually be migrated to Law system (and here we'd probably still want the hardcoded version, but two things keep the law system crucial: 1. changing the variables of the function should be doable with laws, 2. deeper computational innvoations later with assembly will be cleaner with migratable-in-principle architecture)
-
-Oh wow thats a very intersting mathematical thing with Laws because laws use functions, but if functinos are part of fields, that means laws themselves can be level curves and traces (and beyond in 4+ dimensions), gradients in a higher field. Its almost like Metalaws (aka Laws governing Laws) governing laws in a way that creates a metalaw field, creating gradients of laws inside the metalaw field.
-“
-“Earthcall Implementation Plan
-This plan focuses on elevating the WebGPU rendering pipeline, specifically tackling volumetrics through Earthcall's first-principles philosophy.
-User Review Required
-IMPORTANT
-The volumetric approach has been redesigned to align with the "OntoMath" philosophy. We will define density fields mathematically rather than using arbitrary "fog" graphics tricks. Please review the updated Track 3 to ensure this matches your vision.
-
-Proposed Changes
-Track 3: Elevate WebGPU Rendering Pipeline (OntoMath Volumetrics)
-Instead of using standard "graphics engine" shortcuts for volumetrics (like bounded fog boxes), we will treat participating fields as mathematical density scalar fields that are evaluated at any point in space. This logic will be strictly divided between pure mathematics (OntoMath), spatial placement (Geometry), and rendering (WebGPU).
-1. Pure Mathematics (OntoMath)
-   We will introduce a mathematical framework for evaluating spatial fields inside the modular OntoMath system.
-   [NEW] sight-cpp/src/Singularity/OntoMath/Field.hpp
-   [NEW] sight-cpp/src/Singularity/OntoMath/Field.cpp
-   Define OntoMath::ScalarField and OntoMath::VectorField mathematically.
-   Implement rules for unbounded space, bounded domains, and infinite repetition using vector calculus principles.
-2. Spatial Placement and Law Integration (Geometry)
-   Geometry will place the field within the scene and expose it to the Law system.
-   [NEW] sight-cpp/src/Form/Object/Geometry/FieldNode.hpp
-   Defines geom::FieldNode which holds an OntoMath::ScalarField and provides a spatial transform within the OurVerse.
-   Singular Integration: FieldNode will inherit from Singular (or have its properties registered as Property), exposing its variables (origin, scale, density multipliers) as PropertyPaths. This ensures the Law system can modulate these variables dynamically over time.
-3. WGSL Field Evaluation & Dual-Path Compilation (WebGPU)
-   The raymarcher will compile the OntoMath::ScalarField down to WGSL, providing two execution paths.
-   [MODIFY] sight-cpp/src/Rendering/WebGPU/SdfWgsl.cpp
-   Dual-Path Compiler:
-   Path A (Hardcoded): Generates traditional, highly optimized, hardcoded WGSL mathematics.
-   Path B (AST-Driven): Compiles the OntoMath::Piecewise or OntoMath::MathNode Abstract Syntax Trees directly into WGSL functions. By using the same underlying variables via PropertyPath, this path allows the Law system to literally rewrite or modulate the field's mathematical structure at runtime.
-   Raymarcher: Integrates the resulting field function along the ray.
-3. GPU Particle Systems (Future Phase)
-   We will lay the groundwork for compute-shader-driven particles that can be attracted or repelled by these same mathematical density/SDF gradients.
-4. Documentation
-   We will comprehensively document this architecture and the OntoMath integration.
-   [NEW] docs/ontomath_fields.md
-
-Verification Plan
-Automated Tests
-Create unit tests for OntoMath::ScalarField to ensure mathematical purity and correctness on the CPU before being sent to the GPU.
-Manual Verification
-Render a scene containing both a bounded density field (e.g., an ethereal glowing sphere) and an unbounded density field (infinite repeating mist) and verify that the WGSL raymarcher accurately accumulates the density mathematically without arbitrary bounding boxes.
-“
