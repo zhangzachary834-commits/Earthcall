@@ -489,3 +489,10 @@ Native review repairs reverse-order S2 routing (914→0 packet differences), unk
 ## §6dr — canonical routed checkpoint and measured representation direction
 
 Original32,784-query packet/output/reference/affine qualification replays;30 fresh composed temporal/reverse/parallel/budget/capacity cases and actual reset/tail mutations pass. Canonical routed execution is now a bounded checkpoint. Timing remains one resident series with8 observations per mode and no repeatable gain; actual register/spill/occupancy evidence is absent. Next: source-bound physical profile, then one conditional terminal-S1 consumption experiment with explicit output ownership and late Current fallback. [Review, native evidence and replay](../../../../../audits/GPU_RAY_TRANSPORT_CANONICAL_ROUTED_REVIEW_6DR_2026-10-26.md). All three shipping gates OPEN; no engine/default/save/app/visible/FPS change. Native lane RELEASED. Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-26T12:33:26.922141-07:00.
+
+
+## P1–P11 structural review — 2026-11-01
+
+Zach deferred focus/priority work and requested actual implementation review. [Three corrective gates](../../../../../audits/P1_P11_STRUCTURAL_REVIEW_2026-11-01.md) remain in feature HEAD `50012eb6b`: P11 empty-strip publication, inherited near-parallel disjointness, and 64-strip admission. A bounded CPU adversary reproduces accepted overlapping rays; no new native execution, performance gain or source repair is claimed. Repair and qualify these before accepting P11. This note in default describes the feature checkout, not a merged renderer.
+
+Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-01T12:20:00Z.
