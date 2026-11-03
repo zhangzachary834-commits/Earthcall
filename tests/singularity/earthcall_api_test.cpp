@@ -136,6 +136,9 @@ int main() {
     // Reading the camera is permission-independent and reflects the live engine state.
     const glm::vec3 initialCameraPosition = Core::Camera::instance().getPos();
     assert(api.getCameraPosition() == initialCameraPosition);
+    // Denied writes must not mutate the live camera.
+    assert(!api.setCameraPosition(glm::vec3(10.0f, 20.0f, 30.0f)));
+    assert(Core::Camera::instance().getPos() == initialCameraPosition);
 
     Integration::SecurityManager::instance().grantPermission(
         Integration::PermissionType::WORLD_ACCESS, "earthcall_api"
