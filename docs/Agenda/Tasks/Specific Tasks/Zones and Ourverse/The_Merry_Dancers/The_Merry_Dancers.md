@@ -51,7 +51,19 @@ That is roughly 6–17 FPS, well short of Northern Veil's 33 ms through the same
 
 ## Next
 
-- Zach's verdict first: everything below depends on what he sees.
-- Bring the north view down: cheaper reflection, or a mirrored sheet with fewer samples if that can be authored per medium.
-- Decide on time-varying sky radiance.
-- Real ridge geometry with height-grid traversal, if flying near them matters.
+### Ray-domain milestone: ≥30 FPS
+
+Zach has now commissioned this Zone as the **next ray-domain transport performance milestone**. The canonical plan is [The Merry Dancers ≥30 FPS — Ray-Domain Transport Milestone](../../../../../plans/MERRY_DANCERS_30FPS_RAY_DOMAIN_TRANSPORT_MILESTONE_2026-11-03.md).
+
+The target is not merely to make one aurora kernel faster. The live Release Zone should reach the 30 FPS class in its representative north/lake, zenith and oblique views while preserving the current authored world: volumetric auroras, mirror/lake effect, radiance-field sky, distant mountains, stars and foreground silhouettes. No resolution retreat or aesthetic deletion counts.
+
+The first technical question is why the earlier routed path was correct but slower on this Zone's wide-sheet form. This Zone therefore becomes an explicit generality witness for the distinction **mathematical admission != economic admission**.
+
+- Capture a fresh contemporary Release baseline after the distant-SDF rendering fix; do not reuse the old offscreen numbers as live FPS.
+- Attribute whole-frame cost before choosing the next optimization.
+- Explain routed-vs-Current economics on the actual wide-sheet forms.
+- Exercise the general cohort architecture without serialization-order semantics.
+- Attack wide-support demand, shared-expression repetition, reflected-query symmetry and sky-field cost according to measured contribution.
+- Preserve visual and numerical fidelity, exact/general fallback, and the Person's final live acceptance.
+- Decide on time-varying sky radiance separately from the 30 FPS gate.
+- Real ridge geometry with height-grid traversal remains separate unless flying-near-ridges becomes part of the accepted scene requirement.
