@@ -140,7 +140,12 @@ void seedMissingCheckoutIdentities(const std::filesystem::path& home,
                  fname.rfind("studio.", 0) == 0 ||
                  fname.rfind("law-studio-", 0) == 0 ||
                  fname == "synthesis_studio.json" ||
-                 fname == "synthesis_studio_living.json");
+                 fname == "synthesis_studio_living.json" ||
+                 fname == "Northern Veil" ||
+                 fname.rfind("northern_veil.", 0) == 0 ||
+                 fname.rfind("northern.veil.", 0) == 0 ||
+                 fname.rfind("law-northern-veil-", 0) == 0 ||
+                 fname == "northern_veil.json");
             if (fs::exists(dst, ec)) {
                 if (isSyncedShowcase) {
                     fs::remove_all(dst, ec);
