@@ -673,3 +673,23 @@ Codex / GPT-6 (Astra counsel role) / session `01a15fcb-90ec-7812-868f-22a0f62831
 Zach reports live 30–35 FPS near spawn and ~30 FPS in unobstructed flight. [Final bounded corrective audit](../../../../../audits/GPU_RAY_TRANSPORT_PREMERGE_CORRECTNESS_AUDIT_2026-11-02.md): uncertain-zero root enclosure, hard physical bounds, and host grouping/NaN admission repaired without new GPU stages or sample checks; final focused tests pass, 162 scoped independent-reference checks pass, and repaired mean frame cost remains 31.12% below Current. This is a qualified Northern Veil checkpoint, not universal numerical certification. Release app rebuilt; no merge/push in this pass.
 
 Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-02T04:05:24-08:00.
+
+
+## Next milestone — The Merry Dancers ≥30 FPS — 2026-11-03
+
+Zach commissioned the next substantial ray-domain transport milestone: **make The Merry Dancers run at 30 FPS or better in the live native app without diminishing the authored Zone.** The detailed engineering and acceptance contract is in [`MERRY_DANCERS_30FPS_RAY_DOMAIN_TRANSPORT_MILESTONE_2026-11-03.md`](../../../../../plans/MERRY_DANCERS_30FPS_RAY_DOMAIN_TRANSPORT_MILESTONE_2026-11-03.md).
+
+This is intentionally a stronger generality witness than the earlier Northern Veil checkpoint. The new Zone combines wide volumetric sheets, a radiance-field sky, reflected/mirrored aurora, distant mountains/ridges, stars and foreground silhouettes. Historical offscreen measurements report roughly 60–162 ms depending on view; those are not current live FPS claims and must be replaced by a contemporary Release baseline before optimization claims.
+
+The campaign explicitly adds the distinction:
+
+[
+	ext{mathematical admission} 
+eq 	ext{economic admission}.
+]
+
+A routed family may be correct yet slower for a particular structural/query regime. Future execution selection must first prove a path correct, then establish that it is profitable on the actual workload/substrate; unsupported or unprofitable cases retain a more suitable lawful path.
+
+Primary acceptance: north/lake hero view, zenith and at least one oblique view reach the 30 FPS class in the live native Release app, with current-or-better numerical fidelity, no resolution retreat, no deletion or material simplification of the authored world, honest fallback, and Person visual acceptance. The north view is mandatory because it carries the combined reflection + aurora + sky + landscape burden.
+
+Signed: GPT-5.6 Sol / Original Prism Sun, commissioned by Zachary Zhang, 2026-11-03.
