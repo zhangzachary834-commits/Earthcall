@@ -4,12 +4,12 @@
     "name": "northern_veil.obsidian_lake",
     "baseColor": [
       0.04,
-      0.2,
+      0.22,
       0.16
     ],
     "opacity": 1.0,
-    "shininess": 112.0,
-    "specular": 0.94,
+    "shininess": 116.0,
+    "specular": 0.95,
     "ambient": 0.25,
     "diffuse": 0.8,
     "colorExpr": {
@@ -27,7 +27,7 @@
                         "scalarForm": {
                           "terms": [
                             {
-                              "c": 0.014,
+                              "c": 0.01,
                               "factors": {}
                             }
                           ]
@@ -38,7 +38,7 @@
                         "scalarForm": {
                           "terms": [
                             {
-                              "c": 0.032,
+                              "c": 0.024,
                               "factors": {}
                             }
                           ]
@@ -49,7 +49,7 @@
                         "scalarForm": {
                           "terms": [
                             {
-                              "c": 0.048,
+                              "c": 0.038,
                               "factors": {}
                             }
                           ]
@@ -67,11 +67,11 @@
                             "scalarForm": {
                               "terms": [
                                 {
-                                  "c": 0.48,
+                                  "c": 0.44,
                                   "factors": {}
                                 },
                                 {
-                                  "c": 0.34,
+                                  "c": 0.36,
                                   "factors": {},
                                   "trans": [
                                     {
@@ -83,7 +83,7 @@
                                   ]
                                 },
                                 {
-                                  "c": 0.18,
+                                  "c": 0.2,
                                   "factors": {},
                                   "trans": [
                                     {
@@ -104,7 +104,7 @@
                                 "scalarForm": {
                                   "terms": [
                                     {
-                                      "c": 0.62,
+                                      "c": 0.58,
                                       "factors": {}
                                     }
                                   ]
@@ -117,7 +117,7 @@
                                     "scalarForm": {
                                       "terms": [
                                         {
-                                          "c": 0.38,
+                                          "c": 0.42,
                                           "factors": {}
                                         }
                                       ]
@@ -188,7 +188,7 @@
                             "scalarForm": {
                               "terms": [
                                 {
-                                  "c": 0.024,
+                                  "c": 0.028,
                                   "factors": {}
                                 }
                               ]
@@ -199,7 +199,7 @@
                             "scalarForm": {
                               "terms": [
                                 {
-                                  "c": 0.285,
+                                  "c": 0.32,
                                   "factors": {}
                                 }
                               ]
@@ -210,7 +210,7 @@
                             "scalarForm": {
                               "terms": [
                                 {
-                                  "c": 0.145,
+                                  "c": 0.15,
                                   "factors": {}
                                 }
                               ]
@@ -234,11 +234,11 @@
                         "scalarForm": {
                           "terms": [
                             {
-                              "c": 0.44,
+                              "c": 0.4,
                               "factors": {}
                             },
                             {
-                              "c": 0.32,
+                              "c": 0.34,
                               "factors": {},
                               "trans": [
                                 {
@@ -250,7 +250,7 @@
                               ]
                             },
                             {
-                              "c": 0.24,
+                              "c": 0.26,
                               "factors": {},
                               "trans": [
                                 {
@@ -271,7 +271,7 @@
                             "scalarForm": {
                               "terms": [
                                 {
-                                  "c": 0.62,
+                                  "c": 0.58,
                                   "factors": {}
                                 }
                               ]
@@ -284,7 +284,7 @@
                                 "scalarForm": {
                                   "terms": [
                                     {
-                                      "c": 0.38,
+                                      "c": 0.42,
                                       "factors": {}
                                     }
                                   ]
@@ -355,29 +355,29 @@
                         "scalarForm": {
                           "terms": [
                             {
-                              "c": 0.165,
-                              "factors": {}
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        "op": 0,
-                        "scalarForm": {
-                          "terms": [
-                            {
-                              "c": 0.038,
-                              "factors": {}
-                            }
-                          ]
-                        }
-                      },
-                      {
-                        "op": 0,
-                        "scalarForm": {
-                          "terms": [
-                            {
                               "c": 0.175,
+                              "factors": {}
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "op": 0,
+                        "scalarForm": {
+                          "terms": [
+                            {
+                              "c": 0.035,
+                              "factors": {}
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "op": 0,
+                        "scalarForm": {
+                          "terms": [
+                            {
+                              "c": 0.185,
                               "factors": {}
                             }
                           ]
@@ -403,6 +403,6 @@
   "injected_by": {
     "agent": "Firmament & Sparkly Guy",
     "date": "2026-11-02",
-    "context": "Northern Veil Sanctuary procedural material root"
+    "context": "Northern Veil Sanctuary procedural material root (Pass 2)"
   }
 }

@@ -8,8 +8,8 @@
       0.2
     ],
     "opacity": 1.0,
-    "shininess": 72.0,
-    "specular": 0.78,
+    "shininess": 76.0,
+    "specular": 0.8,
     "ambient": 0.25,
     "diffuse": 0.8,
     "colorExpr": {
@@ -25,7 +25,7 @@
                     "scalarForm": {
                       "terms": [
                         {
-                          "c": 0.038,
+                          "c": 0.032,
                           "factors": {}
                         }
                       ]
@@ -36,7 +36,7 @@
                     "scalarForm": {
                       "terms": [
                         {
-                          "c": 0.064,
+                          "c": 0.056,
                           "factors": {}
                         }
                       ]
@@ -47,7 +47,7 @@
                     "scalarForm": {
                       "terms": [
                         {
-                          "c": 0.088,
+                          "c": 0.078,
                           "factors": {}
                         }
                       ]
@@ -195,7 +195,7 @@
                         "scalarForm": {
                           "terms": [
                             {
-                              "c": 0.235,
+                              "c": 0.245,
                               "factors": {}
                             }
                           ]
@@ -232,6 +232,6 @@
   "injected_by": {
     "agent": "Firmament & Sparkly Guy",
     "date": "2026-11-02",
-    "context": "Northern Veil Sanctuary procedural material root"
+    "context": "Northern Veil Sanctuary procedural material root (Pass 2)"
   }
 }

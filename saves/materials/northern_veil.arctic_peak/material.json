@@ -3,13 +3,13 @@
   "material": {
     "name": "northern_veil.arctic_peak",
     "baseColor": [
-      0.06,
+      0.05,
       0.16,
       0.18
     ],
     "opacity": 1.0,
-    "shininess": 44.0,
-    "specular": 0.6,
+    "shininess": 48.0,
+    "specular": 0.62,
     "ambient": 0.25,
     "diffuse": 0.8,
     "colorExpr": {
@@ -25,7 +25,7 @@
                     "scalarForm": {
                       "terms": [
                         {
-                          "c": 0.016,
+                          "c": 0.012,
                           "factors": {}
                         }
                       ]
@@ -36,7 +36,7 @@
                     "scalarForm": {
                       "terms": [
                         {
-                          "c": 0.024,
+                          "c": 0.018,
                           "factors": {}
                         }
                       ]
@@ -47,7 +47,7 @@
                     "scalarForm": {
                       "terms": [
                         {
-                          "c": 0.036,
+                          "c": 0.028,
                           "factors": {}
                         }
                       ]
@@ -67,7 +67,7 @@
                             "scalarForm": {
                               "terms": [
                                 {
-                                  "c": 0.18,
+                                  "c": 0.16,
                                   "factors": {}
                                 },
                                 {
@@ -111,7 +111,7 @@
                             "scalarForm": {
                               "terms": [
                                 {
-                                  "c": 0.55,
+                                  "c": 0.52,
                                   "factors": {}
                                 }
                               ]
@@ -124,7 +124,7 @@
                                 "scalarForm": {
                                   "terms": [
                                     {
-                                      "c": 0.45,
+                                      "c": 0.48,
                                       "factors": {}
                                     }
                                   ]
@@ -208,7 +208,7 @@
                             "scalarForm": {
                               "terms": [
                                 {
-                                  "c": 0.225,
+                                  "c": 0.235,
                                   "factors": {}
                                 }
                               ]
@@ -235,7 +235,7 @@
                             "scalarForm": {
                               "terms": [
                                 {
-                                  "c": 0.52,
+                                  "c": 0.5,
                                   "factors": {}
                                 },
                                 {
@@ -251,7 +251,7 @@
                                   ]
                                 },
                                 {
-                                  "c": 0.2,
+                                  "c": 0.22,
                                   "factors": {},
                                   "trans": [
                                     {
@@ -272,7 +272,7 @@
                                 "scalarForm": {
                                   "terms": [
                                     {
-                                      "c": 0.135,
+                                      "c": 0.145,
                                       "factors": {}
                                     }
                                   ]
@@ -283,7 +283,7 @@
                                 "scalarForm": {
                                   "terms": [
                                     {
-                                      "c": 0.045,
+                                      "c": 0.042,
                                       "factors": {}
                                     }
                                   ]
@@ -294,7 +294,7 @@
                                 "scalarForm": {
                                   "terms": [
                                     {
-                                      "c": 0.155,
+                                      "c": 0.165,
                                       "factors": {}
                                     }
                                   ]
@@ -326,6 +326,6 @@
   "injected_by": {
     "agent": "Firmament & Sparkly Guy",
     "date": "2026-11-02",
-    "context": "Northern Veil Sanctuary procedural material root"
+    "context": "Northern Veil Sanctuary procedural material root (Pass 2)"
   }
 }

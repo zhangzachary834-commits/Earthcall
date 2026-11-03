@@ -25,7 +25,7 @@
                     "scalarForm": {
                       "terms": [
                         {
-                          "c": 0.025,
+                          "c": 0.022,
                           "factors": {}
                         }
                       ]
@@ -36,7 +36,7 @@
                     "scalarForm": {
                       "terms": [
                         {
-                          "c": 0.044,
+                          "c": 0.038,
                           "factors": {}
                         }
                       ]
@@ -47,7 +47,7 @@
                     "scalarForm": {
                       "terms": [
                         {
-                          "c": 0.066,
+                          "c": 0.058,
                           "factors": {}
                         }
                       ]
@@ -196,7 +196,7 @@
                         "scalarForm": {
                           "terms": [
                             {
-                              "c": 0.32,
+                              "c": 0.33,
                               "factors": {}
                             }
                           ]
@@ -233,6 +233,6 @@
   "injected_by": {
     "agent": "Firmament & Sparkly Guy",
     "date": "2026-11-02",
-    "context": "Northern Veil Sanctuary procedural material root"
+    "context": "Northern Veil Sanctuary procedural material root (Pass 2)"
   }
 }
