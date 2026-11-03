@@ -1,19 +1,10 @@
-"""§6do: Faithful Residual Pipeline Connection on `claude/ray-domain-transport-rung0`.
-Rebases the common Single-Member Active (S1) residual family onto faithful §6dd fragments
-(root isolation, knot insertion sort, piece emission, and A* optical transport consumer)
-connected via the proven §6di GPU-resident indirect routing contract.
-
-Sixth-One Sun (§6dn), Firmament, and Prism Sun directives:
-1. Rebase one common residual family (S1: Member 0 active, 0 other members hit, ~39.3% of viewport).
-2. All other tiles execute the established guarded fallback pipeline.
-3. GPU indirect dispatch arguments generated on-chip via `routeArgs`.
-4. Command-buffer per-classification counter reset and actual-family tail bounds.
-5. Exactly-once output publication across all 32,784 rays.
-6. 100.0000% bit-exact schedule & pixel parity against guarded reference (`resUnfused`).
-7. Executable negative controls (`no-reset`, `no-tail`) that fail for expected reasons.
-8. Native Apple M5 compiler reflection facts and two clean paired complete-cost series.
-
-Antigravity / Gemini / session 50cf28df-09e9-4c2b-a4d5-1f796abbc73a / 2026-10-25.
+"""Structural producer/routing diagnostic; complete transport qualification is OPEN.
+§6dq found a noncanonical consumer, changed optics and disconnected Current
+fallback. Do not use shared-consumer parity or these clocks as authored accuracy
+or Current performance evidence. Repaired routing checks depth order, retains
+unknown intrinsic domains and enforces shared capacity. The native review
+records the actual producer packet checks and remaining repair steps.
+Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-10-26.
 """
 
 import argparse
@@ -334,6 +325,16 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
                 enterArr[m] = enter;
                 exitArr[m] = exit;
             }
+        } else if (anyRayHit) {
+            // No intrinsic interval was established (e.g. exactly dx=0).
+            // Unknown support remains active; never infer empty from zero width.
+            activeMemberMask |= (1u << m);
+            memberHit[m] = true;
+            var enter = 1e9f; var exit = -1e9f;
+            for (var i = 0u; i < rayCount && i < 16u; i++) {
+                if (rHit[i]) { enter = min(enter, rA[i]); exit = max(exit, rB[i]); }
+            }
+            enterArr[m] = enter; exitArr[m] = exit;
         }
     }
 
@@ -353,7 +354,7 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
     if (activeMemberMask == 1u && !tileCanOverlap) {
         let slot = atomicAdd(&counters.s1Count, 1u);
         s1TileList[slot] = tileId;
-    } else if (activeMemberMask == 3u && !tileCanOverlap) {
+    } else if (activeMemberMask == 3u && !tileCanOverlap && exitArr[0u] <= enterArr[1u]) {
         let slot = atomicAdd(&counters.s2Count, 1u);
         s2TileList[slot] = tileId;
     } else {
@@ -629,9 +630,10 @@ fn s2ProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_i
                      previousShortBand, previousPositive, uncertain, protectedBoundary)) {
                     pieces[memPieces - 1u].y = r; previousShortBand = false; previousPositive = true;
                 } else {
-                    if (memPieces >= 48u) { reason |= 8u; break; }
+                    // Capacity is shared across both members in the bulk producer.
+                    if (count >= 48u) { reason |= 8u; break; }
                     pieces[memPieces] = vec2f(l, r);
-                    memPieces++; previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
+                    memPieces++; count++; previousShortBand = uncertain && r - l <= 0.02; previousPositive = !uncertain;
                 }
             }
         }
@@ -836,7 +838,10 @@ fn fallbackProducerMain(@builtin(workgroup_id) wid: vec3u, @builtin(local_invoca
 )WGSL";
 '''
 
-    # Now add kConsumerWgsl (Unfused A* Consumer Shader from §6dd)
+    # Historical NONCANONICAL consumer retained for structural diagnostics only.
+    # It omits overlap flow and has no Current fallback dispatch. Its inline
+    # historical "Fallback handled" remark is false for this program; the host
+    # now refuses such cases. Reconnect the canonical harness before admission.
     src += r'''
 // ----------------------------------------------------------------------------
 // 5. Unfused A* Consumer WGSL: Pass 4
@@ -1150,6 +1155,11 @@ int main(int argc, char** argv) {
         gpuRays[i].counts = glm::uvec4(0);
     }
 
+    // This scratch witness admits the pinned layout only, before indexing it.
+    if (groups4x4.size() != 2304u) throw std::runtime_error("pinned tile layout requires exactly2304tiles");
+    for (const auto& [key, indices] : groups4x4) {
+        if (indices.empty() || indices.size() > 16u) throw std::runtime_error("pinned tile capacity exceeded");
+    }
     std::vector<uint32_t> tileOffsets(2305, 0);
     std::vector<uint32_t> tileRayIndices;
     tileRayIndices.reserve(count);
@@ -1243,6 +1253,8 @@ int main(int argc, char** argv) {
     cfg.maxSubPerRay = 64;
     cfg.maxOverPerRay = 16;
     cfg.budget = 1024;
+    // Kernel diagnostic control, not authored state; refusal is checked below.
+    if (const char* budget = std::getenv("EC_RAY_DIAGNOSTIC_BUDGET")) cfg.budget = std::stoul(budget);
 
     GlobalUniforms gu{};
     gu.clock = 7.25f;
@@ -1543,6 +1555,14 @@ auto bgConsumer = group(cpConsumer, {
 
         runCandidate(rep);
 
+        auto headers = readWords(rayBuf, rayBytes);
+        for (size_t i=0;i<count;++i) if ((headers[i*12u+11u]&0x80000000u)!=0u) {
+            throw std::runtime_error("UNQUALIFIED: Current fallback is not connected in this structural diagnostic");
+        }
+        auto currentOutput = readBackResults(resBuf);
+        for (const auto& value : currentOutput) for (float f : value.rgb_T) {
+            if (!std::isfinite(f)) throw std::runtime_error("poison not overwritten in repeated invocation");
+        }
         auto counts = readWords(cntBuf, 16);
         counts0 = counts[0]; counts1 = counts[1]; counts2 = counts[2];
         if (counts[0] + counts[1] + counts[2] != 2304u) {
@@ -1595,7 +1615,9 @@ auto bgConsumer = group(cpConsumer, {
     // Benchmark Matrix (Two clean paired complete-cost series: Series 1 ABBA, Series 2 BAAB)
     std::cerr << "Running paired complete-cost benchmark series..." << std::endl;
     J series1 = J::array();
-    for (int rep : {1, 2, 4}) {
+    // Diagnostic atomics and a noncanonical consumer preclude Current economics.
+    // The explicit opt-in is for structural measurements only, never admission.
+    if (std::getenv("EC_RAY_STRUCTURAL_BENCHMARK")) for (int rep : {1, 2, 4}) {
         J pairs = J::array();
         // ABBA: 0=Ref(A), 1=Cand(B), 2=Cand(B), 3=Ref(A)
         for (int b = 0; b < 4; ++b) {
@@ -1617,7 +1639,7 @@ auto bgConsumer = group(cpConsumer, {
     }
 
     J series2 = J::array();
-    for (int rep : {1, 2, 4}) {
+    if (std::getenv("EC_RAY_STRUCTURAL_BENCHMARK")) for (int rep : {1, 2, 4}) {
         J pairs = J::array();
         // BAAB: 0=Cand(B), 1=Ref(A), 2=Ref(A), 3=Cand(B)
         for (int b = 0; b < 4; ++b) {
@@ -1639,7 +1661,8 @@ auto bgConsumer = group(cpConsumer, {
     }
 
     J outRecord = {
-        {"audit", "§6do faithful residual pipeline connection"},
+        {"audit", "§6dq structural producer/routing diagnostic; transport qualification OPEN"},
+        {"qualification", {{"canonical_consumer_connected",false},{"current_fallback_connected",false},{"authored_optics_verified",false},{"packet_parity_checked_by_this_binary",false},{"current_speedup_qualified",false}}},
         {"scope", "S1 (single-member) + S2 (disjoint pair) specialized producers + fallback producer + A* consumer with GPU indirect routing"},
         {"s1_tiles", counts0},
         {"s2_tiles", counts1},
@@ -1687,6 +1710,14 @@ def main():
         'mutation': a.mutation
     }, indent=2) + '\n')
 
+    # Reusing engine objects requires identical clean source trees. A configured
+    # folder without source provenance is not a source-matching checkout.
+    engine_trees = []
+    for checkout in [root, buildRoot]:
+        if subprocess.check_output(['git','-c','core.fsmonitor=false','status','--porcelain','--','src'], cwd=checkout, text=True).strip():
+            raise ValueError('dirty engine source')
+        engine_trees.append(subprocess.check_output(['git','rev-parse','HEAD:src'], cwd=checkout, text=True).strip())
+    if engine_trees[0] != engine_trees[1]: raise ValueError('engine source trees differ')
     b = buildRoot / 'build'
     db = json.loads((b / 'compile_commands.json').read_text())
     entry = next(x for x in db if x['file'].endswith('/entry.cpp') and 'earthcall_webgpu.dir' in x['command'])

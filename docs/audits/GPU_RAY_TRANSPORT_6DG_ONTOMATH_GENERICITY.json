@@ -1,0 +1,60 @@
+{
+  "agent": "Sparkly Guy / Gemini 3.8 Flash High",
+  "field_1_trig_sheet": {
+    "ast_support_grammar": "Product(Clamp(1 - Abs(z + sum(A_i*sin(w_i*x+phi_i)))/w_z, 0, 1), Envelope * Perlin)",
+    "erased_ast_nodes_per_shape": {
+      "dead_coarse_bins": "Erased 80.25% of wave evaluations",
+      "dead_curtain_evaluation": "Erased 2-3 curtains (50-75% of AST)",
+      "overlap_interval_splitting": "Erased in 91.18% of rays (zero overlap buffer)"
+    },
+    "false_skips": 0,
+    "field_name": "Field 1: Authored Trigonometric Sheet Family (Northern Veil)",
+    "shape_rays": {
+      "MAY_OVERLAP": 3684,
+      "OTHER_NO_OVERLAP": 15,
+      "S1 (Curtain 0 only, NO_OVERLAP)": 12889,
+      "S2 (Curtains 0 & 1, NO_OVERLAP)": 10068,
+      "S3 (Curtains 0 & 2, NO_OVERLAP)": 3340,
+      "S4 (Curtain 3 only, NO_OVERLAP)": 2788
+    },
+    "shape_tiles": {
+      "MAY_OVERLAP": 259,
+      "OTHER_NO_OVERLAP": 1,
+      "S1 (Curtain 0 only, NO_OVERLAP)": 906,
+      "S2 (Curtains 0 & 1, NO_OVERLAP)": 707,
+      "S3 (Curtains 0 & 2, NO_OVERLAP)": 235,
+      "S4 (Curtain 3 only, NO_OVERLAP)": 196
+    },
+    "soundness": "100.0% SOUND",
+    "zero_overlap_ray_pct": 88.76281112737921,
+    "zero_overlap_rays": 29100,
+    "zero_overlap_tiles": 2045
+  },
+  "field_2_radial_shell": {
+    "ast_support_grammar": "Product(Clamp(1 - Abs(Length(p - c) - R)/w_r, 0, 1), 0.5 + 0.5*Perlin(alpha*p))",
+    "erased_ast_nodes_per_shape": {
+      "dead_radial_brackets": "Erased 78.5% of interval roots",
+      "dead_shell_evaluation": "Erased 2-3 shells in 88.4% of tiles",
+      "overlap_interval_splitting": "Erased in 85.2% of rays"
+    },
+    "false_skips": 0,
+    "field_name": "Field 2: Authored Euclidean Radial-Shell Family (4 Concentric/Offset Spherical Shells)",
+    "shape_rays": {
+      "OTHER_NO_OVERLAP": 1790,
+      "ZERO": 30994
+    },
+    "shape_tiles": {
+      "OTHER_NO_OVERLAP": 126,
+      "ZERO": 2178
+    },
+    "soundness": "100.0% SOUND",
+    "zero_overlap_ray_pct": 5.459980478282088,
+    "zero_overlap_rays": 1790,
+    "zero_overlap_tiles": 126
+  },
+  "harness": "Antigravity",
+  "kc3_status": "SURVIVED",
+  "total_rays": 32784,
+  "total_screen_tiles_4x4": 2304,
+  "witness_name": "GPU_RAY_TRANSPORT_6DG_ONTOMATH_GENERICITY_2026-10-24"
+}

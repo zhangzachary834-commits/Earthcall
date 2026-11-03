@@ -255,8 +255,36 @@ int main() {
         assert(logIntegral.has_value());
         assert(neard(logIntegral->evaluate({{"x", 2.0}}),
                      2.0 * std::log(6.0) - 2.0));
-        // x·sin(x) needs integration by parts: honestly not yet held.
-        assert(!xsin.antiderivative("x").has_value());
+        // By parts (2026-10-18): ∫x·sin(x) dx = sin x − x·cos x, exactly; every
+        // new form differentiates back to its integrand.
+        auto xsinIntegral = xsin.antiderivative("x");
+        assert(xsinIntegral.has_value());
+        assert(neard(xsinIntegral->evaluate({{"x", 1.3}}), std::sin(1.3) - 1.3 * std::cos(1.3)));
+        auto backDerivative = [&](const ScalarForm& f, const std::string& v, double at) {
+            const auto F = f.antiderivative(v);
+            assert(F.has_value());
+            return std::abs(F->derivative(v).evaluate({{v, at}}).value_or(1e9) - f.evaluate({{v, at}}).value_or(-1e9));
+        };
+        {
+            using TF = OntoMath::TransFactor;
+            auto term = [](double c, double power, TF::Kind kind, double a, double b) {
+                OntoMath::Term t(c, power == 0.0 ? std::map<std::string, double>{} : std::map<std::string, double>{{"x", power}});
+                t.addTrans(TF(kind, "x", a, b));
+                ScalarForm f;
+                f.terms.push_back(t);
+                return f;
+            };
+            // x³·e^(−2x+0.5), x²·cos(3x−1), x⁴·sin(0.7x+2), x^2.5·ln(4x), ln(2x)/x.
+            for (const auto& f : {term(1.5, 3.0, TF::Kind::Exp, -2.0, 0.5), term(-2.0, 2.0, TF::Kind::Cos, 3.0, -1.0),
+                                  term(0.25, 4.0, TF::Kind::Sin, 0.7, 2.0), term(1.0, 2.5, TF::Kind::Ln, 4.0, 0.0),
+                                  term(3.0, -1.0, TF::Kind::Ln, 2.0, 0.0)})
+                for (double at : {0.4, 1.1, 2.7})
+                    assert(backDerivative(f, "x", at) < 1e-9 * (1.0 + std::abs(f.evaluate({{"x", at}}).value_or(0.0))));
+            // Still honestly refused: sin(x)/x (the sine integral) and √x·eˣ have
+            // no elementary antiderivative.
+            assert(!term(1.0, -1.0, TF::Kind::Sin, 1.0, 0.0).antiderivative("x").has_value());
+            assert(!term(1.0, 0.5, TF::Kind::Exp, 1.0, 0.0).antiderivative("x").has_value());
+        }
 
         // Like terms combine across identical transcendental shapes.
         ScalarForm doubled = wave.plus(wave);
