@@ -75,10 +75,10 @@ def v(name):
 
 
 def balanced(op, xs):
-    """Balanced, not left-deep. MathNode::typeOf visits each child twice per non-Let
-    level and the loader runs it at every node, so load time is ~2^height. A left-deep
-    chain of twenty terms costs about a minute at load; balanced costs nothing. Recorded
-    on the To-do list as an engine defect; authored around here."""
+    """Balanced, not left-deep. MathNode::typeOf used to visit each child twice per non-Let
+    level, with the loader running it at every node, so load time was ~2^height. A left-deep
+    chain was ruinous when this Zone was authored. That defect is fixed (2026-11-03,
+    ontomath_typeof_depth_test), and shallow trees remain cheaper to load regardless."""
     xs = [n(x) for x in xs]
     while len(xs) > 1:
         xs = [{"op": op, "children": [xs[i], xs[i + 1]]} if i + 1 < len(xs) else xs[i]

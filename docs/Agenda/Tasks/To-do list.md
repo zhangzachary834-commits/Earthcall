@@ -153,7 +153,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 
 <a id="joys-ourverse-zones"></a>
 ### Joys · Ourverse · Zones
-- **The Merry Dancers aurora Zone** — First seed installed from Zach's seven photographs, awaiting his in-app verdict and a frame-cost pass on the north view; [task](Specific%20Tasks/Zones%20and%20Ourverse/The_Merry_Dancers/The_Merry_Dancers.md).
+- **The Merry Dancers aurora Zone** — Its sky is clipped by the app's hard-coded `farZ = 100`, so only the curtains have been seen, and a far-plane decision is open; [task](Specific%20Tasks/Zones%20and%20Ourverse/The_Merry_Dancers/The_Merry_Dancers.md).
 - ⚑ ZACH'S IDEA — **Personal Ourverse Navigator: little 2D/3D islands for each world, the first thing Earthcall.app shows**; plan in its own session, attaching through the app's first-run Foundation. → [full task](Specific%20Tasks/Zones%20and%20Ourverse/Personal_Ourverse_Navigator/Personal_Ourverse_Navigator.md)
 - **The Hierarchy of Joys has no consumer** — `rankOf`/`orderMembersBy` are called only by tests, `telos` is non-empty on 2 beings across all saves and in 0 law conditions; give it one true consumer (agenda order when two laws are eligible on the same subject). → [audit §5, §9](../../audits/2026-09-24_mythos_ungoverned_governor_audit.md) — Claude Fable 5.1 (Mythos), 2026-09-24.
 - **Zones as mathematical bounds** — Rung 1 done 2026-09-23 (Dimensional Zones, `within`/`placement`/`extent`, derived location, `@world.zoneId`); Rungs 2–6 (running ≠ present, one continuum on screen, location edges, non-spatial axes, placing existing saves) planned. → [full task](Specific%20Tasks/Architecture%20and%20Ontology/Zones_As_Mathematical_Bounds/Zones_As_Mathematical_Bounds.md)
@@ -454,7 +454,7 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 
 <a id="performance"></a>
 ## Performance (opened 2026-08-24 by `tests/singularity/frame_lag_test.cpp`)
-- **Exponential `MathNode::typeOf`** — Type checking visits children twice per level and runs at every node on load, so deep expressions stall Zone load for up to a minute; [finding](Specific%20Tasks/Zones%20and%20Ourverse/The_Merry_Dancers/The_Merry_Dancers.md#findings-for-other-lanes).
+- ✅ **Exponential `MathNode::typeOf` (2026-11-03)** — Fixed with byte-identical answers, leaving quadratic per-node load checks and a recursion stack limit open; [finding](Specific%20Tasks/Zones%20and%20Ourverse/The_Merry_Dancers/The_Merry_Dancers.md#findings-for-other-lanes).
 - **Routed transport slower than Current on wide sheet envelopes** — A four-media Merry Dancers build measured about 1.7–1.85× slower routed in single offscreen comparisons, cause not found; [finding](Specific%20Tasks/Zones%20and%20Ourverse/The_Merry_Dancers/The_Merry_Dancers.md#findings-for-other-lanes).
 - [~] **Verify generic power lowering against existing OntoMath semantics** — route-aware normal/domain repair and CPU/native witnesses are retained; CPU-double and native subnormal limits remain in the [task](Specific%20Tasks/Rendering%20and%20OntoMath/Power_Lowering_Parity/Power_Lowering_Parity.md).
 - [~] **Standalone tracing, demand and complexity analysis** — the separate executable and offline reports are built and tested; fresh live captures remain in the [task](Specific%20Tasks/Performance%20and%20Runtime/Standalone_Performance_Analysis/Standalone_Performance_Analysis.md).

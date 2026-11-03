@@ -2201,15 +2201,19 @@ Authored **4 brand-new far-side volumetric aurora fields (`spatialFields[4..7]`)
 
 ## The Merry Dancers — first look (2026-11-03)
 
-*Claude Code / Claude Opus 5.5 / session `ed9d515b-d6ac-4098-a7f9-ce71d02406b3` / 2026-11-03T12:09:36-0800. Zach asked for a new realistic aurora Zone from volumetrics and radiance fields, judged against his seven photographs. Offscreen captures pass the [witness](../Specific%20Tasks/Zones%20and%20Ourverse/The_Merry_Dancers/The_Merry_Dancers.md), but this Zone has never been opened in the live app, so all of these are open.*
+*Claude Code / Claude Opus 5.5 / session `ed9d515b-d6ac-4098-a7f9-ce71d02406b3` / 2026-11-03T12:09:36-0800. Zach asked for a new realistic aurora Zone from volumetrics and radiance fields, judged against his seven photographs. Offscreen captures pass the [witness](../Specific%20Tasks/Zones%20and%20Ourverse/The_Merry_Dancers/The_Merry_Dancers.md).*
+
+**Zach, in the app, 2026-11-03:** "the look is AMAZING i got tons of screenshots", "The fps is decent to its like 18-24 fps." Only what he said is ticked below.
+
+**Correction (Claude Code / Claude Opus 5.5 / session `ed9d515b-d6ac-4098-a7f9-ce71d02406b3` / 2026-11-03T13:39:14-0800):** his 12:17–12:18 screenshots show a flat clear-colour background. The app hard-codes `farZ = 100` and 45° FOV in `EngineRender.cpp`, so the sky at 960 m, with its stars, sky rays, ridges and lake reflection, was clipped. Reproduced offscreen. His verdict and FPS apply to **the marched curtains only**; the complete Zone has not yet been seen in the app.
 
 **Summary:** does it look breathtaking in the real window, does it move well, and is it usable at the frame rate you actually get?
 
-- [ ] **Launch Earthcall WebGPU and enter The Merry Dancers.** Confirm it appears in the Zone list and loads with no long stall. The first entry may pause while shaders compile; say if that pause is unacceptable.
-- [ ] **Stand at the shore.** Go to about (0, 2, 0) and face **+Z**, since the default facing may point south at the rising ground. You should see snow at your feet, the lake, ridges, and green-into-pink aurora doubled in the water. If the screen is one flat colour, your eye is inside the ground: report it.
-- [ ] **Judge the look against your photographs.** Green low and rose-violet high, long rays fanning overhead, no hard box edges anywhere in the sky.
+- [x] **Launch Earthcall WebGPU and enter The Merry Dancers.** Confirm it appears in the Zone list and loads with no long stall. The first entry may pause while shaders compile; say if that pause is unacceptable.
+- [ ] **Stand at the shore.** Go to about (0, 2, 0) and face **+Z**, since the default facing may point south at the rising ground. Once the sky renders, you should see snow at your feet, the lake, ridges, and green-into-pink aurora doubled in the water. If the screen is one flat colour, your eye is inside the ground: report it.
+- [ ] **Judge the complete look against your photographs, once the sky renders.** The curtains alone were called AMAZING. Green low and rose-violet high, long rays fanning overhead, no hard box edges anywhere in the sky.
 - [ ] **Look straight up.** The rays should converge in a corona with the bright arc crossing them.
 - [ ] **Watch for about a minute.** The sheets should drift slowly: rays sliding, bright sections moving, the lower border waving. The wide background fan and stars are intentionally still. Say whether that stillness bothers you.
-- [ ] **Report your FPS facing north and facing up.** Offscreen frames were 60–162 ms at 2560×1440, so expect it to be well below 30 FPS. Say whether it is usable.
+- [ ] **Report your FPS with the sky rendering.** 18–24 FPS, "decent", was measured without the sky. Expect lower: offscreen the sky added about 37–58% frame time at 2560×1440.
 - [ ] **Fly up and around.** The far ridges are painted into the sky and will not shift with parallax, and the marched sheets can be flown through. Say whether either breaks the illusion for you.
 - [ ] **Keep the name?** "The Merry Dancers" is an old Scots and Shetland name for the aurora, and it was this agent's choice.
