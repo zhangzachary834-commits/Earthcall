@@ -1529,32 +1529,36 @@ int main() {
               multiSource.wgsl.find("specShape") == std::string::npos &&
               multiSource.wgsl.find("inst.shading") == std::string::npos,
               "multi-source visibility feeds Material response with no renderer-owned lobe math");
+        const auto packet0 =
+            multiSource.wgsl.find("fn sourceSample_0");
+        const auto packet1 =
+            multiSource.wgsl.find("fn sourceSample_1");
+        const auto packetUse =
+            multiSource.wgsl.find("let sourcePacket = sourceSample_0");
         const auto environmentUse =
-            multiSource.wgsl.find("environmentRadiance +=");
-        const auto directBoundary =
-            multiSource.wgsl.find("Direct source transport begins here");
-        check(environmentUse != std::string::npos &&
-                  directBoundary != std::string::npos &&
-                  environmentUse < directBoundary &&
+            multiSource.wgsl.find(
+                "environmentRadiance += sourcePacket.environmentRadiance",
+                packetUse);
+        const auto pathBoundary =
+            multiSource.wgsl.find("Path transport begins here", packetUse);
+        const auto visibilityUse =
+            multiSource.wgsl.find(
+                "sourceVisibility(pf, nf, source.position.xyz)", packetUse);
+        check(packet0 != std::string::npos &&
+                  packet1 != std::string::npos &&
+                  packetUse != std::string::npos &&
+                  environmentUse != std::string::npos &&
+                  pathBoundary != std::string::npos &&
+                  visibilityUse != std::string::npos &&
+                  packet0 < packet1 && packet1 < packetUse &&
+                  packetUse < environmentUse &&
+                  environmentUse < pathBoundary &&
+                  pathBoundary < visibilityUse &&
                   multiSource.wgsl.find("ambientTerm") == std::string::npos,
-              "environment incident radiance is accumulated before direct-path visibility");
+              "source packets are composed before derived Path visibility and receiver evaluation");
         check(multiSource.wgsl.find("lightChroma(sourceDelta)") ==
                   std::string::npos,
-              "multi-source splice removes the one-source chroma/environment prelude");
-        const auto env0 =
-            multiSource.wgsl.find("source.legacyEnvironment");
-        const auto direct0 =
-            multiSource.wgsl.find("Direct source transport begins here", env0);
-        const auto env1 =
-            multiSource.wgsl.find("source.legacyEnvironment", direct0);
-        const auto direct1 =
-            multiSource.wgsl.find("Direct source transport begins here", env1);
-        check(env0 != std::string::npos &&
-                  direct0 != std::string::npos &&
-                  env1 != std::string::npos &&
-                  direct1 != std::string::npos &&
-                  env0 < direct0 && direct0 < env1 && env1 < direct1,
-              "each multi-source environment read precedes that source's direct transport block");
+              "source-set compiler never falls back to the zero-set chroma function");
     }
 
     // ---------------------------------------------------------------------
