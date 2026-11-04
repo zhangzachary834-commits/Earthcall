@@ -193,6 +193,27 @@ private:
     WGPUBindGroupLayout _bgl = nullptr;
     const MeshPipeline* meshPipeline(const std::string& wgsl);
 
+    struct MeshResponseKey {
+        const OntoMath::Piecewise* direct = nullptr;
+        uint32_t directRevision = 0;
+        const OntoMath::Piecewise* environment = nullptr;
+        uint32_t environmentRevision = 0;
+        std::string bindingTypes;
+        bool operator<(const MeshResponseKey& o) const {
+            return std::tie(direct, directRevision, environment,
+                            environmentRevision, bindingTypes)
+                 < std::tie(o.direct, o.directRevision, o.environment,
+                            o.environmentRevision, o.bindingTypes);
+        }
+    };
+    struct MeshResponseMemo {
+        sdfwgsl::SurfaceResponseProgram program;
+        const MeshPipeline* pipeline = nullptr;
+        // Exact Material binding-value identity -> response-only param stream.
+        std::map<std::string, std::vector<float>> params;
+    };
+    std::map<MeshResponseKey, MeshResponseMemo> _meshResponsePrograms;
+
     // ---- Flat-colour pipelines (unlit: overlays, gizmos, wireframe, all 2D) ----
     // OpenGL could change blend and depth state between draws; WebGPU bakes them
     // into the pipeline, so every (topology, blend, depth) combination the app uses
