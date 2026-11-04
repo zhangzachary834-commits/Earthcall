@@ -1592,6 +1592,63 @@ int main() {
                   reboundLayout.structure != boundLayoutB.structure,
               "changing the authored Bind path changes response dependency structure");
 
+        // Pure Piecewise guards are generic local mathematics, not a
+        // Blinn-Phong opcode. This is the exact substrate for response lobes
+        // that exist only on one side of an authored scalar inequality.
+        auto gate = std::make_shared<OntoMath::MathNode>();
+        gate->op = OntoMath::MathNode::Op::Sub;
+        gate->children.push_back(number(0.0001));
+        gate->children.push_back(variable(OntoMath::kWiXVar));
+
+        OntoMath::Piecewise gatedResponse;
+        {
+            OntoMath::Piecewise::Piece lit;
+            lit.whereLEZero = gate;
+            lit.mathNode = std::shared_ptr<OntoMath::MathNode>(
+                vector3(1.0, 0.0, 0.0).release());
+            gatedResponse.pieces.push_back(std::move(lit));
+
+            OntoMath::Piecewise::Piece fallback;
+            fallback.mathNode = std::shared_ptr<OntoMath::MathNode>(
+                vector3(0.0, 0.0, 1.0).release());
+            gatedResponse.pieces.push_back(std::move(fallback));
+        }
+
+        const auto gatedLayout =
+            sdfwgsl::inspectResponseExpression(&gatedResponse);
+        check(gatedLayout.ok &&
+                  gatedLayout.structure.find("<= 0.0") != std::string::npos,
+              "material response lowers pure Piecewise whereLEZero guards");
+
+        const auto cpuLit = gatedResponse.evaluate({
+            {OntoMath::kWiXVar, PropertyValue(0.5)},
+            {OntoMath::kWiYVar, PropertyValue(0.0)},
+            {OntoMath::kWiZVar, PropertyValue(0.0)}
+        });
+        const auto cpuFallback = gatedResponse.evaluate({
+            {OntoMath::kWiXVar, PropertyValue(0.0)},
+            {OntoMath::kWiYVar, PropertyValue(0.0)},
+            {OntoMath::kWiZVar, PropertyValue(0.0)}
+        });
+        check(cpuLit && cpuFallback &&
+                  std::holds_alternative<glm::vec3>(*cpuLit) &&
+                  std::holds_alternative<glm::vec3>(*cpuFallback) &&
+                  std::get<glm::vec3>(*cpuLit).x > 0.9f &&
+                  std::get<glm::vec3>(*cpuFallback).z > 0.9f,
+              "CPU Piecewise pure guard uses the same first-applicable lobe semantics");
+
+        const auto gatedParamsA =
+            sdfwgsl::collectResponseParams(&gatedResponse);
+        gate->children[0]->scalarForm.terms[0].coefficient = 0.01;
+        const auto gatedLayoutEdited =
+            sdfwgsl::inspectResponseExpression(&gatedResponse);
+        const auto gatedParamsB =
+            sdfwgsl::collectResponseParams(&gatedResponse);
+        check(gatedLayoutEdited.ok && gatedParamsA.ok && gatedParamsB.ok &&
+                  gatedLayoutEdited.structure == gatedLayout.structure &&
+                  gatedParamsA.values != gatedParamsB.values,
+              "numeric pure-guard edit refreshes parameters without changing response structure");
+
         auto vectorBindRoot = std::make_shared<OntoMath::MathNode>();
         vectorBindRoot->op = OntoMath::MathNode::Op::Bind;
         vectorBindRoot->propertyPath = "baseColor";
