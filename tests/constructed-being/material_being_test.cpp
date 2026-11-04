@@ -51,7 +51,9 @@ int main() {
     {
         Material m("response_clay");
         assert(m.findProperty("responseExpr") != nullptr);
+        assert(m.findProperty("environmentResponseExpr") != nullptr);
         assert(!m.responseExpr);
+        assert(!m.environmentResponseExpr);
         const uint32_t colorRevisionBefore = m.getRevision();
         const uint32_t responseRevisionBefore = m.getResponseRevision();
 
@@ -171,7 +173,31 @@ int main() {
         assert(nearf(def->specular, 1.0f));
         assert(nearf(def->shininess, 32.0f));
         assert(nearf(def->baseColor.r, 1.0f) && nearf(def->baseColor.g, 1.0f) && nearf(def->baseColor.b, 1.0f));
-        std::printf("  default: reproduces old global constants (ambient .2 / diffuse .8 / shininess 32)\n");
+        assert(!def->responseExpr &&
+               "direct Blinn-Phong must remain legacy until source diffuse/specular migration is lossless");
+        assert(def->environmentResponseExpr &&
+               "legacy default environment response should now be authored OntoMath");
+        std::set<std::string> envBindings;
+        for (const auto& piece : def->environmentResponseExpr->pieces) {
+            if (piece.mathNode) piece.mathNode->collectPropertyBindings(envBindings);
+        }
+        assert(envBindings.size() == 1 && envBindings.count("ambient") == 1);
+
+        const std::map<std::string, PropertyValue> envVars{
+            {OntoMath::kSurfaceColorVar, PropertyValue(glm::vec3(0.5f, 0.25f, 1.0f))},
+            {OntoMath::kEnvironmentRadianceVar, PropertyValue(glm::vec3(1.0f, 0.5f, 0.25f))}
+        };
+        const auto envValue = def->environmentResponseExpr->evaluate(envVars, def.get());
+        assert(envValue && std::holds_alternative<glm::vec3>(*envValue));
+        const glm::vec3 envRgb = std::get<glm::vec3>(*envValue);
+        assert(nearf(envRgb.x, 0.1f) && nearf(envRgb.y, 0.025f) &&
+               nearf(envRgb.z, 0.05f));
+
+        const auto defaultSaved = def->toJson();
+        assert(defaultSaved.contains("environmentResponseExpr"));
+        Material defaultRestored = Material::fromJson(defaultSaved);
+        assert(defaultRestored.environmentResponseExpr);
+        std::printf("  default: ambient compatibility is authored environment response; direct BP remains gated\n");
     }
 
     // --- 3. Manager ownership, resolution, and the undeletable default -------
@@ -265,8 +291,9 @@ int main() {
         assert(m.findProperty("diffuse") != nullptr);
         assert(m.findProperty("colorExpr") != nullptr);
         assert(m.findProperty("responseExpr") != nullptr);
+        assert(m.findProperty("environmentResponseExpr") != nullptr);
         assert(m.findProperty("nonexistent") == nullptr);
-        std::printf("  properties: all 6 properties registered and accessible\n");
+        std::printf("  properties: Material response channels are registered and accessible\n");
     }
 
     // --- 7. Material serialization edge cases and faceTextures ----------------
