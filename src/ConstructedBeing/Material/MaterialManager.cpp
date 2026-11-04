@@ -81,14 +81,13 @@ std::shared_ptr<OntoMath::Piecewise> legacyDirectResponse() {
         number(0.0));
 
     auto diffuseScalar = binary(
-        Op::Scale,
-        bind("diffuse"),
-        binary(Op::Scale,
-               value(OntoMath::kLegacyDiffuseLobeWeightVar),
-               clone(*diffuseCosine)));
-    auto diffuseRgb = binary(
+        Op::Scale, bind("diffuse"), clone(*diffuseCosine));
+    auto diffuseEnvelope = binary(
         Op::Scale, std::move(diffuseScalar),
-        value(OntoMath::kSurfaceColorVar));
+        value(OntoMath::kLegacyDiffuseIncidentVar));
+    auto diffuseRgb = binary(
+        Op::Hadamard, value(OntoMath::kSurfaceColorVar),
+        std::move(diffuseEnvelope));
 
     auto halfVector = unary(
         Op::Normalize,
@@ -104,14 +103,10 @@ std::shared_ptr<OntoMath::Piecewise> legacyDirectResponse() {
     auto specularPower = binary(
         Op::Pow, std::move(specularCosine), std::move(specularExponent));
     auto specularScalar = binary(
-        Op::Scale,
-        bind("specular"),
-        binary(Op::Scale,
-               value(OntoMath::kLegacySpecularLobeWeightVar),
-               std::move(specularPower)));
-    auto specularRgb = vector3(
-        clone(*specularScalar), clone(*specularScalar),
-        std::move(specularScalar));
+        Op::Scale, bind("specular"), std::move(specularPower));
+    auto specularRgb = binary(
+        Op::Scale, std::move(specularScalar),
+        value(OntoMath::kLegacySpecularIncidentVar));
 
     auto lit = binary(Op::Add, clone(*diffuseRgb), std::move(specularRgb));
     auto specularGate = binary(
