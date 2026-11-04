@@ -19,6 +19,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstdio>
+#include <set>
 
 static bool nearf(float a, float b, float eps = 1e-5f) { return std::fabs(a - b) < eps; }
 
@@ -85,6 +86,44 @@ int main() {
         assert(m.responseExpr->toJson() == response.toJson());
 
         std::printf("  rung9:    responseExpr is Law-addressable, persisted, and revision-independent\n");
+    }
+
+    // --- 1c. AD-21 Bind reads ordinary Material PropertyPaths -----------------
+    {
+        Material m("bound_clay");
+        m.shininess = 24.0f;
+
+        auto bind = std::make_shared<OntoMath::MathNode>();
+        bind->op = OntoMath::MathNode::Op::Bind;
+        bind->propertyPath = "shininess";
+
+        auto value = bind->evaluate({}, &m);
+        double numeric = 0.0;
+        assert(value && propertyValueToNumber(*value, numeric));
+        assert(nearf(static_cast<float>(numeric), 24.0f));
+
+        std::set<std::string> paths;
+        bind->collectPropertyBindings(paths);
+        assert(paths.size() == 1 && paths.count("shininess") == 1);
+
+        const nlohmann::json encoded = bind->toJson();
+        assert(encoded["op"] == 42 && encoded["path"] == "shininess");
+        auto restored = OntoMath::MathNode::fromJson(encoded);
+        assert(restored && restored->op == OntoMath::MathNode::Op::Bind);
+        assert(restored->propertyPath == "shininess");
+
+        assert(PropertyPath::parse("shininess").setValue(
+                   m, PropertyValue(7.0f)) == PropertyPath::PathResult::Ok);
+        value = restored->evaluate({}, &m);
+        assert(value && propertyValueToNumber(*value, numeric));
+        assert(nearf(static_cast<float>(numeric), 7.0f));
+
+        OntoMath::MathNode unresolved;
+        unresolved.op = OntoMath::MathNode::Op::Bind;
+        unresolved.propertyPath = "does.not.exist";
+        assert(!unresolved.evaluate({}, &m));
+
+        std::printf("  bind:     OntoMath Bind reads live Material PropertyPaths and round-trips\n");
     }
 
     // --- 2. The default material preserves the old global shading ------------
