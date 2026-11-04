@@ -367,6 +367,78 @@ fn cnoise3_grad(P: vec3<f32>) -> PerlinJet {
     let grad = 2.2 * (g_interp + vec3<f32>(dx_fade, dy_fade, dz_fade));
     return PerlinJet(val, grad);
 }
+
+fn sdSphereGrad(p: vec3<f32>, r: f32) -> PerlinJet {
+    let l = length(p);
+    let grad = select(vec3<f32>(0.0, 1.0, 0.0), p / max(l, 1e-6), l > 1e-6);
+    return PerlinJet(l - r, grad);
+}
+
+fn sdBoxGrad(p: vec3<f32>, b: vec3<f32>) -> PerlinJet {
+    let e = 1e-3;
+    let val = sdBox(p, b);
+    let g = vec3<f32>(
+        sdBox(p + vec3<f32>(e, 0.0, 0.0), b) - sdBox(p - vec3<f32>(e, 0.0, 0.0), b),
+        sdBox(p + vec3<f32>(0.0, e, 0.0), b) - sdBox(p - vec3<f32>(0.0, e, 0.0), b),
+        sdBox(p + vec3<f32>(0.0, 0.0, e), b) - sdBox(p - vec3<f32>(0.0, 0.0, e), b)
+    ) / (2.0 * e);
+    return PerlinJet(val, g);
+}
+
+fn sdRoundBoxGrad(p: vec3<f32>, b: vec3<f32>, r: f32) -> PerlinJet {
+    let e = 1e-3;
+    let val = sdRoundBox(p, b, r);
+    let g = vec3<f32>(
+        sdRoundBox(p + vec3<f32>(e, 0.0, 0.0), b, r) - sdRoundBox(p - vec3<f32>(e, 0.0, 0.0), b, r),
+        sdRoundBox(p + vec3<f32>(0.0, e, 0.0), b, r) - sdRoundBox(p - vec3<f32>(0.0, e, 0.0), b, r),
+        sdRoundBox(p + vec3<f32>(0.0, 0.0, e), b, r) - sdRoundBox(p - vec3<f32>(0.0, 0.0, e), b, r)
+    ) / (2.0 * e);
+    return PerlinJet(val, g);
+}
+
+fn sdEllipsoidGrad(p: vec3<f32>, r: vec3<f32>) -> PerlinJet {
+    let e = 1e-3;
+    let val = sdEllipsoid(p, r);
+    let g = vec3<f32>(
+        sdEllipsoid(p + vec3<f32>(e, 0.0, 0.0), r) - sdEllipsoid(p - vec3<f32>(e, 0.0, 0.0), r),
+        sdEllipsoid(p + vec3<f32>(0.0, e, 0.0), r) - sdEllipsoid(p - vec3<f32>(0.0, e, 0.0), r),
+        sdEllipsoid(p + vec3<f32>(0.0, 0.0, e), r) - sdEllipsoid(p - vec3<f32>(0.0, 0.0, e), r)
+    ) / (2.0 * e);
+    return PerlinJet(val, g);
+}
+
+fn sdCylinderGrad(p: vec3<f32>, r: f32, h: f32) -> PerlinJet {
+    let e = 1e-3;
+    let val = sdCylinder(p, r, h);
+    let g = vec3<f32>(
+        sdCylinder(p + vec3<f32>(e, 0.0, 0.0), r, h) - sdCylinder(p - vec3<f32>(e, 0.0, 0.0), r, h),
+        sdCylinder(p + vec3<f32>(0.0, e, 0.0), r, h) - sdCylinder(p - vec3<f32>(0.0, e, 0.0), r, h),
+        sdCylinder(p + vec3<f32>(0.0, 0.0, e), r, h) - sdCylinder(p - vec3<f32>(0.0, 0.0, e), r, h)
+    ) / (2.0 * e);
+    return PerlinJet(val, g);
+}
+
+fn sdConeGrad(p: vec3<f32>, r1: f32, h: f32) -> PerlinJet {
+    let e = 1e-3;
+    let val = sdCone(p, r1, h);
+    let g = vec3<f32>(
+        sdCone(p + vec3<f32>(e, 0.0, 0.0), r1, h) - sdCone(p - vec3<f32>(e, 0.0, 0.0), r1, h),
+        sdCone(p + vec3<f32>(0.0, e, 0.0), r1, h) - sdCone(p - vec3<f32>(0.0, e, 0.0), r1, h),
+        sdCone(p + vec3<f32>(0.0, 0.0, e), r1, h) - sdCone(p - vec3<f32>(0.0, 0.0, e), r1, h)
+    ) / (2.0 * e);
+    return PerlinJet(val, g);
+}
+
+fn sdTorusGrad(p: vec3<f32>, R: f32, r: f32) -> PerlinJet {
+    let lxy = length(p.xy);
+    let q = vec2<f32>(lxy - R, p.z);
+    let lq = length(q);
+    let val = lq - r;
+    let dir_xy = select(vec2<f32>(1.0, 0.0), p.xy / max(lxy, 1e-6), lxy > 1e-6);
+    let dir_q = select(vec2<f32>(0.0, 1.0), q / max(lq, 1e-6), lq > 1e-6);
+    let grad = vec3<f32>(dir_q.x * dir_xy.x, dir_q.x * dir_xy.y, dir_q.y);
+    return PerlinJet(val, grad);
+}
 )WGSL";
 
 // A WGSL float literal for a C++ constant, so a threshold shared with the CPU
@@ -1435,12 +1507,43 @@ bool astContainsNoise(const OntoMath::MathNode& node) {
     return false;
 }
 
+} // namespace
+
+bool astReadsSpatial(const OntoMath::MathNode& node) {
+    if (node.op == OntoMath::MathNode::Op::ValueLeaf) {
+        return (node.variableName == OntoMath::kAmbientPointVar ||
+                node.variableName == "x" ||
+                node.variableName == "y" ||
+                node.variableName == "z");
+    }
+    if (node.op == OntoMath::MathNode::Op::ScalarLeaf) {
+        for (const auto& term : node.scalarForm.terms) {
+            for (const auto& [var, exp] : term.factors) {
+                if (var == OntoMath::kAmbientPointVar || var == "x" || var == "y" || var == "z")
+                    return true;
+            }
+            for (const auto& tr : term.trans) {
+                if (tr.variable == OntoMath::kAmbientPointVar || tr.variable == "x" || tr.variable == "y" || tr.variable == "z")
+                    return true;
+            }
+        }
+        return false;
+    }
+    for (const auto& c : node.children) {
+        if (c && astReadsSpatial(*c)) return true;
+    }
+    return false;
+}
+
 bool isDifferentiableAst(const OntoMath::MathNode& node) {
     switch (node.op) {
         case OntoMath::MathNode::Op::ScalarLeaf: {
             for (const auto& term : node.scalarForm.terms) {
-                if (!term.factors.empty() || !term.trans.empty()) {
-                    return false;
+                for (const auto& [var, exp] : term.factors) {
+                    if (var != "x" && var != "y" && var != "z") return false;
+                }
+                for (const auto& tr : term.trans) {
+                    if (tr.variable != "x" && tr.variable != "y" && tr.variable != "z") return false;
                 }
             }
             return true;
@@ -1480,10 +1583,87 @@ bool isDifferentiableAst(const OntoMath::MathNode& node) {
             if (node.children.size() != 1 || !node.children[0]) return false;
             return isDifferentiableAst(*node.children[0]);
         }
+        case OntoMath::MathNode::Op::Sqrt:
+        case OntoMath::MathNode::Op::Abs: {
+            if (node.children.size() != 1 || !node.children[0]) return false;
+            return isDifferentiableAst(*node.children[0]);
+        }
+        case OntoMath::MathNode::Op::Pow: {
+            if (node.children.size() != 2 || !node.children[0] || !node.children[1]) return false;
+            return isDifferentiableAst(*node.children[0]) && !astReadsSpatial(*node.children[1]);
+        }
+        case OntoMath::MathNode::Op::Div: {
+            if (node.children.size() != 2 || !node.children[0] || !node.children[1]) return false;
+            return isDifferentiableAst(*node.children[0]) && !astReadsSpatial(*node.children[1]);
+        }
+        case OntoMath::MathNode::Op::Clamp: {
+            if (node.children.size() != 3 || !node.children[0] || !node.children[1] || !node.children[2]) return false;
+            return isDifferentiableAst(*node.children[0]) && isDifferentiableAst(*node.children[1]) && isDifferentiableAst(*node.children[2]);
+        }
+        case OntoMath::MathNode::Op::Union:
+        case OntoMath::MathNode::Op::Intersection:
+        case OntoMath::MathNode::Op::Difference: {
+            if (node.children.size() != 2 || !node.children[0] || !node.children[1]) return false;
+            return isDifferentiableAst(*node.children[0]) && isDifferentiableAst(*node.children[1]);
+        }
         default:
             return false;
     }
 }
+
+bool isDifferentiableRpn(const std::vector<geom::SdfToken>& rpn) {
+    if (rpn.empty()) return false;
+    std::vector<bool> spatial;
+    for (const auto& t : rpn) {
+        using K = geom::SdfToken::Kind;
+        switch (t.kind) {
+            case K::Num: spatial.push_back(false); break;
+            case K::X:
+            case K::Y:
+            case K::Z:   spatial.push_back(true); break;
+            case K::Neg:
+            case K::Sin:
+            case K::Cos:
+            case K::Tan:
+            case K::Sqrt:
+            case K::Abs:
+            case K::Exp:
+            case K::Log:
+                if (spatial.empty()) return false;
+                break;
+            case K::Add:
+            case K::Sub:
+            case K::Mul: {
+                if (spatial.size() < 2) return false;
+                bool b = spatial.back(); spatial.pop_back();
+                bool a = spatial.back(); spatial.pop_back();
+                spatial.push_back(a || b);
+                break;
+            }
+            case K::Div: {
+                if (spatial.size() < 2) return false;
+                bool b = spatial.back(); spatial.pop_back();
+                bool a = spatial.back(); spatial.pop_back();
+                if (b) return false;
+                spatial.push_back(a);
+                break;
+            }
+            case K::Pow: {
+                if (spatial.size() < 2) return false;
+                bool b = spatial.back(); spatial.pop_back();
+                bool a = spatial.back(); spatial.pop_back();
+                if (b) return false;
+                spatial.push_back(a);
+                break;
+            }
+            default:
+                return false;
+        }
+    }
+    return spatial.size() == 1;
+}
+
+namespace {
 
 JetExpr emitMathNodeGrad(const OntoMath::MathNode& node, Emit& e,
                          const std::string& pt, std::string& body, int& nextVar) {
@@ -1493,18 +1673,134 @@ JetExpr emitMathNodeGrad(const OntoMath::MathNode& node, Emit& e,
             if (node.scalarForm.terms.empty()) {
                 return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
             }
-            std::string v = "";
+            std::string totalValStr = "";
+            std::string totalGradXStr = "";
+            std::string totalGradYStr = "";
+            std::string totalGradZStr = "";
+
             for (size_t ti = 0; ti < node.scalarForm.terms.size(); ++ti) {
                 const auto& term = node.scalarForm.terms[ti];
-                if (!term.factors.empty() || !term.trans.empty()) {
-                    e.refuse("ScalarLeaf with non-constant factors reached analytic gradient emitter");
-                    return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+                std::string cParam = e.param(static_cast<float>(term.coefficient));
+
+                struct FactorData {
+                    std::string varName;
+                    double exp;
+                    std::string expParam;
+                };
+                std::vector<FactorData> factors;
+                factors.reserve(term.factors.size());
+                for (const auto& [var, exp] : term.factors) {
+                    std::string expParam = (exp == 1.0) ? "" : e.param(static_cast<float>(exp));
+                    factors.push_back({ var, exp, expParam });
                 }
-                std::string tStr = e.param(static_cast<float>(term.coefficient));
-                if (ti == 0) v = tStr;
-                else v += " + " + tStr;
+
+                struct TransData {
+                    OntoMath::TransFactor::Kind kind;
+                    std::string varName;
+                    std::string scaleParam;
+                    std::string shiftParam;
+                };
+                std::vector<TransData> transList;
+                transList.reserve(term.trans.size());
+                for (const auto& tr : term.trans) {
+                    std::string scaleParam = e.param(static_cast<float>(tr.scale));
+                    std::string shiftParam = e.param(static_cast<float>(tr.shift));
+                    transList.push_back({ tr.kind, tr.variable, scaleParam, shiftParam });
+                }
+
+                std::string curVal = cParam;
+                std::string curGx = "0.0";
+                std::string curGy = "0.0";
+                std::string curGz = "0.0";
+
+                for (const auto& fac : factors) {
+                    std::string wgslVar = pointComponent(fac.varName, e, pt);
+                    std::string fVal;
+                    std::string dFdVar;
+                    if (fac.exp == 1.0) {
+                        fVal = wgslVar;
+                        dFdVar = "1.0";
+                    } else {
+                        fVal = "ontoRawPow(" + wgslVar + ", " + fac.expParam + ")";
+                        dFdVar = "(" + fac.expParam + " * ontoRawPow(" + wgslVar + ", (" + fac.expParam + " - 1.0)))";
+                    }
+
+                    if (fac.varName == "x") {
+                        curGx = "(" + curGx + " * (" + fVal + ") + (" + curVal + ") * (" + dFdVar + "))";
+                        curGy = "(" + curGy + " * (" + fVal + "))";
+                        curGz = "(" + curGz + " * (" + fVal + "))";
+                    } else if (fac.varName == "y") {
+                        curGx = "(" + curGx + " * (" + fVal + "))";
+                        curGy = "(" + curGy + " * (" + fVal + ") + (" + curVal + ") * (" + dFdVar + "))";
+                        curGz = "(" + curGz + " * (" + fVal + "))";
+                    } else if (fac.varName == "z") {
+                        curGx = "(" + curGx + " * (" + fVal + "))";
+                        curGy = "(" + curGy + " * (" + fVal + "))";
+                        curGz = "(" + curGz + " * (" + fVal + ") + (" + curVal + ") * (" + dFdVar + "))";
+                    }
+                    curVal = "(" + curVal + " * (" + fVal + "))";
+                }
+
+                for (const auto& tr : transList) {
+                    std::string wgslVar = pointComponent(tr.varName, e, pt);
+                    std::string inner = "(" + tr.scaleParam + " * " + wgslVar + " + " + tr.shiftParam + ")";
+                    std::string fVal;
+                    std::string dFdVar;
+                    if (tr.kind == OntoMath::TransFactor::Kind::Sin) {
+                        fVal = "sin(" + inner + ")";
+                        dFdVar = "(cos(" + inner + ") * " + tr.scaleParam + ")";
+                    } else if (tr.kind == OntoMath::TransFactor::Kind::Cos) {
+                        fVal = "cos(" + inner + ")";
+                        dFdVar = "(-sin(" + inner + ") * " + tr.scaleParam + ")";
+                    } else if (tr.kind == OntoMath::TransFactor::Kind::Exp) {
+                        fVal = "exp(" + inner + ")";
+                        dFdVar = "(exp(" + inner + ") * " + tr.scaleParam + ")";
+                    } else if (tr.kind == OntoMath::TransFactor::Kind::Ln) {
+                        fVal = "log(max(" + inner + ", 1e-8))";
+                        dFdVar = "(" + tr.scaleParam + " / max(" + inner + ", 1e-8))";
+                    }
+
+                    if (tr.varName == "x") {
+                        curGx = "(" + curGx + " * (" + fVal + ") + (" + curVal + ") * (" + dFdVar + "))";
+                        curGy = "(" + curGy + " * (" + fVal + "))";
+                        curGz = "(" + curGz + " * (" + fVal + "))";
+                    } else if (tr.varName == "y") {
+                        curGx = "(" + curGx + " * (" + fVal + "))";
+                        curGy = "(" + curGy + " * (" + fVal + ") + (" + curVal + ") * (" + dFdVar + "))";
+                        curGz = "(" + curGz + " * (" + fVal + "))";
+                    } else if (tr.varName == "z") {
+                        curGx = "(" + curGx + " * (" + fVal + "))";
+                        curGy = "(" + curGy + " * (" + fVal + "))";
+                        curGz = "(" + curGz + " * (" + fVal + ") + (" + curVal + ") * (" + dFdVar + "))";
+                    }
+                    curVal = "(" + curVal + " * (" + fVal + "))";
+                }
+
+                std::string tv = "tv" + std::to_string(nextVar++);
+                std::string tgx = "tgx" + std::to_string(nextVar++);
+                std::string tgy = "tgy" + std::to_string(nextVar++);
+                std::string tgz = "tgz" + std::to_string(nextVar++);
+                body += "    let " + tv + " = " + curVal + ";\n";
+                body += "    let " + tgx + " = " + curGx + ";\n";
+                body += "    let " + tgy + " = " + curGy + ";\n";
+                body += "    let " + tgz + " = " + curGz + ";\n";
+
+                if (ti == 0) {
+                    totalValStr = tv;
+                    totalGradXStr = tgx;
+                    totalGradYStr = tgy;
+                    totalGradZStr = tgz;
+                } else {
+                    totalValStr += " + " + tv;
+                    totalGradXStr += " + " + tgx;
+                    totalGradYStr += " + " + tgy;
+                    totalGradZStr += " + " + tgz;
+                }
             }
-            return JetExpr{ JetKind::Scalar, "(" + v + ")", "vec3<f32>(0.0)", "", "", "" };
+
+            std::string outVal = (node.scalarForm.terms.size() > 1) ? "(" + totalValStr + ")" : totalValStr;
+            std::string outGrad = "vec3<f32>(" + totalGradXStr + ", " + totalGradYStr + ", " + totalGradZStr + ")";
+            return JetExpr{ JetKind::Scalar, outVal, outGrad, "", "", "" };
         }
         case Op::ValueLeaf: {
             if (node.variableName == OntoMath::kAmbientPointVar) {
@@ -1635,10 +1931,276 @@ JetExpr emitMathNodeGrad(const OntoMath::MathNode& node, Emit& e,
             std::string g = "select(vec3<f32>(0.0), (" + dg + ") / max(length(" + a.value + "), 1e-6), length(" + a.value + ") > 1e-6)";
             return JetExpr{ JetKind::Scalar, v, g, "", "", "" };
         }
+        case Op::Sqrt: {
+            JetExpr u = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            if (u.kind != JetKind::Scalar) {
+                e.refuse("Sqrt expects scalar operand in analytic gradient emitter");
+                return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+            }
+            std::string v = "sqrt(max((" + u.value + "), 0.0))";
+            std::string g = "((" + u.grad + ") / max(2.0 * " + v + ", 1e-6))";
+            return JetExpr{ JetKind::Scalar, v, g, "", "", "" };
+        }
+        case Op::Abs: {
+            JetExpr u = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            if (u.kind != JetKind::Scalar) {
+                e.refuse("Abs expects scalar operand in analytic gradient emitter");
+                return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+            }
+            std::string v = "abs(" + u.value + ")";
+            std::string g = "(sign(" + u.value + ") * (" + u.grad + "))";
+            return JetExpr{ JetKind::Scalar, v, g, "", "", "" };
+        }
+        case Op::Pow: {
+            JetExpr u = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            if (u.kind != JetKind::Scalar) {
+                e.refuse("Pow expects scalar base in analytic gradient emitter");
+                return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+            }
+            std::string expVal = emitMathNode(*node.children[1], e, pt);
+            std::string v = "ontoPow((" + u.value + "), (" + expVal + "))";
+            std::string g = "((" + expVal + ") * ontoPow((" + u.value + "), (" + expVal + " - 1.0)) * (" + u.grad + "))";
+            return JetExpr{ JetKind::Scalar, v, g, "", "", "" };
+        }
+        case Op::Div: {
+            JetExpr u = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            std::string denom = emitMathNode(*node.children[1], e, pt);
+            std::string v = "((" + u.value + ") / (" + denom + "))";
+            std::string g = "((" + u.grad + ") / (" + denom + "))";
+            return JetExpr{ JetKind::Scalar, v, g, "", "", "" };
+        }
+        case Op::Clamp: {
+            JetExpr u = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            JetExpr lo = emitMathNodeGrad(*node.children[1], e, pt, body, nextVar);
+            JetExpr hi = emitMathNodeGrad(*node.children[2], e, pt, body, nextVar);
+            const std::string v = "clamp((" + u.value + "), (" + lo.value + "), (" + hi.value + "))";
+            const std::string g = "select(select((" + u.grad + "), (" + lo.grad + "), (" + u.value + ") < (" + lo.value + ")), (" + hi.grad + "), (" + u.value + ") > (" + hi.value + "))";
+            return JetExpr{ JetKind::Scalar, v, g, "", "", "" };
+        }
+        case Op::Union: {
+            JetExpr a = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            JetExpr b = emitMathNodeGrad(*node.children[1], e, pt, body, nextVar);
+            const std::string v = "min((" + a.value + "), (" + b.value + "))";
+            const std::string g = "select((" + b.grad + "), (" + a.grad + "), (" + a.value + ") <= (" + b.value + "))";
+            return JetExpr{ JetKind::Scalar, v, g, "", "", "" };
+        }
+        case Op::Intersection: {
+            JetExpr a = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            JetExpr b = emitMathNodeGrad(*node.children[1], e, pt, body, nextVar);
+            const std::string v = "max((" + a.value + "), (" + b.value + "))";
+            const std::string g = "select((" + b.grad + "), (" + a.grad + "), (" + a.value + ") >= (" + b.value + "))";
+            return JetExpr{ JetKind::Scalar, v, g, "", "", "" };
+        }
+        case Op::Difference: {
+            JetExpr a = emitMathNodeGrad(*node.children[0], e, pt, body, nextVar);
+            JetExpr b = emitMathNodeGrad(*node.children[1], e, pt, body, nextVar);
+            const std::string v = "max((" + a.value + "), -(" + b.value + "))";
+            const std::string g = "select(-(" + b.grad + "), (" + a.grad + "), (" + a.value + ") >= -(" + b.value + "))";
+            return JetExpr{ JetKind::Scalar, v, g, "", "", "" };
+        }
         default:
             e.refuse(std::string("unsupported operation in analytic gradient emitter: ") + OntoMath::mathOpName(node.op));
             return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
     }
+}
+
+JetExpr emitRpnGrad(const std::vector<geom::SdfToken>& rpn, Emit& e,
+                    const std::string& pt, std::string& body, int& nextVar) {
+    struct RpnJet {
+        std::string val;
+        std::string gx;
+        std::string gy;
+        std::string gz;
+    };
+    std::vector<RpnJet> st;
+    auto pop = [&]() -> RpnJet {
+        if (st.empty()) return RpnJet{ "0.0", "0.0", "0.0", "0.0" };
+        RpnJet t = st.back(); st.pop_back(); return t;
+    };
+
+    for (const geom::SdfToken& t : rpn) {
+        using K = geom::SdfToken::Kind;
+        switch (t.kind) {
+            case K::Num: {
+                std::string p = e.param(t.num);
+                st.push_back(RpnJet{ p, "0.0", "0.0", "0.0" });
+                break;
+            }
+            case K::X: st.push_back(RpnJet{ pt + ".x", "1.0", "0.0", "0.0" }); break;
+            case K::Y: st.push_back(RpnJet{ pt + ".y", "0.0", "1.0", "0.0" }); break;
+            case K::Z: st.push_back(RpnJet{ pt + ".z", "0.0", "0.0", "1.0" }); break;
+            case K::Neg: {
+                auto a = pop();
+                std::string v = "(-(" + a.val + "))";
+                std::string gx = "(-(" + a.gx + "))";
+                std::string gy = "(-(" + a.gy + "))";
+                std::string gz = "(-(" + a.gz + "))";
+                st.push_back(RpnJet{ v, gx, gy, gz });
+                break;
+            }
+            case K::Add: {
+                auto b = pop(); auto a = pop();
+                std::string v = "((" + a.val + ") + (" + b.val + "))";
+                std::string gx = "((" + a.gx + ") + (" + b.gx + "))";
+                std::string gy = "((" + a.gy + ") + (" + b.gy + "))";
+                std::string gz = "((" + a.gz + ") + (" + b.gz + "))";
+                st.push_back(RpnJet{ v, gx, gy, gz });
+                break;
+            }
+            case K::Sub: {
+                auto b = pop(); auto a = pop();
+                std::string v = "((" + a.val + ") - (" + b.val + "))";
+                std::string gx = "((" + a.gx + ") - (" + b.gx + "))";
+                std::string gy = "((" + a.gy + ") - (" + b.gy + "))";
+                std::string gz = "((" + a.gz + ") - (" + b.gz + "))";
+                st.push_back(RpnJet{ v, gx, gy, gz });
+                break;
+            }
+            case K::Mul: {
+                auto b = pop(); auto a = pop();
+                std::string tv = "mv" + std::to_string(nextVar++);
+                std::string tgx = "mgx" + std::to_string(nextVar++);
+                std::string tgy = "mgy" + std::to_string(nextVar++);
+                std::string tgz = "mgz" + std::to_string(nextVar++);
+                body += "    let " + tv + " = (" + a.val + ") * (" + b.val + ");\n";
+                body += "    let " + tgx + " = (" + a.val + ") * (" + b.gx + ") + (" + b.val + ") * (" + a.gx + ");\n";
+                body += "    let " + tgy + " = (" + a.val + ") * (" + b.gy + ") + (" + b.val + ") * (" + a.gy + ");\n";
+                body += "    let " + tgz + " = (" + a.val + ") * (" + b.gz + ") + (" + b.val + ") * (" + a.gz + ");\n";
+                st.push_back(RpnJet{ tv, tgx, tgy, tgz });
+                break;
+            }
+            case K::Div: {
+                auto b = pop(); auto a = pop();
+                std::string tv = "dv" + std::to_string(nextVar++);
+                std::string tgx = "dgx" + std::to_string(nextVar++);
+                std::string tgy = "dgy" + std::to_string(nextVar++);
+                std::string tgz = "dgz" + std::to_string(nextVar++);
+                body += "    let " + tv + " = (" + a.val + ") / (" + b.val + ");\n";
+                body += "    let " + tgx + " = (" + a.gx + ") / (" + b.val + ");\n";
+                body += "    let " + tgy + " = (" + a.gy + ") / (" + b.val + ");\n";
+                body += "    let " + tgz + " = (" + a.gz + ") / (" + b.val + ");\n";
+                st.push_back(RpnJet{ tv, tgx, tgy, tgz });
+                break;
+            }
+            case K::Pow: {
+                auto b = pop(); auto a = pop();
+                std::string tv = "pv" + std::to_string(nextVar++);
+                std::string tgx = "pgx" + std::to_string(nextVar++);
+                std::string tgy = "pgy" + std::to_string(nextVar++);
+                std::string tgz = "pgz" + std::to_string(nextVar++);
+                body += "    let " + tv + " = ontoRawPow((" + a.val + "), (" + b.val + "));\n";
+                std::string dP = "((" + b.val + ") * ontoRawPow((" + a.val + "), (" + b.val + " - 1.0)))";
+                body += "    let " + tgx + " = " + dP + " * (" + a.gx + ");\n";
+                body += "    let " + tgy + " = " + dP + " * (" + a.gy + ");\n";
+                body += "    let " + tgz + " = " + dP + " * (" + a.gz + ");\n";
+                st.push_back(RpnJet{ tv, tgx, tgy, tgz });
+                break;
+            }
+            case K::Sin: {
+                auto a = pop();
+                std::string tv = "sinv" + std::to_string(nextVar++);
+                std::string tgx = "singx" + std::to_string(nextVar++);
+                std::string tgy = "singy" + std::to_string(nextVar++);
+                std::string tgz = "singz" + std::to_string(nextVar++);
+                body += "    let " + tv + " = sin(" + a.val + ");\n";
+                std::string c = "cos(" + a.val + ")";
+                body += "    let " + tgx + " = " + c + " * (" + a.gx + ");\n";
+                body += "    let " + tgy + " = " + c + " * (" + a.gy + ");\n";
+                body += "    let " + tgz + " = " + c + " * (" + a.gz + ");\n";
+                st.push_back(RpnJet{ tv, tgx, tgy, tgz });
+                break;
+            }
+            case K::Cos: {
+                auto a = pop();
+                std::string tv = "cosv" + std::to_string(nextVar++);
+                std::string tgx = "cosgx" + std::to_string(nextVar++);
+                std::string tgy = "cosgy" + std::to_string(nextVar++);
+                std::string tgz = "cosgz" + std::to_string(nextVar++);
+                body += "    let " + tv + " = cos(" + a.val + ");\n";
+                std::string s = "(-sin(" + a.val + "))";
+                body += "    let " + tgx + " = " + s + " * (" + a.gx + ");\n";
+                body += "    let " + tgy + " = " + s + " * (" + a.gy + ");\n";
+                body += "    let " + tgz + " = " + s + " * (" + a.gz + ");\n";
+                st.push_back(RpnJet{ tv, tgx, tgy, tgz });
+                break;
+            }
+            case K::Tan: {
+                auto a = pop();
+                std::string tv = "tanv" + std::to_string(nextVar++);
+                std::string tgx = "tangx" + std::to_string(nextVar++);
+                std::string tgy = "tangy" + std::to_string(nextVar++);
+                std::string tgz = "tangz" + std::to_string(nextVar++);
+                body += "    let " + tv + " = tan(" + a.val + ");\n";
+                std::string sec2 = "(1.0 + " + tv + " * " + tv + ")";
+                body += "    let " + tgx + " = " + sec2 + " * (" + a.gx + ");\n";
+                body += "    let " + tgy + " = " + sec2 + " * (" + a.gy + ");\n";
+                body += "    let " + tgz + " = " + sec2 + " * (" + a.gz + ");\n";
+                st.push_back(RpnJet{ tv, tgx, tgy, tgz });
+                break;
+            }
+            case K::Sqrt: {
+                auto a = pop();
+                std::string tv = "sqrtv" + std::to_string(nextVar++);
+                std::string tgx = "sqrtgx" + std::to_string(nextVar++);
+                std::string tgy = "sqrtgy" + std::to_string(nextVar++);
+                std::string tgz = "sqrtgz" + std::to_string(nextVar++);
+                body += "    let " + tv + " = sqrt(max(" + a.val + ", 0.0));\n";
+                std::string denom = "max(2.0 * " + tv + ", 1e-6)";
+                body += "    let " + tgx + " = (" + a.gx + ") / " + denom + ";\n";
+                body += "    let " + tgy + " = (" + a.gy + ") / " + denom + ";\n";
+                body += "    let " + tgz + " = (" + a.gz + ") / " + denom + ";\n";
+                st.push_back(RpnJet{ tv, tgx, tgy, tgz });
+                break;
+            }
+            case K::Abs: {
+                auto a = pop();
+                std::string tv = "absv" + std::to_string(nextVar++);
+                std::string tgx = "absgx" + std::to_string(nextVar++);
+                std::string tgy = "absgy" + std::to_string(nextVar++);
+                std::string tgz = "absgz" + std::to_string(nextVar++);
+                body += "    let " + tv + " = abs(" + a.val + ");\n";
+                std::string s = "sign(" + a.val + ")";
+                body += "    let " + tgx + " = " + s + " * (" + a.gx + ");\n";
+                body += "    let " + tgy + " = " + s + " * (" + a.gy + ");\n";
+                body += "    let " + tgz + " = " + s + " * (" + a.gz + ");\n";
+                st.push_back(RpnJet{ tv, tgx, tgy, tgz });
+                break;
+            }
+            case K::Exp: {
+                auto a = pop();
+                std::string tv = "expv" + std::to_string(nextVar++);
+                std::string tgx = "expgx" + std::to_string(nextVar++);
+                std::string tgy = "expgy" + std::to_string(nextVar++);
+                std::string tgz = "expgz" + std::to_string(nextVar++);
+                body += "    let " + tv + " = exp(" + a.val + ");\n";
+                body += "    let " + tgx + " = " + tv + " * (" + a.gx + ");\n";
+                body += "    let " + tgy + " = " + tv + " * (" + a.gy + ");\n";
+                body += "    let " + tgz + " = " + tv + " * (" + a.gz + ");\n";
+                st.push_back(RpnJet{ tv, tgx, tgy, tgz });
+                break;
+            }
+            case K::Log: {
+                auto a = pop();
+                std::string tv = "logv" + std::to_string(nextVar++);
+                std::string tgx = "loggx" + std::to_string(nextVar++);
+                std::string tgy = "loggy" + std::to_string(nextVar++);
+                std::string tgz = "loggz" + std::to_string(nextVar++);
+                body += "    let " + tv + " = log(max(" + a.val + ", 1e-8));\n";
+                std::string denom = "max(" + a.val + ", 1e-8)";
+                body += "    let " + tgx + " = (" + a.gx + ") / " + denom + ";\n";
+                body += "    let " + tgy + " = (" + a.gy + ") / " + denom + ";\n";
+                body += "    let " + tgz + " = (" + a.gz + ") / " + denom + ";\n";
+                st.push_back(RpnJet{ tv, tgx, tgy, tgz });
+                break;
+            }
+        }
+    }
+    if (st.empty()) {
+        return JetExpr{ JetKind::Scalar, "0.0", "vec3<f32>(0.0)", "", "", "" };
+    }
+    RpnJet res = st.back();
+    std::string grad = "vec3<f32>(" + res.gx + ", " + res.gy + ", " + res.gz + ")";
+    return JetExpr{ JetKind::Scalar, res.val, grad, "", "", "" };
 }
 
 // Emit one node, returning the name of the temporary holding its distance.
@@ -1738,6 +2300,200 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
             break;
     }
     return out;
+}
+
+} // namespace
+
+bool isDifferentiableSdfNode(const geom::SdfNode& n) {
+    if (n.op == geom::SdfOp::Leaf) {
+        switch (n.prim) {
+            case geom::SdfPrim::Sphere:
+            case geom::SdfPrim::Box:
+            case geom::SdfPrim::RoundBox:
+            case geom::SdfPrim::Ellipsoid:
+            case geom::SdfPrim::Cylinder:
+            case geom::SdfPrim::Cone:
+            case geom::SdfPrim::Torus:
+                return true;
+            case geom::SdfPrim::Expr: {
+                if (n.mathNode && isDifferentiableAst(*n.mathNode)) return true;
+                if (!n.rpn.empty() && isDifferentiableRpn(n.rpn)) return true;
+                if (!n.expr.empty()) {
+                    auto compiled = geom::compileExpr(n.expr);
+                    if (!compiled.empty() && isDifferentiableRpn(compiled)) return true;
+                }
+                return false;
+            }
+            case geom::SdfPrim::Convex:
+                return true;
+            default:
+                return false;
+        }
+    }
+    if (n.children.size() < 2 || !n.children[0] || !n.children[1]) {
+        if (!n.children.empty() && n.children[0]) {
+            return isDifferentiableSdfNode(*n.children[0]);
+        }
+        return true;
+    }
+    return isDifferentiableSdfNode(*n.children[0]) && isDifferentiableSdfNode(*n.children[1]);
+}
+
+namespace {
+
+struct JetNode {
+    std::string val;
+    std::string grad;
+};
+
+JetNode emitNodeJet(const geom::SdfNode& n, Emit& e, const std::string& pt, std::string& body, int& nextVar) {
+    if (n.op == geom::SdfOp::Leaf) {
+        const std::string off = e.param3(n.offset);
+        const std::string lp = "lp" + std::to_string(nextVar++);
+        body += "    let " + lp + " = " + pt + " - " + off + ";\n";
+
+        switch (n.prim) {
+            case geom::SdfPrim::Sphere: {
+                std::string r = e.param(n.dims.x);
+                std::string sj = "sj" + std::to_string(nextVar++);
+                body += "    let " + sj + " = sdSphereGrad(" + lp + ", " + r + ");\n";
+                return JetNode{ sj + ".value", sj + ".grad" };
+            }
+            case geom::SdfPrim::Box: {
+                std::string b = e.param3(n.dims);
+                std::string bj = "bj" + std::to_string(nextVar++);
+                body += "    let " + bj + " = sdBoxGrad(" + lp + ", " + b + ");\n";
+                return JetNode{ bj + ".value", bj + ".grad" };
+            }
+            case geom::SdfPrim::RoundBox: {
+                std::string b = e.param3(n.dims);
+                std::string r = e.param(n.p0);
+                std::string rbj = "rbj" + std::to_string(nextVar++);
+                body += "    let " + rbj + " = sdRoundBoxGrad(" + lp + ", " + b + ", " + r + ");\n";
+                return JetNode{ rbj + ".value", rbj + ".grad" };
+            }
+            case geom::SdfPrim::Ellipsoid: {
+                std::string r = e.param3(n.dims);
+                std::string ej = "ej" + std::to_string(nextVar++);
+                body += "    let " + ej + " = sdEllipsoidGrad(" + lp + ", " + r + ");\n";
+                return JetNode{ ej + ".value", ej + ".grad" };
+            }
+            case geom::SdfPrim::Cylinder: {
+                std::string r = e.param(n.dims.x);
+                std::string h = e.param(n.dims.y);
+                std::string cj = "cj" + std::to_string(nextVar++);
+                body += "    let " + cj + " = sdCylinderGrad(" + lp + ", " + r + ", " + h + ");\n";
+                return JetNode{ cj + ".value", cj + ".grad" };
+            }
+            case geom::SdfPrim::Cone: {
+                std::string r = e.param(n.dims.x);
+                std::string h = e.param(n.dims.y);
+                std::string conj = "conj" + std::to_string(nextVar++);
+                body += "    let " + conj + " = sdConeGrad(" + lp + ", " + r + ", " + h + ");\n";
+                return JetNode{ conj + ".value", conj + ".grad" };
+            }
+            case geom::SdfPrim::Torus: {
+                std::string r1 = e.param(n.dims.x);
+                std::string r2 = e.param(n.dims.y);
+                std::string tj = "tj" + std::to_string(nextVar++);
+                body += "    let " + tj + " = sdTorusGrad(" + lp + ", " + r1 + ", " + r2 + ");\n";
+                return JetNode{ tj + ".value", tj + ".grad" };
+            }
+            case geom::SdfPrim::Expr: {
+                e.sawExpr = true;
+                if (n.mathNode && isDifferentiableAst(*n.mathNode)) {
+                    JetExpr je = emitMathNodeGrad(*n.mathNode, e, lp, body, nextVar);
+                    return JetNode{ je.value, je.grad };
+                } else if (!n.rpn.empty() && isDifferentiableRpn(n.rpn)) {
+                    JetExpr je = emitRpnGrad(n.rpn, e, lp, body, nextVar);
+                    return JetNode{ je.value, je.grad };
+                } else if (!n.expr.empty()) {
+                    auto compiled = geom::compileExpr(n.expr);
+                    if (!compiled.empty() && isDifferentiableRpn(compiled)) {
+                        JetExpr je = emitRpnGrad(compiled, e, lp, body, nextVar);
+                        return JetNode{ je.value, je.grad };
+                    }
+                }
+                e.refuse("Expr without differentiable AST or RPN reached analytic gradient emitter");
+                return JetNode{ "1e9", "vec3<f32>(0.0, 1.0, 0.0)" };
+            }
+            case geom::SdfPrim::Convex: {
+                if (n.planes.empty()) {
+                    return JetNode{ "1e9", "vec3<f32>(0.0, 1.0, 0.0)" };
+                }
+                std::string vAcc = "cvxV" + std::to_string(nextVar++);
+                std::string gAcc = "cvxG" + std::to_string(nextVar++);
+                body += "    var " + vAcc + " = -1e9;\n";
+                body += "    var " + gAcc + " = vec3<f32>(0.0, 1.0, 0.0);\n";
+                for (const glm::vec4& pl : n.planes) {
+                    const std::string nx = e.param(pl.x), ny = e.param(pl.y),
+                                      nz = e.param(pl.z), d = e.param(pl.w);
+                    std::string pNorm = "vec3<f32>(" + nx + ", " + ny + ", " + nz + ")";
+                    std::string pVal = "(dot(" + lp + ", " + pNorm + ") - " + d + ")";
+                    body += "    if (" + pVal + " > " + vAcc + ") {\n";
+                    body += "        " + vAcc + " = " + pVal + ";\n";
+                    body += "        " + gAcc + " = " + pNorm + ";\n";
+                    body += "    }\n";
+                }
+                return JetNode{ vAcc, gAcc };
+            }
+        }
+        return JetNode{ "1e9", "vec3<f32>(0.0, 1.0, 0.0)" };
+    }
+
+    if (n.children.size() < 2 || !n.children[0] || !n.children[1]) {
+        if (!n.children.empty() && n.children[0]) {
+            return emitNodeJet(*n.children[0], e, pt, body, nextVar);
+        } else {
+            return JetNode{ "1.0", "vec3<f32>(0.0, 0.0, 0.0)" };
+        }
+    }
+
+    JetNode a = emitNodeJet(*n.children[0], e, pt, body, nextVar);
+    JetNode b = emitNodeJet(*n.children[1], e, pt, body, nextVar);
+
+    std::string outVal = "csgV" + std::to_string(nextVar++);
+    std::string outGrad = "csgG" + std::to_string(nextVar++);
+
+    switch (n.op) {
+        case geom::SdfOp::Morph: {
+            std::string t = "clamp(" + e.param(n.t) + ", 0.0, 1.0)";
+            body += "    let " + outVal + " = mix(" + a.val + ", " + b.val + ", " + t + ");\n";
+            body += "    let " + outGrad + " = mix(" + a.grad + ", " + b.grad + ", " + t + ");\n";
+            break;
+        }
+        case geom::SdfOp::Intersect: {
+            std::string sel = "csgSel" + std::to_string(nextVar++);
+            body += "    let " + sel + " = " + a.val + " >= " + b.val + ";\n";
+            body += "    let " + outVal + " = select(" + b.val + ", " + a.val + ", " + sel + ");\n";
+            body += "    let " + outGrad + " = select(" + b.grad + ", " + a.grad + ", " + sel + ");\n";
+            break;
+        }
+        case geom::SdfOp::Subtract: {
+            std::string sel = "csgSel" + std::to_string(nextVar++);
+            body += "    let " + sel + " = " + a.val + " >= -(" + b.val + ");\n";
+            body += "    let " + outVal + " = select(-(" + b.val + "), " + a.val + ", " + sel + ");\n";
+            body += "    let " + outGrad + " = select(-(" + b.grad + "), " + a.grad + ", " + sel + ");\n";
+            break;
+        }
+        case geom::SdfOp::SmoothUnion: {
+            std::string k = "max(" + e.param(n.t) + ", 1e-5)";
+            std::string h = "h" + std::to_string(nextVar++);
+            body += "    let " + h + " = clamp(0.5 + 0.5 * (" + b.val + " - " + a.val + ") / " + k + ", 0.0, 1.0);\n";
+            body += "    let " + outVal + " = mix(" + b.val + ", " + a.val + ", " + h + ") - " + k + " * " + h + " * (1.0 - " + h + ");\n";
+            body += "    let " + outGrad + " = mix(" + b.grad + ", " + a.grad + ", " + h + ");\n";
+            break;
+        }
+        case geom::SdfOp::Union:
+        default: {
+            std::string sel = "csgSel" + std::to_string(nextVar++);
+            body += "    let " + sel + " = " + a.val + " <= " + b.val + ";\n";
+            body += "    let " + outVal + " = select(" + b.val + ", " + a.val + ", " + sel + ");\n";
+            body += "    let " + outGrad + " = select(" + b.grad + ", " + a.grad + ", " + sel + ");\n";
+            break;
+        }
+    }
+    return JetNode{ outVal, outGrad };
 }
 
 // Validate the authored vector channel before lowering it. The generic emitter
@@ -2534,66 +3290,68 @@ fn fs(in: VSOut) -> FSOut {
         }
         
         // Volumetric Field Accumulation
-        let density = volumeDensityEval(p);
-        // t may advance beyond maxDist on the last surface-march step. Medium
-        // transport owns only the bounded interval [sample_t, maxDist].
-        let marched_field_distance = max(min(t, maxDist) - sample_t, 0.0);
-        if (density > 0.0 && marched_field_distance > 0.0) {
-            if (first_density_t < 0.0) { first_density_t = sample_t; }
-            // V1: sigma_t is independently authored when present; otherwise
-            // volumeExtinctionEval preserves the exact pre-V1 0.5*D contract.
-            let extinction = max(volumeExtinctionEval(p, density), 1e-6);
-
-            let old_t = transmittance;
-            transmittance *= exp(-extinction * marched_field_distance);
-
-            // V2: sigma_s controls scattering magnitude while C_v controls medium
-            // chroma. Compatibility (sigma_s=D, C_v=white) is byte-for-byte
-            // equivalent to the historical white term.
-            let scattering = max(volumeScatteringEval(p, density), 0.0);
-            let mediumChroma = volumeChromaEval(p);
-            if (HAS_AUTHORED_VOLUME_PHASE) {
-                let mediumWorldP = (inst.model * vec4<f32>(p, 1.0)).xyz;
-                let wiDelta = mediumWorldP - u.lightPos.xyz;
-                let woDelta = u.eyePos.xyz - mediumWorldP;
-                let wiLen = length(wiDelta);
-                let woLen = length(woDelta);
-                let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, SOURCE_DIRECTION_EPS),
-                                wiLen > SOURCE_DIRECTION_EPS);
-                let wo = select(vec3<f32>(0.0), woDelta / max(woLen, SOURCE_DIRECTION_EPS),
-                                woLen > SOURCE_DIRECTION_EPS);
-                var phase = 0.0;
-                if ((!VOLUME_PHASE_READS_WI || wiLen > SOURCE_DIRECTION_EPS) &&
-                    woLen > SOURCE_DIRECTION_EPS) {
-                    phase = max(volumePhaseEval(p, wi, wo), 0.0);
+        if (kHasSurfaceVolumetric) {
+            let density = volumeDensityEval(p);
+            // t may advance beyond maxDist on the last surface-march step. Medium
+            // transport owns only the bounded interval [sample_t, maxDist].
+            let marched_field_distance = max(min(t, maxDist) - sample_t, 0.0);
+            if (density > 0.0 && marched_field_distance > 0.0) {
+                if (first_density_t < 0.0) { first_density_t = sample_t; }
+                // V1: sigma_t is independently authored when present; otherwise
+                // volumeExtinctionEval preserves the exact pre-V1 0.5*D contract.
+                let extinction = max(volumeExtinctionEval(p, density), 1e-6);
+                
+                let old_t = transmittance;
+                transmittance *= exp(-extinction * marched_field_distance);
+                
+                // V2: sigma_s controls scattering magnitude while C_v controls medium
+                // chroma. Compatibility (sigma_s=D, C_v=white) is byte-for-byte
+                // equivalent to the historical white term.
+                let scattering = max(volumeScatteringEval(p, density), 0.0);
+                let mediumChroma = volumeChromaEval(p);
+                if (HAS_AUTHORED_VOLUME_PHASE) {
+                    let mediumWorldP = (inst.model * vec4<f32>(p, 1.0)).xyz;
+                    let wiDelta = mediumWorldP - u.lightPos.xyz;
+                    let woDelta = u.eyePos.xyz - mediumWorldP;
+                    let wiLen = length(wiDelta);
+                    let woLen = length(woDelta);
+                    let wi = select(vec3<f32>(0.0), wiDelta / max(wiLen, SOURCE_DIRECTION_EPS),
+                                    wiLen > SOURCE_DIRECTION_EPS);
+                    let wo = select(vec3<f32>(0.0), woDelta / max(woLen, SOURCE_DIRECTION_EPS),
+                                    woLen > SOURCE_DIRECTION_EPS);
+                    var phase = 0.0;
+                    if ((!VOLUME_PHASE_READS_WI || wiLen > SOURCE_DIRECTION_EPS) &&
+                        woLen > SOURCE_DIRECTION_EPS) {
+                        phase = max(volumePhaseEval(p, wi, wo), 0.0);
+                    }
+                    volumetric_scatter +=
+                        mediumChroma * (scattering / extinction) * phase *
+                        (old_t - transmittance);
+                } else {
+                    // Exact V2 compatibility arithmetic: no extra multiply-by-one.
+                    volumetric_scatter +=
+                        mediumChroma * (scattering / extinction) * (old_t - transmittance);
                 }
-                volumetric_scatter +=
-                    mediumChroma * (scattering / extinction) * phase *
-                    (old_t - transmittance);
-            } else {
-                // Exact V2 compatibility arithmetic: no extra multiply-by-one.
-                volumetric_scatter +=
-                    mediumChroma * (scattering / extinction) * (old_t - transmittance);
-            }
 
-            if (HAS_AUTHORED_VOLUME_EMISSION) {
-                let emissionWorldP = (inst.model * vec4<f32>(p, 1.0)).xyz;
-                let emissionDelta = u.eyePos.xyz - emissionWorldP;
-                let emissionLen = length(emissionDelta);
-                let emissionOmega = select(
-                    vec3<f32>(0.0),
-                    emissionDelta / max(emissionLen, SOURCE_DIRECTION_EPS),
-                    emissionLen > SOURCE_DIRECTION_EPS);
-                var emitted = vec3<f32>(0.0);
-                if (!VOLUME_EMISSION_READS_OMEGA || emissionLen > SOURCE_DIRECTION_EPS) {
-                    emitted = max(volumeEmissionEval(p, emissionOmega), vec3<f32>(0.0));
+                if (HAS_AUTHORED_VOLUME_EMISSION) {
+                    let emissionWorldP = (inst.model * vec4<f32>(p, 1.0)).xyz;
+                    let emissionDelta = u.eyePos.xyz - emissionWorldP;
+                    let emissionLen = length(emissionDelta);
+                    let emissionOmega = select(
+                        vec3<f32>(0.0),
+                        emissionDelta / max(emissionLen, SOURCE_DIRECTION_EPS),
+                        emissionLen > SOURCE_DIRECTION_EPS);
+                    var emitted = vec3<f32>(0.0);
+                    if (!VOLUME_EMISSION_READS_OMEGA || emissionLen > SOURCE_DIRECTION_EPS) {
+                        emitted = max(volumeEmissionEval(p, emissionOmega), vec3<f32>(0.0));
+                    }
+                    volumetric_emission += emitted * ((old_t - transmittance) / extinction);
                 }
-                volumetric_emission += emitted * ((old_t - transmittance) / extinction);
             }
+            
+            // Early exit if the field is fully opaque or ray exits the bounded volume
+            if (transmittance < 0.01) { break; }
         }
-
-        // Early exit if the field is fully opaque or ray exits the bounded volume
-        if (transmittance < 0.01) { break; }
         if (t > maxDist) { break; }
     }
     if (!hit && transmittance > 0.99 && !HAS_AUTHORED_VOLUME_EMISSION) { discard; }
@@ -4112,24 +4870,21 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* responseExpr) {
     Emit e;
 
-    const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
-                                  root.prim == geom::SdfPrim::Expr &&
-                                  root.mathNode &&
-                                  isDifferentiableAst(*root.mathNode));
+    const bool hasAnalyticGrad = isDifferentiableSdfNode(root);
 
     // Follow compile()'s exact traversal order so parameter indices remain a
     // structural contract. We deliberately do not append kPrimitives/kMarcher
     // or assemble a complete shader module on this value-only path.
+    const std::string savedOffset = e.parameterOffset;
+    e.parameterOffset = "paramOffset";
     if (hasAnalyticGrad) {
-        e.sawExpr = true;
-        const std::string off = e.param3(root.offset);
-        const std::string lp = e.fresh();
-        std::string throwawayBody = "    let " + lp + " = p - " + off + ";\n";
+        std::string throwawayBody;
         int nextVar = 0;
-        (void)emitMathNodeGrad(*root.mathNode, e, lp, throwawayBody, nextVar);
+        (void)emitNodeJet(root, e, "p", throwawayBody, nextVar);
     } else {
         (void)emitNode(root, e);
     }
+    e.parameterOffset = savedOffset;
 
     std::string throwaway;
     if (densityKind == DensityInputKind::Authored &&
@@ -4334,23 +5089,27 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* responseExpr) {
     Emit e;
 
-    const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
-                                  root.prim == geom::SdfPrim::Expr &&
-                                  root.mathNode &&
-                                  isDifferentiableAst(*root.mathNode));
+    const bool hasAnalyticGrad = isDifferentiableSdfNode(root);
 
     std::string evalGradFunc;
+    std::string evalFunc;
+    const std::string savedOffset = e.parameterOffset;
+    e.parameterOffset = "paramOffset";
     if (hasAnalyticGrad) {
-        e.sawExpr = true;
-        const std::string off = e.param3(root.offset);
-        const std::string lp = e.fresh();
-        std::string gradBody = "    let " + lp + " = p - " + off + ";\n";
+        std::string gradBody = "    let paramOffset = instances[g_instIdx].paramOffset;\n";
         int nextVar = 0;
-        JetExpr je = emitMathNodeGrad(*root.mathNode, e, lp, gradBody, nextVar);
+        JetNode jn = emitNodeJet(root, e, "p", gradBody, nextVar);
         evalGradFunc = "\nfn sdfEvalGrad(p: vec3<f32>) -> PerlinJet {\n" +
                        gradBody +
-                       "    return PerlinJet(" + je.value + ", " + je.grad + ");\n}\n";
+                       "    return PerlinJet(" + jn.val + ", " + jn.grad + ");\n}\n";
+    } else {
+        const std::string result = emitNode(root, e);
+        evalFunc = "\nfn sdfEval(p: vec3<f32>) -> f32 {\n"
+                   "    let paramOffset = instances[g_instIdx].paramOffset;\n" +
+                   e.body +
+                   "    return " + result + ";\n}\n";
     }
+    e.parameterOffset = savedOffset;
 
     Program prog;
     prog.wgsl = std::string(kSdfBindings) + kPrimitives;
@@ -4367,10 +5126,7 @@ Program compile(const geom::SdfNode& root,
                      "    let gl = length(jet.grad);\n"
                      "    return select(vec3<f32>(0.0, 1.0, 0.0), jet.grad / gl, gl > 1e-8);\n}\n";
     } else {
-        const std::string result = emitNode(root, e);
-        prog.wgsl += "\nfn sdfEval(p: vec3<f32>) -> f32 {\n";
-        prog.wgsl += e.body;
-        prog.wgsl += "    return " + result + ";\n}\n";
+        prog.wgsl += evalFunc;
         prog.wgsl += "\nfn sdfSampleStep(p: vec3<f32>) -> StepSample {\n"
                      "    let raw = sdfEval(p);\n"
                      "    return StepSample(raw, 0.0);\n}\n";
@@ -4603,6 +5359,13 @@ Program compile(const geom::SdfNode& root,
     prog.wgsl += responseReadsWi ? "true;\n" : "false;\n";
     prog.wgsl += "const MATERIAL_RESPONSE_READS_WO: bool = ";
     prog.wgsl += responseReadsWo ? "true;\n" : "false;\n";
+
+    const bool hasSurfaceVolumetric =
+        (densityKind == DensityInputKind::Authored && densityExpr && !densityExpr->pieces.empty()) ||
+        (densityKind == DensityInputKind::LegacyField && fieldNode && fieldNode->field) ||
+        (emissionExpr && !emissionExpr->pieces.empty());
+    prog.wgsl += std::string("\nconst kHasSurfaceVolumetric: bool = ") +
+                 (hasSurfaceVolumetric ? "true;\n" : "false;\n");
 
     const bool multiSource = radianceSources && radianceSources->size() > 1;
     if (!multiSource) {
