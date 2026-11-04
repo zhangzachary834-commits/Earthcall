@@ -4245,6 +4245,11 @@ struct RadianceSourceSample {
         wgsl += "\nfn sourceSample_" + suffix +
                 "(receiverWorld: vec3<f32>) -> RadianceSourceSample {\n";
         wgsl += "    let source = RS[" + suffix + "u];\n";
+        wgsl += "    if (source.control.x <= 0.5) {\n";
+        wgsl += "        return RadianceSourceSample("
+                "vec3<f32>(0.0), vec3<f32>(0.0), vec3<f32>(0.0), "
+                "vec3<f32>(0.0), vec3<f32>(0.0), 0.0, 0.0, 0.0);\n";
+        wgsl += "    }\n";
         wgsl += "    let sourceDelta = receiverWorld - source.position.xyz;\n";
         wgsl += "    let sourceDistance = length(sourceDelta);\n";
         wgsl += "    let sourceChroma = lightChroma_" + suffix +
