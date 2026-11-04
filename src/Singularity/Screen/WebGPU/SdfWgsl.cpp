@@ -509,6 +509,12 @@ std::string pointComponent(const std::string& var, Emit& e, const std::string& p
                  "expression context is not material response");
         return "vec3<f32>(0.0)";
     }
+    if (var == OntoMath::kSurfaceColorVar) {
+        if (e.bindMaterialResponse) return "surfaceColor";
+        e.refuse("an expression names receiver pigment 'surfaceColor', but this shader "
+                 "expression context is not material response");
+        return "vec3<f32>(0.0)";
+    }
     if (var == OntoMath::kOmegaXVar ||
         var == OntoMath::kOmegaYVar ||
         var == OntoMath::kOmegaZVar) {
@@ -1891,6 +1897,7 @@ bool validateResponsePiecewise(const OntoMath::Piecewise& pw, std::string& error
         {"y", OntoMath::ValueKind::Scalar},
         {"z", OntoMath::ValueKind::Scalar},
         {OntoMath::kSurfaceNormalVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kSurfaceColorVar, OntoMath::ValueKind::Vector},
         {OntoMath::kWiXVar, OntoMath::ValueKind::Scalar},
         {OntoMath::kWiYVar, OntoMath::ValueKind::Scalar},
         {OntoMath::kWiZVar, OntoMath::ValueKind::Scalar},
@@ -2629,6 +2636,9 @@ fn fs(in: VSOut) -> FSOut {
     // OntoMath authors the inverse-transpose on CPU. The shader consumes the
     // lowered normal matrix; it does not independently originate that meaning.
     let nw = normalize((inst.normalMat * vec4<f32>(nf, 0.0)).xyz);
+    // Pigment is an admitted receiver input. Once an authored response exists,
+    // it owns whether/how pigment participates in reflected RGB.
+    let surfaceColor = sdfColor(pf);
 
     let L = normalize(u.lightPos.xyz - pw);
     let V = normalize(u.eyePos.xyz - pw);
@@ -2688,7 +2698,7 @@ fn fs(in: VSOut) -> FSOut {
             }
             var receiverResponse = vec3<f32>(0.0);
             if (responseDefined) {
-                receiverResponse = materialResponseEval(pf, nw, responseWi, V);
+                receiverResponse = materialResponseEval(pf, nw, responseWi, V, surfaceColor);
             }
             ambientTerm = vec3<f32>(0.0);
             diffuseTerm = (sourceChroma * vec3<f32>(c.x)) *
@@ -2716,7 +2726,7 @@ fn fs(in: VSOut) -> FSOut {
             }
             var receiverResponse = vec3<f32>(0.0);
             if (responseDefined) {
-                receiverResponse = materialResponseEval(pf, nw, responseWi, V);
+                receiverResponse = materialResponseEval(pf, nw, responseWi, V, surfaceColor);
             }
             ambientTerm = vec3<f32>(0.0);
             diffuseTerm = (u.lightDiffuse.rgb / vec3<f32>(0.8)) *
@@ -2731,8 +2741,13 @@ fn fs(in: VSOut) -> FSOut {
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
 
-    let surfaceColor = sdfColor(pf);
-    let litRgb = surfaceColor * (ambientTerm + diffuseTerm) + specTerm;
+    // Authored response is sovereign reflected RGB. The legacy path still owns
+    // its historical tint/specular split until the compatibility expression
+    // replaces it in the next migration phase.
+    let litRgb = select(
+        surfaceColor * (ambientTerm + diffuseTerm) + specTerm,
+        ambientTerm + diffuseTerm + specTerm,
+        HAS_AUTHORED_MATERIAL_RESPONSE);
     let base_rgb = mix(surfaceColor, litRgb, u.lightControl.x);
     let field_rgb = volumetric_scatter;
     
@@ -4574,7 +4589,7 @@ Program compile(const geom::SdfNode& root,
     bool responseReadsWi = false;
     bool responseReadsWo = false;
     prog.wgsl += "\nfn materialResponseEval(p: vec3<f32>, n: vec3<f32>, "
-                 "wi: vec3<f32>, wo: vec3<f32>) -> vec3<f32> {\n";
+                 "wi: vec3<f32>, wo: vec3<f32>, surfaceColor: vec3<f32>) -> vec3<f32> {\n";
     if (responseExpr && !responseExpr->pieces.empty()) {
         std::string validationError;
         if (!validateResponsePiecewise(*responseExpr, validationError)) {
@@ -4828,7 +4843,7 @@ Program compile(const geom::SdfNode& root,
                 sum += "                }\n";
                 sum += "                if (responseDefined) {\n";
                 sum += "                    let receiverResponse = "
-                       "materialResponseEval(pf, nw, responseWi, V);\n";
+                       "materialResponseEval(pf, nw, responseWi, V, surfaceColor);\n";
                 sum += "                    diffuseTerm += incidentEnvelope * "
                        "receiverResponse * directRadiance;\n";
                 sum += "                }\n";
