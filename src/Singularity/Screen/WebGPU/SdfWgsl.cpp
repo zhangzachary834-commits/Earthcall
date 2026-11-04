@@ -523,6 +523,18 @@ std::string pointComponent(const std::string& var, Emit& e, const std::string& p
                  "expression context is not material environment response");
         return "vec3<f32>(0.0)";
     }
+    if (var == OntoMath::kLegacyDiffuseLobeWeightVar) {
+        if (e.bindMaterialResponse) return "legacyDiffuseLobeWeight";
+        e.refuse("an expression names legacy diffuse-lobe compatibility weight outside "
+                 "the direct material-response migration context");
+        return "0.0";
+    }
+    if (var == OntoMath::kLegacySpecularLobeWeightVar) {
+        if (e.bindMaterialResponse) return "legacySpecularLobeWeight";
+        e.refuse("an expression names legacy specular-lobe compatibility weight outside "
+                 "the direct material-response migration context");
+        return "0.0";
+    }
     if (var == OntoMath::kOmegaXVar ||
         var == OntoMath::kOmegaYVar ||
         var == OntoMath::kOmegaZVar) {
@@ -1951,6 +1963,8 @@ bool validateResponsePiecewise(const OntoMath::Piecewise& pw,
         {"z", OntoMath::ValueKind::Scalar},
         {OntoMath::kSurfaceNormalVar, OntoMath::ValueKind::Vector},
         {OntoMath::kSurfaceColorVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kLegacyDiffuseLobeWeightVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kLegacySpecularLobeWeightVar, OntoMath::ValueKind::Scalar},
         {OntoMath::kWiXVar, OntoMath::ValueKind::Scalar},
         {OntoMath::kWiYVar, OntoMath::ValueKind::Scalar},
         {OntoMath::kWiZVar, OntoMath::ValueKind::Scalar},
