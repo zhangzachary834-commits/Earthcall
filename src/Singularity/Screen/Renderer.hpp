@@ -251,10 +251,10 @@ public:
     double volumeDensityTemporalCoordinate() const { return _volumeDensityTemporalCoordinate; }
     double volumeDensityTemporalDelta() const { return _volumeDensityTemporalDelta; }
 
-    // Rung 7: when a Zone owns two or more radiant FieldNodes, Screen projects
-    // them together instead of forcing one source AST to enumerate the world.
-    // One-source worlds intentionally keep using the historical scalar setters
-    // above, making the one-element sum an exact compatibility path.
+    // Rung 7: Screen projects the ordered admitted radiant FieldNode set
+    // independently of source count. One authored source is the one-element sum
+    // and therefore uses the same source-set compiler/runtime buffer as N sources.
+    // Historical scalar setters above remain an explicit zero-set compatibility lane.
     void setRadianceSources(std::vector<Rendering::RadianceSourceBinding> sources,
                             uint64_t revision) {
         _radianceSources = std::move(sources);
