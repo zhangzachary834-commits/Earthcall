@@ -2180,14 +2180,14 @@ int main() {
         renderer.setRadianceChroma(nullptr, 0);
         renderer.setRadianceAngular(nullptr, 0);
         renderer.setRadianceVisibilityEnabled(false);
-        // Deliberately noncanonical old source-lobe coefficients:
-        // incident white=1, diffuse lobe weight=.2/.8=.25,
-        // specular lobe weight=.4.
+        // Deliberately adversarial old API: diffuse and specular use
+        // DIFFERENT RGB chroma. Old no-chi SDF semantics consumed these
+        // vectors independently; the authored default must preserve that fact.
         renderer.setRadianceSourceCoefficients(1.0f, 0.0f, 0.2f, 0.4f);
         renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
                           glm::vec3(0.0f),
-                          glm::vec3(0.2f),
-                          glm::vec3(0.4f));
+                          glm::vec3(0.20f, 0.08f, 0.04f),
+                          glm::vec3(0.40f, 0.20f, 0.05f));
         renderer.setLightingEnabled(true);
         renderer.setModel(glm::mat4(1.0f));
 
@@ -2205,23 +2205,21 @@ int main() {
         unsigned char migratedLegacyPixel[4];
         readCentre(migratedLegacyPixel);
         std::printf(
-            "legacy direct migration pixel=(%d,%d,%d) expected~(128,115,153)\n",
+            "legacy direct migration pixel=(%d,%d,%d) expected~(128,56,23)\n",
             migratedLegacyPixel[0], migratedLegacyPixel[1],
             migratedLegacyPixel[2]);
 
-        // Exact center would be (.5,.45,.6) -> (128,115,153). The 16x16
-        // framebuffer samples slightly off-axis, so retain a narrow geometric
-        // tolerance while still detecting lost source weights or a hidden
-        // material multiply.
-        assert(migratedLegacyPixel[0] >= 112 &&
+        // Exact front-center is (.50,.22,.09) -> (128,56,23). The 16x16
+        // sample is slightly off-axis, mostly narrowing the shiny lobe.
+        assert(migratedLegacyPixel[0] >= 108 &&
                migratedLegacyPixel[0] <= 140 &&
-               migratedLegacyPixel[1] >= 100 &&
-               migratedLegacyPixel[1] <= 128 &&
-               migratedLegacyPixel[2] >= 137 &&
-               migratedLegacyPixel[2] <= 166 &&
-               migratedLegacyPixel[2] > migratedLegacyPixel[0] + 12 &&
-               migratedLegacyPixel[0] > migratedLegacyPixel[1] + 5 &&
-               "authored default response failed old-world noncanonical lobe parity");
+               migratedLegacyPixel[1] >= 42 &&
+               migratedLegacyPixel[1] <= 72 &&
+               migratedLegacyPixel[2] >= 14 &&
+               migratedLegacyPixel[2] <= 38 &&
+               migratedLegacyPixel[0] > migratedLegacyPixel[1] + 45 &&
+               migratedLegacyPixel[1] > migratedLegacyPixel[2] + 15 &&
+               "authored default response failed arbitrary legacy diffuse/specular RGB parity");
 
         renderer.setRadianceField(nullptr, 0);
         renderer.setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
