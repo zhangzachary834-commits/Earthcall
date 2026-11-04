@@ -330,6 +330,11 @@ std::shared_ptr<Material> Object::ownMaterial() {
                 OntoMath::Piecewise::fromJson(shared->responseExpr->toJson()));
             mine->bumpResponseRevision();
         }
+        if (shared->environmentResponseExpr) {
+            mine->environmentResponseExpr = std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::fromJson(shared->environmentResponseExpr->toJson()));
+            mine->bumpEnvironmentResponseRevision();
+        }
 
         mine->faceTextures = shared->faceTextures;
         // The copies are this material's own paint now; a texture handle
