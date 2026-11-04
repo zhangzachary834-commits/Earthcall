@@ -2124,6 +2124,10 @@ int main() {
     }
     offRenderer.setSdfRangeProxyEnabled(false);
     onRenderer.setSdfRangeProxyEnabled(true);
+    // This is a traversal-performance witness, not an illumination benchmark.
+    // Keep authored/material response law completely out of the measurement.
+    offRenderer.setLightingEnabled(false);
+    onRenderer.setLightingEnabled(false);
     // Some shared helpers still expect a current renderer, but this benchmark
     // invokes both renderers directly. Point the global compatibility handle at
     // the accelerated renderer and never switch it as part of measurement.
