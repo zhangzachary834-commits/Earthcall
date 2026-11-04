@@ -21,8 +21,21 @@ RenderMaterial resolveRenderMaterial(const std::string& materialId, const FaceAl
         rm.colorRevision = m->getRevision();
         rm.responseExpr = m->responseExpr;
         rm.responseRevision = m->getResponseRevision();
-        rm.environmentResponseExpr = m->environmentResponseExpr;
-        rm.environmentResponseRevision = m->getEnvironmentResponseRevision();
+
+        // Existing authored direct response deliberately opts out of inherited
+        // legacy environment. A legacy Material (no direct response) inherits
+        // material.default's environment law unless it authored its own.
+        if (m->environmentResponseExpr) {
+            rm.environmentResponseExpr = m->environmentResponseExpr;
+            rm.environmentResponseRevision = m->getEnvironmentResponseRevision();
+        } else if (!m->responseExpr) {
+            if (auto fallback = materials.defaultMaterial();
+                fallback && fallback.get() != m.get()) {
+                rm.environmentResponseExpr = fallback->environmentResponseExpr;
+                rm.environmentResponseRevision =
+                    fallback->getEnvironmentResponseRevision();
+            }
+        }
 
         if (rm.responseExpr || rm.environmentResponseExpr) {
             std::set<std::string> paths;
