@@ -247,7 +247,7 @@ private:
         uint32_t parameterRevision = 0xffffffff;
         uint32_t colorRevision = 0xffffffff;
         uint32_t responseRevision = 0xffffffff;
-        uint64_t responseBindingRevision = 0xffffffffffffffffULL;
+        std::string responseBindingIdentity;
         std::string responseStructure;
         bool responseReadsNormal = false;
         bool responseReadsWi = false;
