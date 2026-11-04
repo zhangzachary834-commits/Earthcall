@@ -2599,82 +2599,13 @@ void WebGpuRenderer::flushSdfDraws() {
         return;
     }
     
-    // Rung 7 source records are shared across every SDF pipeline in the frame.
-    // Upload only when their byte representation changes; source time and
-    // placement are values, not reasons to rebuild WGSL.
-    WGPUBuffer sourceBuffer = nullptr;
-    uint64_t sourceOffset = 0;
-    uint64_t sourceBindingSize = 0;
-
-    if (!radianceSources().empty()) {
-        std::vector<RadianceSourceGpuData> gpuSources;
-        gpuSources.reserve(radianceSources().size());
-        for (const auto& source : radianceSources()) {
-            RadianceSourceGpuData data{};
-            data.position = glm::vec4(source.position, 1.0f);
-            data.legacyEnvironment = glm::vec4(
-                source.ambientRadiance / 0.2f,
-                (source.coefficients.x * source.coefficients.y) / 0.2f);
-            data.directIncidentRadiance = glm::vec4(
-                legacyDirectIncidentRadiance(
-                    source.ambientRadiance, source.diffuseRadiance,
-                    source.specularRadiance, source.coefficients),
-                source.coefficients.x);
-            data.legacyDiffuseIncident = glm::vec4(
-                source.diffuseRadiance / 0.8f,
-                (source.coefficients.x * source.coefficients.z) / 0.8f);
-            data.legacySpecularIncident = glm::vec4(
-                source.specularRadiance,
-                source.coefficients.x * source.coefficients.w);
-            data.time = glm::vec4(static_cast<float>(source.temporalCoordinate),
-                                  static_cast<float>(source.temporalDelta), 0.0f, 0.0f);
-            data.control =
-                glm::vec4(source.enabled ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
-            gpuSources.push_back(data);
-        }
-
-        const uint64_t bytes =
-            static_cast<uint64_t>(gpuSources.size() * sizeof(RadianceSourceGpuData));
-        uint64_t capacity = 256;
-        while (capacity < bytes) capacity *= 2;
-
-        if (!_persistentRadianceSources.buffer ||
-            _persistentRadianceSources.capacityBytes < bytes) {
-            WGPUBufferDescriptor bd = {};
-            bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
-            bd.size = capacity;
-            WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
-            if (grown) {
-                if (_persistentRadianceSources.buffer) {
-                    wgpuBufferRelease(_persistentRadianceSources.buffer);
-                }
-                _persistentRadianceSources.buffer = grown;
-                _persistentRadianceSources.capacityBytes = capacity;
-                _persistentRadianceSources.mirror.clear();
-                _persistentRadianceSourceVramBytes = static_cast<size_t>(capacity);
-            }
-        }
-
-        const auto* raw =
-            reinterpret_cast<const unsigned char*>(gpuSources.data());
-        const std::vector<unsigned char> bytesNow(raw, raw + bytes);
-        if (_persistentRadianceSources.buffer &&
-            _persistentRadianceSources.capacityBytes >= bytes) {
-            if (_persistentRadianceSources.mirror != bytesNow) {
-                wgpuQueueWriteBuffer(_queue, _persistentRadianceSources.buffer, 0,
-                                     gpuSources.data(), bytes);
-                _persistentRadianceSources.mirror = bytesNow;
-            }
-            sourceBuffer = _persistentRadianceSources.buffer;
-            sourceBindingSize = bytes;
-        } else {
-            auto fallback =
-                bufferPool().suballocateStorage(gpuSources.data(), bytes);
-            sourceBuffer = fallback.buffer;
-            sourceOffset = fallback.offset;
-            sourceBindingSize = fallback.size;
-        }
-    }
+    // Source records are world truth shared by mesh and SDF consumers. The
+    // helper owns persistent residency and exact-byte refresh; representation
+    // paths only bind the returned view.
+    const RadianceSourceBufferView sourceView = prepareRadianceSourceBuffer();
+    WGPUBuffer sourceBuffer = sourceView.buffer;
+    const uint64_t sourceOffset = sourceView.offset;
+    const uint64_t sourceBindingSize = sourceView.size;
 
     // Global uniforms for SDFs
     SdfGlobalUniforms u;
