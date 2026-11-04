@@ -1347,7 +1347,8 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
     // matrix operations below may consume Matrix children; legacy Add/Scale/etc.
     // still refuse them. A Matrix ValueLeaf carries its dimensions forward.
     // Integral types its own children: its body in the scope that binds v.
-    if (op != Op::ValueLeaf && op != Op::Integral && op != Op::Let && !isMatrixOperation(op)) {
+    if (op != Op::ValueLeaf && op != Op::Bind &&
+        op != Op::Integral && op != Op::Let && !isMatrixOperation(op)) {
         preTyped.reserve(children.size());
         for (std::size_t i = 0; i < children.size(); ++i) {
             auto childType = sub(i);
