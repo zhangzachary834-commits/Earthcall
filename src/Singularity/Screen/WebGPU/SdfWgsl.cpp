@@ -2455,8 +2455,20 @@ fn sourceTransportSignedStep(p: vec3<f32>, damping: f32) -> f32 {
     return sdfEval(p);
 }
 
-fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
-    if (u.lightControl.y < 0.5) { return 1.0; }
+struct VisibilityDecision {
+    known: f32,
+    value: f32,
+};
+
+fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> VisibilityDecision {
+    if (u.lightControl.y < 0.5) {
+        return VisibilityDecision(1.0, 1.0);
+    }
+    // LocalReceiverGeometry is mode 1. CompleteScene (mode 2) requires a
+    // scene-wide provider; this SDF owns only its receiving instance.
+    if (u.lightControl.y > 1.5) {
+        return VisibilityDecision(0.0, 0.0);
+    }
 
     let inst = instances[g_instIdx];
     let sourceField = (inst.invModel * vec4<f32>(sourceWorld, 1.0)).xyz;
@@ -2464,7 +2476,7 @@ fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWor
     let sourceDistance = length(toSource);
     let surfaceEps = max(inst.misc.y, 1e-4);
     let bias = surfaceEps * 4.0;
-    if (sourceDistance <= bias * 2.0) { return 1.0; }
+    if (sourceDistance <= bias * 2.0) { return VisibilityDecision(1.0, 1.0); }
 
     let initialDir = toSource / sourceDistance;
     let damping = inst.misc.w;
@@ -2484,36 +2496,36 @@ fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWor
 
     let remaining = sourceField - origin;
     let rayLength = length(remaining);
-    if (rayLength <= bias) { return 1.0; }
+    if (rayLength <= bias) { return VisibilityDecision(1.0, 1.0); }
     let shadowDir = remaining / rayLength;
 
     // Restrict the query to authored geometry inside this instance's domain.
     // A source outside the box is fine: leaving the box unobstructed proves this
     // instance contributes no blocker beyond that exit.
     let bounds = rayAabb(origin, shadowDir, inst.extents.xyz);
-    if (bounds.y < bounds.x || bounds.y <= 0.0) { return 1.0; }
+    if (bounds.y < bounds.x || bounds.y <= 0.0) { return VisibilityDecision(1.0, 1.0); }
 
     var tShadow = max(bounds.x, 0.0);
     let maxShadow = min(bounds.y, rayLength - bias);
-    if (maxShadow <= tShadow) { return 1.0; }
+    if (maxShadow <= tShadow) { return VisibilityDecision(1.0, 1.0); }
 
     // Match the primary renderer's finite exact-march budget. This baseline uses
     // no proof-grid skip, no penumbra estimate, and no percentage heuristic.
     for (var shadowStep = 0; shadowStep < 192; shadowStep = shadowStep + 1) {
-        if (tShadow >= maxShadow) { return 1.0; }
+        if (tShadow >= maxShadow) { return VisibilityDecision(1.0, 1.0); }
 
         let pShadow = origin + shadowDir * tShadow;
         let currentEps = max(surfaceEps, tShadow * 0.001);
         let dShadow = sourceTransportSignedStep(pShadow, damping);
 
-        if (dShadow <= 0.0 || abs(dShadow) < currentEps) { return 0.0; }
+        if (dShadow <= 0.0 || abs(dShadow) < currentEps) { return VisibilityDecision(1.0, 0.0); }
         tShadow = tShadow + max(dShadow, currentEps);
     }
 
     // The primary marcher uses the same bounded iteration contract. If the
     // budget is exhausted before the segment is decided, fail conservatively:
     // never invent an unobstructed path that was not actually traversed.
-    return 0.0;
+    return VisibilityDecision(1.0, 0.0);
 }
 
 @fragment
@@ -2871,7 +2883,7 @@ fn fs(in: VSOut) -> FSOut {
     }
     let shapedRadiance = radialRadiance * angularRadiance;
     let pathVisibility = sourceVisibility(pf, nf, u.lightPos.xyz);
-    let directRadiance = shapedRadiance * pathVisibility;
+    let directRadiance = shapedRadiance * pathVisibility.value;
 
     var incidentRadiance = u.directIncidentRadiance.rgb;
     if (HAS_AUTHORED_CHROMA) {
@@ -2899,7 +2911,7 @@ fn fs(in: VSOut) -> FSOut {
             responseDefined = false;
         }
         var receiverResponse = vec3<f32>(0.0);
-        if (responseDefined) {
+        if (responseDefined && pathVisibility.known > 0.5) {
             receiverResponse = materialResponseEval(
                 pf, nw, responseWi, V, surfaceColor, incidentRadiance,
                 legacyDiffuseIncident, legacySpecularIncident);
@@ -5238,8 +5250,9 @@ Program compile(const geom::SdfNode& root,
                 sum += "            let pathVisibility = "
                        "sourceVisibility(pf, nf, source.position.xyz);\n";
                 sum += "            let directRadiance = "
-                       "sourcePacket.shapedRadiance * pathVisibility;\n";
-                sum += "            if (HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
+                       "sourcePacket.shapedRadiance * pathVisibility.value;\n";
+                sum += "            if (pathVisibility.known > 0.5 && "
+                       "HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
                 sum += "                let responseDefined = "
                        "sourcePacket.directionDefined > 0.5 || "
                        "!MATERIAL_RESPONSE_READS_WI;\n";
