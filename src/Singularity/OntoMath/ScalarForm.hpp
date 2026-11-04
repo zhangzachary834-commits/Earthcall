@@ -559,6 +559,12 @@ struct MathNode {
         // composes the value's bound into the body's (plan §6an).
         Let = 41,
 
+        // Bind(path) reads one authored PropertyPath from the supplied subject
+        // context. The path is mathematical input, not renderer vocabulary.
+        // GPU channels lower admitted scalar/vector values to parameter slots;
+        // an unresolved or unsupported path refuses by name.
+        Bind = 42,
+
         // Not a kind an author picks — the landing place for an op THIS BUILD
         // does not know: a save written by another version. It never
         // evaluates (nullopt), never type-checks, and refuses to compile to
@@ -571,6 +577,7 @@ struct MathNode {
     Op op = Op::ScalarLeaf;
     ScalarForm scalarForm;
     std::string variableName;
+    std::string propertyPath; // Bind payload: canonical authored PropertyPath text
     std::string stringArg; // For Component index or Map func name
     // MatrixConstruct / MatrixIdentity shape. Serialized only for those ops.
     // These are mathematical dimensions, not GLM storage dimensions.
@@ -584,7 +591,8 @@ struct MathNode {
     MathNode() = default;
     MathNode(const MathNode& o)
         : op(o.op), scalarForm(o.scalarForm), variableName(o.variableName),
-          stringArg(o.stringArg), matrixRows(o.matrixRows), matrixCols(o.matrixCols),
+          propertyPath(o.propertyPath), stringArg(o.stringArg),
+          matrixRows(o.matrixRows), matrixCols(o.matrixCols),
           unsupported(o.unsupported) {
         children.reserve(o.children.size());
         for (const auto& c : o.children) {
@@ -614,6 +622,8 @@ struct MathNode {
                     ValueKind* outKind = nullptr, bool allowUnbound = false) const;
 
     void collectDependencies(std::set<std::string>& outDeps) const;
+    // PropertyPath dependencies are distinct from lexical/free variables.
+    void collectPropertyBindings(std::set<std::string>& outPaths) const;
 
     std::optional<PropertyValue> evaluate(const std::map<std::string, PropertyValue>& vars, const Singular* subject = nullptr) const;
 
