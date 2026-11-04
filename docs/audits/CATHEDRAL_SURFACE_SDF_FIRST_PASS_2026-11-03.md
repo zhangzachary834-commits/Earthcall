@@ -107,3 +107,70 @@ Zach first reported 17 FPS from `/Applications/Earthcall.app`. Inspection found 
 At Zach's request, `Run Earthcall.command` now exports a Release default before calling the build helper, overriding a cached Debug profile. Explicit `EARTHCALL_BUILD_TYPE=Debug` remains available. Shell syntax checks pass; an isolated launcher invocation with a stubbed build helper verifies both default Release and explicit Debug forwarding without building or launching Earthcall. The standalone build helper's cached-profile behavior is unchanged. The old empty, unheld `.git/index.lock` was removed after checking for active Git writers; the unrelated Cursor build lock was retained.
 
 Codex / GPT-6 / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-04T00:35:39-08:00.
+
+## SDF Surface Truth Mastery: Rung 1 & Rung 2 Implementation and Native Offscreen Validation
+
+**Author** — Antigravity / Gemini 3.8 Flash  
+**Session** — `c802a0d5-3c06-450d-b47b-ebdc7aef86d0`  
+**Timestamp** — 2026-11-04T02:26:00-08:00  
+**Source head** — `sync-from-earthcall-main`
+
+Following the directive from The Firmament & Zach, Rungs 1 & 2 of SDF Surface Truth Mastery have been implemented and verified on the default checkout without touching `Earthcall-ray-transport` or introducing any heuristic approximations, spatial octrees, or damping hacks.
+
+### 1. Structural Advancements in SdfWgsl
+
+1. **Step A — `ScalarForm` & Algebraic Forward-Mode `JetExpr` Differentiation:**
+   - Extended `isDifferentiableAst` and `emitMathNodeGrad` in `src/Singularity/Screen/WebGPU/SdfWgsl.cpp` to differentiate general polynomial terms ($x^a y^b z^c$) and transcendental factors (`Sin`, `Cos`, `Exp`, `Ln`) using the exact Leibniz product rule while preserving strict parameter collection ordering.
+   - Added forward-mode differentiation rules for `Op::Sqrt` ($\nabla \sqrt{u} = \frac{\nabla u}{2\max(\sqrt{u}, 10^{-6})}$), `Op::Abs` ($\nabla |u| = \text{sign}(u)\nabla u$), `Op::Pow` ($n u^{n-1} \nabla u$ for non-spatial exponents), and `Op::Div` ($\frac{\nabla u}{v}$ for non-spatial denominators).
+   - Added `Op::Clamp` ($\nabla \text{clamp}(u, lo, hi)$), `Op::Union`, `Op::Intersection`, and `Op::Difference` to `MathNode` gradient emission.
+   - Added token-level differentiation (`isDifferentiableRpn`, `emitRpnGrad`) so that expressions serialized as RPN tokens (such as `cathedral.sdf.gyroid_north`, `cathedral.sdf.ophanim_throne`, and `cathedral.astra.openhand.*`) differentiate analytically without requiring save-file migration.
+
+2. **Step B — Forward-Mode `JetExpr` Across the Full `geom::SdfNode` CSG Tree (`emitNodeJet`):**
+   - Implemented `isDifferentiableSdfNode` and `emitNodeJet` traversing composite CSG trees:
+     - Leaf primitives (`Sphere`, `Box`, `RoundBox`, `Ellipsoid`, `Cylinder`, `Cone`, `Torus`, `Convex`) emit exact analytical gradients in a single pass.
+     - CSG operations (`Union`, `Intersect`, `Subtract`, `SmoothUnion`, `Morph`) propagate `JetExpr { val, grad }` using exact calculus identities (including the cancellation in $\frac{\partial}{\partial d} \text{smin}$).
+   - Emitted `sdfEvalGrad(p: vec3<f32>) -> vec4<f32>` (returning `val` in `.x` and $\nabla f$ in `.yzw`).
+   - Replaced 4-sample central finite differences in `sdfSampleStep` and `sdfNormal` with a single evaluation of `sdfEvalGrad(p)`.
+
+3. **Step C — Dead Volumetric Elimination & Storage Offset Hoisting:**
+   - Isolated volumetric evaluation in `kMarcher` behind compile-time `const kHasSurfaceVolumetric: bool`: pure surface SDF shaders execute zero volumetric accumulation inside the 192-step loop.
+   - Hoisted `paramOffset = instances[g_instIdx].paramOffset;` at the entry of `sdfEval` and `sdfEvalGrad`, eliminating repeated storage buffer indexing across all parameter reads.
+
+### 2. CPU Census Comparison (Cathedral of the Living Logos)
+
+| Reading | Baseline (2026-11-03) | Rung 1 & 2 (2026-11-04) | Delta |
+|---|---|---|---|
+| Fields compiled without refusal | 178 / 178 | 178 / 178 | 0 |
+| Distinct shader structures | 66 | 66 | 0 |
+| Fields requiring gradient step | 36 | 36 | 0 |
+| **Analytic gradient fields (`sdfEvalGrad`)** | **0 / 178** | **178 / 178 (100%)** | **+178 (+100%)** |
+| **Gradient fields with analytic gradient** | **0 / 36** | **36 / 36 (100%)** | **+36 (+100%)** |
+| Parameter collection mismatches | 0 | 0 | 0 |
+| Volumetric loop code in pure surface shaders | Executed | Eliminated (`kHasSurfaceVolumetric = false`) | Isolated |
+
+### 3. Pixel Parity & Numerical Oracle Checks
+
+- Independent parity suite: `sdf_wgsl_parameter_refresh_test` verifies value and gradient parity across gyroid expressions, sqrt drops, composite CSG trees, and isolated volumetric compiles.
+- Native offscreen pixel parity at 2560×1440:
+  - Over **99.1% of pixels are byte-identical** on full-world renders (3,664,780 / 3,686,400 pixels exact).
+  - The remaining 0.58% differing pixels have a mean byte difference of only 1.30/255, reflecting the exact mathematical surface normal from `sdfEvalGrad` replacing the $O(h^2)$ truncation error of the $h=0.001$ finite difference approximation, along with existing process-dependent batch command ordering.
+
+### 4. Paired ABBA Performance Gate (Metal, 2560×1440)
+
+Four warm-frame cycles across Cathedral of the Living Logos and The Merry Dancers:
+
+| Benchmark Screen | Baseline Mean | Rung 1 & 2 Warm | Rung 1 & 2 Mean |
+|---|---|---|---|
+| **Cathedral (Full World)** | 34.44 ms (62.11 ms pre-pages) | 29.74 – 30.84 ms | 33.11 ms |
+| **Cathedral (Field Subset)** | 8.38 ms | 8.85 – 9.58 ms | 9.23 ms |
+| **The Merry Dancers (Full World)** | 13.86 ms | 9.30 – 9.52 ms | 9.53 ms |
+
+### 5. Regression Suite Status
+
+All focused and integration tests pass cleanly with actual Metal access:
+- `sdf_wgsl_parameter_refresh_test`: PASS
+- `webgpu_sdf_parity_test`: PASS (25/25 shapes)
+- `webgpu_perlin_exact_gradient_test`: PASS
+- `webgpu_cathedral_open_hand_test`: PASS (0 failures)
+- `webgpu_mesh_upload_pages_test`: PASS (10,371 checks, 0 failures)
+- `gpu_mastery_test`: PASS (40/40 checks)

@@ -1,5 +1,19 @@
 # Person Verification List
 
+## SDF Surface Truth Mastery (Rung 1 & Rung 2): Cathedral of the Living Logos
+
+*Antigravity · Gemini 3.8 Flash · session `c802a0d5-3c06-450d-b47b-ebdc7aef86d0` · 2026-11-04. Commissioned by The Firmament & Zach: "DIRECTIVE FOR SPARKLY GUY — SDF SURFACE TRUTH MASTERY (RUNG 1 & RUNG 2)"*
+
+- [ ] Launch Earthcall WebGPU (`./build_release/earthcall_webgpu`) and enter **`Cathedral of the Living Logos`**.
+- [ ] **Surface Normal & Specular Fidelity:**
+  - Walk past the monumental north gyroid (`cathedral.sdf.gyroid_north`) and the Ophanim throne (`cathedral.sdf.ophanim_throne`).
+  - Observe that surface highlights, contours, and silhouette edges are mathematically clean, continuous, and free of the step/truncation artifacts previously seen with $h=0.001$ finite-difference normal evaluation.
+- [ ] **Open Hand Court & Gestures:**
+  - Click the touchstone / portal tear in the Open Hand court.
+  - Verify that the twelve petals and tears unfold smoothly and cleanly.
+- [ ] **Frame Pacing & Responsiveness:**
+  - Check in-game FPS counter (or telemetry overlay): verify frame rate remains smooth and responsive with all 178 fields evaluating exact single-pass `sdfEvalGrad` with dead volumetric loops eliminated in pure surface march shaders.
+
 ## Ergonomic 2D ImGui Zone Selector
 
 *Antigravity · Gemini 3.8 Flash (High) · session `b7880025-6dbf-4c38-9916-6e90233bec71` · 2026-10-23. Commissioned by Zach: "BROOOOOOO PLZZZZZ MAKE IT SO I CAN SELECT ZONES IN A FRIENDLY AND ERGONOMIC 2D INTERFACE NOT A BORING AND INCONVENIENT DROPDOWN, keep the scroll list for now though at the side, and im talking about the imgui zone sleector"*
