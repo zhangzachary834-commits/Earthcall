@@ -6,6 +6,30 @@
 **Written by:** GPT-5.6 Sol  
 **Status:** implementation plan; no completion claim
 
+## Implementation ledger — 2026-11-03 first cut
+
+Started on this branch.
+
+Implemented:
+- canonical receiver variable `surfaceColor` in OntoMath vocabulary;
+- material-response admission of `surfaceColor : Vector`;
+- WGSL response lowering binds `surfaceColor` only in the receiver context and refuses it elsewhere;
+- `materialResponseEval` now receives pigment explicitly;
+- authored response now owns final reflected RGB in the SDF surface path instead of being obligatorily multiplied by pigment afterward;
+- one-source and multi-source paths use the same new response call;
+- focused compiler witnesses cover pigment admission, authority isolation, structure/value behavior, and the sovereign-output seam.
+
+Commits:
+- `e30ad00b0c0a42387a6c01539906fe8d72a7d249` — admit surface pigment;
+- `5906e14641f2b5b2be41b977768aa49d56b7c5a1` — sovereign reflected RGB;
+- `8e7dd68c984d1dc4fd832997798b782aed2a0587` — focused compiler witnesses.
+
+No CI result is claimed yet; GitHub reports no workflow run attached to the current branch head.
+
+**Next dependency discovered:** AD-21's proposed generic `MathNode::Bind(PropertyPath)` is still not implemented in current canonical. Do not replace it with permanent renderer vocabulary such as `materialDiffuse` / `materialShininess`. The compatibility Blinn-Phong expression should become ordinary data only after it can consume ordinary Material properties through a generic binding path (or an existing equivalent that preserves the same structure/value/refusal laws).
+
+---
+
 ## Commission
 
 Retire Earthcall's bespoke default 3D Blinn-Phong shader as a renderer-owned law and make surface illumination a consequence of the broader authored radiance / visibility / material-response ontology.
