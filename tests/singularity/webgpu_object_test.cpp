@@ -2877,6 +2877,148 @@ int main() {
         renderer.setRadianceField(nullptr, 0);
     }
 
+    // --- REPRESENTATION-INDEPENDENT AUTHORED SOURCE TRANSPORT ---------------
+    // Receiver law is deliberately just canonical incidentRadiance. Constant
+    // rho/chi/alpha remove geometry-dependent lobe/normal differences, so mesh
+    // and implicit representations must witness the same Source -> Receiver
+    // transport while visibility is explicitly disabled (V=1).
+    {
+        auto transportMat =
+            materials.create("webgpu_source_transport_parity");
+        transportMat->baseColor = glm::vec3(1.0f);
+
+        auto incidentRoot = std::make_shared<OntoMath::MathNode>();
+        incidentRoot->op = OntoMath::MathNode::Op::ValueLeaf;
+        incidentRoot->variableName = OntoMath::kIncidentRadianceVar;
+        transportMat->responseExpr =
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::continuous(incidentRoot));
+        transportMat->environmentResponseExpr.reset();
+        transportMat->bumpResponseRevision();
+
+        Object meshTransport;
+        meshTransport.setShapeKind(Object::ShapeKind::Sphere);
+        meshTransport.setRenderMode(Object::RenderMode::Mesh);
+        meshTransport.setMaterialId(
+            "material.webgpu_source_transport_parity");
+
+        Object implicitTransport;
+        implicitTransport.setShapeKind(Object::ShapeKind::Sphere);
+        implicitTransport.setRenderMode(Object::RenderMode::Auto);
+        implicitTransport.setMaterialId(
+            "material.webgpu_source_transport_parity");
+
+        auto rhoRoot = scalarNode(0.8);
+        auto chiRoot = vectorNode(0.25, 0.75, 0.50);
+        auto alphaRoot = scalarNode(0.75);
+        OntoMath::Piecewise rho =
+            OntoMath::Piecewise::continuous(rhoRoot);
+        OntoMath::Piecewise chi =
+            OntoMath::Piecewise::continuous(chiRoot);
+        OntoMath::Piecewise alpha =
+            OntoMath::Piecewise::continuous(alphaRoot);
+
+        Rendering::RadianceSourceBinding source;
+        source.producerId = "webgpu-source-transport-parity";
+        source.position = glm::vec3(0.0f, 0.0f, 2.0f);
+        source.radianceExpr = &rho;
+        source.radianceRevision = 1;
+        source.chromaExpr = &chi;
+        source.chromaRevision = 1;
+        source.angularExpr = &alpha;
+        source.angularRevision = 1;
+        source.temporalCoordinate = 0.0;
+        source.temporalDelta = 0.0;
+        source.enabled = true;
+
+        renderer.setRadianceField(nullptr, 0);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceSources({source}, 7301);
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setLightingEnabled(true);
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshA[4];
+        readCentre(sourceMeshA);
+        const Renderer::FrameStats sourceMeshAStats =
+            renderer.frameStats();
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        implicitTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceImplicitA[4];
+        readCentre(sourceImplicitA);
+
+        std::printf(
+            "source transport mesh=(%d,%d,%d) implicit=(%d,%d,%d) compiles=%u\n",
+            sourceMeshA[0], sourceMeshA[1], sourceMeshA[2],
+            sourceImplicitA[0], sourceImplicitA[1], sourceImplicitA[2],
+            sourceMeshAStats.meshProgramCompiles);
+
+        // Expected linear output is approximately (0.15, 0.45, 0.30).
+        assert(sourceMeshA[0] >= 32 && sourceMeshA[0] <= 46 &&
+               sourceMeshA[1] >= 108 && sourceMeshA[1] <= 122 &&
+               sourceMeshA[2] >= 70 && sourceMeshA[2] <= 84 &&
+               "mesh did not consume authored chi * rho * alpha source transport");
+        assert(std::abs(int(sourceMeshA[0]) -
+                        int(sourceImplicitA[0])) <= 3 &&
+               std::abs(int(sourceMeshA[1]) -
+                        int(sourceImplicitA[1])) <= 3 &&
+               std::abs(int(sourceMeshA[2]) -
+                        int(sourceImplicitA[2])) <= 3 &&
+               "mesh and implicit surfaces disagree on authored rho/chi/alpha transport");
+
+        // VALUE ONLY: halve rho. Source-set structure remains identical; the
+        // mesh pipeline must survive while only the combined parameter stream
+        // changes.
+        rhoRoot->scalarForm.terms[0].coefficient = 0.4;
+        source.radianceRevision = 2;
+        renderer.setRadianceSources({source}, 7302);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshB[4];
+        readCentre(sourceMeshB);
+        const Renderer::FrameStats sourceMeshBStats =
+            renderer.frameStats();
+
+        assert(sourceMeshA[0] > sourceMeshB[0] + 15 &&
+               sourceMeshA[1] > sourceMeshB[1] + 45 &&
+               sourceMeshA[2] > sourceMeshB[2] + 28 &&
+               "numeric rho edit did not reach ordinary mesh source transport");
+        assert(sourceMeshBStats.meshProgramCompiles == 0 &&
+               sourceMeshBStats.meshProgramRefusals == 0 &&
+               sourceMeshBStats.meshParameterBytesUploaded > 0 &&
+               "numeric rho edit recompiled/refused mesh WGSL instead of refreshing source params");
+
+        // VISIBILITY UNKNOWN: mesh has no representation-independent scene
+        // visibility query yet. It must therefore refuse direct V rather than
+        // silently substituting V=1. Environment response is absent here, so
+        // the direct-only pixel becomes black and telemetry records the skip.
+        renderer.setRadianceVisibilityEnabled(true);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshVisibilityUnknown[4];
+        readCentre(sourceMeshVisibilityUnknown);
+        const Renderer::FrameStats sourceVisibilityStats =
+            renderer.frameStats();
+
+        assert(sourceMeshVisibilityUnknown[0] < 5 &&
+               sourceMeshVisibilityUnknown[1] < 5 &&
+               sourceMeshVisibilityUnknown[2] < 5 &&
+               sourceVisibilityStats.meshVisibilityUnknownDirectSkips > 0 &&
+               "mesh silently substituted V=1 when authored visibility was requested");
+
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setRadianceSources({}, 0);
+    }
+
     {
         std::vector<Object> toruses(10);
         for (int i = 0; i < 10; ++i) {
