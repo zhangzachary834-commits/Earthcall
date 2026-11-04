@@ -4367,7 +4367,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* phaseExpr,
                              const OntoMath::Piecewise* emissionExpr,
                              const OntoMath::Piecewise* responseExpr,
-                             const BindingValues* responseBindings) {
+                             const BindingValues* responseBindings,
+                             const OntoMath::Piecewise* environmentResponseExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -4504,6 +4505,20 @@ ParameterBlock collectParams(const geom::SdfNode& root,
         }
     }
 
+    if (environmentResponseExpr && !environmentResponseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateEnvironmentResponsePiecewise(
+                *environmentResponseExpr, responseBindings, validationError)) {
+            e.refuse("material environment response: " + validationError);
+        } else {
+            e.bindEnvironmentResponse = true;
+            e.propertyBindings = responseBindings;
+            emitPiecewise(*environmentResponseExpr, e, "p", "vec3<f32>", throwaway);
+            e.propertyBindings = nullptr;
+            e.bindEnvironmentResponse = false;
+        }
+    }
+
     const bool multiSource = radianceSources && radianceSources->size() > 1;
     if (multiSource) {
         for (std::size_t i = 0; i < radianceSources->size(); ++i) {
@@ -4592,7 +4607,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* phaseExpr,
                 const OntoMath::Piecewise* emissionExpr,
                 const OntoMath::Piecewise* responseExpr,
-                const BindingValues* responseBindings) {
+                const BindingValues* responseBindings,
+                const OntoMath::Piecewise* environmentResponseExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -4866,6 +4882,44 @@ Program compile(const geom::SdfNode& root,
     prog.wgsl += responseReadsWi ? "true;\n" : "false;\n";
     prog.wgsl += "const MATERIAL_RESPONSE_READS_WO: bool = ";
     prog.wgsl += responseReadsWo ? "true;\n" : "false;\n";
+
+    bool environmentResponseReadsNormal = false;
+    bool environmentResponseReadsWo = false;
+    prog.wgsl += "\nfn materialEnvironmentResponseEval(p: vec3<f32>, n: vec3<f32>, "
+                 "wo: vec3<f32>, surfaceColor: vec3<f32>, "
+                 "environmentRadiance: vec3<f32>) -> vec3<f32> {\n";
+    if (environmentResponseExpr && !environmentResponseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateEnvironmentResponsePiecewise(
+                *environmentResponseExpr, responseBindings, validationError)) {
+            e.refuse("material environment response: " + validationError);
+            prog.wgsl += "    return vec3<f32>(0.0);\n";
+        } else {
+            e.readSurfaceNormal = false;
+            e.readWi = false;
+            e.readWo = false;
+            e.bindEnvironmentResponse = true;
+            e.propertyBindings = responseBindings;
+            emitPiecewise(*environmentResponseExpr, e, "p", "vec3<f32>", prog.wgsl);
+            e.propertyBindings = nullptr;
+            e.bindEnvironmentResponse = false;
+            environmentResponseReadsNormal = e.readSurfaceNormal;
+            environmentResponseReadsWo = e.readWo;
+            if (e.readWi) {
+                e.refuse("material environment response illegally read direct incoming direction wi");
+            }
+        }
+    } else {
+        prog.wgsl += "    return vec3<f32>(0.0);\n";
+    }
+    prog.wgsl += "}\n";
+    prog.wgsl += "const HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE: bool = ";
+    prog.wgsl += (environmentResponseExpr && !environmentResponseExpr->pieces.empty())
+        ? "true;\n" : "false;\n";
+    prog.wgsl += "const MATERIAL_ENVIRONMENT_RESPONSE_READS_NORMAL: bool = ";
+    prog.wgsl += environmentResponseReadsNormal ? "true;\n" : "false;\n";
+    prog.wgsl += "const MATERIAL_ENVIRONMENT_RESPONSE_READS_WO: bool = ";
+    prog.wgsl += environmentResponseReadsWo ? "true;\n" : "false;\n";
 
     const bool multiSource = radianceSources && radianceSources->size() > 1;
     if (!multiSource) {
