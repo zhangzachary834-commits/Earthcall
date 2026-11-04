@@ -559,9 +559,12 @@ int main() {
                   before.wgsl.find("fn lightRadiance_1") != std::string::npos,
               "each source keeps its own rho function instead of enumerating the world inside one AST");
         check(before.wgsl.find("environmentRadiance +=") != std::string::npos &&
-                  before.wgsl.find("diffuseTerm +=") != std::string::npos &&
-                  before.wgsl.find("ambientTerm") == std::string::npos,
-              "environment incident radiance and direct source emission are distinct additive channels");
+                  before.wgsl.find("directTerm += incidentRadiance * receiverResponse * directRadiance") !=
+                      std::string::npos &&
+                  before.wgsl.find("ambientTerm") == std::string::npos &&
+                  before.wgsl.find("diffuseTerm") == std::string::npos &&
+                  before.wgsl.find("specTerm") == std::string::npos,
+              "environment incident radiance and Material-owned direct response are distinct additive channels");
 
         // VALUE ONLY: same ScalarLeaf structure on source 1.
         rho1Node->scalarForm.terms[0].coefficient = 0.2;
