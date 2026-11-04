@@ -617,6 +617,61 @@ void WebGpuRenderer::releasePersistentRadianceSources() {
     _persistentRadianceSourceVramBytes = 0;
 }
 
+WebGpuRenderer::RadianceSourceBufferView
+WebGpuRenderer::prepareRadianceSourceBuffer() {
+    RadianceSourceBufferView out;
+    if (radianceSources().empty()) return out;
+
+    std::vector<RadianceSourceGpuData> gpuSources;
+    gpuSources.reserve(radianceSources().size());
+    for (const auto& source : radianceSources()) {
+        gpuSources.push_back(lowerRadianceSourceGpuData(source));
+    }
+
+    const uint64_t bytes =
+        static_cast<uint64_t>(gpuSources.size() * sizeof(RadianceSourceGpuData));
+    uint64_t capacity = 256;
+    while (capacity < bytes) capacity *= 2;
+
+    if (!_persistentRadianceSources.buffer ||
+        _persistentRadianceSources.capacityBytes < bytes) {
+        WGPUBufferDescriptor bd = {};
+        bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
+        bd.size = capacity;
+        WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
+        if (grown) {
+            if (_persistentRadianceSources.buffer) {
+                wgpuBufferRelease(_persistentRadianceSources.buffer);
+            }
+            _persistentRadianceSources.buffer = grown;
+            _persistentRadianceSources.capacityBytes = capacity;
+            _persistentRadianceSources.mirror.clear();
+            _persistentRadianceSourceVramBytes = static_cast<size_t>(capacity);
+        }
+    }
+
+    const auto* raw =
+        reinterpret_cast<const unsigned char*>(gpuSources.data());
+    const std::vector<unsigned char> bytesNow(raw, raw + bytes);
+    if (_persistentRadianceSources.buffer &&
+        _persistentRadianceSources.capacityBytes >= bytes) {
+        if (_persistentRadianceSources.mirror != bytesNow) {
+            wgpuQueueWriteBuffer(_queue, _persistentRadianceSources.buffer, 0,
+                                 gpuSources.data(), bytes);
+            _persistentRadianceSources.mirror = bytesNow;
+        }
+        out.buffer = _persistentRadianceSources.buffer;
+        out.size = bytes;
+        return out;
+    }
+
+    auto fallback = bufferPool().suballocateStorage(gpuSources.data(), bytes);
+    out.buffer = fallback.buffer;
+    out.offset = fallback.offset;
+    out.size = fallback.size;
+    return out;
+}
+
 void WebGpuRenderer::reloadShaders() {
     // Response memo entries borrow MeshPipeline addresses; drop them before the
     // pipeline map that owns those addresses.
