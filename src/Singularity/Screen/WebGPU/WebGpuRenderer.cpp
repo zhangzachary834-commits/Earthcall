@@ -566,6 +566,9 @@ void WebGpuRenderer::releasePersistentRadianceSources() {
 }
 
 void WebGpuRenderer::reloadShaders() {
+    // Response memo entries borrow MeshPipeline addresses; drop them before the
+    // pipeline map that owns those addresses.
+    _meshResponsePrograms.clear();
     for (auto& kv : _meshPipes) {
         if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
     }
@@ -777,6 +780,7 @@ void WebGpuRenderer::shutdown() {
     if (_imageLayout) { wgpuPipelineLayoutRelease(_imageLayout); _imageLayout = nullptr; }
     if (_imageShader) { wgpuShaderModuleRelease(_imageShader); _imageShader = nullptr; }
     if (_imageBgl)    { wgpuBindGroupLayoutRelease(_imageBgl); _imageBgl = nullptr; }
+    _meshResponsePrograms.clear();
     for (auto& kv : _meshPipes) {
         if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
     }
