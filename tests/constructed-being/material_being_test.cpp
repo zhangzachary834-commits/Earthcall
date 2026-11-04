@@ -189,26 +189,30 @@ int main() {
                directBindings.count("specular") == 1 &&
                directBindings.count("shininess") == 1);
 
-        // Deliberately noncanonical source-lobe compatibility weights. With
-        // n=L=V=(0,0,1), diffuse cosine and specular power are both 1.
-        // surfaceColor*(.8*.25) + white*(1*.4) = (.5,.45,.6).
+        // Deliberately adversarial legacy lobe RGB: diffuse and specular
+        // have different chroma. With n=L=V=(0,0,1), both geometric lobes are 1.
+        // diffuse = surfaceColor * .8 * (.25,.10,.05) = (.10,.02,.04)
+        // specular = 1 * (.40,.20,.05), total = (.50,.22,.09).
         const std::map<std::string, PropertyValue> directVars{
             {OntoMath::kSurfaceNormalVar, PropertyValue(glm::vec3(0.0f, 0.0f, 1.0f))},
             {OntoMath::kSurfaceColorVar, PropertyValue(glm::vec3(0.5f, 0.25f, 1.0f))},
+            {OntoMath::kIncidentRadianceVar, PropertyValue(glm::vec3(1.0f))},
             {OntoMath::kWiXVar, PropertyValue(0.0)},
             {OntoMath::kWiYVar, PropertyValue(0.0)},
             {OntoMath::kWiZVar, PropertyValue(-1.0)},
             {OntoMath::kWoXVar, PropertyValue(0.0)},
             {OntoMath::kWoYVar, PropertyValue(0.0)},
             {OntoMath::kWoZVar, PropertyValue(1.0)},
-            {OntoMath::kLegacyDiffuseLobeWeightVar, PropertyValue(0.25)},
-            {OntoMath::kLegacySpecularLobeWeightVar, PropertyValue(0.4)}
+            {OntoMath::kLegacyDiffuseIncidentVar,
+             PropertyValue(glm::vec3(0.25f, 0.10f, 0.05f))},
+            {OntoMath::kLegacySpecularIncidentVar,
+             PropertyValue(glm::vec3(0.40f, 0.20f, 0.05f))}
         };
         const auto directValue = def->responseExpr->evaluate(directVars, def.get());
         assert(directValue && std::holds_alternative<glm::vec3>(*directValue));
         const glm::vec3 directRgb = std::get<glm::vec3>(*directValue);
-        assert(nearf(directRgb.x, 0.5f) && nearf(directRgb.y, 0.45f) &&
-               nearf(directRgb.z, 0.6f));
+        assert(nearf(directRgb.x, 0.50f) && nearf(directRgb.y, 0.22f) &&
+               nearf(directRgb.z, 0.09f));
 
         std::set<std::string> envBindings;
         for (const auto& piece : def->environmentResponseExpr->pieces) {
