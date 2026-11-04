@@ -218,11 +218,10 @@ namespace Core {
 
         const bool persistentLightPlaced = !radiantSources.empty();
         if (radiantSources.size() == 1) {
-            // Exact Rungs 3-6 SDF compatibility still uses the historical
-            // one-source generated path (that path only switches when size>1).
-            // Keep the renderer-facing source projection populated as well so
-            // V3 participating-media transport can truthfully consume the same
-            // admitted source without reconstructing source state.
+            // One authored source is now the one-element source set for
+            // WebGPU surface transport. Keep the historical scalar projections
+            // populated only as compatibility mirrors for backends/paths that
+            // have not yet adopted the source-set transport boundary.
             const auto& source = radiantSources.front();
             const uint64_t sourceSetRevision =
                 static_cast<uint64_t>(std::hash<std::string>{}(sourceSetIdentity));
