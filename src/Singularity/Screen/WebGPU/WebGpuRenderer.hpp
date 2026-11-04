@@ -184,8 +184,14 @@ private:
     WGPUDevice _device = nullptr;
     WGPUQueue  _queue  = nullptr;
     WGPUTextureFormat _colorFormat = WGPUTextureFormat_RGBA8Unorm;
-    WGPURenderPipeline _meshPipeline = nullptr;
+
+    // Mesh geometry no longer owns a fixed shading model. Pipelines are keyed
+    // only by emitted receiver-program structure; numeric Material values live
+    // in a separate parameter buffer and therefore reuse the same pipeline.
+    struct MeshPipeline { WGPURenderPipeline pipe = nullptr; };
+    std::map<std::string, MeshPipeline> _meshPipes;
     WGPUBindGroupLayout _bgl = nullptr;
+    const MeshPipeline* meshPipeline(const std::string& wgsl);
 
     // ---- Flat-colour pipelines (unlit: overlays, gizmos, wireframe, all 2D) ----
     // OpenGL could change blend and depth state between draws; WebGPU bakes them
@@ -769,11 +775,12 @@ private:
     // which a deferred batch cannot honor.
     struct MeshBatchKey {
         const geom::TessMesh* mesh = nullptr;
+        const MeshPipeline* pipeline = nullptr;
         WGPUTextureView albedoView = nullptr;
-        glm::vec4 shading{0.2f, 0.8f, 1.0f, 32.0f}; // ambient, diffuse, specular, shininess
+        std::vector<float> responseParams;
         bool operator<(const MeshBatchKey& o) const {
-            return std::tie(mesh, albedoView, shading.x, shading.y, shading.z, shading.w)
-                 < std::tie(o.mesh, o.albedoView, o.shading.x, o.shading.y, o.shading.z, o.shading.w);
+            return std::tie(mesh, pipeline, albedoView, responseParams)
+                 < std::tie(o.mesh, o.pipeline, o.albedoView, o.responseParams);
         }
     };
     // Mirrors the WGSL `Instance` struct in kMeshWGSL.
