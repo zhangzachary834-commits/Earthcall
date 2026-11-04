@@ -28,6 +28,37 @@ No CI result is claimed yet; GitHub reports no workflow run attached to the curr
 
 **Next dependency discovered:** AD-21's proposed generic `MathNode::Bind(PropertyPath)` is still not implemented in current canonical. Do not replace it with permanent renderer vocabulary such as `materialDiffuse` / `materialShininess`. The compatibility Blinn-Phong expression should become ordinary data only after it can consume ordinary Material properties through a generic binding path (or an existing equivalent that preserves the same structure/value/refusal laws).
 
+## Implementation ledger — 2026-11-03 second pass: AD-21 Bind bridge
+
+Implemented the generic input bridge required before legacy Blinn-Phong can become ordinary authored data:
+
+- appended `MathNode::Op::Bind = 42` with a canonical `propertyPath` payload;
+- CPU evaluation reads Bind through the existing `lawGetValue` / `PropertyPath` funnel against the supplied subject;
+- Bind is typed through the ordinary `TypeEnv`, serializes as `{"op":42,"path":"..."}`, prints as `bind(path)`, and has separate dependency collection from lexical variables;
+- the shared Math editor exposes **Property Bind** directly;
+- `resolveRenderMaterial` walks only Bind dependencies actually named by `responseExpr`, resolves their current Material values, and carries a detached binding snapshot plus independent value fingerprint;
+- the WGSL response compiler admits scalar and vec3 binding values and lowers them into the normal parameter stream;
+- binding paths participate in response dependency-structure identity, while binding numeric values do not;
+- `WebGpuRenderer` memoization now treats response-AST revision and response-binding-value revision as separate causes, recollecting params without recompilation when only a bound value changes;
+- focused CPU/editor/compiler tests and a native WebGPU witness were added. The native witness edits Material `diffuse` through PropertyPath without bumping `responseRevision` and requires the receiver pixel to change with zero shader compiles and a positive parameter upload.
+
+Key commits in this pass:
+- `640ca2a0`, `d33d33c8` — core Bind op, CPU evaluation, serialization, dependency discovery;
+- `1363e2f4`, `0e1edbf7` — Material response binding snapshot/fingerprint;
+- `4c1a400e`, `90454804` — typed response binding API and WGSL parameter lowering;
+- `163b546a`, `2decc506` — renderer memo/value-refresh integration;
+- `49fba4fc`, `c734c906` — authoring UI;
+- `8c201c7d`, `987b84fd`, `941e5df3`, `303b9b77`, `febf799d` — focused and native witnesses;
+- `aa06d453` — self-contained Bind type/arity refusal.
+
+**Scope retained:** the mathematical Bind primitive is generic, but this branch only supplies GPU PropertyPath values to the Material-response channel so far. Other channels must explicitly admit their own subject/binding provider; no global hidden registry was introduced.
+
+**Next architectural obstacle:** exact legacy Blinn-Phong-as-data needs a generic conditional/gating expression for the historical `step(0.0001, diffuse)` specular gate, plus a deliberate ambient/environment compatibility mapping. Do not encode either as a renderer special case.
+
+No CI/native execution result is claimed in this ledger until GitHub produces one.
+
+---
+
 ---
 
 ## Commission
