@@ -397,7 +397,8 @@ struct Emit {
     bool               bindEmissionOmega = false; // V4 E_v owns a distinct omega context
     bool               readEmissionOmega = false;
     bool               bindPhaseDirections = false; // V3 Phi admits wi/wo, never source omega
-    bool               bindMaterialResponse = false; // Rung 9 receiver context admits n + wi/wo
+    bool               bindMaterialResponse = false; // direct receiver context admits n + wi/wo
+    bool               bindEnvironmentResponse = false; // environment receiver admits n + wo + environmentRadiance
     const BindingValues* propertyBindings = nullptr; // generic MathNode::Bind values supplied by owner
     bool               readSurfaceNormal = false;
     bool               readWi = false;
@@ -505,15 +506,21 @@ std::string pointComponent(const std::string& var, Emit& e, const std::string& p
     }
     if (var == OntoMath::kSurfaceNormalVar) {
         e.readSurfaceNormal = true;
-        if (e.bindMaterialResponse) return "n";
+        if (e.bindMaterialResponse || e.bindEnvironmentResponse) return "n";
         e.refuse("an expression names receiver normal 'n', but this shader "
                  "expression context is not material response");
         return "vec3<f32>(0.0)";
     }
     if (var == OntoMath::kSurfaceColorVar) {
-        if (e.bindMaterialResponse) return "surfaceColor";
+        if (e.bindMaterialResponse || e.bindEnvironmentResponse) return "surfaceColor";
         e.refuse("an expression names receiver pigment 'surfaceColor', but this shader "
                  "expression context is not material response");
+        return "vec3<f32>(0.0)";
+    }
+    if (var == OntoMath::kEnvironmentRadianceVar) {
+        if (e.bindEnvironmentResponse) return "environmentRadiance";
+        e.refuse("an expression names environment incident radiance, but this shader "
+                 "expression context is not material environment response");
         return "vec3<f32>(0.0)";
     }
     if (var == OntoMath::kOmegaXVar ||
@@ -552,7 +559,8 @@ std::string pointComponent(const std::string& var, Emit& e, const std::string& p
         var == OntoMath::kWoYVar ||
         var == OntoMath::kWoZVar) {
         e.readWo = true;
-        if (e.bindPhaseDirections || e.bindMaterialResponse) {
+        if (e.bindPhaseDirections || e.bindMaterialResponse ||
+            e.bindEnvironmentResponse) {
             if (var == OntoMath::kWoXVar) return "wo.x";
             if (var == OntoMath::kWoYVar) return "wo.y";
             return "wo.z";
@@ -634,6 +642,7 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
     context += e.bindEmissionOmega ? "E" : "-";
     context += e.bindPhaseDirections ? "P" : "-";
     context += e.bindMaterialResponse ? "R" : "-";
+    context += e.bindEnvironmentResponse ? "J" : "-";
     context += e.prepareVolumeTime ? "Q" : "-";
     // A retained fragment embeds lexical substitutions, including parameter slots.
     for (const auto& [name, expression] : e.boundNames)
@@ -2005,6 +2014,83 @@ bool validateResponsePiecewise(const OntoMath::Piecewise& pw,
         if (kind != OntoMath::ValueKind::Vector) {
             error = "piece " + std::to_string(i) +
                     " material response must evaluate to Vector, got " +
+                    std::string(OntoMath::valueKindName(kind));
+            return false;
+        }
+    }
+    error.clear();
+    return true;
+}
+
+bool validateEnvironmentResponsePiecewise(const OntoMath::Piecewise& pw,
+                                          const BindingValues* bindings,
+                                          std::string& error) {
+    OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
+        {"x", OntoMath::ValueKind::Scalar},
+        {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar},
+        {OntoMath::kSurfaceNormalVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kSurfaceColorVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kEnvironmentRadianceVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kWoXVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoYVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoZVar, OntoMath::ValueKind::Scalar}
+    };
+
+    if (bindings) {
+        for (const auto& [path, value] : *bindings) {
+            double scalar = 0.0;
+            if (propertyValueToNumber(value, scalar)) {
+                env[path] = OntoMath::ValueKind::Scalar;
+            } else if (std::holds_alternative<glm::vec3>(value)) {
+                env[path] = OntoMath::ValueKind::Vector;
+            } else {
+                error = "Bind path '" + path +
+                        "' resolves to a PropertyValue unsupported by material-environment WGSL";
+                return false;
+            }
+        }
+    }
+
+    if (pw.pieces.empty()) {
+        error = "authored material environment response has no pieces";
+        return false;
+    }
+    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
+        const auto& piece = pw.pieces[i];
+        if (piece.guard || piece.call || piece.fold) {
+            error = "piece " + std::to_string(i) +
+                    " uses world Piecewise semantics the WGSL environment response channel does not implement";
+            return false;
+        }
+        if (piece.whereLEZero) {
+            OntoMath::ValueKind guardKind = OntoMath::ValueKind::Unknown;
+            std::string guardError;
+            if (!piece.whereLEZero->checkTypes(env, guardError, &guardKind, false)) {
+                error = "piece " + std::to_string(i) + " pure guard: " + guardError;
+                return false;
+            }
+            if (guardKind != OntoMath::ValueKind::Scalar) {
+                error = "piece " + std::to_string(i) +
+                        " pure guard must evaluate to Scalar, got " +
+                        std::string(OntoMath::valueKindName(guardKind));
+                return false;
+            }
+        }
+        if (!piece.mathNode) {
+            error = "piece " + std::to_string(i) + " has no authored environment response value";
+            return false;
+        }
+        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+        std::string typeError;
+        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
+            error = typeError;
+            return false;
+        }
+        if (kind != OntoMath::ValueKind::Vector) {
+            error = "piece " + std::to_string(i) +
+                    " material environment response must evaluate to Vector, got " +
                     std::string(OntoMath::valueKindName(kind));
             return false;
         }
@@ -4140,6 +4226,61 @@ ParameterBlock collectResponseParams(
 
     Emit e;
     e.bindMaterialResponse = true;
+    e.propertyBindings = bindings;
+    std::string throwaway;
+    emitPiecewise(*expr, e, "p", "vec3<f32>", throwaway);
+    return ParameterBlock{std::move(e.params), !e.refused, e.refusal};
+}
+
+ResponseExpressionLayout inspectEnvironmentResponseExpression(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings) {
+    if (!expr || expr->pieces.empty()) {
+        return ResponseExpressionLayout{
+            "<material-environment-response:absent>", 0, false, false, false, true, ""};
+    }
+    std::string validationError;
+    if (!validateEnvironmentResponsePiecewise(*expr, bindings, validationError)) {
+        return ResponseExpressionLayout{"", 0, false, false, false, false, validationError};
+    }
+
+    Emit e;
+    e.bindEnvironmentResponse = true;
+    e.propertyBindings = bindings;
+    std::string body;
+    emitPiecewise(*expr, e, "p", "vec3<f32>", body);
+
+    std::set<std::string> boundPaths;
+    for (const auto& piece : expr->pieces) {
+        if (piece.mathNode) piece.mathNode->collectPropertyBindings(boundPaths);
+        if (piece.whereLEZero) piece.whereLEZero->collectPropertyBindings(boundPaths);
+    }
+    std::string bindingIdentity;
+    for (const auto& path : boundPaths) {
+        bindingIdentity += "bind[" + std::to_string(path.size()) + "]=" + path + ";";
+    }
+
+    ResponseExpressionLayout layout;
+    layout.structure = bindingIdentity + "\n" + std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.readsNormal = e.readSurfaceNormal;
+    layout.readsWi = e.readWi;
+    layout.readsWo = e.readWo;
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+ParameterBlock collectEnvironmentResponseParams(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings) {
+    if (!expr || expr->pieces.empty()) return ParameterBlock{};
+    std::string validationError;
+    if (!validateEnvironmentResponsePiecewise(*expr, bindings, validationError)) {
+        return ParameterBlock{{}, false, validationError};
+    }
+    Emit e;
+    e.bindEnvironmentResponse = true;
     e.propertyBindings = bindings;
     std::string throwaway;
     emitPiecewise(*expr, e, "p", "vec3<f32>", throwaway);
