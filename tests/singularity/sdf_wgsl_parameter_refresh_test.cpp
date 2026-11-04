@@ -558,9 +558,13 @@ int main() {
         check(before.wgsl.find("fn lightRadiance_0") != std::string::npos &&
                   before.wgsl.find("fn lightRadiance_1") != std::string::npos,
               "each source keeps its own rho function instead of enumerating the world inside one AST");
-        check(before.wgsl.find("ambientTerm +=") != std::string::npos &&
-                  before.wgsl.find("diffuseTerm +=") != std::string::npos,
-              "source emission is aggregated additively above the individual invariants");
+        check(before.wgsl.find("environmentRadiance +=") != std::string::npos &&
+                  before.wgsl.find("directTerm += receiverResponse * directRadiance") !=
+                      std::string::npos &&
+                  before.wgsl.find("ambientTerm") == std::string::npos &&
+                  before.wgsl.find("diffuseTerm") == std::string::npos &&
+                  before.wgsl.find("specTerm") == std::string::npos,
+              "environment incident radiance and Material-owned direct response are distinct additive channels");
 
         // VALUE ONLY: same ScalarLeaf structure on source 1.
         rho1Node->scalarForm.terms[0].coefficient = 0.2;
@@ -1457,6 +1461,15 @@ int main() {
         check(oneSource.wgsl.find(
                   "let directRadiance = shapedRadiance * pathVisibility") != std::string::npos,
               "one-source direct transport multiplies visibility after authored emission");
+        const auto oneEnvironment =
+            oneSource.wgsl.find("legacyEnvironment");
+        const auto oneDirect =
+            oneSource.wgsl.find("let radialRadiance = max(lightRadiance");
+        check(oneEnvironment != std::string::npos &&
+                  oneDirect != std::string::npos &&
+                  oneEnvironment < oneDirect &&
+                  oneSource.wgsl.find("ambientTerm") == std::string::npos,
+              "one-source legacy environment illumination is resolved before rho/alpha/visibility transport");
 
         Rendering::RadianceSourceBinding s0;
         s0.radianceExpr = &rho0;
@@ -1470,13 +1483,40 @@ int main() {
                       "sourceVisibility(pf, nf, source.position.xyz)") != std::string::npos,
               "each composed source derives visibility from its own source-receiver path");
         check(multiSource.wgsl.find(
-                  "diff * directRadiance") != std::string::npos &&
-                  multiSource.wgsl.find(
-                      "specShape * directRadiance") != std::string::npos,
-              "multi-source diffuse/specular transport consumes per-source visibility");
-        check(multiSource.wgsl.find(
-                  "ambientTerm += inst.shading.x") != std::string::npos,
-              "legacy ambient compatibility remains outside direct-path visibility");
+                  "let directRadiance = shapedRadiance * pathVisibility") !=
+                  std::string::npos &&
+              multiSource.wgsl.find(
+                  "directTerm += receiverResponse * directRadiance") !=
+                  std::string::npos &&
+              multiSource.wgsl.find("specShape") == std::string::npos &&
+              multiSource.wgsl.find("inst.shading") == std::string::npos,
+              "multi-source visibility feeds Material response with no renderer-owned lobe math");
+        const auto environmentUse =
+            multiSource.wgsl.find("environmentRadiance +=");
+        const auto directBoundary =
+            multiSource.wgsl.find("Direct source transport begins here");
+        check(environmentUse != std::string::npos &&
+                  directBoundary != std::string::npos &&
+                  environmentUse < directBoundary &&
+                  multiSource.wgsl.find("ambientTerm") == std::string::npos,
+              "environment incident radiance is accumulated before direct-path visibility");
+        check(multiSource.wgsl.find("lightChroma(sourceDelta)") ==
+                  std::string::npos,
+              "multi-source splice removes the one-source chroma/environment prelude");
+        const auto env0 =
+            multiSource.wgsl.find("source.legacyEnvironment");
+        const auto direct0 =
+            multiSource.wgsl.find("Direct source transport begins here", env0);
+        const auto env1 =
+            multiSource.wgsl.find("source.legacyEnvironment", direct0);
+        const auto direct1 =
+            multiSource.wgsl.find("Direct source transport begins here", env1);
+        check(env0 != std::string::npos &&
+                  direct0 != std::string::npos &&
+                  env1 != std::string::npos &&
+                  direct1 != std::string::npos &&
+                  env0 < direct0 && direct0 < env1 && env1 < direct1,
+              "each multi-source environment read precedes that source's direct transport block");
     }
 
     // ---------------------------------------------------------------------
@@ -1486,9 +1526,9 @@ int main() {
     {
         const auto legacy = sdfwgsl::inspectResponseExpression(nullptr);
         check(legacy.ok &&
-                  legacy.structure == "<material-response:legacy-blinn-phong>" &&
+                  legacy.structure == "<material-response:absent>" &&
                   legacy.parameterCount == 0,
-              "absent material response has explicit legacy compatibility identity");
+              "absent material response is a real absence, not a hidden Blinn-Phong law");
 
         auto wi = std::make_unique<OntoMath::MathNode>();
         wi->op = OntoMath::MathNode::Op::VectorConstruct;
@@ -1529,6 +1569,229 @@ int main() {
                   layoutBefore.readsWi &&
                   layoutBefore.readsWo,
               "material response independently admits receiver normal plus wi/wo");
+
+        auto pigmentRoot = std::make_shared<OntoMath::MathNode>();
+        pigmentRoot->op = OntoMath::MathNode::Op::ValueLeaf;
+        pigmentRoot->variableName = OntoMath::kSurfaceColorVar;
+        OntoMath::Piecewise pigmentResponse =
+            OntoMath::Piecewise::continuous(pigmentRoot);
+        const auto pigmentLayout =
+            sdfwgsl::inspectResponseExpression(&pigmentResponse);
+        check(pigmentLayout.ok,
+              "material response admits receiver pigment as authored Vector input");
+        check(!sdfwgsl::inspectVectorExpression(&pigmentResponse, false).ok,
+              "receiver pigment cannot leak into generic source/vector authority");
+
+        auto incidentRoot = std::make_shared<OntoMath::MathNode>();
+        incidentRoot->op = OntoMath::MathNode::Op::ValueLeaf;
+        incidentRoot->variableName = OntoMath::kIncidentRadianceVar;
+        OntoMath::Piecewise incidentResponse =
+            OntoMath::Piecewise::continuous(incidentRoot);
+        check(sdfwgsl::inspectResponseExpression(&incidentResponse).ok,
+              "direct Material response admits canonical incidentRadiance");
+        check(!sdfwgsl::inspectEnvironmentResponseExpression(
+                  &incidentResponse).ok &&
+              !sdfwgsl::inspectVectorExpression(&incidentResponse, false).ok,
+              "direct incidentRadiance cannot leak into environment or generic vector authority");
+
+        auto legacyLobesRoot = std::make_shared<OntoMath::MathNode>();
+        legacyLobesRoot->op = OntoMath::MathNode::Op::Add;
+        legacyLobesRoot->children.push_back(
+            variable(OntoMath::kLegacyDiffuseIncidentVar));
+        legacyLobesRoot->children.push_back(
+            variable(OntoMath::kLegacySpecularIncidentVar));
+        OntoMath::Piecewise legacyLobesResponse =
+            OntoMath::Piecewise::continuous(legacyLobesRoot);
+        check(sdfwgsl::inspectResponseExpression(&legacyLobesResponse).ok,
+              "direct Material response alone admits legacy RGB lobe migration inputs");
+        check(!sdfwgsl::inspectEnvironmentResponseExpression(
+                  &legacyLobesResponse).ok,
+              "environment Material response refuses direct legacy RGB lobe inputs");
+        check(!sdfwgsl::inspectVectorExpression(
+                  &legacyLobesResponse, false).ok,
+              "legacy RGB lobe inputs cannot leak into generic vector authority");
+
+        // Environment response is a second receiver-owned context:
+        // environmentRadiance is admitted, direct wi is not.
+        auto envScale = std::make_unique<OntoMath::MathNode>();
+        envScale->op = OntoMath::MathNode::Op::Scale;
+        auto ambientBind = std::make_unique<OntoMath::MathNode>();
+        ambientBind->op = OntoMath::MathNode::Op::Bind;
+        ambientBind->propertyPath = "ambient";
+        envScale->children.push_back(std::move(ambientBind));
+        envScale->children.push_back(variable(OntoMath::kEnvironmentRadianceVar));
+
+        auto envRoot = std::make_shared<OntoMath::MathNode>();
+        envRoot->op = OntoMath::MathNode::Op::Hadamard;
+        envRoot->children.push_back(variable(OntoMath::kSurfaceColorVar));
+        envRoot->children.push_back(std::move(envScale));
+        OntoMath::Piecewise environmentResponse =
+            OntoMath::Piecewise::continuous(envRoot);
+
+        sdfwgsl::BindingValues ambientA{{"ambient", PropertyValue(0.2f)}};
+        const auto envLayoutA =
+            sdfwgsl::inspectEnvironmentResponseExpression(
+                &environmentResponse, &ambientA);
+        const auto envParamsA =
+            sdfwgsl::collectEnvironmentResponseParams(
+                &environmentResponse, &ambientA);
+        check(envLayoutA.ok && envParamsA.ok &&
+                  envLayoutA.structure.find("bind[7]=ambient") != std::string::npos,
+              "environment response admits environmentRadiance and Material Bind");
+
+        sdfwgsl::BindingValues ambientB{{"ambient", PropertyValue(0.65f)}};
+        const auto envLayoutB =
+            sdfwgsl::inspectEnvironmentResponseExpression(
+                &environmentResponse, &ambientB);
+        const auto envParamsB =
+            sdfwgsl::collectEnvironmentResponseParams(
+                &environmentResponse, &ambientB);
+        check(envLayoutB.ok && envParamsB.ok &&
+                  envLayoutA.structure == envLayoutB.structure &&
+                  envParamsA.values != envParamsB.values,
+              "environment Bind edit refreshes values without changing WGSL structure");
+
+        auto environmentLeak = std::make_shared<OntoMath::MathNode>();
+        environmentLeak->op = OntoMath::MathNode::Op::ValueLeaf;
+        environmentLeak->variableName = OntoMath::kEnvironmentRadianceVar;
+        OntoMath::Piecewise environmentInDirect =
+            OntoMath::Piecewise::continuous(environmentLeak);
+        check(!sdfwgsl::inspectResponseExpression(&environmentInDirect).ok,
+              "direct material response refuses environmentRadiance authority");
+
+        auto wiLeak = std::make_shared<OntoMath::MathNode>();
+        wiLeak->op = OntoMath::MathNode::Op::VectorConstruct;
+        wiLeak->children.push_back(variable(OntoMath::kWiXVar));
+        wiLeak->children.push_back(variable(OntoMath::kWiYVar));
+        wiLeak->children.push_back(variable(OntoMath::kWiZVar));
+        OntoMath::Piecewise wiInEnvironment =
+            OntoMath::Piecewise::continuous(wiLeak);
+        check(!sdfwgsl::inspectEnvironmentResponseExpression(
+                  &wiInEnvironment).ok,
+              "environment material response refuses direct incoming direction wi");
+
+        auto boundRoot = std::make_shared<OntoMath::MathNode>();
+        boundRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto shininessBind = std::make_unique<OntoMath::MathNode>();
+        shininessBind->op = OntoMath::MathNode::Op::Bind;
+        shininessBind->propertyPath = "shininess";
+        boundRoot->children.push_back(std::move(shininessBind));
+        boundRoot->children.push_back(number(0.25));
+        boundRoot->children.push_back(number(0.5));
+        OntoMath::Piecewise boundResponse =
+            OntoMath::Piecewise::continuous(boundRoot);
+
+        sdfwgsl::BindingValues bindingA{
+            {"shininess", PropertyValue(32.0f)}
+        };
+        const auto boundLayoutA =
+            sdfwgsl::inspectResponseExpression(&boundResponse, &bindingA);
+        const auto boundParamsA =
+            sdfwgsl::collectResponseParams(&boundResponse, &bindingA);
+        check(boundLayoutA.ok && boundParamsA.ok &&
+                  boundLayoutA.structure.find("bind[9]=shininess") != std::string::npos,
+              "response Bind lowers an authored PropertyPath into the response layout");
+
+        const auto unresolvedBind =
+            sdfwgsl::inspectResponseExpression(&boundResponse);
+        check(!unresolvedBind.ok &&
+                  unresolvedBind.error.find("shininess") != std::string::npos,
+              "unresolved response Bind refuses by PropertyPath name");
+
+        sdfwgsl::BindingValues bindingB{
+            {"shininess", PropertyValue(8.0f)}
+        };
+        const auto boundLayoutB =
+            sdfwgsl::inspectResponseExpression(&boundResponse, &bindingB);
+        const auto boundParamsB =
+            sdfwgsl::collectResponseParams(&boundResponse, &bindingB);
+        check(boundLayoutB.ok && boundParamsB.ok &&
+                  boundLayoutB.structure == boundLayoutA.structure &&
+                  boundParamsB.values != boundParamsA.values,
+              "Bind value edit preserves response structure and refreshes parameter values");
+
+        boundRoot->children[0]->propertyPath = "specular";
+        sdfwgsl::BindingValues bindingC{
+            {"specular", PropertyValue(8.0f)}
+        };
+        const auto reboundLayout =
+            sdfwgsl::inspectResponseExpression(&boundResponse, &bindingC);
+        check(reboundLayout.ok &&
+                  reboundLayout.structure != boundLayoutB.structure,
+              "changing the authored Bind path changes response dependency structure");
+
+        // Pure Piecewise guards are generic local mathematics, not a
+        // Blinn-Phong opcode. This is the exact substrate for response lobes
+        // that exist only on one side of an authored scalar inequality.
+        auto gate = std::make_shared<OntoMath::MathNode>();
+        gate->op = OntoMath::MathNode::Op::Sub;
+        gate->children.push_back(number(0.0001));
+        gate->children.push_back(variable(OntoMath::kWiXVar));
+
+        OntoMath::Piecewise gatedResponse;
+        {
+            OntoMath::Piecewise::Piece lit;
+            lit.whereLEZero = gate;
+            lit.mathNode = std::shared_ptr<OntoMath::MathNode>(
+                vector3(1.0, 0.0, 0.0).release());
+            gatedResponse.pieces.push_back(std::move(lit));
+
+            OntoMath::Piecewise::Piece fallback;
+            fallback.mathNode = std::shared_ptr<OntoMath::MathNode>(
+                vector3(0.0, 0.0, 1.0).release());
+            gatedResponse.pieces.push_back(std::move(fallback));
+        }
+
+        const auto gatedLayout =
+            sdfwgsl::inspectResponseExpression(&gatedResponse);
+        check(gatedLayout.ok &&
+                  gatedLayout.structure.find("<= 0.0") != std::string::npos,
+              "material response lowers pure Piecewise whereLEZero guards");
+
+        const auto cpuLit = gatedResponse.evaluate({
+            {OntoMath::kWiXVar, PropertyValue(0.5)},
+            {OntoMath::kWiYVar, PropertyValue(0.0)},
+            {OntoMath::kWiZVar, PropertyValue(0.0)}
+        });
+        const auto cpuFallback = gatedResponse.evaluate({
+            {OntoMath::kWiXVar, PropertyValue(0.0)},
+            {OntoMath::kWiYVar, PropertyValue(0.0)},
+            {OntoMath::kWiZVar, PropertyValue(0.0)}
+        });
+        check(cpuLit && cpuFallback &&
+                  std::holds_alternative<glm::vec3>(*cpuLit) &&
+                  std::holds_alternative<glm::vec3>(*cpuFallback) &&
+                  std::get<glm::vec3>(*cpuLit).x > 0.9f &&
+                  std::get<glm::vec3>(*cpuFallback).z > 0.9f,
+              "CPU Piecewise pure guard uses the same first-applicable lobe semantics");
+
+        const auto gatedParamsA =
+            sdfwgsl::collectResponseParams(&gatedResponse);
+        gate->children[0]->scalarForm.terms[0].coefficient = 0.01;
+        const auto gatedLayoutEdited =
+            sdfwgsl::inspectResponseExpression(&gatedResponse);
+        const auto gatedParamsB =
+            sdfwgsl::collectResponseParams(&gatedResponse);
+        check(gatedLayoutEdited.ok && gatedParamsA.ok && gatedParamsB.ok &&
+                  gatedLayoutEdited.structure == gatedLayout.structure &&
+                  gatedParamsA.values != gatedParamsB.values,
+              "numeric pure-guard edit refreshes parameters without changing response structure");
+
+        auto vectorBindRoot = std::make_shared<OntoMath::MathNode>();
+        vectorBindRoot->op = OntoMath::MathNode::Op::Bind;
+        vectorBindRoot->propertyPath = "baseColor";
+        OntoMath::Piecewise vectorBoundResponse =
+            OntoMath::Piecewise::continuous(vectorBindRoot);
+        sdfwgsl::BindingValues vectorBindings{
+            {"baseColor", PropertyValue(glm::vec3(0.2f, 0.4f, 0.8f))}
+        };
+        const auto vectorBound =
+            sdfwgsl::inspectResponseExpression(&vectorBoundResponse, &vectorBindings);
+        const auto vectorBoundParams =
+            sdfwgsl::collectResponseParams(&vectorBoundResponse, &vectorBindings);
+        check(vectorBound.ok && vectorBoundParams.ok &&
+                  vectorBoundParams.values.size() == 3,
+              "response Bind admits authored vec3 PropertyPath values as three parameter slots");
 
         responseRoot->children[2]->scalarForm.terms[0].coefficient = 0.8;
         const auto layoutAfter = sdfwgsl::inspectResponseExpression(&response);
@@ -1601,24 +1864,167 @@ int main() {
             nullptr, nullptr, nullptr, nullptr, nullptr, &response);
 
         check(legacy.ok && authored.ok,
-              "legacy and authored-response surface programs both compile");
+              "absent and authored-response surface programs both compile");
         check(legacy.wgsl.find(
                   "const HAS_AUTHORED_MATERIAL_RESPONSE: bool = false") !=
                   std::string::npos &&
-              legacy.wgsl.find("inst.shading.x * ambientEnvelope") !=
+              legacy.wgsl.find("specShape") == std::string::npos &&
+              legacy.wgsl.find("inst.shading") == std::string::npos &&
+              legacy.wgsl.find("let litRgb = environmentTerm + directTerm") !=
                   std::string::npos,
-              "absent response preserves the explicit legacy Blinn-Phong compatibility path");
+              "absent direct response contains no renderer-owned compatibility shading");
         check(authored.wgsl.find(
                   "const HAS_AUTHORED_MATERIAL_RESPONSE: bool = true") !=
                   std::string::npos &&
               authored.wgsl.find("fn materialResponseEval") !=
                   std::string::npos &&
-              authored.wgsl.find(
-                  "materialResponseEval(pf, nw, responseWi, V)") !=
+              authored.wgsl.find("incidentRadiance: vec3<f32>") !=
                   std::string::npos &&
-              authored.wgsl.find("receiverResponse * directRadiance") !=
-                  std::string::npos,
-              "authored response is evaluated after transport reaches the receiver");
+              authored.wgsl.find("legacyDiffuseIncident: vec3<f32>") !=
+                  std::string::npos &&
+              authored.wgsl.find("legacySpecularIncident: vec3<f32>") !=
+                  std::string::npos &&
+              authored.wgsl.find(
+                  "materialResponseEval(\n                pf, nw, responseWi, V, surfaceColor, incidentRadiance,") !=
+                  std::string::npos &&
+              authored.wgsl.find(
+                  "directTerm = receiverResponse * directRadiance") !=
+                  std::string::npos &&
+              authored.wgsl.find("specShape") == std::string::npos &&
+              authored.wgsl.find("inst.shading") == std::string::npos,
+              "authored response alone owns direct reflected RGB after transport");
+
+        auto boundResponseRoot = std::make_shared<OntoMath::MathNode>();
+        boundResponseRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto diffuseBind = std::make_unique<OntoMath::MathNode>();
+        diffuseBind->op = OntoMath::MathNode::Op::Bind;
+        diffuseBind->propertyPath = "diffuse";
+        boundResponseRoot->children.push_back(std::move(diffuseBind));
+        boundResponseRoot->children.push_back(number(0.0));
+        boundResponseRoot->children.push_back(number(0.0));
+        OntoMath::Piecewise boundResponse =
+            OntoMath::Piecewise::continuous(boundResponseRoot);
+
+        sdfwgsl::BindingValues diffuseA{
+            {"diffuse", PropertyValue(0.8f)}
+        };
+        const auto boundProgramA = sdfwgsl::compile(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr, &boundResponse, &diffuseA);
+
+        sdfwgsl::BindingValues diffuseB{
+            {"diffuse", PropertyValue(0.35f)}
+        };
+        const auto boundProgramB = sdfwgsl::compile(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr, &boundResponse, &diffuseB);
+        const auto boundRefresh = sdfwgsl::collectParams(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr, &boundResponse, &diffuseB);
+
+        check(boundProgramA.ok && boundProgramB.ok && boundRefresh.ok &&
+                  boundProgramA.wgsl == boundProgramB.wgsl &&
+                  boundProgramA.params != boundProgramB.params &&
+                  boundRefresh.values == boundProgramB.params,
+              "live Property Bind value edit reuses WGSL and refreshes only response parameters");
+
+        auto envScaleProd = std::make_unique<OntoMath::MathNode>();
+        envScaleProd->op = OntoMath::MathNode::Op::Scale;
+        auto ambientBindProd = std::make_unique<OntoMath::MathNode>();
+        ambientBindProd->op = OntoMath::MathNode::Op::Bind;
+        ambientBindProd->propertyPath = "ambient";
+        envScaleProd->children.push_back(std::move(ambientBindProd));
+        envScaleProd->children.push_back(variable(OntoMath::kEnvironmentRadianceVar));
+
+        auto envProdRoot = std::make_shared<OntoMath::MathNode>();
+        envProdRoot->op = OntoMath::MathNode::Op::Hadamard;
+        envProdRoot->children.push_back(variable(OntoMath::kSurfaceColorVar));
+        envProdRoot->children.push_back(std::move(envScaleProd));
+        OntoMath::Piecewise environmentResponseProd =
+            OntoMath::Piecewise::continuous(envProdRoot);
+
+        sdfwgsl::BindingValues ambientProdA{
+            {"ambient", PropertyValue(0.2f)}
+        };
+        const auto environmentProgramA = sdfwgsl::compile(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, &ambientProdA, &environmentResponseProd);
+
+        sdfwgsl::BindingValues ambientProdB{
+            {"ambient", PropertyValue(0.6f)}
+        };
+        const auto environmentProgramB = sdfwgsl::compile(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, &ambientProdB, &environmentResponseProd);
+        const auto environmentRefresh = sdfwgsl::collectParams(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, &ambientProdB, &environmentResponseProd);
+
+        check(environmentProgramA.ok && environmentProgramB.ok &&
+                  environmentRefresh.ok &&
+                  environmentProgramA.wgsl == environmentProgramB.wgsl &&
+                  environmentProgramA.params != environmentProgramB.params &&
+                  environmentRefresh.values == environmentProgramB.params &&
+                  environmentProgramA.wgsl.find(
+                      "const HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE: bool = true") !=
+                      std::string::npos &&
+                  environmentProgramA.wgsl.find(
+                      "fn materialEnvironmentResponseEval") != std::string::npos,
+              "authored environment response compiles in production and Bind edits refresh only parameters");
+
+        // Geometry-independent receiver module: mesh and SDF are not
+        // permitted to maintain separate material-response compilers.
+        auto sharedDirectRoot = std::make_shared<OntoMath::MathNode>();
+        sharedDirectRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto sharedDiffuseBind = std::make_unique<OntoMath::MathNode>();
+        sharedDiffuseBind->op = OntoMath::MathNode::Op::Bind;
+        sharedDiffuseBind->propertyPath = "diffuse";
+        sharedDirectRoot->children.push_back(std::move(sharedDiffuseBind));
+        sharedDirectRoot->children.push_back(number(0.0));
+        sharedDirectRoot->children.push_back(number(0.0));
+        OntoMath::Piecewise sharedDirect =
+            OntoMath::Piecewise::continuous(sharedDirectRoot);
+
+        auto sharedEnvironmentRoot =
+            std::make_shared<OntoMath::MathNode>();
+        sharedEnvironmentRoot->op = OntoMath::MathNode::Op::ValueLeaf;
+        sharedEnvironmentRoot->variableName =
+            OntoMath::kEnvironmentRadianceVar;
+        OntoMath::Piecewise sharedEnvironment =
+            OntoMath::Piecewise::continuous(sharedEnvironmentRoot);
+
+        sdfwgsl::BindingValues sharedBindingsA{
+            {"diffuse", PropertyValue(0.8f)}
+        };
+        sdfwgsl::BindingValues sharedBindingsB{
+            {"diffuse", PropertyValue(0.2f)}
+        };
+        const auto surfaceModuleA =
+            sdfwgsl::compileSurfaceResponseModule(
+                &sharedDirect, &sharedEnvironment, &sharedBindingsA);
+        const auto surfaceModuleB =
+            sdfwgsl::compileSurfaceResponseModule(
+                &sharedDirect, &sharedEnvironment, &sharedBindingsB);
+        check(surfaceModuleA.ok && surfaceModuleB.ok &&
+                  surfaceModuleA.wgsl == surfaceModuleB.wgsl &&
+                  surfaceModuleA.params != surfaceModuleB.params &&
+                  surfaceModuleA.hasDirectResponse &&
+                  surfaceModuleA.hasEnvironmentResponse &&
+                  surfaceModuleA.wgsl.find(
+                      "fn materialResponseEval") != std::string::npos &&
+                  surfaceModuleA.wgsl.find(
+                      "fn materialEnvironmentResponseEval") !=
+                      std::string::npos,
+              "geometry-independent surface module preserves one receiver compiler and structure-value split");
 
         const auto beforeParams = authored.params;
         responseRoot->children[2]->scalarForm.terms[0].coefficient = 0.7;

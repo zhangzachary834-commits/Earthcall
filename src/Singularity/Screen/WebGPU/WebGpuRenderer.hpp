@@ -7,9 +7,10 @@
 // These extra methods are WebGPU-specific for now; when the app swaps renderers
 // they will be lifted onto the Renderer interface (OpenGL impl = no-ops).
 //
-// Status: drawMesh is real (TessMesh vertex layout, camera+model+material
-// uniforms, Lambert+ambient lighting, two-sided). drawImplicit tessellates and
-// reuses drawMesh; drawLines/drawOverlay are stubs pending their own pipelines.
+// Status: drawMesh rasterizes TessMesh geometry but delegates receiver
+// illumination to the same authored Material response compiler used by implicit
+// surfaces. Triangle vs. field is representation, not a second shading model.
+// drawLines/drawOverlay and other flat paths remain intentionally unlit pipelines.
 
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/GpuBufferPool.hpp"
@@ -184,8 +185,38 @@ private:
     WGPUDevice _device = nullptr;
     WGPUQueue  _queue  = nullptr;
     WGPUTextureFormat _colorFormat = WGPUTextureFormat_RGBA8Unorm;
-    WGPURenderPipeline _meshPipeline = nullptr;
+
+    // Mesh geometry no longer owns a fixed shading model. Pipelines are keyed
+    // only by emitted receiver-program structure; numeric Material values live
+    // in a separate parameter buffer and therefore reuse the same pipeline.
+    struct MeshPipeline { WGPURenderPipeline pipe = nullptr; };
+    std::map<std::string, MeshPipeline> _meshPipes;
     WGPUBindGroupLayout _bgl = nullptr;
+    const MeshPipeline* meshPipeline(const std::string& wgsl);
+
+    struct MeshResponseKey {
+        // Owning references prevent an expired/reallocated AST address from
+        // aliasing a historical cache entry. Revisions remain the authored
+        // content authority for in-place edits.
+        std::shared_ptr<const OntoMath::Piecewise> direct;
+        uint32_t directRevision = 0;
+        std::shared_ptr<const OntoMath::Piecewise> environment;
+        uint32_t environmentRevision = 0;
+        std::string bindingTypes;
+        bool operator<(const MeshResponseKey& o) const {
+            return std::tie(direct, directRevision, environment,
+                            environmentRevision, bindingTypes)
+                 < std::tie(o.direct, o.directRevision, o.environment,
+                            o.environmentRevision, o.bindingTypes);
+        }
+    };
+    struct MeshResponseMemo {
+        sdfwgsl::SurfaceResponseProgram program;
+        const MeshPipeline* pipeline = nullptr;
+        // Exact Material binding-value identity -> response-only param stream.
+        std::map<std::string, std::vector<float>> params;
+    };
+    std::map<MeshResponseKey, MeshResponseMemo> _meshResponsePrograms;
 
     // ---- Flat-colour pipelines (unlit: overlays, gizmos, wireframe, all 2D) ----
     // OpenGL could change blend and depth state between draws; WebGPU bakes them
@@ -247,10 +278,15 @@ private:
         uint32_t parameterRevision = 0xffffffff;
         uint32_t colorRevision = 0xffffffff;
         uint32_t responseRevision = 0xffffffff;
+        uint32_t environmentResponseRevision = 0xffffffff;
+        std::string responseBindingIdentity;
         std::string responseStructure;
         bool responseReadsNormal = false;
         bool responseReadsWi = false;
         bool responseReadsWo = false;
+        std::string environmentResponseStructure;
+        bool environmentResponseReadsNormal = false;
+        bool environmentResponseReadsWo = false;
         // Full authored radiance content identity. A change here means at least
         // the parameter block must be reconsidered; whether WGSL structure also
         // changed is decided by radianceStructure below.
@@ -764,11 +800,16 @@ private:
     // which a deferred batch cannot honor.
     struct MeshBatchKey {
         const geom::TessMesh* mesh = nullptr;
+        const MeshPipeline* pipeline = nullptr;
         WGPUTextureView albedoView = nullptr;
-        glm::vec4 shading{0.2f, 0.8f, 1.0f, 32.0f}; // ambient, diffuse, specular, shininess
+        // Exact byte identity owns batching equality. The float vector is payload,
+        // never an ordering oracle (NaN would make ordinary float ordering unsafe).
+        std::string responseParamIdentity;
+        std::vector<float> responseParams;
         bool operator<(const MeshBatchKey& o) const {
-            return std::tie(mesh, albedoView, shading.x, shading.y, shading.z, shading.w)
-                 < std::tie(o.mesh, o.albedoView, o.shading.x, o.shading.y, o.shading.z, o.shading.w);
+            return std::tie(mesh, pipeline, albedoView, responseParamIdentity)
+                 < std::tie(o.mesh, o.pipeline, o.albedoView,
+                            o.responseParamIdentity);
         }
     };
     // Mirrors the WGSL `Instance` struct in kMeshWGSL.

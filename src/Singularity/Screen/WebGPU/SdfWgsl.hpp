@@ -21,6 +21,7 @@
 #include <cstddef>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/RadianceSource.hpp"
@@ -53,6 +54,11 @@ struct ParameterBlock {
     bool ok = true;
     std::string error;
 };
+
+// Generic authored PropertyPath values supplied by the channel that owns the
+// subject. The compiler knows paths and types only; it does not know Material,
+// Light, roughness, shininess, or any other domain-specific noun.
+using BindingValues = std::map<std::string, PropertyValue>;
 
 // Isolated authored scalar-expression layout. This deliberately reuses the
 // production emitter: numeric values become parameter slots, while every choice
@@ -243,7 +249,9 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* volumeChromaExpr = nullptr,
                 const OntoMath::Piecewise* phaseExpr = nullptr,
                 const OntoMath::Piecewise* emissionExpr = nullptr,
-                const OntoMath::Piecewise* responseExpr = nullptr);
+                const OntoMath::Piecewise* responseExpr = nullptr,
+                const BindingValues* responseBindings = nullptr,
+                const OntoMath::Piecewise* environmentResponseExpr = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -262,7 +270,9 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* volumeChromaExpr = nullptr,
                              const OntoMath::Piecewise* phaseExpr = nullptr,
                              const OntoMath::Piecewise* emissionExpr = nullptr,
-                             const OntoMath::Piecewise* responseExpr = nullptr);
+                             const OntoMath::Piecewise* responseExpr = nullptr,
+                             const BindingValues* responseBindings = nullptr,
+                             const OntoMath::Piecewise* environmentResponseExpr = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
@@ -331,14 +341,57 @@ AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr
 // wi/wo are transport bindings, never aliases of source alpha's omega.
 PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr);
 
-// Rung 9 receiver-owned f_r-like channel. Authored responses are vec3-valued,
-// may read n and existing wi/wo directional coordinates, and deliberately do
-// not admit t until an honest Material-owned Timeline exists.
-ResponseExpressionLayout inspectResponseExpression(const OntoMath::Piecewise* expr);
+// Rung 9 receiver-owned response channel. Authored responses are vec3-valued,
+// may read n, surfaceColor, and existing wi/wo directional coordinates. The
+// vec3 is the receiver's complete reflected RGB factor/contribution for the
+// admitted incident radiance: Screen must not secretly multiply pigment or add
+// another aesthetic lobe afterward. No t is admitted until an honest
+// Material-owned Timeline exists.
+ResponseExpressionLayout inspectResponseExpression(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings = nullptr);
 
 // Re-collect only response numeric parameters using the same admission/lowering
-// path as inspectResponseExpression. This is the future value-only cache path.
-ParameterBlock collectResponseParams(const OntoMath::Piecewise* expr);
+// path as inspectResponseExpression. Bound PropertyPath values enter the same
+// parameter stream, so value edits preserve WGSL structure.
+ParameterBlock collectResponseParams(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings = nullptr);
+
+// Independent receiver law for directionless environment incident radiance.
+// It may read p/n/wo/surfaceColor/environmentRadiance plus generic Bind paths;
+// wi is deliberately absent because environment input has no single source
+// direction. The returned vec3 is complete reflected environment RGB.
+ResponseExpressionLayout inspectEnvironmentResponseExpression(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings = nullptr);
+ParameterBlock collectEnvironmentResponseParams(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings = nullptr);
+
+// Geometry-independent receiver compiler. Raster meshes and implicit surfaces
+// discover p/n/wo differently, but once a surface interaction exists they must
+// execute the SAME authored Material laws. This module contains only reusable
+// mathematical helpers + materialResponseEval/materialEnvironmentResponseEval;
+// it has no vertex/fragment entry point and no SDF geometry authority.
+// Numeric leaves/Bind values live in params, so equal wgsl means pipeline reuse.
+struct SurfaceResponseProgram {
+    std::string wgsl;
+    std::vector<float> params;
+    bool hasDirectResponse = false;
+    bool hasEnvironmentResponse = false;
+    bool directReadsNormal = false;
+    bool directReadsWi = false;
+    bool directReadsWo = false;
+    bool environmentReadsNormal = false;
+    bool environmentReadsWo = false;
+    bool ok = true;
+    std::string error;
+};
+SurfaceResponseProgram compileSurfaceResponseModule(
+    const OntoMath::Piecewise* responseExpr,
+    const OntoMath::Piecewise* environmentResponseExpr,
+    const BindingValues* bindings = nullptr);
 
 // V4 medium self-emission E_v(p,omega,t)->vec3. Absence is no self-emitted
 // radiance. omega is world-space sample -> eye in an emission-owned context.

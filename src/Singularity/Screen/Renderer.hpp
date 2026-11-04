@@ -45,6 +45,13 @@ public:
     struct FrameStats {
         uint32_t drawCalls = 0;
         uint32_t meshDrawCalls = 0;
+        // Authored mesh receiver-program observability. Pipeline compilation is
+        // structural; Bind/numeric values belong to parameter uploads.
+        uint32_t meshProgramCompiles = 0;
+        uint32_t meshProgramCacheHits = 0;
+        uint32_t meshProgramRefusals = 0;
+        std::string meshLastProgramRefusal;
+        size_t meshParameterBytesUploaded = 0;
         uint32_t sdfDrawCalls = 0;
         uint32_t trianglesDrawn = 0;
         size_t   vramAllocatedBytes = 0;

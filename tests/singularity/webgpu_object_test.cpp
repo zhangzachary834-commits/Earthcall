@@ -15,7 +15,9 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/Screen/RenderMaterial.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Time/timeline.hpp"
@@ -2069,12 +2071,182 @@ int main() {
         renderer.setRadianceSources({}, 0);
     }
 
+    // --- LEGACY ENVIRONMENT / DIRECT-TRANSPORT SEPARATION ------------------
+    // Compatibility environment illumination may reuse authored chi(p,t), but
+    // it is not source rho and it is not visibility. A zero-rho source with a
+    // blocker on its geometric path must therefore keep the same environment
+    // pixel when visibility is enabled.
+    {
+        auto environmentMat = materials.create("webgpu_environment_separation");
+        environmentMat->baseColor = glm::vec3(1.0f);
+        environmentMat->ambient = 0.2f;
+        environmentMat->diffuse = 1.0f;
+        environmentMat->specular = 0.0f;
+
+        Object environmentReceiver;
+        auto environmentSphere =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.55f));
+        environmentReceiver.setFieldShape(environmentSphere, glm::vec3(1.5f));
+        environmentReceiver.setMaterialId("material.webgpu_environment_separation");
+
+        auto zeroRhoNode = scalarNode(0.0);
+        OntoMath::Piecewise zeroRho =
+            OntoMath::Piecewise::continuous(zeroRhoNode);
+        auto redEnvironmentNode = vectorNode(1.0, 0.0, 0.0);
+        OntoMath::Piecewise redEnvironmentChroma =
+            OntoMath::Piecewise::continuous(redEnvironmentNode);
+
+        const glm::vec3 environmentSourcePos(-0.8f, 0.0f, 1.6f);
+        renderer.setRadianceSources({}, 0);
+        renderer.setRadianceField(&zeroRho, 4301);
+        renderer.setRadianceChroma(&redEnvironmentChroma, 4302);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 0.0f);
+        renderer.setLight(environmentSourcePos,
+                          glm::vec3(0.2f),
+                          glm::vec3(0.8f),
+                          glm::vec3(0.0f));
+        renderer.setLightingEnabled(true);
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        environmentReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char environmentBaseline[4];
+        readCentre(environmentBaseline);
+        assert(environmentBaseline[0] > 35 &&
+               environmentBaseline[1] < 12 &&
+               environmentBaseline[2] < 12 &&
+               "zero-rho source lost its legacy environment illumination");
+
+        auto environmentBlocker =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.16f));
+        environmentBlocker.offset = glm::vec3(-0.4f, 0.0f, 1.075f);
+        environmentReceiver.setFieldShape(
+            geom::SdfNode::binary(
+                geom::SdfOp::Union, environmentSphere, environmentBlocker),
+            glm::vec3(1.5f));
+        renderer.setRadianceVisibilityEnabled(true);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        environmentReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char environmentBlocked[4];
+        readCentre(environmentBlocked);
+        std::printf("environment separation zero-rho baseline=(%d,%d,%d) blocked=(%d,%d,%d)\n",
+                    environmentBaseline[0], environmentBaseline[1], environmentBaseline[2],
+                    environmentBlocked[0], environmentBlocked[1], environmentBlocked[2]);
+        assert(abs(int(environmentBaseline[0]) - int(environmentBlocked[0])) <= 2 &&
+               abs(int(environmentBaseline[1]) - int(environmentBlocked[1])) <= 2 &&
+               abs(int(environmentBaseline[2]) - int(environmentBlocked[2])) <= 2 &&
+               "visibility or blocker geometry leaked into environment compatibility illumination");
+
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setRadianceField(nullptr, 0);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
+    }
+
+    // --- LEGACY DIRECT RESPONSE MIGRATION PIXEL PARITY ----------------------
+    // The old source API may still carry independent diffuse/specular weights,
+    // but SDF execution must receive one honest incident RGB plus compatibility
+    // lobe scalars. The inherited material.default response reproduces the old
+    // Blinn-Phong answer; no renderer-owned lobe formula participates.
+    {
+        auto legacyDirectMat = materials.create("webgpu_legacy_direct_migration");
+        legacyDirectMat->baseColor = glm::vec3(0.5f, 0.25f, 1.0f);
+        legacyDirectMat->ambient = 0.2f;
+        legacyDirectMat->diffuse = 0.8f;
+        legacyDirectMat->specular = 1.0f;
+        legacyDirectMat->shininess = 32.0f;
+        legacyDirectMat->responseExpr.reset();
+        legacyDirectMat->environmentResponseExpr.reset();
+
+        Object legacyDirectReceiver;
+        legacyDirectReceiver.setFieldShape(
+            geom::SdfNode::leaf(
+                geom::SdfPrim::Box, glm::vec3(0.55f, 0.55f, 0.55f)),
+            glm::vec3(1.0f));
+        legacyDirectReceiver.setMaterialId(
+            "material.webgpu_legacy_direct_migration");
+
+        auto legacyRhoNode = scalarNode(1.0);
+        OntoMath::Piecewise legacyRho =
+            OntoMath::Piecewise::continuous(legacyRhoNode);
+
+        renderer.setRadianceSources({}, 0);
+        renderer.setRadianceField(&legacyRho, 4401);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceVisibilityEnabled(false);
+        // Deliberately adversarial old API: diffuse and specular use
+        // DIFFERENT RGB chroma. Old no-chi SDF semantics consumed these
+        // vectors independently; the authored default must preserve that fact.
+        renderer.setRadianceSourceCoefficients(1.0f, 0.0f, 0.2f, 0.4f);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.0f),
+                          glm::vec3(0.20f, 0.08f, 0.04f),
+                          glm::vec3(0.40f, 0.20f, 0.05f));
+        renderer.setLightingEnabled(true);
+        renderer.setModel(glm::mat4(1.0f));
+
+        const RenderMaterial legacyResolved =
+            resolveRenderMaterial(
+                "material.webgpu_legacy_direct_migration", {});
+        assert(legacyResolved.responseExpr &&
+               legacyResolved.responseExpr.get() ==
+                   materials.defaultMaterial()->responseExpr.get() &&
+               "legacy direct receiver did not inherit material.default response");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        legacyDirectReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char migratedLegacyPixel[4];
+        readCentre(migratedLegacyPixel);
+        std::printf(
+            "legacy direct migration pixel=(%d,%d,%d) expected~(128,56,23)\n",
+            migratedLegacyPixel[0], migratedLegacyPixel[1],
+            migratedLegacyPixel[2]);
+
+        // Exact front-center is (.50,.22,.09) -> (128,56,23). The 16x16
+        // sample is slightly off-axis, mostly narrowing the shiny lobe.
+        assert(migratedLegacyPixel[0] >= 108 &&
+               migratedLegacyPixel[0] <= 140 &&
+               migratedLegacyPixel[1] >= 42 &&
+               migratedLegacyPixel[1] <= 72 &&
+               migratedLegacyPixel[2] >= 14 &&
+               migratedLegacyPixel[2] <= 38 &&
+               migratedLegacyPixel[0] > migratedLegacyPixel[1] + 45 &&
+               migratedLegacyPixel[1] > migratedLegacyPixel[2] + 15 &&
+               "authored default response failed arbitrary legacy diffuse/specular RGB parity");
+
+        renderer.setRadianceField(nullptr, 0);
+        renderer.setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.2f),
+                          glm::vec3(0.8f),
+                          glm::vec3(1.0f));
+    }
+
     // --- RUNG 9 MATERIAL COPY-ON-WRITE CONTINUITY ---------------------------
     // Painting an Object creates its private Material. That operation may change
     // paint ownership; it must neither erase nor alias receiver-response truth.
     {
         auto sharedResponseMat = materials.create("webgpu_rung9_cow_shared");
-        auto sharedResponseRoot = vectorNode(0.8, 0.2, 0.1);
+        assert(sharedResponseMat->setDynamicProperty(
+            "roughness", PropertyValue(0.42f)));
+
+        auto sharedResponseRoot = std::make_shared<OntoMath::MathNode>();
+        sharedResponseRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto roughnessBind = std::make_unique<OntoMath::MathNode>();
+        roughnessBind->op = OntoMath::MathNode::Op::Bind;
+        roughnessBind->propertyPath = "roughness";
+        sharedResponseRoot->children.push_back(std::move(roughnessBind));
+        sharedResponseRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.2)));
+        sharedResponseRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.1)));
         sharedResponseMat->responseExpr = std::make_shared<OntoMath::Piecewise>(
             OntoMath::Piecewise::continuous(sharedResponseRoot));
         sharedResponseMat->bumpResponseRevision();
@@ -2097,6 +2269,33 @@ int main() {
         assert(privateResponseMat->responseExpr.get() !=
                    sharedResponseMat->responseExpr.get() &&
                "Material copy-on-write aliased the response Piecewise object");
+
+        PropertyValue privateRoughness;
+        PropertyValue sharedRoughness;
+        assert(privateResponseMat->getDynamicProperty(
+                   "roughness", privateRoughness) &&
+               sharedResponseMat->getDynamicProperty(
+                   "roughness", sharedRoughness) &&
+               "Material copy-on-write dropped an authored response Bind input");
+        double privateRoughNumber = 0.0;
+        double sharedRoughNumber = 0.0;
+        assert(propertyValueToNumber(privateRoughness, privateRoughNumber) &&
+               propertyValueToNumber(sharedRoughness, sharedRoughNumber) &&
+               std::abs(privateRoughNumber - 0.42) < 1e-6 &&
+               std::abs(sharedRoughNumber - 0.42) < 1e-6);
+
+        assert(PropertyPath::parse("roughness").setValue(
+                   *privateResponseMat, PropertyValue(0.15f)) ==
+               PropertyPath::PathResult::Ok);
+        assert(privateResponseMat->getDynamicProperty(
+                   "roughness", privateRoughness) &&
+               sharedResponseMat->getDynamicProperty(
+                   "roughness", sharedRoughness));
+        assert(propertyValueToNumber(privateRoughness, privateRoughNumber) &&
+               propertyValueToNumber(sharedRoughness, sharedRoughNumber) &&
+               std::abs(privateRoughNumber - 0.15) < 1e-6 &&
+               std::abs(sharedRoughNumber - 0.42) < 1e-6 &&
+               "editing the private scalar Bind input mutated the shared Material");
 
         privateResponseMat->responseExpr->pieces[0].mathNode =
             vectorNode(0.1, 0.2, 0.9);
@@ -2313,6 +2512,151 @@ int main() {
         renderer.setRadianceVisibilityEnabled(false);
     }
 
+    // --- DEFAULT DIRECT RESPONSE INHERITANCE / LOCAL BINDINGS ----------------
+    // A legacy Material has no local response AST. Resolution must inherit the
+    // default authored equation while binding THIS Material's coefficients.
+    // Equation inheritance is not value inheritance.
+    {
+        auto legacyInherited = materials.create("webgpu_default_response_inheritance");
+        legacyInherited->responseExpr.reset();
+        legacyInherited->environmentResponseExpr.reset();
+        legacyInherited->diffuse = 0.31f;
+        legacyInherited->specular = 0.27f;
+        legacyInherited->shininess = 11.0f;
+        legacyInherited->ambient = 0.09f;
+
+        auto defaultMaterial = materials.defaultMaterial();
+        assert(defaultMaterial && defaultMaterial->responseExpr &&
+               defaultMaterial->environmentResponseExpr);
+
+        const RenderMaterial resolvedInherited =
+            resolveRenderMaterial(
+                "material.webgpu_default_response_inheritance", {});
+        assert(resolvedInherited.responseExpr &&
+               resolvedInherited.responseExpr.get() ==
+                   defaultMaterial->responseExpr.get() &&
+               "legacy Material did not inherit the authored default direct equation");
+        assert(resolvedInherited.environmentResponseExpr &&
+               resolvedInherited.environmentResponseExpr.get() ==
+                   defaultMaterial->environmentResponseExpr.get() &&
+               "legacy Material did not inherit the authored default environment equation");
+
+        const auto readBoundNumber = [&](const char* path) {
+            const auto it = resolvedInherited.responseBindings.find(path);
+            assert(it != resolvedInherited.responseBindings.end());
+            double value = 0.0;
+            assert(propertyValueToNumber(it->second, value));
+            return value;
+        };
+        assert(std::abs(readBoundNumber("diffuse") - 0.31) < 1e-6 &&
+               std::abs(readBoundNumber("specular") - 0.27) < 1e-6 &&
+               std::abs(readBoundNumber("shininess") - 11.0) < 1e-6 &&
+               std::abs(readBoundNumber("ambient") - 0.09) < 1e-6 &&
+               "inherited response equation bound default Material values instead of receiver values");
+
+        auto localRoot = vectorNode(0.2, 0.3, 0.4);
+        legacyInherited->responseExpr =
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::continuous(localRoot));
+        legacyInherited->bumpResponseRevision();
+        const RenderMaterial resolvedLocal =
+            resolveRenderMaterial(
+                "material.webgpu_default_response_inheritance", {});
+        assert(resolvedLocal.responseExpr.get() ==
+                   legacyInherited->responseExpr.get() &&
+               resolvedLocal.responseExpr.get() !=
+                   defaultMaterial->responseExpr.get() &&
+               "explicit local response did not remain sovereign over the default");
+        assert(!resolvedLocal.environmentResponseExpr &&
+               "explicit direct response secretly inherited legacy environment response");
+    }
+
+    // --- AD-21 MATERIAL RESPONSE PROPERTY BIND -------------------------------
+    // The response AST stays byte-for-byte fixed while an ordinary Material
+    // Property changes through PropertyPath. resolveRenderMaterial must refresh
+    // the bound parameter value without a response revision bump or WGSL compile.
+    {
+        auto boundMat = materials.create("webgpu_response_bind_witness");
+        boundMat->baseColor = glm::vec3(1.0f);
+        boundMat->ambient = 0.0f;
+        boundMat->diffuse = 1.0f;
+        boundMat->specular = 0.0f;
+
+        auto boundRoot = std::make_shared<OntoMath::MathNode>();
+        boundRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto boundDiffuse = std::make_unique<OntoMath::MathNode>();
+        boundDiffuse->op = OntoMath::MathNode::Op::Bind;
+        boundDiffuse->propertyPath = "diffuse";
+        boundRoot->children.push_back(std::move(boundDiffuse));
+        boundRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        boundRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        boundMat->responseExpr = std::make_shared<OntoMath::Piecewise>(
+            OntoMath::Piecewise::continuous(boundRoot));
+        boundMat->bumpResponseRevision();
+        const uint32_t boundResponseRevision = boundMat->getResponseRevision();
+        const std::string boundResponseJson = boundMat->responseExpr->toJson().dump();
+
+        Object boundReceiver;
+        boundReceiver.setFieldShape(
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.55f)),
+            glm::vec3(1.0f));
+        boundReceiver.setMaterialId("material.webgpu_response_bind_witness");
+
+        auto boundRhoRoot = scalarNode(1.0);
+        OntoMath::Piecewise boundRho =
+            OntoMath::Piecewise::continuous(boundRhoRoot);
+        renderer.setRadianceSources({}, 0);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setRadianceField(&boundRho, 5101);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.0f),
+                          glm::vec3(0.8f),
+                          glm::vec3(0.0f));
+        renderer.setLightingEnabled(true);
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        boundReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char boundBright[4];
+        readCentre(boundBright);
+        const Renderer::FrameStats boundFirstStats = renderer.frameStats();
+        assert(boundBright[0] > 120 &&
+               "Material Property Bind did not reach the native receiver pixel");
+        assert(boundFirstStats.sdfProgramCompiles == 1 &&
+               "first Property-Bound response draw did not compile exactly once");
+
+        assert(PropertyPath::parse("diffuse").setValue(
+                   *boundMat, PropertyValue(0.18f)) == PropertyPath::PathResult::Ok);
+        assert(boundMat->getResponseRevision() == boundResponseRevision &&
+               boundMat->responseExpr->toJson().dump() == boundResponseJson &&
+               "ordinary bound-property edit mutated response structure/revision");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        boundReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char boundDim[4];
+        readCentre(boundDim);
+        const Renderer::FrameStats boundValueStats = renderer.frameStats();
+        std::printf("AD-21 response Bind red %d -> %d; compiles=%u cacheHits=%u paramBytes=%zu\n",
+                    boundBright[0], boundDim[0],
+                    boundValueStats.sdfProgramCompiles,
+                    boundValueStats.sdfProgramCacheHits,
+                    boundValueStats.sdfParameterBytesUploaded);
+        assert(boundBright[0] > boundDim[0] + 60 &&
+               "live Material Property Bind edit did not refresh native response value");
+        assert(boundValueStats.sdfProgramCompiles == 0 &&
+               boundValueStats.sdfProgramCacheHits >= 1 &&
+               boundValueStats.sdfParameterBytesUploaded > 0 &&
+               "Property Bind value edit recompiled WGSL or reused stale parameters");
+
+        renderer.setRadianceField(nullptr, 0);
+    }
+
     // --- Rung-8 WebGPU begin2D native pixel witness ----------------------------
     // Production begin2D now consumes OntoMath's top-left ZO orthographic
     // projection. Draw only the top-left quarter and prove through GPU readback
@@ -2370,6 +2714,167 @@ int main() {
         std::printf("single-face-painted cube draw calls = %d\n", paintedDrawCalls);
         assert(paintedDrawCalls == 6 &&
                "a single painted face must fall back to the six-draw path, not merge over the paint");
+    }
+
+    // --- AUTHORED RECEIVER LAW ON ORDINARY TRIANGLE MESH -------------------
+    // Rasterization may discover the surface, but it must execute the same
+    // Material response mathematics as the SDF path. A live Bind edit changes
+    // only response parameter bytes, never the mesh WGSL/pipeline.
+    {
+        auto meshResponseMat = materials.create("webgpu_mesh_response_witness");
+        meshResponseMat->baseColor = glm::vec3(1.0f);
+        meshResponseMat->ambient = 0.0f;
+        meshResponseMat->diffuse = 0.82f;
+        meshResponseMat->specular = 0.0f;
+
+        auto meshResponseRoot = std::make_shared<OntoMath::MathNode>();
+        meshResponseRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto meshDiffuseBind = std::make_unique<OntoMath::MathNode>();
+        meshDiffuseBind->op = OntoMath::MathNode::Op::Bind;
+        meshDiffuseBind->propertyPath = "diffuse";
+        meshResponseRoot->children.push_back(std::move(meshDiffuseBind));
+        meshResponseRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        meshResponseRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        meshResponseMat->responseExpr =
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::continuous(meshResponseRoot));
+        meshResponseMat->environmentResponseExpr.reset();
+        meshResponseMat->bumpResponseRevision();
+        const uint32_t meshResponseRevision =
+            meshResponseMat->getResponseRevision();
+        const std::string meshResponseJson =
+            meshResponseMat->responseExpr->toJson().dump();
+
+        Object meshReceiver;
+        meshReceiver.setMaterialId("material.webgpu_mesh_response_witness");
+
+        renderer.setLightingEnabled(true);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.2f),
+                          glm::vec3(0.8f),
+                          glm::vec3(1.0f));
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char meshBright[4];
+        readCentre(meshBright);
+        const Renderer::FrameStats meshFirstStats = renderer.frameStats();
+        std::printf(
+            "mesh authored response bright=(%d,%d,%d) compiles=%u paramBytes=%zu\n",
+            meshBright[0], meshBright[1], meshBright[2],
+            meshFirstStats.meshProgramCompiles,
+            meshFirstStats.meshParameterBytesUploaded);
+        assert(meshBright[0] > 175 &&
+               meshBright[1] < 20 &&
+               meshBright[2] < 20 &&
+               "ordinary mesh did not execute its authored Material response");
+        assert(meshFirstStats.meshProgramCompiles == 1 &&
+               meshFirstStats.meshParameterBytesUploaded > 0 &&
+               "first authored mesh response did not compile/upload its receiver program");
+
+        assert(PropertyPath::parse("diffuse").setValue(
+                   *meshResponseMat, PropertyValue(0.18f)) ==
+               PropertyPath::PathResult::Ok);
+        assert(meshResponseMat->getResponseRevision() == meshResponseRevision &&
+               meshResponseMat->responseExpr->toJson().dump() == meshResponseJson &&
+               "bound mesh Material edit mutated receiver structure/revision");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char meshDim[4];
+        readCentre(meshDim);
+        const Renderer::FrameStats meshValueStats = renderer.frameStats();
+        std::printf(
+            "mesh authored response dim=(%d,%d,%d) compiles=%u paramBytes=%zu\n",
+            meshDim[0], meshDim[1], meshDim[2],
+            meshValueStats.meshProgramCompiles,
+            meshValueStats.meshParameterBytesUploaded);
+        assert(meshBright[0] > meshDim[0] + 110 &&
+               meshDim[0] >= 35 && meshDim[0] <= 60 &&
+               "mesh Bind value edit did not refresh the authored receiver pixel");
+        assert(meshValueStats.meshProgramCompiles == 0 &&
+               meshValueStats.meshParameterBytesUploaded > 0 &&
+               meshValueStats.meshProgramRefusals == 0 &&
+               "mesh Bind value edit recompiled or refused instead of refreshing parameters");
+    }
+
+    // --- MESH / IMPLICIT RECEIVER-LAW REPRESENTATION PARITY ----------------
+    // Geometry representation may change how the surface interaction is found.
+    // It must not change the Material response law that owns the pixel.
+    {
+        auto parityMat = materials.create("webgpu_mesh_sdf_response_parity");
+        parityMat->baseColor = glm::vec3(1.0f);
+
+        auto parityRoot = vectorNode(0.23, 0.61, 0.37);
+        parityMat->responseExpr =
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::continuous(parityRoot));
+        parityMat->environmentResponseExpr.reset();
+        parityMat->bumpResponseRevision();
+
+        Object meshSphere;
+        meshSphere.setShapeKind(Object::ShapeKind::Sphere);
+        meshSphere.setRenderMode(Object::RenderMode::Mesh);
+        meshSphere.setMaterialId(
+            "material.webgpu_mesh_sdf_response_parity");
+
+        Object implicitSphere;
+        implicitSphere.setShapeKind(Object::ShapeKind::Sphere);
+        implicitSphere.setRenderMode(Object::RenderMode::Auto);
+        implicitSphere.setMaterialId(
+            "material.webgpu_mesh_sdf_response_parity");
+
+        auto parityRhoRoot = scalarNode(1.0);
+        OntoMath::Piecewise parityRho =
+            OntoMath::Piecewise::continuous(parityRhoRoot);
+        renderer.setRadianceSources({}, 0);
+        renderer.setRadianceField(&parityRho, 6201);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.0f),
+                          glm::vec3(0.8f),
+                          glm::vec3(0.0f));
+        renderer.setLightingEnabled(true);
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshSphere.drawObject();
+        renderer.endFrame();
+        unsigned char meshRepresentation[4];
+        readCentre(meshRepresentation);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        implicitSphere.drawObject();
+        renderer.endFrame();
+        unsigned char implicitRepresentation[4];
+        readCentre(implicitRepresentation);
+
+        std::printf(
+            "surface-response parity mesh=(%d,%d,%d) implicit=(%d,%d,%d)\n",
+            meshRepresentation[0], meshRepresentation[1],
+            meshRepresentation[2], implicitRepresentation[0],
+            implicitRepresentation[1], implicitRepresentation[2]);
+
+        assert(meshRepresentation[0] > 45 &&
+               meshRepresentation[1] > 135 &&
+               meshRepresentation[2] > 75 &&
+               "mesh representation did not produce the authored receiver RGB");
+        assert(std::abs(int(meshRepresentation[0]) -
+                        int(implicitRepresentation[0])) <= 3 &&
+               std::abs(int(meshRepresentation[1]) -
+                        int(implicitRepresentation[1])) <= 3 &&
+               std::abs(int(meshRepresentation[2]) -
+                        int(implicitRepresentation[2])) <= 3 &&
+               "mesh and implicit representations disagreed on the same authored Material response");
+
+        renderer.setRadianceField(nullptr, 0);
     }
 
     {

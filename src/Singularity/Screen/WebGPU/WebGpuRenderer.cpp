@@ -76,30 +76,42 @@ std::optional<glm::mat4> authoredScaledProduct(const glm::mat4& viewProj,
 }
 
 // Vertex layout mirrors geom::TessVertex exactly: {pos(3), normal(3), uv(2)}.
-// A world-space Lambert term (ambient + diffuse*N·L) tints baseColor; front_facing
-// flips the normal so open surfaces (patches) light on both sides. Texture albedo
-// (faceTextures) is not sampled yet — a later refinement (needs a WGPU texture).
-// Per-instance transform (CPU-GPU micro-mastery Phase 4.3): every mesh draw is
-// an instanced draw now, even a "batch" of one, so the model/normal matrices
-// that used to live in the per-draw uniform U live in this per-instance
-// storage array instead, indexed by @builtin(instance_index). U carries only
-// what every instance in a batch genuinely SHARES (camera, material, light).
-const char* kMeshWGSL = R"(
+// Rasterization discovers a surface interaction; Material OntoMath decides how
+// incident radiance becomes reflected RGB. The response module is compiled by
+// the SAME emitter/validator used by the implicit-surface path.
+std::string meshWgsl(const sdfwgsl::SurfaceResponseProgram& response) {
+    std::string wgsl = R"WGSL(
 struct U {
-    viewProj:  mat4x4<f32>,
-    lightPos:  vec4<f32>,   // world-space POSITION (GL_LIGHT0 is positional)
-    params:    vec4<f32>,   // x=ambient, y=diffuse, z=specular, w=shininess
-    eyePos:    vec4<f32>,
+    viewProj:     mat4x4<f32>,
+    lightPos:     vec4<f32>,
+    eyePos:       vec4<f32>,
+    lightControl: vec4<f32>, // x = lighting enabled
 };
 struct Instance {
     model:     mat4x4<f32>,
     normalMat: mat4x4<f32>,
     baseColor: vec4<f32>,
 };
+struct Params { v: array<f32> };
+
 @group(0) @binding(0) var<uniform> u: U;
 @group(0) @binding(1) var albedoTex: texture_2d<f32>;
 @group(0) @binding(2) var albedoSamp: sampler;
+@group(0) @binding(3) var<storage, read> P: Params;
 @group(1) @binding(0) var<storage, read> instances: array<Instance>;
+)WGSL";
+
+    wgsl += response.wgsl;
+    wgsl += std::string("\nconst HAS_AUTHORED_MATERIAL_RESPONSE: bool = ") +
+            (response.hasDirectResponse ? "true;\n" : "false;\n");
+    wgsl += std::string(
+                "const HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE: bool = ") +
+            (response.hasEnvironmentResponse ? "true;\n" : "false;\n");
+    wgsl += std::string("const MATERIAL_RESPONSE_READS_WI: bool = ") +
+            (response.directReadsWi ? "true;\n" : "false;\n");
+
+    wgsl += R"WGSL(
+const SOURCE_DIRECTION_EPS: f32 = 1e-6;
 
 struct VSOut {
     @builtin(position) clip: vec4<f32>,
@@ -107,6 +119,7 @@ struct VSOut {
     @location(1) uv: vec2<f32>,
     @location(2) worldPos: vec3<f32>,
     @location(3) baseColor: vec4<f32>,
+    @location(4) localPos: vec3<f32>,
 };
 
 @vertex
@@ -120,6 +133,7 @@ fn vs_main(@location(0) pos: vec3<f32>, @location(1) normal: vec3<f32>,
     out.uv = uv;
     out.worldPos = world.xyz;
     out.baseColor = inst.baseColor;
+    out.localPos = pos;
     return out;
 }
 
@@ -127,27 +141,60 @@ fn vs_main(@location(0) pos: vec3<f32>, @location(1) normal: vec3<f32>,
 fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f32> {
     var N = normalize(in.worldNormal);
     if (!front) { N = -N; }
-    let L = normalize(u.lightPos.xyz - in.worldPos);
     let V = normalize(u.eyePos.xyz - in.worldPos);
-    let H = normalize(L + V);
-    let diff = max(dot(N, L), 0.0);
-    let lit = u.params.x + u.params.y * diff;
-    // Blinn-Phong specular: white highlight, gated so it only appears on lit faces.
-    let spec = u.params.z * pow(max(dot(N, H), 0.0), max(u.params.w, 1.0)) * step(0.0001, diff);
-    let texel = textureSample(albedoTex, albedoSamp, in.uv); // paint (white when untextured)
-    let rgb = in.baseColor.rgb * texel.rgb * lit + vec3<f32>(spec);
+    let texel = textureSample(albedoTex, albedoSamp, in.uv);
+    let surfaceColor = in.baseColor.rgb * texel.rgb;
+
+    // First mesh-unification rung: preserve the historical mesh transport
+    // contract exactly. The old mesh shader ignored authored source chroma/rho
+    // and effectively supplied white incident envelopes. Receiver mathematics
+    // is now authored; source-transport unification is a separate next rung.
+    let environmentRadiance = vec3<f32>(1.0);
+    let incidentRadiance = vec3<f32>(1.0);
+    let legacyDiffuseIncident = vec3<f32>(1.0);
+    let legacySpecularIncident = vec3<f32>(1.0);
+
+    var environmentTerm = vec3<f32>(0.0);
+    if (HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE) {
+        environmentTerm = materialEnvironmentResponseEval(
+            in.localPos, N, V, surfaceColor, environmentRadiance);
+    }
+
+    var directTerm = vec3<f32>(0.0);
+    if (HAS_AUTHORED_MATERIAL_RESPONSE) {
+        let sourceDelta = in.worldPos - u.lightPos.xyz;
+        let sourceDistance = length(sourceDelta);
+        var responseWi = vec3<f32>(0.0);
+        var responseDefined = true;
+        if (sourceDistance > SOURCE_DIRECTION_EPS) {
+            // canonical direct transport convention: source -> receiver
+            responseWi = sourceDelta / sourceDistance;
+        } else if (MATERIAL_RESPONSE_READS_WI) {
+            responseDefined = false;
+        }
+        if (responseDefined) {
+            directTerm = materialResponseEval(
+                in.localPos, N, responseWi, V, surfaceColor,
+                incidentRadiance, legacyDiffuseIncident,
+                legacySpecularIncident);
+        }
+    }
+
+    let litRgb = environmentTerm + directTerm;
+    let rgb = mix(surfaceColor, litRgb, u.lightControl.x);
     return vec4<f32>(rgb, in.baseColor.a * texel.a);
 }
-)";
+)WGSL";
+    return wgsl;
+}
 
-// std140-compatible: all members are 16-byte aligned, so this matches the WGSL
-// uniform block byte-for-byte. glm and WGSL are both column-major. model/
-// normalMat moved to the per-instance storage buffer — see kMeshWGSL.
+// std140-compatible: all members are 16-byte aligned. Model/normal matrices
+// remain per-instance; this block is geometry-independent receiver transport.
 struct MeshUniforms {
     glm::mat4 viewProj;
     glm::vec4 lightPos;
-    glm::vec4 params;
     glm::vec4 eyePos;
+    glm::vec4 lightControl;
 };
 
 // Unlit flat-colour shader for the selection overlay + wireframe.
@@ -273,15 +320,9 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     // timestamp extension, and F3 will say that no execution sample is present.
     initGpuTimestampQueries(gpu.timestampQueries);
 
-    WGPUShaderSourceWGSL src = {};
-    src.chain.sType = WGPUSType_ShaderSourceWGSL;
-    src.code = wgpu::Device::str(kMeshWGSL);
-    WGPUShaderModuleDescriptor smDesc = {};
-    smDesc.nextInChain = &src.chain;
-    WGPUShaderModule shader = wgpuDeviceCreateShaderModule(_device, &smDesc);
-    if (!shader) return false;
-
-    WGPUBindGroupLayoutEntry bglEntries[3] = {};
+    // Mesh pipeline layout is fixed execution machinery; the fragment
+    // mathematics is generated lazily per authored Material response structure.
+    WGPUBindGroupLayoutEntry bglEntries[4] = {};
     bglEntries[0].binding = 0;
     bglEntries[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     bglEntries[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -293,14 +334,16 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     bglEntries[2].binding = 2;
     bglEntries[2].visibility = WGPUShaderStage_Fragment;
     bglEntries[2].sampler.type = WGPUSamplerBindingType_Filtering;
+    bglEntries[3].binding = 3;
+    bglEntries[3].visibility = WGPUShaderStage_Fragment;
+    bglEntries[3].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     WGPUBindGroupLayoutDescriptor bglDesc = {};
-    bglDesc.entryCount = 3;
+    bglDesc.entryCount = 4;
     bglDesc.entries = bglEntries;
     _bgl = wgpuDeviceCreateBindGroupLayout(_device, &bglDesc);
 
-    // group(1): the per-instance transform storage array (Phase 4.3). Same
-    // ReadOnlyStorage shape as the SDF params bind group below — minBindingSize
-    // left at 0 (unsized), since a batch's instance count varies draw to draw.
+    // group(1): per-instance model/normal/baseColor storage. Geometry discovery
+    // remains raster-specific; Material response does not.
     WGPUBindGroupLayoutEntry instEntry = {};
     instEntry.binding = 0;
     instEntry.visibility = WGPUShaderStage_Vertex;
@@ -310,9 +353,7 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     instBglDesc.entries = &instEntry;
     _instanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &instBglDesc);
 
-    // group(2): SDF instances plus two derived acceleration buffers:
-    // binding 1 is the proven-heightfield min/max grid; binding 2 is the
-    // conservative zero-set hierarchy. Both are read-only Kernel substrate.
+    // group(2): SDF instances plus derived acceleration buffers.
     WGPUBindGroupLayoutEntry sdfInstEntry[3] = {};
     sdfInstEntry[0].binding = 0;
     sdfInstEntry[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
@@ -327,70 +368,6 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     sdfInstBglDesc.entryCount = 3;
     sdfInstBglDesc.entries = sdfInstEntry;
     _sdfInstanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &sdfInstBglDesc);
-
-    WGPUBindGroupLayout meshLayouts[2] = { _bgl, _instanceBgl };
-    WGPUPipelineLayoutDescriptor plDesc = {};
-    plDesc.bindGroupLayoutCount = 2;
-    plDesc.bindGroupLayouts = meshLayouts;
-    WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(_device, &plDesc);
-
-    WGPUVertexAttribute attrs[3] = {};
-    attrs[0].format = WGPUVertexFormat_Float32x3; attrs[0].offset = 0;  attrs[0].shaderLocation = 0; // pos
-    attrs[1].format = WGPUVertexFormat_Float32x3; attrs[1].offset = 12; attrs[1].shaderLocation = 1; // normal
-    attrs[2].format = WGPUVertexFormat_Float32x2; attrs[2].offset = 24; attrs[2].shaderLocation = 2; // uv
-    WGPUVertexBufferLayout vbl = {};
-    vbl.stepMode = WGPUVertexStepMode_Vertex;
-    vbl.arrayStride = 32; // sizeof(geom::TessVertex)
-    vbl.attributeCount = 3;
-    vbl.attributes = attrs;
-
-    // Alpha blending so RenderMaterial::opacity actually means something. With the
-    // default opacity of 1.0 this is a no-op — src*1 + dst*0 is exactly what an
-    // unblended write does — so it costs nothing for opaque surfaces while making
-    // a translucent material render translucent instead of silently solid.
-    WGPUBlendState meshBlend = {};
-    meshBlend.color.operation = WGPUBlendOperation_Add;
-    meshBlend.color.srcFactor = WGPUBlendFactor_SrcAlpha;
-    meshBlend.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
-    meshBlend.alpha.operation = WGPUBlendOperation_Add;
-    meshBlend.alpha.srcFactor = WGPUBlendFactor_One;
-    meshBlend.alpha.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
-
-    WGPUColorTargetState colorTarget = {};
-    colorTarget.format = _colorFormat;
-    colorTarget.writeMask = WGPUColorWriteMask_All;
-    colorTarget.blend = &meshBlend;
-    WGPUFragmentState frag = {};
-    frag.module = shader;
-    frag.entryPoint = wgpu::Device::str("fs_main");
-    frag.targetCount = 1;
-    frag.targets = &colorTarget;
-
-    // Depth test so nearer surfaces occlude farther ones. Depth24Plus, less-than,
-    // depth writes on. (WebGPU clip depth is [0,1]; the app must build projections
-    // with GLM_FORCE_DEPTH_ZERO_TO_ONE when feeding this backend.)
-    WGPUDepthStencilState ds = {};
-    ds.format = WGPUTextureFormat_Depth24Plus;
-    ds.depthWriteEnabled = WGPUOptionalBool_True;
-    ds.depthCompare = WGPUCompareFunction_Less;
-
-    WGPURenderPipelineDescriptor pd = {};
-    pd.layout = layout;
-    pd.vertex.module = shader;
-    pd.vertex.entryPoint = wgpu::Device::str("vs_main");
-    pd.vertex.bufferCount = 1;
-    pd.vertex.buffers = &vbl;
-    pd.primitive.topology = WGPUPrimitiveTopology_TriangleList;
-    pd.primitive.cullMode = WGPUCullMode_None; // the app has no backface culling
-    pd.depthStencil = &ds;
-    pd.multisample.count = 1;
-    pd.multisample.mask = 0xFFFFFFFFu;
-    pd.fragment = &frag;
-    _meshPipeline = wgpuDeviceCreateRenderPipeline(_device, &pd);
-
-    wgpuPipelineLayoutRelease(layout);
-    wgpuShaderModuleRelease(shader);
-    if (!_meshPipeline) return false;
 
     // Shared linear sampler.
     WGPUSamplerDescriptor sd = {};
@@ -589,6 +566,15 @@ void WebGpuRenderer::releasePersistentRadianceSources() {
 }
 
 void WebGpuRenderer::reloadShaders() {
+    // Response memo entries borrow MeshPipeline addresses; drop them before the
+    // pipeline map that owns those addresses.
+    _meshResponsePrograms.clear();
+    for (auto& kv : _meshPipes) {
+        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
+    }
+    _meshPipes.clear();
+    _meshBatches.clear();
+
     // Keys are SdfPipeline addresses, so release these before destroying the
     // pipeline map whose node addresses identify the caches.
     releasePersistentSdfParams();
@@ -630,6 +616,85 @@ void WebGpuRenderer::reloadShaders() {
     _volumeDrawInstanceCounts.clear();
     _activeVolumePipelines.clear();
     _kernelRouted.reset(); // All borrowed VolumePipeline::routedProgram pointers are gone.
+}
+
+const WebGpuRenderer::MeshPipeline*
+WebGpuRenderer::meshPipeline(const std::string& wgsl) {
+    auto it = _meshPipes.find(wgsl);
+    if (it != _meshPipes.end()) {
+        mutableFrameStats().meshProgramCacheHits++;
+        return &it->second;
+    }
+
+    WGPUShaderSourceWGSL src = {};
+    src.chain.sType = WGPUSType_ShaderSourceWGSL;
+    src.code = wgpu::Device::str(wgsl.c_str());
+    WGPUShaderModuleDescriptor smDesc = {};
+    smDesc.nextInChain = &src.chain;
+    WGPUShaderModule shader = wgpuDeviceCreateShaderModule(_device, &smDesc);
+    if (!shader) return nullptr;
+
+    WGPUBindGroupLayout layouts[2] = { _bgl, _instanceBgl };
+    WGPUPipelineLayoutDescriptor pld = {};
+    pld.bindGroupLayoutCount = 2;
+    pld.bindGroupLayouts = layouts;
+    WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(_device, &pld);
+
+    WGPUVertexAttribute attrs[3] = {};
+    attrs[0].format = WGPUVertexFormat_Float32x3; attrs[0].offset = 0;  attrs[0].shaderLocation = 0;
+    attrs[1].format = WGPUVertexFormat_Float32x3; attrs[1].offset = 12; attrs[1].shaderLocation = 1;
+    attrs[2].format = WGPUVertexFormat_Float32x2; attrs[2].offset = 24; attrs[2].shaderLocation = 2;
+    WGPUVertexBufferLayout vbl = {};
+    vbl.stepMode = WGPUVertexStepMode_Vertex;
+    vbl.arrayStride = 32;
+    vbl.attributeCount = 3;
+    vbl.attributes = attrs;
+
+    WGPUBlendState blend = {};
+    blend.color.operation = WGPUBlendOperation_Add;
+    blend.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+    blend.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+    blend.alpha.operation = WGPUBlendOperation_Add;
+    blend.alpha.srcFactor = WGPUBlendFactor_One;
+    blend.alpha.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+
+    WGPUColorTargetState colorTarget = {};
+    colorTarget.format = _colorFormat;
+    colorTarget.writeMask = WGPUColorWriteMask_All;
+    colorTarget.blend = &blend;
+    WGPUFragmentState frag = {};
+    frag.module = shader;
+    frag.entryPoint = wgpu::Device::str("fs_main");
+    frag.targetCount = 1;
+    frag.targets = &colorTarget;
+
+    WGPUDepthStencilState ds = {};
+    ds.format = WGPUTextureFormat_Depth24Plus;
+    ds.depthWriteEnabled = WGPUOptionalBool_True;
+    ds.depthCompare = WGPUCompareFunction_Less;
+
+    WGPURenderPipelineDescriptor pd = {};
+    pd.layout = layout;
+    pd.vertex.module = shader;
+    pd.vertex.entryPoint = wgpu::Device::str("vs_main");
+    pd.vertex.bufferCount = 1;
+    pd.vertex.buffers = &vbl;
+    pd.primitive.topology = WGPUPrimitiveTopology_TriangleList;
+    pd.primitive.cullMode = WGPUCullMode_None;
+    pd.depthStencil = &ds;
+    pd.multisample.count = 1;
+    pd.multisample.mask = 0xFFFFFFFFu;
+    pd.fragment = &frag;
+
+    MeshPipeline out;
+    out.pipe = wgpuDeviceCreateRenderPipeline(_device, &pd);
+    wgpuPipelineLayoutRelease(layout);
+    wgpuShaderModuleRelease(shader);
+    if (!out.pipe) return nullptr;
+
+    auto [inserted, _] = _meshPipes.emplace(wgsl, out);
+    mutableFrameStats().meshProgramCompiles++;
+    return &inserted->second;
 }
 
 // Build-on-first-use so only the combinations the app actually draws exist.
@@ -719,7 +784,11 @@ void WebGpuRenderer::shutdown() {
     if (_imageLayout) { wgpuPipelineLayoutRelease(_imageLayout); _imageLayout = nullptr; }
     if (_imageShader) { wgpuShaderModuleRelease(_imageShader); _imageShader = nullptr; }
     if (_imageBgl)    { wgpuBindGroupLayoutRelease(_imageBgl); _imageBgl = nullptr; }
-    if (_meshPipeline) { wgpuRenderPipelineRelease(_meshPipeline); _meshPipeline = nullptr; }
+    _meshResponsePrograms.clear();
+    for (auto& kv : _meshPipes) {
+        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
+    }
+    _meshPipes.clear();
     if (_bgl) { wgpuBindGroupLayoutRelease(_bgl); _bgl = nullptr; }
     if (_instanceBgl) { wgpuBindGroupLayoutRelease(_instanceBgl); _instanceBgl = nullptr; }
     _meshBatches.clear();
@@ -1014,9 +1083,8 @@ void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width,
 void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& mat) {
     if (!_pass || mesh.tris.empty()) return;
 
-    // setWireframe: GL had glPolygonMode to draw the same triangles as edges.
-    // WebGPU has no such state, and reinterpreting a triangle list as a line list
-    // would connect the wrong vertices — so the edges are built explicitly.
+    // setWireframe is intentionally unlit overlay machinery, not a surface
+    // illumination path.
     if (_wireframe) {
         std::vector<glm::vec3> edges;
         edges.reserve(mesh.tris.size() * 2);
@@ -1034,14 +1102,90 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
                  glm::vec4(mat.baseColor, mat.opacity));
         return;
     }
+
+    // Compile/cache receiver STRUCTURE separately from values. Bind values are
+    // typed here only to distinguish scalar and vec3 layouts; the compiler
+    // remains ignorant of material nouns such as diffuse or shininess.
+    std::string bindingTypes;
+    for (const auto& [path, value] : mat.responseBindings) {
+        bindingTypes += std::to_string(path.size()) + ":" + path + "=";
+        double scalar = 0.0;
+        if (propertyValueToNumber(value, scalar)) {
+            bindingTypes += "scalar;";
+        } else if (std::holds_alternative<glm::vec3>(value)) {
+            bindingTypes += "vec3;";
+        } else {
+            // compileSurfaceResponseModule will issue the named refusal. Keep a
+            // stable type token so an unsupported value can never alias a valid
+            // receiver program.
+            bindingTypes += "unsupported;";
+        }
+    }
+
+    MeshResponseKey responseKey;
+    responseKey.direct = mat.responseExpr;
+    responseKey.directRevision = mat.responseRevision;
+    responseKey.environment = mat.environmentResponseExpr;
+    responseKey.environmentRevision = mat.environmentResponseRevision;
+    responseKey.bindingTypes = std::move(bindingTypes);
+
+    auto memoIt = _meshResponsePrograms.find(responseKey);
+    if (memoIt == _meshResponsePrograms.end()) {
+        MeshResponseMemo memo;
+        memo.program = sdfwgsl::compileSurfaceResponseModule(
+            mat.responseExpr.get(), mat.environmentResponseExpr.get(),
+            &mat.responseBindings);
+        if (!memo.program.ok) {
+            mutableFrameStats().meshProgramRefusals++;
+            mutableFrameStats().meshLastProgramRefusal = memo.program.error;
+            std::fprintf(stderr,
+                         "[WebGpuRenderer] mesh Material response refused: %s\n",
+                         memo.program.error.c_str());
+            return;
+        }
+        const std::string wgsl = meshWgsl(memo.program);
+        memo.pipeline = meshPipeline(wgsl);
+        if (!memo.pipeline || !memo.pipeline->pipe) {
+            mutableFrameStats().meshProgramRefusals++;
+            mutableFrameStats().meshLastProgramRefusal =
+                "mesh Material response pipeline failed";
+            std::fprintf(stderr,
+                         "[WebGpuRenderer] mesh Material response pipeline failed\n");
+            return;
+        }
+        memo.params.emplace(mat.responseBindingIdentity, memo.program.params);
+        memoIt = _meshResponsePrograms.emplace(
+            std::move(responseKey), std::move(memo)).first;
+    }
+
+    MeshResponseMemo& responseMemo = memoIt->second;
+    auto paramsIt = responseMemo.params.find(mat.responseBindingIdentity);
+    if (paramsIt == responseMemo.params.end()) {
+        auto direct = sdfwgsl::collectResponseParams(
+            mat.responseExpr.get(), &mat.responseBindings);
+        auto environment = sdfwgsl::collectEnvironmentResponseParams(
+            mat.environmentResponseExpr.get(), &mat.responseBindings);
+        if (!direct.ok || !environment.ok) {
+            const std::string reason =
+                !direct.ok ? direct.error : environment.error;
+            mutableFrameStats().meshProgramRefusals++;
+            mutableFrameStats().meshLastProgramRefusal = reason;
+            std::fprintf(stderr,
+                         "[WebGpuRenderer] mesh Material response value refresh refused: %s\n",
+                         reason.c_str());
+            return;
+        }
+        std::vector<float> params;
+        params.reserve(direct.values.size() + environment.values.size());
+        params.insert(params.end(), direct.values.begin(), direct.values.end());
+        params.insert(params.end(), environment.values.begin(), environment.values.end());
+        paramsIt = responseMemo.params.emplace(
+            mat.responseBindingIdentity, std::move(params)).first;
+    }
+
     // Albedo is resolved NOW, not deferred: a queued batch cannot hold
-    // RenderMaterial::albedoPixels (documented "valid only for the duration
-    // of the draw call"), and resolving to a stable WGPUTextureView also
-    // doubles as the batching key's material identity — see MeshBatchKey.
+    // RenderMaterial::albedoPixels beyond this draw call.
     WGPUTextureView albedoView = _whiteView;
-    // Prefer a texture this backend already owns: FaceTexture re-uploads only when
-    // the paint changes, so a static surface costs nothing per frame. The
-    // albedoPixels path below is the fallback for callers that hold no handle.
     auto owned = _textures.find(mat.textureId);
     if (mat.textureId != 0 && owned != _textures.end()) {
         albedoView = owned->second.view;
@@ -1060,30 +1204,35 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
         WGPUTexelCopyBufferLayout alay = {};
         alay.bytesPerRow = w * 4; alay.rowsPerImage = h;
         WGPUExtent3D asize = { w, h, 1 };
-        wgpuQueueWriteTexture(_queue, &adst, mat.albedoPixels, size_t(w) * h * 4, &alay, &asize);
+        wgpuQueueWriteTexture(_queue, &adst, mat.albedoPixels,
+                              size_t(w) * h * 4, &alay, &asize);
         albedoView = wgpuTextureCreateView(atex, nullptr);
         _frameTextures.push_back(atex);
         _frameTextureViews.push_back(albedoView);
     }
 
     MeshBatchKey key;
-    key.mesh       = &mesh;
+    key.mesh = &mesh;
+    key.pipeline = responseMemo.pipeline;
     key.albedoView = albedoView;
-    key.shading    = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
+    key.responseParams = paramsIt->second;
+    if (!key.responseParams.empty()) {
+        key.responseParamIdentity.assign(
+            reinterpret_cast<const char*>(key.responseParams.data()),
+            key.responseParams.size() * sizeof(float));
+    }
 
     const auto authoredTransforms = deriveModelTransforms(_model);
     if (!authoredTransforms) return;
 
     InstanceData inst;
-    inst.model     = _model;
+    inst.model = _model;
     inst.normalMat = authoredTransforms->normal;
     inst.baseColor = glm::vec4(mat.baseColor, mat.opacity);
-    _meshBatches[key].push_back(inst);
+    _meshBatches[std::move(key)].push_back(inst);
 
-    // Every queued instance really will be drawn at flush — count its
-    // triangles now. drawCalls/pipelineSwitches are credited once per BATCH
-    // in flushMeshDraws(), which is the actual number of GPU draw calls.
-    mutableFrameStats().trianglesDrawn += static_cast<uint32_t>(mesh.tris.size() / 3);
+    mutableFrameStats().trianglesDrawn +=
+        static_cast<uint32_t>(mesh.tris.size() / 3);
 }
 
 void WebGpuRenderer::flushMeshDraws() {
@@ -1093,10 +1242,13 @@ void WebGpuRenderer::flushMeshDraws() {
     for (auto& kv : _meshBatches) {
         const MeshBatchKey& key = kv.first;
         const std::vector<InstanceData>& instances = kv.second;
-        if (!key.mesh || key.mesh->tris.empty() || instances.empty()) continue;
+        if (!key.mesh || !key.pipeline || !key.pipeline->pipe ||
+            key.mesh->tris.empty() || instances.empty()) {
+            continue;
+        }
         const geom::TessMesh& mesh = *key.mesh;
 
-        bindPipeline(_meshPipeline);
+        bindPipeline(key.pipeline->pipe);
 
         const size_t vbytes = mesh.tris.size() * sizeof(geom::TessVertex);
         WGPUBuffer vbuf = _meshCache.getOrUpload(mesh);
@@ -1108,36 +1260,70 @@ void WebGpuRenderer::flushMeshDraws() {
         }
 
         MeshUniforms u;
-        u.viewProj  = _viewProj;
-        u.lightPos  = glm::vec4(lightPos(), 1.0f);
-        u.params    = key.shading;
-        u.eyePos    = glm::vec4(_eyePos, 1.0f);
+        u.viewProj = _viewProj;
+        u.lightPos = glm::vec4(lightPos(), 1.0f);
+        u.eyePos = glm::vec4(_eyePos, 1.0f);
+        u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
         auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(MeshUniforms));
 
         auto instAlloc = bufferPool().suballocateStorage(
             instances.data(), instances.size() * sizeof(InstanceData));
 
-        WGPUBindGroupEntry bge[3] = {};
-        bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
-        bge[1].binding = 1; bge[1].textureView = key.albedoView;
-        bge[2].binding = 2; bge[2].sampler = _sampler;
+        // WebGPU storage bindings cannot have zero size. An authored receiver
+        // with no numeric parameters still gets one inert float; generated WGSL
+        // never reads it.
+        const float inert = 0.0f;
+        const void* paramData = key.responseParams.empty()
+            ? static_cast<const void*>(&inert)
+            : static_cast<const void*>(key.responseParams.data());
+        const size_t paramBytes = key.responseParams.empty()
+            ? sizeof(float)
+            : key.responseParams.size() * sizeof(float);
+        auto paramAlloc =
+            bufferPool().suballocateStorage(paramData, paramBytes);
+        mutableFrameStats().meshParameterBytesUploaded += paramBytes;
+
+        WGPUBindGroupEntry bge[4] = {};
+        bge[0].binding = 0;
+        bge[0].buffer = uAlloc.buffer;
+        bge[0].offset = uAlloc.offset;
+        bge[0].size = uAlloc.size;
+        bge[1].binding = 1;
+        bge[1].textureView = key.albedoView;
+        bge[2].binding = 2;
+        bge[2].sampler = _sampler;
+        bge[3].binding = 3;
+        bge[3].buffer = paramAlloc.buffer;
+        bge[3].offset = paramAlloc.offset;
+        bge[3].size = paramAlloc.size;
         WGPUBindGroupDescriptor bgDesc = {};
-        bgDesc.layout = _bgl; bgDesc.entryCount = 3; bgDesc.entries = bge;
-        WGPUBindGroup bindGroup = wgpuDeviceCreateBindGroup(_device, &bgDesc);
+        bgDesc.layout = _bgl;
+        bgDesc.entryCount = 4;
+        bgDesc.entries = bge;
+        WGPUBindGroup bindGroup =
+            wgpuDeviceCreateBindGroup(_device, &bgDesc);
         _frameBindGroups.push_back(bindGroup);
 
         WGPUBindGroupEntry ibge = {};
-        ibge.binding = 0; ibge.buffer = instAlloc.buffer; ibge.offset = instAlloc.offset; ibge.size = instAlloc.size;
+        ibge.binding = 0;
+        ibge.buffer = instAlloc.buffer;
+        ibge.offset = instAlloc.offset;
+        ibge.size = instAlloc.size;
         WGPUBindGroupDescriptor ibgDesc = {};
-        ibgDesc.layout = _instanceBgl; ibgDesc.entryCount = 1; ibgDesc.entries = &ibge;
-        WGPUBindGroup instBindGroup = wgpuDeviceCreateBindGroup(_device, &ibgDesc);
+        ibgDesc.layout = _instanceBgl;
+        ibgDesc.entryCount = 1;
+        ibgDesc.entries = &ibge;
+        WGPUBindGroup instBindGroup =
+            wgpuDeviceCreateBindGroup(_device, &ibgDesc);
         _frameBindGroups.push_back(instBindGroup);
 
         wgpuRenderPassEncoderSetBindGroup(_pass, 0, bindGroup, 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(_pass, 1, instBindGroup, 0, nullptr);
-        wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vbuf, voffset, vbytes);
-        wgpuRenderPassEncoderDraw(_pass, static_cast<uint32_t>(mesh.tris.size()),
-                                  static_cast<uint32_t>(instances.size()), 0, 0);
+        wgpuRenderPassEncoderSetVertexBuffer(
+            _pass, 0, vbuf, voffset, vbytes);
+        wgpuRenderPassEncoderDraw(
+            _pass, static_cast<uint32_t>(mesh.tris.size()),
+            static_cast<uint32_t>(instances.size()), 0, 0);
 
         mutableFrameStats().drawCalls++;
         mutableFrameStats().meshDrawCalls++;
@@ -1146,17 +1332,50 @@ void WebGpuRenderer::flushMeshDraws() {
 }
 
 namespace {
+
+glm::vec3 legacyDirectIncidentRadiance(const glm::vec3& ambientRadiance,
+                                       const glm::vec3& diffuseRadiance,
+                                       const glm::vec3& specularRadiance,
+                                       const glm::vec4& coefficients) {
+    // AuthorableLight projects every historical channel from one
+    // color*intensity source, so division by any nonzero coefficient recovers the
+    // canonical incident RGB exactly. The older raw Renderer::setLight API can
+    // provide mutually inconsistent lobe colours; then canonical incident RGB is
+    // mathematically underdetermined and this is only a best-effort projection.
+    // Exact old-BP parity does NOT depend on this guess: the two legacy RGB lobe
+    // envelopes are preserved independently below for material.default.
+    constexpr float eps = 1e-8f;
+    if (std::fabs(coefficients.z) > eps) {
+        return diffuseRadiance / coefficients.z;
+    }
+    if (std::fabs(coefficients.w) > eps) {
+        return specularRadiance / coefficients.w;
+    }
+    if (std::fabs(coefficients.y) > eps) {
+        return ambientRadiance / coefficients.y;
+    }
+    return glm::vec3(0.0f);
+}
+
 // Uniform block for the raymarcher; must match struct RU in the generated WGSL.
 struct SdfGlobalUniforms {
     glm::mat4 viewProj;
     glm::mat4 invViewProj;
     glm::vec4 lightPos;
     glm::vec4 eyePos;
-    glm::vec4 lightAmbient;
-    glm::vec4 lightDiffuse;
-    glm::vec4 lightSpecular;
+    // Legacy compatibility only: xyz is the directionless environment envelope
+    // already normalized by the historical 0.2 reference; w is the authored
+    // chroma environment scale (intensity * legacyAmbient / 0.2).
+    glm::vec4 legacyEnvironment;
+    // xyz = honest constant direct incident radiance (color * intensity);
+    // w = source intensity used when authored chi replaces constant color.
+    glm::vec4 directIncidentRadiance;
+    // xyz = exact historical no-chi lobe envelope; w = authored-chi scale.
+    // These exist only so material.default can reproduce arbitrary old
+    // Renderer::setLight diffuse/specular RGB without making them source ontology.
+    glm::vec4 legacyDiffuseIncident;
+    glm::vec4 legacySpecularIncident;
     glm::vec4 lightControl; // x = lighting enabled, y = derived visibility enabled
-    glm::vec4 radianceSourceCoefficients; // intensity, ambient, diffuse, specular
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
     glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
     glm::vec4 volumeTime;   // x/y = admitted participating-medium coordinate/delta
@@ -1164,10 +1383,12 @@ struct SdfGlobalUniforms {
 
 struct RadianceSourceGpuData {
     glm::vec4 position;
-    glm::vec4 ambient;
-    glm::vec4 diffuse;
-    glm::vec4 specular;
-    glm::vec4 coefficients;
+    // xyz = constant legacy environment envelope; w = chroma environment scale.
+    // Direct rho/alpha/visibility transport must never read this field.
+    glm::vec4 legacyEnvironment;
+    glm::vec4 directIncidentRadiance;
+    glm::vec4 legacyDiffuseIncident;
+    glm::vec4 legacySpecularIncident;
     glm::vec4 time;
     glm::vec4 control;
 };
@@ -1638,8 +1859,14 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // Rung 9: receiver-owned response has independent structure/value identity.
     // It is inspected once for this material draw before any shader cache decision.
     const auto responseLayout =
-        sdfwgsl::inspectResponseExpression(mat.responseExpr.get());
+        sdfwgsl::inspectResponseExpression(mat.responseExpr.get(),
+                                           &mat.responseBindings);
     const std::string responseStructure = responseLayout.structure;
+    const auto environmentResponseLayout =
+        sdfwgsl::inspectEnvironmentResponseExpression(
+            mat.environmentResponseExpr.get(), &mat.responseBindings);
+    const std::string environmentResponseStructure =
+        environmentResponseLayout.structure;
 
     if (multiSource) {
         if (_radianceSourcesLayoutRevision != radianceSourcesRevision()) {
@@ -1768,6 +1995,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         recordProgramRefusal("material response: " + responseLayout.error);
         return;
     }
+    if (!environmentResponseLayout.ok) {
+        recordProgramRefusal(
+            "material environment response: " + environmentResponseLayout.error);
+        return;
+    }
 
     if (multiSource) {
         if (!_radianceSourcesLayoutOk) {
@@ -1820,6 +2052,12 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->responseReadsNormal == responseLayout.readsNormal &&
             memo->responseReadsWi == responseLayout.readsWi &&
             memo->responseReadsWo == responseLayout.readsWo;
+        const bool environmentResponseStructureMatches =
+            memo->environmentResponseStructure == environmentResponseStructure &&
+            memo->environmentResponseReadsNormal ==
+                environmentResponseLayout.readsNormal &&
+            memo->environmentResponseReadsWo ==
+                environmentResponseLayout.readsWo;
 
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
@@ -1831,6 +2069,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             phaseStructureMatches &&
             emissionStructureMatches &&
             responseStructureMatches &&
+            environmentResponseStructureMatches &&
             memo->colorExprPtr == mat.colorExpr.get()) {
             needsCompile = false;
 
@@ -1853,7 +2092,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             const bool emissionValuesChanged =
                 emissionExpr && memo->emissionRevision != emissionRevision;
             const bool responseValuesChanged =
-                mat.responseExpr && memo->responseRevision != mat.responseRevision;
+                (mat.responseExpr || mat.environmentResponseExpr) &&
+                (memo->responseRevision != mat.responseRevision ||
+                 memo->environmentResponseRevision !=
+                     mat.environmentResponseRevision ||
+                 memo->responseBindingIdentity != mat.responseBindingIdentity);
             const bool valuesChanged =
                 memo->parameterRevision != memoParameterRevision ||
                 sourceValuesChanged || densityValuesChanged || extinctionValuesChanged ||
@@ -1867,7 +2110,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                            radianceAngularExpr(), sourceSet,
                                            densityExpr, densityKind, extinctionExpr,
                                            scatteringExpr, volumeChromaExpr, phaseExpr,
-                                           emissionExpr, mat.responseExpr.get());
+                                           emissionExpr, mat.responseExpr.get(),
+                                           &mat.responseBindings,
+                                           mat.environmentResponseExpr.get());
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -1886,6 +2131,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->phaseRevision = phaseRevision;
                     memo->emissionRevision = emissionRevision;
                     memo->responseRevision = mat.responseRevision;
+                    memo->environmentResponseRevision =
+                        mat.environmentResponseRevision;
+                    memo->responseBindingIdentity = mat.responseBindingIdentity;
                 } else {
                     needsCompile = true;
                 }
@@ -1907,7 +2155,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                      radianceAngularExpr(), sourceSet,
                                      densityExpr, densityKind, extinctionExpr,
                                      scatteringExpr, volumeChromaExpr, phaseExpr,
-                                     emissionExpr, mat.responseExpr.get());
+                                     emissionExpr, mat.responseExpr.get(),
+                                     &mat.responseBindings,
+                                     mat.environmentResponseExpr.get());
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -1949,10 +2199,18 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->emissionStructure = emissionStructure;
             memo->emissionReadsOmega = emissionLayout.readsOmega;
             memo->responseRevision = mat.responseRevision;
+            memo->environmentResponseRevision =
+                mat.environmentResponseRevision;
+            memo->responseBindingIdentity = mat.responseBindingIdentity;
             memo->responseStructure = responseStructure;
             memo->responseReadsNormal = responseLayout.readsNormal;
             memo->responseReadsWi = responseLayout.readsWi;
             memo->responseReadsWo = responseLayout.readsWo;
+            memo->environmentResponseStructure = environmentResponseStructure;
+            memo->environmentResponseReadsNormal =
+                environmentResponseLayout.readsNormal;
+            memo->environmentResponseReadsWo =
+                environmentResponseLayout.readsWo;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->prog = std::move(localProg);
             memo->sp = sp;
@@ -2282,10 +2540,20 @@ void WebGpuRenderer::flushSdfDraws() {
         for (const auto& source : radianceSources()) {
             RadianceSourceGpuData data{};
             data.position = glm::vec4(source.position, 1.0f);
-            data.ambient = glm::vec4(source.ambientRadiance, 1.0f);
-            data.diffuse = glm::vec4(source.diffuseRadiance, 1.0f);
-            data.specular = glm::vec4(source.specularRadiance, 1.0f);
-            data.coefficients = source.coefficients;
+            data.legacyEnvironment = glm::vec4(
+                source.ambientRadiance / 0.2f,
+                (source.coefficients.x * source.coefficients.y) / 0.2f);
+            data.directIncidentRadiance = glm::vec4(
+                legacyDirectIncidentRadiance(
+                    source.ambientRadiance, source.diffuseRadiance,
+                    source.specularRadiance, source.coefficients),
+                source.coefficients.x);
+            data.legacyDiffuseIncident = glm::vec4(
+                source.diffuseRadiance / 0.8f,
+                (source.coefficients.x * source.coefficients.z) / 0.8f);
+            data.legacySpecularIncident = glm::vec4(
+                source.specularRadiance,
+                source.coefficients.x * source.coefficients.w);
             data.time = glm::vec4(static_cast<float>(source.temporalCoordinate),
                                   static_cast<float>(source.temporalDelta), 0.0f, 0.0f);
             data.control =
@@ -2342,13 +2610,23 @@ void WebGpuRenderer::flushSdfDraws() {
     u.invViewProj = _invViewProj;
     u.lightPos = glm::vec4(lightPos(), 1.0f);
     u.eyePos = glm::vec4(_eyePos, 1.0f);
-    u.lightAmbient = glm::vec4(lightAmbient(), 1.0f);
-    u.lightDiffuse = glm::vec4(lightDiffuse(), 1.0f);
-    u.lightSpecular = glm::vec4(lightSpecular(), 1.0f);
+    const glm::vec4 sourceCoefficients = radianceSourceCoefficients();
+    u.legacyEnvironment = glm::vec4(
+        lightAmbient() / 0.2f,
+        (sourceCoefficients.x * sourceCoefficients.y) / 0.2f);
+    u.directIncidentRadiance = glm::vec4(
+        legacyDirectIncidentRadiance(
+            lightAmbient(), lightDiffuse(), lightSpecular(), sourceCoefficients),
+        sourceCoefficients.x);
+    u.legacyDiffuseIncident = glm::vec4(
+        lightDiffuse() / 0.8f,
+        (sourceCoefficients.x * sourceCoefficients.z) / 0.8f);
+    u.legacySpecularIncident = glm::vec4(
+        lightSpecular(),
+        sourceCoefficients.x * sourceCoefficients.w);
     u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f,
                                radianceVisibilityEnabled() ? 1.0f : 0.0f,
                                0.0f, 0.0f);
-    u.radianceSourceCoefficients = radianceSourceCoefficients();
     u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
                                static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
     u.volumeTime = glm::vec4(static_cast<float>(volumeDensityTemporalCoordinate()),

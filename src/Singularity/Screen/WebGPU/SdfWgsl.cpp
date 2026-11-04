@@ -397,7 +397,9 @@ struct Emit {
     bool               bindEmissionOmega = false; // V4 E_v owns a distinct omega context
     bool               readEmissionOmega = false;
     bool               bindPhaseDirections = false; // V3 Phi admits wi/wo, never source omega
-    bool               bindMaterialResponse = false; // Rung 9 receiver context admits n + wi/wo
+    bool               bindMaterialResponse = false; // direct receiver context admits n + wi/wo
+    bool               bindEnvironmentResponse = false; // environment receiver admits n + wo + environmentRadiance
+    const BindingValues* propertyBindings = nullptr; // generic MathNode::Bind values supplied by owner
     bool               readSurfaceNormal = false;
     bool               readWi = false;
     bool               readWo = false;
@@ -504,9 +506,39 @@ std::string pointComponent(const std::string& var, Emit& e, const std::string& p
     }
     if (var == OntoMath::kSurfaceNormalVar) {
         e.readSurfaceNormal = true;
-        if (e.bindMaterialResponse) return "n";
+        if (e.bindMaterialResponse || e.bindEnvironmentResponse) return "n";
         e.refuse("an expression names receiver normal 'n', but this shader "
                  "expression context is not material response");
+        return "vec3<f32>(0.0)";
+    }
+    if (var == OntoMath::kSurfaceColorVar) {
+        if (e.bindMaterialResponse || e.bindEnvironmentResponse) return "surfaceColor";
+        e.refuse("an expression names receiver pigment 'surfaceColor', but this shader "
+                 "expression context is not material response");
+        return "vec3<f32>(0.0)";
+    }
+    if (var == OntoMath::kEnvironmentRadianceVar) {
+        if (e.bindEnvironmentResponse) return "environmentRadiance";
+        e.refuse("an expression names environment incident radiance, but this shader "
+                 "expression context is not material environment response");
+        return "vec3<f32>(0.0)";
+    }
+    if (var == OntoMath::kIncidentRadianceVar) {
+        if (e.bindMaterialResponse) return "incidentRadiance";
+        e.refuse("an expression names direct incident radiance outside "
+                 "the direct material-response context");
+        return "vec3<f32>(0.0)";
+    }
+    if (var == OntoMath::kLegacyDiffuseIncidentVar) {
+        if (e.bindMaterialResponse) return "legacyDiffuseIncident";
+        e.refuse("an expression names legacy diffuse incident compatibility outside "
+                 "the direct material-response migration context");
+        return "vec3<f32>(0.0)";
+    }
+    if (var == OntoMath::kLegacySpecularIncidentVar) {
+        if (e.bindMaterialResponse) return "legacySpecularIncident";
+        e.refuse("an expression names legacy specular incident compatibility outside "
+                 "the direct material-response migration context");
         return "vec3<f32>(0.0)";
     }
     if (var == OntoMath::kOmegaXVar ||
@@ -545,7 +577,8 @@ std::string pointComponent(const std::string& var, Emit& e, const std::string& p
         var == OntoMath::kWoYVar ||
         var == OntoMath::kWoZVar) {
         e.readWo = true;
-        if (e.bindPhaseDirections || e.bindMaterialResponse) {
+        if (e.bindPhaseDirections || e.bindMaterialResponse ||
+            e.bindEnvironmentResponse) {
             if (var == OntoMath::kWoXVar) return "wo.x";
             if (var == OntoMath::kWoYVar) return "wo.y";
             return "wo.z";
@@ -627,6 +660,7 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
     context += e.bindEmissionOmega ? "E" : "-";
     context += e.bindPhaseDirections ? "P" : "-";
     context += e.bindMaterialResponse ? "R" : "-";
+    context += e.bindEnvironmentResponse ? "J" : "-";
     context += e.prepareVolumeTime ? "Q" : "-";
     // A retained fragment embeds lexical substitutions, including parameter slots.
     for (const auto& [name, expression] : e.boundNames)
@@ -702,6 +736,40 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
         case Op::ValueLeaf:
             if (node.variableName == OntoMath::kAmbientPointVar) return "(" + pt + ")";
             return pointComponent(node.variableName, e, pt);
+        case Op::Bind: {
+            if (node.propertyPath.empty()) {
+                e.refuse("Bind has an empty PropertyPath");
+                return "0.0";
+            }
+            if (!e.propertyBindings) {
+                e.refuse("Bind path '" + node.propertyPath +
+                         "' has no PropertyPath binding provider in this shader context");
+                return "0.0";
+            }
+            const auto it = e.propertyBindings->find(node.propertyPath);
+            if (it == e.propertyBindings->end()) {
+                e.refuse("Bind path '" + node.propertyPath + "' is unresolved");
+                return "0.0";
+            }
+            double scalar = 0.0;
+            if (propertyValueToNumber(it->second, scalar)) {
+                if (!std::isfinite(scalar)) {
+                    e.refuse("Bind path '" + node.propertyPath + "' resolved to a non-finite scalar");
+                    return "0.0";
+                }
+                return e.param(static_cast<float>(scalar));
+            }
+            if (const auto* v = std::get_if<glm::vec3>(&it->second)) {
+                if (!std::isfinite(v->x) || !std::isfinite(v->y) || !std::isfinite(v->z)) {
+                    e.refuse("Bind path '" + node.propertyPath + "' resolved to a non-finite Vector");
+                    return "vec3<f32>(0.0)";
+                }
+                return e.param3(*v);
+            }
+            e.refuse("Bind path '" + node.propertyPath +
+                     "' resolved to a PropertyValue this WGSL channel does not admit");
+            return "0.0";
+        }
         case Op::VectorConstruct: {
             if (node.children.size() != 3) {
                 e.refuse("VectorConstruct needs exactly 3 components, got " +
@@ -1044,10 +1112,17 @@ void emitPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt
         if (!piece.mathNode) continue;
         
         std::string cond = "";
-        if (piece.hasLo) cond += inVar + " >= " + e.param(piece.lo);
-        if (piece.hasHi) {
-            if (!cond.empty()) cond += " && ";
-            cond += inVar + " <= " + e.param(piece.hi);
+        if (piece.whereLEZero) {
+            // Piecewise::Piece::applies gives the pure local guard authority
+            // over interval bounds: where g<=0 decides this piece by itself.
+            // Mirror that exact first-applicable-piece rule on the GPU.
+            cond = "(" + emitMathNode(*piece.whereLEZero, e, pt) + ") <= 0.0";
+        } else {
+            if (piece.hasLo) cond += inVar + " >= " + e.param(piece.lo);
+            if (piece.hasHi) {
+                if (!cond.empty()) cond += " && ";
+                cond += inVar + " <= " + e.param(piece.hi);
+            }
         }
         
         std::string val = emitMathNode(*piece.mathNode, e, pt);
@@ -1884,13 +1959,19 @@ bool validatePhasePiecewise(const OntoMath::Piecewise& pw, std::string& error) {
 // generic directional names wi/wo but owns a separate admission environment
 // from volume phase. No t appears here: this bounded rung has not established
 // an honest Material-owned Timeline.
-bool validateResponsePiecewise(const OntoMath::Piecewise& pw, std::string& error) {
+bool validateResponsePiecewise(const OntoMath::Piecewise& pw,
+                               const BindingValues* bindings,
+                               std::string& error) {
     OntoMath::TypeEnv env{
         {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
         {"x", OntoMath::ValueKind::Scalar},
         {"y", OntoMath::ValueKind::Scalar},
         {"z", OntoMath::ValueKind::Scalar},
         {OntoMath::kSurfaceNormalVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kSurfaceColorVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kIncidentRadianceVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kLegacyDiffuseIncidentVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kLegacySpecularIncidentVar, OntoMath::ValueKind::Vector},
         {OntoMath::kWiXVar, OntoMath::ValueKind::Scalar},
         {OntoMath::kWiYVar, OntoMath::ValueKind::Scalar},
         {OntoMath::kWiZVar, OntoMath::ValueKind::Scalar},
@@ -1899,16 +1980,47 @@ bool validateResponsePiecewise(const OntoMath::Piecewise& pw, std::string& error
         {OntoMath::kWoZVar, OntoMath::ValueKind::Scalar}
     };
 
+    if (bindings) {
+        for (const auto& [path, value] : *bindings) {
+            double scalar = 0.0;
+            if (propertyValueToNumber(value, scalar)) {
+                env[path] = OntoMath::ValueKind::Scalar;
+            } else if (std::holds_alternative<glm::vec3>(value)) {
+                env[path] = OntoMath::ValueKind::Vector;
+            } else {
+                error = "Bind path '" + path +
+                        "' resolves to a PropertyValue unsupported by material-response WGSL";
+                return false;
+            }
+        }
+    }
+
     if (pw.pieces.empty()) {
         error = "authored material response expression has no pieces";
         return false;
     }
     for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
         const auto& piece = pw.pieces[i];
-        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
+        if (piece.guard || piece.call || piece.fold) {
             error = "piece " + std::to_string(i) +
-                    " uses Piecewise semantics the WGSL response channel does not implement";
+                    " uses world Piecewise semantics the WGSL response channel does not implement";
             return false;
+        }
+        if (piece.whereLEZero) {
+            OntoMath::ValueKind guardKind = OntoMath::ValueKind::Unknown;
+            std::string guardError;
+            if (!piece.whereLEZero->checkTypes(
+                    env, guardError, &guardKind, false)) {
+                error = "piece " + std::to_string(i) +
+                        " pure guard: " + guardError;
+                return false;
+            }
+            if (guardKind != OntoMath::ValueKind::Scalar) {
+                error = "piece " + std::to_string(i) +
+                        " pure guard must evaluate to Scalar, got " +
+                        std::string(OntoMath::valueKindName(guardKind));
+                return false;
+            }
         }
         if (!piece.mathNode) {
             error = "piece " + std::to_string(i) + " has no authored response value";
@@ -1923,6 +2035,83 @@ bool validateResponsePiecewise(const OntoMath::Piecewise& pw, std::string& error
         if (kind != OntoMath::ValueKind::Vector) {
             error = "piece " + std::to_string(i) +
                     " material response must evaluate to Vector, got " +
+                    std::string(OntoMath::valueKindName(kind));
+            return false;
+        }
+    }
+    error.clear();
+    return true;
+}
+
+bool validateEnvironmentResponsePiecewise(const OntoMath::Piecewise& pw,
+                                          const BindingValues* bindings,
+                                          std::string& error) {
+    OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
+        {"x", OntoMath::ValueKind::Scalar},
+        {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar},
+        {OntoMath::kSurfaceNormalVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kSurfaceColorVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kEnvironmentRadianceVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kWoXVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoYVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kWoZVar, OntoMath::ValueKind::Scalar}
+    };
+
+    if (bindings) {
+        for (const auto& [path, value] : *bindings) {
+            double scalar = 0.0;
+            if (propertyValueToNumber(value, scalar)) {
+                env[path] = OntoMath::ValueKind::Scalar;
+            } else if (std::holds_alternative<glm::vec3>(value)) {
+                env[path] = OntoMath::ValueKind::Vector;
+            } else {
+                error = "Bind path '" + path +
+                        "' resolves to a PropertyValue unsupported by material-environment WGSL";
+                return false;
+            }
+        }
+    }
+
+    if (pw.pieces.empty()) {
+        error = "authored material environment response has no pieces";
+        return false;
+    }
+    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
+        const auto& piece = pw.pieces[i];
+        if (piece.guard || piece.call || piece.fold) {
+            error = "piece " + std::to_string(i) +
+                    " uses world Piecewise semantics the WGSL environment response channel does not implement";
+            return false;
+        }
+        if (piece.whereLEZero) {
+            OntoMath::ValueKind guardKind = OntoMath::ValueKind::Unknown;
+            std::string guardError;
+            if (!piece.whereLEZero->checkTypes(env, guardError, &guardKind, false)) {
+                error = "piece " + std::to_string(i) + " pure guard: " + guardError;
+                return false;
+            }
+            if (guardKind != OntoMath::ValueKind::Scalar) {
+                error = "piece " + std::to_string(i) +
+                        " pure guard must evaluate to Scalar, got " +
+                        std::string(OntoMath::valueKindName(guardKind));
+                return false;
+            }
+        }
+        if (!piece.mathNode) {
+            error = "piece " + std::to_string(i) + " has no authored environment response value";
+            return false;
+        }
+        OntoMath::ValueKind kind = OntoMath::ValueKind::Unknown;
+        std::string typeError;
+        if (!piece.mathNode->checkTypes(env, typeError, &kind, false)) {
+            error = typeError;
+            return false;
+        }
+        if (kind != OntoMath::ValueKind::Vector) {
+            error = "piece " + std::to_string(i) +
+                    " material environment response must evaluate to Vector, got " +
                     std::string(OntoMath::valueKindName(kind));
             return false;
         }
@@ -1991,16 +2180,20 @@ struct RU {
     invViewProj:    mat4x4<f32>,
     lightPos:       vec4<f32>,
     eyePos:         vec4<f32>,
-    lightAmbient:   vec4<f32>,
-    lightDiffuse:   vec4<f32>,
-    lightSpecular:  vec4<f32>,
+    // Legacy compatibility input, semantically separate from direct source
+    // transport. xyz = normalized constant environment envelope; w = authored
+    // chroma environment scale. rho/alpha/visibility never read this.
+    legacyEnvironment: vec4<f32>,
+    // xyz = constant direct incident radiance; w = source intensity used when
+    // authored chi supplies chroma instead of the historical constant color.
+    directIncidentRadiance: vec4<f32>,
+    // xyz = exact historical no-chi lobe envelope; w = authored-chi scale.
+    // Compatibility only; canonical direct colour is directIncidentRadiance.
+    legacyDiffuseIncident: vec4<f32>,
+    legacySpecularIncident: vec4<f32>,
     // x = lighting enabled; y = Rung-8 derived visibility enabled.
     // Visibility is execution state, not authored source state.
     lightControl:   vec4<f32>,
-    // x/y/z/w = source intensity/ambient/diffuse/specular. These are used
-    // only when authored chi is present; the no-chi branch keeps the exact
-    // pre-Rung-5 color-bearing light uniforms below.
-    radianceSourceCoefficients: vec4<f32>,
     // x = distance to the camera's far plane, in WORLD units.
     // y = viewport width in pixels.
     // z = viewport height in pixels.
@@ -2629,15 +2822,35 @@ fn fs(in: VSOut) -> FSOut {
     // OntoMath authors the inverse-transpose on CPU. The shader consumes the
     // lowered normal matrix; it does not independently originate that meaning.
     let nw = normalize((inst.normalMat * vec4<f32>(nf, 0.0)).xyz);
+    // Pigment is an admitted receiver input. Once an authored response exists,
+    // it owns whether/how pigment participates in reflected RGB.
+    let surfaceColor = sdfColor(pf);
 
-    let L = normalize(u.lightPos.xyz - pw);
     let V = normalize(u.eyePos.xyz - pw);
-    let H = normalize(L + V);
 
-    // Evaluate the Person-authored source invariants in source-relative world
-    // coordinates. rho is scalar, chi is vec3, and alpha is a third independent
-    // scalar over the normalized WORLD-space source -> receiver direction.
+    // Compatibility environment illumination is deliberately evaluated BEFORE
+    // direct source transport. It may reuse authored chi(p,t), because legacy
+    // worlds allowed environment colour to vary with source chroma, but it does
+    // not read rho, alpha, visibility, L, H or the direct-light cosine.
     let sourceDelta = pw - u.lightPos.xyz;
+    var sourceChroma = vec3<f32>(1.0);
+    if (HAS_AUTHORED_CHROMA) {
+        sourceChroma = lightChroma(sourceDelta);
+    }
+    var environmentRadiance = u.legacyEnvironment.rgb;
+    if (HAS_AUTHORED_CHROMA) {
+        environmentRadiance =
+            sourceChroma * vec3<f32>(u.legacyEnvironment.w);
+    }
+    var environmentTerm = vec3<f32>(0.0);
+    if (HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE) {
+        environmentTerm = materialEnvironmentResponseEval(
+            pf, nw, V, surfaceColor, environmentRadiance);
+    }
+
+    // Direct source transport begins here. The environment input above is not
+    // consulted below this line; receiver shape lives in materialResponseEval.
+
     let radialRadiance = max(lightRadiance(sourceDelta), 0.0);
     var angularRadiance = 1.0;
     if (HAS_AUTHORED_ANGULAR) {
@@ -2659,80 +2872,46 @@ fn fs(in: VSOut) -> FSOut {
     let shapedRadiance = radialRadiance * angularRadiance;
     let pathVisibility = sourceVisibility(pf, nf, u.lightPos.xyz);
     let directRadiance = shapedRadiance * pathVisibility;
-    let diff = max(dot(nw, L), 0.0);
-    let specShape = inst.shading.z *
-        pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) *
-        step(0.0001, diff);
 
-    var ambientTerm: vec3<f32>;
-    var diffuseTerm: vec3<f32>;
-    var specTerm: vec3<f32>;
+    var incidentRadiance = u.directIncidentRadiance.rgb;
     if (HAS_AUTHORED_CHROMA) {
-        let sourceChroma = lightChroma(pw - u.lightPos.xyz);
-        let c = u.radianceSourceCoefficients;
-        // Separate the legacy scalar coefficients from chroma only on this new
-        // path. This realizes rho * chi without multiplying legacy light.color
-        // a second time, including when one legacy color channel is exactly zero.
-        let ambientEnvelope = sourceChroma * vec3<f32>((c.x * c.y) / 0.2);
-        let diffuseEnvelope = sourceChroma * vec3<f32>((c.x * c.z) / 0.8);
-        let specularEnvelope = sourceChroma * vec3<f32>(c.x * c.w);
-        if (HAS_AUTHORED_MATERIAL_RESPONSE) {
-            let responseDistance = length(sourceDelta);
-            var responseWi = vec3<f32>(0.0);
-            var responseDefined = true;
-            if (responseDistance > SOURCE_DIRECTION_EPS) {
-                // wi keeps the canonical transport convention: source -> receiver.
-                responseWi = sourceDelta / responseDistance;
-            } else if (MATERIAL_RESPONSE_READS_WI) {
-                responseDefined = false;
-            }
-            var receiverResponse = vec3<f32>(0.0);
-            if (responseDefined) {
-                receiverResponse = materialResponseEval(pf, nw, responseWi, V);
-            }
-            ambientTerm = vec3<f32>(0.0);
-            diffuseTerm = (sourceChroma * vec3<f32>(c.x)) *
-                          receiverResponse * directRadiance;
-            specTerm = vec3<f32>(0.0);
-        } else {
-            ambientTerm = inst.shading.x * ambientEnvelope;
-            diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
-            specTerm = specularEnvelope * specShape * directRadiance;
+        incidentRadiance =
+            sourceChroma * vec3<f32>(u.directIncidentRadiance.w);
+    }
+    var legacyDiffuseIncident = u.legacyDiffuseIncident.rgb;
+    var legacySpecularIncident = u.legacySpecularIncident.rgb;
+    if (HAS_AUTHORED_CHROMA) {
+        legacyDiffuseIncident =
+            sourceChroma * vec3<f32>(u.legacyDiffuseIncident.w);
+        legacySpecularIncident =
+            sourceChroma * vec3<f32>(u.legacySpecularIncident.w);
+    }
+
+    var directTerm = vec3<f32>(0.0);
+    if (HAS_AUTHORED_MATERIAL_RESPONSE) {
+        let responseDistance = length(sourceDelta);
+        var responseWi = vec3<f32>(0.0);
+        var responseDefined = true;
+        if (responseDistance > SOURCE_DIRECTION_EPS) {
+            // wi keeps the canonical transport convention: source -> receiver.
+            responseWi = sourceDelta / responseDistance;
+        } else if (MATERIAL_RESPONSE_READS_WI) {
+            responseDefined = false;
         }
-    } else {
-        // EXACT compatibility branch from Rung 4. No authored chi means
-        // constant legacy light.color, already carried by these uniforms.
-        let ambientEnvelope  = u.lightAmbient.rgb / vec3<f32>(0.2);
-        let diffuseEnvelope  = u.lightDiffuse.rgb / vec3<f32>(0.8);
-        let specularEnvelope = u.lightSpecular.rgb;
-        if (HAS_AUTHORED_MATERIAL_RESPONSE) {
-            let responseDistance = length(sourceDelta);
-            var responseWi = vec3<f32>(0.0);
-            var responseDefined = true;
-            if (responseDistance > SOURCE_DIRECTION_EPS) {
-                responseWi = sourceDelta / responseDistance;
-            } else if (MATERIAL_RESPONSE_READS_WI) {
-                responseDefined = false;
-            }
-            var receiverResponse = vec3<f32>(0.0);
-            if (responseDefined) {
-                receiverResponse = materialResponseEval(pf, nw, responseWi, V);
-            }
-            ambientTerm = vec3<f32>(0.0);
-            diffuseTerm = (u.lightDiffuse.rgb / vec3<f32>(0.8)) *
-                          receiverResponse * directRadiance;
-            specTerm = vec3<f32>(0.0);
-        } else {
-            ambientTerm = inst.shading.x * ambientEnvelope;
-            diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
-            specTerm = specularEnvelope * specShape * directRadiance;
+        var receiverResponse = vec3<f32>(0.0);
+        if (responseDefined) {
+            receiverResponse = materialResponseEval(
+                pf, nw, responseWi, V, surfaceColor, incidentRadiance,
+                legacyDiffuseIncident, legacySpecularIncident);
         }
+        directTerm = receiverResponse * directRadiance;
     }
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
 
-    let surfaceColor = sdfColor(pf);
-    let litRgb = surfaceColor * (ambientTerm + diffuseTerm) + specTerm;
+    // Both receiver channels return complete reflected RGB. No renderer-owned
+    // pigment multiply or Blinn-Phong branch remains in SDF execution.
+    let litRgb = environmentTerm + directTerm;
     let base_rgb = mix(surfaceColor, litRgb, u.lightControl.x);
     let field_rgb = volumetric_scatter;
     
@@ -3988,24 +4167,37 @@ AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr
 // Minimum–maximum principle: keep one expressive directional language while
 // preserving distinct irreducible predicates for source emission, medium
 // scattering, and receiving-surface response.
-ResponseExpressionLayout inspectResponseExpression(const OntoMath::Piecewise* expr) {
+ResponseExpressionLayout inspectResponseExpression(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings) {
     if (!expr || expr->pieces.empty()) {
         return ResponseExpressionLayout{
-            "<material-response:legacy-blinn-phong>", 0, false, false, false, true, ""};
+            "<material-response:absent>", 0, false, false, false, true, ""};
     }
 
     std::string validationError;
-    if (!validateResponsePiecewise(*expr, validationError)) {
+    if (!validateResponsePiecewise(*expr, bindings, validationError)) {
         return ResponseExpressionLayout{"", 0, false, false, false, false, validationError};
     }
 
     Emit e;
     e.bindMaterialResponse = true;
+    e.propertyBindings = bindings;
     std::string body;
     emitPiecewise(*expr, e, "p", "vec3<f32>", body);
 
+    std::set<std::string> boundPaths;
+    for (const auto& piece : expr->pieces) {
+        if (piece.mathNode) piece.mathNode->collectPropertyBindings(boundPaths);
+        if (piece.whereLEZero) piece.whereLEZero->collectPropertyBindings(boundPaths);
+    }
+    std::string bindingIdentity;
+    for (const auto& path : boundPaths) {
+        bindingIdentity += "bind[" + std::to_string(path.size()) + "]=" + path + ";";
+    }
+
     ResponseExpressionLayout layout;
-    layout.structure = std::move(body);
+    layout.structure = bindingIdentity + "\n" + std::move(body);
     layout.parameterCount = e.params.size();
     layout.readsNormal = e.readSurfaceNormal;
     layout.readsWi = e.readWi;
@@ -4015,19 +4207,154 @@ ResponseExpressionLayout inspectResponseExpression(const OntoMath::Piecewise* ex
     return layout;
 }
 
-ParameterBlock collectResponseParams(const OntoMath::Piecewise* expr) {
+ParameterBlock collectResponseParams(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings) {
     if (!expr || expr->pieces.empty()) return ParameterBlock{};
 
     std::string validationError;
-    if (!validateResponsePiecewise(*expr, validationError)) {
+    if (!validateResponsePiecewise(*expr, bindings, validationError)) {
         return ParameterBlock{{}, false, validationError};
     }
 
     Emit e;
     e.bindMaterialResponse = true;
+    e.propertyBindings = bindings;
     std::string throwaway;
     emitPiecewise(*expr, e, "p", "vec3<f32>", throwaway);
     return ParameterBlock{std::move(e.params), !e.refused, e.refusal};
+}
+
+ResponseExpressionLayout inspectEnvironmentResponseExpression(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings) {
+    if (!expr || expr->pieces.empty()) {
+        return ResponseExpressionLayout{
+            "<material-environment-response:absent>", 0, false, false, false, true, ""};
+    }
+    std::string validationError;
+    if (!validateEnvironmentResponsePiecewise(*expr, bindings, validationError)) {
+        return ResponseExpressionLayout{"", 0, false, false, false, false, validationError};
+    }
+
+    Emit e;
+    e.bindEnvironmentResponse = true;
+    e.propertyBindings = bindings;
+    std::string body;
+    emitPiecewise(*expr, e, "p", "vec3<f32>", body);
+
+    std::set<std::string> boundPaths;
+    for (const auto& piece : expr->pieces) {
+        if (piece.mathNode) piece.mathNode->collectPropertyBindings(boundPaths);
+        if (piece.whereLEZero) piece.whereLEZero->collectPropertyBindings(boundPaths);
+    }
+    std::string bindingIdentity;
+    for (const auto& path : boundPaths) {
+        bindingIdentity += "bind[" + std::to_string(path.size()) + "]=" + path + ";";
+    }
+
+    ResponseExpressionLayout layout;
+    layout.structure = bindingIdentity + "\n" + std::move(body);
+    layout.parameterCount = e.params.size();
+    layout.readsNormal = e.readSurfaceNormal;
+    layout.readsWi = e.readWi;
+    layout.readsWo = e.readWo;
+    layout.ok = !e.refused;
+    layout.error = e.refusal;
+    return layout;
+}
+
+ParameterBlock collectEnvironmentResponseParams(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings) {
+    if (!expr || expr->pieces.empty()) return ParameterBlock{};
+    std::string validationError;
+    if (!validateEnvironmentResponsePiecewise(*expr, bindings, validationError)) {
+        return ParameterBlock{{}, false, validationError};
+    }
+    Emit e;
+    e.bindEnvironmentResponse = true;
+    e.propertyBindings = bindings;
+    std::string throwaway;
+    emitPiecewise(*expr, e, "p", "vec3<f32>", throwaway);
+    return ParameterBlock{std::move(e.params), !e.refused, e.refusal};
+}
+
+SurfaceResponseProgram compileSurfaceResponseModule(
+    const OntoMath::Piecewise* responseExpr,
+    const OntoMath::Piecewise* environmentResponseExpr,
+    const BindingValues* bindings) {
+    SurfaceResponseProgram out;
+    Emit e;
+    // Surface modules own a compact response-only parameter buffer. Geometry
+    // callers bind P independently; no SDF instance paramOffset is meaningful.
+    e.parameterOffset = "0u";
+    e.propertyBindings = bindings;
+
+    out.wgsl = kPrimitives;
+    out.hasDirectResponse = responseExpr && !responseExpr->pieces.empty();
+    out.hasEnvironmentResponse =
+        environmentResponseExpr && !environmentResponseExpr->pieces.empty();
+
+    out.wgsl += "\nfn materialResponseEval(p: vec3<f32>, n: vec3<f32>, "
+                "wi: vec3<f32>, wo: vec3<f32>, surfaceColor: vec3<f32>, "
+                "incidentRadiance: vec3<f32>, legacyDiffuseIncident: vec3<f32>, "
+                "legacySpecularIncident: vec3<f32>) -> vec3<f32> {\n";
+    if (out.hasDirectResponse) {
+        std::string validationError;
+        if (!validateResponsePiecewise(*responseExpr, bindings, validationError)) {
+            e.refuse("material response: " + validationError);
+            out.wgsl += "    return vec3<f32>(0.0);\n";
+        } else {
+            e.readSurfaceNormal = false;
+            e.readWi = false;
+            e.readWo = false;
+            e.bindMaterialResponse = true;
+            emitPiecewise(*responseExpr, e, "p", "vec3<f32>", out.wgsl);
+            e.bindMaterialResponse = false;
+            out.directReadsNormal = e.readSurfaceNormal;
+            out.directReadsWi = e.readWi;
+            out.directReadsWo = e.readWo;
+        }
+    } else {
+        out.wgsl += "    return vec3<f32>(0.0);\n";
+    }
+    out.wgsl += "}\n";
+
+    out.wgsl += "\nfn materialEnvironmentResponseEval(p: vec3<f32>, "
+                "n: vec3<f32>, wo: vec3<f32>, surfaceColor: vec3<f32>, "
+                "environmentRadiance: vec3<f32>) -> vec3<f32> {\n";
+    if (out.hasEnvironmentResponse) {
+        std::string validationError;
+        if (!validateEnvironmentResponsePiecewise(
+                *environmentResponseExpr, bindings, validationError)) {
+            e.refuse("material environment response: " + validationError);
+            out.wgsl += "    return vec3<f32>(0.0);\n";
+        } else {
+            e.readSurfaceNormal = false;
+            e.readWi = false;
+            e.readWo = false;
+            e.bindEnvironmentResponse = true;
+            emitPiecewise(
+                *environmentResponseExpr, e, "p", "vec3<f32>", out.wgsl);
+            e.bindEnvironmentResponse = false;
+            out.environmentReadsNormal = e.readSurfaceNormal;
+            out.environmentReadsWo = e.readWo;
+            if (e.readWi) {
+                e.refuse(
+                    "material environment response illegally read direct incoming direction wi");
+            }
+        }
+    } else {
+        out.wgsl += "    return vec3<f32>(0.0);\n";
+    }
+    out.wgsl += "}\n";
+
+    out.params = std::move(e.params);
+    out.ok = !e.refused;
+    out.error = e.refusal;
+    if (!out.ok) out.wgsl = "// REFUSED: " + out.error + "\n";
+    return out;
 }
 
 PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr) {
@@ -4109,7 +4436,9 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* volumeChromaExpr,
                              const OntoMath::Piecewise* phaseExpr,
                              const OntoMath::Piecewise* emissionExpr,
-                             const OntoMath::Piecewise* responseExpr) {
+                             const OntoMath::Piecewise* responseExpr,
+                             const BindingValues* responseBindings,
+                             const OntoMath::Piecewise* environmentResponseExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -4235,12 +4564,28 @@ ParameterBlock collectParams(const geom::SdfNode& root,
 
     if (responseExpr && !responseExpr->pieces.empty()) {
         std::string validationError;
-        if (!validateResponsePiecewise(*responseExpr, validationError)) {
+        if (!validateResponsePiecewise(*responseExpr, responseBindings, validationError)) {
             e.refuse("material response: " + validationError);
         } else {
             e.bindMaterialResponse = true;
+            e.propertyBindings = responseBindings;
             emitPiecewise(*responseExpr, e, "p", "vec3<f32>", throwaway);
+            e.propertyBindings = nullptr;
             e.bindMaterialResponse = false;
+        }
+    }
+
+    if (environmentResponseExpr && !environmentResponseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateEnvironmentResponsePiecewise(
+                *environmentResponseExpr, responseBindings, validationError)) {
+            e.refuse("material environment response: " + validationError);
+        } else {
+            e.bindEnvironmentResponse = true;
+            e.propertyBindings = responseBindings;
+            emitPiecewise(*environmentResponseExpr, e, "p", "vec3<f32>", throwaway);
+            e.propertyBindings = nullptr;
+            e.bindEnvironmentResponse = false;
         }
     }
 
@@ -4331,7 +4676,9 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* volumeChromaExpr,
                 const OntoMath::Piecewise* phaseExpr,
                 const OntoMath::Piecewise* emissionExpr,
-                const OntoMath::Piecewise* responseExpr) {
+                const OntoMath::Piecewise* responseExpr,
+                const BindingValues* responseBindings,
+                const OntoMath::Piecewise* environmentResponseExpr) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -4566,18 +4913,19 @@ Program compile(const geom::SdfNode& root,
     prog.wgsl += "\nfn sdfColor(p: vec3<f32>) -> vec3<f32> {\n" + colorBody + "}\n";
 
     // --- Rung 9 Material Response Compiler ---
-    // Receiver response is independent of source emission, visibility and volume
-    // truth. Absence preserves the exact historical Blinn-Phong compatibility
-    // path below; authored response is evaluated only after transport reaches
-    // the receiving surface.
+    // Direct receiver response consumes incident radiance and returns complete
+    // reflected RGB. Source emission, rho/alpha, visibility and volume transport
+    // remain outside the Material law; absence is a real zero-response state.
     bool responseReadsNormal = false;
     bool responseReadsWi = false;
     bool responseReadsWo = false;
     prog.wgsl += "\nfn materialResponseEval(p: vec3<f32>, n: vec3<f32>, "
-                 "wi: vec3<f32>, wo: vec3<f32>) -> vec3<f32> {\n";
+                 "wi: vec3<f32>, wo: vec3<f32>, surfaceColor: vec3<f32>, "
+                 "incidentRadiance: vec3<f32>, legacyDiffuseIncident: vec3<f32>, "
+                 "legacySpecularIncident: vec3<f32>) -> vec3<f32> {\n";
     if (responseExpr && !responseExpr->pieces.empty()) {
         std::string validationError;
-        if (!validateResponsePiecewise(*responseExpr, validationError)) {
+        if (!validateResponsePiecewise(*responseExpr, responseBindings, validationError)) {
             e.refuse("material response: " + validationError);
             prog.wgsl += "    return vec3<f32>(0.0);\n";
         } else {
@@ -4585,7 +4933,9 @@ Program compile(const geom::SdfNode& root,
             e.readWi = false;
             e.readWo = false;
             e.bindMaterialResponse = true;
+            e.propertyBindings = responseBindings;
             emitPiecewise(*responseExpr, e, "p", "vec3<f32>", prog.wgsl);
+            e.propertyBindings = nullptr;
             e.bindMaterialResponse = false;
             responseReadsNormal = e.readSurfaceNormal;
             responseReadsWi = e.readWi;
@@ -4603,6 +4953,44 @@ Program compile(const geom::SdfNode& root,
     prog.wgsl += responseReadsWi ? "true;\n" : "false;\n";
     prog.wgsl += "const MATERIAL_RESPONSE_READS_WO: bool = ";
     prog.wgsl += responseReadsWo ? "true;\n" : "false;\n";
+
+    bool environmentResponseReadsNormal = false;
+    bool environmentResponseReadsWo = false;
+    prog.wgsl += "\nfn materialEnvironmentResponseEval(p: vec3<f32>, n: vec3<f32>, "
+                 "wo: vec3<f32>, surfaceColor: vec3<f32>, "
+                 "environmentRadiance: vec3<f32>) -> vec3<f32> {\n";
+    if (environmentResponseExpr && !environmentResponseExpr->pieces.empty()) {
+        std::string validationError;
+        if (!validateEnvironmentResponsePiecewise(
+                *environmentResponseExpr, responseBindings, validationError)) {
+            e.refuse("material environment response: " + validationError);
+            prog.wgsl += "    return vec3<f32>(0.0);\n";
+        } else {
+            e.readSurfaceNormal = false;
+            e.readWi = false;
+            e.readWo = false;
+            e.bindEnvironmentResponse = true;
+            e.propertyBindings = responseBindings;
+            emitPiecewise(*environmentResponseExpr, e, "p", "vec3<f32>", prog.wgsl);
+            e.propertyBindings = nullptr;
+            e.bindEnvironmentResponse = false;
+            environmentResponseReadsNormal = e.readSurfaceNormal;
+            environmentResponseReadsWo = e.readWo;
+            if (e.readWi) {
+                e.refuse("material environment response illegally read direct incoming direction wi");
+            }
+        }
+    } else {
+        prog.wgsl += "    return vec3<f32>(0.0);\n";
+    }
+    prog.wgsl += "}\n";
+    prog.wgsl += "const HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE: bool = ";
+    prog.wgsl += (environmentResponseExpr && !environmentResponseExpr->pieces.empty())
+        ? "true;\n" : "false;\n";
+    prog.wgsl += "const MATERIAL_ENVIRONMENT_RESPONSE_READS_NORMAL: bool = ";
+    prog.wgsl += environmentResponseReadsNormal ? "true;\n" : "false;\n";
+    prog.wgsl += "const MATERIAL_ENVIRONMENT_RESPONSE_READS_WO: bool = ";
+    prog.wgsl += environmentResponseReadsWo ? "true;\n" : "false;\n";
 
     const bool multiSource = radianceSources && radianceSources->size() > 1;
     if (!multiSource) {
@@ -4670,10 +5058,10 @@ Program compile(const geom::SdfNode& root,
         prog.wgsl +=
             "\nstruct RadianceSourceData {\n"
             "    position: vec4<f32>,\n"
-            "    ambient: vec4<f32>,\n"
-            "    diffuse: vec4<f32>,\n"
-            "    specular: vec4<f32>,\n"
-            "    coefficients: vec4<f32>,\n"
+            "    legacyEnvironment: vec4<f32>,\n"
+            "    directIncidentRadiance: vec4<f32>,\n"
+            "    legacyDiffuseIncident: vec4<f32>,\n"
+            "    legacySpecularIncident: vec4<f32>,\n"
             "    time: vec4<f32>,\n"
             "    control: vec4<f32>,\n"
             "};\n"
@@ -4743,7 +5131,7 @@ Program compile(const geom::SdfNode& root,
 
         std::string marcher = kMarcher;
         const std::string lightingBegin =
-            "    let L = normalize(u.lightPos.xyz - pw);\n";
+            "    let V = normalize(u.eyePos.xyz - pw);\n";
         const std::string lightingEnd =
             "    let clip = u.viewProj * vec4<f32>(pw, 1.0);\n";
         const std::size_t lightAt = marcher.find(lightingBegin);
@@ -4753,9 +5141,8 @@ Program compile(const geom::SdfNode& root,
         } else {
             std::string sum;
             sum += "    let V = normalize(u.eyePos.xyz - pw);\n";
-            sum += "    var ambientTerm = vec3<f32>(0.0);\n";
-            sum += "    var diffuseTerm = vec3<f32>(0.0);\n";
-            sum += "    var specTerm = vec3<f32>(0.0);\n";
+            sum += "    var environmentRadiance = vec3<f32>(0.0);\n";
+            sum += "    var directTerm = vec3<f32>(0.0);\n";
 
             for (std::size_t i = 0; i < radianceSources->size(); ++i) {
                 const auto& source = (*radianceSources)[i];
@@ -4765,14 +5152,18 @@ Program compile(const geom::SdfNode& root,
                 sum += "        if (source.control.x > 0.5) {\n";
                 sum += "            let sourceDelta = pw - source.position.xyz;\n";
                 sum += "            let sourceDistance = length(sourceDelta);\n";
-                sum += "            var Ls = vec3<f32>(0.0);\n";
-                sum += "            if (sourceDistance > SOURCE_DIRECTION_EPS) { "
-                       "Ls = -sourceDelta / sourceDistance; }\n";
-                sum += "            var Hs = V;\n";
-                sum += "            let halfVector = Ls + V;\n";
-                sum += "            let halfLength = length(halfVector);\n";
-                sum += "            if (halfLength > SOURCE_DIRECTION_EPS) { "
-                       "Hs = halfVector / halfLength; }\n";
+                if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
+                    sum += "            let sourceChroma = lightChroma_" + s +
+                           "(sourceDelta);\n";
+                    sum += "            environmentRadiance += sourceChroma * "
+                           "vec3<f32>(source.legacyEnvironment.w);\n";
+                } else {
+                    sum += "            let sourceChroma = vec3<f32>(1.0);\n";
+                    sum += "            environmentRadiance += "
+                           "source.legacyEnvironment.rgb;\n";
+                }
+                sum += "            // Direct source transport begins here; legacyEnvironment "
+                       "is not read below. Receiver shape lives in Material math.\n";
                 sum += "            let radialRadiance = max(lightRadiance_" + s +
                        "(sourceDelta), 0.0);\n";
                 sum += "            var angularRadiance = 1.0;\n";
@@ -4792,31 +5183,21 @@ Program compile(const geom::SdfNode& root,
                 sum += "            let shapedRadiance = radialRadiance * angularRadiance;\n";
                 sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
                 sum += "            let directRadiance = shapedRadiance * pathVisibility;\n";
-                sum += "            let diff = max(dot(nw, Ls), 0.0);\n";
-                sum += "            let specShape = inst.shading.z * "
-                       "pow(max(dot(nw, Hs), 0.0), max(inst.shading.w, 1.0)) * "
-                       "step(0.0001, diff);\n";
 
                 if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
-                    sum += "            let sourceChroma = lightChroma_" + s +
-                           "(sourceDelta);\n";
-                    sum += "            let c = source.coefficients;\n";
-                    sum += "            let ambientEnvelope = sourceChroma * "
-                           "vec3<f32>((c.x * c.y) / 0.2);\n";
-                    sum += "            let diffuseEnvelope = sourceChroma * "
-                           "vec3<f32>((c.x * c.z) / 0.8);\n";
-                    sum += "            let specularEnvelope = sourceChroma * "
-                           "vec3<f32>(c.x * c.w);\n";
-                    sum += "            let incidentEnvelope = sourceChroma * "
-                           "vec3<f32>(c.x);\n";
+                    sum += "            let incidentRadiance = sourceChroma * "
+                           "vec3<f32>(source.directIncidentRadiance.w);\n";
+                    sum += "            let legacyDiffuseIncident = sourceChroma * "
+                           "vec3<f32>(source.legacyDiffuseIncident.w);\n";
+                    sum += "            let legacySpecularIncident = sourceChroma * "
+                           "vec3<f32>(source.legacySpecularIncident.w);\n";
                 } else {
-                    sum += "            let ambientEnvelope = source.ambient.rgb / "
-                           "vec3<f32>(0.2);\n";
-                    sum += "            let diffuseEnvelope = source.diffuse.rgb / "
-                           "vec3<f32>(0.8);\n";
-                    sum += "            let specularEnvelope = source.specular.rgb;\n";
-                    sum += "            let incidentEnvelope = source.diffuse.rgb / "
-                           "vec3<f32>(0.8);\n";
+                    sum += "            let incidentRadiance = "
+                           "source.directIncidentRadiance.rgb;\n";
+                    sum += "            let legacyDiffuseIncident = "
+                           "source.legacyDiffuseIncident.rgb;\n";
+                    sum += "            let legacySpecularIncident = "
+                           "source.legacySpecularIncident.rgb;\n";
                 }
                 sum += "            if (HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
                 sum += "                var responseWi = vec3<f32>(0.0);\n";
@@ -4828,20 +5209,21 @@ Program compile(const geom::SdfNode& root,
                 sum += "                }\n";
                 sum += "                if (responseDefined) {\n";
                 sum += "                    let receiverResponse = "
-                       "materialResponseEval(pf, nw, responseWi, V);\n";
-                sum += "                    diffuseTerm += incidentEnvelope * "
+                       "materialResponseEval(pf, nw, responseWi, V, surfaceColor, "
+                       "incidentRadiance, legacyDiffuseIncident, "
+                       "legacySpecularIncident);\n";
+                sum += "                    directTerm += "
                        "receiverResponse * directRadiance;\n";
                 sum += "                }\n";
-                sum += "            } else {\n";
-                sum += "                ambientTerm += inst.shading.x * ambientEnvelope;\n";
-                sum += "                diffuseTerm += inst.shading.y * diffuseEnvelope * "
-                       "diff * directRadiance;\n";
-                sum += "                specTerm += specularEnvelope * specShape * "
-                       "directRadiance;\n";
                 sum += "            }\n";
                 sum += "        }\n";
                 sum += "    }\n";
             }
+            sum += "    var environmentTerm = vec3<f32>(0.0);\n";
+            sum += "    if (HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE) {\n";
+            sum += "        environmentTerm = materialEnvironmentResponseEval("
+                   "pf, nw, V, surfaceColor, environmentRadiance);\n";
+            sum += "    }\n";
             marcher.replace(lightAt, clipAt - lightAt, sum);
         }
 

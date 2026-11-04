@@ -7,6 +7,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 
 #include <algorithm>
 #include <array>
@@ -1122,6 +1123,13 @@ void MathNode::collectDependencies(std::set<std::string>& outDeps) const {
     }
 }
 
+void MathNode::collectPropertyBindings(std::set<std::string>& outPaths) const {
+    if (op == Op::Bind && !propertyPath.empty()) outPaths.insert(propertyPath);
+    for (const auto& child : children) {
+        if (child) child->collectPropertyBindings(outPaths);
+    }
+}
+
 const char* valueKindName(ValueKind k) {
     switch (k) {
         case ValueKind::Scalar:      return "Scalar";
@@ -1158,6 +1166,7 @@ const char* mathOpName(MathNode::Op op) {
         case MathNode::Op::LineIntegral:    return "LineIntegral";
         case MathNode::Op::Integral:        return "Integral";
         case MathNode::Op::Let:             return "Let";
+        case MathNode::Op::Bind:            return "Bind";
         case MathNode::Op::Union:           return "Union";
         case MathNode::Op::Intersection:    return "Intersection";
         case MathNode::Op::Difference:      return "Difference";
@@ -1231,6 +1240,7 @@ bool isKnownMathOp(int raw) {
         case MathNode::Op::MatrixInverse:
         case MathNode::Op::Integral:
         case MathNode::Op::Let:
+        case MathNode::Op::Bind:
             return true;
         // Unsupported is where unknown ops LAND; it is never a stored value an
         // author picked, so it does not read back as known.
@@ -1337,7 +1347,8 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
     // matrix operations below may consume Matrix children; legacy Add/Scale/etc.
     // still refuse them. A Matrix ValueLeaf carries its dimensions forward.
     // Integral types its own children: its body in the scope that binds v.
-    if (op != Op::ValueLeaf && op != Op::Integral && op != Op::Let && !isMatrixOperation(op)) {
+    if (op != Op::ValueLeaf && op != Op::Bind &&
+        op != Op::Integral && op != Op::Let && !isMatrixOperation(op)) {
         preTyped.reserve(children.size());
         for (std::size_t i = 0; i < children.size(); ++i) {
             auto childType = sub(i);
@@ -1368,6 +1379,21 @@ TypeResult MathNode::typeOf(const TypeEnv& env, const std::string& path,
                 return TypeResult::error(TypeDiagnostic{
                     path, "ValueLeaf names matrix '" + variableName +
                           "' with missing/invalid dimensions"});
+            }
+            return TypeResult::ok(it->second);
+        }
+        case Op::Bind: {
+            if (!children.empty()) return arity(path, op, children.size(), 0);
+            if (propertyPath.empty()) {
+                return TypeResult::error(TypeDiagnostic{
+                    path, "Bind requires a non-empty PropertyPath"});
+            }
+            auto it = env.find(propertyPath);
+            if (it == env.end()) {
+                if (allowUnbound) return TypeResult::ok(ValueKind::Unknown);
+                return TypeResult::error(TypeDiagnostic{
+                    path, "Bind path '" + propertyPath +
+                          "' has no declared signature in this environment"});
             }
             return TypeResult::ok(it->second);
         }
@@ -1827,6 +1853,15 @@ std::optional<PropertyValue> MathNode::evaluate(const std::map<std::string, Prop
                 if (lawGetValue(*const_cast<Singular*>(subject), PropertyPath::parse(variableName), val)) {
                     return val;
                 }
+            }
+            return std::nullopt;
+        }
+        case Op::Bind: {
+            if (!subject || propertyPath.empty()) return std::nullopt;
+            PropertyValue val;
+            if (lawGetValue(*const_cast<Singular*>(subject),
+                            PropertyPath::parse(propertyPath), val)) {
+                return val;
             }
             return std::nullopt;
         }
@@ -2361,6 +2396,7 @@ std::string MathNode::print() const {
     switch (op) {
         case Op::ScalarLeaf:      return scalarForm.print();
         case Op::ValueLeaf:       return variableName;
+        case Op::Bind:            return "bind(" + propertyPath + ")";
         case Op::VectorConstruct: return "(" + arg(0) + ", " + arg(1) + ", " + arg(2) + ")";
         case Op::Component:       return arg(0) + "." + stringArg;
         case Op::Add:             return "(" + arg(0) + " + " + arg(1) + ")";
@@ -2733,6 +2769,11 @@ static std::optional<MathNode::RangeValue> evalMathRange(
             if (it != vars.end()) return it->second;
             return retInf();
         }
+        case Op::Bind: {
+            auto it = vars.find(node.propertyPath);
+            if (it != vars.end()) return it->second;
+            return std::nullopt;
+        }
         case Op::VectorConstruct: {
             if (children.size() != 3) return std::nullopt;
             auto x = evalMathRange(*children[0], vars, euclidean);
@@ -3044,6 +3085,8 @@ nlohmann::json MathNode::toJson() const {
         j["scalarForm"] = scalarForm.toJson();
     } else if (op == Op::ValueLeaf || op == Op::Integral || op == Op::Let) {
         j["var"] = variableName;   // an Integral's or a Let's bound variable
+    } else if (op == Op::Bind) {
+        j["path"] = propertyPath;
     } else if (op == Op::Component || op == Op::Map) {
         j["arg"] = stringArg;
     } else if (op == Op::MatrixConstruct || op == Op::MatrixIdentity) {
@@ -3096,6 +3139,9 @@ std::unique_ptr<MathNode> MathNode::fromJson(const nlohmann::json& j) {
     if (j.contains("var")) {
         node->variableName = j["var"].get<std::string>();
     }
+    if (j.contains("path")) {
+        node->propertyPath = j["path"].get<std::string>();
+    }
     if (j.contains("arg")) {
         node->stringArg = j["arg"].get<std::string>();
     } else if (j.contains("stringArg")) {
@@ -3118,7 +3164,7 @@ std::unique_ptr<MathNode> MathNode::fromJson(const nlohmann::json& j) {
     // still returned — refusing to load law text is worse than loading it with
     // a complaint on the record — but nothing enters the world silently wrong.
     if (!node->children.empty() || node->op == Op::Component || node->op == Op::Map ||
-        isMatrixOperation(node->op)) {
+        node->op == Op::Bind || isMatrixOperation(node->op)) {
         std::string error;
         if (!node->checkTypes(TypeEnv{}, error, nullptr, /*allowUnbound=*/true)) {
             std::fprintf(stderr, "[OntoMath] MathNode type error on load: %s\n",

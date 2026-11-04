@@ -306,6 +306,16 @@ std::shared_ptr<Material> Object::ownMaterial() {
         mine->ambient      = shared->ambient;
         mine->diffuse      = shared->diffuse;
 
+        // Person-authored Material properties are appearance truth too. Copy
+        // their top-level PropertyValue bindings with the same semantics as
+        // Singular's ordinary copy: value types diverge naturally; explicitly
+        // shared container/field identities remain shared until an author
+        // rebinds them. A paint stroke must never leave responseExpr pointing
+        // at a property that existed only on the shared ancestor.
+        for (const auto& [id, value] : shared->dynamicProperties()) {
+            mine->setDynamicProperty(id, value);
+        }
+
         // Authored appearance mathematics is Material truth too. Copy-on-write
         // must preserve it when paint causes an Object to diverge from a shared
         // Material, but the new Material must own an independent AST so future
@@ -319,6 +329,11 @@ std::shared_ptr<Material> Object::ownMaterial() {
             mine->responseExpr = std::make_shared<OntoMath::Piecewise>(
                 OntoMath::Piecewise::fromJson(shared->responseExpr->toJson()));
             mine->bumpResponseRevision();
+        }
+        if (shared->environmentResponseExpr) {
+            mine->environmentResponseExpr = std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::fromJson(shared->environmentResponseExpr->toJson()));
+            mine->bumpEnvironmentResponseRevision();
         }
 
         mine->faceTextures = shared->faceTextures;
