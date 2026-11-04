@@ -194,9 +194,12 @@ private:
     const MeshPipeline* meshPipeline(const std::string& wgsl);
 
     struct MeshResponseKey {
-        const OntoMath::Piecewise* direct = nullptr;
+        // Owning references prevent an expired/reallocated AST address from
+        // aliasing a historical cache entry. Revisions remain the authored
+        // content authority for in-place edits.
+        std::shared_ptr<const OntoMath::Piecewise> direct;
         uint32_t directRevision = 0;
-        const OntoMath::Piecewise* environment = nullptr;
+        std::shared_ptr<const OntoMath::Piecewise> environment;
         uint32_t environmentRevision = 0;
         std::string bindingTypes;
         bool operator<(const MeshResponseKey& o) const {
@@ -798,10 +801,14 @@ private:
         const geom::TessMesh* mesh = nullptr;
         const MeshPipeline* pipeline = nullptr;
         WGPUTextureView albedoView = nullptr;
+        // Exact byte identity owns batching equality. The float vector is payload,
+        // never an ordering oracle (NaN would make ordinary float ordering unsafe).
+        std::string responseParamIdentity;
         std::vector<float> responseParams;
         bool operator<(const MeshBatchKey& o) const {
-            return std::tie(mesh, pipeline, albedoView, responseParams)
-                 < std::tie(o.mesh, o.pipeline, o.albedoView, o.responseParams);
+            return std::tie(mesh, pipeline, albedoView, responseParamIdentity)
+                 < std::tie(o.mesh, o.pipeline, o.albedoView,
+                            o.responseParamIdentity);
         }
     };
     // Mirrors the WGSL `Instance` struct in kMeshWGSL.
