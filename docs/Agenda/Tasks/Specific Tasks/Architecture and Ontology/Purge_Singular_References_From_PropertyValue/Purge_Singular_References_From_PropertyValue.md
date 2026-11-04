@@ -2,6 +2,7 @@
 
 **Status:** open — Zach author decision recorded 2026-10-13.  
 **Origin:** o3's property-pointer seam audit in `docs/Analysis/CLOCK_POINTER_BODY_SEAMS_ANALYSIS_2026-10-13.md`, followed by Zach's verdict.
+**Implementation Plan:** [`PROPERTY_MEMORY_MICROMASTERY_IMPLEMENTATION_PLAN_2026-11-04.md`](../../../../../plans/PROPERTY_MEMORY_MICROMASTERY_IMPLEMENTATION_PLAN_2026-11-04.md) (Rung 0).
 
 ## Author decision
 

@@ -357,9 +357,14 @@ int main() {
                 mesh.tris.push_back(v);
                 mesh.tris.push_back(v);
                 mesh.tris.push_back(v); // Size changed, id/revision unchanged
+                mesh.tris[0].pos = glm::vec3(4.0f, 5.0f, 6.0f);
                 WGPUBuffer buf2 = cache.getOrUpload(mesh);
-                check(buf2 != buf1,
-                      "[4f] changing mesh size (triangle count) forces a re-upload, invalidating the stale buffer");
+                // The driver may recycle the released handle address. Check
+                // the new allocation's size and actual uploaded bytes instead.
+                check(buf1 && buf2 && wgpuBufferGetSize(buf2) == mesh.tris.size() * sizeof(geom::TessVertex),
+                      "[4f] changing mesh size replaces the stale allocation with the correct byte extent");
+                check(glm::distance(readFirstVertexPos(gpu, buf2), glm::vec3(4.0f, 5.0f, 6.0f)) < 1e-4f,
+                      "[4f] size invalidation uploads the current vertex bytes even without a revision bump");
             }
         }
     }

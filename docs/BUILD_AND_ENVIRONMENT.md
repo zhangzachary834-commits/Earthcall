@@ -11,6 +11,8 @@ it describes the workshop, not the ontology.)*
 
 ## Build
 
+**Cathedral mesh upload checkpoint, 2026-11-03.** The current checkout's `build_release/earthcall_webgpu` includes bounded mesh upload pages. Native saved-object complete cost measured 62.112 → 30.042 ms at 2560×1440. The [audit](audits/CATHEDRAL_SURFACE_SDF_FIRST_PASS_2026-11-03.md#native-continuation-and-retained-upload-repair) records fixed-order image parity, independent pixel controls, and the pending live Cathedral check. Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-03T22:52:00-08:00.
+
 **Ray-transport feature checkout (2026-10-28):** `Earthcall-ray-transport` now has experimental routed transport defaultON, with Current fallback and default Camera speed12units/s. Rebuild/run its own `build/earthcall_webgpu`; this pass did not install `/Applications/Earthcall.app`. Use the registered `volumeRoutedTransportEnabled` property/API, not nonexistent routed CLI flags. That checkpoint used a Debug `build`; a copied `build_release` cache names the other checkout and is not qualified here. §6ey built a separate correct-checkout Release tree at `/private/tmp/earthcall-6ey-release-build`; §6ez prepares its bounded signposted Engine trace without launching it—see [review/foreground protocol](audits/GPU_RAY_TRANSPORT_6EZ_OPUS_REVIEW_AND_TRACE_PREPARATION_2026-10-29.md). [Native review, replay and remaining gates](audits/GPU_RAY_TRANSPORT_6EU_LIVE_WIRING_REVIEW_2026-10-28.md). Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T16:51:42.230711-07:00.
 
 **Main ray-transport checkout live comparison (2026-10-30):** Developer Tools (backtick) now has **Routed Volume Transport → Routed transport (off = Current renderer)**, using the existing registered `volumeRoutedTransportEnabled` property. The panel displays requested mode, 60-frame-average frame rate, Debug/Release-style assertion profile and last-render routed-set/viewport-pixel counts. This is the main checkout's baseline toggle; Sonnet's separate single-member candidate is not imported. The initial checkbox build was Debug; Zach subsequently rebuilt this exact checkout in Release and reports about 19–20 FPS in both requested modes from a similar view. Current cache/binary are verified Release. Exact-view timing, appearance and the 30 FPS milestone remain open.
@@ -19,11 +21,12 @@ it describes the workshop, not the ontology.)*
 
 Double-click `Run Earthcall.command` at the repository root. It opens Terminal, configures
 CMake with the required dependency paths below, incrementally builds `earthcall_webgpu`,
-and launches it. The helper preserves the cached CMake build profile; set
-`EARTHCALL_BUILD_TYPE=Release` or `Debug` to override it explicitly (a fresh build
-defaults to Debug). Keep the Terminal window open while the app runs; it displays any build
-or launch failure instead of closing immediately. The same action from a terminal is
-`./scripts/build.sh webgpu run`.
+and launches it. The Finder launcher defaults to **Release**, including when `build/`
+was previously configured as Debug. Set `EARTHCALL_BUILD_TYPE=Debug` explicitly for a
+debugging launch. The standalone build helper preserves its cached profile and defaults
+to Debug for a fresh build; the equivalent Release terminal command is
+`EARTHCALL_BUILD_TYPE=Release ./scripts/build.sh webgpu run`. Keep the Terminal window
+open while the app runs; it displays any build or launch failure instead of closing immediately.
 
 That Terminal window is also a modality of the running world: `Singularity/Terminal/TerminalChannel`
 holds it in raw mode and draws its own line editor (`LineEditor`: live menu, ghost text, colouring, a

@@ -36,6 +36,8 @@ Authorship does not establish consent to every future movement. Current Law moti
 
 ## Mathematics and rendering
 
+**Cathedral surface cost, 2026-11-03.** The [CPU census and native continuation](audits/CATHEDRAL_SURFACE_SDF_FIRST_PASS_2026-11-03.md) distinguish source radiance from 178 surface Fields. A warmed native profile finds thousands of small staging allocations in mesh submission. Bounded upload pages reduce the saved-object screen from 62.112 to 30.042 ms with independent pixel controls and fixed-order image equality. Natural pointer-order variation and live Person acceptance retain their documented scope. Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-03T22:52:00-08:00.
+
 **The app camera is not the probe camera.** `EngineRender` uses FOV 45 and a far plane of 100 unless the active Zone authors `view.farPlane` on its spatial root ([record](Agenda/Tasks/Specific%20Tasks/Zones%20and%20Ourverse/The_Merry_Dancers/The_Merry_Dancers.md)). Opaque beings past it are clipped; media are not. Offscreen look work must use these values, or its stills show things a Person will not see. Claude Code / Claude Opus 5.5 / session `ed9d515b-d6ac-4098-a7f9-ce71d02406b3` / 2026-11-03T13:53:38-0800.
 
 [OntoMath](architecture/mathematics/ONTOMATH_FRAMEWORK.md) owns expression and mathematical meaning. Channels admit coordinate domains and backend capabilities. An unsupported lowering must refuse; a declaration or CPU evaluator is not proof of GPU support.
