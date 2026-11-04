@@ -123,7 +123,31 @@ int main() {
         unresolved.propertyPath = "does.not.exist";
         assert(!unresolved.evaluate({}, &m));
 
-        std::printf("  bind:     OntoMath Bind reads live Material PropertyPaths and round-trips\n");
+        // Dynamic authored parameters are first-class Material state too. A
+        // response Bind that survives only until save/load is not persistence.
+        assert(m.setDynamicProperty("roughness", PropertyValue(0.42f)));
+        auto roughBind = std::make_shared<OntoMath::MathNode>();
+        roughBind->op = OntoMath::MathNode::Op::Bind;
+        roughBind->propertyPath = "roughness";
+        m.responseExpr = std::make_shared<OntoMath::Piecewise>(
+            OntoMath::Piecewise::continuous(roughBind));
+        m.bumpResponseRevision();
+
+        const nlohmann::json boundSaved = m.toJson();
+        assert(boundSaved.contains("authoredProperties"));
+        assert(boundSaved["authoredProperties"].contains("roughness"));
+        Material boundRestored = Material::fromJson(boundSaved);
+        PropertyValue roughness;
+        assert(boundRestored.getDynamicProperty("roughness", roughness));
+        double roughNumber = 0.0;
+        assert(propertyValueToNumber(roughness, roughNumber));
+        assert(nearf(static_cast<float>(roughNumber), 0.42f));
+        assert(boundRestored.responseExpr);
+        auto rebound = boundRestored.responseExpr->evaluate({}, &boundRestored);
+        assert(rebound && propertyValueToNumber(*rebound, roughNumber));
+        assert(nearf(static_cast<float>(roughNumber), 0.42f));
+
+        std::printf("  bind:     OntoMath Bind reads live/persisted Material PropertyPaths\n");
     }
 
     // --- 2. The default material preserves the old global shading ------------
