@@ -13,6 +13,12 @@ std::string normalizeName(const std::string& s) {
 using Node = OntoMath::MathNode;
 using Op = OntoMath::MathNode::Op;
 
+std::unique_ptr<Node> number(double v) {
+    auto n = std::make_unique<Node>();
+    n->op = Op::ScalarLeaf;
+    n->scalarForm = OntoMath::ScalarForm::constant(v);
+    return n;
+}
 std::unique_ptr<Node> value(const char* name) {
     auto n = std::make_unique<Node>();
     n->op = Op::ValueLeaf;
@@ -33,6 +39,95 @@ std::unique_ptr<Node> binary(Op op, std::unique_ptr<Node> a,
     n->children.push_back(std::move(b));
     return n;
 }
+std::unique_ptr<Node> unary(Op op, std::unique_ptr<Node> a) {
+    auto n = std::make_unique<Node>();
+    n->op = op;
+    n->children.push_back(std::move(a));
+    return n;
+}
+std::unique_ptr<Node> vector3(std::unique_ptr<Node> x,
+                              std::unique_ptr<Node> y,
+                              std::unique_ptr<Node> z) {
+    auto n = std::make_unique<Node>();
+    n->op = Op::VectorConstruct;
+    n->children.push_back(std::move(x));
+    n->children.push_back(std::move(y));
+    n->children.push_back(std::move(z));
+    return n;
+}
+std::unique_ptr<Node> direction(const char* x, const char* y, const char* z) {
+    return vector3(value(x), value(y), value(z));
+}
+std::unique_ptr<Node> clone(const Node& n) {
+    return std::make_unique<Node>(n);
+}
+std::unique_ptr<Node> maxNode(std::unique_ptr<Node> a,
+                              std::unique_ptr<Node> b) {
+    // Existing OntoMath Intersection is the generic component/scalar max
+    // operation in CPU and WGSL lowering; no Blinn-Phong-specific opcode.
+    return binary(Op::Intersection, std::move(a), std::move(b));
+}
+
+// Historical direct Blinn-Phong is compatibility DATA, not renderer law.
+// wi follows Earthcall transport convention source -> receiver, so the
+// traditional receiver -> source light direction is -wi.
+std::shared_ptr<OntoMath::Piecewise> legacyDirectResponse() {
+    auto lightDir = binary(
+        Op::Scale, number(-1.0),
+        direction(OntoMath::kWiXVar, OntoMath::kWiYVar, OntoMath::kWiZVar));
+
+    auto diffuseCosine = maxNode(
+        binary(Op::Dot, value(OntoMath::kSurfaceNormalVar), clone(*lightDir)),
+        number(0.0));
+
+    auto diffuseScalar = binary(
+        Op::Scale,
+        bind("diffuse"),
+        binary(Op::Scale,
+               value(OntoMath::kLegacyDiffuseLobeWeightVar),
+               clone(*diffuseCosine)));
+    auto diffuseRgb = binary(
+        Op::Scale, std::move(diffuseScalar),
+        value(OntoMath::kSurfaceColorVar));
+
+    auto halfVector = unary(
+        Op::Normalize,
+        binary(Op::Add,
+               std::move(lightDir),
+               direction(OntoMath::kWoXVar, OntoMath::kWoYVar,
+                         OntoMath::kWoZVar)));
+    auto specularCosine = maxNode(
+        binary(Op::Dot, value(OntoMath::kSurfaceNormalVar),
+               std::move(halfVector)),
+        number(0.0));
+    auto specularExponent = maxNode(bind("shininess"), number(1.0));
+    auto specularPower = binary(
+        Op::Pow, std::move(specularCosine), std::move(specularExponent));
+    auto specularScalar = binary(
+        Op::Scale,
+        bind("specular"),
+        binary(Op::Scale,
+               value(OntoMath::kLegacySpecularLobeWeightVar),
+               std::move(specularPower)));
+    auto specularRgb = vector3(
+        clone(*specularScalar), clone(*specularScalar),
+        std::move(specularScalar));
+
+    auto lit = binary(Op::Add, clone(*diffuseRgb), std::move(specularRgb));
+    auto specularGate = binary(
+        Op::Sub, number(0.0001), clone(*diffuseCosine));
+
+    auto out = std::make_shared<OntoMath::Piecewise>();
+    OntoMath::Piecewise::Piece front;
+    front.whereLEZero = std::shared_ptr<Node>(specularGate.release());
+    front.mathNode = std::shared_ptr<Node>(lit.release());
+    out->pieces.push_back(std::move(front));
+
+    OntoMath::Piecewise::Piece fallback;
+    fallback.mathNode = std::shared_ptr<Node>(diffuseRgb.release());
+    out->pieces.push_back(std::move(fallback));
+    return out;
+}
 
 // Historical ambient receiver coefficient, likewise ordinary data. The
 // environment incident vector already contains the compatibility source/chroma
@@ -49,14 +144,18 @@ std::shared_ptr<OntoMath::Piecewise> legacyEnvironmentResponse() {
 }
 
 void seedLegacyCompatibilityIfUnspecified(Material& material) {
-    // A pre-Rung-9/default Material had neither receiver law. Environment
-    // compatibility can migrate exactly because its historical source envelope
-    // is already separated from rho/visibility. Direct Blinn-Phong activation
-    // waits until source-side diffuse/specular receiver knobs are migrated
-    // without changing inhabited worlds.
-    if (material.responseExpr || material.environmentResponseExpr) return;
-    material.environmentResponseExpr = legacyEnvironmentResponse();
-    material.bumpEnvironmentResponseRevision();
+    // Absence means the historical compatibility law, now expressed as data.
+    // A Person-authored direct response remains sovereign. If direct response
+    // was already authored, do not smuggle legacy environment reflection in.
+    const bool hadDirectResponse = bool(material.responseExpr);
+    if (!material.responseExpr) {
+        material.responseExpr = legacyDirectResponse();
+        material.bumpResponseRevision();
+    }
+    if (!hadDirectResponse && !material.environmentResponseExpr) {
+        material.environmentResponseExpr = legacyEnvironmentResponse();
+        material.bumpEnvironmentResponseRevision();
+    }
 }
 } // namespace
 
