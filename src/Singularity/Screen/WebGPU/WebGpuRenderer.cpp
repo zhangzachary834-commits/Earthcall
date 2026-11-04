@@ -1701,7 +1701,7 @@ struct SdfGlobalUniforms {
     // Renderer::setLight diffuse/specular RGB without making them source ontology.
     glm::vec4 legacyDiffuseIncident;
     glm::vec4 legacySpecularIncident;
-    glm::vec4 lightControl; // x = lighting enabled, y = derived visibility enabled
+    glm::vec4 lightControl; // x = lighting enabled, y = RadianceVisibilityMode (0/1/2)
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
     glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
     glm::vec4 volumeTime;   // x/y = admitted participating-medium coordinate/delta
@@ -2064,6 +2064,14 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // coordinates and numeric AST coefficients are values.
     const bool hasSourceSet = !radianceSources().empty();
     const auto* sourceSet = hasSourceSet ? &radianceSources() : nullptr;
+
+    // CompleteScene is an explicit request for authority this backend does not
+    // yet possess. Record a draw-level refusal signal; shader knownness prevents
+    // any direct term from treating Unknown as either visible or occluded.
+    if (lightingEnabled() && mat.responseExpr &&
+        radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene) {
+        mutableFrameStats().sdfVisibilityUnknownDirectSkips++;
+    }
 
     // Explicit drawImplicit(..., FieldNode*) is the bounded/native V0 witness
     // seam. Production Zone media are projected separately and are NOT consumed
@@ -2830,9 +2838,11 @@ void WebGpuRenderer::flushSdfDraws() {
     u.legacySpecularIncident = glm::vec4(
         lightSpecular(),
         sourceCoefficients.x * sourceCoefficients.w);
-    u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f,
-                               radianceVisibilityEnabled() ? 1.0f : 0.0f,
-                               0.0f, 0.0f);
+    u.lightControl = glm::vec4(
+        lightingEnabled() ? 1.0f : 0.0f,
+        static_cast<float>(
+            static_cast<uint32_t>(radianceVisibilityMode())),
+        0.0f, 0.0f);
     u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
                                static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
     u.volumeTime = glm::vec4(static_cast<float>(volumeDensityTemporalCoordinate()),
