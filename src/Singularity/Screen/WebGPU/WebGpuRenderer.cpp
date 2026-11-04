@@ -79,13 +79,16 @@ std::optional<glm::mat4> authoredScaledProduct(const glm::mat4& viewProj,
 // Rasterization discovers a surface interaction; Material OntoMath decides how
 // incident radiance becomes reflected RGB. The response module is compiled by
 // the SAME emitter/validator used by the implicit-surface path.
-std::string meshWgsl(const sdfwgsl::SurfaceResponseProgram& response) {
+std::string meshWgsl(
+    const sdfwgsl::SurfaceResponseProgram& response,
+    const sdfwgsl::RadianceSourceProgram* sourceProgram) {
+    const bool hasSourceSet = sourceProgram != nullptr;
     std::string wgsl = R"WGSL(
 struct U {
     viewProj:     mat4x4<f32>,
     lightPos:     vec4<f32>,
     eyePos:       vec4<f32>,
-    lightControl: vec4<f32>, // x = lighting enabled
+    lightControl: vec4<f32>, // x = lighting enabled, y = visibility requested
 };
 struct Instance {
     model:     mat4x4<f32>,
@@ -93,15 +96,27 @@ struct Instance {
     baseColor: vec4<f32>,
 };
 struct Params { v: array<f32> };
+struct RadianceSourceData {
+    position: vec4<f32>,
+    legacyEnvironment: vec4<f32>,
+    directIncidentRadiance: vec4<f32>,
+    legacyDiffuseIncident: vec4<f32>,
+    legacySpecularIncident: vec4<f32>,
+    time: vec4<f32>,
+    control: vec4<f32>,
+};
 
 @group(0) @binding(0) var<uniform> u: U;
 @group(0) @binding(1) var albedoTex: texture_2d<f32>;
 @group(0) @binding(2) var albedoSamp: sampler;
 @group(0) @binding(3) var<storage, read> P: Params;
+@group(0) @binding(4) var<storage, read> RS: array<RadianceSourceData>;
 @group(1) @binding(0) var<storage, read> instances: array<Instance>;
 )WGSL";
 
     wgsl += response.wgsl;
+    if (sourceProgram) wgsl += sourceProgram->wgsl;
+
     wgsl += std::string("\nconst HAS_AUTHORED_MATERIAL_RESPONSE: bool = ") +
             (response.hasDirectResponse ? "true;\n" : "false;\n");
     wgsl += std::string(
@@ -109,10 +124,15 @@ struct Params { v: array<f32> };
             (response.hasEnvironmentResponse ? "true;\n" : "false;\n");
     wgsl += std::string("const MATERIAL_RESPONSE_READS_WI: bool = ") +
             (response.directReadsWi ? "true;\n" : "false;\n");
+    wgsl += std::string("const HAS_AUTHORED_SOURCE_SET: bool = ") +
+            (hasSourceSet ? "true;\n" : "false;\n");
+    if (!hasSourceSet) {
+        wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
+                std::to_string(static_cast<float>(OntoMath::kDirectionEpsilon)) +
+                ";\n";
+    }
 
     wgsl += R"WGSL(
-const SOURCE_DIRECTION_EPS: f32 = 1e-6;
-
 struct VSOut {
     @builtin(position) clip: vec4<f32>,
     @location(0) worldNormal: vec3<f32>,
@@ -145,29 +165,63 @@ fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
     let texel = textureSample(albedoTex, albedoSamp, in.uv);
     let surfaceColor = in.baseColor.rgb * texel.rgb;
 
-    // First mesh-unification rung: preserve the historical mesh transport
-    // contract exactly. The old mesh shader ignored authored source chroma/rho
-    // and effectively supplied white incident envelopes. Receiver mathematics
-    // is now authored; source-transport unification is a separate next rung.
-    let environmentRadiance = vec3<f32>(1.0);
-    let incidentRadiance = vec3<f32>(1.0);
-    let legacyDiffuseIncident = vec3<f32>(1.0);
-    let legacySpecularIncident = vec3<f32>(1.0);
-
     var environmentTerm = vec3<f32>(0.0);
+    var directTerm = vec3<f32>(0.0);
+)WGSL";
+
+    if (hasSourceSet) {
+        wgsl += "    var environmentRadiance = vec3<f32>(0.0);\n";
+        for (std::size_t i = 0; i < sourceProgram->angularReadsOmega.size(); ++i) {
+            const std::string index = std::to_string(i);
+            wgsl += "    {\n";
+            wgsl += "        let sourcePacket = sourceSample_" + index +
+                    "(in.worldPos);\n";
+            wgsl += "        if (sourcePacket.enabled > 0.5) {\n";
+            wgsl += "            environmentRadiance += "
+                    "sourcePacket.environmentRadiance;\n";
+            wgsl += "            // Mesh has no scene-wide visibility query yet. "
+                    "V=1 is admitted only when visibility is explicitly disabled.\n";
+            wgsl += "            if (u.lightControl.y < 0.5 && "
+                    "HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
+            wgsl += "                let responseDefined = "
+                    "sourcePacket.directionDefined > 0.5 || "
+                    "!MATERIAL_RESPONSE_READS_WI;\n";
+            wgsl += "                if (responseDefined) {\n";
+            wgsl += "                    let receiverResponse = "
+                    "materialResponseEval(in.localPos, N, sourcePacket.responseWi, "
+                    "V, surfaceColor, sourcePacket.incidentRadiance, "
+                    "sourcePacket.legacyDiffuseIncident, "
+                    "sourcePacket.legacySpecularIncident);\n";
+            wgsl += "                    directTerm += receiverResponse * "
+                    "sourcePacket.shapedRadiance;\n";
+            wgsl += "                }\n";
+            wgsl += "            }\n";
+            wgsl += "        }\n";
+            wgsl += "    }\n";
+        }
+        wgsl += R"WGSL(
+    if (HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE) {
+        environmentTerm = materialEnvironmentResponseEval(
+            in.localPos, N, V, surfaceColor, environmentRadiance);
+    }
+)WGSL";
+    } else {
+        // Explicit zero-set compatibility lane. This preserves the historical
+        // ordinary-mesh incident contract without pretending it is authored
+        // source-set transport.
+        wgsl += R"WGSL(
+    let environmentRadiance = vec3<f32>(1.0);
     if (HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE) {
         environmentTerm = materialEnvironmentResponseEval(
             in.localPos, N, V, surfaceColor, environmentRadiance);
     }
 
-    var directTerm = vec3<f32>(0.0);
     if (HAS_AUTHORED_MATERIAL_RESPONSE) {
         let sourceDelta = in.worldPos - u.lightPos.xyz;
         let sourceDistance = length(sourceDelta);
         var responseWi = vec3<f32>(0.0);
         var responseDefined = true;
         if (sourceDistance > SOURCE_DIRECTION_EPS) {
-            // canonical direct transport convention: source -> receiver
             responseWi = sourceDelta / sourceDistance;
         } else if (MATERIAL_RESPONSE_READS_WI) {
             responseDefined = false;
@@ -175,11 +229,13 @@ fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
         if (responseDefined) {
             directTerm = materialResponseEval(
                 in.localPos, N, responseWi, V, surfaceColor,
-                incidentRadiance, legacyDiffuseIncident,
-                legacySpecularIncident);
+                vec3<f32>(1.0), vec3<f32>(1.0), vec3<f32>(1.0));
         }
     }
+)WGSL";
+    }
 
+    wgsl += R"WGSL(
     let litRgb = environmentTerm + directTerm;
     let rgb = mix(surfaceColor, litRgb, u.lightControl.x);
     return vec4<f32>(rgb, in.baseColor.a * texel.a);
