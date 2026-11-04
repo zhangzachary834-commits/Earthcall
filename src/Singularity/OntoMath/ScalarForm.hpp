@@ -451,10 +451,17 @@ using TypeEnv = std::map<std::string, MathType>;
 //   "environmentRadiance" directionless incident-environment RGB admitted only by
 //                  the Material environment-response channel. It is not a light
 //                  source, wi, rho, visibility, or a material coefficient.
+//   "legacyDiffuseLobeWeight" / "legacySpecularLobeWeight" are execution-only
+//                  migration inputs admitted only by the direct Material response
+//                  channel. They preserve old light.diffuse/light.specular worlds
+//                  without pretending those receiver-lobe knobs are radiance.
+//                  They are compatibility scaffolding, not authored ontology.
 inline constexpr const char* kAmbientPointVar = "p";
 inline constexpr const char* kSurfaceNormalVar = "n";
 inline constexpr const char* kSurfaceColorVar = "surfaceColor";
 inline constexpr const char* kEnvironmentRadianceVar = "environmentRadiance";
+inline constexpr const char* kLegacyDiffuseLobeWeightVar = "legacyDiffuseLobeWeight";
+inline constexpr const char* kLegacySpecularLobeWeightVar = "legacySpecularLobeWeight";
 inline constexpr const char* kTimeVar = "t";
 inline constexpr const char* kOmegaXVar = "omega.x";
 inline constexpr const char* kOmegaYVar = "omega.y";
