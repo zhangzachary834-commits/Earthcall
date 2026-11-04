@@ -288,6 +288,47 @@ The compatibility Blinn-Phong appearance survives only because `material.default
 
 ---
 
+## Implementation ledger — 2026-11-04: visibility authority / knownness pass
+
+Source and receiver mathematics are now representation-independent. This pass isolates the remaining Path relation without pretending receiver-local geometry is complete-scene truth.
+
+Implemented:
+- added `RadianceVisibilityMode` with three explicit scopes:
+  - `Disabled` — exact compatibility `V=1`, known;
+  - `LocalReceiverGeometry` — a backend may answer only from exact geometry owned by the receiving representation;
+  - `CompleteScene` — requires a future shared scene provider; until one exists, direct visibility is **Unknown**;
+- retained `setRadianceVisibilityEnabled(bool)` solely as compatibility syntax, mapping `true` to `LocalReceiverGeometry` rather than silently claiming complete-scene authority;
+- changed generated SDF visibility from a scalar to `VisibilityDecision { known, value }`;
+- SDF local marching returns KnownVisible/KnownOccluded only in `LocalReceiverGeometry` mode;
+- SDF `CompleteScene` returns Unknown **before** consulting receiver-local SDF geometry, so one exact field can never masquerade as the whole Zone;
+- mesh direct transport now uses the same known/value decision shape. With no exact mesh/scene path provider, any requested visibility scope is Unknown rather than fabricated `V=1`;
+- direct Material response executes only when visibility is known. Unknown has no scalar physical value; zero direct contribution is the execution refusal consequence, not a claim that the path is occluded;
+- environment response remains independent from direct-path visibility and therefore continues to execute when direct visibility is Unknown;
+- SDF and mesh uniforms now carry the explicit visibility mode number instead of a boolean;
+- added mesh and SDF unknown-visibility telemetry at draw scope;
+- compiler tribunals require explicit knownness, the `CompleteScene` Unknown branch, and use of `pathVisibility.value` only behind a `pathVisibility.known` gate;
+- native source-transport witness now proves:
+  1. legacy bool-on maps to `LocalReceiverGeometry`;
+  2. mesh local visibility is Unknown and refuses direct transport;
+  3. the same implicit receiver can answer local visibility from its own SDF;
+  4. `CompleteScene` causes **both** mesh and SDF to refuse direct transport until a shared provider exists.
+
+This pass does **not** implement complete-scene visibility. Existing CPU geometry already demonstrates two representation-specific ray truths (triangle `TriGrid::raycast` and SDF sphere tracing), but neither is yet a GPU-visible, scene-wide authority covering arbitrary mixed geometry. Shadow maps, acceleration structures, or shared ray-domain materializations are execution strategies to evaluate separately; none should become ontology.
+
+The architectural boundary is now explicit:
+
+```
+Authored Source (rho, chi, alpha)
+        ↓
+Path Visibility Decision { known, V }
+        ↓
+Authored Receiver (Material response)
+```
+
+A future complete-scene provider may replace Unknown with KnownVisible/KnownOccluded without changing Source ASTs, Material ASTs, or their compilers.
+
+---
+
 ---
 
 ## Commission
