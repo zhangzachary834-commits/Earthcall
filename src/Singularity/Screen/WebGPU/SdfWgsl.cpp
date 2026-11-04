@@ -5059,8 +5059,8 @@ Program compile(const geom::SdfNode& root,
     prog.wgsl += "const MATERIAL_ENVIRONMENT_RESPONSE_READS_WO: bool = ";
     prog.wgsl += environmentResponseReadsWo ? "true;\n" : "false;\n";
 
-    const bool multiSource = radianceSources && radianceSources->size() > 1;
-    if (!multiSource) {
+    const bool sourceSet = radianceSources && !radianceSources->empty();
+    if (!sourceSet) {
         std::string radianceBody;
         if (radianceExpr && !radianceExpr->pieces.empty()) {
             e.bindTime = true;
@@ -5117,9 +5117,8 @@ Program compile(const geom::SdfNode& root,
         prog.wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
                      wgslLiteral(OntoMath::kDirectionEpsilon) + ";\n";
 
-        // Deliberately retain the historical marcher source verbatim in the
-        // zero/one-source case. Rung 7 is additive composition, not a rewrite
-        // of the already-proven Rungs 3-6 path.
+        // Explicit zero-set compatibility lane. Persistently admitted authored
+        // sources, including exactly one source, use the source-set compiler.
         prog.wgsl += kMarcher;
     } else {
         prog.wgsl +=
@@ -5134,65 +5133,8 @@ Program compile(const geom::SdfNode& root,
             "};\n"
             "@group(0) @binding(2) var<storage, read> RS: array<RadianceSourceData>;\n";
 
-        std::vector<bool> angularReadsOmega;
-        angularReadsOmega.reserve(radianceSources->size());
-
-        for (std::size_t i = 0; i < radianceSources->size(); ++i) {
-            const auto& source = (*radianceSources)[i];
-            const std::string suffix = std::to_string(i);
-            e.timeExpression = "RS[" + suffix + "u].time.x";
-
-            std::string radianceBody;
-            if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
-                e.bindTime = true;
-                emitPiecewise(*source.radianceExpr, e, "p", "f32", radianceBody);
-                e.bindTime = false;
-            } else {
-                radianceBody = "    return 1.0;\n";
-            }
-            prog.wgsl += "\nfn lightRadiance_" + suffix +
-                         "(p: vec3<f32>) -> f32 {\n" + radianceBody + "}\n";
-
-            std::string chromaBody;
-            if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
-                std::string validationError;
-                if (!validateVectorPiecewise(*source.chromaExpr, true, validationError)) {
-                    e.refuse("source[" + suffix + "] chroma: " + validationError);
-                } else {
-                    e.bindTime = true;
-                    emitPiecewise(*source.chromaExpr, e, "p", "vec3<f32>", chromaBody);
-                    e.bindTime = false;
-                }
-            } else {
-                chromaBody = "    return vec3<f32>(1.0);\n";
-            }
-            prog.wgsl += "\nfn lightChroma_" + suffix +
-                         "(p: vec3<f32>) -> vec3<f32> {\n" + chromaBody + "}\n";
-
-            std::string angularBody;
-            bool readsOmega = false;
-            if (source.angularExpr && !source.angularExpr->pieces.empty()) {
-                std::string validationError;
-                if (!validateAngularPiecewise(*source.angularExpr, validationError)) {
-                    e.refuse("source[" + suffix + "] angular: " + validationError);
-                } else {
-                    e.bindTime = true;
-                    e.bindOmega = true;
-                    e.readOmega = false;
-                    emitPiecewise(*source.angularExpr, e, "p", "f32", angularBody);
-                    readsOmega = e.readOmega;
-                    e.bindOmega = false;
-                    e.bindTime = false;
-                }
-            } else {
-                angularBody = "    return 1.0;\n";
-            }
-            angularReadsOmega.push_back(readsOmega);
-            prog.wgsl += "\nfn lightAngular_" + suffix +
-                         "(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" +
-                         angularBody + "}\n";
-        }
-        e.timeExpression = "u.radianceTime.x";
+        const std::vector<bool> angularReadsOmega =
+            emitRadianceSourceFunctions(*radianceSources, e, prog.wgsl);
         prog.wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
                      wgslLiteral(OntoMath::kDirectionEpsilon) + ";\n";
 
