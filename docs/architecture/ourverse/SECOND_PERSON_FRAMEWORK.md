@@ -250,3 +250,12 @@ Implementation of any of it; the wire protocol; identity and authentication
 between Earthcall instances; populating the ecumenical Ourverse. This document is
 the constitution written before the border opens — nothing more, and deliberately
 nothing less.
+
+## Addendum: No Black Box and Second Person Framework
+
+### Interrelated Documents
+- `docs/architecture/ourverse/SECOND_PERSON_FRAMEWORK.md`
+- `docs/architecture/ontology/NO_BLACK_BOX.md`
+
+### Thoughts on Integration and Interrelation
+The "No Black Box" doctrine insists on making all meaningful state legible and explicitly mutable via `PropertyPath`. However, this direct state mutation inherently lacks the actor context of who is performing the change. This creates a profound architectural tension with the "Second Person Framework", which requires explicit signed consent and representation provenance for actuating or modifying a Person's state. Existing `TransferPolicy` gates set-to-set creation paths, but it does not generally intercept ordinary `PropertyPath` reads or writes or implement actor-aware Second Person authorization. The Second Person Framework therefore establishes a future authorization requirement: actor identity, signed consent, and representation provenance must be checked at the relevant mutation boundary before changes to a Person's state can be considered authorized. Legibility alone is not an access-control guarantee.
