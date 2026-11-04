@@ -174,10 +174,42 @@ int main() {
         assert(nearf(def->specular, 1.0f));
         assert(nearf(def->shininess, 32.0f));
         assert(nearf(def->baseColor.r, 1.0f) && nearf(def->baseColor.g, 1.0f) && nearf(def->baseColor.b, 1.0f));
-        assert(!def->responseExpr &&
-               "direct Blinn-Phong must remain legacy until source diffuse/specular migration is lossless");
+        assert(def->responseExpr &&
+               "legacy direct Blinn-Phong must now exist only as authored Material math");
         assert(def->environmentResponseExpr &&
-               "legacy default environment response should now be authored OntoMath");
+               "legacy default environment response should be authored OntoMath");
+
+        std::set<std::string> directBindings;
+        for (const auto& piece : def->responseExpr->pieces) {
+            if (piece.mathNode) piece.mathNode->collectPropertyBindings(directBindings);
+            if (piece.whereLEZero) piece.whereLEZero->collectPropertyBindings(directBindings);
+        }
+        assert(directBindings.size() == 3 &&
+               directBindings.count("diffuse") == 1 &&
+               directBindings.count("specular") == 1 &&
+               directBindings.count("shininess") == 1);
+
+        // Deliberately noncanonical source-lobe compatibility weights. With
+        // n=L=V=(0,0,1), diffuse cosine and specular power are both 1.
+        // surfaceColor*(.8*.25) + white*(1*.4) = (.5,.45,.6).
+        const std::map<std::string, PropertyValue> directVars{
+            {OntoMath::kSurfaceNormalVar, PropertyValue(glm::vec3(0.0f, 0.0f, 1.0f))},
+            {OntoMath::kSurfaceColorVar, PropertyValue(glm::vec3(0.5f, 0.25f, 1.0f))},
+            {OntoMath::kWiXVar, PropertyValue(0.0)},
+            {OntoMath::kWiYVar, PropertyValue(0.0)},
+            {OntoMath::kWiZVar, PropertyValue(-1.0)},
+            {OntoMath::kWoXVar, PropertyValue(0.0)},
+            {OntoMath::kWoYVar, PropertyValue(0.0)},
+            {OntoMath::kWoZVar, PropertyValue(1.0)},
+            {OntoMath::kLegacyDiffuseLobeWeightVar, PropertyValue(0.25)},
+            {OntoMath::kLegacySpecularLobeWeightVar, PropertyValue(0.4)}
+        };
+        const auto directValue = def->responseExpr->evaluate(directVars, def.get());
+        assert(directValue && std::holds_alternative<glm::vec3>(*directValue));
+        const glm::vec3 directRgb = std::get<glm::vec3>(*directValue);
+        assert(nearf(directRgb.x, 0.5f) && nearf(directRgb.y, 0.45f) &&
+               nearf(directRgb.z, 0.6f));
+
         std::set<std::string> envBindings;
         for (const auto& piece : def->environmentResponseExpr->pieces) {
             if (piece.mathNode) piece.mathNode->collectPropertyBindings(envBindings);
@@ -195,10 +227,12 @@ int main() {
                nearf(envRgb.z, 0.05f));
 
         const auto defaultSaved = def->toJson();
+        assert(defaultSaved.contains("responseExpr"));
         assert(defaultSaved.contains("environmentResponseExpr"));
         Material defaultRestored = Material::fromJson(defaultSaved);
+        assert(defaultRestored.responseExpr);
         assert(defaultRestored.environmentResponseExpr);
-        std::printf("  default: ambient compatibility is authored environment response; direct BP remains gated\n");
+        std::printf("  default: direct Blinn-Phong and environment compatibility are authored Material equations\n");
     }
 
     // --- 3. Manager ownership, resolution, and the undeletable default -------
