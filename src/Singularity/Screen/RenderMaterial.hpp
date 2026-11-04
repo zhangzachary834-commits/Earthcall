@@ -45,6 +45,11 @@ struct RenderMaterial {
     std::shared_ptr<OntoMath::Piecewise> responseExpr;
     uint32_t responseRevision = 0;
 
+    // Independent authored receiver response to directionless/environment
+    // incident radiance. It shares generic PropertyPath bindings, not direct wi.
+    std::shared_ptr<OntoMath::Piecewise> environmentResponseExpr;
+    uint32_t environmentResponseRevision = 0;
+
     // Generic AD-21 binding snapshot. Keys are the exact PropertyPath texts
     // authored by MathNode::Bind; values are resolved from the Material being
     // before the renderer sees it. No renderer-side material vocabulary lives here.
