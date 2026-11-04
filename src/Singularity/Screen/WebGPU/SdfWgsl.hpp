@@ -250,7 +250,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* phaseExpr = nullptr,
                 const OntoMath::Piecewise* emissionExpr = nullptr,
                 const OntoMath::Piecewise* responseExpr = nullptr,
-                const BindingValues* responseBindings = nullptr);
+                const BindingValues* responseBindings = nullptr,
+                const OntoMath::Piecewise* environmentResponseExpr = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -270,7 +271,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* phaseExpr = nullptr,
                              const OntoMath::Piecewise* emissionExpr = nullptr,
                              const OntoMath::Piecewise* responseExpr = nullptr,
-                             const BindingValues* responseBindings = nullptr);
+                             const BindingValues* responseBindings = nullptr,
+                             const OntoMath::Piecewise* environmentResponseExpr = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
@@ -353,6 +355,17 @@ ResponseExpressionLayout inspectResponseExpression(
 // path as inspectResponseExpression. Bound PropertyPath values enter the same
 // parameter stream, so value edits preserve WGSL structure.
 ParameterBlock collectResponseParams(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings = nullptr);
+
+// Independent receiver law for directionless environment incident radiance.
+// It may read p/n/wo/surfaceColor/environmentRadiance plus generic Bind paths;
+// wi is deliberately absent because environment input has no single source
+// direction. The returned vec3 is complete reflected environment RGB.
+ResponseExpressionLayout inspectEnvironmentResponseExpression(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings = nullptr);
+ParameterBlock collectEnvironmentResponseParams(
     const OntoMath::Piecewise* expr,
     const BindingValues* bindings = nullptr);
 
