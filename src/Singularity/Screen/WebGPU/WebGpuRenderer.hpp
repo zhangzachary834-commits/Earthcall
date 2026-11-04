@@ -368,6 +368,7 @@ private:
     bool _radianceSourcesLayoutOk = true;
     std::string _radianceSourcesLayoutError;
     uint64_t _radianceSourcesStructureRevision = 0;
+    bool refreshRadianceSourceLayout();
 
     // Pipeline-local parameter storage survives frame boundaries. The frame still
     // assembles the compact contiguous parameter vector in instance order, but an
