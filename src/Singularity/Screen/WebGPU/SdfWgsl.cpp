@@ -398,6 +398,7 @@ struct Emit {
     bool               readEmissionOmega = false;
     bool               bindPhaseDirections = false; // V3 Phi admits wi/wo, never source omega
     bool               bindMaterialResponse = false; // Rung 9 receiver context admits n + wi/wo
+    const BindingValues* propertyBindings = nullptr; // generic MathNode::Bind values supplied by owner
     bool               readSurfaceNormal = false;
     bool               readWi = false;
     bool               readWo = false;
@@ -708,6 +709,40 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
         case Op::ValueLeaf:
             if (node.variableName == OntoMath::kAmbientPointVar) return "(" + pt + ")";
             return pointComponent(node.variableName, e, pt);
+        case Op::Bind: {
+            if (node.propertyPath.empty()) {
+                e.refuse("Bind has an empty PropertyPath");
+                return "0.0";
+            }
+            if (!e.propertyBindings) {
+                e.refuse("Bind path '" + node.propertyPath +
+                         "' has no PropertyPath binding provider in this shader context");
+                return "0.0";
+            }
+            const auto it = e.propertyBindings->find(node.propertyPath);
+            if (it == e.propertyBindings->end()) {
+                e.refuse("Bind path '" + node.propertyPath + "' is unresolved");
+                return "0.0";
+            }
+            double scalar = 0.0;
+            if (propertyValueToNumber(it->second, scalar)) {
+                if (!std::isfinite(scalar)) {
+                    e.refuse("Bind path '" + node.propertyPath + "' resolved to a non-finite scalar");
+                    return "0.0";
+                }
+                return e.param(static_cast<float>(scalar));
+            }
+            if (const auto* v = std::get_if<glm::vec3>(&it->second)) {
+                if (!std::isfinite(v->x) || !std::isfinite(v->y) || !std::isfinite(v->z)) {
+                    e.refuse("Bind path '" + node.propertyPath + "' resolved to a non-finite Vector");
+                    return "vec3<f32>(0.0)";
+                }
+                return e.param3(*v);
+            }
+            e.refuse("Bind path '" + node.propertyPath +
+                     "' resolved to a PropertyValue this WGSL channel does not admit");
+            return "0.0";
+        }
         case Op::VectorConstruct: {
             if (node.children.size() != 3) {
                 e.refuse("VectorConstruct needs exactly 3 components, got " +
@@ -1890,7 +1925,9 @@ bool validatePhasePiecewise(const OntoMath::Piecewise& pw, std::string& error) {
 // generic directional names wi/wo but owns a separate admission environment
 // from volume phase. No t appears here: this bounded rung has not established
 // an honest Material-owned Timeline.
-bool validateResponsePiecewise(const OntoMath::Piecewise& pw, std::string& error) {
+bool validateResponsePiecewise(const OntoMath::Piecewise& pw,
+                               const BindingValues* bindings,
+                               std::string& error) {
     OntoMath::TypeEnv env{
         {OntoMath::kAmbientPointVar, OntoMath::ValueKind::Vector},
         {"x", OntoMath::ValueKind::Scalar},
@@ -1905,6 +1942,21 @@ bool validateResponsePiecewise(const OntoMath::Piecewise& pw, std::string& error
         {OntoMath::kWoYVar, OntoMath::ValueKind::Scalar},
         {OntoMath::kWoZVar, OntoMath::ValueKind::Scalar}
     };
+
+    if (bindings) {
+        for (const auto& [path, value] : *bindings) {
+            double scalar = 0.0;
+            if (propertyValueToNumber(value, scalar)) {
+                env[path] = OntoMath::ValueKind::Scalar;
+            } else if (std::holds_alternative<glm::vec3>(value)) {
+                env[path] = OntoMath::ValueKind::Vector;
+            } else {
+                error = "Bind path '" + path +
+                        "' resolves to a PropertyValue unsupported by material-response WGSL";
+                return false;
+            }
+        }
+    }
 
     if (pw.pieces.empty()) {
         error = "authored material response expression has no pieces";
@@ -4003,24 +4055,37 @@ AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr
 // Minimum–maximum principle: keep one expressive directional language while
 // preserving distinct irreducible predicates for source emission, medium
 // scattering, and receiving-surface response.
-ResponseExpressionLayout inspectResponseExpression(const OntoMath::Piecewise* expr) {
+ResponseExpressionLayout inspectResponseExpression(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings) {
     if (!expr || expr->pieces.empty()) {
         return ResponseExpressionLayout{
             "<material-response:legacy-blinn-phong>", 0, false, false, false, true, ""};
     }
 
     std::string validationError;
-    if (!validateResponsePiecewise(*expr, validationError)) {
+    if (!validateResponsePiecewise(*expr, bindings, validationError)) {
         return ResponseExpressionLayout{"", 0, false, false, false, false, validationError};
     }
 
     Emit e;
     e.bindMaterialResponse = true;
+    e.propertyBindings = bindings;
     std::string body;
     emitPiecewise(*expr, e, "p", "vec3<f32>", body);
 
+    std::set<std::string> boundPaths;
+    for (const auto& piece : expr->pieces) {
+        if (piece.mathNode) piece.mathNode->collectPropertyBindings(boundPaths);
+        if (piece.whereLEZero) piece.whereLEZero->collectPropertyBindings(boundPaths);
+    }
+    std::string bindingIdentity;
+    for (const auto& path : boundPaths) {
+        bindingIdentity += "bind[" + std::to_string(path.size()) + "]=" + path + ";";
+    }
+
     ResponseExpressionLayout layout;
-    layout.structure = std::move(body);
+    layout.structure = bindingIdentity + "\n" + std::move(body);
     layout.parameterCount = e.params.size();
     layout.readsNormal = e.readSurfaceNormal;
     layout.readsWi = e.readWi;
@@ -4030,16 +4095,19 @@ ResponseExpressionLayout inspectResponseExpression(const OntoMath::Piecewise* ex
     return layout;
 }
 
-ParameterBlock collectResponseParams(const OntoMath::Piecewise* expr) {
+ParameterBlock collectResponseParams(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings) {
     if (!expr || expr->pieces.empty()) return ParameterBlock{};
 
     std::string validationError;
-    if (!validateResponsePiecewise(*expr, validationError)) {
+    if (!validateResponsePiecewise(*expr, bindings, validationError)) {
         return ParameterBlock{{}, false, validationError};
     }
 
     Emit e;
     e.bindMaterialResponse = true;
+    e.propertyBindings = bindings;
     std::string throwaway;
     emitPiecewise(*expr, e, "p", "vec3<f32>", throwaway);
     return ParameterBlock{std::move(e.params), !e.refused, e.refusal};
@@ -4124,7 +4192,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* volumeChromaExpr,
                              const OntoMath::Piecewise* phaseExpr,
                              const OntoMath::Piecewise* emissionExpr,
-                             const OntoMath::Piecewise* responseExpr) {
+                             const OntoMath::Piecewise* responseExpr,
+                             const BindingValues* responseBindings) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -4250,11 +4319,13 @@ ParameterBlock collectParams(const geom::SdfNode& root,
 
     if (responseExpr && !responseExpr->pieces.empty()) {
         std::string validationError;
-        if (!validateResponsePiecewise(*responseExpr, validationError)) {
+        if (!validateResponsePiecewise(*responseExpr, responseBindings, validationError)) {
             e.refuse("material response: " + validationError);
         } else {
             e.bindMaterialResponse = true;
+            e.propertyBindings = responseBindings;
             emitPiecewise(*responseExpr, e, "p", "vec3<f32>", throwaway);
+            e.propertyBindings = nullptr;
             e.bindMaterialResponse = false;
         }
     }
@@ -4346,7 +4417,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* volumeChromaExpr,
                 const OntoMath::Piecewise* phaseExpr,
                 const OntoMath::Piecewise* emissionExpr,
-                const OntoMath::Piecewise* responseExpr) {
+                const OntoMath::Piecewise* responseExpr,
+                const BindingValues* responseBindings) {
     Emit e;
 
     const bool hasAnalyticGrad = (root.op == geom::SdfOp::Leaf &&
@@ -4592,7 +4664,7 @@ Program compile(const geom::SdfNode& root,
                  "wi: vec3<f32>, wo: vec3<f32>, surfaceColor: vec3<f32>) -> vec3<f32> {\n";
     if (responseExpr && !responseExpr->pieces.empty()) {
         std::string validationError;
-        if (!validateResponsePiecewise(*responseExpr, validationError)) {
+        if (!validateResponsePiecewise(*responseExpr, responseBindings, validationError)) {
             e.refuse("material response: " + validationError);
             prog.wgsl += "    return vec3<f32>(0.0);\n";
         } else {
@@ -4600,7 +4672,9 @@ Program compile(const geom::SdfNode& root,
             e.readWi = false;
             e.readWo = false;
             e.bindMaterialResponse = true;
+            e.propertyBindings = responseBindings;
             emitPiecewise(*responseExpr, e, "p", "vec3<f32>", prog.wgsl);
+            e.propertyBindings = nullptr;
             e.bindMaterialResponse = false;
             responseReadsNormal = e.readSurfaceNormal;
             responseReadsWi = e.readWi;
