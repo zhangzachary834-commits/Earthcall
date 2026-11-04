@@ -1146,6 +1146,28 @@ void WebGpuRenderer::flushMeshDraws() {
 }
 
 namespace {
+
+glm::vec3 legacyDirectIncidentRadiance(const glm::vec3& ambientRadiance,
+                                       const glm::vec3& diffuseRadiance,
+                                       const glm::vec3& specularRadiance,
+                                       const glm::vec4& coefficients) {
+    // Historical light channels were color * intensity * lobeCoefficient.
+    // Recover the single incident RGB before those receiver-model weights were
+    // applied. Any nonzero channel is sufficient; if every lobe coefficient is
+    // zero then historical direct light was zero and returning black preserves it.
+    constexpr float eps = 1e-8f;
+    if (std::fabs(coefficients.z) > eps) {
+        return diffuseRadiance / coefficients.z;
+    }
+    if (std::fabs(coefficients.w) > eps) {
+        return specularRadiance / coefficients.w;
+    }
+    if (std::fabs(coefficients.y) > eps) {
+        return ambientRadiance / coefficients.y;
+    }
+    return glm::vec3(0.0f);
+}
+
 // Uniform block for the raymarcher; must match struct RU in the generated WGSL.
 struct SdfGlobalUniforms {
     glm::mat4 viewProj;
@@ -1156,10 +1178,13 @@ struct SdfGlobalUniforms {
     // already normalized by the historical 0.2 reference; w is the authored
     // chroma environment scale (intensity * legacyAmbient / 0.2).
     glm::vec4 legacyEnvironment;
-    glm::vec4 lightDiffuse;
-    glm::vec4 lightSpecular;
+    // xyz = honest constant direct incident radiance (color * intensity);
+    // w = source intensity used when authored chi replaces constant color.
+    glm::vec4 directIncidentRadiance;
+    // x/y = execution-only legacy diffuse/specular lobe weights. These are not
+    // radiance and exist solely so material.default can reproduce old worlds.
+    glm::vec4 legacyReceiverLobeWeights;
     glm::vec4 lightControl; // x = lighting enabled, y = derived visibility enabled
-    glm::vec4 radianceSourceCoefficients; // intensity, ambient, diffuse, specular
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
     glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
     glm::vec4 volumeTime;   // x/y = admitted participating-medium coordinate/delta
@@ -1170,9 +1195,8 @@ struct RadianceSourceGpuData {
     // xyz = constant legacy environment envelope; w = chroma environment scale.
     // Direct rho/alpha/visibility transport must never read this field.
     glm::vec4 legacyEnvironment;
-    glm::vec4 diffuse;
-    glm::vec4 specular;
-    glm::vec4 coefficients;
+    glm::vec4 directIncidentRadiance;
+    glm::vec4 legacyReceiverLobeWeights;
     glm::vec4 time;
     glm::vec4 control;
 };
@@ -2327,9 +2351,15 @@ void WebGpuRenderer::flushSdfDraws() {
             data.legacyEnvironment = glm::vec4(
                 source.ambientRadiance / 0.2f,
                 (source.coefficients.x * source.coefficients.y) / 0.2f);
-            data.diffuse = glm::vec4(source.diffuseRadiance, 1.0f);
-            data.specular = glm::vec4(source.specularRadiance, 1.0f);
-            data.coefficients = source.coefficients;
+            data.directIncidentRadiance = glm::vec4(
+                legacyDirectIncidentRadiance(
+                    source.ambientRadiance, source.diffuseRadiance,
+                    source.specularRadiance, source.coefficients),
+                source.coefficients.x);
+            data.legacyReceiverLobeWeights = glm::vec4(
+                source.coefficients.z / 0.8f,
+                source.coefficients.w,
+                0.0f, 0.0f);
             data.time = glm::vec4(static_cast<float>(source.temporalCoordinate),
                                   static_cast<float>(source.temporalDelta), 0.0f, 0.0f);
             data.control =
@@ -2390,12 +2420,17 @@ void WebGpuRenderer::flushSdfDraws() {
     u.legacyEnvironment = glm::vec4(
         lightAmbient() / 0.2f,
         (sourceCoefficients.x * sourceCoefficients.y) / 0.2f);
-    u.lightDiffuse = glm::vec4(lightDiffuse(), 1.0f);
-    u.lightSpecular = glm::vec4(lightSpecular(), 1.0f);
+    u.directIncidentRadiance = glm::vec4(
+        legacyDirectIncidentRadiance(
+            lightAmbient(), lightDiffuse(), lightSpecular(), sourceCoefficients),
+        sourceCoefficients.x);
+    u.legacyReceiverLobeWeights = glm::vec4(
+        sourceCoefficients.z / 0.8f,
+        sourceCoefficients.w,
+        0.0f, 0.0f);
     u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f,
                                radianceVisibilityEnabled() ? 1.0f : 0.0f,
                                0.0f, 0.0f);
-    u.radianceSourceCoefficients = sourceCoefficients;
     u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
                                static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
     u.volumeTime = glm::vec4(static_cast<float>(volumeDensityTemporalCoordinate()),
