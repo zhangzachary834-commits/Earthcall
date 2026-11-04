@@ -609,6 +609,81 @@ void WebGpuRenderer::reloadShaders() {
     _kernelRouted.reset(); // All borrowed VolumePipeline::routedProgram pointers are gone.
 }
 
+const WebGpuRenderer::MeshPipeline*
+WebGpuRenderer::meshPipeline(const std::string& wgsl) {
+    auto it = _meshPipes.find(wgsl);
+    if (it != _meshPipes.end()) return &it->second;
+
+    WGPUShaderSourceWGSL src = {};
+    src.chain.sType = WGPUSType_ShaderSourceWGSL;
+    src.code = wgpu::Device::str(wgsl.c_str());
+    WGPUShaderModuleDescriptor smDesc = {};
+    smDesc.nextInChain = &src.chain;
+    WGPUShaderModule shader = wgpuDeviceCreateShaderModule(_device, &smDesc);
+    if (!shader) return nullptr;
+
+    WGPUBindGroupLayout layouts[2] = { _bgl, _instanceBgl };
+    WGPUPipelineLayoutDescriptor pld = {};
+    pld.bindGroupLayoutCount = 2;
+    pld.bindGroupLayouts = layouts;
+    WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(_device, &pld);
+
+    WGPUVertexAttribute attrs[3] = {};
+    attrs[0].format = WGPUVertexFormat_Float32x3; attrs[0].offset = 0;  attrs[0].shaderLocation = 0;
+    attrs[1].format = WGPUVertexFormat_Float32x3; attrs[1].offset = 12; attrs[1].shaderLocation = 1;
+    attrs[2].format = WGPUVertexFormat_Float32x2; attrs[2].offset = 24; attrs[2].shaderLocation = 2;
+    WGPUVertexBufferLayout vbl = {};
+    vbl.stepMode = WGPUVertexStepMode_Vertex;
+    vbl.arrayStride = 32;
+    vbl.attributeCount = 3;
+    vbl.attributes = attrs;
+
+    WGPUBlendState blend = {};
+    blend.color.operation = WGPUBlendOperation_Add;
+    blend.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+    blend.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+    blend.alpha.operation = WGPUBlendOperation_Add;
+    blend.alpha.srcFactor = WGPUBlendFactor_One;
+    blend.alpha.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+
+    WGPUColorTargetState colorTarget = {};
+    colorTarget.format = _colorFormat;
+    colorTarget.writeMask = WGPUColorWriteMask_All;
+    colorTarget.blend = &blend;
+    WGPUFragmentState frag = {};
+    frag.module = shader;
+    frag.entryPoint = wgpu::Device::str("fs_main");
+    frag.targetCount = 1;
+    frag.targets = &colorTarget;
+
+    WGPUDepthStencilState ds = {};
+    ds.format = WGPUTextureFormat_Depth24Plus;
+    ds.depthWriteEnabled = WGPUOptionalBool_True;
+    ds.depthCompare = WGPUCompareFunction_Less;
+
+    WGPURenderPipelineDescriptor pd = {};
+    pd.layout = layout;
+    pd.vertex.module = shader;
+    pd.vertex.entryPoint = wgpu::Device::str("vs_main");
+    pd.vertex.bufferCount = 1;
+    pd.vertex.buffers = &vbl;
+    pd.primitive.topology = WGPUPrimitiveTopology_TriangleList;
+    pd.primitive.cullMode = WGPUCullMode_None;
+    pd.depthStencil = &ds;
+    pd.multisample.count = 1;
+    pd.multisample.mask = 0xFFFFFFFFu;
+    pd.fragment = &frag;
+
+    MeshPipeline out;
+    out.pipe = wgpuDeviceCreateRenderPipeline(_device, &pd);
+    wgpuPipelineLayoutRelease(layout);
+    wgpuShaderModuleRelease(shader);
+    if (!out.pipe) return nullptr;
+
+    auto [inserted, _] = _meshPipes.emplace(wgsl, out);
+    return &inserted->second;
+}
+
 // Build-on-first-use so only the combinations the app actually draws exist.
 WGPURenderPipeline WebGpuRenderer::flatPipeline(WGPUPrimitiveTopology topo, Blend blend,
                                                 DepthMode depth) {
