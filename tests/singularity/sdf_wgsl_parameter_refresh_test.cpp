@@ -1486,7 +1486,7 @@ int main() {
                   "let directRadiance = shapedRadiance * pathVisibility") !=
                   std::string::npos &&
               multiSource.wgsl.find(
-                  "directTerm += incidentRadiance * receiverResponse * directRadiance") !=
+                  "directTerm += receiverResponse * directRadiance") !=
                   std::string::npos &&
               multiSource.wgsl.find("specShape") == std::string::npos &&
               multiSource.wgsl.find("inst.shading") == std::string::npos,
