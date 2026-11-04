@@ -94,6 +94,9 @@ int main() {
         ActionNode propNode = ActionNode::addProperty("target", "custom", 42.0);
         assert(propNode.describe() == "grant property 'custom' = 42");
 
+        ActionNode audioNode = ActionNode::playAudio("tone.frequency", "tone.amplitude", "sine");
+        assert(audioNode.describe() == "play audio tone.frequency tone.amplitude sine");
+
         auto rev = node.reversibility();
         assert(rev.exact == false);
         assert(!rev.obstacles.empty());
