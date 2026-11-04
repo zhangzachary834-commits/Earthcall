@@ -76,30 +76,42 @@ std::optional<glm::mat4> authoredScaledProduct(const glm::mat4& viewProj,
 }
 
 // Vertex layout mirrors geom::TessVertex exactly: {pos(3), normal(3), uv(2)}.
-// A world-space Lambert term (ambient + diffuse*N·L) tints baseColor; front_facing
-// flips the normal so open surfaces (patches) light on both sides. Texture albedo
-// (faceTextures) is not sampled yet — a later refinement (needs a WGPU texture).
-// Per-instance transform (CPU-GPU micro-mastery Phase 4.3): every mesh draw is
-// an instanced draw now, even a "batch" of one, so the model/normal matrices
-// that used to live in the per-draw uniform U live in this per-instance
-// storage array instead, indexed by @builtin(instance_index). U carries only
-// what every instance in a batch genuinely SHARES (camera, material, light).
-const char* kMeshWGSL = R"(
+// Rasterization discovers a surface interaction; Material OntoMath decides how
+// incident radiance becomes reflected RGB. The response module is compiled by
+// the SAME emitter/validator used by the implicit-surface path.
+std::string meshWgsl(const sdfwgsl::SurfaceResponseProgram& response) {
+    std::string wgsl = R"WGSL(
 struct U {
-    viewProj:  mat4x4<f32>,
-    lightPos:  vec4<f32>,   // world-space POSITION (GL_LIGHT0 is positional)
-    params:    vec4<f32>,   // x=ambient, y=diffuse, z=specular, w=shininess
-    eyePos:    vec4<f32>,
+    viewProj:     mat4x4<f32>,
+    lightPos:     vec4<f32>,
+    eyePos:       vec4<f32>,
+    lightControl: vec4<f32>, // x = lighting enabled
 };
 struct Instance {
     model:     mat4x4<f32>,
     normalMat: mat4x4<f32>,
     baseColor: vec4<f32>,
 };
+struct Params { v: array<f32> };
+
 @group(0) @binding(0) var<uniform> u: U;
 @group(0) @binding(1) var albedoTex: texture_2d<f32>;
 @group(0) @binding(2) var albedoSamp: sampler;
+@group(0) @binding(3) var<storage, read> P: Params;
 @group(1) @binding(0) var<storage, read> instances: array<Instance>;
+)WGSL";
+
+    wgsl += response.wgsl;
+    wgsl += std::string("\nconst HAS_AUTHORED_MATERIAL_RESPONSE: bool = ") +
+            (response.hasDirectResponse ? "true;\n" : "false;\n");
+    wgsl += std::string(
+                "const HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE: bool = ") +
+            (response.hasEnvironmentResponse ? "true;\n" : "false;\n");
+    wgsl += std::string("const MATERIAL_RESPONSE_READS_WI: bool = ") +
+            (response.directReadsWi ? "true;\n" : "false;\n");
+
+    wgsl += R"WGSL(
+const SOURCE_DIRECTION_EPS: f32 = 1e-6;
 
 struct VSOut {
     @builtin(position) clip: vec4<f32>,
@@ -107,6 +119,7 @@ struct VSOut {
     @location(1) uv: vec2<f32>,
     @location(2) worldPos: vec3<f32>,
     @location(3) baseColor: vec4<f32>,
+    @location(4) localPos: vec3<f32>,
 };
 
 @vertex
@@ -120,6 +133,7 @@ fn vs_main(@location(0) pos: vec3<f32>, @location(1) normal: vec3<f32>,
     out.uv = uv;
     out.worldPos = world.xyz;
     out.baseColor = inst.baseColor;
+    out.localPos = pos;
     return out;
 }
 
@@ -127,27 +141,60 @@ fn vs_main(@location(0) pos: vec3<f32>, @location(1) normal: vec3<f32>,
 fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f32> {
     var N = normalize(in.worldNormal);
     if (!front) { N = -N; }
-    let L = normalize(u.lightPos.xyz - in.worldPos);
     let V = normalize(u.eyePos.xyz - in.worldPos);
-    let H = normalize(L + V);
-    let diff = max(dot(N, L), 0.0);
-    let lit = u.params.x + u.params.y * diff;
-    // Blinn-Phong specular: white highlight, gated so it only appears on lit faces.
-    let spec = u.params.z * pow(max(dot(N, H), 0.0), max(u.params.w, 1.0)) * step(0.0001, diff);
-    let texel = textureSample(albedoTex, albedoSamp, in.uv); // paint (white when untextured)
-    let rgb = in.baseColor.rgb * texel.rgb * lit + vec3<f32>(spec);
+    let texel = textureSample(albedoTex, albedoSamp, in.uv);
+    let surfaceColor = in.baseColor.rgb * texel.rgb;
+
+    // First mesh-unification rung: preserve the historical mesh transport
+    // contract exactly. The old mesh shader ignored authored source chroma/rho
+    // and effectively supplied white incident envelopes. Receiver mathematics
+    // is now authored; source-transport unification is a separate next rung.
+    let environmentRadiance = vec3<f32>(1.0);
+    let incidentRadiance = vec3<f32>(1.0);
+    let legacyDiffuseIncident = vec3<f32>(1.0);
+    let legacySpecularIncident = vec3<f32>(1.0);
+
+    var environmentTerm = vec3<f32>(0.0);
+    if (HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE) {
+        environmentTerm = materialEnvironmentResponseEval(
+            in.localPos, N, V, surfaceColor, environmentRadiance);
+    }
+
+    var directTerm = vec3<f32>(0.0);
+    if (HAS_AUTHORED_MATERIAL_RESPONSE) {
+        let sourceDelta = in.worldPos - u.lightPos.xyz;
+        let sourceDistance = length(sourceDelta);
+        var responseWi = vec3<f32>(0.0);
+        var responseDefined = true;
+        if (sourceDistance > SOURCE_DIRECTION_EPS) {
+            // canonical direct transport convention: source -> receiver
+            responseWi = sourceDelta / sourceDistance;
+        } else if (MATERIAL_RESPONSE_READS_WI) {
+            responseDefined = false;
+        }
+        if (responseDefined) {
+            directTerm = materialResponseEval(
+                in.localPos, N, responseWi, V, surfaceColor,
+                incidentRadiance, legacyDiffuseIncident,
+                legacySpecularIncident);
+        }
+    }
+
+    let litRgb = environmentTerm + directTerm;
+    let rgb = mix(surfaceColor, litRgb, u.lightControl.x);
     return vec4<f32>(rgb, in.baseColor.a * texel.a);
 }
-)";
+)WGSL";
+    return wgsl;
+}
 
-// std140-compatible: all members are 16-byte aligned, so this matches the WGSL
-// uniform block byte-for-byte. glm and WGSL are both column-major. model/
-// normalMat moved to the per-instance storage buffer — see kMeshWGSL.
+// std140-compatible: all members are 16-byte aligned. Model/normal matrices
+// remain per-instance; this block is geometry-independent receiver transport.
 struct MeshUniforms {
     glm::mat4 viewProj;
     glm::vec4 lightPos;
-    glm::vec4 params;
     glm::vec4 eyePos;
+    glm::vec4 lightControl;
 };
 
 // Unlit flat-colour shader for the selection overlay + wireframe.
