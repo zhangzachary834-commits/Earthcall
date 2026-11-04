@@ -2187,9 +2187,10 @@ struct RU {
     // xyz = constant direct incident radiance; w = source intensity used when
     // authored chi supplies chroma instead of the historical constant color.
     directIncidentRadiance: vec4<f32>,
-    // x/y = legacy diffuse/specular receiver-lobe weights. These are migration
-    // inputs for material.default, not emitted radiance.
-    legacyReceiverLobeWeights: vec4<f32>,
+    // xyz = exact historical no-chi lobe envelope; w = authored-chi scale.
+    // Compatibility only; canonical direct colour is directIncidentRadiance.
+    legacyDiffuseIncident: vec4<f32>,
+    legacySpecularIncident: vec4<f32>,
     // x = lighting enabled; y = Rung-8 derived visibility enabled.
     // Visibility is execution state, not authored source state.
     lightControl:   vec4<f32>,
@@ -2877,8 +2878,14 @@ fn fs(in: VSOut) -> FSOut {
         incidentRadiance =
             sourceChroma * vec3<f32>(u.directIncidentRadiance.w);
     }
-    let legacyDiffuseLobeWeight = u.legacyReceiverLobeWeights.x;
-    let legacySpecularLobeWeight = u.legacyReceiverLobeWeights.y;
+    var legacyDiffuseIncident = u.legacyDiffuseIncident.rgb;
+    var legacySpecularIncident = u.legacySpecularIncident.rgb;
+    if (HAS_AUTHORED_CHROMA) {
+        legacyDiffuseIncident =
+            sourceChroma * vec3<f32>(u.legacyDiffuseIncident.w);
+        legacySpecularIncident =
+            sourceChroma * vec3<f32>(u.legacySpecularIncident.w);
+    }
 
     var directTerm = vec3<f32>(0.0);
     if (HAS_AUTHORED_MATERIAL_RESPONSE) {
@@ -2894,10 +2901,10 @@ fn fs(in: VSOut) -> FSOut {
         var receiverResponse = vec3<f32>(0.0);
         if (responseDefined) {
             receiverResponse = materialResponseEval(
-                pf, nw, responseWi, V, surfaceColor,
-                legacyDiffuseLobeWeight, legacySpecularLobeWeight);
+                pf, nw, responseWi, V, surfaceColor, incidentRadiance,
+                legacyDiffuseIncident, legacySpecularIncident);
         }
-        directTerm = incidentRadiance * receiverResponse * directRadiance;
+        directTerm = receiverResponse * directRadiance;
     }
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
@@ -4829,17 +4836,16 @@ Program compile(const geom::SdfNode& root,
     prog.wgsl += "\nfn sdfColor(p: vec3<f32>) -> vec3<f32> {\n" + colorBody + "}\n";
 
     // --- Rung 9 Material Response Compiler ---
-    // Receiver response is independent of source emission, visibility and volume
-    // truth. Absence preserves the exact historical Blinn-Phong compatibility
-    // path below; authored response is evaluated only after transport reaches
-    // the receiving surface.
+    // Direct receiver response consumes incident radiance and returns complete
+    // reflected RGB. Source emission, rho/alpha, visibility and volume transport
+    // remain outside the Material law; absence is a real zero-response state.
     bool responseReadsNormal = false;
     bool responseReadsWi = false;
     bool responseReadsWo = false;
     prog.wgsl += "\nfn materialResponseEval(p: vec3<f32>, n: vec3<f32>, "
                  "wi: vec3<f32>, wo: vec3<f32>, surfaceColor: vec3<f32>, "
-                 "legacyDiffuseLobeWeight: f32, legacySpecularLobeWeight: f32) "
-                 "-> vec3<f32> {\n";
+                 "incidentRadiance: vec3<f32>, legacyDiffuseIncident: vec3<f32>, "
+                 "legacySpecularIncident: vec3<f32>) -> vec3<f32> {\n";
     if (responseExpr && !responseExpr->pieces.empty()) {
         std::string validationError;
         if (!validateResponsePiecewise(*responseExpr, responseBindings, validationError)) {
@@ -4977,7 +4983,8 @@ Program compile(const geom::SdfNode& root,
             "    position: vec4<f32>,\n"
             "    legacyEnvironment: vec4<f32>,\n"
             "    directIncidentRadiance: vec4<f32>,\n"
-            "    legacyReceiverLobeWeights: vec4<f32>,\n"
+            "    legacyDiffuseIncident: vec4<f32>,\n"
+            "    legacySpecularIncident: vec4<f32>,\n"
             "    time: vec4<f32>,\n"
             "    control: vec4<f32>,\n"
             "};\n"
@@ -5103,14 +5110,18 @@ Program compile(const geom::SdfNode& root,
                 if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
                     sum += "            let incidentRadiance = sourceChroma * "
                            "vec3<f32>(source.directIncidentRadiance.w);\n";
+                    sum += "            let legacyDiffuseIncident = sourceChroma * "
+                           "vec3<f32>(source.legacyDiffuseIncident.w);\n";
+                    sum += "            let legacySpecularIncident = sourceChroma * "
+                           "vec3<f32>(source.legacySpecularIncident.w);\n";
                 } else {
                     sum += "            let incidentRadiance = "
                            "source.directIncidentRadiance.rgb;\n";
+                    sum += "            let legacyDiffuseIncident = "
+                           "source.legacyDiffuseIncident.rgb;\n";
+                    sum += "            let legacySpecularIncident = "
+                           "source.legacySpecularIncident.rgb;\n";
                 }
-                sum += "            let legacyDiffuseLobeWeight = "
-                       "source.legacyReceiverLobeWeights.x;\n";
-                sum += "            let legacySpecularLobeWeight = "
-                       "source.legacyReceiverLobeWeights.y;\n";
                 sum += "            if (HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
                 sum += "                var responseWi = vec3<f32>(0.0);\n";
                 sum += "                var responseDefined = true;\n";
@@ -5122,8 +5133,9 @@ Program compile(const geom::SdfNode& root,
                 sum += "                if (responseDefined) {\n";
                 sum += "                    let receiverResponse = "
                        "materialResponseEval(pf, nw, responseWi, V, surfaceColor, "
-                       "legacyDiffuseLobeWeight, legacySpecularLobeWeight);\n";
-                sum += "                    directTerm += incidentRadiance * "
+                       "incidentRadiance, legacyDiffuseIncident, "
+                       "legacySpecularIncident);\n";
+                sum += "                    directTerm += "
                        "receiverResponse * directRadiance;\n";
                 sum += "                }\n";
                 sum += "            }\n";
