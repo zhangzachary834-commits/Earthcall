@@ -120,4 +120,14 @@ The physics system now seamlessly integrates with:
 - **Audio System**: Collision events can trigger sound effects
 - **Particle System**: Collision events can create visual effects
 
-This hybrid approach gives you the best of both worlds: reliable hard-wired physics calculations with flexible event-driven responses! 
+This hybrid approach gives you the best of both worlds: reliable hard-wired physics calculations with flexible event-driven responses!
+## Interrelated Documents
+- [Time and Moment](../ontology/TIME_AND_MOMENT.md)
+- [No Black Box](../ontology/NO_BLACK_BOX.md)
+- [Event Bus vs Event Handler](EVENT_BUS_VS_EVENT_HANDLER.md)
+
+## Thoughts on Integration and Interrelation
+
+The introduction of the `PhysicsCollisionEvent` directly intersects with the core principles established in our temporal ontology and the "No Black Box" doctrine. While the current integration effectively surfaces collision data to the `EventBus`, making physics accessible to broader systems like Formations and Zones, we must be mindful of how these events relate to the broader concept of `Moment`.
+
+According to the temporal ontology, an `Event` is not merely a transient data structure, but a distinguished `Moment` Singular. By structuring `PhysicsCollisionEvent` as a standard struct, we are currently employing a pragmatic intermediate step. As the physics event integration matures, we should consider elevating these collision events to proper `Event` Singulars within a `Timeline`. This would align the physics system's soft-wired communication fully with the "No Black Box" principle, ensuring that collision occurrences are historically addressable, legible to Laws without opaque callback structs, and inherently grounded in the world's temporal substrate.
