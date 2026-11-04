@@ -331,9 +331,12 @@ AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr
 // wi/wo are transport bindings, never aliases of source alpha's omega.
 PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr);
 
-// Rung 9 receiver-owned f_r-like channel. Authored responses are vec3-valued,
-// may read n and existing wi/wo directional coordinates, and deliberately do
-// not admit t until an honest Material-owned Timeline exists.
+// Rung 9 receiver-owned response channel. Authored responses are vec3-valued,
+// may read n, surfaceColor, and existing wi/wo directional coordinates. The
+// vec3 is the receiver's complete reflected RGB factor/contribution for the
+// admitted incident radiance: Screen must not secretly multiply pigment or add
+// another aesthetic lobe afterward. No t is admitted until an honest
+// Material-owned Timeline exists.
 ResponseExpressionLayout inspectResponseExpression(const OntoMath::Piecewise* expr);
 
 // Re-collect only response numeric parameters using the same admission/lowering
