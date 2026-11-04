@@ -558,9 +558,10 @@ int main() {
         check(before.wgsl.find("fn lightRadiance_0") != std::string::npos &&
                   before.wgsl.find("fn lightRadiance_1") != std::string::npos,
               "each source keeps its own rho function instead of enumerating the world inside one AST");
-        check(before.wgsl.find("ambientTerm +=") != std::string::npos &&
-                  before.wgsl.find("diffuseTerm +=") != std::string::npos,
-              "source emission is aggregated additively above the individual invariants");
+        check(before.wgsl.find("environmentTerm +=") != std::string::npos &&
+                  before.wgsl.find("diffuseTerm +=") != std::string::npos &&
+                  before.wgsl.find("ambientTerm") == std::string::npos,
+              "environment compatibility and direct source emission are distinct additive channels");
 
         // VALUE ONLY: same ScalarLeaf structure on source 1.
         rho1Node->scalarForm.terms[0].coefficient = 0.2;
@@ -1457,6 +1458,15 @@ int main() {
         check(oneSource.wgsl.find(
                   "let directRadiance = shapedRadiance * pathVisibility") != std::string::npos,
               "one-source direct transport multiplies visibility after authored emission");
+        const auto oneEnvironment =
+            oneSource.wgsl.find("legacyEnvironment");
+        const auto oneDirect =
+            oneSource.wgsl.find("let radialRadiance = max(lightRadiance");
+        check(oneEnvironment != std::string::npos &&
+                  oneDirect != std::string::npos &&
+                  oneEnvironment < oneDirect &&
+                  oneSource.wgsl.find("ambientTerm") == std::string::npos,
+              "one-source legacy environment illumination is resolved before rho/alpha/visibility transport");
 
         Rendering::RadianceSourceBinding s0;
         s0.radianceExpr = &rho0;
@@ -1474,9 +1484,18 @@ int main() {
                   multiSource.wgsl.find(
                       "specShape * directRadiance") != std::string::npos,
               "multi-source diffuse/specular transport consumes per-source visibility");
-        check(multiSource.wgsl.find(
-                  "ambientTerm += inst.shading.x") != std::string::npos,
-              "legacy ambient compatibility remains outside direct-path visibility");
+        const auto environmentUse =
+            multiSource.wgsl.find("environmentTerm += inst.shading.x");
+        const auto directBoundary =
+            multiSource.wgsl.find("Direct source transport begins here");
+        check(environmentUse != std::string::npos &&
+                  directBoundary != std::string::npos &&
+                  environmentUse < directBoundary &&
+                  multiSource.wgsl.find("ambientTerm") == std::string::npos,
+              "legacy environment compatibility executes before direct-path visibility");
+        const auto directTail = multiSource.wgsl.substr(directBoundary);
+        check(directTail.find("legacyEnvironment") == std::string::npos,
+              "direct multi-source transport cannot read the legacy environment input");
     }
 
     // ---------------------------------------------------------------------
