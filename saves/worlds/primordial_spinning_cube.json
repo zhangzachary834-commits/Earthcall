@@ -3144,7 +3144,9 @@
           }
         }
       ],
-      "materialRefs": [],
+      "materialRefs": [
+        "primordial.spinning-cube.material"
+      ],
       "world": {
         "objects": [
           {

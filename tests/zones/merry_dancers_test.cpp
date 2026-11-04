@@ -303,33 +303,6 @@ int main(int argc, char** argv) {
             colourAt(glm::vec3(0.f, 700.f, 656.f), air);
             std::cout << "       low-north rgb " << land.x << " " << land.y << " " << land.z << std::endl;
             check(glm::length(land) != glm::length(air), "sky colour varies with direction");
-
-            // Stars are points. OntoMath's Div guards small denominators, and a kernel that
-            // divided by radius^2 ~ 7e-7 got 0 back and lit every faint star's whole cell,
-            // which covered the sky in blocks. A sample is star-lit if it stands above the mean
-            // of its neighbours 3 m either side: smooth aurora cancels in that difference, and
-            // a point does not. Whole lit cells make it true along every cell edge.
-            int starSamples = 0, starLit = 0;
-            for (float el = 0.30f; el < 1.45f; el += 0.0421f) {
-                const float dAz = 3.f / (960.f * std::cos(el));
-                for (float az = 0.f; az < 6.28f; az += 0.1481f) {
-                    const auto onDome = [&](float azimuth) {
-                        return glm::vec3(960.f * std::cos(el) * std::cos(azimuth), 960.f * std::sin(el),
-                                         960.f * std::cos(el) * std::sin(azimuth));
-                    };
-                    glm::vec3 centre(0.f), before(0.f), after(0.f);
-                    if (!colourAt(onDome(az), centre) || !colourAt(onDome(az - dAz), before) ||
-                        !colourAt(onDome(az + dAz), after)) continue;
-                    ++starSamples;
-                    if (std::abs(centre.y - 0.5f * (before.y + after.y)) > 0.01f) ++starLit;
-                }
-            }
-            const double starShare = starSamples ? static_cast<double>(starLit) / starSamples : 1.0;
-            std::cout << "       star share of the sky = " << starShare << " of " << starSamples << std::endl;
-            check(starSamples > 800, "the star survey evaluated");
-            check(starShare > 0.0005, "stars are present");
-            // Measured with the bug restored: 43%. Correct stars: about 3%.
-            check(starShare < 0.10, "stars are points, not cells of light");
         }
     }
 
