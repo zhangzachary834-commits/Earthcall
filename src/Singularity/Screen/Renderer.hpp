@@ -32,6 +32,19 @@ namespace geom { struct SdfNode; class FieldNode; struct HeightGrid; }
 // selection/law-candidate overlays.
 enum class Blend { Opaque, Alpha, Additive };
 
+// Visibility is derived path truth with an explicit epistemic scope.
+// Disabled: exact compatibility V=1.
+// LocalReceiverGeometry: a backend may answer only from the receiving geometry
+// it actually owns (today: SDF instance-local marching). Other representations
+// must return Unknown rather than inventing V.
+// CompleteScene: requires a scene-wide visibility provider. Until one exists,
+// every backend must return Unknown for direct transport.
+enum class RadianceVisibilityMode : uint32_t {
+    Disabled = 0,
+    LocalReceiverGeometry = 1,
+    CompleteScene = 2
+};
+
 // An opaque handle to a GPU-side texture. Under OpenGL this happens to be the GL
 // texture name (which is why RenderMaterial::textureId is the same width); under
 // WebGPU it is an index the backend assigns. 0 means "none".
@@ -56,6 +69,9 @@ public:
         // query. When authored visibility is requested, direct source-set
         // transport is skipped rather than silently substituting V=1.
         uint32_t meshVisibilityUnknownDirectSkips = 0;
+        // Same epistemic refusal on implicit surfaces when CompleteScene is
+        // requested before a complete-scene provider exists.
+        uint32_t sdfVisibilityUnknownDirectSkips = 0;
         uint32_t sdfDrawCalls = 0;
         uint32_t trianglesDrawn = 0;
         size_t   vramAllocatedBytes = 0;
@@ -311,14 +327,27 @@ public:
         return _renderedFieldObserver.stats();
     }
 
-    // Rung 8 execution seam: visibility is DERIVED transport truth, never an
-    // authored property of rho/chi/alpha. Keeping this as renderer state makes
-    // V=1 an exact compatibility mode and lets transport change at runtime
-    // without regenerating source WGSL or mutating any source AST. The default
-    // remains false until Screen can truthfully query the complete scene, not
-    // merely the SDF geometry owned by the currently executing pipeline.
-    void setRadianceVisibilityEnabled(bool on) { _radianceVisibilityEnabled = on; }
-    bool radianceVisibilityEnabled() const { return _radianceVisibilityEnabled; }
+    // Rung 8 execution seam: visibility is DERIVED path truth, never an
+    // authored property of rho/chi/alpha. The mode distinguishes exact V=1,
+    // receiver-local evidence, and complete-scene authority. Unknown is never
+    // collapsed into visible or occluded.
+    void setRadianceVisibilityMode(RadianceVisibilityMode mode) {
+        _radianceVisibilityMode = mode;
+    }
+    RadianceVisibilityMode radianceVisibilityMode() const {
+        return _radianceVisibilityMode;
+    }
+
+    // Compatibility API retained for existing witnesses/callers: "enabled"
+    // historically meant the SDF instance-local query, not complete-scene truth.
+    void setRadianceVisibilityEnabled(bool on) {
+        _radianceVisibilityMode = on
+            ? RadianceVisibilityMode::LocalReceiverGeometry
+            : RadianceVisibilityMode::Disabled;
+    }
+    bool radianceVisibilityEnabled() const {
+        return _radianceVisibilityMode != RadianceVisibilityMode::Disabled;
+    }
 
     // Zero-density proof: skip evaluating a medium's density in cells where
     // OntoMath interval arithmetic proved it can never be positive. Such a
@@ -571,7 +600,8 @@ private:
     double _volumeDensityTemporalDelta = 0.0;
     std::vector<Rendering::RadianceSourceBinding> _radianceSources;
     uint64_t _radianceSourcesRevision = 0;
-    bool _radianceVisibilityEnabled = false;
+    RadianceVisibilityMode _radianceVisibilityMode =
+        RadianceVisibilityMode::Disabled;
     bool _volumeZeroProofEnabled = true;
     bool _volumeRoutedTransportEnabled = true; // Zach, direct branch-default authorization 2026-10-28
     bool _volumeSupportCertificatesEnabled = false;
