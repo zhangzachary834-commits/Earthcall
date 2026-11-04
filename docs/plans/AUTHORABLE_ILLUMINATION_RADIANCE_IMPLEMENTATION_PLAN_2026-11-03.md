@@ -59,6 +59,39 @@ No CI/native execution result is claimed in this ledger until GitHub produces on
 
 ---
 
+## Implementation ledger — 2026-11-03 third pass: environment/direct separation
+
+The historical "ambient" contribution is now explicitly separated from direct source transport in the WebGPU SDF execution topology.
+
+Implemented:
+- SDF global/source GPU records now expose `legacyEnvironment` instead of an ambient-named shader input;
+- `legacyEnvironment.xyz` is the constant compatibility environment envelope normalized by the historical 0.2 reference;
+- `legacyEnvironment.w` is the authored-chroma environment scale `intensity * legacyAmbient / 0.2`;
+- one-source and multi-source shaders evaluate the compatibility environment contribution before any `rho`, `alpha`, visibility, light direction, half-vector, diffuse cosine, or specular-shape work;
+- authored `chi(p,t)` may still color this compatibility environment path, preserving the exact historical contract that ambient survived zero-rho sources while chroma remained spatially authorable;
+- below the explicit "Direct source transport begins here" seam, generated WGSL does not read `legacyEnvironment`;
+- the old SDF identifiers `ambientTerm`, `u.lightAmbient`, and `source.ambient` are gone from generated/production SDF code;
+- legacy Material `ambient` remains temporarily as compatibility receiver data; authored Material responses continue to bypass it, preserving Rung-9 sovereignty until a generic environment-response law replaces that coefficient;
+- focused compiler witnesses now require environment-before-direct ordering and prove the direct tail cannot read the environment input;
+- a native WebGPU witness uses `rho=0`, authored red chroma, a blocker on the source path, and enabled visibility; the environment pixel must remain unchanged.
+
+This pass deliberately does **not** claim the world ontology is purified yet. `AuthorableLightState.light.ambient`, `RadianceSourceBinding.ambientRadiance`, Material `ambient`, and mesh/OpenGL compatibility remain adapters/fossils to migrate. The important boundary crossed here is execution truth: SDF direct radiance no longer contains an ambient branch.
+
+Key commits:
+- `ee38279a` — explicit legacy-environment GPU projection;
+- `302d9710` — environment/direct WGSL separation;
+- `b50df428` — structural compiler witnesses;
+- `27e0ea5f` — native zero-rho/visibility environment witness.
+
+Next migration seam:
+1. make the legacy direct Blinn-Phong lobe an inherited authored `Material.responseExpr` using generic `Bind` + pure Piecewise;
+2. give environment illumination its own authored receiver-response law instead of `Material::ambient`;
+3. only then delete `<material-response:legacy-blinn-phong>`, hardcoded direct diffuse/specular WGSL, and the remaining source/light coefficient vocabulary.
+
+No CI/native execution result is claimed here until the exact branch head receives one.
+
+---
+
 ---
 
 ## Commission
