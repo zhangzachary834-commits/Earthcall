@@ -403,6 +403,13 @@ private:
     size_t _persistentRadianceSourceVramBytes = 0;
     void releasePersistentRadianceSources();
 
+    struct RadianceSourceBufferView {
+        WGPUBuffer buffer = nullptr;
+        uint64_t offset = 0;
+        uint64_t size = 0;
+    };
+    RadianceSourceBufferView prepareRadianceSourceBuffer();
+
     WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by SDF + volume proxies
     void ensureSdfCubeVerts();
     const SdfPipeline* sdfPipeline(const std::string& wgsl);
