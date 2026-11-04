@@ -2207,12 +2207,26 @@ Authored **4 brand-new far-side volumetric aurora fields (`spatialFields[4..7]`)
 
 **Correction (Claude Code / Claude Opus 5.5 / session `ed9d515b-d6ac-4098-a7f9-ce71d02406b3` / 2026-11-03T13:53:38-0800):** his 12:17–12:18 screenshots show a flat clear-colour background, because the app's hard-coded `farZ = 100` clipped the sky at 960 m. His verdict and FPS apply to the marched curtains only. The Zone now authors `view.farPlane = 2000`, so the checks below need the rebuilt `build/earthcall_webgpu`; the installed app does not have the fix.
 
+**Zach, in the app, complete Zone, 2026-11-03 14:09–14:12:** "IT LOOKS AMAZING ITS THE MOST INSANE THING IVE SEEN IN EARTHCALL SO FARRRRRRR"; "some views r 20-25ish fps others are 9 fps". His shots show the sky rendering. He also said not to work on FPS until there is a general architecture for it.
+
 - [x] **Launch Earthcall WebGPU and enter The Merry Dancers.** Confirm it appears in the Zone list and loads with no long stall. The first entry may pause while shaders compile; say if that pause is unacceptable.
-- [ ] **Stand at the shore.** Go to about (0, 2, 0) and face **+Z**, since the default facing may point south at the rising ground. You should see snow at your feet, the lake, ridges, and green-into-pink aurora doubled in the water. If the screen is one flat colour, your eye is inside the ground: report it.
-- [ ] **Confirm the sky now renders.** Stars, fanned sky rays, ridges and lake reflection should replace the flat grey background. Also enter Northern Veil afterward and confirm it looks unchanged.
-- [ ] **Judge the complete look against your photographs.** The curtains alone were called AMAZING. Green low and rose-violet high, long rays fanning overhead, no hard box edges anywhere in the sky.
+- [x] **Stand at the shore.** Go to about (0, 2, 0) and face **+Z**, since the default facing may point south at the rising ground. You should see snow at your feet, the lake, ridges, and green-into-pink aurora doubled in the water. If the screen is one flat colour, your eye is inside the ground: report it.
+- [x] **Confirm the sky now renders.** Stars, fanned sky rays, ridges and lake reflection replaced the flat grey (his 14:09–14:12 shots).
+- [x] **Judge the complete look against your photographs.** "THE MOST INSANE THING IVE SEEN IN EARTHCALL SO FAR."
 - [ ] **Look straight up.** The rays should converge in a corona with the bright arc crossing them.
 - [ ] **Watch for about a minute.** The sheets should drift slowly: rays sliding, bright sections moving, the lower border waving. The wide background fan and stars are intentionally still. Say whether that stillness bothers you.
-- [ ] **Report your FPS with the sky rendering.** 18–24 FPS, "decent", was measured without the sky. Expect lower: offscreen, frames went from 51–62 ms to about 80 ms at 2560×1440.
+- [x] **Report your FPS with the sky rendering.** 20–25 in some views, 9 in others (views not named).
 - [ ] **Fly up and around.** The far ridges are painted into the sky and will not shift with parallax, and the marched sheets can be flown through. Say whether either breaks the illusion for you.
+- [ ] **Second look pass: moiré.** Restart `./build/earthcall_webgpu` so it reloads the Zone. The fine diagonal stripes across faint curtain, as in your 14:10 and 14:11 shots, should be gone or nearly so. A faint trace may remain on the arc; say if you still notice it.
+- [ ] **Second look pass: stars.** Stars should be fine round points with a few bright ones among faint dust, not flecks or pebbles. Fly upward: they will stay round but grow as you near the dome. Say if they now feel too sparse or too faint.
+- [ ] **Second look pass: the arc overhead.** Look straight up. It should be thinner, with folds and a sharper lower edge, and less of a soft green tube. It is improved but still the softest thing here, so this one is your call.
+- [ ] **Second look pass: ground and trees.** Near snow should have no woven pattern, ridge snow should have gullies instead of camouflage blotches, and the spruces should read as spruces rather than wavy bowling pins. The spruce change was this agent's addition from your shots; say if you preferred the old ones.
+- [ ] **Second look pass: did it get slower?** Report FPS in your 9 FPS view. Offscreen, slow views look somewhat slower, on noisy single runs.
+- [ ] **Northern Veil's far plane.** Enter Northern Veil. Its ridges and lake past 100 m, previously clipped, should now appear. Offscreen the far ridges have boxy cut edges, so say whether you want to keep them. Removing the one `view.farPlane` property undoes it.
 - [ ] **Keep the name?** "The Merry Dancers" is an old Scots and Shetland name for the aurora, and it was this agent's choice.
+
+
+## Cathedral surface cost baseline — 2026-11-03
+
+- [x] **Live performance report, 2026-11-04:** Zach ran the rebuilt checkout's Release executable with expensive Laws disabled and reported **38 FPS**, judging the renderer much better. Camera/extent and a matched live baseline were not recorded. Law optimization remains separate at Zach's direction. Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-04T00:35:39-08:00.
+- [ ] Run `build_release/earthcall_webgpu` and revisit a familiar slow Cathedral view. Judge carved-detail visibility, lighting, movement, frame pacing, and FPS after mesh upload paging. The fixed saved-object screen improved 62.112 → 30.042 ms, with exact fixed-order image parity. Record the actual camera/window extent and inhabited rate. This shared mesh-path improvement applies alongside either volume renderer. [Task and native gates](../Specific%20Tasks/Performance%20and%20Runtime/Cathedral_Surface_Frame_Cost/Cathedral_Surface_Frame_Cost.md). Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-03T22:52:00-08:00.

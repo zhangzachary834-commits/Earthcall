@@ -1,0 +1,27 @@
+# Cathedral surface frame cost
+
+**Commission** — Zachary Zhang asked for surface SDF optimization after the Northern Veil merge.  
+**Author** — Codex / GPT-6 / Sixth-One Sun  
+**Session** — `01a148a7-bd85-7550-a416-0e859a729c1a`  
+**Timestamp** — 2026-11-03T21:18:00-08:00
+
+Source/CPU preparation is complete. All 178 surface Fields compile and match re-collected parameters. Thirty-six require gradient-corrected marching, and none emit analytic gradients. The spatial-root expression supplies authored source radiance. [Audit, source-bound census, and prepared probe](../../../../../audits/CATHEDRAL_SURFACE_SDF_FIRST_PASS_2026-11-03.md)
+
+- [x] Read the saved scene and distinguish geometry and radiance callers.
+- [x] Build correct-checkout Release production objects and execute the CPU compiler census.
+- [x] Prepare an explicitly invoked isolated Field-subset native screen.
+- [x] Resume native work after Zach closes Chrome and releases the CPU-only boundary.
+- [ ] Capture Zach's actual slow camera and drawable size for the inhabited comparison.
+- [ ] Validate baseline shaders and resolve the scalar-Map diagnostic on `material.logos.bounds.quantized`.
+- [x] Separate Field-subset and full saved-object costs, then locate the larger CPU staging-allocation bottleneck with a warmed stack sample.
+- [x] Qualify bounded mesh upload pages, with independent native pixels, offset-negative control, fixed-order image parity, and four ABBA blocks.
+- [x] Compare upload-only fidelity with independent pixels and exact fixed-order full-scene RGBA alongside paired ABBA complete cost.
+- [x] Record Zach's live 38 FPS report with expensive Laws disabled; keep Law optimization separate as requested.
+- [x] Make the Finder launcher default to Release even over a cached Debug build, retaining an explicit Debug override.
+- [ ] For any later derivative/intersection change, qualify intersections, normals, depth, seams, and authored-reference accuracy separately.
+- [ ] Validate the full inhabited scene and record Zach's appearance, motion, and frame-pacing judgment.
+- [ ] Investigate stable logical mesh ordering for repeatable coplanar results across processes.
+
+Preserve authored geometry and native resolution. Mathematical differentiation belongs with OntoMath. Retain original value arithmetic and fall back where derivative validity is undecided. Broader spatial proof structures require measured profitability before adoption.
+
+**Native checkpoint, 2026-11-03T22:52:00-08:00.** Upload pages reduce the full saved-object screen from 62.112 to 30.042 ms, with CPU submission 39.592 → 15.654 ms. Fixed-order images match every RGBA byte. Natural process-dependent batch ordering remains visible in both renderers. Run `build_release/earthcall_webgpu` for the pending Person check. The [audit continuation](../../../../../audits/CATHEDRAL_SURFACE_SDF_FIRST_PASS_2026-11-03.md#native-continuation-and-retained-upload-repair) records scope, raw controls, padding cost, and the separate scalar-Map follow-up.

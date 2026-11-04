@@ -153,7 +153,7 @@ Addendum: Also ensure save system works in every case and everything that needs 
 
 <a id="joys-ourverse-zones"></a>
 ### Joys · Ourverse · Zones
-- **The Merry Dancers aurora Zone** — Its sky now has an authored `view.farPlane` past the app's historical 100 m, awaiting Zach's first look at the complete Zone; [task](Specific%20Tasks/Zones%20and%20Ourverse/The_Merry_Dancers/The_Merry_Dancers.md).
+- **The Merry Dancers aurora Zone** — Zach called the complete Zone the most insane thing in Earthcall so far; a second look pass awaits his eye, and FPS waits for a general architecture; [task](Specific%20Tasks/Zones%20and%20Ourverse/The_Merry_Dancers/The_Merry_Dancers.md).
 - ⚑ ZACH'S IDEA — **Personal Ourverse Navigator: little 2D/3D islands for each world, the first thing Earthcall.app shows**; plan in its own session, attaching through the app's first-run Foundation. → [full task](Specific%20Tasks/Zones%20and%20Ourverse/Personal_Ourverse_Navigator/Personal_Ourverse_Navigator.md)
 - **The Hierarchy of Joys has no consumer** — `rankOf`/`orderMembersBy` are called only by tests, `telos` is non-empty on 2 beings across all saves and in 0 law conditions; give it one true consumer (agenda order when two laws are eligible on the same subject). → [audit §5, §9](../../audits/2026-09-24_mythos_ungoverned_governor_audit.md) — Claude Fable 5.1 (Mythos), 2026-09-24.
 - **Zones as mathematical bounds** — Rung 1 done 2026-09-23 (Dimensional Zones, `within`/`placement`/`extent`, derived location, `@world.zoneId`); Rungs 2–6 (running ≠ present, one continuum on screen, location edges, non-spatial axes, placing existing saves) planned. → [full task](Specific%20Tasks/Architecture%20and%20Ontology/Zones_As_Mathematical_Bounds/Zones_As_Mathematical_Bounds.md)
@@ -501,6 +501,7 @@ on a quiet machine) so the tripwire tightens behind the fix.
 
 - **Dual-path parity test (hardcoded WGSL vs OntoMath AST path)** — (from [Green_Hills_Population_One §3](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/Green_Hills_Population_One.md), … → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Dual_path_parity_test_hardcoded_WGSL_vs_OntoMath_AST_path/Dual_path_parity_test_hardcoded_WGSL_vs_OntoMath_AST_path.md)
 
+- **Cathedral surface frame cost** — bounded mesh upload pages reduce the native saved-object screen 62.112 → 30.042 ms, with live Cathedral acceptance and the scalar-Map typing follow-up pending. → [task and gates](Specific%20Tasks/Performance%20and%20Runtime/Cathedral_Surface_Frame_Cost/Cathedral_Surface_Frame_Cost.md)
 - **Ray-domain transport native checkpoint** — Zach reports live 30–35 FPS; [final bounded corrective audit passes](../../audits/GPU_RAY_TRANSPORT_PREMERGE_CORRECTNESS_AUDIT_2026-11-02.md), with checkpoint merge pending and universal certification still separate.
 - **Authorable GPU Runs** — measure producer work tails, then qualify one bounded resumable GPU queue before exposing continuation policy through ScreenChannel/Law. → [status and next slice](Specific%20Tasks/Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md#authorable-gpu-runs-implementation-priority--2026-10-29)
 

@@ -103,6 +103,10 @@ The Law therefore reconstructs motion from world time plus authored properties a
 
 During implementation the first hand-authored JSON accidentally bound all three rotation components to an unbound s factor. That was repaired before this task was closed, and the test now specifically requires sx, sy, and sz independently. This is exactly why presence of a Law record is not evidence that the Law says what its author intended.
 
+### Material closure repair (2026-11-03)
+
+The resurrected zone carried its Material directly in embedded `materials`, but also declared `"materialRefs": ["primordial.spinning-cube.material"]`. `ZoneManager::prepareZoneMaterialClosure` requires every entry in `materialRefs` to exist as an external shared root at `saves/materials/<stem>/material.json`. Because no external root file existed, `ZoneManager::switchTo` refused activation with `missing Material root 'primordial.spinning-cube.material'`. Removing the dangling reference from `materialRefs` (leaving `materials` embedded) resolved the refusal, and `primordial_spinning_cube_test` now validates end-to-end `BootedEngineHarness` Zone hydration and `switchTo()`.
+
 ## Machine witness
 
 primordial_spinning_cube_test checks:

@@ -16,11 +16,19 @@
 #include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "Singularity/Screen/AuthoredView.hpp"
 
+#include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <string>
+#include <vector>
+
+namespace fs = std::filesystem;
 
 namespace {
 int g_checks = 0, g_failures = 0;
@@ -93,6 +101,34 @@ int main() {
         const float admitted = readFrom(PropertyValue(far));
         check(OntoMath::cameraPerspective(0.78, 1.7, kNear, admitted, true).has_value(),
               "far " + std::to_string(far) + " is a valid projection");
+    }
+
+    // Zach, 2026-11-03: give Northern Veil the same property. Its ridges and lake plates
+    // reach about 208 m, so the historical 100 m was clipping its own scenery.
+    {
+        const fs::path saved = fs::path(__FILE__).parent_path().parent_path().parent_path() /
+                               "saves" / "zones" / "Northern Veil" / "zone.ecform";
+        std::ifstream in(saved, std::ios::binary);
+        const std::vector<std::uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        check(!bytes.empty(), "Northern Veil's save exists");
+        if (!bytes.empty()) {
+            const auto wrapper = nlohmann::json::from_msgpack(bytes);
+            const auto zone = nlohmann::json::parse(wrapper.at("MigrationRoot").get<std::string>());
+            const auto root = geom::FieldNode::fromJson(zone.at("spatialRoot"));
+            const float reach = Rendering::authoredFarPlane(root.get(), kFallback, kNear);
+            check(reach == 500.0f, "Northern Veil authors its far plane");
+            float farthest = 0.f;
+            for (const auto& object : zone.at("world").at("objects")) {
+                const auto center = object.at("center");
+                const auto extent = object.at("fieldExtent");
+                for (int axis = 0; axis < 3; ++axis) {
+                    farthest = std::max(farthest, std::abs(center[axis].get<float>()) + std::abs(extent[axis].get<float>()));
+                }
+            }
+            std::cout << "  farthest opaque reach = " << farthest << std::endl;
+            check(farthest > kFallback, "the historical far plane was clipping its scenery");
+            check(reach > 2.0f * farthest, "its far plane covers the scenery from anywhere inside it");
+        }
     }
 
     std::cout << "\n" << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";

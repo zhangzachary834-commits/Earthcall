@@ -1090,58 +1090,97 @@ void WebGpuRenderer::flushMeshDraws() {
     if (_meshBatches.empty()) return;
     if (!_pass) { _meshBatches.clear(); return; }
 
-    for (auto& kv : _meshBatches) {
-        const MeshBatchKey& key = kv.first;
-        const std::vector<InstanceData>& instances = kv.second;
-        if (!key.mesh || key.mesh->tris.empty() || instances.empty()) continue;
-        const geom::TessMesh& mesh = *key.mesh;
+    // Kernel upload packets live only for this flush. The ordered batches and
+    // their binding sizes stay intact, while many small queue writes share a
+    // bounded staging upload. Metal otherwise allocates a staging buffer for
+    // every uniform and instance write, even with resident destination buffers.
+    struct UploadRecord {
+        const MeshBatchKey* key;
+        const std::vector<InstanceData>* instances;
+        size_t uniformOffset;
+        size_t instanceOffset;
+    };
+    constexpr size_t pageBytes = 256 * 1024;
+    constexpr size_t bindingAlignment = 256; // Same alignment as GpuBufferPool.
+    const auto aligned = [](size_t bytes) {
+        return (bytes + bindingAlignment - 1) / bindingAlignment * bindingAlignment;
+    };
+    std::vector<UploadRecord> records;
+    std::vector<uint8_t> uniforms, instanceBytes;
+    const auto flushPage = [&]() {
+        if (records.empty()) return;
+        const auto uniformPage = bufferPool().suballocateUniform(uniforms.data(), uniforms.size());
+        const auto instancePage = bufferPool().suballocateStorage(instanceBytes.data(), instanceBytes.size());
+        for (const auto& record : records) {
+            const MeshBatchKey& key = *record.key;
+            const auto& instances = *record.instances;
+            const geom::TessMesh& mesh = *key.mesh;
 
-        bindPipeline(_meshPipeline);
+            bindPipeline(_meshPipeline);
 
-        const size_t vbytes = mesh.tris.size() * sizeof(geom::TessVertex);
-        WGPUBuffer vbuf = _meshCache.getOrUpload(mesh);
-        uint64_t voffset = 0;
-        if (!vbuf) {
-            auto vAlloc = bufferPool().suballocateVertex(mesh.tris.data(), vbytes);
-            vbuf = vAlloc.buffer;
-            voffset = vAlloc.offset;
+            const size_t vbytes = mesh.tris.size() * sizeof(geom::TessVertex);
+            WGPUBuffer vbuf = _meshCache.getOrUpload(mesh);
+            uint64_t voffset = 0;
+            if (!vbuf) {
+                auto vAlloc = bufferPool().suballocateVertex(mesh.tris.data(), vbytes);
+                vbuf = vAlloc.buffer;
+                voffset = vAlloc.offset;
+            }
+
+            WGPUBindGroupEntry bge[3] = {};
+            bge[0].binding = 0; bge[0].buffer = uniformPage.buffer;
+            bge[0].offset = uniformPage.offset + record.uniformOffset; bge[0].size = sizeof(MeshUniforms);
+            bge[1].binding = 1; bge[1].textureView = key.albedoView;
+            bge[2].binding = 2; bge[2].sampler = _sampler;
+            WGPUBindGroupDescriptor bgDesc = {};
+            bgDesc.layout = _bgl; bgDesc.entryCount = 3; bgDesc.entries = bge;
+            WGPUBindGroup bindGroup = wgpuDeviceCreateBindGroup(_device, &bgDesc);
+            _frameBindGroups.push_back(bindGroup);
+
+            WGPUBindGroupEntry ibge = {};
+            ibge.binding = 0; ibge.buffer = instancePage.buffer;
+            ibge.offset = instancePage.offset + record.instanceOffset;
+            ibge.size = instances.size() * sizeof(InstanceData);
+            WGPUBindGroupDescriptor ibgDesc = {};
+            ibgDesc.layout = _instanceBgl; ibgDesc.entryCount = 1; ibgDesc.entries = &ibge;
+            WGPUBindGroup instBindGroup = wgpuDeviceCreateBindGroup(_device, &ibgDesc);
+            _frameBindGroups.push_back(instBindGroup);
+
+            wgpuRenderPassEncoderSetBindGroup(_pass, 0, bindGroup, 0, nullptr);
+            wgpuRenderPassEncoderSetBindGroup(_pass, 1, instBindGroup, 0, nullptr);
+            wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vbuf, voffset, vbytes);
+            wgpuRenderPassEncoderDraw(_pass, static_cast<uint32_t>(mesh.tris.size()),
+                                      static_cast<uint32_t>(instances.size()), 0, 0);
+
+            mutableFrameStats().drawCalls++;
+            mutableFrameStats().meshDrawCalls++;
         }
-
-        MeshUniforms u;
-        u.viewProj  = _viewProj;
-        u.lightPos  = glm::vec4(lightPos(), 1.0f);
-        u.params    = key.shading;
-        u.eyePos    = glm::vec4(_eyePos, 1.0f);
-        auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(MeshUniforms));
-
-        auto instAlloc = bufferPool().suballocateStorage(
-            instances.data(), instances.size() * sizeof(InstanceData));
-
-        WGPUBindGroupEntry bge[3] = {};
-        bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
-        bge[1].binding = 1; bge[1].textureView = key.albedoView;
-        bge[2].binding = 2; bge[2].sampler = _sampler;
-        WGPUBindGroupDescriptor bgDesc = {};
-        bgDesc.layout = _bgl; bgDesc.entryCount = 3; bgDesc.entries = bge;
-        WGPUBindGroup bindGroup = wgpuDeviceCreateBindGroup(_device, &bgDesc);
-        _frameBindGroups.push_back(bindGroup);
-
-        WGPUBindGroupEntry ibge = {};
-        ibge.binding = 0; ibge.buffer = instAlloc.buffer; ibge.offset = instAlloc.offset; ibge.size = instAlloc.size;
-        WGPUBindGroupDescriptor ibgDesc = {};
-        ibgDesc.layout = _instanceBgl; ibgDesc.entryCount = 1; ibgDesc.entries = &ibge;
-        WGPUBindGroup instBindGroup = wgpuDeviceCreateBindGroup(_device, &ibgDesc);
-        _frameBindGroups.push_back(instBindGroup);
-
-        wgpuRenderPassEncoderSetBindGroup(_pass, 0, bindGroup, 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(_pass, 1, instBindGroup, 0, nullptr);
-        wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vbuf, voffset, vbytes);
-        wgpuRenderPassEncoderDraw(_pass, static_cast<uint32_t>(mesh.tris.size()),
-                                  static_cast<uint32_t>(instances.size()), 0, 0);
-
-        mutableFrameStats().drawCalls++;
-        mutableFrameStats().meshDrawCalls++;
+        records.clear();
+        uniforms.clear();
+        instanceBytes.clear();
+    };
+    for (const auto& [key, instances] : _meshBatches) {
+        if (!key.mesh || key.mesh->tris.empty() || instances.empty()) continue;
+        const size_t bytes = instances.size() * sizeof(InstanceData);
+        if (!records.empty() && (aligned(uniforms.size()) + sizeof(MeshUniforms) > pageBytes ||
+                                  aligned(instanceBytes.size()) + bytes > pageBytes))
+            flushPage();
+        // A single larger instance batch keeps its existing allocation size.
+        // Only combinations of batches are limited to a page.
+        const size_t uniformOffset = aligned(uniforms.size());
+        const size_t instanceOffset = aligned(instanceBytes.size());
+        MeshUniforms uniform;
+        uniform.viewProj = _viewProj;
+        uniform.lightPos = glm::vec4(lightPos(), 1.0f);
+        uniform.params = key.shading;
+        uniform.eyePos = glm::vec4(_eyePos, 1.0f);
+        uniforms.resize(uniformOffset + sizeof(uniform));
+        instanceBytes.resize(instanceOffset + bytes);
+        std::memcpy(uniforms.data() + uniformOffset, &uniform, sizeof(uniform));
+        std::memcpy(instanceBytes.data() + instanceOffset, instances.data(), bytes);
+        records.push_back({&key, &instances, uniformOffset, instanceOffset});
     }
+    flushPage();
     _meshBatches.clear();
 }
 
