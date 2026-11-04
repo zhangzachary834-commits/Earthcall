@@ -681,6 +681,8 @@ int main() {
             return 1;
         }
         setCurrentRenderer(&r);
+        // Gate D proves roots/coverage, not a particular Material response.
+        r.setLightingEnabled(false);
 
         WGPUTextureDescriptor td = {};
         td.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_CopySrc;
