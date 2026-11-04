@@ -2330,8 +2330,10 @@ int main() {
         boundDiffuse->op = OntoMath::MathNode::Op::Bind;
         boundDiffuse->propertyPath = "diffuse";
         boundRoot->children.push_back(std::move(boundDiffuse));
-        boundRoot->children.push_back(scalarNode(0.0));
-        boundRoot->children.push_back(scalarNode(0.0));
+        boundRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        boundRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
         boundMat->responseExpr = std::make_shared<OntoMath::Piecewise>(
             OntoMath::Piecewise::continuous(boundRoot));
         boundMat->bumpResponseRevision();
