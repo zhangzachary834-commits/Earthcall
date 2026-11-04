@@ -445,8 +445,12 @@ using TypeEnv = std::map<std::string, MathType>;
 //                  world-space normalized sample -> receiver/eye.
 //   "n"            Rung 9 receiving-surface normal, a Vector. It is admitted
 //                  only by a material-response execution context.
+//   "surfaceColor" receiving-surface pigment/albedo, a Vector. Material response
+//                  may consume it; the renderer must not force an albedo multiply
+//                  after an authored response has already returned reflected RGB.
 inline constexpr const char* kAmbientPointVar = "p";
 inline constexpr const char* kSurfaceNormalVar = "n";
+inline constexpr const char* kSurfaceColorVar = "surfaceColor";
 inline constexpr const char* kTimeVar = "t";
 inline constexpr const char* kOmegaXVar = "omega.x";
 inline constexpr const char* kOmegaYVar = "omega.y";
