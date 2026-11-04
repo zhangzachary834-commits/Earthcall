@@ -1123,9 +1123,9 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
     }
 
     MeshResponseKey responseKey;
-    responseKey.direct = mat.responseExpr.get();
+    responseKey.direct = mat.responseExpr;
     responseKey.directRevision = mat.responseRevision;
-    responseKey.environment = mat.environmentResponseExpr.get();
+    responseKey.environment = mat.environmentResponseExpr;
     responseKey.environmentRevision = mat.environmentResponseRevision;
     responseKey.bindingTypes = std::move(bindingTypes);
 
@@ -1216,6 +1216,11 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
     key.pipeline = responseMemo.pipeline;
     key.albedoView = albedoView;
     key.responseParams = paramsIt->second;
+    if (!key.responseParams.empty()) {
+        key.responseParamIdentity.assign(
+            reinterpret_cast<const char*>(key.responseParams.data()),
+            key.responseParams.size() * sizeof(float));
+    }
 
     const auto authoredTransforms = deriveModelTransforms(_model);
     if (!authoredTransforms) return;
