@@ -312,7 +312,7 @@ private:
         uint64_t emissionRevision = 0xffffffffffffffffULL;
         std::string emissionStructure;
         bool emissionReadsOmega = false;
-        bool multiSource = false;
+        bool sourceSet = false;
         uint64_t sourceSetRevision = 0xffffffffffffffffULL;
         uint64_t sourceSetStructureRevision = 0xffffffffffffffffULL;
         const OntoMath::Piecewise* colorExprPtr = nullptr;
