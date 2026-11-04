@@ -2070,6 +2070,83 @@ int main() {
         renderer.setRadianceSources({}, 0);
     }
 
+    // --- LEGACY ENVIRONMENT / DIRECT-TRANSPORT SEPARATION ------------------
+    // Compatibility environment illumination may reuse authored chi(p,t), but
+    // it is not source rho and it is not visibility. A zero-rho source with a
+    // blocker on its geometric path must therefore keep the same environment
+    // pixel when visibility is enabled.
+    {
+        auto environmentMat = materials.create("webgpu_environment_separation");
+        environmentMat->baseColor = glm::vec3(1.0f);
+        environmentMat->ambient = 0.2f;
+        environmentMat->diffuse = 1.0f;
+        environmentMat->specular = 0.0f;
+
+        Object environmentReceiver;
+        auto environmentSphere =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.55f));
+        environmentReceiver.setFieldShape(environmentSphere, glm::vec3(1.5f));
+        environmentReceiver.setMaterialId("material.webgpu_environment_separation");
+
+        auto zeroRhoNode = scalarNode(0.0);
+        OntoMath::Piecewise zeroRho =
+            OntoMath::Piecewise::continuous(zeroRhoNode);
+        auto redEnvironmentNode = vectorNode(1.0, 0.0, 0.0);
+        OntoMath::Piecewise redEnvironmentChroma =
+            OntoMath::Piecewise::continuous(redEnvironmentNode);
+
+        const glm::vec3 environmentSourcePos(-0.8f, 0.0f, 1.6f);
+        renderer.setRadianceSources({}, 0);
+        renderer.setRadianceField(&zeroRho, 4301);
+        renderer.setRadianceChroma(&redEnvironmentChroma, 4302);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 0.0f);
+        renderer.setLight(environmentSourcePos,
+                          glm::vec3(0.2f),
+                          glm::vec3(0.8f),
+                          glm::vec3(0.0f));
+        renderer.setLightingEnabled(true);
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        environmentReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char environmentBaseline[4];
+        readCentre(environmentBaseline);
+        assert(environmentBaseline[0] > 35 &&
+               environmentBaseline[1] < 12 &&
+               environmentBaseline[2] < 12 &&
+               "zero-rho source lost its legacy environment illumination");
+
+        auto environmentBlocker =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.16f));
+        environmentBlocker.offset = glm::vec3(-0.4f, 0.0f, 1.075f);
+        environmentReceiver.setFieldShape(
+            geom::SdfNode::binary(
+                geom::SdfOp::Union, environmentSphere, environmentBlocker),
+            glm::vec3(1.5f));
+        renderer.setRadianceVisibilityEnabled(true);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        environmentReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char environmentBlocked[4];
+        readCentre(environmentBlocked);
+        std::printf("environment separation zero-rho baseline=(%d,%d,%d) blocked=(%d,%d,%d)\n",
+                    environmentBaseline[0], environmentBaseline[1], environmentBaseline[2],
+                    environmentBlocked[0], environmentBlocked[1], environmentBlocked[2]);
+        assert(abs(int(environmentBaseline[0]) - int(environmentBlocked[0])) <= 2 &&
+               abs(int(environmentBaseline[1]) - int(environmentBlocked[1])) <= 2 &&
+               abs(int(environmentBaseline[2]) - int(environmentBlocked[2])) <= 2 &&
+               "visibility or blocker geometry leaked into environment compatibility illumination");
+
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setRadianceField(nullptr, 0);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
+    }
+
     // --- RUNG 9 MATERIAL COPY-ON-WRITE CONTINUITY ---------------------------
     // Painting an Object creates its private Material. That operation may change
     // paint ownership; it must neither erase nor alias receiver-response truth.
