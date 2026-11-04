@@ -4165,6 +4165,21 @@ std::vector<bool> emitRadianceSourceFunctions(
     std::vector<bool> angularReadsOmega;
     angularReadsOmega.reserve(sources.size());
 
+    wgsl += R"WGSL(
+struct RadianceSourceSample {
+    environmentRadiance: vec3<f32>,
+    incidentRadiance: vec3<f32>,
+    legacyDiffuseIncident: vec3<f32>,
+    legacySpecularIncident: vec3<f32>,
+    responseWi: vec3<f32>,
+    shapedRadiance: f32,
+    directionDefined: f32,
+    enabled: f32,
+};
+)WGSL";
+    wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
+            wgslLiteral(OntoMath::kDirectionEpsilon) + ";\n";
+
     const std::string previousTimeExpression = e.timeExpression;
     for (std::size_t i = 0; i < sources.size(); ++i) {
         const auto& source = sources[i];
@@ -4182,8 +4197,10 @@ std::vector<bool> emitRadianceSourceFunctions(
         wgsl += "\nfn lightRadiance_" + suffix +
                 "(p: vec3<f32>) -> f32 {\n" + radianceBody + "}\n";
 
+        const bool hasChroma =
+            source.chromaExpr && !source.chromaExpr->pieces.empty();
         std::string chromaBody;
-        if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
+        if (hasChroma) {
             std::string validationError;
             if (!validateVectorPiecewise(*source.chromaExpr, true, validationError)) {
                 e.refuse("source[" + suffix + "] chroma: " + validationError);
@@ -4198,9 +4215,11 @@ std::vector<bool> emitRadianceSourceFunctions(
         wgsl += "\nfn lightChroma_" + suffix +
                 "(p: vec3<f32>) -> vec3<f32> {\n" + chromaBody + "}\n";
 
+        const bool hasAngular =
+            source.angularExpr && !source.angularExpr->pieces.empty();
         std::string angularBody;
         bool readsOmega = false;
-        if (source.angularExpr && !source.angularExpr->pieces.empty()) {
+        if (hasAngular) {
             std::string validationError;
             if (!validateAngularPiecewise(*source.angularExpr, validationError)) {
                 e.refuse("source[" + suffix + "] angular: " + validationError);
@@ -4220,6 +4239,56 @@ std::vector<bool> emitRadianceSourceFunctions(
         wgsl += "\nfn lightAngular_" + suffix +
                 "(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" +
                 angularBody + "}\n";
+
+        // This is the geometry-independent source packet. Visibility is
+        // deliberately NOT here: Source authors rho/chi/alpha; Path owns V.
+        wgsl += "\nfn sourceSample_" + suffix +
+                "(receiverWorld: vec3<f32>) -> RadianceSourceSample {\n";
+        wgsl += "    let source = RS[" + suffix + "u];\n";
+        wgsl += "    let sourceDelta = receiverWorld - source.position.xyz;\n";
+        wgsl += "    let sourceDistance = length(sourceDelta);\n";
+        wgsl += "    let sourceChroma = lightChroma_" + suffix +
+                "(sourceDelta);\n";
+        if (hasChroma) {
+            wgsl += "    let environmentRadiance = sourceChroma * "
+                    "vec3<f32>(source.legacyEnvironment.w);\n";
+            wgsl += "    let incidentRadiance = sourceChroma * "
+                    "vec3<f32>(source.directIncidentRadiance.w);\n";
+            wgsl += "    let legacyDiffuseIncident = sourceChroma * "
+                    "vec3<f32>(source.legacyDiffuseIncident.w);\n";
+            wgsl += "    let legacySpecularIncident = sourceChroma * "
+                    "vec3<f32>(source.legacySpecularIncident.w);\n";
+        } else {
+            wgsl += "    let environmentRadiance = source.legacyEnvironment.rgb;\n";
+            wgsl += "    let incidentRadiance = source.directIncidentRadiance.rgb;\n";
+            wgsl += "    let legacyDiffuseIncident = source.legacyDiffuseIncident.rgb;\n";
+            wgsl += "    let legacySpecularIncident = source.legacySpecularIncident.rgb;\n";
+        }
+        wgsl += "    let radialRadiance = max(lightRadiance_" + suffix +
+                "(sourceDelta), 0.0);\n";
+        wgsl += "    var angularRadiance = 1.0;\n";
+        if (hasAngular) {
+            if (readsOmega) {
+                wgsl += "    if (sourceDistance > SOURCE_DIRECTION_EPS) {\n";
+                wgsl += "        angularRadiance = max(lightAngular_" + suffix +
+                        "(sourceDelta, sourceDelta / sourceDistance), 0.0);\n";
+                wgsl += "    } else { angularRadiance = 0.0; }\n";
+            } else {
+                wgsl += "    angularRadiance = max(lightAngular_" + suffix +
+                        "(sourceDelta, vec3<f32>(0.0)), 0.0);\n";
+            }
+        }
+        wgsl += "    var responseWi = vec3<f32>(0.0);\n";
+        wgsl += "    var directionDefined = 0.0;\n";
+        wgsl += "    if (sourceDistance > SOURCE_DIRECTION_EPS) {\n";
+        wgsl += "        responseWi = sourceDelta / sourceDistance;\n";
+        wgsl += "        directionDefined = 1.0;\n";
+        wgsl += "    }\n";
+        wgsl += "    return RadianceSourceSample("
+                "environmentRadiance, incidentRadiance, legacyDiffuseIncident, "
+                "legacySpecularIncident, responseWi, "
+                "radialRadiance * angularRadiance, directionDefined, source.control.x);\n";
+        wgsl += "}\n";
     }
     e.timeExpression = previousTimeExpression;
     return angularReadsOmega;
