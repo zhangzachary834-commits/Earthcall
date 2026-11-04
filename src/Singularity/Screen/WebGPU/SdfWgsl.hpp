@@ -21,6 +21,7 @@
 #include <cstddef>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/RadianceSource.hpp"
@@ -53,6 +54,11 @@ struct ParameterBlock {
     bool ok = true;
     std::string error;
 };
+
+// Generic authored PropertyPath values supplied by the channel that owns the
+// subject. The compiler knows paths and types only; it does not know Material,
+// Light, roughness, shininess, or any other domain-specific noun.
+using BindingValues = std::map<std::string, PropertyValue>;
 
 // Isolated authored scalar-expression layout. This deliberately reuses the
 // production emitter: numeric values become parameter slots, while every choice
@@ -243,7 +249,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* volumeChromaExpr = nullptr,
                 const OntoMath::Piecewise* phaseExpr = nullptr,
                 const OntoMath::Piecewise* emissionExpr = nullptr,
-                const OntoMath::Piecewise* responseExpr = nullptr);
+                const OntoMath::Piecewise* responseExpr = nullptr,
+                const BindingValues* responseBindings = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -262,7 +269,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* volumeChromaExpr = nullptr,
                              const OntoMath::Piecewise* phaseExpr = nullptr,
                              const OntoMath::Piecewise* emissionExpr = nullptr,
-                             const OntoMath::Piecewise* responseExpr = nullptr);
+                             const OntoMath::Piecewise* responseExpr = nullptr,
+                             const BindingValues* responseBindings = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
@@ -337,11 +345,16 @@ PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr);
 // admitted incident radiance: Screen must not secretly multiply pigment or add
 // another aesthetic lobe afterward. No t is admitted until an honest
 // Material-owned Timeline exists.
-ResponseExpressionLayout inspectResponseExpression(const OntoMath::Piecewise* expr);
+ResponseExpressionLayout inspectResponseExpression(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings = nullptr);
 
 // Re-collect only response numeric parameters using the same admission/lowering
-// path as inspectResponseExpression. This is the future value-only cache path.
-ParameterBlock collectResponseParams(const OntoMath::Piecewise* expr);
+// path as inspectResponseExpression. Bound PropertyPath values enter the same
+// parameter stream, so value edits preserve WGSL structure.
+ParameterBlock collectResponseParams(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings = nullptr);
 
 // V4 medium self-emission E_v(p,omega,t)->vec3. Absence is no self-emitted
 // radiance. omega is world-space sample -> eye in an emission-owned context.
