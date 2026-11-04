@@ -1351,11 +1351,25 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
         }
     }
 
+    const bool hasSourceSet = !radianceSources().empty();
+    if (hasSourceSet && !refreshRadianceSourceLayout()) {
+        mutableFrameStats().meshProgramRefusals++;
+        mutableFrameStats().meshLastProgramRefusal =
+            _radianceSourcesLayoutError;
+        std::fprintf(stderr,
+                     "[WebGpuRenderer] mesh source-set response refused: %s\n",
+                     _radianceSourcesLayoutError.c_str());
+        return;
+    }
+
     MeshResponseKey responseKey;
     responseKey.direct = mat.responseExpr;
     responseKey.directRevision = mat.responseRevision;
     responseKey.environment = mat.environmentResponseExpr;
     responseKey.environmentRevision = mat.environmentResponseRevision;
+    responseKey.sourceSet = hasSourceSet;
+    responseKey.sourceSetStructureRevision =
+        hasSourceSet ? _radianceSourcesStructureRevision : 0;
     responseKey.bindingTypes = std::move(bindingTypes);
 
     auto memoIt = _meshResponsePrograms.find(responseKey);
@@ -1372,7 +1386,26 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
                          memo.program.error.c_str());
             return;
         }
-        const std::string wgsl = meshWgsl(memo.program);
+        if (hasSourceSet) {
+            const std::string sourceOffset =
+                std::to_string(memo.program.params.size()) + "u";
+            memo.sourceProgram = sdfwgsl::compileRadianceSourceModule(
+                radianceSources(), sourceOffset);
+            if (!memo.sourceProgram.ok) {
+                mutableFrameStats().meshProgramRefusals++;
+                mutableFrameStats().meshLastProgramRefusal =
+                    memo.sourceProgram.error;
+                std::fprintf(
+                    stderr,
+                    "[WebGpuRenderer] mesh authored source-set refused: %s\n",
+                    memo.sourceProgram.error.c_str());
+                return;
+            }
+        }
+
+        const std::string wgsl =
+            meshWgsl(memo.program,
+                     hasSourceSet ? &memo.sourceProgram : nullptr);
         memo.pipeline = meshPipeline(wgsl);
         if (!memo.pipeline || !memo.pipeline->pipe) {
             mutableFrameStats().meshProgramRefusals++;
@@ -1382,13 +1415,30 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
                          "[WebGpuRenderer] mesh Material response pipeline failed\n");
             return;
         }
-        memo.params.emplace(mat.responseBindingIdentity, memo.program.params);
+        std::vector<float> initialParams = memo.program.params;
+        if (hasSourceSet) {
+            initialParams.insert(
+                initialParams.end(),
+                memo.sourceProgram.params.begin(),
+                memo.sourceProgram.params.end());
+        }
+        const std::string valueIdentity =
+            mat.responseBindingIdentity +
+            (hasSourceSet
+                 ? "#sourceSet:" + std::to_string(radianceSourcesRevision())
+                 : "#sourceSet:none");
+        memo.params.emplace(valueIdentity, std::move(initialParams));
         memoIt = _meshResponsePrograms.emplace(
             std::move(responseKey), std::move(memo)).first;
     }
 
     MeshResponseMemo& responseMemo = memoIt->second;
-    auto paramsIt = responseMemo.params.find(mat.responseBindingIdentity);
+    const std::string valueIdentity =
+        mat.responseBindingIdentity +
+        (hasSourceSet
+             ? "#sourceSet:" + std::to_string(radianceSourcesRevision())
+             : "#sourceSet:none");
+    auto paramsIt = responseMemo.params.find(valueIdentity);
     if (paramsIt == responseMemo.params.end()) {
         auto direct = sdfwgsl::collectResponseParams(
             mat.responseExpr.get(), &mat.responseBindings);
@@ -1404,12 +1454,35 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
                          reason.c_str());
             return;
         }
+
+        sdfwgsl::ParameterBlock sourceParams;
+        if (hasSourceSet) {
+            sourceParams =
+                sdfwgsl::collectRadianceSourceParams(radianceSources());
+            if (!sourceParams.ok) {
+                mutableFrameStats().meshProgramRefusals++;
+                mutableFrameStats().meshLastProgramRefusal =
+                    sourceParams.error;
+                std::fprintf(
+                    stderr,
+                    "[WebGpuRenderer] mesh source param refresh refused: %s\n",
+                    sourceParams.error.c_str());
+                return;
+            }
+        }
+
         std::vector<float> params;
-        params.reserve(direct.values.size() + environment.values.size());
+        params.reserve(direct.values.size() + environment.values.size() +
+                       sourceParams.values.size());
         params.insert(params.end(), direct.values.begin(), direct.values.end());
         params.insert(params.end(), environment.values.begin(), environment.values.end());
+        if (hasSourceSet) {
+            params.insert(params.end(),
+                          sourceParams.values.begin(),
+                          sourceParams.values.end());
+        }
         paramsIt = responseMemo.params.emplace(
-            mat.responseBindingIdentity, std::move(params)).first;
+            valueIdentity, std::move(params)).first;
     }
 
     // Albedo is resolved NOW, not deferred: a queued batch cannot hold
@@ -1445,6 +1518,7 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
     key.pipeline = responseMemo.pipeline;
     key.albedoView = albedoView;
     key.responseParams = paramsIt->second;
+    key.sourceSet = hasSourceSet;
     if (!key.responseParams.empty()) {
         key.responseParamIdentity.assign(
             reinterpret_cast<const char*>(key.responseParams.data()),
