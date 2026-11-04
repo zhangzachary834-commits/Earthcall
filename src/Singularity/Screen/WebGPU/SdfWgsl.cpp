@@ -4280,6 +4280,83 @@ ParameterBlock collectEnvironmentResponseParams(
     return ParameterBlock{std::move(e.params), !e.refused, e.refusal};
 }
 
+SurfaceResponseProgram compileSurfaceResponseModule(
+    const OntoMath::Piecewise* responseExpr,
+    const OntoMath::Piecewise* environmentResponseExpr,
+    const BindingValues* bindings) {
+    SurfaceResponseProgram out;
+    Emit e;
+    // Surface modules own a compact response-only parameter buffer. Geometry
+    // callers bind P independently; no SDF instance paramOffset is meaningful.
+    e.parameterOffset = "0u";
+    e.propertyBindings = bindings;
+
+    out.wgsl = kPrimitives;
+    out.hasDirectResponse = responseExpr && !responseExpr->pieces.empty();
+    out.hasEnvironmentResponse =
+        environmentResponseExpr && !environmentResponseExpr->pieces.empty();
+
+    out.wgsl += "\nfn materialResponseEval(p: vec3<f32>, n: vec3<f32>, "
+                "wi: vec3<f32>, wo: vec3<f32>, surfaceColor: vec3<f32>, "
+                "incidentRadiance: vec3<f32>, legacyDiffuseIncident: vec3<f32>, "
+                "legacySpecularIncident: vec3<f32>) -> vec3<f32> {\n";
+    if (out.hasDirectResponse) {
+        std::string validationError;
+        if (!validateResponsePiecewise(*responseExpr, bindings, validationError)) {
+            e.refuse("material response: " + validationError);
+            out.wgsl += "    return vec3<f32>(0.0);\n";
+        } else {
+            e.readSurfaceNormal = false;
+            e.readWi = false;
+            e.readWo = false;
+            e.bindMaterialResponse = true;
+            emitPiecewise(*responseExpr, e, "p", "vec3<f32>", out.wgsl);
+            e.bindMaterialResponse = false;
+            out.directReadsNormal = e.readSurfaceNormal;
+            out.directReadsWi = e.readWi;
+            out.directReadsWo = e.readWo;
+        }
+    } else {
+        out.wgsl += "    return vec3<f32>(0.0);\n";
+    }
+    out.wgsl += "}\n";
+
+    out.wgsl += "\nfn materialEnvironmentResponseEval(p: vec3<f32>, "
+                "n: vec3<f32>, wo: vec3<f32>, surfaceColor: vec3<f32>, "
+                "environmentRadiance: vec3<f32>) -> vec3<f32> {\n";
+    if (out.hasEnvironmentResponse) {
+        std::string validationError;
+        if (!validateEnvironmentResponsePiecewise(
+                *environmentResponseExpr, bindings, validationError)) {
+            e.refuse("material environment response: " + validationError);
+            out.wgsl += "    return vec3<f32>(0.0);\n";
+        } else {
+            e.readSurfaceNormal = false;
+            e.readWi = false;
+            e.readWo = false;
+            e.bindEnvironmentResponse = true;
+            emitPiecewise(
+                *environmentResponseExpr, e, "p", "vec3<f32>", out.wgsl);
+            e.bindEnvironmentResponse = false;
+            out.environmentReadsNormal = e.readSurfaceNormal;
+            out.environmentReadsWo = e.readWo;
+            if (e.readWi) {
+                e.refuse(
+                    "material environment response illegally read direct incoming direction wi");
+            }
+        }
+    } else {
+        out.wgsl += "    return vec3<f32>(0.0);\n";
+    }
+    out.wgsl += "}\n";
+
+    out.params = std::move(e.params);
+    out.ok = !e.refused;
+    out.error = e.refusal;
+    if (!out.ok) out.wgsl = "// REFUSED: " + out.error + "\n";
+    return out;
+}
+
 PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr) {
     if (!expr || expr->pieces.empty()) {
         return PhaseExpressionLayout{"<volume-phase:1.0>", 0, false, false, true, ""};
