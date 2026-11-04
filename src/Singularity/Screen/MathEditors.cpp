@@ -696,10 +696,10 @@ bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
                 static_cast<int>(candidateOp) >= static_cast<int>(OntoMath::MathNode::Op::MatrixConstruct) &&
                 static_cast<int>(candidateOp) <= static_cast<int>(OntoMath::MathNode::Op::MatrixInverse);
             const char* group = matrixOp ? "MATRICES"
-                                : i <= 3 ? "VALUES"
-                                : i <= 10 ? "ARITHMETIC & VECTORS"
-                                : i <= 14 ? "TRANSFORMS"
-                                : i <= 23 ? "SPACE & FIELDS"
+                                : i <= 4 ? "VALUES"
+                                : i <= 11 ? "ARITHMETIC & VECTORS"
+                                : i <= 15 ? "TRANSFORMS"
+                                : i <= 24 ? "SPACE & FIELDS"
                                           : "FUNCTIONS";
             if (!previousGroup || std::strcmp(group, previousGroup) != 0) {
                 ImGui::TextDisabled("%s", group);
