@@ -1542,6 +1542,16 @@ void WebGpuRenderer::flushMeshDraws() {
     if (_meshBatches.empty()) return;
     if (!_pass) { _meshBatches.clear(); return; }
 
+    RadianceSourceBufferView sourceView = prepareRadianceSourceBuffer();
+    if (!sourceView.buffer) {
+        const RadianceSourceGpuData inertSource{};
+        auto inert = bufferPool().suballocateStorage(
+            &inertSource, sizeof(RadianceSourceGpuData));
+        sourceView.buffer = inert.buffer;
+        sourceView.offset = inert.offset;
+        sourceView.size = inert.size;
+    }
+
     for (auto& kv : _meshBatches) {
         const MeshBatchKey& key = kv.first;
         const std::vector<InstanceData>& instances = kv.second;
@@ -1566,7 +1576,16 @@ void WebGpuRenderer::flushMeshDraws() {
         u.viewProj = _viewProj;
         u.lightPos = glm::vec4(lightPos(), 1.0f);
         u.eyePos = glm::vec4(_eyePos, 1.0f);
-        u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
+        u.lightControl = glm::vec4(
+            lightingEnabled() ? 1.0f : 0.0f,
+            radianceVisibilityEnabled() ? 1.0f : 0.0f,
+            0.0f, 0.0f);
+        if (key.sourceSet && radianceVisibilityEnabled()) {
+            // This is an explicit unknown-V refusal for direct transport, not
+            // evidence that the source was invisible. The shader still admits
+            // directionless environment response from the source set.
+            mutableFrameStats().meshVisibilityUnknownDirectSkips++;
+        }
         auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(MeshUniforms));
 
         auto instAlloc = bufferPool().suballocateStorage(
@@ -1586,7 +1605,14 @@ void WebGpuRenderer::flushMeshDraws() {
             bufferPool().suballocateStorage(paramData, paramBytes);
         mutableFrameStats().meshParameterBytesUploaded += paramBytes;
 
-        WGPUBindGroupEntry bge[4] = {};
+        if (key.sourceSet && (!sourceView.buffer || sourceView.size == 0)) {
+            mutableFrameStats().meshProgramRefusals++;
+            mutableFrameStats().meshLastProgramRefusal =
+                "admitted mesh source set has no GPU source buffer";
+            continue;
+        }
+
+        WGPUBindGroupEntry bge[5] = {};
         bge[0].binding = 0;
         bge[0].buffer = uAlloc.buffer;
         bge[0].offset = uAlloc.offset;
@@ -1599,9 +1625,13 @@ void WebGpuRenderer::flushMeshDraws() {
         bge[3].buffer = paramAlloc.buffer;
         bge[3].offset = paramAlloc.offset;
         bge[3].size = paramAlloc.size;
+        bge[4].binding = 4;
+        bge[4].buffer = sourceView.buffer;
+        bge[4].offset = sourceView.offset;
+        bge[4].size = sourceView.size;
         WGPUBindGroupDescriptor bgDesc = {};
         bgDesc.layout = _bgl;
-        bgDesc.entryCount = 4;
+        bgDesc.entryCount = 5;
         bgDesc.entries = bge;
         WGPUBindGroup bindGroup =
             wgpuDeviceCreateBindGroup(_device, &bgDesc);
