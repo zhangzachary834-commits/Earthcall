@@ -17,6 +17,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/Screen/RenderMaterial.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Time/timeline.hpp"
@@ -2428,6 +2429,65 @@ int main() {
 
         renderer.setRadianceField(nullptr, 0);
         renderer.setRadianceVisibilityEnabled(false);
+    }
+
+    // --- DEFAULT DIRECT RESPONSE INHERITANCE / LOCAL BINDINGS ----------------
+    // A legacy Material has no local response AST. Resolution must inherit the
+    // default authored equation while binding THIS Material's coefficients.
+    // Equation inheritance is not value inheritance.
+    {
+        auto legacyInherited = materials.create("webgpu_default_response_inheritance");
+        legacyInherited->responseExpr.reset();
+        legacyInherited->environmentResponseExpr.reset();
+        legacyInherited->diffuse = 0.31f;
+        legacyInherited->specular = 0.27f;
+        legacyInherited->shininess = 11.0f;
+        legacyInherited->ambient = 0.09f;
+
+        auto defaultMaterial = materials.defaultMaterial();
+        assert(defaultMaterial && defaultMaterial->responseExpr &&
+               defaultMaterial->environmentResponseExpr);
+
+        const RenderMaterial resolvedInherited =
+            resolveRenderMaterial(
+                "material.webgpu_default_response_inheritance", {});
+        assert(resolvedInherited.responseExpr &&
+               resolvedInherited.responseExpr.get() ==
+                   defaultMaterial->responseExpr.get() &&
+               "legacy Material did not inherit the authored default direct equation");
+        assert(resolvedInherited.environmentResponseExpr &&
+               resolvedInherited.environmentResponseExpr.get() ==
+                   defaultMaterial->environmentResponseExpr.get() &&
+               "legacy Material did not inherit the authored default environment equation");
+
+        const auto readBoundNumber = [&](const char* path) {
+            const auto it = resolvedInherited.responseBindings.find(path);
+            assert(it != resolvedInherited.responseBindings.end());
+            double value = 0.0;
+            assert(propertyValueToNumber(it->second, value));
+            return value;
+        };
+        assert(std::abs(readBoundNumber("diffuse") - 0.31) < 1e-6 &&
+               std::abs(readBoundNumber("specular") - 0.27) < 1e-6 &&
+               std::abs(readBoundNumber("shininess") - 11.0) < 1e-6 &&
+               std::abs(readBoundNumber("ambient") - 0.09) < 1e-6 &&
+               "inherited response equation bound default Material values instead of receiver values");
+
+        auto localRoot = vectorNode(0.2, 0.3, 0.4);
+        legacyInherited->responseExpr =
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::continuous(localRoot));
+        legacyInherited->bumpResponseRevision();
+        const RenderMaterial resolvedLocal =
+            resolveRenderMaterial(
+                "material.webgpu_default_response_inheritance", {});
+        assert(resolvedLocal.responseExpr.get() ==
+                   legacyInherited->responseExpr.get() &&
+               resolvedLocal.responseExpr.get() !=
+                   defaultMaterial->responseExpr.get() &&
+               "explicit local response did not remain sovereign over the default");
+        assert(!resolvedLocal.environmentResponseExpr &&
+               "explicit direct response secretly inherited legacy environment response");
     }
 
     // --- AD-21 MATERIAL RESPONSE PROPERTY BIND -------------------------------
