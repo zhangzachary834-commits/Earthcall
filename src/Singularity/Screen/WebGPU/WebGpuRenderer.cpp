@@ -1075,9 +1075,8 @@ void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width,
 void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& mat) {
     if (!_pass || mesh.tris.empty()) return;
 
-    // setWireframe: GL had glPolygonMode to draw the same triangles as edges.
-    // WebGPU has no such state, and reinterpreting a triangle list as a line list
-    // would connect the wrong vertices — so the edges are built explicitly.
+    // setWireframe is intentionally unlit overlay machinery, not a surface
+    // illumination path.
     if (_wireframe) {
         std::vector<glm::vec3> edges;
         edges.reserve(mesh.tris.size() * 2);
@@ -1095,14 +1094,83 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
                  glm::vec4(mat.baseColor, mat.opacity));
         return;
     }
+
+    // Compile/cache receiver STRUCTURE separately from values. Bind values are
+    // typed here only to distinguish scalar and vec3 layouts; the compiler
+    // remains ignorant of material nouns such as diffuse or shininess.
+    std::string bindingTypes;
+    for (const auto& [path, value] : mat.responseBindings) {
+        bindingTypes += std::to_string(path.size()) + ":" + path + "=";
+        double scalar = 0.0;
+        if (propertyValueToNumber(value, scalar)) {
+            bindingTypes += "scalar;";
+        } else if (std::holds_alternative<glm::vec3>(value)) {
+            bindingTypes += "vec3;";
+        } else {
+            // compileSurfaceResponseModule will issue the named refusal. Keep a
+            // stable type token so an unsupported value can never alias a valid
+            // receiver program.
+            bindingTypes += "unsupported;";
+        }
+    }
+
+    MeshResponseKey responseKey;
+    responseKey.direct = mat.responseExpr.get();
+    responseKey.directRevision = mat.responseRevision;
+    responseKey.environment = mat.environmentResponseExpr.get();
+    responseKey.environmentRevision = mat.environmentResponseRevision;
+    responseKey.bindingTypes = std::move(bindingTypes);
+
+    auto memoIt = _meshResponsePrograms.find(responseKey);
+    if (memoIt == _meshResponsePrograms.end()) {
+        MeshResponseMemo memo;
+        memo.program = sdfwgsl::compileSurfaceResponseModule(
+            mat.responseExpr.get(), mat.environmentResponseExpr.get(),
+            &mat.responseBindings);
+        if (!memo.program.ok) {
+            std::fprintf(stderr,
+                         "[WebGpuRenderer] mesh Material response refused: %s\n",
+                         memo.program.error.c_str());
+            return;
+        }
+        const std::string wgsl = meshWgsl(memo.program);
+        memo.pipeline = meshPipeline(wgsl);
+        if (!memo.pipeline || !memo.pipeline->pipe) {
+            std::fprintf(stderr,
+                         "[WebGpuRenderer] mesh Material response pipeline failed\n");
+            return;
+        }
+        memo.params.emplace(mat.responseBindingIdentity, memo.program.params);
+        memoIt = _meshResponsePrograms.emplace(
+            std::move(responseKey), std::move(memo)).first;
+    }
+
+    MeshResponseMemo& responseMemo = memoIt->second;
+    auto paramsIt = responseMemo.params.find(mat.responseBindingIdentity);
+    if (paramsIt == responseMemo.params.end()) {
+        auto direct = sdfwgsl::collectResponseParams(
+            mat.responseExpr.get(), &mat.responseBindings);
+        auto environment = sdfwgsl::collectEnvironmentResponseParams(
+            mat.environmentResponseExpr.get(), &mat.responseBindings);
+        if (!direct.ok || !environment.ok) {
+            const std::string reason =
+                !direct.ok ? direct.error : environment.error;
+            std::fprintf(stderr,
+                         "[WebGpuRenderer] mesh Material response value refresh refused: %s\n",
+                         reason.c_str());
+            return;
+        }
+        std::vector<float> params;
+        params.reserve(direct.values.size() + environment.values.size());
+        params.insert(params.end(), direct.values.begin(), direct.values.end());
+        params.insert(params.end(), environment.values.begin(), environment.values.end());
+        paramsIt = responseMemo.params.emplace(
+            mat.responseBindingIdentity, std::move(params)).first;
+    }
+
     // Albedo is resolved NOW, not deferred: a queued batch cannot hold
-    // RenderMaterial::albedoPixels (documented "valid only for the duration
-    // of the draw call"), and resolving to a stable WGPUTextureView also
-    // doubles as the batching key's material identity — see MeshBatchKey.
+    // RenderMaterial::albedoPixels beyond this draw call.
     WGPUTextureView albedoView = _whiteView;
-    // Prefer a texture this backend already owns: FaceTexture re-uploads only when
-    // the paint changes, so a static surface costs nothing per frame. The
-    // albedoPixels path below is the fallback for callers that hold no handle.
     auto owned = _textures.find(mat.textureId);
     if (mat.textureId != 0 && owned != _textures.end()) {
         albedoView = owned->second.view;
@@ -1121,30 +1189,30 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
         WGPUTexelCopyBufferLayout alay = {};
         alay.bytesPerRow = w * 4; alay.rowsPerImage = h;
         WGPUExtent3D asize = { w, h, 1 };
-        wgpuQueueWriteTexture(_queue, &adst, mat.albedoPixels, size_t(w) * h * 4, &alay, &asize);
+        wgpuQueueWriteTexture(_queue, &adst, mat.albedoPixels,
+                              size_t(w) * h * 4, &alay, &asize);
         albedoView = wgpuTextureCreateView(atex, nullptr);
         _frameTextures.push_back(atex);
         _frameTextureViews.push_back(albedoView);
     }
 
     MeshBatchKey key;
-    key.mesh       = &mesh;
+    key.mesh = &mesh;
+    key.pipeline = responseMemo.pipeline;
     key.albedoView = albedoView;
-    key.shading    = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
+    key.responseParams = paramsIt->second;
 
     const auto authoredTransforms = deriveModelTransforms(_model);
     if (!authoredTransforms) return;
 
     InstanceData inst;
-    inst.model     = _model;
+    inst.model = _model;
     inst.normalMat = authoredTransforms->normal;
     inst.baseColor = glm::vec4(mat.baseColor, mat.opacity);
-    _meshBatches[key].push_back(inst);
+    _meshBatches[std::move(key)].push_back(inst);
 
-    // Every queued instance really will be drawn at flush — count its
-    // triangles now. drawCalls/pipelineSwitches are credited once per BATCH
-    // in flushMeshDraws(), which is the actual number of GPU draw calls.
-    mutableFrameStats().trianglesDrawn += static_cast<uint32_t>(mesh.tris.size() / 3);
+    mutableFrameStats().trianglesDrawn +=
+        static_cast<uint32_t>(mesh.tris.size() / 3);
 }
 
 void WebGpuRenderer::flushMeshDraws() {
@@ -1154,10 +1222,13 @@ void WebGpuRenderer::flushMeshDraws() {
     for (auto& kv : _meshBatches) {
         const MeshBatchKey& key = kv.first;
         const std::vector<InstanceData>& instances = kv.second;
-        if (!key.mesh || key.mesh->tris.empty() || instances.empty()) continue;
+        if (!key.mesh || !key.pipeline || !key.pipeline->pipe ||
+            key.mesh->tris.empty() || instances.empty()) {
+            continue;
+        }
         const geom::TessMesh& mesh = *key.mesh;
 
-        bindPipeline(_meshPipeline);
+        bindPipeline(key.pipeline->pipe);
 
         const size_t vbytes = mesh.tris.size() * sizeof(geom::TessVertex);
         WGPUBuffer vbuf = _meshCache.getOrUpload(mesh);
@@ -1169,36 +1240,69 @@ void WebGpuRenderer::flushMeshDraws() {
         }
 
         MeshUniforms u;
-        u.viewProj  = _viewProj;
-        u.lightPos  = glm::vec4(lightPos(), 1.0f);
-        u.params    = key.shading;
-        u.eyePos    = glm::vec4(_eyePos, 1.0f);
+        u.viewProj = _viewProj;
+        u.lightPos = glm::vec4(lightPos(), 1.0f);
+        u.eyePos = glm::vec4(_eyePos, 1.0f);
+        u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
         auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(MeshUniforms));
 
         auto instAlloc = bufferPool().suballocateStorage(
             instances.data(), instances.size() * sizeof(InstanceData));
 
-        WGPUBindGroupEntry bge[3] = {};
-        bge[0].binding = 0; bge[0].buffer = uAlloc.buffer; bge[0].offset = uAlloc.offset; bge[0].size = uAlloc.size;
-        bge[1].binding = 1; bge[1].textureView = key.albedoView;
-        bge[2].binding = 2; bge[2].sampler = _sampler;
+        // WebGPU storage bindings cannot have zero size. An authored receiver
+        // with no numeric parameters still gets one inert float; generated WGSL
+        // never reads it.
+        const float inert = 0.0f;
+        const void* paramData = key.responseParams.empty()
+            ? static_cast<const void*>(&inert)
+            : static_cast<const void*>(key.responseParams.data());
+        const size_t paramBytes = key.responseParams.empty()
+            ? sizeof(float)
+            : key.responseParams.size() * sizeof(float);
+        auto paramAlloc =
+            bufferPool().suballocateStorage(paramData, paramBytes);
+
+        WGPUBindGroupEntry bge[4] = {};
+        bge[0].binding = 0;
+        bge[0].buffer = uAlloc.buffer;
+        bge[0].offset = uAlloc.offset;
+        bge[0].size = uAlloc.size;
+        bge[1].binding = 1;
+        bge[1].textureView = key.albedoView;
+        bge[2].binding = 2;
+        bge[2].sampler = _sampler;
+        bge[3].binding = 3;
+        bge[3].buffer = paramAlloc.buffer;
+        bge[3].offset = paramAlloc.offset;
+        bge[3].size = paramAlloc.size;
         WGPUBindGroupDescriptor bgDesc = {};
-        bgDesc.layout = _bgl; bgDesc.entryCount = 3; bgDesc.entries = bge;
-        WGPUBindGroup bindGroup = wgpuDeviceCreateBindGroup(_device, &bgDesc);
+        bgDesc.layout = _bgl;
+        bgDesc.entryCount = 4;
+        bgDesc.entries = bge;
+        WGPUBindGroup bindGroup =
+            wgpuDeviceCreateBindGroup(_device, &bgDesc);
         _frameBindGroups.push_back(bindGroup);
 
         WGPUBindGroupEntry ibge = {};
-        ibge.binding = 0; ibge.buffer = instAlloc.buffer; ibge.offset = instAlloc.offset; ibge.size = instAlloc.size;
+        ibge.binding = 0;
+        ibge.buffer = instAlloc.buffer;
+        ibge.offset = instAlloc.offset;
+        ibge.size = instAlloc.size;
         WGPUBindGroupDescriptor ibgDesc = {};
-        ibgDesc.layout = _instanceBgl; ibgDesc.entryCount = 1; ibgDesc.entries = &ibge;
-        WGPUBindGroup instBindGroup = wgpuDeviceCreateBindGroup(_device, &ibgDesc);
+        ibgDesc.layout = _instanceBgl;
+        ibgDesc.entryCount = 1;
+        ibgDesc.entries = &ibge;
+        WGPUBindGroup instBindGroup =
+            wgpuDeviceCreateBindGroup(_device, &ibgDesc);
         _frameBindGroups.push_back(instBindGroup);
 
         wgpuRenderPassEncoderSetBindGroup(_pass, 0, bindGroup, 0, nullptr);
         wgpuRenderPassEncoderSetBindGroup(_pass, 1, instBindGroup, 0, nullptr);
-        wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vbuf, voffset, vbytes);
-        wgpuRenderPassEncoderDraw(_pass, static_cast<uint32_t>(mesh.tris.size()),
-                                  static_cast<uint32_t>(instances.size()), 0, 0);
+        wgpuRenderPassEncoderSetVertexBuffer(
+            _pass, 0, vbuf, voffset, vbytes);
+        wgpuRenderPassEncoderDraw(
+            _pass, static_cast<uint32_t>(mesh.tris.size()),
+            static_cast<uint32_t>(instances.size()), 0, 0);
 
         mutableFrameStats().drawCalls++;
         mutableFrameStats().meshDrawCalls++;
