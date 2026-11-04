@@ -49,7 +49,9 @@ struct RenderMaterial {
     // authored by MathNode::Bind; values are resolved from the Material being
     // before the renderer sees it. No renderer-side material vocabulary lives here.
     std::map<std::string, PropertyValue> responseBindings;
-    uint64_t responseBindingRevision = 0;
+    // Full canonical value identity, not a hash-only cache key: a collision is
+    // not authority to reuse stale GPU parameters.
+    std::string responseBindingIdentity;
 };
 
 // One face's albedo — the paint the Face Brush writes — described BOTH ways,
