@@ -1981,6 +1981,51 @@ int main() {
                       "fn materialEnvironmentResponseEval") != std::string::npos,
               "authored environment response compiles in production and Bind edits refresh only parameters");
 
+        // Geometry-independent receiver module: mesh and SDF are not
+        // permitted to maintain separate material-response compilers.
+        auto sharedDirectRoot = std::make_shared<OntoMath::MathNode>();
+        sharedDirectRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto sharedDiffuseBind = std::make_unique<OntoMath::MathNode>();
+        sharedDiffuseBind->op = OntoMath::MathNode::Op::Bind;
+        sharedDiffuseBind->propertyPath = "diffuse";
+        sharedDirectRoot->children.push_back(std::move(sharedDiffuseBind));
+        sharedDirectRoot->children.push_back(number(0.0));
+        sharedDirectRoot->children.push_back(number(0.0));
+        OntoMath::Piecewise sharedDirect =
+            OntoMath::Piecewise::continuous(sharedDirectRoot);
+
+        auto sharedEnvironmentRoot =
+            std::make_shared<OntoMath::MathNode>();
+        sharedEnvironmentRoot->op = OntoMath::MathNode::Op::ValueLeaf;
+        sharedEnvironmentRoot->variableName =
+            OntoMath::kEnvironmentRadianceVar;
+        OntoMath::Piecewise sharedEnvironment =
+            OntoMath::Piecewise::continuous(sharedEnvironmentRoot);
+
+        sdfwgsl::BindingValues sharedBindingsA{
+            {"diffuse", PropertyValue(0.8f)}
+        };
+        sdfwgsl::BindingValues sharedBindingsB{
+            {"diffuse", PropertyValue(0.2f)}
+        };
+        const auto surfaceModuleA =
+            sdfwgsl::compileSurfaceResponseModule(
+                &sharedDirect, &sharedEnvironment, &sharedBindingsA);
+        const auto surfaceModuleB =
+            sdfwgsl::compileSurfaceResponseModule(
+                &sharedDirect, &sharedEnvironment, &sharedBindingsB);
+        check(surfaceModuleA.ok && surfaceModuleB.ok &&
+                  surfaceModuleA.wgsl == surfaceModuleB.wgsl &&
+                  surfaceModuleA.params != surfaceModuleB.params &&
+                  surfaceModuleA.hasDirectResponse &&
+                  surfaceModuleA.hasEnvironmentResponse &&
+                  surfaceModuleA.wgsl.find(
+                      "fn materialResponseEval") != std::string::npos &&
+                  surfaceModuleA.wgsl.find(
+                      "fn materialEnvironmentResponseEval") !=
+                      std::string::npos,
+              "geometry-independent surface module preserves one receiver compiler and structure-value split");
+
         const auto beforeParams = authored.params;
         responseRoot->children[2]->scalarForm.terms[0].coefficient = 0.7;
         const auto refreshed = sdfwgsl::collectParams(
