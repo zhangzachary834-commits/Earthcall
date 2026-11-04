@@ -448,9 +448,13 @@ using TypeEnv = std::map<std::string, MathType>;
 //   "surfaceColor" receiving-surface pigment/albedo, a Vector. Material response
 //                  may consume it; the renderer must not force an albedo multiply
 //                  after an authored response has already returned reflected RGB.
+//   "environmentRadiance" directionless incident-environment RGB admitted only by
+//                  the Material environment-response channel. It is not a light
+//                  source, wi, rho, visibility, or a material coefficient.
 inline constexpr const char* kAmbientPointVar = "p";
 inline constexpr const char* kSurfaceNormalVar = "n";
 inline constexpr const char* kSurfaceColorVar = "surfaceColor";
+inline constexpr const char* kEnvironmentRadianceVar = "environmentRadiance";
 inline constexpr const char* kTimeVar = "t";
 inline constexpr const char* kOmegaXVar = "omega.x";
 inline constexpr const char* kOmegaYVar = "omega.y";
