@@ -337,6 +337,28 @@ VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
 // only source-radiance scalar context that admits omega.x/y/z.
 AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr);
 
+// Geometry-independent authored source compiler. It lowers the ordered admitted
+// source set's rho(p,t), chi(p,t), and alpha(p,omega,t) through the SAME emitter
+// used by SDF transport. It deliberately owns no visibility query and no
+// surface/geometry semantics. Callers supply a parameter-buffer base expression
+// because receiver and source numeric streams may share one storage array.
+struct RadianceSourceProgram {
+    std::string wgsl;
+    std::vector<float> params;
+    std::vector<bool> angularReadsOmega;
+    bool ok = true;
+    std::string error;
+};
+RadianceSourceProgram compileRadianceSourceModule(
+    const std::vector<Rendering::RadianceSourceBinding>& sources,
+    const std::string& parameterOffset = "0u");
+
+// Recollect rho/chi/alpha numeric values in exactly the module's emission order.
+// Structure/revisions are caller cache authority; this path performs no WGSL
+// assembly and is therefore the source-side analogue of collectResponseParams.
+ParameterBlock collectRadianceSourceParams(
+    const std::vector<Rendering::RadianceSourceBinding>& sources);
+
 // V3 medium phase Phi(p,wi,wo,t)->scalar. Absence is exact identity Phi=1.
 // wi/wo are transport bindings, never aliases of source alpha's omega.
 PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr);
