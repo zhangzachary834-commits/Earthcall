@@ -2148,6 +2148,89 @@ int main() {
         renderer.setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
     }
 
+    // --- LEGACY DIRECT RESPONSE MIGRATION PIXEL PARITY ----------------------
+    // The old source API may still carry independent diffuse/specular weights,
+    // but SDF execution must receive one honest incident RGB plus compatibility
+    // lobe scalars. The inherited material.default response reproduces the old
+    // Blinn-Phong answer; no renderer-owned lobe formula participates.
+    {
+        auto legacyDirectMat = materials.create("webgpu_legacy_direct_migration");
+        legacyDirectMat->baseColor = glm::vec3(0.5f, 0.25f, 1.0f);
+        legacyDirectMat->ambient = 0.2f;
+        legacyDirectMat->diffuse = 0.8f;
+        legacyDirectMat->specular = 1.0f;
+        legacyDirectMat->shininess = 32.0f;
+        legacyDirectMat->responseExpr.reset();
+        legacyDirectMat->environmentResponseExpr.reset();
+
+        Object legacyDirectReceiver;
+        legacyDirectReceiver.setFieldShape(
+            geom::SdfNode::leaf(
+                geom::SdfPrim::Box, glm::vec3(0.55f, 0.55f, 0.55f)),
+            glm::vec3(1.0f));
+        legacyDirectReceiver.setMaterialId(
+            "material.webgpu_legacy_direct_migration");
+
+        auto legacyRhoNode = scalarNode(1.0);
+        OntoMath::Piecewise legacyRho =
+            OntoMath::Piecewise::continuous(legacyRhoNode);
+
+        renderer.setRadianceSources({}, 0);
+        renderer.setRadianceField(&legacyRho, 4401);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceVisibilityEnabled(false);
+        // Deliberately noncanonical old source-lobe coefficients:
+        // incident white=1, diffuse lobe weight=.2/.8=.25,
+        // specular lobe weight=.4.
+        renderer.setRadianceSourceCoefficients(1.0f, 0.0f, 0.2f, 0.4f);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.0f),
+                          glm::vec3(0.2f),
+                          glm::vec3(0.4f));
+        renderer.setLightingEnabled(true);
+        renderer.setModel(glm::mat4(1.0f));
+
+        const RenderMaterial legacyResolved =
+            resolveRenderMaterial(
+                "material.webgpu_legacy_direct_migration", {});
+        assert(legacyResolved.responseExpr &&
+               legacyResolved.responseExpr.get() ==
+                   materials.defaultMaterial()->responseExpr.get() &&
+               "legacy direct receiver did not inherit material.default response");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        legacyDirectReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char migratedLegacyPixel[4];
+        readCentre(migratedLegacyPixel);
+        std::printf(
+            "legacy direct migration pixel=(%d,%d,%d) expected~(128,115,153)\n",
+            migratedLegacyPixel[0], migratedLegacyPixel[1],
+            migratedLegacyPixel[2]);
+
+        // Exact center would be (.5,.45,.6) -> (128,115,153). The 16x16
+        // framebuffer samples slightly off-axis, so retain a narrow geometric
+        // tolerance while still detecting lost source weights or a hidden
+        // material multiply.
+        assert(migratedLegacyPixel[0] >= 112 &&
+               migratedLegacyPixel[0] <= 140 &&
+               migratedLegacyPixel[1] >= 100 &&
+               migratedLegacyPixel[1] <= 128 &&
+               migratedLegacyPixel[2] >= 137 &&
+               migratedLegacyPixel[2] <= 166 &&
+               migratedLegacyPixel[2] > migratedLegacyPixel[0] + 12 &&
+               migratedLegacyPixel[0] > migratedLegacyPixel[1] + 5 &&
+               "authored default response failed old-world noncanonical lobe parity");
+
+        renderer.setRadianceField(nullptr, 0);
+        renderer.setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.2f),
+                          glm::vec3(0.8f),
+                          glm::vec3(1.0f));
+    }
+
     // --- RUNG 9 MATERIAL COPY-ON-WRITE CONTINUITY ---------------------------
     // Painting an Object creates its private Material. That operation may change
     // paint ownership; it must neither erase nor alias receiver-response truth.
