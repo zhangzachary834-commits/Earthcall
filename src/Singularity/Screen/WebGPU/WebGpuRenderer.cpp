@@ -2004,49 +2004,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         environmentResponseLayout.structure;
 
     if (hasSourceSet) {
-        if (_radianceSourcesLayoutRevision != radianceSourcesRevision()) {
-            std::string structure = "sources:" + std::to_string(radianceSources().size()) + "\n";
-            bool ok = true;
-            std::string error;
-
-            for (std::size_t i = 0; i < radianceSources().size(); ++i) {
-                const auto& source = radianceSources()[i];
-                const auto rho = sdfwgsl::inspectScalarExpression(source.radianceExpr, true);
-                const auto chi = sdfwgsl::inspectVectorExpression(source.chromaExpr, true);
-                const auto alpha = sdfwgsl::inspectAngularExpression(source.angularExpr);
-
-                structure += "source[" + std::to_string(i) + "]\n";
-                structure += "rho:" + rho.structure + "\n";
-                structure += "chi:" + chi.structure + "\n";
-                structure += "alpha:" + alpha.structure +
-                             (alpha.readsOmega ? ":omega\n" : ":no-omega\n");
-
-                if (!rho.ok && ok) {
-                    ok = false;
-                    error = "source[" + std::to_string(i) + "] radiance: " + rho.error;
-                }
-                if (!chi.ok && ok) {
-                    ok = false;
-                    error = "source[" + std::to_string(i) + "] chroma: " + chi.error;
-                }
-                if (!alpha.ok && ok) {
-                    ok = false;
-                    error = "source[" + std::to_string(i) + "] angular: " + alpha.error;
-                }
-            }
-
-            const bool structureChanged =
-                _radianceSourcesLayoutRevision == 0xffffffffffffffffULL ||
-                structure != _radianceSourcesLayoutStructure ||
-                ok != _radianceSourcesLayoutOk;
-            if (structureChanged) ++_radianceSourcesStructureRevision;
-            _radianceSourcesLayoutRevision = radianceSourcesRevision();
-            _radianceSourcesLayoutStructure = std::move(structure);
-            _radianceSourcesLayoutOk = ok;
-            _radianceSourcesLayoutError = std::move(error);
-        }
+        (void)refreshRadianceSourceLayout();
     } else {
-        // Exact Rungs 3-6 layout inspection.
+        // Exact zero-set compatibility layout inspection.
         if (_radianceLayoutRevision != radianceRevision() ||
             _radianceLayoutExprPtr != radianceExpr()) {
             sdfwgsl::ScalarExpressionLayout nextLayout =
