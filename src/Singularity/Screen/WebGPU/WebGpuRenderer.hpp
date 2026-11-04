@@ -202,14 +202,15 @@ private:
         uint32_t directRevision = 0;
         std::shared_ptr<const OntoMath::Piecewise> environment;
         uint32_t environmentRevision = 0;
+        bool sourceSet = false;
         uint64_t sourceSetStructureRevision = 0;
         std::string bindingTypes;
         bool operator<(const MeshResponseKey& o) const {
             return std::tie(direct, directRevision, environment,
-                            environmentRevision, sourceSetStructureRevision,
-                            bindingTypes)
+                            environmentRevision, sourceSet,
+                            sourceSetStructureRevision, bindingTypes)
                  < std::tie(o.direct, o.directRevision, o.environment,
-                            o.environmentRevision,
+                            o.environmentRevision, o.sourceSet,
                             o.sourceSetStructureRevision, o.bindingTypes);
         }
     };
