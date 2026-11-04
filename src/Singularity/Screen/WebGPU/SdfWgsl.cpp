@@ -5202,10 +5202,7 @@ Program compile(const geom::SdfNode& root,
             "};\n"
             "@group(0) @binding(2) var<storage, read> RS: array<RadianceSourceData>;\n";
 
-        const std::vector<bool> angularReadsOmega =
-            emitRadianceSourceFunctions(*radianceSources, e, prog.wgsl);
-        prog.wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
-                     wgslLiteral(OntoMath::kDirectionEpsilon) + ";\n";
+        (void)emitRadianceSourceFunctions(*radianceSources, e, prog.wgsl);
 
         std::string marcher = kMarcher;
         const std::string lightingBegin =
@@ -5223,79 +5220,37 @@ Program compile(const geom::SdfNode& root,
             sum += "    var directTerm = vec3<f32>(0.0);\n";
 
             for (std::size_t i = 0; i < radianceSources->size(); ++i) {
-                const auto& source = (*radianceSources)[i];
-                const std::string s = std::to_string(i);
+                const std::string sourceIndex = std::to_string(i);
                 sum += "    {\n";
-                sum += "        let source = RS[" + s + "u];\n";
-                sum += "        if (source.control.x > 0.5) {\n";
-                sum += "            let sourceDelta = pw - source.position.xyz;\n";
-                sum += "            let sourceDistance = length(sourceDelta);\n";
-                if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
-                    sum += "            let sourceChroma = lightChroma_" + s +
-                           "(sourceDelta);\n";
-                    sum += "            environmentRadiance += sourceChroma * "
-                           "vec3<f32>(source.legacyEnvironment.w);\n";
-                } else {
-                    sum += "            let sourceChroma = vec3<f32>(1.0);\n";
-                    sum += "            environmentRadiance += "
-                           "source.legacyEnvironment.rgb;\n";
-                }
-                sum += "            // Direct source transport begins here; legacyEnvironment "
-                       "is not read below. Receiver shape lives in Material math.\n";
-                sum += "            let radialRadiance = max(lightRadiance_" + s +
-                       "(sourceDelta), 0.0);\n";
-                sum += "            var angularRadiance = 1.0;\n";
-
-                if (source.angularExpr && !source.angularExpr->pieces.empty()) {
-                    if (angularReadsOmega[i]) {
-                        sum += "            if (sourceDistance > SOURCE_DIRECTION_EPS) {\n";
-                        sum += "                angularRadiance = max(lightAngular_" + s +
-                               "(sourceDelta, sourceDelta / sourceDistance), 0.0);\n";
-                        sum += "            } else { angularRadiance = 0.0; }\n";
-                    } else {
-                        sum += "            angularRadiance = max(lightAngular_" + s +
-                               "(sourceDelta, vec3<f32>(0.0)), 0.0);\n";
-                    }
-                }
-
-                sum += "            let shapedRadiance = radialRadiance * angularRadiance;\n";
-                sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
-                sum += "            let directRadiance = shapedRadiance * pathVisibility;\n";
-
-                if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
-                    sum += "            let incidentRadiance = sourceChroma * "
-                           "vec3<f32>(source.directIncidentRadiance.w);\n";
-                    sum += "            let legacyDiffuseIncident = sourceChroma * "
-                           "vec3<f32>(source.legacyDiffuseIncident.w);\n";
-                    sum += "            let legacySpecularIncident = sourceChroma * "
-                           "vec3<f32>(source.legacySpecularIncident.w);\n";
-                } else {
-                    sum += "            let incidentRadiance = "
-                           "source.directIncidentRadiance.rgb;\n";
-                    sum += "            let legacyDiffuseIncident = "
-                           "source.legacyDiffuseIncident.rgb;\n";
-                    sum += "            let legacySpecularIncident = "
-                           "source.legacySpecularIncident.rgb;\n";
-                }
+                sum += "        let source = RS[" + sourceIndex + "u];\n";
+                sum += "        let sourcePacket = sourceSample_" + sourceIndex +
+                       "(pw);\n";
+                sum += "        if (sourcePacket.enabled > 0.5) {\n";
+                sum += "            environmentRadiance += "
+                       "sourcePacket.environmentRadiance;\n";
+                sum += "            // Path transport begins here. Source packet "
+                       "contains rho/chi/alpha only; V remains derived geometry.\n";
+                sum += "            let pathVisibility = "
+                       "sourceVisibility(pf, nf, source.position.xyz);\n";
+                sum += "            let directRadiance = "
+                       "sourcePacket.shapedRadiance * pathVisibility;\n";
                 sum += "            if (HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
-                sum += "                var responseWi = vec3<f32>(0.0);\n";
-                sum += "                var responseDefined = true;\n";
-                sum += "                if (sourceDistance > SOURCE_DIRECTION_EPS) {\n";
-                sum += "                    responseWi = sourceDelta / sourceDistance;\n";
-                sum += "                } else if (MATERIAL_RESPONSE_READS_WI) {\n";
-                sum += "                    responseDefined = false;\n";
-                sum += "                }\n";
+                sum += "                let responseDefined = "
+                       "sourcePacket.directionDefined > 0.5 || "
+                       "!MATERIAL_RESPONSE_READS_WI;\n";
                 sum += "                if (responseDefined) {\n";
                 sum += "                    let receiverResponse = "
-                       "materialResponseEval(pf, nw, responseWi, V, surfaceColor, "
-                       "incidentRadiance, legacyDiffuseIncident, "
-                       "legacySpecularIncident);\n";
+                       "materialResponseEval(pf, nw, sourcePacket.responseWi, V, "
+                       "surfaceColor, sourcePacket.incidentRadiance, "
+                       "sourcePacket.legacyDiffuseIncident, "
+                       "sourcePacket.legacySpecularIncident);\n";
                 sum += "                    directTerm += "
                        "receiverResponse * directRadiance;\n";
                 sum += "                }\n";
                 sum += "            }\n";
                 sum += "        }\n";
                 sum += "    }\n";
+            }
             }
             sum += "    var environmentTerm = vec3<f32>(0.0);\n";
             sum += "    if (HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE) {\n";
