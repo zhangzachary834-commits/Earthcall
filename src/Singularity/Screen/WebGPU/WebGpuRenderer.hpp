@@ -247,11 +247,15 @@ private:
         uint32_t parameterRevision = 0xffffffff;
         uint32_t colorRevision = 0xffffffff;
         uint32_t responseRevision = 0xffffffff;
+        uint32_t environmentResponseRevision = 0xffffffff;
         std::string responseBindingIdentity;
         std::string responseStructure;
         bool responseReadsNormal = false;
         bool responseReadsWi = false;
         bool responseReadsWo = false;
+        std::string environmentResponseStructure;
+        bool environmentResponseReadsNormal = false;
+        bool environmentResponseReadsWo = false;
         // Full authored radiance content identity. A change here means at least
         // the parameter block must be reconsidered; whether WGSL structure also
         // changed is decided by radianceStructure below.
