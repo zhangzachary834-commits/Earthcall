@@ -2073,15 +2073,18 @@ struct RU {
     invViewProj:    mat4x4<f32>,
     lightPos:       vec4<f32>,
     eyePos:         vec4<f32>,
-    lightAmbient:   vec4<f32>,
+    // Legacy compatibility input, semantically separate from direct source
+    // transport. xyz = normalized constant environment envelope; w = authored
+    // chroma environment scale. rho/alpha/visibility never read this.
+    legacyEnvironment: vec4<f32>,
     lightDiffuse:   vec4<f32>,
     lightSpecular:  vec4<f32>,
     // x = lighting enabled; y = Rung-8 derived visibility enabled.
     // Visibility is execution state, not authored source state.
     lightControl:   vec4<f32>,
-    // x/y/z/w = source intensity/ambient/diffuse/specular. These are used
-    // only when authored chi is present; the no-chi branch keeps the exact
-    // pre-Rung-5 color-bearing light uniforms below.
+    // x/y/z/w = historical intensity/ambient/diffuse/specular coefficients.
+    // y is consumed only by the compatibility projection that constructs
+    // legacyEnvironment on CPU; direct WGSL transport uses x/z/w only.
     radianceSourceCoefficients: vec4<f32>,
     // x = distance to the camera's far plane, in WORLD units.
     // y = viewport width in pixels.
@@ -2715,14 +2718,31 @@ fn fs(in: VSOut) -> FSOut {
     // it owns whether/how pigment participates in reflected RGB.
     let surfaceColor = sdfColor(pf);
 
-    let L = normalize(u.lightPos.xyz - pw);
     let V = normalize(u.eyePos.xyz - pw);
-    let H = normalize(L + V);
 
-    // Evaluate the Person-authored source invariants in source-relative world
-    // coordinates. rho is scalar, chi is vec3, and alpha is a third independent
-    // scalar over the normalized WORLD-space source -> receiver direction.
+    // Compatibility environment illumination is deliberately evaluated BEFORE
+    // direct source transport. It may reuse authored chi(p,t), because legacy
+    // worlds allowed environment colour to vary with source chroma, but it does
+    // not read rho, alpha, visibility, L, H or the direct-light cosine.
     let sourceDelta = pw - u.lightPos.xyz;
+    var sourceChroma = vec3<f32>(1.0);
+    if (HAS_AUTHORED_CHROMA) {
+        sourceChroma = lightChroma(sourceDelta);
+    }
+    var environmentTerm = vec3<f32>(0.0);
+    if (!HAS_AUTHORED_MATERIAL_RESPONSE) {
+        if (HAS_AUTHORED_CHROMA) {
+            environmentTerm =
+                inst.shading.x * sourceChroma * vec3<f32>(u.legacyEnvironment.w);
+        } else {
+            environmentTerm = inst.shading.x * u.legacyEnvironment.rgb;
+        }
+    }
+
+    // Direct source transport begins here. The environment compatibility input
+    // above is not consulted below this line.
+    let L = normalize(u.lightPos.xyz - pw);
+    let H = normalize(L + V);
     let radialRadiance = max(lightRadiance(sourceDelta), 0.0);
     var angularRadiance = 1.0;
     if (HAS_AUTHORED_ANGULAR) {
@@ -2749,16 +2769,12 @@ fn fs(in: VSOut) -> FSOut {
         pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) *
         step(0.0001, diff);
 
-    var ambientTerm: vec3<f32>;
-    var diffuseTerm: vec3<f32>;
-    var specTerm: vec3<f32>;
+    var diffuseTerm = vec3<f32>(0.0);
+    var specTerm = vec3<f32>(0.0);
     if (HAS_AUTHORED_CHROMA) {
-        let sourceChroma = lightChroma(pw - u.lightPos.xyz);
         let c = u.radianceSourceCoefficients;
-        // Separate the legacy scalar coefficients from chroma only on this new
-        // path. This realizes rho * chi without multiplying legacy light.color
-        // a second time, including when one legacy color channel is exactly zero.
-        let ambientEnvelope = sourceChroma * vec3<f32>((c.x * c.y) / 0.2);
+        // Direct legacy coefficients remain compatibility data until the
+        // default response expression takes ownership in the next migration.
         let diffuseEnvelope = sourceChroma * vec3<f32>((c.x * c.z) / 0.8);
         let specularEnvelope = sourceChroma * vec3<f32>(c.x * c.w);
         if (HAS_AUTHORED_MATERIAL_RESPONSE) {
@@ -2775,19 +2791,16 @@ fn fs(in: VSOut) -> FSOut {
             if (responseDefined) {
                 receiverResponse = materialResponseEval(pf, nw, responseWi, V, surfaceColor);
             }
-            ambientTerm = vec3<f32>(0.0);
             diffuseTerm = (sourceChroma * vec3<f32>(c.x)) *
                           receiverResponse * directRadiance;
-            specTerm = vec3<f32>(0.0);
         } else {
-            ambientTerm = inst.shading.x * ambientEnvelope;
             diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
             specTerm = specularEnvelope * specShape * directRadiance;
         }
     } else {
-        // EXACT compatibility branch from Rung 4. No authored chi means
-        // constant legacy light.color, already carried by these uniforms.
-        let ambientEnvelope  = u.lightAmbient.rgb / vec3<f32>(0.2);
+        // EXACT direct compatibility branch from Rung 4. Constant legacy
+        // source colour remains in diffuse/specular uniforms; environment has
+        // already been resolved above and cannot leak back into this path.
         let diffuseEnvelope  = u.lightDiffuse.rgb / vec3<f32>(0.8);
         let specularEnvelope = u.lightSpecular.rgb;
         if (HAS_AUTHORED_MATERIAL_RESPONSE) {
@@ -2803,12 +2816,9 @@ fn fs(in: VSOut) -> FSOut {
             if (responseDefined) {
                 receiverResponse = materialResponseEval(pf, nw, responseWi, V, surfaceColor);
             }
-            ambientTerm = vec3<f32>(0.0);
             diffuseTerm = (u.lightDiffuse.rgb / vec3<f32>(0.8)) *
                           receiverResponse * directRadiance;
-            specTerm = vec3<f32>(0.0);
         } else {
-            ambientTerm = inst.shading.x * ambientEnvelope;
             diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
             specTerm = specularEnvelope * specShape * directRadiance;
         }
@@ -2820,8 +2830,8 @@ fn fs(in: VSOut) -> FSOut {
     // its historical tint/specular split until the compatibility expression
     // replaces it in the next migration phase.
     let litRgb = select(
-        surfaceColor * (ambientTerm + diffuseTerm) + specTerm,
-        ambientTerm + diffuseTerm + specTerm,
+        surfaceColor * (environmentTerm + diffuseTerm) + specTerm,
+        environmentTerm + diffuseTerm + specTerm,
         HAS_AUTHORED_MATERIAL_RESPONSE);
     let base_rgb = mix(surfaceColor, litRgb, u.lightControl.x);
     let field_rgb = volumetric_scatter;
@@ -4782,7 +4792,7 @@ Program compile(const geom::SdfNode& root,
         prog.wgsl +=
             "\nstruct RadianceSourceData {\n"
             "    position: vec4<f32>,\n"
-            "    ambient: vec4<f32>,\n"
+            "    legacyEnvironment: vec4<f32>,\n"
             "    diffuse: vec4<f32>,\n"
             "    specular: vec4<f32>,\n"
             "    coefficients: vec4<f32>,\n"
@@ -4865,7 +4875,7 @@ Program compile(const geom::SdfNode& root,
         } else {
             std::string sum;
             sum += "    let V = normalize(u.eyePos.xyz - pw);\n";
-            sum += "    var ambientTerm = vec3<f32>(0.0);\n";
+            sum += "    var environmentTerm = vec3<f32>(0.0);\n";
             sum += "    var diffuseTerm = vec3<f32>(0.0);\n";
             sum += "    var specTerm = vec3<f32>(0.0);\n";
 
@@ -4877,6 +4887,22 @@ Program compile(const geom::SdfNode& root,
                 sum += "        if (source.control.x > 0.5) {\n";
                 sum += "            let sourceDelta = pw - source.position.xyz;\n";
                 sum += "            let sourceDistance = length(sourceDelta);\n";
+                if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
+                    sum += "            let sourceChroma = lightChroma_" + s +
+                           "(sourceDelta);\n";
+                    sum += "            if (!HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
+                    sum += "                environmentTerm += inst.shading.x * "
+                           "sourceChroma * vec3<f32>(source.legacyEnvironment.w);\n";
+                    sum += "            }\n";
+                } else {
+                    sum += "            let sourceChroma = vec3<f32>(1.0);\n";
+                    sum += "            if (!HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
+                    sum += "                environmentTerm += inst.shading.x * "
+                           "source.legacyEnvironment.rgb;\n";
+                    sum += "            }\n";
+                }
+                sum += "            // Direct source transport begins here; legacyEnvironment "
+                       "is not read below.\n";
                 sum += "            var Ls = vec3<f32>(0.0);\n";
                 sum += "            if (sourceDistance > SOURCE_DIRECTION_EPS) { "
                        "Ls = -sourceDelta / sourceDistance; }\n";
@@ -4910,11 +4936,7 @@ Program compile(const geom::SdfNode& root,
                        "step(0.0001, diff);\n";
 
                 if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
-                    sum += "            let sourceChroma = lightChroma_" + s +
-                           "(sourceDelta);\n";
                     sum += "            let c = source.coefficients;\n";
-                    sum += "            let ambientEnvelope = sourceChroma * "
-                           "vec3<f32>((c.x * c.y) / 0.2);\n";
                     sum += "            let diffuseEnvelope = sourceChroma * "
                            "vec3<f32>((c.x * c.z) / 0.8);\n";
                     sum += "            let specularEnvelope = sourceChroma * "
@@ -4922,8 +4944,6 @@ Program compile(const geom::SdfNode& root,
                     sum += "            let incidentEnvelope = sourceChroma * "
                            "vec3<f32>(c.x);\n";
                 } else {
-                    sum += "            let ambientEnvelope = source.ambient.rgb / "
-                           "vec3<f32>(0.2);\n";
                     sum += "            let diffuseEnvelope = source.diffuse.rgb / "
                            "vec3<f32>(0.8);\n";
                     sum += "            let specularEnvelope = source.specular.rgb;\n";
@@ -4945,7 +4965,6 @@ Program compile(const geom::SdfNode& root,
                        "receiverResponse * directRadiance;\n";
                 sum += "                }\n";
                 sum += "            } else {\n";
-                sum += "                ambientTerm += inst.shading.x * ambientEnvelope;\n";
                 sum += "                diffuseTerm += inst.shading.y * diffuseEnvelope * "
                        "diff * directRadiance;\n";
                 sum += "                specTerm += specularEnvelope * specShape * "
