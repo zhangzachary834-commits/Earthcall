@@ -126,11 +126,20 @@ int main() {
         // Dynamic authored parameters are first-class Material state too. A
         // response Bind that survives only until save/load is not persistence.
         assert(m.setDynamicProperty("roughness", PropertyValue(0.42f)));
-        auto roughBind = std::make_shared<OntoMath::MathNode>();
+        auto roughBind = std::make_unique<OntoMath::MathNode>();
         roughBind->op = OntoMath::MathNode::Op::Bind;
         roughBind->propertyPath = "roughness";
+        auto roughResponse = std::make_shared<OntoMath::MathNode>();
+        roughResponse->op = OntoMath::MathNode::Op::VectorConstruct;
+        roughResponse->children.push_back(std::move(roughBind));
+        for (int i = 0; i < 2; ++i) {
+            auto zero = std::make_unique<OntoMath::MathNode>();
+            zero->op = OntoMath::MathNode::Op::ScalarLeaf;
+            zero->scalarForm = OntoMath::ScalarForm::constant(0.0);
+            roughResponse->children.push_back(std::move(zero));
+        }
         m.responseExpr = std::make_shared<OntoMath::Piecewise>(
-            OntoMath::Piecewise::continuous(roughBind));
+            OntoMath::Piecewise::continuous(roughResponse));
         m.bumpResponseRevision();
 
         const nlohmann::json boundSaved = m.toJson();
@@ -144,8 +153,8 @@ int main() {
         assert(nearf(static_cast<float>(roughNumber), 0.42f));
         assert(boundRestored.responseExpr);
         auto rebound = boundRestored.responseExpr->evaluate({}, &boundRestored);
-        assert(rebound && propertyValueToNumber(*rebound, roughNumber));
-        assert(nearf(static_cast<float>(roughNumber), 0.42f));
+        assert(rebound && std::holds_alternative<glm::vec3>(*rebound));
+        assert(nearf(std::get<glm::vec3>(*rebound).x, 0.42f));
 
         std::printf("  bind:     OntoMath Bind reads live/persisted Material PropertyPaths\n");
     }
