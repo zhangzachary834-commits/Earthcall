@@ -1,6 +1,7 @@
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 
 #include <cstdint>
 #include <string>
@@ -269,6 +270,17 @@ json Material::toJson() const {
     if (responseExpr) {
         j["responseExpr"] = responseExpr->toJson();
     }
+    // A Material may own Person-authored response parameters just like any
+    // other Singular. If responseExpr binds one of them, dropping it here would
+    // make save/load silently change the material's mathematics.
+    if (!dynamicProperties().empty()) {
+        json authored = json::object();
+        for (const auto& [id, value] : dynamicProperties()) {
+            authored[Earthcall::StringInterner::resolve(id)] =
+                propertyValueToJson(value);
+        }
+        if (!authored.empty()) j["authoredProperties"] = std::move(authored);
+    }
     if (textureResolution != 64) {
         j["textureResolution"] = textureResolution;
     }
@@ -308,6 +320,12 @@ Material Material::fromJson(const json& j) {
     if (j.contains("responseExpr")) {
         m.responseExpr =
             std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(j["responseExpr"]));
+    }
+    if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
+        for (auto it = j["authoredProperties"].begin();
+             it != j["authoredProperties"].end(); ++it) {
+            m.setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
+        }
     }
     if (j.contains("textureResolution") && j["textureResolution"].is_number_integer()) {
         m.textureResolution = j["textureResolution"].get<int>();
