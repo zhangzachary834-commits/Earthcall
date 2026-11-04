@@ -4156,6 +4156,100 @@ AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr
 }
 
 
+namespace {
+
+std::vector<bool> emitRadianceSourceFunctions(
+    const std::vector<Rendering::RadianceSourceBinding>& sources,
+    Emit& e,
+    std::string& wgsl) {
+    std::vector<bool> angularReadsOmega;
+    angularReadsOmega.reserve(sources.size());
+
+    const std::string previousTimeExpression = e.timeExpression;
+    for (std::size_t i = 0; i < sources.size(); ++i) {
+        const auto& source = sources[i];
+        const std::string suffix = std::to_string(i);
+        e.timeExpression = "RS[" + suffix + "u].time.x";
+
+        std::string radianceBody;
+        if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
+            e.bindTime = true;
+            emitPiecewise(*source.radianceExpr, e, "p", "f32", radianceBody);
+            e.bindTime = false;
+        } else {
+            radianceBody = "    return 1.0;\n";
+        }
+        wgsl += "\nfn lightRadiance_" + suffix +
+                "(p: vec3<f32>) -> f32 {\n" + radianceBody + "}\n";
+
+        std::string chromaBody;
+        if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
+            std::string validationError;
+            if (!validateVectorPiecewise(*source.chromaExpr, true, validationError)) {
+                e.refuse("source[" + suffix + "] chroma: " + validationError);
+            } else {
+                e.bindTime = true;
+                emitPiecewise(*source.chromaExpr, e, "p", "vec3<f32>", chromaBody);
+                e.bindTime = false;
+            }
+        } else {
+            chromaBody = "    return vec3<f32>(1.0);\n";
+        }
+        wgsl += "\nfn lightChroma_" + suffix +
+                "(p: vec3<f32>) -> vec3<f32> {\n" + chromaBody + "}\n";
+
+        std::string angularBody;
+        bool readsOmega = false;
+        if (source.angularExpr && !source.angularExpr->pieces.empty()) {
+            std::string validationError;
+            if (!validateAngularPiecewise(*source.angularExpr, validationError)) {
+                e.refuse("source[" + suffix + "] angular: " + validationError);
+            } else {
+                e.bindTime = true;
+                e.bindOmega = true;
+                e.readOmega = false;
+                emitPiecewise(*source.angularExpr, e, "p", "f32", angularBody);
+                readsOmega = e.readOmega;
+                e.bindOmega = false;
+                e.bindTime = false;
+            }
+        } else {
+            angularBody = "    return 1.0;\n";
+        }
+        angularReadsOmega.push_back(readsOmega);
+        wgsl += "\nfn lightAngular_" + suffix +
+                "(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" +
+                angularBody + "}\n";
+    }
+    e.timeExpression = previousTimeExpression;
+    return angularReadsOmega;
+}
+
+} // namespace
+
+RadianceSourceProgram compileRadianceSourceModule(
+    const std::vector<Rendering::RadianceSourceBinding>& sources,
+    const std::string& parameterOffset) {
+    RadianceSourceProgram out;
+    Emit e;
+    e.parameterOffset = parameterOffset;
+    out.angularReadsOmega = emitRadianceSourceFunctions(sources, e, out.wgsl);
+    out.params = std::move(e.params);
+    out.ok = !e.refused;
+    out.error = e.refusal;
+    if (!out.ok) out.wgsl = "// REFUSED: " + out.error + "\n";
+    return out;
+}
+
+ParameterBlock collectRadianceSourceParams(
+    const std::vector<Rendering::RadianceSourceBinding>& sources) {
+    Emit e;
+    e.parameterOffset = "0u";
+    std::string throwaway;
+    (void)emitRadianceSourceFunctions(sources, e, throwaway);
+    return ParameterBlock{std::move(e.params), !e.refused, e.refusal};
+}
+
 // Architectural note — GPT-5.6 Sol ("The Sun"), 2026-09-24:
 // OntoMath's directional coordinates are shared mathematical grammar, not shared
 // semantic authority. Phi_medium(p, wi, wo, t) owns participating-medium
