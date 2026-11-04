@@ -67,6 +67,8 @@ const std::vector<PathOption>& knownPathOptions() {
             else if (std::holds_alternative<glm::mat4>(probe))      type = "transform";
             else if (std::holds_alternative<std::string>(probe))    type = "text";
             else if (std::holds_alternative<bool>(probe))           type = "toggle";
+            else if (std::holds_alternative<std::shared_ptr<PropertyList>>(probe)) type = "list";
+            else if (std::holds_alternative<std::shared_ptr<PropertyDict>>(probe)) type = "dictionary";
             options.push_back({property->name(), group, type, isVec});
             if (isVec) {
                 options.push_back({property->name() + ".x", group, "number", false});
@@ -128,6 +130,8 @@ const std::vector<PathOption>& knownPathOptions() {
             else if (std::holds_alternative<glm::mat4>(probe))     type = "transform";
             else if (std::holds_alternative<std::string>(probe))   type = "text";
             else if (std::holds_alternative<bool>(probe))          type = "toggle";
+            else if (std::holds_alternative<std::shared_ptr<PropertyList>>(probe)) type = "list";
+            else if (std::holds_alternative<std::shared_ptr<PropertyDict>>(probe)) type = "dictionary";
             options.push_back({property->name(), "Channel — Creation", type, isVec});
             if (isVec) {
                 options.push_back({property->name() + ".x", "Channel — Creation", "number", false});
@@ -145,6 +149,8 @@ const std::vector<PathOption>& knownPathOptions() {
             else if (std::holds_alternative<glm::mat4>(probe))     type = "transform";
             else if (std::holds_alternative<std::string>(probe))   type = "text";
             else if (std::holds_alternative<bool>(probe))          type = "toggle";
+            else if (std::holds_alternative<std::shared_ptr<PropertyList>>(probe)) type = "list";
+            else if (std::holds_alternative<std::shared_ptr<PropertyDict>>(probe)) type = "dictionary";
             options.push_back({property->name(), "Channel — Locomotion", type, isVec});
             if (isVec) {
                 options.push_back({property->name() + ".x", "Channel — Locomotion", "number", false});
@@ -167,6 +173,8 @@ const std::vector<PathOption>& knownPathOptions() {
             else if (std::holds_alternative<glm::mat4>(probe))     type = "transform";
             else if (std::holds_alternative<std::string>(probe))   type = "text";
             else if (std::holds_alternative<bool>(probe))          type = "toggle";
+            else if (std::holds_alternative<std::shared_ptr<PropertyList>>(probe)) type = "list";
+            else if (std::holds_alternative<std::shared_ptr<PropertyDict>>(probe)) type = "dictionary";
             options.push_back({property->name(), "Channel — Interaction", type, isVec});
             if (isVec) {
                 options.push_back({property->name() + ".x", "Channel — Interaction", "number", false});
@@ -193,6 +201,7 @@ const std::vector<PathOption>& knownPathOptions() {
             if (std::holds_alternative<std::string>(probe)) type = "text";
             else if (std::holds_alternative<bool>(probe)) type = "toggle";
             else if (std::holds_alternative<std::shared_ptr<PropertyList>>(probe)) type = "list";
+            else if (std::holds_alternative<std::shared_ptr<PropertyDict>>(probe)) type = "dictionary";
             options.push_back({property->name(), "Formation", type, false});
         }
 
@@ -237,6 +246,8 @@ const std::vector<PathOption>& knownPathOptions() {
             const char* type = "number";
             if (std::holds_alternative<std::string>(probe)) type = "text";
             else if (std::holds_alternative<bool>(probe)) type = "toggle";
+            else if (std::holds_alternative<std::shared_ptr<PropertyList>>(probe)) type = "list";
+            else if (std::holds_alternative<std::shared_ptr<PropertyDict>>(probe)) type = "dictionary";
             options.push_back({property->name(), "Channel — Screen Recorder", type, false});
         }
 
@@ -246,6 +257,8 @@ const std::vector<PathOption>& knownPathOptions() {
             const char* type = "number";
             if (std::holds_alternative<std::string>(probe)) type = "text";
             else if (std::holds_alternative<bool>(probe)) type = "toggle";
+            else if (std::holds_alternative<std::shared_ptr<PropertyList>>(probe)) type = "list";
+            else if (std::holds_alternative<std::shared_ptr<PropertyDict>>(probe)) type = "dictionary";
             options.push_back({property->name(), "Channel — Audio", type, false});
         }
 
@@ -255,6 +268,8 @@ const std::vector<PathOption>& knownPathOptions() {
             const char* type = "number";
             if (std::holds_alternative<std::string>(probe)) type = "text";
             else if (std::holds_alternative<bool>(probe)) type = "toggle";
+            else if (std::holds_alternative<std::shared_ptr<PropertyList>>(probe)) type = "list";
+            else if (std::holds_alternative<std::shared_ptr<PropertyDict>>(probe)) type = "dictionary";
             options.push_back({property->name(), "Language — Lexeme", type, false});
         }
     }
