@@ -1542,6 +1542,72 @@ int main() {
         check(!sdfwgsl::inspectVectorExpression(&pigmentResponse, false).ok,
               "receiver pigment cannot leak into generic source/vector authority");
 
+        auto boundRoot = std::make_shared<OntoMath::MathNode>();
+        boundRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto shininessBind = std::make_unique<OntoMath::MathNode>();
+        shininessBind->op = OntoMath::MathNode::Op::Bind;
+        shininessBind->propertyPath = "shininess";
+        boundRoot->children.push_back(std::move(shininessBind));
+        boundRoot->children.push_back(number(0.25));
+        boundRoot->children.push_back(number(0.5));
+        OntoMath::Piecewise boundResponse =
+            OntoMath::Piecewise::continuous(boundRoot);
+
+        sdfwgsl::BindingValues bindingA{
+            {"shininess", PropertyValue(32.0f)}
+        };
+        const auto boundLayoutA =
+            sdfwgsl::inspectResponseExpression(&boundResponse, &bindingA);
+        const auto boundParamsA =
+            sdfwgsl::collectResponseParams(&boundResponse, &bindingA);
+        check(boundLayoutA.ok && boundParamsA.ok &&
+                  boundLayoutA.structure.find("bind[9]=shininess") != std::string::npos,
+              "response Bind lowers an authored PropertyPath into the response layout");
+
+        const auto unresolvedBind =
+            sdfwgsl::inspectResponseExpression(&boundResponse);
+        check(!unresolvedBind.ok &&
+                  unresolvedBind.error.find("shininess") != std::string::npos,
+              "unresolved response Bind refuses by PropertyPath name");
+
+        sdfwgsl::BindingValues bindingB{
+            {"shininess", PropertyValue(8.0f)}
+        };
+        const auto boundLayoutB =
+            sdfwgsl::inspectResponseExpression(&boundResponse, &bindingB);
+        const auto boundParamsB =
+            sdfwgsl::collectResponseParams(&boundResponse, &bindingB);
+        check(boundLayoutB.ok && boundParamsB.ok &&
+                  boundLayoutB.structure == boundLayoutA.structure &&
+                  boundParamsB.values != boundParamsA.values,
+              "Bind value edit preserves response structure and refreshes parameter values");
+
+        boundRoot->children[0]->propertyPath = "specular";
+        sdfwgsl::BindingValues bindingC{
+            {"specular", PropertyValue(8.0f)}
+        };
+        const auto reboundLayout =
+            sdfwgsl::inspectResponseExpression(&boundResponse, &bindingC);
+        check(reboundLayout.ok &&
+                  reboundLayout.structure != boundLayoutB.structure,
+              "changing the authored Bind path changes response dependency structure");
+
+        auto vectorBindRoot = std::make_shared<OntoMath::MathNode>();
+        vectorBindRoot->op = OntoMath::MathNode::Op::Bind;
+        vectorBindRoot->propertyPath = "baseColor";
+        OntoMath::Piecewise vectorBoundResponse =
+            OntoMath::Piecewise::continuous(vectorBindRoot);
+        sdfwgsl::BindingValues vectorBindings{
+            {"baseColor", PropertyValue(glm::vec3(0.2f, 0.4f, 0.8f))}
+        };
+        const auto vectorBound =
+            sdfwgsl::inspectResponseExpression(&vectorBoundResponse, &vectorBindings);
+        const auto vectorBoundParams =
+            sdfwgsl::collectResponseParams(&vectorBoundResponse, &vectorBindings);
+        check(vectorBound.ok && vectorBoundParams.ok &&
+                  vectorBoundParams.values.size() == 3,
+              "response Bind admits authored vec3 PropertyPath values as three parameter slots");
+
         responseRoot->children[2]->scalarForm.terms[0].coefficient = 0.8;
         const auto layoutAfter = sdfwgsl::inspectResponseExpression(&response);
         const auto paramsAfter = sdfwgsl::collectResponseParams(&response);
@@ -1634,6 +1700,43 @@ int main() {
                   "ambientTerm + diffuseTerm + specTerm,\n        HAS_AUTHORED_MATERIAL_RESPONSE") !=
                   std::string::npos,
               "authored response is evaluated after transport and owns final reflected RGB");
+
+        auto boundResponseRoot = std::make_shared<OntoMath::MathNode>();
+        boundResponseRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto diffuseBind = std::make_unique<OntoMath::MathNode>();
+        diffuseBind->op = OntoMath::MathNode::Op::Bind;
+        diffuseBind->propertyPath = "diffuse";
+        boundResponseRoot->children.push_back(std::move(diffuseBind));
+        boundResponseRoot->children.push_back(number(0.0));
+        boundResponseRoot->children.push_back(number(0.0));
+        OntoMath::Piecewise boundResponse =
+            OntoMath::Piecewise::continuous(boundResponseRoot);
+
+        sdfwgsl::BindingValues diffuseA{
+            {"diffuse", PropertyValue(0.8f)}
+        };
+        const auto boundProgramA = sdfwgsl::compile(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr, &boundResponse, &diffuseA);
+
+        sdfwgsl::BindingValues diffuseB{
+            {"diffuse", PropertyValue(0.35f)}
+        };
+        const auto boundProgramB = sdfwgsl::compile(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr, &boundResponse, &diffuseB);
+        const auto boundRefresh = sdfwgsl::collectParams(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr, &boundResponse, &diffuseB);
+
+        check(boundProgramA.ok && boundProgramB.ok && boundRefresh.ok &&
+                  boundProgramA.wgsl == boundProgramB.wgsl &&
+                  boundProgramA.params != boundProgramB.params &&
+                  boundRefresh.values == boundProgramB.params,
+              "live Property Bind value edit reuses WGSL and refreshes only response parameters");
 
         const auto beforeParams = authored.params;
         responseRoot->children[2]->scalarForm.terms[0].coefficient = 0.7;
