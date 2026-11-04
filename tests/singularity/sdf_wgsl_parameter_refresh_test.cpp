@@ -1485,14 +1485,14 @@ int main() {
                       "specShape * directRadiance") != std::string::npos,
               "multi-source diffuse/specular transport consumes per-source visibility");
         const auto environmentUse =
-            multiSource.wgsl.find("environmentTerm += inst.shading.x");
+            multiSource.wgsl.find("environmentRadiance +=");
         const auto directBoundary =
             multiSource.wgsl.find("Direct source transport begins here");
         check(environmentUse != std::string::npos &&
                   directBoundary != std::string::npos &&
                   environmentUse < directBoundary &&
                   multiSource.wgsl.find("ambientTerm") == std::string::npos,
-              "legacy environment compatibility executes before direct-path visibility");
+              "environment incident radiance is accumulated before direct-path visibility");
         const auto directTail = multiSource.wgsl.substr(directBoundary);
         check(directTail.find("legacyEnvironment") == std::string::npos,
               "direct multi-source transport cannot read the legacy environment input");
@@ -1560,6 +1560,65 @@ int main() {
               "material response admits receiver pigment as authored Vector input");
         check(!sdfwgsl::inspectVectorExpression(&pigmentResponse, false).ok,
               "receiver pigment cannot leak into generic source/vector authority");
+
+        // Environment response is a second receiver-owned context:
+        // environmentRadiance is admitted, direct wi is not.
+        auto envScale = std::make_unique<OntoMath::MathNode>();
+        envScale->op = OntoMath::MathNode::Op::Scale;
+        auto ambientBind = std::make_unique<OntoMath::MathNode>();
+        ambientBind->op = OntoMath::MathNode::Op::Bind;
+        ambientBind->propertyPath = "ambient";
+        envScale->children.push_back(std::move(ambientBind));
+        envScale->children.push_back(variable(OntoMath::kEnvironmentRadianceVar));
+
+        auto envRoot = std::make_shared<OntoMath::MathNode>();
+        envRoot->op = OntoMath::MathNode::Op::Hadamard;
+        envRoot->children.push_back(variable(OntoMath::kSurfaceColorVar));
+        envRoot->children.push_back(std::move(envScale));
+        OntoMath::Piecewise environmentResponse =
+            OntoMath::Piecewise::continuous(envRoot);
+
+        sdfwgsl::BindingValues ambientA{{"ambient", PropertyValue(0.2f)}};
+        const auto envLayoutA =
+            sdfwgsl::inspectEnvironmentResponseExpression(
+                &environmentResponse, &ambientA);
+        const auto envParamsA =
+            sdfwgsl::collectEnvironmentResponseParams(
+                &environmentResponse, &ambientA);
+        check(envLayoutA.ok && envParamsA.ok &&
+                  envLayoutA.structure.find("bind[7]=ambient") != std::string::npos,
+              "environment response admits environmentRadiance and Material Bind");
+
+        sdfwgsl::BindingValues ambientB{{"ambient", PropertyValue(0.65f)}};
+        const auto envLayoutB =
+            sdfwgsl::inspectEnvironmentResponseExpression(
+                &environmentResponse, &ambientB);
+        const auto envParamsB =
+            sdfwgsl::collectEnvironmentResponseParams(
+                &environmentResponse, &ambientB);
+        check(envLayoutB.ok && envParamsB.ok &&
+                  envLayoutA.structure == envLayoutB.structure &&
+                  envParamsA.values != envParamsB.values,
+              "environment Bind edit refreshes values without changing WGSL structure");
+
+        auto environmentLeak = std::make_shared<OntoMath::MathNode>();
+        environmentLeak->op = OntoMath::MathNode::Op::ValueLeaf;
+        environmentLeak->variableName = OntoMath::kEnvironmentRadianceVar;
+        OntoMath::Piecewise environmentInDirect =
+            OntoMath::Piecewise::continuous(environmentLeak);
+        check(!sdfwgsl::inspectResponseExpression(&environmentInDirect).ok,
+              "direct material response refuses environmentRadiance authority");
+
+        auto wiLeak = std::make_shared<OntoMath::MathNode>();
+        wiLeak->op = OntoMath::MathNode::Op::VectorConstruct;
+        wiLeak->children.push_back(variable(OntoMath::kWiXVar));
+        wiLeak->children.push_back(variable(OntoMath::kWiYVar));
+        wiLeak->children.push_back(variable(OntoMath::kWiZVar));
+        OntoMath::Piecewise wiInEnvironment =
+            OntoMath::Piecewise::continuous(wiLeak);
+        check(!sdfwgsl::inspectEnvironmentResponseExpression(
+                  &wiInEnvironment).ok,
+              "environment material response refuses direct incoming direction wi");
 
         auto boundRoot = std::make_shared<OntoMath::MathNode>();
         boundRoot->op = OntoMath::MathNode::Op::VectorConstruct;
