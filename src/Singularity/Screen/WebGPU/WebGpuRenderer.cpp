@@ -88,7 +88,7 @@ struct U {
     viewProj:     mat4x4<f32>,
     lightPos:     vec4<f32>,
     eyePos:       vec4<f32>,
-    lightControl: vec4<f32>, // x = lighting enabled, y = visibility requested
+    lightControl: vec4<f32>, // x = lighting enabled, y = RadianceVisibilityMode (0/1/2)
 };
 struct Instance {
     model:     mat4x4<f32>,
@@ -133,6 +133,21 @@ struct RadianceSourceData {
     }
 
     wgsl += R"WGSL(
+struct VisibilityDecision {
+    known: f32,
+    value: f32,
+};
+
+fn meshPathVisibility() -> VisibilityDecision {
+    // Mesh currently owns no exact ray query even for its local tessellation.
+    // Disabled is exact compatibility V=1; every requested scope is Unknown
+    // until a shared scene/path provider is admitted.
+    if (u.lightControl.y < 0.5) {
+        return VisibilityDecision(1.0, 1.0);
+    }
+    return VisibilityDecision(0.0, 0.0);
+}
+
 struct VSOut {
     @builtin(position) clip: vec4<f32>,
     @location(0) worldNormal: vec3<f32>,
@@ -179,9 +194,8 @@ fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
             wgsl += "        if (sourcePacket.enabled > 0.5) {\n";
             wgsl += "            environmentRadiance += "
                     "sourcePacket.environmentRadiance;\n";
-            wgsl += "            // Mesh has no scene-wide visibility query yet. "
-                    "V=1 is admitted only when visibility is explicitly disabled.\n";
-            wgsl += "            if (u.lightControl.y < 0.5 && "
+            wgsl += "            let pathVisibility = meshPathVisibility();\n";
+            wgsl += "            if (pathVisibility.known > 0.5 && "
                     "HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
             wgsl += "                let responseDefined = "
                     "sourcePacket.directionDefined > 0.5 || "
@@ -193,7 +207,7 @@ fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
                     "sourcePacket.legacyDiffuseIncident, "
                     "sourcePacket.legacySpecularIncident);\n";
             wgsl += "                    directTerm += receiverResponse * "
-                    "sourcePacket.shapedRadiance;\n";
+                    "sourcePacket.shapedRadiance * pathVisibility.value;\n";
             wgsl += "                }\n";
             wgsl += "            }\n";
             wgsl += "        }\n";
@@ -226,10 +240,12 @@ fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
         } else if (MATERIAL_RESPONSE_READS_WI) {
             responseDefined = false;
         }
-        if (responseDefined) {
+        let pathVisibility = meshPathVisibility();
+        if (responseDefined && pathVisibility.known > 0.5) {
             directTerm = materialResponseEval(
                 in.localPos, N, responseWi, V, surfaceColor,
-                vec3<f32>(1.0), vec3<f32>(1.0), vec3<f32>(1.0));
+                vec3<f32>(1.0), vec3<f32>(1.0), vec3<f32>(1.0)) *
+                pathVisibility.value;
         }
     }
 )WGSL";
@@ -1578,9 +1594,10 @@ void WebGpuRenderer::flushMeshDraws() {
         u.eyePos = glm::vec4(_eyePos, 1.0f);
         u.lightControl = glm::vec4(
             lightingEnabled() ? 1.0f : 0.0f,
-            radianceVisibilityEnabled() ? 1.0f : 0.0f,
+            static_cast<float>(
+                static_cast<uint32_t>(radianceVisibilityMode())),
             0.0f, 0.0f);
-        if (key.sourceSet && radianceVisibilityEnabled()) {
+        if (radianceVisibilityMode() != RadianceVisibilityMode::Disabled) {
             // This is an explicit unknown-V refusal for direct transport, not
             // evidence that the source was invisible. The shader still admits
             // directionless environment response from the source set.
