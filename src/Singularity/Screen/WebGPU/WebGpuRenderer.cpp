@@ -566,6 +566,12 @@ void WebGpuRenderer::releasePersistentRadianceSources() {
 }
 
 void WebGpuRenderer::reloadShaders() {
+    for (auto& kv : _meshPipes) {
+        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
+    }
+    _meshPipes.clear();
+    _meshBatches.clear();
+
     // Keys are SdfPipeline addresses, so release these before destroying the
     // pipeline map whose node addresses identify the caches.
     releasePersistentSdfParams();
@@ -771,7 +777,10 @@ void WebGpuRenderer::shutdown() {
     if (_imageLayout) { wgpuPipelineLayoutRelease(_imageLayout); _imageLayout = nullptr; }
     if (_imageShader) { wgpuShaderModuleRelease(_imageShader); _imageShader = nullptr; }
     if (_imageBgl)    { wgpuBindGroupLayoutRelease(_imageBgl); _imageBgl = nullptr; }
-    if (_meshPipeline) { wgpuRenderPipelineRelease(_meshPipeline); _meshPipeline = nullptr; }
+    for (auto& kv : _meshPipes) {
+        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
+    }
+    _meshPipes.clear();
     if (_bgl) { wgpuBindGroupLayoutRelease(_bgl); _bgl = nullptr; }
     if (_instanceBgl) { wgpuBindGroupLayoutRelease(_instanceBgl); _instanceBgl = nullptr; }
     _meshBatches.clear();
