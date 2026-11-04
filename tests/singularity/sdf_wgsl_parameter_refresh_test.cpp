@@ -1530,6 +1530,18 @@ int main() {
                   layoutBefore.readsWo,
               "material response independently admits receiver normal plus wi/wo");
 
+        auto pigmentRoot = std::make_shared<OntoMath::MathNode>();
+        pigmentRoot->op = OntoMath::MathNode::Op::ValueLeaf;
+        pigmentRoot->variableName = OntoMath::kSurfaceColorVar;
+        OntoMath::Piecewise pigmentResponse =
+            OntoMath::Piecewise::continuous(pigmentRoot);
+        const auto pigmentLayout =
+            sdfwgsl::inspectResponseExpression(&pigmentResponse);
+        check(pigmentLayout.ok,
+              "material response admits receiver pigment as authored Vector input");
+        check(!sdfwgsl::inspectVectorExpression(&pigmentResponse, false).ok,
+              "receiver pigment cannot leak into generic source/vector authority");
+
         responseRoot->children[2]->scalarForm.terms[0].coefficient = 0.8;
         const auto layoutAfter = sdfwgsl::inspectResponseExpression(&response);
         const auto paramsAfter = sdfwgsl::collectResponseParams(&response);
@@ -1614,11 +1626,14 @@ int main() {
               authored.wgsl.find("fn materialResponseEval") !=
                   std::string::npos &&
               authored.wgsl.find(
-                  "materialResponseEval(pf, nw, responseWi, V)") !=
+                  "materialResponseEval(pf, nw, responseWi, V, surfaceColor)") !=
                   std::string::npos &&
               authored.wgsl.find("receiverResponse * directRadiance") !=
+                  std::string::npos &&
+              authored.wgsl.find(
+                  "ambientTerm + diffuseTerm + specTerm,\n        HAS_AUTHORED_MATERIAL_RESPONSE") !=
                   std::string::npos,
-              "authored response is evaluated after transport reaches the receiver");
+              "authored response is evaluated after transport and owns final reflected RGB");
 
         const auto beforeParams = authored.params;
         responseRoot->children[2]->scalarForm.terms[0].coefficient = 0.7;
