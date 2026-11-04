@@ -2815,14 +2815,19 @@ fn fs(in: VSOut) -> FSOut {
     if (HAS_AUTHORED_CHROMA) {
         sourceChroma = lightChroma(sourceDelta);
     }
+    var environmentRadiance = u.legacyEnvironment.rgb;
+    if (HAS_AUTHORED_CHROMA) {
+        environmentRadiance =
+            sourceChroma * vec3<f32>(u.legacyEnvironment.w);
+    }
     var environmentTerm = vec3<f32>(0.0);
-    if (!HAS_AUTHORED_MATERIAL_RESPONSE) {
-        if (HAS_AUTHORED_CHROMA) {
-            environmentTerm =
-                inst.shading.x * sourceChroma * vec3<f32>(u.legacyEnvironment.w);
-        } else {
-            environmentTerm = inst.shading.x * u.legacyEnvironment.rgb;
-        }
+    if (HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE) {
+        environmentTerm = materialEnvironmentResponseEval(
+            pf, nw, V, surfaceColor, environmentRadiance);
+    } else if (!HAS_AUTHORED_MATERIAL_RESPONSE) {
+        // Temporary compatibility only. Once material.default owns the inherited
+        // environment law, production resolution no longer reaches this branch.
+        environmentTerm = inst.shading.x * environmentRadiance;
     }
 
     // Direct source transport begins here. The environment compatibility input
@@ -5060,7 +5065,7 @@ Program compile(const geom::SdfNode& root,
 
         std::string marcher = kMarcher;
         const std::string lightingBegin =
-            "    let L = normalize(u.lightPos.xyz - pw);\n";
+            "    let V = normalize(u.eyePos.xyz - pw);\n";
         const std::string lightingEnd =
             "    let clip = u.viewProj * vec4<f32>(pw, 1.0);\n";
         const std::size_t lightAt = marcher.find(lightingBegin);
@@ -5070,7 +5075,7 @@ Program compile(const geom::SdfNode& root,
         } else {
             std::string sum;
             sum += "    let V = normalize(u.eyePos.xyz - pw);\n";
-            sum += "    var environmentTerm = vec3<f32>(0.0);\n";
+            sum += "    var environmentRadiance = vec3<f32>(0.0);\n";
             sum += "    var diffuseTerm = vec3<f32>(0.0);\n";
             sum += "    var specTerm = vec3<f32>(0.0);\n";
 
@@ -5085,16 +5090,12 @@ Program compile(const geom::SdfNode& root,
                 if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
                     sum += "            let sourceChroma = lightChroma_" + s +
                            "(sourceDelta);\n";
-                    sum += "            if (!HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
-                    sum += "                environmentTerm += inst.shading.x * "
-                           "sourceChroma * vec3<f32>(source.legacyEnvironment.w);\n";
-                    sum += "            }\n";
+                    sum += "            environmentRadiance += sourceChroma * "
+                           "vec3<f32>(source.legacyEnvironment.w);\n";
                 } else {
                     sum += "            let sourceChroma = vec3<f32>(1.0);\n";
-                    sum += "            if (!HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
-                    sum += "                environmentTerm += inst.shading.x * "
+                    sum += "            environmentRadiance += "
                            "source.legacyEnvironment.rgb;\n";
-                    sum += "            }\n";
                 }
                 sum += "            // Direct source transport begins here; legacyEnvironment "
                        "is not read below.\n";
@@ -5168,6 +5169,13 @@ Program compile(const geom::SdfNode& root,
                 sum += "        }\n";
                 sum += "    }\n";
             }
+            sum += "    var environmentTerm = vec3<f32>(0.0);\n";
+            sum += "    if (HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE) {\n";
+            sum += "        environmentTerm = materialEnvironmentResponseEval("
+                   "pf, nw, V, surfaceColor, environmentRadiance);\n";
+            sum += "    } else if (!HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
+            sum += "        environmentTerm = inst.shading.x * environmentRadiance;\n";
+            sum += "    }\n";
             marcher.replace(lightAt, clipAt - lightAt, sum);
         }
 
