@@ -498,6 +498,7 @@ if(NOT EMSCRIPTEN)
         # Add a test here when its fixture is an authored save it must find,
         # rather than one it creates in a temp SaveRoot.
         if (${TEST_NAME} STREQUAL "synthesis_studio_app_test" OR
+
             ${TEST_NAME} STREQUAL "synthesis_studio_living_test" OR
             ${TEST_NAME} STREQUAL "synthesis_studio_full_store_boot_test" OR
             ${TEST_NAME} STREQUAL "person_home_migration_boot_test" OR
