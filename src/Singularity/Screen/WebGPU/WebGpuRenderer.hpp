@@ -7,9 +7,10 @@
 // These extra methods are WebGPU-specific for now; when the app swaps renderers
 // they will be lifted onto the Renderer interface (OpenGL impl = no-ops).
 //
-// Status: drawMesh is real (TessMesh vertex layout, camera+model+material
-// uniforms, Lambert+ambient lighting, two-sided). drawImplicit tessellates and
-// reuses drawMesh; drawLines/drawOverlay are stubs pending their own pipelines.
+// Status: drawMesh rasterizes TessMesh geometry but delegates receiver
+// illumination to the same authored Material response compiler used by implicit
+// surfaces. Triangle vs. field is representation, not a second shading model.
+// drawLines/drawOverlay and other flat paths remain intentionally unlit pipelines.
 
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/GpuBufferPool.hpp"
