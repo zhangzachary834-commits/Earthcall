@@ -21,13 +21,20 @@ RenderMaterial resolveRenderMaterial(const std::string& materialId, const FaceAl
         rm.colorRevision = m->getRevision();
         rm.responseExpr = m->responseExpr;
         rm.responseRevision = m->getResponseRevision();
+        rm.environmentResponseExpr = m->environmentResponseExpr;
+        rm.environmentResponseRevision = m->getEnvironmentResponseRevision();
 
-        if (rm.responseExpr) {
+        if (rm.responseExpr || rm.environmentResponseExpr) {
             std::set<std::string> paths;
-            for (const auto& piece : rm.responseExpr->pieces) {
-                if (piece.mathNode) piece.mathNode->collectPropertyBindings(paths);
-                if (piece.whereLEZero) piece.whereLEZero->collectPropertyBindings(paths);
-            }
+            const auto collectBindings = [&](const std::shared_ptr<OntoMath::Piecewise>& expr) {
+                if (!expr) return;
+                for (const auto& piece : expr->pieces) {
+                    if (piece.mathNode) piece.mathNode->collectPropertyBindings(paths);
+                    if (piece.whereLEZero) piece.whereLEZero->collectPropertyBindings(paths);
+                }
+            };
+            collectBindings(rm.responseExpr);
+            collectBindings(rm.environmentResponseExpr);
 
             // Resolve only authored dependencies. Missing paths stay absent:
             // the GPU compiler names and refuses the unresolved Bind rather than
