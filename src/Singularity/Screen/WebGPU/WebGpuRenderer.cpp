@@ -197,6 +197,58 @@ struct MeshUniforms {
     glm::vec4 lightControl;
 };
 
+glm::vec3 legacyDirectIncidentRadiance(const glm::vec3& ambientRadiance,
+                                       const glm::vec3& diffuseRadiance,
+                                       const glm::vec3& specularRadiance,
+                                       const glm::vec4& coefficients) {
+    constexpr float eps = 1e-8f;
+    if (std::fabs(coefficients.z) > eps) {
+        return diffuseRadiance / coefficients.z;
+    }
+    if (std::fabs(coefficients.w) > eps) {
+        return specularRadiance / coefficients.w;
+    }
+    if (std::fabs(coefficients.y) > eps) {
+        return ambientRadiance / coefficients.y;
+    }
+    return glm::vec3(0.0f);
+}
+
+struct RadianceSourceGpuData {
+    glm::vec4 position;
+    glm::vec4 legacyEnvironment;
+    glm::vec4 directIncidentRadiance;
+    glm::vec4 legacyDiffuseIncident;
+    glm::vec4 legacySpecularIncident;
+    glm::vec4 time;
+    glm::vec4 control;
+};
+
+RadianceSourceGpuData lowerRadianceSourceGpuData(
+    const Rendering::RadianceSourceBinding& source) {
+    RadianceSourceGpuData data{};
+    data.position = glm::vec4(source.position, 1.0f);
+    data.legacyEnvironment = glm::vec4(
+        source.ambientRadiance / 0.2f,
+        (source.coefficients.x * source.coefficients.y) / 0.2f);
+    data.directIncidentRadiance = glm::vec4(
+        legacyDirectIncidentRadiance(
+            source.ambientRadiance, source.diffuseRadiance,
+            source.specularRadiance, source.coefficients),
+        source.coefficients.x);
+    data.legacyDiffuseIncident = glm::vec4(
+        source.diffuseRadiance / 0.8f,
+        (source.coefficients.x * source.coefficients.z) / 0.8f);
+    data.legacySpecularIncident = glm::vec4(
+        source.specularRadiance,
+        source.coefficients.x * source.coefficients.w);
+    data.time = glm::vec4(static_cast<float>(source.temporalCoordinate),
+                          static_cast<float>(source.temporalDelta), 0.0f, 0.0f);
+    data.control =
+        glm::vec4(source.enabled ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
+    return data;
+}
+
 // Unlit flat-colour shader for the selection overlay + wireframe.
 const char* kFlatWGSL = R"(
 struct FU { mvp: mat4x4<f32>, color: vec4<f32> };
@@ -1333,30 +1385,6 @@ void WebGpuRenderer::flushMeshDraws() {
 
 namespace {
 
-glm::vec3 legacyDirectIncidentRadiance(const glm::vec3& ambientRadiance,
-                                       const glm::vec3& diffuseRadiance,
-                                       const glm::vec3& specularRadiance,
-                                       const glm::vec4& coefficients) {
-    // AuthorableLight projects every historical channel from one
-    // color*intensity source, so division by any nonzero coefficient recovers the
-    // canonical incident RGB exactly. The older raw Renderer::setLight API can
-    // provide mutually inconsistent lobe colours; then canonical incident RGB is
-    // mathematically underdetermined and this is only a best-effort projection.
-    // Exact old-BP parity does NOT depend on this guess: the two legacy RGB lobe
-    // envelopes are preserved independently below for material.default.
-    constexpr float eps = 1e-8f;
-    if (std::fabs(coefficients.z) > eps) {
-        return diffuseRadiance / coefficients.z;
-    }
-    if (std::fabs(coefficients.w) > eps) {
-        return specularRadiance / coefficients.w;
-    }
-    if (std::fabs(coefficients.y) > eps) {
-        return ambientRadiance / coefficients.y;
-    }
-    return glm::vec3(0.0f);
-}
-
 // Uniform block for the raymarcher; must match struct RU in the generated WGSL.
 struct SdfGlobalUniforms {
     glm::mat4 viewProj;
@@ -1381,17 +1409,6 @@ struct SdfGlobalUniforms {
     glm::vec4 volumeTime;   // x/y = admitted participating-medium coordinate/delta
 };
 
-struct RadianceSourceGpuData {
-    glm::vec4 position;
-    // xyz = constant legacy environment envelope; w = chroma environment scale.
-    // Direct rho/alpha/visibility transport must never read this field.
-    glm::vec4 legacyEnvironment;
-    glm::vec4 directIncidentRadiance;
-    glm::vec4 legacyDiffuseIncident;
-    glm::vec4 legacySpecularIncident;
-    glm::vec4 time;
-    glm::vec4 control;
-};
 
 struct VolumeGlobalUniforms {
     glm::mat4 viewProj;
