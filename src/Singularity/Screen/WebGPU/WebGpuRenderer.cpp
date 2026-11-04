@@ -1152,7 +1152,10 @@ struct SdfGlobalUniforms {
     glm::mat4 invViewProj;
     glm::vec4 lightPos;
     glm::vec4 eyePos;
-    glm::vec4 lightAmbient;
+    // Legacy compatibility only: xyz is the directionless environment envelope
+    // already normalized by the historical 0.2 reference; w is the authored
+    // chroma environment scale (intensity * legacyAmbient / 0.2).
+    glm::vec4 legacyEnvironment;
     glm::vec4 lightDiffuse;
     glm::vec4 lightSpecular;
     glm::vec4 lightControl; // x = lighting enabled, y = derived visibility enabled
@@ -1164,7 +1167,9 @@ struct SdfGlobalUniforms {
 
 struct RadianceSourceGpuData {
     glm::vec4 position;
-    glm::vec4 ambient;
+    // xyz = constant legacy environment envelope; w = chroma environment scale.
+    // Direct rho/alpha/visibility transport must never read this field.
+    glm::vec4 legacyEnvironment;
     glm::vec4 diffuse;
     glm::vec4 specular;
     glm::vec4 coefficients;
@@ -2289,7 +2294,9 @@ void WebGpuRenderer::flushSdfDraws() {
         for (const auto& source : radianceSources()) {
             RadianceSourceGpuData data{};
             data.position = glm::vec4(source.position, 1.0f);
-            data.ambient = glm::vec4(source.ambientRadiance, 1.0f);
+            data.legacyEnvironment = glm::vec4(
+                source.ambientRadiance / 0.2f,
+                (source.coefficients.x * source.coefficients.y) / 0.2f);
             data.diffuse = glm::vec4(source.diffuseRadiance, 1.0f);
             data.specular = glm::vec4(source.specularRadiance, 1.0f);
             data.coefficients = source.coefficients;
@@ -2349,13 +2356,16 @@ void WebGpuRenderer::flushSdfDraws() {
     u.invViewProj = _invViewProj;
     u.lightPos = glm::vec4(lightPos(), 1.0f);
     u.eyePos = glm::vec4(_eyePos, 1.0f);
-    u.lightAmbient = glm::vec4(lightAmbient(), 1.0f);
+    const glm::vec4 sourceCoefficients = radianceSourceCoefficients();
+    u.legacyEnvironment = glm::vec4(
+        lightAmbient() / 0.2f,
+        (sourceCoefficients.x * sourceCoefficients.y) / 0.2f);
     u.lightDiffuse = glm::vec4(lightDiffuse(), 1.0f);
     u.lightSpecular = glm::vec4(lightSpecular(), 1.0f);
     u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f,
                                radianceVisibilityEnabled() ? 1.0f : 0.0f,
                                0.0f, 0.0f);
-    u.radianceSourceCoefficients = radianceSourceCoefficients();
+    u.radianceSourceCoefficients = sourceCoefficients;
     u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
                                static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
     u.volumeTime = glm::vec4(static_cast<float>(volumeDensityTemporalCoordinate()),
