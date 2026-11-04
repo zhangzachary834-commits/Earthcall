@@ -238,6 +238,56 @@ No CI/native result is claimed for this exact head until its workflow completes.
 
 ---
 
+## Implementation ledger — 2026-11-03 fifth pass: mesh receiver-law unification
+
+The ordinary WebGPU triangle path no longer owns a bespoke Blinn-Phong shader.
+
+Implemented:
+- extracted `compileSurfaceResponseModule(...)`, a geometry-independent receiver compiler using the same OntoMath validation/emission path as SDF material response;
+- the reusable module emits `materialResponseEval` and `materialEnvironmentResponseEval` plus one compact response parameter stream, with no vertex/fragment entry point and no SDF geometry bindings;
+- replaced the static mesh WGSL Blinn-Phong body with raster surface-interaction plumbing: rasterization supplies local/world position, world normal, view direction, paint/pigment and source direction; authored Material response supplies reflected RGB;
+- removed mesh-shader-owned diffuse cosine, half vector, specular power, `MeshUniforms.params`, and the semantic `MeshBatchKey.shading` quartet;
+- removed the fixed `_meshPipeline`; mesh pipelines are built lazily and cached by generated receiver WGSL structure;
+- mesh response structure is memoized independently from bound values; PropertyPath Bind edits recollect parameter values without recompiling the GPU pipeline;
+- response AST cache keys retain owning `shared_ptr` references plus authored revision authority, preventing an expired/reallocated AST address from aliasing historical compiled state;
+- instanced mesh batching now keys by mesh, receiver pipeline, albedo, and exact response-parameter **bit identity**. Float vectors themselves are payload, not an ordering oracle, so NaN ordering cannot silently merge distinct batches;
+- response params live in a read-only storage binding. Parameter-free responses receive one inert storage float because WebGPU does not admit a zero-sized binding;
+- added mesh-specific compiler/refusal/parameter-upload telemetry to `Renderer::FrameStats`;
+- standalone renderer/window diagnostics now author the receiver response they intend instead of relying on a bare `RenderMaterial` to summon the removed shader;
+- added a native ordinary-mesh witness whose response is `vec3(Bind("diffuse"),0,0)`; a PropertyPath edit changes the pixel while frame two requires zero mesh program compiles and positive parameter upload;
+- added a representation-parity witness: the same authored direction-independent Material response is rendered once as a tessellated sphere and once through the exact implicit path, and center RGB must agree within a narrow byte tolerance;
+- repaired two stale SDF tribunals from the prior authored-Blinn-Phong crown. The exact pre-mesh-unification CI head then passed the SDF proof suite and WebGPU object/radiance parity before this final cache-hardening/parity increment.
+
+### Deliberate transport boundary
+
+This pass unifies **receiver law**, not yet the entire source-transport implementation.
+
+Historical mesh shading ignored authored `rho/chi/alpha/visibility` and effectively consumed white direct/environment envelopes plus one positional light direction. To avoid combining a receiver-law migration with a source-transport behavior change, the new mesh path preserves that historical incident adapter for now:
+
+```
+raster surface interaction
+        ↓
+white compatibility incident envelopes + source direction
+        ↓
+the SAME Material.responseExpr / environmentResponseExpr semantics
+```
+
+The next transport rung may replace those white compatibility envelopes with the full authored RadianceSource set (`rho · chi · alpha · visibility`) and multi-source accumulation, but that is a separate pixel-parity tribunal.
+
+### Production fossil state
+
+In the current WebGPU mesh source:
+- no fixed `_meshPipeline`;
+- no `MeshBatchKey.shading`;
+- no `MeshUniforms.params`;
+- no hardcoded `diff = max(dot(N,L),...)`;
+- no hardcoded half-vector/specular `pow`;
+- no renderer-owned Blinn-Phong branch.
+
+The compatibility Blinn-Phong appearance survives only because `material.default.responseExpr` is authored OntoMath. An explicitly authored response therefore changes both implicit and mesh matter without adding a renderer shader kind.
+
+---
+
 ---
 
 ## Commission
