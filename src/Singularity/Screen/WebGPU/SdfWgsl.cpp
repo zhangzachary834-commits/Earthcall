@@ -5251,7 +5251,6 @@ Program compile(const geom::SdfNode& root,
                 sum += "        }\n";
                 sum += "    }\n";
             }
-            }
             sum += "    var environmentTerm = vec3<f32>(0.0);\n";
             sum += "    if (HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE) {\n";
             sum += "        environmentTerm = materialEnvironmentResponseEval("
