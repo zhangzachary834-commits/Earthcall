@@ -3,7 +3,10 @@
 #include <glm/glm.hpp>
 #include <string>
 #include <memory>
+#include <map>
+#include <cstdint>
 #include "Singularity/OntoMath/ScalarForm.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 
 // ---------------------------------------------------------------------------
 // RenderMaterial is the flat, GPU-facing view of a Material being. The ontology
@@ -41,6 +44,12 @@ struct RenderMaterial {
     // authored AST, but Material remains its identity and revision authority.
     std::shared_ptr<OntoMath::Piecewise> responseExpr;
     uint32_t responseRevision = 0;
+
+    // Generic AD-21 binding snapshot. Keys are the exact PropertyPath texts
+    // authored by MathNode::Bind; values are resolved from the Material being
+    // before the renderer sees it. No renderer-side material vocabulary lives here.
+    std::map<std::string, PropertyValue> responseBindings;
+    uint64_t responseBindingRevision = 0;
 };
 
 // One face's albedo — the paint the Face Brush writes — described BOTH ways,
