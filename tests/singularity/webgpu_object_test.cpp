@@ -2716,6 +2716,93 @@ int main() {
                "a single painted face must fall back to the six-draw path, not merge over the paint");
     }
 
+    // --- AUTHORED RECEIVER LAW ON ORDINARY TRIANGLE MESH -------------------
+    // Rasterization may discover the surface, but it must execute the same
+    // Material response mathematics as the SDF path. A live Bind edit changes
+    // only response parameter bytes, never the mesh WGSL/pipeline.
+    {
+        auto meshResponseMat = materials.create("webgpu_mesh_response_witness");
+        meshResponseMat->baseColor = glm::vec3(1.0f);
+        meshResponseMat->ambient = 0.0f;
+        meshResponseMat->diffuse = 0.82f;
+        meshResponseMat->specular = 0.0f;
+
+        auto meshResponseRoot = std::make_shared<OntoMath::MathNode>();
+        meshResponseRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto meshDiffuseBind = std::make_unique<OntoMath::MathNode>();
+        meshDiffuseBind->op = OntoMath::MathNode::Op::Bind;
+        meshDiffuseBind->propertyPath = "diffuse";
+        meshResponseRoot->children.push_back(std::move(meshDiffuseBind));
+        meshResponseRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        meshResponseRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        meshResponseMat->responseExpr =
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::continuous(meshResponseRoot));
+        meshResponseMat->environmentResponseExpr.reset();
+        meshResponseMat->bumpResponseRevision();
+        const uint32_t meshResponseRevision =
+            meshResponseMat->getResponseRevision();
+        const std::string meshResponseJson =
+            meshResponseMat->responseExpr->toJson().dump();
+
+        Object meshReceiver;
+        meshReceiver.setMaterialId("material.webgpu_mesh_response_witness");
+
+        renderer.setLightingEnabled(true);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.2f),
+                          glm::vec3(0.8f),
+                          glm::vec3(1.0f));
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char meshBright[4];
+        readCentre(meshBright);
+        const Renderer::FrameStats meshFirstStats = renderer.frameStats();
+        std::printf(
+            "mesh authored response bright=(%d,%d,%d) compiles=%u paramBytes=%zu\n",
+            meshBright[0], meshBright[1], meshBright[2],
+            meshFirstStats.meshProgramCompiles,
+            meshFirstStats.meshParameterBytesUploaded);
+        assert(meshBright[0] > 175 &&
+               meshBright[1] < 20 &&
+               meshBright[2] < 20 &&
+               "ordinary mesh did not execute its authored Material response");
+        assert(meshFirstStats.meshProgramCompiles == 1 &&
+               meshFirstStats.meshParameterBytesUploaded > 0 &&
+               "first authored mesh response did not compile/upload its receiver program");
+
+        assert(PropertyPath::parse("diffuse").setValue(
+                   *meshResponseMat, PropertyValue(0.18f)) ==
+               PropertyPath::PathResult::Ok);
+        assert(meshResponseMat->getResponseRevision() == meshResponseRevision &&
+               meshResponseMat->responseExpr->toJson().dump() == meshResponseJson &&
+               "bound mesh Material edit mutated receiver structure/revision");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char meshDim[4];
+        readCentre(meshDim);
+        const Renderer::FrameStats meshValueStats = renderer.frameStats();
+        std::printf(
+            "mesh authored response dim=(%d,%d,%d) compiles=%u paramBytes=%zu\n",
+            meshDim[0], meshDim[1], meshDim[2],
+            meshValueStats.meshProgramCompiles,
+            meshValueStats.meshParameterBytesUploaded);
+        assert(meshBright[0] > meshDim[0] + 110 &&
+               meshDim[0] >= 35 && meshDim[0] <= 60 &&
+               "mesh Bind value edit did not refresh the authored receiver pixel");
+        assert(meshValueStats.meshProgramCompiles == 0 &&
+               meshValueStats.meshParameterBytesUploaded > 0 &&
+               meshValueStats.meshProgramRefusals == 0 &&
+               "mesh Bind value edit recompiled or refused instead of refreshing parameters");
+    }
+
     {
         std::vector<Object> toruses(10);
         for (int i = 0; i < 10; ++i) {
