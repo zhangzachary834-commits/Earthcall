@@ -121,13 +121,14 @@ The physics system now seamlessly integrates with:
 - **Particle System**: Collision events can create visual effects
 
 This hybrid approach gives you the best of both worlds: reliable hard-wired physics calculations with flexible event-driven responses!
+
 ## Interrelated Documents
 - [Time and Moment](../ontology/TIME_AND_MOMENT.md)
 - [No Black Box](../ontology/NO_BLACK_BOX.md)
 - [Event Bus vs Event Handler](EVENT_BUS_VS_EVENT_HANDLER.md)
 
-## Thoughts on Integration and Interrelation
+## Ontological Interrelation and Migration Boundary
 
-The introduction of the `PhysicsCollisionEvent` directly intersects with the core principles established in our temporal ontology and the "No Black Box" doctrine. While the current integration effectively surfaces collision data to the `EventBus`, making physics accessible to broader systems like Formations and Zones, we must be mindful of how these events relate to the broader concept of `Moment`.
+The physics collision notification described here is an EventBus message, not yet an authored temporal occurrence. The temporal ontology defines `Event : Moment` as a Singular that can inhabit a `Timeline`; publishing a `PhysicsCollisionEvent` struct does not automatically create such a Singular, attach it to a Timeline, persist its history, or make it reachable by Laws. EventBus delivery and event-handler callbacks remain distinct from Law execution.
 
-According to the temporal ontology, an `Event` is not merely a transient data structure, but a distinguished `Moment` Singular. By structuring `PhysicsCollisionEvent` as a standard struct, we are currently employing a pragmatic intermediate step. As the physics event integration matures, we should consider elevating these collision events to proper `Event` Singulars within a `Timeline`. This would align the physics system's soft-wired communication fully with the "No Black Box" principle, ensuring that collision occurrences are historically addressable, legible to Laws without opaque callback structs, and inherently grounded in the world's temporal substrate.
+A future integration could translate a collision notification into an `Event` Singular with authored participants, temporal coordinates, and appropriate Timeline membership, then expose it through the ordinary property and relation systems. That would make the occurrence eligible for historical inspection and Law interpretation subject to actual reachability and authority rules. These are **migration goals**, not guarantees of the present physics implementation. The [No Black Box](../ontology/NO_BLACK_BOX.md) principle calls for legible being-state, while kernel-level collision detection can remain a named mechanism; it does not require replacing the physics solver with authored callbacks.
