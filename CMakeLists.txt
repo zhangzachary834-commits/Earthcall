@@ -497,8 +497,8 @@ if(NOT EMSCRIPTEN)
         # as "this world never sweeps" and drew a wrong conclusion from it.
         # Add a test here when its fixture is an authored save it must find,
         # rather than one it creates in a temp SaveRoot.
-        if (${TEST_NAME} STREQUAL "synthesis_studio_app_test" OR
-
+        if (${TEST_NAME} STREQUAL "slow_adapter_zone_perf_test" OR
+            ${TEST_NAME} STREQUAL "synthesis_studio_app_test" OR
             ${TEST_NAME} STREQUAL "synthesis_studio_living_test" OR
             ${TEST_NAME} STREQUAL "synthesis_studio_full_store_boot_test" OR
             ${TEST_NAME} STREQUAL "person_home_migration_boot_test" OR
