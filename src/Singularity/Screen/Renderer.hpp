@@ -52,6 +52,10 @@ public:
         uint32_t meshProgramRefusals = 0;
         std::string meshLastProgramRefusal;
         size_t meshParameterBytesUploaded = 0;
+        // Meshes do not yet own a representation-independent scene visibility
+        // query. When authored visibility is requested, direct source-set
+        // transport is skipped rather than silently substituting V=1.
+        uint32_t meshVisibilityUnknownDirectSkips = 0;
         uint32_t sdfDrawCalls = 0;
         uint32_t trianglesDrawn = 0;
         size_t   vramAllocatedBytes = 0;
