@@ -369,6 +369,30 @@ ParameterBlock collectEnvironmentResponseParams(
     const OntoMath::Piecewise* expr,
     const BindingValues* bindings = nullptr);
 
+// Geometry-independent receiver compiler. Raster meshes and implicit surfaces
+// discover p/n/wo differently, but once a surface interaction exists they must
+// execute the SAME authored Material laws. This module contains only reusable
+// mathematical helpers + materialResponseEval/materialEnvironmentResponseEval;
+// it has no vertex/fragment entry point and no SDF geometry authority.
+// Numeric leaves/Bind values live in params, so equal wgsl means pipeline reuse.
+struct SurfaceResponseProgram {
+    std::string wgsl;
+    std::vector<float> params;
+    bool hasDirectResponse = false;
+    bool hasEnvironmentResponse = false;
+    bool directReadsNormal = false;
+    bool directReadsWi = false;
+    bool directReadsWo = false;
+    bool environmentReadsNormal = false;
+    bool environmentReadsWo = false;
+    bool ok = true;
+    std::string error;
+};
+SurfaceResponseProgram compileSurfaceResponseModule(
+    const OntoMath::Piecewise* responseExpr,
+    const OntoMath::Piecewise* environmentResponseExpr,
+    const BindingValues* bindings = nullptr);
+
 // V4 medium self-emission E_v(p,omega,t)->vec3. Absence is no self-emitted
 // radiance. omega is world-space sample -> eye in an emission-owned context.
 EmissionExpressionLayout inspectEmissionExpression(const OntoMath::Piecewise* expr);
