@@ -594,6 +594,10 @@ void initializeMathNodeForEditor(OntoMath::MathNode& node, OntoMath::MathNode::O
             resizeChildren(2);
             if (node.variableName.empty()) node.variableName = "tau";
             break;
+        case Op::Bind:
+            node.matrixRows = node.matrixCols = 0;
+            node.children.clear();
+            break;
         default:
             node.matrixRows = node.matrixCols = 0;
             break;
@@ -616,6 +620,7 @@ bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
     static const OpDescriptor descriptors[] = {
         { OntoMath::MathNode::Op::ScalarLeaf, "Scalar Expression", 0, true, false, false, nullptr },
         { OntoMath::MathNode::Op::ValueLeaf, "Variable Leaf", 0, false, true, false, nullptr },
+        { OntoMath::MathNode::Op::Bind, "Property Bind", 0, false, false, false, nullptr },
         { OntoMath::MathNode::Op::VectorConstruct, "Vector Construct", 3, false, false, false, nullptr },
         { OntoMath::MathNode::Op::Component, "Component", 1, false, false, true, "index (0,1,2)" },
         { OntoMath::MathNode::Op::Add, "Add (+)", 2, false, false, false, nullptr },
@@ -791,6 +796,16 @@ bool editMathNode(OntoMath::MathNode& node, const MathBindings& bindings) {
                 }
             }
             ImGui::EndCombo();
+        }
+    }
+
+    if (node.op == OntoMath::MathNode::Op::Bind) {
+        char pathBuf[256];
+        copyToBuf(pathBuf, sizeof(pathBuf), node.propertyPath);
+        if (textField("PropertyPath", pathBuf, sizeof(pathBuf),
+                      "e.g. shininess or @material.clay.baseColor")) {
+            node.propertyPath = pathBuf;
+            changed = true;
         }
     }
 
