@@ -1503,9 +1503,20 @@ int main() {
         check(multiSource.wgsl.find("lightChroma(sourceDelta)") ==
                   std::string::npos,
               "multi-source splice removes the one-source chroma/environment prelude");
-        const auto directTail = multiSource.wgsl.substr(directBoundary);
-        check(directTail.find("legacyEnvironment") == std::string::npos,
-              "direct multi-source transport cannot read the legacy environment input");
+        const auto env0 =
+            multiSource.wgsl.find("source.legacyEnvironment");
+        const auto direct0 =
+            multiSource.wgsl.find("Direct source transport begins here", env0);
+        const auto env1 =
+            multiSource.wgsl.find("source.legacyEnvironment", direct0);
+        const auto direct1 =
+            multiSource.wgsl.find("Direct source transport begins here", env1);
+        check(env0 != std::string::npos &&
+                  direct0 != std::string::npos &&
+                  env1 != std::string::npos &&
+                  direct1 != std::string::npos &&
+                  env0 < direct0 && direct0 < env1 && env1 < direct1,
+              "each multi-source environment read precedes that source's direct transport block");
     }
 
     // ---------------------------------------------------------------------
@@ -1867,11 +1878,14 @@ int main() {
                   std::string::npos &&
               authored.wgsl.find("fn materialResponseEval") !=
                   std::string::npos &&
-              authored.wgsl.find(
-                  "incidentRadiance: vec3<f32>, legacyDiffuseIncident: vec3<f32>") !=
+              authored.wgsl.find("incidentRadiance: vec3<f32>") !=
+                  std::string::npos &&
+              authored.wgsl.find("legacyDiffuseIncident: vec3<f32>") !=
+                  std::string::npos &&
+              authored.wgsl.find("legacySpecularIncident: vec3<f32>") !=
                   std::string::npos &&
               authored.wgsl.find(
-                  "incidentRadiance, legacyDiffuseIncident, legacySpecularIncident") !=
+                  "materialResponseEval(\n                pf, nw, responseWi, V, surfaceColor, incidentRadiance,") !=
                   std::string::npos &&
               authored.wgsl.find(
                   "directTerm = receiverResponse * directRadiance") !=
