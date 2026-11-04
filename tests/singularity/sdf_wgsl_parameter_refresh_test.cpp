@@ -550,6 +550,44 @@ int main() {
 
         std::vector<Rendering::RadianceSourceBinding> sources{s0, s1};
 
+        // One authored source is not a special compiler anymore. It uses the
+        // same RS[0] source-set lowering and persistent-storage contract as N.
+        std::vector<Rendering::RadianceSourceBinding> oneSource{s0};
+        const auto oneSet =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &oneSource);
+        const auto sourceModuleA =
+            sdfwgsl::compileRadianceSourceModule(oneSource, "7u");
+        const auto sourceParamsA =
+            sdfwgsl::collectRadianceSourceParams(oneSource);
+        check(oneSet.ok && sourceModuleA.ok && sourceParamsA.ok &&
+                  oneSet.wgsl.find(
+                      "@group(0) @binding(2) var<storage, read> RS") !=
+                      std::string::npos &&
+                  oneSet.wgsl.find("fn lightRadiance_0") != std::string::npos &&
+                  oneSet.wgsl.find("fn lightRadiance(p: vec3<f32>)") ==
+                      std::string::npos,
+              "one authored source uses the same source-set compiler as many");
+        check(sourceModuleA.wgsl.find("fn lightRadiance_0") != std::string::npos &&
+                  sourceModuleA.wgsl.find("P.v[7u + 0]") != std::string::npos &&
+                  sameFloats(sourceModuleA.params, sourceParamsA.values),
+              "standalone source module shares production lowering and caller-selected param base");
+
+        rho0Node->scalarForm.terms[0].coefficient = 0.6;
+        const auto sourceModuleB =
+            sdfwgsl::compileRadianceSourceModule(oneSource, "7u");
+        const auto sourceParamsB =
+            sdfwgsl::collectRadianceSourceParams(oneSource);
+        const auto oneSetValueEdited =
+            sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &oneSource);
+        check(sourceModuleB.ok && sourceParamsB.ok && oneSetValueEdited.ok &&
+                  sourceModuleA.wgsl == sourceModuleB.wgsl &&
+                  sourceModuleA.params != sourceModuleB.params &&
+                  sameFloats(sourceModuleB.params, sourceParamsB.values) &&
+                  oneSet.wgsl == oneSetValueEdited.wgsl &&
+                  oneSet.params != oneSetValueEdited.params,
+              "one-source numeric rho edit preserves source and SDF WGSL structure");
+        rho0Node->scalarForm.terms[0].coefficient = 1.0;
+
         const auto before =
             sdfwgsl::compile(sphere, nullptr, nullptr, nullptr, nullptr, nullptr, &sources);
         check(before.ok, "two-source WGSL compilation succeeds");
