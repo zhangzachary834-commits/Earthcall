@@ -1856,7 +1856,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             const bool responseValuesChanged =
                 mat.responseExpr &&
                 (memo->responseRevision != mat.responseRevision ||
-                 memo->responseBindingRevision != mat.responseBindingRevision);
+                 memo->responseBindingIdentity != mat.responseBindingIdentity);
             const bool valuesChanged =
                 memo->parameterRevision != memoParameterRevision ||
                 sourceValuesChanged || densityValuesChanged || extinctionValuesChanged ||
@@ -1890,7 +1890,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->phaseRevision = phaseRevision;
                     memo->emissionRevision = emissionRevision;
                     memo->responseRevision = mat.responseRevision;
-                    memo->responseBindingRevision = mat.responseBindingRevision;
+                    memo->responseBindingIdentity = mat.responseBindingIdentity;
                 } else {
                     needsCompile = true;
                 }
@@ -1955,7 +1955,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->emissionStructure = emissionStructure;
             memo->emissionReadsOmega = emissionLayout.readsOmega;
             memo->responseRevision = mat.responseRevision;
-            memo->responseBindingRevision = mat.responseBindingRevision;
+            memo->responseBindingIdentity = mat.responseBindingIdentity;
             memo->responseStructure = responseStructure;
             memo->responseReadsNormal = responseLayout.readsNormal;
             memo->responseReadsWi = responseLayout.readsWi;
