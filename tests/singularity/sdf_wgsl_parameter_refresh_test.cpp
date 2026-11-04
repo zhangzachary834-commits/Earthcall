@@ -1480,10 +1480,14 @@ int main() {
                       "sourceVisibility(pf, nf, source.position.xyz)") != std::string::npos,
               "each composed source derives visibility from its own source-receiver path");
         check(multiSource.wgsl.find(
-                  "diff * directRadiance") != std::string::npos &&
-                  multiSource.wgsl.find(
-                      "specShape * directRadiance") != std::string::npos,
-              "multi-source diffuse/specular transport consumes per-source visibility");
+                  "let directRadiance = shapedRadiance * pathVisibility") !=
+                  std::string::npos &&
+              multiSource.wgsl.find(
+                  "directTerm += incidentRadiance * receiverResponse * directRadiance") !=
+                  std::string::npos &&
+              multiSource.wgsl.find("specShape") == std::string::npos &&
+              multiSource.wgsl.find("inst.shading") == std::string::npos,
+              "multi-source visibility feeds Material response with no renderer-owned lobe math");
         const auto environmentUse =
             multiSource.wgsl.find("environmentRadiance +=");
         const auto directBoundary =
@@ -1508,9 +1512,9 @@ int main() {
     {
         const auto legacy = sdfwgsl::inspectResponseExpression(nullptr);
         check(legacy.ok &&
-                  legacy.structure == "<material-response:legacy-blinn-phong>" &&
+                  legacy.structure == "<material-response:absent>" &&
                   legacy.parameterCount == 0,
-              "absent material response has explicit legacy compatibility identity");
+              "absent material response is a real absence, not a hidden Blinn-Phong law");
 
         auto wi = std::make_unique<OntoMath::MathNode>();
         wi->op = OntoMath::MathNode::Op::VectorConstruct;
@@ -1563,6 +1567,24 @@ int main() {
               "material response admits receiver pigment as authored Vector input");
         check(!sdfwgsl::inspectVectorExpression(&pigmentResponse, false).ok,
               "receiver pigment cannot leak into generic source/vector authority");
+
+        auto legacyWeightsRoot = std::make_shared<OntoMath::MathNode>();
+        legacyWeightsRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        legacyWeightsRoot->children.push_back(
+            variable(OntoMath::kLegacyDiffuseLobeWeightVar));
+        legacyWeightsRoot->children.push_back(
+            variable(OntoMath::kLegacySpecularLobeWeightVar));
+        legacyWeightsRoot->children.push_back(number(0.0));
+        OntoMath::Piecewise legacyWeightsResponse =
+            OntoMath::Piecewise::continuous(legacyWeightsRoot);
+        check(sdfwgsl::inspectResponseExpression(&legacyWeightsResponse).ok,
+              "direct Material response alone admits legacy lobe migration inputs");
+        check(!sdfwgsl::inspectEnvironmentResponseExpression(
+                  &legacyWeightsResponse).ok,
+              "environment Material response refuses direct legacy lobe migration inputs");
+        check(!sdfwgsl::inspectVectorExpression(
+                  &legacyWeightsResponse, false).ok,
+              "legacy lobe migration inputs cannot leak into generic vector authority");
 
         // Environment response is a second receiver-owned context:
         // environmentRadiance is admitted, direct wi is not.
@@ -1817,29 +1839,32 @@ int main() {
             nullptr, nullptr, nullptr, nullptr, nullptr, &response);
 
         check(legacy.ok && authored.ok,
-              "legacy and authored-response surface programs both compile");
+              "absent and authored-response surface programs both compile");
         check(legacy.wgsl.find(
                   "const HAS_AUTHORED_MATERIAL_RESPONSE: bool = false") !=
                   std::string::npos &&
-              legacy.wgsl.find("let specShape = inst.shading.z") !=
-                  std::string::npos &&
-              legacy.wgsl.find("ambientTerm") == std::string::npos,
-              "absent direct response preserves only the direct Blinn-Phong compatibility branch");
+              legacy.wgsl.find("specShape") == std::string::npos &&
+              legacy.wgsl.find("inst.shading") == std::string::npos &&
+              legacy.wgsl.find("let litRgb = environmentTerm + directTerm") !=
+                  std::string::npos,
+              "absent direct response contains no renderer-owned compatibility shading");
         check(authored.wgsl.find(
                   "const HAS_AUTHORED_MATERIAL_RESPONSE: bool = true") !=
                   std::string::npos &&
               authored.wgsl.find("fn materialResponseEval") !=
                   std::string::npos &&
               authored.wgsl.find(
-                  "materialResponseEval(pf, nw, responseWi, V, surfaceColor)") !=
+                  "legacyDiffuseLobeWeight: f32, legacySpecularLobeWeight: f32") !=
                   std::string::npos &&
-              authored.wgsl.find("receiverResponse * directRadiance") !=
+              authored.wgsl.find(
+                  "legacyDiffuseLobeWeight, legacySpecularLobeWeight") !=
                   std::string::npos &&
-              authored.wgsl.find("let directRgb = select(") !=
+              authored.wgsl.find(
+                  "directTerm = incidentRadiance * receiverResponse * directRadiance") !=
                   std::string::npos &&
-              authored.wgsl.find("let litRgb = environmentTerm + directRgb") !=
-                  std::string::npos,
-              "authored direct response is evaluated after transport and owns direct reflected RGB");
+              authored.wgsl.find("specShape") == std::string::npos &&
+              authored.wgsl.find("inst.shading") == std::string::npos,
+              "authored response alone owns direct reflected RGB after transport");
 
         auto boundResponseRoot = std::make_shared<OntoMath::MathNode>();
         boundResponseRoot->op = OntoMath::MathNode::Op::VectorConstruct;
