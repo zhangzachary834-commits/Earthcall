@@ -2803,6 +2803,80 @@ int main() {
                "mesh Bind value edit recompiled or refused instead of refreshing parameters");
     }
 
+    // --- MESH / IMPLICIT RECEIVER-LAW REPRESENTATION PARITY ----------------
+    // Geometry representation may change how the surface interaction is found.
+    // It must not change the Material response law that owns the pixel.
+    {
+        auto parityMat = materials.create("webgpu_mesh_sdf_response_parity");
+        parityMat->baseColor = glm::vec3(1.0f);
+
+        auto parityRoot = vectorNode(0.23, 0.61, 0.37);
+        parityMat->responseExpr =
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::continuous(parityRoot));
+        parityMat->environmentResponseExpr.reset();
+        parityMat->bumpResponseRevision();
+
+        Object meshSphere;
+        meshSphere.setShapeKind(Object::ShapeKind::Sphere);
+        meshSphere.setRenderMode(Object::RenderMode::Mesh);
+        meshSphere.setMaterialId(
+            "material.webgpu_mesh_sdf_response_parity");
+
+        Object implicitSphere;
+        implicitSphere.setShapeKind(Object::ShapeKind::Sphere);
+        implicitSphere.setRenderMode(Object::RenderMode::Auto);
+        implicitSphere.setMaterialId(
+            "material.webgpu_mesh_sdf_response_parity");
+
+        auto parityRhoRoot = scalarNode(1.0);
+        OntoMath::Piecewise parityRho =
+            OntoMath::Piecewise::continuous(parityRhoRoot);
+        renderer.setRadianceSources({}, 0);
+        renderer.setRadianceField(&parityRho, 6201);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.0f),
+                          glm::vec3(0.8f),
+                          glm::vec3(0.0f));
+        renderer.setLightingEnabled(true);
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshSphere.drawObject();
+        renderer.endFrame();
+        unsigned char meshRepresentation[4];
+        readCentre(meshRepresentation);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        implicitSphere.drawObject();
+        renderer.endFrame();
+        unsigned char implicitRepresentation[4];
+        readCentre(implicitRepresentation);
+
+        std::printf(
+            "surface-response parity mesh=(%d,%d,%d) implicit=(%d,%d,%d)\n",
+            meshRepresentation[0], meshRepresentation[1],
+            meshRepresentation[2], implicitRepresentation[0],
+            implicitRepresentation[1], implicitRepresentation[2]);
+
+        assert(meshRepresentation[0] > 45 &&
+               meshRepresentation[1] > 135 &&
+               meshRepresentation[2] > 75 &&
+               "mesh representation did not produce the authored receiver RGB");
+        assert(std::abs(int(meshRepresentation[0]) -
+                        int(implicitRepresentation[0])) <= 3 &&
+               std::abs(int(meshRepresentation[1]) -
+                        int(implicitRepresentation[1])) <= 3 &&
+               std::abs(int(meshRepresentation[2]) -
+                        int(implicitRepresentation[2])) <= 3 &&
+               "mesh and implicit representations disagreed on the same authored Material response");
+
+        renderer.setRadianceField(nullptr, 0);
+    }
+
     {
         std::vector<Object> toruses(10);
         for (int i = 0; i < 10; ++i) {
