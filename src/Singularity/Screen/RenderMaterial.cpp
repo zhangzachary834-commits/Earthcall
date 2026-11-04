@@ -22,9 +22,20 @@ RenderMaterial resolveRenderMaterial(const std::string& materialId, const FaceAl
         rm.responseExpr = m->responseExpr;
         rm.responseRevision = m->getResponseRevision();
 
+        // A legacy Material inherits the default direct receiver law as an
+        // equation, but Bind paths still resolve against THIS Material below.
+        // An explicitly-authored response remains sovereign and is never replaced.
+        if (!rm.responseExpr) {
+            if (auto fallback = materials.defaultMaterial();
+                fallback && fallback.get() != m.get()) {
+                rm.responseExpr = fallback->responseExpr;
+                rm.responseRevision = fallback->getResponseRevision();
+            }
+        }
+
         // Existing authored direct response deliberately opts out of inherited
-        // legacy environment. A legacy Material (no direct response) inherits
-        // material.default's environment law unless it authored its own.
+        // legacy environment. A legacy Material (no local direct response)
+        // inherits material.default's environment law unless it authored its own.
         if (m->environmentResponseExpr) {
             rm.environmentResponseExpr = m->environmentResponseExpr;
             rm.environmentResponseRevision = m->getEnvironmentResponseRevision();
