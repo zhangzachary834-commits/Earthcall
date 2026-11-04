@@ -430,7 +430,7 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
 
     // Mesh pipeline layout is fixed execution machinery; the fragment
     // mathematics is generated lazily per authored Material response structure.
-    WGPUBindGroupLayoutEntry bglEntries[4] = {};
+    WGPUBindGroupLayoutEntry bglEntries[5] = {};
     bglEntries[0].binding = 0;
     bglEntries[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     bglEntries[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -445,8 +445,11 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     bglEntries[3].binding = 3;
     bglEntries[3].visibility = WGPUShaderStage_Fragment;
     bglEntries[3].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    bglEntries[4].binding = 4;
+    bglEntries[4].visibility = WGPUShaderStage_Fragment;
+    bglEntries[4].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     WGPUBindGroupLayoutDescriptor bglDesc = {};
-    bglDesc.entryCount = 4;
+    bglDesc.entryCount = 5;
     bglDesc.entries = bglEntries;
     _bgl = wgpuDeviceCreateBindGroupLayout(_device, &bglDesc);
 
