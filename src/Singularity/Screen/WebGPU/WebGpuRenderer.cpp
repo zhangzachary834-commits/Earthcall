@@ -1747,8 +1747,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // that rule for a COLLECTION: source membership/count and emitted AST shape
     // are shader structure; source positions, colors, enablement, temporal
     // coordinates and numeric AST coefficients are values.
-    const bool multiSource = radianceSources().size() > 1;
-    const auto* sourceSet = multiSource ? &radianceSources() : nullptr;
+    const bool hasSourceSet = !radianceSources().empty();
+    const auto* sourceSet = hasSourceSet ? &radianceSources() : nullptr;
 
     // Explicit drawImplicit(..., FieldNode*) is the bounded/native V0 witness
     // seam. Production Zone media are projected separately and are NOT consumed
@@ -1868,7 +1868,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     const std::string environmentResponseStructure =
         environmentResponseLayout.structure;
 
-    if (multiSource) {
+    if (hasSourceSet) {
         if (_radianceSourcesLayoutRevision != radianceSourcesRevision()) {
             std::string structure = "sources:" + std::to_string(radianceSources().size()) + "\n";
             bool ok = true;
@@ -2001,7 +2001,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         return;
     }
 
-    if (multiSource) {
+    if (hasSourceSet) {
         if (!_radianceSourcesLayoutOk) {
             recordProgramRefusal(_radianceSourcesLayoutError);
             return;
@@ -2025,8 +2025,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     if (memoId != 0) {
         memo = &_programCache[memoId];
         const bool sourceStructureMatches =
-            memo->multiSource == multiSource &&
-            (multiSource
+            memo->sourceSet == hasSourceSet &&
+            (hasSourceSet
                 ? memo->sourceSetStructureRevision == _radianceSourcesStructureRevision
                 : (memo->radianceStructureRevision == _radianceStructureRevision &&
                    memo->chromaStructureRevision == _chromaStructureRevision &&
@@ -2073,7 +2073,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->colorExprPtr == mat.colorExpr.get()) {
             needsCompile = false;
 
-            const bool sourceValuesChanged = multiSource
+            const bool sourceValuesChanged = hasSourceSet
                 ? memo->sourceSetRevision != radianceSourcesRevision()
                 : (memo->radianceRevision != radianceRevision() ||
                    memo->chromaRevision != radianceChromaRevision() ||
@@ -2173,7 +2173,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->revision = memoRevision;
             memo->parameterRevision = memoParameterRevision;
             memo->colorRevision = mat.colorRevision;
-            memo->multiSource = multiSource;
+            memo->sourceSet = hasSourceSet;
             memo->radianceRevision = radianceRevision();
             memo->radianceStructureRevision = _radianceStructureRevision;
             memo->chromaRevision = radianceChromaRevision();
@@ -2534,7 +2534,7 @@ void WebGpuRenderer::flushSdfDraws() {
     uint64_t sourceOffset = 0;
     uint64_t sourceBindingSize = 0;
 
-    if (radianceSources().size() > 1) {
+    if (!radianceSources().empty()) {
         std::vector<RadianceSourceGpuData> gpuSources;
         gpuSources.reserve(radianceSources().size());
         for (const auto& source : radianceSources()) {
