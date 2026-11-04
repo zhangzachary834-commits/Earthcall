@@ -202,18 +202,23 @@ private:
         uint32_t directRevision = 0;
         std::shared_ptr<const OntoMath::Piecewise> environment;
         uint32_t environmentRevision = 0;
+        uint64_t sourceSetStructureRevision = 0;
         std::string bindingTypes;
         bool operator<(const MeshResponseKey& o) const {
             return std::tie(direct, directRevision, environment,
-                            environmentRevision, bindingTypes)
+                            environmentRevision, sourceSetStructureRevision,
+                            bindingTypes)
                  < std::tie(o.direct, o.directRevision, o.environment,
-                            o.environmentRevision, o.bindingTypes);
+                            o.environmentRevision,
+                            o.sourceSetStructureRevision, o.bindingTypes);
         }
     };
     struct MeshResponseMemo {
         sdfwgsl::SurfaceResponseProgram program;
+        sdfwgsl::RadianceSourceProgram sourceProgram;
         const MeshPipeline* pipeline = nullptr;
-        // Exact Material binding-value identity -> response-only param stream.
+        // Material Bind identity + source-set value revision -> combined
+        // receiver/source param stream. Structure lives in the key above.
         std::map<std::string, std::vector<float>> params;
     };
     std::map<MeshResponseKey, MeshResponseMemo> _meshResponsePrograms;
@@ -814,10 +819,12 @@ private:
         // never an ordering oracle (NaN would make ordinary float ordering unsafe).
         std::string responseParamIdentity;
         std::vector<float> responseParams;
+        bool sourceSet = false;
         bool operator<(const MeshBatchKey& o) const {
-            return std::tie(mesh, pipeline, albedoView, responseParamIdentity)
+            return std::tie(mesh, pipeline, albedoView, responseParamIdentity,
+                            sourceSet)
                  < std::tie(o.mesh, o.pipeline, o.albedoView,
-                            o.responseParamIdentity);
+                            o.responseParamIdentity, o.sourceSet);
         }
     };
     // Mirrors the WGSL `Instance` struct in kMeshWGSL.
