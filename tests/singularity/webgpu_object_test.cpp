@@ -2074,7 +2074,19 @@ int main() {
     // paint ownership; it must neither erase nor alias receiver-response truth.
     {
         auto sharedResponseMat = materials.create("webgpu_rung9_cow_shared");
-        auto sharedResponseRoot = vectorNode(0.8, 0.2, 0.1);
+        assert(sharedResponseMat->setDynamicProperty(
+            "roughness", PropertyValue(0.42f)));
+
+        auto sharedResponseRoot = std::make_shared<OntoMath::MathNode>();
+        sharedResponseRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto roughnessBind = std::make_unique<OntoMath::MathNode>();
+        roughnessBind->op = OntoMath::MathNode::Op::Bind;
+        roughnessBind->propertyPath = "roughness";
+        sharedResponseRoot->children.push_back(std::move(roughnessBind));
+        sharedResponseRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.2)));
+        sharedResponseRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.1)));
         sharedResponseMat->responseExpr = std::make_shared<OntoMath::Piecewise>(
             OntoMath::Piecewise::continuous(sharedResponseRoot));
         sharedResponseMat->bumpResponseRevision();
@@ -2097,6 +2109,33 @@ int main() {
         assert(privateResponseMat->responseExpr.get() !=
                    sharedResponseMat->responseExpr.get() &&
                "Material copy-on-write aliased the response Piecewise object");
+
+        PropertyValue privateRoughness;
+        PropertyValue sharedRoughness;
+        assert(privateResponseMat->getDynamicProperty(
+                   "roughness", privateRoughness) &&
+               sharedResponseMat->getDynamicProperty(
+                   "roughness", sharedRoughness) &&
+               "Material copy-on-write dropped an authored response Bind input");
+        double privateRoughNumber = 0.0;
+        double sharedRoughNumber = 0.0;
+        assert(propertyValueToNumber(privateRoughness, privateRoughNumber) &&
+               propertyValueToNumber(sharedRoughness, sharedRoughNumber) &&
+               std::abs(privateRoughNumber - 0.42) < 1e-6 &&
+               std::abs(sharedRoughNumber - 0.42) < 1e-6);
+
+        assert(PropertyPath::parse("roughness").setValue(
+                   *privateResponseMat, PropertyValue(0.15f)) ==
+               PropertyPath::PathResult::Ok);
+        assert(privateResponseMat->getDynamicProperty(
+                   "roughness", privateRoughness) &&
+               sharedResponseMat->getDynamicProperty(
+                   "roughness", sharedRoughness));
+        assert(propertyValueToNumber(privateRoughness, privateRoughNumber) &&
+               propertyValueToNumber(sharedRoughness, sharedRoughNumber) &&
+               std::abs(privateRoughNumber - 0.15) < 1e-6 &&
+               std::abs(sharedRoughNumber - 0.42) < 1e-6 &&
+               "editing the private scalar Bind input mutated the shared Material");
 
         privateResponseMat->responseExpr->pieces[0].mathNode =
             vectorNode(0.1, 0.2, 0.9);
