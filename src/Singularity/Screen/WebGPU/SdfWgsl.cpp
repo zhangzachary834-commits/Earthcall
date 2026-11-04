@@ -4683,42 +4683,15 @@ ParameterBlock collectParams(const geom::SdfNode& root,
         }
     }
 
-    const bool multiSource = radianceSources && radianceSources->size() > 1;
-    if (multiSource) {
-        for (std::size_t i = 0; i < radianceSources->size(); ++i) {
-            const auto& source = (*radianceSources)[i];
-            e.timeExpression = "RS[" + std::to_string(i) + "u].time.x";
-
-            if (source.radianceExpr && !source.radianceExpr->pieces.empty()) {
-                e.bindTime = true;
-                emitPiecewise(*source.radianceExpr, e, "p", "f32", throwaway);
-                e.bindTime = false;
-            }
-            if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
-                std::string validationError;
-                if (!validateVectorPiecewise(*source.chromaExpr, true, validationError)) {
-                    e.refuse("source[" + std::to_string(i) + "] chroma: " + validationError);
-                } else {
-                    e.bindTime = true;
-                    emitPiecewise(*source.chromaExpr, e, "p", "vec3<f32>", throwaway);
-                    e.bindTime = false;
-                }
-            }
-            if (source.angularExpr && !source.angularExpr->pieces.empty()) {
-                std::string validationError;
-                if (!validateAngularPiecewise(*source.angularExpr, validationError)) {
-                    e.refuse("source[" + std::to_string(i) + "] angular: " + validationError);
-                } else {
-                    e.bindTime = true;
-                    e.bindOmega = true;
-                    emitPiecewise(*source.angularExpr, e, "p", "f32", throwaway);
-                    e.bindOmega = false;
-                    e.bindTime = false;
-                }
-            }
-        }
-        e.timeExpression = "u.radianceTime.x";
+    const bool sourceSet = radianceSources && !radianceSources->empty();
+    if (sourceSet) {
+        // Exactly the same rho/chi/alpha lowering as the standalone source
+        // module and the SDF compile path. One source is not a different law.
+        std::string throwawaySourceWgsl;
+        (void)emitRadianceSourceFunctions(*radianceSources, e, throwawaySourceWgsl);
     } else {
+        // Explicit zero-set compatibility lane for callers that still project
+        // one historical source through the scalar setters.
         if (radianceExpr && !radianceExpr->pieces.empty()) {
             e.bindTime = true;
             emitPiecewise(*radianceExpr, e, "p", "f32", throwaway);
