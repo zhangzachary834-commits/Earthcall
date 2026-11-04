@@ -2177,15 +2177,15 @@ struct RU {
     // transport. xyz = normalized constant environment envelope; w = authored
     // chroma environment scale. rho/alpha/visibility never read this.
     legacyEnvironment: vec4<f32>,
-    lightDiffuse:   vec4<f32>,
-    lightSpecular:  vec4<f32>,
+    // xyz = constant direct incident radiance; w = source intensity used when
+    // authored chi supplies chroma instead of the historical constant color.
+    directIncidentRadiance: vec4<f32>,
+    // x/y = legacy diffuse/specular receiver-lobe weights. These are migration
+    // inputs for material.default, not emitted radiance.
+    legacyReceiverLobeWeights: vec4<f32>,
     // x = lighting enabled; y = Rung-8 derived visibility enabled.
     // Visibility is execution state, not authored source state.
     lightControl:   vec4<f32>,
-    // x/y/z/w = historical intensity/ambient/diffuse/specular coefficients.
-    // y is consumed only by the compatibility projection that constructs
-    // legacyEnvironment on CPU; direct WGSL transport uses x/z/w only.
-    radianceSourceCoefficients: vec4<f32>,
     // x = distance to the camera's far plane, in WORLD units.
     // y = viewport width in pixels.
     // z = viewport height in pixels.
@@ -2875,59 +2875,40 @@ fn fs(in: VSOut) -> FSOut {
         pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) *
         step(0.0001, diff);
 
+    var incidentRadiance = u.directIncidentRadiance.rgb;
+    if (HAS_AUTHORED_CHROMA) {
+        incidentRadiance =
+            sourceChroma * vec3<f32>(u.directIncidentRadiance.w);
+    }
+    let legacyDiffuseLobeWeight = u.legacyReceiverLobeWeights.x;
+    let legacySpecularLobeWeight = u.legacyReceiverLobeWeights.y;
+
     var diffuseTerm = vec3<f32>(0.0);
     var specTerm = vec3<f32>(0.0);
-    if (HAS_AUTHORED_CHROMA) {
-        let c = u.radianceSourceCoefficients;
-        // Direct legacy coefficients remain compatibility data until the
-        // default response expression takes ownership in the next migration.
-        let diffuseEnvelope = sourceChroma * vec3<f32>((c.x * c.z) / 0.8);
-        let specularEnvelope = sourceChroma * vec3<f32>(c.x * c.w);
-        if (HAS_AUTHORED_MATERIAL_RESPONSE) {
-            let responseDistance = length(sourceDelta);
-            var responseWi = vec3<f32>(0.0);
-            var responseDefined = true;
-            if (responseDistance > SOURCE_DIRECTION_EPS) {
-                // wi keeps the canonical transport convention: source -> receiver.
-                responseWi = sourceDelta / responseDistance;
-            } else if (MATERIAL_RESPONSE_READS_WI) {
-                responseDefined = false;
-            }
-            var receiverResponse = vec3<f32>(0.0);
-            if (responseDefined) {
-                receiverResponse = materialResponseEval(pf, nw, responseWi, V, surfaceColor);
-            }
-            diffuseTerm = (sourceChroma * vec3<f32>(c.x)) *
-                          receiverResponse * directRadiance;
-        } else {
-            diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
-            specTerm = specularEnvelope * specShape * directRadiance;
+    if (HAS_AUTHORED_MATERIAL_RESPONSE) {
+        let responseDistance = length(sourceDelta);
+        var responseWi = vec3<f32>(0.0);
+        var responseDefined = true;
+        if (responseDistance > SOURCE_DIRECTION_EPS) {
+            // wi keeps the canonical transport convention: source -> receiver.
+            responseWi = sourceDelta / responseDistance;
+        } else if (MATERIAL_RESPONSE_READS_WI) {
+            responseDefined = false;
         }
+        var receiverResponse = vec3<f32>(0.0);
+        if (responseDefined) {
+            receiverResponse = materialResponseEval(
+                pf, nw, responseWi, V, surfaceColor,
+                legacyDiffuseLobeWeight, legacySpecularLobeWeight);
+        }
+        diffuseTerm = incidentRadiance * receiverResponse * directRadiance;
     } else {
-        // EXACT direct compatibility branch from Rung 4. Constant legacy
-        // source colour remains in diffuse/specular uniforms; environment has
-        // already been resolved above and cannot leak back into this path.
-        let diffuseEnvelope  = u.lightDiffuse.rgb / vec3<f32>(0.8);
-        let specularEnvelope = u.lightSpecular.rgb;
-        if (HAS_AUTHORED_MATERIAL_RESPONSE) {
-            let responseDistance = length(sourceDelta);
-            var responseWi = vec3<f32>(0.0);
-            var responseDefined = true;
-            if (responseDistance > SOURCE_DIRECTION_EPS) {
-                responseWi = sourceDelta / responseDistance;
-            } else if (MATERIAL_RESPONSE_READS_WI) {
-                responseDefined = false;
-            }
-            var receiverResponse = vec3<f32>(0.0);
-            if (responseDefined) {
-                receiverResponse = materialResponseEval(pf, nw, responseWi, V, surfaceColor);
-            }
-            diffuseTerm = (u.lightDiffuse.rgb / vec3<f32>(0.8)) *
-                          receiverResponse * directRadiance;
-        } else {
-            diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
-            specTerm = specularEnvelope * specShape * directRadiance;
-        }
+        // Temporary direct compatibility branch. The source contributes one
+        // incident RGB; historical receiver-lobe weights remain separate data.
+        let diffuseEnvelope = incidentRadiance * legacyDiffuseLobeWeight;
+        let specularEnvelope = incidentRadiance * legacySpecularLobeWeight;
+        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
+        specTerm = specularEnvelope * specShape * directRadiance;
     }
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
@@ -4872,7 +4853,9 @@ Program compile(const geom::SdfNode& root,
     bool responseReadsWi = false;
     bool responseReadsWo = false;
     prog.wgsl += "\nfn materialResponseEval(p: vec3<f32>, n: vec3<f32>, "
-                 "wi: vec3<f32>, wo: vec3<f32>, surfaceColor: vec3<f32>) -> vec3<f32> {\n";
+                 "wi: vec3<f32>, wo: vec3<f32>, surfaceColor: vec3<f32>, "
+                 "legacyDiffuseLobeWeight: f32, legacySpecularLobeWeight: f32) "
+                 "-> vec3<f32> {\n";
     if (responseExpr && !responseExpr->pieces.empty()) {
         std::string validationError;
         if (!validateResponsePiecewise(*responseExpr, responseBindings, validationError)) {
@@ -5009,9 +4992,8 @@ Program compile(const geom::SdfNode& root,
             "\nstruct RadianceSourceData {\n"
             "    position: vec4<f32>,\n"
             "    legacyEnvironment: vec4<f32>,\n"
-            "    diffuse: vec4<f32>,\n"
-            "    specular: vec4<f32>,\n"
-            "    coefficients: vec4<f32>,\n"
+            "    directIncidentRadiance: vec4<f32>,\n"
+            "    legacyReceiverLobeWeights: vec4<f32>,\n"
             "    time: vec4<f32>,\n"
             "    control: vec4<f32>,\n"
             "};\n"
@@ -5148,20 +5130,16 @@ Program compile(const geom::SdfNode& root,
                        "step(0.0001, diff);\n";
 
                 if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
-                    sum += "            let c = source.coefficients;\n";
-                    sum += "            let diffuseEnvelope = sourceChroma * "
-                           "vec3<f32>((c.x * c.z) / 0.8);\n";
-                    sum += "            let specularEnvelope = sourceChroma * "
-                           "vec3<f32>(c.x * c.w);\n";
-                    sum += "            let incidentEnvelope = sourceChroma * "
-                           "vec3<f32>(c.x);\n";
+                    sum += "            let incidentRadiance = sourceChroma * "
+                           "vec3<f32>(source.directIncidentRadiance.w);\n";
                 } else {
-                    sum += "            let diffuseEnvelope = source.diffuse.rgb / "
-                           "vec3<f32>(0.8);\n";
-                    sum += "            let specularEnvelope = source.specular.rgb;\n";
-                    sum += "            let incidentEnvelope = source.diffuse.rgb / "
-                           "vec3<f32>(0.8);\n";
+                    sum += "            let incidentRadiance = "
+                           "source.directIncidentRadiance.rgb;\n";
                 }
+                sum += "            let legacyDiffuseLobeWeight = "
+                       "source.legacyReceiverLobeWeights.x;\n";
+                sum += "            let legacySpecularLobeWeight = "
+                       "source.legacyReceiverLobeWeights.y;\n";
                 sum += "            if (HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
                 sum += "                var responseWi = vec3<f32>(0.0);\n";
                 sum += "                var responseDefined = true;\n";
@@ -5172,11 +5150,16 @@ Program compile(const geom::SdfNode& root,
                 sum += "                }\n";
                 sum += "                if (responseDefined) {\n";
                 sum += "                    let receiverResponse = "
-                       "materialResponseEval(pf, nw, responseWi, V, surfaceColor);\n";
-                sum += "                    diffuseTerm += incidentEnvelope * "
+                       "materialResponseEval(pf, nw, responseWi, V, surfaceColor, "
+                       "legacyDiffuseLobeWeight, legacySpecularLobeWeight);\n";
+                sum += "                    diffuseTerm += incidentRadiance * "
                        "receiverResponse * directRadiance;\n";
                 sum += "                }\n";
                 sum += "            } else {\n";
+                sum += "                let diffuseEnvelope = incidentRadiance * "
+                       "legacyDiffuseLobeWeight;\n";
+                sum += "                let specularEnvelope = incidentRadiance * "
+                       "legacySpecularLobeWeight;\n";
                 sum += "                diffuseTerm += inst.shading.y * diffuseEnvelope * "
                        "diff * directRadiance;\n";
                 sum += "                specTerm += specularEnvelope * specShape * "
