@@ -5128,7 +5128,6 @@ Program compile(const geom::SdfNode& root,
             sum += "        environmentTerm = materialEnvironmentResponseEval("
                    "pf, nw, V, surfaceColor, environmentRadiance);\n";
             sum += "    }\n";
-            sum += "    let litRgb = environmentTerm + directTerm;\n";
             marcher.replace(lightAt, clipAt - lightAt, sum);
         }
 
