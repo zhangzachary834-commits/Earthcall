@@ -2191,8 +2191,11 @@ struct RU {
     // Compatibility only; canonical direct colour is directIncidentRadiance.
     legacyDiffuseIncident: vec4<f32>,
     legacySpecularIncident: vec4<f32>,
-    // x = lighting enabled; y = Rung-8 derived visibility enabled.
-    // Visibility is execution state, not authored source state.
+    // x = lighting enabled; y = RadianceVisibilityMode:
+    //   0 Disabled (known V=1)
+    //   1 LocalReceiverGeometry
+    //   2 CompleteScene (Unknown until a shared scene provider exists)
+    // Visibility is derived execution/path truth, not authored source state.
     lightControl:   vec4<f32>,
     // x = distance to the camera's far plane, in WORLD units.
     // y = viewport width in pixels.
