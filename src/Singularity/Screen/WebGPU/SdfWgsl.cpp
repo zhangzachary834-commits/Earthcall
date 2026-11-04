@@ -2827,7 +2827,8 @@ fn fs(in: VSOut) -> FSOut {
     } else if (!HAS_AUTHORED_MATERIAL_RESPONSE) {
         // Temporary compatibility only. Once material.default owns the inherited
         // environment law, production resolution no longer reaches this branch.
-        environmentTerm = inst.shading.x * environmentRadiance;
+        environmentTerm =
+            surfaceColor * inst.shading.x * environmentRadiance;
     }
 
     // Direct source transport begins here. The environment compatibility input
@@ -2917,13 +2918,14 @@ fn fs(in: VSOut) -> FSOut {
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
 
-    // Authored response is sovereign reflected RGB. The legacy path still owns
-    // its historical tint/specular split until the compatibility expression
-    // replaces it in the next migration phase.
-    let litRgb = select(
-        surfaceColor * (environmentTerm + diffuseTerm) + specTerm,
-        environmentTerm + diffuseTerm + specTerm,
+    // Environment response is complete reflected environment RGB. Direct
+    // response is independently sovereign when authored; the legacy direct
+    // branch alone receives the historical surfaceColor multiply here.
+    let directRgb = select(
+        surfaceColor * diffuseTerm + specTerm,
+        diffuseTerm + specTerm,
         HAS_AUTHORED_MATERIAL_RESPONSE);
+    let litRgb = environmentTerm + directRgb;
     let base_rgb = mix(surfaceColor, litRgb, u.lightControl.x);
     let field_rgb = volumetric_scatter;
     
@@ -5174,7 +5176,8 @@ Program compile(const geom::SdfNode& root,
             sum += "        environmentTerm = materialEnvironmentResponseEval("
                    "pf, nw, V, surfaceColor, environmentRadiance);\n";
             sum += "    } else if (!HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
-            sum += "        environmentTerm = inst.shading.x * environmentRadiance;\n";
+            sum += "        environmentTerm = "
+                   "surfaceColor * inst.shading.x * environmentRadiance;\n";
             sum += "    }\n";
             marcher.replace(lightAt, clipAt - lightAt, sum);
         }
