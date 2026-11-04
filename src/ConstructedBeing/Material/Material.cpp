@@ -155,6 +155,38 @@ private:
     Material* _mat;
 };
 
+class EnvironmentResponseExprBridge : public Property {
+public:
+    explicit EnvironmentResponseExprBridge(std::string name, Material* mat)
+        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)), _mat(mat) {}
+
+    std::string name() const override { return _name; }
+    Earthcall::StringId nameId() const override { return _nameId; }
+    std::string typeName() const override { return "string"; }
+
+    PropertyValue value() const override {
+        if (!_mat || !_mat->environmentResponseExpr) return PropertyValue(std::string("{}"));
+        return PropertyValue(_mat->environmentResponseExpr->toJson().dump());
+    }
+    bool setValue(const PropertyValue& v) override {
+        if (!_mat) return false;
+        const std::string* src = std::get_if<std::string>(&v);
+        if (!src) return false;
+        nlohmann::json parsed = nlohmann::json::parse(*src, nullptr, false);
+        if (parsed.is_discarded()) return false;
+
+        _mat->environmentResponseExpr =
+            std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(parsed));
+        _mat->bumpEnvironmentResponseRevision();
+        return true;
+    }
+
+private:
+    std::string _name;
+    Earthcall::StringId _nameId;
+    Material* _mat;
+};
+
 class ColorExprBridge : public Property {
 public:
     explicit ColorExprBridge(std::string name, Material* mat)
@@ -205,6 +237,8 @@ void Material::buildProperties() {
         "colorExpr", this));
     registerProperty(std::make_unique<ResponseExprBridge>(
         "responseExpr", this));
+    registerProperty(std::make_unique<EnvironmentResponseExprBridge>(
+        "environmentResponseExpr", this));
     registerProperty(std::make_unique<ComputedProperty<Material, int>>(
         "textureResolution", this, &Material::getTextureResolution, &Material::setTextureResolution));
     registerProperty(std::make_unique<ComputedProperty<Material, int>>(
@@ -270,6 +304,9 @@ json Material::toJson() const {
     if (responseExpr) {
         j["responseExpr"] = responseExpr->toJson();
     }
+    if (environmentResponseExpr) {
+        j["environmentResponseExpr"] = environmentResponseExpr->toJson();
+    }
     // A Material may own Person-authored response parameters just like any
     // other Singular. If responseExpr binds one of them, dropping it here would
     // make save/load silently change the material's mathematics.
@@ -320,6 +357,11 @@ Material Material::fromJson(const json& j) {
     if (j.contains("responseExpr")) {
         m.responseExpr =
             std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(j["responseExpr"]));
+    }
+    if (j.contains("environmentResponseExpr")) {
+        m.environmentResponseExpr =
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::fromJson(j["environmentResponseExpr"]));
     }
     if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
         for (auto it = j["authoredProperties"].begin();
