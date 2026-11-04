@@ -2838,17 +2838,11 @@ fn fs(in: VSOut) -> FSOut {
     if (HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE) {
         environmentTerm = materialEnvironmentResponseEval(
             pf, nw, V, surfaceColor, environmentRadiance);
-    } else if (!HAS_AUTHORED_MATERIAL_RESPONSE) {
-        // Temporary compatibility only. Once material.default owns the inherited
-        // environment law, production resolution no longer reaches this branch.
-        environmentTerm =
-            surfaceColor * inst.shading.x * environmentRadiance;
     }
 
-    // Direct source transport begins here. The environment compatibility input
-    // above is not consulted below this line.
-    let L = normalize(u.lightPos.xyz - pw);
-    let H = normalize(L + V);
+    // Direct source transport begins here. The environment input above is not
+    // consulted below this line; receiver shape lives in materialResponseEval.
+
     let radialRadiance = max(lightRadiance(sourceDelta), 0.0);
     var angularRadiance = 1.0;
     if (HAS_AUTHORED_ANGULAR) {
@@ -2870,10 +2864,6 @@ fn fs(in: VSOut) -> FSOut {
     let shapedRadiance = radialRadiance * angularRadiance;
     let pathVisibility = sourceVisibility(pf, nf, u.lightPos.xyz);
     let directRadiance = shapedRadiance * pathVisibility;
-    let diff = max(dot(nw, L), 0.0);
-    let specShape = inst.shading.z *
-        pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) *
-        step(0.0001, diff);
 
     var incidentRadiance = u.directIncidentRadiance.rgb;
     if (HAS_AUTHORED_CHROMA) {
@@ -2883,8 +2873,7 @@ fn fs(in: VSOut) -> FSOut {
     let legacyDiffuseLobeWeight = u.legacyReceiverLobeWeights.x;
     let legacySpecularLobeWeight = u.legacyReceiverLobeWeights.y;
 
-    var diffuseTerm = vec3<f32>(0.0);
-    var specTerm = vec3<f32>(0.0);
+    var directTerm = vec3<f32>(0.0);
     if (HAS_AUTHORED_MATERIAL_RESPONSE) {
         let responseDistance = length(sourceDelta);
         var responseWi = vec3<f32>(0.0);
@@ -2901,26 +2890,14 @@ fn fs(in: VSOut) -> FSOut {
                 pf, nw, responseWi, V, surfaceColor,
                 legacyDiffuseLobeWeight, legacySpecularLobeWeight);
         }
-        diffuseTerm = incidentRadiance * receiverResponse * directRadiance;
-    } else {
-        // Temporary direct compatibility branch. The source contributes one
-        // incident RGB; historical receiver-lobe weights remain separate data.
-        let diffuseEnvelope = incidentRadiance * legacyDiffuseLobeWeight;
-        let specularEnvelope = incidentRadiance * legacySpecularLobeWeight;
-        diffuseTerm = inst.shading.y * diffuseEnvelope * diff * directRadiance;
-        specTerm = specularEnvelope * specShape * directRadiance;
+        directTerm = incidentRadiance * receiverResponse * directRadiance;
     }
 
     let clip = u.viewProj * vec4<f32>(pw, 1.0);
 
-    // Environment response is complete reflected environment RGB. Direct
-    // response is independently sovereign when authored; the legacy direct
-    // branch alone receives the historical surfaceColor multiply here.
-    let directRgb = select(
-        surfaceColor * diffuseTerm + specTerm,
-        diffuseTerm + specTerm,
-        HAS_AUTHORED_MATERIAL_RESPONSE);
-    let litRgb = environmentTerm + directRgb;
+    // Both receiver channels return complete reflected RGB. No renderer-owned
+    // pigment multiply or Blinn-Phong branch remains in SDF execution.
+    let litRgb = environmentTerm + directTerm;
     let base_rgb = mix(surfaceColor, litRgb, u.lightControl.x);
     let field_rgb = volumetric_scatter;
     
@@ -4181,7 +4158,7 @@ ResponseExpressionLayout inspectResponseExpression(
     const BindingValues* bindings) {
     if (!expr || expr->pieces.empty()) {
         return ResponseExpressionLayout{
-            "<material-response:legacy-blinn-phong>", 0, false, false, false, true, ""};
+            "<material-response:absent>", 0, false, false, false, true, ""};
     }
 
     std::string validationError;
@@ -5074,8 +5051,7 @@ Program compile(const geom::SdfNode& root,
             std::string sum;
             sum += "    let V = normalize(u.eyePos.xyz - pw);\n";
             sum += "    var environmentRadiance = vec3<f32>(0.0);\n";
-            sum += "    var diffuseTerm = vec3<f32>(0.0);\n";
-            sum += "    var specTerm = vec3<f32>(0.0);\n";
+            sum += "    var directTerm = vec3<f32>(0.0);\n";
 
             for (std::size_t i = 0; i < radianceSources->size(); ++i) {
                 const auto& source = (*radianceSources)[i];
@@ -5096,15 +5072,7 @@ Program compile(const geom::SdfNode& root,
                            "source.legacyEnvironment.rgb;\n";
                 }
                 sum += "            // Direct source transport begins here; legacyEnvironment "
-                       "is not read below.\n";
-                sum += "            var Ls = vec3<f32>(0.0);\n";
-                sum += "            if (sourceDistance > SOURCE_DIRECTION_EPS) { "
-                       "Ls = -sourceDelta / sourceDistance; }\n";
-                sum += "            var Hs = V;\n";
-                sum += "            let halfVector = Ls + V;\n";
-                sum += "            let halfLength = length(halfVector);\n";
-                sum += "            if (halfLength > SOURCE_DIRECTION_EPS) { "
-                       "Hs = halfVector / halfLength; }\n";
+                       "is not read below. Receiver shape lives in Material math.\n";
                 sum += "            let radialRadiance = max(lightRadiance_" + s +
                        "(sourceDelta), 0.0);\n";
                 sum += "            var angularRadiance = 1.0;\n";
@@ -5124,10 +5092,6 @@ Program compile(const geom::SdfNode& root,
                 sum += "            let shapedRadiance = radialRadiance * angularRadiance;\n";
                 sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
                 sum += "            let directRadiance = shapedRadiance * pathVisibility;\n";
-                sum += "            let diff = max(dot(nw, Ls), 0.0);\n";
-                sum += "            let specShape = inst.shading.z * "
-                       "pow(max(dot(nw, Hs), 0.0), max(inst.shading.w, 1.0)) * "
-                       "step(0.0001, diff);\n";
 
                 if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
                     sum += "            let incidentRadiance = sourceChroma * "
@@ -5152,18 +5116,9 @@ Program compile(const geom::SdfNode& root,
                 sum += "                    let receiverResponse = "
                        "materialResponseEval(pf, nw, responseWi, V, surfaceColor, "
                        "legacyDiffuseLobeWeight, legacySpecularLobeWeight);\n";
-                sum += "                    diffuseTerm += incidentRadiance * "
+                sum += "                    directTerm += incidentRadiance * "
                        "receiverResponse * directRadiance;\n";
                 sum += "                }\n";
-                sum += "            } else {\n";
-                sum += "                let diffuseEnvelope = incidentRadiance * "
-                       "legacyDiffuseLobeWeight;\n";
-                sum += "                let specularEnvelope = incidentRadiance * "
-                       "legacySpecularLobeWeight;\n";
-                sum += "                diffuseTerm += inst.shading.y * diffuseEnvelope * "
-                       "diff * directRadiance;\n";
-                sum += "                specTerm += specularEnvelope * specShape * "
-                       "directRadiance;\n";
                 sum += "            }\n";
                 sum += "        }\n";
                 sum += "    }\n";
@@ -5172,10 +5127,8 @@ Program compile(const geom::SdfNode& root,
             sum += "    if (HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE) {\n";
             sum += "        environmentTerm = materialEnvironmentResponseEval("
                    "pf, nw, V, surfaceColor, environmentRadiance);\n";
-            sum += "    } else if (!HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
-            sum += "        environmentTerm = "
-                   "surfaceColor * inst.shading.x * environmentRadiance;\n";
             sum += "    }\n";
+            sum += "    let litRgb = environmentTerm + directTerm;\n";
             marcher.replace(lightAt, clipAt - lightAt, sum);
         }
 
