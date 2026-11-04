@@ -339,10 +339,6 @@ COREFOUNDATION_FW:FILEPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/S
 //Path to a program.
 EARTHCALL_LAW_LINE_PYTHON:FILEPATH=/Library/Frameworks/Python.framework/Versions/3.14/bin/python3
 
-//Linux/other: wgpu-native library built from the vendored tag;
-// enables webgpu_* tests on a software Vulkan device
-EARTHCALL_WGPU_NATIVE_LIBRARY:FILEPATH=
-
 //Build websocketpp with CPP11 features enabled.
 ENABLE_CPP11:BOOL=ON
 

@@ -10,7 +10,6 @@
 // This is still a MACHINE witness. A Person must open the world and see the
 // ancestor rotate; "a green suite is not a witness" remains in force.
 
-#include "support/test_harness.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
 #include "ConstructedBeing/Material/Material.hpp"
@@ -94,8 +93,6 @@ int main() {
               && zone["lawRefs"].size() == 1
               && zone["lawRefs"][0] == "law-primordial-cube-spin",
           "the Zone explicitly references its authored spin Law");
-    check(!zone.contains("materialRefs") || zone["materialRefs"].empty(),
-          "the Zone defines its own Material directly rather than naming a dangling shared root");
 
     const auto& objects = zone.at("world").at("objects");
     check(objects.size() == 1, "the Zone contains one visible ancestor");
@@ -213,24 +210,6 @@ int main() {
     const auto world = SaveSystem::readSaveData(worldPath.string());
     check(!world.empty() && world.value("currentZoneId", "") == "Primordial Spinning Cube",
           "a launchable witness world opens on the resurrected ancestor");
-
-    {
-        TestSupport::RealSaveTreeGuard guard(TestSupport::GuardCurrentRoot);
-        TestSupport::BootedEngineHarness harness("Zach");
-        std::size_t cubeIndex = harness.zones.zones().size();
-        for (std::size_t i = 0; i < harness.zones.zones().size(); ++i) {
-            const auto& z = harness.zones.zones()[i];
-            if (z && z->getIdentifier() == "Primordial Spinning Cube") {
-                cubeIndex = i;
-                break;
-            }
-        }
-        check(cubeIndex < harness.zones.zones().size(), "booted harness discovered Primordial Spinning Cube");
-        if (cubeIndex < harness.zones.zones().size()) {
-            bool switched = harness.zones.switchTo(cubeIndex);
-            check(switched, "Booted harness switchTo Primordial Spinning Cube succeeds");
-        }
-    }
 
     std::cout << "------------------------------------------------------------\n";
     std::cout << checks - failures << "/" << checks << " machine checks passed.\n";

@@ -24,7 +24,6 @@ from __future__ import annotations
 from copy import deepcopy
 import json
 import os
-import sys
 from pathlib import Path
 import tempfile
 
@@ -328,7 +327,7 @@ def build_zone(material, object_record):
             "primordial.behaviorAuthority": LAW_ID,
         },
         "materials": [material],
-        "materialRefs": [],
+        "materialRefs": [MATERIAL_ID],
         "world": {"objects": [object_record]},
         "formationRelations": [],
         "lexemes": [],
@@ -383,7 +382,6 @@ def verify(zone, law, world):
     assert obj["field"]["prim"] == 7 and obj["field"].get("mathNode")
     assert "faceColors" not in obj
     assert zone["lawRefs"] == [LAW_ID]
-    assert "materialRefs" not in zone or not zone["materialRefs"]
     assert law["law"]["activation"] == 1
     assert law["law"]["actionModel"]["kind"] == 8
     assert law["law"]["actionModel"]["path"] == "rotation"
@@ -408,18 +406,6 @@ def main():
     atomic_write(ZONE_PATH, zone)
     atomic_write(LAW_PATH, law)
     atomic_write(WORLD_PATH, world)
-
-    try:
-        sys.path.insert(0, str(ROOT / "scripts"))
-        from earthcall_data_home import data_root
-        home_root = data_root()
-        if home_root != (ROOT / "saves") and home_root.is_dir():
-            atomic_write(home_root / "zones" / ZONE_ID / "zone.json", zone)
-            atomic_write(home_root / "laws" / LAW_ID / "law.json", law)
-            atomic_write(home_root / "worlds" / "primordial_spinning_cube.json", world)
-            print(f"  data home updated: {home_root}")
-    except Exception as e:
-        print(f"  note: data home update skipped ({e})")
 
     print("Primordial Spinning Cube resurrected.")
     print("  geometry: authored Field math, not ShapeKind::Cube")

@@ -2,7 +2,7 @@
 
 *Claude Code / Claude Opus 5.5 / session `ed9d515b-d6ac-4098-a7f9-ce71d02406b3` / 2026-11-03T12:09:36-0800. Commissioned by Zach, 2026-11-03: "THERE IS ALREADY AN AURORA ZONE (northern veils) BUT I WANT U TO MAKE ANOTHER AURORA ZONE FROM SCRATCH ... USE VOLUMETRICS AND RADIANCE FIELDS TO MAKE GORGEOUS, REALISTIC STYLE AURORA", with seven reference photographs. He added that Northern Veil "isn't that realistic/breathtaking-level" and is not the reference, and that The Veiled Hour is relevant only as volumetrics and light. The name, the design and the mathematics below are this agent's; Zach may rename or redirect any of it.*
 
-**Status:** Zach's verdict on the complete Zone, 2026-11-03, 14:09–14:12 screenshots: "IT LOOKS AMAZING ITS THE MOST INSANE THING IVE SEEN IN EARTHCALL SO FARRRRRRR", at "some views r 20-25ish fps others are 9 fps". He then asked for the soft arc, stars and moiré to be fixed, and said **not to work on FPS "until we can establish a general architecture for it rather than a bespoke one".** That look pass is installed and awaits his eye. Checks are on the [Person Verification List](../../../For%20Zach/Person%20Verification%20List.md#the-merry-dancers--first-look-2026-11-03).
+**Status:** far-plane fix in place; the complete Zone still awaits Zach's first look in the app. Before the fix he called the curtains alone "AMAZING" at 18-24 FPS. Checks are on the [Person Verification List](../../../For%20Zach/Person%20Verification%20List.md#the-merry-dancers--first-look-2026-11-03).
 
 ## Resolved: the app clipped everything opaque past 100 m
 
@@ -11,48 +11,6 @@
 **Fix, chosen by Zach ("authored far plane"), 2026-11-03:** `view.farPlane` is an authored property on a Zone's spatial root, beside `light.*`, read by `Rendering::authoredFarPlane` (`src/Singularity/Screen/AuthoredView.hpp`). This departs from the Law-set channel value first proposed, because a channel value would leak into the next Zone and need a reset; a root property ends with the Zone and a Law can still write it. Absent means the historical 100, and only this Zone (2000) carries it among 49 data-home `zone.json` Zones. `.ecform` Zones were not scanned, but the property is new, so none can carry it unless authored since. FOV stays hard-coded at 45.
 
 **Evidence:** `authored_far_plane_test` 20/20; `merry_dancers_test` 75/75 on snapshot and live file. Offscreen with the app's camera and the production read, 2560×1440, median of 7 frames: no clear-colour pixels in any view; 79 ms north, 80 ms up, 81 ms northeast, 60 ms south. That is about 12–17 FPS offscreen, compared with the 16–20 implied by the far-100 reproduction (62 and 51 ms) for what he measured at 18–24 FPS. The live window remains unverified. Claude Code / Claude Opus 5.5 / session `ed9d515b-d6ac-4098-a7f9-ce71d02406b3` / 2026-11-03T13:53:38-0800.
-
-## Look pass after Zach's first complete view
-
-*Claude Code / Claude Opus 5.5 / session `ed9d515b-d6ac-4098-a7f9-ce71d02406b3` / 2026-11-03. Requested by Zach ("FIX THOSE THINGS NEXT PASS"), and read from his screenshots.*
-
-**The moiré was sampling, not the look.** Offscreen at 768 samples per chord the stripes vanish and the rest of the frame looks unchanged, so nothing about them belongs in the integral. Two analytic band limits now remove what a ray's step cannot resolve, with no extra samples and no engine change. Both start from `lattice_step`, the longest step a direction can take through its box (chord / 96, from `omega` alone).
-
-- `resolved(k)` fades a ray-comb sine once its phase per step nears Nyquist (`k * advance` from pi/2 to pi). The true integral of such a term over a step is near zero, so this is correct as well as free.
-- `resolved_width` widens the arc's sheet only on rays that step too far across it, and divides emission by the same factor so energy along the ray is unchanged. Thinning the sheet without this made the moiré worse, which is how this second cause was found.
-
-Both assume 96 samples. A higher sample count stays correct, only more conservative; a lower one would alias again. This is authored per Zone: **it is a stopgap for the general sampling question, not an answer to it.** Faint residual stripes remain on the arc in some views (visible at the top right of the north-west still).
-
-**Other changes, Zone data only:**
-
-| What | Before | Now |
-|---|---|---|
-| Stars | thresholded noise product: flecks of one brightness, pebbles up close | one point per stereographic cell, round everywhere (the map is conformal), steep magnitude law, warm-to-cool tint |
-| Overhead arc | half-width 11 m, wide Perlin blobs | half-width 7.5 m (10.5 max on coarse rays), a third fine fold, finer rays, sharper lower border |
-| Far band and its reflection | | unchanged except the comb band limit, because Zach loved them |
-| Ridge snow | isotropic noise: camouflage blotches | noise stretched down the fall line, lighter rock |
-| Near snow | crossed sines: a woven pattern | one noise octave |
-| Spruces (not asked for; added from his shots) | few deep tiers: wavy bowling pins | about 19 shallow drooping tiers, marched at 0.3 for a conservative step |
-
-**A trap for later authors:** OntoMath's `Div` guards small denominators. Dividing by a radius squared of 7e-7 returned 0, which lit every faint star's whole cell and covered the sky in blocks. Keep such comparisons in units where nothing is tiny. `merry_dancers_test` now has a star-share witness for this.
-
-**Honest limits of this pass:**
-
-- The arc is sharper and folded, but still the softest thing in the Zone from directly below. Part of that is real: a ray running up a tilted sheet integrates across its fine rays.
-- Stars live on a dome at 960 m because surface colour binds position, not view direction. They stay round but grow as a Person flies toward them.
-- Cost was not worked on, by instruction, and did not stay flat. Single offscreen runs at 2560×1440, machine noisy (the same old-Zone view measured 80 and 93 ms in one session): up 93 → 108 ms, north 88 → 115, northeast 103 → 107, northwest 117 → 102, south 63 → 60. Media account for the rise: sky and solids held at about 33 ms, and arc media-only in the up view went from 81 ms to 111 before trimming, unre-measured after. Expect the slow views to get somewhat slower.
-
-**Install:** patched per §7 rule 8, with 32 subtrees replaced (`volumeDensity`, `volumeEmission`, `colorExpr`, spruce `field`) and every other value verified unmoved. The result equals the generator's output.
-
-**Evidence:** `merry_dancers_test` 78/78 on the snapshot and the live file. Its star witness measures a 3.7% star share, and 43% with the block bug restored in a scratch copy, where it fails as it should. `authored_far_plane_test` 24/24. No live-window check yet.
-
-**Side costs:** in this Debug build, loading plus first frame went from about 2 s to about 4 s offscreen, and `merry_dancers_test` now takes about 6 minutes on host evaluation, which a later pass should shrink.
-
-## Northern Veil got the same property
-
-Zach, 2026-11-03: "can u do the same authorable property thing for the other aurora zone". `view.farPlane = 500` now sits on Northern Veil's spatial root, in the data-home `.ecform` and the `saves/` snapshot, inserted at byte level with everything else verified identical.
-
-**This visibly changes that Zone.** Its ridges and lake plates reach 208 m, so 100 m had been clipping them. Offscreen, more ridge appears where flat background was, and those far ridges have boxy cut edges, which may or may not be welcome. To undo it, remove the one property. 500 is more than twice the scenery's reach (`authored_far_plane_test`). Single-run cost: 45 → 65 ms north, 38 → 36 ms toward the lake. Nothing here was verified in the live app.
 
 ## What exists
 
@@ -102,7 +60,7 @@ That is roughly 6–17 FPS, well short of Northern Veil's 33 ms through the same
 
 ## Next
 
-- **No FPS work until there is a general architecture for it (Zach, 2026-11-03).** Do not trim this Zone bespoke for frame rate. Concentrating a ray's samples inside proven support, rather than spacing them over the whole box chord, would address both cost and the moiré generally; that is this agent's suggestion, not a decision.
-- Zach's eye on the look pass above.
+- Zach's verdict first: everything below depends on what he sees.
+- Bring the north view down: cheaper reflection, or a mirrored sheet with fewer samples if that can be authored per medium.
 - Decide on time-varying sky radiance.
 - Real ridge geometry with height-grid traversal, if flying near them matters.
