@@ -1181,9 +1181,11 @@ struct SdfGlobalUniforms {
     // xyz = honest constant direct incident radiance (color * intensity);
     // w = source intensity used when authored chi replaces constant color.
     glm::vec4 directIncidentRadiance;
-    // x/y = execution-only legacy diffuse/specular lobe weights. These are not
-    // radiance and exist solely so material.default can reproduce old worlds.
-    glm::vec4 legacyReceiverLobeWeights;
+    // xyz = exact historical no-chi lobe envelope; w = authored-chi scale.
+    // These exist only so material.default can reproduce arbitrary old
+    // Renderer::setLight diffuse/specular RGB without making them source ontology.
+    glm::vec4 legacyDiffuseIncident;
+    glm::vec4 legacySpecularIncident;
     glm::vec4 lightControl; // x = lighting enabled, y = derived visibility enabled
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
     glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
@@ -1196,7 +1198,8 @@ struct RadianceSourceGpuData {
     // Direct rho/alpha/visibility transport must never read this field.
     glm::vec4 legacyEnvironment;
     glm::vec4 directIncidentRadiance;
-    glm::vec4 legacyReceiverLobeWeights;
+    glm::vec4 legacyDiffuseIncident;
+    glm::vec4 legacySpecularIncident;
     glm::vec4 time;
     glm::vec4 control;
 };
@@ -2356,10 +2359,12 @@ void WebGpuRenderer::flushSdfDraws() {
                     source.ambientRadiance, source.diffuseRadiance,
                     source.specularRadiance, source.coefficients),
                 source.coefficients.x);
-            data.legacyReceiverLobeWeights = glm::vec4(
-                source.coefficients.z / 0.8f,
-                source.coefficients.w,
-                0.0f, 0.0f);
+            data.legacyDiffuseIncident = glm::vec4(
+                source.diffuseRadiance / 0.8f,
+                (source.coefficients.x * source.coefficients.z) / 0.8f);
+            data.legacySpecularIncident = glm::vec4(
+                source.specularRadiance,
+                source.coefficients.x * source.coefficients.w);
             data.time = glm::vec4(static_cast<float>(source.temporalCoordinate),
                                   static_cast<float>(source.temporalDelta), 0.0f, 0.0f);
             data.control =
@@ -2424,10 +2429,12 @@ void WebGpuRenderer::flushSdfDraws() {
         legacyDirectIncidentRadiance(
             lightAmbient(), lightDiffuse(), lightSpecular(), sourceCoefficients),
         sourceCoefficients.x);
-    u.legacyReceiverLobeWeights = glm::vec4(
-        sourceCoefficients.z / 0.8f,
-        sourceCoefficients.w,
-        0.0f, 0.0f);
+    u.legacyDiffuseIncident = glm::vec4(
+        lightDiffuse() / 0.8f,
+        (sourceCoefficients.x * sourceCoefficients.z) / 0.8f);
+    u.legacySpecularIncident = glm::vec4(
+        lightSpecular(),
+        sourceCoefficients.x * sourceCoefficients.w);
     u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f,
                                radianceVisibilityEnabled() ? 1.0f : 0.0f,
                                0.0f, 0.0f);
