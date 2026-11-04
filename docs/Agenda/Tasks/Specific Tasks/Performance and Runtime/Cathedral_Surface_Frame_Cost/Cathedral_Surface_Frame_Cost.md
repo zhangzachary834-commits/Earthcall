@@ -1,8 +1,8 @@
 # Cathedral surface frame cost
 
-**Commission** — Zachary Zhang asked for surface SDF optimization after the Northern Veil merge.  
-**Author** — Codex / GPT-6 / Sixth-One Sun  
-**Session** — `01a148a7-bd85-7550-a416-0e859a729c1a`  
+**Commission** — Zachary Zhang asked for surface SDF optimization after the Northern Veil merge.
+**Author** — Codex / GPT-6 / Sixth-One Sun
+**Session** — `01a148a7-bd85-7550-a416-0e859a729c1a`
 **Timestamp** — 2026-11-03T21:18:00-08:00
 
 Source/CPU preparation is complete. All 178 surface Fields compile and match re-collected parameters. Thirty-six require gradient-corrected marching, and none emit analytic gradients. The spatial-root expression supplies authored source radiance. [Audit, source-bound census, and prepared probe](../../../../../audits/CATHEDRAL_SURFACE_SDF_FIRST_PASS_2026-11-03.md)
