@@ -523,17 +523,23 @@ std::string pointComponent(const std::string& var, Emit& e, const std::string& p
                  "expression context is not material environment response");
         return "vec3<f32>(0.0)";
     }
-    if (var == OntoMath::kLegacyDiffuseLobeWeightVar) {
-        if (e.bindMaterialResponse) return "legacyDiffuseLobeWeight";
-        e.refuse("an expression names legacy diffuse-lobe compatibility weight outside "
-                 "the direct material-response migration context");
-        return "0.0";
+    if (var == OntoMath::kIncidentRadianceVar) {
+        if (e.bindMaterialResponse) return "incidentRadiance";
+        e.refuse("an expression names direct incident radiance outside "
+                 "the direct material-response context");
+        return "vec3<f32>(0.0)";
     }
-    if (var == OntoMath::kLegacySpecularLobeWeightVar) {
-        if (e.bindMaterialResponse) return "legacySpecularLobeWeight";
-        e.refuse("an expression names legacy specular-lobe compatibility weight outside "
+    if (var == OntoMath::kLegacyDiffuseIncidentVar) {
+        if (e.bindMaterialResponse) return "legacyDiffuseIncident";
+        e.refuse("an expression names legacy diffuse incident compatibility outside "
                  "the direct material-response migration context");
-        return "0.0";
+        return "vec3<f32>(0.0)";
+    }
+    if (var == OntoMath::kLegacySpecularIncidentVar) {
+        if (e.bindMaterialResponse) return "legacySpecularIncident";
+        e.refuse("an expression names legacy specular incident compatibility outside "
+                 "the direct material-response migration context");
+        return "vec3<f32>(0.0)";
     }
     if (var == OntoMath::kOmegaXVar ||
         var == OntoMath::kOmegaYVar ||
@@ -1963,8 +1969,9 @@ bool validateResponsePiecewise(const OntoMath::Piecewise& pw,
         {"z", OntoMath::ValueKind::Scalar},
         {OntoMath::kSurfaceNormalVar, OntoMath::ValueKind::Vector},
         {OntoMath::kSurfaceColorVar, OntoMath::ValueKind::Vector},
-        {OntoMath::kLegacyDiffuseLobeWeightVar, OntoMath::ValueKind::Scalar},
-        {OntoMath::kLegacySpecularLobeWeightVar, OntoMath::ValueKind::Scalar},
+        {OntoMath::kIncidentRadianceVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kLegacyDiffuseIncidentVar, OntoMath::ValueKind::Vector},
+        {OntoMath::kLegacySpecularIncidentVar, OntoMath::ValueKind::Vector},
         {OntoMath::kWiXVar, OntoMath::ValueKind::Scalar},
         {OntoMath::kWiYVar, OntoMath::ValueKind::Scalar},
         {OntoMath::kWiZVar, OntoMath::ValueKind::Scalar},
