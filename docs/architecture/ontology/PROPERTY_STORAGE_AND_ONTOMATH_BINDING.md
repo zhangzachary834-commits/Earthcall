@@ -21,6 +21,8 @@ The thesis is:
 This extends the existing doctrine, “a Property is a legible predication of a Singular.” Neither a Property, its value cell, nor an ordinary list or map becomes another Singular solely because it is addressable. A Relation still joins Singulars; a PropertyPath qualifies the aspect of a Singular in question. A graph of Property values is data about bearers, not a second ontology of Property-beings.
 
 ## 1. What exists today, and the gap
+**2026-11-03 narrow AD-21 landing.** `MathNode::Bind` (append-only op 42) now carries a PropertyPath payload, evaluates on CPU through the existing Law/PropertyPath read funnel, round-trips through JSON, and is authorable in the shared Math editor. The WebGPU material-response channel is the first GPU admission: `resolveRenderMaterial` resolves only the paths named by the response AST, supplies a detached typed scalar/vec3 snapshot, and the WGSL emitter lowers those values to ordinary parameter slots. Bound-value changes therefore refresh parameters without changing response WGSL; unresolved/unsupported bindings refuse by path name. This does **not** complete the broader memory-cell/custody/access-governance programme below, nor does it silently enable Bind in every execution channel. Other channels remain explicit admissions.
+
 
 | Existing seam | Current capacity | Gap this design addresses |
 |---|---|---|
