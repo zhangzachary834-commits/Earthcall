@@ -5,7 +5,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 
 #include <set>
-#include <functional>
 
 extern MaterialManager materials; // global Material beings (globals.cpp)
 
@@ -50,8 +49,7 @@ RenderMaterial resolveRenderMaterial(const std::string& materialId, const FaceAl
                 }
                 fingerprint += ";";
             }
-            rm.responseBindingRevision =
-                static_cast<uint64_t>(std::hash<std::string>{}(fingerprint));
+            rm.responseBindingIdentity = std::move(fingerprint);
         }
     }
     rm.textureId    = albedo.handle;
