@@ -1085,10 +1085,17 @@ void emitPiecewise(const OntoMath::Piecewise& pw, Emit& e, const std::string& pt
         if (!piece.mathNode) continue;
         
         std::string cond = "";
-        if (piece.hasLo) cond += inVar + " >= " + e.param(piece.lo);
-        if (piece.hasHi) {
-            if (!cond.empty()) cond += " && ";
-            cond += inVar + " <= " + e.param(piece.hi);
+        if (piece.whereLEZero) {
+            // Piecewise::Piece::applies gives the pure local guard authority
+            // over interval bounds: where g<=0 decides this piece by itself.
+            // Mirror that exact first-applicable-piece rule on the GPU.
+            cond = "(" + emitMathNode(*piece.whereLEZero, e, pt) + ") <= 0.0";
+        } else {
+            if (piece.hasLo) cond += inVar + " >= " + e.param(piece.lo);
+            if (piece.hasHi) {
+                if (!cond.empty()) cond += " && ";
+                cond += inVar + " <= " + e.param(piece.hi);
+            }
         }
         
         std::string val = emitMathNode(*piece.mathNode, e, pt);
@@ -1964,10 +1971,26 @@ bool validateResponsePiecewise(const OntoMath::Piecewise& pw,
     }
     for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
         const auto& piece = pw.pieces[i];
-        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
+        if (piece.guard || piece.call || piece.fold) {
             error = "piece " + std::to_string(i) +
-                    " uses Piecewise semantics the WGSL response channel does not implement";
+                    " uses world Piecewise semantics the WGSL response channel does not implement";
             return false;
+        }
+        if (piece.whereLEZero) {
+            OntoMath::ValueKind guardKind = OntoMath::ValueKind::Unknown;
+            std::string guardError;
+            if (!piece.whereLEZero->checkTypes(
+                    env, guardError, &guardKind, false)) {
+                error = "piece " + std::to_string(i) +
+                        " pure guard: " + guardError;
+                return false;
+            }
+            if (guardKind != OntoMath::ValueKind::Scalar) {
+                error = "piece " + std::to_string(i) +
+                        " pure guard must evaluate to Scalar, got " +
+                        std::string(OntoMath::valueKindName(guardKind));
+                return false;
+            }
         }
         if (!piece.mathNode) {
             error = "piece " + std::to_string(i) + " has no authored response value";
