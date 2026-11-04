@@ -1151,10 +1151,13 @@ glm::vec3 legacyDirectIncidentRadiance(const glm::vec3& ambientRadiance,
                                        const glm::vec3& diffuseRadiance,
                                        const glm::vec3& specularRadiance,
                                        const glm::vec4& coefficients) {
-    // Historical light channels were color * intensity * lobeCoefficient.
-    // Recover the single incident RGB before those receiver-model weights were
-    // applied. Any nonzero channel is sufficient; if every lobe coefficient is
-    // zero then historical direct light was zero and returning black preserves it.
+    // AuthorableLight projects every historical channel from one
+    // color*intensity source, so division by any nonzero coefficient recovers the
+    // canonical incident RGB exactly. The older raw Renderer::setLight API can
+    // provide mutually inconsistent lobe colours; then canonical incident RGB is
+    // mathematically underdetermined and this is only a best-effort projection.
+    // Exact old-BP parity does NOT depend on this guess: the two legacy RGB lobe
+    // envelopes are preserved independently below for material.default.
     constexpr float eps = 1e-8f;
     if (std::fabs(coefficients.z) > eps) {
         return diffuseRadiance / coefficients.z;
