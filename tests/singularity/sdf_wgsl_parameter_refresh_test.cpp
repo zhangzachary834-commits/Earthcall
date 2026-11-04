@@ -1478,9 +1478,10 @@ int main() {
               "V5 names the refusing member and never fabricates a stale fallback");
     }
 
-    // 9. Rung 8: visibility is derived transport below source authorship.
-    //    The shader must expose an exact V=1 compatibility gate and multiply
-    //    each source's direct radiance AFTER rho*chi*alpha composition.
+    // 9. Rung 8: visibility is derived Path truth below source authorship.
+    //    Knownness is independent from V itself: Disabled is known V=1,
+    //    LocalReceiverGeometry may answer from owned geometry, and CompleteScene
+    //    must remain Unknown until a shared scene provider exists.
     // ---------------------------------------------------------------------
     {
         auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
@@ -1493,12 +1494,21 @@ int main() {
         check(oneSource.ok &&
                   oneSource.wgsl.find("fn sourceVisibility") != std::string::npos,
               "Rung-8 shader exposes derived geometric visibility transport");
-        check(oneSource.wgsl.find("u.lightControl.y < 0.5") != std::string::npos &&
-                  oneSource.wgsl.find("return 1.0") != std::string::npos,
-              "visibility-disabled compatibility path is explicit V=1");
+        check(oneSource.wgsl.find("struct VisibilityDecision") != std::string::npos &&
+                  oneSource.wgsl.find("u.lightControl.y < 0.5") != std::string::npos &&
+                  oneSource.wgsl.find("u.lightControl.y > 1.5") != std::string::npos &&
+                  oneSource.wgsl.find("VisibilityDecision(1.0, 1.0)") !=
+                      std::string::npos &&
+                  oneSource.wgsl.find("VisibilityDecision(0.0, 0.0)") !=
+                      std::string::npos,
+              "visibility encodes knownness separately from V and refuses absent complete-scene authority");
         check(oneSource.wgsl.find(
-                  "let directRadiance = shapedRadiance * pathVisibility") != std::string::npos,
-              "one-source direct transport multiplies visibility after authored emission");
+                  "let directRadiance = shapedRadiance * pathVisibility.value") !=
+                  std::string::npos &&
+              oneSource.wgsl.find(
+                  "responseDefined && pathVisibility.known > 0.5") !=
+                  std::string::npos,
+              "one-source direct transport consumes V only when visibility is known");
         const auto oneEnvironment =
             oneSource.wgsl.find("legacyEnvironment");
         const auto oneDirect =
@@ -1521,14 +1531,17 @@ int main() {
                       "sourceVisibility(pf, nf, source.position.xyz)") != std::string::npos,
               "each composed source derives visibility from its own source-receiver path");
         check(multiSource.wgsl.find(
-                  "let directRadiance = shapedRadiance * pathVisibility") !=
+                  "sourcePacket.shapedRadiance * pathVisibility.value") !=
+                  std::string::npos &&
+              multiSource.wgsl.find(
+                  "pathVisibility.known > 0.5 && HAS_AUTHORED_MATERIAL_RESPONSE") !=
                   std::string::npos &&
               multiSource.wgsl.find(
                   "directTerm += receiverResponse * directRadiance") !=
                   std::string::npos &&
               multiSource.wgsl.find("specShape") == std::string::npos &&
               multiSource.wgsl.find("inst.shading") == std::string::npos,
-              "multi-source visibility feeds Material response with no renderer-owned lobe math");
+              "multi-source visibility feeds Material response only from a known Path decision");
         const auto packet0 =
             multiSource.wgsl.find("fn sourceSample_0");
         const auto packet1 =
