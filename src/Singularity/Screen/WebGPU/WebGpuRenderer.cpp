@@ -621,7 +621,10 @@ void WebGpuRenderer::reloadShaders() {
 const WebGpuRenderer::MeshPipeline*
 WebGpuRenderer::meshPipeline(const std::string& wgsl) {
     auto it = _meshPipes.find(wgsl);
-    if (it != _meshPipes.end()) return &it->second;
+    if (it != _meshPipes.end()) {
+        mutableFrameStats().meshProgramCacheHits++;
+        return &it->second;
+    }
 
     WGPUShaderSourceWGSL src = {};
     src.chain.sType = WGPUSType_ShaderSourceWGSL;
@@ -690,6 +693,7 @@ WebGpuRenderer::meshPipeline(const std::string& wgsl) {
     if (!out.pipe) return nullptr;
 
     auto [inserted, _] = _meshPipes.emplace(wgsl, out);
+    mutableFrameStats().meshProgramCompiles++;
     return &inserted->second;
 }
 
@@ -1132,6 +1136,8 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
             mat.responseExpr.get(), mat.environmentResponseExpr.get(),
             &mat.responseBindings);
         if (!memo.program.ok) {
+            mutableFrameStats().meshProgramRefusals++;
+            mutableFrameStats().meshLastProgramRefusal = memo.program.error;
             std::fprintf(stderr,
                          "[WebGpuRenderer] mesh Material response refused: %s\n",
                          memo.program.error.c_str());
@@ -1140,6 +1146,9 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
         const std::string wgsl = meshWgsl(memo.program);
         memo.pipeline = meshPipeline(wgsl);
         if (!memo.pipeline || !memo.pipeline->pipe) {
+            mutableFrameStats().meshProgramRefusals++;
+            mutableFrameStats().meshLastProgramRefusal =
+                "mesh Material response pipeline failed";
             std::fprintf(stderr,
                          "[WebGpuRenderer] mesh Material response pipeline failed\n");
             return;
@@ -1159,6 +1168,8 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
         if (!direct.ok || !environment.ok) {
             const std::string reason =
                 !direct.ok ? direct.error : environment.error;
+            mutableFrameStats().meshProgramRefusals++;
+            mutableFrameStats().meshLastProgramRefusal = reason;
             std::fprintf(stderr,
                          "[WebGpuRenderer] mesh Material response value refresh refused: %s\n",
                          reason.c_str());
@@ -1265,6 +1276,7 @@ void WebGpuRenderer::flushMeshDraws() {
             : key.responseParams.size() * sizeof(float);
         auto paramAlloc =
             bufferPool().suballocateStorage(paramData, paramBytes);
+        mutableFrameStats().meshParameterBytesUploaded += paramBytes;
 
         WGPUBindGroupEntry bge[4] = {};
         bge[0].binding = 0;
