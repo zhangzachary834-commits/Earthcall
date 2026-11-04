@@ -92,6 +92,48 @@ No CI/native execution result is claimed here until the exact branch head receiv
 
 ---
 
+## Implementation ledger — 2026-11-03 fourth pass: authored environment receiver law
+
+Environment illumination has crossed from renderer-owned receiver arithmetic into Material-authored OntoMath without changing the historical direct-light contract.
+
+Implemented:
+- canonical receiver input `environmentRadiance : Vector` in OntoMath;
+- independent `Material.environmentResponseExpr` with its own revision authority, Property bridge, JSON persistence and paint copy-on-write preservation;
+- `RenderMaterial` projects direct and environment response laws separately while resolving one generic union of `Bind(PropertyPath)` dependencies against the actual Material being;
+- a dedicated material-environment compiler context admits `p`, `n`, `wo`, `surfaceColor`, `environmentRadiance`, and generic Bind values, while refusing direct `wi`;
+- the direct response context correspondingly refuses `environmentRadiance`;
+- environment response participates independently in shader structure identity, refusal, parameter recollection and WebGPU memoization;
+- multi-source environment radiance is summed first and passed once through the Material environment-response law; direct source transport remains a separate sum;
+- fixed the multi-source splice boundary after environment work moved ahead of `L`: replacement now begins at the receiver's `V` prelude, so one-source chroma/environment code cannot leak into a multi-source program;
+- environment response output owns complete reflected environment RGB, preventing a second renderer pigment multiply;
+- `material.default` now receives an ordinary authored compatibility law equivalent to the historical ambient receiver term:
+  `surfaceColor ⊙ (Bind("ambient") × environmentRadiance)`;
+- legacy Materials with no direct response inherit that default environment law while binding their own `ambient` value;
+- a Material that explicitly authors direct `responseExpr` does **not** secretly inherit legacy environment response. It receives zero environment unless it authors `environmentResponseExpr` itself, preserving Rung-9 sovereignty;
+- compiler tribunals prove environment/direct input authority isolation and parameter-only `ambient` edits;
+- production compiler tribunals compile the environment law with two different Bind values and require byte-identical WGSL plus exact parameter recollection;
+- the native zero-rho + blocker + visibility witness remains the pixel-level compatibility tribunal.
+
+### Deliberate direct-Blinn-Phong gate
+
+The generic mathematics needed to express historical direct Blinn-Phong now exists: `Bind`, Dot, Normalize, Clamp, Pow, Scale/Add/Hadamard, and pure `Piecewise.whereLEZero`. However, **the default direct response is intentionally not activated yet**.
+
+Repository audit found inhabited/authored worlds with noncanonical source-side receiver knobs, including Prism Cathedral, Sanctuary of Sunlit Mist, Northern Veil, Borealis Sanctuary, Synthesis Studio and others. Their `light.diffuse` and `light.specular` values independently scale the historical diffuse and specular lobes. A single physically honest incident-radiance vector cannot encode two independent receiver-lobe multipliers. Activating a Material-only Blinn-Phong response now would therefore change authored appearances.
+
+Accordingly:
+- `material.default.responseExpr` remains absent;
+- the hardcoded **direct** Blinn-Phong compatibility branch remains temporarily authoritative;
+- `material.default.environmentResponseExpr` is active and authored;
+- source-side `light.diffuse/specular` must be migrated losslessly before the direct compatibility branch can be deleted.
+
+This is a narrower but stronger milestone: ambient/environment receiver semantics are no longer a shader law, while no inhabited world is silently recolored to make the architecture prettier on paper.
+
+Next migration target: re-home legacy source-side diffuse/specular receiver weights as explicit compatibility/authored data without pretending they are emitted radiance. Only after that witness is pixel-parity complete should the default direct Blinn-Phong AST take authority and `<material-response:legacy-blinn-phong>` disappear.
+
+No CI result is claimed here until the exact final branch head completes its workflow.
+
+---
+
 ---
 
 ## Commission
