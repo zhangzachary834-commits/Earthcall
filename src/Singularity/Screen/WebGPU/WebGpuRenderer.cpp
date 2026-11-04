@@ -320,15 +320,9 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     // timestamp extension, and F3 will say that no execution sample is present.
     initGpuTimestampQueries(gpu.timestampQueries);
 
-    WGPUShaderSourceWGSL src = {};
-    src.chain.sType = WGPUSType_ShaderSourceWGSL;
-    src.code = wgpu::Device::str(kMeshWGSL);
-    WGPUShaderModuleDescriptor smDesc = {};
-    smDesc.nextInChain = &src.chain;
-    WGPUShaderModule shader = wgpuDeviceCreateShaderModule(_device, &smDesc);
-    if (!shader) return false;
-
-    WGPUBindGroupLayoutEntry bglEntries[3] = {};
+    // Mesh pipeline layout is fixed execution machinery; the fragment
+    // mathematics is generated lazily per authored Material response structure.
+    WGPUBindGroupLayoutEntry bglEntries[4] = {};
     bglEntries[0].binding = 0;
     bglEntries[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     bglEntries[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -340,14 +334,16 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     bglEntries[2].binding = 2;
     bglEntries[2].visibility = WGPUShaderStage_Fragment;
     bglEntries[2].sampler.type = WGPUSamplerBindingType_Filtering;
+    bglEntries[3].binding = 3;
+    bglEntries[3].visibility = WGPUShaderStage_Fragment;
+    bglEntries[3].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     WGPUBindGroupLayoutDescriptor bglDesc = {};
-    bglDesc.entryCount = 3;
+    bglDesc.entryCount = 4;
     bglDesc.entries = bglEntries;
     _bgl = wgpuDeviceCreateBindGroupLayout(_device, &bglDesc);
 
-    // group(1): the per-instance transform storage array (Phase 4.3). Same
-    // ReadOnlyStorage shape as the SDF params bind group below — minBindingSize
-    // left at 0 (unsized), since a batch's instance count varies draw to draw.
+    // group(1): per-instance model/normal/baseColor storage. Geometry discovery
+    // remains raster-specific; Material response does not.
     WGPUBindGroupLayoutEntry instEntry = {};
     instEntry.binding = 0;
     instEntry.visibility = WGPUShaderStage_Vertex;
@@ -357,9 +353,7 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     instBglDesc.entries = &instEntry;
     _instanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &instBglDesc);
 
-    // group(2): SDF instances plus two derived acceleration buffers:
-    // binding 1 is the proven-heightfield min/max grid; binding 2 is the
-    // conservative zero-set hierarchy. Both are read-only Kernel substrate.
+    // group(2): SDF instances plus derived acceleration buffers.
     WGPUBindGroupLayoutEntry sdfInstEntry[3] = {};
     sdfInstEntry[0].binding = 0;
     sdfInstEntry[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
@@ -374,70 +368,6 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     sdfInstBglDesc.entryCount = 3;
     sdfInstBglDesc.entries = sdfInstEntry;
     _sdfInstanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &sdfInstBglDesc);
-
-    WGPUBindGroupLayout meshLayouts[2] = { _bgl, _instanceBgl };
-    WGPUPipelineLayoutDescriptor plDesc = {};
-    plDesc.bindGroupLayoutCount = 2;
-    plDesc.bindGroupLayouts = meshLayouts;
-    WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(_device, &plDesc);
-
-    WGPUVertexAttribute attrs[3] = {};
-    attrs[0].format = WGPUVertexFormat_Float32x3; attrs[0].offset = 0;  attrs[0].shaderLocation = 0; // pos
-    attrs[1].format = WGPUVertexFormat_Float32x3; attrs[1].offset = 12; attrs[1].shaderLocation = 1; // normal
-    attrs[2].format = WGPUVertexFormat_Float32x2; attrs[2].offset = 24; attrs[2].shaderLocation = 2; // uv
-    WGPUVertexBufferLayout vbl = {};
-    vbl.stepMode = WGPUVertexStepMode_Vertex;
-    vbl.arrayStride = 32; // sizeof(geom::TessVertex)
-    vbl.attributeCount = 3;
-    vbl.attributes = attrs;
-
-    // Alpha blending so RenderMaterial::opacity actually means something. With the
-    // default opacity of 1.0 this is a no-op — src*1 + dst*0 is exactly what an
-    // unblended write does — so it costs nothing for opaque surfaces while making
-    // a translucent material render translucent instead of silently solid.
-    WGPUBlendState meshBlend = {};
-    meshBlend.color.operation = WGPUBlendOperation_Add;
-    meshBlend.color.srcFactor = WGPUBlendFactor_SrcAlpha;
-    meshBlend.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
-    meshBlend.alpha.operation = WGPUBlendOperation_Add;
-    meshBlend.alpha.srcFactor = WGPUBlendFactor_One;
-    meshBlend.alpha.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
-
-    WGPUColorTargetState colorTarget = {};
-    colorTarget.format = _colorFormat;
-    colorTarget.writeMask = WGPUColorWriteMask_All;
-    colorTarget.blend = &meshBlend;
-    WGPUFragmentState frag = {};
-    frag.module = shader;
-    frag.entryPoint = wgpu::Device::str("fs_main");
-    frag.targetCount = 1;
-    frag.targets = &colorTarget;
-
-    // Depth test so nearer surfaces occlude farther ones. Depth24Plus, less-than,
-    // depth writes on. (WebGPU clip depth is [0,1]; the app must build projections
-    // with GLM_FORCE_DEPTH_ZERO_TO_ONE when feeding this backend.)
-    WGPUDepthStencilState ds = {};
-    ds.format = WGPUTextureFormat_Depth24Plus;
-    ds.depthWriteEnabled = WGPUOptionalBool_True;
-    ds.depthCompare = WGPUCompareFunction_Less;
-
-    WGPURenderPipelineDescriptor pd = {};
-    pd.layout = layout;
-    pd.vertex.module = shader;
-    pd.vertex.entryPoint = wgpu::Device::str("vs_main");
-    pd.vertex.bufferCount = 1;
-    pd.vertex.buffers = &vbl;
-    pd.primitive.topology = WGPUPrimitiveTopology_TriangleList;
-    pd.primitive.cullMode = WGPUCullMode_None; // the app has no backface culling
-    pd.depthStencil = &ds;
-    pd.multisample.count = 1;
-    pd.multisample.mask = 0xFFFFFFFFu;
-    pd.fragment = &frag;
-    _meshPipeline = wgpuDeviceCreateRenderPipeline(_device, &pd);
-
-    wgpuPipelineLayoutRelease(layout);
-    wgpuShaderModuleRelease(shader);
-    if (!_meshPipeline) return false;
 
     // Shared linear sampler.
     WGPUSamplerDescriptor sd = {};
