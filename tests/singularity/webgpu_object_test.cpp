@@ -2996,26 +2996,71 @@ int main() {
                sourceMeshBStats.meshParameterBytesUploaded > 0 &&
                "numeric rho edit recompiled/refused mesh WGSL instead of refreshing source params");
 
-        // VISIBILITY UNKNOWN: mesh has no representation-independent scene
-        // visibility query yet. It must therefore refuse direct V rather than
-        // silently substituting V=1. Environment response is absent here, so
-        // the direct-only pixel becomes black and telemetry records the skip.
+        // LOCAL RECEIVER VISIBILITY: compatibility bool-on now means the
+        // explicitly scoped local-receiver query. Mesh cannot answer it, but the
+        // exact implicit representation can answer from its own SDF.
         renderer.setRadianceVisibilityEnabled(true);
+        assert(renderer.radianceVisibilityMode() ==
+                   RadianceVisibilityMode::LocalReceiverGeometry &&
+               "legacy visibility bool must map to LocalReceiverGeometry");
+
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         meshTransport.drawObject();
         renderer.endFrame();
-        unsigned char sourceMeshVisibilityUnknown[4];
-        readCentre(sourceMeshVisibilityUnknown);
-        const Renderer::FrameStats sourceVisibilityStats =
+        unsigned char sourceMeshLocalUnknown[4];
+        readCentre(sourceMeshLocalUnknown);
+        const Renderer::FrameStats sourceMeshLocalStats =
+            renderer.frameStats();
+        assert(sourceMeshLocalUnknown[0] < 5 &&
+               sourceMeshLocalUnknown[1] < 5 &&
+               sourceMeshLocalUnknown[2] < 5 &&
+               sourceMeshLocalStats.meshVisibilityUnknownDirectSkips > 0 &&
+               "mesh silently substituted V=1 for unknown local-receiver visibility");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        implicitTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceImplicitLocalKnown[4];
+        readCentre(sourceImplicitLocalKnown);
+        assert(sourceImplicitLocalKnown[0] > 8 &&
+               sourceImplicitLocalKnown[1] > 35 &&
+               sourceImplicitLocalKnown[2] > 20 &&
+               "implicit local-receiver visibility failed to return known-unoccluded transport");
+
+        // COMPLETE SCENE VISIBILITY: neither representation may pretend its
+        // local geometry is the whole Zone. Until a shared scene provider exists,
+        // direct transport is Unknown for BOTH and therefore withheld.
+        renderer.setRadianceVisibilityMode(
+            RadianceVisibilityMode::CompleteScene);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshSceneUnknown[4];
+        readCentre(sourceMeshSceneUnknown);
+        const Renderer::FrameStats sourceMeshSceneStats =
             renderer.frameStats();
 
-        assert(sourceMeshVisibilityUnknown[0] < 5 &&
-               sourceMeshVisibilityUnknown[1] < 5 &&
-               sourceMeshVisibilityUnknown[2] < 5 &&
-               sourceVisibilityStats.meshVisibilityUnknownDirectSkips > 0 &&
-               "mesh silently substituted V=1 when authored visibility was requested");
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        implicitTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceImplicitSceneUnknown[4];
+        readCentre(sourceImplicitSceneUnknown);
+        const Renderer::FrameStats sourceImplicitSceneStats =
+            renderer.frameStats();
 
-        renderer.setRadianceVisibilityEnabled(false);
+        assert(sourceMeshSceneUnknown[0] < 5 &&
+               sourceMeshSceneUnknown[1] < 5 &&
+               sourceMeshSceneUnknown[2] < 5 &&
+               sourceMeshSceneStats.meshVisibilityUnknownDirectSkips > 0 &&
+               "mesh fabricated complete-scene visibility");
+        assert(sourceImplicitSceneUnknown[0] < 5 &&
+               sourceImplicitSceneUnknown[1] < 5 &&
+               sourceImplicitSceneUnknown[2] < 5 &&
+               sourceImplicitSceneStats.sdfVisibilityUnknownDirectSkips > 0 &&
+               "implicit receiver-local SDF masqueraded as complete-scene visibility");
+
+        renderer.setRadianceVisibilityMode(RadianceVisibilityMode::Disabled);
         renderer.setRadianceSources({}, 0);
     }
 
