@@ -2313,6 +2313,90 @@ int main() {
         renderer.setRadianceVisibilityEnabled(false);
     }
 
+    // --- AD-21 MATERIAL RESPONSE PROPERTY BIND -------------------------------
+    // The response AST stays byte-for-byte fixed while an ordinary Material
+    // Property changes through PropertyPath. resolveRenderMaterial must refresh
+    // the bound parameter value without a response revision bump or WGSL compile.
+    {
+        auto boundMat = materials.create("webgpu_response_bind_witness");
+        boundMat->baseColor = glm::vec3(1.0f);
+        boundMat->ambient = 0.0f;
+        boundMat->diffuse = 1.0f;
+        boundMat->specular = 0.0f;
+
+        auto boundRoot = std::make_shared<OntoMath::MathNode>();
+        boundRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto boundDiffuse = std::make_unique<OntoMath::MathNode>();
+        boundDiffuse->op = OntoMath::MathNode::Op::Bind;
+        boundDiffuse->propertyPath = "diffuse";
+        boundRoot->children.push_back(std::move(boundDiffuse));
+        boundRoot->children.push_back(scalarNode(0.0));
+        boundRoot->children.push_back(scalarNode(0.0));
+        boundMat->responseExpr = std::make_shared<OntoMath::Piecewise>(
+            OntoMath::Piecewise::continuous(boundRoot));
+        boundMat->bumpResponseRevision();
+        const uint32_t boundResponseRevision = boundMat->getResponseRevision();
+        const std::string boundResponseJson = boundMat->responseExpr->toJson().dump();
+
+        Object boundReceiver;
+        boundReceiver.setFieldShape(
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.55f)),
+            glm::vec3(1.0f));
+        boundReceiver.setMaterialId("material.webgpu_response_bind_witness");
+
+        auto boundRhoRoot = scalarNode(1.0);
+        OntoMath::Piecewise boundRho =
+            OntoMath::Piecewise::continuous(boundRhoRoot);
+        renderer.setRadianceSources({}, 0);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setRadianceField(&boundRho, 5101);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.0f),
+                          glm::vec3(0.8f),
+                          glm::vec3(0.0f));
+        renderer.setLightingEnabled(true);
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        boundReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char boundBright[4];
+        readCentre(boundBright);
+        const Renderer::FrameStats boundFirstStats = renderer.frameStats();
+        assert(boundBright[0] > 120 &&
+               "Material Property Bind did not reach the native receiver pixel");
+        assert(boundFirstStats.sdfProgramCompiles == 1 &&
+               "first Property-Bound response draw did not compile exactly once");
+
+        assert(PropertyPath::parse("diffuse").setValue(
+                   *boundMat, PropertyValue(0.18f)) == PropertyPath::PathResult::Ok);
+        assert(boundMat->getResponseRevision() == boundResponseRevision &&
+               boundMat->responseExpr->toJson().dump() == boundResponseJson &&
+               "ordinary bound-property edit mutated response structure/revision");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        boundReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char boundDim[4];
+        readCentre(boundDim);
+        const Renderer::FrameStats boundValueStats = renderer.frameStats();
+        std::printf("AD-21 response Bind red %d -> %d; compiles=%u cacheHits=%u paramBytes=%zu\n",
+                    boundBright[0], boundDim[0],
+                    boundValueStats.sdfProgramCompiles,
+                    boundValueStats.sdfProgramCacheHits,
+                    boundValueStats.sdfParameterBytesUploaded);
+        assert(boundBright[0] > boundDim[0] + 60 &&
+               "live Material Property Bind edit did not refresh native response value");
+        assert(boundValueStats.sdfProgramCompiles == 0 &&
+               boundValueStats.sdfProgramCacheHits >= 1 &&
+               boundValueStats.sdfParameterBytesUploaded > 0 &&
+               "Property Bind value edit recompiled WGSL or reused stale parameters");
+
+        renderer.setRadianceField(nullptr, 0);
+    }
+
     // --- Rung-8 WebGPU begin2D native pixel witness ----------------------------
     // Production begin2D now consumes OntoMath's top-left ZO orthographic
     // projection. Draw only the top-left quarter and prove through GPU readback
