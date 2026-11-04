@@ -41,6 +41,7 @@ jobs:
         ontomath_linear_algebra_test
         ontomath_authoring_reachability_test
         ontomath_affine_sovereignty_test
+        ontomath_two_direction_witness_test
         geometry_ontomath_test
         gift_shop_guardrail_test
         interaction_channel_test
