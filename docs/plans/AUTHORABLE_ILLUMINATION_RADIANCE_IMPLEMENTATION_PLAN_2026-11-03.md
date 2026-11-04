@@ -134,6 +134,110 @@ No CI result is claimed here until the exact final branch head completes its wor
 
 ---
 
+## Implementation ledger — 2026-11-03 fifth pass: direct response sovereignty and SDF Blinn–Phong demotion
+
+The SDF/WebGPU direct-lighting path no longer contains a renderer-owned Blinn–Phong law. Historical Blinn–Phong is now an ordinary inherited `Material.responseExpr` built from generic OntoMath, while direct transport remains source/visibility truth.
+
+### Direct receiver contract
+
+The direct Material response is now a complete reflected-RGB law:
+
+`R_direct(p, n, wi, wo, surfaceColor, incidentRadiance, compatibilityInputs, Bind(...)) -> vec3`.
+
+The renderer applies only the scalar transport term after the response:
+
+`L_direct_out = R_direct(...) * rho * alpha * visibility`.
+
+This replaces the earlier intermediate contract in which the response was treated as a throughput and multiplied by incident RGB afterward. A Person-authored response is therefore genuinely sovereign over direct reflected colour.
+
+The direct response context admits:
+- `p`, receiver normal `n`, canonical source->receiver `wi`, receiver->eye `wo`;
+- `surfaceColor`;
+- canonical `incidentRadiance`;
+- generic `Bind(PropertyPath)`;
+- two explicitly compatibility-only RGB inputs, `legacyDiffuseIncident` and `legacySpecularIncident`.
+
+The environment response does not admit the direct incident/lobe inputs, and generic source/vector contexts do not admit them.
+
+### Lossless migration of the old light.diffuse/light.specular fossil
+
+A well-formed `AuthorableLight` historically derived ambient, diffuse and specular colours from one `light.color * light.intensity`, so the canonical direct incident RGB is recoverable exactly. The older raw `Renderer::setLight` API can provide mutually inconsistent diffuse/specular RGB vectors, in which case a unique canonical source radiance is mathematically underdetermined.
+
+The migration therefore keeps two facts separate:
+1. `directIncidentRadiance` is the canonical/future-facing direct incident RGB. For AuthorableLight it is exact; for contradictory raw legacy calls it is only a best-effort projection.
+2. `legacyDiffuseIncident` and `legacySpecularIncident` carry the exact historical per-lobe RGB envelopes. They are execution-only compatibility data and are not source ontology.
+
+For no-chi legacy lighting:
+- `legacyDiffuseIncident.rgb = lightDiffuse / 0.8`;
+- `legacySpecularIncident.rgb = lightSpecular`.
+
+For authored chi:
+- the corresponding `.w` fields carry the historical scalar factors and the shader multiplies them by the authored source chroma at the receiver.
+
+This means even an old raw call with different diffuse and specular chroma remains exactly representable by the compatibility Material response without declaring either lobe to be a kind of emitted light.
+
+### material.default now owns historical Blinn–Phong as authored data
+
+`material.default.responseExpr` is seeded as generic OntoMath only. No privileged `BlinnPhong`, `BRDF`, Lambert, or material-model operation was added.
+
+Its direct compatibility mathematics is equivalent to the historical SDF branch:
+- `L = -wi`;
+- `d = max(dot(n,L),0)`;
+- diffuse = `surfaceColor ⊙ legacyDiffuseIncident * Bind("diffuse") * d`;
+- `H = normalize(L + wo)`;
+- specular = `legacySpecularIncident * Bind("specular") * pow(max(dot(n,H),0), max(Bind("shininess"),1))`;
+- the historical `step(0.0001,d)` specular gate is represented by a pure Piecewise `whereLEZero` guard on `0.0001 - d`.
+
+A legacy Material with no local direct response inherits this equation from `material.default`, but its Bind paths resolve against the receiving Material's own values. Equation inheritance is therefore not value inheritance. An explicit local response remains sovereign and is not replaced.
+
+`material.default.environmentResponseExpr` remains the independently authored environment law from the previous pass.
+
+### Renderer fallback deleted from SDF execution
+
+Generated SDF WGSL now has:
+- no `<material-response:legacy-blinn-phong>` identity — absence is `<material-response:absent>`;
+- no `inst.shading` reads;
+- no renderer-authored diffuse cosine;
+- no renderer-authored half-vector/specular power branch;
+- no `specShape`;
+- no post-response pigment multiply;
+- no direct-response multiply by incident RGB outside the Material law.
+
+The SDF instance ABI still physically contains its historical `shading` vec4 and WebGpuRenderer still writes that dead slot. This pass intentionally leaves the storage layout intact because many diagnostic GPU fixtures pin the 288-byte instance ABI. The slot has zero SDF WGSL authority and can be removed later as a mechanical ABI cleanup after this semantic migration is verified.
+
+### Witnesses
+
+Compiler/ownership tribunals now require:
+- an absent response to be true absence, not a hidden renderer law;
+- direct-response admission of canonical incident RGB and quarantine of legacy lobe RGB compatibility inputs;
+- environment/generic expression contexts to refuse those direct-only inputs;
+- generated SDF WGSL to contain no hardcoded `specShape`, `inst.shading`, or legacy response identity;
+- multi-source direct transport to accumulate `receiverResponse * directRadiance`, with source visibility remaining outside Material response;
+- Bind value edits to refresh parameters without changing shader structure;
+- inherited default equations to bind receiver-local diffuse/specular/shininess/ambient values.
+
+The default Material CPU witness deliberately gives the historical diffuse and specular lobes different chroma. With a front-facing receiver, `surfaceColor=(.5,.25,1)`, `legacyDiffuseIncident=(.25,.10,.05)`, and `legacySpecularIncident=(.40,.20,.05)`, the authored default response must produce `(.50,.22,.09)`.
+
+The native WebGPU witness drives the same adversarial condition through the old `Renderer::setLight` boundary and requires the centre pixel near `(128,56,23)`. This proves the old API's independent lobe colours survive the CPU compatibility adapter, inherited Material AST and production WGSL path.
+
+Geometry/range witnesses that manually construct bare `RenderMaterial` values now explicitly disable lighting. SDF visibility, parity, heightfield, range-performance and Perlin-root tests no longer rely on a hidden shading model merely to make a hit non-black.
+
+### Remaining fossils / next pass
+
+This pass purifies the **SDF/WebGPU surface path**, not every renderer path.
+
+Still remaining:
+- the ordinary WebGPU mesh shader still contains bespoke Blinn–Phong and `MeshUniforms.params` / `MeshBatchKey.shading`;
+- CPU/save compatibility still exposes `AuthorableLightState.ambient/diffuse/specular`, `RadianceSourceBinding.ambientRadiance/diffuseRadiance/specularRadiance`, and the historical `Renderer::setLight` surface;
+- the dead SDF instance `shading` ABI slot remains physically present;
+- OpenGL remains a legacy compatibility backend.
+
+The next architectural pass is to make ordinary WebGPU mesh surfaces consume the same authored Material direct/environment response semantics as SDF surfaces, then remove the mesh shader's built-in Blinn–Phong. Only after mesh parity is proven should the old CPU light vocabulary and dead SDF ABI slot be mechanically retired.
+
+No CI/native result is claimed for this exact head until its workflow completes.
+
+---
+
 ---
 
 ## Commission
