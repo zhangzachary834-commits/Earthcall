@@ -558,10 +558,10 @@ int main() {
         check(before.wgsl.find("fn lightRadiance_0") != std::string::npos &&
                   before.wgsl.find("fn lightRadiance_1") != std::string::npos,
               "each source keeps its own rho function instead of enumerating the world inside one AST");
-        check(before.wgsl.find("environmentTerm +=") != std::string::npos &&
+        check(before.wgsl.find("environmentRadiance +=") != std::string::npos &&
                   before.wgsl.find("diffuseTerm +=") != std::string::npos &&
                   before.wgsl.find("ambientTerm") == std::string::npos,
-              "environment compatibility and direct source emission are distinct additive channels");
+              "environment incident radiance and direct source emission are distinct additive channels");
 
         // VALUE ONLY: same ScalarLeaf structure on source 1.
         rho1Node->scalarForm.terms[0].coefficient = 0.2;
@@ -1493,6 +1493,9 @@ int main() {
                   environmentUse < directBoundary &&
                   multiSource.wgsl.find("ambientTerm") == std::string::npos,
               "environment incident radiance is accumulated before direct-path visibility");
+        check(multiSource.wgsl.find("lightChroma(sourceDelta)") ==
+                  std::string::npos,
+              "multi-source splice removes the one-source chroma/environment prelude");
         const auto directTail = multiSource.wgsl.substr(directBoundary);
         check(directTail.find("legacyEnvironment") == std::string::npos,
               "direct multi-source transport cannot read the legacy environment input");
@@ -1818,9 +1821,10 @@ int main() {
         check(legacy.wgsl.find(
                   "const HAS_AUTHORED_MATERIAL_RESPONSE: bool = false") !=
                   std::string::npos &&
-              legacy.wgsl.find("inst.shading.x * ambientEnvelope") !=
-                  std::string::npos,
-              "absent response preserves the explicit legacy Blinn-Phong compatibility path");
+              legacy.wgsl.find("let specShape = inst.shading.z") !=
+                  std::string::npos &&
+              legacy.wgsl.find("ambientTerm") == std::string::npos,
+              "absent direct response preserves only the direct Blinn-Phong compatibility branch");
         check(authored.wgsl.find(
                   "const HAS_AUTHORED_MATERIAL_RESPONSE: bool = true") !=
                   std::string::npos &&
@@ -1831,10 +1835,11 @@ int main() {
                   std::string::npos &&
               authored.wgsl.find("receiverResponse * directRadiance") !=
                   std::string::npos &&
-              authored.wgsl.find(
-                  "ambientTerm + diffuseTerm + specTerm,\n        HAS_AUTHORED_MATERIAL_RESPONSE") !=
+              authored.wgsl.find("let directRgb = select(") !=
+                  std::string::npos &&
+              authored.wgsl.find("let litRgb = environmentTerm + directRgb") !=
                   std::string::npos,
-              "authored response is evaluated after transport and owns final reflected RGB");
+              "authored direct response is evaluated after transport and owns direct reflected RGB");
 
         auto boundResponseRoot = std::make_shared<OntoMath::MathNode>();
         boundResponseRoot->op = OntoMath::MathNode::Op::VectorConstruct;
@@ -1872,6 +1877,56 @@ int main() {
                   boundProgramA.params != boundProgramB.params &&
                   boundRefresh.values == boundProgramB.params,
               "live Property Bind value edit reuses WGSL and refreshes only response parameters");
+
+        auto envScaleProd = std::make_unique<OntoMath::MathNode>();
+        envScaleProd->op = OntoMath::MathNode::Op::Scale;
+        auto ambientBindProd = std::make_unique<OntoMath::MathNode>();
+        ambientBindProd->op = OntoMath::MathNode::Op::Bind;
+        ambientBindProd->propertyPath = "ambient";
+        envScaleProd->children.push_back(std::move(ambientBindProd));
+        envScaleProd->children.push_back(variable(OntoMath::kEnvironmentRadianceVar));
+
+        auto envProdRoot = std::make_shared<OntoMath::MathNode>();
+        envProdRoot->op = OntoMath::MathNode::Op::Hadamard;
+        envProdRoot->children.push_back(variable(OntoMath::kSurfaceColorVar));
+        envProdRoot->children.push_back(std::move(envScaleProd));
+        OntoMath::Piecewise environmentResponseProd =
+            OntoMath::Piecewise::continuous(envProdRoot);
+
+        sdfwgsl::BindingValues ambientProdA{
+            {"ambient", PropertyValue(0.2f)}
+        };
+        const auto environmentProgramA = sdfwgsl::compile(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, &ambientProdA, &environmentResponseProd);
+
+        sdfwgsl::BindingValues ambientProdB{
+            {"ambient", PropertyValue(0.6f)}
+        };
+        const auto environmentProgramB = sdfwgsl::compile(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, &ambientProdB, &environmentResponseProd);
+        const auto environmentRefresh = sdfwgsl::collectParams(
+            surface, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, sdfwgsl::DensityInputKind::LegacyField,
+            nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, &ambientProdB, &environmentResponseProd);
+
+        check(environmentProgramA.ok && environmentProgramB.ok &&
+                  environmentRefresh.ok &&
+                  environmentProgramA.wgsl == environmentProgramB.wgsl &&
+                  environmentProgramA.params != environmentProgramB.params &&
+                  environmentRefresh.values == environmentProgramB.params &&
+                  environmentProgramA.wgsl.find(
+                      "const HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE: bool = true") !=
+                      std::string::npos &&
+                  environmentProgramA.wgsl.find(
+                      "fn materialEnvironmentResponseEval") != std::string::npos,
+              "authored environment response compiles in production and Bind edits refresh only parameters");
 
         const auto beforeParams = authored.params;
         responseRoot->children[2]->scalarForm.terms[0].coefficient = 0.7;
