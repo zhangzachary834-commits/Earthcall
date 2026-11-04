@@ -559,7 +559,7 @@ int main() {
                   before.wgsl.find("fn lightRadiance_1") != std::string::npos,
               "each source keeps its own rho function instead of enumerating the world inside one AST");
         check(before.wgsl.find("environmentRadiance +=") != std::string::npos &&
-                  before.wgsl.find("directTerm += incidentRadiance * receiverResponse * directRadiance") !=
+                  before.wgsl.find("directTerm += receiverResponse * directRadiance") !=
                       std::string::npos &&
                   before.wgsl.find("ambientTerm") == std::string::npos &&
                   before.wgsl.find("diffuseTerm") == std::string::npos &&
@@ -1571,23 +1571,34 @@ int main() {
         check(!sdfwgsl::inspectVectorExpression(&pigmentResponse, false).ok,
               "receiver pigment cannot leak into generic source/vector authority");
 
-        auto legacyWeightsRoot = std::make_shared<OntoMath::MathNode>();
-        legacyWeightsRoot->op = OntoMath::MathNode::Op::VectorConstruct;
-        legacyWeightsRoot->children.push_back(
-            variable(OntoMath::kLegacyDiffuseLobeWeightVar));
-        legacyWeightsRoot->children.push_back(
-            variable(OntoMath::kLegacySpecularLobeWeightVar));
-        legacyWeightsRoot->children.push_back(number(0.0));
-        OntoMath::Piecewise legacyWeightsResponse =
-            OntoMath::Piecewise::continuous(legacyWeightsRoot);
-        check(sdfwgsl::inspectResponseExpression(&legacyWeightsResponse).ok,
-              "direct Material response alone admits legacy lobe migration inputs");
+        auto incidentRoot = std::make_shared<OntoMath::MathNode>();
+        incidentRoot->op = OntoMath::MathNode::Op::ValueLeaf;
+        incidentRoot->variableName = OntoMath::kIncidentRadianceVar;
+        OntoMath::Piecewise incidentResponse =
+            OntoMath::Piecewise::continuous(incidentRoot);
+        check(sdfwgsl::inspectResponseExpression(&incidentResponse).ok,
+              "direct Material response admits canonical incidentRadiance");
         check(!sdfwgsl::inspectEnvironmentResponseExpression(
-                  &legacyWeightsResponse).ok,
-              "environment Material response refuses direct legacy lobe migration inputs");
+                  &incidentResponse).ok &&
+              !sdfwgsl::inspectVectorExpression(&incidentResponse, false).ok,
+              "direct incidentRadiance cannot leak into environment or generic vector authority");
+
+        auto legacyLobesRoot = std::make_shared<OntoMath::MathNode>();
+        legacyLobesRoot->op = OntoMath::MathNode::Op::Add;
+        legacyLobesRoot->children.push_back(
+            variable(OntoMath::kLegacyDiffuseIncidentVar));
+        legacyLobesRoot->children.push_back(
+            variable(OntoMath::kLegacySpecularIncidentVar));
+        OntoMath::Piecewise legacyLobesResponse =
+            OntoMath::Piecewise::continuous(legacyLobesRoot);
+        check(sdfwgsl::inspectResponseExpression(&legacyLobesResponse).ok,
+              "direct Material response alone admits legacy RGB lobe migration inputs");
+        check(!sdfwgsl::inspectEnvironmentResponseExpression(
+                  &legacyLobesResponse).ok,
+              "environment Material response refuses direct legacy RGB lobe inputs");
         check(!sdfwgsl::inspectVectorExpression(
-                  &legacyWeightsResponse, false).ok,
-              "legacy lobe migration inputs cannot leak into generic vector authority");
+                  &legacyLobesResponse, false).ok,
+              "legacy RGB lobe inputs cannot leak into generic vector authority");
 
         // Environment response is a second receiver-owned context:
         // environmentRadiance is admitted, direct wi is not.
@@ -1857,13 +1868,13 @@ int main() {
               authored.wgsl.find("fn materialResponseEval") !=
                   std::string::npos &&
               authored.wgsl.find(
-                  "legacyDiffuseLobeWeight: f32, legacySpecularLobeWeight: f32") !=
+                  "incidentRadiance: vec3<f32>, legacyDiffuseIncident: vec3<f32>") !=
                   std::string::npos &&
               authored.wgsl.find(
-                  "legacyDiffuseLobeWeight, legacySpecularLobeWeight") !=
+                  "incidentRadiance, legacyDiffuseIncident, legacySpecularIncident") !=
                   std::string::npos &&
               authored.wgsl.find(
-                  "directTerm = incidentRadiance * receiverResponse * directRadiance") !=
+                  "directTerm = receiverResponse * directRadiance") !=
                   std::string::npos &&
               authored.wgsl.find("specShape") == std::string::npos &&
               authored.wgsl.find("inst.shading") == std::string::npos,
