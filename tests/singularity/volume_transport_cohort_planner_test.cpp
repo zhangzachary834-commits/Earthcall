@@ -156,7 +156,7 @@ int main() {
         };
         const auto plan = Rendering::planVolumeCohortTiles(
             256, 128, 128, 128, first, second);
-        assert(!false);
+        assert(plan.secondBeforeFirstRegions.empty());
         assert(!plan.firstBeforeSecondRegions.empty());
         assert(plan.jointRegions.empty());
         assert(area(plan.firstBeforeSecondRegions) == uint64_t(256) * 128);
@@ -210,7 +210,7 @@ int main() {
         };
         const auto plan = Rendering::planVolumeCohortTiles(
             256, 256, 128, 128, first, second);
-        assert(!false);
+        assert(plan.secondBeforeFirstRegions.empty());
         assert(plan.firstBeforeSecondRegions.size() == 1);
         assert(plan.firstBeforeSecondRegions[0].x == 0);
         assert(plan.firstBeforeSecondRegions[0].y == 0);
@@ -232,8 +232,8 @@ int main() {
         };
         const auto plan = Rendering::planVolumeCohortTiles(
             128, 128, 128, 128, first, second);
-        assert(plan.firstBeforeSecondRegions.empty() && plan.secondBeforeFirstRegions.empty());
-        assert(plan.firstBeforeSecondRegions.empty() && plan.secondBeforeFirstRegions.empty());
+        assert(plan.firstBeforeSecondRegions.empty());
+        assert(plan.secondBeforeFirstRegions.empty());
         assert(area(plan.jointRegions) == uint64_t(128) * 128);
     }
 
