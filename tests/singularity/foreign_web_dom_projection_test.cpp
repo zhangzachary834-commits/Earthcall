@@ -163,15 +163,26 @@ int main() {
 
         auto div1Form = translator.findNodeFormation("node.6");
         assert(div1Form != nullptr);
-        // Prove relation counts went down and members are gone
+        // Both links and both members must disappear, not just the attribute binding.
         bool foundAttrRel = false;
+        bool foundValueRel = false;
+        bool preservedClassAttr = false;
         for (const auto& rel : div1Form->relations().getAll()) {
             if (rel->typeLabel() == DomRelationType::kHasAttribute) {
                 auto* target = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
                 if (target && target->getSymbol() == "id") foundAttrRel = true;
+                if (target && target->getSymbol() == "class") preservedClassAttr = true;
+            }
+            if (rel->typeLabel() == DomRelationType::kHasValue) {
+                auto* source = dynamic_cast<Singularity::Language::Lexeme*>(rel->a());
+                if (source && source->getSymbol() == "id") foundValueRel = true;
             }
         }
         assert(!foundAttrRel);
+        assert(!foundValueRel);
+        assert(preservedClassAttr);
+        assert(language.findById("page-session.a91f4b2c.attr.node.6.1") != nullptr);
+        assert(language.findById("page-session.a91f4b2c.attrval.node.6.1") != nullptr);
     }
 
     // 6. Navigation / Retirement Lifecycle
