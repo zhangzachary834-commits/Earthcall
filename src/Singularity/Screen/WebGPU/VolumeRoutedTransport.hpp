@@ -2,6 +2,7 @@
 #include <webgpu/webgpu.h>
 #include <glm/glm.hpp>
 #include <array>
+#include <functional>
 #include <map>
 #include <string>
 #include <vector>
@@ -14,6 +15,18 @@
 struct KernelRoutedSpec {glm::vec4 origin,half,limits,curv,amps,freqs,phases;};
 static_assert(sizeof(KernelRoutedSpec)==112);
 struct KernelRoutedRange {WGPUBuffer buffer=nullptr;uint64_t offset=0,size=0;};
+
+// Strip-lifetime view of the routed producer's proof/program stream.
+// The underlying buffers are reusable scratch: a consumer may record GPU work
+// from them during the callback, but must not retain their contents past that
+// strip. Command order guarantees the recorded consumer runs before the next
+// producer overwrites the same storage.
+struct KernelRoutedSpanStrip {
+    uint32_t stripIndex=0,startRow=0,rowCount=0,rayCapacity=0;
+    KernelRoutedRange window{},rays{},singles{},overlaps{};
+};
+using KernelRoutedSpanConsumer =
+    std::function<bool(WGPUCommandEncoder,const KernelRoutedSpanStrip&)>;
 struct KernelRoutedTransport {
     WGPUDevice device=nullptr;WGPUQueue queue=nullptr;
     WGPUBuffer publication=nullptr,rays=nullptr,singles=nullptr,overlaps=nullptr,offsets=nullptr,indices=nullptr,counts=nullptr,args=nullptr;
@@ -55,4 +68,10 @@ struct KernelRoutedTransport {
     bool ensure(WGPUDevice d,WGPUQueue q,uint32_t w,uint32_t h);
     Program* program(const std::string& source);
     bool encode(Program&,WGPUCommandEncoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth);
+    // Producer-only C5b seam. Runs setup/classification/span producers and
+    // invokes consumer once per strip before scratch reuse; does not run
+    // ecConsume or claim framebuffer publication.
+    bool encodeSpans(Program&,WGPUCommandEncoder,const KernelRoutedRange& globals,
+                     const KernelRoutedRange& params,const KernelRoutedRange& instances,
+                     WGPUTextureView depth,const KernelRoutedSpanConsumer& consumer);
 };
