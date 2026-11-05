@@ -127,6 +127,10 @@ std::optional<float> evaluateFieldVm(const FieldVmProgram& program,
 // fieldVmEval(programBase, instructionCount, p). It requires the canonical
 // primitive helpers (sdSphere/sdBox/...) already emitted by this compiler.
 std::string fieldVmMathModule();
+// Production consumers bind the otherwise-neutral VM instruction stream at a
+// concrete storage location without baking renderer resource topology into the
+// derived bytecode format itself.
+std::string fieldVmBoundMathModule(uint32_t group, uint32_t binding);
 
 // Generic authored PropertyPath values supplied by the channel that owns the
 // subject. The compiler knows paths and types only; it does not know Material,
