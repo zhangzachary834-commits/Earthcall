@@ -2622,12 +2622,13 @@ fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWor
     let inst = instances[receiverIndex];
     let surfaceWorld = (inst.model * vec4<f32>(surfacePoint, 1.0)).xyz;
 
-    // CompleteScene authority for this bounded provider means:
+    // CompleteScene authority for this bounded SDF provider means:
     //   receiver-local field
     //   + every other instance of this SAME compiled field program
+    //   + every admitted FOREIGN field program through the bounded VM table
     //   + the exact shared world-triangle materialization.
-    // A different SDF program never reaches this branch: CPU admission keeps
-    // the completeness bit false for mixed-program scenes.
+    // CPU admission grants the completeness bit only when all four authorities
+    // are represented within their explicit blocker/instruction budgets.
     let cohortV =
         cohortOtherInstanceVisibility(surfaceWorld, sourceWorld, receiverIndex);
     g_instIdx = receiverIndex;
