@@ -194,28 +194,59 @@ private:
     WGPUBindGroupLayout _bgl = nullptr;
     const MeshPipeline* meshPipeline(const std::string& wgsl);
 
-    // Bounded CompleteScene execution substrate: exact world-space triangles
-    // for every queued opaque mesh, plus (for SDF receivers) every instance in
-    // one compiled SDF-program cohort evaluated by that receiver shader itself.
-    // Exceeding the mesh budget or admitting a different SDF program produces
-    // Unknown, never an approximate visibility answer.
+    struct SdfPipeline;
+
+    // Bounded CompleteScene execution substrate:
+    //  * exact world-space triangles for opaque meshes;
+    //  * exact analytic segment blockers for admitted foreign implicit leaves;
+    //  * the receiver SDF shader's own exact same-program instance cohort.
+    // Unsupported implicit programs remain Unknown; no tessellation substitutes
+    // for field truth merely to manufacture scene completeness.
     struct SceneVisibilityTriangle {
         glm::vec4 a;
         glm::vec4 b;
         glm::vec4 c;
+    };
+    // Exact execution packet for a bounded set of primitive SDF leaves.
+    // kind: 1 = sphere, 2 = axis-aligned box in blocker-local coordinates.
+    // World transforms are handled by invModel, so arbitrary affine instance
+    // transforms do not change the primitive's mathematical intersection law.
+    struct SceneVisibilityImplicitBlocker {
+        glm::mat4 invModel{1.0f};
+        glm::vec4 dimsKind{0.0f};
+        glm::vec4 offset{0.0f};
+    };
+    struct SceneVisibilityBufferView {
+        WGPUBuffer buffer = nullptr;
+        uint64_t offset = 0;
+        uint64_t size = 0;
+        uint32_t count = 0;
+        bool complete = false;
     };
     struct SceneVisibilityFrame {
         WGPUBuffer buffer = nullptr;
         uint64_t offset = 0;
         uint64_t size = 0;
         uint32_t triangleCount = 0;
+
+        WGPUBuffer implicitBuffer = nullptr;
+        uint64_t implicitOffset = 0;
+        uint64_t implicitSize = 0;
+        uint32_t implicitCount = 0;
+
+        // Every opaque mesh blocker was exactly materialized as triangles.
+        bool meshBlockersComplete = false;
+        // Mesh receivers have no local SDF evaluator, so every SDF blocker must
+        // additionally be present in the analytic implicit packet.
         bool meshComplete = false;
-        bool sdfComplete = false;
     };
     SceneVisibilityFrame _sceneVisibilityFrame;
     bool _frameHasUnmaterializedOpaqueGeometry = false;
     bool _frameHadEarlySurfaceFlush = false;
     SceneVisibilityFrame prepareSceneVisibilityFrame();
+    SceneVisibilityBufferView prepareForeignImplicitVisibility(
+        const SdfPipeline* receiver);
+    bool sdfSceneVisibilityComplete(const SdfPipeline* receiver) const;
     void ensureSceneVisibilityBindingForEarlyFlush();
 
     struct MeshResponseKey {
@@ -902,6 +933,11 @@ private:
         uint32_t rangeProofDepth = 0;
     };
     std::map<const SdfPipeline*, std::vector<SdfInstanceData>> _sdfBatches;
+    // One entry per analytically materializable instance. Equality with the
+    // corresponding SDF instance batch size is the exact completeness proof for
+    // exporting that program cohort to foreign visibility consumers.
+    std::map<const SdfPipeline*, std::vector<SceneVisibilityImplicitBlocker>>
+        _sdfVisibilityBlockerBatches;
     std::map<const SdfPipeline*, std::vector<float>> _sdfParamsBatches;
     std::map<const SdfPipeline*, std::vector<glm::vec2>> _sdfHeightGridBatches;
     std::map<const SdfPipeline*, std::vector<uint32_t>> _sdfRangeNodeBatches;
