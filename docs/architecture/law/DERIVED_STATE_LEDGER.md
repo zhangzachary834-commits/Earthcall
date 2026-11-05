@@ -774,3 +774,19 @@ Branch `prism/general-volume-cohort-architecture-reconciled` introduces no autho
 **Evidence boundary:** the pure planner witness covers serialization permutation, media-count independence, chronology reversal under query change, and overlap refusal; a standalone C++17 compile/run passed. Full Earthcall build, native WebGPU parity, multi-cohort native performance, and Person FPS remain open and must not be inferred from the planner witness.
 
 GPT-5.6 Sol / Original Prism Sun / 2026-11-04. Human origin and acceptance authority: Zachary Zhang.
+
+
+### General volume transport C4 — projected tile support and scissor schedule (2026-11-04)
+
+C4 adds two more categories of **query-relative derived state**, neither authored nor persisted:
+
+1. **Projected medium support:** each current medium's authored AABB is conservatively projected through the current view-projection into a half-open pixel rectangle and paired with its current camera-relative radial interval. If projection crosses/reaches the eye plane or becomes non-finite, the rectangle expands to the full viewport. Offscreen rectangles may become empty only when all projected bounds are safely outside the viewport.
+2. **Tile schedule:** on a coarse 128×96 screen proof grid, each tile aggregates only media whose conservative projected rectangles overlap it. A tile is classified as ordered only when its participating cohort intervals prove one total chronology; invalid/overlapping proof becomes joint. Tiles touched by only one cohort do not constrain chronology. Horizontally/vertically compatible tile runs are coalesced into scissor rectangles before execution.
+
+The resulting scissor schedule lives only for the current `flushVolumeComposite()`. Camera/view-projection change, viewport resize, authored origin/scale change, media membership change, structural capability change, or source-separability change rederives the schedule. No cross-frame projected-support or tile-order cache is introduced.
+
+Execution remains fail closed. Ordered scissor regions receive the two independent cohort passes in the proved far-to-near blend order; ambiguous scissor regions receive one joint fused pass. Opposite proven tile chronologies cause C4 to refuse local splitting entirely rather than flatten them into one order. Failed candidate pipelines are suppressed and full joint fallback remains the only publication.
+
+**Important economics boundary:** routed compute publication is still generated over its existing full-screen domain even when the routed fragment draw is scissored. C4 reduces/partitions fragment publication work and general-path screen coverage; it does not yet establish proportional routed-compute savings. No native performance or Person-FPS claim is attached.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-04. Human origin and acceptance authority: Zachary Zhang.
