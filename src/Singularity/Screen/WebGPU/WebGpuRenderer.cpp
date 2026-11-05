@@ -89,6 +89,7 @@ struct U {
     lightPos:     vec4<f32>,
     eyePos:       vec4<f32>,
     lightControl: vec4<f32>, // x = lighting enabled, y = RadianceVisibilityMode (0/1/2)
+    sceneVisibilityControl: vec4<f32>, // x = exact analytic implicit blocker count
 };
 struct Instance {
     model:     mat4x4<f32>,
@@ -105,6 +106,11 @@ struct RadianceSourceData {
     time: vec4<f32>,
     control: vec4<f32>,
 };
+struct SceneImplicitBlockerData {
+    invModel: mat4x4<f32>,
+    dimsKind: vec4<f32>,
+    offset: vec4<f32>,
+};
 
 @group(0) @binding(0) var<uniform> u: U;
 @group(0) @binding(1) var albedoTex: texture_2d<f32>;
@@ -112,6 +118,8 @@ struct RadianceSourceData {
 @group(0) @binding(3) var<storage, read> P: Params;
 @group(0) @binding(4) var<storage, read> RS: array<RadianceSourceData>;
 @group(0) @binding(5) var<storage, read> sceneTriangles: array<vec4<f32>>;
+@group(0) @binding(6) var<storage, read>
+    sceneImplicitBlockers: array<SceneImplicitBlockerData>;
 @group(1) @binding(0) var<storage, read> instances: array<Instance>;
 )WGSL";
 
@@ -134,6 +142,7 @@ struct RadianceSourceData {
     }
 
     wgsl += sdfwgsl::sceneVisibilityTriangleMathModule();
+    wgsl += sdfwgsl::sceneVisibilityImplicitMathModule();
 
     wgsl += R"WGSL(
 struct VisibilityDecision {
@@ -152,6 +161,11 @@ fn meshPathVisibility(surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> Visibi
     }
     if (u.lightControl.z < 0.5) {
         return VisibilityDecision(0.0, 0.0);
+    }
+    let implicitV =
+        sceneImplicitVisibility(surfaceWorld, sourceWorld);
+    if (implicitV < 0.5) {
+        return VisibilityDecision(1.0, 0.0);
     }
     return VisibilityDecision(
         1.0, sceneMeshVisibility(surfaceWorld, sourceWorld));
@@ -277,6 +291,7 @@ struct MeshUniforms {
     glm::vec4 lightPos;
     glm::vec4 eyePos;
     glm::vec4 lightControl;
+    glm::vec4 sceneVisibilityControl;
 };
 
 glm::vec3 legacyDirectIncidentRadiance(const glm::vec3& ambientRadiance,
@@ -456,7 +471,7 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
 
     // Mesh pipeline layout is fixed execution machinery; the fragment
     // mathematics is generated lazily per authored Material response structure.
-    WGPUBindGroupLayoutEntry bglEntries[6] = {};
+    WGPUBindGroupLayoutEntry bglEntries[7] = {};
     bglEntries[0].binding = 0;
     bglEntries[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     bglEntries[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -477,8 +492,11 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     bglEntries[5].binding = 5;
     bglEntries[5].visibility = WGPUShaderStage_Fragment;
     bglEntries[5].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    bglEntries[6].binding = 6;
+    bglEntries[6].visibility = WGPUShaderStage_Fragment;
+    bglEntries[6].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     WGPUBindGroupLayoutDescriptor bglDesc = {};
-    bglDesc.entryCount = 6;
+    bglDesc.entryCount = 7;
     bglDesc.entries = bglEntries;
     _bgl = wgpuDeviceCreateBindGroupLayout(_device, &bglDesc);
 
@@ -1895,6 +1913,7 @@ struct SdfGlobalUniforms {
     glm::vec4 legacyDiffuseIncident;
     glm::vec4 legacySpecularIncident;
     glm::vec4 lightControl; // x = lighting enabled, y = RadianceVisibilityMode (0/1/2)
+    glm::vec4 sceneVisibilityControl; // x = foreign analytic implicit blocker count
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
     glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
     glm::vec4 volumeTime;   // x/y = admitted participating-medium coordinate/delta
@@ -1957,7 +1976,7 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
 
     const bool usesRadianceSources =
         wgsl.find("@group(0) @binding(2) var<storage, read> RS") != std::string::npos;
-    WGPUBindGroupLayoutEntry be[4] = {};
+    WGPUBindGroupLayoutEntry be[5] = {};
     be[0].binding = 0;
     be[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     be[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -1975,8 +1994,12 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     be[sceneEntry].binding = 3;
     be[sceneEntry].visibility = WGPUShaderStage_Fragment;
     be[sceneEntry].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    const uint32_t implicitEntry = sceneEntry + 1;
+    be[implicitEntry].binding = 4;
+    be[implicitEntry].visibility = WGPUShaderStage_Fragment;
+    be[implicitEntry].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     WGPUBindGroupLayoutDescriptor bgld = {};
-    bgld.entryCount = usesRadianceSources ? 4 : 3;
+    bgld.entryCount = usesRadianceSources ? 5 : 4;
     bgld.entries = be;
 
     SdfPipeline out;
