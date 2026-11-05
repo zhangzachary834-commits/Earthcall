@@ -529,10 +529,6 @@ const char* propertyTypeName(const PropertyValue& value) {
     if (std::holds_alternative<bool>(value)) return "toggle";
     if (std::holds_alternative<std::shared_ptr<PropertyList>>(value)) return "list";
     if (std::holds_alternative<std::shared_ptr<PropertyDict>>(value)) return "dictionary";
-    if (std::holds_alternative<Singular*>(value) ||
-        std::holds_alternative<Object*>(value) ||
-        std::holds_alternative<Relation*>(value) ||
-        std::holds_alternative<Formation*>(value)) return "nested Singular";
     return "number";
 }
 

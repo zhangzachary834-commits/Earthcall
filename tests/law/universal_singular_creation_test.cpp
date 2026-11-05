@@ -52,7 +52,7 @@ int main() {
     zone.addObject(b);
     auto lexical = Singularity::Language::LanguageSystem::instance().intern("hope", "lexeme.source-hope");
     lexical->setConceptualWeightValue(0.375);
-    lexical->setDynamicProperty("focus", PropertyValue(a.get()));
+    lexical->setDynamicProperty("focus", PropertyValue(std::string("member-a")));
     lexical->setDynamicProperty("t", PropertyValue(2)); // a user key, not a codec tag
     zone.addToFormation(lexical.get());
     Material material("source-paint");
@@ -134,7 +134,7 @@ int main() {
     assert(born->getConceptualWeight() == 0.375f);
     PropertyValue focus;
     assert(born->getDynamicProperty("focus", focus));
-    assert(std::get<Object*>(focus) == a.get());
+    assert(std::get<std::string>(focus) == "member-a");
     assert(Singularity::Language::LanguageSystem::instance().findById("lexeme.authored-hope").get() == born);
     PropertyValue meaning;
     assert(born->getDynamicProperty("meaning", meaning));
@@ -186,7 +186,7 @@ int main() {
         PropertyValue liveGlyph;
         assert(born->getDynamicProperty("appearance.glyph", liveGlyph) &&
                liveGlyph == PropertyValue(std::string("unsaved-word")));
-        assert(born->getDynamicProperty("focus", focus) && std::get<Object*>(focus) == a.get());
+        assert(born->getDynamicProperty("focus", focus) && std::get<std::string>(focus) == "member-a");
     }
     // The old root is no longer the visible world during hydration. References
     // to its Objects must bind to the restored root's actual Object instances.
@@ -199,7 +199,7 @@ int main() {
     assert(restoredBorn == born); // language identity remains one canonical instance
     assert(restoredBorn->getDynamicProperty("meaning", meaning));
     assert(restoredBorn->getDynamicProperty("focus", focus));
-    assert(std::get<Object*>(focus) == find(*restored, "member-a"));
+    assert(std::get<std::string>(focus) == "member-a");
     auto* restoredFormation = dynamic_cast<Formation*>(find(*restored, "formation.source-pair.branch-1"));
     assert(restoredFormation);
     assert(restoredFormation->hasMember(find(*restored, "member-a")));

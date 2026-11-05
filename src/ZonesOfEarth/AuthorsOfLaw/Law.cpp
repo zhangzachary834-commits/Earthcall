@@ -450,6 +450,54 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     return law;
 }
 
+bool Law::hasAuthorityOver(const Law& other) const {
+    if (this == &other) return false;
+
+    // 1. Check directed reachability in Universe relations for "authority-over"
+    std::unordered_set<const Singular*> visited;
+    std::vector<const Singular*> queue;
+    queue.push_back(this);
+    visited.insert(this);
+
+    auto allRelations = Universe::instance().relations();
+    while (!queue.empty()) {
+        const Singular* curr = queue.back();
+        queue.pop_back();
+
+        for (const auto* r : allRelations) {
+            if (!r) continue;
+            if (r->type == "authority-over" || (r->getTypeLexeme() && r->typeLabel() == "authority-over")) {
+                if (r->a() == curr && r->b()) {
+                    if (r->b() == &other) return true;
+                    if (visited.insert(r->b()).second) {
+                        queue.push_back(r->b());
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. First Mover standing above ordinary authored laws when no explicit DAG edge overrides
+    if (this->isFirstMover() && !other.isFirstMover()) {
+        return !other.hasAuthorityOver(*this);
+    }
+    if (!this->isFirstMover() && other.isFirstMover()) {
+        return false;
+    }
+
+    // 3. Fallback to legacy _authorityLevel when neither is connected in DAG and FirstMover status is identical
+    return _authorityLevel > other.authorityLevel();
+}
+
+bool Law::hasEqualOrHigherStandingThan(const Law& other) const {
+    if (this == &other) return true;
+    if (hasAuthorityOver(other)) return true;
+    if (other.hasAuthorityOver(*this)) return false;
+
+    // Horizontal peers with no DAG relation
+    return _authorityLevel >= other.authorityLevel();
+}
+
 Law::ApplicationResult Law::applyTo(Singular& target) {
     return applyToImpl(target, false);
 }
@@ -499,11 +547,33 @@ Law::ApplicationResult Law::applyToImpl(
         }
     }
 
+    bool selfAuthorityElevation = false;
+    if (_actionModel) {
+        std::vector<PropertyPath> paths;
+        _actionModel->collectPaths(paths);
+        for (const auto& p : paths) {
+            if (p.segments.empty()) continue;
+            std::size_t startIdx = 0;
+            Singular* bearer = resolveLawRoot(target, p, startIdx);
+            const Law* destLaw = dynamic_cast<const Law*>(bearer);
+            if (!destLaw && targetLaw && startIdx == 0) destLaw = targetLaw;
+            const std::string& propSeg = (startIdx < p.segments.size()) ? p.segments[startIdx] : p.segments.front();
+            if (propSeg == "authorityLevel" || propSeg == "authority" || propSeg == "isFirstMover") {
+                if (!destLaw || destLaw == this || !hasAuthorityOver(*destLaw)) {
+                    selfAuthorityElevation = true;
+                    break;
+                }
+            }
+        }
+    }
+
     if (!_enabled) {
         result = ApplicationResult::Disabled;
     } else if (!isAuthored()) {
         result = ApplicationResult::Unauthored;
-    } else if (targetLaw && _authorityLevel < targetLaw->authorityLevel()) {
+    } else if (targetLaw && !hasEqualOrHigherStandingThan(*targetLaw)) {
+        result = ApplicationResult::AuthorityDenied;
+    } else if (selfAuthorityElevation) {
         result = ApplicationResult::AuthorityDenied;
     } else if (violatesKernelBoundary) {
         result = ApplicationResult::AuthorityDenied;
@@ -532,6 +602,7 @@ Law::ApplicationResult Law::applyToImpl(
         ECA::Event event;
         event.type = "law-apply";
         event.subject = &target;
+        event.object = this;
         
 
         // time.sinceApplied context: t=0 is when this law began holding for
@@ -545,10 +616,10 @@ Law::ApplicationResult Law::applyToImpl(
                                                  : Universe::instance().now());
         }
 
-        // Arm the trace: every action node reports into it, and the record
-        // carries it out. This is where "did anything actually happen" is
-        // answered — the application result only says the branch was reached.
+        // Arm the trace and ambient execution policy context: every action node
+        // reports into the trace and inherits this Law as authorizingLaw.
         ActionNode::TraceScope traceScope;
+        TransferPolicy::ExecutionScope policyExecScope(this, &target);
         SingularSetToSetCreation::AuthorScope creationAuthors(_authors.getMembers());
         for (const auto& action : _actions) {
             action.run(event, target);

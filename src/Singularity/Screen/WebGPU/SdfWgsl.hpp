@@ -218,6 +218,7 @@ Program compileGridDepthTransport(const OntoMath::MathNode& sigma, const OntoMat
 
 bool isDifferentiableAst(const OntoMath::MathNode& node);
 bool isDifferentiableSdfNode(const geom::SdfNode& node);
+bool tryComputeSdfBoundingSphere(const geom::SdfNode& node, glm::vec3& outCenter, float& outRadius);
 
 // Compile a field into a raymarching shader plus its parameter block.
 // `colorFormatIsSrgb` is unused for now; kept out of the signature deliberately —

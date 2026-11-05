@@ -1,13 +1,51 @@
 #include "Singularity/TransferPolicy.hpp"
 
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+
+#include <algorithm>
+
+namespace {
+bool s_transferPolicyAlive = false;
+const Law* s_activeLaw = nullptr;
+Singular* s_activeActor = nullptr;
+} // namespace
+
+TransferPolicy::ExecutionScope::ExecutionScope(const Law* law, Singular* actor)
+    : _prevLaw(s_activeLaw), _prevActor(s_activeActor) {
+    s_activeLaw = law;
+    s_activeActor = actor;
+}
+
+TransferPolicy::ExecutionScope::~ExecutionScope() {
+    s_activeLaw = _prevLaw;
+    s_activeActor = _prevActor;
+}
+
+AccessContext TransferPolicy::currentContext(AccessOp op) {
+    AccessContext ctx;
+    ctx.actor = s_activeActor;
+    ctx.authorizingLaw = s_activeLaw;
+    ctx.op = op;
+    return ctx;
+}
+
+void TransferPolicy::notifyBearerDestroyed(const Singular* bearer) {
+    if (!s_transferPolicyAlive || !bearer) return;
+    TransferPolicy::instance().removeRulesForBearer(bearer);
+}
 
 TransferPolicy& TransferPolicy::instance() {
     static TransferPolicy policy;
     return policy;
 }
 
+TransferPolicy::~TransferPolicy() {
+    s_transferPolicyAlive = false;
+}
+
 TransferPolicy::TransferPolicy() {
+    s_transferPolicyAlive = true;
     setObjectID(std::string("transfer-policy"));
     setPhysicalObject(0);   // extra-spatial: an interface between Person and Singularity
 
@@ -100,4 +138,108 @@ void TransferPolicy::loadFromJson(const nlohmann::json& j) {
     for (auto it = j["open"].begin(); it != j["open"].end(); ++it) {
         setOpen(it.key(), it.value().get<bool>());   // Kernel refuses, honestly
     }
+}
+
+void TransferPolicy::addPolicyRule(const PolicyRule& rule) {
+    _rules.push_back(rule);
+    ++_accessPolicyRevision;
+}
+
+void TransferPolicy::removeRulesForBearer(const Singular* bearer) {
+    if (!bearer || _rules.empty()) return;
+    auto oldSize = _rules.size();
+    _rules.erase(
+        std::remove_if(_rules.begin(), _rules.end(),
+                       [bearer](const PolicyRule& r) {
+                           return static_cast<const Singular*>(r.governingLaw) == bearer;
+                       }),
+        _rules.end());
+    if (_rules.size() != oldSize) {
+        if (_rules.empty()) {
+            _accessPolicyRevision = 0;
+        } else {
+            ++_accessPolicyRevision;
+        }
+    }
+}
+
+void TransferPolicy::clearPolicyRules() {
+    _rules.clear();
+    _accessPolicyRevision = 0;
+}
+
+bool TransferPolicy::checkAccess(Singular& bearer,
+                                 const PropertyPath::ResolvedSlot& slot,
+                                 const ValueCell* effectiveCell,
+                                 const AccessContext& ctx) const {
+    (void)bearer;
+    if (_accessPolicyRevision == 0) return true;
+
+    AccessContext effectiveCtx = ctx;
+    if (!effectiveCtx.authorizingLaw && s_activeLaw) {
+        effectiveCtx.authorizingLaw = s_activeLaw;
+    }
+    if (!effectiveCtx.actor && s_activeActor) {
+        effectiveCtx.actor = s_activeActor;
+    }
+
+    // Collect all matching rules
+    std::vector<const PolicyRule*> matching;
+    std::string dynamicKey = slot.dynamicKey;
+    std::string propName = slot.prop ? slot.prop->name() : "";
+
+    for (const auto& rule : _rules) {
+        if (rule.op != effectiveCtx.op) continue;
+
+        bool cellMatch = rule.cellId.valid() && effectiveCell && (rule.cellId == effectiveCell->id);
+        bool pathMatch = false;
+        if (!rule.pathPattern.empty()) {
+            if (rule.pathPattern == dynamicKey || rule.pathPattern == propName) {
+                pathMatch = true;
+            } else if (!rule.cellId.valid() && slot.rootPropertyId.isValid()) {
+                if (Earthcall::StringInterner::resolve(slot.rootPropertyId) == rule.pathPattern) {
+                    pathMatch = true;
+                }
+            }
+        } else if (!rule.cellId.valid()) {
+            pathMatch = true; // Wildcard pattern
+        }
+
+        if (cellMatch || pathMatch) {
+            if (!rule.filter || rule.filter(effectiveCtx)) {
+                matching.push_back(&rule);
+            }
+        }
+    }
+
+    if (matching.empty()) return true; // Open-by-default migration baseline
+
+    // Precedence resolution via authority-over DAG
+    const PolicyRule* winner = matching[0];
+    for (std::size_t i = 1; i < matching.size(); ++i) {
+        const PolicyRule* candidate = matching[i];
+        if (!winner->governingLaw && candidate->governingLaw) {
+            winner = candidate;
+        } else if (winner->governingLaw && candidate->governingLaw) {
+            if (candidate->governingLaw->hasAuthorityOver(*winner->governingLaw)) {
+                winner = candidate;
+            } else if (!winner->governingLaw->hasAuthorityOver(*candidate->governingLaw)) {
+                // If equal or unranked standing: cell-specific rule wins over generic path,
+                // and if still tied, deny takes precedence.
+                if (candidate->cellId.valid() && !winner->cellId.valid()) {
+                    winner = candidate;
+                } else if (!candidate->allow && winner->allow) {
+                    winner = candidate;
+                }
+            }
+        } else {
+            if (candidate->cellId.valid() && !winner->cellId.valid()) {
+                winner = candidate;
+            } else if (!candidate->allow && winner->allow) {
+                winner = candidate;
+            }
+        }
+    }
+
+    return winner->allow;
 }

@@ -84,3 +84,32 @@ Signed notices were appended to **14 existing prose Intercom threads**, covering
 Direct app sends also succeeded to **Build Earthcall Sun Zone**, **🌫️🌈 PRISM SUN**, and **Reflect on Earthcall progression**. Send success establishes delivery, not recipient reading or adoption. The notice requests reading during the next relevant commission and does not commission unsolicited implementation.
 
 Verification: each Intercom file retained its complete pre-broadcast byte prefix, each notice links to the existing guide, and each registered guide section resolves. No engine or world/save changes were made by this broadcast; no new Person acceptance check is required.
+
+---
+
+## Journal corruption found 2026-11-04 (blocks `nav find` / `nav trace` entirely)
+
+Found while following `CLAUDE.md`'s "run `nav find` before replying" rule for the October monthly
+reflection. `agent intercom/conversation_links.jsonl` refuses to load. Three distinct defects,
+verified by reading the file:
+
+1. **No trailing newline** on the final record — the tool reported
+   `incomplete journal tail; repair before appending`. *Fixed 2026-11-04* (one byte appended).
+2. **Duplicated block:** lines **159–221 are a byte-identical replay of lines 94–156**
+   (`md5` of both ranges = `d72d9d47406a9e2eda4f005fb76d4e9c`), 63 records, almost certainly a
+   merge artifact. The tool now refuses with
+   `:159: invalid connection journal: duplicate record id`. **Not fixed** — this is shared
+   append-only state other sessions write to, and choosing which copy is canonical is a judgment
+   call for whoever owns this lane.
+3. **Four schema-foreign records at lines 314–320** — Firmament phase-review blobs keyed
+   `timestamp`/`phase`/`agent`/`reviewed_commit` with no `id` field, appended into the connection
+   journal by mistake. They belong in an audit, not here.
+
+**Consequence worth naming:** every agent instructed to trace a conversation before replying has
+either skipped that step or watched it error out for an unknown stretch of time. The convention
+outran its tooling, and nothing was alerting on it — the same quiet-failure class the reflection's
+§8 describes. Suggest the repair also add a CI check that the journal loads, so the next
+corruption is loud.
+
+*Found by Claude Code · Claude Opus 5 · session `14701b58-1f21-425f-b59c-bc3ee2e5abdb` ·
+2026-11-04, while writing [The Month the Author Bound Himself](../../../../../Reflections%20on%20Earthcall's%20Progression/The_Month_The_Author_Bound_Himself.md).*

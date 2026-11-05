@@ -1,8 +1,8 @@
 # Person Verification List
 
-## SDF Surface Truth Mastery (Rung 1 & Rung 2): Cathedral of the Living Logos
+## SDF Surface Truth Mastery (Rungs 1–4): Cathedral of the Living Logos
 
-*Antigravity · Gemini 3.8 Flash · session `c802a0d5-3c06-450d-b47b-ebdc7aef86d0` · 2026-11-04. Commissioned by The Firmament & Zach: "DIRECTIVE FOR SPARKLY GUY — SDF SURFACE TRUTH MASTERY (RUNG 1 & RUNG 2)"*
+*Antigravity · Gemini 3.8 Flash · session `c802a0d5-3c06-450d-b47b-ebdc7aef86d0` · 2026-11-04. Commissioned by The Firmament & Zach: "DIRECTIVE FOR SPARKLY GUY — SDF SURFACE TRUTH MASTERY (CORRECTIVE ABBA + RUNG 3 & RUNG 4)"*
 
 - [ ] Launch Earthcall WebGPU (`./build_release/earthcall_webgpu`) and enter **`Cathedral of the Living Logos`**.
 - [ ] **Surface Normal & Specular Fidelity:**
@@ -11,8 +11,11 @@
 - [ ] **Open Hand Court & Gestures:**
   - Click the touchstone / portal tear in the Open Hand court.
   - Verify that the twelve petals and tears unfold smoothly and cleanly.
+- [ ] **Closed-Form Root Hits & CSG Bounding Pruning:**
+  - Observe that standalone primitive leaves (spheres, cubes, polyhedra) resolve in $O(1)$ without grazing-ray sphere-marching stalls.
+  - Inspect complex sculptures: observe that off-silhouette rays skip distant child subtrees cleanly with zero pixel artifacts.
 - [ ] **Frame Pacing & Responsiveness:**
-  - Check in-game FPS counter (or telemetry overlay): verify frame rate remains smooth and responsive with all 178 fields evaluating exact single-pass `sdfEvalGrad` with dead volumetric loops eliminated in pure surface march shaders.
+  - Check in-game FPS counter (or telemetry overlay): verify frame rate remains smooth and responsive, with Cathedral Field Subset at ~7.8 ms and Full World at ~29–30 ms (up from 17 FPS / 62 ms historically).
 
 ## Ergonomic 2D ImGui Zone Selector
 
@@ -2244,3 +2247,25 @@ Authored **4 brand-new far-side volumetric aurora fields (`spatialFields[4..7]`)
 
 - [x] **Live performance report, 2026-11-04:** Zach ran the rebuilt checkout's Release executable with expensive Laws disabled and reported **38 FPS**, judging the renderer much better. Camera/extent and a matched live baseline were not recorded. Law optimization remains separate at Zach's direction. Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-04T00:35:39-08:00.
 - [ ] Run `build_release/earthcall_webgpu` and revisit a familiar slow Cathedral view. Judge carved-detail visibility, lighting, movement, frame pacing, and FPS after mesh upload paging. The fixed saved-object screen improved 62.112 → 30.042 ms, with exact fixed-order image parity. Record the actual camera/window extent and inhabited rate. This shared mesh-path improvement applies alongside either volume renderer. [Task and native gates](../Specific%20Tasks/Performance%20and%20Runtime/Cathedral_Surface_Frame_Cost/Cathedral_Surface_Frame_Cost.md). Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-03T22:52:00-08:00.
+
+## October monthly reflection — author's own verdict (2026-11-04)
+
+Claude Code · Claude Opus 5 · session `14701b58-1f21-425f-b59c-bc3ee2e5abdb`. Wrote
+[The Month the Author Bound Himself](../../../Reflections%20on%20Earthcall's%20Progression/The_Month_The_Author_Bound_Himself.md),
+a monthly reflection on 2026-10-01 → 2026-11-04 commissioned by Zach. All figures were counted from
+the log, the audits, and the tree; §7 quotes the manifesto rather than paraphrasing it. Two places
+read intent rather than quote it, and only Zach can say whether they are right:
+
+- [ ] **§4 — "the hardest thing you did was doubt something you loved."** I claim you asked whether
+  the old aurora's beauty came from your authored equations or from an accident of evaluation, and
+  accepted that a darker image might be the faithful one. Confirm that is actually what you were
+  doing, or correct it.
+- [ ] **§7 — the Babel refusal and the Seven Refusals as one principle.** My argument is that
+  *"Do not turn Earthcall into Babel"* applies Refusal 1's logic to the author himself, and that
+  Refusal 3 therefore now carries a moral justification identical to its technical one. That is my
+  reading, not your stated position — say whether you accept it, because if you do it probably
+  belongs in `AUTHORED_CATEGORIES.md` rather than in a reflection.
+- [ ] **Your derivative-order account of power concentration** (velocity/acceleration of
+  concentration, and unwillingness to trade a lower derivative value for higher derivative
+  generosity) is currently only a manifesto paragraph. Confirm whether you want it written up where
+  a Law can reach it.

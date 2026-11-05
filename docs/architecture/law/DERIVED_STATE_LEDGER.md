@@ -49,6 +49,17 @@ red the moment the map stops noticing the world's shape move.
 
 ## 1. The ledger
 
+### Property ValueCell observer back-edges (2026-11-04)
+
+Zach's Property memory micromastery and alias-deafness resolution (Rungs 0–2): multiple Property paths (`Shared`, `Unique`, `Weak`) may bind to an underlying `ValueCell`. Changes through any bound path fan out notifications across all live observers to close the Rete alias-deafness gap.
+
+| Structure | Derived from | Invalidated / renewed by | Guarded by |
+|---|---|---|---|
+| `ValueCell::observers` | Explicit path-to-cell bindings (`bindPropertyCell`, `ActionNode::shareCell/uniqueCell/weakCell`) | `rebind`, `unbindPropertyCell`, `removeDynamicProperty`, and `~Singular` (`detachAllPropertyCells`, `detachAllForBearer`); cell reclaimed when `strongCount` drops to 0 | `property_memory_access_test`, `dynamic_property_reachability_test` |
+| `ValueCell::generation` | Cell slot lifecycle in `PropertyCellTable` | Incremented upon cell reclamation (when `strongCount == 0`); causes subsequent operations on dangling `Weak` handles to report `PathResult::ExpiredCell` | `property_memory_access_test` |
+
+*Antigravity / Gemini 3.8 Flash / session `102da8a2-db47-4627-8ce6-cf1235aeabd4` / 2026-11-04.*
+
 ### Direct Screen region observations (2026-10-07)
 
 Zach requested named displayed regions, granular Property paths and Metalaw authoring. This is a sensing snapshot/source-editing rung, not a membership cache or an inverse compositor.

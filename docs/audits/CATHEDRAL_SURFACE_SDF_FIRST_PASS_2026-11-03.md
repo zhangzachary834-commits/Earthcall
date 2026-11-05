@@ -157,20 +157,24 @@ Following the directive from The Firmament & Zach, Rungs 1 & 2 of SDF Surface Tr
 
 ### 4. Paired ABBA Performance Gate (Metal, 2560×1440)
 
-Four warm-frame cycles across Cathedral of the Living Logos and The Merry Dancers:
+Four warm-frame cycles (16 warm frames per benchmark) across Cathedral of the Living Logos and The Merry Dancers:
 
-| Benchmark Screen | Baseline Mean | Rung 1 & 2 Warm | Rung 1 & 2 Mean |
-|---|---|---|---|
-| **Cathedral (Full World)** | 34.44 ms (62.11 ms pre-pages) | 29.74 – 30.84 ms | 33.11 ms |
-| **Cathedral (Field Subset)** | 8.38 ms | 8.85 – 9.58 ms | 9.23 ms |
-| **The Merry Dancers (Full World)** | 13.86 ms | 9.30 – 9.52 ms | 9.53 ms |
+| Benchmark Screen | Baseline Mean | Initial Rung 1 & 2 Mean | Post-Corrective Firmament Fixes (Rung 1 & 2) | Rung 3 & 4 (Closed-Form Root + Bounding CSG Pruning) |
+|---|---|---|---|---|
+| **Cathedral (Full World)** | 34.44 ms *(62.11 ms pre-pages)* | 33.11 ms *(warm 29.74–30.84 ms)* | **32.31 ms** *(warm 28.34–30.71 ms)* | **30.74 ms** *(median 29.34 ms, warm 28.20–38.71 ms)* |
+| **Cathedral (Field Subset)** | 8.38 ms | 9.23 ms | **8.06 ms** *(warm 7.73–8.35 ms)* | **7.81 ms** *(median 7.81 ms, warm 7.75–7.92 ms)* |
+| **The Merry Dancers (Full World)** | 13.86 ms | 9.53 ms | **10.47 ms** *(warm 9.98–10.99 ms)* | **10.00 ms** *(median 10.01 ms, warm 9.89–10.08 ms)* |
+
+*Note on Rung 3 & 4 Implementation:*
+- **Rung 3 (Closed-Form Root Hits):** Single-leaf primitives (`Sphere`, `Box`) and `Convex` polyhedra solve exact ray-domain intersections along $\mathbf{p}(t) = \mathbf{ro} + t\mathbf{rd}$ in $O(1)$ closed form (0 sphere-marching loop iterations) when volumetric flags and space warp are inactive, and bypass the 192-step loop in both primary rays and `sourceVisibility` shadow queries.
+- **Rung 4 (Bounding-Sphere CSG Pruning):** Pure-primitive subtrees with $\ge 3$ leaves in `Union` and `SmoothUnion` evaluate a conservative CPU-derived bounding sphere $\|\mathbf{p} - \mathbf{c}_B\| - R_B$. If the bound exceeds $d_A (+ k)$, child 1 is skipped entirely at runtime. Crucially, child bounding center $\mathbf{c}_B$ and radius $R_B$ are registered as storage buffer parameters (`P.v`) via `e.param3(cB)` and `e.param(rB)`, strictly preserving byte-identical WGSL code across slider/position value edits with zero shader recompilation!
 
 ### 5. Regression Suite Status
 
 All focused and integration tests pass cleanly with actual Metal access:
-- `sdf_wgsl_parameter_refresh_test`: PASS
-- `webgpu_sdf_parity_test`: PASS (25/25 shapes)
-- `webgpu_perlin_exact_gradient_test`: PASS
+- `sdf_wgsl_parameter_refresh_test`: PASS (including Rung 3 root hit witnesses and Rung 4 bounding CSG pruning witnesses)
+- `webgpu_sdf_parity_test`: PASS (25/25 shapes agree with CPU reference, including exact 0-diff on Sphere, Box, and Convex)
+- `webgpu_perlin_exact_gradient_test`: PASS (Gates A-D)
 - `webgpu_cathedral_open_hand_test`: PASS (0 failures)
 - `webgpu_mesh_upload_pages_test`: PASS (10,371 checks, 0 failures)
 - `gpu_mastery_test`: PASS (40/40 checks)

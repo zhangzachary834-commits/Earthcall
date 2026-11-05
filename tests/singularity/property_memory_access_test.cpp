@@ -2,9 +2,11 @@
 // predicates, shared writes reach shared storage, and paths retain no IDs.
 // Codex / GPT-6.1 Sol / 01a0e64f-5853-7d30-8196-995b4fd16b89 / 2026-10-01.
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyCell.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "Singularity/OntoMath/Field.hpp"
 
@@ -12,6 +14,11 @@
 #include <iostream>
 
 namespace {
+static_assert(!is_property_value_alternative<Singular*>);
+static_assert(!is_property_value_alternative<Object*>);
+static_assert(!is_property_value_alternative<Relation*>);
+static_assert(!is_property_value_alternative<Formation*>);
+
 using Result = PropertyPath::PathResult;
 
 class MemorySubject : public Singular {
@@ -261,6 +268,552 @@ int main() {
     assert(!propertyValueUnchanged(PropertyValue(deepA.front()), PropertyValue(deepB.front())));
     for (const auto& list : deepA) list->elements.clear();
     for (const auto& list : deepB) list->elements.clear();
+
+    // -------------------------------------------------------------------------
+    // Rung 1: Independent rebinding of one shared path without detaching the other
+    // -------------------------------------------------------------------------
+    {
+        Object rebindA;
+        Object rebindB;
+        CellId cellAB = PropertyCellTable::instance().allocateCell(
+            PropertyValue(100.0), CellOwnershipMode::Shared, &rebindA, Earthcall::StringInterner::intern("val"));
+        assert(rebindA.bindPropertyCell("val", cellAB, CellOwnershipMode::Shared));
+        assert(rebindB.bindPropertyCell("val", cellAB, CellOwnershipMode::Shared));
+
+        assert(PropertyPath::parse("val").setValue(rebindA, 150.0) == Result::Ok);
+        PropertyValue readB;
+        assert(PropertyPath::parse("val").getValue(rebindB, readB) == Result::Ok);
+        assert(std::get<double>(readB) == 150.0);
+
+        // Explicitly rebind rebindA to a new cell
+        CellId newCellA = PropertyCellTable::instance().allocateCell(
+            PropertyValue(999.0), CellOwnershipMode::Unique, &rebindA, Earthcall::StringInterner::intern("val"));
+        assert(rebindA.bindPropertyCell("val", newCellA, CellOwnershipMode::Unique));
+
+        PropertyValue readA;
+        assert(PropertyPath::parse("val").getValue(rebindA, readA) == Result::Ok);
+        assert(std::get<double>(readA) == 999.0);
+
+        // rebindB must remain bound to cellAB and unaffected
+        assert(PropertyPath::parse("val").getValue(rebindB, readB) == Result::Ok);
+        assert(std::get<double>(readB) == 150.0);
+
+        // Mutating rebindB does not affect rebindA
+        assert(PropertyPath::parse("val").setValue(rebindB, 200.0) == Result::Ok);
+        assert(PropertyPath::parse("val").getValue(rebindA, readA) == Result::Ok);
+        assert(std::get<double>(readA) == 999.0);
+    }
+
+    // -------------------------------------------------------------------------
+    // Rung 1: Unique sharing refusal (UniqueOwnershipRefused) & conversion to Shared
+    // -------------------------------------------------------------------------
+    {
+        Object u1;
+        u1.setObjectID("u1-owner");
+        Object u2;
+        u2.setObjectID("u2-peer");
+
+        CellId uniqueCellId = PropertyCellTable::instance().allocateCell(
+            PropertyValue(std::string("confidential")), CellOwnershipMode::Unique, &u1, Earthcall::StringInterner::intern("secret"));
+        assert(u1.bindPropertyCell("secret", uniqueCellId, CellOwnershipMode::Unique));
+
+        // Direct attempt to share Unique cell must fail
+        assert(!u2.bindPropertyCell("secret", uniqueCellId, CellOwnershipMode::Shared));
+
+        // Law action shareCell must refuse with UniqueOwnershipRefused
+        std::vector<Singular*> uniBeings{&u1, &u2, &author};
+        Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+            for (auto* b : uniBeings) if (b) out.push_back(b);
+        });
+
+        ActionNode tryShare = ActionNode::shareCell("secret", "@u1-owner.secret");
+        Law refuseShareLaw("refuse-unique-share");
+        refuseShareLaw.addAuthor(author);
+        refuseShareLaw.setActionModel(tryShare);
+        // Evaluating tryShare on u2 must fail to bind
+        refuseShareLaw.applyTo(u2);
+        assert(!u2.hasPropertyCell("secret"));
+
+        // Explicitly convert unique cell to shared
+        assert(u1.convertPropertyCellToShared("secret"));
+
+        // Now shareCell succeeds
+        assert(u2.bindPropertyCell("secret", uniqueCellId, CellOwnershipMode::Shared));
+        PropertyValue secVal;
+        assert(PropertyPath::parse("secret").getValue(u2, secVal) == Result::Ok);
+        assert(std::get<std::string>(secVal) == "confidential");
+
+        Universe::instance().setProvider(nullptr);
+    }
+
+    // -------------------------------------------------------------------------
+    // Rung 1: Weak live observation & ExpiredCell refusal after owner destruction
+    // -------------------------------------------------------------------------
+    {
+        auto tempOwner = std::make_unique<Object>();
+        CellId weakTargetCell = PropertyCellTable::instance().allocateCell(
+            PropertyValue(42), CellOwnershipMode::Shared, tempOwner.get(), Earthcall::StringInterner::intern("data"));
+        assert(tempOwner->bindPropertyCell("data", weakTargetCell, CellOwnershipMode::Shared));
+
+        Object observer;
+        assert(observer.bindPropertyCell("weakView", weakTargetCell, CellOwnershipMode::Weak));
+
+        PropertyValue val;
+        assert(PropertyPath::parse("weakView").getValue(observer, val) == Result::Ok);
+        assert(std::get<int>(val) == 42);
+
+        // Live mutation through owner is observed
+        assert(PropertyPath::parse("data").setValue(*tempOwner, 84) == Result::Ok);
+        assert(PropertyPath::parse("weakView").getValue(observer, val) == Result::Ok);
+        assert(std::get<int>(val) == 84);
+
+        // Destroy owner
+        tempOwner.reset();
+
+        // Weak handle must now return ExpiredCell (never 0, stale, or black)
+        assert(PropertyPath::parse("weakView").getValue(observer, val) == Result::ExpiredCell);
+        assert(PropertyPath::parse("weakView").setValue(observer, 99) == Result::ExpiredCell);
+    }
+
+    // -------------------------------------------------------------------------
+    // Rung 2: End-to-End "Red Object in Hand -> Building Form" Witness
+    // -------------------------------------------------------------------------
+    {
+        auto objInHand = std::make_unique<Object>();
+        objInHand->setObjectID("obj-in-hand");
+        assert(PropertyPath::parse("color").setValue(*objInHand, glm::vec3(1.0f, 0.0f, 0.0f)) == Result::Ok); // Red
+        objInHand->setDynamicProperty("tempScale", 2.5);
+
+        Object buildingForm;
+        buildingForm.setObjectID("building-form");
+        assert(PropertyPath::parse("color").setValue(buildingForm, glm::vec3(0.0f, 0.0f, 0.0f)) == Result::Ok); // Black
+
+        std::vector<Singular*> worldBeings{objInHand.get(), &buildingForm, &author};
+        Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+            for (auto* b : worldBeings) if (b) out.push_back(b);
+        });
+
+        // 1. Share color from obj-in-hand to buildingForm
+        ActionNode bindColorAction = ActionNode::shareCell("color", "@obj-in-hand.color");
+        Law bindColorLaw("bind-color-law");
+        bindColorLaw.addAuthor(author);
+        bindColorLaw.setActionModel(bindColorAction);
+        assert(bindColorLaw.applyTo(buildingForm) == Law::ApplicationResult::Applied);
+
+        // Building now reflects the red color
+        PropertyValue bColor;
+        assert(PropertyPath::parse("color").getValue(buildingForm, bColor) == Result::Ok);
+        assert(std::get<glm::vec3>(bColor) == glm::vec3(1.0f, 0.0f, 0.0f));
+
+        // 2. Weak bind tempScale to buildingForm.observedScale
+        ActionNode bindWeakAction = ActionNode::weakCell("observedScale", "@obj-in-hand.tempScale");
+        Law bindWeakLaw("bind-weak-law");
+        bindWeakLaw.addAuthor(author);
+        bindWeakLaw.setActionModel(bindWeakAction);
+        assert(bindWeakLaw.applyTo(buildingForm) == Law::ApplicationResult::Applied);
+
+        PropertyValue obsScale;
+        assert(PropertyPath::parse("observedScale").getValue(buildingForm, obsScale) == Result::Ok);
+        assert(std::get<double>(obsScale) == 2.5);
+
+        // 3. Mutate objInHand.color -> verify buildingForm updates and wakes
+        std::string notifiedProp;
+        Singular::setPropertyChangeCallback([&](Singular* owner, const std::string& name) {
+            if (owner == &buildingForm) notifiedProp = name;
+        });
+
+        assert(PropertyPath::parse("color.g").setValue(*objInHand, 0.75f) == Result::Ok);
+        assert(notifiedProp == "color");
+        PropertyValue bColorG;
+        assert(PropertyPath::parse("color.g").getValue(buildingForm, bColorG) == Result::Ok);
+        assert(std::get<float>(bColorG) == 0.75f);
+        Singular::setPropertyChangeCallback(nullptr);
+
+        // 4. Destroy objInHand -> verify share retains the cell while weak refuses with ExpiredCell
+        objInHand.reset();
+        worldBeings[0] = nullptr;
+
+        PropertyValue finalColor;
+        assert(PropertyPath::parse("color").getValue(buildingForm, finalColor) == Result::Ok);
+        assert(std::get<glm::vec3>(finalColor) == glm::vec3(1.0f, 0.75f, 0.0f));
+
+        PropertyValue expiredProbe;
+        assert(PropertyPath::parse("observedScale").getValue(buildingForm, expiredProbe) == Result::ExpiredCell);
+        assert(PropertyPath::parse("observedScale").setValue(buildingForm, 10.0) == Result::ExpiredCell);
+
+        Universe::instance().setProvider(nullptr);
+    }
+
+    // -------------------------------------------------------------------------
+    // 7. Pass 2 Bug 1 & Bug 4: Weak write refusal & dynamicProperties synchronization
+    // -------------------------------------------------------------------------
+    {
+        Object strongBearer;
+        strongBearer.setObjectID("strong-bearer");
+        strongBearer.setDynamicProperty("speed", 50.0);
+
+        Object weakObserver;
+        weakObserver.setObjectID("weak-observer");
+
+        CellId speedCell = PropertyCellTable::instance().allocateCell(
+            50.0, CellOwnershipMode::Shared, &strongBearer, Earthcall::StringInterner::intern("speed"));
+        strongBearer.bindPropertyCell("speed", speedCell, CellOwnershipMode::Shared);
+
+        // Bind weak observer to speedCell
+        assert(weakObserver.bindPropertyCell("speed", speedCell, CellOwnershipMode::Weak));
+
+        // Bug 1: Refuse writes through live weak observer
+        assert(PropertyPath::parse("speed").setValue(weakObserver, 100.0) == Result::ReadOnly);
+        assert(!weakObserver.setDynamicProperty("speed", 100.0));
+        assert(weakObserver.getDynamicPropertyPtr(Earthcall::StringInterner::intern("speed")) == nullptr);
+
+        // Value on strong bearer is unmodified
+        PropertyValue vStrong;
+        assert(PropertyPath::parse("speed").getValue(strongBearer, vStrong) == Result::Ok);
+        assert(std::get<double>(vStrong) == 50.0);
+
+        // Bug 4: DynamicProperties synchronization across shared observers
+        Object sharedPeer;
+        sharedPeer.setObjectID("shared-peer");
+        assert(sharedPeer.bindPropertyCell("sharedSpeed", speedCell, CellOwnershipMode::Shared));
+
+        // Mutate through strongBearer
+        assert(strongBearer.setDynamicProperty("speed", 75.0));
+        // Verify sharedPeer shadow dynamicProperties is synchronized immediately
+        auto peerDyn = sharedPeer.dynamicProperties();
+        auto itPeer = peerDyn.find(Earthcall::StringInterner::intern("sharedSpeed"));
+        assert(itPeer != peerDyn.end());
+        assert(std::get<double>(itPeer->second) == 75.0);
+
+        // Move sharedPeer to movedPeer and verify retargeting in PropertyCellTable
+        Object movedPeer = std::move(sharedPeer);
+        assert(strongBearer.setDynamicProperty("speed", 90.0));
+        auto movedDyn = movedPeer.dynamicProperties();
+        auto itMoved = movedDyn.find(Earthcall::StringInterner::intern("sharedSpeed"));
+        assert(itMoved != movedDyn.end());
+        assert(std::get<double>(itMoved->second) == 90.0);
+    }
+
+    // -------------------------------------------------------------------------
+    // 8. Pass 2 Bug 2: Nested Container Component Access inside a ValueCell
+    // -------------------------------------------------------------------------
+    {
+        Object canvas;
+        canvas.setObjectID("canvas");
+
+        // Build a nested container: dict["color"] = glm::vec3(0.1f, 0.2f, 0.3f)
+        auto dict = std::make_shared<PropertyDict>();
+        dict->elements["color"] = glm::vec3(0.1f, 0.2f, 0.3f);
+        PropertyValue containerVal(dict);
+
+        CellId paintCell = PropertyCellTable::instance().allocateCell(
+            containerVal, CellOwnershipMode::Shared, &canvas, Earthcall::StringInterner::intern("paint"));
+        canvas.bindPropertyCell("paint", paintCell, CellOwnershipMode::Shared);
+
+        // Read nested component paint.color.g
+        PropertyValue gVal;
+        assert(PropertyPath::parse("paint.color.g").getValue(canvas, gVal) == Result::Ok);
+        assert(std::abs(std::get<float>(gVal) - 0.2f) < 1e-5f);
+
+        // Write nested component paint.color.g
+        std::string notified;
+        Singular::setPropertyChangeCallback([&](Singular* owner, const std::string& name) {
+            if (owner == &canvas) notified = name;
+        });
+
+        assert(PropertyPath::parse("paint.color.g").setValue(canvas, 0.85f) == Result::Ok);
+        assert(notified == "paint");
+
+        // Verify read-back reflects updated lane
+        PropertyValue updatedG;
+        assert(PropertyPath::parse("paint.color.g").getValue(canvas, updatedG) == Result::Ok);
+        assert(std::abs(std::get<float>(updatedG) - 0.85f) < 1e-5f);
+
+        Singular::setPropertyChangeCallback(nullptr);
+    }
+
+    // -------------------------------------------------------------------------
+    // 9. Pass 2 Bug 3: BindingMode::Derive separate from ShareCell & Reactive Edges
+    // -------------------------------------------------------------------------
+    {
+        Object srcObj;
+        srcObj.setObjectID("src-obj");
+        srcObj.setDynamicProperty("x", 5.0);
+
+        Object destObj;
+        destObj.setObjectID("dest-obj");
+        destObj.setDynamicProperty("y", 0.0);
+
+        std::vector<Singular*> beings{&srcObj, &destObj, &author};
+        Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+            for (auto* b : beings) if (b) out.push_back(b);
+        });
+
+        // Map y := x + x with BindingMode::Derive
+        auto x1 = std::make_unique<OntoMath::MathNode>();
+        x1->op = OntoMath::MathNode::Op::ValueLeaf;
+        x1->variableName = "x";
+
+        auto x2 = std::make_unique<OntoMath::MathNode>();
+        x2->op = OntoMath::MathNode::Op::ValueLeaf;
+        x2->variableName = "x";
+
+        auto addNode = std::make_shared<OntoMath::MathNode>();
+        addNode->op = OntoMath::MathNode::Op::Add;
+        addNode->children.push_back(std::move(x1));
+        addNode->children.push_back(std::move(x2));
+
+        auto doubleF = OntoMath::Piecewise::continuous(addNode);
+
+        MathBindings deriveBinds;
+        deriveBinds["x"] = MathBindingEntry{PropertyPath::parse("@src-obj.x"), BindingMode::Derive};
+
+        ActionNode deriveAction = ActionNode::map("y", doubleF, deriveBinds);
+        Law deriveLaw("derive-law");
+        deriveLaw.addAuthor(author);
+        deriveLaw.setActionModel(deriveAction);
+
+        assert(deriveLaw.applyTo(destObj) == Law::ApplicationResult::Applied);
+
+        // Initial derivation: y = 2 * 5.0 = 10.0
+        PropertyValue yVal;
+        assert(PropertyPath::parse("y").getValue(destObj, yVal) == Result::Ok);
+        assert(std::get<double>(yVal) == 10.0);
+
+        // Verify destObj and srcObj do NOT share the same mutable cell
+        assert(destObj.getPropertyCell(Earthcall::StringInterner::intern("y")) !=
+               srcObj.getPropertyCell(Earthcall::StringInterner::intern("x")));
+
+        // Reactive recomputation: mutate x on srcObj -> y on destObj updates automatically!
+        assert(PropertyPath::parse("x").setValue(srcObj, 7.0) == Result::Ok);
+
+        PropertyValue yUpdated;
+        assert(PropertyPath::parse("y").getValue(destObj, yUpdated) == Result::Ok);
+        assert(std::get<double>(yUpdated) == 14.0);
+
+        Universe::instance().setProvider(nullptr);
+    }
+
+    // -------------------------------------------------------------------------
+    // 10. Pass 2 Rung 3: Relation-Based Authority DAG Precedence (AD-24, AD-37)
+    // -------------------------------------------------------------------------
+    {
+        Law rootLaw("root-law");
+        rootLaw.addAuthor(author);
+        rootLaw.grantAuthority(0);
+
+        Law intermediateLaw("intermediate-law");
+        intermediateLaw.addAuthor(author);
+        intermediateLaw.grantAuthority(0);
+
+        Law leafLaw("leaf-law");
+        leafLaw.addAuthor(author);
+        leafLaw.grantAuthority(0);
+
+        // Establish authority-over relations: rootLaw -> intermediateLaw -> leafLaw
+        Relation rel1("authority-over", rootLaw, intermediateLaw, true);
+        Relation rel2("authority-over", intermediateLaw, leafLaw, true);
+
+        std::vector<Relation*> authRelations{&rel1, &rel2};
+        Universe::instance().setRelationProvider([&](std::vector<Relation*>& out) {
+            for (auto* r : authRelations) if (r) out.push_back(r);
+        });
+
+        assert(rootLaw.hasAuthorityOver(intermediateLaw));
+        assert(intermediateLaw.hasAuthorityOver(leafLaw));
+        // Transitive reachability along DAG
+        assert(rootLaw.hasAuthorityOver(leafLaw));
+
+        assert(!leafLaw.hasAuthorityOver(rootLaw));
+        assert(!leafLaw.hasAuthorityOver(intermediateLaw));
+
+        assert(rootLaw.hasEqualOrHigherStandingThan(leafLaw));
+        assert(!leafLaw.hasEqualOrHigherStandingThan(rootLaw));
+
+        Universe::instance().setRelationProvider(nullptr);
+    }
+
+    // -------------------------------------------------------------------------
+    // 11. Pass 2 Rung 3: Policy-Driven Cell Access & AD-38 Self-Elevation Refusal
+    // -------------------------------------------------------------------------
+    {
+        TransferPolicy::instance().clearPolicyRules();
+
+        Object vault;
+        vault.setObjectID("vault");
+        vault.setDynamicProperty("secret", 1234.0);
+
+        Object vaultMirror;
+        vaultMirror.setObjectID("vault-mirror");
+
+        // Cell backing secret
+        CellId secretCell = PropertyCellTable::instance().allocateCell(
+            1234.0, CellOwnershipMode::Shared, &vault, Earthcall::StringInterner::intern("secret"));
+        vault.bindPropertyCell("secret", secretCell, CellOwnershipMode::Shared);
+        vaultMirror.bindPropertyCell("secretAlias", secretCell, CellOwnershipMode::Shared);
+
+        // Open-by-default migration baseline (AD-37): revision == 0 allows writes
+        assert(TransferPolicy::instance().accessPolicyRevision() == 0);
+        assert(PropertyPath::parse("secret").setValue(vault, 5678.0) == Result::Ok);
+
+        // Authority laws
+        Law highLaw("high-law");
+        highLaw.addAuthor(author);
+        highLaw.grantAuthority(10);
+
+        Law lowLaw("low-law");
+        lowLaw.addAuthor(author);
+        lowLaw.grantAuthority(-5);
+
+        // Add policy rule: secretCell write is DENIED by highLaw
+        PolicyRule denySecretWrite;
+        denySecretWrite.cellId = secretCell;
+        denySecretWrite.op = AccessOp::Write;
+        denySecretWrite.allow = false;
+        denySecretWrite.governingLaw = &highLaw;
+        TransferPolicy::instance().addPolicyRule(denySecretWrite);
+
+        // Effective-cell alias governance: writing to vault.secret OR vaultMirror.secretAlias is AccessDenied!
+        assert(PropertyPath::parse("secret").setValue(vault, 9999.0) == Result::AccessDenied);
+        assert(PropertyPath::parse("secretAlias").setValue(vaultMirror, 9999.0) == Result::AccessDenied);
+
+        // Conflict resolution: lowLaw tries to allow it
+        PolicyRule allowSecretWrite;
+        allowSecretWrite.cellId = secretCell;
+        allowSecretWrite.op = AccessOp::Write;
+        allowSecretWrite.allow = true;
+        allowSecretWrite.governingLaw = &lowLaw;
+        TransferPolicy::instance().addPolicyRule(allowSecretWrite);
+
+        // HighLaw authority over lowLaw -> highLaw still wins (AccessDenied)
+        assert(PropertyPath::parse("secret").setValue(vault, 9999.0) == Result::AccessDenied);
+
+        // AD-38: Self-elevation refusal: lowLaw cannot elevate its authorityLevel or add authority-over over highLaw
+        ActionNode elevateSelf = ActionNode::set("authorityLevel", 100);
+        lowLaw.setActionModel(elevateSelf);
+        assert(lowLaw.applyTo(lowLaw) == Law::ApplicationResult::AuthorityDenied);
+
+        // Firmament Pass 2 Corrective Fix Witness 1: Ambient ExecutionScope on Set/Add
+        // Policy rule that allows writes ONLY when authorizingLaw == &highLaw
+        TransferPolicy::instance().clearPolicyRules();
+        PolicyRule allowHighLawOnly;
+        allowHighLawOnly.cellId = secretCell;
+        allowHighLawOnly.op = AccessOp::Write;
+        allowHighLawOnly.allow = false;
+        allowHighLawOnly.governingLaw = &highLaw;
+        allowHighLawOnly.filter = [&](const AccessContext& ctx) {
+            return ctx.authorizingLaw != &highLaw;
+        };
+        TransferPolicy::instance().addPolicyRule(allowHighLawOnly);
+
+        Law writerLow("writer-low");
+        writerLow.addAuthor(author);
+        writerLow.setActionModel(ActionNode::set("secret", 7777.0));
+        assert(writerLow.applyTo(vault) == Law::ApplicationResult::Applied);
+        assert(!writerLow.applicationLog().back().changedSomething());
+        assert(writerLow.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
+        assert(std::string(ActionNode::reasonName(Result::AccessDenied)) == "Access Denied");
+
+        highLaw.setActionModel(ActionNode::set("secret", 8888.0));
+        assert(highLaw.applyTo(vault) == Law::ApplicationResult::Applied);
+        assert(highLaw.applicationLog().back().changedSomething());
+        PropertyValue afterHigh;
+        assert(PropertyPath::parse("secret").getValue(vault, afterHigh) == Result::Ok);
+        assert(std::get<double>(afterHigh) == 8888.0);
+
+        // Firmament Pass 2 Corrective Fix Witness 2: UniqueCell custody transfer via ActionNode::uniqueCell
+        TransferPolicy::instance().clearPolicyRules();
+        Object tokenSrc;
+        tokenSrc.setObjectID("token-src");
+        tokenSrc.setDynamicProperty("badge", std::string("gold-seal"));
+        Object tokenDst;
+        tokenDst.setObjectID("token-dst");
+        std::vector<Singular*> tokenBeings{&tokenSrc, &tokenDst, &author};
+        Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+            for (auto* b : tokenBeings) if (b) out.push_back(b);
+        });
+        Law transferUniqueLaw("transfer-unique-law");
+        transferUniqueLaw.addAuthor(author);
+        transferUniqueLaw.setActionModel(ActionNode::uniqueCell("badge", "@token-src.badge"));
+        assert(transferUniqueLaw.applyTo(tokenDst) == Law::ApplicationResult::Applied);
+        assert(transferUniqueLaw.applicationLog().back().changedSomething());
+        assert(tokenDst.getPropertyCellMode("badge") == CellOwnershipMode::Unique);
+        PropertyValue badgeVal;
+        assert(PropertyPath::parse("badge").getValue(tokenDst, badgeVal) == Result::Ok);
+        assert(std::get<std::string>(badgeVal) == "gold-seal");
+        Universe::instance().setProvider(nullptr);
+
+        // Firmament Pass 2 Corrective Fix Witness 3: Cyclic Derive guard & DerivedEdge subject/law destruction safety
+        {
+            Object cycleA;
+            cycleA.setObjectID("cycle-a");
+            cycleA.setDynamicProperty("v", 2.0);
+            Object cycleB;
+            cycleB.setObjectID("cycle-b");
+            cycleB.setDynamicProperty("v", 2.0);
+            auto tempController = std::make_unique<Object>();
+            tempController->setObjectID("temp-controller");
+
+            std::vector<Singular*> cycleBeings{&cycleA, &cycleB, tempController.get(), &author};
+            Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+                for (auto* b : cycleBeings) if (b) out.push_back(b);
+            });
+
+            auto leafV = std::make_shared<OntoMath::MathNode>();
+            leafV->op = OntoMath::MathNode::Op::ValueLeaf;
+            leafV->variableName = "in";
+            auto idFn = OntoMath::Piecewise::continuous(leafV);
+
+            MathBindings bAtoB;
+            bAtoB["in"] = MathBindingEntry{PropertyPath::parse("@cycle-a.v"), BindingMode::Derive};
+            Law lawAtoB("law-a-to-b");
+            lawAtoB.addAuthor(author);
+            lawAtoB.setActionModel(ActionNode::map("@cycle-b.v", idFn, bAtoB));
+            assert(lawAtoB.applyTo(*tempController) == Law::ApplicationResult::Applied);
+
+            MathBindings bBtoA;
+            bBtoA["in"] = MathBindingEntry{PropertyPath::parse("@cycle-b.v"), BindingMode::Derive};
+            Law lawBtoA("law-b-to-a");
+            lawBtoA.addAuthor(author);
+            lawBtoA.setActionModel(ActionNode::map("@cycle-a.v", idFn, bBtoA));
+            assert(lawBtoA.applyTo(*tempController) == Law::ApplicationResult::Applied);
+
+            // Mutating cycleA.v must terminate cleanly without infinite recursion
+            assert(PropertyPath::parse("v").setValue(cycleA, 9.0) == Result::Ok);
+            PropertyValue bCheck;
+            assert(PropertyPath::parse("v").getValue(cycleB, bCheck) == Result::Ok);
+            assert(std::get<double>(bCheck) == 9.0);
+
+            // Destroying tempController (the subjectBearer of the DerivedEdge) must detach the edge cleanly
+            tempController.reset();
+            cycleBeings[2] = nullptr;
+            assert(PropertyPath::parse("v").setValue(cycleA, 15.0) == Result::Ok);
+            assert(PropertyPath::parse("v").getValue(cycleB, bCheck) == Result::Ok);
+            assert(std::get<double>(bCheck) == 9.0);
+
+            Universe::instance().setProvider(nullptr);
+        }
+
+        // Firmament Pass 2 Corrective Fix Witness 4: TransferPolicy auto-removes rules when governingLaw dies
+        {
+            auto ephemeralLaw = std::make_unique<Law>("ephemeral-law");
+            ephemeralLaw->addAuthor(author);
+            PolicyRule r;
+            r.cellId = secretCell;
+            r.op = AccessOp::Write;
+            r.allow = false;
+            r.governingLaw = ephemeralLaw.get();
+            TransferPolicy::instance().addPolicyRule(r);
+            assert(PropertyPath::parse("secret").setValue(vault, 1111.0) == Result::AccessDenied);
+
+            // Destroying ephemeralLaw automatically purges its rule and restores revision 0
+            ephemeralLaw.reset();
+            assert(TransferPolicy::instance().accessPolicyRevision() == 0);
+            assert(PropertyPath::parse("secret").setValue(vault, 1111.0) == Result::Ok);
+        }
+
+        TransferPolicy::instance().clearPolicyRules();
+    }
 
     std::cout << "property_memory_access_test: PASS\n";
 }

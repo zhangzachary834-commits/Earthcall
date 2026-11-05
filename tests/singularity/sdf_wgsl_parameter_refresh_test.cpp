@@ -1890,6 +1890,102 @@ int main() {
         check(volProg.ok, "volumetric composite field compiles cleanly");
         check(volProg.wgsl.find("const kHasSurfaceVolumetric: bool = true;") != std::string::npos,
               "field with authored density sets kHasSurfaceVolumetric = true");
+
+        // 5. Firmament Corrective Witnesses:
+        //    (a) 1-pass analytical primitive gradients (no 6-tap finite differences in sdBoxGrad / sdCylinderGrad / sdConeGrad / sdEllipsoidGrad)
+        //    (b) Decoupled value-only sdfEval(p) so 1-Lipschitz sphere marching never computes or discards gradients
+        check(csgProg.wgsl.find("sdBox(p + vec3<f32>") == std::string::npos &&
+                  csgProg.wgsl.find("sdCylinder(p + vec3<f32>") == std::string::npos &&
+                  csgProg.wgsl.find("sdCone(p + vec3<f32>") == std::string::npos &&
+                  csgProg.wgsl.find("sdEllipsoid(p + vec3<f32>") == std::string::npos,
+              "primitive gradient functions use 1-pass analytical formulas without 6-tap finite differences");
+        check(csgProg.wgsl.find("return sdfEvalGrad(p).value;") == std::string::npos,
+              "sdfEval(p) is emitted as a standalone scalar evaluator rather than delegating to sdfEvalGrad(p)");
+
+        // 6. Rung 3 Closed-Form Root Hit Witness
+        {
+            auto rootSphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f));
+            rootSphere.offset = glm::vec3(1.0f, 2.0f, 3.0f);
+            const auto sphereProg = sdfwgsl::compile(rootSphere);
+            check(sphereProg.ok, "root sphere compiles");
+            check(sphereProg.wgsl.find("let directHit = rootClosedFormHit(ro, rd, t, maxDist);") != std::string::npos,
+                  "marcher calls rootClosedFormHit");
+            check(sphereProg.wgsl.find("let h = b * b - c;") != std::string::npos,
+                  "rootClosedFormHit contains quadratic ray-sphere intersection");
+            const auto sphereParams = sdfwgsl::collectParams(rootSphere);
+            check(sphereParams.ok && sphereParams.values == sphereProg.params,
+                  "root sphere parameter collection matches compile");
+
+            auto rootBox = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.4f, 0.5f, 0.6f));
+            rootBox.offset = glm::vec3(-1.0f, 0.5f, 2.0f);
+            const auto boxProg = sdfwgsl::compile(rootBox);
+            check(boxProg.ok, "root box compiles");
+            check(boxProg.wgsl.find("let slab = rayAabb(ro - off, rd, b);") != std::string::npos,
+                  "rootClosedFormHit contains slab ray-box intersection");
+            const auto boxParams = sdfwgsl::collectParams(rootBox);
+            check(boxParams.ok && boxParams.values == boxProg.params,
+                  "root box parameter collection matches compile");
+
+            auto rootConvex = geom::SdfNode::leaf(geom::SdfPrim::Convex, glm::vec3(0.0f));
+            rootConvex.offset = glm::vec3(0.0f, 1.0f, 0.0f);
+            rootConvex.planes = {
+                glm::vec4(1.0f, 0.0f, 0.0f, 0.5f),
+                glm::vec4(-1.0f, 0.0f, 0.0f, 0.5f),
+                glm::vec4(0.0f, 1.0f, 0.0f, 0.5f),
+                glm::vec4(0.0f, -1.0f, 0.0f, 0.5f)
+            };
+            const auto cvxProg = sdfwgsl::compile(rootConvex);
+            check(cvxProg.ok, "root convex compiles");
+            check(cvxProg.wgsl.find("let tPlane = num / den;") != std::string::npos,
+                  "rootClosedFormHit contains plane half-space intersection");
+            const auto cvxParams = sdfwgsl::collectParams(rootConvex);
+            check(cvxParams.ok && cvxParams.values == cvxProg.params,
+                  "root convex parameter collection matches compile");
+
+            check(csgProg.wgsl.find("fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {\n    return vec2<f32>(-1.0, -1.0);") != std::string::npos,
+                  "composite CSG tree falls back to -1 for rootClosedFormHit");
+        }
+
+        // 7. Rung 4 Conservative Bounding-Sphere Subtree Pruning Witness
+        {
+            auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f));
+            auto box = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.3f, 0.3f, 0.3f));
+            box.offset = glm::vec3(5.0f, 0.0f, 0.0f);
+            auto cyl = geom::SdfNode::leaf(geom::SdfPrim::Cylinder, glm::vec3(0.2f, 0.4f, 0.0f));
+            cyl.offset = glm::vec3(5.2f, 0.1f, 0.0f);
+            auto torus = geom::SdfNode::leaf(geom::SdfPrim::Torus, glm::vec3(0.3f, 0.05f, 0.0f));
+            torus.offset = glm::vec3(5.1f, -0.1f, 0.0f);
+
+            auto subCsg = geom::SdfNode::binary(
+                geom::SdfOp::SmoothUnion,
+                box,
+                geom::SdfNode::binary(geom::SdfOp::Union, cyl, torus),
+                0.15f);
+
+            glm::vec3 cB(0.0f);
+            float rB = 0.0f;
+            bool ok = sdfwgsl::tryComputeSdfBoundingSphere(subCsg, cB, rB);
+            check(ok, "tryComputeSdfBoundingSphere succeeds on 3-leaf primitive subtree");
+            check(cB.x > 4.5f && rB > 0.4f, "subCsg bounding sphere encloses offset primitives");
+
+            auto tree = geom::SdfNode::binary(geom::SdfOp::Union, sphere, subCsg);
+            const auto progBefore = sdfwgsl::compile(tree);
+            check(progBefore.ok, "tree with prunable child 1 compiles");
+            check(progBefore.wgsl.find("let boundB") != std::string::npos,
+                  "shader contains boundB distance calculation");
+            check(progBefore.wgsl.find("if (boundB") != std::string::npos,
+                  "shader contains runtime bounding sphere guard");
+
+            // Mutate parameters in child 1 without structural changes
+            tree.children[1]->children[0]->offset.y = 1.0f;
+            tree.children[1]->children[1]->children[0]->dims.x = 0.25f;
+            const auto refreshed = sdfwgsl::collectParams(tree);
+            const auto progAfter = sdfwgsl::compile(tree);
+            check(refreshed.ok && refreshed.values == progAfter.params,
+                  "parameter recollection matches full compile on pruned tree");
+            check(progBefore.wgsl == progAfter.wgsl,
+                  "WGSL is byte-identical across parameter mutation on pruned tree");
+        }
     }
 
     if (failures) {

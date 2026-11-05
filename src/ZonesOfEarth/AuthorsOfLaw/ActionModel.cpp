@@ -58,6 +58,9 @@ const char* ActionNode::reasonName(PropertyPath::PathResult reason) {
         case PropertyPath::PathResult::BadComponent: return "Bad Component";
         case PropertyPath::PathResult::Unchanged: return "Unchanged";
         case PropertyPath::PathResult::Unsupported: return "Unsupported storage access";
+        case PropertyPath::PathResult::ExpiredCell: return "Expired Cell";
+        case PropertyPath::PathResult::UniqueOwnershipRefused: return "Unique Ownership Refused";
+        case PropertyPath::PathResult::AccessDenied: return "Access Denied";
     }
     return "Unknown";
 }
@@ -671,8 +674,6 @@ ECA::ActionExecutor ActionNode::compile() const {
                                     break;
                                 }
                             }
-                        } else if (std::holds_alternative<Object*>(pv)) {
-                            parent = std::get<Object*>(pv);
                         }
                     }
                 }
@@ -1024,13 +1025,33 @@ ECA::ActionExecutor ActionNode::compile() const {
                     edges = Universe::instance().relations();
                 }
                 for (const auto* rel : edges) {
-                    if (rel && rel->a() == a && rel->b() == b && rel->type == relType) {
+                    if (rel && rel->a() == a && rel->b() == b && rel->type == resolvedRelType) {
                         emitEffect("AddRelation", true, "relation already present");
                         return;
                     }
                 }
 
-                auto relation = std::make_shared<Relation>(relType, *a, *b);
+                if (resolvedRelType == "authority-over") {
+                    if (a == b) {
+                        emitEffect("AddRelation", false, "AuthorityDenied: self-authority cycle refused");
+                        return;
+                    }
+                    const Law* lawA = dynamic_cast<const Law*>(a);
+                    const Law* lawB = dynamic_cast<const Law*>(b);
+                    const Law* authorizingLaw = dynamic_cast<const Law*>(event.object);
+                    if (lawA && lawB && lawB->hasAuthorityOver(*lawA)) {
+                        emitEffect("AddRelation", false, "AuthorityDenied: cycle in authority-over DAG refused");
+                        return;
+                    }
+                    if (lawB) {
+                        if (!authorizingLaw || !authorizingLaw->hasAuthorityOver(*lawB)) {
+                            emitEffect("AddRelation", false, "AuthorityDenied: self-elevation refused");
+                            return;
+                        }
+                    }
+                }
+
+                auto relation = std::make_shared<Relation>(resolvedRelType, *a, *b);
                 Universe::instance().addRelation(relation);
 
                 emitEffect("AddRelation", true);
@@ -1087,7 +1108,144 @@ ECA::ActionExecutor ActionNode::compile() const {
             const PropertyPath target = path;
             const OntoMath::Piecewise f = mapFunction;
             const MathBindings binds = bindings;
-            return [target, f, binds](const ECA::Event&, Singular& subject) {
+            return [target, f, binds](const ECA::Event& event, Singular& subject) {
+                const Law* authorizingLaw = dynamic_cast<const Law*>(event.object);
+                // Check if any bound variable uses cell operations
+                for (const auto& [varName, bEntry] : binds) {
+                    if (bEntry.mode == BindingMode::ShareCell ||
+                        bEntry.mode == BindingMode::UniqueCell ||
+                        bEntry.mode == BindingMode::ObserveWeak) {
+                        std::size_t srcStart = 0;
+                        Singular* srcRoot = resolveLawRoot(subject, bEntry.path, srcStart);
+                        if (!srcRoot) {
+                            emitEffect("Map", false, "cannot resolve source for cell binding");
+                            return;
+                        }
+                        auto srcSlot = bEntry.path.resolve(*srcRoot, srcStart);
+                        Singular* srcBearer = srcSlot.owner ? srcSlot.owner : srcRoot;
+                        Earthcall::StringId srcPropId = srcSlot.prop ? srcSlot.prop->nameId() :
+                            (!srcSlot.dynamicKey.empty() ? Earthcall::StringInterner::intern(srcSlot.dynamicKey) :
+                             Earthcall::StringInterner::intern(bEntry.path.segments.back()));
+
+                        std::size_t destStart = 0;
+                        Singular* destRoot = resolveLawRoot(subject, target, destStart);
+                        if (!destRoot) {
+                            emitEffect("Map", false, "cannot resolve target for cell binding");
+                            return;
+                        }
+                        auto destSlot = target.resolve(*destRoot, destStart);
+                        Singular* destBearer = destSlot.owner ? destSlot.owner : destRoot;
+                        Earthcall::StringId destPropId = destSlot.prop ? destSlot.prop->nameId() :
+                            (!destSlot.dynamicKey.empty() ? Earthcall::StringInterner::intern(destSlot.dynamicKey) :
+                             Earthcall::StringInterner::intern(target.segments.back()));
+
+                        if (TransferPolicy::instance().accessPolicyRevision() > 0) {
+                            AccessOp srcOp = AccessOp::Share;
+                            if (bEntry.mode == BindingMode::UniqueCell) srcOp = AccessOp::TransferUnique;
+                            else if (bEntry.mode == BindingMode::ObserveWeak) srcOp = AccessOp::BorrowWeak;
+                            AccessContext srcCtx = TransferPolicy::currentContext(srcOp);
+                            if (authorizingLaw) srcCtx.authorizingLaw = authorizingLaw;
+                            srcCtx.actor = &subject;
+                            const ValueCell* existingSrcCell = srcSlot.cellId.valid()
+                                ? PropertyCellTable::instance().getCell(srcSlot.cellId) : nullptr;
+                            if (!TransferPolicy::instance().checkAccess(*srcRoot, srcSlot, existingSrcCell, srcCtx)) {
+                                emitResult(subject, "Map", PropertyPath::PathResult::AccessDenied, target);
+                                return;
+                            }
+                            AccessContext dstCtx = TransferPolicy::currentContext(AccessOp::Write);
+                            if (authorizingLaw) dstCtx.authorizingLaw = authorizingLaw;
+                            dstCtx.actor = &subject;
+                            const ValueCell* existingDstCell = destSlot.cellId.valid()
+                                ? PropertyCellTable::instance().getCell(destSlot.cellId) : nullptr;
+                            if (!TransferPolicy::instance().checkAccess(*destRoot, destSlot, existingDstCell, dstCtx)) {
+                                emitResult(subject, "Map", PropertyPath::PathResult::AccessDenied, target);
+                                return;
+                            }
+                        }
+
+                        CellId cellId = srcSlot.cellId;
+                        if (bEntry.mode == BindingMode::UniqueCell) {
+                            if (cellId.valid()) {
+                                auto* existingCell = PropertyCellTable::instance().getCell(cellId);
+                                if (!existingCell) {
+                                    emitResult(subject, "Map", PropertyPath::PathResult::ExpiredCell, target);
+                                    return;
+                                }
+                                if (existingCell->strongCount > 1) {
+                                    emitResult(subject, "Map", PropertyPath::PathResult::UniqueOwnershipRefused, target);
+                                    return;
+                                }
+                                if (srcBearer == destBearer && srcPropId == destPropId) {
+                                    destBearer->bindPropertyCell(destPropId, cellId, CellOwnershipMode::Unique);
+                                } else {
+                                    PropertyValue transferredVal = existingCell->value;
+                                    srcBearer->unbindPropertyCell(srcPropId);
+                                    CellId newUniqueId = PropertyCellTable::instance().allocateCell(
+                                        transferredVal, CellOwnershipMode::Unique, destBearer, destPropId);
+                                    destBearer->bindPropertyCell(destPropId, newUniqueId, CellOwnershipMode::Unique);
+                                    cellId = newUniqueId;
+                                }
+                            } else {
+                                PropertyValue initialVal;
+                                if (srcSlot.prop) initialVal = srcSlot.prop->value();
+                                else if (srcSlot.dynamicSlot) initialVal = *srcSlot.dynamicSlot;
+                                else srcBearer->getDynamicProperty(srcPropId, initialVal);
+                                cellId = PropertyCellTable::instance().allocateCell(
+                                    initialVal, CellOwnershipMode::Unique, destBearer, destPropId);
+                                destBearer->bindPropertyCell(destPropId, cellId, CellOwnershipMode::Unique);
+                            }
+                            if (destSlot.prop) {
+                                const auto* c = PropertyCellTable::instance().getCell(cellId);
+                                if (c) destSlot.prop->setValue(c->value);
+                            }
+                            PropertyCellTable::instance().notifyMutation(cellId);
+                            emitEffect("Map", true);
+                            return;
+                        }
+
+                        if (!cellId.valid()) {
+                            PropertyValue initialVal;
+                            if (srcSlot.prop) initialVal = srcSlot.prop->value();
+                            else if (srcSlot.dynamicSlot) initialVal = *srcSlot.dynamicSlot;
+                            else srcBearer->getDynamicProperty(srcPropId, initialVal);
+
+                            cellId = PropertyCellTable::instance().allocateCell(
+                                initialVal, CellOwnershipMode::Shared, srcBearer, srcPropId);
+                            srcBearer->bindPropertyCell(srcPropId, cellId, CellOwnershipMode::Shared);
+                        }
+
+                        CellOwnershipMode targetMode = (bEntry.mode == BindingMode::ObserveWeak)
+                            ? CellOwnershipMode::Weak : CellOwnershipMode::Shared;
+
+                        if (!destBearer->bindPropertyCell(destPropId, cellId, targetMode)) {
+                            auto* c = PropertyCellTable::instance().getCell(cellId);
+                            if (c && c->isUniqueLocked) {
+                                emitResult(subject, "Map", PropertyPath::PathResult::UniqueOwnershipRefused, target);
+                                return;
+                            }
+                            emitEffect("Map", false, "failed to bind property cell");
+                            return;
+                        }
+                        if (destSlot.prop) {
+                            const auto* c = PropertyCellTable::instance().getCell(cellId);
+                            if (c) destSlot.prop->setValue(c->value);
+                        }
+                        PropertyCellTable::instance().notifyMutation(cellId);
+                        emitEffect("Map", true);
+                        return;
+                    } else if (bEntry.mode == BindingMode::CopyValue) {
+                        PropertyValue srcVal;
+                        if (!lawGetValue(subject, bEntry.path, srcVal)) {
+                            emitEffect("Map", false, "cannot read source for copy");
+                            return;
+                        }
+                        PropertyValue copied = PropertyCellTable::deepCopy(srcVal);
+                        auto res = lawSetValue(subject, target, copied);
+                        emitResult(subject, "Map", res, target);
+                        return;
+                    }
+                }
+
                 auto vars = readMathBindings(subject, binds);
                 if (!vars) {
                     if (target.toString() == "@basic-pixel-canvas.authored.full-canvas") {
@@ -1101,11 +1259,66 @@ ECA::ActionExecutor ActionNode::compile() const {
                     emitEffect("Map", false, "outside the authored bounds");
                     return;
                 }
-                auto res = lawSetValue(subject, target, *valProp);
+                AccessContext ctx = TransferPolicy::currentContext(AccessOp::Write);
+                ctx.actor = &subject;
+                if (authorizingLaw) ctx.authorizingLaw = authorizingLaw;
+                auto res = lawSetValue(subject, target, *valProp, ctx);
                 if (target.toString() == "@basic-pixel-canvas.authored.full-canvas") {
                     std::cout << "[MAP DEBUG] target=" << target.toString() << " res=" << static_cast<int>(res) << std::endl;
                 }
                 emitResult(subject, "Map", res, target);
+
+                if (res == PropertyPath::PathResult::Ok) {
+                    for (const auto& [varName, bEntry] : binds) {
+                        if (bEntry.mode == BindingMode::Derive) {
+                            std::size_t srcStart = 0;
+                            Singular* srcRoot = resolveLawRoot(subject, bEntry.path, srcStart);
+                            if (!srcRoot) continue;
+                            auto srcSlot = bEntry.path.resolve(*srcRoot, srcStart);
+                            CellId srcCellId = srcSlot.cellId;
+                            Singular* srcBearer = srcSlot.owner ? srcSlot.owner : srcRoot;
+                            Earthcall::StringId srcPropId = srcSlot.prop ? srcSlot.prop->nameId() :
+                                (!srcSlot.dynamicKey.empty() ? Earthcall::StringInterner::intern(srcSlot.dynamicKey) :
+                                 Earthcall::StringInterner::intern(bEntry.path.segments.back()));
+                            if (!srcCellId.valid()) {
+                                PropertyValue initialVal;
+                                if (srcSlot.prop) initialVal = srcSlot.prop->value();
+                                else if (srcSlot.dynamicSlot) initialVal = *srcSlot.dynamicSlot;
+                                else srcBearer->getDynamicProperty(srcPropId, initialVal);
+                                srcCellId = PropertyCellTable::instance().allocateCell(initialVal, CellOwnershipMode::Shared, srcBearer, srcPropId);
+                                srcBearer->bindPropertyCell(srcPropId, srcCellId, CellOwnershipMode::Shared);
+                            }
+
+                            std::size_t destStart = 0;
+                            Singular* destRoot = resolveLawRoot(subject, target, destStart);
+                            if (!destRoot) continue;
+                            auto destSlot = target.resolve(*destRoot, destStart);
+                            Singular* destBearer = destSlot.owner ? destSlot.owner : destRoot;
+                            Earthcall::StringId destPropId = destSlot.prop ? destSlot.prop->nameId() :
+                                (!destSlot.dynamicKey.empty() ? Earthcall::StringInterner::intern(destSlot.dynamicKey) :
+                                 Earthcall::StringInterner::intern(target.segments.back()));
+
+                            PropertyCellTable::instance().registerDerivedEdge(
+                                srcCellId,
+                                destBearer,
+                                destPropId,
+                                [target, f, binds, subjectPtr = &subject, authorizingLaw]() {
+                                    auto v = readMathBindings(*subjectPtr, binds);
+                                    if (!v) return;
+                                    auto val = f.evaluate(*v, subjectPtr);
+                                    if (!val) return;
+                                    AccessContext recomputeCtx;
+                                    recomputeCtx.actor = subjectPtr;
+                                    recomputeCtx.authorizingLaw = authorizingLaw;
+                                    recomputeCtx.op = AccessOp::Write;
+                                    lawSetValue(*subjectPtr, target, *val, recomputeCtx);
+                                },
+                                &subject,
+                                authorizingLaw
+                            );
+                        }
+                    }
+                }
             };
         }
         case Kind::Flow: {
@@ -1212,14 +1425,8 @@ ECA::ActionExecutor ActionNode::compile() const {
                     std::size_t start = 0;
                     Singular* prototype = resolveLawRoot(subject, source, start);
                     if (prototype && start != source.segments.size()) {
-                        PropertyValue value;
-                        prototype = nullptr;
-                        if (lawGetValue(subject, source, value)) {
-                            if (auto p = std::get_if<Singular*>(&value)) prototype = *p;
-                            else if (auto p = std::get_if<Object*>(&value)) prototype = *p;
-                            else if (auto p = std::get_if<Relation*>(&value)) prototype = *p;
-                            else if (auto p = std::get_if<Formation*>(&value)) prototype = *p;
-                        }
+                        auto slot = source.resolve(*prototype, start);
+                        prototype = (slot.prop ? slot.prop->asSingular() : nullptr);
                     }
                     if (!prototype) { emitEffect("Create", false, "prototype path has no unambiguous Singular referent: " + source.toString()); return; }
                     if (!parent.empty() || !placement.empty() || hasLegacyOverrides) {
@@ -2074,6 +2281,30 @@ ActionNode ActionNode::map(const std::string& dottedPath, OntoMath::Piecewise fu
     n.mapFunction = std::move(function);
     n.bindings = std::move(bindings);
     return n;
+}
+
+ActionNode ActionNode::shareCell(const std::string& targetPath, const std::string& sourcePath) {
+    MathBindings b;
+    b["_cell_src"] = MathBindingEntry{PropertyPath::parse(sourcePath), BindingMode::ShareCell};
+    return ActionNode::map(targetPath, OntoMath::Piecewise{}, std::move(b));
+}
+
+ActionNode ActionNode::uniqueCell(const std::string& targetPath, const std::string& sourcePath) {
+    MathBindings b;
+    b["_cell_src"] = MathBindingEntry{PropertyPath::parse(sourcePath), BindingMode::UniqueCell};
+    return ActionNode::map(targetPath, OntoMath::Piecewise{}, std::move(b));
+}
+
+ActionNode ActionNode::weakCell(const std::string& targetPath, const std::string& sourcePath) {
+    MathBindings b;
+    b["_cell_src"] = MathBindingEntry{PropertyPath::parse(sourcePath), BindingMode::ObserveWeak};
+    return ActionNode::map(targetPath, OntoMath::Piecewise{}, std::move(b));
+}
+
+ActionNode ActionNode::copyCell(const std::string& targetPath, const std::string& sourcePath) {
+    MathBindings b;
+    b["_cell_src"] = MathBindingEntry{PropertyPath::parse(sourcePath), BindingMode::CopyValue};
+    return ActionNode::map(targetPath, OntoMath::Piecewise{}, std::move(b));
 }
 
 ActionNode ActionNode::flow(const std::string& dottedPath, OntoMath::Piecewise function,

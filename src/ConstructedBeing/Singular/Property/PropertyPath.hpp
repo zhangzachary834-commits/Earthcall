@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PropertyValue.hpp"
+#include "PropertyCell.hpp"
 #include "Singularity/Core/StringId.hpp"
 
 #include <functional>
@@ -10,6 +11,7 @@
 
 class Property;
 class Singular;
+struct AccessContext;
 
 // ============================================================================
 // PropertyPath — The address of a variable on the substrate
@@ -91,6 +93,9 @@ public:
         PropertyValue* structuredSource = nullptr;
         PropertyValue structuredOriginal;
         PropertyValue structuredView;
+        CellId cellId;
+        CellOwnershipMode cellMode = CellOwnershipMode::InlineValue;
+        Earthcall::StringId rootPropertyId;
     };
 
     ResolvedSlot resolve(Singular& root, std::size_t startIndex = 0) const;
@@ -102,11 +107,16 @@ public:
         ReadOnly,
         BadComponent,
         Unchanged, // the slot already held this value; not a write
-        Unsupported // readable storage whose bridge cannot safely mutate an element
+        Unsupported, // readable storage whose bridge cannot safely mutate an element
+        ExpiredCell, // weak read/write after final strong owner released
+        UniqueOwnershipRefused, // attempt to share a cell currently held as Unique
+        AccessDenied // reserved for Rung 3 Law/TransferPolicy refusal
     };
 
     PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex = 0) const;
+    PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex, const AccessContext& ctx) const;
     PathResult setValue(Singular& root, const PropertyValue& v, std::size_t startIndex = 0) const;
+    PathResult setValue(Singular& root, const PropertyValue& v, std::size_t startIndex, const AccessContext& ctx) const;
 };
 
 // ============================================================================

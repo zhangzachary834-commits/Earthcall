@@ -486,7 +486,9 @@ void Zone::clearStoredSingulars() {
 
 std::shared_ptr<PropertyList> Zone::propStoredSingulars() const {
     auto out = std::make_shared<PropertyList>();
-    for (const auto& being : _storedSingulars) out->elements.emplace_back(being.get());
+    for (const auto& being : _storedSingulars) {
+        if (being) out->elements.emplace_back(being->getIdentifier());
+    }
     return out;
 }
 

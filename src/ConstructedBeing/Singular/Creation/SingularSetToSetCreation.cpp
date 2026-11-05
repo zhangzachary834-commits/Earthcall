@@ -89,11 +89,6 @@ nlohmann::json storedValue(const PropertyValue& value, std::unordered_set<const 
         } else if constexpr (std::is_same_v<T, std::shared_ptr<OntoMath::ScalarField>> || std::is_same_v<T, std::shared_ptr<OntoMath::VectorField>>) {
             return {{"t", std::is_same_v<T, std::shared_ptr<OntoMath::ScalarField>> ? "scalar_field" : "vector_field"},
                     {"v", item ? item->toJson() : nlohmann::json(nullptr)}};
-        } else if constexpr (std::is_pointer_v<T>) {
-            auto out = propertyValueToJson(value);
-            out["refKind"] = std::is_same_v<T, Object*> ? "object" : std::is_same_v<T, Relation*> ? "relation" :
-                             std::is_same_v<T, Formation*> ? "formation" : "singular";
-            return out;
         } else return propertyValueToJson(value);
     }, value);
 }
@@ -111,27 +106,7 @@ bool referencesAvailable(const nlohmann::json& value, const Resolver& resolve) {
 PropertyValue restoredValue(const nlohmann::json& value, const Resolver& resolve) {
     const auto tag = value.is_object() ? value.value("t", std::string{}) : std::string{};
     if (tag == "ref") {
-        const auto id = value.value("id", std::string{});
-        Singular* target = id.empty() ? nullptr : (resolve ? resolve(id) : nullptr);
-        if (!id.empty() && !target) throw std::runtime_error("unresolved authored reference: " + id);
-        const auto kind = value.value("refKind", std::string("singular"));
-        if (kind == "object") {
-            auto* typed = dynamic_cast<Object*>(target);
-            if (target && !typed) throw std::runtime_error("Object reference type mismatch");
-            return typed;
-        }
-        if (kind == "relation") {
-            auto* typed = dynamic_cast<Relation*>(target);
-            if (target && !typed) throw std::runtime_error("Relation reference type mismatch");
-            return typed;
-        }
-        if (kind == "formation") {
-            auto* typed = dynamic_cast<Formation*>(target);
-            if (target && !typed) throw std::runtime_error("Formation reference type mismatch");
-            return typed;
-        }
-        if (kind != "singular") throw std::runtime_error("unknown authored reference type");
-        return target;
+        return PropertyValue{};
     }
     if (tag == "list") {
         if (value.value("null", false)) return std::shared_ptr<PropertyList>{};

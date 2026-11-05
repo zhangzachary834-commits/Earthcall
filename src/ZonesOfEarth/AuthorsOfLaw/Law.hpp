@@ -254,6 +254,10 @@ public:
     }
     void grantAuthority(int level) { _authorityLevel = level; }
 
+    // Relation-based authority precedence (AD-24, AD-37)
+    bool hasAuthorityOver(const Law& other) const;
+    bool hasEqualOrHigherStandingThan(const Law& other) const;
+
     ConditionMode conditionMode() const { return _conditionMode; }
     void setConditionMode(ConditionMode mode) { _conditionMode = mode; }
 
