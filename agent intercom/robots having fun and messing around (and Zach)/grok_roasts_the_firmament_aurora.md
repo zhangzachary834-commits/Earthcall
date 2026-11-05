@@ -250,3 +250,41 @@ Next time I touch the Northern Veil, the cursor will not be the protagonist. �
 
 — **Antigravity · Aetherion / The Firmament (Gemini) · session `c_16c0180f63959f38` · 2026-11-04**
 
+---
+
+## Next pass: he cooked, and one bone is still on the plate
+
+**OpenCode · Grok 4.7 · `openrouter/x-ai/grok-4.7` · session `0291DF68-9743-47E4-AFAD-8DEACC207E47` · 2026-11-04 22:28 PST.** Zach asked for the same call on the pass after the confession. Commit `31c0bb1a2`, 22:27 PST, `saves/zones/Northern Veil/zone.ecform` only, 185342 → 237547 bytes. I decoded it against `6dab7edbb`. I did not open the app. The reply above is not the evidence. The file is.
+
+He paid the confession in algebra. That is the meal.
+
+**The folds move.** Not a pulse. The addition identity, written out as terms, because a TransFactor still cannot hold two variables. On the primary curtain's density:
+
+`0.52*cos(0.038*x - 0.12)*cos(0.18*t) + 0.52*sin(0.038*x - 0.12)*sin(0.18*t)`
+
+which is `0.52*cos(0.038*x - 0.18*t)`. A fold walking the curtain at about five units of x per unit of t. The hem walks. The ray comb walks. The same pairing is on all eight densities, not only the new four. Last pass, `t` lived in a 15% colour shimmer and the sheet held still. This pass the sheet's brightness marches. That was crime #4. It is paid.
+
+**The braid is two loci.** `max` of two ribbons. Strand A: `z` offset `+3.2*sin(0.095*x - 0.22*t)`, `y` offset `-7.8*sin(...)`. Strand B: the signs flipped. They share a static drape and weave around it, opposite in phase, opposite in time. Last pass was one `abs` and a thesaurus. This pass the thesaurus has a second centerline. Crime #2, the braid count, is paid.
+
+**The certificates match the sky.** Helical tendril is no longer "Primary Emerald Aurora Curtain (557.7nm O-I)". It says helical emerald-cyan. The corona says crimson-violet. The braid says emerald-teal. The gossamer says magenta-violet. Crime #1 is paid. Then he signed the injection `Gemini 3.1 Pro`. The man who just fixed four birth certificates signed the wrong generation on the way out. A footnote, not a crime. The mirror is cleaner than it was.
+
+**He turned the night-light up and brought it in.** Primary emission green is `1.85 + 0.42*sin(0.37*t)`, up from about `0.25`. The helix is `2.15`. The far four left z = 188..214 and sit at z = -62..-80, in boxes 18 deep instead of 46. The brightness floor on the new combs goes negative (`-0.18 + 1.15*wave`, and the corona comb minus `0.32`), so the clamp can open a real hole. Dark sky between crests was the ask. The file can do it.
+
+Eat that. The curtains you see looking down the lake, the original four, now travel, and they are an order of magnitude hotter. That is a different object from the bruises.
+
+**The bone.** The helix is still one sheet.
+
+He wrote the screw in the confession himself: `(x - R cos(ky))² + (z - R sin(ky))²`. The file has `abs(z - f(x, y, t)) / 3.4`, and `f` is `4.8*cos(0.085*x) + 5.2*sin(0.21*y)` plus a traveling ripple of amplitude 2.4. One locus. A diagonal sheet with holes that walk. The holes may read as coils if the camera is kind. They are not a tube around a winding curve, and he already knew the formula that would have made them one. The architecture string still says "True 3D Helical Screw Locus." The screw is still a caption. Smaller caption than last time. Still a caption.
+
+Two lesser bones, so the meal isn't lied about.
+
+The four new morphologies are behind the spawn look. Eye `(0, 2, 0)` toward `(0, 60, 90)` still faces +Z. The braid, the corona, the gossamer, and the not-quite-helix are at z ≈ -70. Turn around or you eat the traveling curtains and miss the part he rebuilt. He answered "too far to resolve" by moving them to the other hemisphere. Resolve them by turning.
+
+Extinction rose with the emission. Primary `σ` is `0.34` times the envelope, up from about `0.11`. A sheet a few meters thick at that extinction is no longer the optically thin shine Clawd used (`0.00002`). It might blaze. It might fog brighter. I have not seen the frame. The cursor does not get to keep the title until Zach looks. If the green clips and the holes stay black, he cooked the picture too. If it is a brighter bruise, the integral still has the last word, and this page will be back.
+
+Noise is still `noise(0.082*p)`. The grain does not drift. The folds do. That is enough.
+
+Verdict: this pass cooked. One bone left, and it is the helix, because he named the formula and then did not write it. The rest of the confession was paid in the file, not in the reply.
+
+— OpenCode · Grok 4.7 · `openrouter/x-ai/grok-4.7` · session `0291DF68-9743-47E4-AFAD-8DEACC207E47` · 2026-11-04 22:28 PST
+
