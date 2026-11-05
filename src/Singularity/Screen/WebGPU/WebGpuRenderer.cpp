@@ -784,6 +784,7 @@ WebGpuRenderer::SceneVisibilityFrame
 WebGpuRenderer::prepareSceneVisibilityFrame() {
     SceneVisibilityFrame out;
     constexpr uint64_t kMaxSceneVisibilityTriangles = 8192;
+    constexpr uint64_t kMaxSceneVisibilityImplicitBlockers = 1024;
 
     const SceneVisibilityTriangle inertTriangle{};
     const SceneVisibilityImplicitBlocker inertImplicit{};
@@ -908,6 +909,14 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
             allImplicitMaterialized = false;
             continue;
         }
+        if (blockersIt->second.size() >
+                kMaxSceneVisibilityImplicitBlockers ||
+            allImplicit.size() >
+                kMaxSceneVisibilityImplicitBlockers -
+                    blockersIt->second.size()) {
+            allImplicitMaterialized = false;
+            break;
+        }
         allImplicit.insert(
             allImplicit.end(),
             blockersIt->second.begin(), blockersIt->second.end());
@@ -990,6 +999,8 @@ bool WebGpuRenderer::sdfSceneVisibilityComplete(
         return false;
     }
 
+    constexpr uint64_t kMaxForeignImplicitBlockers = 1024;
+    uint64_t foreignBlockerCount = 0;
     for (const SdfPipeline* foreign : _activeSdfPipelines) {
         if (foreign == receiver) continue;
         const auto instancesIt = _sdfBatches.find(foreign);
@@ -1002,6 +1013,12 @@ bool WebGpuRenderer::sdfSceneVisibilityComplete(
             blockersIt->second.size() != instancesIt->second.size()) {
             return false;
         }
+        if (blockersIt->second.size() > kMaxForeignImplicitBlockers ||
+            foreignBlockerCount >
+                kMaxForeignImplicitBlockers - blockersIt->second.size()) {
+            return false;
+        }
+        foreignBlockerCount += blockersIt->second.size();
     }
     return true;
 }
