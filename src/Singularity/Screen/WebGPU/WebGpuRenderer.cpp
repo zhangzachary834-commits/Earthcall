@@ -760,6 +760,129 @@ WebGpuRenderer::prepareRadianceSourceBuffer() {
 }
 
 
+
+WebGpuRenderer::SceneVisibilityFrame
+WebGpuRenderer::prepareSceneVisibilityFrame() {
+    SceneVisibilityFrame out;
+    constexpr uint64_t kMaxSceneVisibilityTriangles = 8192;
+
+    // Binding is structurally present in every surface pipeline. Keep one legal
+    // inert element even when CompleteScene is disabled or unavailable.
+    const SceneVisibilityTriangle inert{};
+    auto bindInert = [&]() {
+        auto alloc = bufferPool().suballocateStorage(&inert, sizeof(inert));
+        out.buffer = alloc.buffer;
+        out.offset = alloc.offset;
+        out.size = alloc.size;
+    };
+
+    if (radianceVisibilityMode() != RadianceVisibilityMode::CompleteScene) {
+        bindInert();
+        return out;
+    }
+
+    uint64_t sdfInstanceCount = 0;
+    for (const SdfPipeline* sp : _activeSdfPipelines) {
+        const auto found = _sdfBatches.find(sp);
+        if (found != _sdfBatches.end()) {
+            sdfInstanceCount += found->second.size();
+        }
+    }
+
+    bool exactMeshMaterialization = !_frameHasUnmaterializedOpaqueGeometry;
+    uint64_t triangleCount = 0;
+    for (const auto& entry : _meshBatches) {
+        const MeshBatchKey& key = entry.first;
+        if (!key.mesh) {
+            exactMeshMaterialization = false;
+            continue;
+        }
+
+        // Binary path visibility cannot truthfully consume unknown texture alpha
+        // or partially transparent receiver/blocker surfaces yet.
+        if (key.albedoView != _whiteView) {
+            exactMeshMaterialization = false;
+        }
+
+        const uint64_t perInstance =
+            static_cast<uint64_t>(key.mesh->tris.size() / 3);
+        for (const InstanceData& inst : entry.second) {
+            if (inst.baseColor.a < 0.999999f) {
+                exactMeshMaterialization = false;
+            }
+            if (triangleCount > kMaxSceneVisibilityTriangles - perInstance) {
+                exactMeshMaterialization = false;
+                triangleCount = kMaxSceneVisibilityTriangles + 1;
+                break;
+            }
+            triangleCount += perInstance;
+        }
+        if (triangleCount > kMaxSceneVisibilityTriangles) break;
+    }
+
+    if (!exactMeshMaterialization ||
+        triangleCount > kMaxSceneVisibilityTriangles) {
+        bindInert();
+        mutableFrameStats().sceneVisibilityUnknownFrames++;
+        return out;
+    }
+
+    std::vector<SceneVisibilityTriangle> triangles;
+    triangles.reserve(static_cast<size_t>(triangleCount));
+    for (const auto& entry : _meshBatches) {
+        const geom::TessMesh& mesh = *entry.first.mesh;
+        for (const InstanceData& inst : entry.second) {
+            for (size_t i = 0; i + 2 < mesh.tris.size(); i += 3) {
+                const glm::vec4 a =
+                    inst.model * glm::vec4(mesh.tris[i + 0].pos, 1.0f);
+                const glm::vec4 b =
+                    inst.model * glm::vec4(mesh.tris[i + 1].pos, 1.0f);
+                const glm::vec4 c =
+                    inst.model * glm::vec4(mesh.tris[i + 2].pos, 1.0f);
+                triangles.push_back({a, b, c});
+            }
+        }
+    }
+
+    const void* data = triangles.empty()
+        ? static_cast<const void*>(&inert)
+        : static_cast<const void*>(triangles.data());
+    const size_t bytes = triangles.empty()
+        ? sizeof(inert)
+        : triangles.size() * sizeof(SceneVisibilityTriangle);
+    auto alloc = bufferPool().suballocateStorage(data, bytes);
+    out.buffer = alloc.buffer;
+    out.offset = alloc.offset;
+    out.size = alloc.size;
+    out.triangleCount = static_cast<uint32_t>(triangles.size());
+
+    if (!out.buffer) {
+        out.triangleCount = 0;
+        mutableFrameStats().sceneVisibilityUnknownFrames++;
+        return out;
+    }
+
+    // Mesh receivers are complete only when no SDF blocker exists. An SDF
+    // receiver may compose its own exact local field with the shared mesh set
+    // only when it is the sole SDF instance in the frame.
+    out.meshComplete = sdfInstanceCount == 0;
+    out.sdfComplete = sdfInstanceCount == 1;
+
+    mutableFrameStats().sceneVisibilityTriangles = out.triangleCount;
+    mutableFrameStats().sceneVisibilityBytesUploaded += bytes;
+    if (out.meshComplete) {
+        mutableFrameStats().sceneVisibilityMeshKnownFrames++;
+    }
+    if (out.sdfComplete) {
+        mutableFrameStats().sceneVisibilitySdfKnownFrames++;
+    }
+    if (!out.meshComplete && !out.sdfComplete) {
+        mutableFrameStats().sceneVisibilityUnknownFrames++;
+    }
+    return out;
+}
+
+
 bool WebGpuRenderer::refreshRadianceSourceLayout() {
     if (radianceSources().empty()) {
         _radianceSourcesLayoutRevision = radianceSourcesRevision();
@@ -1335,6 +1458,8 @@ void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width,
     // endFrame() (an early return, a crash-recovery path) would leave stale
     // entries — clear rather than carry them into a frame with a new _pass.
     _meshBatches.clear();
+    _sceneVisibilityFrame = {};
+    _frameHasUnmaterializedOpaqueGeometry = false;
 }
 
 void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& mat) {
@@ -4592,6 +4717,11 @@ void WebGpuRenderer::composeVolumes() {
 
 void WebGpuRenderer::endFrame() {
     if (!_pass) return;
+    // Every opaque draw is now admitted. Build the frame-scoped visibility
+    // materialization BEFORE either representation flushes so both consume the
+    // same complete-or-Unknown scene evidence.
+    _sceneVisibilityFrame = prepareSceneVisibilityFrame();
+
     // Every drawMesh() call this frame only queued into _meshBatches; this is
     // where those batches actually become wgpuRenderPassEncoderDraw calls, so
     // it must run before the pass ends.
@@ -4776,6 +4906,9 @@ void WebGpuRenderer::drawSolid(const std::vector<glm::vec3>& tris, const glm::ve
     // In 2D scope the model transform is meaningless; otherwise these are world-space
     // triangles under the current OntoMath-authored view-projection/model cache.
     if (!_in2D && !_modelViewProjValid) return;
+    if (!_in2D && depthWrite) {
+        _frameHasUnmaterializedOpaqueGeometry = true;
+    }
     const glm::mat4& mvp = _in2D ? _ortho2D : _modelViewProj;
     drawFlat(flatPipeline(WGPUPrimitiveTopology_TriangleList, blend,
                           depthWrite ? DepthMode::TestWrite : DepthMode::TestOnly),
