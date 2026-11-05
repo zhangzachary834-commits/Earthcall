@@ -1021,6 +1021,7 @@ void WebGpuRenderer::reloadShaders() {
     }
     _activeSdfPipelines.clear();
     _sdfBatches.clear();
+    _sdfVisibilityBlockerBatches.clear();
     _sdfParamsBatches.clear();
     _sdfHeightGridBatches.clear();
     _sdfRangeNodeBatches.clear();
@@ -2736,6 +2737,37 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     inst.model = _model;
     inst.invModel = authoredTransforms->inverse;
     inst.normalMat = authoredTransforms->normal;
+
+    // Foreign CompleteScene consumers may use a compact exact analytic packet
+    // only for primitive leaves whose ray intersection is explicitly admitted.
+    // Absence of a packet is not a fallback approximation: it is later consumed
+    // as evidence that this cohort cannot grant foreign visibility authority.
+    std::optional<SceneVisibilityImplicitBlocker> visibilityBlocker;
+    const auto finite3 = [](const glm::vec3& v) {
+        return std::isfinite(v.x) && std::isfinite(v.y) &&
+               std::isfinite(v.z);
+    };
+    if (field.op == geom::SdfOp::Leaf &&
+        finite3(field.dims) && finite3(field.offset)) {
+        float kind = 0.0f;
+        bool validDims = false;
+        if (field.prim == geom::SdfPrim::Sphere) {
+            kind = 1.0f;
+            validDims = field.dims.x > 0.0f;
+        } else if (field.prim == geom::SdfPrim::Box) {
+            kind = 2.0f;
+            validDims = field.dims.x > 0.0f &&
+                        field.dims.y > 0.0f &&
+                        field.dims.z > 0.0f;
+        }
+        if (kind > 0.0f && validDims) {
+            SceneVisibilityImplicitBlocker blocker;
+            blocker.invModel = authoredTransforms->inverse;
+            blocker.dimsKind = glm::vec4(field.dims, kind);
+            blocker.offset = glm::vec4(field.offset, 0.0f);
+            visibilityBlocker = blocker;
+        }
+    }
     
     glm::vec3 albedo(1.0f);
     if (mat.albedoPixels && mat.albedoWidth > 0 && mat.albedoHeight > 0) {
@@ -2913,7 +2945,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     auto& sdfBatch = _sdfBatches[sp];
     if (sdfBatch.empty()) _activeSdfPipelines.push_back(sp);
     sdfBatch.push_back(inst);
-    _sdfParamsBatches[sp].insert(_sdfParamsBatches[sp].end(), prog->params.begin(), prog->params.end());
+    if (visibilityBlocker) {
+        _sdfVisibilityBlockerBatches[sp].push_back(*visibilityBlocker);
+    }
+    _sdfParamsBatches[sp].insert(
+        _sdfParamsBatches[sp].end(), prog->params.begin(), prog->params.end());
 
     mutableFrameStats().trianglesDrawn += 12;
 }
