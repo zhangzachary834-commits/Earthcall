@@ -940,6 +940,10 @@ private:
     // exporting that program cohort to foreign visibility consumers.
     std::map<const SdfPipeline*, std::vector<SceneVisibilityImplicitBlocker>>
         _sdfVisibilityBlockerBatches;
+    // Count of instances whose surface opacity is compatible with this binary
+    // visibility provider. Own-program exact geometry is not sufficient when
+    // optical transmission itself is unresolved.
+    std::map<const SdfPipeline*, uint32_t> _sdfVisibilityOpaqueInstanceCounts;
     std::map<const SdfPipeline*, std::vector<float>> _sdfParamsBatches;
     std::map<const SdfPipeline*, std::vector<glm::vec2>> _sdfHeightGridBatches;
     std::map<const SdfPipeline*, std::vector<uint32_t>> _sdfRangeNodeBatches;
