@@ -6,6 +6,7 @@
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
 #include "Singularity/Screen/VolumeRayTransport.hpp"
+#include "Singularity/Screen/VolumeTransportCohortPlanner.hpp"
 #include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/SdfRangeProof.hpp"
@@ -3523,21 +3524,31 @@ void WebGpuRenderer::flushVolumeComposite() {
     }
 
     if (activeMedia.size() > 1) {
-        if (!_certificateProbeMedium && incidentSource &&
-            OntoMath::literalZero(incidentSource->radianceExpr) &&
-            activeMedia.size() >= 6) {
-            // Partition into far-side background cohort (drawn first over the opaque
-            // scene on the grid-proof fused lane) and near-side 4-curtain cohort
-            // (drawn second over the background on the hardware routed transport lane).
-            std::vector<const Rendering::VolumeDensityBinding*> nearCohort(
-                activeMedia.begin(), activeMedia.begin() + 4);
-            std::vector<const Rendering::VolumeDensityBinding*> farCohort(
-                activeMedia.begin() + 4, activeMedia.end());
-            enqueueVolumeCohort(farCohort, false);
-            enqueueVolumeCohort(nearCohort, true);
-        } else {
-            enqueueVolumeCohort(activeMedia, true);
-        }
+        // C1: derive execution capability from each medium's mathematics. This
+        // classification is intentionally NOT yet permission to split the set:
+        // cohort chronology/separability are query-relative proofs (C3+), not
+        // consequences of vector position or media count.
+        const auto routedCapability = [](const Rendering::VolumeDensityBinding* medium) {
+            if (!medium || !medium->densityExpr) return false;
+            const auto recipe = OntoMath::clampedWaveSupport(medium->densityExpr);
+            if (!recipe) return false;
+            if (!OntoMath::clampedWaveGroupingSlackFits(*recipe, std::abs(medium->scale.z)))
+                return false;
+            if (!glm::all(glm::lessThanEqual(glm::abs(medium->origin), glm::vec3(1024))))
+                return false;
+            if (!glm::all(glm::lessThanEqual(glm::abs(medium->scale), glm::vec3(1024))))
+                return false;
+            return true;
+        };
+        const auto capabilityPartition =
+            Rendering::partitionVolumeMediaByRoutedCapability(activeMedia, routedCapability);
+
+        // Until a lawful cohort-order certificate exists, mixed capability
+        // families remain one joint set. This deliberately sacrifices the
+        // Pass-3 positional speedup rather than preserving an unproved
+        // "first four are near / rest are far" world-domain assumption.
+        const bool wholeSetRoutedAdmissible = capabilityPartition.second.empty();
+        enqueueVolumeCohort(activeMedia, wholeSetRoutedAdmissible);
     }
 
     // Build ordinary V0-V4 batches only from the bounded projection EngineRender
