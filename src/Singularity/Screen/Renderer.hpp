@@ -69,8 +69,15 @@ public:
         // query. When authored visibility is requested, direct source-set
         // transport is skipped rather than silently substituting V=1.
         uint32_t meshVisibilityUnknownDirectSkips = 0;
+        // First CompleteScene provider observability. The provider is exact only
+        // when every relevant blocker was admitted into its world-triangle set.
+        uint32_t sceneVisibilityTriangles = 0;
+        size_t sceneVisibilityBytesUploaded = 0;
+        uint32_t sceneVisibilityMeshKnownFrames = 0;
+        uint32_t sceneVisibilitySdfKnownFrames = 0;
+        uint32_t sceneVisibilityUnknownFrames = 0;
         // Same epistemic refusal on implicit surfaces when CompleteScene is
-        // requested before a complete-scene provider exists.
+        // requested but no complete provider exists for that receiver.
         uint32_t sdfVisibilityUnknownDirectSkips = 0;
         uint32_t sdfDrawCalls = 0;
         uint32_t trianglesDrawn = 0;
