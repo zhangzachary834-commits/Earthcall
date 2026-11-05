@@ -111,11 +111,13 @@ struct RadianceSourceData {
 @group(0) @binding(2) var albedoSamp: sampler;
 @group(0) @binding(3) var<storage, read> P: Params;
 @group(0) @binding(4) var<storage, read> RS: array<RadianceSourceData>;
+@group(0) @binding(5) var<storage, read> sceneTriangles: array<SceneVisibilityTriangle>;
 @group(1) @binding(0) var<storage, read> instances: array<Instance>;
 )WGSL";
 
     wgsl += response.wgsl;
     if (sourceProgram) wgsl += sourceProgram->wgsl;
+    wgsl += sdfwgsl::sceneVisibilityTriangleMathModule();
 
     wgsl += std::string("\nconst HAS_AUTHORED_MATERIAL_RESPONSE: bool = ") +
             (response.hasDirectResponse ? "true;\n" : "false;\n");
@@ -138,14 +140,20 @@ struct VisibilityDecision {
     value: f32,
 };
 
-fn meshPathVisibility() -> VisibilityDecision {
-    // Mesh currently owns no exact ray query even for its local tessellation.
-    // Disabled is exact compatibility V=1; every requested scope is Unknown
-    // until a shared scene/path provider is admitted.
+fn meshPathVisibility(surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> VisibilityDecision {
     if (u.lightControl.y < 0.5) {
         return VisibilityDecision(1.0, 1.0);
     }
-    return VisibilityDecision(0.0, 0.0);
+    // LocalReceiverGeometry remains Unknown for raster triangles because the
+    // receiver is only one member of a potentially larger mesh world.
+    if (u.lightControl.y < 1.5) {
+        return VisibilityDecision(0.0, 0.0);
+    }
+    if (u.lightControl.z < 0.5) {
+        return VisibilityDecision(0.0, 0.0);
+    }
+    return VisibilityDecision(
+        1.0, sceneMeshVisibility(surfaceWorld, sourceWorld));
 }
 
 struct VSOut {
@@ -194,7 +202,7 @@ fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
             wgsl += "        if (sourcePacket.enabled > 0.5) {\n";
             wgsl += "            environmentRadiance += "
                     "sourcePacket.environmentRadiance;\n";
-            wgsl += "            let pathVisibility = meshPathVisibility();\n";
+            wgsl += "            let pathVisibility = meshPathVisibility(in.worldPos, sourcePacket.sourceWorld);\n";
             wgsl += "            if (pathVisibility.known > 0.5 && "
                     "HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
             wgsl += "                let responseDefined = "
@@ -240,7 +248,7 @@ fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
         } else if (MATERIAL_RESPONSE_READS_WI) {
             responseDefined = false;
         }
-        let pathVisibility = meshPathVisibility();
+        let pathVisibility = meshPathVisibility(in.worldPos, sourcePacket.sourceWorld);
         if (responseDefined && pathVisibility.known > 0.5) {
             directTerm = materialResponseEval(
                 in.localPos, N, responseWi, V, surfaceColor,
