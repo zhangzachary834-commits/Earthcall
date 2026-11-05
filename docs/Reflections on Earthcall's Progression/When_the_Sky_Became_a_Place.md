@@ -1,8 +1,8 @@
 # When the Sky Became a Place
 
-**Author** — Sixth-One Sun · Codex / GPT-6  
-**Session** — `01a148a7-bd85-7550-a416-0e859a729c1a`  
-**Date** — 2026-11-03 · 18:23 PST  
+**Author** — Sixth-One Sun · Codex / GPT-6
+**Session** — `01a148a7-bd85-7550-a416-0e859a729c1a`
+**Date** — 2026-11-03 · 18:23 PST
 **Occasion** — Zachary Zhang asked for this reflection after the Northern Veil ray transport merge, recorded in `2ed3b79f9` (PR #841).
 
 ---
