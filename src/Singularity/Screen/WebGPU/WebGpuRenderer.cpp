@@ -455,7 +455,7 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
 
     // Mesh pipeline layout is fixed execution machinery; the fragment
     // mathematics is generated lazily per authored Material response structure.
-    WGPUBindGroupLayoutEntry bglEntries[5] = {};
+    WGPUBindGroupLayoutEntry bglEntries[6] = {};
     bglEntries[0].binding = 0;
     bglEntries[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     bglEntries[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -473,8 +473,11 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     bglEntries[4].binding = 4;
     bglEntries[4].visibility = WGPUShaderStage_Fragment;
     bglEntries[4].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    bglEntries[5].binding = 5;
+    bglEntries[5].visibility = WGPUShaderStage_Fragment;
+    bglEntries[5].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     WGPUBindGroupLayoutDescriptor bglDesc = {};
-    bglDesc.entryCount = 5;
+    bglDesc.entryCount = 6;
     bglDesc.entries = bglEntries;
     _bgl = wgpuDeviceCreateBindGroupLayout(_device, &bglDesc);
 
@@ -1773,7 +1776,7 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
 
     const bool usesRadianceSources =
         wgsl.find("@group(0) @binding(2) var<storage, read> RS") != std::string::npos;
-    WGPUBindGroupLayoutEntry be[3] = {};
+    WGPUBindGroupLayoutEntry be[4] = {};
     be[0].binding = 0;
     be[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     be[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -1781,13 +1784,18 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     be[1].binding = 1;
     be[1].visibility = WGPUShaderStage_Fragment;
     be[1].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    uint32_t sceneEntry = 2;
     if (usesRadianceSources) {
         be[2].binding = 2;
         be[2].visibility = WGPUShaderStage_Fragment;
         be[2].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+        sceneEntry = 3;
     }
+    be[sceneEntry].binding = 3;
+    be[sceneEntry].visibility = WGPUShaderStage_Fragment;
+    be[sceneEntry].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     WGPUBindGroupLayoutDescriptor bgld = {};
-    bgld.entryCount = usesRadianceSources ? 3 : 2;
+    bgld.entryCount = usesRadianceSources ? 4 : 3;
     bgld.entries = be;
 
     SdfPipeline out;
