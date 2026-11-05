@@ -358,25 +358,7 @@ int main() {
     }
 
 
-    // Specific check for list/dictionary types that Palette added to LawGraphWindow
-    // if finding the property returns the correct option with type "dictionary"
-    {
-        bool foundDict = false;
-        bool foundList = false;
-        for (const auto& option : Rendering::knownPathOptions()) {
-            if (std::string(option.type) == "dictionary") {
-                foundDict = true;
-            } else if (std::string(option.type) == "list") {
-                foundList = true;
-            }
-        }
-        if (!foundDict || !foundList) {
-            fail("knownPathOptions", "Palette Update", "must successfully classify at least one dictionary and one list property from the prototypes (e.g. from ScreenChannel/Formation)");
-        }
-    }
-
-
-    // Specific check for list/dictionary types that Palette added to LawGraphWindow
+    // Smoke check only: existing groups may already supply both types; per-path\n    // typeMatches validation above checks advertised types against live values.
     {
         bool foundDict = false;
         bool foundList = false;
