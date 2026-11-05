@@ -2197,6 +2197,9 @@ struct RU {
     //   2 CompleteScene (Unknown until a shared scene provider exists)
     // Visibility is derived execution/path truth, not authored source state.
     lightControl:   vec4<f32>,
+    // x = exact foreign implicit blocker count for this receiver pipeline.
+    // y/z/w reserved for future path-provider execution metadata.
+    sceneVisibilityControl: vec4<f32>,
     // x = distance to the camera's far plane, in WORLD units.
     // y = viewport width in pixels.
     // z = viewport height in pixels.
@@ -2213,6 +2216,13 @@ struct RU {
 struct Params { v: array<f32> };
 @group(0) @binding(1) var<storage, read> P: Params;
 @group(0) @binding(3) var<storage, read> sceneTriangles: array<vec4<f32>>;
+struct SceneImplicitBlockerData {
+    invModel: mat4x4<f32>,
+    dimsKind: vec4<f32>,
+    offset: vec4<f32>,
+};
+@group(0) @binding(4) var<storage, read>
+    sceneImplicitBlockers: array<SceneImplicitBlockerData>;
 
 struct VSOut {
     @builtin(position) clip: vec4<f32>,
@@ -2622,6 +2632,12 @@ fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWor
         cohortOtherInstanceVisibility(surfaceWorld, sourceWorld, receiverIndex);
     g_instIdx = receiverIndex;
     if (cohortV < 0.5) {
+        return VisibilityDecision(1.0, 0.0);
+    }
+
+    let foreignImplicitV =
+        sceneImplicitVisibility(surfaceWorld, sourceWorld);
+    if (foreignImplicitV < 0.5) {
         return VisibilityDecision(1.0, 0.0);
     }
 
@@ -4290,6 +4306,97 @@ fn sceneMeshVisibility(surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
 }
 
 
+std::string sceneVisibilityImplicitMathModule() {
+    return R"WGSL(
+fn sceneImplicitSphereBlocks(
+    blocker: SceneImplicitBlockerData,
+    surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> bool {
+    let a =
+        (blocker.invModel * vec4<f32>(surfaceWorld, 1.0)).xyz -
+        blocker.offset.xyz;
+    let b =
+        (blocker.invModel * vec4<f32>(sourceWorld, 1.0)).xyz -
+        blocker.offset.xyz;
+    let d = b - a;
+    let aa = dot(d, d);
+    if (aa <= 1e-12) { return false; }
+
+    let r = blocker.dimsKind.x;
+    if (!(r > 0.0)) { return false; }
+    let bb = dot(a, d);
+    let cc = dot(a, a) - r * r;
+    let disc = bb * bb - aa * cc;
+    if (disc < 0.0) { return false; }
+
+    let root = sqrt(max(disc, 0.0));
+    let s0 = (-bb - root) / aa;
+    let s1 = (-bb + root) / aa;
+    let eps = 1e-5;
+    return (s0 > eps && s0 < 1.0 - eps) ||
+           (s1 > eps && s1 < 1.0 - eps);
+}
+
+fn sceneImplicitBoxBlocks(
+    blocker: SceneImplicitBlockerData,
+    surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> bool {
+    let a =
+        (blocker.invModel * vec4<f32>(surfaceWorld, 1.0)).xyz -
+        blocker.offset.xyz;
+    let b =
+        (blocker.invModel * vec4<f32>(sourceWorld, 1.0)).xyz -
+        blocker.offset.xyz;
+    let d = b - a;
+    let h = blocker.dimsKind.xyz;
+    if (any(h <= vec3<f32>(0.0))) { return false; }
+
+    let parallel = abs(d) <= vec3<f32>(1e-8);
+    let outsideParallel =
+        parallel &&
+        (a < -h || a > h);
+    if (any(outsideParallel)) { return false; }
+
+    let safeD = select(d, vec3<f32>(1e-8), parallel);
+    let t0 = (-h - a) / safeD;
+    let t1 = ( h - a) / safeD;
+    let lo = min(t0, t1);
+    let hi = max(t0, t1);
+    let enter = max(max(lo.x, lo.y), lo.z);
+    let exit = min(min(hi.x, hi.y), hi.z);
+    let eps = 1e-5;
+    return exit > max(enter, eps) &&
+           enter < 1.0 - eps &&
+           exit > eps;
+}
+
+fn sceneImplicitBlockerBlocks(
+    blocker: SceneImplicitBlockerData,
+    surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> bool {
+    let kind = blocker.dimsKind.w;
+    if (kind < 1.5) {
+        return sceneImplicitSphereBlocks(blocker, surfaceWorld, sourceWorld);
+    }
+    if (kind < 2.5) {
+        return sceneImplicitBoxBlocks(blocker, surfaceWorld, sourceWorld);
+    }
+    return false;
+}
+
+fn sceneImplicitVisibility(
+    surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
+    let blockerCount =
+        u32(max(u.sceneVisibilityControl.x, 0.0));
+    for (var i = 0u; i < blockerCount; i = i + 1u) {
+        if (sceneImplicitBlockerBlocks(
+                sceneImplicitBlockers[i], surfaceWorld, sourceWorld)) {
+            return 0.0;
+        }
+    }
+    return 1.0;
+}
+)WGSL";
+}
+
+
 AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr) {
     if (!expr || expr->pieces.empty()) {
         return AngularExpressionLayout{"<legacy-angular:1.0>", 0, false, true, ""};
@@ -5354,6 +5461,7 @@ Program compile(const geom::SdfNode& root,
         // Explicit zero-set compatibility lane. Persistently admitted authored
         // sources, including exactly one source, use the source-set compiler.
         prog.wgsl += sceneVisibilityTriangleMathModule();
+        prog.wgsl += sceneVisibilityImplicitMathModule();
         prog.wgsl += kMarcher;
     } else {
         prog.wgsl +=
@@ -5371,6 +5479,7 @@ Program compile(const geom::SdfNode& root,
         (void)emitRadianceSourceFunctions(*radianceSources, e, prog.wgsl);
 
         prog.wgsl += sceneVisibilityTriangleMathModule();
+        prog.wgsl += sceneVisibilityImplicitMathModule();
         std::string marcher = kMarcher;
         const std::string lightingBegin =
             "    let V = normalize(u.eyePos.xyz - pw);\n";
