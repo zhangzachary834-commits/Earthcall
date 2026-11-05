@@ -677,43 +677,47 @@ Performance evidence cannot substitute for this.
 
 ## 12. Implementation ladder
 
-### Implementation status — 2026-11-04
+### Implementation status — 2026-11-05
 
-**C0–C4 now have a bounded first implementation on the reconciled branch.**
+**C0–C4 and C5a now have a bounded implementation on the reconciled branch.**
 
-- Added `VolumeTransportCohortPlanner.hpp` as pure derived execution machinery for capability membership, conservative chronology, and tile-local refinement.
-- Added `volume_transport_cohort_planner_test.cpp`, including:
-  - the historical first-four positional split as an explicit negative counterexample;
-  - capability-derived permutation invariance;
-  - media-count-threshold independence;
-  - camera/query chronology reversal without capability change;
-  - whole-screen overlap refusal;
-  - local recovery when global shells overlap but tile support is ordered;
-  - localization of an ambiguous tile to joint transport;
-  - refusal when adjacent tiles prove opposite chronologies;
-  - tile-run coalescing so proof granularity does not automatically become draw-call granularity;
-  - invalid radial proof as uncertainty, never absence.
-- Removed the production `activeMedia.size() >= 6` / first-four / remainder partition from `WebGpuRenderer::flushVolumeComposite()`.
-- C2 derives routed/general candidate membership from each medium's structural mathematics.
-- C3 derives camera-relative conservative radial shells from authored AABBs and schedules whole-screen independent passes only when source separability and total chronology are both proved.
-- C4 projects each current authored AABB conservatively to screen space, partitions the viewport on a coarse 128×96 proof grid, and derives local ordered vs ambiguous regions.
-- Ordered regions are executed by the two capability cohorts under WebGPU scissor rectangles. Ambiguous regions are executed by one joint fused set. The regions are disjoint, so the joint path cannot double-composite pixels already handled by the split path.
-- If different tiles prove opposite cohort chronologies, C4 refuses the split globally. Independent opposite-order tile schedules are deliberately deferred to C5.
-- A projection that reaches/crosses the eye plane claims the full viewport rather than culling. A screen-overlapping medium whose radial proof is invalid makes that tile ambiguous.
-- Partial pipeline creation/encode preparation cannot become partial visible truth: failed candidate split pipelines are scissor-suppressed and the full joint path is retained.
-- The routed compute producer still runs over its existing full-screen publication domain even when its fragment draw is scissored. C4 therefore proves/render-restricts publication regions but does **not** yet claim proportional routed-compute savings.
+C5a removes C4's remaining single-order restriction without claiming full same-ray interval scheduling:
 
-The C3 certificate remains deliberately stronger than necessary:
+- `VolumeCohortTilePlan` now carries three disjoint region families:
+  - `firstBeforeSecondRegions`;
+  - `secondBeforeFirstRegions`;
+  - `jointRegions`.
+- Opposite proved chronologies in different screen regions are no longer treated as a global conflict.
+- `buildVolumeCohortDrawSchedule()` is a pure derived scheduler that explicitly reverses camera chronology into premultiplied blend publication order:
+  - camera proof `FirstBeforeSecond` -> draw `Second`, then `First`;
+  - camera proof `SecondBeforeFirst` -> draw `First`, then `Second`;
+  - unknown -> draw one `Joint` program.
+- `WebGpuRenderer::flushVolumeComposite()` now separates **pipeline preparation** from **fragment publication**. Each scheduled physical pipeline uploads/binds/prepares and runs routed compute at most once, then an ordered `VolumeDrawPacket` stream may reference that prepared pipeline multiple times under disjoint scissor regions.
+- Thus one frame may lawfully execute:
+  `General→Routed` over one region,
+  `Routed→General` over another,
+  and `Joint` over a third.
+- Failed split construction clears the derived packet schedule and retains the full joint fallback.
+- Ordinary V0–V4 volume paths keep their historical full-viewport order when no explicit C5 schedule exists.
+- Routed compute publication remains full-screen today even when routed fragment packets are local; C5a changes publication chronology, not routed producer granularity.
+- Draw-call and triangle telemetry now follows actual packet/strip draws after the preparation/publication split.
+
+**C5a evidence witnesses** now include:
+- opposite adjacent tile chronologies retained as separate region families;
+- pure chronology-to-blend reversal (`Second,First` vs `First,Second`);
+- mixed ordered + joint regions;
+- invalid proof remains joint;
+- serialization permutation and C2/C3/C4 witnesses remain intact.
+
+**Not yet C5-complete:** if one *single ray/tile* contains true interleaving such as
 
 [
-d_{\max}(A) < d_{\min}(B)
+A ightarrow B ightarrow A,
 ]
 
-means every possible point in (A) is closer to the camera than every possible point in (B), so every ray that hits both encounters (A) first.
+C5a still assigns that region to the joint path. C5b must derive ordered **support intervals** inside the query region and lower them into an interval schedule, or retain joint transport when intervals cannot be separated. Do not describe C5a as proof of arbitrary interpenetrating-medium decomposition.
 
-C4 weakens only the **query region**, not the proof standard: the same conservative chronology is re-evaluated from only the media whose projected AABBs may touch each tile. Unknown stays joint. Opposite proven tile orders stay joint until C5 can encode independent interval/tile schedules.
-
-**Evidence boundary:** the source/test changes are committed and source-audited. This environment could not clone the GitHub branch for an independent local compile because outbound DNS/network access is unavailable. GitHub had not reported a CI context at the time of this receipt. Therefore full C++ build, native WebGPU parity, Northern Veil visual parity, M5 performance, and Person FPS remain open acceptance obligations.
+**Acceptance boundary:** source and pure-planner witnesses are committed, but no native WebGPU parity, M5 performance, or Person-FPS claim is attached here. The branch is currently behind default only by later Northern Veil authored-save / council-history commits, not renderer substrate changes observed during this pass.
 
 ### Rung C0 — Freeze and expose the prototype
 
