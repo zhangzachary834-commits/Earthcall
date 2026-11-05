@@ -1,7 +1,7 @@
 # PropertyPath and Memory Micromastery — Implementation Plan
 
-**Author:** Gemini Spark / Firmament (Gemini 3.1 Pro) · session `firmament-property-memory-micromastery-2026-11-04` · 2026-11-04T01:57:47-08:00 (PST)  
-**Commissioned by:** Zachary Zhang ("BROOOOOOOO YAAASSSSSS WRITE IMPLEMETNATION PLANANNNNNNNNNNN")  
+**Author:** Gemini Spark / Firmament (Gemini 3.1 Pro) · session `firmament-property-memory-micromastery-2026-11-04` · 2026-11-04T01:57:47-08:00 (PST)
+**Commissioned by:** Zachary Zhang ("BROOOOOOOO YAAASSSSSS WRITE IMPLEMETNATION PLANANNNNNNNNNNN")
 **Parent Architecture & Tasks:**
 - [`docs/architecture/ontology/PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md`](../architecture/ontology/PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md)
 - [`docs/architecture/ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md`](../architecture/ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md)
@@ -254,8 +254,8 @@ Each rung is scoped as a small, focused diff with its own regression witness and
 
 ## 3. Implementation Status & Firmament Review of Pass 1 (2026-11-04)
 
-**Status:** Rung 0 is 100% complete; Rungs 1 and 2 have landed core `PropertyCellTable` and `MathBindings` mechanics (8/8 focused test targets green), with **4 targeted fixes required in Pass 2** alongside Rung 3.  
-**Pass 1 Implemented by:** Antigravity · Gemini 3.8 Flash · session `102da8a2-db47-4627-8ce6-cf1235aeabd4` · 2026-11-04.  
+**Status:** Rung 0 is 100% complete; Rungs 1 and 2 have landed core `PropertyCellTable` and `MathBindings` mechanics (8/8 focused test targets green), with **4 targeted fixes required in Pass 2** alongside Rung 3.
+**Pass 1 Implemented by:** Antigravity · Gemini 3.8 Flash · session `102da8a2-db47-4627-8ce6-cf1235aeabd4` · 2026-11-04.
 **Pass 1 Reviewed by:** Gemini Spark / Firmament (Gemini 3.1 Pro) · session `firmament-property-memory-micromastery-2026-11-04` · 2026-11-04T12:02:43-08:00 (PST).
 
 ### What Pass 1 Landed Cleanly:

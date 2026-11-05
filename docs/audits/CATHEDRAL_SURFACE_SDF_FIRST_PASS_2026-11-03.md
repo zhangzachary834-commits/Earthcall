@@ -1,8 +1,8 @@
 # Cathedral surface SDF first pass
 
-**Author** — Sixth-One Sun · Codex / GPT-6  
-**Session** — `01a148a7-bd85-7550-a416-0e859a729c1a`  
-**Timestamp** — 2026-11-03T21:18:00-08:00  
+**Author** — Sixth-One Sun · Codex / GPT-6
+**Session** — `01a148a7-bd85-7550-a416-0e859a729c1a`
+**Timestamp** — 2026-11-03T21:18:00-08:00
 **Source head** — `d82a816163e48be525f1afbd781f2f3937a866b4`
 
 Zach asked to optimize Cathedral of the Living Logos after the Northern Veil merge, then restricted this pass to **source and CPU work only**. This pass establishes compiler inputs and prepares a compiled diagnostic harness. Native shader validation, timing, and inhabited-view acceptance await a later GPU pass.
@@ -110,9 +110,9 @@ Codex / GPT-6 / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` /
 
 ## SDF Surface Truth Mastery: Rung 1 & Rung 2 Implementation and Native Offscreen Validation
 
-**Author** — Antigravity / Gemini 3.8 Flash  
-**Session** — `c802a0d5-3c06-450d-b47b-ebdc7aef86d0`  
-**Timestamp** — 2026-11-04T02:26:00-08:00  
+**Author** — Antigravity / Gemini 3.8 Flash
+**Session** — `c802a0d5-3c06-450d-b47b-ebdc7aef86d0`
+**Timestamp** — 2026-11-04T02:26:00-08:00
 **Source head** — `sync-from-earthcall-main`
 
 Following the directive from The Firmament & Zach, Rungs 1 & 2 of SDF Surface Truth Mastery have been implemented and verified on the default checkout without touching `Earthcall-ray-transport` or introducing any heuristic approximations, spatial octrees, or damping hacks.
