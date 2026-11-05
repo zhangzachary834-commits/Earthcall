@@ -126,6 +126,38 @@ struct VolumeCohortTilePlan {
     }
 };
 
+enum class VolumeCohortDrawTarget {
+    First,
+    Second,
+    Joint
+};
+
+struct VolumeCohortDrawStep {
+    VolumeCohortDrawTarget target = VolumeCohortDrawTarget::Joint;
+    VolumeScreenRect rect{};
+};
+
+// Chronology is camera->scene; premultiplied-alpha publication is scene->camera.
+// Therefore a FirstBeforeSecond proof emits Second then First.
+inline std::vector<VolumeCohortDrawStep>
+buildVolumeCohortDrawSchedule(const VolumeCohortTilePlan& plan) {
+    std::vector<VolumeCohortDrawStep> out;
+    out.reserve(plan.firstBeforeSecondRegions.size() * 2 +
+                plan.secondBeforeFirstRegions.size() * 2 +
+                plan.jointRegions.size());
+    for (const auto& rect : plan.firstBeforeSecondRegions) {
+        out.push_back({VolumeCohortDrawTarget::Second, rect});
+        out.push_back({VolumeCohortDrawTarget::First, rect});
+    }
+    for (const auto& rect : plan.secondBeforeFirstRegions) {
+        out.push_back({VolumeCohortDrawTarget::First, rect});
+        out.push_back({VolumeCohortDrawTarget::Second, rect});
+    }
+    for (const auto& rect : plan.jointRegions)
+        out.push_back({VolumeCohortDrawTarget::Joint, rect});
+    return out;
+}
+
 inline std::vector<VolumeScreenRect>
 coalesceVolumeTileMask(const std::vector<uint8_t>& mask,
                        uint32_t tilesX, uint32_t tilesY,
