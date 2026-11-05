@@ -2529,6 +2529,13 @@ fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWor
         return VisibilityDecision(1.0, 1.0);
     }
 
+    // CompleteScene authority is a prerequisite, not something local marching
+    // can discover. Refuse before paying for receiver-local evidence when the
+    // frame materialization is incomplete.
+    if (u.lightControl.y > 1.5 && u.lightControl.z < 0.5) {
+        return VisibilityDecision(0.0, 0.0);
+    }
+
     let localV = localSourceVisibility(surfacePoint, surfaceNormal, sourceWorld);
     if (u.lightControl.y < 1.5) {
         return VisibilityDecision(1.0, localV);
@@ -2537,9 +2544,6 @@ fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWor
     // CompleteScene may be answered only when the renderer proved that this
     // receiving SDF plus the frame's world-triangle materialization cover every
     // opaque blocker. z is that completeness bit; w is triangle count.
-    if (u.lightControl.z < 0.5) {
-        return VisibilityDecision(0.0, 0.0);
-    }
     if (localV < 0.5) {
         return VisibilityDecision(1.0, 0.0);
     }
