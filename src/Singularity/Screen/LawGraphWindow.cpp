@@ -4101,6 +4101,9 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
                 ImGui::BulletText("%s -> %s", Law::resultName(record.result),
                                   record.targetId.empty() ? "(no target)"
                                                           : record.targetId.c_str());
+                if (!record.refusalReason.empty()) {
+                    ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f), "    refused: %s", record.refusalReason.c_str());
+                }
             }
         }
         if (testSubject) {
