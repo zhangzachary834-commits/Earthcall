@@ -6,6 +6,65 @@
 **Written by:** GPT-5.6 Sol  
 **Status:** implementation plan; no completion claim
 
+## Implementation ledger — 2026-11-05 continuation: native GPU field-VM scene table rung 1
+
+The native field VM now crosses the first **production path-visibility authority** boundary for SDF receivers. Mixed authored SDF programs no longer require a universe-sized generated shader and no longer collapse to the Sphere/Box compatibility packet.
+
+Implemented:
+- added a receiver-relative **scene field-program table** for SDF CompleteScene visibility;
+- each foreign opaque SDF instance contributes a 96-byte VM descriptor carrying inverse model transform, bounded proxy extent, bytecode span and declared stack bound;
+- foreign program instructions are concatenated into a separate storage stream using the existing 48-byte `FieldVmInstruction` ABI;
+- SDF shaders bind VM descriptors at group 0 / binding 4 and bytecode at group 0 / binding 5;
+- the fixed WGSL VM is now assembled into both one-source and source-set production SDF programs;
+- the scene-table admission contract is explicitly bounded at **1,024 foreign blockers** and **16,384 total foreign instructions per receiver**, in addition to each program's 1,024-instruction / 128-stack limits;
+- CompleteScene SDF authority now requires one shared predicate covering:
+  1. receiver-local field authority,
+  2. every opaque instance in the receiver's same-program cohort,
+  3. every foreign SDF cohort admitted through the VM table,
+  4. exact frame mesh-triangle materialization;
+- renderer telemetry and the actual SDF binding path now consume that same completeness predicate rather than maintaining a second stale census;
+- the foreign VM source-segment marcher is tri-state:
+  - proved hit → `Known, V=0`;
+  - proved traversal through the clipped blocker interval → `Known, V=1`;
+  - malformed descriptor, VM refusal, non-finite result or march-budget exhaustion → `Unknown`;
+- a proved blocker settles the aggregate path even if another foreign program is Unknown; otherwise any unresolved blocker keeps the aggregate Unknown;
+- numeric SDF edits rebuild the derived scene bytecode from current field values without requiring receiver WGSL regeneration;
+- compiler witnesses now require the production ordering:
+  **own field → same-program cohort → foreign field VM → mesh triangles**;
+- `field_vm_test` now pins the production SDF WGSL binding and VM call using a mixed Sphere/Torus CSG program;
+- `sdf_wgsl_parameter_refresh_test` was migrated from the historical Sphere/Box packet vocabulary to the VM descriptor/binding/ordering contract;
+- `webgpu_object_test` now contains a native-device falsifier: a Sphere receiver and a **foreign Torus in a distinct CSG program cohort** must shadow only one source in CompleteScene mode, then moving that Torus by a value-only edit must remove the shadow without WGSL recompilation.
+
+Preserved boundaries / non-claims:
+- **no green CI or native-device result is claimed yet** for this rung; the native Torus witness is authored and wired into the existing WebGPU test target, but this session has not observed it execute on a native runner;
+- raster mesh receivers still consume the historical exact analytic Sphere/Box implicit packet; they do not yet consume the VM scene table;
+- `Expr` remains refused until Earthcall has a lossless **OntoMath-native** bytecode lowering; legacy `SdfToken` RPN is still not promoted back into authority;
+- `Convex` remains refused until its plane payload receives an explicit VM representation;
+- this VM is now a **foreign path-visibility consumer**, not yet the primary whole-scene surface renderer described by the longer Native GPU OntoMath horizon;
+- the older receiver-local / same-program-cohort marcher still conservatively treats its own finite-step exhaustion as blocked. The new foreign VM does the stronger thing and returns Unknown. Unifying that epistemic contract is a separate follow-up rung, not silently folded into this migration.
+
+Next gates:
+1. observe the Torus native WebGPU witness and focused SDF/compiler witnesses on a real runner;
+2. if green, let raster mesh receivers consume the same VM scene table and retire the Sphere/Box-only foreign implicit authority path;
+3. add native OntoMath bytecode for `Expr` without reviving a second mathematical ontology;
+4. only after those gates consider broader VM ownership of primary surface execution.
+
+The architectural inversion is now concrete:
+
+```
+many authored field laws
+        ↓
+many derived bytecode programs
+        ↓
+one bounded execution language
+        ↓
+receiver-relative path truth
+```
+
+No mega-shader. No triangulation lie. No privileged Torus/Sphere/Box ontology.
+
+---
+
 ## Implementation ledger — 2026-11-05 continuation: native GPU field-VM substrate rung 0
 
 The next foreign-program frontier now has a **data-execution substrate** instead of requiring a scene-sized generated shader.
