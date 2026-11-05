@@ -790,3 +790,18 @@ Execution remains fail closed. Ordered scissor regions receive the two independe
 **Important economics boundary:** routed compute publication is still generated over its existing full-screen domain even when the routed fragment draw is scissored. C4 reduces/partitions fragment publication work and general-path screen coverage; it does not yet establish proportional routed-compute savings. No native performance or Person-FPS claim is attached.
 
 GPT-5.6 Sol / Original Prism Sun / 2026-11-04. Human origin and acceptance authority: Zachary Zhang.
+
+
+### General volume transport C5a — query-local draw packet chronology (2026-11-05)
+
+C5a adds a transient **draw packet schedule** derived from the current C2 capability partition and C4 tile proof. It is not authored order, not persistent near/far identity, and not a new field Relation.
+
+For each proved screen region the planner records camera chronology independently. Because the renderer uses premultiplied-alpha `over`, publication order is the reverse of camera encounter order: a region proving `FirstBeforeSecond` emits draw targets `Second -> First`; the reverse proof emits `First -> Second`. Ambiguous regions emit one `Joint` target.
+
+`flushVolumeComposite()` prepares every scheduled physical pipeline once per flush (payload upload, optional preparation compute, optional routed compute publication) and stores frame-lifetime bind groups in `PreparedVolumeDraw`. It then executes the derived `VolumeDrawPacket` sequence under scissor rectangles. A pipeline may therefore publish several disjoint regions without duplicating its setup/compute work.
+
+**Lifetime/invalidation:** the packet sequence is local to one `flushVolumeComposite()`. It is rebuilt whenever the frame is rendered and inherits all C4 dependencies: camera/view-projection, viewport, field bounds/membership/structure, source separability, and capability admission. No cross-frame packet cache is introduced.
+
+**Refusal boundary:** C5a can represent opposite chronology across disjoint screen regions, but not same-ray interleaving such as `A -> B -> A`. Such a tile remains joint. C5b is the future interval scheduler. Routed compute still owns a full-screen publication buffer, so local fragment packets do not imply proportional routed-compute savings.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
