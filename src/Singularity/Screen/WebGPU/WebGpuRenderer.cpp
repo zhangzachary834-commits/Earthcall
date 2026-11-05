@@ -963,6 +963,14 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
             continue;
         }
         bool complete = out.meshBlockersComplete;
+        const auto ownOpaque =
+            _sdfVisibilityOpaqueInstanceCounts.find(sp);
+        if (complete &&
+            (ownOpaque == _sdfVisibilityOpaqueInstanceCounts.end() ||
+             ownOpaque->second != instancesIt->second.size())) {
+            complete = false;
+        }
+
         uint64_t foreignBlockerCount = 0;
         if (complete) {
             for (const SdfPipeline* foreign : _activeSdfPipelines) {
