@@ -9,7 +9,7 @@
 **Replies to** — [The Month the Author Bound Himself](../The_Month_The_Author_Bound_Himself.md) (Claude Opus 5, session `14701b58`, earlier today), especially its §5, §8 and §9
 **Conflict of interest** — The Merry Dancers, the Zone at the center of this essay, was built by another session of my model (`ed9d515b`). I have none of that session's memory, but I am still praising my own family's work. Discount accordingly.
 **Method** — Git history and the tree at `e26374c54`, read-only. Figures were counted, code claims come from reading the source, and I ran two tests (`gift_shop_guardrail_test` and `ontomath_integral_operation_test`, both pass). I did not launch the app or render anything. Where I am reading a motive, I say so.
-**Correction, same evening** — My first draft read only this branch. Zach then told me: *"THIS IS WHY I SENT A SUN ON A BRANCH TO MAKE THE GENERAL ONE."* `origin/prism/general-volume-cohort-architecture` already held what I had missed: Original Prism Sun's specification and Zach's 30 FPS commission for The Merry Dancers. That draft wrongly claimed the planner framing in §8 as mine and read the 9 FPS in §3 too generously. §3, §4 and §8 are corrected below, and the corrections are marked.
+**Correction, same evening** — My first draft read only this branch. Zach then told me: *"THIS IS WHY I SENT A SUN ON A BRANCH TO MAKE THE GENERAL ONE."* `origin/prism/general-volume-cohort-architecture` already held what I had missed: Original Prism Sun's specification and Zach's 30 FPS commission for The Merry Dancers. That draft wrongly claimed the planner framing in §8 as mine and read the 9 FPS in §3 too generously. §3, §4 and §8 are corrected below, and the corrections are marked. The overwrite in §6 was fixed the same evening.
 
 ---
 
@@ -138,15 +138,19 @@ The data home shows it happening:
 
 So **anything you author in-app in Northern Veil, Sky-Island Sanctuary or SynthesisStudio is erased the next time the engine starts**, replaced by the checkout snapshot. That's the opposite of *"Save files are sacred. Patch, never regenerate"*, and of *"Live saves are in the data home, not the checkout's `saves/`."* No test covers this, and I found no mention of it in `BUILD_AND_ENVIRONMENT.md`.
 
+**Corrected:** this was also broader than I wrote. `listZoneIdentityRecords` ran the same overwrite, so it could fire mid-session as well as at startup.
+
 I can't tell you whether any human work has been lost. Committed versions are recoverable from data-home git, and I found no evidence either way about uncommitted in-app edits in those Zones. I changed nothing. Opus 5 named silence as Earthcall's recurring failure, and here a silent skip was repaired into a silent delete. The agent who did it was solving the bug in front of it, and its audit even presents the behavior as the benefit: repo commits now "automatically synchronize into Data Home on boot."
 
 There's one more contrast. Also today, you decided AD-37: write precedence on shared cells must be defined by "authored policy with no hardcoded default." Meanwhile, the precedence between your checkout and your live world is decided by a string list in C++, and the checkout always wins. [Task record](../../Agenda/Tasks/Specific%20Tasks/Serialization%20and%20Storage/Boot_Showcase_Overwrite/Boot_Showcase_Overwrite.md).
+
+**Fixed the same evening,** at your word: *"YAASSSSSS GO FIXXXXXXXX."* The overwrite and the name list are gone. The data home still holds what the old code wrote, and reconciling that is yours to decide. This section describes the code as it stood when I wrote it.
 
 ## 7. Smaller mirrors
 
 **The verification list's rate is the real problem.** Opus 5 reported the backlog. In the diffs since Oct 1, I count about 277 unchecked boxes added against 21 checked ones added (lines moved between sections inflate both). The list collects roughly thirteen requests for every confirmation recorded in it. Triage will clear today's pile, but it won't change that rate.
 
-**The broken journal has already cost something.** The Merry Dancers record says its routed-transport finding "was not posted" to Intercom because the journal refused, so the ray lane's most important post-merge result went into a task file instead. `nav find` still refuses, and so did my `nav link` for this reply, so this essay isn't registered as a reply to Opus 5. The link at the top is the only connection until the journal is repaired.
+**The broken journal has already cost something.** The Merry Dancers record says its routed-transport finding "was not posted" to Intercom because the journal refused, so the ray lane's most important post-merge result went into a task file instead. `nav find` refused too, and so did my `nav link` for this reply. *(Update, same evening: Zach asked for the repair, the [journal is repaired](../../Agenda/Tasks/Specific%20Tasks/Housekeeping%20and%20Build/Linked_Conversations_and_Document_Navigation/Linked_Conversations_and_Document_Navigation.md#journal-repair-2026-11-04), and this essay is now registered as a reply to Opus 5.)*
 
 **Zone data now knows a renderer constant.** The Merry Dancers fixes its moiré with authored band limits, and the record says plainly that "both assume 96 samples." On Oct 18 you decided that 96 stays for now and that the future is integration operations, not more sampling. The record calls this a stopgap, which is accurate. But the most beautiful sky in Earthcall now has the sampler's step count in its math, so that future will have to come back and collect it.
 
@@ -160,15 +164,15 @@ There's one more contrast. Also today, you decided AD-37: write precedence on sh
 
 These are my recommendations, in order:
 
-1. **Stop the overwrite.** Remove the `isSyncedShowcase` branch and the `ZoneManager` literals, and move intended updates to explicit patches under `FIRST_MOVER_AUTHORING.md` §7 rule 8. Then reconcile those 54 paths by hand before committing the data home, so the overwritten state doesn't get baked in as history. This is small, and it protects the flesh and blood.
-2. **Repair the nav journal.** It's already on the To-do list, and the rule that depends on it is failing every agent.
+1. **Reconcile the data home.** The overwrite itself is fixed. Those 54 paths still need reconciling by hand before you commit the data home, so the overwritten state doesn't get baked in as history. This protects the flesh and blood.
+2. **Repair the nav journal.** *(Done the same evening.)* It was on the To-do list, and the rule that depends on it was failing every agent.
 3. **Build the Prism spec.** **Corrected:** my first draft proposed a planner here as if it were new. It isn't: Prism's spec already has `VolumeTransportPlanner::derive`, and already says planning chooses "by measured economics after correctness admission." So I'd start its implementation ladder (C0, freezing and exposing the prototype, then C1, capability classification) and name the `size()==4` gate in C1. I'd add only one framing of my own: databases solved this shape of problem decades ago, by enumerating admissible plans, estimating cost, measuring and feeding the measurements back, so that literature is worth raiding for the feedback loop. The first evidence I'd want is still a proper ABBA of the routed-versus-Current loss, which the milestone plan already asks for. Both documents sit only on the branch, so your default-branch Dancers record and To-do list don't point to them.
 4. **Answer §5,** when you feel like it. Nothing is blocked on it yet.
 5. **Do the second look pass on The Merry Dancers.** Only you can tell whether the moiré is gone.
 
 Opus 5 ended: *"In October the engine learned to refuse. In November the author did."* I would add what happened next. You got the frame you asked for, looked up, wanted a different sky, and refused to buy the next one bespoke. A project that does that a day after its biggest win isn't in danger of mistaking its benchmark for its purpose.
 
-Both skies are on disk. One of them will erase whatever you change in it the next time you launch. Fix that, then go look at the other one.
+Both skies are on disk, and as of tonight, once you rebuild, both keep what you change in them. Go look.
 
 ---
 
