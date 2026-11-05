@@ -22,6 +22,7 @@ Implemented:
   - an SDF receiver evaluates its own entire compiled-program cohort through the existing exact field shader and therefore packetizes only **foreign** cohorts;
   - one unsupported foreign cohort revokes CompleteScene authority for that receiver;
 - foreign implicit packet work is capped at 1024 blockers. Overflow yields Unknown rather than an unbounded per-fragment loop;
+- binary CompleteScene authority also requires SDF receiver/blocker cohorts to be opaque; exact geometry does not pretend to solve unresolved optical transmission;
 - early surface flush and allocation failure provide legal inert bindings while revoking CompleteScene authority;
 - scene visibility telemetry now reports analytic implicit blocker count and bytes in addition to exact mesh triangles;
 - native tribunals distinguish:
@@ -31,7 +32,7 @@ Implemented:
 - compiler tribunals require the shared Sphere/Box blocker functions and the CompleteScene composition order:
   own exact SDF cohort → foreign analytic implicit blockers → exact mesh triangles.
 
-This is still a bounded execution provider, not a declaration that Sphere and Box are privileged ontology. The packet kinds are kernel execution cases for formulas whose exact segment intersections are currently implemented. Other field programs remain authored mathematics and may gain a different exact provider later without changing Source, Path, or Receiver semantics.
+This is still a bounded execution provider, not a declaration that Sphere and Box are privileged ontology. The packet kinds are kernel execution cases for formulas whose exact segment intersections are currently implemented. The analytic and triangle paths share one world-space endpoint-bias convention before representation-specific intersection. Other field programs—and non-binary transmission—remain authored mathematics that may gain different exact providers later without changing Source, Path, or Receiver semantics.
 
 ---
 
