@@ -827,3 +827,16 @@ A tagged joint program is excluded from full-ray `KernelRoutedTransport` admissi
 Invalid/incomplete family tagging refuses compiler admission rather than treating an unknown member as absent.
 
 GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
+
+
+### General volume transport C5b-2b1 — routed strip span stream (2026-11-05)
+
+The routed producer's `rays`, `singles`, and `overlaps` buffers are **strip-lifetime derived execution state**. They are reusable scratch, not frame publications, not persistent caches, and not authored relations.
+
+`encodeSpans()` exposes those buffers only through a borrowed callback after setup/classification/S1-S2-fallback production for one strip and before the next strip may overwrite them. A consumer may record GPU commands against the borrowed ranges during that callback; it must not treat their contents as surviving afterward.
+
+The established `encode()` path still performs `ecConsume` and owns the integrated full-frame routed publication. Producer truth and framebuffer publication are now distinct execution lifetimes.
+
+C5b-2b1 has no production renderer caller yet. No routed interval performance claim follows from the existence of the seam.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
