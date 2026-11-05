@@ -677,6 +677,18 @@ Performance evidence cannot substitute for this.
 
 ## 12. Implementation ladder
 
+### Implementation status — 2026-11-04
+
+**C0/C1 landed on this branch.**
+
+- Added `VolumeTransportCohortPlanner.hpp` as a pure capability-membership primitive.
+- Added `volume_transport_cohort_planner_test.cpp`, including an explicit counterexample showing that the historical first-four positional split changes cohort membership under serialization permutation while capability-derived membership does not.
+- Removed the production `activeMedia.size() >= 6` / first-four / remainder partition from `WebGpuRenderer::flushVolumeComposite()`.
+- Mixed execution families currently remain one joint fused set until a query-relative separability/order proof exists.
+- Existing four-member routed admission remains available when the entire four-member set satisfies the routed structural proof.
+
+This is intentionally a temporary **correctness-first valley**: the eight-field Northern Veil may lose the prototype's multi-cohort speedup on this branch until C2/C3 restore specialization under proof. That loss is preferable to preserving serialization order as physics.
+
 ### Rung C0 — Freeze and expose the prototype
 
 - Keep current Pass 3 as a dated prototype.
