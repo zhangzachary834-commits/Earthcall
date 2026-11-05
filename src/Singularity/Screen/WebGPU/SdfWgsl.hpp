@@ -365,6 +365,12 @@ ParameterBlock collectRadianceSourceParams(
 // authority and is carried separately in u.lightControl.z.
 std::string sceneVisibilityTriangleMathModule();
 
+// Exact bounded foreign-implicit visibility for analytically admitted primitive
+// leaves. Callers provide sceneImplicitBlockers storage and
+// u.sceneVisibilityControl.x = blocker count. This module is representation
+// neutral and owns only segment/primitive intersection, never completeness.
+std::string sceneVisibilityImplicitMathModule();
+
 // V3 medium phase Phi(p,wi,wo,t)->scalar. Absence is exact identity Phi=1.
 // wi/wo are transport bindings, never aliases of source alpha's omega.
 PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr);
