@@ -267,23 +267,23 @@ int main() {
 
     // Specific check for list/dictionary types that Palette added to LawGraphWindow
     {
-        bool foundDict = false;
-        bool foundList = false;
+        bool foundScreenDict = false;
+        bool foundFormationList = false;
 
         for (const auto& option : Rendering::knownPathOptions()) {
-            if (std::string(option.type) == "dictionary") {
-                foundDict = true;
+            if (std::string(option.group) == "Channel — Screen" && std::string(option.type) == "dictionary") {
+                foundScreenDict = true;
             }
-            if (std::string(option.type) == "list") {
-                foundList = true;
+            if (std::string(option.group) == "Formation" && std::string(option.type) == "list") {
+                foundFormationList = true;
             }
         }
 
-        if (!foundDict) {
-            fail("knownPathOptions", "Palette Update", "must successfully classify dictionary properties (which otherwise fallback to number)");
+        if (!foundScreenDict) {
+            fail("knownPathOptions", "Palette Update", "must successfully classify dictionary properties (e.g. from ScreenChannel)");
         }
-        if (!foundList) {
-            fail("knownPathOptions", "Palette Update", "must successfully classify list properties (which otherwise fallback to number)");
+        if (!foundFormationList) {
+            fail("knownPathOptions", "Palette Update", "must successfully classify list properties (e.g. from Formation)");
         }
     }
 
