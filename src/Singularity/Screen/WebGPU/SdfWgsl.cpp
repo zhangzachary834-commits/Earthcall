@@ -4350,10 +4350,11 @@ fn sceneImplicitBoxBlocks(
     if (any(h <= vec3<f32>(0.0))) { return false; }
 
     let parallel = abs(d) <= vec3<f32>(1e-8);
-    let outsideParallel =
-        parallel &&
-        (a < -h || a > h);
-    if (any(outsideParallel)) { return false; }
+    if ((parallel.x && (a.x < -h.x || a.x > h.x)) ||
+        (parallel.y && (a.y < -h.y || a.y > h.y)) ||
+        (parallel.z && (a.z < -h.z || a.z > h.z))) {
+        return false;
+    }
 
     let safeD = select(d, vec3<f32>(1e-8), parallel);
     let t0 = (-h - a) / safeD;
