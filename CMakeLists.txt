@@ -282,6 +282,7 @@ if(NOT EMSCRIPTEN)
     list(APPEND WEBGPU_APP_SOURCES 
         src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
         src/Singularity/Screen/WebGPU/SdfWgsl.cpp
+        src/Singularity/Screen/WebGPU/FieldVm.cpp
         src/Singularity/Screen/WebGPU/GpuBufferPool.cpp
         src/Singularity/Screen/WebGPU/GpuMeshCache.cpp
     )
@@ -405,7 +406,8 @@ if(NOT EMSCRIPTEN)
             # binds `p` happily), so this needs the real emitter.
             add_executable(${TEST_NAME}
                 ${TEST_SOURCE}
-                src/Singularity/Screen/WebGPU/SdfWgsl.cpp)
+                src/Singularity/Screen/WebGPU/SdfWgsl.cpp
+                src/Singularity/Screen/WebGPU/FieldVm.cpp)
             target_link_libraries(${TEST_NAME} PRIVATE
                 earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto
                 ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
@@ -413,6 +415,7 @@ if(NOT EMSCRIPTEN)
             set(WEBGPU_TEST_EXTRA_SRCS
                 src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
                 src/Singularity/Screen/WebGPU/SdfWgsl.cpp
+                src/Singularity/Screen/WebGPU/FieldVm.cpp
                 src/Singularity/Screen/WebGPU/GpuBufferPool.cpp
                 src/Singularity/Screen/WebGPU/GpuMeshCache.cpp)
             if(APPLE)
