@@ -3524,10 +3524,9 @@ void WebGpuRenderer::flushVolumeComposite() {
     }
 
     if (activeMedia.size() > 1) {
-        // C1: derive execution capability from each medium's mathematics. This
-        // classification is intentionally NOT yet permission to split the set:
-        // cohort chronology/separability are query-relative proofs (C3+), not
-        // consequences of vector position or media count.
+        // C2: execution-family membership comes only from mathematical
+        // capability. Serialization order, Zone identity, artistic role and
+        // media count carry no transport meaning.
         const auto routedCapability = [](const Rendering::VolumeDensityBinding* medium) {
             if (!medium || !medium->densityExpr) return false;
             const auto recipe = OntoMath::clampedWaveSupport(medium->densityExpr);
@@ -3542,13 +3541,67 @@ void WebGpuRenderer::flushVolumeComposite() {
         };
         const auto capabilityPartition =
             Rendering::partitionVolumeMediaByRoutedCapability(activeMedia, routedCapability);
+        const auto& routedCohort = capabilityPartition.first;
+        const auto& generalCohort = capabilityPartition.second;
 
-        // Until a lawful cohort-order certificate exists, mixed capability
-        // families remain one joint set. This deliberately sacrifices the
-        // Pass-3 positional speedup rather than preserving an unproved
-        // "first four are near / rest are far" world-domain assumption.
-        const bool wholeSetRoutedAdmissible = capabilityPartition.second.empty();
-        enqueueVolumeCohort(activeMedia, wholeSetRoutedAdmissible);
+        // C3's first chronology certificate is intentionally coarse but sound:
+        // derive a camera-relative radial shell from each authored AABB. If the
+        // shells do not overlap, every possible point in the nearer cohort is
+        // closer to the eye than every possible point in the farther cohort,
+        // hence every ray that hits both has the same cohort chronology.
+        const auto radialSupportFor =
+            [&](const Rendering::VolumeDensityBinding* medium)
+                -> Rendering::VolumeCohortSupportInterval {
+            if (!medium) return {};
+            const glm::vec3 halfExtent = glm::abs(medium->scale);
+            const glm::vec3 eyeDelta = glm::abs(_eyePos - medium->origin);
+            const glm::vec3 nearestDelta =
+                glm::max(eyeDelta - halfExtent, glm::vec3(0.0f));
+            const glm::vec3 farthestDelta = eyeDelta + halfExtent;
+            const double nearDistance = static_cast<double>(glm::length(nearestDelta));
+            const double farDistance = static_cast<double>(glm::length(farthestDelta));
+            if (!std::isfinite(nearDistance) || !std::isfinite(farDistance))
+                return {};
+            return {nearDistance, farDistance, true};
+        };
+
+        bool scheduledSplit = false;
+        const bool separableSource =
+            !_certificateProbeMedium && incidentSource &&
+            OntoMath::literalZero(incidentSource->radianceExpr);
+
+        // The current routed backend is a four-member execution family. A
+        // different routed cardinality is therefore capability information but
+        // not yet an executable split. Also keep singleton companions joint:
+        // enqueueVolumeCohort currently represents multi-medium sets only.
+        if (separableSource && routedCohort.size() == 4 && generalCohort.size() > 1) {
+            const auto routedSupport =
+                Rendering::aggregateVolumeCohortSupport(routedCohort, radialSupportFor);
+            const auto generalSupport =
+                Rendering::aggregateVolumeCohortSupport(generalCohort, radialSupportFor);
+            const auto order =
+                Rendering::proveWholeScreenRadialOrder(routedSupport, generalSupport);
+
+            if (order == Rendering::VolumeCohortOrder::FirstBeforeSecond) {
+                // Routed is nearer: compose farther general transport first.
+                enqueueVolumeCohort(generalCohort, false);
+                enqueueVolumeCohort(routedCohort, true);
+                scheduledSplit = true;
+            } else if (order == Rendering::VolumeCohortOrder::SecondBeforeFirst) {
+                // General is nearer: compose farther routed transport first.
+                enqueueVolumeCohort(routedCohort, true);
+                enqueueVolumeCohort(generalCohort, false);
+                scheduledSplit = true;
+            }
+        }
+
+        if (!scheduledSplit) {
+            // Overlapping/unknown shells, non-separable source coupling, or an
+            // unsupported cohort cardinality stay on one joint path. C4/C5 may
+            // later recover specialization locally per tile/ray/interval.
+            const bool wholeSetRoutedAdmissible = generalCohort.empty();
+            enqueueVolumeCohort(activeMedia, wholeSetRoutedAdmissible);
+        }
     }
 
     // Build ordinary V0-V4 batches only from the bounded projection EngineRender
