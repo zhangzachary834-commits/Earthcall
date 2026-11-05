@@ -213,7 +213,9 @@ private:
     };
     SceneVisibilityFrame _sceneVisibilityFrame;
     bool _frameHasUnmaterializedOpaqueGeometry = false;
+    bool _frameHadEarlySurfaceFlush = false;
     SceneVisibilityFrame prepareSceneVisibilityFrame();
+    void ensureSceneVisibilityBindingForEarlyFlush();
 
     struct MeshResponseKey {
         // Owning references prevent an expired/reallocated AST address from
