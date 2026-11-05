@@ -263,6 +263,29 @@ int main() {
         }
     }
 
+
+    // Specific check for list/dictionary types that Palette added to LawGraphWindow
+    {
+        bool foundScreenDict = false;
+        bool foundFormationList = false;
+
+        for (const auto& option : Rendering::knownPathOptions()) {
+            if (std::string(option.group) == "Channel — Screen" && std::string(option.type) == "dictionary") {
+                foundScreenDict = true;
+            }
+            if (std::string(option.group) == "Formation" && std::string(option.type) == "list") {
+                foundFormationList = true;
+            }
+        }
+
+        if (!foundScreenDict) {
+            fail("knownPathOptions", "Palette Update", "must successfully classify dictionary properties (e.g. from ScreenChannel prototype)");
+        }
+        if (!foundFormationList) {
+            fail("knownPathOptions", "Palette Update", "must successfully classify list properties (e.g. from Formation prototype)");
+        }
+    }
+
     // SDF range-proxy governance is a ScreenChannel contract even though the
     // derived counters are not authoring-picker entries. Keep it here rather
     // than in gpu_mastery_test: this witness needs property registration, not a
@@ -358,23 +381,25 @@ int main() {
     }
 
 
-    // Smoke check only: existing groups may already supply both types; per-path
-    // typeMatches validation above checks advertised types against live values.
+    // Specific check for list/dictionary types that Palette added to LawGraphWindow
     {
-        bool foundDict = false;
-        bool foundList = false;
+        bool foundScreenDict = false;
+        bool foundFormationList = false;
 
         for (const auto& option : Rendering::knownPathOptions()) {
-            if (std::string(option.type) == "dictionary") {
-                foundDict = true;
+            if (std::string(option.group) == "Channel — Screen" && std::string(option.type) == "dictionary") {
+                foundScreenDict = true;
             }
-            if (std::string(option.type) == "list") {
-                foundList = true;
+            if (std::string(option.group) == "Formation" && std::string(option.type) == "list") {
+                foundFormationList = true;
             }
         }
 
-        if (!foundDict || !foundList) {
-            fail("knownPathOptions", "Palette Update", "must successfully classify list and dictionary properties from any prototype");
+        if (!foundScreenDict) {
+            fail("knownPathOptions", "Palette Update", "must successfully classify dictionary properties (e.g. from ScreenChannel prototype)");
+        }
+        if (!foundFormationList) {
+            fail("knownPathOptions", "Palette Update", "must successfully classify list properties (e.g. from Formation prototype)");
         }
     }
 
