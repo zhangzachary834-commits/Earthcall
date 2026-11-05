@@ -117,7 +117,6 @@ struct RadianceSourceData {
 
     wgsl += response.wgsl;
     if (sourceProgram) wgsl += sourceProgram->wgsl;
-    wgsl += sdfwgsl::sceneVisibilityTriangleMathModule();
 
     wgsl += std::string("\nconst HAS_AUTHORED_MATERIAL_RESPONSE: bool = ") +
             (response.hasDirectResponse ? "true;\n" : "false;\n");
@@ -133,6 +132,8 @@ struct RadianceSourceData {
                 std::to_string(static_cast<float>(OntoMath::kDirectionEpsilon)) +
                 ";\n";
     }
+
+    wgsl += sdfwgsl::sceneVisibilityTriangleMathModule();
 
     wgsl += R"WGSL(
 struct VisibilityDecision {
