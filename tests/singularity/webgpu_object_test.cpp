@@ -3152,7 +3152,7 @@ int main() {
         // law from the sphere receiver, but this bounded provider can lower the
         // primitive leaf itself into an exact analytic segment blocker.
         Object differentImplicit;
-        differentImplicit.setShapeKind(Object::ShapeKind::Box);
+        differentImplicit.setShapeKind(Object::ShapeKind::Cube);
         differentImplicit.setRenderMode(Object::RenderMode::Auto);
         differentImplicit.setMaterialId("material.webgpu_source_transport_parity");
         const glm::mat4 implicitBoxBlockerModel =
