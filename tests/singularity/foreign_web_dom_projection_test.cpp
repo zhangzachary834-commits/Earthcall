@@ -185,6 +185,55 @@ int main() {
         assert(language.findById("page-session.a91f4b2c.attrval.node.6.1") != nullptr);
     }
 
+    // 5.6 Remove-set-remove must preserve the surviving class attribute identity.
+    {
+        const std::string prefix = "page-session.a91f4b2c.";
+        nlohmann::json setJson = {
+            {"protocolVersion", 1}, {"pageSessionId", "page-session.a91f4b2c"},
+            {"sequence", 3}, {"records", {{
+                {"kind", "attribute-set"}, {"targetNodeToken", "node.6"},
+                {"attributeName", "data-test"}, {"attributeValue", "fresh"}
+            }}}
+        };
+        auto setDelta = DomDelta::fromJson(setJson);
+        assert(setDelta.validate().valid);
+        std::string err;
+        assert(translator.applyDelta(setDelta, &err));
+        assert(err.empty());
+        assert(language.findById(prefix + "attr.node.6.2") != nullptr);
+        assert(language.findById(prefix + "attrval.node.6.2") != nullptr);
+        assert(language.findById(prefix + "attr.node.6.1") != nullptr);
+
+        nlohmann::json removeJson = {
+            {"protocolVersion", 1}, {"pageSessionId", "page-session.a91f4b2c"},
+            {"sequence", 4}, {"records", {{
+                {"kind", "attribute-remove"}, {"targetNodeToken", "node.6"},
+                {"attributeName", "data-test"}
+            }}}
+        };
+        auto removeDelta = DomDelta::fromJson(removeJson);
+        assert(removeDelta.validate().valid);
+        assert(translator.applyDelta(removeDelta, &err));
+        assert(err.empty());
+        assert(translator.getCurrentSequence() == 4);
+        assert(language.findById(prefix + "attr.node.6.2") == nullptr);
+        assert(language.findById(prefix + "attrval.node.6.2") == nullptr);
+        assert(language.findById(prefix + "attr.node.6.1") != nullptr);
+        assert(language.findById(prefix + "attrval.node.6.1") != nullptr);
+        auto form = translator.findNodeFormation("node.6");
+        assert(form != nullptr);
+        bool classLinked = false;
+        bool removedLinked = false;
+        for (const auto& rel : form->relations().getAll()) {
+            if (rel->typeLabel() != DomRelationType::kHasAttribute) continue;
+            auto* attr = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
+            if (attr && attr->getSymbol() == "class") classLinked = true;
+            if (attr && attr->getSymbol() == "data-test") removedLinked = true;
+        }
+        assert(classLinked);
+        assert(!removedLinked);
+    }
+
     // 6. Navigation / Retirement Lifecycle
     {
         // Prove retire completely clears live mirror
