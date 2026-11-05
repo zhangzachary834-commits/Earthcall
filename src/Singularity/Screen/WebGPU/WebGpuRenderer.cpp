@@ -111,7 +111,7 @@ struct RadianceSourceData {
 @group(0) @binding(2) var albedoSamp: sampler;
 @group(0) @binding(3) var<storage, read> P: Params;
 @group(0) @binding(4) var<storage, read> RS: array<RadianceSourceData>;
-@group(0) @binding(5) var<storage, read> sceneTriangles: array<SceneVisibilityTriangle>;
+@group(0) @binding(5) var<storage, read> sceneTriangles: array<vec4<f32>>;
 @group(1) @binding(0) var<storage, read> instances: array<Instance>;
 )WGSL";
 
@@ -810,7 +810,8 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
             if (inst.baseColor.a < 0.999999f) {
                 exactMeshMaterialization = false;
             }
-            if (triangleCount > kMaxSceneVisibilityTriangles - perInstance) {
+            if (perInstance > kMaxSceneVisibilityTriangles ||
+                triangleCount > kMaxSceneVisibilityTriangles - perInstance) {
                 exactMeshMaterialization = false;
                 triangleCount = kMaxSceneVisibilityTriangles + 1;
                 break;
