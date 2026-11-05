@@ -4331,9 +4331,8 @@ fn sceneImplicitSphereBlocks(
     let root = sqrt(max(disc, 0.0));
     let s0 = (-bb - root) / aa;
     let s1 = (-bb + root) / aa;
-    let eps = 1e-5;
-    return (s0 > eps && s0 < 1.0 - eps) ||
-           (s1 > eps && s1 < 1.0 - eps);
+    return (s0 > 0.0 && s0 < 1.0) ||
+           (s1 > 0.0 && s1 < 1.0);
 }
 
 fn sceneImplicitBoxBlocks(
@@ -4366,10 +4365,9 @@ fn sceneImplicitBoxBlocks(
     let hi = select(max(t0, t1), vec3<f32>( 1e30), parallel);
     let enter = max(max(lo.x, lo.y), lo.z);
     let exit = min(min(hi.x, hi.y), hi.z);
-    let eps = 1e-5;
-    return exit > max(enter, eps) &&
-           enter < 1.0 - eps &&
-           exit > eps;
+    return exit >= max(enter, 0.0) &&
+           enter < 1.0 &&
+           exit > 0.0;
 }
 
 fn sceneImplicitBlockerBlocks(
@@ -4387,11 +4385,25 @@ fn sceneImplicitBlockerBlocks(
 
 fn sceneImplicitVisibility(
     surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
+    let toSource = sourceWorld - surfaceWorld;
+    let distance = length(toSource);
+    if (distance <= SOURCE_DIRECTION_EPS) { return 1.0; }
+
+    // Share the exact same endpoint convention as sceneMeshVisibility: bias
+    // once in WORLD space, then every representation intersects that one path.
+    let direction = toSource / distance;
+    let bias = max(1e-4, distance * 1e-5);
+    let segmentStart = surfaceWorld + direction * bias;
+    let segmentEnd = sourceWorld - direction * bias;
+    if (dot(segmentEnd - segmentStart, direction) <= 0.0) {
+        return 1.0;
+    }
+
     let blockerCount =
         u32(max(u.sceneVisibilityControl.x, 0.0));
     for (var i = 0u; i < blockerCount; i = i + 1u) {
         if (sceneImplicitBlockerBlocks(
-                sceneImplicitBlockers[i], surfaceWorld, sourceWorld)) {
+                sceneImplicitBlockers[i], segmentStart, segmentEnd)) {
             return 0.0;
         }
     }
