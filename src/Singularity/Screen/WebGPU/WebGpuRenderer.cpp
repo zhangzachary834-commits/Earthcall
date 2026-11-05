@@ -962,41 +962,8 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
         if (instancesIt == _sdfBatches.end() || instancesIt->second.empty()) {
             continue;
         }
-        bool complete = out.meshBlockersComplete;
-        const auto ownOpaque =
-            _sdfVisibilityOpaqueInstanceCounts.find(sp);
-        if (complete &&
-            (ownOpaque == _sdfVisibilityOpaqueInstanceCounts.end() ||
-             ownOpaque->second != instancesIt->second.size())) {
-            complete = false;
-        }
-
-        uint64_t foreignBlockerCount = 0;
-        if (complete) {
-            for (const SdfPipeline* foreign : _activeSdfPipelines) {
-                if (foreign == sp) continue;
-                const auto foreignInstances = _sdfBatches.find(foreign);
-                if (foreignInstances == _sdfBatches.end() ||
-                    foreignInstances->second.empty()) {
-                    continue;
-                }
-                const auto foreignBlockers =
-                    _sdfVisibilityBlockerBatches.find(foreign);
-                if (foreignBlockers == _sdfVisibilityBlockerBatches.end() ||
-                    foreignBlockers->second.size() !=
-                        foreignInstances->second.size() ||
-                    foreignBlockers->second.size() >
-                        kMaxSceneVisibilityImplicitBlockers ||
-                    foreignBlockerCount >
-                        kMaxSceneVisibilityImplicitBlockers -
-                            foreignBlockers->second.size()) {
-                    complete = false;
-                    break;
-                }
-                foreignBlockerCount += foreignBlockers->second.size();
-            }
-        }
-        if (!complete) {
+        if (!sdfSceneVisibilityCompleteForFrame(
+                sp, out.meshBlockersComplete)) {
             anyUnknown = true;
         }
     }
@@ -1007,10 +974,10 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
     return out;
 }
 
-bool WebGpuRenderer::sdfSceneVisibilityComplete(
-    const SdfPipeline* receiver) const {
+bool WebGpuRenderer::sdfSceneVisibilityCompleteForFrame(
+    const SdfPipeline* receiver, bool meshBlockersComplete) const {
     if (radianceVisibilityMode() != RadianceVisibilityMode::CompleteScene ||
-        !_sceneVisibilityFrame.meshBlockersComplete || !receiver) {
+        !meshBlockersComplete || !receiver) {
         return false;
     }
 
@@ -1066,6 +1033,12 @@ bool WebGpuRenderer::sdfSceneVisibilityComplete(
         }
     }
     return true;
+}
+
+bool WebGpuRenderer::sdfSceneVisibilityComplete(
+    const SdfPipeline* receiver) const {
+    return sdfSceneVisibilityCompleteForFrame(
+        receiver, _sceneVisibilityFrame.meshBlockersComplete);
 }
 
 WebGpuRenderer::SceneVisibilityBufferView
