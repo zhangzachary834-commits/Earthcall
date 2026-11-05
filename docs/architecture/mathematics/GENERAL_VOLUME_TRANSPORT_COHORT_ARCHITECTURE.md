@@ -679,34 +679,41 @@ Performance evidence cannot substitute for this.
 
 ### Implementation status — 2026-11-04
 
-**C0–C3 now have a bounded first implementation on this branch.**
+**C0–C4 now have a bounded first implementation on the reconciled branch.**
 
-- Added `VolumeTransportCohortPlanner.hpp` as a pure capability-membership and conservative order-proof primitive.
+- Added `VolumeTransportCohortPlanner.hpp` as pure derived execution machinery for capability membership, conservative chronology, and tile-local refinement.
 - Added `volume_transport_cohort_planner_test.cpp`, including:
-  - an explicit counterexample showing that the historical first-four positional split changes cohort membership under serialization permutation;
+  - the historical first-four positional split as an explicit negative counterexample;
   - capability-derived permutation invariance;
   - media-count-threshold independence;
-  - a camera/query-change witness that reverses proven chronology without changing capability membership;
-  - an overlapping-shell witness that correctly refuses whole-cohort order.
+  - camera/query chronology reversal without capability change;
+  - whole-screen overlap refusal;
+  - local recovery when global shells overlap but tile support is ordered;
+  - localization of an ambiguous tile to joint transport;
+  - refusal when adjacent tiles prove opposite chronologies;
+  - tile-run coalescing so proof granularity does not automatically become draw-call granularity;
+  - invalid radial proof as uncertainty, never absence.
 - Removed the production `activeMedia.size() >= 6` / first-four / remainder partition from `WebGpuRenderer::flushVolumeComposite()`.
-- C2 now derives routed/general candidate membership from each medium's structural mathematics.
-- C3 now derives a camera-relative conservative radial shell from each cohort's authored AABBs. Independent cohort passes are scheduled only when:
-  1. the current source coupling satisfies the narrow separability admission used by routed transport; and
-  2. the two radial shells prove a total whole-screen order.
-- If shells overlap, source coupling is not admitted, the routed cardinality is unsupported, or any proof input is invalid, the renderer keeps the media in one joint fused path.
-- Existing four-member routed admission remains available when the entire set satisfies the routed structural proof.
+- C2 derives routed/general candidate membership from each medium's structural mathematics.
+- C3 derives camera-relative conservative radial shells from authored AABBs and schedules whole-screen independent passes only when source separability and total chronology are both proved.
+- C4 projects each current authored AABB conservatively to screen space, partitions the viewport on a coarse 128×96 proof grid, and derives local ordered vs ambiguous regions.
+- Ordered regions are executed by the two capability cohorts under WebGPU scissor rectangles. Ambiguous regions are executed by one joint fused set. The regions are disjoint, so the joint path cannot double-composite pixels already handled by the split path.
+- If different tiles prove opposite cohort chronologies, C4 refuses the split globally. Independent opposite-order tile schedules are deliberately deferred to C5.
+- A projection that reaches/crosses the eye plane claims the full viewport rather than culling. A screen-overlapping medium whose radial proof is invalid makes that tile ambiguous.
+- Partial pipeline creation/encode preparation cannot become partial visible truth: failed candidate split pipelines are scissor-suppressed and the full joint path is retained.
+- The routed compute producer still runs over its existing full-screen publication domain even when its fragment draw is scissored. C4 therefore proves/render-restricts publication regions but does **not** yet claim proportional routed-compute savings.
 
-The first C3 certificate is deliberately stronger than necessary:
+The C3 certificate remains deliberately stronger than necessary:
 
 [
 d_{\max}(A) < d_{\min}(B)
 ]
 
-means every possible point in (A) is closer to the camera than every possible point in (B), so every ray that hits both encounters (A) first. Overlapping radial shells therefore mean **unknown**, not “wrong”; C4/C5 are where tile/ray/interval refinement may recover additional lawful specialization.
+means every possible point in (A) is closer to the camera than every possible point in (B), so every ray that hits both encounters (A) first.
 
-This means the eight-field Northern Veil may still remain joint for many views. That is expected. The branch now restores multi-cohort execution only when the proof boundary actually earns it.
+C4 weakens only the **query region**, not the proof standard: the same conservative chronology is re-evaluated from only the media whose projected AABBs may touch each tile. Unknown stays joint. Opposite proven tile orders stay joint until C5 can encode independent interval/tile schedules.
 
-A standalone C++17 compile/run of the planner witness passed after the C3 change. Full Earthcall build, native WebGPU verification, and Person FPS remain separate acceptance obligations.
+**Evidence boundary:** the source/test changes are committed and source-audited. This environment could not clone the GitHub branch for an independent local compile because outbound DNS/network access is unavailable. GitHub had not reported a CI context at the time of this receipt. Therefore full C++ build, native WebGPU parity, Northern Veil visual parity, M5 performance, and Person FPS remain open acceptance obligations.
 
 ### Rung C0 — Freeze and expose the prototype
 
