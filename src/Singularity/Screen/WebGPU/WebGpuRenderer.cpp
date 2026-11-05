@@ -1057,21 +1057,39 @@ WebGpuRenderer::prepareForeignImplicitVisibility(
 }
 
 void WebGpuRenderer::ensureSceneVisibilityBindingForEarlyFlush() {
-    if (_sceneVisibilityFrame.buffer) return;
+    if (_sceneVisibilityFrame.buffer &&
+        _sceneVisibilityFrame.implicitBuffer) {
+        return;
+    }
 
     // Surface shading is about to execute before frame admission has closed.
     // Later blockers cannot retroactively affect already-emitted fragments, so
     // CompleteScene authority is irrecoverably Unknown for the rest of this
-    // frame. Still provide the structurally-required storage binding.
+    // frame. Still provide every structurally-required storage binding.
     _frameHadEarlySurfaceFlush = true;
-    const SceneVisibilityTriangle inert{};
-    auto alloc = bufferPool().suballocateStorage(&inert, sizeof(inert));
-    _sceneVisibilityFrame.buffer = alloc.buffer;
-    _sceneVisibilityFrame.offset = alloc.offset;
-    _sceneVisibilityFrame.size = alloc.size;
-    _sceneVisibilityFrame.triangleCount = 0;
+
+    if (!_sceneVisibilityFrame.buffer) {
+        const SceneVisibilityTriangle inertTriangle{};
+        auto alloc = bufferPool().suballocateStorage(
+            &inertTriangle, sizeof(inertTriangle));
+        _sceneVisibilityFrame.buffer = alloc.buffer;
+        _sceneVisibilityFrame.offset = alloc.offset;
+        _sceneVisibilityFrame.size = alloc.size;
+        _sceneVisibilityFrame.triangleCount = 0;
+    }
+
+    if (!_sceneVisibilityFrame.implicitBuffer) {
+        const SceneVisibilityImplicitBlocker inertImplicit{};
+        auto alloc = bufferPool().suballocateStorage(
+            &inertImplicit, sizeof(inertImplicit));
+        _sceneVisibilityFrame.implicitBuffer = alloc.buffer;
+        _sceneVisibilityFrame.implicitOffset = alloc.offset;
+        _sceneVisibilityFrame.implicitSize = alloc.size;
+        _sceneVisibilityFrame.implicitCount = 0;
+    }
+
+    _sceneVisibilityFrame.meshBlockersComplete = false;
     _sceneVisibilityFrame.meshComplete = false;
-    _sceneVisibilityFrame.sdfComplete = false;
     if (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene) {
         mutableFrameStats().sceneVisibilityUnknownFrames++;
     }
@@ -3191,6 +3209,7 @@ void WebGpuRenderer::flushSdfDraws() {
     if (!_pass) {
         for (const SdfPipeline* sp : _activeSdfPipelines) {
             _sdfBatches[sp].clear();
+            _sdfVisibilityBlockerBatches[sp].clear();
             _sdfParamsBatches[sp].clear();
             _sdfHeightGridBatches[sp].clear();
             _sdfRangeNodeBatches[sp].clear();
@@ -3465,6 +3484,7 @@ void WebGpuRenderer::flushSdfDraws() {
     }
     for (const SdfPipeline* sp : _activeSdfPipelines) {
         _sdfBatches[sp].clear();
+        _sdfVisibilityBlockerBatches[sp].clear();
         _sdfParamsBatches[sp].clear();
         _sdfHeightGridBatches[sp].clear();
         _sdfRangeNodeBatches[sp].clear();
