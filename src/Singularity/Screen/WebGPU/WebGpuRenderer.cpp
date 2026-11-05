@@ -202,7 +202,8 @@ fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
             wgsl += "        if (sourcePacket.enabled > 0.5) {\n";
             wgsl += "            environmentRadiance += "
                     "sourcePacket.environmentRadiance;\n";
-            wgsl += "            let pathVisibility = meshPathVisibility(in.worldPos, sourcePacket.sourceWorld);\n";
+            wgsl += "            let pathVisibility = meshPathVisibility(in.worldPos, RS[" +
+                    index + "u].position.xyz);\n";
             wgsl += "            if (pathVisibility.known > 0.5 && "
                     "HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
             wgsl += "                let responseDefined = "
@@ -248,7 +249,7 @@ fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f
         } else if (MATERIAL_RESPONSE_READS_WI) {
             responseDefined = false;
         }
-        let pathVisibility = meshPathVisibility(in.worldPos, sourcePacket.sourceWorld);
+        let pathVisibility = meshPathVisibility(in.worldPos, u.lightPos.xyz);
         if (responseDefined && pathVisibility.known > 0.5) {
             directTerm = materialResponseEval(
                 in.localPos, N, responseWi, V, surfaceColor,
