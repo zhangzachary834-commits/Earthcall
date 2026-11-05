@@ -791,8 +791,10 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
     }
 
     bool exactMeshMaterialization = !_frameHasUnmaterializedOpaqueGeometry;
+    bool hasMeshReceivers = false;
     uint64_t triangleCount = 0;
     for (const auto& entry : _meshBatches) {
+        if (!entry.second.empty()) hasMeshReceivers = true;
         const MeshBatchKey& key = entry.first;
         if (!key.mesh) {
             exactMeshMaterialization = false;
@@ -878,7 +880,10 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
     if (out.sdfComplete) {
         mutableFrameStats().sceneVisibilitySdfKnownFrames++;
     }
-    if (!out.meshComplete && !out.sdfComplete) {
+    const bool anyReceiverUnknown =
+        (hasMeshReceivers && !out.meshComplete) ||
+        (sdfInstanceCount > 0 && !out.sdfComplete);
+    if (anyReceiverUnknown) {
         mutableFrameStats().sceneVisibilityUnknownFrames++;
     }
     return out;
