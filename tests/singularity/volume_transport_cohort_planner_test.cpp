@@ -37,6 +37,22 @@ Rendering::VolumeCohortSupportInterval intervalFor(const Medium* medium) {
     return {medium->nearDistance, medium->farDistance, true};
 }
 
+Rendering::VolumeProjectedMediumSupport projected(
+    uint32_t x, uint32_t y, uint32_t w, uint32_t h,
+    double nearDistance, double farDistance) {
+    return {
+        {x, y, w, h},
+        {nearDistance, farDistance, true}
+    };
+}
+
+uint64_t area(const std::vector<Rendering::VolumeScreenRect>& rects) {
+    uint64_t total = 0;
+    for (const auto& rect : rects)
+        total += uint64_t(rect.width) * rect.height;
+    return total;
+}
+
 } // namespace
 
 int main() {
@@ -112,8 +128,7 @@ int main() {
                routedAfterCameraMove, generalAfterCameraMove) ==
            Rendering::VolumeCohortOrder::SecondBeforeFirst);
 
-    // Overlap is not guessed into an order. It must fall through to refinement
-    // or joint/general transport.
+    // Overlap is not guessed into an order.
     storage[0].nearDistance = 10.0;
     storage[0].farDistance = 15.0;
     storage[1].nearDistance = 10.5;
@@ -128,7 +143,87 @@ int main() {
                overlappingRouted, generalSupport) ==
            Rendering::VolumeCohortOrder::Unknown);
 
+    // C4 witness 1: whole-screen shells overlap, but projected screen support
+    // separates the conflicting depth bands. Local proof recovers the split.
+    {
+        const std::vector<Rendering::VolumeProjectedMediumSupport> first{
+            projected(0,   0, 128, 128, 2.0, 5.0),
+            projected(128, 0, 128, 128, 20.0, 24.0)
+        };
+        const std::vector<Rendering::VolumeProjectedMediumSupport> second{
+            projected(0,   0, 128, 128, 10.0, 14.0),
+            projected(128, 0, 128, 128, 30.0, 34.0)
+        };
+        const auto plan = Rendering::planVolumeCohortTiles(
+            256, 128, 128, 128, first, second);
+        assert(!plan.conflictingOrders);
+        assert(plan.commonOrder ==
+               Rendering::VolumeCohortOrder::FirstBeforeSecond);
+        assert(plan.jointRegions.empty());
+        assert(area(plan.orderedRegions) == uint64_t(256) * 128);
+    }
+
+    // C4 witness 2: one tile is provably ordered and its neighbor is genuinely
+    // ambiguous. Only the ambiguous tile becomes joint transport.
+    {
+        const std::vector<Rendering::VolumeProjectedMediumSupport> first{
+            projected(0,   0, 128, 128, 2.0, 5.0),
+            projected(128, 0, 128, 128, 10.0, 18.0)
+        };
+        const std::vector<Rendering::VolumeProjectedMediumSupport> second{
+            projected(0,   0, 128, 128, 10.0, 14.0),
+            projected(128, 0, 128, 128, 12.0, 20.0)
+        };
+        const auto plan = Rendering::planVolumeCohortTiles(
+            256, 128, 128, 128, first, second);
+        assert(plan.hasLocalSplit());
+        assert(plan.commonOrder ==
+               Rendering::VolumeCohortOrder::FirstBeforeSecond);
+        assert(area(plan.orderedRegions) == uint64_t(128) * 128);
+        assert(area(plan.jointRegions) == uint64_t(128) * 128);
+    }
+
+    // C4 witness 3: opposite proven chronologies in adjacent tiles are not
+    // flattened into one draw order. C4 refuses and gives every active tile to
+    // the joint path; C5 may later schedule these intervals independently.
+    {
+        const std::vector<Rendering::VolumeProjectedMediumSupport> first{
+            projected(0,   0, 128, 128, 2.0, 5.0),
+            projected(128, 0, 128, 128, 20.0, 24.0)
+        };
+        const std::vector<Rendering::VolumeProjectedMediumSupport> second{
+            projected(0,   0, 128, 128, 10.0, 14.0),
+            projected(128, 0, 128, 128, 8.0, 12.0)
+        };
+        const auto plan = Rendering::planVolumeCohortTiles(
+            256, 128, 128, 128, first, second);
+        assert(plan.conflictingOrders);
+        assert(plan.commonOrder == Rendering::VolumeCohortOrder::Unknown);
+        assert(plan.orderedRegions.empty());
+        assert(area(plan.jointRegions) == uint64_t(256) * 128);
+    }
+
+    // C4 witness 4: horizontally and vertically adjacent ordered tiles coalesce
+    // so proof granularity does not automatically become draw-call granularity.
+    {
+        const std::vector<Rendering::VolumeProjectedMediumSupport> first{
+            projected(0, 0, 256, 256, 2.0, 5.0)
+        };
+        const std::vector<Rendering::VolumeProjectedMediumSupport> second{
+            projected(0, 0, 256, 256, 10.0, 14.0)
+        };
+        const auto plan = Rendering::planVolumeCohortTiles(
+            256, 256, 128, 128, first, second);
+        assert(!plan.conflictingOrders);
+        assert(plan.orderedRegions.size() == 1);
+        assert(plan.orderedRegions[0].x == 0);
+        assert(plan.orderedRegions[0].y == 0);
+        assert(plan.orderedRegions[0].width == 256);
+        assert(plan.orderedRegions[0].height == 256);
+    }
+
     std::cout << "PASS volume transport cohort planner: capability membership is "
-                 "permutation-invariant and whole-screen chronology is proof-derived\n";
+                 "permutation-invariant; whole-screen and tile-local chronology "
+                 "remain proof-derived and fail closed\n";
     return 0;
 }
