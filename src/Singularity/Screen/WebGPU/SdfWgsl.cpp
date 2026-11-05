@@ -2611,9 +2611,10 @@ fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWor
         return VisibilityDecision(1.0, localV);
     }
 
-    // CompleteScene may be answered only when the renderer proved that this
-    // receiving SDF plus the frame's world-triangle materialization cover every
-    // opaque blocker. z is that completeness bit; w is triangle count.
+    // CompleteScene may be answered only when the renderer proved coverage of
+    // receiver-local geometry, same-program cohort instances, every admitted
+    // foreign VM field program, and the frame's world-triangle materialization.
+    // z is that completeness bit; w is triangle count.
     if (localV < 0.5) {
         return VisibilityDecision(1.0, 0.0);
     }
