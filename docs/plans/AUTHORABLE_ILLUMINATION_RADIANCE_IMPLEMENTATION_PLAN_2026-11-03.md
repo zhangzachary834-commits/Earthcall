@@ -6,6 +6,31 @@
 **Written by:** GPT-5.6 Sol  
 **Status:** implementation plan; no completion claim
 
+## Implementation ledger — 2026-11-05 continuation: native GPU field-VM substrate rung 0
+
+The next foreign-program frontier now has a **data-execution substrate** instead of requiring a scene-sized generated shader.
+
+Implemented:
+- added a derived Kernel `FieldVmInstruction` ABI: one 48-byte `uvec4 + vec4 + vec4` record;
+- added fixed execution bounds of 1,024 instructions and 128 stack values; overflow refuses rather than truncating authored mathematics;
+- lowered the existing exact `SdfNode` primitive/CSG vocabulary to postorder bytecode: Sphere, Box, RoundBox, Ellipsoid, Cylinder, Cone, Torus, Morph, Union, Intersect, Subtract and SmoothUnion;
+- added a CPU interpreter for the exact same records as a parity witness against `geom::evalSdf`;
+- added a fixed, binding-neutral WGSL stack interpreter returning `{value, known}`, so malformed/unknown bytecode cannot impersonate authored zero;
+- deliberately refused `Expr` until a lossless **OntoMath-native** bytecode encoding exists; legacy `SdfToken` RPN is not revived as a second mathematical authority;
+- deliberately refused `Convex` until its plane payload is represented explicitly;
+- added `field_vm_test`, covering all admitted primitives, all five CSG operators, local offsets, malformed opcode refusal, Expr/Convex refusal, and both hard execution budgets;
+- linked the VM compilation unit into the WebGPU app, WebGPU tests and CPU codegen witness lane;
+- added `field_vm_test` to the focused SDF GitHub Actions verification job.
+
+Not activated yet:
+- no renderer path uploads a scene field-program table yet;
+- no `CompleteScene` query grants `Known` from VM execution yet;
+- the WGSL VM module is source/ABI-tested but is not yet device-executed by this rung.
+
+This boundary is intentional. First prove that authored field mathematics can become bounded data without changing meaning; only then allow path visibility to trust that data. The next rung is the scene-program table: program descriptors + instance transforms + bytecode spans, a real GPU execution witness, then receiver-relative visibility activation.
+
+---
+
 ## Implementation ledger — 2026-11-04 continuation: bounded mixed-program implicit visibility
 
 `CompleteScene` can now cross the first **distinct implicit-program** boundary without triangulating fields or inventing a universe-sized mega-shader.
