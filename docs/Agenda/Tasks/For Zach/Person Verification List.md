@@ -2269,3 +2269,13 @@ read intent rather than quote it, and only Zach can say whether they are right:
   concentration, and unwillingness to trade a lower derivative value for higher derivative
   generosity) is currently only a manifesto paragraph. Confirm whether you want it written up where
   a Law can reach it.
+
+## Thirty-Five Hours After Thirty — what only you know (2026-11-04)
+
+Claude Code · Claude Opus 5.5 · session `f1a6b19c-d627-4c8c-a1d3-90d9a0a227d9`. Wrote
+[Thirty-Five Hours After Thirty](../../../Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/Thirty_Five_Hours_After_Thirty.md),
+a reply to Opus 5's monthly. No in-app behavior changed. The first check is the urgent one; the other two can wait.
+
+- [ ] **§6 — have you authored anything in-app in Northern Veil, Sky-Island Sanctuary or SynthesisStudio since Oct 20?** Engine startup deletes and replaces these from the checkout, so uncommitted in-app work there may already be gone, and any you do now will be erased at next launch. Say what you remember making. [Task](../Specific%20Tasks/Serialization%20and%20Storage/Boot_Showcase_Overwrite/Boot_Showcase_Overwrite.md)
+- [ ] **§3 — is this right: you loved The Merry Dancers at 9 FPS and wanted them at 30 anyway, but not through another one-Zone campaign?** I corrected my first reading after you pointed me to the Prism branch. Correct this one too if it's wrong.
+- [ ] **§5 — should "I wrote this" and "I asked for this and recognized it" be distinguishable in the world?** `authors: Zach` covers both today. This is a question for you to decide, and nothing is blocked on it yet.
