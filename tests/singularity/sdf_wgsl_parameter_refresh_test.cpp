@@ -1528,6 +1528,35 @@ int main() {
                   "cohortOtherInstanceVisibility(surfaceWorld, sourceWorld, receiverIndex)") !=
                   std::string::npos,
               "CompleteScene SDF visibility evaluates every instance in the admitted same-program cohort and restores receiver authority");
+        check(oneSource.wgsl.find("struct SceneImplicitBlockerData") !=
+                  std::string::npos &&
+              oneSource.wgsl.find(
+                  "@group(0) @binding(4) var<storage, read>") !=
+                  std::string::npos &&
+              oneSource.wgsl.find("fn sceneImplicitSphereBlocks") !=
+                  std::string::npos &&
+              oneSource.wgsl.find("fn sceneImplicitBoxBlocks") !=
+                  std::string::npos &&
+              oneSource.wgsl.find("fn sceneImplicitVisibility") !=
+                  std::string::npos,
+              "CompleteScene carries exact bounded foreign implicit blocker execution math");
+        const auto cohortVisibilityUse =
+            oneSource.wgsl.find(
+                "cohortOtherInstanceVisibility(surfaceWorld, sourceWorld, receiverIndex)");
+        const auto foreignVisibilityUse =
+            oneSource.wgsl.find(
+                "sceneImplicitVisibility(surfaceWorld, sourceWorld)",
+                cohortVisibilityUse);
+        const auto meshVisibilityUse =
+            oneSource.wgsl.find(
+                "sceneMeshVisibility(surfaceWorld, sourceWorld)",
+                foreignVisibilityUse);
+        check(cohortVisibilityUse != std::string::npos &&
+                  foreignVisibilityUse != std::string::npos &&
+                  meshVisibilityUse != std::string::npos &&
+                  cohortVisibilityUse < foreignVisibilityUse &&
+                  foreignVisibilityUse < meshVisibilityUse,
+              "CompleteScene composes own exact SDF cohort, foreign analytic implicit blockers, then mesh triangles");
         const auto oneEnvironment =
             oneSource.wgsl.find("legacyEnvironment");
         const auto oneDirect =
