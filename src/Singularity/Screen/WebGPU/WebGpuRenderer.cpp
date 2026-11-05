@@ -1014,9 +1014,6 @@ bool WebGpuRenderer::sdfSceneVisibilityComplete(
         return false;
     }
 
-    // Exact local field geometry cannot stand in for unresolved transmission.
-    // Every instance in the receiving cohort must be opaque under this binary V
-    // provider before its local/cohort marcher can grant CompleteScene authority.
     const auto receiverInstances = _sdfBatches.find(receiver);
     if (receiverInstances == _sdfBatches.end() ||
         receiverInstances->second.empty()) {
@@ -1029,26 +1026,44 @@ bool WebGpuRenderer::sdfSceneVisibilityComplete(
         return false;
     }
 
-    constexpr uint64_t kMaxForeignImplicitBlockers = 1024;
-    uint64_t foreignBlockerCount = 0;
+    constexpr uint64_t kMaxForeignVmBlockers = 1024;
+    constexpr uint64_t kMaxForeignVmInstructions = 16384;
+    uint64_t blockerCount = 0;
+    uint64_t instructionCount = 0;
+
     for (const SdfPipeline* foreign : _activeSdfPipelines) {
         if (foreign == receiver) continue;
         const auto instancesIt = _sdfBatches.find(foreign);
         if (instancesIt == _sdfBatches.end() || instancesIt->second.empty()) {
             continue;
         }
-        const auto blockersIt =
-            _sdfVisibilityBlockerBatches.find(foreign);
-        if (blockersIt == _sdfVisibilityBlockerBatches.end() ||
-            blockersIt->second.size() != instancesIt->second.size()) {
+
+        const auto vmIt = _sdfVisibilityVmBatches.find(foreign);
+        if (vmIt == _sdfVisibilityVmBatches.end() ||
+            vmIt->second.size() != instancesIt->second.size()) {
             return false;
         }
-        if (blockersIt->second.size() > kMaxForeignImplicitBlockers ||
-            foreignBlockerCount >
-                kMaxForeignImplicitBlockers - blockersIt->second.size()) {
+
+        if (vmIt->second.size() > kMaxForeignVmBlockers ||
+            blockerCount > kMaxForeignVmBlockers - vmIt->second.size()) {
             return false;
         }
-        foreignBlockerCount += blockersIt->second.size();
+        blockerCount += vmIt->second.size();
+
+        for (const SceneVisibilityVmAdmission& admission : vmIt->second) {
+            const auto& program = admission.program;
+            if (!program.ok || program.instructions.empty() ||
+                program.instructions.size() > sdfwgsl::kFieldVmMaxInstructions ||
+                program.maxStackDepth > sdfwgsl::kFieldVmMaxStackDepth) {
+                return false;
+            }
+            if (program.instructions.size() > kMaxForeignVmInstructions ||
+                instructionCount >
+                    kMaxForeignVmInstructions - program.instructions.size()) {
+                return false;
+            }
+            instructionCount += program.instructions.size();
+        }
     }
     return true;
 }
@@ -1057,14 +1072,22 @@ WebGpuRenderer::SceneVisibilityBufferView
 WebGpuRenderer::prepareForeignImplicitVisibility(
     const SdfPipeline* receiver) {
     SceneVisibilityBufferView out;
-    const SceneVisibilityImplicitBlocker inert{};
+    const SceneVisibilityVmBlocker inertBlocker{};
+    const sdfwgsl::FieldVmInstruction inertInstruction{};
 
     auto bindInert = [&]() {
-        auto alloc = bufferPool().suballocateStorage(&inert, sizeof(inert));
-        out.buffer = alloc.buffer;
-        out.offset = alloc.offset;
-        out.size = alloc.size;
+        auto blockerAlloc =
+            bufferPool().suballocateStorage(&inertBlocker, sizeof(inertBlocker));
+        auto programAlloc =
+            bufferPool().suballocateStorage(&inertInstruction, sizeof(inertInstruction));
+        out.buffer = blockerAlloc.buffer;
+        out.offset = blockerAlloc.offset;
+        out.size = blockerAlloc.size;
         out.count = 0;
+        out.programBuffer = programAlloc.buffer;
+        out.programOffset = programAlloc.offset;
+        out.programSize = programAlloc.size;
+        out.instructionCount = 0;
     };
 
     if (!sdfSceneVisibilityComplete(receiver)) {
@@ -1072,34 +1095,63 @@ WebGpuRenderer::prepareForeignImplicitVisibility(
         return out;
     }
 
-    std::vector<SceneVisibilityImplicitBlocker> blockers;
+    std::vector<SceneVisibilityVmBlocker> blockers;
+    std::vector<sdfwgsl::FieldVmInstruction> instructions;
     for (const SdfPipeline* foreign : _activeSdfPipelines) {
         if (foreign == receiver) continue;
-        const auto it = _sdfVisibilityBlockerBatches.find(foreign);
-        if (it != _sdfVisibilityBlockerBatches.end()) {
-            blockers.insert(blockers.end(),
-                            it->second.begin(), it->second.end());
+        const auto it = _sdfVisibilityVmBatches.find(foreign);
+        if (it == _sdfVisibilityVmBatches.end()) continue;
+
+        for (const SceneVisibilityVmAdmission& admission : it->second) {
+            SceneVisibilityVmBlocker blocker = admission.blocker;
+            blocker.program = glm::uvec4(
+                static_cast<uint32_t>(instructions.size()),
+                static_cast<uint32_t>(admission.program.instructions.size()),
+                admission.program.maxStackDepth,
+                0u);
+            blockers.push_back(blocker);
+            instructions.insert(
+                instructions.end(),
+                admission.program.instructions.begin(),
+                admission.program.instructions.end());
         }
     }
 
-    const void* data = blockers.empty()
-        ? static_cast<const void*>(&inert)
+    const void* blockerData = blockers.empty()
+        ? static_cast<const void*>(&inertBlocker)
         : static_cast<const void*>(blockers.data());
-    const size_t bytes = blockers.empty()
-        ? sizeof(inert)
-        : blockers.size() * sizeof(SceneVisibilityImplicitBlocker);
-    auto alloc = bufferPool().suballocateStorage(data, bytes);
-    out.buffer = alloc.buffer;
-    out.offset = alloc.offset;
-    out.size = alloc.size;
+    const size_t blockerBytes = blockers.empty()
+        ? sizeof(inertBlocker)
+        : blockers.size() * sizeof(SceneVisibilityVmBlocker);
+    auto blockerAlloc =
+        bufferPool().suballocateStorage(blockerData, blockerBytes);
+
+    const void* programData = instructions.empty()
+        ? static_cast<const void*>(&inertInstruction)
+        : static_cast<const void*>(instructions.data());
+    const size_t programBytes = instructions.empty()
+        ? sizeof(inertInstruction)
+        : instructions.size() * sizeof(sdfwgsl::FieldVmInstruction);
+    auto programAlloc =
+        bufferPool().suballocateStorage(programData, programBytes);
+
+    out.buffer = blockerAlloc.buffer;
+    out.offset = blockerAlloc.offset;
+    out.size = blockerAlloc.size;
     out.count = static_cast<uint32_t>(blockers.size());
-    out.complete = out.buffer != nullptr;
+    out.programBuffer = programAlloc.buffer;
+    out.programOffset = programAlloc.offset;
+    out.programSize = programAlloc.size;
+    out.instructionCount = static_cast<uint32_t>(instructions.size());
+    out.complete = out.buffer != nullptr && out.programBuffer != nullptr;
     if (!out.complete) {
         out.count = 0;
+        out.instructionCount = 0;
         return out;
     }
 
-    mutableFrameStats().sceneVisibilityImplicitBytesUploaded += bytes;
+    mutableFrameStats().sceneVisibilityImplicitBytesUploaded +=
+        blockerBytes + programBytes;
     return out;
 }
 
@@ -1227,6 +1279,7 @@ void WebGpuRenderer::reloadShaders() {
     _activeSdfPipelines.clear();
     _sdfBatches.clear();
     _sdfVisibilityBlockerBatches.clear();
+    _sdfVisibilityVmBatches.clear();
     _sdfVisibilityOpaqueInstanceCounts.clear();
     _sdfParamsBatches.clear();
     _sdfHeightGridBatches.clear();
@@ -2134,7 +2187,7 @@ struct SdfGlobalUniforms {
     glm::vec4 legacyDiffuseIncident;
     glm::vec4 legacySpecularIncident;
     glm::vec4 lightControl; // x = lighting enabled, y = RadianceVisibilityMode (0/1/2)
-    glm::vec4 sceneVisibilityControl; // x = foreign analytic implicit blocker count
+    glm::vec4 sceneVisibilityControl; // x = foreign VM blocker count, y = VM instruction count
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
     glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
     glm::vec4 volumeTime;   // x/y = admitted participating-medium coordinate/delta
@@ -2197,7 +2250,7 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
 
     const bool usesRadianceSources =
         wgsl.find("@group(0) @binding(2) var<storage, read> RS") != std::string::npos;
-    WGPUBindGroupLayoutEntry be[5] = {};
+    WGPUBindGroupLayoutEntry be[6] = {};
     be[0].binding = 0;
     be[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     be[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -2219,8 +2272,12 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     be[implicitEntry].binding = 4;
     be[implicitEntry].visibility = WGPUShaderStage_Fragment;
     be[implicitEntry].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    const uint32_t vmProgramEntry = implicitEntry + 1;
+    be[vmProgramEntry].binding = 5;
+    be[vmProgramEntry].visibility = WGPUShaderStage_Fragment;
+    be[vmProgramEntry].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     WGPUBindGroupLayoutDescriptor bgld = {};
-    bgld.entryCount = usesRadianceSources ? 5 : 4;
+    bgld.entryCount = usesRadianceSources ? 6 : 5;
     bgld.entries = be;
 
     SdfPipeline out;
@@ -3173,6 +3230,16 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     if (visibilityBlocker && binaryVisibilityOpaque) {
         _sdfVisibilityBlockerBatches[sp].push_back(*visibilityBlocker);
     }
+    if (binaryVisibilityOpaque) {
+        sdfwgsl::FieldVmProgram visibilityVm = sdfwgsl::lowerFieldVm(field);
+        if (visibilityVm.ok) {
+            SceneVisibilityVmAdmission admission;
+            admission.blocker.invModel = authoredTransforms->inverse;
+            admission.blocker.extents = inst.extents;
+            admission.program = std::move(visibilityVm);
+            _sdfVisibilityVmBatches[sp].push_back(std::move(admission));
+        }
+    }
     _sdfParamsBatches[sp].insert(
         _sdfParamsBatches[sp].end(), prog->params.begin(), prog->params.end());
 
@@ -3277,6 +3344,7 @@ void WebGpuRenderer::flushSdfDraws() {
         for (const SdfPipeline* sp : _activeSdfPipelines) {
             _sdfBatches[sp].clear();
             _sdfVisibilityBlockerBatches[sp].clear();
+            _sdfVisibilityVmBatches[sp].clear();
             _sdfVisibilityOpaqueInstanceCounts[sp] = 0;
             _sdfParamsBatches[sp].clear();
             _sdfHeightGridBatches[sp].clear();
@@ -3378,7 +3446,8 @@ void WebGpuRenderer::flushSdfDraws() {
             static_cast<float>(_sceneVisibilityFrame.triangleCount));
         u.sceneVisibilityControl = glm::vec4(
             static_cast<float>(foreignVisibility.count),
-            0.0f, 0.0f, 0.0f);
+            static_cast<float>(foreignVisibility.instructionCount),
+            0.0f, 0.0f);
         auto uAlloc =
             bufferPool().suballocateUniform(&u, sizeof(SdfGlobalUniforms));
 
@@ -3514,7 +3583,7 @@ void WebGpuRenderer::flushSdfDraws() {
         // Group 0: globals + authored parameters + optional sources +
         // complete-scene mesh triangles + receiver-relative foreign implicit
         // blocker packets.
-        WGPUBindGroupEntry bge[5] = {};
+        WGPUBindGroupEntry bge[6] = {};
         bge[0].binding = 0;
         bge[0].buffer = uAlloc.buffer;
         bge[0].offset = uAlloc.offset;
@@ -3555,9 +3624,22 @@ void WebGpuRenderer::flushSdfDraws() {
         bge[implicitEntry].offset = foreignVisibility.offset;
         bge[implicitEntry].size = foreignVisibility.size;
 
+        if (!foreignVisibility.programBuffer ||
+            foreignVisibility.programSize == 0) {
+            mutableFrameStats().sdfProgramRefusals++;
+            mutableFrameStats().sdfLastProgramRefusal =
+                "scene visibility VM program binding unavailable";
+            continue;
+        }
+        const uint32_t vmProgramEntry = implicitEntry + 1;
+        bge[vmProgramEntry].binding = 5;
+        bge[vmProgramEntry].buffer = foreignVisibility.programBuffer;
+        bge[vmProgramEntry].offset = foreignVisibility.programOffset;
+        bge[vmProgramEntry].size = foreignVisibility.programSize;
+
         WGPUBindGroupDescriptor bgd = {};
         bgd.layout = sp->bgl;
-        bgd.entryCount = sp->usesRadianceSources ? 5 : 4;
+        bgd.entryCount = sp->usesRadianceSources ? 6 : 5;
         bgd.entries = bge;
         WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
         _frameBindGroups.push_back(bg);
@@ -3591,6 +3673,7 @@ void WebGpuRenderer::flushSdfDraws() {
     for (const SdfPipeline* sp : _activeSdfPipelines) {
         _sdfBatches[sp].clear();
         _sdfVisibilityBlockerBatches[sp].clear();
+        _sdfVisibilityVmBatches[sp].clear();
         _sdfVisibilityOpaqueInstanceCounts[sp] = 0;
         _sdfParamsBatches[sp].clear();
         _sdfHeightGridBatches[sp].clear();
