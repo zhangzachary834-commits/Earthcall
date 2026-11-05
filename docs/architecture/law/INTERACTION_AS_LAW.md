@@ -793,3 +793,9 @@ world can be an interface, and why an interface can be made of anything in the w
 
 The button was never a special thing. It was only ever an object that someone agreed to
 mean something by.
+
+## Interrelated Documents
+* [Direct Screen Forms](../../Agenda/Tasks/Specific Tasks/Rendering and OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md)
+
+## Thoughts on Integration and Interrelation
+Interaction-as-Law fundamentally rejects traditional UI widgets, instead relying on pointer events interacting directly with authored Laws. This architecture perfectly dovetails with Direct Screen Forms, which evaluate OntoMath expressions at framebuffer sample centers without the need for underlying physical Objects or Meshes. Together, they allow UI to be authored natively within the engine as mathematical regions governed by rules, bypassing the need for legacy geometric containers and enabling UIs that project true Earthcall-authored meaning rather than simply imitating it through external widget abstractions.
