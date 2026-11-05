@@ -4058,9 +4058,20 @@ void WebGpuRenderer::flushVolumeComposite() {
     }
     auto globalAlloc = bufferPool().suballocateUniform(&globals, sizeof(globals));
 
+    struct PreparedVolumeDraw {
+        WGPUBindGroup globalBg = nullptr;
+        WGPUBindGroup instanceBg = nullptr;
+        uint32_t drawInstanceCount = 0;
+    };
+    std::map<const VolumePipeline*, PreparedVolumeDraw> preparedVolumeDraws;
+    auto pipelineIsScheduled = [&](const VolumePipeline* pipeline) {
+        if (!explicitVolumeSchedule) return true;
+        return std::any_of(volumeDrawSchedule.begin(), volumeDrawSchedule.end(),
+            [&](const VolumeDrawPacket& packet) { return packet.pipeline == pipeline; });
+    };
+
     for (const VolumePipeline* pipeline : _activeVolumePipelines) {
-        const auto scissorIt = volumeScissors.find(pipeline);
-        if (scissorIt != volumeScissors.end() && scissorIt->second.empty()) continue;
+        if (!pipelineIsScheduled(pipeline)) continue;
         const auto& instances = _volumeBatches[pipeline];
         const auto& params = _volumeParamBatches[pipeline];
         if (!pipeline || !pipeline->pipe || instances.empty() || params.empty()) continue;
@@ -4229,53 +4240,74 @@ void WebGpuRenderer::flushVolumeComposite() {
                 }
             }
         }
-        if (!_pass) {
-            _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &volumePassDesc);
-            _boundPipeline = nullptr;
-        }
-
-        bindPipeline(pipeline->pipe);
-        wgpuRenderPassEncoderSetBindGroup(_pass, 0, globalBg, 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(_pass, 1, instanceBg, 0, nullptr);
-        wgpuRenderPassEncoderSetVertexBuffer(
-            _pass, 0, _sdfCubeVerts, 0, 36 * sizeof(glm::vec3));
         uint32_t drawInstanceCount = static_cast<uint32_t>(instances.size());
         if (const auto countIt = _volumeDrawInstanceCounts.find(pipeline);
             countIt != _volumeDrawInstanceCounts.end()) {
             drawInstanceCount = countIt->second;
         }
-        uint32_t issuedDraws = 0;
-        if (_certificateProbeMedium &&
-            _certificateProbeStripRows * kCertificateProbeStrips < _certificateProbeFootprint.w) {
-            // A hidden certificate-timing lane draws only its strips: the same
-            // full-resolution rays the frame casts there, fewer of them.
-            const auto& f = _certificateProbeFootprint;
-            for (uint32_t strip = 0; strip < kCertificateProbeStrips; ++strip) {
-                const uint32_t centre = f.y + static_cast<uint32_t>((strip + 0.5) * f.w / kCertificateProbeStrips);
-                const uint32_t top = std::max(f.y, centre - std::min(centre, _certificateProbeStripRows / 2u));
-                const uint32_t rows = std::min(_certificateProbeStripRows, f.y + f.w - top);
-                wgpuRenderPassEncoderSetScissorRect(_pass, f.x, top, f.z, rows);
-                wgpuRenderPassEncoderDraw(_pass, 36, drawInstanceCount, 0, 0);
-                ++issuedDraws;
-            }
-            wgpuRenderPassEncoderSetScissorRect(_pass, 0, 0, _depthW, _depthH);
-        } else if (scissorIt != volumeScissors.end()) {
-            for (const auto& rect : scissorIt->second) {
-                if (!rect.width || !rect.height) continue;
-                wgpuRenderPassEncoderSetScissorRect(
-                    _pass, rect.x, rect.y, rect.width, rect.height);
-                wgpuRenderPassEncoderDraw(_pass, 36, drawInstanceCount, 0, 0);
-                ++issuedDraws;
-            }
-            wgpuRenderPassEncoderSetScissorRect(_pass, 0, 0, _depthW, _depthH);
-        } else {
-            wgpuRenderPassEncoderDraw(_pass, 36, drawInstanceCount, 0, 0);
-            issuedDraws = 1;
-        }
+        preparedVolumeDraws[pipeline] = {globalBg, instanceBg, drawInstanceCount};
+    }
 
+    // Ordinary V0-V4 paths do not install an explicit C5 schedule; preserve
+    // their historical full-viewport draw order.
+    if (!explicitVolumeSchedule) {
+        const Rendering::VolumeScreenRect full{0u, 0u, _depthW, _depthH};
+        for (const VolumePipeline* pipeline : _activeVolumePipelines)
+            if (preparedVolumeDraws.count(pipeline))
+                volumeDrawSchedule.push_back({pipeline, full});
+    }
+
+    if (!volumeDrawSchedule.empty()) {
+        _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &volumePassDesc);
+        _boundPipeline = nullptr;
+
+        uint32_t issuedDraws = 0;
+        for (const auto& packet : volumeDrawSchedule) {
+            const auto preparedIt = preparedVolumeDraws.find(packet.pipeline);
+            if (preparedIt == preparedVolumeDraws.end()) continue;
+            const auto& prepared = preparedIt->second;
+
+            bindPipeline(packet.pipeline->pipe);
+            wgpuRenderPassEncoderSetBindGroup(
+                _pass, 0, prepared.globalBg, 0, nullptr);
+            wgpuRenderPassEncoderSetBindGroup(
+                _pass, 1, prepared.instanceBg, 0, nullptr);
+            wgpuRenderPassEncoderSetVertexBuffer(
+                _pass, 0, _sdfCubeVerts, 0, 36 * sizeof(glm::vec3));
+
+            if (_certificateProbeMedium &&
+                _certificateProbeStripRows * kCertificateProbeStrips <
+                    _certificateProbeFootprint.w) {
+                const auto& f = _certificateProbeFootprint;
+                for (uint32_t strip = 0; strip < kCertificateProbeStrips; ++strip) {
+                    const uint32_t centre =
+                        f.y + static_cast<uint32_t>(
+                            (strip + 0.5) * f.w / kCertificateProbeStrips);
+                    const uint32_t top =
+                        std::max(f.y, centre -
+                            std::min(centre, _certificateProbeStripRows / 2u));
+                    const uint32_t rows =
+                        std::min(_certificateProbeStripRows,
+                                 f.y + f.w - top);
+                    wgpuRenderPassEncoderSetScissorRect(
+                        _pass, f.x, top, f.z, rows);
+                    wgpuRenderPassEncoderDraw(
+                        _pass, 36, prepared.drawInstanceCount, 0, 0);
+                    ++issuedDraws;
+                }
+            } else if (packet.rect.width && packet.rect.height) {
+                wgpuRenderPassEncoderSetScissorRect(
+                    _pass, packet.rect.x, packet.rect.y,
+                    packet.rect.width, packet.rect.height);
+                wgpuRenderPassEncoderDraw(
+                    _pass, 36, prepared.drawInstanceCount, 0, 0);
+                ++issuedDraws;
+            }
+            mutableFrameStats().trianglesDrawn +=
+                static_cast<uint32_t>(12 * prepared.drawInstanceCount);
+        }
+        wgpuRenderPassEncoderSetScissorRect(_pass, 0, 0, _depthW, _depthH);
         mutableFrameStats().drawCalls += issuedDraws;
-        mutableFrameStats().trianglesDrawn +=
-            static_cast<uint32_t>(12 * drawInstanceCount * issuedDraws);
     }
 
     if (_pass) {
