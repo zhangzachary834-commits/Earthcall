@@ -185,10 +185,12 @@ planVolumeCohortTiles(uint32_t viewportWidth, uint32_t viewportHeight,
         VolumeCohortSupportInterval aggregate;
         bool any = false;
         for (const auto& support : supports) {
-            if (!support.radial.valid ||
-                !volumeScreenRectsOverlap(support.screen, tile))
+            if (!volumeScreenRectsOverlap(support.screen, tile))
                 continue;
-            if (!std::isfinite(support.radial.nearDistance) ||
+            // Once a medium may touch this tile, lack of a valid radial proof
+            // is uncertainty, never absence.
+            if (!support.radial.valid ||
+                !std::isfinite(support.radial.nearDistance) ||
                 !std::isfinite(support.radial.farDistance) ||
                 support.radial.nearDistance < 0.0 ||
                 support.radial.farDistance < support.radial.nearDistance)
