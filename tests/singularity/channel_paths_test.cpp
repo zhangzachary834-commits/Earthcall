@@ -269,6 +269,7 @@ int main() {
     {
         bool foundDict = false;
         bool foundList = false;
+
         for (const auto& option : Rendering::knownPathOptions()) {
             if (std::string(option.type) == "dictionary") {
                 foundDict = true;
@@ -279,10 +280,10 @@ int main() {
         }
 
         if (!foundDict) {
-            fail("knownPathOptions", "Palette Update", "must successfully classify at least one dictionary property from any prototype");
+            fail("knownPathOptions", "Palette Update", "must successfully classify dictionary properties (which otherwise fallback to number)");
         }
         if (!foundList) {
-            fail("knownPathOptions", "Palette Update", "must successfully classify at least one list property from any prototype");
+            fail("knownPathOptions", "Palette Update", "must successfully classify list properties (which otherwise fallback to number)");
         }
     }
 
@@ -377,6 +378,29 @@ int main() {
                 fail("sdfLastProgramRefusal", "Channel — Screen",
                      "renderer refusal reason must remain derived/read-only");
             }
+        }
+    }
+
+
+    // Specific check for list/dictionary types that Palette added to LawGraphWindow
+    {
+        bool foundDict = false;
+        bool foundList = false;
+
+        for (const auto& option : Rendering::knownPathOptions()) {
+            if (std::string(option.type) == "dictionary") {
+                foundDict = true;
+            }
+            if (std::string(option.type) == "list") {
+                foundList = true;
+            }
+        }
+
+        if (!foundDict) {
+            fail("knownPathOptions", "Palette Update", "must successfully classify dictionary properties (which otherwise fallback to number)");
+        }
+        if (!foundList) {
+            fail("knownPathOptions", "Palette Update", "must successfully classify list properties (which otherwise fallback to number)");
         }
     }
 
