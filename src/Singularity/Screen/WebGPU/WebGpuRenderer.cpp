@@ -3062,6 +3062,9 @@ void WebGpuRenderer::attachVolumeSupportCertificates(const Rendering::VolumeDens
 void WebGpuRenderer::flushVolumeComposite() {
     if (!_encoder || !_frameColorView || !_depthView || !_inverseViewProjValid) return;
     std::map<const VolumePipeline*, std::array<KernelRoutedSpec,4>> routedSpecs;
+    // C4 query-relative publication regions. Presence in this map means the
+    // pipeline is scissor-controlled; an empty vector means deliberately skip.
+    std::map<const VolumePipeline*, std::vector<Rendering::VolumeScreenRect>> volumeScissors;
     const auto prepareStart = std::chrono::steady_clock::now();
     ++_volumeZeroProofFrame;
 
@@ -3217,8 +3220,8 @@ void WebGpuRenderer::flushVolumeComposite() {
     // crossing a boundary compiles each lane at most once per structure, then
     // reuses it. A camera change never changes the equations/parameter layout.
     auto enqueueVolumeCohort = [&](const std::vector<const Rendering::VolumeDensityBinding*>& cohortMedia,
-                                   bool allowRouted) {
-        if (cohortMedia.size() <= 1) return;
+                                   bool allowRouted) -> const VolumePipeline* {
+        if (cohortMedia.size() <= 1) return nullptr;
 
         bool cohortTrimProofSupport = volumeZeroProofEnabled();
         for (const auto* medium : cohortMedia) {
@@ -3550,7 +3553,9 @@ void WebGpuRenderer::flushVolumeComposite() {
             instances.insert(
                 instances.end(), mediumInstances.begin(), mediumInstances.end());
             _volumeDrawInstanceCounts[setMemo.pipeline] = 1u;
+            return setMemo.pipeline;
         }
+        return nullptr;
     };
 
     bool trimProofSupport = volumeZeroProofEnabled();
@@ -3583,10 +3588,6 @@ void WebGpuRenderer::flushVolumeComposite() {
         const auto& routedCohort = capabilityPartition.first;
         const auto& generalCohort = capabilityPartition.second;
 
-        // C3: conservative whole-screen chronology. Each cohort receives a
-        // camera-relative radial shell derived from authored AABBs. If those
-        // shells are strictly ordered, every ray hitting both cohorts shares
-        // that chronology. Overlap means unknown and therefore no split.
         const auto radialSupportFor =
             [&](const Rendering::VolumeDensityBinding* medium)
                 -> Rendering::VolumeCohortSupportInterval {
@@ -3603,42 +3604,170 @@ void WebGpuRenderer::flushVolumeComposite() {
             return {nearDistance, farDistance, true};
         };
 
+        // Conservative projection of an authored AABB into screen space. When
+        // perspective projection becomes unsafe (a corner reaches/ crosses the
+        // eye plane), claim the full viewport rather than culling a possible
+        // contribution. The radial interval remains independently derived.
+        const auto projectedSupportFor =
+            [&](const Rendering::VolumeDensityBinding* medium)
+                -> Rendering::VolumeProjectedMediumSupport {
+            const auto radial = radialSupportFor(medium);
+            const Rendering::VolumeScreenRect full{0u, 0u, _depthW, _depthH};
+            if (!medium || _depthW == 0 || _depthH == 0)
+                return {full, radial};
+
+            const glm::vec3 h = glm::abs(medium->scale);
+            float minX = std::numeric_limits<float>::infinity();
+            float minY = std::numeric_limits<float>::infinity();
+            float maxX = -std::numeric_limits<float>::infinity();
+            float maxY = -std::numeric_limits<float>::infinity();
+            bool fullScreen = false;
+
+            for (int ix = -1; ix <= 1; ix += 2) {
+                for (int iy = -1; iy <= 1; iy += 2) {
+                    for (int iz = -1; iz <= 1; iz += 2) {
+                        const glm::vec3 p = medium->origin +
+                            glm::vec3(float(ix) * h.x, float(iy) * h.y, float(iz) * h.z);
+                        const glm::vec4 clip = _viewProj * glm::vec4(p, 1.0f);
+                        if (!std::isfinite(clip.x) || !std::isfinite(clip.y) ||
+                            !std::isfinite(clip.w) || clip.w <= 1e-5f) {
+                            fullScreen = true;
+                            break;
+                        }
+                        const float ndcX = clip.x / clip.w;
+                        const float ndcY = clip.y / clip.w;
+                        if (!std::isfinite(ndcX) || !std::isfinite(ndcY)) {
+                            fullScreen = true;
+                            break;
+                        }
+                        const float px = (ndcX * 0.5f + 0.5f) * float(_depthW);
+                        const float py = (0.5f - ndcY * 0.5f) * float(_depthH);
+                        minX = std::min(minX, px); maxX = std::max(maxX, px);
+                        minY = std::min(minY, py); maxY = std::max(maxY, py);
+                    }
+                    if (fullScreen) break;
+                }
+                if (fullScreen) break;
+            }
+            if (fullScreen) return {full, radial};
+
+            if (maxX <= 0.0f || maxY <= 0.0f ||
+                minX >= float(_depthW) || minY >= float(_depthH))
+                return {{0u, 0u, 0u, 0u}, radial};
+
+            const float x0f = std::clamp(minX, 0.0f, float(_depthW));
+            const float y0f = std::clamp(minY, 0.0f, float(_depthH));
+            const float x1f = std::clamp(maxX, 0.0f, float(_depthW));
+            const float y1f = std::clamp(maxY, 0.0f, float(_depthH));
+            const uint32_t x0 = static_cast<uint32_t>(std::floor(x0f));
+            const uint32_t y0 = static_cast<uint32_t>(std::floor(y0f));
+            const uint32_t x1 = static_cast<uint32_t>(std::ceil(x1f));
+            const uint32_t y1 = static_cast<uint32_t>(std::ceil(y1f));
+            if (x1 <= x0 || y1 <= y0)
+                return {{0u, 0u, 0u, 0u}, radial};
+            return {{x0, y0, x1 - x0, y1 - y0}, radial};
+        };
+
+        auto suppressPipeline = [&](const VolumePipeline* pipeline) {
+            if (pipeline) volumeScissors[pipeline] = {};
+        };
+
         bool scheduledSplit = false;
         const bool separableSource =
             !_certificateProbeMedium && incidentSource &&
             OntoMath::literalZero(incidentSource->radianceExpr);
 
-        // The current routed backend is a four-member execution family. A
-        // different routed cardinality is capability information but not yet
-        // an executable split. Singleton companions remain joint because the
-        // cohort executor currently represents multi-medium sets only.
+        // Current routed execution is a four-member family. Capability facts
+        // for other cardinalities are retained, but do not manufacture a
+        // physical routed backend that does not exist.
         if (separableSource && routedCohort.size() == 4 && generalCohort.size() > 1) {
             const auto routedSupport =
                 Rendering::aggregateVolumeCohortSupport(routedCohort, radialSupportFor);
             const auto generalSupport =
                 Rendering::aggregateVolumeCohortSupport(generalCohort, radialSupportFor);
-            const auto order =
+            const auto wholeOrder =
                 Rendering::proveWholeScreenRadialOrder(routedSupport, generalSupport);
 
-            if (order == Rendering::VolumeCohortOrder::FirstBeforeSecond) {
-                // Routed is nearer: compose farther general transport first.
-                enqueueVolumeCohort(generalCohort, false);
-                enqueueVolumeCohort(routedCohort, true);
-                scheduledSplit = true;
-            } else if (order == Rendering::VolumeCohortOrder::SecondBeforeFirst) {
-                // General is nearer: compose farther routed transport first.
-                enqueueVolumeCohort(routedCohort, true);
-                enqueueVolumeCohort(generalCohort, false);
-                scheduledSplit = true;
+            auto enqueueOrderedSplit = [&](Rendering::VolumeCohortOrder order,
+                                           const std::vector<Rendering::VolumeScreenRect>* regions)
+                -> bool {
+                const VolumePipeline* farPipeline = nullptr;
+                const VolumePipeline* nearPipeline = nullptr;
+                if (order == Rendering::VolumeCohortOrder::FirstBeforeSecond) {
+                    // First == routed and is nearer, so general must publish first.
+                    farPipeline = enqueueVolumeCohort(generalCohort, false);
+                    nearPipeline = enqueueVolumeCohort(routedCohort, true);
+                } else if (order == Rendering::VolumeCohortOrder::SecondBeforeFirst) {
+                    farPipeline = enqueueVolumeCohort(routedCohort, true);
+                    nearPipeline = enqueueVolumeCohort(generalCohort, false);
+                } else {
+                    return false;
+                }
+                if (!farPipeline || !nearPipeline) {
+                    suppressPipeline(farPipeline);
+                    suppressPipeline(nearPipeline);
+                    return false;
+                }
+                if (regions) {
+                    volumeScissors[farPipeline] = *regions;
+                    volumeScissors[nearPipeline] = *regions;
+                }
+                return true;
+            };
+
+            if (wholeOrder != Rendering::VolumeCohortOrder::Unknown) {
+                scheduledSplit = enqueueOrderedSplit(wholeOrder, nullptr);
+            } else {
+                // C4: whole-screen uncertainty is refined only where screen
+                // support can be conservatively localized. 128x96 is a coarse
+                // proof grid (20x15 at 2560x1440); horizontal/vertical runs are
+                // coalesced before becoming physical scissor draws.
+                std::vector<Rendering::VolumeProjectedMediumSupport> routedProjected;
+                std::vector<Rendering::VolumeProjectedMediumSupport> generalProjected;
+                routedProjected.reserve(routedCohort.size());
+                generalProjected.reserve(generalCohort.size());
+                for (const auto* medium : routedCohort)
+                    routedProjected.push_back(projectedSupportFor(medium));
+                for (const auto* medium : generalCohort)
+                    generalProjected.push_back(projectedSupportFor(medium));
+
+                const auto tilePlan = Rendering::planVolumeCohortTiles(
+                    _depthW, _depthH, 128u, 96u,
+                    routedProjected, generalProjected);
+
+                if (!tilePlan.conflictingOrders &&
+                    tilePlan.commonOrder != Rendering::VolumeCohortOrder::Unknown &&
+                    !tilePlan.orderedRegions.empty()) {
+                    const bool splitReady =
+                        enqueueOrderedSplit(tilePlan.commonOrder, &tilePlan.orderedRegions);
+                    const VolumePipeline* jointPipeline = nullptr;
+                    bool jointReady = true;
+                    if (splitReady && !tilePlan.jointRegions.empty()) {
+                        jointPipeline = enqueueVolumeCohort(activeMedia, false);
+                        jointReady = jointPipeline != nullptr;
+                        if (jointReady)
+                            volumeScissors[jointPipeline] = tilePlan.jointRegions;
+                    }
+                    if (splitReady && jointReady) {
+                        scheduledSplit = true;
+                    } else {
+                        // A physical pipeline refusal cannot leave only half a
+                        // schedule visible. Suppress partial work; the full
+                        // joint path below becomes the only publication.
+                        for (auto& [pipeline, regions] : volumeScissors)
+                            regions.clear();
+                    }
+                }
             }
         }
 
         if (!scheduledSplit) {
-            // Overlapping/unknown shells, non-separable source coupling, or an
-            // unsupported cohort cardinality stay on one joint path. C4/C5 may
-            // later recover specialization locally per tile/ray/interval.
             const bool wholeSetRoutedAdmissible = generalCohort.empty();
-            enqueueVolumeCohort(activeMedia, wholeSetRoutedAdmissible);
+            const auto* joint = enqueueVolumeCohort(activeMedia, wholeSetRoutedAdmissible);
+            // A prior failed C3/C4 attempt may have inserted the same pipeline
+            // into the controlled map; full joint fallback must regain the
+            // entire viewport.
+            if (joint) volumeScissors.erase(joint);
         }
     }
 
@@ -3930,6 +4059,8 @@ void WebGpuRenderer::flushVolumeComposite() {
     auto globalAlloc = bufferPool().suballocateUniform(&globals, sizeof(globals));
 
     for (const VolumePipeline* pipeline : _activeVolumePipelines) {
+        const auto scissorIt = volumeScissors.find(pipeline);
+        if (scissorIt != volumeScissors.end() && scissorIt->second.empty()) continue;
         const auto& instances = _volumeBatches[pipeline];
         const auto& params = _volumeParamBatches[pipeline];
         if (!pipeline || !pipeline->pipe || instances.empty() || params.empty()) continue;
@@ -4113,6 +4244,7 @@ void WebGpuRenderer::flushVolumeComposite() {
             countIt != _volumeDrawInstanceCounts.end()) {
             drawInstanceCount = countIt->second;
         }
+        uint32_t issuedDraws = 0;
         if (_certificateProbeMedium &&
             _certificateProbeStripRows * kCertificateProbeStrips < _certificateProbeFootprint.w) {
             // A hidden certificate-timing lane draws only its strips: the same
@@ -4124,16 +4256,26 @@ void WebGpuRenderer::flushVolumeComposite() {
                 const uint32_t rows = std::min(_certificateProbeStripRows, f.y + f.w - top);
                 wgpuRenderPassEncoderSetScissorRect(_pass, f.x, top, f.z, rows);
                 wgpuRenderPassEncoderDraw(_pass, 36, drawInstanceCount, 0, 0);
+                ++issuedDraws;
+            }
+            wgpuRenderPassEncoderSetScissorRect(_pass, 0, 0, _depthW, _depthH);
+        } else if (scissorIt != volumeScissors.end()) {
+            for (const auto& rect : scissorIt->second) {
+                if (!rect.width || !rect.height) continue;
+                wgpuRenderPassEncoderSetScissorRect(
+                    _pass, rect.x, rect.y, rect.width, rect.height);
+                wgpuRenderPassEncoderDraw(_pass, 36, drawInstanceCount, 0, 0);
+                ++issuedDraws;
             }
             wgpuRenderPassEncoderSetScissorRect(_pass, 0, 0, _depthW, _depthH);
         } else {
-            wgpuRenderPassEncoderDraw(
-                _pass, 36, drawInstanceCount, 0, 0);
+            wgpuRenderPassEncoderDraw(_pass, 36, drawInstanceCount, 0, 0);
+            issuedDraws = 1;
         }
 
-        mutableFrameStats().drawCalls++;
+        mutableFrameStats().drawCalls += issuedDraws;
         mutableFrameStats().trianglesDrawn +=
-            static_cast<uint32_t>(12 * drawInstanceCount);
+            static_cast<uint32_t>(12 * drawInstanceCount * issuedDraws);
     }
 
     if (_pass) {
