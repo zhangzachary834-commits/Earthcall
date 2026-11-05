@@ -436,6 +436,13 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
  if(!creation.finish()||!p.setup||!p.consumer)return failed();std::fprintf(stderr,"[WebGpuRenderer] routed transport production-evaluator pipeline active\n");return &programs.emplace(source,std::move(p)).first->second;
 }
 bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth){
+ return encodeInternal(p,encoder,globals,params,instances,depth,nullptr);
+}
+bool KernelRoutedTransport::encodeSpans(Program& p,WGPUCommandEncoder encoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth,const KernelRoutedSpanConsumer& consumer){
+ if(!consumer)return false;
+ return encodeInternal(p,encoder,globals,params,instances,depth,&consumer);
+}
+bool KernelRoutedTransport::encodeInternal(Program& p,WGPUCommandEncoder encoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth,const KernelRoutedSpanConsumer* spanConsumer){
  using namespace kernel_routed_detail;
  encodedPasses=0;encodedDispatches=0;dispatchTrace=collectDispatchTrace?0xcbf29ce484222325ull:0;
  if(!stripUniform||!specsUniform||!maxStrips)return false;
@@ -498,7 +505,10 @@ bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const K
  }
  auto begin=[&](){++encodedPasses;return wgpuCommandEncoderBeginComputePass(encoder,nullptr);};
  auto note=[&](const void* pipe,uint32_t n,uint64_t tag){++encodedDispatches;if(!collectDispatchTrace)return;for(uint64_t v:{uint64_t(reinterpret_cast<uintptr_t>(pipe)),uint64_t(n),tag})for(int b=0;b<8;++b)dispatchTrace=(dispatchTrace^((v>>(8*b))&255))*0x100000001b3ull;};
- WGPUComputePassEncoder shared=coalescePasses?begin():nullptr;
+ // External strip consumers may open their own compute/render passes. End the
+ // producer pass before handing off each strip; ordinary integrated publication
+ // retains the established coalesced-pass path.
+ WGPUComputePassEncoder shared=coalescePasses&&!spanConsumer?begin():nullptr;
  auto open=[&](){return shared?shared:begin();};
  auto close=[&](WGPUComputePassEncoder pass){if(pass==shared)return;wgpuComputePassEncoderEnd(pass);wgpuComputePassEncoderRelease(pass);};
  for(uint32_t stripIdx=0,start=0;start<height&&stripIdx<maxStrips;start+=stripRows,++stripIdx){
@@ -507,7 +517,18 @@ bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const K
   withContext(p.setup);dispatch(common[0],resetGroup,1);dispatch(classifyPipe,classifyGroup,(tiles+63)/64);dispatch(common[2],argsGroup,4);
   if(observerGroup){dispatch(observerPipe,observerGroup,(tiles+63)/64);dispatch(accumPipe,accumulatorGroup,1);}
   for(unsigned i=0;i<3;++i){auto pass=open();wgpuComputePassEncoderSetPipeline(pass,common[i+3]);wgpuComputePassEncoderSetBindGroup(pass,0,prodGroups[i][stripIdx],0,nullptr);note(common[i+3],i*12,3);wgpuComputePassEncoderDispatchWorkgroupsIndirect(pass,args,i*12);close(pass);}
-  {auto pass=open();wgpuComputePassEncoderSetPipeline(pass,p.consumer);wgpuComputePassEncoderSetBindGroup(pass,0,globalGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,1,instanceGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,2,p.localGroups[stripIdx],0,nullptr);note(p.consumer,36,2);wgpuComputePassEncoderDispatchWorkgroupsIndirect(pass,args,36);close(pass);}
+  if(spanConsumer){
+   const KernelRoutedSpanStrip strip{
+    stripIdx,start,std::min(stripRows,height-start),capacity,
+    {stripUniform,uint64_t(stripIdx)*kUniformStride,48},
+    {rays,0,uint64_t(capacity)*48},
+    {singles,0,uint64_t(capacity)*64*16},
+    {overlaps,0,uint64_t(capacity)*16*16}
+   };
+   if(!(*spanConsumer)(encoder,strip)){releaseTemporary();return false;}
+  }else{
+   auto pass=open();wgpuComputePassEncoderSetPipeline(pass,p.consumer);wgpuComputePassEncoderSetBindGroup(pass,0,globalGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,1,instanceGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,2,p.localGroups[stripIdx],0,nullptr);note(p.consumer,36,2);wgpuComputePassEncoderDispatchWorkgroupsIndirect(pass,args,36);close(pass);
+  }
  }
  if(shared){wgpuComputePassEncoderEnd(shared);wgpuComputePassEncoderRelease(shared);}
  releaseTemporary();return true;
