@@ -263,8 +263,6 @@ int main() {
         }
     }
 
-
-
     // SDF range-proxy governance is a ScreenChannel contract even though the
     // derived counters are not authoring-picker entries. Keep it here rather
     // than in gpu_mastery_test: this witness needs property registration, not a
@@ -358,7 +356,6 @@ int main() {
             }
         }
     }
-
 
     std::printf("\nchannel_paths_test: %d advertised paths resolved, %d skipped (clock), %d failed\n",
                 g_checked - g_failures, skipped, g_failures);
