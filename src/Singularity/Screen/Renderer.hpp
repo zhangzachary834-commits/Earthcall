@@ -37,8 +37,10 @@ enum class Blend { Opaque, Alpha, Additive };
 // LocalReceiverGeometry: a backend may answer only from the receiving geometry
 // it actually owns (today: SDF instance-local marching). Other representations
 // must return Unknown rather than inventing V.
-// CompleteScene: requires a scene-wide visibility provider. Until one exists,
-// every backend must return Unknown for direct transport.
+// CompleteScene: requires a provider that proves coverage of every relevant
+// blocker for the queried frame/receiver. WebGPU's first bounded provider admits
+// exact mesh-only scenes and one-SDF-plus-mesh scenes; unsupported scenes remain
+// Unknown rather than being approximated into authority.
 enum class RadianceVisibilityMode : uint32_t {
     Disabled = 0,
     LocalReceiverGeometry = 1,
@@ -65,9 +67,10 @@ public:
         uint32_t meshProgramRefusals = 0;
         std::string meshLastProgramRefusal;
         size_t meshParameterBytesUploaded = 0;
-        // Meshes do not yet own a representation-independent scene visibility
-        // query. When authored visibility is requested, direct source-set
-        // transport is skipped rather than silently substituting V=1.
+        // Direct transport refused because the requested visibility scope was
+        // not known for a mesh receiver. LocalReceiverGeometry remains unknown
+        // for raster meshes; CompleteScene may be known through a complete frame
+        // provider.
         uint32_t meshVisibilityUnknownDirectSkips = 0;
         // First CompleteScene provider observability. The provider is exact only
         // when every relevant blocker was admitted into its world-triangle set.
