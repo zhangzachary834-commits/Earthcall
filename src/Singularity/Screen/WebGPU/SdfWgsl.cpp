@@ -2524,6 +2524,66 @@ fn localSourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sour
     return 0.0;
 }
 
+fn cohortOtherInstanceVisibility(
+    surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>,
+    receiverIndex: u32) -> f32 {
+    let savedIndex = g_instIdx;
+    let instanceCount = arrayLength(&instances);
+
+    for (var i = 0u; i < instanceCount; i = i + 1u) {
+        if (i == receiverIndex) { continue; }
+
+        // The compiled field program is shared by this whole admitted cohort;
+        // switching g_instIdx selects this instance's own transform, authored
+        // parameter offset, march policy, and bounds without changing the law.
+        g_instIdx = i;
+        let inst = instances[i];
+        let origin = (inst.invModel * vec4<f32>(surfaceWorld, 1.0)).xyz;
+        let sourceField = (inst.invModel * vec4<f32>(sourceWorld, 1.0)).xyz;
+        let segment = sourceField - origin;
+        let rayLength = length(segment);
+        if (rayLength <= 1e-6) { continue; }
+
+        let shadowDir = segment / rayLength;
+        let bounds = rayAabb(origin, shadowDir, inst.extents.xyz);
+        if (bounds.y < bounds.x || bounds.y <= 0.0) { continue; }
+
+        var tShadow = max(bounds.x, 0.0);
+        let surfaceEps = max(inst.misc.y, 1e-4);
+        let maxShadow = min(bounds.y, rayLength - surfaceEps);
+        if (maxShadow <= tShadow) { continue; }
+
+        let damping = inst.misc.w;
+        var decided = false;
+        for (var shadowStep = 0; shadowStep < 192; shadowStep = shadowStep + 1) {
+            if (tShadow >= maxShadow) {
+                decided = true;
+                break;
+            }
+
+            let pShadow = origin + shadowDir * tShadow;
+            let currentEps = max(surfaceEps, tShadow * 0.001);
+            let dShadow = sourceTransportSignedStep(pShadow, damping);
+            if (dShadow <= 0.0 || abs(dShadow) < currentEps) {
+                g_instIdx = savedIndex;
+                return 0.0;
+            }
+            tShadow = tShadow + max(dShadow, currentEps);
+        }
+
+        // Mirror the existing exact local visibility contract: exhausting the
+        // finite marcher without traversing the admitted segment never invents
+        // an unobstructed path.
+        if (!decided && tShadow < maxShadow) {
+            g_instIdx = savedIndex;
+            return 0.0;
+        }
+    }
+
+    g_instIdx = savedIndex;
+    return 1.0;
+}
+
 fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> VisibilityDecision {
     if (u.lightControl.y < 0.5) {
         return VisibilityDecision(1.0, 1.0);
@@ -2548,8 +2608,23 @@ fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWor
         return VisibilityDecision(1.0, 0.0);
     }
 
-    let inst = instances[g_instIdx];
+    let receiverIndex = g_instIdx;
+    let inst = instances[receiverIndex];
     let surfaceWorld = (inst.model * vec4<f32>(surfacePoint, 1.0)).xyz;
+
+    // CompleteScene authority for this bounded provider means:
+    //   receiver-local field
+    //   + every other instance of this SAME compiled field program
+    //   + the exact shared world-triangle materialization.
+    // A different SDF program never reaches this branch: CPU admission keeps
+    // the completeness bit false for mixed-program scenes.
+    let cohortV =
+        cohortOtherInstanceVisibility(surfaceWorld, sourceWorld, receiverIndex);
+    g_instIdx = receiverIndex;
+    if (cohortV < 0.5) {
+        return VisibilityDecision(1.0, 0.0);
+    }
+
     let meshV = sceneMeshVisibility(surfaceWorld, sourceWorld);
     return VisibilityDecision(1.0, meshV);
 }
