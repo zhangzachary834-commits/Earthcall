@@ -812,3 +812,18 @@ GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance autho
 Ray-lifetime derived state only. Conservative support intervals for two execution families are partitioned into maximal near-to-far `First`, `Second`, or `Joint` runs, including `A -> B -> A`. Invalid inputs or run-budget overflow refuse and retain joint transport. `executeVolumeCohortIntervalSchedule()` preserves one continuing transport state across runs. No cross-family WebGPU interval lowering is claimed; C5b-2 owns that bridge.
 
 GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
+
+
+### General volume transport C5b-2a — fused execution-family mask (2026-11-05)
+
+C5b-2a adds a **program-structural family-tag vector** and a **segment-lifetime GPU family mask**. Neither is authored ontology.
+
+The renderer derives complete First/Second tags from the current C2 capability partition while preserving active-media order. The tag vector participates in fused-program revision/structure identity, so a regroup recompiles rather than borrowing stale WGSL. All-routed/all-general sets remain untagged.
+
+Inside the fused V5 program, `ecC5bExecutionMask` is rebuilt on each pre-existing authored AABB event segment. The lane adds no events and does not re-space quadrature. Bit 0 means First may participate; bit 1 means Second may participate; both bits preserve the existing joint evaluator. The same transmittance/radiance state continues across all segments.
+
+A tagged joint program is excluded from full-ray `KernelRoutedTransport` admission. Routed subinterval specialization is not yet claimed; C5b-2b owns that lowering.
+
+Invalid/incomplete family tagging refuses compiler admission rather than treating an unknown member as absent.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
