@@ -199,6 +199,23 @@ int main() {
         assert(plan.jointRegions.empty());
     }
 
+    // C5 draw schedule witness: camera chronology reverses into far-to-near
+    // blend publication independently for each region.
+    {
+        Rendering::VolumeCohortTilePlan plan;
+        plan.firstBeforeSecondRegions.push_back({0, 0, 128, 128});
+        plan.secondBeforeFirstRegions.push_back({128, 0, 128, 128});
+        plan.jointRegions.push_back({0, 128, 256, 128});
+        const auto steps = Rendering::buildVolumeCohortDrawSchedule(plan);
+        assert(steps.size() == 5);
+        assert(steps[0].target == Rendering::VolumeCohortDrawTarget::Second);
+        assert(steps[1].target == Rendering::VolumeCohortDrawTarget::First);
+        assert(steps[2].target == Rendering::VolumeCohortDrawTarget::First);
+        assert(steps[3].target == Rendering::VolumeCohortDrawTarget::Second);
+        assert(steps[4].target == Rendering::VolumeCohortDrawTarget::Joint);
+        assert(steps[0].rect.x == 0 && steps[2].rect.x == 128);
+    }
+
     // C4 witness 4: horizontally and vertically adjacent ordered tiles coalesce
     // so proof granularity does not automatically become draw-call granularity.
     {
