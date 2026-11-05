@@ -3243,39 +3243,35 @@ void WebGpuRenderer::flushSdfDraws() {
     const uint64_t sourceOffset = sourceView.offset;
     const uint64_t sourceBindingSize = sourceView.size;
 
-    // Global uniforms for SDFs
-    SdfGlobalUniforms u;
-    u.viewProj = _viewProj;
-    u.invViewProj = _invViewProj;
-    u.lightPos = glm::vec4(lightPos(), 1.0f);
-    u.eyePos = glm::vec4(_eyePos, 1.0f);
+    // Global SDF uniform values shared across program cohorts. Visibility
+    // completeness and foreign blocker count are receiver-relative, so those
+    // two fields are filled separately inside the cohort loop.
+    SdfGlobalUniforms baseU{};
+    baseU.viewProj = _viewProj;
+    baseU.invViewProj = _invViewProj;
+    baseU.lightPos = glm::vec4(lightPos(), 1.0f);
+    baseU.eyePos = glm::vec4(_eyePos, 1.0f);
     const glm::vec4 sourceCoefficients = radianceSourceCoefficients();
-    u.legacyEnvironment = glm::vec4(
+    baseU.legacyEnvironment = glm::vec4(
         lightAmbient() / 0.2f,
         (sourceCoefficients.x * sourceCoefficients.y) / 0.2f);
-    u.directIncidentRadiance = glm::vec4(
+    baseU.directIncidentRadiance = glm::vec4(
         legacyDirectIncidentRadiance(
             lightAmbient(), lightDiffuse(), lightSpecular(), sourceCoefficients),
         sourceCoefficients.x);
-    u.legacyDiffuseIncident = glm::vec4(
+    baseU.legacyDiffuseIncident = glm::vec4(
         lightDiffuse() / 0.8f,
         (sourceCoefficients.x * sourceCoefficients.z) / 0.8f);
-    u.legacySpecularIncident = glm::vec4(
+    baseU.legacySpecularIncident = glm::vec4(
         lightSpecular(),
         sourceCoefficients.x * sourceCoefficients.w);
-    const bool sdfCompleteSceneKnown =
-        radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
-        _sceneVisibilityFrame.sdfComplete;
-    u.lightControl = glm::vec4(
-        lightingEnabled() ? 1.0f : 0.0f,
-        static_cast<float>(
-            static_cast<uint32_t>(radianceVisibilityMode())),
-        sdfCompleteSceneKnown ? 1.0f : 0.0f,
-        static_cast<float>(_sceneVisibilityFrame.triangleCount));
-    u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
-                               static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
-    u.volumeTime = glm::vec4(static_cast<float>(volumeDensityTemporalCoordinate()),
-                            static_cast<float>(volumeDensityTemporalDelta()), 0.0f, 0.0f);
+    baseU.radianceTime = glm::vec4(
+        static_cast<float>(radianceTemporalCoordinate()),
+        static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
+    baseU.volumeTime = glm::vec4(
+        static_cast<float>(volumeDensityTemporalCoordinate()),
+        static_cast<float>(volumeDensityTemporalDelta()), 0.0f, 0.0f);
+
     // Unprojected rather than read off a named setting: the far plane belongs to
     // whatever projection the caller actually set, and asking the matrix cannot
     // drift away from it. NDC z = 1 is the far plane under the [0,1] depth range
@@ -3292,18 +3288,46 @@ void WebGpuRenderer::flushSdfDraws() {
             }
         }
     }
-    u.limits = glm::vec4(farDist, float(_depthW), float(_depthH), _spaceDistortion);
+    baseU.limits =
+        glm::vec4(farDist, float(_depthW), float(_depthH), _spaceDistortion);
 
-    auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(SdfGlobalUniforms));
-
+    bool recordedSdfKnownFrame = false;
     for (const SdfPipeline* sp : _activeSdfPipelines) {
         const auto& instances = _sdfBatches[sp];
-        if (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
-            !_sceneVisibilityFrame.sdfComplete) {
-            mutableFrameStats().sdfVisibilityUnknownDirectSkips +=
-                static_cast<uint32_t>(instances.size());
+
+        // Own-program instances stay in this shader's exact cohort evaluator.
+        // Only foreign cohorts are materialized into the analytic blocker packet.
+        const SceneVisibilityBufferView foreignVisibility =
+            prepareForeignImplicitVisibility(sp);
+        const bool sdfCompleteSceneKnown =
+            radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
+            foreignVisibility.complete;
+
+        if (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene) {
+            if (sdfCompleteSceneKnown) {
+                if (!recordedSdfKnownFrame) {
+                    mutableFrameStats().sceneVisibilitySdfKnownFrames++;
+                    recordedSdfKnownFrame = true;
+                }
+            } else {
+                mutableFrameStats().sdfVisibilityUnknownDirectSkips +=
+                    static_cast<uint32_t>(instances.size());
+            }
         }
-        
+
+        SdfGlobalUniforms u = baseU;
+        u.lightControl = glm::vec4(
+            lightingEnabled() ? 1.0f : 0.0f,
+            static_cast<float>(
+                static_cast<uint32_t>(radianceVisibilityMode())),
+            sdfCompleteSceneKnown ? 1.0f : 0.0f,
+            static_cast<float>(_sceneVisibilityFrame.triangleCount));
+        u.sceneVisibilityControl = glm::vec4(
+            static_cast<float>(foreignVisibility.count),
+            0.0f, 0.0f, 0.0f);
+        auto uAlloc =
+            bufferPool().suballocateUniform(&u, sizeof(SdfGlobalUniforms));
+
         const auto& params = _sdfParamsBatches[sp];
 
         const size_t paramBytes = params.size() * sizeof(float);
