@@ -88,3 +88,12 @@ Earthcall emits `noun-verbed` events (e.g., `relation-formed`, `jump-started`). 
 | Modifying Earthcall to save worlds to `world.sqlite` | Violates First Mover legibility and the `Frontier` system. | Stick to JSON and `.ecsave`. |
 | A channel defining `struct DatabaseRow` | Defining a domain noun inside the engine. | Map queries to generic properties or dynamic JSON payloads. |
 | Loading SQL rows into a hidden array | State invisible to Laws and quantifiers. | Instantiate the rows as `Object`s or `Relation`s in the world graph. |
+
+## Addendum: Foreign Databases and First Mover Ontology
+
+### Interrelated Documents
+- `docs/architecture/Integration/FOREIGN_DATABASES.md`
+- `docs/architecture/law/FIRST_MOVER_AUTHORING.md`
+
+### Thoughts on Integration and Interrelation
+Earthcall explicitly forbids external relational databases like SQLite from acting as the internal ontological state store, as doing so would violate the rich graph structure and legibility required by the engine. Instead, these foreign databases interrelate with the system by assuming the role of a First Mover. By acting strictly as a First Mover, an external database or its sidecar can influence the world state through the generation of JSON `.ecsave` data or by asserting properties over a Modality Channel. This interrelation ensures that the world's state remains pure and legible within Earthcall's ontology, while still allowing complex external data systems to initiate meaningful semantic creation.
