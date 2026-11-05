@@ -805,3 +805,10 @@ For each proved screen region the planner records camera chronology independentl
 **Refusal boundary:** C5a can represent opposite chronology across disjoint screen regions, but not same-ray interleaving such as `A -> B -> A`. Such a tile remains joint. C5b is the future interval scheduler. Routed compute still owns a full-screen publication buffer, so local fragment packets do not imply proportional routed-compute savings.
 
 GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
+
+
+### General volume transport C5b-1 — ray interval schedule IR (2026-11-05)
+
+Ray-lifetime derived state only. Conservative support intervals for two execution families are partitioned into maximal near-to-far `First`, `Second`, or `Joint` runs, including `A -> B -> A`. Invalid inputs or run-budget overflow refuse and retain joint transport. `executeVolumeCohortIntervalSchedule()` preserves one continuing transport state across runs. No cross-family WebGPU interval lowering is claimed; C5b-2 owns that bridge.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
