@@ -55,6 +55,22 @@ int main(){
     check(bound.find("@group(0) @binding(5) var<storage, read> fieldVmInstructions")!=std::string::npos,
           "production VM module binds the instruction stream at the requested storage slot");
 
+    auto productionTorus=geom::SdfNode::leaf(geom::SdfPrim::Torus,{.75f,.18f,0});
+    auto productionCsg=geom::SdfNode::binary(
+        geom::SdfOp::Union,
+        geom::SdfNode::leaf(geom::SdfPrim::Sphere,{.5f}),
+        productionTorus);
+    const auto production=sdfwgsl::compile(productionCsg);
+    check(production.ok&&
+          production.wgsl.find("@group(0) @binding(5) var<storage, read> fieldVmInstructions")!=std::string::npos&&
+          production.wgsl.find("struct SceneFieldVmBlockerData")!=std::string::npos&&
+          production.wgsl.find("fn sceneFieldVmVisibility(")!=std::string::npos&&
+          production.wgsl.find("fieldVmEval(programBase, instructionCount")!=std::string::npos,
+          "production SDF WGSL executes foreign field programs through the bound VM");
+    check(production.wgsl.find("sceneImplicitBlockers")==std::string::npos&&
+          production.wgsl.find("sceneFieldVmBlockers")!=std::string::npos,
+          "production SDF visibility no longer depends on the sphere-box foreign packet");
+
     auto expr=geom::makeImplicit("x*x+y*y+z*z-1");
     auto evm=sdfwgsl::lowerFieldVm(expr);
     check(!evm.ok&&evm.error.find("native OntoMath bytecode")!=std::string::npos,"Expr refuses until native OntoMath bytecode exists");
