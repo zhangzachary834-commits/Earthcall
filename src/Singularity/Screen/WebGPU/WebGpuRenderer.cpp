@@ -3226,8 +3226,16 @@ void WebGpuRenderer::flushVolumeComposite() {
     // crossing a boundary compiles each lane at most once per structure, then
     // reuses it. A camera change never changes the equations/parameter layout.
     auto enqueueVolumeCohort = [&](const std::vector<const Rendering::VolumeDensityBinding*>& cohortMedia,
-                                   bool allowRouted) -> const VolumePipeline* {
+                                   bool allowRouted,
+                                   const std::vector<sdfwgsl::VolumeExecutionFamily>* executionFamilies = nullptr)
+        -> const VolumePipeline* {
         if (cohortMedia.size() <= 1) return nullptr;
+        const std::vector<sdfwgsl::VolumeExecutionFamily> noExecutionFamilies;
+        const auto& executionFamilyTags =
+            executionFamilies ? *executionFamilies : noExecutionFamilies;
+        if (!executionFamilyTags.empty() &&
+            executionFamilyTags.size() != cohortMedia.size())
+            return nullptr;
 
         bool cohortTrimProofSupport = volumeZeroProofEnabled();
         for (const auto* medium : cohortMedia) {
@@ -3239,7 +3247,8 @@ void WebGpuRenderer::flushVolumeComposite() {
         }
 
         std::array<KernelRoutedSpec,4> frameSpecs{};
-        bool wantRouted = allowRouted && volumeRoutedTransportEnabled() && !_certificateProbeMedium &&
+        bool wantRouted = allowRouted && executionFamilyTags.empty() &&
+            volumeRoutedTransportEnabled() && !_certificateProbeMedium &&
             cohortMedia.size()==4 && incidentSource && OntoMath::literalZero(incidentSource->radianceExpr);
         // No source uses Current's unit compatibility illumination, not zero light.
         const auto vector4=[](const std::array<float,4>& v){return glm::vec4(v[0],v[1],v[2],v[3]);};
@@ -3288,6 +3297,11 @@ void WebGpuRenderer::flushVolumeComposite() {
         auto& setMemo = _volumeSetProgramCache[setKey];
         uint64_t setContentRevision = volumeDensitySourcesRevision();
         combineRevision(setContentRevision, wantRouted ? 0x524f5554ULL : 0x4c454741ULL);
+        if (!executionFamilyTags.empty()) {
+            combineRevision(setContentRevision, 0x43354232ULL); // "C5B2"
+            for (const auto family : executionFamilyTags)
+                combineRevision(setContentRevision, static_cast<uint64_t>(family));
+        }
         combineRevision(setContentRevision, incidentSourceContentRevision);
         for (std::size_t m = 0; m < cohortMedia.size(); ++m) {
             combineRevision(setContentRevision, reinterpret_cast< uintptr_t >(cohortMedia[m]->densityExpr));
@@ -3305,6 +3319,12 @@ void WebGpuRenderer::flushVolumeComposite() {
             std::string structure =
                 "medium-count:" + std::to_string(cohortMedia.size()) + (wantRouted ? "\nrouted\n" : "\nlegacy\n") +
                 incidentSourceStructure + "\n";
+            if (!executionFamilyTags.empty()) {
+                structure += "c5b-execution-families:";
+                for (const auto family : executionFamilyTags)
+                    structure += std::to_string(static_cast<unsigned>(family)) + ",";
+                structure += "\n";
+            }
 
             std::vector<sdfwgsl::KernelVolumeEvaluator> retainedEvaluators;
             retainedEvaluators.reserve(cohortMedia.size());
@@ -3410,8 +3430,9 @@ void WebGpuRenderer::flushVolumeComposite() {
                     !setMemo.ok || setMemo.structure != structure ||
                     !setMemo.pipeline;
                 if (needsCompile) {
-                    setMemo.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, cohortTrimProofSupport,
-                                                             certificateMembers, certificateSwitches);
+                    setMemo.prog = sdfwgsl::composeVolumeSet(
+                        compilerInputs, retainedEvaluators, cohortTrimProofSupport,
+                        certificateMembers, certificateSwitches, executionFamilyTags);
                     ++mutableFrameStats().volumeProgramCompiles;
                     mutableFrameStats().volumeWgslBytesGenerated +=
                         setMemo.prog.wgsl.size();
@@ -3452,8 +3473,9 @@ void WebGpuRenderer::flushVolumeComposite() {
                         for (auto& key : otherKey) std::get<10>(key) = !cohortTrimProofSupport;
                         auto& other = _volumeSetProgramCache[otherKey];
                         if (!other.ok || other.structure != structure || !other.pipeline) {
-                            other.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, !cohortTrimProofSupport,
-                                                                   certificateMembers, certificateSwitches);
+                            other.prog = sdfwgsl::composeVolumeSet(
+                                compilerInputs, retainedEvaluators, !cohortTrimProofSupport,
+                                certificateMembers, certificateSwitches, executionFamilyTags);
                             ++mutableFrameStats().volumeProgramCompiles;
                             mutableFrameStats().volumeWgslBytesGenerated += other.prog.wgsl.size();
                             other.ok = other.prog.ok;
