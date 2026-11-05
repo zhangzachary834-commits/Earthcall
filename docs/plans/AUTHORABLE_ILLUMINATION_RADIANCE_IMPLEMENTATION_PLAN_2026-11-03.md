@@ -6,6 +6,35 @@
 **Written by:** GPT-5.6 Sol  
 **Status:** implementation plan; no completion claim
 
+## Implementation ledger — 2026-11-04 continuation: bounded mixed-program implicit visibility
+
+`CompleteScene` can now cross the first **distinct implicit-program** boundary without triangulating fields or inventing a universe-sized mega-shader.
+
+Implemented:
+- added a representation-neutral analytic implicit blocker packet carrying an inverse world transform, exact primitive dimensions, local leaf offset, and an execution kind;
+- the first admitted foreign primitive leaves are **Sphere** and **Box** only;
+- segment endpoints are transformed into blocker-local coordinates, so arbitrary affine instance transforms preserve exact line/primitive intersection;
+- shared WGSL implements exact segment/sphere quadratic intersection and exact segment/box slab intersection, including true unbounded intervals for parallel in-slab axes;
+- mesh and SDF surface shaders consume the same blocker packet and intersection module;
+- every Field draw exports a blocker packet only when its exact SDF root is an admitted finite positive primitive leaf; unsupported Torus/CSG/Expr/etc. export nothing rather than a proxy;
+- scene completeness is now **receiver-relative**:
+  - mesh receivers require every implicit blocker in the frame to be exactly packetized;
+  - an SDF receiver evaluates its own entire compiled-program cohort through the existing exact field shader and therefore packetizes only **foreign** cohorts;
+  - one unsupported foreign cohort revokes CompleteScene authority for that receiver;
+- foreign implicit packet work is capped at 1024 blockers. Overflow yields Unknown rather than an unbounded per-fragment loop;
+- early surface flush and allocation failure provide legal inert bindings while revoking CompleteScene authority;
+- scene visibility telemetry now reports analytic implicit blocker count and bytes in addition to exact mesh triangles;
+- native tribunals distinguish:
+  1. mesh receiver + foreign exact Box Field blocker → known occluded;
+  2. Sphere SDF receiver + foreign exact Box Field program → known occluded;
+  3. Sphere SDF receiver + unsupported foreign Torus Field program → Unknown, direct transport withheld;
+- compiler tribunals require the shared Sphere/Box blocker functions and the CompleteScene composition order:
+  own exact SDF cohort → foreign analytic implicit blockers → exact mesh triangles.
+
+This is still a bounded execution provider, not a declaration that Sphere and Box are privileged ontology. The packet kinds are kernel execution cases for formulas whose exact segment intersections are currently implemented. Other field programs remain authored mathematics and may gain a different exact provider later without changing Source, Path, or Receiver semantics.
+
+---
+
 ## Implementation ledger — 2026-11-04 continuation: plural same-program SDF visibility cohorts
 
 The first bounded `CompleteScene` provider admitted exact mesh-only scenes and one SDF receiver plus the exact mesh-triangle blocker set. This continuation expands implicit plurality without pretending differently-authored field programs are interchangeable.
