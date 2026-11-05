@@ -47,6 +47,22 @@ struct VolumeCohortIntervalSchedule {
 //
 // Invalid proof inputs or run-budget exhaustion refuse the schedule; callers
 // must retain joint transport over their authoritative ray segment.
+template <class RunConsumer>
+bool executeVolumeCohortIntervalSchedule(
+    const VolumeCohortIntervalSchedule& schedule,
+    RunConsumer&& consume) {
+    if (!schedule.admitted) return false;
+    for (const auto& run : schedule.runs) {
+        if (!consume(run)) return false;
+    }
+    return true;
+}
+
+// The scheduler below owns chronology only. The consumer supplied above owns
+// transport state and must carry that SAME state from one run to the next.
+// Re-starting radiance/transmittance independently per run is not equivalent
+// unless a later proof explicitly derives an associative segment-composition
+// representation.
 inline VolumeCohortIntervalSchedule
 scheduleVolumeCohortRayIntervals(
     const std::vector<VolumeCohortRayInterval>& first,
