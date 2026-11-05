@@ -3027,38 +3027,108 @@ int main() {
                sourceImplicitLocalKnown[2] > 20 &&
                "implicit local-receiver visibility failed to return known-unoccluded transport");
 
-        // COMPLETE SCENE VISIBILITY: neither representation may pretend its
-        // local geometry is the whole Zone. Until a shared scene provider exists,
-        // direct transport is Unknown for BOTH and therefore withheld.
+        // COMPLETE SCENE VISIBILITY: first lawful provider. Move the source
+        // off the camera axis so a blocker can sit on the source ray without
+        // hiding the centre receiver pixel from the eye.
+        source.position = glm::vec3(1.4f, 0.0f, 1.4f);
+        renderer.setRadianceSources({source}, 7303);
         renderer.setRadianceVisibilityMode(
             RadianceVisibilityMode::CompleteScene);
 
+        // Mesh-only opaque scene is completely represented by the frame's exact
+        // world-triangle materialization. No blocker => known visible.
+        renderer.setModel(glm::mat4(1.0f));
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         meshTransport.drawObject();
         renderer.endFrame();
-        unsigned char sourceMeshSceneUnknown[4];
-        readCentre(sourceMeshSceneUnknown);
-        const Renderer::FrameStats sourceMeshSceneStats =
+        unsigned char sourceMeshSceneVisible[4];
+        readCentre(sourceMeshSceneVisible);
+        const Renderer::FrameStats sourceMeshSceneVisibleStats =
             renderer.frameStats();
+
+        assert(sourceMeshSceneVisible[0] > 8 &&
+               sourceMeshSceneVisible[1] > 35 &&
+               sourceMeshSceneVisible[2] > 20 &&
+               sourceMeshSceneVisibleStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshSceneVisibleStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshSceneVisibleStats.sceneVisibilityTriangles > 0 &&
+               "complete mesh scene did not yield a known visible path");
+
+        // Small opaque mesh blocker lies on the receiver->source segment but is
+        // displaced from the camera's x=0 centre ray.
+        Object meshBlocker;
+        meshBlocker.setShapeKind(Object::ShapeKind::Sphere);
+        meshBlocker.setRenderMode(Object::RenderMode::Mesh);
+        meshBlocker.setMaterialId("material.webgpu_source_transport_parity");
+        const glm::mat4 blockerModel =
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.95f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.22f));
 
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
-        implicitTransport.drawObject();
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(blockerModel);
+        meshBlocker.drawObject();
         renderer.endFrame();
-        unsigned char sourceImplicitSceneUnknown[4];
-        readCentre(sourceImplicitSceneUnknown);
-        const Renderer::FrameStats sourceImplicitSceneStats =
+        unsigned char sourceMeshSceneBlocked[4];
+        readCentre(sourceMeshSceneBlocked);
+        const Renderer::FrameStats sourceMeshSceneBlockedStats =
             renderer.frameStats();
 
-        assert(sourceMeshSceneUnknown[0] < 5 &&
-               sourceMeshSceneUnknown[1] < 5 &&
-               sourceMeshSceneUnknown[2] < 5 &&
-               sourceMeshSceneStats.meshVisibilityUnknownDirectSkips > 0 &&
-               "mesh fabricated complete-scene visibility");
-        assert(sourceImplicitSceneUnknown[0] < 5 &&
-               sourceImplicitSceneUnknown[1] < 5 &&
-               sourceImplicitSceneUnknown[2] < 5 &&
-               sourceImplicitSceneStats.sdfVisibilityUnknownDirectSkips > 0 &&
-               "implicit receiver-local SDF masqueraded as complete-scene visibility");
+        assert(sourceMeshSceneBlocked[0] < 5 &&
+               sourceMeshSceneBlocked[1] < 5 &&
+               sourceMeshSceneBlocked[2] < 5 &&
+               sourceMeshSceneBlockedStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshSceneBlockedStats.meshVisibilityUnknownDirectSkips == 0 &&
+               "complete mesh scene failed to report a known occluded source path");
+
+        // Mixed representation: exactly one SDF receiver may combine its exact
+        // local field with the SAME complete mesh-triangle blocker set.
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(blockerModel);
+        meshBlocker.drawObject();
+        renderer.endFrame();
+        unsigned char sourceImplicitSceneBlocked[4];
+        readCentre(sourceImplicitSceneBlocked);
+        const Renderer::FrameStats sourceImplicitSceneBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceImplicitSceneBlocked[0] < 5 &&
+               sourceImplicitSceneBlocked[1] < 5 &&
+               sourceImplicitSceneBlocked[2] < 5 &&
+               sourceImplicitSceneBlockedStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceImplicitSceneBlockedStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               "one SDF receiver plus mesh blockers failed complete-scene visibility");
+
+        // Completeness is conditional, not optimistic. A second SDF blocker is
+        // not represented by the triangle provider; every SDF direct path must
+        // return Unknown rather than ignoring that being.
+        Object secondImplicit;
+        secondImplicit.setShapeKind(Object::ShapeKind::Sphere);
+        secondImplicit.setRenderMode(Object::RenderMode::Auto);
+        secondImplicit.setMaterialId("material.webgpu_source_transport_parity");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.9f, 0.0f, 0.0f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.25f)));
+        secondImplicit.drawObject();
+        renderer.endFrame();
+        unsigned char sourceSdfSceneUnknown[4];
+        readCentre(sourceSdfSceneUnknown);
+        const Renderer::FrameStats sourceSdfSceneUnknownStats =
+            renderer.frameStats();
+
+        assert(sourceSdfSceneUnknown[0] < 5 &&
+               sourceSdfSceneUnknown[1] < 5 &&
+               sourceSdfSceneUnknown[2] < 5 &&
+               sourceSdfSceneUnknownStats.sceneVisibilitySdfKnownFrames == 0 &&
+               sourceSdfSceneUnknownStats.sdfVisibilityUnknownDirectSkips > 0 &&
+               "unsupported second SDF blocker was silently omitted from complete-scene truth");
 
         renderer.setRadianceVisibilityMode(RadianceVisibilityMode::Disabled);
         renderer.setRadianceSources({}, 0);
