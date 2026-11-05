@@ -358,7 +358,8 @@ int main() {
     }
 
 
-    // Smoke check only: existing groups may already supply both types; per-path\n    // typeMatches validation above checks advertised types against live values.
+    // Smoke check only: existing groups may already supply both types; per-path
+    // typeMatches validation above checks advertised types against live values.
     {
         bool foundDict = false;
         bool foundList = false;
