@@ -453,6 +453,15 @@ VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* 
 // member: an all-false (or empty) vector emits exactly the pre-existing marcher.
 // `supportCertificateSwitches` (per member, or the one pointer) narrows the
 // lowered killers as lowerVolumeSupportKillers's `only`; absent = every candidate.
+//
+// C5b-2a `executionFamilies` is another optional structural compiler lane.
+// When present it must tag every set member First or Second. The fused V5
+// marcher derives a two-bit family mask on each EXISTING authored AABB event
+// segment and gates member work with it while preserving one continuous
+// transmittance/radiance state. It adds no events and does not re-space the
+// accepted V5 quadrature lattice. This is the stateful cross-family bridge;
+// it does not yet replace First-only work with KernelRoutedTransport's
+// specialized root/subpanel producer.
 Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport = true,
                                const OntoMath::Piecewise* supportCertificateDensity = nullptr,
                                const std::vector<uint32_t>* supportCertificateSwitches = nullptr);
