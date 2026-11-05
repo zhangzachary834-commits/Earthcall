@@ -216,6 +216,8 @@ private:
         glm::vec4 dimsKind{0.0f};
         glm::vec4 offset{0.0f};
     };
+    static_assert(sizeof(SceneVisibilityImplicitBlocker) == 96,
+                  "scene implicit blocker GPU ABI must remain mat4 + 2 vec4");
     struct SceneVisibilityBufferView {
         WGPUBuffer buffer = nullptr;
         uint64_t offset = 0;
