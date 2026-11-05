@@ -38,9 +38,10 @@ enum class Blend { Opaque, Alpha, Additive };
 // it actually owns (today: SDF instance-local marching). Other representations
 // must return Unknown rather than inventing V.
 // CompleteScene: requires a provider that proves coverage of every relevant
-// blocker for the queried frame/receiver. WebGPU's first bounded provider admits
-// exact mesh-only scenes and one-SDF-plus-mesh scenes; unsupported scenes remain
-// Unknown rather than being approximated into authority.
+// blocker for the queried frame/receiver. WebGPU's bounded provider admits
+// exact mesh-only scenes and one compiled-SDF-program cohort plus meshes;
+// differently-structured implicit programs remain Unknown rather than being
+// approximated into authority.
 enum class RadianceVisibilityMode : uint32_t {
     Disabled = 0,
     LocalReceiverGeometry = 1,
@@ -72,8 +73,9 @@ public:
         // for raster meshes; CompleteScene may be known through a complete frame
         // provider.
         uint32_t meshVisibilityUnknownDirectSkips = 0;
-        // First CompleteScene provider observability. The provider is exact only
-        // when every relevant blocker was admitted into its world-triangle set.
+        // CompleteScene provider observability. The provider is exact only when
+        // every relevant blocker is admitted into either the world-triangle set
+        // or the receiving SDF shader's one exact same-program instance cohort.
         uint32_t sceneVisibilityTriangles = 0;
         size_t sceneVisibilityBytesUploaded = 0;
         uint32_t sceneVisibilityMeshKnownFrames = 0;
