@@ -359,6 +359,12 @@ RadianceSourceProgram compileRadianceSourceModule(
 ParameterBlock collectRadianceSourceParams(
     const std::vector<Rendering::RadianceSourceBinding>& sources);
 
+// Shared CompleteScene execution math. Callers declare a storage array named
+// sceneTriangles and carry triangle count in u.lightControl.w. The module owns
+// exact ray/triangle intersection only; scene completeness remains renderer
+// authority and is carried separately in u.lightControl.z.
+std::string sceneVisibilityTriangleMathModule();
+
 // V3 medium phase Phi(p,wi,wo,t)->scalar. Absence is exact identity Phi=1.
 // wi/wo are transport bindings, never aliases of source alpha's omega.
 PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr);
