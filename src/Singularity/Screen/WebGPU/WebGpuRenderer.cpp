@@ -785,29 +785,32 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
     SceneVisibilityFrame out;
     constexpr uint64_t kMaxSceneVisibilityTriangles = 8192;
 
-    // Binding is structurally present in every surface pipeline. Keep one legal
-    // inert element even when CompleteScene is disabled or unavailable.
-    const SceneVisibilityTriangle inert{};
-    auto bindInert = [&]() {
-        auto alloc = bufferPool().suballocateStorage(&inert, sizeof(inert));
+    const SceneVisibilityTriangle inertTriangle{};
+    const SceneVisibilityImplicitBlocker inertImplicit{};
+
+    auto bindInertTriangles = [&]() {
+        auto alloc = bufferPool().suballocateStorage(
+            &inertTriangle, sizeof(inertTriangle));
         out.buffer = alloc.buffer;
         out.offset = alloc.offset;
         out.size = alloc.size;
+        out.triangleCount = 0;
+    };
+    auto bindInertImplicit = [&]() {
+        auto alloc = bufferPool().suballocateStorage(
+            &inertImplicit, sizeof(inertImplicit));
+        out.implicitBuffer = alloc.buffer;
+        out.implicitOffset = alloc.offset;
+        out.implicitSize = alloc.size;
+        out.implicitCount = 0;
     };
 
+    // Both storage bindings are structurally present in every surface pipeline.
+    // Outside CompleteScene they carry one inert legal element and no authority.
     if (radianceVisibilityMode() != RadianceVisibilityMode::CompleteScene) {
-        bindInert();
+        bindInertTriangles();
+        bindInertImplicit();
         return out;
-    }
-
-    uint64_t sdfInstanceCount = 0;
-    uint64_t sdfProgramCohortCount = 0;
-    for (const SdfPipeline* sp : _activeSdfPipelines) {
-        const auto found = _sdfBatches.find(sp);
-        if (found != _sdfBatches.end() && !found->second.empty()) {
-            ++sdfProgramCohortCount;
-            sdfInstanceCount += found->second.size();
-        }
     }
 
     bool exactMeshMaterialization = !_frameHasUnmaterializedOpaqueGeometry;
@@ -846,7 +849,8 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
 
     if (!exactMeshMaterialization ||
         triangleCount > kMaxSceneVisibilityTriangles) {
-        bindInert();
+        bindInertTriangles();
+        bindInertImplicit();
         mutableFrameStats().sceneVisibilityUnknownFrames++;
         return out;
     }
@@ -868,53 +872,189 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
         }
     }
 
-    const void* data = triangles.empty()
-        ? static_cast<const void*>(&inert)
+    const void* triangleData = triangles.empty()
+        ? static_cast<const void*>(&inertTriangle)
         : static_cast<const void*>(triangles.data());
-    const size_t bytes = triangles.empty()
-        ? sizeof(inert)
+    const size_t triangleBytes = triangles.empty()
+        ? sizeof(inertTriangle)
         : triangles.size() * sizeof(SceneVisibilityTriangle);
+    auto triangleAlloc =
+        bufferPool().suballocateStorage(triangleData, triangleBytes);
+    out.buffer = triangleAlloc.buffer;
+    out.offset = triangleAlloc.offset;
+    out.size = triangleAlloc.size;
+    out.triangleCount = static_cast<uint32_t>(triangles.size());
+    if (!out.buffer) {
+        out.triangleCount = 0;
+        bindInertImplicit();
+        mutableFrameStats().sceneVisibilityUnknownFrames++;
+        return out;
+    }
+    out.meshBlockersComplete = true;
+
+    // Global analytic implicit packet used by mesh receivers. SDF receivers use
+    // receiver-relative foreign packets below: their own program cohort is
+    // already exact inside their shader and must not be redundantly intersected.
+    bool allImplicitMaterialized = true;
+    std::vector<SceneVisibilityImplicitBlocker> allImplicit;
+    for (const SdfPipeline* sp : _activeSdfPipelines) {
+        const auto instancesIt = _sdfBatches.find(sp);
+        if (instancesIt == _sdfBatches.end() || instancesIt->second.empty()) {
+            continue;
+        }
+        const auto blockersIt = _sdfVisibilityBlockerBatches.find(sp);
+        if (blockersIt == _sdfVisibilityBlockerBatches.end() ||
+            blockersIt->second.size() != instancesIt->second.size()) {
+            allImplicitMaterialized = false;
+            continue;
+        }
+        allImplicit.insert(
+            allImplicit.end(),
+            blockersIt->second.begin(), blockersIt->second.end());
+    }
+
+    const void* implicitData = allImplicit.empty()
+        ? static_cast<const void*>(&inertImplicit)
+        : static_cast<const void*>(allImplicit.data());
+    const size_t implicitBytes = allImplicit.empty()
+        ? sizeof(inertImplicit)
+        : allImplicit.size() * sizeof(SceneVisibilityImplicitBlocker);
+    auto implicitAlloc =
+        bufferPool().suballocateStorage(implicitData, implicitBytes);
+    out.implicitBuffer = implicitAlloc.buffer;
+    out.implicitOffset = implicitAlloc.offset;
+    out.implicitSize = implicitAlloc.size;
+    out.implicitCount = static_cast<uint32_t>(allImplicit.size());
+
+    if (!out.implicitBuffer) {
+        out.implicitCount = 0;
+        allImplicitMaterialized = false;
+    }
+
+    // A raster receiver has no local implicit evaluator. It may claim complete
+    // scene visibility only when every implicit blocker was exported exactly.
+    out.meshComplete =
+        out.meshBlockersComplete && allImplicitMaterialized;
+
+    auto& stats = mutableFrameStats();
+    stats.sceneVisibilityTriangles = out.triangleCount;
+    stats.sceneVisibilityBytesUploaded += triangleBytes;
+    stats.sceneVisibilityImplicitBlockers = out.implicitCount;
+    stats.sceneVisibilityImplicitBytesUploaded += implicitBytes;
+
+    if (hasMeshReceivers && out.meshComplete) {
+        stats.sceneVisibilityMeshKnownFrames++;
+    }
+
+    bool anyUnknown =
+        hasMeshReceivers && !out.meshComplete;
+    for (const SdfPipeline* sp : _activeSdfPipelines) {
+        const auto instancesIt = _sdfBatches.find(sp);
+        if (instancesIt == _sdfBatches.end() || instancesIt->second.empty()) {
+            continue;
+        }
+        bool complete = out.meshBlockersComplete;
+        if (complete) {
+            for (const SdfPipeline* foreign : _activeSdfPipelines) {
+                if (foreign == sp) continue;
+                const auto foreignInstances = _sdfBatches.find(foreign);
+                if (foreignInstances == _sdfBatches.end() ||
+                    foreignInstances->second.empty()) {
+                    continue;
+                }
+                const auto foreignBlockers =
+                    _sdfVisibilityBlockerBatches.find(foreign);
+                if (foreignBlockers == _sdfVisibilityBlockerBatches.end() ||
+                    foreignBlockers->second.size() !=
+                        foreignInstances->second.size()) {
+                    complete = false;
+                    break;
+                }
+            }
+        }
+        if (!complete) {
+            anyUnknown = true;
+        }
+    }
+    if (anyUnknown) {
+        stats.sceneVisibilityUnknownFrames++;
+    }
+
+    return out;
+}
+
+bool WebGpuRenderer::sdfSceneVisibilityComplete(
+    const SdfPipeline* receiver) const {
+    if (radianceVisibilityMode() != RadianceVisibilityMode::CompleteScene ||
+        !_sceneVisibilityFrame.meshBlockersComplete || !receiver) {
+        return false;
+    }
+
+    for (const SdfPipeline* foreign : _activeSdfPipelines) {
+        if (foreign == receiver) continue;
+        const auto instancesIt = _sdfBatches.find(foreign);
+        if (instancesIt == _sdfBatches.end() || instancesIt->second.empty()) {
+            continue;
+        }
+        const auto blockersIt =
+            _sdfVisibilityBlockerBatches.find(foreign);
+        if (blockersIt == _sdfVisibilityBlockerBatches.end() ||
+            blockersIt->second.size() != instancesIt->second.size()) {
+            return false;
+        }
+    }
+    return true;
+}
+
+WebGpuRenderer::SceneVisibilityBufferView
+WebGpuRenderer::prepareForeignImplicitVisibility(
+    const SdfPipeline* receiver) {
+    SceneVisibilityBufferView out;
+    const SceneVisibilityImplicitBlocker inert{};
+
+    auto bindInert = [&]() {
+        auto alloc = bufferPool().suballocateStorage(&inert, sizeof(inert));
+        out.buffer = alloc.buffer;
+        out.offset = alloc.offset;
+        out.size = alloc.size;
+        out.count = 0;
+    };
+
+    if (!sdfSceneVisibilityComplete(receiver)) {
+        bindInert();
+        return out;
+    }
+
+    std::vector<SceneVisibilityImplicitBlocker> blockers;
+    for (const SdfPipeline* foreign : _activeSdfPipelines) {
+        if (foreign == receiver) continue;
+        const auto it = _sdfVisibilityBlockerBatches.find(foreign);
+        if (it != _sdfVisibilityBlockerBatches.end()) {
+            blockers.insert(blockers.end(),
+                            it->second.begin(), it->second.end());
+        }
+    }
+
+    const void* data = blockers.empty()
+        ? static_cast<const void*>(&inert)
+        : static_cast<const void*>(blockers.data());
+    const size_t bytes = blockers.empty()
+        ? sizeof(inert)
+        : blockers.size() * sizeof(SceneVisibilityImplicitBlocker);
     auto alloc = bufferPool().suballocateStorage(data, bytes);
     out.buffer = alloc.buffer;
     out.offset = alloc.offset;
     out.size = alloc.size;
-    out.triangleCount = static_cast<uint32_t>(triangles.size());
-
-    if (!out.buffer) {
-        out.triangleCount = 0;
-        mutableFrameStats().sceneVisibilityUnknownFrames++;
+    out.count = static_cast<uint32_t>(blockers.size());
+    out.complete = out.buffer != nullptr;
+    if (!out.complete) {
+        out.count = 0;
         return out;
     }
 
-    // Mesh receivers are complete only when no SDF blocker exists: the mesh
-    // shader still has no exact implicit-field evaluator.
-    //
-    // An SDF receiver may compose the shared mesh set with EVERY instance in
-    // its own compiled SDF program cohort. The instance storage already carries
-    // all transforms/params for that exact field program, so plurality of
-    // instances is not a loss of authority. A second distinct SDF program still
-    // makes CompleteScene Unknown until a mixed-program provider exists.
-    out.meshComplete = sdfInstanceCount == 0;
-    out.sdfComplete =
-        sdfInstanceCount > 0 && sdfProgramCohortCount == 1;
-
-    mutableFrameStats().sceneVisibilityTriangles = out.triangleCount;
-    mutableFrameStats().sceneVisibilityBytesUploaded += bytes;
-    if (out.meshComplete) {
-        mutableFrameStats().sceneVisibilityMeshKnownFrames++;
-    }
-    if (out.sdfComplete) {
-        mutableFrameStats().sceneVisibilitySdfKnownFrames++;
-    }
-    const bool anyReceiverUnknown =
-        (hasMeshReceivers && !out.meshComplete) ||
-        (sdfInstanceCount > 0 && !out.sdfComplete);
-    if (anyReceiverUnknown) {
-        mutableFrameStats().sceneVisibilityUnknownFrames++;
-    }
+    mutableFrameStats().sceneVisibilityImplicitBytesUploaded += bytes;
     return out;
 }
-
 
 void WebGpuRenderer::ensureSceneVisibilityBindingForEarlyFlush() {
     if (_sceneVisibilityFrame.buffer) return;
