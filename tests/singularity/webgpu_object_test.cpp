@@ -3232,8 +3232,8 @@ int main() {
         assert(sourceSdfUnsupportedProgramUnknown[0] < 5 &&
                sourceSdfUnsupportedProgramUnknown[1] < 5 &&
                sourceSdfUnsupportedProgramUnknown[2] < 5 &&
-               sourceSdfUnsupportedProgramUnknownStats.sceneVisibilitySdfKnownFrames == 0 &&
                sourceSdfUnsupportedProgramUnknownStats.sdfVisibilityUnknownDirectSkips > 0 &&
+               sourceSdfUnsupportedProgramUnknownStats.sceneVisibilityUnknownFrames > 0 &&
                "unsupported foreign SDF program was silently omitted from complete-scene truth");
 
         renderer.setRadianceVisibilityMode(RadianceVisibilityMode::Disabled);
