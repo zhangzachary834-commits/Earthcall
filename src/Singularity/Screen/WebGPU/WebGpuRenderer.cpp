@@ -3734,22 +3734,32 @@ void WebGpuRenderer::flushVolumeComposite() {
                         _depthW, _depthH, 128u, 96u,
                         routedProjected, generalProjected);
 
-                    // C5: each proved region carries its own chronology.
-                    for (const auto& rect : tilePlan.firstBeforeSecondRegions)
-                        appendOrderedRegion(
-                            Rendering::VolumeCohortOrder::FirstBeforeSecond, rect);
-                    for (const auto& rect : tilePlan.secondBeforeFirstRegions)
-                        appendOrderedRegion(
-                            Rendering::VolumeCohortOrder::SecondBeforeFirst, rect);
+                    // C5: each proved region carries its own chronology,
+                    // then the pure planner reverses camera chronology into
+                    // premultiplied far-to-near publication order.
+                    const auto logicalSchedule =
+                        Rendering::buildVolumeCohortDrawSchedule(tilePlan);
+                    const bool needsJoint = std::any_of(
+                        logicalSchedule.begin(), logicalSchedule.end(),
+                        [](const Rendering::VolumeCohortDrawStep& step) {
+                            return step.target ==
+                                Rendering::VolumeCohortDrawTarget::Joint;
+                        });
+                    const VolumePipeline* jointPipeline =
+                        needsJoint ? enqueueVolumeCohort(activeMedia, false) : nullptr;
+                    const bool jointReady = !needsJoint || jointPipeline;
 
-                    bool jointReady = true;
-                    if (!tilePlan.jointRegions.empty()) {
-                        const auto* jointPipeline =
-                            enqueueVolumeCohort(activeMedia, false);
-                        jointReady = jointPipeline != nullptr;
-                        if (jointReady)
-                            for (const auto& rect : tilePlan.jointRegions)
-                                appendPacket(jointPipeline, rect);
+                    if (jointReady) {
+                        for (const auto& step : logicalSchedule) {
+                            const VolumePipeline* target = nullptr;
+                            if (step.target == Rendering::VolumeCohortDrawTarget::First)
+                                target = routedPipeline;
+                            else if (step.target == Rendering::VolumeCohortDrawTarget::Second)
+                                target = generalPipeline;
+                            else
+                                target = jointPipeline;
+                            appendPacket(target, step.rect);
+                        }
                     }
 
                     scheduledSplit =
@@ -4262,6 +4272,7 @@ void WebGpuRenderer::flushVolumeComposite() {
         _boundPipeline = nullptr;
 
         uint32_t issuedDraws = 0;
+        uint64_t issuedTriangles = 0;
         for (const auto& packet : volumeDrawSchedule) {
             const auto preparedIt = preparedVolumeDraws.find(packet.pipeline);
             if (preparedIt == preparedVolumeDraws.end()) continue;
@@ -4294,6 +4305,8 @@ void WebGpuRenderer::flushVolumeComposite() {
                     wgpuRenderPassEncoderDraw(
                         _pass, 36, prepared.drawInstanceCount, 0, 0);
                     ++issuedDraws;
+                    issuedTriangles +=
+                        uint64_t(12) * prepared.drawInstanceCount;
                 }
             } else if (packet.rect.width && packet.rect.height) {
                 wgpuRenderPassEncoderSetScissorRect(
@@ -4302,12 +4315,15 @@ void WebGpuRenderer::flushVolumeComposite() {
                 wgpuRenderPassEncoderDraw(
                     _pass, 36, prepared.drawInstanceCount, 0, 0);
                 ++issuedDraws;
+                issuedTriangles +=
+                    uint64_t(12) * prepared.drawInstanceCount;
             }
-            mutableFrameStats().trianglesDrawn +=
-                static_cast<uint32_t>(12 * prepared.drawInstanceCount);
         }
         wgpuRenderPassEncoderSetScissorRect(_pass, 0, 0, _depthW, _depthH);
         mutableFrameStats().drawCalls += issuedDraws;
+        mutableFrameStats().trianglesDrawn +=
+            static_cast<uint32_t>(std::min<uint64_t>(
+                issuedTriangles, std::numeric_limits<uint32_t>::max()));
     }
 
     if (_pass) {
