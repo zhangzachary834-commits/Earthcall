@@ -194,10 +194,11 @@ private:
     WGPUBindGroupLayout _bgl = nullptr;
     const MeshPipeline* meshPipeline(const std::string& wgsl);
 
-    // First CompleteScene execution substrate: exact world-space triangles for
-    // every queued opaque mesh. It is intentionally brute-force and bounded;
-    // exceeding the budget or admitting unsupported blockers produces Unknown,
-    // never an approximate visibility answer.
+    // Bounded CompleteScene execution substrate: exact world-space triangles
+    // for every queued opaque mesh, plus (for SDF receivers) every instance in
+    // one compiled SDF-program cohort evaluated by that receiver shader itself.
+    // Exceeding the mesh budget or admitting a different SDF program produces
+    // Unknown, never an approximate visibility answer.
     struct SceneVisibilityTriangle {
         glm::vec4 a;
         glm::vec4 b;
