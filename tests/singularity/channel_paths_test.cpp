@@ -359,19 +359,39 @@ int main() {
 
 
     // Specific check for list/dictionary types that Palette added to LawGraphWindow
+    // if finding the property returns the correct option with type "dictionary"
     {
-        bool dictFound = false;
-        bool listFound = false;
+        bool foundDict = false;
+        bool foundList = false;
         for (const auto& option : Rendering::knownPathOptions()) {
             if (std::string(option.type) == "dictionary") {
-                dictFound = true;
-            }
-            if (std::string(option.type) == "list") {
-                listFound = true;
+                foundDict = true;
+            } else if (std::string(option.type) == "list") {
+                foundList = true;
             }
         }
-        if (!dictFound || !listFound) {
-            fail("knownPathOptions", "Palette Update", "must successfully classify list and dictionary properties from prototypes (e.g. from ScreenChannel/Formation)");
+        if (!foundDict || !foundList) {
+            fail("knownPathOptions", "Palette Update", "must successfully classify at least one dictionary and one list property from the prototypes (e.g. from ScreenChannel/Formation)");
+        }
+    }
+
+
+    // Specific check for list/dictionary types that Palette added to LawGraphWindow
+    {
+        bool foundDict = false;
+        bool foundList = false;
+
+        for (const auto& option : Rendering::knownPathOptions()) {
+            if (std::string(option.type) == "dictionary") {
+                foundDict = true;
+            }
+            if (std::string(option.type) == "list") {
+                foundList = true;
+            }
+        }
+
+        if (!foundDict || !foundList) {
+            fail("knownPathOptions", "Palette Update", "must successfully classify list and dictionary properties from any prototype");
         }
     }
 
