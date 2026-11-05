@@ -218,11 +218,35 @@ private:
     };
     static_assert(sizeof(SceneVisibilityImplicitBlocker) == 96,
                   "scene implicit blocker GPU ABI must remain mat4 + 2 vec4");
+
+    // Generic foreign-field visibility packet for SDF receivers. The authored
+    // field remains an SdfNode/OntoMath tree; this is derived frame execution
+    // state. program = {instructionBase, instructionCount, maxStackDepth, 0}.
+    struct SceneVisibilityVmBlocker {
+        glm::mat4 invModel{1.0f};
+        glm::vec4 extents{0.0f};
+        glm::uvec4 program{0u};
+    };
+    static_assert(sizeof(SceneVisibilityVmBlocker) == 96,
+                  "scene VM blocker GPU ABI must remain mat4 + vec4 + uvec4");
+    struct SceneVisibilityVmAdmission {
+        SceneVisibilityVmBlocker blocker;
+        sdfwgsl::FieldVmProgram program;
+    };
+
     struct SceneVisibilityBufferView {
         WGPUBuffer buffer = nullptr;
         uint64_t offset = 0;
         uint64_t size = 0;
         uint32_t count = 0;
+
+        // A separate instruction stream keeps instance transforms/descriptors
+        // compact while allowing many blocker programs in one fixed shader.
+        WGPUBuffer programBuffer = nullptr;
+        uint64_t programOffset = 0;
+        uint64_t programSize = 0;
+        uint32_t instructionCount = 0;
+
         bool complete = false;
     };
     struct SceneVisibilityFrame {
@@ -940,6 +964,11 @@ private:
     // exporting that program cohort to foreign visibility consumers.
     std::map<const SdfPipeline*, std::vector<SceneVisibilityImplicitBlocker>>
         _sdfVisibilityBlockerBatches;
+    // Generic VM admissions are separate from the analytic mesh packet during
+    // the first activation rung. Equality with the SDF instance batch size is
+    // the completeness proof for foreign SDF visibility.
+    std::map<const SdfPipeline*, std::vector<SceneVisibilityVmAdmission>>
+        _sdfVisibilityVmBatches;
     // Count of instances whose surface opacity is compatible with this binary
     // visibility provider. Own-program exact geometry is not sufficient when
     // optical transmission itself is unresolved.
