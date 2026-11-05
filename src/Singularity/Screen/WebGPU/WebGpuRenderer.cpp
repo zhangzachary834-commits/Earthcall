@@ -1956,6 +1956,9 @@ void WebGpuRenderer::flushMeshDraws() {
                 static_cast<uint32_t>(radianceVisibilityMode())),
             meshCompleteSceneKnown ? 1.0f : 0.0f,
             static_cast<float>(_sceneVisibilityFrame.triangleCount));
+        u.sceneVisibilityControl = glm::vec4(
+            static_cast<float>(_sceneVisibilityFrame.implicitCount),
+            0.0f, 0.0f, 0.0f);
         const bool meshVisibilityUnknown =
             radianceVisibilityMode() == RadianceVisibilityMode::LocalReceiverGeometry ||
             (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
@@ -1989,7 +1992,7 @@ void WebGpuRenderer::flushMeshDraws() {
             continue;
         }
 
-        WGPUBindGroupEntry bge[6] = {};
+        WGPUBindGroupEntry bge[7] = {};
         bge[0].binding = 0;
         bge[0].buffer = uAlloc.buffer;
         bge[0].offset = uAlloc.offset;
@@ -2016,9 +2019,20 @@ void WebGpuRenderer::flushMeshDraws() {
         bge[5].buffer = _sceneVisibilityFrame.buffer;
         bge[5].offset = _sceneVisibilityFrame.offset;
         bge[5].size = _sceneVisibilityFrame.size;
+        if (!_sceneVisibilityFrame.implicitBuffer ||
+            _sceneVisibilityFrame.implicitSize == 0) {
+            mutableFrameStats().meshProgramRefusals++;
+            mutableFrameStats().meshLastProgramRefusal =
+                "scene visibility implicit binding unavailable";
+            continue;
+        }
+        bge[6].binding = 6;
+        bge[6].buffer = _sceneVisibilityFrame.implicitBuffer;
+        bge[6].offset = _sceneVisibilityFrame.implicitOffset;
+        bge[6].size = _sceneVisibilityFrame.implicitSize;
         WGPUBindGroupDescriptor bgDesc = {};
         bgDesc.layout = _bgl;
-        bgDesc.entryCount = 6;
+        bgDesc.entryCount = 7;
         bgDesc.entries = bge;
         WGPUBindGroup bindGroup =
             wgpuDeviceCreateBindGroup(_device, &bgDesc);
