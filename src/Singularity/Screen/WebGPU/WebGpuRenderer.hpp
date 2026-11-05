@@ -272,6 +272,8 @@ private:
     SceneVisibilityFrame prepareSceneVisibilityFrame();
     SceneVisibilityBufferView prepareForeignImplicitVisibility(
         const SdfPipeline* receiver);
+    bool sdfSceneVisibilityCompleteForFrame(
+        const SdfPipeline* receiver, bool meshBlockersComplete) const;
     bool sdfSceneVisibilityComplete(const SdfPipeline* receiver) const;
     void ensureSceneVisibilityBindingForEarlyFlush();
 
