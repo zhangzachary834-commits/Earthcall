@@ -77,7 +77,9 @@ public:
         // every relevant blocker is admitted into either the world-triangle set
         // or the receiving SDF shader's one exact same-program instance cohort.
         uint32_t sceneVisibilityTriangles = 0;
+        uint32_t sceneVisibilityImplicitBlockers = 0;
         size_t sceneVisibilityBytesUploaded = 0;
+        size_t sceneVisibilityImplicitBytesUploaded = 0;
         uint32_t sceneVisibilityMeshKnownFrames = 0;
         uint32_t sceneVisibilitySdfKnownFrames = 0;
         uint32_t sceneVisibilityUnknownFrames = 0;
