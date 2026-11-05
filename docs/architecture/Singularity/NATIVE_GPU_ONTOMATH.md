@@ -1,5 +1,8 @@
 # Native GPU OntoMath (The AST Interpreter)
 
+> **Implementation status — 2026-11-05.** Rung 0 is now production substrate, not yet active renderer authority. `SdfWgsl.hpp` and `FieldVm.cpp` define bounded field bytecode, a CPU parity interpreter, and a fixed WGSL interpreter. Primitive/CSG `SdfNode` forms are admitted. `Expr` refuses until OntoMath has a lossless native bytecode lowering; `Convex` refuses until its plane payload is encoded. No scene program table is uploaded yet, and no VM result grants `CompleteScene::Known`.
+
+
 ## 1. The Dynamic SDF Recompilation Problem
 Earthcall’s `OntoMath` provides a mathematically pure representation of the Zone, modeling Beings as analytic fields (SDFs). Currently, the `@screen-channel` translates this pure math into pixels by recursively generating a string of WGSL source code (`SdfWgsl.cpp`) and passing it to the graphics driver for compilation.
 
