@@ -2212,7 +2212,7 @@ struct RU {
 @group(0) @binding(0) var<uniform> u: RU;
 struct Params { v: array<f32> };
 @group(0) @binding(1) var<storage, read> P: Params;
-@group(0) @binding(3) var<storage, read> sceneTriangles: array<SceneVisibilityTriangle>;
+@group(0) @binding(3) var<storage, read> sceneTriangles: array<vec4<f32>>;
 
 struct VSOut {
     @builtin(position) clip: vec4<f32>,
@@ -4166,22 +4166,20 @@ VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
 
 std::string sceneVisibilityTriangleMathModule() {
     return R"WGSL(
-struct SceneVisibilityTriangle {
-    a: vec4<f32>,
-    b: vec4<f32>,
-    c: vec4<f32>,
-};
-
 fn sceneTriangleBlocks(
     origin: vec3<f32>, direction: vec3<f32>, maxT: f32,
-    tri: SceneVisibilityTriangle) -> bool {
-    let e1 = tri.b.xyz - tri.a.xyz;
-    let e2 = tri.c.xyz - tri.a.xyz;
+    triangleIndex: u32) -> bool {
+    let base = triangleIndex * 3u;
+    let a = sceneTriangles[base + 0u].xyz;
+    let b = sceneTriangles[base + 1u].xyz;
+    let c = sceneTriangles[base + 2u].xyz;
+    let e1 = b - a;
+    let e2 = c - a;
     let p = cross(direction, e2);
     let det = dot(e1, p);
     if (abs(det) <= 1e-8) { return false; }
     let invDet = 1.0 / det;
-    let tvec = origin - tri.a.xyz;
+    let tvec = origin - a;
     let baryU = dot(tvec, p) * invDet;
     if (baryU < 0.0 || baryU > 1.0) { return false; }
     let q = cross(tvec, e1);
@@ -4203,7 +4201,7 @@ fn sceneMeshVisibility(surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
     let maxT = max(distance - 2.0 * bias, 0.0);
     let triangleCount = u32(max(u.lightControl.w, 0.0));
     for (var i = 0u; i < triangleCount; i = i + 1u) {
-        if (sceneTriangleBlocks(origin, direction, maxT, sceneTriangles[i])) {
+        if (sceneTriangleBlocks(origin, direction, maxT, i)) {
             return 0.0;
         }
     }
