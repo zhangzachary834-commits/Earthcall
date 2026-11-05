@@ -3628,10 +3628,10 @@ fn fs(in: VSOut) -> FSOut {
                 // V1: sigma_t is independently authored when present; otherwise
                 // volumeExtinctionEval preserves the exact pre-V1 0.5*D contract.
                 let extinction = max(volumeExtinctionEval(p, density), 1e-6);
-                
+
                 let old_t = transmittance;
                 transmittance *= exp(-extinction * marched_field_distance);
-                
+
                 // V2: sigma_s controls scattering magnitude while C_v controls medium
                 // chroma. Compatibility (sigma_s=D, C_v=white) is byte-for-byte
                 // equivalent to the historical white term.
@@ -3676,7 +3676,7 @@ fn fs(in: VSOut) -> FSOut {
                     volumetric_emission += emitted * ((old_t - transmittance) / extinction);
                 }
             }
-            
+
             // Early exit if the field is fully opaque or ray exits the bounded volume
             if (transmittance < 0.01) { break; }
         }
