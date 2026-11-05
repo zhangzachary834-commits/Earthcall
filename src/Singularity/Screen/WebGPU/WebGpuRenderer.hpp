@@ -194,6 +194,26 @@ private:
     WGPUBindGroupLayout _bgl = nullptr;
     const MeshPipeline* meshPipeline(const std::string& wgsl);
 
+    // First CompleteScene execution substrate: exact world-space triangles for
+    // every queued opaque mesh. It is intentionally brute-force and bounded;
+    // exceeding the budget or admitting unsupported blockers produces Unknown,
+    // never an approximate visibility answer.
+    struct SceneVisibilityTriangle {
+        glm::vec4 a;
+        glm::vec4 b;
+        glm::vec4 c;
+    };
+    struct SceneVisibilityFrame {
+        WGPUBuffer buffer = nullptr;
+        uint64_t offset = 0;
+        uint64_t size = 0;
+        uint32_t triangleCount = 0;
+        bool meshComplete = false;
+        bool sdfComplete = false;
+    };
+    SceneVisibilityFrame _sceneVisibilityFrame;
+    SceneVisibilityFrame prepareSceneVisibilityFrame();
+
     struct MeshResponseKey {
         // Owning references prevent an expired/reallocated AST address from
         // aliasing a historical cache entry. Revisions remain the authored
