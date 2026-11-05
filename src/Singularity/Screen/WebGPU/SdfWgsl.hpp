@@ -19,9 +19,12 @@
 // per-instance data. Two spheres of different radii share one pipeline.
 
 #include <cstddef>
+#include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 #include <map>
+#include <glm/glm.hpp>
 
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/RadianceSource.hpp"
@@ -54,6 +57,76 @@ struct ParameterBlock {
     bool ok = true;
     std::string error;
 };
+
+// ---------------------------------------------------------------------------
+// Native GPU field VM — first production substrate rung.
+//
+// This is DERIVED Kernel IR, never authored or persisted identity. OntoMath /
+// SdfNode remain the mathematical source of truth. The VM exists only so a
+// fixed WebGPU shader can evaluate many active field programs supplied as data
+// without recompiling one receiver shader per scene topology.
+//
+// The first rung lowers the exact current SdfNode primitive/CSG vocabulary.
+// Expr/Convex are deliberately refused until their OntoMath/plane payloads have
+// equally explicit VM encodings; refusal is preferable to a second math engine.
+enum class FieldVmOpcode : uint32_t {
+    Sphere = 1,
+    Box = 2,
+    RoundBox = 3,
+    Ellipsoid = 4,
+    Cylinder = 5,
+    Cone = 6,
+    Torus = 7,
+
+    Morph = 20,
+    Union = 21,
+    Intersect = 22,
+    Subtract = 23,
+    SmoothUnion = 24,
+};
+
+// One postorder stack instruction. meta.x = FieldVmOpcode.
+// Primitive records:
+//   a.xyz = local leaf offset; a.w = primitive scalar parameter 0
+//   b.xyz = primitive dimensions / remaining scalar parameters.
+// Operator records:
+//   a.x = blend parameter for Morph / SmoothUnion.
+// The ABI is intentionally plain storage-buffer data.
+struct FieldVmInstruction {
+    glm::uvec4 meta{0u};
+    glm::vec4 a{0.0f};
+    glm::vec4 b{0.0f};
+};
+static_assert(sizeof(FieldVmInstruction) == 48,
+              "field VM GPU ABI must remain uvec4 + 2 vec4");
+
+struct FieldVmProgram {
+    std::vector<FieldVmInstruction> instructions;
+    uint32_t maxStackDepth = 0;
+    bool ok = true;
+    std::string error;
+};
+
+// Hard bounds are part of the execution contract. A field that cannot fit is
+// not silently truncated and cannot grant visibility authority.
+inline constexpr uint32_t kFieldVmMaxInstructions = 1024;
+inline constexpr uint32_t kFieldVmMaxStackDepth = 128;
+
+FieldVmProgram lowerFieldVm(const geom::SdfNode& root);
+
+// CPU execution witness for the exact same derived records. This is not a
+// second authored evaluator; tests compare it directly against geom::evalSdf.
+// nullopt means malformed/refused bytecode.
+std::optional<float> evaluateFieldVm(const FieldVmProgram& program,
+                                     const glm::vec3& p);
+
+// Fixed WGSL interpreter module. The caller owns the storage binding and must
+// expose:
+//   var<storage, read> fieldVmInstructions: array<FieldVmInstructionData>;
+// The returned module defines FieldVmInstructionData and
+// fieldVmEval(programBase, instructionCount, p). It requires the canonical
+// primitive helpers (sdSphere/sdBox/...) already emitted by this compiler.
+std::string fieldVmMathModule();
 
 // Generic authored PropertyPath values supplied by the channel that owns the
 // subject. The compiler knows paths and types only; it does not know Material,
