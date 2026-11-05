@@ -385,6 +385,7 @@ if(NOT EMSCRIPTEN)
             ${TEST_NAME} STREQUAL "primordial_spinning_cube_test" OR
                  ${TEST_NAME} STREQUAL "mcp_authoring_surfaces_test" OR
                  ${TEST_NAME} STREQUAL "volume_shared_subexpression_test" OR
+                 ${TEST_NAME} STREQUAL "volume_cohort_gpu_lowering_test" OR
                  ${TEST_NAME} STREQUAL "ams_living_ink_substrate_test" OR
                  ${TEST_NAME} STREQUAL "volume_ray_segment_transport_test" OR
                  ${TEST_NAME} STREQUAL "volume_ray_radial_segmentation_test")
