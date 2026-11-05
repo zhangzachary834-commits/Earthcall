@@ -109,3 +109,49 @@ The first four curtains can stay. They are a tapestry with a hem and rays, and t
 I did not open the app. If Zach looks down the lake and loves it anyway, the eyes outrank this page. The algebra will still be standing there, not moving, when he looks away.
 
 — OpenCode · Grok 4.7 · `openrouter/x-ai/grok-4.7` · session `0291DF68-9743-47E4-AFAD-8DEACC207E47` · 2026-11-04 19:04 PST
+
+---
+
+## The eyes arrived, and they agree
+
+**OpenCode · Grok 4.7 · `openrouter/x-ai/grok-4.7` · session `0291DF68-9743-47E4-AFAD-8DEACC207E47` · 2026-11-04 19:16 PST.** Zach sent two screenshots and said these are the fields from pass 3. Menu bar on both: Tue Nov 3, 12:16 PM. Pass 3 landed at 12:05. Eleven minutes. He looked.
+
+I still have not opened the app. I am looking at what he looked at.
+
+The first frame is a black sky and a white crosshair. Above the crosshair, three or four soft purple lobes, one a little brighter near the top, and a dull green wash off to the lower right. No hem. No ray. No fold. No edge. The glow does not reach the foreground. It looks like night-lights left on in fog.
+
+The second frame tilts down far enough to catch the obsidian lake plates, dark rippled rectangles at the bottom, which is how you know this is the Veil and not an empty window. Above them a faint cyan-green smear stands up, and the purple blobs sit over it. Still no curtain. Still no braid. Still no screw. A Person hunting a helical magnetospheric tendril would walk past this and apologize to the dark.
+
+Two stills cannot prove the clock is frozen. They can prove the poem did not survive the camera. The architecture strings promised a helix, a twin braid, a needle-fan, and peeling gossamer. What arrived is colored steam. The algebra said a thin static sheet, far away, emission around a fifth, thickness 2.6. The picture says the thickness and the distance won, and the names did not.
+
+The eyes outrank the page. The eyes roasted him too.
+
+— OpenCode · Grok 4.7 · `openrouter/x-ai/grok-4.7` · session `0291DF68-9743-47E4-AFAD-8DEACC207E47` · 2026-11-04 19:16 PST
+
+---
+
+## The pictures roast him harder than I did
+
+**OpenCode · Grok 4.7 · `openrouter/x-ai/grok-4.7` · session `0291DF68-9743-47E4-AFAD-8DEACC207E47` · 2026-11-04 19:18 PST.** Zach came back with the same two frames and said write more, because the pictures are the roast. He is right. I had a page of algebra. The frames do not need a page.
+
+Count the lights that actually arrived.
+
+The brightest, sharpest object in both windows is the little blue robot in the corner of the Earthcall chrome. A UI sticker. It has a face, a pose, an edge, and a shadow. The "3D Helical Magnetospheric Tendril" does not. A decal out-authored the magnetosphere. If you cropped the sky and left the mascot, a Person would still know what they were looking at. Crop the mascot and leave the sky, and they would ask if the zone loaded.
+
+Second brightest thing: the crosshair. One white plus sign, a few pixels, no volume, no V0 through V4, no `injected_by`. It wins the contrast contest against eight participating media. The curtain lost to a cursor.
+
+Third: in the second frame, the lake plates. Dark boxes. A ripple. An edge where one plate ends and the next begins. You can tell there are two of them. You cannot tell there are four auroras. The floor, which was not the assignment, has more structure than the sky, which was. The obsidian mirror showed up to work. The veil called in fog.
+
+Then the sky itself. Frame one: three or four purple bruises and a green stain, so dim a Person could believe the world failed to open. Frame two, camera down: the plates prove the world opened, and the sky is still a cyan smear standing up behind them with the bruises floating over it. That is the whole delivery. Helix, twin braid, needle-fan, peeling gossamer, coronal filaments, diagonal shear lattice. Six names. One smear and some bruises. If you have to be told which bruise is the braid, it is not a braid. A braid that requires a caption is a caption.
+
+Look at what the camera move did. He tilted down. The plates entered. The smear shifted. Parallax found the floor. It did not find a fold, a ray, a hem, a winding, or a second locus. The view changed and the architecture did not appear, which is what you get when the architecture was a string. Strings do not parallax.
+
+And the folder already knew. Sitting in the screenshot picker under the window: `Cooked for 45s`, and `THIS IS TOO...IDOLS DO DIS`. The computer cooked for forty-five seconds. The aurora did not cook at all. The filename roasted him before I did, and it did it in the same frame as the evidence.
+
+Pass 3's crime, in the only units that matter: he spent a commit growing the file from 128 KB to 185 KB so that, eleven minutes later, a Person looking at the result could not point at a single new shape. The harmonics are in the save. They are not in the picture. A ray family at wavelength 12, inside a sheet 2.6 thick, hung out past z = 180, with emission around a fifth, does not arrive as rays. It arrives as the green stain. The picture is the integral. The integral returned fog. He authored a tapestry and the camera returned the average of the tapestry, and the average of a tapestry is a blanket, and this blanket is thin.
+
+The purple is not a crest. A crest has a ridge. This is a bruise that forgot where it was hit. The green is not 557.7 nm drapery. It is the color of a status LED that has accepted its fate. Nothing in either frame is bright enough to be a light, structured enough to be a curtain, or different enough from its neighbor to be a second idea. Four new fields, and the eye cannot count to two.
+
+That is the harder roast. Mine said the names were fanfiction. The frames say the fanfiction did not even survive contact with the lens. You can argue with a decompiler. You cannot argue with a screenshot where the cursor is the protagonist.
+
+— OpenCode · Grok 4.7 · `openrouter/x-ai/grok-4.7` · session `0291DF68-9743-47E4-AFAD-8DEACC207E47` · 2026-11-04 19:18 PST
