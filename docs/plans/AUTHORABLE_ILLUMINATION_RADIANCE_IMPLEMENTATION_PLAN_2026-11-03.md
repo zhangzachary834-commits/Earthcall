@@ -329,6 +329,47 @@ A future complete-scene provider may replace Unknown with KnownVisible/KnownOccl
 
 ---
 
+## Implementation ledger — 2026-11-04: first bounded CompleteScene visibility provider
+
+The visibility contract from the prior pass now has its first proof-producing `CompleteScene` implementation. This is deliberately a bounded execution substrate, not a new visibility ontology.
+
+Implemented:
+- surface draws remain deferred until frame admission closes at `endFrame()`; that boundary now materializes exact opaque mesh blockers once for both mesh and SDF consumers;
+- queued mesh triangles are transformed into world space and uploaded as flat `vec4` triplets;
+- mesh and SDF shaders share one Möller–Trumbore ray/triangle module;
+- `CompleteScene` knownness is admitted only where coverage is proved:
+  - mesh receiver + mesh-only opaque frame: known;
+  - exactly one SDF receiver + arbitrary admitted opaque mesh blockers: known by composing receiver-local SDF visibility with the shared mesh triangle set;
+  - multiple SDF instances: unknown;
+  - textured mesh alpha, partial opacity, depth-writing geometry outside the deferred surface batches, allocation failure, or the first-provider triangle budget being exceeded: unknown;
+- the initial brute-force budget is 8192 world triangles. Exceeding it revokes authority instead of returning an approximate result;
+- the scene triangle storage binding is structurally present even when visibility is disabled/unknown; an inert element keeps the GPU binding legal while `lightControl.z/w` carry provider completeness and triangle count as runtime values;
+- CompleteScene changes therefore do not require Source or Material AST recompilation;
+- frame telemetry records materialized triangle count/bytes, mesh-known frames, SDF-known frames, and frames where an admitted receiver class remains unknown;
+- native tribunals now demand:
+  1. a mesh-only CompleteScene receiver becomes KnownVisible with no blocker;
+  2. an off-camera mesh blocker placed on the receiver→source segment yields KnownOccluded;
+  3. the same mesh blocker occludes the sole SDF receiver through the combined local-SDF + scene-triangle provider;
+  4. admitting a second SDF revokes completeness and returns Unknown rather than silently omitting that being;
+- compiler tribunals pin the shared exact triangle intersection module and require direct transport to remain gated by `VisibilityDecision.known`;
+- early surface flushes are an explicit authority barrier. Volume staging and direct Screen can force opaque surfaces to execute before `endFrame()`; once that happens, later geometry cannot retroactively become a blocker, so CompleteScene authority is irrevocably Unknown for the rest of that frame. A legal inert visibility binding is supplied to those early draws.
+
+The execution is intentionally primitive. A future BVH, grid, ray-domain materialized view, shadow projection, or hybrid mesh/SDF accelerator may replace the brute-force triangle loop. Such a replacement must preserve the existing contract:
+
+```
+Authored Source
+      ↓
+VisibilityDecision { known, V }
+      ↓
+Authored Receiver
+```
+
+Acceleration may change how evidence is obtained. It may not redefine what visibility means, silently drop unsupported geometry, or collapse Unknown into either visible or occluded.
+
+No exact-head CI/native green claim is made until the workflow for this ledger's final commit completes.
+
+---
+
 ---
 
 ## Commission
