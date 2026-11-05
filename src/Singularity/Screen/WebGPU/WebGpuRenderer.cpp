@@ -3062,9 +3062,15 @@ void WebGpuRenderer::attachVolumeSupportCertificates(const Rendering::VolumeDens
 void WebGpuRenderer::flushVolumeComposite() {
     if (!_encoder || !_frameColorView || !_depthView || !_inverseViewProjValid) return;
     std::map<const VolumePipeline*, std::array<KernelRoutedSpec,4>> routedSpecs;
-    // C4 query-relative publication regions. Presence in this map means the
-    // pipeline is scissor-controlled; an empty vector means deliberately skip.
-    std::map<const VolumePipeline*, std::vector<Rendering::VolumeScreenRect>> volumeScissors;
+    // C5 query-local publication schedule. A physical pipeline is prepared at
+    // most once; packets may reference it repeatedly with different scissor
+    // regions and different local chronology.
+    struct VolumeDrawPacket {
+        const VolumePipeline* pipeline = nullptr;
+        Rendering::VolumeScreenRect rect{};
+    };
+    std::vector<VolumeDrawPacket> volumeDrawSchedule;
+    bool explicitVolumeSchedule = false;
     const auto prepareStart = std::chrono::steady_clock::now();
     ++_volumeZeroProofFrame;
 
@@ -3668,18 +3674,21 @@ void WebGpuRenderer::flushVolumeComposite() {
             return {{x0, y0, x1 - x0, y1 - y0}, radial};
         };
 
-        auto suppressPipeline = [&](const VolumePipeline* pipeline) {
-            if (pipeline) volumeScissors[pipeline] = {};
-        };
-
         bool scheduledSplit = false;
         const bool separableSource =
             !_certificateProbeMedium && incidentSource &&
             OntoMath::literalZero(incidentSource->radianceExpr);
+        const Rendering::VolumeScreenRect fullViewport{0u, 0u, _depthW, _depthH};
+
+        auto appendPacket = [&](const VolumePipeline* pipeline,
+                                const Rendering::VolumeScreenRect& rect) {
+            if (pipeline && rect.width && rect.height)
+                volumeDrawSchedule.push_back({pipeline, rect});
+        };
 
         // Current routed execution is a four-member family. Capability facts
-        // for other cardinalities are retained, but do not manufacture a
-        // physical routed backend that does not exist.
+        // for other cardinalities remain informative but cannot manufacture a
+        // backend the renderer does not possess.
         if (separableSource && routedCohort.size() == 4 && generalCohort.size() > 1) {
             const auto routedSupport =
                 Rendering::aggregateVolumeCohortSupport(routedCohort, radialSupportFor);
@@ -3688,87 +3697,78 @@ void WebGpuRenderer::flushVolumeComposite() {
             const auto wholeOrder =
                 Rendering::proveWholeScreenRadialOrder(routedSupport, generalSupport);
 
-            auto enqueueOrderedSplit = [&](Rendering::VolumeCohortOrder order,
-                                           const std::vector<Rendering::VolumeScreenRect>* regions)
-                -> bool {
-                const VolumePipeline* farPipeline = nullptr;
-                const VolumePipeline* nearPipeline = nullptr;
+            // Prepare capability pipelines once. Packet order, not preparation
+            // order, now carries local far-to-near chronology.
+            const VolumePipeline* routedPipeline =
+                enqueueVolumeCohort(routedCohort, true);
+            const VolumePipeline* generalPipeline =
+                enqueueVolumeCohort(generalCohort, false);
+
+            auto appendOrderedRegion = [&](Rendering::VolumeCohortOrder order,
+                                           const Rendering::VolumeScreenRect& rect) {
                 if (order == Rendering::VolumeCohortOrder::FirstBeforeSecond) {
-                    // First == routed and is nearer, so general must publish first.
-                    farPipeline = enqueueVolumeCohort(generalCohort, false);
-                    nearPipeline = enqueueVolumeCohort(routedCohort, true);
+                    // First == routed is nearer, therefore general publishes first.
+                    appendPacket(generalPipeline, rect);
+                    appendPacket(routedPipeline, rect);
                 } else if (order == Rendering::VolumeCohortOrder::SecondBeforeFirst) {
-                    farPipeline = enqueueVolumeCohort(routedCohort, true);
-                    nearPipeline = enqueueVolumeCohort(generalCohort, false);
-                } else {
-                    return false;
+                    appendPacket(routedPipeline, rect);
+                    appendPacket(generalPipeline, rect);
                 }
-                if (!farPipeline || !nearPipeline) {
-                    suppressPipeline(farPipeline);
-                    suppressPipeline(nearPipeline);
-                    return false;
-                }
-                if (regions) {
-                    volumeScissors[farPipeline] = *regions;
-                    volumeScissors[nearPipeline] = *regions;
-                }
-                return true;
             };
 
-            if (wholeOrder != Rendering::VolumeCohortOrder::Unknown) {
-                scheduledSplit = enqueueOrderedSplit(wholeOrder, nullptr);
-            } else {
-                // C4: whole-screen uncertainty is refined only where screen
-                // support can be conservatively localized. 128x96 is a coarse
-                // proof grid (20x15 at 2560x1440); horizontal/vertical runs are
-                // coalesced before becoming physical scissor draws.
-                std::vector<Rendering::VolumeProjectedMediumSupport> routedProjected;
-                std::vector<Rendering::VolumeProjectedMediumSupport> generalProjected;
-                routedProjected.reserve(routedCohort.size());
-                generalProjected.reserve(generalCohort.size());
-                for (const auto* medium : routedCohort)
-                    routedProjected.push_back(projectedSupportFor(medium));
-                for (const auto* medium : generalCohort)
-                    generalProjected.push_back(projectedSupportFor(medium));
+            if (routedPipeline && generalPipeline) {
+                if (wholeOrder != Rendering::VolumeCohortOrder::Unknown) {
+                    appendOrderedRegion(wholeOrder, fullViewport);
+                    scheduledSplit = !volumeDrawSchedule.empty();
+                } else {
+                    std::vector<Rendering::VolumeProjectedMediumSupport> routedProjected;
+                    std::vector<Rendering::VolumeProjectedMediumSupport> generalProjected;
+                    routedProjected.reserve(routedCohort.size());
+                    generalProjected.reserve(generalCohort.size());
+                    for (const auto* medium : routedCohort)
+                        routedProjected.push_back(projectedSupportFor(medium));
+                    for (const auto* medium : generalCohort)
+                        generalProjected.push_back(projectedSupportFor(medium));
 
-                const auto tilePlan = Rendering::planVolumeCohortTiles(
-                    _depthW, _depthH, 128u, 96u,
-                    routedProjected, generalProjected);
+                    const auto tilePlan = Rendering::planVolumeCohortTiles(
+                        _depthW, _depthH, 128u, 96u,
+                        routedProjected, generalProjected);
 
-                if (!tilePlan.conflictingOrders &&
-                    tilePlan.commonOrder != Rendering::VolumeCohortOrder::Unknown &&
-                    !tilePlan.orderedRegions.empty()) {
-                    const bool splitReady =
-                        enqueueOrderedSplit(tilePlan.commonOrder, &tilePlan.orderedRegions);
-                    const VolumePipeline* jointPipeline = nullptr;
+                    // C5: each proved region carries its own chronology.
+                    for (const auto& rect : tilePlan.firstBeforeSecondRegions)
+                        appendOrderedRegion(
+                            Rendering::VolumeCohortOrder::FirstBeforeSecond, rect);
+                    for (const auto& rect : tilePlan.secondBeforeFirstRegions)
+                        appendOrderedRegion(
+                            Rendering::VolumeCohortOrder::SecondBeforeFirst, rect);
+
                     bool jointReady = true;
-                    if (splitReady && !tilePlan.jointRegions.empty()) {
-                        jointPipeline = enqueueVolumeCohort(activeMedia, false);
+                    if (!tilePlan.jointRegions.empty()) {
+                        const auto* jointPipeline =
+                            enqueueVolumeCohort(activeMedia, false);
                         jointReady = jointPipeline != nullptr;
                         if (jointReady)
-                            volumeScissors[jointPipeline] = tilePlan.jointRegions;
+                            for (const auto& rect : tilePlan.jointRegions)
+                                appendPacket(jointPipeline, rect);
                     }
-                    if (splitReady && jointReady) {
-                        scheduledSplit = true;
-                    } else {
-                        // A physical pipeline refusal cannot leave only half a
-                        // schedule visible. Suppress partial work; the full
-                        // joint path below becomes the only publication.
-                        for (auto& [pipeline, regions] : volumeScissors)
-                            regions.clear();
-                    }
+
+                    scheduledSplit =
+                        jointReady && !volumeDrawSchedule.empty();
                 }
             }
+
+            if (!scheduledSplit)
+                volumeDrawSchedule.clear();
         }
 
         if (!scheduledSplit) {
             const bool wholeSetRoutedAdmissible = generalCohort.empty();
-            const auto* joint = enqueueVolumeCohort(activeMedia, wholeSetRoutedAdmissible);
-            // A prior failed C3/C4 attempt may have inserted the same pipeline
-            // into the controlled map; full joint fallback must regain the
-            // entire viewport.
-            if (joint) volumeScissors.erase(joint);
+            const auto* joint =
+                enqueueVolumeCohort(activeMedia, wholeSetRoutedAdmissible);
+            volumeDrawSchedule.clear();
+            appendPacket(joint, fullViewport);
         }
+        explicitVolumeSchedule = true;
     }
 
     // Build ordinary V0-V4 batches only from the bounded projection EngineRender
