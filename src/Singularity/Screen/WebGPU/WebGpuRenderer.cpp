@@ -963,6 +963,7 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
             continue;
         }
         bool complete = out.meshBlockersComplete;
+        uint64_t foreignBlockerCount = 0;
         if (complete) {
             for (const SdfPipeline* foreign : _activeSdfPipelines) {
                 if (foreign == sp) continue;
@@ -975,10 +976,16 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
                     _sdfVisibilityBlockerBatches.find(foreign);
                 if (foreignBlockers == _sdfVisibilityBlockerBatches.end() ||
                     foreignBlockers->second.size() !=
-                        foreignInstances->second.size()) {
+                        foreignInstances->second.size() ||
+                    foreignBlockers->second.size() >
+                        kMaxSceneVisibilityImplicitBlockers ||
+                    foreignBlockerCount >
+                        kMaxSceneVisibilityImplicitBlockers -
+                            foreignBlockers->second.size()) {
                     complete = false;
                     break;
                 }
+                foreignBlockerCount += foreignBlockers->second.size();
             }
         }
         if (!complete) {
