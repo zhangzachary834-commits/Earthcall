@@ -110,13 +110,19 @@ struct VolumeProjectedMediumSupport {
 };
 
 struct VolumeCohortTilePlan {
-    VolumeCohortOrder commonOrder = VolumeCohortOrder::Unknown;
-    std::vector<VolumeScreenRect> orderedRegions;
+    // "First" and "Second" name the two capability cohorts supplied to the
+    // planner. Each region carries its own proved camera-to-scene chronology.
+    std::vector<VolumeScreenRect> firstBeforeSecondRegions;
+    std::vector<VolumeScreenRect> secondBeforeFirstRegions;
     std::vector<VolumeScreenRect> jointRegions;
-    bool conflictingOrders = false;
+
+    bool hasOrderedRegions() const {
+        return !firstBeforeSecondRegions.empty() ||
+               !secondBeforeFirstRegions.empty();
+    }
 
     bool hasLocalSplit() const {
-        return !conflictingOrders && !orderedRegions.empty() && !jointRegions.empty();
+        return hasOrderedRegions() && !jointRegions.empty();
     }
 };
 
@@ -176,9 +182,9 @@ planVolumeCohortTiles(uint32_t viewportWidth, uint32_t viewportHeight,
 
     const uint32_t tilesX = (viewportWidth + tileWidth - 1u) / tileWidth;
     const uint32_t tilesY = (viewportHeight + tileHeight - 1u) / tileHeight;
-    std::vector<uint8_t> ordered(size_t(tilesX) * tilesY, 0u);
+    std::vector<uint8_t> firstBeforeSecond(size_t(tilesX) * tilesY, 0u);
+    std::vector<uint8_t> secondBeforeFirst(size_t(tilesX) * tilesY, 0u);
     std::vector<uint8_t> joint(size_t(tilesX) * tilesY, 0u);
-    std::vector<uint8_t> active(size_t(tilesX) * tilesY, 0u);
 
     auto supportForTile = [&](const std::vector<VolumeProjectedMediumSupport>& supports,
                               const VolumeScreenRect& tile) {
@@ -220,52 +226,39 @@ planVolumeCohortTiles(uint32_t viewportWidth, uint32_t viewportHeight,
 
             if (!firstSupport.first && !secondSupport.first)
                 continue;
-            active[index] = 1u;
 
-            // A tile touched by only one cohort is independently composable and
-            // does not constrain the common chronology of dual-cohort tiles.
+            // A tile touched by only one cohort has no inter-cohort chronology
+            // obligation. Assign it deterministically to the first-before-second
+            // schedule; the absent cohort's conservative screen support cannot
+            // contribute there, so its extra scissored draw is physically empty.
             if (!firstSupport.first || !secondSupport.first) {
-                ordered[index] = 1u;
+                firstBeforeSecond[index] = 1u;
                 continue;
             }
 
             const auto order =
                 proveWholeScreenRadialOrder(firstSupport.second,
                                             secondSupport.second, epsilon);
-            if (order == VolumeCohortOrder::Unknown) {
+            if (order == VolumeCohortOrder::FirstBeforeSecond)
+                firstBeforeSecond[index] = 1u;
+            else if (order == VolumeCohortOrder::SecondBeforeFirst)
+                secondBeforeFirst[index] = 1u;
+            else
                 joint[index] = 1u;
-                continue;
-            }
-            if (out.commonOrder == VolumeCohortOrder::Unknown)
-                out.commonOrder = order;
-            else if (out.commonOrder != order)
-                out.conflictingOrders = true;
-            ordered[index] = 1u;
         }
     }
 
-    if (out.conflictingOrders) {
-        out.commonOrder = VolumeCohortOrder::Unknown;
-        out.orderedRegions.clear();
-        out.jointRegions =
-            coalesceVolumeTileMask(active, tilesX, tilesY, tileWidth, tileHeight,
-                                   viewportWidth, viewportHeight);
-        return out;
-    }
-
-    // If the cohorts never share a tile, draw order is irrelevant; choose a
-    // deterministic order while preserving the proof that their screen support
-    // is disjoint under this conservative projection.
-    if (out.commonOrder == VolumeCohortOrder::Unknown &&
-        std::none_of(joint.begin(), joint.end(), [](uint8_t v) { return v != 0; })) {
-        out.commonOrder = VolumeCohortOrder::FirstBeforeSecond;
-    }
-
-    out.orderedRegions =
-        coalesceVolumeTileMask(ordered, tilesX, tilesY, tileWidth, tileHeight,
+    out.firstBeforeSecondRegions =
+        coalesceVolumeTileMask(firstBeforeSecond, tilesX, tilesY,
+                               tileWidth, tileHeight,
+                               viewportWidth, viewportHeight);
+    out.secondBeforeFirstRegions =
+        coalesceVolumeTileMask(secondBeforeFirst, tilesX, tilesY,
+                               tileWidth, tileHeight,
                                viewportWidth, viewportHeight);
     out.jointRegions =
-        coalesceVolumeTileMask(joint, tilesX, tilesY, tileWidth, tileHeight,
+        coalesceVolumeTileMask(joint, tilesX, tilesY,
+                               tileWidth, tileHeight,
                                viewportWidth, viewportHeight);
     return out;
 }
