@@ -212,6 +212,7 @@ private:
         bool sdfComplete = false;
     };
     SceneVisibilityFrame _sceneVisibilityFrame;
+    bool _frameHasUnmaterializedOpaqueGeometry = false;
     SceneVisibilityFrame prepareSceneVisibilityFrame();
 
     struct MeshResponseKey {
