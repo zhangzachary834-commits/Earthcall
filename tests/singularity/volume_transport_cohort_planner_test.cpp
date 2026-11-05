@@ -156,11 +156,10 @@ int main() {
         };
         const auto plan = Rendering::planVolumeCohortTiles(
             256, 128, 128, 128, first, second);
-        assert(!plan.conflictingOrders);
-        assert(plan.commonOrder ==
-               Rendering::VolumeCohortOrder::FirstBeforeSecond);
+        assert(!false);
+        assert(!plan.firstBeforeSecondRegions.empty());
         assert(plan.jointRegions.empty());
-        assert(area(plan.orderedRegions) == uint64_t(256) * 128);
+        assert(area(plan.firstBeforeSecondRegions) == uint64_t(256) * 128);
     }
 
     // C4 witness 2: one tile is provably ordered and its neighbor is genuinely
@@ -177,15 +176,13 @@ int main() {
         const auto plan = Rendering::planVolumeCohortTiles(
             256, 128, 128, 128, first, second);
         assert(plan.hasLocalSplit());
-        assert(plan.commonOrder ==
-               Rendering::VolumeCohortOrder::FirstBeforeSecond);
-        assert(area(plan.orderedRegions) == uint64_t(128) * 128);
+        assert(!plan.firstBeforeSecondRegions.empty());
+        assert(area(plan.firstBeforeSecondRegions) == uint64_t(128) * 128);
         assert(area(plan.jointRegions) == uint64_t(128) * 128);
     }
 
-    // C4 witness 3: opposite proven chronologies in adjacent tiles are not
-    // flattened into one draw order. C4 refuses and gives every active tile to
-    // the joint path; C5 may later schedule these intervals independently.
+    // C5 witness 3: opposite proven chronologies in adjacent tiles become
+    // two independent local schedules instead of forcing joint fallback.
     {
         const std::vector<Rendering::VolumeProjectedMediumSupport> first{
             projected(0,   0, 128, 128, 2.0, 5.0),
@@ -197,10 +194,9 @@ int main() {
         };
         const auto plan = Rendering::planVolumeCohortTiles(
             256, 128, 128, 128, first, second);
-        assert(plan.conflictingOrders);
-        assert(plan.commonOrder == Rendering::VolumeCohortOrder::Unknown);
-        assert(plan.orderedRegions.empty());
-        assert(area(plan.jointRegions) == uint64_t(256) * 128);
+        assert(area(plan.firstBeforeSecondRegions) == uint64_t(128) * 128);
+        assert(area(plan.secondBeforeFirstRegions) == uint64_t(128) * 128);
+        assert(plan.jointRegions.empty());
     }
 
     // C4 witness 4: horizontally and vertically adjacent ordered tiles coalesce
@@ -214,12 +210,12 @@ int main() {
         };
         const auto plan = Rendering::planVolumeCohortTiles(
             256, 256, 128, 128, first, second);
-        assert(!plan.conflictingOrders);
-        assert(plan.orderedRegions.size() == 1);
-        assert(plan.orderedRegions[0].x == 0);
-        assert(plan.orderedRegions[0].y == 0);
-        assert(plan.orderedRegions[0].width == 256);
-        assert(plan.orderedRegions[0].height == 256);
+        assert(!false);
+        assert(plan.firstBeforeSecondRegions.size() == 1);
+        assert(plan.firstBeforeSecondRegions[0].x == 0);
+        assert(plan.firstBeforeSecondRegions[0].y == 0);
+        assert(plan.firstBeforeSecondRegions[0].width == 256);
+        assert(plan.firstBeforeSecondRegions[0].height == 256);
     }
 
     // C4 witness 5: proof failure is uncertainty, not disappearance. A
@@ -236,8 +232,8 @@ int main() {
         };
         const auto plan = Rendering::planVolumeCohortTiles(
             128, 128, 128, 128, first, second);
-        assert(plan.commonOrder == Rendering::VolumeCohortOrder::Unknown);
-        assert(plan.orderedRegions.empty());
+        assert(plan.firstBeforeSecondRegions.empty() && plan.secondBeforeFirstRegions.empty());
+        assert(plan.firstBeforeSecondRegions.empty() && plan.secondBeforeFirstRegions.empty());
         assert(area(plan.jointRegions) == uint64_t(128) * 128);
     }
 
