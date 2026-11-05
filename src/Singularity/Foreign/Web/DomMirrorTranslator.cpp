@@ -346,17 +346,63 @@ bool DomMirrorTranslator::applyDelta(const DomDelta& delta, std::string* outErro
             case DomDeltaKind::AttributeRemove: {
                 auto nodeForm = findNodeFormation(rec.targetNodeToken);
                 if (nodeForm) {
-                    // Search for attribute member matching attributeName
-                    Singular* memberToRemove = nullptr;
-                    for (Singular* mem : nodeForm->getMembers()) {
-                        auto* lex = dynamic_cast<Singularity::Language::Lexeme*>(mem);
-                        if (lex && lex->getSymbol() == rec.attributeName) {
-                            memberToRemove = lex;
-                            break;
+                    std::shared_ptr<Relation> attrRel;
+                    std::shared_ptr<Relation> valRel;
+                    Singularity::Language::Lexeme* attrLex = nullptr;
+                    Singularity::Language::Lexeme* valLex = nullptr;
+
+                    for (const auto& rel : nodeForm->relations().getAll()) {
+                        if (rel->typeLabel() == DomRelationType::kHasAttribute) {
+                            auto* target = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
+                            if (target && target->getSymbol() == rec.attributeName) {
+                                attrRel = rel;
+                                attrLex = target;
+                                break;
+                            }
                         }
                     }
-                    if (memberToRemove) {
-                        nodeForm->releaseMember(memberToRemove);
+                    if (attrLex) {
+                        for (const auto& rel : nodeForm->relations().getAll()) {
+                            if (rel->typeLabel() == DomRelationType::kHasValue && rel->a() == attrLex) {
+                                valRel = rel;
+                                valLex = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
+                                break;
+                            }
+                        }
+                    }
+
+                    if (attrRel) {
+                        nodeForm->removeRelation(attrRel);
+                        auto& nodeRels = _nodeRelations[rec.targetNodeToken];
+                        nodeRels.erase(std::remove(nodeRels.begin(), nodeRels.end(), attrRel), nodeRels.end());
+                        _allSessionRelations.erase(std::remove(_allSessionRelations.begin(), _allSessionRelations.end(), attrRel), _allSessionRelations.end());
+                    }
+                    if (valRel) {
+                        nodeForm->removeRelation(valRel);
+                        auto& nodeRels = _nodeRelations[rec.targetNodeToken];
+                        nodeRels.erase(std::remove(nodeRels.begin(), nodeRels.end(), valRel), nodeRels.end());
+                        _allSessionRelations.erase(std::remove(_allSessionRelations.begin(), _allSessionRelations.end(), valRel), _allSessionRelations.end());
+                    }
+
+                    if (attrLex) {
+                        std::string stableId = "@" + attrLex->getIdentifier();
+                        nodeForm->releaseMember(attrLex);
+                        language.remove(stableId);
+
+                        _allSessionLexemes.erase(
+                            std::remove_if(_allSessionLexemes.begin(), _allSessionLexemes.end(),
+                                [&](const std::shared_ptr<Singularity::Language::Lexeme>& l) { return l.get() == attrLex; }),
+                            _allSessionLexemes.end());
+                    }
+                    if (valLex) {
+                        std::string stableId = "@" + valLex->getIdentifier();
+                        nodeForm->releaseMember(valLex);
+                        language.remove(stableId);
+
+                        _allSessionLexemes.erase(
+                            std::remove_if(_allSessionLexemes.begin(), _allSessionLexemes.end(),
+                                [&](const std::shared_ptr<Singularity::Language::Lexeme>& l) { return l.get() == valLex; }),
+                            _allSessionLexemes.end());
                     }
                 }
                 break;

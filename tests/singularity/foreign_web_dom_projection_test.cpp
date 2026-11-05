@@ -136,6 +136,44 @@ int main() {
         assert(language.findById("page-session.a91f4b2c.node.10") == nullptr);
     }
 
+    // 5.5 Attribute Remove Lifecycle Gap
+    {
+        nlohmann::json j = {
+            {"protocolVersion", 1},
+            {"pageSessionId", "page-session.a91f4b2c"},
+            {"sequence", 2},
+            {"records", {{
+                {"kind", "attribute-remove"},
+                {"targetNodeToken", "node.6"},
+                {"attributeName", "id"}
+            }}}
+        };
+        DomDelta delta = DomDelta::fromJson(j);
+        assert(delta.validate().valid);
+
+        std::string err;
+        bool ok = translator.applyDelta(delta, &err);
+        assert(ok);
+        assert(err.empty());
+        assert(translator.getCurrentSequence() == 2);
+
+        // Prove attribute and value lexemes were destroyed from language system
+        assert(language.findById("page-session.a91f4b2c.attr.node.6.0") == nullptr);
+        assert(language.findById("page-session.a91f4b2c.attrval.node.6.0") == nullptr);
+
+        auto div1Form = translator.findNodeFormation("node.6");
+        assert(div1Form != nullptr);
+        // Prove relation counts went down and members are gone
+        bool foundAttrRel = false;
+        for (const auto& rel : div1Form->relations().getAll()) {
+            if (rel->typeLabel() == DomRelationType::kHasAttribute) {
+                auto* target = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
+                if (target && target->getSymbol() == "id") foundAttrRel = true;
+            }
+        }
+        assert(!foundAttrRel);
+    }
+
     // 6. Navigation / Retirement Lifecycle
     {
         // Prove retire completely clears live mirror
