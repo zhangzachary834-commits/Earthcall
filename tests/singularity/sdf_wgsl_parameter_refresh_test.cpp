@@ -1480,8 +1480,8 @@ int main() {
 
     // 9. Rung 8: visibility is derived Path truth below source authorship.
     //    Knownness is independent from V itself: Disabled is known V=1,
-    //    LocalReceiverGeometry may answer from owned geometry, and CompleteScene
-    //    must remain Unknown until a shared scene provider exists.
+    //    LocalReceiverGeometry may answer from owned geometry, while CompleteScene
+    //    requires explicit provider completeness across own, foreign and mesh blockers.
     // ---------------------------------------------------------------------
     {
         auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
@@ -1528,24 +1528,28 @@ int main() {
                   "cohortOtherInstanceVisibility(surfaceWorld, sourceWorld, receiverIndex)") !=
                   std::string::npos,
               "CompleteScene SDF visibility evaluates every instance in the admitted same-program cohort and restores receiver authority");
-        check(oneSource.wgsl.find("struct SceneImplicitBlockerData") !=
+        check(oneSource.wgsl.find("struct SceneFieldVmBlockerData") !=
                   std::string::npos &&
               oneSource.wgsl.find(
                   "@group(0) @binding(4) var<storage, read>") !=
                   std::string::npos &&
-              oneSource.wgsl.find("fn sceneImplicitSphereBlocks") !=
+              oneSource.wgsl.find(
+                  "@group(0) @binding(5) var<storage, read> fieldVmInstructions") !=
                   std::string::npos &&
-              oneSource.wgsl.find("fn sceneImplicitBoxBlocks") !=
+              oneSource.wgsl.find("fn sceneFieldVmBlockerVisibility") !=
                   std::string::npos &&
-              oneSource.wgsl.find("fn sceneImplicitVisibility") !=
+              oneSource.wgsl.find("fn sceneFieldVmVisibility") !=
+                  std::string::npos &&
+              oneSource.wgsl.find(
+                  "fieldVmEval(programBase, instructionCount") !=
                   std::string::npos,
-              "CompleteScene carries exact bounded foreign implicit blocker execution math");
+              "CompleteScene carries bounded foreign field-program VM execution math");
         const auto cohortVisibilityUse =
             oneSource.wgsl.find(
                 "cohortOtherInstanceVisibility(surfaceWorld, sourceWorld, receiverIndex)");
         const auto foreignVisibilityUse =
             oneSource.wgsl.find(
-                "sceneImplicitVisibility(surfaceWorld, sourceWorld)",
+                "sceneFieldVmVisibility(surfaceWorld, sourceWorld)",
                 cohortVisibilityUse);
         const auto meshVisibilityUse =
             oneSource.wgsl.find(
@@ -1556,7 +1560,7 @@ int main() {
                   meshVisibilityUse != std::string::npos &&
                   cohortVisibilityUse < foreignVisibilityUse &&
                   foreignVisibilityUse < meshVisibilityUse,
-              "CompleteScene composes own exact SDF cohort, foreign analytic implicit blockers, then mesh triangles");
+              "CompleteScene composes own exact SDF cohort, foreign field-program VM blockers, then mesh triangles");
         const auto oneEnvironment =
             oneSource.wgsl.find("legacyEnvironment");
         const auto oneDirect =
