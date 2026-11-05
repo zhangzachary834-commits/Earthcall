@@ -1496,19 +1496,26 @@ int main() {
               "Rung-8 shader exposes derived geometric visibility transport");
         check(oneSource.wgsl.find("struct VisibilityDecision") != std::string::npos &&
                   oneSource.wgsl.find("u.lightControl.y < 0.5") != std::string::npos &&
-                  oneSource.wgsl.find("u.lightControl.y > 1.5") != std::string::npos &&
+                  oneSource.wgsl.find("u.lightControl.y < 1.5") != std::string::npos &&
+                  oneSource.wgsl.find("u.lightControl.z < 0.5") != std::string::npos &&
                   oneSource.wgsl.find("VisibilityDecision(1.0, 1.0)") !=
                       std::string::npos &&
                   oneSource.wgsl.find("VisibilityDecision(0.0, 0.0)") !=
+                      std::string::npos &&
+                  oneSource.wgsl.find("sceneMeshVisibility(surfaceWorld, sourceWorld)") !=
                       std::string::npos,
-              "visibility encodes knownness separately from V and refuses absent complete-scene authority");
+              "visibility separates knownness from V and admits CompleteScene only behind explicit provider completeness");
         check(oneSource.wgsl.find(
                   "let directRadiance = shapedRadiance * pathVisibility.value") !=
                   std::string::npos &&
               oneSource.wgsl.find(
                   "responseDefined && pathVisibility.known > 0.5") !=
+                  std::string::npos &&
+              oneSource.wgsl.find("fn sceneTriangleBlocks") !=
+                  std::string::npos &&
+              oneSource.wgsl.find("sceneTriangles[base + 2u]") !=
                   std::string::npos,
-              "one-source direct transport consumes V only when visibility is known");
+              "one-source direct transport consumes only known V and carries exact shared triangle execution math");
         const auto oneEnvironment =
             oneSource.wgsl.find("legacyEnvironment");
         const auto oneDirect =
