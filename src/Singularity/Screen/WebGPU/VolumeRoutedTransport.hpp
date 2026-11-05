@@ -74,4 +74,8 @@ struct KernelRoutedTransport {
     bool encodeSpans(Program&,WGPUCommandEncoder,const KernelRoutedRange& globals,
                      const KernelRoutedRange& params,const KernelRoutedRange& instances,
                      WGPUTextureView depth,const KernelRoutedSpanConsumer& consumer);
+private:
+    bool encodeInternal(Program&,WGPUCommandEncoder,const KernelRoutedRange& globals,
+                        const KernelRoutedRange& params,const KernelRoutedRange& instances,
+                        WGPUTextureView depth,const KernelRoutedSpanConsumer* spanConsumer);
 };
