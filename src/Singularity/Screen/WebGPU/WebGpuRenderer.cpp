@@ -783,9 +783,11 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
     }
 
     uint64_t sdfInstanceCount = 0;
+    uint64_t sdfProgramCohortCount = 0;
     for (const SdfPipeline* sp : _activeSdfPipelines) {
         const auto found = _sdfBatches.find(sp);
-        if (found != _sdfBatches.end()) {
+        if (found != _sdfBatches.end() && !found->second.empty()) {
+            ++sdfProgramCohortCount;
             sdfInstanceCount += found->second.size();
         }
     }
@@ -866,11 +868,17 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
         return out;
     }
 
-    // Mesh receivers are complete only when no SDF blocker exists. An SDF
-    // receiver may compose its own exact local field with the shared mesh set
-    // only when it is the sole SDF instance in the frame.
+    // Mesh receivers are complete only when no SDF blocker exists: the mesh
+    // shader still has no exact implicit-field evaluator.
+    //
+    // An SDF receiver may compose the shared mesh set with EVERY instance in
+    // its own compiled SDF program cohort. The instance storage already carries
+    // all transforms/params for that exact field program, so plurality of
+    // instances is not a loss of authority. A second distinct SDF program still
+    // makes CompleteScene Unknown until a mixed-program provider exists.
     out.meshComplete = sdfInstanceCount == 0;
-    out.sdfComplete = sdfInstanceCount == 1;
+    out.sdfComplete =
+        sdfInstanceCount > 0 && sdfProgramCohortCount == 1;
 
     mutableFrameStats().sceneVisibilityTriangles = out.triangleCount;
     mutableFrameStats().sceneVisibilityBytesUploaded += bytes;
