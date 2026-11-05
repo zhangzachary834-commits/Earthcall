@@ -416,6 +416,7 @@ fn fieldVmEval(
     return FieldVmResult(stack[0], 1.0);
 }
 )WGSL";
+}
 
 std::string fieldVmBoundMathModule(uint32_t group, uint32_t binding) {
     std::string module = fieldVmMathModule();
@@ -433,8 +434,6 @@ std::string fieldVmBoundMathModule(uint32_t group, uint32_t binding) {
         ") var<storage, read> fieldVmInstructions: array<FieldVmInstructionData>;\n";
     module.insert(insertAt, declaration);
     return module;
-}
-
 }
 
 } // namespace sdfwgsl
