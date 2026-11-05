@@ -1729,15 +1729,20 @@ void WebGpuRenderer::flushMeshDraws() {
         u.viewProj = _viewProj;
         u.lightPos = glm::vec4(lightPos(), 1.0f);
         u.eyePos = glm::vec4(_eyePos, 1.0f);
+        const bool meshCompleteSceneKnown =
+            radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
+            _sceneVisibilityFrame.meshComplete;
         u.lightControl = glm::vec4(
             lightingEnabled() ? 1.0f : 0.0f,
             static_cast<float>(
                 static_cast<uint32_t>(radianceVisibilityMode())),
-            0.0f, 0.0f);
-        if (radianceVisibilityMode() != RadianceVisibilityMode::Disabled) {
-            // This is an explicit unknown-V refusal for direct transport, not
-            // evidence that the source was invisible. The shader still admits
-            // directionless environment response from the source set.
+            meshCompleteSceneKnown ? 1.0f : 0.0f,
+            static_cast<float>(_sceneVisibilityFrame.triangleCount));
+        const bool meshVisibilityUnknown =
+            radianceVisibilityMode() == RadianceVisibilityMode::LocalReceiverGeometry ||
+            (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
+             !meshCompleteSceneKnown);
+        if (meshVisibilityUnknown) {
             mutableFrameStats().meshVisibilityUnknownDirectSkips++;
         }
         auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(MeshUniforms));
@@ -1766,7 +1771,7 @@ void WebGpuRenderer::flushMeshDraws() {
             continue;
         }
 
-        WGPUBindGroupEntry bge[5] = {};
+        WGPUBindGroupEntry bge[6] = {};
         bge[0].binding = 0;
         bge[0].buffer = uAlloc.buffer;
         bge[0].offset = uAlloc.offset;
@@ -1783,9 +1788,19 @@ void WebGpuRenderer::flushMeshDraws() {
         bge[4].buffer = sourceView.buffer;
         bge[4].offset = sourceView.offset;
         bge[4].size = sourceView.size;
+        if (!_sceneVisibilityFrame.buffer || _sceneVisibilityFrame.size == 0) {
+            mutableFrameStats().meshProgramRefusals++;
+            mutableFrameStats().meshLastProgramRefusal =
+                "scene visibility triangle binding unavailable";
+            continue;
+        }
+        bge[5].binding = 5;
+        bge[5].buffer = _sceneVisibilityFrame.buffer;
+        bge[5].offset = _sceneVisibilityFrame.offset;
+        bge[5].size = _sceneVisibilityFrame.size;
         WGPUBindGroupDescriptor bgDesc = {};
         bgDesc.layout = _bgl;
-        bgDesc.entryCount = 5;
+        bgDesc.entryCount = 6;
         bgDesc.entries = bge;
         WGPUBindGroup bindGroup =
             wgpuDeviceCreateBindGroup(_device, &bgDesc);
@@ -2206,14 +2221,6 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // coordinates and numeric AST coefficients are values.
     const bool hasSourceSet = !radianceSources().empty();
     const auto* sourceSet = hasSourceSet ? &radianceSources() : nullptr;
-
-    // CompleteScene is an explicit request for authority this backend does not
-    // yet possess. Record a draw-level refusal signal; shader knownness prevents
-    // any direct term from treating Unknown as either visible or occluded.
-    if (lightingEnabled() && mat.responseExpr &&
-        radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene) {
-        mutableFrameStats().sdfVisibilityUnknownDirectSkips++;
-    }
 
     // Explicit drawImplicit(..., FieldNode*) is the bounded/native V0 witness
     // seam. Production Zone media are projected separately and are NOT consumed
@@ -2980,11 +2987,15 @@ void WebGpuRenderer::flushSdfDraws() {
     u.legacySpecularIncident = glm::vec4(
         lightSpecular(),
         sourceCoefficients.x * sourceCoefficients.w);
+    const bool sdfCompleteSceneKnown =
+        radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
+        _sceneVisibilityFrame.sdfComplete;
     u.lightControl = glm::vec4(
         lightingEnabled() ? 1.0f : 0.0f,
         static_cast<float>(
             static_cast<uint32_t>(radianceVisibilityMode())),
-        0.0f, 0.0f);
+        sdfCompleteSceneKnown ? 1.0f : 0.0f,
+        static_cast<float>(_sceneVisibilityFrame.triangleCount));
     u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
                                static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
     u.volumeTime = glm::vec4(static_cast<float>(volumeDensityTemporalCoordinate()),
@@ -3011,6 +3022,11 @@ void WebGpuRenderer::flushSdfDraws() {
 
     for (const SdfPipeline* sp : _activeSdfPipelines) {
         const auto& instances = _sdfBatches[sp];
+        if (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
+            !_sceneVisibilityFrame.sdfComplete) {
+            mutableFrameStats().sdfVisibilityUnknownDirectSkips +=
+                static_cast<uint32_t>(instances.size());
+        }
         
         const auto& params = _sdfParamsBatches[sp];
 
@@ -3141,8 +3157,9 @@ void WebGpuRenderer::flushSdfDraws() {
 
         auto instAlloc = bufferPool().suballocateStorage(instances.data(), instances.size() * sizeof(SdfInstanceData));
 
-        // Group 0: globals + authored parameter values + optional Rung 7 sources.
-        WGPUBindGroupEntry bge[3] = {};
+        // Group 0: globals + authored parameters + optional sources +
+        // frame-scoped complete-scene mesh triangles.
+        WGPUBindGroupEntry bge[4] = {};
         bge[0].binding = 0;
         bge[0].buffer = uAlloc.buffer;
         bge[0].offset = uAlloc.offset;
@@ -3151,16 +3168,28 @@ void WebGpuRenderer::flushSdfDraws() {
         bge[1].buffer = paramBuffer;
         bge[1].offset = paramOffset;
         bge[1].size = paramBindingSize;
+        uint32_t sceneEntry = 2;
         if (sp->usesRadianceSources) {
             if (!sourceBuffer || sourceBindingSize == 0) continue;
             bge[2].binding = 2;
             bge[2].buffer = sourceBuffer;
             bge[2].offset = sourceOffset;
             bge[2].size = sourceBindingSize;
+            sceneEntry = 3;
         }
+        if (!_sceneVisibilityFrame.buffer || _sceneVisibilityFrame.size == 0) {
+            mutableFrameStats().sdfProgramRefusals++;
+            mutableFrameStats().sdfLastProgramRefusal =
+                "scene visibility triangle binding unavailable";
+            continue;
+        }
+        bge[sceneEntry].binding = 3;
+        bge[sceneEntry].buffer = _sceneVisibilityFrame.buffer;
+        bge[sceneEntry].offset = _sceneVisibilityFrame.offset;
+        bge[sceneEntry].size = _sceneVisibilityFrame.size;
         WGPUBindGroupDescriptor bgd = {};
         bgd.layout = sp->bgl;
-        bgd.entryCount = sp->usesRadianceSources ? 3 : 2;
+        bgd.entryCount = sp->usesRadianceSources ? 4 : 3;
         bgd.entries = bge;
         WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
         _frameBindGroups.push_back(bg);
