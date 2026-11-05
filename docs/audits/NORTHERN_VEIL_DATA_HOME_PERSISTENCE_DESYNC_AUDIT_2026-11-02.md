@@ -103,3 +103,11 @@ Decoding both files with MessagePack (`msgpack`) confirmed the full authored sco
 - `SaveSystem::chooseDataRoot` and `SaveSystem::readZoneIdentity("Northern Veil")` verified: resolves to Data Home and returns the 4 upgraded spatialFields and 4 sanctuary materials.
 - `save_system_error_test`, `zone_identity_test`, and `zone_spatial_field_roundtrip_test` pass 100%.
 - Both `./build/earthcall_webgpu` and `/Applications/Earthcall.app` updated.
+
+---
+
+## Addendum, 2026-11-04: resolution withdrawn
+
+The diagnosis above stands: a checkout edit silently failed to reach the data home. The resolution in step 4 and step 5 has been removed, because `isSyncedShowcase` ran `remove_all` and re-copied from the checkout, which erased in-app authoring in these Zones, and because it ran whenever Zones were listed as well as at startup. The checkout no longer overwrites the data home. Startup now reports differing entries in its boot note, and intended updates are patched in deliberately. [Task record](../Agenda/Tasks/Specific%20Tasks/Serialization%20and%20Storage/Boot_Showcase_Overwrite/Boot_Showcase_Overwrite.md).
+
+*Claude Code / Claude Opus 5.5 / session `f1a6b19c-d627-4c8c-a1d3-90d9a0a227d9` / 2026-11-04T17:50-08:00, at Zach's request ("YAASSSSSS GO FIXXXXXXXX").*
