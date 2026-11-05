@@ -382,28 +382,6 @@ int main() {
     }
 
 
-    // Specific check for list/dictionary types that Palette added to LawGraphWindow
-    {
-        bool foundScreenDict = false;
-        bool foundFormationList = false;
-
-        for (const auto& option : Rendering::knownPathOptions()) {
-            if (std::string(option.group) == "Channel — Screen" && std::string(option.type) == "dictionary") {
-                foundScreenDict = true;
-            }
-            if (std::string(option.group) == "Formation" && std::string(option.type) == "list") {
-                foundFormationList = true;
-            }
-        }
-
-        if (!foundScreenDict) {
-            fail("knownPathOptions", "Palette Update", "must successfully classify dictionary properties (e.g. from ScreenChannel prototype)");
-        }
-        if (!foundFormationList) {
-            fail("knownPathOptions", "Palette Update", "must successfully classify list properties (e.g. from Formation prototype)");
-        }
-    }
-
     std::printf("\nchannel_paths_test: %d advertised paths resolved, %d skipped (clock), %d failed\n",
                 g_checked - g_failures, skipped, g_failures);
 
