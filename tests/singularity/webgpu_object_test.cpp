@@ -3152,7 +3152,10 @@ int main() {
         // law from the sphere receiver, but this bounded provider can lower the
         // primitive leaf itself into an exact analytic segment blocker.
         Object differentImplicit;
-        differentImplicit.setShapeKind(Object::ShapeKind::Cube);
+        differentImplicit.setFieldShape(
+            geom::SdfNode::leaf(
+                geom::SdfPrim::Box, glm::vec3(0.5f)),
+            glm::vec3(0.75f));
         differentImplicit.setRenderMode(Object::RenderMode::Auto);
         differentImplicit.setMaterialId("material.webgpu_source_transport_parity");
         const glm::mat4 implicitBoxBlockerModel =
@@ -3206,7 +3209,10 @@ int main() {
         // admitted by this bounded provider. Its mere presence must revoke scene
         // authority instead of being triangulated, guessed, or silently omitted.
         Object unsupportedImplicit;
-        unsupportedImplicit.setShapeKind(Object::ShapeKind::Torus);
+        unsupportedImplicit.setFieldShape(
+            geom::SdfNode::leaf(
+                geom::SdfPrim::Torus, glm::vec3(0.5f, 0.2f, 0.0f)),
+            glm::vec3(0.8f));
         unsupportedImplicit.setRenderMode(Object::RenderMode::Auto);
         unsupportedImplicit.setMaterialId("material.webgpu_source_transport_parity");
 
