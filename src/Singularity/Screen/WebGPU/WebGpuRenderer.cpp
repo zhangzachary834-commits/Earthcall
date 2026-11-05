@@ -6,6 +6,7 @@
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
 #include "Singularity/Screen/VolumeRayTransport.hpp"
+#include "Singularity/Screen/VolumeTransportCohortPlanner.hpp"
 #include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/SdfRangeProof.hpp"
@@ -3562,20 +3563,82 @@ void WebGpuRenderer::flushVolumeComposite() {
     }
 
     if (activeMedia.size() > 1) {
-        if (!_certificateProbeMedium && incidentSource &&
-            OntoMath::literalZero(incidentSource->radianceExpr) &&
-            activeMedia.size() >= 6) {
-            // Partition into far-side background cohort (drawn first over the opaque
-            // scene on the grid-proof fused lane) and near-side 4-curtain cohort
-            // (drawn second over the background on the hardware routed transport lane).
-            std::vector<const Rendering::VolumeDensityBinding*> nearCohort(
-                activeMedia.begin(), activeMedia.begin() + 4);
-            std::vector<const Rendering::VolumeDensityBinding*> farCohort(
-                activeMedia.begin() + 4, activeMedia.end());
-            enqueueVolumeCohort(farCohort, false);
-            enqueueVolumeCohort(nearCohort, true);
-        } else {
-            enqueueVolumeCohort(activeMedia, true);
+        // C2: execution-family membership comes only from mathematical
+        // capability. Serialization order, Zone identity, artistic role and
+        // media count carry no transport meaning.
+        const auto routedCapability = [](const Rendering::VolumeDensityBinding* medium) {
+            if (!medium || !medium->densityExpr) return false;
+            const auto recipe = OntoMath::clampedWaveSupport(medium->densityExpr);
+            if (!recipe) return false;
+            if (!OntoMath::clampedWaveGroupingSlackFits(*recipe, std::abs(medium->scale.z)))
+                return false;
+            if (!glm::all(glm::lessThanEqual(glm::abs(medium->origin), glm::vec3(1024))))
+                return false;
+            if (!glm::all(glm::lessThanEqual(glm::abs(medium->scale), glm::vec3(1024))))
+                return false;
+            return true;
+        };
+        const auto capabilityPartition =
+            Rendering::partitionVolumeMediaByRoutedCapability(activeMedia, routedCapability);
+        const auto& routedCohort = capabilityPartition.first;
+        const auto& generalCohort = capabilityPartition.second;
+
+        // C3: conservative whole-screen chronology. Each cohort receives a
+        // camera-relative radial shell derived from authored AABBs. If those
+        // shells are strictly ordered, every ray hitting both cohorts shares
+        // that chronology. Overlap means unknown and therefore no split.
+        const auto radialSupportFor =
+            [&](const Rendering::VolumeDensityBinding* medium)
+                -> Rendering::VolumeCohortSupportInterval {
+            if (!medium) return {};
+            const glm::vec3 halfExtent = glm::abs(medium->scale);
+            const glm::vec3 eyeDelta = glm::abs(_eyePos - medium->origin);
+            const glm::vec3 nearestDelta =
+                glm::max(eyeDelta - halfExtent, glm::vec3(0.0f));
+            const glm::vec3 farthestDelta = eyeDelta + halfExtent;
+            const double nearDistance = static_cast<double>(glm::length(nearestDelta));
+            const double farDistance = static_cast<double>(glm::length(farthestDelta));
+            if (!std::isfinite(nearDistance) || !std::isfinite(farDistance))
+                return {};
+            return {nearDistance, farDistance, true};
+        };
+
+        bool scheduledSplit = false;
+        const bool separableSource =
+            !_certificateProbeMedium && incidentSource &&
+            OntoMath::literalZero(incidentSource->radianceExpr);
+
+        // The current routed backend is a four-member execution family. A
+        // different routed cardinality is capability information but not yet
+        // an executable split. Singleton companions remain joint because the
+        // cohort executor currently represents multi-medium sets only.
+        if (separableSource && routedCohort.size() == 4 && generalCohort.size() > 1) {
+            const auto routedSupport =
+                Rendering::aggregateVolumeCohortSupport(routedCohort, radialSupportFor);
+            const auto generalSupport =
+                Rendering::aggregateVolumeCohortSupport(generalCohort, radialSupportFor);
+            const auto order =
+                Rendering::proveWholeScreenRadialOrder(routedSupport, generalSupport);
+
+            if (order == Rendering::VolumeCohortOrder::FirstBeforeSecond) {
+                // Routed is nearer: compose farther general transport first.
+                enqueueVolumeCohort(generalCohort, false);
+                enqueueVolumeCohort(routedCohort, true);
+                scheduledSplit = true;
+            } else if (order == Rendering::VolumeCohortOrder::SecondBeforeFirst) {
+                // General is nearer: compose farther routed transport first.
+                enqueueVolumeCohort(routedCohort, true);
+                enqueueVolumeCohort(generalCohort, false);
+                scheduledSplit = true;
+            }
+        }
+
+        if (!scheduledSplit) {
+            // Overlapping/unknown shells, non-separable source coupling, or an
+            // unsupported cohort cardinality stay on one joint path. C4/C5 may
+            // later recover specialization locally per tile/ray/interval.
+            const bool wholeSetRoutedAdmissible = generalCohort.empty();
+            enqueueVolumeCohort(activeMedia, wholeSetRoutedAdmissible);
         }
     }
 
