@@ -45,6 +45,30 @@ int main() {
         expectRun(schedule, 2, 2.0, 3.0, VolumeCohortIntervalTarget::First);
     }
 
+    // C5b execution witness: the consumer receives one near->far run stream,
+    // preserving the motivating A -> B -> A chronology.
+    {
+        const std::vector<VolumeCohortRayInterval> first{
+            {0.0, 1.0}, {2.0, 3.0}
+        };
+        const std::vector<VolumeCohortRayInterval> second{{1.0, 2.0}};
+        const auto schedule =
+            Rendering::scheduleVolumeCohortRayIntervals(first, second);
+        std::vector<VolumeCohortIntervalTarget> visited;
+        const bool ok = Rendering::executeVolumeCohortIntervalSchedule(
+            schedule,
+            [&](const auto& run) {
+                visited.push_back(run.target);
+                return true;
+            });
+        assert(ok);
+        assert((visited == std::vector<VolumeCohortIntervalTarget>{
+            VolumeCohortIntervalTarget::First,
+            VolumeCohortIntervalTarget::Second,
+            VolumeCohortIntervalTarget::First
+        }));
+    }
+
     // C5b witness 2: overlapping support becomes Joint only on the overlap.
     {
         const std::vector<VolumeCohortRayInterval> first{{0.0, 2.0}};
