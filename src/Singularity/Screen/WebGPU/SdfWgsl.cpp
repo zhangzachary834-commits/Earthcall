@@ -4356,11 +4356,14 @@ fn sceneImplicitBoxBlocks(
         return false;
     }
 
-    let safeD = select(d, vec3<f32>(1e-8), parallel);
+    let safeD = select(d, vec3<f32>(1.0), parallel);
     let t0 = (-h - a) / safeD;
     let t1 = ( h - a) / safeD;
-    let lo = min(t0, t1);
-    let hi = max(t0, t1);
+    // A parallel segment already passed the "outside slab" refusal above.
+    // Its exact interval on that axis is therefore unbounded, not a finite
+    // epsilon-derived approximation.
+    let lo = select(min(t0, t1), vec3<f32>(-1e30), parallel);
+    let hi = select(max(t0, t1), vec3<f32>( 1e30), parallel);
     let enter = max(max(lo.x, lo.y), lo.z);
     let exit = min(min(hi.x, hi.y), hi.z);
     let eps = 1e-5;
