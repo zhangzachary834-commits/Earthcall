@@ -760,3 +760,17 @@ Sparkly Guy / Gemini 3.8 Flash / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` 
 ### Mesh upload packets — 2026-11-03
 
 **Mesh upload packets, 2026-11-03.** `WebGpuRenderer::flushMeshDraws` derives aligned uniform/instance upload pages from the current ordered `_meshBatches`, view-projection, light, and eye snapshots. These Kernel packets live for one flush, and GPU ranges live in the existing queue-ordered buffer pool. Every flush reconstructs them, so camera/material/model edits require no cross-frame cache invalidation. Bindings retain each batch's original byte extent and 256-byte alignment. Multiple flushes and an oversized individual batch are covered by `webgpu_mesh_upload_pages_test`, with independent pixel expectations and a failing offset mutation. [Native correctness and cost record](../../audits/CATHEDRAL_SURFACE_SDF_FIRST_PASS_2026-11-03.md#native-continuation-and-retained-upload-repair). Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-03T22:52:00-08:00.
+
+
+### General volume transport cohorts — capability membership and radial order certificates (2026-11-04)
+
+Branch `prism/general-volume-cohort-architecture-reconciled` introduces no authored cohort kind and no persistent near/far label. `VolumeTransportCohortPlanner` derives two classes of transient execution facts from the current rendered media set:
+
+1. **Capability membership** — whether each current medium satisfies the structural routed-admission predicate. This depends on the current density AST, authored origin/scale bounds, and the routed grouping-slack theorem. Serialization/index order, Zone identity, artistic labels, and media-count thresholds are explicitly excluded from the key. The derived partition is rebuilt from the current `activeMedia` projection each `flushVolumeComposite()`.
+2. **Whole-screen radial chronology certificate** — for each candidate cohort, the renderer derives a conservative camera-relative radial interval from the union of current authored AABBs. The certificate `A before B` is accepted only when `far(A) < near(B)` (within the declared epsilon), which is sufficient to establish the same ordering on every ray that intersects both cohorts. Overlapping/invalid shells produce `Unknown` and retain the joint fused path.
+
+**Lifetime / invalidation:** capability membership is valid only for the current rendered field structures and bounds; chronology is additionally dependent on current camera position. No cross-frame order cache is introduced. Camera movement, field origin/scale change, structural AST change, media membership change, or source-coupling change is observed by rederivation on the next flush. The narrow independent-pass separability gate still requires the existing literal-zero incident-radiance condition and current routed backend cardinality; failure retains joint transport rather than inferring semantics.
+
+**Evidence boundary:** the pure planner witness covers serialization permutation, media-count independence, chronology reversal under query change, and overlap refusal; a standalone C++17 compile/run passed. Full Earthcall build, native WebGPU parity, multi-cohort native performance, and Person FPS remain open and must not be inferred from the planner witness.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-04. Human origin and acceptance authority: Zachary Zhang.
