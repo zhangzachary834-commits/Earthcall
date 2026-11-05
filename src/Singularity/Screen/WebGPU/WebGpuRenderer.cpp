@@ -3458,8 +3458,9 @@ void WebGpuRenderer::flushSdfDraws() {
         auto instAlloc = bufferPool().suballocateStorage(instances.data(), instances.size() * sizeof(SdfInstanceData));
 
         // Group 0: globals + authored parameters + optional sources +
-        // frame-scoped complete-scene mesh triangles.
-        WGPUBindGroupEntry bge[4] = {};
+        // complete-scene mesh triangles + receiver-relative foreign implicit
+        // blocker packets.
+        WGPUBindGroupEntry bge[5] = {};
         bge[0].binding = 0;
         bge[0].buffer = uAlloc.buffer;
         bge[0].offset = uAlloc.offset;
@@ -3487,9 +3488,22 @@ void WebGpuRenderer::flushSdfDraws() {
         bge[sceneEntry].buffer = _sceneVisibilityFrame.buffer;
         bge[sceneEntry].offset = _sceneVisibilityFrame.offset;
         bge[sceneEntry].size = _sceneVisibilityFrame.size;
+
+        if (!foreignVisibility.buffer || foreignVisibility.size == 0) {
+            mutableFrameStats().sdfProgramRefusals++;
+            mutableFrameStats().sdfLastProgramRefusal =
+                "scene visibility implicit binding unavailable";
+            continue;
+        }
+        const uint32_t implicitEntry = sceneEntry + 1;
+        bge[implicitEntry].binding = 4;
+        bge[implicitEntry].buffer = foreignVisibility.buffer;
+        bge[implicitEntry].offset = foreignVisibility.offset;
+        bge[implicitEntry].size = foreignVisibility.size;
+
         WGPUBindGroupDescriptor bgd = {};
         bgd.layout = sp->bgl;
-        bgd.entryCount = sp->usesRadianceSources ? 4 : 3;
+        bgd.entryCount = sp->usesRadianceSources ? 5 : 4;
         bgd.entries = bge;
         WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
         _frameBindGroups.push_back(bg);
