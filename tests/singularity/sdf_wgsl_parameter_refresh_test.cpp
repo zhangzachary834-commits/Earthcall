@@ -1516,6 +1516,18 @@ int main() {
               oneSource.wgsl.find("sceneTriangles[base + 2u]") !=
                   std::string::npos,
               "one-source direct transport consumes only known V and carries exact shared triangle execution math");
+        check(oneSource.wgsl.find(
+                  "fn cohortOtherInstanceVisibility") != std::string::npos &&
+              oneSource.wgsl.find("arrayLength(&instances)") !=
+                  std::string::npos &&
+              oneSource.wgsl.find("g_instIdx = i") !=
+                  std::string::npos &&
+              oneSource.wgsl.find("g_instIdx = savedIndex") !=
+                  std::string::npos &&
+              oneSource.wgsl.find(
+                  "cohortOtherInstanceVisibility(surfaceWorld, sourceWorld, receiverIndex)") !=
+                  std::string::npos,
+              "CompleteScene SDF visibility evaluates every instance in the admitted same-program cohort and restores receiver authority");
         const auto oneEnvironment =
             oneSource.wgsl.find("legacyEnvironment");
         const auto oneDirect =
