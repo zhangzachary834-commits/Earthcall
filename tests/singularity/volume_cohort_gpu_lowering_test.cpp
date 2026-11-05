@@ -80,6 +80,28 @@ int main() {
     assert(grouped.wgsl.find(
         "var mediumEvents: array<f32, 4>") != std::string::npos);
 
+    // The motivating C5b chronology is expressible physically inside one
+    // generated fused consumer: First -> Second -> First. Runtime placement
+    // determines which existing box-event segments carry each bit.
+    auto densityC = scalarExpression(0.625);
+    sdfwgsl::VolumeProgramInput cMember;
+    cMember.densityExpr = &densityC;
+    const std::vector<sdfwgsl::VolumeProgramInput> mediaAba{a, b, cMember};
+    const std::vector<sdfwgsl::VolumeExecutionFamily> aba{
+        sdfwgsl::VolumeExecutionFamily::First,
+        sdfwgsl::VolumeExecutionFamily::Second,
+        sdfwgsl::VolumeExecutionFamily::First
+    };
+    const auto groupedAba = sdfwgsl::composeVolumeSet(
+        mediaAba, {}, false, {}, {}, aba);
+    assert(groupedAba.ok);
+    assert(count(groupedAba.wgsl, "ecC5bExecutionMask |= 1u") == 2);
+    assert(count(groupedAba.wgsl, "ecC5bExecutionMask |= 2u") == 1);
+    assert(groupedAba.wgsl.find(
+        "var mediumEvents: array<f32, 6>") != std::string::npos);
+    assert(count(groupedAba.wgsl, "var transmittance = 1.0;") == 1);
+    assert(count(groupedAba.wgsl, "var integratedRadiance = vec3<f32>(0.0);") == 1);
+
     // Family assignment is structural compiler state.
     const std::vector<sdfwgsl::VolumeExecutionFamily> ba{
         sdfwgsl::VolumeExecutionFamily::Second,
