@@ -885,6 +885,28 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
 }
 
 
+void WebGpuRenderer::ensureSceneVisibilityBindingForEarlyFlush() {
+    if (_sceneVisibilityFrame.buffer) return;
+
+    // Surface shading is about to execute before frame admission has closed.
+    // Later blockers cannot retroactively affect already-emitted fragments, so
+    // CompleteScene authority is irrecoverably Unknown for the rest of this
+    // frame. Still provide the structurally-required storage binding.
+    _frameHadEarlySurfaceFlush = true;
+    const SceneVisibilityTriangle inert{};
+    auto alloc = bufferPool().suballocateStorage(&inert, sizeof(inert));
+    _sceneVisibilityFrame.buffer = alloc.buffer;
+    _sceneVisibilityFrame.offset = alloc.offset;
+    _sceneVisibilityFrame.size = alloc.size;
+    _sceneVisibilityFrame.triangleCount = 0;
+    _sceneVisibilityFrame.meshComplete = false;
+    _sceneVisibilityFrame.sdfComplete = false;
+    if (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene) {
+        mutableFrameStats().sceneVisibilityUnknownFrames++;
+    }
+}
+
+
 bool WebGpuRenderer::refreshRadianceSourceLayout() {
     if (radianceSources().empty()) {
         _radianceSourcesLayoutRevision = radianceSourcesRevision();
@@ -1462,6 +1484,7 @@ void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width,
     _meshBatches.clear();
     _sceneVisibilityFrame = {};
     _frameHasUnmaterializedOpaqueGeometry = false;
+    _frameHadEarlySurfaceFlush = false;
 }
 
 void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& mat) {
@@ -1696,6 +1719,9 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
 void WebGpuRenderer::flushMeshDraws() {
     if (_meshBatches.empty()) return;
     if (!_pass) { _meshBatches.clear(); return; }
+    if (!_sceneVisibilityFrame.buffer) {
+        ensureSceneVisibilityBindingForEarlyFlush();
+    }
 
     RadianceSourceBufferView sourceView = prepareRadianceSourceBuffer();
     if (!sourceView.buffer) {
@@ -2959,6 +2985,9 @@ void WebGpuRenderer::flushSdfDraws() {
         }
         _activeSdfPipelines.clear();
         return;
+    }
+    if (!_sceneVisibilityFrame.buffer) {
+        ensureSceneVisibilityBindingForEarlyFlush();
     }
     
     // Source records are world truth shared by mesh and SDF consumers. The
@@ -4748,10 +4777,14 @@ void WebGpuRenderer::composeVolumes() {
 
 void WebGpuRenderer::endFrame() {
     if (!_pass) return;
-    // Every opaque draw is now admitted. Build the frame-scoped visibility
-    // materialization BEFORE either representation flushes so both consume the
-    // same complete-or-Unknown scene evidence.
-    _sceneVisibilityFrame = prepareSceneVisibilityFrame();
+    // Every opaque draw is now admitted. Build frame-scoped visibility only
+    // if no surface was shaded earlier. Once an early flush happened, later
+    // geometry cannot retroactively become a blocker for those fragments.
+    if (!_frameHadEarlySurfaceFlush) {
+        _sceneVisibilityFrame = prepareSceneVisibilityFrame();
+    } else if (!_sceneVisibilityFrame.buffer) {
+        ensureSceneVisibilityBindingForEarlyFlush();
+    }
 
     // Every drawMesh() call this frame only queued into _meshBatches; this is
     // where those batches actually become wgpuRenderPassEncoderDraw calls, so
