@@ -3616,6 +3616,22 @@ void WebGpuRenderer::flushVolumeComposite() {
         const auto& routedCohort = capabilityPartition.first;
         const auto& generalCohort = capabilityPartition.second;
 
+        // C5b-2a: preserve authored activeMedia order while tagging the two
+        // derived execution families. The tags exist only when both families
+        // are present; an all-routed or all-general set needs no grouped lane.
+        std::vector<sdfwgsl::VolumeExecutionFamily> mixedExecutionFamilies;
+        if (!routedCohort.empty() && !generalCohort.empty()) {
+            mixedExecutionFamilies.reserve(activeMedia.size());
+            for (const auto* medium : activeMedia) {
+                const bool first =
+                    std::find(routedCohort.begin(), routedCohort.end(), medium) !=
+                    routedCohort.end();
+                mixedExecutionFamilies.push_back(
+                    first ? sdfwgsl::VolumeExecutionFamily::First
+                          : sdfwgsl::VolumeExecutionFamily::Second);
+            }
+        }
+
         const auto radialSupportFor =
             [&](const Rendering::VolumeDensityBinding* medium)
                 -> Rendering::VolumeCohortSupportInterval {
@@ -3768,7 +3784,12 @@ void WebGpuRenderer::flushVolumeComposite() {
                                 Rendering::VolumeCohortDrawTarget::Joint;
                         });
                     const VolumePipeline* jointPipeline =
-                        needsJoint ? enqueueVolumeCohort(activeMedia, false) : nullptr;
+                        needsJoint
+                            ? enqueueVolumeCohort(
+                                  activeMedia, false,
+                                  mixedExecutionFamilies.empty()
+                                      ? nullptr : &mixedExecutionFamilies)
+                            : nullptr;
                     const bool jointReady = !needsJoint || jointPipeline;
 
                     if (jointReady) {
@@ -3796,7 +3817,10 @@ void WebGpuRenderer::flushVolumeComposite() {
         if (!scheduledSplit) {
             const bool wholeSetRoutedAdmissible = generalCohort.empty();
             const auto* joint =
-                enqueueVolumeCohort(activeMedia, wholeSetRoutedAdmissible);
+                enqueueVolumeCohort(
+                    activeMedia, wholeSetRoutedAdmissible,
+                    mixedExecutionFamilies.empty()
+                        ? nullptr : &mixedExecutionFamilies);
             volumeDrawSchedule.clear();
             appendPacket(joint, fullViewport);
         }
