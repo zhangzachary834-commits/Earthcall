@@ -416,6 +416,25 @@ fn fieldVmEval(
     return FieldVmResult(stack[0], 1.0);
 }
 )WGSL";
+
+std::string fieldVmBoundMathModule(uint32_t group, uint32_t binding) {
+    std::string module = fieldVmMathModule();
+    const std::string marker =
+        "struct FieldVmResult {\n"
+        "    value: f32,\n"
+        "    known: f32,\n"
+        "};\n";
+    const std::size_t at = module.find(marker);
+    if (at == std::string::npos) return "// REFUSED: field VM binding marker missing\n";
+    const std::size_t insertAt = at + marker.size();
+    const std::string declaration =
+        "@group(" + std::to_string(group) + ") @binding(" +
+        std::to_string(binding) +
+        ") var<storage, read> fieldVmInstructions: array<FieldVmInstructionData>;\n";
+    module.insert(insertAt, declaration);
+    return module;
+}
+
 }
 
 } // namespace sdfwgsl
