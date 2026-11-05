@@ -2067,7 +2067,99 @@ int main() {
                chiBlueSource.toJson().dump() == chiBlueBeforeVisibility &&
                "derived visibility leaked blocker state into authored source invariants");
 
-        renderer.setRadianceVisibilityEnabled(false);
+        // COMPLETE-SCENE FOREIGN FIELD VM: a Torus cannot enter the historical
+        // sphere/box analytic packet. Put it in a separate SDF program cohort,
+        // exactly on the red-source path but off the camera-centre ray. A centre
+        // red drop therefore proves foreign path visibility rather than visual
+        // occlusion of the receiver.
+        radiant.setFieldShape(receiver, glm::vec3(1.5f));
+        renderer.setRadianceVisibilityMode(RadianceVisibilityMode::CompleteScene);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char vmSceneBaseline[4];
+        readCentre(vmSceneBaseline);
+        const Renderer::FrameStats vmBaselineStats = renderer.frameStats();
+        assert(vmBaselineStats.sceneVisibilitySdfKnownFrames >= 1 &&
+               vmBaselineStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               "receiver-only CompleteScene did not establish SDF visibility authority");
+
+        Object vmForeignBlocker;
+        auto vmFarSphere =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.05f));
+        vmFarSphere.offset = glm::vec3(0.0f, 10.0f, 0.0f);
+        auto vmTorus =
+            geom::SdfNode::leaf(geom::SdfPrim::Torus,
+                                glm::vec3(0.18f, 0.12f, 0.0f));
+        vmTorus.offset = glm::vec3(-0.4f, 0.18f, 1.075f);
+        auto vmForeignField =
+            geom::SdfNode::binary(
+                geom::SdfOp::Union, vmFarSphere, vmTorus);
+        vmForeignBlocker.setFieldShape(vmForeignField, glm::vec3(1.5f));
+        vmForeignBlocker.setMaterialId("material.webgpu_radiance_witness");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        vmForeignBlocker.drawObject();
+        renderer.endFrame();
+        unsigned char vmTorusBlocked[4];
+        readCentre(vmTorusBlocked);
+        const Renderer::FrameStats vmTorusStats = renderer.frameStats();
+        std::printf(
+            "foreign VM torus baseline=(%d,%d,%d) blocked=(%d,%d,%d) "
+            "known=%u unknownSkips=%u unknownFrames=%u\n",
+            vmSceneBaseline[0], vmSceneBaseline[1], vmSceneBaseline[2],
+            vmTorusBlocked[0], vmTorusBlocked[1], vmTorusBlocked[2],
+            vmTorusStats.sceneVisibilitySdfKnownFrames,
+            vmTorusStats.sdfVisibilityUnknownDirectSkips,
+            vmTorusStats.sceneVisibilityUnknownFrames);
+
+        assert(vmSceneBaseline[0] > vmTorusBlocked[0] + 20 &&
+               "foreign Torus VM program did not block the red source path");
+        assert(vmTorusBlocked[2] > 35 &&
+               std::abs(int(vmTorusBlocked[2]) - int(vmSceneBaseline[2])) < 25 &&
+               "foreign Torus damaged the independent blue source path");
+        assert(vmTorusStats.sceneVisibilitySdfKnownFrames >= 1 &&
+               vmTorusStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               vmTorusStats.sceneVisibilityUnknownFrames == 0 &&
+               "complete foreign Torus VM scene was reported Unknown");
+
+        // VALUE ONLY: move the Torus behind the receiver. The foreign program
+        // topology is unchanged; the scene-table bytecode must refresh without
+        // regenerating WGSL, and the red contribution must return.
+        const auto vmStructureBefore =
+            vmForeignBlocker.getSdfStructureRevision();
+        const auto vmParamsBefore =
+            vmForeignBlocker.getSdfParameterRevision();
+        vmForeignBlocker.setFieldOperandBOffset(
+            glm::vec3(-0.4f, 0.18f, -0.8f));
+        assert(vmForeignBlocker.getSdfStructureRevision() ==
+                   vmStructureBefore &&
+               vmForeignBlocker.getSdfParameterRevision() !=
+                   vmParamsBefore &&
+               "foreign Torus motion did not remain a value-only SDF edit");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        vmForeignBlocker.drawObject();
+        renderer.endFrame();
+        unsigned char vmTorusMoved[4];
+        readCentre(vmTorusMoved);
+        const Renderer::FrameStats vmMovedStats = renderer.frameStats();
+        assert(vmTorusMoved[0] > vmTorusBlocked[0] + 20 &&
+               "moving the foreign Torus left stale VM shadow bytecode");
+        assert(std::abs(int(vmTorusMoved[0]) - int(vmSceneBaseline[0])) < 25 &&
+               std::abs(int(vmTorusMoved[2]) - int(vmSceneBaseline[2])) < 25 &&
+               "foreign Torus removal did not restore the CompleteScene baseline");
+        assert(vmMovedStats.sdfProgramCompiles == 0 &&
+               vmMovedStats.sdfProgramCacheHits >= 2 &&
+               "foreign Torus value motion regenerated SDF WGSL");
+        assert(vmMovedStats.sceneVisibilitySdfKnownFrames >= 1 &&
+               vmMovedStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               "moved foreign Torus lost CompleteScene VM authority");
+
+        renderer.setRadianceVisibilityMode(RadianceVisibilityMode::Disabled);
         renderer.setRadianceSources({}, 0);
     }
 
