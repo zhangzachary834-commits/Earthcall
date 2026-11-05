@@ -222,6 +222,25 @@ int main() {
         assert(plan.orderedRegions[0].height == 256);
     }
 
+    // C4 witness 5: proof failure is uncertainty, not disappearance. A
+    // screen-overlapping medium with an invalid radial certificate forces joint
+    // transport on that tile.
+    {
+        Rendering::VolumeProjectedMediumSupport invalid{
+            {0, 0, 128, 128},
+            {}
+        };
+        const std::vector<Rendering::VolumeProjectedMediumSupport> first{invalid};
+        const std::vector<Rendering::VolumeProjectedMediumSupport> second{
+            projected(0, 0, 128, 128, 10.0, 14.0)
+        };
+        const auto plan = Rendering::planVolumeCohortTiles(
+            128, 128, 128, 128, first, second);
+        assert(plan.commonOrder == Rendering::VolumeCohortOrder::Unknown);
+        assert(plan.orderedRegions.empty());
+        assert(area(plan.jointRegions) == uint64_t(128) * 128);
+    }
+
     std::cout << "PASS volume transport cohort planner: capability membership is "
                  "permutation-invariant; whole-screen and tile-local chronology "
                  "remain proof-derived and fail closed\n";
