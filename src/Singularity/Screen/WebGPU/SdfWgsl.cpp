@@ -2436,11 +2436,11 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
 // between the receiver and source and never writes or reinterprets rho/chi/alpha.
 // lightControl.y=0 is the exact Rung-7 compatibility law V=1.
 //
-// Scope is intentionally honest. A generated SDF pipeline can evaluate its own
-// authored geometry; it cannot yet name arbitrary differently-structured SDF
-// pipelines elsewhere in the Zone. Scene-wide transport needs a shared scene
-// geometry representation rather than pretending those other beings are visible
-// here. Until that exists, this function is not enabled globally by EngineRender.
+// Scope is intentionally honest. This helper evaluates ONLY the receiving SDF.
+// CompleteScene may combine that local answer with the renderer's exact frame
+// mesh-triangle materialization when the renderer proves coverage complete.
+// Differently-structured additional SDFs are not silently omitted: their presence
+// revokes CompleteScene knownness until a shared mixed-geometry provider exists.
 fn sourceTransportSignedStep(p: vec3<f32>, damping: f32) -> f32 {
     if (damping < 0.5) {
         let s = sdfSampleStep(p);
