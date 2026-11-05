@@ -6,6 +6,31 @@
 **Written by:** GPT-5.6 Sol  
 **Status:** implementation plan; no completion claim
 
+## Implementation ledger — 2026-11-04 continuation: plural same-program SDF visibility cohorts
+
+The first bounded `CompleteScene` provider admitted exact mesh-only scenes and one SDF receiver plus the exact mesh-triangle blocker set. This continuation expands implicit plurality without pretending differently-authored field programs are interchangeable.
+
+Implemented:
+- `prepareSceneVisibilityFrame()` now distinguishes **SDF instance count** from **active compiled SDF-program cohort count**;
+- mesh receivers remain complete only when no implicit blocker exists, because mesh WGSL still has no exact implicit evaluator;
+- SDF receivers are complete when every admitted implicit instance belongs to one compiled SDF-program cohort, regardless of instance count;
+- generated SDF WGSL now emits `cohortOtherInstanceVisibility(...)`, iterating the runtime instance array for that exact pipeline;
+- cohort traversal temporarily switches `g_instIdx` so the existing exact field evaluator reads each blocker instance's own transform, parameter offset, bounds, and march policy, then restores the receiving instance before Material evaluation;
+- the receiving instance retains the existing self-shadow escape path; foreign cohort instances are tested as blockers without receiver-self bias;
+- the shared mesh-triangle visibility provider remains composed after the complete SDF cohort test;
+- a second distinct SDF program still revokes `CompleteScene` authority and yields Unknown rather than being silently omitted;
+- compiler tribunals require runtime cohort iteration, instance-authority switching, restoration, and invocation only inside the bounded complete-scene path;
+- native tribunals now distinguish:
+  1. one-instance SDF cohort → known visible;
+  2. two instances of the same compiled sphere program, with the second on the source path → known occluded;
+  3. receiver sphere plus differently-structured implicit box → Unknown.
+
+This is deliberately **not** a general mixed-SDF scene compiler. The new authority is exactly:
+`one compiled implicit field program × N instances + exact admitted mesh triangles`.
+A second field program remains outside the provider until Earthcall has a lawful way to compose multiple implicit programs into one path query.
+
+---
+
 ## Implementation ledger — 2026-11-03 first cut
 
 Started on this branch.
