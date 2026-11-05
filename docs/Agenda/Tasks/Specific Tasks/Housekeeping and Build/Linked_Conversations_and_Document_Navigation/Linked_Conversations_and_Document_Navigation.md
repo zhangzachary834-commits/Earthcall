@@ -113,3 +113,45 @@ corruption is loud.
 
 *Found by Claude Code · Claude Opus 5 · session `14701b58-1f21-425f-b59c-bc3ee2e5abdb` ·
 2026-11-04, while writing [The Month the Author Bound Himself](../../../../../Reflections%20on%20Earthcall's%20Progression/The_Month_The_Author_Bound_Himself.md).*
+
+## Journal repair, 2026-11-04
+
+*Claude Code / Claude Opus 5.5 / session `f1a6b19c-d627-4c8c-a1d3-90d9a0a227d9` / 2026-11-04. Zach asked: "BROOOOOOOO NOW FIX THE NAV TOOL REFUSALS".*
+
+**Status:** fixed. `nav find`, `nav trace` and `nav link` all work on the real journal.
+
+**Where the damage came from:**
+
+| Damage | Origin | What happened to it |
+|---|---|---|
+| 63 replayed records, lines 159–221 | Merge `77503b6da` (2026-11-02) joined a 258-line and a 157-line journal into 322 lines | Dropped. Every line matched its first occurrence byte for byte |
+| 4 Firmament phase-review records, lines 314–320 | Hand-written appends, starting at `90f39d672` | Moved verbatim to [`conversation_links.quarantine.jsonl`](../../../../../../agent%20intercom/conversation_links.quarantine.jsonl) |
+| 59 records missing, and nothing refused | Dropped on 2026-10-26: `0f2ab2e51` replaced the file from a branch's shorter copy (58 records), merge `fd6ecbc32` kept the side without them (57 of those), and `4c5e8304d` dropped one more | 29 restored verbatim from git, 28 already active under a later id, 2 not restorable (below) |
+
+The third row was not in the original report. It is the worse failure: the file stayed valid, so `nav trace` would have quietly answered with less ancestry than was registered.
+
+**What changed in the tool:**
+
+- **Reads no longer refuse.** Search and trace use every sound record and print a warning naming the damage. `nav doctor` reports it and exits nonzero. Writes still refuse, so the damage cannot be buried under another entry.
+- **`nav repair`** previews by default; `nav repair --apply --by harness/model/session` applies. It drops only replays, quarantines anything else unreadable, and keeps every sound line's exact bytes and order. It refuses when one id carries two different contents, because a reader has to settle that, and refuses if the file changes underneath it.
+- **Replays cannot revive a withdrawn edge.** The first occurrence of an id is the record.
+- **CI alarm:** the `Focused CPU tests` job now runs these tests, including `test_this_checkouts_journal_is_sound` against the real journal.
+- **`.gitattributes`** sets `merge=union` on the journal and quarantine files, so a merge keeps both sides' appends. A union merge can still produce a replay, which the alarm catches and `nav repair` removes. It helps only with merges: an ordinary commit carrying a stale copy of the file, like `0f2ab2e51`, still drops records (see Remaining).
+
+**Evidence:**
+
+- 21 focused tests pass; 6 are new. `test_this_checkouts_journal_is_sound` failed on the damaged journal ("67 damaged line(s), first at line 159") and passes on the repaired one.
+- Every record id at `HEAD` survives the repair, and the 254 sound lines match `HEAD`'s bytes and order.
+- A throwaway git repository confirmed the union merge keeps both branches' appends and the result loads clean.
+- The CI step has not run on GitHub yet.
+
+**Registered:** [Thirty-Five Hours After Thirty](../../../../../Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/Thirty_Five_Hours_After_Thirty.md) → [The Month the Author Bound Himself](../../../../../Reflections%20on%20Earthcall's%20Progression/The_Month_The_Author_Bound_Himself.md), the registration this refusal had blocked.
+
+**Remaining, for whoever owns the lane:**
+
+- [ ] **Nothing catches a silently dropped record yet.** The alarm checks the journal's shape, and a journal missing records is still well-formed, so a commit carrying a stale copy passes it. A CI check that every record id in the parent commit survives would catch this. It needs more than the job's default shallow checkout, and a deliberate history rewrite would need an allowance.
+- [ ] The 4 quarantined Firmament records never registered their review documents as connections, and `docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P16` through `P19` have no journal edge. Each record lists its artifacts, but the parent should be proved by reading the source before linking.
+- [ ] 2 dropped records were not restored because an endpoint no longer resolves: Codex's `LAW_LINE_SHAPE_GARDEN` link (2026-10-20) names a heading that no longer exists, and Firmament's link (2026-10-23) names a `GPU_RAY_TRANSPORT_PRODUCER_WORK_CENSUS_REVIEW_2026-10-23` document that no longer exists at that path. Both remain in git history.
+- [ ] `nav doctor` still reports 285 unresolved citations and 27 possible unconnected replies. This is the queue described under [Verification and remaining work](#verification-and-remaining-work), not journal damage.
+
+**For future agents:** register connections only with `nav link`. Never append to the journal by hand; a record that is not a connection belongs in an audit. Resolve a merge on this file by keeping both sides, then run `nav repair`.

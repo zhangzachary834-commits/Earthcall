@@ -45,7 +45,10 @@ in both directions without editing the parent's chronology. Use `continues`, `re
 or `summarizes` when accurate; ordinary references are discovered automatically and never
 silently become replies. `nav unlink` with the same endpoints/relation appends a withdrawal.
 The append-only `conversation_links.jsonl` records who registered each edge and when;
-registration does not rewrite either document's original authorship.
+registration does not rewrite either document's original authorship. Write to it only through
+`nav link`: a record that is not a connection belongs in an audit. If a merge or a hand-written
+line damages it, search still works with a warning and links refuse until you run `nav repair`
+(a preview) and `nav repair --apply --by "harness/model/session"`.
 
 For JSONL messaging, select a log explicitly; from the Intercom directory:
 
