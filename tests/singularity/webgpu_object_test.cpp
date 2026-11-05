@@ -3148,33 +3148,87 @@ int main() {
                sourceSdfCohortBlockedStats.sdfVisibilityUnknownDirectSkips == 0 &&
                "same-program second SDF instance was not admitted as an exact blocker");
 
-        // A differently-structured SDF is still outside this bounded provider.
-        // Its mere presence revokes complete-scene authority; never evaluate the
-        // receiver cohort and silently omit a distinct authored field program.
+        // DISTINCT PROGRAM, EXACT PACKET: a box is a different compiled SDF
+        // law from the sphere receiver, but this bounded provider can lower the
+        // primitive leaf itself into an exact analytic segment blocker.
         Object differentImplicit;
         differentImplicit.setShapeKind(Object::ShapeKind::Box);
         differentImplicit.setRenderMode(Object::RenderMode::Auto);
         differentImplicit.setMaterialId("material.webgpu_source_transport_parity");
+        const glm::mat4 implicitBoxBlockerModel =
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.95f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.22f));
+
+        // Mesh receivers have no local SDF evaluator, so this proves they consume
+        // the global exact analytic implicit packet rather than silently ignoring
+        // the box or demoting CompleteScene to Unknown.
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(implicitBoxBlockerModel);
+        differentImplicit.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshImplicitBlocked[4];
+        readCentre(sourceMeshImplicitBlocked);
+        const Renderer::FrameStats sourceMeshImplicitBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceMeshImplicitBlocked[0] < 5 &&
+               sourceMeshImplicitBlocked[1] < 5 &&
+               sourceMeshImplicitBlocked[2] < 5 &&
+               sourceMeshImplicitBlockedStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshImplicitBlockedStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshImplicitBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
+               "mesh receiver did not consume exact analytic implicit blocker packet");
+
+        // SDF receiver: its own sphere cohort stays in the exact local/cohort
+        // evaluator while ONLY the foreign box travels through the packet.
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(implicitBoxBlockerModel);
+        differentImplicit.drawObject();
+        renderer.endFrame();
+        unsigned char sourceSdfMixedProgramBlocked[4];
+        readCentre(sourceSdfMixedProgramBlocked);
+        const Renderer::FrameStats sourceSdfMixedProgramBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceSdfMixedProgramBlocked[0] < 5 &&
+               sourceSdfMixedProgramBlocked[1] < 5 &&
+               sourceSdfMixedProgramBlocked[2] < 5 &&
+               sourceSdfMixedProgramBlockedStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceSdfMixedProgramBlockedStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               sourceSdfMixedProgramBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
+               "foreign analytic box program did not retain complete-scene SDF authority");
+
+        // DISTINCT PROGRAM, UNSUPPORTED PACKET: torus intersection has not been
+        // admitted by this bounded provider. Its mere presence must revoke scene
+        // authority instead of being triangulated, guessed, or silently omitted.
+        Object unsupportedImplicit;
+        unsupportedImplicit.setShapeKind(Object::ShapeKind::Torus);
+        unsupportedImplicit.setRenderMode(Object::RenderMode::Auto);
+        unsupportedImplicit.setMaterialId("material.webgpu_source_transport_parity");
 
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         renderer.setModel(glm::mat4(1.0f));
         implicitTransport.drawObject();
         renderer.setModel(
             glm::translate(glm::mat4(1.0f), glm::vec3(0.9f, 0.0f, 0.0f)) *
-            glm::scale(glm::mat4(1.0f), glm::vec3(0.25f)));
-        differentImplicit.drawObject();
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.22f)));
+        unsupportedImplicit.drawObject();
         renderer.endFrame();
-        unsigned char sourceSdfMixedProgramUnknown[4];
-        readCentre(sourceSdfMixedProgramUnknown);
-        const Renderer::FrameStats sourceSdfMixedProgramUnknownStats =
+        unsigned char sourceSdfUnsupportedProgramUnknown[4];
+        readCentre(sourceSdfUnsupportedProgramUnknown);
+        const Renderer::FrameStats sourceSdfUnsupportedProgramUnknownStats =
             renderer.frameStats();
 
-        assert(sourceSdfMixedProgramUnknown[0] < 5 &&
-               sourceSdfMixedProgramUnknown[1] < 5 &&
-               sourceSdfMixedProgramUnknown[2] < 5 &&
-               sourceSdfMixedProgramUnknownStats.sceneVisibilitySdfKnownFrames == 0 &&
-               sourceSdfMixedProgramUnknownStats.sdfVisibilityUnknownDirectSkips > 0 &&
-               "different SDF program was silently omitted from complete-scene truth");
+        assert(sourceSdfUnsupportedProgramUnknown[0] < 5 &&
+               sourceSdfUnsupportedProgramUnknown[1] < 5 &&
+               sourceSdfUnsupportedProgramUnknown[2] < 5 &&
+               sourceSdfUnsupportedProgramUnknownStats.sceneVisibilitySdfKnownFrames == 0 &&
+               sourceSdfUnsupportedProgramUnknownStats.sdfVisibilityUnknownDirectSkips > 0 &&
+               "unsupported foreign SDF program was silently omitted from complete-scene truth");
 
         renderer.setRadianceVisibilityMode(RadianceVisibilityMode::Disabled);
         renderer.setRadianceSources({}, 0);
