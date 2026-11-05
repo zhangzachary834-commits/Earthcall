@@ -51,6 +51,9 @@ int main(){
     const std::string w=sdfwgsl::fieldVmMathModule();
     check(w.find("fn fieldVmEval(")!=std::string::npos&&w.find("array<f32, 128>")!=std::string::npos&&w.find("instructionCount > 1024u")!=std::string::npos,"WGSL VM carries fixed instruction and stack bounds");
     check(w.find("@group(")==std::string::npos,"WGSL VM module is binding-neutral");
+    const std::string bound=sdfwgsl::fieldVmBoundMathModule(0u,5u);
+    check(bound.find("@group(0) @binding(5) var<storage, read> fieldVmInstructions")!=std::string::npos,
+          "production VM module binds the instruction stream at the requested storage slot");
 
     auto expr=geom::makeImplicit("x*x+y*y+z*z-1");
     auto evm=sdfwgsl::lowerFieldVm(expr);
