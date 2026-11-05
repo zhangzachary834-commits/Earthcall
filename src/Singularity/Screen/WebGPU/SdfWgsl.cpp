@@ -2197,8 +2197,8 @@ struct RU {
     //   2 CompleteScene (Unknown until a shared scene provider exists)
     // Visibility is derived execution/path truth, not authored source state.
     lightControl:   vec4<f32>,
-    // x = exact foreign implicit blocker count for this receiver pipeline.
-    // y/z/w reserved for future path-provider execution metadata.
+    // x = exact foreign VM blocker count for this receiver pipeline.
+    // y = total uploaded VM instruction count; z/w reserved.
     sceneVisibilityControl: vec4<f32>,
     // x = distance to the camera's far plane, in WORLD units.
     // y = viewport width in pixels.
@@ -2216,13 +2216,13 @@ struct RU {
 struct Params { v: array<f32> };
 @group(0) @binding(1) var<storage, read> P: Params;
 @group(0) @binding(3) var<storage, read> sceneTriangles: array<vec4<f32>>;
-struct SceneImplicitBlockerData {
+struct SceneFieldVmBlockerData {
     invModel: mat4x4<f32>,
-    dimsKind: vec4<f32>,
-    offset: vec4<f32>,
+    extents: vec4<f32>,
+    program: vec4<u32>,
 };
 @group(0) @binding(4) var<storage, read>
-    sceneImplicitBlockers: array<SceneImplicitBlockerData>;
+    sceneFieldVmBlockers: array<SceneFieldVmBlockerData>;
 
 struct VSOut {
     @builtin(position) clip: vec4<f32>,
@@ -2635,9 +2635,12 @@ fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWor
         return VisibilityDecision(1.0, 0.0);
     }
 
-    let foreignImplicitV =
-        sceneImplicitVisibility(surfaceWorld, sourceWorld);
-    if (foreignImplicitV < 0.5) {
+    let foreignVm =
+        sceneFieldVmVisibility(surfaceWorld, sourceWorld);
+    if (foreignVm.known < 0.5) {
+        return VisibilityDecision(0.0, 0.0);
+    }
+    if (foreignVm.value < 0.5) {
         return VisibilityDecision(1.0, 0.0);
     }
 
@@ -4413,6 +4416,142 @@ fn sceneImplicitVisibility(
 }
 
 
+std::string sceneVisibilityFieldVmMathModule() {
+    return R"WGSL(
+struct SceneFieldVmVisibilityDecision {
+    known: f32,
+    value: f32,
+};
+
+fn sceneFieldVmRayAabb(
+    ro: vec3<f32>, rd: vec3<f32>, b: vec3<f32>) -> vec2<f32> {
+    let rds = select(rd, vec3<f32>(1e-8), abs(rd) < vec3<f32>(1e-8));
+    let inv = 1.0 / rds;
+    let t0 = (-b - ro) * inv;
+    let t1 = ( b - ro) * inv;
+    let tmin = min(t0, t1);
+    let tmax = max(t0, t1);
+    return vec2<f32>(
+        max(max(tmin.x, tmin.y), tmin.z),
+        min(min(tmax.x, tmax.y), tmax.z));
+}
+
+fn sceneFieldVmBlockerVisibility(
+    blocker: SceneFieldVmBlockerData,
+    surfaceWorld: vec3<f32>,
+    sourceWorld: vec3<f32>) -> SceneFieldVmVisibilityDecision {
+    let a = (blocker.invModel * vec4<f32>(surfaceWorld, 1.0)).xyz;
+    let b = (blocker.invModel * vec4<f32>(sourceWorld, 1.0)).xyz;
+    let segment = b - a;
+    let rayLength = length(segment);
+    if (rayLength <= 1e-8) {
+        return SceneFieldVmVisibilityDecision(1.0, 1.0);
+    }
+
+    let extent = abs(blocker.extents.xyz);
+    if (any(extent <= vec3<f32>(0.0))) {
+        return SceneFieldVmVisibilityDecision(0.0, 0.0);
+    }
+
+    let programBase = blocker.program.x;
+    let instructionCount = blocker.program.y;
+    let declaredStack = blocker.program.z;
+    let totalInstructions =
+        u32(max(u.sceneVisibilityControl.y, 0.0));
+    if (instructionCount == 0u ||
+        instructionCount > 1024u ||
+        declaredStack == 0u ||
+        declaredStack > 128u) {
+        return SceneFieldVmVisibilityDecision(0.0, 0.0);
+    }
+    if (programBase > totalInstructions) {
+        return SceneFieldVmVisibilityDecision(0.0, 0.0);
+    }
+    if (instructionCount > totalInstructions - programBase) {
+        return SceneFieldVmVisibilityDecision(0.0, 0.0);
+    }
+
+    let direction = segment / rayLength;
+    let bounds = sceneFieldVmRayAabb(a, direction, extent);
+    if (bounds.y < bounds.x || bounds.y <= 0.0) {
+        return SceneFieldVmVisibilityDecision(1.0, 1.0);
+    }
+
+    var t = max(bounds.x, 0.0);
+    let tExit = min(bounds.y, rayLength);
+    if (tExit <= t) {
+        return SceneFieldVmVisibilityDecision(1.0, 1.0);
+    }
+
+    for (var step = 0; step < 192; step = step + 1) {
+        if (t >= tExit) {
+            return SceneFieldVmVisibilityDecision(1.0, 1.0);
+        }
+
+        let sample =
+            fieldVmEval(programBase, instructionCount, a + direction * t);
+        if (sample.known < 0.5 ||
+            !(sample.value == sample.value) ||
+            abs(sample.value) > 3.402823e38) {
+            return SceneFieldVmVisibilityDecision(0.0, 0.0);
+        }
+
+        let epsilon = max(1e-4, t * 0.001);
+        if (sample.value <= 0.0 || abs(sample.value) < epsilon) {
+            return SceneFieldVmVisibilityDecision(1.0, 0.0);
+        }
+        t = t + max(sample.value, epsilon);
+    }
+
+    // Crossing the exact clipped interval on the final permitted step is still
+    // a proof of no hit. Anything short of that remains undecided.
+    if (t >= tExit) {
+        return SceneFieldVmVisibilityDecision(1.0, 1.0);
+    }
+    return SceneFieldVmVisibilityDecision(0.0, 0.0);
+}
+
+fn sceneFieldVmVisibility(
+    surfaceWorld: vec3<f32>,
+    sourceWorld: vec3<f32>) -> SceneFieldVmVisibilityDecision {
+    let toSource = sourceWorld - surfaceWorld;
+    let distance = length(toSource);
+    if (distance <= SOURCE_DIRECTION_EPS) {
+        return SceneFieldVmVisibilityDecision(1.0, 1.0);
+    }
+
+    // Match the mesh/legacy implicit endpoint convention once in WORLD space.
+    let direction = toSource / distance;
+    let bias = max(1e-4, distance * 1e-5);
+    let segmentStart = surfaceWorld + direction * bias;
+    let segmentEnd = sourceWorld - direction * bias;
+    if (dot(segmentEnd - segmentStart, direction) <= 0.0) {
+        return SceneFieldVmVisibilityDecision(1.0, 1.0);
+    }
+
+    let blockerCount =
+        u32(max(u.sceneVisibilityControl.x, 0.0));
+    var allKnown = true;
+    for (var i = 0u; i < blockerCount; i = i + 1u) {
+        let decision = sceneFieldVmBlockerVisibility(
+            sceneFieldVmBlockers[i], segmentStart, segmentEnd);
+        if (decision.known > 0.5 && decision.value < 0.5) {
+            return SceneFieldVmVisibilityDecision(1.0, 0.0);
+        }
+        if (decision.known < 0.5) {
+            allKnown = false;
+        }
+    }
+
+    if (!allKnown) {
+        return SceneFieldVmVisibilityDecision(0.0, 0.0);
+    }
+    return SceneFieldVmVisibilityDecision(1.0, 1.0);
+}
+)WGSL";
+}
+
+
 AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr) {
     if (!expr || expr->pieces.empty()) {
         return AngularExpressionLayout{"<legacy-angular:1.0>", 0, false, true, ""};
@@ -5476,8 +5615,9 @@ Program compile(const geom::SdfNode& root,
 
         // Explicit zero-set compatibility lane. Persistently admitted authored
         // sources, including exactly one source, use the source-set compiler.
+        prog.wgsl += fieldVmBoundMathModule(0u, 5u);
         prog.wgsl += sceneVisibilityTriangleMathModule();
-        prog.wgsl += sceneVisibilityImplicitMathModule();
+        prog.wgsl += sceneVisibilityFieldVmMathModule();
         prog.wgsl += kMarcher;
     } else {
         prog.wgsl +=
@@ -5494,8 +5634,9 @@ Program compile(const geom::SdfNode& root,
 
         (void)emitRadianceSourceFunctions(*radianceSources, e, prog.wgsl);
 
+        prog.wgsl += fieldVmBoundMathModule(0u, 5u);
         prog.wgsl += sceneVisibilityTriangleMathModule();
-        prog.wgsl += sceneVisibilityImplicitMathModule();
+        prog.wgsl += sceneVisibilityFieldVmMathModule();
         std::string marcher = kMarcher;
         const std::string lightingBegin =
             "    let V = normalize(u.eyePos.xyz - pw);\n";
