@@ -2212,6 +2212,7 @@ struct RU {
 @group(0) @binding(0) var<uniform> u: RU;
 struct Params { v: array<f32> };
 @group(0) @binding(1) var<storage, read> P: Params;
+@group(0) @binding(3) var<storage, read> sceneTriangles: array<SceneVisibilityTriangle>;
 
 struct VSOut {
     @builtin(position) clip: vec4<f32>,
@@ -2463,15 +2464,7 @@ struct VisibilityDecision {
     value: f32,
 };
 
-fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> VisibilityDecision {
-    if (u.lightControl.y < 0.5) {
-        return VisibilityDecision(1.0, 1.0);
-    }
-    // LocalReceiverGeometry is mode 1. CompleteScene (mode 2) requires a
-    // scene-wide provider; this SDF owns only its receiving instance.
-    if (u.lightControl.y > 1.5) {
-        return VisibilityDecision(0.0, 0.0);
-    }
+fn localSourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
 
     let inst = instances[g_instIdx];
     let sourceField = (inst.invModel * vec4<f32>(sourceWorld, 1.0)).xyz;
@@ -2479,7 +2472,7 @@ fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWor
     let sourceDistance = length(toSource);
     let surfaceEps = max(inst.misc.y, 1e-4);
     let bias = surfaceEps * 4.0;
-    if (sourceDistance <= bias * 2.0) { return VisibilityDecision(1.0, 1.0); }
+    if (sourceDistance <= bias * 2.0) { return 1.0; }
 
     let initialDir = toSource / sourceDistance;
     let damping = inst.misc.w;
@@ -2499,36 +2492,62 @@ fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWor
 
     let remaining = sourceField - origin;
     let rayLength = length(remaining);
-    if (rayLength <= bias) { return VisibilityDecision(1.0, 1.0); }
+    if (rayLength <= bias) { return 1.0; }
     let shadowDir = remaining / rayLength;
 
     // Restrict the query to authored geometry inside this instance's domain.
     // A source outside the box is fine: leaving the box unobstructed proves this
     // instance contributes no blocker beyond that exit.
     let bounds = rayAabb(origin, shadowDir, inst.extents.xyz);
-    if (bounds.y < bounds.x || bounds.y <= 0.0) { return VisibilityDecision(1.0, 1.0); }
+    if (bounds.y < bounds.x || bounds.y <= 0.0) { return 1.0; }
 
     var tShadow = max(bounds.x, 0.0);
     let maxShadow = min(bounds.y, rayLength - bias);
-    if (maxShadow <= tShadow) { return VisibilityDecision(1.0, 1.0); }
+    if (maxShadow <= tShadow) { return 1.0; }
 
     // Match the primary renderer's finite exact-march budget. This baseline uses
     // no proof-grid skip, no penumbra estimate, and no percentage heuristic.
     for (var shadowStep = 0; shadowStep < 192; shadowStep = shadowStep + 1) {
-        if (tShadow >= maxShadow) { return VisibilityDecision(1.0, 1.0); }
+        if (tShadow >= maxShadow) { return 1.0; }
 
         let pShadow = origin + shadowDir * tShadow;
         let currentEps = max(surfaceEps, tShadow * 0.001);
         let dShadow = sourceTransportSignedStep(pShadow, damping);
 
-        if (dShadow <= 0.0 || abs(dShadow) < currentEps) { return VisibilityDecision(1.0, 0.0); }
+        if (dShadow <= 0.0 || abs(dShadow) < currentEps) { return 0.0; }
         tShadow = tShadow + max(dShadow, currentEps);
     }
 
     // The primary marcher uses the same bounded iteration contract. If the
     // budget is exhausted before the segment is decided, fail conservatively:
     // never invent an unobstructed path that was not actually traversed.
-    return VisibilityDecision(1.0, 0.0);
+    return 0.0;
+}
+
+fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> VisibilityDecision {
+    if (u.lightControl.y < 0.5) {
+        return VisibilityDecision(1.0, 1.0);
+    }
+
+    let localV = localSourceVisibility(surfacePoint, surfaceNormal, sourceWorld);
+    if (u.lightControl.y < 1.5) {
+        return VisibilityDecision(1.0, localV);
+    }
+
+    // CompleteScene may be answered only when the renderer proved that this
+    // receiving SDF plus the frame's world-triangle materialization cover every
+    // opaque blocker. z is that completeness bit; w is triangle count.
+    if (u.lightControl.z < 0.5) {
+        return VisibilityDecision(0.0, 0.0);
+    }
+    if (localV < 0.5) {
+        return VisibilityDecision(1.0, 0.0);
+    }
+
+    let inst = instances[g_instIdx];
+    let surfaceWorld = (inst.model * vec4<f32>(surfacePoint, 1.0)).xyz;
+    let meshV = sceneMeshVisibility(surfaceWorld, sourceWorld);
+    return VisibilityDecision(1.0, meshV);
 }
 
 @fragment
@@ -4145,6 +4164,55 @@ VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
     return layout;
 }
 
+std::string sceneVisibilityTriangleMathModule() {
+    return R"WGSL(
+struct SceneVisibilityTriangle {
+    a: vec4<f32>,
+    b: vec4<f32>,
+    c: vec4<f32>,
+};
+
+fn sceneTriangleBlocks(
+    origin: vec3<f32>, direction: vec3<f32>, maxT: f32,
+    tri: SceneVisibilityTriangle) -> bool {
+    let e1 = tri.b.xyz - tri.a.xyz;
+    let e2 = tri.c.xyz - tri.a.xyz;
+    let p = cross(direction, e2);
+    let det = dot(e1, p);
+    if (abs(det) <= 1e-8) { return false; }
+    let invDet = 1.0 / det;
+    let tvec = origin - tri.a.xyz;
+    let baryU = dot(tvec, p) * invDet;
+    if (baryU < 0.0 || baryU > 1.0) { return false; }
+    let q = cross(tvec, e1);
+    let baryV = dot(direction, q) * invDet;
+    if (baryV < 0.0 || baryU + baryV > 1.0) { return false; }
+    let tHit = dot(e2, q) * invDet;
+    return tHit > 1e-6 && tHit < maxT;
+}
+
+fn sceneMeshVisibility(surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
+    let toSource = sourceWorld - surfaceWorld;
+    let distance = length(toSource);
+    if (distance <= SOURCE_DIRECTION_EPS) { return 1.0; }
+    let direction = toSource / distance;
+    // Directional bias removes only the coincident receiver hit. If the source
+    // lies through a closed receiver, the ray still reaches its opposite side.
+    let bias = max(1e-4, distance * 1e-5);
+    let origin = surfaceWorld + direction * bias;
+    let maxT = max(distance - 2.0 * bias, 0.0);
+    let triangleCount = u32(max(u.lightControl.w, 0.0));
+    for (var i = 0u; i < triangleCount; i = i + 1u) {
+        if (sceneTriangleBlocks(origin, direction, maxT, sceneTriangles[i])) {
+            return 0.0;
+        }
+    }
+    return 1.0;
+}
+)WGSL";
+}
+
+
 AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr) {
     if (!expr || expr->pieces.empty()) {
         return AngularExpressionLayout{"<legacy-angular:1.0>", 0, false, true, ""};
@@ -5208,6 +5276,7 @@ Program compile(const geom::SdfNode& root,
 
         // Explicit zero-set compatibility lane. Persistently admitted authored
         // sources, including exactly one source, use the source-set compiler.
+        prog.wgsl += sceneVisibilityTriangleMathModule();
         prog.wgsl += kMarcher;
     } else {
         prog.wgsl +=
@@ -5224,6 +5293,7 @@ Program compile(const geom::SdfNode& root,
 
         (void)emitRadianceSourceFunctions(*radianceSources, e, prog.wgsl);
 
+        prog.wgsl += sceneVisibilityTriangleMathModule();
         std::string marcher = kMarcher;
         const std::string lightingBegin =
             "    let V = normalize(u.eyePos.xyz - pw);\n";
