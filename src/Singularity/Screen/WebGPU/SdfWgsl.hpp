@@ -48,6 +48,14 @@ enum class DensityInputKind {
     Authored
 };
 
+// Kernel-derived C5b execution grouping for fused volume transport. These are
+// compiler lanes, never authored medium kinds or persistent near/far identity.
+enum class VolumeExecutionFamily : unsigned char {
+    Ungrouped = 0,
+    First = 1,
+    Second = 2
+};
+
 struct ParameterBlock {
     std::vector<float> values;
     bool ok = true;
@@ -451,7 +459,8 @@ Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trim
 Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
                          const std::vector<KernelVolumeEvaluator>& evaluators,
                          bool trimProofSupport = true, const std::vector<bool>& supportCertificates = {},
-                         const std::vector<std::vector<uint32_t>>& supportCertificateSwitches = {});
+                         const std::vector<std::vector<uint32_t>>& supportCertificateSwitches = {},
+                         const std::vector<VolumeExecutionFamily>& executionFamilies = {});
 
 // V5 exact overlap baseline. Reuses direct lowerVolumeEvaluator() output for every member's evaluator
 // semantics, then composes those evaluators into one shared ray integral. The
