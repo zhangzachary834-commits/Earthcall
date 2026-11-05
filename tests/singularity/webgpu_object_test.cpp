@@ -3102,9 +3102,27 @@ int main() {
                sourceImplicitSceneBlockedStats.sdfVisibilityUnknownDirectSkips == 0 &&
                "one SDF receiver plus mesh blockers failed complete-scene visibility");
 
-        // Completeness is conditional, not optimistic. A second SDF blocker is
-        // not represented by the triangle provider; every SDF direct path must
-        // return Unknown rather than ignoring that being.
+        // Same-program SDF plurality is exact: the current SDF pipeline's
+        // instance storage already contains every transform/parameter record.
+        // First prove the one-instance cohort is known visible.
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceImplicitCohortVisible[4];
+        readCentre(sourceImplicitCohortVisible);
+        const Renderer::FrameStats sourceImplicitCohortVisibleStats =
+            renderer.frameStats();
+        assert(sourceImplicitCohortVisible[0] > 8 &&
+               sourceImplicitCohortVisible[1] > 35 &&
+               sourceImplicitCohortVisible[2] > 20 &&
+               sourceImplicitCohortVisibleStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceImplicitCohortVisibleStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               "single-program SDF cohort did not yield known visible transport");
+
+        // A second instance of the SAME compiled sphere program lies exactly on
+        // the receiver->source segment. CompleteScene must remain KNOWN and become
+        // occluded; plurality of instances is not plurality of field laws.
         Object secondImplicit;
         secondImplicit.setShapeKind(Object::ShapeKind::Sphere);
         secondImplicit.setRenderMode(Object::RenderMode::Auto);
@@ -3114,21 +3132,49 @@ int main() {
         renderer.setModel(glm::mat4(1.0f));
         implicitTransport.drawObject();
         renderer.setModel(
-            glm::translate(glm::mat4(1.0f), glm::vec3(0.9f, 0.0f, 0.0f)) *
-            glm::scale(glm::mat4(1.0f), glm::vec3(0.25f)));
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.95f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.22f)));
         secondImplicit.drawObject();
         renderer.endFrame();
-        unsigned char sourceSdfSceneUnknown[4];
-        readCentre(sourceSdfSceneUnknown);
-        const Renderer::FrameStats sourceSdfSceneUnknownStats =
+        unsigned char sourceSdfCohortBlocked[4];
+        readCentre(sourceSdfCohortBlocked);
+        const Renderer::FrameStats sourceSdfCohortBlockedStats =
             renderer.frameStats();
 
-        assert(sourceSdfSceneUnknown[0] < 5 &&
-               sourceSdfSceneUnknown[1] < 5 &&
-               sourceSdfSceneUnknown[2] < 5 &&
-               sourceSdfSceneUnknownStats.sceneVisibilitySdfKnownFrames == 0 &&
-               sourceSdfSceneUnknownStats.sdfVisibilityUnknownDirectSkips > 0 &&
-               "unsupported second SDF blocker was silently omitted from complete-scene truth");
+        assert(sourceSdfCohortBlocked[0] < 5 &&
+               sourceSdfCohortBlocked[1] < 5 &&
+               sourceSdfCohortBlocked[2] < 5 &&
+               sourceSdfCohortBlockedStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceSdfCohortBlockedStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               "same-program second SDF instance was not admitted as an exact blocker");
+
+        // A differently-structured SDF is still outside this bounded provider.
+        // Its mere presence revokes complete-scene authority; never evaluate the
+        // receiver cohort and silently omit a distinct authored field program.
+        Object differentImplicit;
+        differentImplicit.setShapeKind(Object::ShapeKind::Box);
+        differentImplicit.setRenderMode(Object::RenderMode::Auto);
+        differentImplicit.setMaterialId("material.webgpu_source_transport_parity");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.9f, 0.0f, 0.0f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.25f)));
+        differentImplicit.drawObject();
+        renderer.endFrame();
+        unsigned char sourceSdfMixedProgramUnknown[4];
+        readCentre(sourceSdfMixedProgramUnknown);
+        const Renderer::FrameStats sourceSdfMixedProgramUnknownStats =
+            renderer.frameStats();
+
+        assert(sourceSdfMixedProgramUnknown[0] < 5 &&
+               sourceSdfMixedProgramUnknown[1] < 5 &&
+               sourceSdfMixedProgramUnknown[2] < 5 &&
+               sourceSdfMixedProgramUnknownStats.sceneVisibilitySdfKnownFrames == 0 &&
+               sourceSdfMixedProgramUnknownStats.sdfVisibilityUnknownDirectSkips > 0 &&
+               "different SDF program was silently omitted from complete-scene truth");
 
         renderer.setRadianceVisibilityMode(RadianceVisibilityMode::Disabled);
         renderer.setRadianceSources({}, 0);
