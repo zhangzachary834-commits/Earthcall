@@ -1006,6 +1006,21 @@ bool WebGpuRenderer::sdfSceneVisibilityComplete(
         return false;
     }
 
+    // Exact local field geometry cannot stand in for unresolved transmission.
+    // Every instance in the receiving cohort must be opaque under this binary V
+    // provider before its local/cohort marcher can grant CompleteScene authority.
+    const auto receiverInstances = _sdfBatches.find(receiver);
+    if (receiverInstances == _sdfBatches.end() ||
+        receiverInstances->second.empty()) {
+        return false;
+    }
+    const auto receiverOpaque =
+        _sdfVisibilityOpaqueInstanceCounts.find(receiver);
+    if (receiverOpaque == _sdfVisibilityOpaqueInstanceCounts.end() ||
+        receiverOpaque->second != receiverInstances->second.size()) {
+        return false;
+    }
+
     constexpr uint64_t kMaxForeignImplicitBlockers = 1024;
     uint64_t foreignBlockerCount = 0;
     for (const SdfPipeline* foreign : _activeSdfPipelines) {
@@ -1204,6 +1219,7 @@ void WebGpuRenderer::reloadShaders() {
     _activeSdfPipelines.clear();
     _sdfBatches.clear();
     _sdfVisibilityBlockerBatches.clear();
+    _sdfVisibilityOpaqueInstanceCounts.clear();
     _sdfParamsBatches.clear();
     _sdfHeightGridBatches.clear();
     _sdfRangeNodeBatches.clear();
@@ -3141,7 +3157,12 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     auto& sdfBatch = _sdfBatches[sp];
     if (sdfBatch.empty()) _activeSdfPipelines.push_back(sp);
     sdfBatch.push_back(inst);
-    if (visibilityBlocker) {
+
+    const bool binaryVisibilityOpaque = mat.opacity >= 0.999999f;
+    if (binaryVisibilityOpaque) {
+        ++_sdfVisibilityOpaqueInstanceCounts[sp];
+    }
+    if (visibilityBlocker && binaryVisibilityOpaque) {
         _sdfVisibilityBlockerBatches[sp].push_back(*visibilityBlocker);
     }
     _sdfParamsBatches[sp].insert(
@@ -3248,6 +3269,7 @@ void WebGpuRenderer::flushSdfDraws() {
         for (const SdfPipeline* sp : _activeSdfPipelines) {
             _sdfBatches[sp].clear();
             _sdfVisibilityBlockerBatches[sp].clear();
+            _sdfVisibilityOpaqueInstanceCounts[sp] = 0;
             _sdfParamsBatches[sp].clear();
             _sdfHeightGridBatches[sp].clear();
             _sdfRangeNodeBatches[sp].clear();
@@ -3561,6 +3583,7 @@ void WebGpuRenderer::flushSdfDraws() {
     for (const SdfPipeline* sp : _activeSdfPipelines) {
         _sdfBatches[sp].clear();
         _sdfVisibilityBlockerBatches[sp].clear();
+        _sdfVisibilityOpaqueInstanceCounts[sp] = 0;
         _sdfParamsBatches[sp].clear();
         _sdfHeightGridBatches[sp].clear();
         _sdfRangeNodeBatches[sp].clear();
