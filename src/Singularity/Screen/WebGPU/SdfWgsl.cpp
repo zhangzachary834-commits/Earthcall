@@ -7291,8 +7291,27 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media, bool trim
 Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
                          const std::vector<KernelVolumeEvaluator>& evaluators,
                          bool trimProofSupport, const std::vector<bool>& supportCertificates,
-                         const std::vector<std::vector<uint32_t>>& supportCertificateSwitches) {
+                         const std::vector<std::vector<uint32_t>>& supportCertificateSwitches,
+                         const std::vector<VolumeExecutionFamily>& executionFamilies) {
     Program out;
+    const bool groupedExecution = !executionFamilies.empty();
+    if (groupedExecution) {
+        if (executionFamilies.size() != media.size()) {
+            out.ok = false;
+            out.error = "volume set: execution-family count does not match media count";
+            out.wgsl = "// REFUSED: " + out.error + "\n";
+            return out;
+        }
+        for (const auto family : executionFamilies) {
+            if (family != VolumeExecutionFamily::First &&
+                family != VolumeExecutionFamily::Second) {
+                out.ok = false;
+                out.error = "volume set: grouped execution requires First/Second tags for every member";
+                out.wgsl = "// REFUSED: " + out.error + "\n";
+                return out;
+            }
+        }
+    }
     if (media.empty()) {
         out.ok = false;
         out.error = "volume set: no participating media";
@@ -7541,6 +7560,8 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         "        let segmentMidP = ro + rd * segmentMidT;\n"
         "        var segmentOccupied = false;\n"
         "        var segmentSpacing = 3.0e38;\n";
+    if (groupedExecution)
+        out.wgsl += "        var ecC5bExecutionMask = 0u; // C5b-2a query-local execution families\n";
 
     for (std::size_t i = 0; i < media.size(); ++i) {
         const std::string n = std::to_string(i);
@@ -7555,7 +7576,14 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "            if (all(segmentMidP >= segmentMin" + n + ") && "
                 "all(segmentMidP <= segmentMax" + n + ")) {\n"
             "                segmentOccupied = true;\n"
-            "                segmentSpacing = min(segmentSpacing, mediumChord[" + n + "] / f32(samplesPerChord));\n"
+            "                segmentSpacing = min(segmentSpacing, mediumChord[" + n + "] / f32(samplesPerChord));\n";
+        if (groupedExecution) {
+            const uint32_t familyBit =
+                executionFamilies[i] == VolumeExecutionFamily::First ? 1u : 2u;
+            out.wgsl += "                ecC5bExecutionMask |= " +
+                        std::to_string(familyBit) + "u;\n";
+        }
+        out.wgsl +=
             "            }\n"
             "        }\n";
     }
@@ -7608,7 +7636,13 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         out.wgsl +=
             "            {\n"
             "                let mediumInst" + n + " = instances[" + inst + "];\n"
-            "                if (all(worldP >= mediumInst" + n + ".origin.xyz - mediumInst" + n + ".halfExtent.xyz) && "
+            "                if (" +
+                std::string(groupedExecution
+                    ? "((ecC5bExecutionMask & " +
+                          std::to_string(executionFamilies[i] == VolumeExecutionFamily::First ? 1u : 2u) +
+                          "u) != 0u) && "
+                    : "") +
+                "all(worldP >= mediumInst" + n + ".origin.xyz - mediumInst" + n + ".halfExtent.xyz) && "
                 "all(worldP <= mediumInst" + n + ".origin.xyz + mediumInst" + n + ".halfExtent.xyz)) {\n"
             "                    walkHeld = true;\n"
             "                    if (raySupport" + n + ".y < raySupport" + n + ".x || sampleT > raySupport" + n + ".y) {\n"
