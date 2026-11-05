@@ -793,3 +793,12 @@ world can be an interface, and why an interface can be made of anything in the w
 
 The button was never a special thing. It was only ever an object that someone agreed to
 mean something by.
+
+## Addendum: Interaction-as-Law and Direct Screen Forms
+
+### Interrelated Documents
+- `docs/architecture/law/INTERACTION_AS_LAW.md`
+- `docs/Agenda/Tasks/Specific Tasks/Rendering and OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md`
+
+### Thoughts on Integration and Interrelation
+The "Interaction-as-Law" paradigm intentionally rejects traditional UI widgets in favor of modeling controls as authored beings governed by Laws via pointer events. This architecture deeply interrelates with "Direct Screen Forms", which evaluate OntoMath expressions directly at framebuffer sample centers via `ScreenChannel.cpp`. By combining these two principles, Earthcall is able to render and govern interactive UI surfaces purely through mathematical evaluation without requiring underlying physical Objects or Meshes. The direct screen evaluation provides the visual substrate, while Interaction-as-Law provides the interactive meaning, fulfilling the promise of a UI that is natively governed by the world's ontology.
