@@ -679,15 +679,34 @@ Performance evidence cannot substitute for this.
 
 ### Implementation status — 2026-11-04
 
-**C0/C1 landed on this branch.**
+**C0–C3 now have a bounded first implementation on this branch.**
 
-- Added `VolumeTransportCohortPlanner.hpp` as a pure capability-membership primitive.
-- Added `volume_transport_cohort_planner_test.cpp`, including an explicit counterexample showing that the historical first-four positional split changes cohort membership under serialization permutation while capability-derived membership does not.
+- Added `VolumeTransportCohortPlanner.hpp` as a pure capability-membership and conservative order-proof primitive.
+- Added `volume_transport_cohort_planner_test.cpp`, including:
+  - an explicit counterexample showing that the historical first-four positional split changes cohort membership under serialization permutation;
+  - capability-derived permutation invariance;
+  - media-count-threshold independence;
+  - a camera/query-change witness that reverses proven chronology without changing capability membership;
+  - an overlapping-shell witness that correctly refuses whole-cohort order.
 - Removed the production `activeMedia.size() >= 6` / first-four / remainder partition from `WebGpuRenderer::flushVolumeComposite()`.
-- Mixed execution families currently remain one joint fused set until a query-relative separability/order proof exists.
-- Existing four-member routed admission remains available when the entire four-member set satisfies the routed structural proof.
+- C2 now derives routed/general candidate membership from each medium's structural mathematics.
+- C3 now derives a camera-relative conservative radial shell from each cohort's authored AABBs. Independent cohort passes are scheduled only when:
+  1. the current source coupling satisfies the narrow separability admission used by routed transport; and
+  2. the two radial shells prove a total whole-screen order.
+- If shells overlap, source coupling is not admitted, the routed cardinality is unsupported, or any proof input is invalid, the renderer keeps the media in one joint fused path.
+- Existing four-member routed admission remains available when the entire set satisfies the routed structural proof.
 
-This is intentionally a temporary **correctness-first valley**: the eight-field Northern Veil may lose the prototype's multi-cohort speedup on this branch until C2/C3 restore specialization under proof. That loss is preferable to preserving serialization order as physics.
+The first C3 certificate is deliberately stronger than necessary:
+
+[
+d_{\max}(A) < d_{\min}(B)
+]
+
+means every possible point in (A) is closer to the camera than every possible point in (B), so every ray that hits both encounters (A) first. Overlapping radial shells therefore mean **unknown**, not “wrong”; C4/C5 are where tile/ray/interval refinement may recover additional lawful specialization.
+
+This means the eight-field Northern Veil may still remain joint for many views. That is expected. The branch now restores multi-cohort execution only when the proof boundary actually earns it.
+
+A standalone C++17 compile/run of the planner witness passed after the C3 change. Full Earthcall build, native WebGPU verification, and Person FPS remain separate acceptance obligations.
 
 ### Rung C0 — Freeze and expose the prototype
 
