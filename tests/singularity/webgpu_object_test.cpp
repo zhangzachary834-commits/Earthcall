@@ -3240,9 +3240,9 @@ int main() {
                sourceSdfCohortBlockedStats.sdfVisibilityUnknownDirectSkips == 0 &&
                "same-program second SDF instance was not admitted as an exact blocker");
 
-        // DISTINCT PROGRAM, EXACT PACKET: a box is a different compiled SDF
-        // law from the sphere receiver, but this bounded provider can lower the
-        // primitive leaf itself into an exact analytic segment blocker.
+        // DISTINCT PROGRAM, SHARED FIELD VM: a box is a different compiled SDF
+        // law from the sphere receiver. Both raster and SDF receivers must now
+        // consume it through the same bounded field-program execution language.
         Object differentImplicit;
         differentImplicit.setFieldShape(
             geom::SdfNode::leaf(
@@ -3254,9 +3254,8 @@ int main() {
             glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.95f)) *
             glm::scale(glm::mat4(1.0f), glm::vec3(0.22f));
 
-        // Mesh receivers have no local SDF evaluator, so this proves they consume
-        // the global exact analytic implicit packet rather than silently ignoring
-        // the box or demoting CompleteScene to Unknown.
+        // Mesh receivers have no local SDF evaluator. Known occlusion here
+        // therefore proves the raster path consumed the all-SDF VM scene table.
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         renderer.setModel(glm::mat4(1.0f));
         meshTransport.drawObject();
@@ -3274,10 +3273,10 @@ int main() {
                sourceMeshImplicitBlockedStats.sceneVisibilityMeshKnownFrames > 0 &&
                sourceMeshImplicitBlockedStats.meshVisibilityUnknownDirectSkips == 0 &&
                sourceMeshImplicitBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
-               "mesh receiver did not consume exact analytic implicit blocker packet");
+               "mesh receiver did not consume the shared field VM blocker table");
 
         // SDF receiver: its own sphere cohort stays in the exact local/cohort
-        // evaluator while ONLY the foreign box travels through the packet.
+        // evaluator while ONLY the foreign box travels through the same VM ABI.
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         renderer.setModel(glm::mat4(1.0f));
         implicitTransport.drawObject();
@@ -3295,25 +3294,79 @@ int main() {
                sourceSdfMixedProgramBlockedStats.sceneVisibilitySdfKnownFrames > 0 &&
                sourceSdfMixedProgramBlockedStats.sdfVisibilityUnknownDirectSkips == 0 &&
                sourceSdfMixedProgramBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
-               "foreign analytic box program did not retain complete-scene SDF authority");
+               "foreign box VM program did not retain CompleteScene SDF authority");
 
-        // DISTINCT PROGRAM, UNSUPPORTED PACKET: torus intersection has not been
-        // admitted by this bounded provider. Its mere presence must revoke scene
-        // authority instead of being triangulated, guessed, or silently omitted.
-        Object unsupportedImplicit;
-        unsupportedImplicit.setFieldShape(
+        // TORUS IS NO LONGER THE REFUSAL FRONTIER. Put a Torus in its own SDF
+        // program and one major radius off the source ray in Y, so the ray cuts
+        // the tube rather than passing through the hole. X keeps the blocker off
+        // the camera-centre ray. A known black mesh pixel therefore requires
+        // on-device foreign Torus field execution.
+        Object vmKnownTorus;
+        vmKnownTorus.setFieldShape(
             geom::SdfNode::leaf(
                 geom::SdfPrim::Torus, glm::vec3(0.5f, 0.2f, 0.0f)),
             glm::vec3(0.8f));
+        vmKnownTorus.setRenderMode(Object::RenderMode::Auto);
+        vmKnownTorus.setMaterialId("material.webgpu_source_transport_parity");
+        const glm::mat4 implicitTorusBlockerModel =
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.11f, 0.95f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.22f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(implicitTorusBlockerModel);
+        vmKnownTorus.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshTorusBlocked[4];
+        readCentre(sourceMeshTorusBlocked);
+        const Renderer::FrameStats sourceMeshTorusBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceMeshTorusBlocked[0] < 5 &&
+               sourceMeshTorusBlocked[1] < 5 &&
+               sourceMeshTorusBlocked[2] < 5 &&
+               sourceMeshTorusBlockedStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshTorusBlockedStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshTorusBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
+               "mesh CompleteScene did not execute foreign Torus through the field VM");
+
+        // TRUE REFUSAL FRONTIER: Expr still has no lossless OntoMath-native VM
+        // bytecode. Its presence must therefore revoke CompleteScene authority
+        // for BOTH representation kinds rather than being triangulated, guessed,
+        // or silently omitted.
+        Object unsupportedImplicit;
+        unsupportedImplicit.setFieldShape(
+            geom::makeImplicit("x*x+y*y+z*z-1"),
+            glm::vec3(0.8f));
         unsupportedImplicit.setRenderMode(Object::RenderMode::Auto);
         unsupportedImplicit.setMaterialId("material.webgpu_source_transport_parity");
+        const glm::mat4 unsupportedExprModel =
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.9f, 0.0f, 0.0f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.22f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(unsupportedExprModel);
+        unsupportedImplicit.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshUnsupportedProgramUnknown[4];
+        readCentre(sourceMeshUnsupportedProgramUnknown);
+        const Renderer::FrameStats sourceMeshUnsupportedProgramUnknownStats =
+            renderer.frameStats();
+
+        assert(sourceMeshUnsupportedProgramUnknown[0] < 5 &&
+               sourceMeshUnsupportedProgramUnknown[1] < 5 &&
+               sourceMeshUnsupportedProgramUnknown[2] < 5 &&
+               sourceMeshUnsupportedProgramUnknownStats.meshVisibilityUnknownDirectSkips > 0 &&
+               sourceMeshUnsupportedProgramUnknownStats.sceneVisibilityUnknownFrames > 0 &&
+               "unsupported Expr program was silently omitted from mesh CompleteScene truth");
 
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         renderer.setModel(glm::mat4(1.0f));
         implicitTransport.drawObject();
-        renderer.setModel(
-            glm::translate(glm::mat4(1.0f), glm::vec3(0.9f, 0.0f, 0.0f)) *
-            glm::scale(glm::mat4(1.0f), glm::vec3(0.22f)));
+        renderer.setModel(unsupportedExprModel);
         unsupportedImplicit.drawObject();
         renderer.endFrame();
         unsigned char sourceSdfUnsupportedProgramUnknown[4];
@@ -3326,7 +3379,7 @@ int main() {
                sourceSdfUnsupportedProgramUnknown[2] < 5 &&
                sourceSdfUnsupportedProgramUnknownStats.sdfVisibilityUnknownDirectSkips > 0 &&
                sourceSdfUnsupportedProgramUnknownStats.sceneVisibilityUnknownFrames > 0 &&
-               "unsupported foreign SDF program was silently omitted from complete-scene truth");
+               "unsupported Expr program was silently omitted from SDF CompleteScene truth");
 
         renderer.setRadianceVisibilityMode(RadianceVisibilityMode::Disabled);
         renderer.setRadianceSources({}, 0);
