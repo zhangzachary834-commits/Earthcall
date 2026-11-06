@@ -469,13 +469,17 @@ KernelRoutedTransport::Program* KernelRoutedTransport::program(const std::string
  if(!creation.finish()||!p.setup||!p.consumer)return failed();std::fprintf(stderr,"[WebGpuRenderer] routed transport production-evaluator pipeline active\n");return &programs.emplace(source,std::move(p)).first->second;
 }
 bool KernelRoutedTransport::encode(Program& p,WGPUCommandEncoder encoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth){
- return encodeInternal(p,encoder,globals,params,instances,depth,nullptr);
+ return encodeInternal(p,encoder,globals,params,instances,depth,nullptr,true);
 }
 bool KernelRoutedTransport::encodeSpans(Program& p,WGPUCommandEncoder encoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth,const KernelRoutedSpanConsumer& consumer){
  if(!consumer)return false;
- return encodeInternal(p,encoder,globals,params,instances,depth,&consumer);
+ return encodeInternal(p,encoder,globals,params,instances,depth,&consumer,false);
 }
-bool KernelRoutedTransport::encodeInternal(Program& p,WGPUCommandEncoder encoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth,const KernelRoutedSpanConsumer* spanConsumer){
+bool KernelRoutedTransport::encodeWithSpans(Program& p,WGPUCommandEncoder encoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth,const KernelRoutedSpanConsumer& consumer){
+ if(!consumer)return false;
+ return encodeInternal(p,encoder,globals,params,instances,depth,&consumer,true);
+}
+bool KernelRoutedTransport::encodeInternal(Program& p,WGPUCommandEncoder encoder,const KernelRoutedRange& globals,const KernelRoutedRange& params,const KernelRoutedRange& instances,WGPUTextureView depth,const KernelRoutedSpanConsumer* spanConsumer,bool publishIntegrated){
  using namespace kernel_routed_detail;
  encodedPasses=0;encodedDispatches=0;dispatchTrace=collectDispatchTrace?0xcbf29ce484222325ull:0;
  if(!stripUniform||!specsUniform||!maxStrips)return false;
@@ -559,7 +563,8 @@ bool KernelRoutedTransport::encodeInternal(Program& p,WGPUCommandEncoder encoder
     {overlaps,0,uint64_t(capacity)*16*16}
    };
    if(!(*spanConsumer)(encoder,strip)){releaseTemporary();return false;}
-  }else{
+  }
+  if(publishIntegrated){
    auto pass=open();wgpuComputePassEncoderSetPipeline(pass,p.consumer);wgpuComputePassEncoderSetBindGroup(pass,0,globalGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,1,instanceGroup,0,nullptr);wgpuComputePassEncoderSetBindGroup(pass,2,p.localGroups[stripIdx],0,nullptr);note(p.consumer,36,2);wgpuComputePassEncoderDispatchWorkgroupsIndirect(pass,args,36);close(pass);
   }
  }
