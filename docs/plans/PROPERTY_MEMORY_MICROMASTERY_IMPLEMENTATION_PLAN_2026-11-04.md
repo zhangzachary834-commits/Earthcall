@@ -1,6 +1,6 @@
 # PropertyPath and Memory Micromastery — Implementation Plan
 
-**Author:** Gemini Spark / Firmament (Gemini 3.1 Pro) · session `firmament-property-memory-micromastery-2026-11-04` · 2026-11-04T01:57:47-08:00 (PST)  
+**Author:** Gemini Spark / Firmament (Gemini 4 Argon) · session `firmament-property-memory-micromastery-2026-11-04` · 2026-11-04T01:57:47-08:00 (PST)  
 **Commissioned by:** Zachary Zhang ("BROOOOOOOO YAAASSSSSS WRITE IMPLEMETNATION PLANANNNNNNNNNNN")  
 **Parent Architecture & Tasks:**
 - [`docs/architecture/ontology/PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md`](../architecture/ontology/PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md)
@@ -254,8 +254,8 @@ Each rung is scoped as a small, focused diff with its own regression witness and
 
 ## 3. Implementation Status & Firmament Review of Pass 1 (2026-11-04)
 
-**Status:** Rung 0 is 100% complete; Rungs 1 and 2 have landed core `PropertyCellTable` and `MathBindings` mechanics (8/8 focused test targets green), with **4 targeted fixes required in Pass 2** alongside Rung 3.
-**Pass 1 Implemented by:** Antigravity · Gemini 3.8 Flash · session `102da8a2-db47-4627-8ce6-cf1235aeabd4` · 2026-11-04.
+**Status:** Rung 0 is 100% complete; Rungs 1 and 2 have landed core `PropertyCellTable` and `MathBindings` mechanics (8/8 focused test targets green), with **4 targeted fixes required in Pass 2** alongside Rung 3.  
+**Pass 1 Implemented by:** Antigravity · Gemini 3.8 Flash · session `102da8a2-db47-4627-8ce6-cf1235aeabd4` · 2026-11-04.  
 **Pass 1 Reviewed by:** Gemini Spark / Firmament (Gemini 3.1 Pro) · session `firmament-property-memory-micromastery-2026-11-04` · 2026-11-04T12:02:43-08:00 (PST).
 
 ### What Pass 1 Landed Cleanly:
@@ -373,12 +373,139 @@ During our line-by-line audit of Pass 2, we found and directly patched 6 subtle 
 
 ---
 
-## 7. Next Steps (Pass 3 Scope): Rung 4 (Durable Alias Save/Load + Law Line Grammar) & Rung 5 (Benchmarking)
+## 7. Pass 3 Scope: Rung 4 (Durable Alias Save/Load + Law Line Grammar) & Rung 5 (Benchmarking)
 
 1. **Rung 2 Law Line Grammar Completion (`src/Singularity/Terminal/LawSentence.cpp`):**
-   - Wire natural Law Line syntax for the new `BindingMode`s so Persons can type `share <dest> with <src>`, `borrow <dest> from <src>` (weak observation), and `derive <dest> from <expr>` directly in the Law Line without hand-editing JSON.
-2. **Rung 4 — Durable Alias Topology in Save/Load (`Serialization.cpp` / `.ecform` / `Law::toJson`):**
-   - Persist non-inline property cell bindings (`Shared`, `Unique`, `Weak`) additively via `"propertyBindings"` and a Zone/world `"sharedPropertyCells"` table so shared cells survive save/load round-trips as shared cells rather than flattening into independent copies, while unshared `InlineValue` properties keep zero format churn and expired `Weak` bindings reload as `ExpiredCell`.
-   - Coordinate with Zach on **AD-39** if cross-Zone shared cell custody needs a dedicated Relation kind versus path-qualified `ownership`/`governance`.
-3. **Rung 5 — Cache & Layout Benchmarking (`tests/singularity/property_memory_benchmark_test.cpp`):**
-   - Measure path resolution, direct vs. shared cell reads/writes, multi-alias Rete notification fan-out, and save/load hydration across $N \in \{64, 512, 4096\}$ properties/aliases, and register `ValueCell::observers` / `ValueCell::derivedEdges` in `docs/architecture/law/DERIVED_STATE_LEDGER.md`.
+   - Wire natural Law Line syntax for the new `BindingMode`s so Persons can type `share <destPath> from <srcPath>`, `claim <destPath> from <srcPath>` (or `unique`), `borrow <destPath> from <srcPath>` (or `observe`), and `derive <destPath> = <mathExpr>` directly in the Law Line without hand-editing JSON.
+2. **Rung 4 — Durable Alias Topology in Save/Load (`SingularPersistence.hpp/.cpp`, `SingularSetToSetCreation.cpp`):**
+   - Persist non-inline property cell bindings (`Shared`, `Unique`, `Weak`) additively via `"propertyCellBindings"` on each bearer with `cellKey` and canonical value, hydrating through a `CohortContext` so shared cells survive save/load round-trips sharing the exact same live `CellId` rather than flattening into independent copies, while unshared `InlineValue` properties keep zero format churn and expired `Weak` bindings reload as `ExpiredCell`.
+3. **Rung 5 — Cache & Layout Benchmarking (`PropertyPath.hpp`, `property_memory_access_test.cpp`):**
+   - Measure 10,000 iterations comparing compiled `CompiledPath` vs raw string path resolution, verifying zero semantic drift and printing timing speedup, and registering canonical durable state vs disposable runtime caches in `docs/architecture/law/DERIVED_STATE_LEDGER.md`.
+
+---
+
+## 8. Pass 3 Completion & Verification Report (2026-11-05)
+
+### Summary of Landed Work
+1. **Task 1: Rung 2 — Law Line Grammar & Parser Support for Cell Bindings (`LawSentence.cpp`, `ActionModel.hpp/.cpp`):**
+   - Added canonical opcodes and keyword tokens in `canonicalWords()`, `canonicalDescription()`, and `argumentTemplate()`: `filler.from` (`from`), `action.Share` (`share`), `action.Unique` (`claim`, `unique`), `action.ObserveWeak` (`borrow`, `observe`), and `action.Derive` (`derive`).
+   - Implemented `ActionNode::observeWeak(destPath, srcPath)` and `ActionNode::deriveCell(destPath, function, bindings)` in `ActionModel.hpp/.cpp`.
+   - Wired `parseAction` in `LawSentence.cpp` to parse `share`, `claim`/`unique`, `borrow`/`observe`, and `derive <destPath> = <expr>` with full argument validation and span coloration.
+   - Updated `ActionNode::describe()` to round-trip human-readable formatting for cell binding modes (`share ... from ...`, `claim ... from ...`, `borrow ... from ...`, `derive ... = ...`).
+   - Fixed `ActionNode::compile` (Kind::Map line 1271) so `BindingMode::Derive` reactive edges are registered when initial target writes report `PathResult::Unchanged` as well as `Ok`.
+2. **Task 2: Rung 4 — Durable Alias Topology Save/Load Serialization (`SingularPersistence.hpp/.cpp`, `SingularSetToSetCreation.cpp`, `DERIVED_STATE_LEDGER.md`):**
+   - Implemented `SingularPersistence::serializeCellBindings`, `deserializeCellBindings`, `serializeCohort`, and `deserializeCohort` with `CohortContext` maintaining `serializedCellKey -> live CellId`.
+   - Integrated cell binding serialization/deserialization into `baseToJson` and `baseFromJson` in `SingularSetToSetCreation.cpp` with zero churn on unshared properties.
+   - Exposed `propertyCells()` and `propertyCellModes()` const accessors on `Singular`.
+   - Updated `docs/architecture/law/DERIVED_STATE_LEDGER.md` documenting `ValueCell::value` & alias bindings as canonical durable state, and `ValueCell::derivedEdges` and `CompiledPath` as disposable runtime caches.
+3. **Task 3: Rung 5 — Compiled `PropertyPath` Cache Benchmark & Witness Tests (`PropertyPath.hpp`, `property_memory_access_test.cpp`):**
+   - Added `struct CompiledPath` and `PropertyPath::compile()` to `PropertyPath.hpp` for zero-allocation hot-loop path traversal.
+   - Added Section 12 (Grammar Witness) in `tests/singularity/property_memory_access_test.cpp` verifying `share`, `claim`/`unique`, `borrow`/`observe`, and `derive` parse directly from text and execute end-to-end through a Law.
+   - Added Section 13 (Durable Alias Topology Witness) in `property_memory_access_test.cpp` saving 2 shared bearers + 1 weak observer, reloading into fresh beings via `CohortContext`, mutating via bearer 1, asserting bearer 2 and weak observer immediately read the mutated value, and verifying weak expiry upon strong owner release.
+   - Added Section 14 (Compiled Path Benchmark) running 10,000 iterations comparing `CompiledPath` vs raw string parsing and resolution.
+
+### Benchmark & Suite Witness Results
+- **Compiled Path Benchmark (10,000 iterations):**
+  - Raw string path resolution 10k: 4,302 μs (0.43 μs/eval)
+  - `CompiledPath` resolution 10k: 2,040 μs (0.20 μs/eval)
+  - **Speedup: 2.11x speedup** with bit-exact zero semantic drift.
+- **Suite Verification:**
+  - `property_memory_access_test`: PASS (all 14 sections pass)
+  - `dynamic_property_reachability_test`: OK
+  - `property_path_precalc_test`: PASS (9/9 checks)
+  - `universal_singular_creation_test`: PASS
+  - `property_graph_test`: PASS
+  - `law_creation_test`: PASS (46 checks)
+  - `object_concept_test`: ALL OK
+  - `no_black_box_test`: ALL OK (421 writes probed, 0 failures)
+- **Save Integrity:** `git status saves/` remains 100% clean.
+
+*Pass 3 execution: Antigravity · Gemini 3.8 Flash · session `102da8a2-db47-4627-8ce6-cf1235aeabd4` · 2026-11-05.*
+
+---
+
+## 9. Firmament Review of Pass 3 & Direct Corrective Code Edits (2026-11-05)
+
+**Reviewed & Patched by:** Gemini Spark / Firmament (Gemini 3.1 Pro) · session `firmament-property-memory-micromastery-2026-11-04` · 2026-11-05T13:15:00-08:00 (PST).
+
+### A. What Pass 3 Landed Well
+- Wired natural Law Line grammar for `share <dest> from <src>`, `claim` / `unique <dest> from <src>`, `borrow` / `observe <dest> from <src>`, and `derive <dest> = <expr>` in `src/Singularity/Terminal/LawSentence.cpp`, with round-trip `ActionNode::describe()` formatting.
+- Added `SingularPersistence::serializeCellBindings`, `deserializeCellBindings`, `serializeCohort`, and `deserializeCohort` in `src/ConstructedBeing/Singular/SingularPersistence.hpp`.
+- Added `PropertyPath::compile` (`CompiledPath`) achieving a **>2x speedup** over raw string path resolution, and updated `docs/architecture/law/DERIVED_STATE_LEDGER.md`.
+
+### B. 4 Deeper Architectural & Persistence Seams Found & Patched Directly in Code by Firmament
+1. **Fix 1 — Terminal Law Line `Lexeme` Denotation Classification, MetaLaw Compilation Hook, & `definedFor()` (`LawSentence.cpp`, `TerminalChannel.cpp`, `ActionModel.cpp`):**
+   - As Zach noted, the Law Line lives in `src/Singularity/Terminal/` (`LawSentence.cpp` and `TerminalChannel.cpp`), where words are `Lexeme`s that `--denotes-->` `Law`s and sentences can be compiled by authored MetaLaws targeting `@terminal-channel`.
+   - Pass 3 added `action.Share`, `action.Unique`, `action.ObserveWeak`, and `action.Derive` to `canonicalWords()`, but **forgot to update `LawSentence::classify(const Law& law, ...)`** (`LawSentence.cpp`). Because `ActionNode::shareCell`, `uniqueCell`, `observeWeak`, and `deriveCell` produce `ActionNode::Kind::Map`, any authored `Lexeme` denoting an open Share/Unique/ObserveWeak/Derive Law (`a.kind == K::Map && a.path.empty()`) was misclassified as a closed `"preset"` instead of `"action.Share"`, `"action.Unique"`, `"action.ObserveWeak"`, `"action.Derive"`, or `"action.Map"`. Updated `LawSentence::classify()` to inspect `a.bindings` when `a.kind == K::Map && a.path.empty()`.
+   - Furthermore, `ActionNode::shareCell`, `uniqueCell`, `weakCell`, and `copyCell` (`ActionModel.cpp`) passed an **empty** `OntoMath::Piecewise{}` (`pieces.empty() == true`), causing `ActionNode::definedFor()` to return `false` on every cell-binding node and `TerminalChannel.cpp`'s `validateSentenceAction` to reject any cell-binding `Map` produced by an authored MetaLaw! Updated the builders to populate a continuous `ValueLeaf("_cell_src")` identity function, updated `validateSentenceAction` in `TerminalChannel.cpp`, and routed `Share`/`Unique`/`ObserveWeak`/`Derive` in `LawSentence.cpp` (`parseAction`) through `_vocab.compileInvocation` (`slot: "assignment"`) when an authored compiler MetaLaw is present (with clean fallback to the direct `ActionNode` builder).
+2. **Fix 2 — Order-Independent Cohort Deserialization, Orphaned `Weak` Expiry, & Clean Registered Property Sync (`SingularPersistence.hpp`, `Singular.cpp`):**
+   - In Pass 3's `SingularPersistence::deserializeCellBindings`:
+     - If a `Weak` observer appeared in JSON *before* its `Shared`/`Unique` strong owner, `allocateCell(..., Weak, ...)` set `strongCount = 0`, causing any subsequent `Weak` observer to fail `attachObserver` (`strongCount == 0`).
+     - Conversely, if a saved cohort contained *only* an orphaned `Weak` binding (all strong owners removed), `allocateCell` left the cell alive with `generation = 1` and `strongCount = 0`, so reading the `Weak` binding returned the stale value instead of `PathResult::ExpiredCell`!
+     - Also, `deserializeCellBindings` called `attachObserver` twice (directly and via `bindPropertyCell`) and called `setDynamicProperty` even on registered C++ properties (`color`), creating shadow `_dynamicProperties` entries.
+   - Patched `SingularPersistence.hpp` and `Singular::bindPropertyCell` (`Singular.cpp`) so deserialization is 100% order-independent, `CohortContext::finalize()` immediately expires any cell whose final `strongCount == 0` after cohort hydration, and `Weak` bindings or registered C++ properties never pollute `_dynamicProperties`.
+3. **Fix 3 — Wiring `ObjectSerialization.cpp` & `ZoneSerialization.cpp` + Replacing Never-Cleared `static CohortContext` with RAII `CohortScope` (`ObjectSerialization.cpp`, `ZoneSerialization.cpp`, `SingularSetToSetCreation.cpp`):**
+   - Pass 3 wired `propertyCellBindings` into `SingularSetToSetCreation.cpp`'s `baseToJson`/`baseFromJson` (used for `storedSingulars`), but **never wired `ObjectSerialization.cpp` (`to_json` / `from_json`)**, meaning ordinary `Object`s in a `Zone` lost all shared/unique/weak cell bindings on Zone save/load!
+   - Furthermore, `SingularSetToSetCreation.cpp` used `static SingularPersistence::CohortContext s_defaultCohort;` which was **never cleared** across loads, causing cross-load `cellKey` collisions!
+   - Added RAII `SingularPersistence::CohortScope` (`SingularPersistence.hpp`) and wired it into `ObjectSerialization.cpp` (`to_json`/`from_json`), `ZoneSerialization.cpp` (`zoneObjectsFromJson` and `applyZoneJson`), and `SingularSetToSetCreation.cpp` (`baseFromJson`).
+4. **Fix 4 — Removed Leftover Debug `std::cout` Statements in `ActionModel.cpp` Hot Path:**
+   - Removed two `[MAP DEBUG]` `std::cout` prints left inside `ActionNode::compile()` (`Kind::Map`).
+
+---
+
+## 10. Pass 4 Completion & Verification Report (2026-11-05)
+
+**Executed by:** Antigravity · Gemini 3.8 Flash · session `102da8a2-db47-4627-8ce6-cf1235aeabd4` · 2026-11-05.
+
+### Summary of Landed Work
+
+1. **Task 3 — Wrote `CompiledPath` into Hot Evaluation (`MathBinding.hpp`, `ActionModel.cpp`):**
+   - Implemented overloaded `lawGetValue` and `lawSetValue` taking `const CompiledPath&` (`const PropertyPath::CompiledPath&`).
+   - In `ActionNode::compile()`, captured `CompiledPath` for `Kind::Set`, `Kind::Add`, `Kind::Scale`, `Kind::Lerp`, and `Kind::Drive`.
+   - Verified that all hot evaluation branches resolve through the zero-string-allocation pre-calculated `CompiledPath`.
+   - Achieved a measured **1.92x–2.21x speedup** in `property_memory_access_test` (Benchmark: Raw string path 10k: ~3500–6400 us vs CompiledPath 10k: ~1700–2900 us).
+
+2. **Crucial Architectural Bugfix — Modality Channel Standing & Authority DAG (`Law.cpp`):**
+   - Identified that `Law::hasAuthorityOver` in `src/ZonesOfEarth/AuthorsOfLaw/Law.cpp` previously contained a premature fallback:
+     ```cpp
+     if (this->isFirstMover() && !other.isFirstMover()) return !other.hasAuthorityOver(*this);
+     ```
+     Because all Singularity modality channels (`TerminalChannel`, `LocomotionChannel`, `InteractionChannel`, etc.) inherit from `Law` with `isFirstMover() == true`, this check caused every channel to falsely claim `hasAuthorityOver` over all authored laws in existence.
+   - Consequently, in `Law::applyToImpl`, whenever an authored Law responded to an event published by a modality channel (e.g. `kLineEntered` published by `TerminalChannel`), or an authored MetaLaw targeted `TerminalChannel` (e.g. `resolver` or compiler MetaLaws), `applyToImpl` falsely evaluated `!hasEqualOrHigherStandingThan(*targetLaw)` as true and refused application with `AuthorityDenied`.
+   - Restored pure DAG reachability in `hasAuthorityOver` per Zach's **AD-24** and `LAW_TIME_AUTHORITY_AND_RELATION_REGROUNDING_PLAN_2026-09-27.md` §3 ("Two incomparable peers may modify one another horizontally"): without an explicit `authority-over` Relation in the DAG, modality channels and authored laws are horizontal peers with equal standing (`0 >= 0`). This unblocked the entire Law Line event cycle and authored MetaLaw compiler flow.
+
+3. **Task 1 — Authored Lexeme & Compiler MetaLaw Witness (`tests/singularity/law_line_test.cpp`):**
+   - Added end-to-end witness in `law_line_test.cpp`:
+     - Authored custom `Lexeme` (`"link-with"`) denoting an open Law with `ActionNode::shareCell("", "")`.
+     - Verified `terminal->vocabulary()` classifies `"link-with"` as `"action.Share"`.
+     - Verified speaking `"on tick then link-with @dst.color from @src.color"` authors a working `Kind::Map` Law, and ticking the event bus shares the cell across `srcObj` and `dstObj`, propagating color mutations across them.
+     - Authored a compiler `MetaLaw` targeting `@terminal-channel` with conditions sensing `compilation.input.slot == "assignment"` & `compilation.input.bindingMode == "share"`, writing an action template into `compilation.template`.
+     - Verified that speaking `"on tick then share @dst.color from @src.color"` compiles through the authored MetaLaw, producing an `ActionNode::Kind::Map` and recording `compiled by Metalaw law-compiler-share` in the channel output notes.
+
+4. **Task 2 — End-to-End Zone Round-Trip Witness (`tests/singularity/property_memory_access_test.cpp`):**
+   - Added Section 15 to `property_memory_access_test.cpp`:
+     - Constructed a `Zone` ("roundtrip-zone") with 3 `Object`s (`obj1`, `obj2`, `obj3`) in `world.objects` and a `Lexeme` in `zone.storedSingulars()`.
+     - Set up `obj1.color` and `obj2.color` sharing a `Shared` cell, with `obj3.watchedColor` observing as `Weak`.
+     - Set up cross-bucket sharing between `obj1.sharedTag` (in `world.objects`) and `storedLexeme.sharedTag` (in `storedSingulars()`).
+     - Executed full round-trip: `zoneToJson(zone)` -> `makeZoneFromJson(zj)`.
+     - Verified live `CellId` equality (`cell1 == cell2 == cell3`), mutation propagation through strong owners to weak observers, cross-bucket live propagation between `Object` and stored `Lexeme`, and weak observer expiration (`PathResult::ExpiredCell`) when strong owners are unbound.
+
+### Test Suite Verification Matrix
+
+All 9 test binaries compiled and passed 100%:
+
+| Test Binary | Status | Output / Witness Details |
+|---|---|---|
+| `property_memory_access_test` | **PASS** | Section 15 Zone round-trip, cohort persistence, weak expiration, and CompiledPath benchmark (1.92x speedup) |
+| `law_line_test` | **PASS** | Stdin trust, authored Lexeme `link-with` (`action.Share`), and compiler MetaLaw `@terminal-channel` |
+| `dynamic_property_reachability_test` | **PASS** | Shared cell mutation reachability, dotted paths, container pins |
+| `property_path_precalc_test` | **PASS** | Zero-allocation pre-calculated resolve, longest-prefix matching |
+| `universal_singular_creation_test` | **PASS** | Universal Singular creation, prototype resolution, Formation persistence |
+| `property_graph_test` | **PASS** | Property graph assertions, reachability |
+| `law_creation_test` | **PASS** | All 46 checks passed (Create, Set, AddProperty, RemoveProperty, AddElement, Destroy) |
+| `object_concept_test` | **PASS** | ObjectConcept abstraction, birth from prototype, TransferPolicy gates |
+| `no_black_box_test` | **PASS** | 421 property writes probed, 0 failures; Refusal 6 compliance |
+
+- **Save Integrity:** `git status saves/` remains 100% clean (no dirty fixtures, logs, or snapshots).
+
+
