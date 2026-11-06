@@ -7464,6 +7464,13 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         clamp(i32(floor(in.position.x)), 0, maxX),
         clamp(i32(floor(in.position.y)), 0, maxY));
     let sceneDepth = textureLoad(sceneDepthTex, px, 0);
+)WGSL";
+    if (useFirstActivityMask) out.wgsl += R"WGSL(
+    let ecC5bPixel =
+        u32(px.y) * u32(max(i32(u.viewport.x), 1)) + u32(px.x);
+    let ecC5bFirstActivityWord = c5bFirstActivity[ecC5bPixel];
+)WGSL";
+    out.wgsl += R"WGSL(
 
     if (sceneDepth < 0.999999) {
         let opaqueWorld = worldAtDepth(in.position.xy, sceneDepth);
