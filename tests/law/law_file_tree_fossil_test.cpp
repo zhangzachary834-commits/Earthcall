@@ -22,6 +22,7 @@ int main() {
     }
 
     for (const fs::path& fossil : {
+             fs::path("Makefile.legacy"),
              fs::path("src/ZonesOfEarth/AuthorsOfLaw/Law.cpp.new"),
              fs::path("src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.cpp"),
              fs::path("src/Singularity/FirstMoverOntology/Legacy/DesignSystem.cpp"),
