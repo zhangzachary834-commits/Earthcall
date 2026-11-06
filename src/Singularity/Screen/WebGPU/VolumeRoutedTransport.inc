@@ -229,7 +229,9 @@ fn ecProjected(ro:vec3<f32>,rd:vec3<f32>,wo:vec3<f32>,s:f32,mask:u32)->vec4<f32>
 )WGSL";
 }
 KernelRoutedTransport::~KernelRoutedTransport(){
- enableRouteObserver(false);releaseBuffers();for(auto p:common)if(p)wgpuComputePipelineRelease(p);if(classifySkip)wgpuComputePipelineRelease(classifySkip);
+ enableRouteObserver(false);
+ releaseBuffers();
+ kernel_routed_detail::releaseCommon(*this);
  for(auto& [key,p]:programs)kernel_routed_detail::releaseProgram(p);
 }
 void KernelRoutedTransport::releaseBuffers(){
