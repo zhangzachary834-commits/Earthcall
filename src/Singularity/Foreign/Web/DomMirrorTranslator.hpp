@@ -82,8 +82,6 @@ private:
     std::unordered_map<std::string, std::shared_ptr<Singularity::Language::Lexeme>> _nodeLexemes;
     std::unordered_map<std::string, std::shared_ptr<Formation>> _nodeFormations;
     std::unordered_map<std::string, std::vector<std::shared_ptr<Relation>>> _nodeRelations;
-    // Never derive stable occurrence IDs from the shrinking live relation count.
-    std::unordered_map<std::string, size_t> _nextAttributeIndex;
     std::vector<std::shared_ptr<Singularity::Language::Lexeme>> _allSessionLexemes;
     std::vector<std::shared_ptr<Relation>> _allSessionRelations;
     std::vector<std::string> _confirmedOperations;
