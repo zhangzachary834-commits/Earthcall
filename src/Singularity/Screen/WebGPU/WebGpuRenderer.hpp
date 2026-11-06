@@ -198,30 +198,21 @@ private:
 
     // Bounded CompleteScene execution substrate:
     //  * exact world-space triangles for opaque meshes;
-    //  * exact analytic segment blockers for admitted foreign implicit leaves;
-    //  * the receiver SDF shader's own exact same-program instance cohort.
-    // Unsupported implicit programs remain Unknown; no tessellation substitutes
-    // for field truth merely to manufacture scene completeness.
+    //  * bounded foreign/all-SDF field-program VM tables;
+    //  * an SDF receiver shader's own exact same-program instance cohort.
+    // Unsupported field programs remain Unknown; no tessellation substitutes
+    // for authored field truth merely to manufacture scene completeness.
     struct SceneVisibilityTriangle {
         glm::vec4 a;
         glm::vec4 b;
         glm::vec4 c;
     };
-    // Exact execution packet for a bounded set of primitive SDF leaves.
-    // kind: 1 = sphere, 2 = axis-aligned box in blocker-local coordinates.
-    // World transforms are handled by invModel, so arbitrary affine instance
-    // transforms do not change the primitive's mathematical intersection law.
-    struct SceneVisibilityImplicitBlocker {
-        glm::mat4 invModel{1.0f};
-        glm::vec4 dimsKind{0.0f};
-        glm::vec4 offset{0.0f};
-    };
-    static_assert(sizeof(SceneVisibilityImplicitBlocker) == 96,
-                  "scene implicit blocker GPU ABI must remain mat4 + 2 vec4");
-
-    // Generic foreign-field visibility packet for SDF receivers. The authored
-    // field remains an SdfNode/OntoMath tree; this is derived frame execution
-    // state. program = {instructionBase, instructionCount, maxStackDepth, 0}.
+    // Generic field-program visibility packet. For an SDF receiver the table
+    // contains every foreign cohort; for a raster mesh receiver it contains
+    // every admitted SDF cohort in the frame.
+    // The authored field remains an SdfNode/OntoMath tree; this is derived
+    // frame execution state. program = {instructionBase, instructionCount,
+    // maxStackDepth, 0}.
     struct SceneVisibilityVmBlocker {
         glm::mat4 invModel{1.0f};
         glm::vec4 extents{0.0f};
@@ -255,24 +246,21 @@ private:
         uint64_t size = 0;
         uint32_t triangleCount = 0;
 
-        WGPUBuffer implicitBuffer = nullptr;
-        uint64_t implicitOffset = 0;
-        uint64_t implicitSize = 0;
-        uint32_t implicitCount = 0;
-
         // Every opaque mesh blocker was exactly materialized as triangles.
         bool meshBlockersComplete = false;
-        // Mesh receivers have no local SDF evaluator, so every SDF blocker must
-        // additionally be present in the analytic implicit packet.
+        // Mesh CompleteScene additionally requires every SDF blocker to be
+        // admitted by the same bounded field-VM table used by SDF receivers.
         bool meshComplete = false;
     };
     SceneVisibilityFrame _sceneVisibilityFrame;
     bool _frameHasUnmaterializedOpaqueGeometry = false;
     bool _frameHadEarlySurfaceFlush = false;
     SceneVisibilityFrame prepareSceneVisibilityFrame();
-    SceneVisibilityBufferView prepareForeignImplicitVisibility(
+    // receiver == nullptr means a raster mesh consumer: include every SDF
+    // cohort. Otherwise omit only that SDF receiver's own exact cohort.
+    SceneVisibilityBufferView prepareFieldVmVisibility(
         const SdfPipeline* receiver);
-    bool sdfSceneVisibilityCompleteForFrame(
+    bool fieldVmSceneVisibilityCompleteForFrame(
         const SdfPipeline* receiver, bool meshBlockersComplete) const;
     bool sdfSceneVisibilityComplete(const SdfPipeline* receiver) const;
     void ensureSceneVisibilityBindingForEarlyFlush();
@@ -961,14 +949,9 @@ private:
         uint32_t rangeProofDepth = 0;
     };
     std::map<const SdfPipeline*, std::vector<SdfInstanceData>> _sdfBatches;
-    // One entry per analytically materializable instance. Equality with the
-    // corresponding SDF instance batch size is the exact completeness proof for
-    // exporting that program cohort to foreign visibility consumers.
-    std::map<const SdfPipeline*, std::vector<SceneVisibilityImplicitBlocker>>
-        _sdfVisibilityBlockerBatches;
-    // Generic VM admissions are separate from the analytic mesh packet during
-    // the first activation rung. Equality with the SDF instance batch size is
-    // the completeness proof for foreign SDF visibility.
+    // Equality with the corresponding opaque SDF instance batch size is the
+    // exact completeness proof for exporting that program cohort to any foreign
+    // visibility consumer, mesh or SDF.
     std::map<const SdfPipeline*, std::vector<SceneVisibilityVmAdmission>>
         _sdfVisibilityVmBatches;
     // Count of instances whose surface opacity is compatible with this binary
