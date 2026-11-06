@@ -5943,6 +5943,10 @@ fn sminK(a: f32, b: f32, k: f32) -> f32 {
 )WGSL";
 } // namespace
 
+std::string fieldVmPrimitiveMathModule() {
+    return kSdfPrimitivesMath;
+}
+
 std::string inspectVolumeSharing(const OntoMath::Piecewise* densityExpr,
                                  const OntoMath::Piecewise* extinctionExpr,
                                  const OntoMath::Piecewise* scatteringExpr,
