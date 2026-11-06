@@ -132,11 +132,6 @@ std::string fieldVmMathModule();
 // derived bytecode format itself.
 std::string fieldVmBoundMathModule(uint32_t group, uint32_t binding);
 
-// Canonical primitive SDF WGSL needed by data-driven field consumers that do
-// not otherwise compile a surface SDF module (notably raster mesh visibility).
-// This is the same math substrate used by native field execution; callers must
-// not copy primitive formulas into representation-specific shaders.
-std::string fieldVmPrimitiveMathModule();
 
 // Generic authored PropertyPath values supplied by the channel that owns the
 // subject. The compiler knows paths and types only; it does not know Material,
@@ -448,11 +443,6 @@ ParameterBlock collectRadianceSourceParams(
 // authority and is carried separately in u.lightControl.z.
 std::string sceneVisibilityTriangleMathModule();
 
-// Exact bounded foreign-implicit visibility for analytically admitted primitive
-// leaves. Callers provide sceneImplicitBlockers storage and
-// u.sceneVisibilityControl.x = blocker count. This module is representation
-// neutral and owns only segment/primitive intersection, never completeness.
-std::string sceneVisibilityImplicitMathModule();
 
 // Bounded tri-state foreign field-program visibility. Callers provide
 // SceneFieldVmBlockerData[] as sceneFieldVmBlockers, bind fieldVmInstructions,
