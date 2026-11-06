@@ -4311,113 +4311,6 @@ fn sceneMeshVisibility(surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
 }
 
 
-std::string sceneVisibilityImplicitMathModule() {
-    return R"WGSL(
-fn sceneImplicitSphereBlocks(
-    blocker: SceneImplicitBlockerData,
-    surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> bool {
-    let a =
-        (blocker.invModel * vec4<f32>(surfaceWorld, 1.0)).xyz -
-        blocker.offset.xyz;
-    let b =
-        (blocker.invModel * vec4<f32>(sourceWorld, 1.0)).xyz -
-        blocker.offset.xyz;
-    let d = b - a;
-    let aa = dot(d, d);
-    if (aa <= 1e-12) { return false; }
-
-    let r = blocker.dimsKind.x;
-    if (!(r > 0.0)) { return false; }
-    let bb = dot(a, d);
-    let cc = dot(a, a) - r * r;
-    let disc = bb * bb - aa * cc;
-    if (disc < 0.0) { return false; }
-
-    let root = sqrt(max(disc, 0.0));
-    let s0 = (-bb - root) / aa;
-    let s1 = (-bb + root) / aa;
-    return (s0 > 0.0 && s0 < 1.0) ||
-           (s1 > 0.0 && s1 < 1.0);
-}
-
-fn sceneImplicitBoxBlocks(
-    blocker: SceneImplicitBlockerData,
-    surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> bool {
-    let a =
-        (blocker.invModel * vec4<f32>(surfaceWorld, 1.0)).xyz -
-        blocker.offset.xyz;
-    let b =
-        (blocker.invModel * vec4<f32>(sourceWorld, 1.0)).xyz -
-        blocker.offset.xyz;
-    let d = b - a;
-    let h = blocker.dimsKind.xyz;
-    if (any(h <= vec3<f32>(0.0))) { return false; }
-
-    let parallel = abs(d) <= vec3<f32>(1e-8);
-    if ((parallel.x && (a.x < -h.x || a.x > h.x)) ||
-        (parallel.y && (a.y < -h.y || a.y > h.y)) ||
-        (parallel.z && (a.z < -h.z || a.z > h.z))) {
-        return false;
-    }
-
-    let safeD = select(d, vec3<f32>(1.0), parallel);
-    let t0 = (-h - a) / safeD;
-    let t1 = ( h - a) / safeD;
-    // A parallel segment already passed the "outside slab" refusal above.
-    // Its exact interval on that axis is therefore unbounded, not a finite
-    // epsilon-derived approximation.
-    let lo = select(min(t0, t1), vec3<f32>(-1e30), parallel);
-    let hi = select(max(t0, t1), vec3<f32>( 1e30), parallel);
-    let enter = max(max(lo.x, lo.y), lo.z);
-    let exit = min(min(hi.x, hi.y), hi.z);
-    return exit >= max(enter, 0.0) &&
-           enter < 1.0 &&
-           exit > 0.0;
-}
-
-fn sceneImplicitBlockerBlocks(
-    blocker: SceneImplicitBlockerData,
-    surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> bool {
-    let kind = blocker.dimsKind.w;
-    if (kind < 1.5) {
-        return sceneImplicitSphereBlocks(blocker, surfaceWorld, sourceWorld);
-    }
-    if (kind < 2.5) {
-        return sceneImplicitBoxBlocks(blocker, surfaceWorld, sourceWorld);
-    }
-    return false;
-}
-
-fn sceneImplicitVisibility(
-    surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
-    let toSource = sourceWorld - surfaceWorld;
-    let distance = length(toSource);
-    if (distance <= SOURCE_DIRECTION_EPS) { return 1.0; }
-
-    // Share the exact same endpoint convention as sceneMeshVisibility: bias
-    // once in WORLD space, then every representation intersects that one path.
-    let direction = toSource / distance;
-    let bias = max(1e-4, distance * 1e-5);
-    let segmentStart = surfaceWorld + direction * bias;
-    let segmentEnd = sourceWorld - direction * bias;
-    if (dot(segmentEnd - segmentStart, direction) <= 0.0) {
-        return 1.0;
-    }
-
-    let blockerCount =
-        u32(max(u.sceneVisibilityControl.x, 0.0));
-    for (var i = 0u; i < blockerCount; i = i + 1u) {
-        if (sceneImplicitBlockerBlocks(
-                sceneImplicitBlockers[i], segmentStart, segmentEnd)) {
-            return 0.0;
-        }
-    }
-    return 1.0;
-}
-)WGSL";
-}
-
-
 std::string sceneVisibilityFieldVmMathModule() {
     return R"WGSL(
 struct SceneFieldVmVisibilityDecision {
@@ -5942,10 +5835,6 @@ fn sminK(a: f32, b: f32, k: f32) -> f32 {
 }
 )WGSL";
 } // namespace
-
-std::string fieldVmPrimitiveMathModule() {
-    return kSdfPrimitivesMath;
-}
 
 std::string inspectVolumeSharing(const OntoMath::Piecewise* densityExpr,
                                  const OntoMath::Piecewise* extinctionExpr,
