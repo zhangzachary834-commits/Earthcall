@@ -132,6 +132,10 @@ struct CompiledPath {
         return CompiledPath{PropertyPath::parse(dotted)};
     }
 
+    std::string toString() const { return path.toString(); }
+    bool empty() const { return path.empty(); }
+    operator const PropertyPath&() const noexcept { return path; }
+
     PropertyPath::ResolvedSlot resolve(Singular& root, std::size_t startIndex = 0) const {
         return path.resolve(root, startIndex);
     }

@@ -622,7 +622,20 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
                     return PathResult::Ok;
                 }
             } else {
-                *slot.dynamicSlot = valToWrite;
+                if (slot.containerProperty) {
+                    if (!slot.containerPins.empty()) {
+                        PropertyValue previousValue = *slot.dynamicSlot;
+                        *slot.dynamicSlot = valToWrite;
+                        if (!slot.containerProperty->setValue(slot.containerPins.front())) {
+                            *slot.dynamicSlot = std::move(previousValue);
+                            return PathResult::ReadOnly;
+                        }
+                    } else {
+                        return PathResult::ReadOnly;
+                    }
+                } else {
+                    *slot.dynamicSlot = valToWrite;
+                }
                 announce(PathResult::Ok, slot.containerProperty, slot.owner, slot.dynamicKey);
                 return PathResult::Ok;
             }

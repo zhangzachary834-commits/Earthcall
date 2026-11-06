@@ -59,12 +59,20 @@ inline BindingMode bindingModeFromString(const std::string& str) {
 struct MathBindingEntry {
     PropertyPath path;
     BindingMode mode = BindingMode::FollowPath;
+    mutable PropertyPath::CompiledPath compiledPath;
 
     MathBindingEntry() = default;
     MathBindingEntry(const PropertyPath& p, BindingMode m = BindingMode::FollowPath)
-        : path(p), mode(m) {}
+        : path(p), mode(m), compiledPath(path.compile()) {}
     MathBindingEntry(PropertyPath&& p, BindingMode m = BindingMode::FollowPath)
-        : path(std::move(p)), mode(m) {}
+        : path(std::move(p)), mode(m), compiledPath(path.compile()) {}
+
+    const PropertyPath::CompiledPath& getCompiled() const {
+        if (compiledPath.path.fullId() != path.fullId()) {
+            compiledPath = path.compile();
+        }
+        return compiledPath;
+    }
 
     operator const PropertyPath&() const noexcept { return path; }
     operator PropertyPath&() noexcept { return path; }
@@ -182,6 +190,11 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
         }
     }
     
+    if (!best && !path.segments.empty() && path.segments[0] == "@transfer-policy") {
+        best = &TransferPolicy::instance();
+        bestConsumed = 1;
+    }
+
     if (!best) return nullptr;   // the named being is not in the world: no value
     startIndex = bestConsumed;
     return best;
@@ -349,14 +362,20 @@ inline PropertyPath::PathResult lawSetValue(Singular& subject, const CompiledPat
 }
 
 inline std::optional<std::map<std::string, PropertyValue>> readMathBindings(
-    Singular& subject, const MathBindings& bindings) {
+    Singular& subject, const MathBindings& bindings, const AccessContext& ctx = {}) {
     std::map<std::string, PropertyValue> vars;
     for (const auto& entry : bindings) {
         PropertyValue value;
-        if (!lawGetValue(subject, entry.second.path, value)) {
-            return std::nullopt;
+        const auto& cp = entry.second.getCompiled();
+        if (!cp.empty()) {
+            if (!lawGetValue(subject, cp, value, ctx)) {
+                return std::nullopt;
+            }
+        } else {
+            if (!lawGetValue(subject, entry.second.path, value, ctx)) {
+                return std::nullopt;
+            }
         }
-        
         vars[entry.first] = std::move(value);
     }
     return vars;

@@ -3815,7 +3815,7 @@ fn fs(in: VSOut) -> FSOut {
             raw = sdfEval(p);
             d = raw;
 
-            if (omega > 1.0 && (d < 0.0 || d + prev_d < candidate_step)) {
+            if (omega > 1.0 && candidate_step > 0.0 && (d < 0.0 || d + prev_d < candidate_step)) {
                 t = t - candidate_step + prev_d;
                 omega = 1.0;
                 candidate_step = 0.0;
@@ -5636,62 +5636,526 @@ enum class Ray1DLaw {
     LawII_Convex,
     LawIII_RoundBox,
     LawIV_Torus,
-    LawIV_Cone
+    LawIV_Cone,
+    LawII_CompositeIntersect,
+    LawII_CompositeUnion,
+    LawIV_SubtractPositiveSupport
 };
 
-bool isEuclideanNormMathNode(const OntoMath::MathNode& node) {
-    if (node.op == OntoMath::MathNode::Op::Length) {
-        if (!node.children.empty() && node.children[0]) {
-            if (node.children[0]->op == OntoMath::MathNode::Op::ValueLeaf &&
-                node.children[0]->variableName == "p") {
-                return true;
-            }
-        }
+bool isConvexRay1DLaw(Ray1DLaw law) {
+    return law == Ray1DLaw::LawI_Sphere ||
+           law == Ray1DLaw::LawI_Ellipsoid ||
+           law == Ray1DLaw::LawII_Box ||
+           law == Ray1DLaw::LawII_Cylinder ||
+           law == Ray1DLaw::LawII_Convex;
+}
+
+bool isSupportSlabRay1DLaw(Ray1DLaw law) {
+    return isConvexRay1DLaw(law) ||
+           law == Ray1DLaw::LawIII_RoundBox ||
+           law == Ray1DLaw::LawIV_Torus ||
+           law == Ray1DLaw::LawIV_Cone ||
+           law == Ray1DLaw::LawII_CompositeIntersect ||
+           law == Ray1DLaw::LawII_CompositeUnion ||
+           law == Ray1DLaw::LawIV_SubtractPositiveSupport;
+}
+
+bool isConstantScalarLeaf(const OntoMath::MathNode& node) {
+    if (node.op != OntoMath::MathNode::Op::ScalarLeaf) return false;
+    if (node.scalarForm.terms.empty()) return true;
+    return node.scalarForm.terms.size() == 1 &&
+           node.scalarForm.terms[0].factors.empty() &&
+           node.scalarForm.terms[0].trans.empty();
+}
+
+bool isAmbientPointLeaf(const OntoMath::MathNode& node) {
+    return node.op == OntoMath::MathNode::Op::ValueLeaf &&
+           node.variableName == OntoMath::kAmbientPointVar;
+}
+
+bool isAxisProjectionNode(const OntoMath::MathNode& node, const char* axis) {
+    if (node.op == OntoMath::MathNode::Op::ValueLeaf && node.variableName == axis) {
+        return true;
     }
-    if (node.op == OntoMath::MathNode::Op::Sqrt && !node.children.empty() && node.children[0]) {
+    return node.op == OntoMath::MathNode::Op::Component &&
+           node.stringArg == axis &&
+           node.children.size() == 1 &&
+           node.children[0] &&
+           isAmbientPointLeaf(*node.children[0]);
+}
+
+bool isZeroConstantVector(const OntoMath::MathNode& node) {
+    if (node.op != OntoMath::MathNode::Op::VectorConstruct || node.children.size() != 3) {
+        return false;
+    }
+    for (int i = 0; i < 3; ++i) {
+        if (!node.children[i] || !isConstantScalarLeaf(*node.children[i])) return false;
+        const double c = node.children[i]->scalarForm.terms.empty()
+                             ? 0.0
+                             : node.children[i]->scalarForm.terms[0].coefficient;
+        if (std::abs(c) > 1e-6) return false;
+    }
+    return true;
+}
+
+bool isConstantVector3(const OntoMath::MathNode& node) {
+    if (node.op != OntoMath::MathNode::Op::VectorConstruct || node.children.size() != 3) {
+        return false;
+    }
+    return node.children[0] && isConstantScalarLeaf(*node.children[0]) &&
+           node.children[1] && isConstantScalarLeaf(*node.children[1]) &&
+           node.children[2] && isConstantScalarLeaf(*node.children[2]);
+}
+
+bool isXYProjectionLength(const OntoMath::MathNode& node) {
+    if (node.op != OntoMath::MathNode::Op::Length || node.children.size() != 1 || !node.children[0]) {
+        return false;
+    }
+    const auto& vec = *node.children[0];
+    if (vec.op != OntoMath::MathNode::Op::VectorConstruct || vec.children.size() != 3 ||
+        !vec.children[0] || !vec.children[1] || !vec.children[2]) {
+        return false;
+    }
+    if (!isConstantScalarLeaf(*vec.children[2])) return false;
+    const double zCoeff = vec.children[2]->scalarForm.terms.empty()
+                              ? 0.0
+                              : vec.children[2]->scalarForm.terms[0].coefficient;
+    return isAxisProjectionNode(*vec.children[0], "x") &&
+           isAxisProjectionNode(*vec.children[1], "y") &&
+           std::abs(zCoeff) <= 1e-6;
+}
+
+bool isEuclideanNormMathNode(const OntoMath::MathNode& node) {
+    if (node.op == OntoMath::MathNode::Op::Length &&
+        node.children.size() == 1 && node.children[0] &&
+        isAmbientPointLeaf(*node.children[0])) {
+        return true;
+    }
+    if (node.op == OntoMath::MathNode::Op::Sqrt &&
+        node.children.size() == 1 && node.children[0]) {
         const auto& c = *node.children[0];
-        if (c.op == OntoMath::MathNode::Op::Dot && c.children.size() == 2) {
-            if (c.children[0]->variableName == "p" && c.children[1]->variableName == "p") return true;
+        if (c.op == OntoMath::MathNode::Op::Dot && c.children.size() == 2 &&
+            c.children[0] && c.children[1] &&
+            isAmbientPointLeaf(*c.children[0]) && isAmbientPointLeaf(*c.children[1])) {
+            return true;
         }
-        std::map<std::string, PropertyValue> v0{{"x", PropertyValue(0.0)}, {"y", PropertyValue(0.0)}, {"z", PropertyValue(0.0)}, {"p", PropertyValue(glm::vec3(0.0f))}};
-        std::map<std::string, PropertyValue> v1{{"x", PropertyValue(1.0)}, {"y", PropertyValue(2.0)}, {"z", PropertyValue(2.0)}, {"p", PropertyValue(glm::vec3(1.0f, 2.0f, 2.0f))}};
-        auto eval0 = c.evaluate(v0);
-        auto eval1 = c.evaluate(v1);
-        double d0 = -1.0, d1 = -1.0;
-        if (eval0 && eval1 && propertyValueToNumber(*eval0, d0) && propertyValueToNumber(*eval1, d1)) {
-            if (std::abs(d0) < 1e-5 && std::abs(d1 - 9.0) < 1e-4) return true;
+        if (const auto sf = OntoMath::toScalarForm(c)) {
+            if (sf->terms.size() == 3) {
+                bool hasX2 = false, hasY2 = false, hasZ2 = false;
+                for (const auto& term : sf->terms) {
+                    if (!term.trans.empty() || term.factors.size() != 1) return false;
+                    if (std::abs(term.coefficient - 1.0) > 1e-6) return false;
+                    const auto& [var, exp] = *term.factors.begin();
+                    if (std::abs(exp - 2.0) > 1e-6) return false;
+                    if (var == "x") hasX2 = true;
+                    else if (var == "y") hasY2 = true;
+                    else if (var == "z") hasZ2 = true;
+                }
+                if (hasX2 && hasY2 && hasZ2) return true;
+            }
         }
     }
     return false;
 }
 
-Ray1DLaw classifyRay1D(const geom::SdfNode& root) {
-    if (root.op == geom::SdfOp::Leaf) {
-        switch (root.prim) {
-            case geom::SdfPrim::Sphere:    return Ray1DLaw::LawI_Sphere;
-            case geom::SdfPrim::Ellipsoid: return Ray1DLaw::LawI_Ellipsoid;
-            case geom::SdfPrim::Box:       return Ray1DLaw::LawII_Box;
-            case geom::SdfPrim::Cylinder:  return Ray1DLaw::LawII_Cylinder;
-            case geom::SdfPrim::Convex:    return Ray1DLaw::LawII_Convex;
-            case geom::SdfPrim::RoundBox:  return Ray1DLaw::LawIII_RoundBox;
-            case geom::SdfPrim::Torus:     return Ray1DLaw::LawIV_Torus;
-            case geom::SdfPrim::Cone:      return Ray1DLaw::LawIV_Cone;
-            case geom::SdfPrim::Expr: {
-                std::shared_ptr<OntoMath::MathNode> rawMath;
-                if (root.mathNode) rawMath = root.mathNode;
-                else if (!root.rpn.empty()) rawMath = geom::rpnToMathNode(root.rpn);
-                else if (!root.expr.empty()) rawMath = geom::rpnToMathNode(geom::compileExpr(root.expr));
-                if (rawMath && rawMath->op == OntoMath::MathNode::Op::Sub && rawMath->children.size() == 2) {
-                    if (rawMath->children[0] && isEuclideanNormMathNode(*rawMath->children[0]) &&
-                        rawMath->children[1] && rawMath->children[1]->op == OntoMath::MathNode::Op::ScalarLeaf) {
-                        return Ray1DLaw::LawI_Sphere;
-                    }
+bool isAnisotropicScaledNormMathNode(const OntoMath::MathNode& node) {
+    if (node.op != OntoMath::MathNode::Op::Length ||
+        node.children.size() != 1 || !node.children[0]) {
+        return false;
+    }
+    const auto& vec = *node.children[0];
+    if (vec.op != OntoMath::MathNode::Op::VectorConstruct || vec.children.size() != 3) {
+        return false;
+    }
+    const char* axes[3] = {"x", "y", "z"};
+    for (int i = 0; i < 3; ++i) {
+        if (!vec.children[i]) return false;
+        const auto& div = *vec.children[i];
+        if (div.op != OntoMath::MathNode::Op::Div || div.children.size() != 2 ||
+            !div.children[0] || !div.children[1]) {
+            return false;
+        }
+        if (!isAxisProjectionNode(*div.children[0], axes[i]) ||
+            !isConstantScalarLeaf(*div.children[1])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool isBoxMathNode(const OntoMath::MathNode& node) {
+    if (node.op != OntoMath::MathNode::Op::Add || node.children.size() != 2 ||
+        !node.children[0] || !node.children[1]) {
+        return false;
+    }
+    const auto& outer = *node.children[0];
+    const auto& inner = *node.children[1];
+    if (outer.op != OntoMath::MathNode::Op::Length || outer.children.size() != 1 || !outer.children[0]) {
+        return false;
+    }
+    const auto& maxQ0 = *outer.children[0];
+    if (maxQ0.op != OntoMath::MathNode::Op::Intersection || maxQ0.children.size() != 2 ||
+        !maxQ0.children[0] || !maxQ0.children[1] || !isZeroConstantVector(*maxQ0.children[1])) {
+        return false;
+    }
+    const auto& q = *maxQ0.children[0];
+    if (q.op != OntoMath::MathNode::Op::Sub || q.children.size() != 2 ||
+        !q.children[0] || !q.children[1]) {
+        return false;
+    }
+    if (q.children[0]->op != OntoMath::MathNode::Op::Abs ||
+        q.children[0]->children.size() != 1 || !q.children[0]->children[0] ||
+        !isAmbientPointLeaf(*q.children[0]->children[0]) ||
+        !isConstantVector3(*q.children[1])) {
+        return false;
+    }
+    return inner.op == OntoMath::MathNode::Op::Union &&
+           inner.children.size() == 2 &&
+           inner.children[0] && inner.children[1] &&
+           inner.children[0]->op == OntoMath::MathNode::Op::Intersection &&
+           isConstantScalarLeaf(*inner.children[1]);
+}
+
+bool isZSlabSubNode(const OntoMath::MathNode& node) {
+    if (node.op != OntoMath::MathNode::Op::Sub || node.children.size() != 2 ||
+        !node.children[0] || !node.children[1]) {
+        return false;
+    }
+    const auto& absZ = *node.children[0];
+    return absZ.op == OntoMath::MathNode::Op::Abs &&
+           absZ.children.size() == 1 && absZ.children[0] &&
+           isAxisProjectionNode(*absZ.children[0], "z") &&
+           isConstantScalarLeaf(*node.children[1]);
+}
+
+bool isHalfSpaceTree(const OntoMath::MathNode& node) {
+    if (node.op == OntoMath::MathNode::Op::Sub && node.children.size() == 2 &&
+        node.children[0] && node.children[1]) {
+        const auto& dot = *node.children[0];
+        return dot.op == OntoMath::MathNode::Op::Dot &&
+               dot.children.size() == 2 && dot.children[0] && dot.children[1] &&
+               isAmbientPointLeaf(*dot.children[0]) &&
+               isConstantVector3(*dot.children[1]) &&
+               isConstantScalarLeaf(*node.children[1]);
+    }
+    if (node.op == OntoMath::MathNode::Op::Intersection && node.children.size() == 2 &&
+        node.children[0] && node.children[1]) {
+        return isHalfSpaceTree(*node.children[0]) && isHalfSpaceTree(*node.children[1]);
+    }
+    return false;
+}
+
+Ray1DLaw classifyMathNode1D(const OntoMath::MathNode& m) {
+    using Op = OntoMath::MathNode::Op;
+    if (m.op == Op::Sub && m.children.size() == 2 && m.children[0] && m.children[1]) {
+        const auto& lhs = *m.children[0];
+        const auto& rhs = *m.children[1];
+        if (isConstantScalarLeaf(rhs)) {
+            if (isEuclideanNormMathNode(lhs)) {
+                return Ray1DLaw::LawI_Sphere;
+            }
+            if (isAnisotropicScaledNormMathNode(lhs)) {
+                return Ray1DLaw::LawI_Ellipsoid;
+            }
+            if (isBoxMathNode(lhs)) {
+                return Ray1DLaw::LawIII_RoundBox;
+            }
+            if (lhs.op == Op::Length && lhs.children.size() == 1 && lhs.children[0]) {
+                const auto& qVec = *lhs.children[0];
+                if (qVec.op == Op::VectorConstruct && qVec.children.size() == 3 &&
+                    qVec.children[0] && qVec.children[1] && qVec.children[2] &&
+                    qVec.children[0]->op == Op::Sub && qVec.children[0]->children.size() == 2 &&
+                    qVec.children[0]->children[0] && qVec.children[0]->children[1] &&
+                    isXYProjectionLength(*qVec.children[0]->children[0]) &&
+                    isConstantScalarLeaf(*qVec.children[0]->children[1]) &&
+                    isAxisProjectionNode(*qVec.children[1], "z") &&
+                    isConstantScalarLeaf(*qVec.children[2])) {
+                    return Ray1DLaw::LawIV_Torus;
                 }
-                break;
             }
         }
     }
+    if (isBoxMathNode(m)) {
+        return Ray1DLaw::LawII_Box;
+    }
+    if (m.op == Op::Intersection && m.children.size() == 2 && m.children[0] && m.children[1]) {
+        const auto& a = *m.children[0];
+        const auto& b = *m.children[1];
+        if (isZSlabSubNode(b) && a.op == Op::Sub && a.children.size() == 2 &&
+            a.children[0] && a.children[1] && isXYProjectionLength(*a.children[0])) {
+            if (isConstantScalarLeaf(*a.children[1])) {
+                return Ray1DLaw::LawII_Cylinder;
+            }
+            if (a.children[1]->op == Op::Scale && a.children[1]->children.size() == 2 &&
+                a.children[1]->children[0] && a.children[1]->children[1] &&
+                isConstantScalarLeaf(*a.children[1]->children[0]) &&
+                a.children[1]->children[1]->op == Op::Sub &&
+                a.children[1]->children[1]->children.size() == 2 &&
+                a.children[1]->children[1]->children[0] &&
+                a.children[1]->children[1]->children[1] &&
+                isConstantScalarLeaf(*a.children[1]->children[1]->children[0]) &&
+                isAxisProjectionNode(*a.children[1]->children[1]->children[1], "z")) {
+                return Ray1DLaw::LawIV_Cone;
+            }
+        }
+    }
+    if (isHalfSpaceTree(m)) {
+        return Ray1DLaw::LawII_Convex;
+    }
+    if (m.op == Op::Intersection && m.children.size() == 2 && m.children[0] && m.children[1]) {
+        const Ray1DLaw lawA = classifyMathNode1D(*m.children[0]);
+        const Ray1DLaw lawB = classifyMathNode1D(*m.children[1]);
+        if (isSupportSlabRay1DLaw(lawA) && isSupportSlabRay1DLaw(lawB)) {
+            return Ray1DLaw::LawII_CompositeIntersect;
+        }
+    }
+    if (m.op == Op::Difference && m.children.size() == 2 && m.children[0] && m.children[1]) {
+        const Ray1DLaw lawA = classifyMathNode1D(*m.children[0]);
+        if (isSupportSlabRay1DLaw(lawA)) {
+            return Ray1DLaw::LawIV_SubtractPositiveSupport;
+        }
+    }
+    if (m.op == Op::Union && m.children.size() == 2 && m.children[0] && m.children[1]) {
+        const Ray1DLaw lawA = classifyMathNode1D(*m.children[0]);
+        const Ray1DLaw lawB = classifyMathNode1D(*m.children[1]);
+        if (isSupportSlabRay1DLaw(lawA) && isSupportSlabRay1DLaw(lawB)) {
+            return Ray1DLaw::LawII_CompositeUnion;
+        }
+    }
     return Ray1DLaw::Fallback;
+}
+
+geom::SdfNode stripLeafOffsetsForMathClassification(const geom::SdfNode& node) {
+    geom::SdfNode copy = node;
+    copy.offset = glm::vec3(0.0f);
+    copy.children.clear();
+    copy.children.reserve(node.children.size());
+    for (const auto& child : node.children) {
+        if (child) {
+            copy.children.push_back(std::make_shared<geom::SdfNode>(
+                stripLeafOffsetsForMathClassification(*child)));
+        } else {
+            copy.children.push_back(nullptr);
+        }
+    }
+    return copy;
+}
+
+Ray1DLaw classifyRay1D(const geom::SdfNode& root) {
+    if (countSdfLeaves(root) > 8) {
+        return Ray1DLaw::Fallback;
+    }
+    const geom::SdfNode canonical = stripLeafOffsetsForMathClassification(root);
+    const std::shared_ptr<OntoMath::MathNode> math = canonical.toMathNode();
+    if (!math) {
+        if (root.op == geom::SdfOp::Leaf && root.prim == geom::SdfPrim::Convex && root.planes.empty()) {
+            return Ray1DLaw::LawII_Convex;
+        }
+        return Ray1DLaw::Fallback;
+    }
+    return classifyMathNode1D(*math);
+}
+
+bool isConvexRay1DNode(const geom::SdfNode& node) {
+    if (node.op == geom::SdfOp::Leaf) {
+        return isConvexRay1DLaw(classifyRay1D(node));
+    }
+    if (node.op == geom::SdfOp::Intersect) {
+        if (node.children.size() < 2 || !node.children[0] || !node.children[1]) return false;
+        return isConvexRay1DNode(*node.children[0]) && isConvexRay1DNode(*node.children[1]);
+    }
+    return false;
+}
+
+bool isExactInfimumRay1DNode(const geom::SdfNode& node) {
+    if (isConvexRay1DNode(node)) {
+        return true;
+    }
+    if (node.op == geom::SdfOp::Union) {
+        if (node.children.size() < 2 || !node.children[0] || !node.children[1]) return false;
+        return isExactInfimumRay1DNode(*node.children[0]) &&
+               isExactInfimumRay1DNode(*node.children[1]);
+    }
+    return false;
+}
+
+std::string emit1DIntervalSnippet(const geom::SdfNode& node, Ray1DLaw law, uint32_t base, const std::string& pfx) {
+    const std::string sBase = std::to_string(base);
+    if (law == Ray1DLaw::LawI_Sphere) {
+        Emit eDry;
+        (void)emitNode(node, eDry);
+        const uint32_t rSlot = base + (eDry.params.empty() ? 3u : static_cast<uint32_t>(eDry.params.size() - 1));
+        return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
+               "    let r_" + pfx + " = P.v[paramOffset + " + std::to_string(rSlot) + "u];\n"
+               "    let m_" + pfx + " = ro - off_" + pfx + ";\n"
+               "    let b_" + pfx + " = dot(m_" + pfx + ", rd);\n"
+               "    let c_" + pfx + " = dot(m_" + pfx + ", m_" + pfx + ") - r_" + pfx + " * r_" + pfx + ";\n"
+               "    let h_" + pfx + " = b_" + pfx + " * b_" + pfx + " - c_" + pfx + ";\n"
+               "    var tEnter_" + pfx + " = tMax + 1.0;\n"
+               "    var tExit_" + pfx + " = -1.0;\n"
+               "    if (h_" + pfx + " >= 0.0) {\n"
+               "        let s_" + pfx + " = sqrt(h_" + pfx + ");\n"
+               "        tEnter_" + pfx + " = -b_" + pfx + " - s_" + pfx + ";\n"
+               "        tExit_" + pfx + " = -b_" + pfx + " + s_" + pfx + ";\n"
+               "    }\n";
+    }
+    if (law == Ray1DLaw::LawI_Ellipsoid) {
+        return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
+               "    let r_" + pfx + " = max(vec3<f32>(P.v[paramOffset + " + std::to_string(base + 3) + "u], P.v[paramOffset + " + std::to_string(base + 4) + "u], P.v[paramOffset + " + std::to_string(base + 5) + "u]), vec3<f32>(1e-4));\n"
+               "    let m_" + pfx + " = (ro - off_" + pfx + ") / r_" + pfx + ";\n"
+               "    let d_" + pfx + " = rd / r_" + pfx + ";\n"
+               "    let a_" + pfx + " = dot(d_" + pfx + ", d_" + pfx + ");\n"
+               "    let b_" + pfx + " = dot(m_" + pfx + ", d_" + pfx + ");\n"
+               "    let c_" + pfx + " = dot(m_" + pfx + ", m_" + pfx + ") - 1.0;\n"
+               "    let h_" + pfx + " = b_" + pfx + " * b_" + pfx + " - a_" + pfx + " * c_" + pfx + ";\n"
+               "    var tEnter_" + pfx + " = tMax + 1.0;\n"
+               "    var tExit_" + pfx + " = -1.0;\n"
+               "    if (h_" + pfx + " >= 0.0 && a_" + pfx + " > 1e-8) {\n"
+               "        let s_" + pfx + " = sqrt(h_" + pfx + ");\n"
+               "        tEnter_" + pfx + " = (-b_" + pfx + " - s_" + pfx + ") / a_" + pfx + ";\n"
+               "        tExit_" + pfx + " = (-b_" + pfx + " + s_" + pfx + ") / a_" + pfx + ";\n"
+               "    }\n";
+    }
+    if (law == Ray1DLaw::LawII_Box) {
+        return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
+               "    let b_" + pfx + " = vec3<f32>(P.v[paramOffset + " + std::to_string(base + 3) + "u], P.v[paramOffset + " + std::to_string(base + 4) + "u], P.v[paramOffset + " + std::to_string(base + 5) + "u]);\n"
+               "    let slab_" + pfx + " = rayAabb(ro - off_" + pfx + ", rd, b_" + pfx + ");\n"
+               "    let tEnter_" + pfx + " = slab_" + pfx + ".x;\n"
+               "    let tExit_" + pfx + " = slab_" + pfx + ".y;\n";
+    }
+    if (law == Ray1DLaw::LawII_Cylinder) {
+        return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
+               "    let r_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 3) + "u];\n"
+               "    let h_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 4) + "u];\n"
+               "    let m_" + pfx + " = ro - off_" + pfx + ";\n"
+               "    let a_" + pfx + " = rd.x * rd.x + rd.y * rd.y;\n"
+               "    let b_" + pfx + " = m_" + pfx + ".x * rd.x + m_" + pfx + ".y * rd.y;\n"
+               "    let c_" + pfx + " = m_" + pfx + ".x * m_" + pfx + ".x + m_" + pfx + ".y * m_" + pfx + ".y - r_" + pfx + " * r_" + pfx + ";\n"
+               "    var tEnter_" + pfx + " = -1e6;\n"
+               "    var tExit_" + pfx + " = 1e6;\n"
+               "    if (a_" + pfx + " > 1e-8) {\n"
+               "        let disc = b_" + pfx + " * b_" + pfx + " - a_" + pfx + " * c_" + pfx + ";\n"
+               "        if (disc < 0.0) { tEnter_" + pfx + " = tMax + 1.0; tExit_" + pfx + " = -1.0; }\n"
+               "        else {\n"
+               "            let s = sqrt(disc);\n"
+               "            tEnter_" + pfx + " = max(tEnter_" + pfx + ", (-b_" + pfx + " - s) / a_" + pfx + ");\n"
+               "            tExit_" + pfx + " = min(tExit_" + pfx + ", (-b_" + pfx + " + s) / a_" + pfx + ");\n"
+               "        }\n"
+               "    } else if (c_" + pfx + " > 0.0) {\n"
+               "        tEnter_" + pfx + " = tMax + 1.0; tExit_" + pfx + " = -1.0;\n"
+               "    }\n"
+               "    if (tEnter_" + pfx + " <= tExit_" + pfx + ") {\n"
+               "        if (abs(rd.z) > 1e-8) {\n"
+               "            let tz0 = (-h_" + pfx + " - m_" + pfx + ".z) / rd.z;\n"
+               "            let tz1 = (h_" + pfx + " - m_" + pfx + ".z) / rd.z;\n"
+               "            tEnter_" + pfx + " = max(tEnter_" + pfx + ", min(tz0, tz1));\n"
+               "            tExit_" + pfx + " = min(tExit_" + pfx + ", max(tz0, tz1));\n"
+               "        } else if (abs(m_" + pfx + ".z) > h_" + pfx + ") {\n"
+               "            tEnter_" + pfx + " = tMax + 1.0; tExit_" + pfx + " = -1.0;\n"
+               "        }\n"
+               "    }\n";
+    }
+    if (law == Ray1DLaw::LawII_Convex) {
+        if (node.planes.empty()) {
+            return "    let tEnter_" + pfx + " = tMax + 1.0;\n    let tExit_" + pfx + " = -1.0;\n";
+        }
+        std::string code = "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
+                           "    var tEnter_" + pfx + " = -1e6;\n"
+                           "    var tExit_" + pfx + " = 1e6;\n";
+        for (size_t i = 0; i < node.planes.size(); ++i) {
+            uint32_t pBase = base + 3u + static_cast<uint32_t>(i * 4u);
+            code += "    {\n";
+            code += "        let plN = vec3<f32>(P.v[paramOffset + " + std::to_string(pBase) + "u], P.v[paramOffset + " + std::to_string(pBase + 1) + "u], P.v[paramOffset + " + std::to_string(pBase + 2) + "u]);\n";
+            code += "        let plD = P.v[paramOffset + " + std::to_string(pBase + 3) + "u];\n";
+            code += "        let num = plD - dot(ro - off_" + pfx + ", plN);\n";
+            code += "        let den = dot(rd, plN);\n";
+            code += "        if (abs(den) <= 1e-8) {\n";
+            code += "            if (num < 0.0) { tEnter_" + pfx + " = tMax + 1.0; tExit_" + pfx + " = -1.0; }\n";
+            code += "        } else {\n";
+            code += "            let tPlane = num / den;\n";
+            code += "            if (den > 0.0) { tExit_" + pfx + " = min(tExit_" + pfx + ", tPlane); } else { tEnter_" + pfx + " = max(tEnter_" + pfx + ", tPlane); }\n";
+            code += "        }\n";
+            code += "    }\n";
+        }
+        return code;
+    }
+    if (law == Ray1DLaw::LawIII_RoundBox) {
+        return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
+               "    let b_" + pfx + " = vec3<f32>(P.v[paramOffset + " + std::to_string(base + 3) + "u], P.v[paramOffset + " + std::to_string(base + 4) + "u], P.v[paramOffset + " + std::to_string(base + 5) + "u]);\n"
+               "    let r_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 6) + "u];\n"
+               "    let bInner_" + pfx + " = max(b_" + pfx + " - vec3<f32>(r_" + pfx + "), vec3<f32>(0.0));\n"
+               "    let bOuter_" + pfx + " = bInner_" + pfx + " + vec3<f32>(max(r_" + pfx + ", 0.0));\n"
+               "    let slab_" + pfx + " = rayAabb(ro - off_" + pfx + ", rd, bOuter_" + pfx + ");\n"
+               "    let tEnter_" + pfx + " = slab_" + pfx + ".x;\n"
+               "    let tExit_" + pfx + " = slab_" + pfx + ".y;\n";
+    }
+    if (law == Ray1DLaw::LawIV_Torus) {
+        return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
+               "    let majR_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 3) + "u];\n"
+               "    let minR_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 4) + "u];\n"
+               "    let outerB_" + pfx + " = vec3<f32>(majR_" + pfx + " + minR_" + pfx + ", majR_" + pfx + " + minR_" + pfx + ", minR_" + pfx + ");\n"
+               "    let slab_" + pfx + " = rayAabb(ro - off_" + pfx + ", rd, outerB_" + pfx + ");\n"
+               "    let tEnter_" + pfx + " = slab_" + pfx + ".x;\n"
+               "    let tExit_" + pfx + " = slab_" + pfx + ".y;\n";
+    }
+    if (law == Ray1DLaw::LawIV_Cone) {
+        return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
+               "    let r1_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 3) + "u];\n"
+               "    let h_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 4) + "u];\n"
+               "    let outerB_" + pfx + " = vec3<f32>(r1_" + pfx + ", r1_" + pfx + ", h_" + pfx + ");\n"
+               "    let slab_" + pfx + " = rayAabb(ro - off_" + pfx + ", rd, outerB_" + pfx + ");\n"
+               "    let tEnter_" + pfx + " = slab_" + pfx + ".x;\n"
+               "    let tExit_" + pfx + " = slab_" + pfx + ".y;\n";
+    }
+    return "    let tEnter_" + pfx + " = -1e6;\n    let tExit_" + pfx + " = 1e6;\n";
+}
+
+std::string emitRecursive1DIntervalSnippet(const geom::SdfNode& node, uint32_t base, const std::string& pfx) {
+    if (node.op == geom::SdfOp::Leaf) {
+        const Ray1DLaw leafLaw = classifyRay1D(node);
+        return emit1DIntervalSnippet(node, leafLaw, base, pfx);
+    }
+    if (node.op == geom::SdfOp::Intersect && node.children.size() >= 2 && node.children[0] && node.children[1]) {
+        const geom::SdfNode& c0 = *node.children[0];
+        const geom::SdfNode& c1 = *node.children[1];
+        Emit eDry0;
+        (void)emitNode(c0, eDry0);
+        const uint32_t base1 = base + static_cast<uint32_t>(eDry0.params.size());
+
+        std::string code;
+        code += emitRecursive1DIntervalSnippet(c0, base, pfx + "_0");
+        code += emitRecursive1DIntervalSnippet(c1, base1, pfx + "_1");
+        code += "    let tEnter_" + pfx + " = max(tEnter_" + pfx + "_0, tEnter_" + pfx + "_1);\n";
+        code += "    let tExit_" + pfx + " = min(tExit_" + pfx + "_0, tExit_" + pfx + "_1);\n";
+        return code;
+    }
+    if (node.op == geom::SdfOp::Union && node.children.size() >= 2 && node.children[0] && node.children[1]) {
+        const geom::SdfNode& c0 = *node.children[0];
+        const geom::SdfNode& c1 = *node.children[1];
+        Emit eDry0;
+        (void)emitNode(c0, eDry0);
+        const uint32_t base1 = base + static_cast<uint32_t>(eDry0.params.size());
+
+        std::string code;
+        code += emitRecursive1DIntervalSnippet(c0, base, pfx + "_0");
+        code += emitRecursive1DIntervalSnippet(c1, base1, pfx + "_1");
+        code += "    let valid_" + pfx + "_0 = (tEnter_" + pfx + "_0 <= tExit_" + pfx + "_0) && (tExit_" + pfx + "_0 >= tStart) && (tEnter_" + pfx + "_0 <= tMax);\n";
+        code += "    let valid_" + pfx + "_1 = (tEnter_" + pfx + "_1 <= tExit_" + pfx + "_1) && (tExit_" + pfx + "_1 >= tStart) && (tEnter_" + pfx + "_1 <= tMax);\n";
+        code += "    let tEnter_" + pfx + " = min(select(tMax + 1.0, max(tEnter_" + pfx + "_0, tStart), valid_" + pfx + "_0),\n"
+                "                                select(tMax + 1.0, max(tEnter_" + pfx + "_1, tStart), valid_" + pfx + "_1));\n";
+        code += "    let tExit_" + pfx + " = max(select(-1.0, min(tExit_" + pfx + "_0, tMax), valid_" + pfx + "_0),\n"
+                "                               select(-1.0, min(tExit_" + pfx + "_1, tMax), valid_" + pfx + "_1));\n";
+        return code;
+    }
+    if (node.op == geom::SdfOp::Subtract && !node.children.empty() && node.children[0]) {
+        const geom::SdfNode& c0 = *node.children[0];
+        std::string code;
+        code += emitRecursive1DIntervalSnippet(c0, base, pfx + "_0");
+        code += "    let tEnter_" + pfx + " = tEnter_" + pfx + "_0;\n";
+        code += "    let tExit_" + pfx + " = tExit_" + pfx + "_0;\n";
+        return code;
+    }
+    return "    let tEnter_" + pfx + " = -1e6;\n    let tExit_" + pfx + " = 1e6;\n";
 }
 
 } // namespace
@@ -5700,31 +6164,32 @@ std::string emitRootClosedFormHit(const geom::SdfNode& root) {
     const Ray1DLaw law = classifyRay1D(root);
 
     if (law == Ray1DLaw::LawI_Sphere) {
-        return R"WGSL(
-fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
-    let paramOffset = instances[g_instIdx].paramOffset;
-    let off = vec3<f32>(P.v[paramOffset + 0u], P.v[paramOffset + 1u], P.v[paramOffset + 2u]);
-    let r = P.v[paramOffset + 3u];
-    let m = ro - off;
-    let b = dot(m, rd);
-    let c = dot(m, m) - r * r;
-    let h = b * b - c;
-    if (h < 0.0) {
-        return vec2<f32>(tMax + 1.0, 0.0);
-    }
-    let s = sqrt(h);
-    let t0 = -b - s;
-    let t1 = -b + s;
-    if (t1 < tStart || t0 > tMax) {
-        return vec2<f32>(tMax + 1.0, 0.0);
-    }
-    let tHit = select(t0, tStart, t0 < tStart);
-    if (tHit > tMax) {
-        return vec2<f32>(tMax + 1.0, 0.0);
-    }
-    return vec2<f32>(tHit, 1.0);
-}
-)WGSL";
+        Emit eDry;
+        (void)emitNode(root, eDry);
+        const uint32_t rSlot = eDry.params.empty() ? 3u : static_cast<uint32_t>(eDry.params.size() - 1);
+        return "fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {\n"
+               "    let paramOffset = instances[g_instIdx].paramOffset;\n"
+               "    let off = vec3<f32>(P.v[paramOffset + 0u], P.v[paramOffset + 1u], P.v[paramOffset + 2u]);\n"
+               "    let r = P.v[paramOffset + " + std::to_string(rSlot) + "u];\n"
+               "    let m = ro - off;\n"
+               "    let b = dot(m, rd);\n"
+               "    let c = dot(m, m) - r * r;\n"
+               "    let h = b * b - c;\n"
+               "    if (h < 0.0) {\n"
+               "        return vec2<f32>(tMax + 1.0, 0.0);\n"
+               "    }\n"
+               "    let s = sqrt(h);\n"
+               "    let t0 = -b - s;\n"
+               "    let t1 = -b + s;\n"
+               "    if (t1 < tStart || t0 > tMax) {\n"
+               "        return vec2<f32>(tMax + 1.0, 0.0);\n"
+               "    }\n"
+               "    let tHit = select(t0, tStart, t0 < tStart);\n"
+               "    if (tHit > tMax) {\n"
+               "        return vec2<f32>(tMax + 1.0, 0.0);\n"
+               "    }\n"
+               "    return vec2<f32>(tHit, 1.0);\n"
+               "}\n";
     }
 
     if (law == Ray1DLaw::LawI_Ellipsoid) {
@@ -5873,7 +6338,9 @@ fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> ve
     let b = vec3<f32>(P.v[paramOffset + 3u], P.v[paramOffset + 4u], P.v[paramOffset + 5u]);
     let r = P.v[paramOffset + 6u];
 
-    let slab = rayAabb(ro - off, rd, b);
+    let bInner = max(b - vec3<f32>(r), vec3<f32>(0.0));
+    let bOuter = bInner + vec3<f32>(max(r, 0.0));
+    let slab = rayAabb(ro - off, rd, bOuter);
     if (slab.y < slab.x || slab.y < tStart || slab.x > tMax) {
         return vec2<f32>(tMax + 1.0, 0.0);
     }
@@ -5882,10 +6349,9 @@ fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> ve
         return vec2<f32>(tMax + 1.0, 0.0);
     }
     let pCand = (ro - off) + rd * tCand;
-    let bInner = max(b - vec3<f32>(r), vec3<f32>(0.0));
     let q = abs(pCand) - bInner;
-    let activeAxes = select(0, 1, q.x > 0.0) + select(0, 1, q.y > 0.0) + select(0, 1, q.z > 0.0);
-    if (activeAxes <= 1) {
+    let dCand = length(max(q, vec3<f32>(0.0))) + min(max(q.x, max(q.y, q.z)), 0.0) - r;
+    if (dCand <= 1e-4) {
         return vec2<f32>(tCand, 1.0);
     }
     return vec2<f32>(tCand, -2.0 - min(slab.y, tMax));
@@ -5929,6 +6395,41 @@ fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> ve
     return vec2<f32>(tEnter, -2.0 - tExit);
 }
 )WGSL";
+    }
+
+    if (law == Ray1DLaw::LawII_CompositeIntersect ||
+        law == Ray1DLaw::LawII_CompositeUnion ||
+        law == Ray1DLaw::LawIV_SubtractPositiveSupport) {
+        std::string code = R"WGSL(
+fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
+    let paramOffset = instances[g_instIdx].paramOffset;
+)WGSL";
+        code += emitRecursive1DIntervalSnippet(root, 0u, "root");
+        code += R"WGSL(
+    let tEnter = tEnter_root;
+    let tExit = tExit_root;
+    if (tEnter > tExit || tExit < tStart || tEnter > tMax) {
+        return vec2<f32>(tMax + 1.0, 0.0);
+    }
+)WGSL";
+        if (isExactInfimumRay1DNode(root)) {
+            code += R"WGSL(
+    let tHit = max(tEnter, tStart);
+    if (tHit > tMax) {
+        return vec2<f32>(tMax + 1.0, 0.0);
+    }
+    return vec2<f32>(tHit, 1.0);
+}
+)WGSL";
+        } else {
+            code += R"WGSL(
+    let tEnterClamped = max(tEnter, tStart);
+    let tExitClamped = min(tExit + 0.05, tMax);
+    return vec2<f32>(tEnterClamped, -2.0 - tExitClamped);
+}
+)WGSL";
+        }
+        return code;
     }
 
     return R"WGSL(

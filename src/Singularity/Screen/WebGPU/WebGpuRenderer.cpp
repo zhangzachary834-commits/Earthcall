@@ -24,28 +24,6 @@
 
 namespace {
 
-struct AuthoredModelTransforms {
-    glm::mat4 inverse;
-    glm::mat4 normal;
-};
-
-// OntoMath owns the mathematical meaning of model inversion and normal
-// inverse-transpose. GLM matrices here are only lowered GPU representation.
-std::optional<AuthoredModelTransforms> deriveModelTransforms(const glm::mat4& model) {
-    const auto authoredModel = OntoMath::MatrixValue::fromGlmMat4(model);
-    const auto inverse = OntoMath::inverseAffine(authoredModel);
-    if (!inverse) return std::nullopt;
-
-    const auto normal = OntoMath::matrixTranspose(*inverse);
-    if (!normal) return std::nullopt;
-
-    const auto loweredInverse = inverse->toGlmMat4();
-    const auto loweredNormal = normal->toGlmMat4();
-    if (!loweredInverse || !loweredNormal) return std::nullopt;
-
-    return AuthoredModelTransforms{*loweredInverse, *loweredNormal};
-}
-
 std::optional<glm::mat4> authoredProduct(const glm::mat4& left,
                                          const glm::mat4& right) {
     const auto product = OntoMath::matrixMultiply(
@@ -959,11 +937,39 @@ void WebGpuRenderer::applyCamera(const glm::mat4& view, const glm::mat4& proj,
     setCamera(*authoredViewProj, eyePos);
 }
 
+std::optional<WebGpuRenderer::AuthoredModelTransforms> WebGpuRenderer::deriveModelTransforms(const glm::mat4& model) {
+    const auto authoredModel = OntoMath::MatrixValue::fromGlmMat4(model);
+    const auto inverse = OntoMath::inverseAffine(authoredModel);
+    if (!inverse) return std::nullopt;
+
+    const auto normal = OntoMath::matrixTranspose(*inverse);
+    if (!normal) return std::nullopt;
+
+    const auto loweredInverse = inverse->toGlmMat4();
+    const auto loweredNormal = normal->toGlmMat4();
+    if (!loweredInverse || !loweredNormal) return std::nullopt;
+
+    return AuthoredModelTransforms{*loweredInverse, *loweredNormal};
+}
+
+const std::optional<WebGpuRenderer::AuthoredModelTransforms>& WebGpuRenderer::getModelTransforms() {
+    if (_hasCachedTransforms && _model == _cachedModelMatrix) {
+        return _cachedTransforms;
+    }
+    _cachedModelMatrix = _model;
+    _hasCachedTransforms = true;
+    _cachedTransforms = deriveModelTransforms(_model);
+    return _cachedTransforms;
+}
+
 void WebGpuRenderer::applyModel(const glm::mat4& model) {
-    _model = model;
-    const auto modelViewProj = authoredProduct(_viewProj, _model);
-    _modelViewProjValid = modelViewProj.has_value();
-    if (modelViewProj) _modelViewProj = *modelViewProj;
+    if (_model != model) {
+        _hasCachedTransforms = false;
+        _model = model;
+        const auto modelViewProj = authoredProduct(_viewProj, _model);
+        _modelViewProjValid = modelViewProj.has_value();
+        if (modelViewProj) _modelViewProj = *modelViewProj;
+    }
 }
 
 void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width, uint32_t height,
@@ -1071,14 +1077,23 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
     key.albedoView = albedoView;
     key.shading    = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
 
-    const auto authoredTransforms = deriveModelTransforms(_model);
+    const auto& authoredTransforms = getModelTransforms();
     if (!authoredTransforms) return;
 
     InstanceData inst;
     inst.model     = _model;
     inst.normalMat = authoredTransforms->normal;
     inst.baseColor = glm::vec4(mat.baseColor, mat.opacity);
-    _meshBatches[key].push_back(inst);
+
+    std::vector<InstanceData>* targetVec = nullptr;
+    if (_lastMeshBatchKey && key == *_lastMeshBatchKey && _lastMeshBatchVector) {
+        targetVec = _lastMeshBatchVector;
+    } else {
+        targetVec = &_meshBatches[key];
+        _lastMeshBatchKey = key;
+        _lastMeshBatchVector = targetVec;
+    }
+    targetVec->push_back(inst);
 
     // Every queued instance really will be drawn at flush — count its
     // triangles now. drawCalls/pipelineSwitches are credited once per BATCH
@@ -1087,42 +1102,36 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
 }
 
 void WebGpuRenderer::flushMeshDraws() {
-    if (_meshBatches.empty()) return;
-    if (!_pass) { _meshBatches.clear(); return; }
+    if (_meshBatches.empty()) {
+        _lastMeshBatchKey.reset();
+        _lastMeshBatchVector = nullptr;
+        return;
+    }
+    if (!_pass) {
+        _meshBatches.clear();
+        _lastMeshBatchKey.reset();
+        _lastMeshBatchVector = nullptr;
+        return;
+    }
 
-    // Kernel upload packets live only for this flush. The ordered batches and
-    // their binding sizes stay intact, while many small queue writes share a
-    // bounded staging upload. Metal otherwise allocates a staging buffer for
-    // every uniform and instance write, even with resident destination buffers.
-    struct UploadRecord {
-        const MeshBatchKey* key;
-        const std::vector<InstanceData>* instances;
-        uint32_t firstInstance;
-        size_t uniformSlotIndex;
-    };
-    struct UniformKey {
-        WGPUTextureView albedoView;
-        glm::vec4 shading;
-        bool operator==(const UniformKey& o) const {
-            return albedoView == o.albedoView && shading == o.shading;
-        }
-    };
     constexpr size_t pageBytes = 256 * 1024;
     constexpr size_t bindingAlignment = 256; // Same alignment as GpuBufferPool.
     const auto aligned = [](size_t bytes) {
         return (bytes + bindingAlignment - 1) / bindingAlignment * bindingAlignment;
     };
-    std::vector<UploadRecord> records;
-    std::vector<InstanceData> pageInstances;
-    std::vector<UniformKey> pageUniformKeys;
-    std::vector<size_t> pageUniformOffsets;
-    std::vector<uint8_t> uniforms;
+
+    _meshRecords.clear();
+    _meshPageInstances.clear();
+    _meshPageUniformKeys.clear();
+    _meshPageUniformOffsets.clear();
+    _meshUniforms.clear();
+    _meshPageGroup0.clear();
 
     const auto flushPage = [&]() {
-        if (records.empty()) return;
-        const auto uniformPage = bufferPool().suballocateUniform(uniforms.data(), uniforms.size());
-        const size_t instBytes = pageInstances.size() * sizeof(InstanceData);
-        const auto instancePage = bufferPool().suballocateStorage(pageInstances.data(), instBytes);
+        if (_meshRecords.empty()) return;
+        const auto uniformPage = bufferPool().suballocateUniform(_meshUniforms.data(), _meshUniforms.size());
+        const size_t instBytes = _meshPageInstances.size() * sizeof(InstanceData);
+        const auto instancePage = bufferPool().suballocateStorage(_meshPageInstances.data(), instBytes);
 
         // Group 1: one shared bind group covering all contiguous instances in this page
         WGPUBindGroupEntry ibge = {};
@@ -1138,16 +1147,16 @@ void WebGpuRenderer::flushMeshDraws() {
         _frameBindGroups.push_back(pageInstBindGroup);
 
         // Group 0: one bind group per unique (albedoView, shading) in this page
-        std::vector<WGPUBindGroup> pageGroup0;
-        pageGroup0.reserve(pageUniformKeys.size());
-        for (size_t i = 0; i < pageUniformKeys.size(); ++i) {
+        _meshPageGroup0.clear();
+        _meshPageGroup0.reserve(_meshPageUniformKeys.size());
+        for (size_t i = 0; i < _meshPageUniformKeys.size(); ++i) {
             WGPUBindGroupEntry bge[3] = {};
             bge[0].binding = 0;
             bge[0].buffer = uniformPage.buffer;
-            bge[0].offset = uniformPage.offset + pageUniformOffsets[i];
+            bge[0].offset = uniformPage.offset + _meshPageUniformOffsets[i];
             bge[0].size = sizeof(MeshUniforms);
             bge[1].binding = 1;
-            bge[1].textureView = pageUniformKeys[i].albedoView;
+            bge[1].textureView = _meshPageUniformKeys[i].albedoView;
             bge[2].binding = 2;
             bge[2].sampler = _sampler;
             WGPUBindGroupDescriptor bgDesc = {};
@@ -1156,14 +1165,14 @@ void WebGpuRenderer::flushMeshDraws() {
             bgDesc.entries = bge;
             WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgDesc);
             _frameBindGroups.push_back(bg);
-            pageGroup0.push_back(bg);
+            _meshPageGroup0.push_back(bg);
         }
 
         bindPipeline(_meshPipeline);
         wgpuRenderPassEncoderSetBindGroup(_pass, 1, pageInstBindGroup, 0, nullptr);
         WGPUBindGroup currentGroup0 = nullptr;
 
-        for (const auto& record : records) {
+        for (const auto& record : _meshRecords) {
             const MeshBatchKey& key = *record.key;
             const auto& instances = *record.instances;
             const geom::TessMesh& mesh = *key.mesh;
@@ -1177,7 +1186,7 @@ void WebGpuRenderer::flushMeshDraws() {
                 voffset = vAlloc.offset;
             }
 
-            WGPUBindGroup bg0 = pageGroup0[record.uniformSlotIndex];
+            WGPUBindGroup bg0 = _meshPageGroup0[record.uniformSlotIndex];
             if (bg0 != currentGroup0) {
                 wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg0, 0, nullptr);
                 currentGroup0 = bg0;
@@ -1190,51 +1199,54 @@ void WebGpuRenderer::flushMeshDraws() {
             mutableFrameStats().drawCalls++;
             mutableFrameStats().meshDrawCalls++;
         }
-        records.clear();
-        uniforms.clear();
-        pageInstances.clear();
-        pageUniformKeys.clear();
-        pageUniformOffsets.clear();
+        _meshRecords.clear();
+        _meshUniforms.clear();
+        _meshPageInstances.clear();
+        _meshPageUniformKeys.clear();
+        _meshPageUniformOffsets.clear();
+        _meshPageGroup0.clear();
     };
 
     for (const auto& [key, instances] : _meshBatches) {
         if (!key.mesh || key.mesh->tris.empty() || instances.empty()) continue;
 
-        UniformKey uKey{key.albedoView, key.shading};
-        auto it = std::find(pageUniformKeys.begin(), pageUniformKeys.end(), uKey);
-        const bool needNewUniform = (it == pageUniformKeys.end());
+        MeshUniformKey uKey{key.albedoView, key.shading};
+        auto it = std::find(_meshPageUniformKeys.begin(), _meshPageUniformKeys.end(), uKey);
+        const bool needNewUniform = (it == _meshPageUniformKeys.end());
         const size_t addUniformBytes = needNewUniform ? sizeof(MeshUniforms) : 0;
 
-        if (!records.empty() && (aligned(uniforms.size()) + addUniformBytes > pageBytes ||
-                                 (pageInstances.size() + instances.size()) * sizeof(InstanceData) > pageBytes)) {
+        if (!_meshRecords.empty() && (aligned(_meshUniforms.size()) + addUniformBytes > pageBytes ||
+                                 (_meshPageInstances.size() + instances.size()) * sizeof(InstanceData) > pageBytes)) {
             flushPage();
-            it = pageUniformKeys.end();
+            it = _meshPageUniformKeys.end();
         }
 
         size_t uniformSlotIndex = 0;
-        if (it != pageUniformKeys.end()) {
-            uniformSlotIndex = static_cast<size_t>(std::distance(pageUniformKeys.begin(), it));
+        if (it != _meshPageUniformKeys.end()) {
+            uniformSlotIndex = static_cast<size_t>(std::distance(_meshPageUniformKeys.begin(), it));
         } else {
-            const size_t uniformOffset = aligned(uniforms.size());
+            const size_t uniformOffset = aligned(_meshUniforms.size());
             MeshUniforms uniform;
             uniform.viewProj = _viewProj;
             uniform.lightPos = glm::vec4(lightPos(), 1.0f);
             uniform.params = key.shading;
             uniform.eyePos = glm::vec4(_eyePos, 1.0f);
-            uniforms.resize(uniformOffset + sizeof(uniform));
-            std::memcpy(uniforms.data() + uniformOffset, &uniform, sizeof(uniform));
+            _meshUniforms.resize(uniformOffset + sizeof(uniform));
+            std::memcpy(_meshUniforms.data() + uniformOffset, &uniform, sizeof(uniform));
 
-            uniformSlotIndex = pageUniformKeys.size();
-            pageUniformKeys.push_back(uKey);
-            pageUniformOffsets.push_back(uniformOffset);
+            uniformSlotIndex = _meshPageUniformKeys.size();
+            _meshPageUniformKeys.push_back(uKey);
+            _meshPageUniformOffsets.push_back(uniformOffset);
         }
 
-        const uint32_t firstInstance = static_cast<uint32_t>(pageInstances.size());
-        pageInstances.insert(pageInstances.end(), instances.begin(), instances.end());
-        records.push_back({&key, &instances, firstInstance, uniformSlotIndex});
+        const uint32_t firstInstance = static_cast<uint32_t>(_meshPageInstances.size());
+        _meshPageInstances.insert(_meshPageInstances.end(), instances.begin(), instances.end());
+        _meshRecords.push_back({&key, &instances, firstInstance, uniformSlotIndex});
     }
     flushPage();
     _meshBatches.clear();
+    _lastMeshBatchKey.reset();
+    _lastMeshBatchVector = nullptr;
 }
 
 namespace {
@@ -2067,7 +2079,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     ensureSdfCubeVerts();
     if (!_sdfCubeVerts) return;
 
-    const auto authoredTransforms = deriveModelTransforms(_model);
+    const auto& authoredTransforms = getModelTransforms();
     if (!authoredTransforms) return;
 
     SdfInstanceData inst;
@@ -2481,54 +2493,49 @@ void WebGpuRenderer::flushSdfDraws() {
     static constexpr uint32_t kZeroDummy[4] = {0u, 0u, 0u, 0u};
     auto emptyAccelAlloc = bufferPool().suballocateStorage(kZeroDummy, sizeof(kZeroDummy));
 
-    struct SdfInstanceSlice {
-        WGPUBuffer buffer = nullptr;
-        uint64_t offset = 0;
-        uint64_t size = 0;
-    };
-    std::unordered_map<const SdfPipeline*, SdfInstanceSlice> instanceAllocations;
+    _sdfInstanceAllocations.clear();
     constexpr size_t pageBytes = 256 * 1024;
     constexpr size_t bindingAlignment = 256;
     const auto aligned = [](size_t bytes) {
         return (bytes + bindingAlignment - 1) / bindingAlignment * bindingAlignment;
     };
-    std::vector<const SdfPipeline*> pendingPipelines;
-    std::vector<size_t> pendingOffsets;
-    std::vector<uint8_t> packedInstanceBytes;
+    _sdfPendingPipelines.clear();
+    _sdfPendingOffsets.clear();
+    _sdfPackedInstanceBytes.clear();
 
     const auto flushInstancePage = [&]() {
-        if (pendingPipelines.empty()) return;
-        auto pageAlloc = bufferPool().suballocateStorage(packedInstanceBytes.data(), packedInstanceBytes.size());
-        for (size_t i = 0; i < pendingPipelines.size(); ++i) {
-            const SdfPipeline* sp = pendingPipelines[i];
-            const size_t instOffset = pendingOffsets[i];
+        if (_sdfPendingPipelines.empty()) return;
+        auto pageAlloc = bufferPool().suballocateStorage(_sdfPackedInstanceBytes.data(), _sdfPackedInstanceBytes.size());
+        for (size_t i = 0; i < _sdfPendingPipelines.size(); ++i) {
+            const SdfPipeline* sp = _sdfPendingPipelines[i];
+            const size_t instOffset = _sdfPendingOffsets[i];
             const size_t instBytes = _sdfBatches[sp].size() * sizeof(SdfInstanceData);
-            instanceAllocations[sp] = {pageAlloc.buffer, pageAlloc.offset + instOffset, instBytes};
+            _sdfInstanceAllocations[sp] = {pageAlloc.buffer, pageAlloc.offset + instOffset, instBytes};
         }
-        pendingPipelines.clear();
-        pendingOffsets.clear();
-        packedInstanceBytes.clear();
+        _sdfPendingPipelines.clear();
+        _sdfPendingOffsets.clear();
+        _sdfPackedInstanceBytes.clear();
     };
 
     for (const SdfPipeline* sp : _activeSdfPipelines) {
         const auto& instances = _sdfBatches[sp];
         if (instances.empty()) continue;
         const size_t bytes = instances.size() * sizeof(SdfInstanceData);
-        if (!pendingPipelines.empty() && (aligned(packedInstanceBytes.size()) + bytes > pageBytes)) {
+        if (!_sdfPendingPipelines.empty() && (aligned(_sdfPackedInstanceBytes.size()) + bytes > pageBytes)) {
             flushInstancePage();
         }
-        const size_t instOffset = aligned(packedInstanceBytes.size());
-        packedInstanceBytes.resize(instOffset + bytes);
-        std::memcpy(packedInstanceBytes.data() + instOffset, instances.data(), bytes);
-        pendingPipelines.push_back(sp);
-        pendingOffsets.push_back(instOffset);
+        const size_t instOffset = aligned(_sdfPackedInstanceBytes.size());
+        _sdfPackedInstanceBytes.resize(instOffset + bytes);
+        std::memcpy(_sdfPackedInstanceBytes.data() + instOffset, instances.data(), bytes);
+        _sdfPendingPipelines.push_back(sp);
+        _sdfPendingOffsets.push_back(instOffset);
     }
     flushInstancePage();
 
     for (const SdfPipeline* sp : _activeSdfPipelines) {
         const auto& instances = _sdfBatches[sp];
-        const auto itInst = instanceAllocations.find(sp);
-        if (itInst == instanceAllocations.end() || !itInst->second.buffer) continue;
+        const auto itInst = _sdfInstanceAllocations.find(sp);
+        if (itInst == _sdfInstanceAllocations.end() || !itInst->second.buffer) continue;
         const auto& instAlloc = itInst->second;
         
         const auto& params = _sdfParamsBatches[sp];
@@ -2719,6 +2726,7 @@ void WebGpuRenderer::flushSdfDraws() {
         _sdfRangeNodeBatches[sp].clear();
     }
     _activeSdfPipelines.clear();
+    _sdfInstanceAllocations.clear();
 }
 
 // The zero-proof memo for this density × extent, rebuilt only when either

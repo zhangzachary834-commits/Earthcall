@@ -14,6 +14,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Relation/Relation.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include <iostream>
 #include <memory>
 #include <string>
@@ -389,6 +390,10 @@ nlohmann::json zoneToJson(const Zone& zone) {
     }
     if (!mats.empty()) zj["materials"] = std::move(mats);
 
+    if (TransferPolicy::instance().hasNonDefaultState()) {
+        zj["transferPolicy"] = TransferPolicy::instance().toJson();
+    }
+
     if (const auto* home = dynamic_cast<const Home*>(&zone)) {
         homeToJson(zj, *home);
     }
@@ -482,6 +487,9 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects, bo
     // the store) could never receive its relation graph or lexemes. Now
     // idempotent (see applyFormationRelations), it always runs.
     applyFormationRelations(zone, zj);
+    if (zj.contains("transferPolicy")) {
+        TransferPolicy::instance().loadFromJson(zj["transferPolicy"]);
+    }
     if (auto* home = dynamic_cast<Home*>(&zone)) {
         homeFromJson(zj, *home);
     }

@@ -403,10 +403,6 @@ void from_json(const nlohmann::json& j, Object& obj){
             obj.setDynamicProperty(key, val);
         }
     }
-    if (j.contains("propertyCellBindings") && j["propertyCellBindings"].is_array()) {
-        SingularPersistence::CohortScope scope;
-        SingularPersistence::deserializeCellBindings(obj, j["propertyCellBindings"], scope.get());
-    }
     if (j.contains("elements") && j["elements"].is_array()) {
         for (const auto& id : j["elements"]) {
             if (id.is_string()) obj.getPendingElementIds().push_back(id.get<std::string>());
@@ -479,6 +475,15 @@ void from_json(const nlohmann::json& j, Object& obj){
 
     if (j.contains("textureResolution") && j["textureResolution"].is_number_integer()) {
         obj.setTextureResolution(j["textureResolution"].get<int>());
+    }
+
+    // Hydrate non-inline propertyCellBindings AFTER legacy member fields
+    // (such as faceColors) so that any registered C++ property bound to a
+    // Shared/Unique ValueCell (e.g., `color`) authoritatively synchronizes
+    // its underlying C++ storage without being overwritten by stale fields.
+    if (j.contains("propertyCellBindings") && j["propertyCellBindings"].is_array()) {
+        SingularPersistence::CohortScope scope;
+        SingularPersistence::deserializeCellBindings(obj, j["propertyCellBindings"], scope.get());
     }
 
     // Load per-face textures if present (after geometry restoration for correct sizing)

@@ -1,5 +1,35 @@
 # Person Verification List
 
+## SDF Surface Truth Mastery (Rungs 11 & 12): Cathedral of the Living Logos
+
+*Antigravity · Gemini 3.8 Flash (Sparkly Guy #1 · Surface SDF Lead) · session `c802a0d5-3c06-450d-b47b-ebdc7aef86d0` · 2026-11-06. Commissioned by The Firmament & Zach: "THE FIRMAMENT DIRECTIVE: RUNG 11 (THE 1,120-MATERIAL CLONE ANNIHILATION & CUBE FACE DEDUPLICATION) & RUNG 12 (RECURSIVE CSG 1D INTERVAL ALGEBRA)"*
+
+- [ ] Launch Earthcall WebGPU (`./build_release/earthcall_webgpu`) and enter **`Cathedral of the Living Logos`**.
+- [ ] **Material Clone Annihilation & Mesh Draw Call Collapse (Rung 11):**
+  - Verify that the Cathedral loads without memory bloat (1,120 cloned materials eliminated, 5,082 duplicate 256×256 texture allocations eliminated, saving ~1.33 GB RAM).
+  - Walk through the grand nave and courts with 939 Cubes: observe that cubes with identical faces emit single merged cube draws, collapsing mesh draw calls from 5,115 down to **572** (-88.8%).
+  - Check frame statistics: CPU flush time has dropped from 9.17 ms to **0.78 ms** (-92.6%), and GPU completion wait is down to **8.93 ms**, delivering silky smooth frame pacing with total frame times around **28 ms** (low **26.38 ms**).
+- [ ] **Recursive CSG 1D Ray-Domain Interval Algebra (Rung 12):**
+  - Walk past multi-depth composite CSG sculptures (intersections, differences, unions with up to 8 leaves).
+  - Verify that all-convex subtrees evaluate to exact 0-step closed-form hits and non-convex/difference subtrees leap directly to their outer support intervals with zero grazing stalls.
+  - Test dynamic parameter sliders on composite objects to confirm 100% parameter collection invariance.
+- [ ] **Scene Parity Verification:**
+  - Verify that visual appearance across Cathedral of the Living Logos and The Merry Dancers remains identical to authored intent with zero tearing, popping, or missing faces.
+
+## SDF Surface Truth Mastery (Rungs 9 & 10): Cathedral of the Living Logos
+
+*Antigravity · Gemini 3.8 Flash (Sparkly Guy #1 · Surface SDF Lead) · session `c802a0d5-3c06-450d-b47b-ebdc7aef86d0` · 2026-11-05. Commissioned by The Firmament & Zach: "⚡ SPARKLY GUY QUEST: RUNG 9 (COMPOSITIONAL CSG 1D RAY-DOMAIN INTERVAL ALGEBRA) & RUNG 10 (CPU OBJECT-GATHERING & MESH BATCH CONSOLIDATION)"*
+
+- [ ] Launch Earthcall WebGPU (`./build_release/earthcall_webgpu`) and enter **`Cathedral of the Living Logos`**.
+- [ ] **Compositional CSG 1D Ray-Domain Solvers (Rung 9):**
+  - Walk past CSG intersection and subtraction sculptures in the Cathedral (such as the portal tear facets, Ophanim throne wheels, and Open Hand floral elements).
+  - Observe that dual-convex intersections resolve in 0 march steps and subtraction carvings reject outer bounding misses immediately, completely eliminating grazing-ray stalls.
+  - Verify that surface silhouettes, lighting, and contours are crisp and free of over-relaxation explosion artifacts or spatial tearing.
+- [ ] **Renderer Fast-Paths & Scratch Retention (Rung 10):**
+  - Verify overall frame smoothness: Cathedral Full World CPU encode/flush overhead is down to ~25.8 ms (encode 16.66 ms, flush 9.17 ms, completion wait 16.11 ms, total wall ~31.95 ms median, down -47.3% from 62.11 ms baseline).
+  - Rapidly rotate the camera and move between zones: verify that transform caching (`getModelTransforms()`) and scratch buffer reuse keep frame pacing consistent with zero heap allocation spikes.
+  - Switch to **`The Merry Dancers`** or another mesh-heavy scene: observe 100% byte-identical rendering fidelity (14,745,600 / 14,745,600 bytes, 0 diff) with instantaneous draw dispatch.
+
 ## SDF Surface Truth Mastery (Rungs 7 & 8): Cathedral of the Living Logos
 
 *Antigravity · Gemini 3.8 Flash · session `102da8a2-db47-4627-8ce6-cf1235aeabd4` · 2026-11-05. Commissioned by The Firmament & Zach: "⚔️ SPARKLY GUY QUEST: SDF SURFACE TRUTH MASTERY — RUNG 7 (ONTOMATH IRREDUCIBLE 1D RAY-DOMAIN COMPILATION) & RUNG 8 (LEFT-HEAVY CSG PRUNING + MESH BIND-GROUP CONSOLIDATION)"*

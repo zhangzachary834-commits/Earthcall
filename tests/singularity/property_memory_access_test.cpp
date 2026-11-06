@@ -1149,6 +1149,44 @@ int main() {
         double speedup = compNs > 0 ? static_cast<double>(rawNs) / compNs : 1.0;
         std::cout << "[Benchmark] Raw string path 10k: " << rawNs << " us, CompiledPath 10k: "
                   << compNs << " us (" << speedup << "x speedup)\n";
+
+        // ActionNode::Kind::Map benchmark: out_val := v + v over 10,000 ticks
+        benchSubject.setDynamicProperty("in_val", 21.0);
+        benchSubject.setDynamicProperty("out_val", 0.0);
+
+        auto v1 = std::make_unique<OntoMath::MathNode>();
+        v1->op = OntoMath::MathNode::Op::ValueLeaf;
+        v1->variableName = "v";
+
+        auto v2 = std::make_unique<OntoMath::MathNode>();
+        v2->op = OntoMath::MathNode::Op::ValueLeaf;
+        v2->variableName = "v";
+
+        auto addNode = std::make_shared<OntoMath::MathNode>();
+        addNode->op = OntoMath::MathNode::Op::Add;
+        addNode->children.push_back(std::move(v1));
+        addNode->children.push_back(std::move(v2));
+
+        auto doubleF = OntoMath::Piecewise::continuous(addNode);
+
+        MathBindings mapBinds;
+        mapBinds["v"] = MathBindingEntry{PropertyPath::parse("in_val")};
+        auto mapAction = ActionNode::map("out_val", doubleF, mapBinds);
+        auto compiledMap = mapAction.compile();
+
+        ECA::Event dummyEvent{"tick", &benchSubject, nullptr};
+        auto tMap0 = std::chrono::high_resolution_clock::now();
+        for (int i = 0; i < iterations; ++i) {
+            compiledMap(dummyEvent, benchSubject);
+        }
+        auto tMap1 = std::chrono::high_resolution_clock::now();
+        auto mapUs = std::chrono::duration_cast<std::chrono::microseconds>(tMap1 - tMap0).count();
+
+        PropertyValue outVal;
+        assert(PropertyPath::parse("out_val").getValue(benchSubject, outVal) == Result::Ok);
+        assert(std::get<double>(outVal) == 42.0);
+        std::cout << "[Benchmark] ActionNode::Kind::Map 10k ticks: " << mapUs << " us ("
+                  << (static_cast<double>(mapUs) / iterations) << " us/tick)\n";
     }
 
     // -------------------------------------------------------------------------
@@ -1273,6 +1311,530 @@ int main() {
         rObj2->unbindPropertyCell("color");
         PropertyValue expVal;
         assert(PropertyPath::parse("watchedColor").getValue(*rObj3, expVal) == Result::ExpiredCell);
+    }
+
+    // -------------------------------------------------------------------------
+    // 16. Pass 5 Quest 3: Zone-Governed Inter-Zone Access Hook on TransferPolicy
+    // -------------------------------------------------------------------------
+    {
+        TransferPolicy::instance().clearPolicyRules();
+
+        Zone zoneA("zoneA", "symA");
+        Zone zoneB("zoneB", "symB");
+
+        Object authorA; authorA.setObjectID("authorA");
+        Object authorB; authorB.setObjectID("authorB");
+
+        Law lawA("lawA");
+        lawA.addAuthor(authorA);
+
+        Law lawB_low("lawB-low");
+        lawB_low.addAuthor(authorB);
+
+        Law lawB_high("lawB-high");
+        lawB_high.addAuthor(authorB);
+
+        // Relation establishing lawB_high authority-over lawB_low
+        Relation relAuthority("authority-over", lawB_high, lawB_low, true);
+        std::vector<Relation*> authRelations{&relAuthority};
+        Universe::instance().setRelationProvider([&](std::vector<Relation*>& out) {
+            for (auto* r : authRelations) if (r) out.push_back(r);
+        });
+        assert(lawB_high.hasAuthorityOver(lawB_low));
+
+        Object targetObj;
+        targetObj.setObjectID("target-obj");
+        targetObj.setDynamicProperty("data", 10.0);
+
+        AccessContext interCtx;
+        interCtx.originZone = &zoneA;
+        interCtx.targetZone = &zoneB;
+        interCtx.op = AccessOp::Write;
+
+        // 1. Initially open-by-default: write succeeds
+        assert(PropertyPath::parse("data").setValue(targetObj, 20.0, 0, interCtx) == Result::Ok);
+
+        // 2. Zone A allows outbound writes/shares
+        PolicyRule ruleA_outbound;
+        ruleA_outbound.originZoneId = "zoneA";
+        ruleA_outbound.targetZoneId = "";
+        ruleA_outbound.op = AccessOp::Write;
+        ruleA_outbound.allow = true;
+        ruleA_outbound.governingLaw = &lawA;
+        TransferPolicy::instance().addPolicyRule(ruleA_outbound);
+
+        // 3. Zone B denies inbound writes/shares from Zone A (authored by lawB_low)
+        PolicyRule ruleB_inbound_deny;
+        ruleB_inbound_deny.originZoneId = "zoneA";
+        ruleB_inbound_deny.targetZoneId = "zoneB";
+        ruleB_inbound_deny.op = AccessOp::Write;
+        ruleB_inbound_deny.allow = false;
+        ruleB_inbound_deny.governingLaw = &lawB_low;
+        TransferPolicy::instance().addPolicyRule(ruleB_inbound_deny);
+
+        // With dual jurisdiction: zoneA allows, but zoneB denies -> write refused with AccessDenied!
+        assert(PropertyPath::parse("data").setValue(targetObj, 30.0, 0, interCtx) == Result::AccessDenied);
+
+        // 4. Competing rule in Zone B: lawB_high (higher authority) grants inbound writes from zoneA
+        PolicyRule ruleB_inbound_allow;
+        ruleB_inbound_allow.originZoneId = "zoneA";
+        ruleB_inbound_allow.targetZoneId = "zoneB";
+        ruleB_inbound_allow.op = AccessOp::Write;
+        ruleB_inbound_allow.allow = true;
+        ruleB_inbound_allow.governingLaw = &lawB_high;
+        TransferPolicy::instance().addPolicyRule(ruleB_inbound_allow);
+
+        // Conflict resolved via authority-over DAG: lawB_high overrules lawB_low in receiver Zone B
+        // Both zoneA and zoneB now allow -> write succeeds!
+        assert(PropertyPath::parse("data").setValue(targetObj, 40.0, 0, interCtx) == Result::Ok);
+
+        // 5. If Zone A's outbound rule changes to deny (veto by sender):
+        TransferPolicy::instance().clearPolicyRules();
+        PolicyRule ruleA_deny;
+        ruleA_deny.originZoneId = "zoneA";
+        ruleA_deny.targetZoneId = "";
+        ruleA_deny.op = AccessOp::Write;
+        ruleA_deny.allow = false;
+        ruleA_deny.governingLaw = &lawA;
+        TransferPolicy::instance().addPolicyRule(ruleA_deny);
+        TransferPolicy::instance().addPolicyRule(ruleB_inbound_allow);
+
+        // Sender Zone A denies outbound -> write refused even though Zone B allows!
+        assert(PropertyPath::parse("data").setValue(targetObj, 50.0, 0, interCtx) == Result::AccessDenied);
+
+        // 6. Firmament Pass 5 Corrective Fix Witness:
+        //    (a) Automatic originZone & targetZone resolution when a real Law executes across Zones
+        //    (b) Explicit governingZoneId attribution when an outbound rule specifies both originZoneId and targetZoneId
+        Object senderObj;
+        senderObj.setObjectID("sender-obj");
+        zoneA.addToFormation(&senderObj);
+        zoneA.addToFormation(&lawA);
+        zoneB.addToFormation(&targetObj);
+        zoneB.addToFormation(&lawB_low);
+        zoneB.addToFormation(&lawB_high);
+
+        std::vector<Singular*> interZoneBeings{&zoneA, &zoneB, &senderObj, &targetObj, &authorA, &authorB, &lawA, &lawB_low, &lawB_high};
+        Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+            for (auto* b : interZoneBeings) if (b) out.push_back(b);
+        });
+
+        TransferPolicy::instance().clearPolicyRules();
+        // Zone A specifically denies outbound writes to Zone B (both originZoneId and targetZoneId set!)
+        PolicyRule ruleA_targeted_outbound_deny;
+        ruleA_targeted_outbound_deny.governingZoneId = "zoneA";
+        ruleA_targeted_outbound_deny.originZoneId = "zoneA";
+        ruleA_targeted_outbound_deny.targetZoneId = "zoneB";
+        ruleA_targeted_outbound_deny.op = AccessOp::Write;
+        ruleA_targeted_outbound_deny.allow = false;
+        ruleA_targeted_outbound_deny.governingLaw = &lawA;
+        TransferPolicy::instance().addPolicyRule(ruleA_targeted_outbound_deny);
+        // Zone B allows inbound via high-authority lawB_high
+        TransferPolicy::instance().addPolicyRule(ruleB_inbound_allow);
+
+        // Real Law execution from senderObj in zoneA writing to @target-obj.data in zoneB:
+        // TransferPolicy::checkAccess automatically infers originZone=&zoneA and targetZone=&zoneB,
+        // and ruleA_targeted_outbound_deny stays in senderRules (cannot be overruled by Zone B's lawB_high).
+        lawA.setActionModel(ActionNode::set("@target-obj.data", 77.0));
+        assert(lawA.applyTo(senderObj) == Law::ApplicationResult::Applied);
+        assert(!lawA.applicationLog().back().changedSomething());
+        assert(lawA.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
+
+        // Once Zone A allows outbound to Zone B, the same Law execution succeeds automatically!
+        TransferPolicy::instance().clearPolicyRules();
+        PolicyRule ruleA_targeted_outbound_allow = ruleA_targeted_outbound_deny;
+        ruleA_targeted_outbound_allow.allow = true;
+        TransferPolicy::instance().addPolicyRule(ruleA_targeted_outbound_allow);
+        TransferPolicy::instance().addPolicyRule(ruleB_inbound_allow);
+
+        assert(lawA.applyTo(senderObj) == Law::ApplicationResult::Applied);
+        assert(lawA.applicationLog().back().changedSomething());
+        PropertyValue autoZoneVal;
+        assert(PropertyPath::parse("data").getValue(targetObj, autoZoneVal) == Result::Ok);
+        assert(std::get<double>(autoZoneVal) == 77.0);
+
+        TransferPolicy::instance().clearPolicyRules();
+        Universe::instance().setProvider(nullptr);
+        Universe::instance().setRelationProvider(nullptr);
+    }
+
+    // -------------------------------------------------------------------------
+    // 17. Legible Property Surface on @transfer-policy for Authoring PolicyRules by Law & Persistence
+    // -------------------------------------------------------------------------
+    {
+        TransferPolicy::instance().clearPolicyRules();
+
+        Zone zoneA("zoneA", "symA");
+        Zone zoneB("zoneB", "symB");
+
+        Object authorA; authorA.setObjectID("authorA-17");
+        Object authorB; authorB.setObjectID("authorB-17");
+
+        Object senderObj; senderObj.setObjectID("sender-obj-17");
+        zoneA.addToFormation(&senderObj);
+
+        Object targetObj; targetObj.setObjectID("target-obj-17");
+        zoneB.addToFormation(&targetObj);
+        targetObj.setDynamicProperty("data", 10.0);
+
+        Law lawA("lawA-17");
+        lawA.setLawIdentifier("lawA-17");
+        lawA.addAuthor(authorA);
+        lawA.setJurisdiction(std::shared_ptr<Zone>(&zoneA, [](Zone*){}));
+        zoneA.addToFormation(&lawA);
+
+        Law lawB_low("lawB-low-17");
+        lawB_low.setLawIdentifier("lawB-low-17");
+        lawB_low.addAuthor(authorB);
+        lawB_low.setJurisdiction(std::shared_ptr<Zone>(&zoneB, [](Zone*){}));
+        zoneB.addToFormation(&lawB_low);
+
+        Law lawB_high("lawB-high-17");
+        lawB_high.setLawIdentifier("lawB-high-17");
+        lawB_high.addAuthor(authorB);
+        lawB_high.setJurisdiction(std::shared_ptr<Zone>(&zoneB, [](Zone*){}));
+        zoneB.addToFormation(&lawB_high);
+
+        Relation authOver("authority-over", lawB_high, lawB_low, true);
+        std::vector<Relation*> rels{&authOver};
+        Universe::instance().setRelationProvider([&](std::vector<Relation*>& out) {
+            for (auto* r : rels) if (r) out.push_back(r);
+        });
+
+        std::vector<Singular*> allBeings{
+            &zoneA, &zoneB, &senderObj, &targetObj, &authorA, &authorB, &lawA, &lawB_low, &lawB_high, &TransferPolicy::instance()
+        };
+        Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+            for (auto* b : allBeings) if (b) out.push_back(b);
+        });
+
+        // Step 1: lawB_low authors a deny PolicyRule targeting zoneB purely via PropertyPath writes
+        // (zero direct C++ calls to addPolicyRule)
+        lawB_low.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.pathPattern", PropertyValue(std::string("data"))),
+            ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("write"))),
+            ActionNode::set("@transfer-policy.rule.allow", PropertyValue(false)),
+            ActionNode::set("@transfer-policy.rule.targetZoneId", PropertyValue(std::string("zoneB"))),
+            ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true))
+        }));
+
+        assert(TransferPolicy::instance().ruleCount() == 0);
+        assert(lawB_low.applyTo(targetObj) == Law::ApplicationResult::Applied);
+        assert(TransferPolicy::instance().ruleCount() == 1);
+
+        // Verify staged fields were reset and ruleCount property reads 1
+        PropertyValue rcVal;
+        assert(PropertyPath::parse("ruleCount").getValue(TransferPolicy::instance(), rcVal) == Result::Ok);
+        assert(std::get<int>(rcVal) == 1);
+
+        // Step 2: Now lawA attempts to write @target-obj-17.data from zoneA.
+        // Receiver Zone B has a deny rule from lawB_low. Write is refused!
+        lawA.setActionModel(ActionNode::set("@target-obj-17.data", 42.0));
+        assert(lawA.applyTo(senderObj) == Law::ApplicationResult::Applied);
+        assert(!lawA.applicationLog().back().changedSomething());
+        assert(lawA.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
+
+        // Step 3: lawB_high authors an allow PolicyRule targeting zoneB purely via PropertyPath writes
+        lawB_high.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.pathPattern", PropertyValue(std::string("data"))),
+            ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("write"))),
+            ActionNode::set("@transfer-policy.rule.allow", PropertyValue(true)),
+            ActionNode::set("@transfer-policy.rule.targetZoneId", PropertyValue(std::string("zoneB"))),
+            ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true))
+        }));
+
+        assert(lawB_high.applyTo(targetObj) == Law::ApplicationResult::Applied);
+        assert(TransferPolicy::instance().ruleCount() == 2);
+
+        // Step 4: lawA attempts to write again.
+        // Because lawB_high has authority-over lawB_low, lawB_high's allow rule wins!
+        assert(lawA.applyTo(senderObj) == Law::ApplicationResult::Applied);
+        assert(lawA.applicationLog().back().changedSomething());
+        PropertyValue finalVal;
+        assert(PropertyPath::parse("data").getValue(targetObj, finalVal) == Result::Ok);
+        assert(std::get<double>(finalVal) == 42.0);
+
+        // Step 5: Persistence round-trip of authored rules
+        nlohmann::json savedJson = TransferPolicy::instance().toJson();
+        assert(savedJson.contains("rules"));
+        assert(savedJson["rules"].size() == 2);
+        assert(savedJson["rules"][0]["governingLawId"] == "lawB-low-17");
+        assert(savedJson["rules"][1]["governingLawId"] == "lawB-high-17");
+        assert(savedJson["rules"][0]["allow"] == false);
+        assert(savedJson["rules"][1]["allow"] == true);
+
+        TransferPolicy::instance().clearPolicyRules();
+        assert(TransferPolicy::instance().ruleCount() == 0);
+
+        TransferPolicy::instance().loadFromJson(savedJson);
+        assert(TransferPolicy::instance().ruleCount() == 2);
+
+        // Verify loaded rules still govern access correctly with authority DAG intact
+        targetObj.setDynamicProperty("data", 100.0);
+        lawA.setActionModel(ActionNode::set("@target-obj-17.data", 200.0));
+        assert(lawA.applyTo(senderObj) == Law::ApplicationResult::Applied);
+        assert(lawA.applicationLog().back().changedSomething());
+        assert(PropertyPath::parse("data").getValue(targetObj, finalVal) == Result::Ok);
+        assert(std::get<double>(finalVal) == 200.0);
+
+        // Step 6: Firmament Pass 6 Corrective Fix Witness:
+        //   (a) Lazy governingLawId resolution when TransferPolicy::loadFromJson runs BEFORE Laws are in Universe
+        TransferPolicy::instance().clearPolicyRules();
+        Universe::instance().setProvider(nullptr);
+        TransferPolicy::instance().loadFromJson(savedJson);
+        assert(TransferPolicy::instance().ruleCount() == 2);
+        // Re-register Universe provider after loadFromJson -> lazy resolution restores governingLaw pointers!
+        Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+            for (auto* b : allBeings) if (b) out.push_back(b);
+        });
+        assert(TransferPolicy::instance().toJson()["rules"][0]["governingLawId"] == "lawB-low-17");
+        assert(TransferPolicy::instance().toJson()["rules"][1]["governingLawId"] == "lawB-high-17");
+
+        //   (b) Effective-Cell Policy Authoring by Law via @transfer-policy.rule.targetCellPath
+        //   (c) Committed-Snapshot Anti-Self-Authorization Guard (createdInScopeId == s_activeScopeId)
+        TransferPolicy::instance().clearPolicyRules();
+        Object mirrorObj;
+        mirrorObj.setObjectID("mirror-obj-17");
+        zoneB.addToFormation(&mirrorObj);
+        allBeings.push_back(&mirrorObj);
+
+        // Share cell between targetObj.data and mirrorObj.aliasData
+        Law shareAliasLaw("share-alias-17");
+        shareAliasLaw.addAuthor(authorB);
+        shareAliasLaw.setActionModel(ActionNode::shareCell("aliasData", "@target-obj-17.data"));
+        assert(shareAliasLaw.applyTo(mirrorObj) == Law::ApplicationResult::Applied);
+        assert(mirrorObj.getPropertyCell("aliasData") == targetObj.getPropertyCell("data"));
+
+        // lawB_high authors a cell-specific deny rule via rule.targetCellPath = "@target-obj-17.data"
+        lawB_high.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.targetCellPath", PropertyValue(std::string("@target-obj-17.data"))),
+            ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("write"))),
+            ActionNode::set("@transfer-policy.rule.allow", PropertyValue(false)),
+            ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true))
+        }));
+        assert(lawB_high.applyTo(targetObj) == Law::ApplicationResult::Applied);
+
+        // Writing through mirrorObj.aliasData is refused by the effective-cell rule!
+        lawA.setActionModel(ActionNode::set("@mirror-obj-17.aliasData", 999.0));
+        assert(lawA.applyTo(senderObj) == Law::ApplicationResult::Applied);
+        assert(!lawA.applicationLog().back().changedSomething());
+        assert(lawA.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
+
+        // Committed-Snapshot Guard: even if a higher-authority Law commits an allow rule AND tries to write
+        // to the protected cell inside the SAME Law application transaction, the uncommitted allow rule
+        // cannot authorize the transaction that created it!
+        Law superLaw("super-law-17");
+        superLaw.setLawIdentifier("super-law-17");
+        superLaw.addAuthor(authorB);
+        superLaw.setJurisdiction(std::shared_ptr<Zone>(&zoneB, [](Zone*){}));
+        zoneB.addToFormation(&superLaw);
+        allBeings.push_back(&superLaw);
+        Relation superRel("authority-over", superLaw, lawB_high, true);
+        rels.push_back(&superRel);
+
+        superLaw.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.targetCellPath", PropertyValue(std::string("@target-obj-17.data"))),
+            ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("write"))),
+            ActionNode::set("@transfer-policy.rule.allow", PropertyValue(true)),
+            ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true)),
+            ActionNode::set("@mirror-obj-17.aliasData", PropertyValue(555.0))
+        }));
+        // First application: the allow rule is committed, but the write in the SAME transaction is refused!
+        assert(superLaw.applyTo(targetObj) == Law::ApplicationResult::Applied);
+        assert(superLaw.applicationLog().back().trace.nodes.back().reason == Result::AccessDenied);
+        assert(PropertyPath::parse("data").getValue(targetObj, finalVal) == Result::Ok);
+        assert(std::get<double>(finalVal) == 200.0);
+
+        // Subsequent application (after the rule transaction committed): write now succeeds!
+        lawA.setActionModel(ActionNode::set("@mirror-obj-17.aliasData", 555.0));
+        assert(lawA.applyTo(senderObj) == Law::ApplicationResult::Applied);
+        assert(lawA.applicationLog().back().changedSomething());
+        assert(PropertyPath::parse("data").getValue(targetObj, finalVal) == Result::Ok);
+        assert(std::get<double>(finalVal) == 555.0);
+
+        TransferPolicy::instance().clearPolicyRules();
+        Universe::instance().setProvider(nullptr);
+        Universe::instance().setRelationProvider(nullptr);
+    }
+
+    // -------------------------------------------------------------------------
+    // 18. Quest 1 & Quest 2: Zone + TransferPolicy Round-Trip Persistence &
+    //     Comprehensive AccessOp Governance (Read, Share, BorrowWeak, TransferUnique)
+    // -------------------------------------------------------------------------
+    {
+        TransferPolicy::instance().clearPolicyRules();
+
+        // --- Part A: Zone + TransferPolicy Round-Trip Persistence (Quest 1) ---
+        Zone zone18("zone18", "sym18");
+        auto obj18 = std::make_shared<Object>();
+        obj18->setObjectID("obj18");
+        obj18->setDynamicProperty("secret", 123.0);
+        obj18->setDynamicProperty("classified", 77.0);
+        obj18->setDynamicProperty("nosharer", 100.0);
+        obj18->setDynamicProperty("noweak", 200.0);
+        obj18->setDynamicProperty("nounique", 300.0);
+        zone18.addObject(obj18);
+
+        Object actor18; actor18.setObjectID("actor18");
+        zone18.addToFormation(&actor18);
+
+        Law lawAdmin("law-admin-18");
+        lawAdmin.setLawIdentifier("law-admin-18");
+        lawAdmin.addAuthor(actor18);
+        lawAdmin.setJurisdiction(std::shared_ptr<Zone>(&zone18, [](Zone*){}));
+        zone18.addToFormation(&lawAdmin);
+
+        std::vector<Singular*> beings18{
+            &zone18, obj18.get(), &actor18, &lawAdmin, &TransferPolicy::instance()
+        };
+        Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+            for (auto* b : beings18) if (b) out.push_back(b);
+        });
+
+        // Initially no custom policy rules -> hasNonDefaultState() is false!
+        assert(!TransferPolicy::instance().hasNonDefaultState());
+        nlohmann::json defaultZj = zoneToJson(zone18);
+        assert(!defaultZj.contains("transferPolicy")); // Clean zone has zero format churn!
+
+        // Author a PolicyRule denying writes to "secret" purely via PropertyPath writes
+        lawAdmin.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.pathPattern", PropertyValue(std::string("secret"))),
+            ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("write"))),
+            ActionNode::set("@transfer-policy.rule.allow", PropertyValue(false)),
+            ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true))
+        }));
+        assert(lawAdmin.applyTo(*obj18) == Law::ApplicationResult::Applied);
+        assert(TransferPolicy::instance().ruleCount() == 1);
+        assert(TransferPolicy::instance().hasNonDefaultState());
+
+        // Serialize Zone -> includes "transferPolicy" additively
+        nlohmann::json customZj = zoneToJson(zone18);
+        assert(customZj.contains("transferPolicy"));
+        assert(customZj["transferPolicy"]["rules"].size() == 1);
+
+        // Clear TransferPolicy rules and verify reload restores them
+        TransferPolicy::instance().clearPolicyRules();
+        assert(TransferPolicy::instance().ruleCount() == 0);
+
+        std::shared_ptr<Zone> reloadedZone = makeZoneFromJson(customZj);
+        assert(reloadedZone != nullptr);
+        assert(TransferPolicy::instance().ruleCount() == 1);
+
+        // Verify the restored rule enforces access refusal on writes to "secret"
+        Law writerLaw("writer-law-18");
+        writerLaw.setLawIdentifier("writer-law-18");
+        writerLaw.addAuthor(actor18);
+        writerLaw.setActionModel(ActionNode::set("@obj18.secret", 999.0));
+        assert(writerLaw.applyTo(actor18) == Law::ApplicationResult::Applied);
+        assert(!writerLaw.applicationLog().back().changedSomething());
+        assert(writerLaw.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
+        PropertyValue secretVal;
+        assert(PropertyPath::parse("secret").getValue(*obj18, secretVal) == Result::Ok);
+        assert(std::get<double>(secretVal) == 123.0);
+
+        // --- Part B: Comprehensive AccessOp Governance (Quest 2) ---
+        // 1. AccessOp::Read Governance
+        // Author a rule on @transfer-policy denying read access to "classified"
+        lawAdmin.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.pathPattern", PropertyValue(std::string("classified"))),
+            ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("read"))),
+            ActionNode::set("@transfer-policy.rule.allow", PropertyValue(false)),
+            ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true))
+        }));
+        assert(lawAdmin.applyTo(*obj18) == Law::ApplicationResult::Applied);
+
+        // (a) Condition evaluation: ConditionNode::compare fails because lawGetValue returns false / AccessDenied
+        Law conditionReaderLaw("cond-reader-18");
+        conditionReaderLaw.setLawIdentifier("cond-reader-18");
+        conditionReaderLaw.addAuthor(actor18);
+        conditionReaderLaw.setConditionModel(ConditionNode::compare(
+            "@obj18.classified", ConditionNode::Op::Eq, PropertyValue(77.0)
+        ));
+        conditionReaderLaw.setActionModel(ActionNode::set("auditFlag", PropertyValue(true)));
+        assert(conditionReaderLaw.applyTo(actor18) == Law::ApplicationResult::ConditionsFailed);
+        assert(!actor18.hasDynamicProperty("auditFlag"));
+
+        // (b) CopyValue read governance: ActionNode::copyCell fails because source cannot be read
+        Law copyReaderLaw("copy-reader-18");
+        copyReaderLaw.setLawIdentifier("copy-reader-18");
+        copyReaderLaw.addAuthor(actor18);
+        copyReaderLaw.setActionModel(ActionNode::copyCell("leaked", "@obj18.classified"));
+        assert(copyReaderLaw.applyTo(actor18) == Law::ApplicationResult::Applied);
+        assert(!copyReaderLaw.applicationLog().back().changedSomething());
+        assert(copyReaderLaw.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
+        assert(!actor18.hasDynamicProperty("leaked"));
+
+        // (c) MathBindings read governance: ActionNode::map with bindings reading "classified" fails
+        Law mapReaderLaw("map-reader-18");
+        mapReaderLaw.setLawIdentifier("map-reader-18");
+        mapReaderLaw.addAuthor(actor18);
+        MathBindings mb;
+        mb["x"] = MathBindingEntry{PropertyPath::parse("@obj18.classified")};
+        auto leaf = std::make_shared<OntoMath::MathNode>();
+        leaf->op = OntoMath::MathNode::Op::ValueLeaf;
+        leaf->variableName = "x";
+        mapReaderLaw.setActionModel(ActionNode::map("derived", OntoMath::Piecewise::continuous(std::move(leaf)), std::move(mb)));
+        assert(mapReaderLaw.applyTo(actor18) == Law::ApplicationResult::Applied);
+        assert(!mapReaderLaw.applicationLog().back().changedSomething());
+        assert(mapReaderLaw.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
+        assert(!actor18.hasDynamicProperty("derived"));
+
+        // 2. AccessOp::Share Governance
+        lawAdmin.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.pathPattern", PropertyValue(std::string("nosharer"))),
+            ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("share"))),
+            ActionNode::set("@transfer-policy.rule.allow", PropertyValue(false)),
+            ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true))
+        }));
+        assert(lawAdmin.applyTo(*obj18) == Law::ApplicationResult::Applied);
+
+        Law shareAttemptLaw("share-attempt-18");
+        shareAttemptLaw.setLawIdentifier("share-attempt-18");
+        shareAttemptLaw.addAuthor(actor18);
+        shareAttemptLaw.setActionModel(ActionNode::shareCell("sharedAlias", "@obj18.nosharer"));
+        assert(shareAttemptLaw.applyTo(actor18) == Law::ApplicationResult::Applied);
+        assert(!shareAttemptLaw.applicationLog().back().changedSomething());
+        assert(shareAttemptLaw.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
+        assert(!actor18.hasPropertyCell("sharedAlias"));
+
+        // 3. AccessOp::BorrowWeak Governance
+        lawAdmin.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.pathPattern", PropertyValue(std::string("noweak"))),
+            ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("weak"))),
+            ActionNode::set("@transfer-policy.rule.allow", PropertyValue(false)),
+            ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true))
+        }));
+        assert(lawAdmin.applyTo(*obj18) == Law::ApplicationResult::Applied);
+
+        Law weakAttemptLaw("weak-attempt-18");
+        weakAttemptLaw.setLawIdentifier("weak-attempt-18");
+        weakAttemptLaw.addAuthor(actor18);
+        weakAttemptLaw.setActionModel(ActionNode::weakCell("weakAlias", "@obj18.noweak"));
+        assert(weakAttemptLaw.applyTo(actor18) == Law::ApplicationResult::Applied);
+        assert(!weakAttemptLaw.applicationLog().back().changedSomething());
+        assert(weakAttemptLaw.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
+        assert(!actor18.hasPropertyCell("weakAlias"));
+
+        // 4. AccessOp::TransferUnique Governance
+        lawAdmin.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.pathPattern", PropertyValue(std::string("nounique"))),
+            ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("unique"))),
+            ActionNode::set("@transfer-policy.rule.allow", PropertyValue(false)),
+            ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true))
+        }));
+        assert(lawAdmin.applyTo(*obj18) == Law::ApplicationResult::Applied);
+
+        Law uniqueAttemptLaw("unique-attempt-18");
+        uniqueAttemptLaw.setLawIdentifier("unique-attempt-18");
+        uniqueAttemptLaw.addAuthor(actor18);
+        uniqueAttemptLaw.setActionModel(ActionNode::uniqueCell("uniqueAlias", "@obj18.nounique"));
+        assert(uniqueAttemptLaw.applyTo(actor18) == Law::ApplicationResult::Applied);
+        assert(!uniqueAttemptLaw.applicationLog().back().changedSomething());
+        assert(uniqueAttemptLaw.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
+        assert(!actor18.hasPropertyCell("uniqueAlias"));
+
+        TransferPolicy::instance().clearPolicyRules();
+        Universe::instance().setProvider(nullptr);
+        Universe::instance().setRelationProvider(nullptr);
     }
 
     std::cout << "property_memory_access_test: PASS\n";

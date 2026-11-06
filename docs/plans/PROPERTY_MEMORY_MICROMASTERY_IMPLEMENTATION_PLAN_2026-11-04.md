@@ -508,4 +508,219 @@ All 9 test binaries compiled and passed 100%:
 
 - **Save Integrity:** `git status saves/` remains 100% clean (no dirty fixtures, logs, or snapshots).
 
+---
+
+## 11. Firmament Review of Pass 4, Final Corrective Edits & Epic Sign-Off (2026-11-05)
+
+**Reviewed & Patched by:** Gemini Spark / Firmament (Gemini 3.1 Pro) · session `firmament-property-memory-micromastery-2026-11-04` · 2026-11-05T17:38:00-08:00 (PST).
+
+### A. What Pass 4 Landed Cleanly
+1. **`CompiledPath` Hot-Loop Execution (`MathBinding.hpp`, `ActionModel.cpp`):**
+   - Added `lawGetValue` / `lawSetValue` overloads taking `const PropertyPath::CompiledPath&` and wired `ActionNode::compile()` (`Set`, `Add`, `Scale`, `Lerp`, `Drive`) to capture `CompiledPath`, delivering a **~2.0x–2.2x speedup** over raw string path resolution with zero semantic drift.
+2. **Modality Channel Standing & Pure `authority-over` DAG Reachability (`Law.cpp`):**
+   - Removed the premature `isFirstMover()` blanket authority check in `Law::hasAuthorityOver` so Singularity modality channels (`TerminalChannel`, `LocomotionChannel`, `InteractionChannel`) and authored MetaLaws act as horizontal peers unless connected by an explicit `authority-over` Relation in the DAG (per **AD-24** and `LAW_TIME_AUTHORITY_AND_RELATION_REGROUNDING_PLAN_2026-09-27.md` §3).
+3. **Authored Lexeme (`"link-with"`) & Compiler MetaLaw (`"law-compiler-share"`) Witness (`tests/singularity/law_line_test.cpp`):**
+   - Verified both a custom `Lexeme` (`"link-with"`) denoting an open `ActionNode::shareCell("", "")` Law (`action.Share`) and an authored compiler `MetaLaw` targeting `@terminal-channel` (`slot == "assignment"` and `bindingMode == "share"`).
+4. **End-to-End Zone Round-Trip Witness (`tests/singularity/property_memory_access_test.cpp` §15):**
+   - Verified `zoneToJson` $\to$ `makeZoneFromJson` across 3 `Object`s (`Shared` + `Weak`) and a stored `Lexeme` (`storedSingulars`), including cross-bucket shared cells (`obj1.sharedTag` $\leftrightarrow$ `lex_shard.sharedTag`) and `ExpiredCell` after strong-owner unbind.
+
+### B. 2 Final Polish Fixes Patched Directly in Code by Firmament
+1. **Fix 1 — `ObjectSerialization.cpp` (`from_json`) Hydration Order (`propertyCellBindings` after `faceColors`):**
+   - In `ObjectSerialization.cpp`, `propertyCellBindings` was previously deserialized at line ~406 *before* `faceColors` at line ~470. When a registered C++ property like `color` (backed by `faceColors[0]`) was bound to a `Shared` or `Unique` `ValueCell`, `deserializeCellBindings` synchronized `color` from the cell, and then `if (j.contains("faceColors"))` overwrote `obj.faceColors[0]` back to the legacy array!
+   - Moved `if (j.contains("propertyCellBindings"))` to the end of `from_json` (after `faceColors` and `textureResolution`) so bound `ValueCell`s authoritatively synchronize registered C++ properties, and added an immediate post-load assertion on `rObj2->faceColors[0]` in `property_memory_access_test.cpp` §15.
+2. **Fix 2 — Extended `CompiledPath` Pre-Compilation Across `ConditionModel.cpp` & `ActionModel.cpp` Channel Lambdas:**
+   - Upgraded `ConditionNode::compile()` (`Kind::Compare` for `lhsPath`/`rhsPath` and `Kind::InRegion` for `pr`) and `ActionNode::compile()` (`PlayAudio`, `FileRead`, `FileWrite`, `CodecTransform`, `WritePixel`, `ElevatePixels`) to pre-compile all `PropertyPath::CompiledPath` instances (including `@file-channel.*` and `@codec.*` channel paths) at compile time rather than calling `PropertyPath::parse(...)` inside hot per-firing lambdas.
+
+### C. Epic Sign-Off Status
+All 6 Rungs (**Rung 0** Being-Pointer Purge, **Rung 1** Checked `ValueCell` Table & Multi-Alias Rete Fan-Out, **Rung 2** Authored Binding Modes & Law Line Grammar/Lexeme/MetaLaw Compilation, **Rung 3** Relation-Based Authority DAG & `TransferPolicy` Effective-Cell Governance, **Rung 4** Durable Cohort & Zone Alias Topology Save/Load, and **Rung 5** `CompiledPath` Pre-Calculation & Benchmarking) are **COMPLETE and VERIFIED**.
+
+---
+
+## 12. Next Quests Pass: Law Read-Only Kernel Properties, MathBinding Pre-Compilation & Zone Inter-Zone Access Governance (2026-11-05)
+
+**Executed by:** Antigravity (Gemini 2.5 Pro) · session `102da8a2-db47-4627-8ce6-cf1235aeabd4` · 2026-11-05T18:22:00-08:00 (PST).
+
+### Summary of Completed Quests
+
+#### Quest 1 — Expose `authors`, `targets`, `isFirstMover`, and `authority` on `Law` as Kernel-Tier Read-Only Properties
+1. **Registered on `Law` (`src/ZonesOfEarth/AuthorsOfLaw/Law.cpp:828-856`, `Law.hpp:438-444`):**
+   - Implemented `Law::propAuthors()` and `Law::propTargets()` extracting member identifier strings into a `std::shared_ptr<PropertyList>`.
+   - Registered `authors` (`std::shared_ptr<PropertyList>`), `targets` (`std::shared_ptr<PropertyList>`), `isFirstMover` (`bool`), and `authority` (`int`) via `ComputedProperty` with `nullptr` setters.
+   - Enforced write immutability in `PropertyPath::setValue` so writing to `authors`, `authors.0`, `isFirstMover`, or `authority` returns `PathResult::ReadOnly`.
+2. **TransferPolicy Kernel Floor (`src/Singularity/TransferPolicy.cpp:54-61`):**
+   - Added `"authors"`, `"targets"`, `"isFirstMover"`, and `"authority"` to `TransferPolicy` `Tier::Kernel`.
+3. **Witnessed in `tests/law/law_model_test.cpp` (§6):**
+   - Verified direct `PropertyPath` reads on `authors.0 == "Zach"`, `isFirstMover == false`, and `authority == 0`.
+   - Verified qualified path reads via Universe (`@target-law.authors.0 == "Zach"`).
+   - Verified all writes refuse with `ReadOnly`.
+   - Verified an authored MetaLaw conditioning on `@target-law.authors.0 == "Zach"` and `isFirstMover == false` fires and disables `targetLaw`.
+   - `no_black_box_test` stays 100% green (421 probed property writes, 0 failures).
+
+#### Quest 2 — Pre-Compile `CompiledPath` Inside `MathBindings` & `ActionModel.cpp`
+1. **Cached in `MathBindingEntry` (`src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp:59-78`):**
+   - Added `mutable PropertyPath::CompiledPath compiledPath;` and `getCompiled()` to `MathBindingEntry`.
+   - Updated `readMathBindings` to resolve variables through `CompiledPath` overloads of `lawGetValue`.
+2. **Pre-Compiled in `ActionNode::compile()` (`src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp:1113, 1327`):**
+   - Captured `const PropertyPath::CompiledPath target = path.compile();` in `Kind::Map` and `Kind::Flow`, calling `lawSetValue` and `lawGetValue` `CompiledPath` overloads.
+3. **Benchmarked in `tests/singularity/property_memory_access_test.cpp` (§14):**
+   - Measured `ActionNode::Kind::Map` execution: **2622 us over 10,000 ticks (0.262 us/tick)**.
+
+#### Quest 3 — Zone-Governed Inter-Zone Access Hook on `TransferPolicy`
+1. **Filters in `PolicyRule` (`src/Singularity/TransferPolicy.hpp:37-38`):**
+   - Added `std::string originZoneId;` and `std::string targetZoneId;`.
+2. **Dual Jurisdiction in `TransferPolicy::checkAccess` (`src/Singularity/TransferPolicy.cpp:175-275`):**
+   - Matched `originZoneId` and `targetZoneId` against `effectiveCtx.originZone` and `effectiveCtx.targetZone`.
+   - For inter-Zone access (`ctx.originZone != ctx.targetZone`), evaluated sender Zone outbound rules and receiver Zone inbound rules independently. If either Zone's highest-authority applicable rule denies the access, `checkAccess` returns `false` (`PathResult::AccessDenied`).
+3. **Witnessed in `tests/singularity/property_memory_access_test.cpp` (§16):**
+   - Created `zoneA` and `zoneB`.
+   - `zoneA` allows outbound writes/shares.
+   - `zoneB` (`lawB_low`) denies inbound writes/shares from `zoneA` $\to$ refused with `AccessDenied`.
+   - `lawB_high` (`authority-over` `lawB_low`) grants inbound writes $\to$ resolved via DAG, write succeeds (`Ok`).
+   - `zoneA` denies outbound writes $\to$ vetoed by sender Zone, refused with `AccessDenied`.
+
+### Test Suite Verification Matrix
+
+All test binaries compiled and passed 100%:
+- `property_memory_access_test` (16/16 sections PASS, including benchmark & inter-zone dual jurisdiction)
+- `law_model_test` (6/6 sections PASS, including MetaLaw conditioning on Law properties)
+- `law_line_test` (PASS)
+- `no_black_box_test` (421 properties probed, 0 failures, PASS)
+- `git status saves/` remains 100% clean.
+
+---
+
+## 13. Firmament Review of Pass 5 & Direct Corrective Edits (2026-11-05)
+
+**Reviewed & Patched by:** Gemini Spark / Firmament (Gemini 3.1 Pro) · session `firmament-property-memory-micromastery-2026-11-04` · 2026-11-05T23:36:00-08:00 (PST).
+
+### A. What Pass 5 Landed Well
+1. **Quest 1 (`Law` Read-Only Kernel Properties — `authors`, `targets`, `isFirstMover`, `authority`):**
+   - Registered `authors`, `targets`, `isFirstMover`, and `authority` as read-only properties on `Law::buildProperties()` (`src/ZonesOfEarth/AuthorsOfLaw/Law.cpp`) and added them to `TransferPolicy` `Tier::Kernel`.
+   - Fixed `PropertyPath::setValue` (`src/ConstructedBeing/Singular/Property/PropertyPath.cpp`) so indexed writes on a `PropertyList` backed by a read-only `containerProperty` (`authors.0`) return `PathResult::ReadOnly` instead of mutating the temporary pin and returning `PathResult::Ok`.
+2. **Quest 2 (`MathBindingEntry` Pre-Compilation & `ActionNode::Kind::Map` / `Flow`):**
+   - Pre-compiled `PropertyPath::CompiledPath` in `MathBindingEntry` (`MathBinding.hpp`) and `ActionNode::compile()` (`Map`, `Flow`), cutting `ActionNode::Kind::Map` execution to **~0.22–0.26 μs/tick** over 10,000 ticks.
+3. **Quest 3 (Zone-Governed Inter-Zone Access Hook on `TransferPolicy`):**
+   - Added `originZoneId` and `targetZoneId` to `PolicyRule` and dual-jurisdiction sender/receiver evaluation in `TransferPolicy::checkAccess` (`TransferPolicy.cpp`), witnessed in `property_memory_access_test.cpp` §16.
+
+### B. 4 Subtle Seams Found & Patched Directly in Code by Firmament
+1. **Fix 1 — Automatic `originZone` & `targetZone` Resolution During Real Law Execution + Explicit `governingZoneId` Attribution (`TransferPolicy.hpp`, `TransferPolicy.cpp`):**
+   - Added `resolveZoneForBeing(const Singular* being, const Law* fallbackLaw)` in `TransferPolicy.cpp` so `TransferPolicy::checkAccess` automatically infers `originZone` and `targetZone` whenever a Law or actor accesses a bearer across Zones. Added `std::string governingZoneId;` to `PolicyRule` (`TransferPolicy.hpp`) so a sender Zone's outbound rule targeting a specific receiver Zone stays in `senderRules`. Witnessed in `property_memory_access_test.cpp` §16.6.
+2. **Fix 2 — Exposed Relation-Based `authorityOver` Read-Only Kernel Property on `Law` (`Law.hpp`, `Law.cpp`, `TransferPolicy.cpp`):**
+   - Added `Law::propAuthorityOver()` returning a read-only `std::shared_ptr<PropertyList>` of all Law identifiers `b` for which `this --[authority-over]--> b` holds in `Universe::instance()`, registered `"authorityOver"` in `Law::buildProperties()` and `TransferPolicy` `Tier::Kernel`, guarded `"authorityOver"` in `Law::applyToImpl`, and added verification in `tests/law/law_model_test.cpp` §6.5.
+3. **Fix 3 — Safe Rollback on Refused Read-Only Indexed Container Writes (`PropertyPath.cpp`):**
+   - Saved `PropertyValue previousValue = *slot.dynamicSlot;` and restored `*slot.dynamicSlot = std::move(previousValue);` whenever `slot.containerProperty->setValue(...)` returns `false`.
+4. **Fix 4 — Synchronized `MathBindingEntry::getCompiled()` on Path Mutation (`MathBinding.hpp`):**
+   - Updated `MathBindingEntry::getCompiled()` to check `if (compiledPath.path.fullId() != path.fullId()) compiledPath = path.compile();` ($O(1)$ `StringId` comparison).
+
+---
+
+## 14. Pass 6 — Legible TransferPolicy Property Surface, JSON Persistence & Rete Notifications (2026-11-05)
+
+**Executed by:** Antigravity · session `102da8a2-db47-4627-8ce6-cf1235aeabd4` · 2026-11-06T00:05:00-08:00 (PST).
+
+### A. What Was Built & Landed
+
+1. **Legible Property Surface on `@transfer-policy` for Authoring `PolicyRule`s by Law (`src/Singularity/TransferPolicy.hpp`, `src/Singularity/TransferPolicy.cpp`):**
+   - Registered 8 staged and query properties on `TransferPolicy::buildProperties()`:
+     - `rule.pathPattern` (`std::string`, default `""`): target property path or wildcard.
+     - `rule.op` (`std::string`, default `"write"`): access operation (`"read"`, `"write"`, `"share"`, `"weak"`, `"unique"`, `"derive"`).
+     - `rule.allow` (`bool`, default `true`): grant or deny permission.
+     - `rule.governingZoneId` (`std::string`, default `""`): explicit jurisdictional Zone owner.
+     - `rule.originZoneId` (`std::string`, default `""`): source Zone restriction.
+     - `rule.targetZoneId` (`std::string`, default `""`): destination Zone restriction.
+     - `rule.commit` (`bool`): edge-trigger property. When written `true`, builds `PolicyRule`, automatically stamps `rule.governingLaw = TransferPolicy::currentContext().authorizingLaw` (and infers `rule.governingZoneId` from `governingLaw->jurisdiction()`), adds rule via `addPolicyRule(r)`, resets staged fields to defaults, and notifies property changes on `"ruleCount"` and `"rule.commit"`.
+     - `ruleCount` (`int`, read-only): returns active `_rules.size()`.
+   - Added `accessOpToString(AccessOp)` and `accessOpFromString(const std::string&)` helper functions.
+   - Updated `resolveLawRoot` in `src/ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp` with dedicated fallback for `@transfer-policy` so that `@transfer-policy` resolves reliably across all headless and booted environments.
+   - Added exemption entry in `tests/singularity/no_black_box_test.cpp` for `{"TransferPolicy", "rule.commit"}` noting the edge trigger behavior.
+
+2. **Authored `PolicyRule` Persistence Round-Trip (`src/Singularity/TransferPolicy.cpp`):**
+   - Updated `TransferPolicy::toJson()` to serialize `_rules` under `"rules"` JSON array (`pathPattern`, `op`, `allow`, `governingZoneId`, `originZoneId`, `targetZoneId`, `governingLawId`).
+   - Updated `TransferPolicy::loadFromJson()` to restore `_rules`, looking up `governingLawId` in `Universe::instance().beings()` to resolve `governingLaw` pointers and incrementing `_accessPolicyRevision`.
+
+3. **Rete Property-Change Notifications on `Law` Formations & `authority-over` Mutations (`src/ZonesOfEarth/AuthorsOfLaw/Law.cpp`, `src/ZonesOfEarth/AuthorsOfLaw/ActionModel.cpp`):**
+   - In `Law::addAuthor` and `Law::setAuthors`: called `Singular::notifyPropertyChanged(this, "authors")`.
+   - In `Law::addTarget` and `Law::clearTargets`: called `Singular::notifyPropertyChanged(this, "targets")`.
+   - In `ActionNode::compile()` (`Kind::AddRelation` in `ActionModel.cpp`): when `resolvedRelType == "authority-over"`, called `Singular::notifyPropertyChanged(a, "authorityOver")`.
+
+4. **Witness Verification in Test Suites:**
+   - **`tests/singularity/property_memory_access_test.cpp` (§17):**
+     - Two distinct Laws (`lawB_low` and `lawB_high`, with `lawB_high --[authority-over]--> lawB_low`) author competing inter-Zone `PolicyRule`s purely through `ActionNode::sequence` setting `@transfer-policy.rule.*` and `@transfer-policy.rule.commit := true` with zero direct C++ calls to `addPolicyRule`.
+     - `lawA` from `zoneA` writes `@target-obj-17.data` in `zoneB`: initially denied by `lawB_low`'s rule, then permitted once `lawB_high` commits its allow rule (as `lawB_high` wins via the Relation DAG).
+     - Serialized `TransferPolicy` to JSON, cleared rules, loaded from JSON, and verified that restored rules continue to govern access identically with the authority DAG intact.
+   - **`tests/law/law_model_test.cpp` (§6.6):**
+     - Formed a `WhileTrue` MetaLaw in `LawManager` conditioning on `authorityOver.0 == "target-law-2"`.
+     - Ticked once: condition failed, did not fire.
+     - Executed `ActionNode::addRelation` to form the `"authority-over"` Relation between the MetaLaw and target Law.
+     - Ticked again: Rete caught `notifyPropertyChanged("authorityOver")`, marked the fact dirty, evaluated terminal memory, and automatically fired the MetaLaw, disabling the target Law.
+
+### Test Suite Verification Matrix
+
+All test suites compile and pass 100%:
+- `property_memory_access_test`: PASS (17/17 sections)
+- `law_model_test`: PASS (7/7 sections, including Section 6.6 reactive MetaLaw)
+- `law_line_test`: OK
+- `property_path_precalc_test`: ALL 9 TESTS PASSED (zero allocations in `resolve()`)
+- `dynamic_property_reachability_test`: OK
+- `no_black_box_test`: ALL OK (421 properties probed, 0 failures)
+- `saves/`: 100% clean (zero modifications).
+
+---
+
+## 15. Firmament Review of Pass 6 & Direct Corrective Edits (2026-11-06)
+
+**Reviewed & Patched by:** Gemini Spark / Firmament (Gemini 3.1 Pro) · session `firmament-property-memory-micromastery-2026-11-04` · 2026-11-06T01:44:00-08:00 (PST).
+
+### A. What Pass 6 Landed Well
+1. **Legible `rule.*` Command-Property Surface on `@transfer-policy` (`TransferPolicy.hpp/.cpp`, `MathBinding.hpp`, `no_black_box_test.cpp`):**
+   - Registered `rule.pathPattern`, `rule.op`, `rule.allow`, `rule.governingZoneId`, `rule.originZoneId`, `rule.targetZoneId`, `rule.commit` (edge trigger), and read-only `ruleCount` on `TransferPolicy`, plus `@transfer-policy` root fallback in `resolveLawRoot`.
+   - Verified in `property_memory_access_test.cpp` (§17) that competing Laws (`lawB_low` and `lawB_high`) author inter-Zone `PolicyRule`s purely via `ActionNode::sequence` writes to `@transfer-policy.rule.*` and survive JSON round-trip persistence.
+2. **Rete Property-Change Notifications on `Law` Formations & `authority-over` Creation (`Law.cpp`, `ActionModel.cpp`, `law_model_test.cpp` §6.6):**
+   - Wired `Singular::notifyPropertyChanged` in `Law::addAuthor`, `Law::setAuthors`, `Law::addTarget`, `Law::clearTargets`, and `ActionNode::Kind::AddRelation` (`"authority-over"`), waking `WhileTrue` Rete MetaLaws conditioning on `authorityOver.0`.
+
+### B. 3 Deeper Seams Found & Patched Directly in Code by Firmament
+1. **Fix 1 — Effective-Cell Policy Authoring by Law (`rule.targetCellPath`) + Committed-Snapshot Anti-Self-Authorization Guard (`TransferPolicy.hpp`, `TransferPolicy.cpp`):**
+   - *Finding A:* Pass 6 allowed Laws to stage `rule.pathPattern`, `rule.op`, `rule.allow`, and Zone IDs, but had no property for binding a `PolicyRule` to a specific `ValueCell` (`r.cellId`). Without that, an authored Law could only govern by path spelling, not by effective cell across aliases (`@target-obj-17.data` and `@mirror-obj-17.aliasData`).
+   - *Finding B:* Under the **Committed-Snapshot Boundary** (`PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md` §5b & Rung 3 Step 3: *"a newly written Law or alias edit cannot authorize the transaction that created it"*), a Law that committed an allow rule (`rule.allow := true`, `rule.commit := true`) inside an `ActionNode::sequence` could immediately consume that uncommitted allow rule in the next step of the *same* Law application!
+   - *Fix:* Registered `rule.targetCellPath` (`std::string`) on `TransferPolicy` (`TransferPolicy.hpp/.cpp`) so `propSetRuleCommit(true)` resolves the target path to its `CellId` (or allocates/binds a shared `ValueCell` on the target slot if not yet cell-backed) and stamps `r.cellId`. Added `s_activeScopeId` tracking on `TransferPolicy::ExecutionScope` and `uint64_t createdInScopeId` on `PolicyRule` so any `rule.allow == true` rule created in the currently active `ExecutionScope` (`rule.createdInScopeId == s_activeScopeId`) cannot authorize writes inside the same transaction that created it, taking effect only after the Law application scope commits. Witnessed in `property_memory_access_test.cpp` §17.6(b)–(c).
+2. **Fix 2 — Order-Independent `governingLawId` Preservation & Lazy Resolution on `PolicyRule` (`TransferPolicy.hpp`, `TransferPolicy.cpp`):**
+   - *Finding:* In Pass 6's `TransferPolicy::loadFromJson`, if `TransferPolicy` was deserialized *before* `LawManager` populated the Laws into `Universe::instance().beings()`, `r.governingLaw` remained `nullptr` and the `"governingLawId"` string was discarded—permanently losing the rule's governing Law in the `authority-over` DAG!
+   - *Fix:* Added `std::string governingLawId;` and `mutable const Law* governingLaw = nullptr;` on `PolicyRule`, preserved `governingLawId` across `addPolicyRule`, `loadFromJson`, and `toJson`, and added `resolveGoverningLaw(const PolicyRule&)` in `TransferPolicy.cpp` to lazily resolve and cache `governingLaw` once the Law is present in `Universe::instance().beings()`. Witnessed in `property_memory_access_test.cpp` §17.6(a).
+3. **Fix 3 — Rete Property-Change Notifications on `Law` Member Removal & `"authority-over"` Destruction (`Law.cpp`):**
+   - *Finding:* `LawManager::releaseFromLaws(Singular* being)` removed destroyed beings directly via `law->targets().removeMember(being)` and `law->authors().removeMember(being)` without firing `notifyPropertyChanged`, and the `"relation-destroyed"` handler in `LawManager::connectToEventBus()` did not notify `"authorityOver"` when an `"authority-over"` Relation was destroyed.
+   - *Fix:* Updated `LawManager::releaseFromLaws` to fire `Singular::notifyPropertyChanged(law.get(), "targets")` / `"authors"` whenever a member is removed, and updated the `"relation-destroyed"` handler in `LawManager::connectToEventBus()` to fire `Singular::notifyPropertyChanged(relation->a(), "authorityOver")` when an `"authority-over"` Relation is destroyed.
+
+---
+
+## 16. Pass 7: Zone Persistence & AccessOp Read/Share/BorrowWeak/TransferUnique Governance (2026-11-06)
+
+**Implemented by:** Sparkly Guy (Antigravity · Gemini 2.5 Pro) · 2026-11-06T11:10:00-08:00.
+
+### A. Architectural Scope & Accomplishments
+1. **Quest 1 — Zone & World Save/Load Round-Trip for `@transfer-policy` (`TransferPolicy.hpp/.cpp`, `ZoneSerialization.cpp`):**
+   - Implemented `TransferPolicy::hasNonDefaultState()`: returns `true` if `!_rules.empty()` or any non-kernel gate departs from `Tier::Gated` default.
+   - Updated `ZoneSerialization::zoneToJson()`: serialized `"transferPolicy": TransferPolicy::instance().toJson()` additively only when `hasNonDefaultState()` is true. Default/clean zones emit zero `"transferPolicy"` keys, maintaining 100% byte/format invariance for existing saves.
+   - Updated `ZoneSerialization::applyZoneJson()`: when `"transferPolicy"` is present, deserialized via `TransferPolicy::instance().loadFromJson()`.
+   - Preserved `CellId` (`cellSlot`, `cellGen`) in `toJson()` and deserialized in `loadFromJson()`.
+   - Added end-to-end Section 18.1 round-trip witness in `tests/singularity/property_memory_access_test.cpp`.
+2. **Quest 2 — Prophetic Rete & `AccessOp` Governance Witness (`PropertyPath.cpp`, `ActionModel.cpp`, `MathBinding.hpp`, `property_memory_access_test.cpp`):**
+   - Verified that `PropertyPath::getValue` invokes `TransferPolicy::checkAccess` with `AccessOp::Read`. When denied by an authored rule, `lawGetValue` returns `false`, causing condition evaluation to fail before actions fire.
+   - Updated `ActionNode::compile()` (`Kind::Map` for `BindingMode::CopyValue`): checks `readCtx` (`AccessOp::Read`) on source path and `writeCtx` (`AccessOp::Write`) on target path, cleanly emitting `PathResult::AccessDenied` if either fails.
+   - Updated `readMathBindings` in `MathBinding.hpp` and `ActionModel.cpp` to propagate `const AccessContext& ctx` with `AccessOp::Read`.
+   - Comprehensive test suite in `tests/singularity/property_memory_access_test.cpp` (§18.2–18.5) validating authored policy governance over `AccessOp::Read`, `AccessOp::Share`, `AccessOp::BorrowWeak`, and `AccessOp::TransferUnique`.
+
+### B. Test Suite Verification Matrix
+All 6 test suites compile and pass 100%:
+- `property_memory_access_test`: PASS (18/18 sections)
+- `law_model_test`: ALL OK (including Section 6.6 reactive MetaLaw)
+- `law_line_test`: OK
+- `property_path_precalc_test`: ALL 9 TESTS PASSED (zero allocations in `resolve()`)
+- `dynamic_property_reachability_test`: OK
+- `no_black_box_test`: ALL OK (421 properties probed, 0 failures)
+- `saves/`: 100% clean (zero modifications).
+
+
+
+
+
 

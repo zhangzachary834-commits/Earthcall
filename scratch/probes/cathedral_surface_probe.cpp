@@ -263,6 +263,7 @@ int main(int argc, char** argv) {
             report["encode_ms"] = encodeTimes;
             report["completion_wait_ms"] = waitTimes;
             report["flush_ms"] = flushTimes;
+            report["mesh_draw_calls"] = renderer.frameStats().meshDrawCalls;
             report["render_scope"] = world ? "all saved Objects through drawObject, without Laws/Person/tools" : "Field subset";
             report["unit_radiance_ablation"] = unitLight;
             report["objects_loaded"] = objects.size();

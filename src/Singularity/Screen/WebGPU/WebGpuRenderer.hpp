@@ -701,6 +701,16 @@ private:
     bool _inverseViewProjValid = true;
     bool _modelViewProjValid = true;
 
+    struct AuthoredModelTransforms {
+        glm::mat4 inverse;
+        glm::mat4 normal;
+    };
+    static std::optional<AuthoredModelTransforms> deriveModelTransforms(const glm::mat4& model);
+    bool _hasCachedTransforms = false;
+    glm::mat4 _cachedModelMatrix{0.0f};
+    std::optional<AuthoredModelTransforms> _cachedTransforms;
+    const std::optional<AuthoredModelTransforms>& getModelTransforms();
+
     // Optional execution timing. Query writes bracket the main command encoder's
     // render pass; each result is copied into a small readback ring and consumed
     // on a later frame. That delay is intentional: waiting here would recreate
@@ -770,6 +780,10 @@ private:
             return std::tie(mesh, albedoView, shading.x, shading.y, shading.z, shading.w)
                  < std::tie(o.mesh, o.albedoView, o.shading.x, o.shading.y, o.shading.z, o.shading.w);
         }
+        bool operator==(const MeshBatchKey& o) const {
+            return std::tie(mesh, albedoView, shading.x, shading.y, shading.z, shading.w)
+                == std::tie(o.mesh, o.albedoView, o.shading.x, o.shading.y, o.shading.z, o.shading.w);
+        }
     };
     // Mirrors the WGSL `Instance` struct in kMeshWGSL.
     struct InstanceData { 
@@ -779,6 +793,30 @@ private:
     };
     std::map<MeshBatchKey, std::vector<InstanceData>> _meshBatches;
     WGPUBindGroupLayout _instanceBgl = nullptr; // group(1): the instance storage buffer
+
+    struct MeshUploadRecord {
+        const MeshBatchKey* key = nullptr;
+        const std::vector<InstanceData>* instances = nullptr;
+        uint32_t firstInstance = 0;
+        size_t uniformSlotIndex = 0;
+    };
+    struct MeshUniformKey {
+        WGPUTextureView albedoView = nullptr;
+        glm::vec4 shading{0.0f};
+        bool operator==(const MeshUniformKey& o) const {
+            return albedoView == o.albedoView && shading == o.shading;
+        }
+    };
+    std::vector<MeshUploadRecord> _meshRecords;
+    std::vector<InstanceData> _meshPageInstances;
+    std::vector<MeshUniformKey> _meshPageUniformKeys;
+    std::vector<size_t> _meshPageUniformOffsets;
+    std::vector<uint8_t> _meshUniforms;
+    std::vector<WGPUBindGroup> _meshPageGroup0;
+
+    std::optional<MeshBatchKey> _lastMeshBatchKey;
+    std::vector<InstanceData>* _lastMeshBatchVector = nullptr;
+
     // Records every queued batch as real wgpuRenderPassEncoderDraw calls.
     // MUST run while _pass is still open — called from endFrame() before
     // wgpuRenderPassEncoderEnd. Safety invariant this design now depends on:
@@ -829,6 +867,17 @@ private:
     // avoiding an ever-growing scan of historical pipeline keys.
     std::vector<const SdfPipeline*> _activeSdfPipelines;
     WGPUBindGroupLayout _sdfInstanceBgl = nullptr; // group(1): instances (0) + height cells (1) + range nodes (2)
+
+    struct SdfInstanceSlice {
+        WGPUBuffer buffer = nullptr;
+        uint64_t offset = 0;
+        uint64_t size = 0;
+    };
+    std::unordered_map<const SdfPipeline*, SdfInstanceSlice> _sdfInstanceAllocations;
+    std::vector<const SdfPipeline*> _sdfPendingPipelines;
+    std::vector<size_t> _sdfPendingOffsets;
+    std::vector<uint8_t> _sdfPackedInstanceBytes;
+
     void flushSdfDraws();
 
     // Last pipeline bound on the CURRENT pass. Kernel state: a driver-object

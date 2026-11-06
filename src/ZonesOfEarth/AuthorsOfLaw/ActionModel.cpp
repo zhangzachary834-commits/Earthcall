@@ -721,8 +721,8 @@ ECA::ActionExecutor ActionNode::compile() const {
             // both are ordinary PropertyPaths — so a pad sounds its own
             // `acoustic.frequency` and a button sounds `@state.studio.soundFreq`
             // with the same node, exactly as the law text reads.
-            const PropertyPath freqPath = path;
-            const PropertyPath ampPath = input;
+            const PropertyPath::CompiledPath freqPath = path.compile();
+            const PropertyPath::CompiledPath ampPath = input.compile();
             const std::string timbre = propertyName;
 
             return [freqPath, ampPath, timbre](const ECA::Event&, Singular& subject) {
@@ -739,13 +739,13 @@ ECA::ActionExecutor ActionNode::compile() const {
                 if (!lawGetValue(subject, freqPath, fv) ||
                     !propertyValueToNumber(fv, frequency)) {
                     emitEffect("PlayAudio", false,
-                               "frequency '" + freqPath.toString() + "' does not read");
+                               "frequency '" + freqPath.path.toString() + "' does not read");
                     return;
                 }
                 if (!lawGetValue(subject, ampPath, av) ||
                     !propertyValueToNumber(av, amplitude)) {
                     emitEffect("PlayAudio", false,
-                               "amplitude '" + ampPath.toString() + "' does not read");
+                               "amplitude '" + ampPath.path.toString() + "' does not read");
                     return;
                 }
 
@@ -767,31 +767,39 @@ ECA::ActionExecutor ActionNode::compile() const {
             };
         }
         case Kind::FileRead: {
-            const PropertyPath sourcePath = input;
-            const PropertyPath destPath = path;
-            return [sourcePath, destPath](const ECA::Event&, Singular& subject) {
+            const PropertyPath::CompiledPath sourcePath = input.compile();
+            const PropertyPath::CompiledPath destPath = path.compile();
+            const PropertyPath::CompiledPath chPath = PropertyPath::compile("@file-channel.file.path");
+            const PropertyPath::CompiledPath chRead = PropertyPath::compile("@file-channel.file.read");
+            const PropertyPath::CompiledPath chContent = PropertyPath::compile("@file-channel.file.content");
+            return [sourcePath, destPath, chPath, chRead, chContent](const ECA::Event&, Singular& subject) {
                 PropertyValue pvFile;
                 if (lawGetValue(subject, sourcePath, pvFile)) {
-                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.path"), pvFile);
-                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.read"), PropertyValue(true));
+                    lawSetValue(subject, chPath, pvFile);
+                    lawSetValue(subject, chRead, PropertyValue(true));
                     PropertyValue content;
-                    if (lawGetValue(subject, PropertyPath::parse("@file-channel.file.content"), content)) {
+                    if (lawGetValue(subject, chContent, content)) {
                         lawSetValue(subject, destPath, content);
                     }
                 }
             };
         }
         case Kind::FileWrite: {
-            const PropertyPath targetPathPath = path;
-            const PropertyPath contentPath = input;
-            return [targetPathPath, contentPath](const ECA::Event&, Singular& subject) {
+            const PropertyPath::CompiledPath targetPathPath = path.compile();
+            const PropertyPath::CompiledPath contentPath = input.compile();
+            const PropertyPath::CompiledPath channelPath = PropertyPath::compile("@file-channel.file.path");
+            const PropertyPath::CompiledPath channelContent = PropertyPath::compile("@file-channel.file.content");
+            const PropertyPath::CompiledPath channelWrite = PropertyPath::compile("@file-channel.file.write");
+            const PropertyPath::CompiledPath channelSuccess = PropertyPath::compile("@file-channel.file.lastOperationSuccess");
+            const PropertyPath::CompiledPath channelError = PropertyPath::compile("@file-channel.file.lastError");
+            return [targetPathPath, contentPath, channelPath, channelContent, channelWrite, channelSuccess, channelError](const ECA::Event&, Singular& subject) {
                 PropertyValue pvFile, pvContent;
                 if (!lawGetValue(subject, targetPathPath, pvFile)) {
-                    emitEffect("FileWrite", false, "file path source does not read: " + targetPathPath.toString());
+                    emitEffect("FileWrite", false, "file path source does not read: " + targetPathPath.path.toString());
                     return;
                 }
                 if (!lawGetValue(subject, contentPath, pvContent)) {
-                    emitEffect("FileWrite", false, "file content source does not read: " + contentPath.toString());
+                    emitEffect("FileWrite", false, "file content source does not read: " + contentPath.path.toString());
                     return;
                 }
 
@@ -800,7 +808,6 @@ ECA::ActionExecutor ActionNode::compile() const {
                            result == PropertyPath::PathResult::Unchanged;
                 };
 
-                const PropertyPath channelPath = PropertyPath::parse("@file-channel.file.path");
                 const auto pathResult = lawSetValue(subject, channelPath, pvFile);
                 if (!accepted(pathResult)) {
                     emitEffect("FileWrite", false,
@@ -809,7 +816,6 @@ ECA::ActionExecutor ActionNode::compile() const {
                     return;
                 }
 
-                const PropertyPath channelContent = PropertyPath::parse("@file-channel.file.content");
                 const auto contentResult = lawSetValue(subject, channelContent, pvContent);
                 if (!accepted(contentResult)) {
                     emitEffect("FileWrite", false,
@@ -819,7 +825,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                 }
 
                 const auto triggerResult = lawSetValue(
-                    subject, PropertyPath::parse("@file-channel.file.write"), PropertyValue(true));
+                    subject, channelWrite, PropertyValue(true));
                 if (!accepted(triggerResult)) {
                     emitEffect("FileWrite", false,
                                "file write trigger refused: " +
@@ -828,16 +834,12 @@ ECA::ActionExecutor ActionNode::compile() const {
                 }
 
                 PropertyValue succeeded;
-                if (!lawGetValue(subject,
-                                 PropertyPath::parse("@file-channel.file.lastOperationSuccess"),
-                                 succeeded) ||
+                if (!lawGetValue(subject, channelSuccess, succeeded) ||
                     !std::holds_alternative<bool>(succeeded) ||
                     !std::get<bool>(succeeded)) {
                     PropertyValue lastError;
                     std::string note = "file channel reported write failure";
-                    if (lawGetValue(subject,
-                                    PropertyPath::parse("@file-channel.file.lastError"),
-                                    lastError)) {
+                    if (lawGetValue(subject, channelError, lastError)) {
                         if (const auto* message = std::get_if<std::string>(&lastError);
                             message && !message->empty()) {
                             note += ": " + *message;
@@ -852,24 +854,26 @@ ECA::ActionExecutor ActionNode::compile() const {
         }
         case Kind::CodecTransform: {
             const std::string op = propertyName;
-            const PropertyPath sourcePath = input;
-            const PropertyPath destPath = path;
-            return [op, sourcePath, destPath](const ECA::Event&, Singular& subject) {
+            const PropertyPath::CompiledPath sourcePath = input.compile();
+            const PropertyPath::CompiledPath destPath = path.compile();
+            const PropertyPath::CompiledPath codecInput = PropertyPath::compile("@codec.codec.input");
+            const PropertyPath::CompiledPath codecOp = PropertyPath::compile("@codec.codec." + op);
+            return [sourcePath, destPath, codecInput, codecOp](const ECA::Event&, Singular& subject) {
                 PropertyValue cv;
                 if (lawGetValue(subject, sourcePath, cv)) {
-                    lawSetValue(subject, PropertyPath::parse("@codec.codec.input"), cv);
+                    lawSetValue(subject, codecInput, cv);
                     PropertyValue result;
-                    if (lawGetValue(subject, PropertyPath::parse("@codec.codec." + op), result)) {
+                    if (lawGetValue(subject, codecOp, result)) {
                         lawSetValue(subject, destPath, result);
                     }
                 }
             };
         }
         case Kind::WritePixel: {
-            const PropertyPath facePath = pixelFacePath;
-            const PropertyPath uPath = pixelUPath;
-            const PropertyPath vPath = pixelVPath;
-            const PropertyPath colorPath = pixelColorPath;
+            const PropertyPath::CompiledPath facePath = pixelFacePath.compile();
+            const PropertyPath::CompiledPath uPath = pixelUPath.compile();
+            const PropertyPath::CompiledPath vPath = pixelVPath.compile();
+            const PropertyPath::CompiledPath colorPath = pixelColorPath.compile();
             return [facePath, uPath, vPath, colorPath](const ECA::Event&,
                                                        Singular& subject) {
                 const PixelWriteSink& sink = pixelWriteSink();
@@ -883,25 +887,25 @@ ECA::ActionExecutor ActionNode::compile() const {
                 if (!lawGetValue(subject, facePath, faceValue) ||
                     !propertyValueToNumber(faceValue, face)) {
                     emitEffect("WritePixel", false,
-                               "face '" + facePath.toString() + "' does not read");
+                               "face '" + facePath.path.toString() + "' does not read");
                     return;
                 }
                 if (!lawGetValue(subject, uPath, uValue) ||
                     !propertyValueToNumber(uValue, u)) {
                     emitEffect("WritePixel", false,
-                               "u '" + uPath.toString() + "' does not read");
+                               "u '" + uPath.path.toString() + "' does not read");
                     return;
                 }
                 if (!lawGetValue(subject, vPath, vValue) ||
                     !propertyValueToNumber(vValue, v)) {
                     emitEffect("WritePixel", false,
-                               "v '" + vPath.toString() + "' does not read");
+                               "v '" + vPath.path.toString() + "' does not read");
                     return;
                 }
                 if (!lawGetValue(subject, colorPath, colorValue) ||
                     !std::holds_alternative<glm::vec3>(colorValue)) {
                     emitEffect("WritePixel", false,
-                               "color '" + colorPath.toString() + "' does not read a vec3");
+                               "color '" + colorPath.path.toString() + "' does not read a vec3");
                     return;
                 }
 
@@ -920,7 +924,7 @@ ECA::ActionExecutor ActionNode::compile() const {
         }
         case Kind::ElevatePixels: {
             const std::string name = propertyName;
-            const PropertyPath facePath = pixelFacePath;
+            const PropertyPath::CompiledPath facePath = pixelFacePath.compile();
             const OntoMath::Piecewise selector = mapFunction;
             return [name, facePath, selector](const ECA::Event&, Singular& subject) {
                 const PixelPropertySink& sink = pixelPropertySink();
@@ -937,7 +941,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                 if (!lawGetValue(subject, facePath, faceValue) ||
                     !propertyValueToNumber(faceValue, face)) {
                     emitEffect("ElevatePixels", false,
-                               "face '" + facePath.toString() + "' does not read");
+                               "face '" + facePath.path.toString() + "' does not read");
                     return;
                 }
                 std::string reason;
@@ -1055,6 +1059,10 @@ ECA::ActionExecutor ActionNode::compile() const {
                 auto relation = std::make_shared<Relation>(resolvedRelType, *a, *b);
                 Universe::instance().addRelation(relation);
 
+                if (resolvedRelType == "authority-over") {
+                    Singular::notifyPropertyChanged(a, "authorityOver");
+                }
+
                 emitEffect("AddRelation", true);
                 Core::EventBus::instance().publish(
                     ECA::Event{"relation-created", a, b, std::time(nullptr)}
@@ -1106,7 +1114,7 @@ ECA::ActionExecutor ActionNode::compile() const {
             // path := f(bindings) — behavior governed by an authored,
             // exact, piecewise mathematical function. Undefined math writes
             // nothing: a law never manifests undefined values.
-            const PropertyPath target = path;
+            const PropertyPath::CompiledPath target = path.compile();
             const OntoMath::Piecewise f = mapFunction;
             const MathBindings binds = bindings;
             return [target, f, binds](const ECA::Event& event, Singular& subject) {
@@ -1138,7 +1146,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                         Singular* destBearer = destSlot.owner ? destSlot.owner : destRoot;
                         Earthcall::StringId destPropId = destSlot.prop ? destSlot.prop->nameId() :
                             (!destSlot.dynamicKey.empty() ? Earthcall::StringInterner::intern(destSlot.dynamicKey) :
-                             Earthcall::StringInterner::intern(target.segments.back()));
+                             Earthcall::StringInterner::intern(target.path.segments.back()));
 
                         if (TransferPolicy::instance().accessPolicyRevision() > 0) {
                             AccessOp srcOp = AccessOp::Share;
@@ -1236,20 +1244,31 @@ ECA::ActionExecutor ActionNode::compile() const {
                         return;
                     } else if (bEntry.mode == BindingMode::CopyValue) {
                         PropertyValue srcVal;
-                        if (!lawGetValue(subject, bEntry.path, srcVal)) {
-                            emitEffect("Map", false, "cannot read source for copy");
+                        const auto& cp = bEntry.getCompiled();
+                        AccessContext readCtx = TransferPolicy::currentContext(AccessOp::Read);
+                        readCtx.actor = &subject;
+                        if (authorizingLaw) readCtx.authorizingLaw = authorizingLaw;
+                        bool readOk = !cp.empty() ? lawGetValue(subject, cp, srcVal, readCtx) : lawGetValue(subject, bEntry.path, srcVal, readCtx);
+                        if (!readOk) {
+                            emitResult(subject, "Map", PropertyPath::PathResult::AccessDenied, target);
                             return;
                         }
                         PropertyValue copied = PropertyCellTable::deepCopy(srcVal);
-                        auto res = lawSetValue(subject, target, copied);
+                        AccessContext writeCtx = TransferPolicy::currentContext(AccessOp::Write);
+                        writeCtx.actor = &subject;
+                        if (authorizingLaw) writeCtx.authorizingLaw = authorizingLaw;
+                        auto res = lawSetValue(subject, target, copied, writeCtx);
                         emitResult(subject, "Map", res, target);
                         return;
                     }
                 }
 
-                auto vars = readMathBindings(subject, binds);
+                AccessContext readCtx = TransferPolicy::currentContext(AccessOp::Read);
+                readCtx.actor = &subject;
+                if (authorizingLaw) readCtx.authorizingLaw = authorizingLaw;
+                auto vars = readMathBindings(subject, binds, readCtx);
                 if (!vars) {
-                    emitEffect("Map", false, "a bound variable does not read on this subject");
+                    emitResult(subject, "Map", PropertyPath::PathResult::AccessDenied, target);
                     return;
                 }
                 const auto valProp = f.evaluate(*vars, &subject);
@@ -1291,7 +1310,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                             Singular* destBearer = destSlot.owner ? destSlot.owner : destRoot;
                             Earthcall::StringId destPropId = destSlot.prop ? destSlot.prop->nameId() :
                                 (!destSlot.dynamicKey.empty() ? Earthcall::StringInterner::intern(destSlot.dynamicKey) :
-                                 Earthcall::StringInterner::intern(target.segments.back()));
+                                 Earthcall::StringInterner::intern(target.path.segments.back()));
 
                             PropertyCellTable::instance().registerDerivedEdge(
                                 srcCellId,
@@ -1320,7 +1339,7 @@ ECA::ActionExecutor ActionNode::compile() const {
             // path := path + f(bindings) * dt — the authored model is the
             // RATE of change, integrated one frame at a time. Needs the
             // world clock (dt); undefined math flows nothing.
-            const PropertyPath target = path;
+            const PropertyPath::CompiledPath target = path.compile();
             const OntoMath::Piecewise f = mapFunction;
             const MathBindings binds = bindings;
             return [target, f, binds](const ECA::Event&, Singular& subject) {

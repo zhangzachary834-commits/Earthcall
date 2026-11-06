@@ -175,3 +175,16 @@ All tests passed: `property_memory_access_test`, `dynamic_property_reachability_
    - Synchronize `_dynamicProperties[obs.rootPropertyId]` across all live `Unique`/`Shared` dynamic observers in `PropertyCellTable::notifyMutation`.
 
 *Gemini Spark / Firmament (Gemini 3.1 Pro) · session `firmament-property-memory-micromastery-2026-11-04` · 2026-11-04T12:02:43-08:00 (PST).*
+
+## Rungs 0–5 Completed & Verified Across Passes 1–4 (2026-11-05)
+
+All 6 Rungs of [`PROPERTY_MEMORY_MICROMASTERY_IMPLEMENTATION_PLAN_2026-11-04.md`](../../../../../plans/PROPERTY_MEMORY_MICROMASTERY_IMPLEMENTATION_PLAN_2026-11-04.md) are now implemented, audited, and verified across 9 focused test binaries:
+- **Rung 0 (Being-Pointer Purge):** Removed `Singular*`, `Object*`, `Relation*`, and `Formation*` from `PropertyValue` while preserving constitutive `Property::asSingular()` bridges.
+- **Rung 1 (Checked `ValueCell` Table & Multi-Alias Rete Fan-Out):** Implemented generation-checked `PropertyCellTable` (`InlineValue`, `Shared`, `Unique`, `Weak`), live `Weak` write refusal (`PathResult::ReadOnly`), nested container component access inside cells (`paint.layers.0.color.g`), `_dynamicProperties` synchronization across shared observers, and complete observer fan-out closing Rete alias deafness.
+- **Rung 2 (Authored Binding Modes, Law Line Grammar, Lexeme Denotation & Compiler MetaLaws):** Added `FollowPath`, `ShareCell`, `UniqueCell`, `ObserveWeak`, `CopyValue`, and reactive `Derive` (`DerivedEdge` with cycle and bearer-destruction guards), wired Law Line grammar (`share`, `claim`/`unique`, `borrow`/`observe`, `derive`), `LawSentence::classify()` for open cell-binding Laws denoted by `Lexeme`s, and `@terminal-channel` compiler MetaLaw routing (`tests/singularity/law_line_test.cpp`).
+- **Rung 3 (Relation-Based Authority DAG & `TransferPolicy` Effective-Cell Governance):** Implemented `Law::hasAuthorityOver` / `hasEqualOrHigherStandingThan` over the `authority-over` Relation DAG (**AD-24**), ambient `TransferPolicy::ExecutionScope` across all Law actions, open-by-default ($O(1)$ at revision 0) effective-cell access checks (**AD-37**), and self-elevation / cycle refusals (**AD-38**).
+- **Rung 4 (Durable Cohort & Zone Alias Topology Save/Load):** Implemented `SingularPersistence::CohortContext` / `CohortScope` with order-independent `Weak`/`Shared`/`Unique` hydration, orphaned `Weak` expiry on `finalize()`, post-`faceColors` hydration ordering in `ObjectSerialization.cpp`, and full `zoneToJson` / `makeZoneFromJson` round-trip verification across `world.objects` and `storedSingulars` (`tests/singularity/property_memory_access_test.cpp` §15).
+- **Rung 5 (`CompiledPath` Pre-Calculation & Benchmarking):** Wired `PropertyPath::CompiledPath` into `MathBinding.hpp`, `ActionModel.cpp`, and `ConditionModel.cpp`, achieving a **~2.07x speedup** over raw string path resolution in the 10,000-iteration benchmark with zero semantic drift, and documented canonical vs. derived state in [`DERIVED_STATE_LEDGER.md`](../../../../../architecture/law/DERIVED_STATE_LEDGER.md).
+
+*Antigravity (Gemini 3.8 Flash) & Gemini Spark / Firmament (Gemini 3.1 Pro) · 2026-11-05.*
+

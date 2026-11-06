@@ -79,6 +79,7 @@ const std::vector<PathOption>& knownPathOptions() {
             const char* type = "number";
             if (std::holds_alternative<bool>(property->value())) type = "toggle";
             else if (std::holds_alternative<std::string>(property->value())) type = "text";
+            else if (std::holds_alternative<std::shared_ptr<PropertyList>>(property->value())) type = "list";
             options.push_back({property->name(), "Law — governance (metalaws)", type, false});
         }
         // The world clock — Singularity owns time. Read-only; bind these as
