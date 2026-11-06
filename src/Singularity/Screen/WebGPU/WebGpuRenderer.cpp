@@ -3620,6 +3620,7 @@ void WebGpuRenderer::flushVolumeComposite() {
 
     const VolumePipeline* c5bActivitySourcePipeline = nullptr;
     bool c5bFirstActivityNeeded = false;
+    bool c5bFirstActivityProduced = false;
 
     if (activeMedia.size() > 1) {
         // C2: execution-family membership comes only from mathematical
@@ -4408,9 +4409,12 @@ void WebGpuRenderer::flushVolumeComposite() {
                           globalRange, paramRange, instanceRange,
                           _depthView, compact);
 
-                if (!routedEncoded) {
+                if (routedEncoded) {
+                    c5bFirstActivityProduced = true;
+                } else {
                     // Optimization refusal must never become false absence.
                     _kernelRouted->fillFirstActivityUnknown();
+                    c5bFirstActivityProduced = true; // safely unknown, not stale
                     if (publicationNeeded)
                         routedEncoded = _kernelRouted->encode(
                             *transport, _encoder,
@@ -4456,6 +4460,14 @@ void WebGpuRenderer::flushVolumeComposite() {
             drawInstanceCount = countIt->second;
         }
         preparedVolumeDraws[pipeline] = {globalBg, instanceBg, drawInstanceCount};
+    }
+
+    if (c5bFirstActivityNeeded && !c5bFirstActivityProduced &&
+        _kernelRouted) {
+        // Source preparation/refusal may have prevented the compactor from
+        // running. Fail open rather than borrow a previous frame's theorem.
+        _kernelRouted->fillFirstActivityUnknown();
+        c5bFirstActivityProduced = true;
     }
 
     // Ordinary V0-V4 paths do not install an explicit C5 schedule; preserve
