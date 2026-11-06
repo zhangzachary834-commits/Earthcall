@@ -1,4 +1,5 @@
 #include "Singularity/Screen/WebGPU/VolumeRoutedTransport.hpp"
+#include "Singularity/Screen/WebGPU/VolumeRoutedKernels.hpp"
 
 #include <cassert>
 #include <cstdint>
@@ -47,6 +48,24 @@ int main() {
     assert(static_cast<bool>(consumer));
     assert(consumer(nullptr, strip));
     assert(called);
+
+    // C5b-2b2 certificate law: invalid/refused routed truth is all-ones
+    // (unknown/maybe), while a valid ray with no spans is exact zero. The
+    // compactor includes singles and overlaps and uses the cohort-independent
+    // absolute camera-distance domain [0, 2048].
+    const std::string compactor = routed_wgsl::kFirstActivityMaskWgsl;
+    assert(compactor.find("ecFirstActivity[pixel] = 0xffffffffu;") !=
+           std::string::npos);
+    assert(compactor.find("ecFirstActivity[pixel] = 0u;") !=
+           std::string::npos);
+    assert(compactor.find("for (var i = 0u; i < ray.counts.y; i++)") !=
+           std::string::npos);
+    assert(compactor.find("for (var i = 0u; i < overlapCount; i++)") !=
+           std::string::npos);
+    assert(compactor.find("hi > 2048.0001") != std::string::npos);
+    assert(compactor.find("lo * (1.0 / 2048.0)") != std::string::npos);
+    assert(compactor.find("(lo - t0)") == std::string::npos);
+    assert(compactor.find("(hi - t0)") == std::string::npos);
 
     std::cout
         << "PASS volume_routed_span_contract_test: strip metadata, "
