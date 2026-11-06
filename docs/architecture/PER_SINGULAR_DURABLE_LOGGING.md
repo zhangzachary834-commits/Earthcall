@@ -556,3 +556,10 @@ Those histories should be legible after the moment in which they occurred has pa
 The console is the window through which we watch Earthcall living now.
 
 The durable logs are the memory by which Earthcall can tell us what happened before.
+
+## Interrelated Documents
+- [No Black Box](ontology/NO_BLACK_BOX.md)
+- [Interaction as Law](law/INTERACTION_AS_LAW.md)
+
+## Thoughts on Integration and Interrelation
+The No Black Box principle ensures spatial and present legibility—every piece of state is registered and accessible. Per-Singular Durable Logging extends this principle across time, providing historical legibility. A system that hides its state violates No Black Box; a system that forgets its history violates Durable Logging. Together, they ensure that a Singular's state is fully known in the present and its journey is fully accountable in the past. Furthermore, through Interaction-as-Law, even UI interactions become part of this durable history, treating user actions not as transient UI events but as permanent ontological changes.
