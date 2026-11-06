@@ -3618,6 +3618,9 @@ void WebGpuRenderer::flushVolumeComposite() {
         }
     }
 
+    const VolumePipeline* c5bActivitySourcePipeline = nullptr;
+    bool c5bFirstActivityNeeded = false;
+
     if (activeMedia.size() > 1) {
         // C2: execution-family membership comes only from mathematical
         // capability. Serialization order, Zone identity, artistic role and
@@ -3764,6 +3767,8 @@ void WebGpuRenderer::flushVolumeComposite() {
                 enqueueVolumeCohort(routedCohort, true);
             const VolumePipeline* generalPipeline =
                 enqueueVolumeCohort(generalCohort, false);
+            if (routedPipeline && routedPipeline->routed)
+                c5bActivitySourcePipeline = routedPipeline;
 
             auto appendOrderedRegion = [&](Rendering::VolumeCohortOrder order,
                                            const Rendering::VolumeScreenRect& rect) {
@@ -3806,13 +3811,19 @@ void WebGpuRenderer::flushVolumeComposite() {
                             return step.target ==
                                 Rendering::VolumeCohortDrawTarget::Joint;
                         });
+                    const bool useFirstActivity =
+                        needsJoint && c5bActivitySourcePipeline &&
+                        !mixedExecutionFamilies.empty();
                     const VolumePipeline* jointPipeline =
                         needsJoint
                             ? enqueueVolumeCohort(
                                   activeMedia, false,
                                   mixedExecutionFamilies.empty()
-                                      ? nullptr : &mixedExecutionFamilies)
+                                      ? nullptr : &mixedExecutionFamilies,
+                                  useFirstActivity)
                             : nullptr;
+                    if (jointPipeline && jointPipeline->firstActivityMask)
+                        c5bFirstActivityNeeded = true;
                     const bool jointReady = !needsJoint || jointPipeline;
 
                     if (jointReady) {
@@ -3839,11 +3850,16 @@ void WebGpuRenderer::flushVolumeComposite() {
 
         if (!scheduledSplit) {
             const bool wholeSetRoutedAdmissible = generalCohort.empty();
+            const bool useFirstActivity =
+                c5bActivitySourcePipeline && !mixedExecutionFamilies.empty();
             const auto* joint =
                 enqueueVolumeCohort(
                     activeMedia, wholeSetRoutedAdmissible,
                     mixedExecutionFamilies.empty()
-                        ? nullptr : &mixedExecutionFamilies);
+                        ? nullptr : &mixedExecutionFamilies,
+                    useFirstActivity);
+            if (joint && joint->firstActivityMask)
+                c5bFirstActivityNeeded = true;
             volumeDrawSchedule.clear();
             appendPacket(joint, fullViewport);
         }
@@ -4145,6 +4161,8 @@ void WebGpuRenderer::flushVolumeComposite() {
     std::map<const VolumePipeline*, PreparedVolumeDraw> preparedVolumeDraws;
     auto pipelineIsScheduled = [&](const VolumePipeline* pipeline) {
         if (!explicitVolumeSchedule) return true;
+        if (c5bFirstActivityNeeded && pipeline == c5bActivitySourcePipeline)
+            return true;
         return std::any_of(volumeDrawSchedule.begin(), volumeDrawSchedule.end(),
             [&](const VolumeDrawPacket& packet) { return packet.pipeline == pipeline; });
     };
