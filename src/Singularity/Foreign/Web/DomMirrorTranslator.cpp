@@ -56,6 +56,7 @@ void DomMirrorTranslator::retire() {
     }
     _nodeFormations.clear();
     _nodeRelations.clear();
+    _nextAttributeIndex.clear();
 
     // Remove occurrence Lexemes from LanguageSystem
     for (const auto& lex : _allSessionLexemes) {
@@ -188,12 +189,14 @@ void DomMirrorTranslator::registerNode(const DomNodeRecord& node) {
     nodeForm->addMember(nodeLexeme.get());
 
     std::vector<std::shared_ptr<Relation>> nodeRels;
+    auto& nextAttributeIndex = _nextAttributeIndex[node.nodeToken];
 
     for (size_t i = 0; i < node.attributes.size(); ++i) {
         const auto& attr = node.attributes[i];
 
-        std::string attrId = makeAttrLexemeId(_pageSessionId, node.nodeToken, i);
-        std::string valId = makeAttrValLexemeId(_pageSessionId, node.nodeToken, i);
+        const size_t attributeIndex = nextAttributeIndex++;
+        std::string attrId = makeAttrLexemeId(_pageSessionId, node.nodeToken, attributeIndex);
+        std::string valId = makeAttrValLexemeId(_pageSessionId, node.nodeToken, attributeIndex);
 
         auto attrLexeme = language.intern(attr.name, attrId);
         auto valLexeme = language.intern(attr.value, valId);
@@ -304,7 +307,7 @@ bool DomMirrorTranslator::applyDelta(const DomDelta& delta, std::string* outErro
                 auto nodeForm = findNodeFormation(rec.targetNodeToken);
                 auto nodeLexeme = findNodeLexeme(rec.targetNodeToken);
                 if (nodeForm && nodeLexeme) {
-                    size_t newIndex = _nodeRelations[rec.targetNodeToken].size() / 2;
+                    size_t newIndex = _nextAttributeIndex[rec.targetNodeToken]++;
                     std::string attrId = makeAttrLexemeId(_pageSessionId, rec.targetNodeToken, newIndex);
                     std::string valId = makeAttrValLexemeId(_pageSessionId, rec.targetNodeToken, newIndex);
 
