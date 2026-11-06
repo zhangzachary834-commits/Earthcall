@@ -386,6 +386,7 @@ private:
     std::unique_ptr<KernelRoutedTransport> _kernelRouted;
     struct VolumePipeline {
         bool routed = false; // compiled layout, never authored medium state
+        bool firstActivityMask = false; // C5b-2b2 group(0)/binding(3) conservative certificate
         KernelRoutedTransport::Program* routedProgram=nullptr; // Kernel owns stable entries; reload clears pipelines before owner reset
         WGPURenderPipeline pipe = nullptr;
         WGPUBindGroupLayout globalBgl = nullptr;
