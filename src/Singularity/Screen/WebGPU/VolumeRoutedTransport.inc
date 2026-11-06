@@ -133,6 +133,7 @@ inline void releaseProgram(KernelRoutedTransport::Program& p){
 inline void releaseCommon(KernelRoutedTransport& k){
  for(auto& p:k.common)if(p){wgpuComputePipelineRelease(p);p=nullptr;}
  if(k.classifySkip){wgpuComputePipelineRelease(k.classifySkip);k.classifySkip=nullptr;}
+ if(k.firstActivityPipe){wgpuComputePipelineRelease(k.firstActivityPipe);k.firstActivityPipe=nullptr;}
 }
 inline WGPUBuffer buffer(WGPUDevice d,WGPUQueue q,uint64_t bytes,WGPUBufferUsage extra=0,const void* data=nullptr){
  WGPUBufferDescriptor b={};b.label=wgpu::Device::str("Kernel bounded routed transport");b.size=bytes;b.usage=WGPUBufferUsage_Storage|WGPUBufferUsage_CopyDst|WGPUBufferUsage_CopySrc|extra;
@@ -232,9 +233,10 @@ KernelRoutedTransport::~KernelRoutedTransport(){
  for(auto& [key,p]:programs)kernel_routed_detail::releaseProgram(p);
 }
 void KernelRoutedTransport::releaseBuffers(){
- for(auto* p:{&publication,&rays,&singles,&overlaps,&offsets,&indices,&counts,&args,&stripUniform,&specsUniform})if(*p){wgpuBufferRelease(*p);*p=nullptr;}
+ for(auto* p:{&publication,&firstActivityMask,&rays,&singles,&overlaps,&offsets,&indices,&counts,&args,&stripUniform,&specsUniform})if(*p){wgpuBufferRelease(*p);*p=nullptr;}
  for(auto& p:lists)if(p){wgpuBufferRelease(p);p=nullptr;}
  for(auto& cohort:prodGroups){for(auto& bg:cohort)if(bg)wgpuBindGroupRelease(bg);cohort.clear();}
+ for(auto bg:firstActivityGroups)if(bg)wgpuBindGroupRelease(bg);firstActivityGroups.clear();
  if(resetGroup){wgpuBindGroupRelease(resetGroup);resetGroup=nullptr;}
  if(argsGroup){wgpuBindGroupRelease(argsGroup);argsGroup=nullptr;}
  if(cachedClassifyGroup){wgpuBindGroupRelease(cachedClassifyGroup);cachedClassifyGroup=nullptr;}
@@ -246,10 +248,14 @@ void KernelRoutedTransport::releaseBuffers(){
 bool KernelRoutedTransport::ensure(WGPUDevice d,WGPUQueue q,uint32_t w,uint32_t h){
  using namespace kernel_routed_detail;device=d;queue=q;WGPULimits limits={};
  if(wgpuDeviceGetLimits(d,&limits)!=WGPUStatus_Success||!w||!h||uint64_t(w)*h*16>std::min<uint64_t>(64ull*1024*1024,limits.maxStorageBufferBindingSize))return false;
- const auto groupsReady=[&](){return maxStrips&&std::all_of(prodGroups.begin(),prodGroups.end(),[&](const auto& v){return v.size()==maxStrips&&std::all_of(v.begin(),v.end(),[](auto g){return g!=nullptr;});});};
- if(width==w&&height==h&&publication&&rays&&singles&&overlaps&&offsets&&indices&&counts&&args&&stripUniform&&specsUniform&&
+ const auto groupsReady=[&](){
+  return maxStrips&&
+   std::all_of(prodGroups.begin(),prodGroups.end(),[&](const auto& v){return v.size()==maxStrips&&std::all_of(v.begin(),v.end(),[](auto g){return g!=nullptr;});})&&
+   firstActivityGroups.size()==maxStrips&&std::all_of(firstActivityGroups.begin(),firstActivityGroups.end(),[](auto g){return g!=nullptr;});
+ };
+ if(width==w&&height==h&&publication&&firstActivityMask&&rays&&singles&&overlaps&&offsets&&indices&&counts&&args&&stripUniform&&specsUniform&&
     std::all_of(lists.begin(),lists.end(),[](auto b){return b!=nullptr;})&&std::all_of(common.begin(),common.end(),[](auto p){return p!=nullptr;})&&
-    classifySkip&&resetGroup&&argsGroup&&cachedClassifyGroup&&groupsReady())return true;
+    classifySkip&&firstActivityPipe&&resetGroup&&argsGroup&&cachedClassifyGroup&&groupsReady())return true;
  releaseBuffers();CreationScope creation(d);
  const auto failed=[&](){creation.finish();releaseBuffers();enableRouteObserver(false);releaseCommon(*this);return false;};
  // 64 intervals/ray retained; partition work, never lower accuracy to fit.
@@ -258,13 +264,13 @@ bool KernelRoutedTransport::ensure(WGPUDevice d,WGPUQueue q,uint32_t w,uint32_t 
  width=w;height=h;stripRows=rows;capacity=w*rows;tiles=((w+3)/4)*(rows/4);
  std::vector<uint32_t> off,idx;off.reserve(tiles+1);idx.reserve(capacity);
  for(uint32_t y=0;y<rows;y+=4)for(uint32_t x=0;x<w;x+=4){off.push_back(idx.size());for(uint32_t dy=0;dy<4;++dy)for(uint32_t dx=0;dx<4&&x+dx<w;++dx)idx.push_back((y+dy)*w+x+dx);}
- off.push_back(idx.size());publication=buffer(d,q,uint64_t(w)*h*16);rays=buffer(d,q,uint64_t(capacity)*48);singles=buffer(d,q,uint64_t(capacity)*64*16);overlaps=buffer(d,q,uint64_t(capacity)*16*16);
+ off.push_back(idx.size());publication=buffer(d,q,uint64_t(w)*h*16);firstActivityMask=buffer(d,q,uint64_t(w)*h*4);rays=buffer(d,q,uint64_t(capacity)*48);singles=buffer(d,q,uint64_t(capacity)*64*16);overlaps=buffer(d,q,uint64_t(capacity)*16*16);
  offsets=buffer(d,q,off.size()*4,0,off.data());indices=buffer(d,q,idx.size()*4,0,idx.data());counts=buffer(d,q,16);args=buffer(d,q,48,WGPUBufferUsage_Indirect);
  for(auto& b:lists)b=buffer(d,q,uint64_t(tiles)*4);
  maxStrips=(h+rows-1)/rows;if(!maxStrips)return false;
  {WGPUBufferDescriptor bd={};bd.label=wgpu::Device::str("strip uniforms");bd.size=uint64_t(maxStrips)*kUniformStride;bd.usage=WGPUBufferUsage_Uniform|WGPUBufferUsage_CopyDst;stripUniform=wgpuDeviceCreateBuffer(d,&bd);}
  {WGPUBufferDescriptor bd={};bd.label=wgpu::Device::str("curtain specs uniform");bd.size=sizeof(KernelRoutedSpec)*4;bd.usage=WGPUBufferUsage_Uniform|WGPUBufferUsage_CopyDst;specsUniform=wgpuDeviceCreateBuffer(d,&bd);}
- if(!publication||!rays||!singles||!overlaps||!offsets||!indices||!counts||!args||!lists[0]||!lists[1]||!lists[2]||!stripUniform||!specsUniform)return failed();
+ if(!publication||!firstActivityMask||!rays||!singles||!overlaps||!offsets||!indices||!counts||!args||!lists[0]||!lists[1]||!lists[2]||!stripUniform||!specsUniform)return failed();
  // Static pipelines may have survived a successful resize. Missing pipelines
  // are built independently; a failed transaction releases the partial set.
  if(common[2]){wgpuComputePipelineRelease(common[2]);common[2]=nullptr;}
@@ -274,13 +280,15 @@ bool KernelRoutedTransport::ensure(WGPUDevice d,WGPUQueue q,uint32_t w,uint32_t 
  const char* names[]={"resetCountersMain","classifyTilesMain","routeArgs","s1ProducerMain","s2ProducerMain","fallbackProducerMain"};
  for(unsigned i=0;i<6;++i)if(!common[i]){common[i]=pipeline(d,codes[i],names[i]);if(!common[i])return failed();}
  if(!classifySkip)classifySkip=pipeline(d,routed_wgsl::kClassifyWgsl,"classifyTilesMain");
- if(!classifySkip)return failed();
+ if(!firstActivityPipe)firstActivityPipe=pipeline(d,routed_wgsl::kFirstActivityMaskWgsl,"compactFirstActivityMain");
+ if(!classifySkip||!firstActivityPipe)return failed();
  if(!resetGroup)resetGroup=group(device,common[0],{entry(0,counts,16)});
  if(!argsGroup)argsGroup=group(device,common[2],{entry(0,counts,16),entry(1,args,48)});
  if(!cachedClassifyGroup)cachedClassifyGroup=group(device,common[1],{entry(0,specsUniform,sizeof(KernelRoutedSpec)*4,0),entry(1,rays,uint64_t(capacity)*48),entry(2,offsets,uint64_t(tiles+1)*4),entry(3,indices,uint64_t(capacity)*4),entry(4,lists[0],uint64_t(tiles)*4),entry(5,lists[1],uint64_t(tiles)*4),entry(6,lists[2],uint64_t(tiles)*4),entry(7,counts,16)});
  cachedClassifyPipe=common[1];
  if(!resetGroup||!argsGroup||!cachedClassifyGroup)return failed();
  for(unsigned i=0;i<3;++i)prodGroups[i].assign(maxStrips,nullptr);
+ firstActivityGroups.assign(maxStrips,nullptr);
  for(uint32_t stripIdx=0,start=0;start<height&&stripIdx<maxStrips;start+=stripRows,++stripIdx){
   for(unsigned i=0;i<3;++i){
    auto entries=std::vector<WGPUBindGroupEntry>{entry(0,stripUniform,48,uint64_t(stripIdx)*kUniformStride),entry(1,specsUniform,sizeof(KernelRoutedSpec)*4,0),entry(2,rays,uint64_t(capacity)*48),entry(3,singles,uint64_t(capacity)*64*16)};
@@ -289,9 +297,34 @@ bool KernelRoutedTransport::ensure(WGPUDevice d,WGPUQueue q,uint32_t w,uint32_t 
    prodGroups[i][stripIdx]=group(device,common[i+3],entries);
    if(!prodGroups[i][stripIdx])return failed();
   }
+  firstActivityGroups[stripIdx]=group(device,firstActivityPipe,{
+   entry(0,stripUniform,48,uint64_t(stripIdx)*kUniformStride),
+   entry(1,rays,uint64_t(capacity)*48),
+   entry(2,singles,uint64_t(capacity)*64*16),
+   entry(3,overlaps,uint64_t(capacity)*16*16),
+   entry(4,firstActivityMask,uint64_t(width)*height*4)
+  });
+  if(!firstActivityGroups[stripIdx])return failed();
  }
  if(!creation.finish())return failed();
  return true;
+}
+bool KernelRoutedTransport::compactFirstActivity(WGPUCommandEncoder encoder,const KernelRoutedSpanStrip& strip){
+ if(!encoder||!firstActivityPipe||!firstActivityMask||strip.stripIndex>=firstActivityGroups.size())return false;
+ if(strip.rayCapacity!=capacity||strip.rays.buffer!=rays||strip.singles.buffer!=singles||strip.overlaps.buffer!=overlaps)return false;
+ auto bg=firstActivityGroups[strip.stripIndex];if(!bg)return false;
+ auto pass=wgpuCommandEncoderBeginComputePass(encoder,nullptr);if(!pass)return false;
+ wgpuComputePassEncoderSetPipeline(pass,firstActivityPipe);
+ wgpuComputePassEncoderSetBindGroup(pass,0,bg,0,nullptr);
+ wgpuComputePassEncoderDispatchWorkgroups(pass,(capacity+63)/64,1,1);
+ wgpuComputePassEncoderEnd(pass);wgpuComputePassEncoderRelease(pass);
+ ++encodedPasses;++encodedDispatches;
+ return true;
+}
+void KernelRoutedTransport::fillFirstActivityUnknown(){
+ if(!queue||!firstActivityMask||!width||!height)return;
+ std::vector<uint32_t> unknown(size_t(width)*height,0xffffffffu);
+ wgpuQueueWriteBuffer(queue,firstActivityMask,0,unknown.data(),unknown.size()*sizeof(uint32_t));
 }
 bool KernelRoutedTransport::enableRouteObserver(bool on){
  using namespace kernel_routed_detail;
