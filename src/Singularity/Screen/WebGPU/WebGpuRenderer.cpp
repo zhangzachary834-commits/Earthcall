@@ -895,10 +895,6 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
     stats.sceneVisibilityTriangles = out.triangleCount;
     stats.sceneVisibilityBytesUploaded += triangleBytes;
 
-    if (hasMeshReceivers && out.meshComplete) {
-        stats.sceneVisibilityMeshKnownFrames++;
-    }
-
     bool anyUnknown =
         hasMeshReceivers && !out.meshComplete;
     for (const SdfPipeline* sp : _activeSdfPipelines) {
@@ -1931,6 +1927,17 @@ void WebGpuRenderer::flushMeshDraws() {
     RadianceSourceBufferView sourceView = prepareRadianceSourceBuffer();
     const SceneVisibilityBufferView meshFieldVisibility =
         prepareFieldVmVisibility(nullptr);
+    if (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene) {
+        if (_sceneVisibilityFrame.meshComplete &&
+            meshFieldVisibility.complete) {
+            mutableFrameStats().sceneVisibilityMeshKnownFrames++;
+        } else if (_sceneVisibilityFrame.meshComplete &&
+                   !meshFieldVisibility.complete) {
+            // Semantic coverage was complete, but the device resources needed
+            // to execute that proof failed to materialize this frame.
+            mutableFrameStats().sceneVisibilityUnknownFrames++;
+        }
+    }
     if (!sourceView.buffer) {
         const RadianceSourceGpuData inertSource{};
         auto inert = bufferPool().suballocateStorage(
