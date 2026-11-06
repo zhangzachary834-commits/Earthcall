@@ -139,6 +139,9 @@ struct Program {
     std::vector<KernelVolumeTimeSlot> kernelVolumeTimeSlots;
     std::string kernelVolumePreparationWgsl;
     uint32_t kernelVolumePreparationInstanceBase = 0;
+    // C5b-2b2: fused V5 fragment expects group(0)/binding(3) to be
+    // the conservative 32-bin First-family activity mask.
+    bool kernelVolumeUsesFirstActivityMask = false;
 
     // True when the tree contains an implicit f(x,y,z)=0 leaf. Such a field is an
     // ISO-SURFACE VALUE, not a distance: it can be arbitrarily larger than the
@@ -462,6 +465,12 @@ VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* 
 // accepted V5 quadrature lattice. This is the stateful cross-family bridge;
 // it does not yet replace First-only work with KernelRoutedTransport's
 // specialized root/subpanel producer.
+//
+// C5b-2b2 `useFirstActivityMask` binds a conservative 32-bin per-pixel
+// certificate at group(0)/binding(3). It is legal only with grouped execution.
+// A zero bit may skip First-family member work at that EXISTING V5 sample;
+// one means maybe active/refused and therefore evaluates normally. No sample
+// coordinates, event boundaries, or transport algebra are changed.
 Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport = true,
                                const OntoMath::Piecewise* supportCertificateDensity = nullptr,
                                const std::vector<uint32_t>* supportCertificateSwitches = nullptr);
@@ -469,7 +478,8 @@ Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
                          const std::vector<KernelVolumeEvaluator>& evaluators,
                          bool trimProofSupport = true, const std::vector<bool>& supportCertificates = {},
                          const std::vector<std::vector<uint32_t>>& supportCertificateSwitches = {},
-                         const std::vector<VolumeExecutionFamily>& executionFamilies = {});
+                         const std::vector<VolumeExecutionFamily>& executionFamilies = {},
+                         bool useFirstActivityMask = false);
 
 // V5 exact overlap baseline. Reuses direct lowerVolumeEvaluator() output for every member's evaluator
 // semantics, then composes those evaluators into one shared ray integral. The
