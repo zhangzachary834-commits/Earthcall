@@ -6749,6 +6749,12 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         clamp(i32(floor(in.position.x)), 0, maxX),
         clamp(i32(floor(in.position.y)), 0, maxY));
     let sceneDepth = textureLoad(sceneDepthTex, px, 0);
+)WGSL";
+    if (useFirstActivityMask) out.wgsl += R"WGSL(
+    let ecC5bPixel = u32(px.y) * u32(max(i32(u.viewport.x), 1)) + u32(px.x);
+    let ecC5bFirstActivityWord = c5bFirstActivity[ecC5bPixel];
+)WGSL";
+    out.wgsl += R"WGSL(
 
     if (sceneDepth < 0.999999) {
         let opaqueWorld = worldAtDepth(in.position.xy, sceneDepth);
@@ -7292,9 +7298,16 @@ Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
                          const std::vector<KernelVolumeEvaluator>& evaluators,
                          bool trimProofSupport, const std::vector<bool>& supportCertificates,
                          const std::vector<std::vector<uint32_t>>& supportCertificateSwitches,
-                         const std::vector<VolumeExecutionFamily>& executionFamilies) {
+                         const std::vector<VolumeExecutionFamily>& executionFamilies,
+                         bool useFirstActivityMask) {
     Program out;
     const bool groupedExecution = !executionFamilies.empty();
+    if (useFirstActivityMask && !groupedExecution) {
+        out.ok = false;
+        out.error = "volume set: First-activity mask requires grouped execution";
+        out.wgsl = "// REFUSED: " + out.error + "\n";
+        return out;
+    }
     if (groupedExecution) {
         if (executionFamilies.size() != media.size()) {
             out.ok = false;
@@ -7353,7 +7366,11 @@ Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
             return out;
         }
 
-        if (i == 0) out.wgsl = kernelVolumePrefix(trimProofSupport);
+        if (i == 0) {
+            out.wgsl = kernelVolumePrefix(trimProofSupport);
+            if (useFirstActivityMask)
+                out.wgsl += "@group(0) @binding(3) var<storage, read> c5bFirstActivity: array<u32>;\n";
+        }
         std::string evalBlock = member.wgsl;
         const std::string suffix = "_" + std::to_string(i);
 
@@ -7619,6 +7636,15 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 )WGSL";
     out.wgsl += R"WGSL(
             let worldP = ro + rd * sampleT;
+)WGSL";
+    if (useFirstActivityMask) out.wgsl += R"WGSL(
+            // C5b-2b2 conservative activity gate. Canonical camera-distance
+            // bins match the routed producer's [0,2048] admission domain.
+            let ecC5bBin = min(u32(floor(clamp(sampleT * (32.0 / 2048.0), 0.0, 31.999999))), 31u);
+            let ecC5bFirstActive =
+                (ecC5bFirstActivityWord & (1u << ecC5bBin)) != 0u;
+)WGSL";
+    out.wgsl += R"WGSL(
 
             // Consume each medium's proof and contribution together. Unknown
             // leaves cannot justify a collective jump; known leaves contribute
@@ -7640,7 +7666,11 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
                 std::string(groupedExecution
                     ? "((ecC5bExecutionMask & " +
                           std::to_string(executionFamilies[i] == VolumeExecutionFamily::First ? 1u : 2u) +
-                          "u) != 0u) && "
+                          "u) != 0u) && " +
+                          std::string(useFirstActivityMask &&
+                                      executionFamilies[i] == VolumeExecutionFamily::First
+                                          ? "ecC5bFirstActive && "
+                                          : "")
                     : "") +
                 "all(worldP >= mediumInst" + n + ".origin.xyz - mediumInst" + n + ".halfExtent.xyz) && "
                 "all(worldP <= mediumInst" + n + ".origin.xyz + mediumInst" + n + ".halfExtent.xyz)) {\n"
@@ -7799,6 +7829,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     out.params.clear();
     out.kernelVolumePreparationWgsl = kernelVolumeTimePreparation(members, true);
     out.kernelVolumePreparationInstanceBase = 1;
+    out.kernelVolumeUsesFirstActivityMask = useFirstActivityMask;
     for (const auto& member : members) {
         out.params.insert(out.params.end(), member.params.begin(), member.params.end());
     }
