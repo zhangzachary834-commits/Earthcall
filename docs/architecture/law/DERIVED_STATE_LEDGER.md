@@ -840,3 +840,22 @@ The established `encode()` path still performs `ecConsume` and owns the integrat
 C5b-2b1 has no production renderer caller yet. No routed interval performance claim follows from the existence of the seam.
 
 GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
+
+
+### General volume transport C5b-2b2 — conservative First-family activity certificate (2026-11-05)
+
+C5b-2b2 materializes a **frame-lifetime derived activity certificate** from the routed First-family producer. It is not authored support, not a persistent medium property, and not a replacement density field.
+
+The raw routed `ECSpan` program remains strip-lifetime scratch. After each strip is produced, a GPU compactor writes one `u32` into `firstActivityMask` for each framebuffer pixel. The 32 bits conservatively cover absolute camera-ray distance `s in [0,2048]`; they are intentionally independent of the routed cohort's own AABB envelope and the mixed set's AABB envelope.
+
+Semantics are one-sided: a zero bit means **proved First-family inactive in that canonical bin**; a one bit means maybe active, overlap, refusal, or unknown. Invalid route state, malformed spans, and compactor refusal fail open to all ones. Boundary quantization may create false positives but must never create false negatives.
+
+The mixed fused V5 shader may use a zero bit only to skip First-family evaluator work at an already-existing V5 sample. Second-family evaluation, authored AABB event boundaries, sample coordinates, segment spacing, and the single continuing transmittance/radiance state are unchanged.
+
+The mask is rebuilt from current routed producer truth each frame when required. If the source pipeline fails or is skipped before producing it, the renderer writes an all-ones fail-open certificate before the masked draw; previous-frame zero bits never retain authority.
+
+At 2560×1440 the certificate occupies 14,745,600 bytes (about 14.1 MiB). It is a compact execution materialization, not a full-frame copy of routed span records.
+
+C5b-2b2 does not yet substitute routed quadrature values for First-family V5 evaluation. C5b-2b3 owns that optimization.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
