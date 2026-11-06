@@ -110,6 +110,14 @@ public:
 
     std::string getIdentifier() const override { return _lawId; }
 
+    // Opaque, persisted history lineage; unlike the authored Law identifier,
+    // it survives renames and ordinary save/load or Save As. An intentional
+    // fork must explicitly mint a new lineage rather than changing the name.
+    const std::string& durableHistoryLineage() const noexcept { return _durableHistoryLineage; }
+    // Explicitly fork durable history after copying/restoring a Law. A rename
+    // or ordinary Save As must NOT call this; both preserve the same lineage.
+    void forkDurableHistoryLineage();
+
     // Give an engine-instantiated law the stable slug law text names it by.
     //
     // setObjectID() is NOT this. Law inherits Object but overrides
@@ -414,6 +422,9 @@ protected:
     void registerEnabledProperty();
 
 private:
+    // LawManager alone may restore an engine-owned First Mover's saved history
+    // lineage. The authored Law JSON loader cannot confer First Mover authority.
+    friend class LawManager;
     void initializeLawIdentity();
     // Stable, law-derived names for the three group Formations (see the .cpp).
     void nameGroupFormations();
@@ -445,6 +456,7 @@ private:
     int propAuthority() const { return _authorityLevel; }
 
     std::string _lawId;
+    std::string _durableHistoryLineage;
     std::string _name;
     bool _enabled = true;
     int _authorityLevel = 0;
@@ -943,6 +955,14 @@ public:
     // Unauthored and it cannot fire), and rebinds triggers. Call after the
     // world is loaded so the Universe can resolve the identifiers.
     void loadFromJson(const nlohmann::json& j);
+
+    // Explicitly turn a copied world into an independent history branch.
+    // Re-key every registered Law, including engine-owned First Movers,
+    // while retaining authored IDs, definitions, and authority. Ordinary
+    // save/load and Save As MUST NOT call this: they preserve lineage.
+    // Stage all new identities before mutation so entropy failure cannot
+    // leave a half-forked world. Call before executing the copied world.
+    void forkAllDurableHistoryLineages();
 
     // ------------------------------------------------------------------
     // Drive sessions: change over time that outlives its event. When an

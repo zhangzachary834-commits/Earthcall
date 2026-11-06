@@ -1,0 +1,105 @@
+name: Law durable logging canonical control (diagnostic)
+
+# Attribution witness only: run the four failing focused tests and the
+# chess-world adapter-off baseline on the exact PR base, not the PR head.
+# A successful workflow means the controls ran; inspect CANONICAL_* lines
+# for test outcomes. No repository writes, deployment, or merge.
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/law-durable-logging-canonical-control.yml'
+      - 'src/Singularity/Core/Logging/DurableLogger.cpp'
+      - 'src/Singularity/Core/Logging/DurableLogger.hpp'
+      - 'src/ZonesOfEarth/AuthorsOfLaw/Law.cpp'
+      - 'src/ZonesOfEarth/AuthorsOfLaw/Law.hpp'
+      - 'src/ZonesOfEarth/AuthorsOfLaw/LawAuditLogger.hpp'
+      - 'tests/law/law_durable_logging_test.cpp'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-control:
+    name: Exact-base focused failures and chess baseline (macOS 15)
+    if: github.event_name == 'pull_request'
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - name: Check out exact canonical base
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - name: Verify base SHA and runner
+        shell: bash
+        run: |
+          set -euxo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.base.sha }}"
+          echo "CANONICAL_BASE_SHA=$(git rev-parse HEAD)"
+          uname -a
+
+      - name: Configure exact canonical tree
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
+            -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
+            -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
+            -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a"
+
+      - name: Build four failed witnesses and independent chess baseline
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake --build build --parallel 4 --target \
+            second_nature_law_forge_zone_test \
+            first_mover_test \
+            person_ecform_propagation_test \
+            authorable_light_contract_test \
+            slow_adapter_zone_perf_test
+
+      - name: Run four canonical focused witnesses (report failures without hiding them)
+        shell: bash
+        run: |
+          set -uo pipefail
+          # GitHub's bash runner starts with -e; disable it so an expected
+          # canonical CTest failure cannot skip the independent chess control.
+          set +e
+          ctest --test-dir build --output-on-failure --no-tests=error \
+            -R '^(second_nature_law_forge_zone_test|first_mover_test|person_ecform_propagation_test|authorable_light_contract_test)$' \
+            2>&1 | tee canonical-focused.log
+          rc=${PIPESTATUS[0]}
+          echo "CANONICAL_FOCUSED_CTEST_EXIT=$rc"
+          echo "CANONICAL_FOCUSED_RESULT=$([ "$rc" -eq 0 ] && echo PASS || echo FAIL)"
+          # This is an attribution control: expected failures are evidence,
+          # not a reason to prevent the independent chess baseline from running.
+          exit 0
+
+      - name: Run exact canonical chess-world adapter-off baseline
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          cmd = ["./build/slow_adapter_zone_perf_test",
+                 "saves/worlds/chess_app.json",
+                 "--adapter=off", "--direct=off", "--frames=60"]
+          print("CANONICAL_CHESS_COMMAND=" + " ".join(cmd), flush=True)
+          try:
+              result = subprocess.run(cmd, text=True, capture_output=True, timeout=120)
+          except subprocess.TimeoutExpired:
+              print("CANONICAL_CHESS_BASELINE_RESULT=TIMEOUT_120S")
+          else:
+              perf = [line for line in result.stdout.splitlines()
+                      if line.startswith("ADAPTER_PERF ")]
+              for line in perf:
+                  print(line)
+              if result.returncode == 0 and perf:
+                  print("CANONICAL_CHESS_BASELINE_RESULT=PASS")
+              else:
+                  print("CANONICAL_CHESS_BASELINE_RESULT=FAIL")
+                  print("\n".join((result.stdout + "\n" + result.stderr).splitlines()[-20:]))
+          PY
