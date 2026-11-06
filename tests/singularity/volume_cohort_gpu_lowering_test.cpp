@@ -102,6 +102,37 @@ int main() {
     assert(count(groupedAba.wgsl, "var transmittance = 1.0;") == 1);
     assert(count(groupedAba.wgsl, "var integratedRadiance = vec3<f32>(0.0);") == 1);
 
+    // C5b-2b2 activity-gated grouped program: same V5 lattice, plus one
+    // conservative per-pixel First-family certificate binding.
+    const auto activityGated = sdfwgsl::composeVolumeSet(
+        media, {}, false, {}, {}, ab, true);
+    assert(activityGated.ok);
+    assert(activityGated.kernelVolumeUsesFirstActivityMask);
+    assert(activityGated.wgsl.find(
+        "@group(0) @binding(3) var<storage, read> c5bFirstActivity") !=
+        std::string::npos);
+    assert(activityGated.wgsl.find(
+        "let ecC5bFirstActivityWord = c5bFirstActivity[ecC5bPixel]") !=
+        std::string::npos);
+    assert(activityGated.wgsl.find(
+        "sampleT * (32.0 / 2048.0)") != std::string::npos);
+    assert(activityGated.wgsl.find(
+        "ecC5bFirstActive && all(worldP >= mediumInst0") !=
+        std::string::npos);
+    // Second-family work is not gated by a First-family absence certificate.
+    assert(activityGated.wgsl.find(
+        "ecC5bFirstActive && all(worldP >= mediumInst1") ==
+        std::string::npos);
+    assert(count(activityGated.wgsl, "var transmittance = 1.0;") == 1);
+    assert(activityGated.wgsl.find(
+        "var mediumEvents: array<f32, 4>") != std::string::npos);
+
+    const auto illegalUngroupedActivity = sdfwgsl::composeVolumeSet(
+        media, {}, false, {}, {}, {}, true);
+    assert(!illegalUngroupedActivity.ok);
+    assert(illegalUngroupedActivity.error.find(
+        "requires grouped execution") != std::string::npos);
+
     // Family assignment is structural compiler state.
     const std::vector<sdfwgsl::VolumeExecutionFamily> ba{
         sdfwgsl::VolumeExecutionFamily::Second,
