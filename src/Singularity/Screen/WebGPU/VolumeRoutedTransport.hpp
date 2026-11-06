@@ -80,6 +80,12 @@ struct KernelRoutedTransport {
     bool encodeSpans(Program&,WGPUCommandEncoder,const KernelRoutedRange& globals,
                      const KernelRoutedRange& params,const KernelRoutedRange& instances,
                      WGPUTextureView depth,const KernelRoutedSpanConsumer& consumer);
+    // Same producer pass, but after the external strip consumer also run the
+    // established ecConsume before scratch reuse. Used when one frame needs
+    // both routed RGBA regions and C5b activity certificates.
+    bool encodeWithSpans(Program&,WGPUCommandEncoder,const KernelRoutedRange& globals,
+                         const KernelRoutedRange& params,const KernelRoutedRange& instances,
+                         WGPUTextureView depth,const KernelRoutedSpanConsumer& consumer);
     // Consume one borrowed routed strip into the durable conservative
     // 32-bin First-family mask. Safe false positives; no false negatives.
     bool compactFirstActivity(WGPUCommandEncoder,const KernelRoutedSpanStrip&);
@@ -88,5 +94,6 @@ struct KernelRoutedTransport {
 private:
     bool encodeInternal(Program&,WGPUCommandEncoder,const KernelRoutedRange& globals,
                         const KernelRoutedRange& params,const KernelRoutedRange& instances,
-                        WGPUTextureView depth,const KernelRoutedSpanConsumer* spanConsumer);
+                        WGPUTextureView depth,const KernelRoutedSpanConsumer* spanConsumer,
+                        bool publishIntegrated);
 };
