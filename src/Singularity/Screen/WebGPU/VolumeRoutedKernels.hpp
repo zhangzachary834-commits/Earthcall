@@ -333,13 +333,14 @@ struct ECSpan {span:vec2<f32>,info:vec2<u32>};
 @group(0) @binding(3) var<storage,read> ecOverlaps:array<ECSpan>;
 @group(0) @binding(4) var<storage,read_write> ecFirstActivity:array<u32>;
 
-fn markSpan(mask:ptr<function,u32>, lo:f32, hi:f32, t0:f32, t1:f32) -> bool {
-    if (!(t1 > t0) || !(hi > lo) || lo < t0 - 1e-4 || hi > t1 + 1e-4) {
+fn markSpan(mask:ptr<function,u32>, lo:f32, hi:f32) -> bool {
+    // Canonical camera-ray distance domain. The routed setup already refuses
+    // t1 > 2048, so this coordinate is independent of any cohort's AABB envelope.
+    if (!(hi > lo) || lo < -1e-4 || hi > 2048.0001) {
         return false;
     }
-    let inv = 1.0 / (t1 - t0);
-    let q0 = clamp((lo - t0) * inv, 0.0, 1.0);
-    let q1 = clamp((hi - t0) * inv, 0.0, 1.0);
+    let q0 = clamp(lo * (1.0 / 2048.0), 0.0, 1.0);
+    let q1 = clamp(hi * (1.0 / 2048.0), 0.0, 1.0);
     let b0 = min(u32(floor(q0 * 32.0)), 31u);
     let b1 = min(u32(floor(q1 * 32.0)), 31u);
     var b = b0;
@@ -376,9 +377,8 @@ fn compactFirstActivityMain(@builtin(global_invocation_id) gid:vec3<u32>) {
         return;
     }
 
-    let t0 = ray.ro_clipA.w;
-    let t1 = ray.rd_clipB.w;
-    if (!(t1 > t0)) {
+    if (!(ray.rd_clipB.w > ray.ro_clipA.w) ||
+        ray.ro_clipA.w < -1e-4 || ray.rd_clipB.w > 2048.0001) {
         ecFirstActivity[pixel] = 0xffffffffu;
         return;
     }
@@ -387,14 +387,14 @@ fn compactFirstActivityMain(@builtin(global_invocation_id) gid:vec3<u32>) {
     var mask = 0u;
     for (var i = 0u; i < ray.counts.y; i++) {
         let sp = ecSingles[i * stride + id];
-        if (!markSpan(&mask, sp.span.x, sp.span.y, t0, t1)) {
+        if (!markSpan(&mask, sp.span.x, sp.span.y)) {
             ecFirstActivity[pixel] = 0xffffffffu;
             return;
         }
     }
     for (var i = 0u; i < overlapCount; i++) {
         let sp = ecOverlaps[i * stride + id];
-        if (!markSpan(&mask, sp.span.x, sp.span.y, t0, t1)) {
+        if (!markSpan(&mask, sp.span.x, sp.span.y)) {
             ecFirstActivity[pixel] = 0xffffffffu;
             return;
         }
