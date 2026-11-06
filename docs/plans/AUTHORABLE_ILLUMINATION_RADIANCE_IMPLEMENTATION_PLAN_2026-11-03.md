@@ -6,6 +6,85 @@
 **Written by:** GPT-5.6 Sol  
 **Status:** implementation plan; no completion claim
 
+## Implementation ledger — 2026-11-05 continuation: shared mesh/SDF field-VM visibility rung 2
+
+The historical Sphere/Box foreign-implicit packet is no longer an active CompleteScene authority. Raster mesh and implicit SDF receivers now consume **one shared bounded field-program VM language** for SDF blockers.
+
+Implemented:
+- generalized the receiver-relative VM scene-table packer:
+  - `receiver == nullptr` means a raster mesh consumer and packs **every** admitted SDF cohort;
+  - an SDF receiver omits only its own compiled-program cohort because that cohort is already evaluated directly by the receiver shader;
+- generalized the CompleteScene predicate so mesh and SDF consumers share one blocker/instruction budget and one opacity/program-admission law;
+- expanded mesh group-0 visibility bindings to:
+  - binding 5 = exact world-space mesh triangles,
+  - binding 6 = field-VM blocker descriptors,
+  - binding 7 = field-VM bytecode;
+- mesh WGSL now executes the same fixed `fieldVmEval` interpreter and the same tri-state `sceneFieldVmVisibility` module used by SDF receivers;
+- mesh visibility preserves epistemic tri-state semantics: VM refusal/malformed data/budget exhaustion returns Unknown; a proved blocker returns Known occluded; only proved traversal continues to mesh-triangle visibility;
+- the canonical primitive SDF equations are **not duplicated** for mesh: `compileSurfaceResponseModule()` already prefixes the shared `kPrimitives` math, and the VM interpreter consumes those exact functions;
+- deleted the renderer-owned analytic packet state:
+  - `SceneVisibilityImplicitBlocker`,
+  - `_sdfVisibilityBlockerBatches`,
+  - frame implicit buffer/offset/size/count;
+- deleted the retired WGSL analytic packet implementation:
+  - `SceneImplicitBlockerData`,
+  - `sceneImplicitSphereBlocks`,
+  - `sceneImplicitBoxBlocks`,
+  - `sceneImplicitVisibility`,
+  - `sceneVisibilityImplicitMathModule()`;
+- frame-scoped visibility now owns only exact mesh-triangle materialization; field-program descriptors/bytecode remain receiver-relative derived execution state;
+- mesh-known telemetry now records success only **after** VM descriptor/program buffers actually materialize; semantic completeness without device allocation can no longer produce a false Known receipt;
+- retained historical telemetry names `sceneVisibilityImplicitBlockers` / `sceneVisibilityImplicitBytesUploaded` for compatibility, but they now mean VM blocker descriptors and descriptor+bytecode bytes;
+- migrated the native CompleteScene tribunal:
+  1. foreign Box blocks a mesh receiver through the shared VM;
+  2. the same Box blocks an SDF receiver through the same ABI;
+  3. foreign Torus is now **Known** for a mesh receiver through VM execution;
+  4. `Expr` is the real current refusal frontier and revokes CompleteScene authority for both mesh and SDF receivers;
+- the Torus mesh witness is geometrically adversarial: its center is offset by one major radius from the source segment so the ray cuts the torus tube rather than flying through its hole, while remaining off the camera-centre ray.
+
+Final active CompleteScene authority after this rung:
+
+```
+Raster mesh receiver:
+    all admitted SDF cohorts -> field VM
+    all opaque mesh blockers -> exact triangles
+
+SDF receiver:
+    own compiled-program cohort -> native receiver evaluator
+    every foreign admitted SDF cohort -> field VM
+    all opaque mesh blockers -> exact triangles
+```
+
+Preserved refusal law:
+- `Expr` remains Unknown until Earthcall has lossless OntoMath-native field bytecode;
+- `Convex` remains Unknown until its plane payload has an explicit VM representation;
+- blocker/instruction budget overflow remains Unknown;
+- no triangulation is allowed to impersonate authored field truth merely to earn CompleteScene authority.
+
+Verification status:
+- static source/ABI sweep finds **zero** active Sphere/Box packet symbols in the renderer/WGSL/test authority path;
+- mesh bind-group layout and draw bindings both expose eight entries with bytecode at binding 7;
+- SDF bytecode remains at binding 5;
+- both representation paths call the same `sceneVisibilityFieldVmMathModule()`;
+- the native Box/Torus/Expr tribunals are authored in `webgpu_object_test`;
+- **no native-device/CI green result is claimed yet in this session** because no workflow/status result has surfaced for the current head.
+
+Next frontier:
+1. observe the native mesh-Torus / Expr-refusal tribunal on a real WebGPU runner;
+2. implement lossless OntoMath-native bytecode for `Expr` without reviving legacy `SdfToken` RPN as a second authority;
+3. encode Convex plane payloads;
+4. then decide whether the field VM should expand from path-visibility execution into primary surface execution.
+
+The representation boundary has now collapsed without collapsing the ontology:
+
+```
+mesh receiver ─┐
+               ├── one field execution language ──> Path truth
+SDF receiver ──┘
+```
+
+---
+
 ## Implementation ledger — 2026-11-05 continuation: native GPU field-VM scene table rung 1
 
 The native field VM now crosses the first **production path-visibility authority** boundary for SDF receivers. Mixed authored SDF programs no longer require a universe-sized generated shader and no longer collapse to the Sphere/Box compatibility packet.
