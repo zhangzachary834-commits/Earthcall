@@ -3234,7 +3234,8 @@ void WebGpuRenderer::flushVolumeComposite() {
     // reuses it. A camera change never changes the equations/parameter layout.
     auto enqueueVolumeCohort = [&](const std::vector<const Rendering::VolumeDensityBinding*>& cohortMedia,
                                    bool allowRouted,
-                                   const std::vector<sdfwgsl::VolumeExecutionFamily>* executionFamilies = nullptr)
+                                   const std::vector<sdfwgsl::VolumeExecutionFamily>* executionFamilies = nullptr,
+                                   bool useFirstActivityMask = false)
         -> const VolumePipeline* {
         if (cohortMedia.size() <= 1) return nullptr;
         const std::vector<sdfwgsl::VolumeExecutionFamily> noExecutionFamilies;
@@ -3243,6 +3244,14 @@ void WebGpuRenderer::flushVolumeComposite() {
         if (!executionFamilyTags.empty() &&
             executionFamilyTags.size() != cohortMedia.size())
             return nullptr;
+        if (useFirstActivityMask && executionFamilyTags.empty())
+            return nullptr;
+        if (useFirstActivityMask) {
+            if (!_kernelRouted)
+                _kernelRouted = std::make_unique<KernelRoutedTransport>();
+            if (!_kernelRouted->ensure(_device, _queue, _depthW, _depthH))
+                return nullptr;
+        }
 
         bool cohortTrimProofSupport = volumeZeroProofEnabled();
         for (const auto* medium : cohortMedia) {
@@ -3309,6 +3318,8 @@ void WebGpuRenderer::flushVolumeComposite() {
             for (const auto family : executionFamilyTags)
                 combineRevision(setContentRevision, static_cast<uint64_t>(family));
         }
+        combineRevision(setContentRevision,
+                        useFirstActivityMask ? 0x43354143ULL : 0x4e4f4143ULL); // C5AC / NOAC
         combineRevision(setContentRevision, incidentSourceContentRevision);
         for (std::size_t m = 0; m < cohortMedia.size(); ++m) {
             combineRevision(setContentRevision, reinterpret_cast< uintptr_t >(cohortMedia[m]->densityExpr));
@@ -3332,6 +3343,9 @@ void WebGpuRenderer::flushVolumeComposite() {
                     structure += std::to_string(static_cast<unsigned>(family)) + ",";
                 structure += "\n";
             }
+            structure += useFirstActivityMask
+                ? "c5b-first-activity-mask:on\n"
+                : "c5b-first-activity-mask:off\n";
 
             std::vector<sdfwgsl::KernelVolumeEvaluator> retainedEvaluators;
             retainedEvaluators.reserve(cohortMedia.size());
@@ -3439,7 +3453,8 @@ void WebGpuRenderer::flushVolumeComposite() {
                 if (needsCompile) {
                     setMemo.prog = sdfwgsl::composeVolumeSet(
                         compilerInputs, retainedEvaluators, cohortTrimProofSupport,
-                        certificateMembers, certificateSwitches, executionFamilyTags);
+                        certificateMembers, certificateSwitches,
+                        executionFamilyTags, useFirstActivityMask);
                     ++mutableFrameStats().volumeProgramCompiles;
                     mutableFrameStats().volumeWgslBytesGenerated +=
                         setMemo.prog.wgsl.size();
@@ -3482,7 +3497,8 @@ void WebGpuRenderer::flushVolumeComposite() {
                         if (!other.ok || other.structure != structure || !other.pipeline) {
                             other.prog = sdfwgsl::composeVolumeSet(
                                 compilerInputs, retainedEvaluators, !cohortTrimProofSupport,
-                                certificateMembers, certificateSwitches, executionFamilyTags);
+                                certificateMembers, certificateSwitches,
+                                executionFamilyTags, useFirstActivityMask);
                             ++mutableFrameStats().volumeProgramCompiles;
                             mutableFrameStats().volumeWgslBytesGenerated += other.prog.wgsl.size();
                             other.ok = other.prog.ok;
