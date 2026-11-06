@@ -477,15 +477,7 @@ bool Law::hasAuthorityOver(const Law& other) const {
         }
     }
 
-    // 2. First Mover standing above ordinary authored laws when no explicit DAG edge overrides
-    if (this->isFirstMover() && !other.isFirstMover()) {
-        return !other.hasAuthorityOver(*this);
-    }
-    if (!this->isFirstMover() && other.isFirstMover()) {
-        return false;
-    }
-
-    // 3. Fallback to legacy _authorityLevel when neither is connected in DAG and FirstMover status is identical
+    // 2. Fallback to legacy _authorityLevel when neither is connected in DAG
     return _authorityLevel > other.authorityLevel();
 }
 

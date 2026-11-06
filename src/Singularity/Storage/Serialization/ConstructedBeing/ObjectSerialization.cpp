@@ -1,5 +1,6 @@
 #include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "ConstructedBeing/Singular/SingularPersistence.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/SdfJson.hpp"
 #include <cstring>
@@ -292,6 +293,12 @@ void to_json(nlohmann::json& j, const Object& obj){
         }
         j["elements"] = std::move(els);
     }
+
+    // Additive non-inline cell bindings (Shared, Unique, Weak)
+    nlohmann::json cellBindings = SingularPersistence::serializeCellBindings(obj);
+    if (!cellBindings.empty()) {
+        j["propertyCellBindings"] = std::move(cellBindings);
+    }
 }
 
 void from_json(const nlohmann::json& j, Object& obj){
@@ -395,6 +402,10 @@ void from_json(const nlohmann::json& j, Object& obj){
             }
             obj.setDynamicProperty(key, val);
         }
+    }
+    if (j.contains("propertyCellBindings") && j["propertyCellBindings"].is_array()) {
+        SingularPersistence::CohortScope scope;
+        SingularPersistence::deserializeCellBindings(obj, j["propertyCellBindings"], scope.get());
     }
     if (j.contains("elements") && j["elements"].is_array()) {
         for (const auto& id : j["elements"]) {

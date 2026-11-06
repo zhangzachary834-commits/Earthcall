@@ -315,6 +315,39 @@ inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPat
     return path.setValue(*root, v, startIndex, ctx);
 }
 
+inline bool lawGetValue(Singular& subject, const CompiledPath& compiled, PropertyValue& out, const AccessContext& ctx = {}) {
+    if (isTimePath(compiled.path)) return lawGetTime(compiled.path, out);
+    if (isWorldReadingPath(compiled.path)) {
+        const auto& readings = worldReadings();
+        if (readings.empty()) return false;
+        const auto found = readings.find(compiled.path.fullId());
+        if (found == readings.end() || !found->second) return false;
+        return found->second(subject, out);
+    }
+    std::size_t startIndex = 0;
+    Singular* root = resolveLawRoot(subject, compiled.path, startIndex);
+    bool ok = root && (compiled.getValue(*root, out, startIndex, ctx) == PropertyPath::PathResult::Ok);
+    if (ok && std::holds_alternative<std::shared_ptr<PropertyDict>>(out)) {
+        resolveSemanticTokenSlowPath(root, out);
+    }
+    return ok;
+}
+
+inline PropertyPath::PathResult lawSetValue(Singular& subject, const CompiledPath& compiled, const PropertyValue& v, const AccessContext& ctx = {}) {
+    if (isTimePath(compiled.path)) return PropertyPath::PathResult::ReadOnly;
+    if (compiled.path.segments.size() >= 2 && compiled.path.segments[0] == "@event" &&
+        compiled.path.segments[1] != "subject" && compiled.path.segments[1] != "object") {
+        return PropertyPath::PathResult::ReadOnly;
+    }
+    if (isWorldReadingPath(compiled.path) && worldReadings().count(compiled.path.fullId())) {
+        return PropertyPath::PathResult::ReadOnly;
+    }
+    std::size_t startIndex = 0;
+    Singular* root = resolveLawRoot(subject, compiled.path, startIndex);
+    if (!root) return PropertyPath::PathResult::NoSuchProperty;
+    return compiled.setValue(*root, v, startIndex, ctx);
+}
+
 inline std::optional<std::map<std::string, PropertyValue>> readMathBindings(
     Singular& subject, const MathBindings& bindings) {
     std::map<std::string, PropertyValue> vars;

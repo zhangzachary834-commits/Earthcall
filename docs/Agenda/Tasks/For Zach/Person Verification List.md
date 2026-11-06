@@ -1,8 +1,26 @@
 # Person Verification List
 
-## SDF Surface Truth Mastery (Rungs 1–4): Cathedral of the Living Logos
+## SDF Surface Truth Mastery (Rungs 7 & 8): Cathedral of the Living Logos
 
-*Antigravity · Gemini 3.8 Flash · session `c802a0d5-3c06-450d-b47b-ebdc7aef86d0` · 2026-11-04. Commissioned by The Firmament & Zach: "DIRECTIVE FOR SPARKLY GUY — SDF SURFACE TRUTH MASTERY (CORRECTIVE ABBA + RUNG 3 & RUNG 4)"*
+*Antigravity · Gemini 3.8 Flash · session `102da8a2-db47-4627-8ce6-cf1235aeabd4` · 2026-11-05. Commissioned by The Firmament & Zach: "⚔️ SPARKLY GUY QUEST: SDF SURFACE TRUTH MASTERY — RUNG 7 (ONTOMATH IRREDUCIBLE 1D RAY-DOMAIN COMPILATION) & RUNG 8 (LEFT-HEAVY CSG PRUNING + MESH BIND-GROUP CONSOLIDATION)"*
+
+- [ ] Launch Earthcall WebGPU (`./build_release/earthcall_webgpu`) and enter **`Cathedral of the Living Logos`**.
+- [ ] **OntoMath 1D Ray-Domain Solvers (Rung 7):**
+  - Walk around the cathedral court and look upwards at the three giant sky auroras (`cathedral.sky.aurora.emerald`, `turquoise`, `sapphire`).
+  - Observe that the anisotropic quadratic Ellipsoid and authored expression drops (`sqrt(x*x + y*y + z*z) - 1`) resolve with zero stepping lag.
+  - Step onto the Open Hand terraces (`Cylinder` circular quadric + Z-slab) and observe crisp, immediate surface detection.
+  - Inspect the rounded pedestals and columns (`RoundBox` Minkowski offset/bevel decomposition): notice that flat-face rays resolve in 0 march steps and bevel corners leap straight across the support envelope with 0 edge artifacts.
+- [ ] **Left-Heavy CSG Pruning & Parameter Invariance (Rung 8A):**
+  - In the Open Hand court, interact with multi-component sculptures (such as `cathedral.sdf.seraph.left` / `seraph.right` and throne structures).
+  - Observe that left-heavy CSG chains prune skipped subtrees cleanly at runtime without visual pop or missing geometry.
+  - Test slider/property edits: verify parameter values refresh dynamically without recompiling WGSL pipelines.
+- [ ] **Mesh Bind Group Consolidation & Frame Smoothness (Rung 8B):**
+  - Verify that full world scene traversal with all 1,231 Objects renders with rock-solid stability.
+  - Observe that mesh rendering achieves 100% byte-identical pixel parity on foreign/mesh scenes like The Merry Dancers (14,745,600 / 14,745,600 bytes) while instance bind groups are cleanly consolidated to 1 per page.
+
+## SDF Surface Truth Mastery (Rungs 1–6): Cathedral of the Living Logos
+
+*Antigravity · Gemini 3.8 Flash · session `c802a0d5-3c06-450d-b47b-ebdc7aef86d0` · 2026-11-05. Commissioned by The Firmament & Zach: "THE FIRMAMENT — SDF SURFACE TRUTH MASTERY: RUNG 5 & RUNG 6 DIRECTIVE"*
 
 - [ ] Launch Earthcall WebGPU (`./build_release/earthcall_webgpu`) and enter **`Cathedral of the Living Logos`**.
 - [ ] **Surface Normal & Specular Fidelity:**
@@ -11,11 +29,14 @@
 - [ ] **Open Hand Court & Gestures:**
   - Click the touchstone / portal tear in the Open Hand court.
   - Verify that the twelve petals and tears unfold smoothly and cleanly.
-- [ ] **Closed-Form Root Hits & CSG Bounding Pruning:**
+- [ ] **Closed-Form Root Hits & CSG Bounding Pruning (Rungs 3, 4, 6A):**
   - Observe that standalone primitive leaves (spheres, cubes, polyhedra) resolve in $O(1)$ without grazing-ray sphere-marching stalls.
-  - Inspect complex sculptures: observe that off-silhouette rays skip distant child subtrees cleanly with zero pixel artifacts.
+  - Inspect complex carved and composite sculptures: observe that rays outside carving bounding spheres skip child subtrees in both `Union`, `SmoothUnion`, and `Subtract` cleanly with zero pixel artifacts.
+- [ ] **Tight Analytical AABB Bounds & Dynamic Shader Bloat Elimination (Rungs 5B, 6B):**
+  - Observe that procedural pillars and arches render without screen-space bounding overdraw overhead.
+  - Shaders without noise omit the ~12 KB Perlin WGSL routines entirely, reducing compile and pipeline warmup times.
 - [ ] **Frame Pacing & Responsiveness:**
-  - Check in-game FPS counter (or telemetry overlay): verify frame rate remains smooth and responsive, with Cathedral Field Subset at ~7.8 ms and Full World at ~29–30 ms (up from 17 FPS / 62 ms historically).
+  - Check in-game FPS counter (or telemetry overlay): verify frame rate remains smooth and responsive, with Cathedral Full World breaking the 30 ms wall down to ~28.9 ms (low 27.85 ms) and The Merry Dancers holding rock solid at 9.9–10.0 ms (up from 17 FPS / 62 ms historically).
 
 ## Ergonomic 2D ImGui Zone Selector
 

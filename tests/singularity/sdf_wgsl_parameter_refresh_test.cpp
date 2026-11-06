@@ -1986,6 +1986,197 @@ int main() {
             check(progBefore.wgsl == progAfter.wgsl,
                   "WGSL is byte-identical across parameter mutation on pruned tree");
         }
+
+        // 8. Rung 5B Analytical Tight Proxy AABB Computation
+        {
+            auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.2f));
+            sphere.offset = glm::vec3(0.5f, -0.5f, 2.0f);
+            glm::vec3 sMin(0.0f), sMax(0.0f);
+            bool okSphere = sdfwgsl::tryComputeSdfTightAabb(sphere, sMin, sMax);
+            check(okSphere, "tryComputeSdfTightAabb succeeds on Sphere leaf");
+            check(std::abs(sMin.x - (0.5f - 1.2f)) < 1e-5f &&
+                  std::abs(sMax.x - (0.5f + 1.2f)) < 1e-5f,
+                  "Sphere tight AABB matches exact radius");
+
+            auto box = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.5f, 1.0f, 2.0f));
+            box.offset = glm::vec3(1.0f, 2.0f, 3.0f);
+            glm::vec3 bMin(0.0f), bMax(0.0f);
+            bool okBox = sdfwgsl::tryComputeSdfTightAabb(box, bMin, bMax);
+            check(okBox, "tryComputeSdfTightAabb succeeds on Box leaf");
+            check(std::abs(bMin.x - 0.5f) < 1e-5f && std::abs(bMax.x - 1.5f) < 1e-5f &&
+                  std::abs(bMin.y - 1.0f) < 1e-5f && std::abs(bMax.y - 3.0f) < 1e-5f,
+                  "Box tight AABB matches exact half-extents and offset");
+
+            // Subtract(A, B): bounded by child A
+            auto subTree = geom::SdfNode::binary(geom::SdfOp::Subtract, box, sphere);
+            glm::vec3 subMin(0.0f), subMax(0.0f);
+            bool okSub = sdfwgsl::tryComputeSdfTightAabb(subTree, subMin, subMax);
+            check(okSub, "tryComputeSdfTightAabb succeeds on Subtract tree");
+            check(subMin == bMin && subMax == bMax,
+                  "Subtract tight AABB is bounded strictly by positive child A");
+
+            // Unbounded / Expr fails open
+            auto exprNode = geom::makeImplicit("y - sin(x)");
+            glm::vec3 eMin(0.0f), eMax(0.0f);
+            bool okExpr = sdfwgsl::tryComputeSdfTightAabb(exprNode, eMin, eMax);
+            check(!okExpr, "tryComputeSdfTightAabb fails open (returns false) on Expr leaf");
+        }
+
+        // 9. Rung 6A CSG Subtree Pruning for Subtract with >= 2 Leaves
+        {
+            auto mainBody = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(2.0f, 2.0f, 2.0f));
+            auto recess = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.5f, 0.5f, 0.5f));
+            recess.offset = glm::vec3(4.0f, 0.0f, 0.0f);
+            auto hole = geom::SdfNode::leaf(geom::SdfPrim::Cylinder, glm::vec3(0.2f, 0.6f, 0.0f));
+            hole.offset = glm::vec3(4.0f, 0.0f, 0.0f);
+
+            // 2-leaf composite child: Subtract(recess, hole)
+            auto carvedFeature = geom::SdfNode::binary(geom::SdfOp::Subtract, recess, hole);
+            check(sdfwgsl::countSdfLeaves(carvedFeature) == 2, "carved feature has exactly 2 leaves");
+
+            glm::vec3 cB(0.0f);
+            float rB = 0.0f;
+            bool okB = sdfwgsl::tryComputeSdfBoundingSphere(carvedFeature, cB, rB);
+            check(okB, "tryComputeSdfBoundingSphere succeeds on 2-leaf Subtract composite");
+            check(cB.x > 3.5f && rB > 0.4f, "carvedFeature bounding sphere encloses offset primitives");
+
+            // Root: mainBody - carvedFeature
+            auto carvedTree = geom::SdfNode::binary(geom::SdfOp::Subtract, mainBody, carvedFeature);
+            const auto progBefore = sdfwgsl::compile(carvedTree);
+            check(progBefore.ok, "Subtract tree with 2-leaf prunable child compiles");
+            check(progBefore.wgsl.find("let boundB") != std::string::npos,
+                  "Subtract shader contains boundB distance calculation");
+            check(progBefore.wgsl.find("if (boundB") != std::string::npos,
+                  "Subtract shader contains runtime bounding sphere guard");
+            check(progBefore.wgsl.find("(-(") != std::string::npos,
+                  "Subtract shader contains -d_A pruning threshold guard");
+
+            // Parameter mutation test
+            carvedTree.children[1]->children[0]->offset.y = 0.5f;
+            const auto refreshed = sdfwgsl::collectParams(carvedTree);
+            const auto progAfter = sdfwgsl::compile(carvedTree);
+            check(refreshed.ok && refreshed.values == progAfter.params,
+                  "parameter recollection matches full compile on pruned Subtract tree");
+            check(progBefore.wgsl == progAfter.wgsl,
+                  "WGSL is byte-identical across parameter mutation on pruned Subtract tree");
+        }
+
+        // 10. Rung 6B Conditional Perlin Noise Stripping in SdfWgsl
+        {
+            auto pureSphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+            const auto pureProg = sdfwgsl::compile(pureSphere);
+            check(pureProg.ok, "pureSphere compiles");
+            check(pureProg.wgsl.find("cnoise3") == std::string::npos,
+                  "pure geometry SDF strips unused cnoise3 and cnoise3_grad from WGSL");
+
+            auto noiseExpr = geom::makeImplicit(terrainMath(40.0));
+            const auto noiseProg = sdfwgsl::compile(noiseExpr);
+            check(noiseProg.ok, "noiseExpr compiles");
+            check(noiseProg.wgsl.find("fn cnoise3(P: vec3<f32>) -> f32") != std::string::npos,
+                  "noise-dependent SDF includes cnoise3 definition in WGSL");
+        }
+
+        // 11. Rung 7 OntoMath Irreducible 1D Ray-Domain Compilation & Rung 8A Left-Heavy CSG Pruning
+        {
+            // 11.1 Law I: Ellipsoid and authored Expr sqrt(x*x + y*y + z*z) - 1
+            auto ellipsoid = geom::SdfNode::leaf(geom::SdfPrim::Ellipsoid, glm::vec3(140.0f, 18.0f, 0.35f));
+            ellipsoid.offset = glm::vec3(0.0f, 10.0f, -5.0f);
+            const auto ellProgBefore = sdfwgsl::compile(ellipsoid);
+            check(ellProgBefore.ok, "Ellipsoid compiles");
+            check(ellProgBefore.wgsl.find("let m = (ro - off) / r;") != std::string::npos,
+                  "Ellipsoid emits Law I scaled anisotropic quadratic 1D solver");
+            ellipsoid.dims.y = 20.0f;
+            const auto ellRefreshed = sdfwgsl::collectParams(ellipsoid);
+            const auto ellProgAfter = sdfwgsl::compile(ellipsoid);
+            check(ellRefreshed.ok && ellRefreshed.values == ellProgAfter.params,
+                  "Ellipsoid parameter recollection matches full compile");
+            check(ellProgBefore.wgsl == ellProgAfter.wgsl,
+                  "Ellipsoid WGSL is byte-identical across parameter mutation");
+
+            auto exprDrop = geom::makeImplicit("sqrt(x*x + y*y + z*z) - 1");
+            exprDrop.offset = glm::vec3(1.0f, 2.0f, 3.0f);
+            const auto dropProgBefore = sdfwgsl::compile(exprDrop);
+            check(dropProgBefore.ok, "Authored Expr drop compiles");
+            check(dropProgBefore.wgsl.find("let m = ro - off;") != std::string::npos &&
+                  dropProgBefore.wgsl.find("let b = dot(m, rd);") != std::string::npos,
+                  "Authored Expr sqrt(x*x + y*y + z*z) - 1 emits Law I 1D quadratic root finder");
+            exprDrop.offset.x = 2.5f;
+            const auto dropRefreshed = sdfwgsl::collectParams(exprDrop);
+            const auto dropProgAfter = sdfwgsl::compile(exprDrop);
+            check(dropRefreshed.ok && dropRefreshed.values == dropProgAfter.params,
+                  "Authored Expr parameter recollection matches full compile");
+            check(dropProgBefore.wgsl == dropProgAfter.wgsl,
+                  "Authored Expr WGSL is byte-identical across parameter mutation");
+
+            // 11.2 Law II: Cylinder
+            auto cylinder = geom::SdfNode::leaf(geom::SdfPrim::Cylinder, glm::vec3(12.1f, 0.2f, 0.0f));
+            cylinder.offset = glm::vec3(0.0f, 1.0f, 0.0f);
+            const auto cylProgBefore = sdfwgsl::compile(cylinder);
+            check(cylProgBefore.ok, "Cylinder compiles");
+            check(cylProgBefore.wgsl.find("let a = rd.x * rd.x + rd.y * rd.y;") != std::string::npos &&
+                  cylProgBefore.wgsl.find("let tz0 = (-h - m.z) / rd.z;") != std::string::npos,
+                  "Cylinder emits Law II 1D circular quadric + Z slab intersection");
+            cylinder.dims.x = 15.0f;
+            const auto cylRefreshed = sdfwgsl::collectParams(cylinder);
+            const auto cylProgAfter = sdfwgsl::compile(cylinder);
+            check(cylRefreshed.ok && cylRefreshed.values == cylProgAfter.params,
+                  "Cylinder parameter recollection matches full compile");
+            check(cylProgBefore.wgsl == cylProgAfter.wgsl,
+                  "Cylinder WGSL is byte-identical across parameter mutation");
+
+            // 11.3 Law III & IV: RoundBox and Torus
+            auto roundBox = geom::SdfNode::leaf(geom::SdfPrim::RoundBox, glm::vec3(2.0f, 1.0f, 0.5f), 0.1f);
+            roundBox.offset = glm::vec3(1.0f, 0.0f, -2.0f);
+            const auto rbProgBefore = sdfwgsl::compile(roundBox);
+            check(rbProgBefore.ok, "RoundBox compiles");
+            check(rbProgBefore.wgsl.find("let activeAxes = select(0, 1, q.x > 0.0)") != std::string::npos &&
+                  rbProgBefore.wgsl.find("return vec2<f32>(tCand, -2.0 - min(slab.y, tMax));") != std::string::npos,
+                  "RoundBox emits Law III flat-face root + bevel support interval leap");
+            roundBox.p0 = 0.2f;
+            const auto rbRefreshed = sdfwgsl::collectParams(roundBox);
+            const auto rbProgAfter = sdfwgsl::compile(roundBox);
+            check(rbRefreshed.ok && rbRefreshed.values == rbProgAfter.params,
+                  "RoundBox parameter recollection matches full compile");
+            check(rbProgBefore.wgsl == rbProgAfter.wgsl,
+                  "RoundBox WGSL is byte-identical across parameter mutation");
+
+            auto torus = geom::SdfNode::leaf(geom::SdfPrim::Torus, glm::vec3(3.0f, 0.5f, 0.0f));
+            const auto torusProg = sdfwgsl::compile(torus);
+            check(torusProg.ok, "Torus compiles");
+            check(torusProg.wgsl.find("let outerB = vec3<f32>(majR + minR, majR + minR, minR);") != std::string::npos &&
+                  torusProg.wgsl.find("return vec2<f32>(tEnter, -2.0 - tExit);") != std::string::npos,
+                  "Torus emits Law IV outer-slab miss rejection + support interval leap");
+
+            // 11.4 Rung 8A (canPruneA): Left-heavy SmoothUnion(SmoothUnion(Sphere, Box), Sphere)
+            auto s1 = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+            s1.offset = glm::vec3(-2.0f, 0.0f, 0.0f);
+            auto b1 = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.5f));
+            b1.offset = glm::vec3(2.0f, 0.0f, 0.0f);
+            auto s2 = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f));
+            s2.offset = glm::vec3(0.0f, 5.0f, 0.0f);
+
+            // Left child has 2 leaves, right child has 1 leaf
+            auto leftChain = geom::SdfNode::binary(geom::SdfOp::SmoothUnion, s1, b1, 0.2f);
+            auto leftHeavyTree = geom::SdfNode::binary(geom::SdfOp::SmoothUnion, leftChain, s2, 0.3f);
+            check(sdfwgsl::countSdfLeaves(*leftHeavyTree.children[0]) == 2, "left child has 2 leaves");
+            check(sdfwgsl::countSdfLeaves(*leftHeavyTree.children[1]) == 1, "right child has 1 leaf");
+
+            const auto lhProgBefore = sdfwgsl::compile(leftHeavyTree);
+            check(lhProgBefore.ok, "Left-heavy SmoothUnion tree compiles");
+            check(lhProgBefore.wgsl.find("let boundA") != std::string::npos,
+                  "Left-heavy tree emits boundA distance calculation");
+            check(lhProgBefore.wgsl.find("if (boundA") != std::string::npos,
+                  "Left-heavy tree emits runtime bounding sphere guard for child[0]");
+
+            // Parameter mutation test
+            leftHeavyTree.children[0]->children[0]->offset.y = 1.0f;
+            const auto lhRefreshed = sdfwgsl::collectParams(leftHeavyTree);
+            const auto lhProgAfter = sdfwgsl::compile(leftHeavyTree);
+            check(lhRefreshed.ok && lhRefreshed.values == lhProgAfter.params,
+                  "Left-heavy parameter recollection matches full compile");
+            check(lhProgBefore.wgsl == lhProgAfter.wgsl,
+                  "Left-heavy WGSL is byte-identical across parameter mutation");
+        }
     }
 
     if (failures) {

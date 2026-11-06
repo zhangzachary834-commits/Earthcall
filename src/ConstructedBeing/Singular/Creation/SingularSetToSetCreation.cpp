@@ -18,6 +18,7 @@
 #include "Person/Person.hpp"
 #include "Relation/Relation.hpp"
 #include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
+#include "ConstructedBeing/Singular/SingularPersistence.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
@@ -140,15 +141,24 @@ nlohmann::json baseToJson(const Singular& being) {
     for (const auto& record : being.stakeholders())
         out["stakeholders"].push_back({{"path", record.propertyPath}, {"author", record.authorId},
                                       {"law", record.lawId}, {"timestamp", record.timestamp}});
+    nlohmann::json cellBindings = SingularPersistence::serializeCellBindings(being);
+    if (!cellBindings.empty()) {
+        out["propertyCellBindings"] = std::move(cellBindings);
+    }
     return out;
 }
 
-void baseFromJson(Singular& being, const nlohmann::json& state, const Resolver& resolve = {}) {
+void baseFromJson(Singular& being, const nlohmann::json& state, const Resolver& resolve = {}, SingularPersistence::CohortContext* cohort = nullptr) {
     being.setTelosId(state.value("telos", std::string{}));
     if (state.contains("properties")) {
         for (auto it = state["properties"].begin(); it != state["properties"].end(); ++it)
             if (!being.setDynamicProperty(it.key(), restoredValue(it.value(), resolve)))
                 throw std::runtime_error("authored property restoration refused: " + it.key());
+    }
+    if (state.contains("propertyCellBindings")) {
+        SingularPersistence::CohortScope scope;
+        SingularPersistence::CohortContext& activeCohort = cohort ? *cohort : scope.get();
+        SingularPersistence::deserializeCellBindings(being, state["propertyCellBindings"], activeCohort);
     }
     for (const auto& item : state.value("dataStructures", nlohmann::json::array())) {
         DataStructure structure(item.at("name").get<std::string>(), restoredValue(item.at("data"), resolve));

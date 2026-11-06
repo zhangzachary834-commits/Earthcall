@@ -15,6 +15,7 @@
 #include "Relation/Relation.hpp"
 
 #include <ctime>
+#include <fstream>
 #include <iomanip>
 #include <limits>
 #include <sstream>
@@ -485,17 +486,17 @@ ActionNode ActionNode::fromJson(const nlohmann::json& j) {
 ECA::ActionExecutor ActionNode::compile() const {
     switch (kind) {
         case Kind::Set: {
-            const PropertyPath p = path;
+            const PropertyPath::CompiledPath p = path.compile();
             const PropertyValue v = operand;
             return [p, v](const ECA::Event&, Singular& target) { 
                 auto res = lawSetValue(target, p, v);
-                emitResult(target, "Set", res, p);
+                emitResult(target, "Set", res, p.path);
             };
         }
         case Kind::Add:
         case Kind::Scale:
         case Kind::Lerp: {
-            const PropertyPath p = path;
+            const PropertyPath::CompiledPath p = path.compile();
             const PropertyValue rhs = operand;
             const double f = factor;
             const Kind k = kind;
@@ -531,16 +532,16 @@ ECA::ActionExecutor ActionNode::compile() const {
                 }
                 
                 auto res = lawSetValue(target, p, result);
-                emitResult(target, kindName(k), res, p);
+                emitResult(target, kindName(k), res, p.path);
             };
         }
         case Kind::Drive: {
-            const PropertyPath p = path;
-            const PropertyPath in = input;
+            const PropertyPath::CompiledPath p = path.compile();
+            const PropertyPath::CompiledPath in = input.compile();
             const CurveModel c = curve;
             return [p, in, c](const ECA::Event& event, Singular& target) {
                 double x = 0.0;
-                if (in.empty()) {
+                if (in.path.empty()) {
                     // No authored input: the world clock is the domain
                     // (falling back to the event's coarse moment when no
                     // engine has set the clock).
@@ -552,7 +553,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                     if (!lawGetValue(target, in, v) || !propertyValueToNumber(v, x)) return;
                 }
                 auto res = lawSetValue(target, p, PropertyValue(c.evaluate(x)));
-                emitResult(target, "Drive", res, p);
+                emitResult(target, "Drive", res, p.path);
             };
         }
         case Kind::Sequence:
@@ -1248,9 +1249,6 @@ ECA::ActionExecutor ActionNode::compile() const {
 
                 auto vars = readMathBindings(subject, binds);
                 if (!vars) {
-                    if (target.toString() == "@basic-pixel-canvas.authored.full-canvas") {
-                        std::cout << "[MAP DEBUG] vars is nullopt!" << std::endl;
-                    }
                     emitEffect("Map", false, "a bound variable does not read on this subject");
                     return;
                 }
@@ -1263,12 +1261,9 @@ ECA::ActionExecutor ActionNode::compile() const {
                 ctx.actor = &subject;
                 if (authorizingLaw) ctx.authorizingLaw = authorizingLaw;
                 auto res = lawSetValue(subject, target, *valProp, ctx);
-                if (target.toString() == "@basic-pixel-canvas.authored.full-canvas") {
-                    std::cout << "[MAP DEBUG] target=" << target.toString() << " res=" << static_cast<int>(res) << std::endl;
-                }
                 emitResult(subject, "Map", res, target);
 
-                if (res == PropertyPath::PathResult::Ok) {
+                if (res == PropertyPath::PathResult::Ok || res == PropertyPath::PathResult::Unchanged) {
                     for (const auto& [varName, bEntry] : binds) {
                         if (bEntry.mode == BindingMode::Derive) {
                             std::size_t srcStart = 0;
@@ -1807,7 +1802,20 @@ std::string ActionNode::describe() const {
         case Kind::Sequence: return "sequence(" + std::to_string(children.size()) + ")";
         case Kind::Parallel: return "parallel(" + std::to_string(children.size()) + ")";
         case Kind::Spawn: return "spawn(" + conceptId + ")";
-        case Kind::Map: return path.toString() + " := " + mapFunction.print();
+        case Kind::Map: {
+            for (const auto& [varName, bEntry] : bindings) {
+                if (bEntry.mode == BindingMode::ShareCell) {
+                    return "share " + path.toString() + " from " + bEntry.path.toString();
+                } else if (bEntry.mode == BindingMode::UniqueCell) {
+                    return "claim " + path.toString() + " from " + bEntry.path.toString();
+                } else if (bEntry.mode == BindingMode::ObserveWeak) {
+                    return "borrow " + path.toString() + " from " + bEntry.path.toString();
+                } else if (bEntry.mode == BindingMode::Derive) {
+                    return "derive " + path.toString() + " = " + mapFunction.print();
+                }
+            }
+            return path.toString() + " := " + mapFunction.print();
+        }
         case Kind::Flow: return "d(" + path.toString() + ")/dt = " + mapFunction.print();
         case Kind::Publish: return "publish '" + eventType + "'";
         case Kind::Create:
@@ -2283,28 +2291,49 @@ ActionNode ActionNode::map(const std::string& dottedPath, OntoMath::Piecewise fu
     return n;
 }
 
+namespace {
+OntoMath::Piecewise cellSourceIdentityFunction() {
+    auto leaf = std::make_shared<OntoMath::MathNode>();
+    leaf->op = OntoMath::MathNode::Op::ValueLeaf;
+    leaf->variableName = "_cell_src";
+    return OntoMath::Piecewise::continuous(std::move(leaf));
+}
+} // namespace
+
 ActionNode ActionNode::shareCell(const std::string& targetPath, const std::string& sourcePath) {
     MathBindings b;
     b["_cell_src"] = MathBindingEntry{PropertyPath::parse(sourcePath), BindingMode::ShareCell};
-    return ActionNode::map(targetPath, OntoMath::Piecewise{}, std::move(b));
+    return ActionNode::map(targetPath, cellSourceIdentityFunction(), std::move(b));
 }
 
 ActionNode ActionNode::uniqueCell(const std::string& targetPath, const std::string& sourcePath) {
     MathBindings b;
     b["_cell_src"] = MathBindingEntry{PropertyPath::parse(sourcePath), BindingMode::UniqueCell};
-    return ActionNode::map(targetPath, OntoMath::Piecewise{}, std::move(b));
+    return ActionNode::map(targetPath, cellSourceIdentityFunction(), std::move(b));
 }
 
 ActionNode ActionNode::weakCell(const std::string& targetPath, const std::string& sourcePath) {
     MathBindings b;
     b["_cell_src"] = MathBindingEntry{PropertyPath::parse(sourcePath), BindingMode::ObserveWeak};
-    return ActionNode::map(targetPath, OntoMath::Piecewise{}, std::move(b));
+    return ActionNode::map(targetPath, cellSourceIdentityFunction(), std::move(b));
+}
+
+ActionNode ActionNode::observeWeak(const std::string& targetPath, const std::string& sourcePath) {
+    return weakCell(targetPath, sourcePath);
 }
 
 ActionNode ActionNode::copyCell(const std::string& targetPath, const std::string& sourcePath) {
     MathBindings b;
     b["_cell_src"] = MathBindingEntry{PropertyPath::parse(sourcePath), BindingMode::CopyValue};
-    return ActionNode::map(targetPath, OntoMath::Piecewise{}, std::move(b));
+    return ActionNode::map(targetPath, cellSourceIdentityFunction(), std::move(b));
+}
+
+ActionNode ActionNode::deriveCell(const std::string& targetPath, OntoMath::Piecewise function,
+                                  MathBindings bindings) {
+    for (auto& [name, entry] : bindings) {
+        entry.mode = BindingMode::Derive;
+    }
+    return ActionNode::map(targetPath, std::move(function), std::move(bindings));
 }
 
 ActionNode ActionNode::flow(const std::string& dottedPath, OntoMath::Piecewise function,

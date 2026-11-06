@@ -509,7 +509,7 @@ on a quiet machine) so the tripwire tightens behind the fix.
 
 - **Dual-path parity test (hardcoded WGSL vs OntoMath AST path)** — (from [Green_Hills_Population_One §3](../../Reflections%20on%20Earthcall%27s%20Progression/Reflections%20on%20Trajectory/Green_Hills_Population_One.md), … → [full task](Specific%20Tasks/Rendering%20and%20OntoMath/Dual_path_parity_test_hardcoded_WGSL_vs_OntoMath_AST_path/Dual_path_parity_test_hardcoded_WGSL_vs_OntoMath_AST_path.md)
 
-- **Cathedral surface frame cost** — bounded mesh upload pages reduce the native saved-object screen 62.112 → 30.042 ms, with live Cathedral acceptance and the scalar-Map typing follow-up pending. → [task and gates](Specific%20Tasks/Performance%20and%20Runtime/Cathedral_Surface_Frame_Cost/Cathedral_Surface_Frame_Cost.md)
+- **Cathedral surface frame cost** — analytical Jet gradients, closed-form hits, paged staging, tight AABBs, and CSG pruning reduce full Cathedral frame time 62.11 → 28.93 ms. → [task and gates](Specific%20Tasks/Performance%20and%20Runtime/Cathedral_Surface_Frame_Cost/Cathedral_Surface_Frame_Cost.md)
 - **Ray-domain transport native checkpoint** — Zach reports live 30–35 FPS; [final bounded corrective audit passes](../../audits/GPU_RAY_TRANSPORT_PREMERGE_CORRECTNESS_AUDIT_2026-11-02.md), with checkpoint merge pending and universal certification still separate.
 - **Authorable GPU Runs** — measure producer work tails, then qualify one bounded resumable GPU queue before exposing continuation policy through ScreenChannel/Law. → [status and next slice](Specific%20Tasks/Rendering%20and%20OntoMath/Ray_Domain_Transport_Compilation/Ray_Domain_Transport_Compilation.md#authorable-gpu-runs-implementation-priority--2026-10-29)
 

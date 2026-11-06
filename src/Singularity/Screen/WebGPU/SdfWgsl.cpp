@@ -177,85 +177,6 @@ fn sminK(a: f32, b: f32, k: f32) -> f32 {
     return mix(b, a, h) - k * h * (1.0 - h);
 }
 
-fn mod289(x: vec4<f32>) -> vec4<f32> {
-    return x - floor(x * (1.0 / 289.0)) * 289.0;
-}
-fn mod289_3(x: vec3<f32>) -> vec3<f32> {
-    return x - floor(x * (1.0 / 289.0)) * 289.0;
-}
-fn permute4(x: vec4<f32>) -> vec4<f32> {
-    return mod289(((x * 34.0) + 1.0) * x);
-}
-fn taylorInvSqrt(r: vec4<f32>) -> vec4<f32> {
-    return 1.79284291400159 - 0.85373472095314 * r;
-}
-fn cnoise3(P: vec3<f32>) -> f32 {
-    let Pi0 = floor(P);
-    let Pi1 = Pi0 + vec3<f32>(1.0);
-    let Pi0_mod = mod289_3(Pi0);
-    let Pi1_mod = mod289_3(Pi1);
-    let Pf0 = fract(P);
-    let Pf1 = Pf0 - vec3<f32>(1.0);
-    let ix = vec4<f32>(Pi0_mod.x, Pi1_mod.x, Pi0_mod.x, Pi1_mod.x);
-    let iy = vec4<f32>(Pi0_mod.y, Pi0_mod.y, Pi1_mod.y, Pi1_mod.y);
-    let iz0 = vec4<f32>(Pi0_mod.z);
-    let iz1 = vec4<f32>(Pi1_mod.z);
-
-    let ixy = permute4(permute4(ix) + iy);
-    let ixy0 = permute4(ixy + iz0);
-    let ixy1 = permute4(ixy + iz1);
-
-    var gx0 = ixy0 / 7.0;
-    var gy0 = fract(floor(gx0) / 7.0) - 0.5;
-    gx0 = fract(gx0);
-    var gz0 = vec4<f32>(0.5) - abs(gx0) - abs(gy0);
-    let sz0 = step(gz0, vec4<f32>(0.0));
-    gx0 = gx0 - sz0 * (step(vec4<f32>(0.0), gx0) - 0.5);
-    gy0 = gy0 - sz0 * (step(vec4<f32>(0.0), gy0) - 0.5);
-
-    var gx1 = ixy1 / 7.0;
-    var gy1 = fract(floor(gx1) / 7.0) - 0.5;
-    gx1 = fract(gx1);
-    var gz1 = vec4<f32>(0.5) - abs(gx1) - abs(gy1);
-    let sz1 = step(gz1, vec4<f32>(0.0));
-    gx1 = gx1 - sz1 * (step(vec4<f32>(0.0), gx1) - 0.5);
-    gy1 = gy1 - sz1 * (step(vec4<f32>(0.0), gy1) - 0.5);
-
-    var g000 = vec3<f32>(gx0.x,gy0.x,gz0.x);
-    var g100 = vec3<f32>(gx0.y,gy0.y,gz0.y);
-    var g010 = vec3<f32>(gx0.z,gy0.z,gz0.z);
-    var g110 = vec3<f32>(gx0.w,gy0.w,gz0.w);
-    var g001 = vec3<f32>(gx1.x,gy1.x,gz1.x);
-    var g101 = vec3<f32>(gx1.y,gy1.y,gz1.y);
-    var g011 = vec3<f32>(gx1.z,gy1.z,gz1.z);
-    var g111 = vec3<f32>(gx1.w,gy1.w,gz1.w);
-
-    let norm0 = taylorInvSqrt(vec4<f32>(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
-    g000 = g000 * norm0.x;
-    g010 = g010 * norm0.y;
-    g100 = g100 * norm0.z;
-    g110 = g110 * norm0.w;
-    let norm1 = taylorInvSqrt(vec4<f32>(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));
-    g001 = g001 * norm1.x;
-    g011 = g011 * norm1.y;
-    g101 = g101 * norm1.z;
-    g111 = g111 * norm1.w;
-
-    let n000 = dot(g000, Pf0);
-    let n100 = dot(g100, vec3<f32>(Pf1.x, Pf0.y, Pf0.z));
-    let n010 = dot(g010, vec3<f32>(Pf0.x, Pf1.y, Pf0.z));
-    let n110 = dot(g110, vec3<f32>(Pf1.x, Pf1.y, Pf0.z));
-    let n001 = dot(g001, vec3<f32>(Pf0.x, Pf0.y, Pf1.z));
-    let n101 = dot(g101, vec3<f32>(Pf1.x, Pf0.y, Pf1.z));
-    let n011 = dot(g011, vec3<f32>(Pf0.x, Pf1.y, Pf1.z));
-    let n111 = dot(g111, Pf1);
-
-    let fade_xyz = Pf0 * Pf0 * Pf0 * (Pf0 * (Pf0 * 6.0 - 15.0) + 10.0);
-    let n_z = mix(vec4<f32>(n000, n100, n010, n110), vec4<f32>(n001, n101, n011, n111), fade_xyz.z);
-    let n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);
-    let n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); 
-    return 2.2 * n_xyz;
-}
 struct PerlinJet {
     value: f32,
     grad: vec3<f32>,
@@ -264,109 +185,6 @@ struct StepSample {
     raw: f32,
     gradLen: f32,
 };
-
-fn cnoise3_grad(P: vec3<f32>) -> PerlinJet {
-    let Pi0 = floor(P);
-    let Pi1 = Pi0 + vec3<f32>(1.0);
-    let Pi0_mod = mod289_3(Pi0);
-    let Pi1_mod = mod289_3(Pi1);
-    let Pf0 = fract(P);
-    let Pf1 = Pf0 - vec3<f32>(1.0);
-    let ix = vec4<f32>(Pi0_mod.x, Pi1_mod.x, Pi0_mod.x, Pi1_mod.x);
-    let iy = vec4<f32>(Pi0_mod.y, Pi0_mod.y, Pi1_mod.y, Pi1_mod.y);
-    let iz0 = vec4<f32>(Pi0_mod.z);
-    let iz1 = vec4<f32>(Pi1_mod.z);
-
-    let ixy = permute4(permute4(ix) + iy);
-    let ixy0 = permute4(ixy + iz0);
-    let ixy1 = permute4(ixy + iz1);
-
-    var gx0 = ixy0 / 7.0;
-    var gy0 = fract(floor(gx0) / 7.0) - 0.5;
-    gx0 = fract(gx0);
-    var gz0 = vec4<f32>(0.5) - abs(gx0) - abs(gy0);
-    let sz0 = step(gz0, vec4<f32>(0.0));
-    gx0 = gx0 - sz0 * (step(vec4<f32>(0.0), gx0) - 0.5);
-    gy0 = gy0 - sz0 * (step(vec4<f32>(0.0), gy0) - 0.5);
-
-    var gx1 = ixy1 / 7.0;
-    var gy1 = fract(floor(gx1) / 7.0) - 0.5;
-    gx1 = fract(gx1);
-    var gz1 = vec4<f32>(0.5) - abs(gx1) - abs(gy1);
-    let sz1 = step(gz1, vec4<f32>(0.0));
-    gx1 = gx1 - sz1 * (step(vec4<f32>(0.0), gx1) - 0.5);
-    gy1 = gy1 - sz1 * (step(vec4<f32>(0.0), gy1) - 0.5);
-
-    var g000 = vec3<f32>(gx0.x, gy0.x, gz0.x);
-    var g100 = vec3<f32>(gx0.y, gy0.y, gz0.y);
-    var g010 = vec3<f32>(gx0.z, gy0.z, gz0.z);
-    var g110 = vec3<f32>(gx0.w, gy0.w, gz0.w);
-    var g001 = vec3<f32>(gx1.x, gy1.x, gz1.x);
-    var g101 = vec3<f32>(gx1.y, gy1.y, gz1.y);
-    var g011 = vec3<f32>(gx1.z, gy1.z, gz1.z);
-    var g111 = vec3<f32>(gx1.w, gy1.w, gz1.w);
-
-    let norm0 = taylorInvSqrt(vec4<f32>(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
-    g000 = g000 * norm0.x;
-    g010 = g010 * norm0.y;
-    g100 = g100 * norm0.z;
-    g110 = g110 * norm0.w;
-    let norm1 = taylorInvSqrt(vec4<f32>(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));
-    g001 = g001 * norm1.x;
-    g011 = g011 * norm1.y;
-    g101 = g101 * norm1.z;
-    g111 = g111 * norm1.w;
-
-    let n000 = dot(g000, Pf0);
-    let n100 = dot(g100, vec3<f32>(Pf1.x, Pf0.y, Pf0.z));
-    let n010 = dot(g010, vec3<f32>(Pf0.x, Pf1.y, Pf0.z));
-    let n110 = dot(g110, vec3<f32>(Pf1.x, Pf1.y, Pf0.z));
-    let n001 = dot(g001, vec3<f32>(Pf0.x, Pf0.y, Pf1.z));
-    let n101 = dot(g101, vec3<f32>(Pf1.x, Pf0.y, Pf1.z));
-    let n011 = dot(g011, vec3<f32>(Pf0.x, Pf1.y, Pf1.z));
-    let n111 = dot(g111, Pf1);
-
-    let fade_xyz = Pf0 * Pf0 * Pf0 * (Pf0 * (Pf0 * 6.0 - 15.0) + 10.0);
-    let dfade_xyz = 30.0 * Pf0 * Pf0 * (Pf0 - vec3<f32>(1.0)) * (Pf0 - vec3<f32>(1.0));
-
-    let u = fade_xyz.x;
-    let v = fade_xyz.y;
-    let w = fade_xyz.z;
-
-    let n_z0 = mix(n000, n001, w);
-    let n_z1 = mix(n100, n101, w);
-    let n_z2 = mix(n010, n011, w);
-    let n_z3 = mix(n110, n111, w);
-
-    let n_yz0 = mix(n_z0, n_z2, v);
-    let n_yz1 = mix(n_z1, n_z3, v);
-
-    let n_xyz = mix(n_yz0, n_yz1, u);
-    let val = 2.2 * n_xyz;
-
-    let dx_fade = dfade_xyz.x * (n_yz1 - n_yz0);
-
-    let n_x_y0 = mix(n_z0, n_z1, u);
-    let n_x_y1 = mix(n_z2, n_z3, u);
-    let dy_fade = dfade_xyz.y * (n_x_y1 - n_x_y0);
-
-    let n_xy_z0 = mix(mix(n000, n100, u), mix(n010, n110, u), v);
-    let n_xy_z1 = mix(mix(n001, n101, u), mix(n011, n111, u), v);
-    let dz_fade = dfade_xyz.z * (n_xy_z1 - n_xy_z0);
-
-    let g_z0 = mix(g000, g001, w);
-    let g_z1 = mix(g100, g101, w);
-    let g_z2 = mix(g010, g011, w);
-    let g_z3 = mix(g110, g111, w);
-
-    let g_yz0 = mix(g_z0, g_z2, v);
-    let g_yz1 = mix(g_z1, g_z3, v);
-
-    let g_interp = mix(g_yz0, g_yz1, u);
-
-    let grad = 2.2 * (g_interp + vec3<f32>(dx_fade, dy_fade, dz_fade));
-    return PerlinJet(val, grad);
-}
 
 fn sdSphereGrad(p: vec3<f32>, r: f32) -> PerlinJet {
     let l = length(p);
@@ -1521,6 +1339,213 @@ bool astContainsNoise(const OntoMath::MathNode& node) {
     return false;
 }
 
+const char* kPerlinNoiseFunctions = R"WGSL(
+fn mod289(x: vec4<f32>) -> vec4<f32> {
+    return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+fn mod289_3(x: vec3<f32>) -> vec3<f32> {
+    return x - floor(x * (1.0 / 289.0)) * 289.0;
+}
+fn permute4(x: vec4<f32>) -> vec4<f32> {
+    return mod289(((x * 34.0) + 1.0) * x);
+}
+fn taylorInvSqrt(r: vec4<f32>) -> vec4<f32> {
+    return 1.79284291400159 - 0.85373472095314 * r;
+}
+fn cnoise3(P: vec3<f32>) -> f32 {
+    let Pi0 = floor(P);
+    let Pi1 = Pi0 + vec3<f32>(1.0);
+    let Pi0_mod = mod289_3(Pi0);
+    let Pi1_mod = mod289_3(Pi1);
+    let Pf0 = fract(P);
+    let Pf1 = Pf0 - vec3<f32>(1.0);
+    let ix = vec4<f32>(Pi0_mod.x, Pi1_mod.x, Pi0_mod.x, Pi1_mod.x);
+    let iy = vec4<f32>(Pi0_mod.y, Pi0_mod.y, Pi1_mod.y, Pi1_mod.y);
+    let iz0 = vec4<f32>(Pi0_mod.z);
+    let iz1 = vec4<f32>(Pi1_mod.z);
+
+    let ixy = permute4(permute4(ix) + iy);
+    let ixy0 = permute4(ixy + iz0);
+    let ixy1 = permute4(ixy + iz1);
+
+    var gx0 = ixy0 / 7.0;
+    var gy0 = fract(floor(gx0) / 7.0) - 0.5;
+    gx0 = fract(gx0);
+    var gz0 = vec4<f32>(0.5) - abs(gx0) - abs(gy0);
+    let sz0 = step(gz0, vec4<f32>(0.0));
+    gx0 = gx0 - sz0 * (step(vec4<f32>(0.0), gx0) - 0.5);
+    gy0 = gy0 - sz0 * (step(vec4<f32>(0.0), gy0) - 0.5);
+
+    var gx1 = ixy1 / 7.0;
+    var gy1 = fract(floor(gx1) / 7.0) - 0.5;
+    gx1 = fract(gx1);
+    var gz1 = vec4<f32>(0.5) - abs(gx1) - abs(gy1);
+    let sz1 = step(gz1, vec4<f32>(0.0));
+    gx1 = gx1 - sz1 * (step(vec4<f32>(0.0), gx1) - 0.5);
+    gy1 = gy1 - sz1 * (step(vec4<f32>(0.0), gy1) - 0.5);
+
+    var g000 = vec3<f32>(gx0.x, gy0.x, gz0.x);
+    var g100 = vec3<f32>(gx0.y, gy0.y, gz0.y);
+    var g010 = vec3<f32>(gx0.z, gy0.z, gz0.z);
+    var g110 = vec3<f32>(gx0.w, gy0.w, gz0.w);
+    var g001 = vec3<f32>(gx1.x, gy1.x, gz1.x);
+    var g101 = vec3<f32>(gx1.y, gy1.y, gz1.y);
+    var g011 = vec3<f32>(gx1.z, gy1.z, gz1.z);
+    var g111 = vec3<f32>(gx1.w, gy1.w, gz1.w);
+
+    let norm0 = taylorInvSqrt(vec4<f32>(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
+    g000 = g000 * norm0.x;
+    g010 = g010 * norm0.y;
+    g100 = g100 * norm0.z;
+    g110 = g110 * norm0.w;
+    let norm1 = taylorInvSqrt(vec4<f32>(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));
+    g001 = g001 * norm1.x;
+    g011 = g011 * norm1.y;
+    g101 = g101 * norm1.z;
+    g111 = g111 * norm1.w;
+
+    let n000 = dot(g000, Pf0);
+    let n100 = dot(g100, vec3<f32>(Pf1.x, Pf0.y, Pf0.z));
+    let n010 = dot(g010, vec3<f32>(Pf0.x, Pf1.y, Pf0.z));
+    let n110 = dot(g110, vec3<f32>(Pf1.x, Pf1.y, Pf0.z));
+    let n001 = dot(g001, vec3<f32>(Pf0.x, Pf0.y, Pf1.z));
+    let n101 = dot(g101, vec3<f32>(Pf1.x, Pf0.y, Pf1.z));
+    let n011 = dot(g011, vec3<f32>(Pf0.x, Pf1.y, Pf1.z));
+    let n111 = dot(g111, Pf1);
+
+    let fade_xyz = Pf0 * Pf0 * Pf0 * (Pf0 * (Pf0 * 6.0 - 15.0) + 10.0);
+    let n_z = mix(vec4<f32>(n000, n100, n010, n110), vec4<f32>(n001, n101, n011, n111), fade_xyz.z);
+    let n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);
+    let n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x); 
+    return 2.2 * n_xyz;
+}
+
+fn cnoise3_grad(P: vec3<f32>) -> PerlinJet {
+    let Pi0 = floor(P);
+    let Pi1 = Pi0 + vec3<f32>(1.0);
+    let Pi0_mod = mod289_3(Pi0);
+    let Pi1_mod = mod289_3(Pi1);
+    let Pf0 = fract(P);
+    let Pf1 = Pf0 - vec3<f32>(1.0);
+    let ix = vec4<f32>(Pi0_mod.x, Pi1_mod.x, Pi0_mod.x, Pi1_mod.x);
+    let iy = vec4<f32>(Pi0_mod.y, Pi0_mod.y, Pi1_mod.y, Pi1_mod.y);
+    let iz0 = vec4<f32>(Pi0_mod.z);
+    let iz1 = vec4<f32>(Pi1_mod.z);
+
+    let ixy = permute4(permute4(ix) + iy);
+    let ixy0 = permute4(ixy + iz0);
+    let ixy1 = permute4(ixy + iz1);
+
+    var gx0 = ixy0 / 7.0;
+    var gy0 = fract(floor(gx0) / 7.0) - 0.5;
+    gx0 = fract(gx0);
+    var gz0 = vec4<f32>(0.5) - abs(gx0) - abs(gy0);
+    let sz0 = step(gz0, vec4<f32>(0.0));
+    gx0 = gx0 - sz0 * (step(vec4<f32>(0.0), gx0) - 0.5);
+    gy0 = gy0 - sz0 * (step(vec4<f32>(0.0), gy0) - 0.5);
+
+    var gx1 = ixy1 / 7.0;
+    var gy1 = fract(floor(gx1) / 7.0) - 0.5;
+    gx1 = fract(gx1);
+    var gz1 = vec4<f32>(0.5) - abs(gx1) - abs(gy1);
+    let sz1 = step(gz1, vec4<f32>(0.0));
+    gx1 = gx1 - sz1 * (step(vec4<f32>(0.0), gx1) - 0.5);
+    gy1 = gy1 - sz1 * (step(vec4<f32>(0.0), gy1) - 0.5);
+
+    var g000 = vec3<f32>(gx0.x, gy0.x, gz0.x);
+    var g100 = vec3<f32>(gx0.y, gy0.y, gz0.y);
+    var g010 = vec3<f32>(gx0.z, gy0.z, gz0.z);
+    var g110 = vec3<f32>(gx0.w, gy0.w, gz0.w);
+    var g001 = vec3<f32>(gx1.x, gy1.x, gz1.x);
+    var g101 = vec3<f32>(gx1.y, gy1.y, gz1.y);
+    var g011 = vec3<f32>(gx1.z, gy1.z, gz1.z);
+    var g111 = vec3<f32>(gx1.w, gy1.w, gz1.w);
+
+    let norm0 = taylorInvSqrt(vec4<f32>(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));
+    g000 = g000 * norm0.x;
+    g010 = g010 * norm0.y;
+    g100 = g100 * norm0.z;
+    g110 = g110 * norm0.w;
+    let norm1 = taylorInvSqrt(vec4<f32>(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));
+    g001 = g001 * norm1.x;
+    g011 = g011 * norm1.y;
+    g101 = g101 * norm1.z;
+    g111 = g111 * norm1.w;
+
+    let n000 = dot(g000, Pf0);
+    let n100 = dot(g100, vec3<f32>(Pf1.x, Pf0.y, Pf0.z));
+    let n010 = dot(g010, vec3<f32>(Pf0.x, Pf1.y, Pf0.z));
+    let n110 = dot(g110, vec3<f32>(Pf1.x, Pf1.y, Pf0.z));
+    let n001 = dot(g001, vec3<f32>(Pf0.x, Pf0.y, Pf1.z));
+    let n101 = dot(g101, vec3<f32>(Pf1.x, Pf0.y, Pf1.z));
+    let n011 = dot(g011, vec3<f32>(Pf0.x, Pf1.y, Pf1.z));
+    let n111 = dot(g111, Pf1);
+
+    let fade_xyz = Pf0 * Pf0 * Pf0 * (Pf0 * (Pf0 * 6.0 - 15.0) + 10.0);
+    let dfade_xyz = 30.0 * Pf0 * Pf0 * (Pf0 - vec3<f32>(1.0)) * (Pf0 - vec3<f32>(1.0));
+
+    let u = fade_xyz.x;
+    let v = fade_xyz.y;
+    let w = fade_xyz.z;
+
+    let n_z0 = mix(n000, n001, w);
+    let n_z1 = mix(n100, n101, w);
+    let n_z2 = mix(n010, n011, w);
+    let n_z3 = mix(n110, n111, w);
+
+    let n_yz0 = mix(n_z0, n_z2, v);
+    let n_yz1 = mix(n_z1, n_z3, v);
+
+    let n_xyz = mix(n_yz0, n_yz1, u);
+    let val = 2.2 * n_xyz;
+
+    let dx_fade = dfade_xyz.x * (n_yz1 - n_yz0);
+
+    let n_x_y0 = mix(n_z0, n_z1, u);
+    let n_x_y1 = mix(n_z2, n_z3, u);
+    let dy_fade = dfade_xyz.y * (n_x_y1 - n_x_y0);
+
+    let n_xy_z0 = mix(mix(n000, n100, u), mix(n010, n110, u), v);
+    let n_xy_z1 = mix(mix(n001, n101, u), mix(n011, n111, u), v);
+    let dz_fade = dfade_xyz.z * (n_xy_z1 - n_xy_z0);
+
+    let g_z0 = mix(g000, g001, w);
+    let g_z1 = mix(g100, g101, w);
+    let g_z2 = mix(g010, g011, w);
+    let g_z3 = mix(g110, g111, w);
+
+    let g_yz0 = mix(g_z0, g_z2, v);
+    let g_yz1 = mix(g_z1, g_z3, v);
+
+    let g_interp = mix(g_yz0, g_yz1, u);
+
+    let grad = 2.2 * (g_interp + vec3<f32>(dx_fade, dy_fade, dz_fade));
+    return PerlinJet(val, grad);
+}
+)WGSL";
+
+bool sdfNodeContainsNoise(const geom::SdfNode& n) {
+    if (n.op == geom::SdfOp::Leaf) {
+        if (n.prim == geom::SdfPrim::Expr) {
+            if (n.mathNode && astContainsNoise(*n.mathNode)) return true;
+            if (!n.expr.empty() && n.expr.find("noise") != std::string::npos) return true;
+        }
+        return false;
+    }
+    for (const auto& child : n.children) {
+        if (child && sdfNodeContainsNoise(*child)) return true;
+    }
+    return false;
+}
+
+bool piecewiseContainsNoise(const OntoMath::Piecewise* pw) {
+    if (!pw) return false;
+    for (const auto& piece : pw->pieces) {
+        if (piece.mathNode && astContainsNoise(*piece.mathNode)) return true;
+    }
+    return false;
+}
+
 } // namespace
 
 bool astReadsSpatial(const OntoMath::MathNode& node) {
@@ -2299,15 +2324,6 @@ JetExpr emitRpnGrad(const std::vector<geom::SdfToken>& rpn, Emit& e,
     return JetExpr{ JetKind::Scalar, res.val, grad, "", "", "" };
 }
 
-int countSdfLeaves(const geom::SdfNode& n) {
-    if (n.op == geom::SdfOp::Leaf) return 1;
-    int sum = 0;
-    for (const auto& child : n.children) {
-        if (child) sum += countSdfLeaves(*child);
-    }
-    return sum;
-}
-
 bool isPurePrimitiveTree(const geom::SdfNode& n) {
     if (n.op == geom::SdfOp::Leaf) {
         return n.prim != geom::SdfPrim::Expr;
@@ -2401,13 +2417,55 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
         return out;
     }
 
+    const bool isCommutativeUnion = (n.op == geom::SdfOp::Union || n.op == geom::SdfOp::SmoothUnion);
+    glm::vec3 cA(0.0f);
+    float rA = 0.0f;
+    const bool canPruneA = isCommutativeUnion &&
+                           n.children.size() >= 2 && n.children[0] &&
+                           countSdfLeaves(*n.children[0]) >= 2 &&
+                           (!n.children[1] || countSdfLeaves(*n.children[0]) > countSdfLeaves(*n.children[1])) &&
+                           isPurePrimitiveTree(*n.children[0]) &&
+                           tryComputeSdfBoundingSphere(*n.children[0], cA, rA);
+
+    if (canPruneA) {
+        const size_t startA = e.body.size();
+        const std::string a = emitNode(*n.children[0], e);
+        std::string bodyA = e.body.substr(startA);
+        e.body.erase(startA);
+
+        const std::string b = emitNode(*n.children[1], e);
+
+        std::string cAExpr = e.param3(cA);
+        std::string rAExpr = e.param(rA);
+        std::string kExpr = "0.0";
+        if (n.op == geom::SdfOp::SmoothUnion) {
+            kExpr = "max(" + e.param(n.t) + ", 1e-5)";
+        }
+        std::string boundVar = e.fresh();
+        std::string aVar = e.fresh();
+        e.line("let " + boundVar + " = length(p - " + cAExpr + ") - " + rAExpr + ";");
+        e.line("var " + aVar + " = 1e6;");
+        std::string threshold = (n.op == geom::SdfOp::SmoothUnion) ? ("(" + b + " + " + kExpr + ")") : b;
+        e.line("if (" + boundVar + " <= " + threshold + ") {");
+        e.body += bodyA;
+        e.line("    " + aVar + " = " + a + ";");
+        e.line("}");
+
+        if (n.op == geom::SdfOp::SmoothUnion) {
+            e.line("let " + out + " = sminK(" + aVar + ", " + b + ", " + kExpr + ");");
+        } else {
+            e.line("let " + out + " = min(" + aVar + ", " + b + ");");
+        }
+        return out;
+    }
+
     const std::string a = emitNode(*n.children[0], e);
 
     glm::vec3 cB(0.0f);
     float rB = 0.0f;
-    const bool canPruneB = (n.op == geom::SdfOp::Union || n.op == geom::SdfOp::SmoothUnion) &&
+    const bool canPruneB = (n.op == geom::SdfOp::Union || n.op == geom::SdfOp::SmoothUnion || n.op == geom::SdfOp::Subtract) &&
                            n.children[1] &&
-                           countSdfLeaves(*n.children[1]) >= 3 &&
+                           countSdfLeaves(*n.children[1]) >= 2 &&
                            isPurePrimitiveTree(*n.children[1]) &&
                            tryComputeSdfBoundingSphere(*n.children[1], cB, rB);
 
@@ -2418,11 +2476,11 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
         if (n.op == geom::SdfOp::SmoothUnion) {
             kExpr = "max(" + e.param(n.t) + ", 1e-5)";
         }
-        std::string boundVar = e.fresh();
-        std::string bVar = e.fresh();
+        std::string boundVar = "boundB" + std::to_string(e.next++);
+        std::string bVar = "bVal" + std::to_string(e.next++);
         e.line("let " + boundVar + " = length(p - " + cBExpr + ") - " + rBExpr + ";");
         e.line("var " + bVar + " = 1e6;");
-        std::string threshold = (n.op == geom::SdfOp::SmoothUnion) ? ("(" + a + " + " + kExpr + ")") : a;
+        std::string threshold = (n.op == geom::SdfOp::SmoothUnion) ? ("(" + a + " + " + kExpr + ")") : ((n.op == geom::SdfOp::Subtract) ? ("(-(" + a + "))") : a);
         e.line("if (" + boundVar + " <= " + threshold + ") {");
         const std::string b = emitNode(*n.children[1], e);
         e.line("    " + bVar + " = " + b + ";");
@@ -2430,6 +2488,8 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
 
         if (n.op == geom::SdfOp::SmoothUnion) {
             e.line("let " + out + " = sminK(" + a + ", " + bVar + ", " + kExpr + ");");
+        } else if (n.op == geom::SdfOp::Subtract) {
+            e.line("let " + out + " = max(" + a + ", -(" + bVar + "));");
         } else {
             e.line("let " + out + " = min(" + a + ", " + bVar + ");");
         }
@@ -2459,6 +2519,15 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
 }
 
 } // namespace
+
+int countSdfLeaves(const geom::SdfNode& n) {
+    if (n.op == geom::SdfOp::Leaf) return 1;
+    int sum = 0;
+    for (const auto& child : n.children) {
+        if (child) sum += countSdfLeaves(*child);
+    }
+    return sum;
+}
 
 bool tryComputeSdfBoundingSphere(const geom::SdfNode& n, glm::vec3& outCenter, float& outRadius) {
     if (n.op == geom::SdfOp::Leaf) {
@@ -2560,6 +2629,89 @@ bool tryComputeSdfBoundingSphere(const geom::SdfNode& n, glm::vec3& outCenter, f
         outCenter = C;
         outRadius = R;
         return true;
+    }
+
+    return false;
+}
+
+bool tryComputeSdfTightAabb(const geom::SdfNode& n, glm::vec3& outMin, glm::vec3& outMax) {
+    if (n.op == geom::SdfOp::Leaf) {
+        glm::vec3 halfExt(0.0f);
+        switch (n.prim) {
+            case geom::SdfPrim::Sphere:
+                halfExt = glm::vec3(std::max(n.dims.x, 0.0f));
+                break;
+            case geom::SdfPrim::Box:
+                halfExt = glm::max(n.dims, glm::vec3(0.0f));
+                break;
+            case geom::SdfPrim::RoundBox:
+                halfExt = glm::max(n.dims, glm::vec3(0.0f)) + glm::vec3(std::max(n.p0, 0.0f));
+                break;
+            case geom::SdfPrim::Ellipsoid:
+                halfExt = glm::max(n.dims, glm::vec3(0.0f));
+                break;
+            case geom::SdfPrim::Cylinder:
+                halfExt = glm::vec3(std::max(n.dims.x, 0.0f), std::max(n.dims.x, 0.0f), std::max(n.dims.y, 0.0f));
+                break;
+            case geom::SdfPrim::Cone:
+                halfExt = glm::vec3(std::max(n.dims.x, 0.0f), std::max(n.dims.x, 0.0f), std::max(n.dims.y, 0.0f));
+                break;
+            case geom::SdfPrim::Torus:
+                halfExt = glm::vec3(std::max(n.dims.x, 0.0f) + std::max(n.dims.y, 0.0f),
+                                    std::max(n.dims.x, 0.0f) + std::max(n.dims.y, 0.0f),
+                                    std::max(n.dims.y, 0.0f));
+                break;
+            default:
+                return false;
+        }
+        outMin = n.offset - halfExt;
+        outMax = n.offset + halfExt;
+        return std::isfinite(outMin.x) && std::isfinite(outMin.y) && std::isfinite(outMin.z) &&
+               std::isfinite(outMax.x) && std::isfinite(outMax.y) && std::isfinite(outMax.z);
+    }
+
+    if (n.children.size() < 2 || !n.children[0] || !n.children[1]) {
+        if (!n.children.empty() && n.children[0]) {
+            return tryComputeSdfTightAabb(*n.children[0], outMin, outMax);
+        }
+        return false;
+    }
+
+    glm::vec3 min0(0.0f), max0(0.0f), min1(0.0f), max1(0.0f);
+    bool ok0 = tryComputeSdfTightAabb(*n.children[0], min0, max0);
+    bool ok1 = tryComputeSdfTightAabb(*n.children[1], min1, max1);
+
+    if (n.op == geom::SdfOp::Subtract) {
+        if (ok0) {
+            outMin = min0;
+            outMax = max0;
+            return true;
+        }
+        return false;
+    }
+
+    if (n.op == geom::SdfOp::Intersect) {
+        if (ok0 && ok1) {
+            outMin = glm::max(min0, min1);
+            outMax = glm::min(max0, max1);
+            return glm::all(glm::lessThanEqual(outMin, outMax));
+        }
+        if (ok0) { outMin = min0; outMax = max0; return true; }
+        if (ok1) { outMin = min1; outMax = max1; return true; }
+        return false;
+    }
+
+    if (n.op == geom::SdfOp::Union || n.op == geom::SdfOp::SmoothUnion || n.op == geom::SdfOp::Morph) {
+        if (!ok0 || !ok1) return false;
+        outMin = glm::min(min0, min1);
+        outMax = glm::max(max0, max1);
+        if (n.op == geom::SdfOp::SmoothUnion) {
+            float k = std::max(n.t, 0.0f);
+            outMin -= glm::vec3(k);
+            outMax += glm::vec3(k);
+        }
+        return std::isfinite(outMin.x) && std::isfinite(outMin.y) && std::isfinite(outMin.z) &&
+               std::isfinite(outMax.x) && std::isfinite(outMax.y) && std::isfinite(outMax.z);
     }
 
     return false;
@@ -2710,13 +2862,69 @@ JetNode emitNodeJet(const geom::SdfNode& n, Emit& e, const std::string& pt, std:
         }
     }
 
+    const bool isCommutativeUnion = (n.op == geom::SdfOp::Union || n.op == geom::SdfOp::SmoothUnion);
+    glm::vec3 cA(0.0f);
+    float rA = 0.0f;
+    const bool canPruneA = isCommutativeUnion &&
+                           n.children.size() >= 2 && n.children[0] &&
+                           countSdfLeaves(*n.children[0]) >= 2 &&
+                           (!n.children[1] || countSdfLeaves(*n.children[0]) > countSdfLeaves(*n.children[1])) &&
+                           isPurePrimitiveTree(*n.children[0]) &&
+                           tryComputeSdfBoundingSphere(*n.children[0], cA, rA);
+
+    if (canPruneA) {
+        std::string bodyA;
+        JetNode a = emitNodeJet(*n.children[0], e, pt, bodyA, nextVar);
+
+        std::string bodyB;
+        JetNode b = emitNodeJet(*n.children[1], e, pt, bodyB, nextVar);
+
+        std::string cAExpr = e.param3(cA);
+        std::string rAExpr = e.param(rA);
+        std::string kExpr = "0.0";
+        if (n.op == geom::SdfOp::SmoothUnion) {
+            kExpr = "max(" + e.param(n.t) + ", 1e-5)";
+        }
+
+        body += bodyB;
+
+        std::string boundVar = "boundA" + std::to_string(nextVar++);
+        std::string aValVar = "aVal" + std::to_string(nextVar++);
+        std::string aGradVar = "aGrad" + std::to_string(nextVar++);
+        body += "    let " + boundVar + " = length(" + pt + " - " + cAExpr + ") - " + rAExpr + ";\n";
+        body += "    var " + aValVar + " = 1e6;\n";
+        body += "    var " + aGradVar + " = vec3<f32>(0.0, 1.0, 0.0);\n";
+
+        std::string threshold = (n.op == geom::SdfOp::SmoothUnion) ? ("(" + b.val + " + " + kExpr + ")") : b.val;
+        body += "    if (" + boundVar + " <= " + threshold + ") {\n";
+        body += bodyA;
+        body += "        " + aValVar + " = " + a.val + ";\n";
+        body += "        " + aGradVar + " = " + a.grad + ";\n";
+        body += "    }\n";
+
+        std::string outVal = "csgV" + std::to_string(nextVar++);
+        std::string outGrad = "csgG" + std::to_string(nextVar++);
+        if (n.op == geom::SdfOp::SmoothUnion) {
+            std::string h = "h" + std::to_string(nextVar++);
+            body += "    let " + h + " = clamp(0.5 + 0.5 * (" + b.val + " - " + aValVar + ") / " + kExpr + ", 0.0, 1.0);\n";
+            body += "    let " + outVal + " = mix(" + b.val + ", " + aValVar + ", " + h + ") - " + kExpr + " * " + h + " * (1.0 - " + h + ");\n";
+            body += "    let " + outGrad + " = mix(" + b.grad + ", " + aGradVar + ", " + h + ");\n";
+        } else {
+            std::string sel = "csgSel" + std::to_string(nextVar++);
+            body += "    let " + sel + " = " + aValVar + " <= " + b.val + ";\n";
+            body += "    let " + outVal + " = select(" + b.val + ", " + aValVar + ", " + sel + ");\n";
+            body += "    let " + outGrad + " = select(" + b.grad + ", " + aGradVar + ", " + sel + ");\n";
+        }
+        return JetNode{ outVal, outGrad };
+    }
+
     JetNode a = emitNodeJet(*n.children[0], e, pt, body, nextVar);
 
     glm::vec3 cB(0.0f);
     float rB = 0.0f;
-    const bool canPruneB = (n.op == geom::SdfOp::Union || n.op == geom::SdfOp::SmoothUnion) &&
+    const bool canPruneB = (n.op == geom::SdfOp::Union || n.op == geom::SdfOp::SmoothUnion || n.op == geom::SdfOp::Subtract) &&
                            n.children[1] &&
-                           countSdfLeaves(*n.children[1]) >= 3 &&
+                           countSdfLeaves(*n.children[1]) >= 2 &&
                            isPurePrimitiveTree(*n.children[1]) &&
                            tryComputeSdfBoundingSphere(*n.children[1], cB, rB);
 
@@ -2733,7 +2941,7 @@ JetNode emitNodeJet(const geom::SdfNode& n, Emit& e, const std::string& pt, std:
         body += "    let " + boundVar + " = length(" + pt + " - " + cBExpr + ") - " + rBExpr + ";\n";
         body += "    var " + bValVar + " = 1e6;\n";
         body += "    var " + bGradVar + " = vec3<f32>(0.0, 1.0, 0.0);\n";
-        std::string threshold = (n.op == geom::SdfOp::SmoothUnion) ? ("(" + a.val + " + " + kExpr + ")") : a.val;
+        std::string threshold = (n.op == geom::SdfOp::SmoothUnion) ? ("(" + a.val + " + " + kExpr + ")") : ((n.op == geom::SdfOp::Subtract) ? ("(-(" + a.val + "))") : a.val);
         body += "    if (" + boundVar + " <= " + threshold + ") {\n";
         JetNode b = emitNodeJet(*n.children[1], e, pt, body, nextVar);
         body += "        " + bValVar + " = " + b.val + ";\n";
@@ -2747,6 +2955,11 @@ JetNode emitNodeJet(const geom::SdfNode& n, Emit& e, const std::string& pt, std:
             body += "    let " + h + " = clamp(0.5 + 0.5 * (" + bValVar + " - " + a.val + ") / " + kExpr + ", 0.0, 1.0);\n";
             body += "    let " + outVal + " = mix(" + bValVar + ", " + a.val + ", " + h + ") - " + kExpr + " * " + h + " * (1.0 - " + h + ");\n";
             body += "    let " + outGrad + " = mix(" + bGradVar + ", " + a.grad + ", " + h + ");\n";
+        } else if (n.op == geom::SdfOp::Subtract) {
+            std::string sel = "csgSel" + std::to_string(nextVar++);
+            body += "    let " + sel + " = " + a.val + " >= -(" + bValVar + ");\n";
+            body += "    let " + outVal + " = select(-(" + bValVar + "), " + a.val + ", " + sel + ");\n";
+            body += "    let " + outGrad + " = select(-(" + bGradVar + "), " + a.grad + ", " + sel + ");\n";
         } else {
             std::string sel = "csgSel" + std::to_string(nextVar++);
             body += "    let " + sel + " = " + a.val + " <= " + bValVar + ";\n";
@@ -3365,13 +3578,17 @@ fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWor
     if (bounds.y < bounds.x || bounds.y <= 0.0) { return 1.0; }
 
     var tShadow = max(bounds.x, 0.0);
-    let maxShadow = min(bounds.y, rayLength - bias);
+    var maxShadow = min(bounds.y, rayLength - bias);
     if (maxShadow <= tShadow) { return 1.0; }
 
     if (!kHasSurfaceVolumetric && u.limits.w <= 1e-4) {
         let shadowDirectHit = rootClosedFormHit(origin, shadowDir, tShadow, maxShadow);
         if (shadowDirectHit.y >= 0.0) {
             return select(1.0, 0.0, shadowDirectHit.y > 0.5);
+        } else if (shadowDirectHit.y < -1.5) {
+            tShadow = max(tShadow, shadowDirectHit.x);
+            maxShadow = min(maxShadow, -shadowDirectHit.y - 2.0);
+            if (tShadow >= maxShadow) { return 1.0; }
         }
     }
 
@@ -3451,7 +3668,7 @@ fn fs(in: VSOut) -> FSOut {
     //               maxDist, broke on the first iteration and discarded. The
     //               noise floor's budget is 8000, which is why terrain looked
     //               fine and only the small things went missing.
-    let maxDist = min(min(box.y, t + inst.misc.z), farField);
+    var maxDist = min(min(box.y, t + inst.misc.z), farField);
 
     // Min/max heightfield grid skip (Phase C): for a proven heightfield
     // (inst.misc.x > 0.5, with dimensions nonzero when traversal is enabled),
@@ -3511,6 +3728,13 @@ fn fs(in: VSOut) -> FSOut {
             hit = directHit.y > 0.5;
             if (hit) {
                 t = directHit.x;
+            }
+        } else if (directHit.y < -1.5) {
+            t = max(t, directHit.x);
+            maxDist = min(maxDist, -directHit.y - 2.0);
+            if (t > maxDist) {
+                closedFormDecided = true;
+                hit = false;
             }
         }
     }
@@ -5401,10 +5625,82 @@ ParameterBlock collectParams(const geom::SdfNode& root,
     return block;
 }
 
-std::string emitRootClosedFormHit(const geom::SdfNode& root) {
+namespace {
+
+enum class Ray1DLaw {
+    Fallback,
+    LawI_Sphere,
+    LawI_Ellipsoid,
+    LawII_Box,
+    LawII_Cylinder,
+    LawII_Convex,
+    LawIII_RoundBox,
+    LawIV_Torus,
+    LawIV_Cone
+};
+
+bool isEuclideanNormMathNode(const OntoMath::MathNode& node) {
+    if (node.op == OntoMath::MathNode::Op::Length) {
+        if (!node.children.empty() && node.children[0]) {
+            if (node.children[0]->op == OntoMath::MathNode::Op::ValueLeaf &&
+                node.children[0]->variableName == "p") {
+                return true;
+            }
+        }
+    }
+    if (node.op == OntoMath::MathNode::Op::Sqrt && !node.children.empty() && node.children[0]) {
+        const auto& c = *node.children[0];
+        if (c.op == OntoMath::MathNode::Op::Dot && c.children.size() == 2) {
+            if (c.children[0]->variableName == "p" && c.children[1]->variableName == "p") return true;
+        }
+        std::map<std::string, PropertyValue> v0{{"x", PropertyValue(0.0)}, {"y", PropertyValue(0.0)}, {"z", PropertyValue(0.0)}, {"p", PropertyValue(glm::vec3(0.0f))}};
+        std::map<std::string, PropertyValue> v1{{"x", PropertyValue(1.0)}, {"y", PropertyValue(2.0)}, {"z", PropertyValue(2.0)}, {"p", PropertyValue(glm::vec3(1.0f, 2.0f, 2.0f))}};
+        auto eval0 = c.evaluate(v0);
+        auto eval1 = c.evaluate(v1);
+        double d0 = -1.0, d1 = -1.0;
+        if (eval0 && eval1 && propertyValueToNumber(*eval0, d0) && propertyValueToNumber(*eval1, d1)) {
+            if (std::abs(d0) < 1e-5 && std::abs(d1 - 9.0) < 1e-4) return true;
+        }
+    }
+    return false;
+}
+
+Ray1DLaw classifyRay1D(const geom::SdfNode& root) {
     if (root.op == geom::SdfOp::Leaf) {
-        if (root.prim == geom::SdfPrim::Sphere) {
-            return R"WGSL(
+        switch (root.prim) {
+            case geom::SdfPrim::Sphere:    return Ray1DLaw::LawI_Sphere;
+            case geom::SdfPrim::Ellipsoid: return Ray1DLaw::LawI_Ellipsoid;
+            case geom::SdfPrim::Box:       return Ray1DLaw::LawII_Box;
+            case geom::SdfPrim::Cylinder:  return Ray1DLaw::LawII_Cylinder;
+            case geom::SdfPrim::Convex:    return Ray1DLaw::LawII_Convex;
+            case geom::SdfPrim::RoundBox:  return Ray1DLaw::LawIII_RoundBox;
+            case geom::SdfPrim::Torus:     return Ray1DLaw::LawIV_Torus;
+            case geom::SdfPrim::Cone:      return Ray1DLaw::LawIV_Cone;
+            case geom::SdfPrim::Expr: {
+                std::shared_ptr<OntoMath::MathNode> rawMath;
+                if (root.mathNode) rawMath = root.mathNode;
+                else if (!root.rpn.empty()) rawMath = geom::rpnToMathNode(root.rpn);
+                else if (!root.expr.empty()) rawMath = geom::rpnToMathNode(geom::compileExpr(root.expr));
+                if (rawMath && rawMath->op == OntoMath::MathNode::Op::Sub && rawMath->children.size() == 2) {
+                    if (rawMath->children[0] && isEuclideanNormMathNode(*rawMath->children[0]) &&
+                        rawMath->children[1] && rawMath->children[1]->op == OntoMath::MathNode::Op::ScalarLeaf) {
+                        return Ray1DLaw::LawI_Sphere;
+                    }
+                }
+                break;
+            }
+        }
+    }
+    return Ray1DLaw::Fallback;
+}
+
+} // namespace
+
+std::string emitRootClosedFormHit(const geom::SdfNode& root) {
+    const Ray1DLaw law = classifyRay1D(root);
+
+    if (law == Ray1DLaw::LawI_Sphere) {
+        return R"WGSL(
 fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
     let paramOffset = instances[g_instIdx].paramOffset;
     let off = vec3<f32>(P.v[paramOffset + 0u], P.v[paramOffset + 1u], P.v[paramOffset + 2u]);
@@ -5429,9 +5725,40 @@ fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> ve
     return vec2<f32>(tHit, 1.0);
 }
 )WGSL";
-        }
-        if (root.prim == geom::SdfPrim::Box) {
-            return R"WGSL(
+    }
+
+    if (law == Ray1DLaw::LawI_Ellipsoid) {
+        return R"WGSL(
+fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
+    let paramOffset = instances[g_instIdx].paramOffset;
+    let off = vec3<f32>(P.v[paramOffset + 0u], P.v[paramOffset + 1u], P.v[paramOffset + 2u]);
+    let r = max(vec3<f32>(P.v[paramOffset + 3u], P.v[paramOffset + 4u], P.v[paramOffset + 5u]), vec3<f32>(1e-4));
+    let m = (ro - off) / r;
+    let d = rd / r;
+    let a = dot(d, d);
+    let b = dot(m, d);
+    let c = dot(m, m) - 1.0;
+    let h = b * b - a * c;
+    if (h < 0.0 || a <= 1e-8) {
+        return vec2<f32>(tMax + 1.0, 0.0);
+    }
+    let s = sqrt(h);
+    let t0 = (-b - s) / a;
+    let t1 = (-b + s) / a;
+    if (t1 < tStart || t0 > tMax) {
+        return vec2<f32>(tMax + 1.0, 0.0);
+    }
+    let tHit = select(t0, tStart, t0 < tStart);
+    if (tHit > tMax) {
+        return vec2<f32>(tMax + 1.0, 0.0);
+    }
+    return vec2<f32>(tHit, 1.0);
+}
+)WGSL";
+    }
+
+    if (law == Ray1DLaw::LawII_Box) {
+        return R"WGSL(
 fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
     let paramOffset = instances[g_instIdx].paramOffset;
     let off = vec3<f32>(P.v[paramOffset + 0u], P.v[paramOffset + 1u], P.v[paramOffset + 2u]);
@@ -5447,38 +5774,41 @@ fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> ve
     return vec2<f32>(tHit, 1.0);
 }
 )WGSL";
-        }
-        if (root.prim == geom::SdfPrim::Convex) {
-            if (root.planes.empty()) {
-                return R"WGSL(
-fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
-    return vec2<f32>(tMax + 1.0, 0.0);
-}
-)WGSL";
-            }
-            std::string code = R"WGSL(
+    }
+
+    if (law == Ray1DLaw::LawII_Cylinder) {
+        return R"WGSL(
 fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
     let paramOffset = instances[g_instIdx].paramOffset;
     let off = vec3<f32>(P.v[paramOffset + 0u], P.v[paramOffset + 1u], P.v[paramOffset + 2u]);
+    let r = P.v[paramOffset + 3u];
+    let h = P.v[paramOffset + 4u];
+    let m = ro - off;
+
+    let a = rd.x * rd.x + rd.y * rd.y;
+    let b = m.x * rd.x + m.y * rd.y;
+    let c = m.x * m.x + m.y * m.y - r * r;
     var tEnter = tStart;
     var tExit = tMax;
-)WGSL";
-            for (size_t i = 0; i < root.planes.size(); ++i) {
-                uint32_t base = 3u + static_cast<uint32_t>(i * 4u);
-                code += "    {\n";
-                code += "        let plN = vec3<f32>(P.v[paramOffset + " + std::to_string(base) + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n";
-                code += "        let plD = P.v[paramOffset + " + std::to_string(base + 3) + "u];\n";
-                code += "        let num = plD - dot(ro - off, plN);\n";
-                code += "        let den = dot(rd, plN);\n";
-                code += "        if (abs(den) <= 1e-8) {\n";
-                code += "            if (num < 0.0) { return vec2<f32>(tMax + 1.0, 0.0); }\n";
-                code += "        } else {\n";
-                code += "            let tPlane = num / den;\n";
-                code += "            if (den > 0.0) { tExit = min(tExit, tPlane); } else { tEnter = max(tEnter, tPlane); }\n";
-                code += "        }\n";
-                code += "    }\n";
-            }
-            code += R"WGSL(
+    if (a > 1e-8) {
+        let disc = b * b - a * c;
+        if (disc < 0.0) { return vec2<f32>(tMax + 1.0, 0.0); }
+        let s = sqrt(disc);
+        tEnter = max(tEnter, (-b - s) / a);
+        tExit = min(tExit, (-b + s) / a);
+    } else if (c > 0.0) {
+        return vec2<f32>(tMax + 1.0, 0.0);
+    }
+
+    if (abs(rd.z) > 1e-8) {
+        let tz0 = (-h - m.z) / rd.z;
+        let tz1 = (h - m.z) / rd.z;
+        tEnter = max(tEnter, min(tz0, tz1));
+        tExit = min(tExit, max(tz0, tz1));
+    } else if (abs(m.z) > h) {
+        return vec2<f32>(tMax + 1.0, 0.0);
+    }
+
     if (tEnter > tExit || tExit < tStart) {
         return vec2<f32>(tMax + 1.0, 0.0);
     }
@@ -5489,9 +5819,118 @@ fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> ve
     return vec2<f32>(tHit, 1.0);
 }
 )WGSL";
-            return code;
-        }
     }
+
+    if (law == Ray1DLaw::LawII_Convex) {
+        if (root.planes.empty()) {
+            return R"WGSL(
+fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
+    return vec2<f32>(tMax + 1.0, 0.0);
+}
+)WGSL";
+        }
+        std::string code = R"WGSL(
+fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
+    let paramOffset = instances[g_instIdx].paramOffset;
+    let off = vec3<f32>(P.v[paramOffset + 0u], P.v[paramOffset + 1u], P.v[paramOffset + 2u]);
+    var tEnter = tStart;
+    var tExit = tMax;
+)WGSL";
+        for (size_t i = 0; i < root.planes.size(); ++i) {
+            uint32_t base = 3u + static_cast<uint32_t>(i * 4u);
+            code += "    {\n";
+            code += "        let plN = vec3<f32>(P.v[paramOffset + " + std::to_string(base) + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n";
+            code += "        let plD = P.v[paramOffset + " + std::to_string(base + 3) + "u];\n";
+            code += "        let num = plD - dot(ro - off, plN);\n";
+            code += "        let den = dot(rd, plN);\n";
+            code += "        if (abs(den) <= 1e-8) {\n";
+            code += "            if (num < 0.0) { return vec2<f32>(tMax + 1.0, 0.0); }\n";
+            code += "        } else {\n";
+            code += "            let tPlane = num / den;\n";
+            code += "            if (den > 0.0) { tExit = min(tExit, tPlane); } else { tEnter = max(tEnter, tPlane); }\n";
+            code += "        }\n";
+            code += "    }\n";
+        }
+        code += R"WGSL(
+    if (tEnter > tExit || tExit < tStart) {
+        return vec2<f32>(tMax + 1.0, 0.0);
+    }
+    let tHit = max(tEnter, tStart);
+    if (tHit > tMax) {
+        return vec2<f32>(tMax + 1.0, 0.0);
+    }
+    return vec2<f32>(tHit, 1.0);
+}
+)WGSL";
+        return code;
+    }
+
+    if (law == Ray1DLaw::LawIII_RoundBox) {
+        return R"WGSL(
+fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
+    let paramOffset = instances[g_instIdx].paramOffset;
+    let off = vec3<f32>(P.v[paramOffset + 0u], P.v[paramOffset + 1u], P.v[paramOffset + 2u]);
+    let b = vec3<f32>(P.v[paramOffset + 3u], P.v[paramOffset + 4u], P.v[paramOffset + 5u]);
+    let r = P.v[paramOffset + 6u];
+
+    let slab = rayAabb(ro - off, rd, b);
+    if (slab.y < slab.x || slab.y < tStart || slab.x > tMax) {
+        return vec2<f32>(tMax + 1.0, 0.0);
+    }
+    let tCand = max(slab.x, tStart);
+    if (tCand > tMax) {
+        return vec2<f32>(tMax + 1.0, 0.0);
+    }
+    let pCand = (ro - off) + rd * tCand;
+    let bInner = max(b - vec3<f32>(r), vec3<f32>(0.0));
+    let q = abs(pCand) - bInner;
+    let activeAxes = select(0, 1, q.x > 0.0) + select(0, 1, q.y > 0.0) + select(0, 1, q.z > 0.0);
+    if (activeAxes <= 1) {
+        return vec2<f32>(tCand, 1.0);
+    }
+    return vec2<f32>(tCand, -2.0 - min(slab.y, tMax));
+}
+)WGSL";
+    }
+
+    if (law == Ray1DLaw::LawIV_Torus) {
+        return R"WGSL(
+fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
+    let paramOffset = instances[g_instIdx].paramOffset;
+    let off = vec3<f32>(P.v[paramOffset + 0u], P.v[paramOffset + 1u], P.v[paramOffset + 2u]);
+    let majR = P.v[paramOffset + 3u];
+    let minR = P.v[paramOffset + 4u];
+    let outerB = vec3<f32>(majR + minR, majR + minR, minR);
+    let slab = rayAabb(ro - off, rd, outerB);
+    if (slab.y < slab.x || slab.y < tStart || slab.x > tMax) {
+        return vec2<f32>(tMax + 1.0, 0.0);
+    }
+    let tEnter = max(slab.x, tStart);
+    let tExit = min(slab.y, tMax);
+    return vec2<f32>(tEnter, -2.0 - tExit);
+}
+)WGSL";
+    }
+
+    if (law == Ray1DLaw::LawIV_Cone) {
+        return R"WGSL(
+fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
+    let paramOffset = instances[g_instIdx].paramOffset;
+    let off = vec3<f32>(P.v[paramOffset + 0u], P.v[paramOffset + 1u], P.v[paramOffset + 2u]);
+    let r1 = P.v[paramOffset + 3u];
+    let h = P.v[paramOffset + 4u];
+    let outerB = vec3<f32>(r1, r1, h);
+    let slab = rayAabb(ro - off, rd, outerB);
+    if (slab.y < slab.x || slab.y < tStart || slab.x > tMax) {
+        return vec2<f32>(tMax + 1.0, 0.0);
+    }
+    let tEnter = max(slab.x, tStart);
+    let tExit = min(slab.y, tMax);
+    return vec2<f32>(tEnter, -2.0 - tExit);
+}
+)WGSL";
+    }
+
     return R"WGSL(
 fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
     return vec2<f32>(-1.0, -1.0);
@@ -5551,8 +5990,34 @@ Program compile(const geom::SdfNode& root,
     }
     e.parameterOffset = savedOffset;
 
+    bool needsNoise = sdfNodeContainsNoise(root) ||
+                      piecewiseContainsNoise(colorExpr) ||
+                      piecewiseContainsNoise(radianceExpr) ||
+                      piecewiseContainsNoise(chromaExpr) ||
+                      piecewiseContainsNoise(angularExpr) ||
+                      piecewiseContainsNoise(densityExpr) ||
+                      piecewiseContainsNoise(extinctionExpr) ||
+                      piecewiseContainsNoise(scatteringExpr) ||
+                      piecewiseContainsNoise(volumeChromaExpr) ||
+                      piecewiseContainsNoise(phaseExpr) ||
+                      piecewiseContainsNoise(emissionExpr) ||
+                      piecewiseContainsNoise(responseExpr);
+    if (radianceSources) {
+        for (const auto& src : *radianceSources) {
+            if (piecewiseContainsNoise(src.radianceExpr) ||
+                piecewiseContainsNoise(src.chromaExpr) ||
+                piecewiseContainsNoise(src.angularExpr)) {
+                needsNoise = true;
+                break;
+            }
+        }
+    }
+
     Program prog;
     prog.wgsl = std::string(kSdfBindings) + kPrimitives;
+    if (needsNoise) {
+        prog.wgsl += kPerlinNoiseFunctions;
+    }
 
     if (hasAnalyticGrad) {
         prog.wgsl += evalGradFunc;

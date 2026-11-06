@@ -1097,8 +1097,15 @@ void WebGpuRenderer::flushMeshDraws() {
     struct UploadRecord {
         const MeshBatchKey* key;
         const std::vector<InstanceData>* instances;
-        size_t uniformOffset;
-        size_t instanceOffset;
+        uint32_t firstInstance;
+        size_t uniformSlotIndex;
+    };
+    struct UniformKey {
+        WGPUTextureView albedoView;
+        glm::vec4 shading;
+        bool operator==(const UniformKey& o) const {
+            return albedoView == o.albedoView && shading == o.shading;
+        }
     };
     constexpr size_t pageBytes = 256 * 1024;
     constexpr size_t bindingAlignment = 256; // Same alignment as GpuBufferPool.
@@ -1106,17 +1113,60 @@ void WebGpuRenderer::flushMeshDraws() {
         return (bytes + bindingAlignment - 1) / bindingAlignment * bindingAlignment;
     };
     std::vector<UploadRecord> records;
-    std::vector<uint8_t> uniforms, instanceBytes;
+    std::vector<InstanceData> pageInstances;
+    std::vector<UniformKey> pageUniformKeys;
+    std::vector<size_t> pageUniformOffsets;
+    std::vector<uint8_t> uniforms;
+
     const auto flushPage = [&]() {
         if (records.empty()) return;
         const auto uniformPage = bufferPool().suballocateUniform(uniforms.data(), uniforms.size());
-        const auto instancePage = bufferPool().suballocateStorage(instanceBytes.data(), instanceBytes.size());
+        const size_t instBytes = pageInstances.size() * sizeof(InstanceData);
+        const auto instancePage = bufferPool().suballocateStorage(pageInstances.data(), instBytes);
+
+        // Group 1: one shared bind group covering all contiguous instances in this page
+        WGPUBindGroupEntry ibge = {};
+        ibge.binding = 0;
+        ibge.buffer = instancePage.buffer;
+        ibge.offset = instancePage.offset;
+        ibge.size = instBytes;
+        WGPUBindGroupDescriptor ibgDesc = {};
+        ibgDesc.layout = _instanceBgl;
+        ibgDesc.entryCount = 1;
+        ibgDesc.entries = &ibge;
+        WGPUBindGroup pageInstBindGroup = wgpuDeviceCreateBindGroup(_device, &ibgDesc);
+        _frameBindGroups.push_back(pageInstBindGroup);
+
+        // Group 0: one bind group per unique (albedoView, shading) in this page
+        std::vector<WGPUBindGroup> pageGroup0;
+        pageGroup0.reserve(pageUniformKeys.size());
+        for (size_t i = 0; i < pageUniformKeys.size(); ++i) {
+            WGPUBindGroupEntry bge[3] = {};
+            bge[0].binding = 0;
+            bge[0].buffer = uniformPage.buffer;
+            bge[0].offset = uniformPage.offset + pageUniformOffsets[i];
+            bge[0].size = sizeof(MeshUniforms);
+            bge[1].binding = 1;
+            bge[1].textureView = pageUniformKeys[i].albedoView;
+            bge[2].binding = 2;
+            bge[2].sampler = _sampler;
+            WGPUBindGroupDescriptor bgDesc = {};
+            bgDesc.layout = _bgl;
+            bgDesc.entryCount = 3;
+            bgDesc.entries = bge;
+            WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgDesc);
+            _frameBindGroups.push_back(bg);
+            pageGroup0.push_back(bg);
+        }
+
+        bindPipeline(_meshPipeline);
+        wgpuRenderPassEncoderSetBindGroup(_pass, 1, pageInstBindGroup, 0, nullptr);
+        WGPUBindGroup currentGroup0 = nullptr;
+
         for (const auto& record : records) {
             const MeshBatchKey& key = *record.key;
             const auto& instances = *record.instances;
             const geom::TessMesh& mesh = *key.mesh;
-
-            bindPipeline(_meshPipeline);
 
             const size_t vbytes = mesh.tris.size() * sizeof(geom::TessVertex);
             WGPUBuffer vbuf = _meshCache.getOrUpload(mesh);
@@ -1127,58 +1177,61 @@ void WebGpuRenderer::flushMeshDraws() {
                 voffset = vAlloc.offset;
             }
 
-            WGPUBindGroupEntry bge[3] = {};
-            bge[0].binding = 0; bge[0].buffer = uniformPage.buffer;
-            bge[0].offset = uniformPage.offset + record.uniformOffset; bge[0].size = sizeof(MeshUniforms);
-            bge[1].binding = 1; bge[1].textureView = key.albedoView;
-            bge[2].binding = 2; bge[2].sampler = _sampler;
-            WGPUBindGroupDescriptor bgDesc = {};
-            bgDesc.layout = _bgl; bgDesc.entryCount = 3; bgDesc.entries = bge;
-            WGPUBindGroup bindGroup = wgpuDeviceCreateBindGroup(_device, &bgDesc);
-            _frameBindGroups.push_back(bindGroup);
+            WGPUBindGroup bg0 = pageGroup0[record.uniformSlotIndex];
+            if (bg0 != currentGroup0) {
+                wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg0, 0, nullptr);
+                currentGroup0 = bg0;
+            }
 
-            WGPUBindGroupEntry ibge = {};
-            ibge.binding = 0; ibge.buffer = instancePage.buffer;
-            ibge.offset = instancePage.offset + record.instanceOffset;
-            ibge.size = instances.size() * sizeof(InstanceData);
-            WGPUBindGroupDescriptor ibgDesc = {};
-            ibgDesc.layout = _instanceBgl; ibgDesc.entryCount = 1; ibgDesc.entries = &ibge;
-            WGPUBindGroup instBindGroup = wgpuDeviceCreateBindGroup(_device, &ibgDesc);
-            _frameBindGroups.push_back(instBindGroup);
-
-            wgpuRenderPassEncoderSetBindGroup(_pass, 0, bindGroup, 0, nullptr);
-            wgpuRenderPassEncoderSetBindGroup(_pass, 1, instBindGroup, 0, nullptr);
             wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vbuf, voffset, vbytes);
             wgpuRenderPassEncoderDraw(_pass, static_cast<uint32_t>(mesh.tris.size()),
-                                      static_cast<uint32_t>(instances.size()), 0, 0);
+                                      static_cast<uint32_t>(instances.size()), 0, record.firstInstance);
 
             mutableFrameStats().drawCalls++;
             mutableFrameStats().meshDrawCalls++;
         }
         records.clear();
         uniforms.clear();
-        instanceBytes.clear();
+        pageInstances.clear();
+        pageUniformKeys.clear();
+        pageUniformOffsets.clear();
     };
+
     for (const auto& [key, instances] : _meshBatches) {
         if (!key.mesh || key.mesh->tris.empty() || instances.empty()) continue;
-        const size_t bytes = instances.size() * sizeof(InstanceData);
-        if (!records.empty() && (aligned(uniforms.size()) + sizeof(MeshUniforms) > pageBytes ||
-                                  aligned(instanceBytes.size()) + bytes > pageBytes))
+
+        UniformKey uKey{key.albedoView, key.shading};
+        auto it = std::find(pageUniformKeys.begin(), pageUniformKeys.end(), uKey);
+        const bool needNewUniform = (it == pageUniformKeys.end());
+        const size_t addUniformBytes = needNewUniform ? sizeof(MeshUniforms) : 0;
+
+        if (!records.empty() && (aligned(uniforms.size()) + addUniformBytes > pageBytes ||
+                                 (pageInstances.size() + instances.size()) * sizeof(InstanceData) > pageBytes)) {
             flushPage();
-        // A single larger instance batch keeps its existing allocation size.
-        // Only combinations of batches are limited to a page.
-        const size_t uniformOffset = aligned(uniforms.size());
-        const size_t instanceOffset = aligned(instanceBytes.size());
-        MeshUniforms uniform;
-        uniform.viewProj = _viewProj;
-        uniform.lightPos = glm::vec4(lightPos(), 1.0f);
-        uniform.params = key.shading;
-        uniform.eyePos = glm::vec4(_eyePos, 1.0f);
-        uniforms.resize(uniformOffset + sizeof(uniform));
-        instanceBytes.resize(instanceOffset + bytes);
-        std::memcpy(uniforms.data() + uniformOffset, &uniform, sizeof(uniform));
-        std::memcpy(instanceBytes.data() + instanceOffset, instances.data(), bytes);
-        records.push_back({&key, &instances, uniformOffset, instanceOffset});
+            it = pageUniformKeys.end();
+        }
+
+        size_t uniformSlotIndex = 0;
+        if (it != pageUniformKeys.end()) {
+            uniformSlotIndex = static_cast<size_t>(std::distance(pageUniformKeys.begin(), it));
+        } else {
+            const size_t uniformOffset = aligned(uniforms.size());
+            MeshUniforms uniform;
+            uniform.viewProj = _viewProj;
+            uniform.lightPos = glm::vec4(lightPos(), 1.0f);
+            uniform.params = key.shading;
+            uniform.eyePos = glm::vec4(_eyePos, 1.0f);
+            uniforms.resize(uniformOffset + sizeof(uniform));
+            std::memcpy(uniforms.data() + uniformOffset, &uniform, sizeof(uniform));
+
+            uniformSlotIndex = pageUniformKeys.size();
+            pageUniformKeys.push_back(uKey);
+            pageUniformOffsets.push_back(uniformOffset);
+        }
+
+        const uint32_t firstInstance = static_cast<uint32_t>(pageInstances.size());
+        pageInstances.insert(pageInstances.end(), instances.begin(), instances.end());
+        records.push_back({&key, &instances, firstInstance, uniformSlotIndex});
     }
     flushPage();
     _meshBatches.clear();
@@ -2059,6 +2112,19 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         glm::abs(isProvenHeightfield ? extent : extent * 1.05f);
     glm::vec3 proxyExtent = baselineProxyExtent;
 
+    const bool hasVolumeChannels = fieldNode != nullptr ||
+        densityExpr != nullptr || extinctionExpr != nullptr ||
+        scatteringExpr != nullptr || volumeChromaExpr != nullptr ||
+        phaseExpr != nullptr || emissionExpr != nullptr;
+
+    glm::vec3 tightMin(0.0f), tightMax(0.0f);
+    if (!hasVolumeChannels && sdfwgsl::tryComputeSdfTightAabb(field, tightMin, tightMax) &&
+        glm::all(glm::lessThanEqual(tightMin, tightMax))) {
+        // Proxy extent is half-size centered at origin of local space:
+        glm::vec3 derivedHalf = glm::max(glm::abs(tightMin), glm::abs(tightMax)) * 1.02f;
+        proxyExtent = glm::min(proxyExtent, glm::max(derivedHalf, glm::vec3(1e-3f)));
+    }
+
     // First generic spatial-Prophetic activation rung. It is deliberately limited
     // to surface-only draws: a FieldNode may carry volumetric density outside the
     // SDF zero set, so zero-set proof is not permission to trim that volume.
@@ -2412,8 +2478,58 @@ void WebGpuRenderer::flushSdfDraws() {
 
     auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(SdfGlobalUniforms));
 
+    static constexpr uint32_t kZeroDummy[4] = {0u, 0u, 0u, 0u};
+    auto emptyAccelAlloc = bufferPool().suballocateStorage(kZeroDummy, sizeof(kZeroDummy));
+
+    struct SdfInstanceSlice {
+        WGPUBuffer buffer = nullptr;
+        uint64_t offset = 0;
+        uint64_t size = 0;
+    };
+    std::unordered_map<const SdfPipeline*, SdfInstanceSlice> instanceAllocations;
+    constexpr size_t pageBytes = 256 * 1024;
+    constexpr size_t bindingAlignment = 256;
+    const auto aligned = [](size_t bytes) {
+        return (bytes + bindingAlignment - 1) / bindingAlignment * bindingAlignment;
+    };
+    std::vector<const SdfPipeline*> pendingPipelines;
+    std::vector<size_t> pendingOffsets;
+    std::vector<uint8_t> packedInstanceBytes;
+
+    const auto flushInstancePage = [&]() {
+        if (pendingPipelines.empty()) return;
+        auto pageAlloc = bufferPool().suballocateStorage(packedInstanceBytes.data(), packedInstanceBytes.size());
+        for (size_t i = 0; i < pendingPipelines.size(); ++i) {
+            const SdfPipeline* sp = pendingPipelines[i];
+            const size_t instOffset = pendingOffsets[i];
+            const size_t instBytes = _sdfBatches[sp].size() * sizeof(SdfInstanceData);
+            instanceAllocations[sp] = {pageAlloc.buffer, pageAlloc.offset + instOffset, instBytes};
+        }
+        pendingPipelines.clear();
+        pendingOffsets.clear();
+        packedInstanceBytes.clear();
+    };
+
     for (const SdfPipeline* sp : _activeSdfPipelines) {
         const auto& instances = _sdfBatches[sp];
+        if (instances.empty()) continue;
+        const size_t bytes = instances.size() * sizeof(SdfInstanceData);
+        if (!pendingPipelines.empty() && (aligned(packedInstanceBytes.size()) + bytes > pageBytes)) {
+            flushInstancePage();
+        }
+        const size_t instOffset = aligned(packedInstanceBytes.size());
+        packedInstanceBytes.resize(instOffset + bytes);
+        std::memcpy(packedInstanceBytes.data() + instOffset, instances.data(), bytes);
+        pendingPipelines.push_back(sp);
+        pendingOffsets.push_back(instOffset);
+    }
+    flushInstancePage();
+
+    for (const SdfPipeline* sp : _activeSdfPipelines) {
+        const auto& instances = _sdfBatches[sp];
+        const auto itInst = instanceAllocations.find(sp);
+        if (itInst == instanceAllocations.end() || !itInst->second.buffer) continue;
+        const auto& instAlloc = itInst->second;
         
         const auto& params = _sdfParamsBatches[sp];
 
@@ -2478,71 +2594,66 @@ void WebGpuRenderer::flushSdfDraws() {
         // SDF parameters. The CPU batch is rebuilt in instance order, but
         // unchanged proof bytes are not re-uploaded after warmup.
         const auto& rangeNodes = _sdfRangeNodeBatches[sp];
-        const size_t rangeBytes = rangeNodes.size() * sizeof(uint32_t);
-        auto& persistentRange = _persistentSdfRangeNodes[sp];
-        const uint64_t requiredRangeBytes =
-            static_cast<uint64_t>(std::max<size_t>(rangeBytes, sizeof(uint32_t)));
-        if (!persistentRange.buffer || persistentRange.capacityBytes < requiredRangeBytes) {
-            uint64_t capacity = 256;
-            while (capacity < requiredRangeBytes) capacity *= 2;
-
-            WGPUBufferDescriptor bd = {};
-            bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
-            bd.size = capacity;
-            WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
-            if (grown) {
-                if (persistentRange.buffer) {
-                    _persistentSdfRangeNodeVramBytes -=
-                        static_cast<size_t>(persistentRange.capacityBytes);
-                    wgpuBufferRelease(persistentRange.buffer);
-                }
-                persistentRange.buffer = grown;
-                persistentRange.capacityBytes = capacity;
-                persistentRange.mirror.clear();
-                _persistentSdfRangeNodeVramBytes += static_cast<size_t>(capacity);
-            }
-        }
-
-        bool rangeChanged = persistentRange.mirror.size() != rangeNodes.size();
-        if (!rangeChanged && !rangeNodes.empty()) {
-            rangeChanged = std::memcmp(
-                persistentRange.mirror.data(), rangeNodes.data(), rangeBytes) != 0;
-        }
-
-        const bool persistentRangeUsable =
-            persistentRange.buffer && persistentRange.capacityBytes >= requiredRangeBytes;
-        WGPUBuffer rangeBuffer = persistentRangeUsable ? persistentRange.buffer : nullptr;
+        WGPUBuffer rangeBuffer = nullptr;
         uint64_t rangeOffset = 0;
-        uint64_t rangeBindingSize = requiredRangeBytes;
+        uint64_t rangeBindingSize = sizeof(uint32_t);
 
-        if (rangeBuffer) {
-            if (rangeChanged && !rangeNodes.empty()) {
-                wgpuQueueWriteBuffer(_queue, rangeBuffer, 0, rangeNodes.data(), rangeBytes);
-                persistentRange.mirror = rangeNodes;
-                mutableFrameStats().sdfRangeNodeBytesUploaded += rangeBytes;
-            }
-            // An empty batch writes nothing: the buffer still holds the mirror's
-            // bytes (no instance reads them: every count is 0), so the mirror
-            // stays — clearing it forced identical bytes to re-upload on the
-            // next traversal frame (webgpu_perlin_exact_gradient_test line 817,
-            // reproduced on lavapipe and on Codex's M5; Claude Opus 5.5, 2026-10-17).
+        if (rangeNodes.empty()) {
+            rangeBuffer = emptyAccelAlloc.buffer;
+            rangeOffset = emptyAccelAlloc.offset;
+            rangeBindingSize = sizeof(uint32_t);
         } else {
-            // Binding 2 must remain valid even for a batch with no proof grid.
-            // A zeroed dummy is never read because each such instance has count=0.
-            const uint32_t dummy = 0u;
-            const void* src = rangeNodes.empty()
-                ? static_cast<const void*>(&dummy)
-                : static_cast<const void*>(rangeNodes.data());
-            auto fallback = bufferPool().suballocateStorage(src, requiredRangeBytes);
-            rangeBuffer = fallback.buffer;
-            rangeOffset = fallback.offset;
-            rangeBindingSize = fallback.size;
-            if (!rangeNodes.empty()) {
+            const size_t rangeBytes = rangeNodes.size() * sizeof(uint32_t);
+            auto& persistentRange = _persistentSdfRangeNodes[sp];
+            const uint64_t requiredRangeBytes =
+                static_cast<uint64_t>(std::max<size_t>(rangeBytes, sizeof(uint32_t)));
+            if (!persistentRange.buffer || persistentRange.capacityBytes < requiredRangeBytes) {
+                uint64_t capacity = 256;
+                while (capacity < requiredRangeBytes) capacity *= 2;
+
+                WGPUBufferDescriptor bd = {};
+                bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
+                bd.size = capacity;
+                WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
+                if (grown) {
+                    if (persistentRange.buffer) {
+                        _persistentSdfRangeNodeVramBytes -=
+                            static_cast<size_t>(persistentRange.capacityBytes);
+                        wgpuBufferRelease(persistentRange.buffer);
+                    }
+                    persistentRange.buffer = grown;
+                    persistentRange.capacityBytes = capacity;
+                    persistentRange.mirror.clear();
+                    _persistentSdfRangeNodeVramBytes += static_cast<size_t>(capacity);
+                }
+            }
+
+            bool rangeChanged = persistentRange.mirror.size() != rangeNodes.size();
+            if (!rangeChanged) {
+                rangeChanged = std::memcmp(
+                    persistentRange.mirror.data(), rangeNodes.data(), rangeBytes) != 0;
+            }
+
+            const bool persistentRangeUsable =
+                persistentRange.buffer && persistentRange.capacityBytes >= requiredRangeBytes;
+            rangeBuffer = persistentRangeUsable ? persistentRange.buffer : nullptr;
+            rangeOffset = 0;
+            rangeBindingSize = requiredRangeBytes;
+
+            if (rangeBuffer) {
+                if (rangeChanged) {
+                    wgpuQueueWriteBuffer(_queue, rangeBuffer, 0, rangeNodes.data(), rangeBytes);
+                    persistentRange.mirror = rangeNodes;
+                    mutableFrameStats().sdfRangeNodeBytesUploaded += rangeBytes;
+                }
+            } else {
+                auto fallback = bufferPool().suballocateStorage(rangeNodes.data(), requiredRangeBytes);
+                rangeBuffer = fallback.buffer;
+                rangeOffset = fallback.offset;
+                rangeBindingSize = fallback.size;
                 mutableFrameStats().sdfRangeNodeBytesUploaded += rangeBytes;
             }
         }
-
-        auto instAlloc = bufferPool().suballocateStorage(instances.data(), instances.size() * sizeof(SdfInstanceData));
 
         // Group 0: globals + authored parameter values + optional Rung 7 sources.
         WGPUBindGroupEntry bge[3] = {};
@@ -2571,14 +2682,21 @@ void WebGpuRenderer::flushSdfDraws() {
         // Group 1: instances + heightfield cells + positive-proof bit words.
         // Empty accelerators bind legal dummy storage but advertise zero count,
         // so the shader cannot observe the dummy contents.
-        auto& hgCells = _sdfHeightGridBatches[sp];
-        if (hgCells.empty()) hgCells.push_back(glm::vec2(0.0f));
-        auto hgAlloc = bufferPool().suballocateStorage(
-            hgCells.data(), hgCells.size() * sizeof(glm::vec2));
+        const auto& hgCells = _sdfHeightGridBatches[sp];
+        WGPUBuffer hgBuffer = emptyAccelAlloc.buffer;
+        uint64_t hgOffset = emptyAccelAlloc.offset;
+        uint64_t hgSize = sizeof(glm::vec2);
+        if (!hgCells.empty()) {
+            auto hgAlloc = bufferPool().suballocateStorage(
+                hgCells.data(), hgCells.size() * sizeof(glm::vec2));
+            hgBuffer = hgAlloc.buffer;
+            hgOffset = hgAlloc.offset;
+            hgSize = hgAlloc.size;
+        }
 
         WGPUBindGroupEntry ibge[3] = {};
         ibge[0].binding = 0; ibge[0].buffer = instAlloc.buffer; ibge[0].offset = instAlloc.offset; ibge[0].size = instAlloc.size;
-        ibge[1].binding = 1; ibge[1].buffer = hgAlloc.buffer; ibge[1].offset = hgAlloc.offset; ibge[1].size = hgAlloc.size;
+        ibge[1].binding = 1; ibge[1].buffer = hgBuffer; ibge[1].offset = hgOffset; ibge[1].size = hgSize;
         ibge[2].binding = 2; ibge[2].buffer = rangeBuffer; ibge[2].offset = rangeOffset; ibge[2].size = rangeBindingSize;
         WGPUBindGroupDescriptor ibgDesc = {};
         ibgDesc.layout = _sdfInstanceBgl; ibgDesc.entryCount = 3; ibgDesc.entries = ibge;

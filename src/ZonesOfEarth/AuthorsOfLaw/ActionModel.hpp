@@ -442,7 +442,10 @@ struct ActionNode {
     static ActionNode shareCell(const std::string& targetPath, const std::string& sourcePath);
     static ActionNode uniqueCell(const std::string& targetPath, const std::string& sourcePath);
     static ActionNode weakCell(const std::string& targetPath, const std::string& sourcePath);
+    static ActionNode observeWeak(const std::string& targetPath, const std::string& sourcePath);
     static ActionNode copyCell(const std::string& targetPath, const std::string& sourcePath);
+    static ActionNode deriveCell(const std::string& targetPath, OntoMath::Piecewise function,
+                                 MathBindings bindings);
     static ActionNode flow(const std::string& dottedPath, OntoMath::Piecewise function,
                            MathBindings bindings);
     static ActionNode sequence(std::vector<ActionNode> children);

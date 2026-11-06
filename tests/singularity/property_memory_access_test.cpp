@@ -8,9 +8,15 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "ConstructedBeing/Singular/SingularPersistence.hpp"
+#include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
+#include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
+#include "Singularity/Terminal/LawSentence.hpp"
 #include "Singularity/OntoMath/Field.hpp"
 
 #include <cassert>
+#include <chrono>
 #include <iostream>
 
 namespace {
@@ -813,6 +819,460 @@ int main() {
         }
 
         TransferPolicy::instance().clearPolicyRules();
+    }
+
+    // -------------------------------------------------------------------------
+    // 12. Pass 3 Task 1 (Rung 2): Law Line Grammar & Parser for Cell Bindings
+    // -------------------------------------------------------------------------
+    {
+        using namespace Singularity::Terminal;
+        LawSentence::Vocabulary vocab;
+        vocab.words = LawSentence::canonicalWords();
+        vocab.events = {"trigger_cell"};
+
+        // Form 1: share <destPath> from <srcPath>
+        {
+            auto p = LawSentence::parse("on trigger_cell then share @dst.color from @src.color", vocab);
+            assert(p.ok);
+            assert(p.action.has_value());
+            assert(p.action->kind == ActionNode::Kind::Map);
+            assert(p.action->describe() == "share @dst.color from @src.color");
+
+            Object srcObj; srcObj.setObjectID("src");
+            Object dstObj; dstObj.setObjectID("dst");
+            srcObj.setDynamicProperty("color", glm::vec3(1.0f, 0.0f, 0.0f));
+            dstObj.setDynamicProperty("color", glm::vec3(0.0f, 1.0f, 0.0f));
+
+            std::vector<Singular*> testBeings{&srcObj, &dstObj, &author};
+            Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+                for (auto* b : testBeings) if (b) out.push_back(b);
+            });
+
+            Law shareLaw("test-share-law");
+            shareLaw.addAuthor(author);
+            shareLaw.setActionModel(*p.action);
+            assert(shareLaw.applyTo(dstObj) == Law::ApplicationResult::Applied);
+
+            assert(dstObj.hasPropertyCell("color"));
+            assert(srcObj.hasPropertyCell("color"));
+            assert(dstObj.getPropertyCell("color") == srcObj.getPropertyCell("color"));
+            assert(dstObj.getPropertyCellMode("color") == CellOwnershipMode::Shared);
+
+            // Mutating through dst mutates shared cell
+            assert(PropertyPath::parse("color").setValue(dstObj, glm::vec3(0.5f, 0.5f, 0.5f)) == Result::Ok);
+            PropertyValue readSrc;
+            assert(PropertyPath::parse("color").getValue(srcObj, readSrc) == Result::Ok);
+            assert(std::get<glm::vec3>(readSrc) == glm::vec3(0.5f, 0.5f, 0.5f));
+
+            Universe::instance().setProvider(nullptr);
+        }
+
+        // Form 2: claim / unique <destPath> from <srcPath>
+        {
+            auto pClaim = LawSentence::parse("on trigger_cell then claim @dst.badge from @src.badge", vocab);
+            assert(pClaim.ok);
+            assert(pClaim.action.has_value());
+            assert(pClaim.action->describe() == "claim @dst.badge from @src.badge");
+
+            auto pUnique = LawSentence::parse("on trigger_cell then unique @dst.badge from @src.badge", vocab);
+            assert(pUnique.ok);
+            assert(pUnique.action.has_value());
+            assert(pUnique.action->describe() == "claim @dst.badge from @src.badge");
+
+            Object srcObj; srcObj.setObjectID("src");
+            Object dstObj; dstObj.setObjectID("dst");
+            srcObj.setDynamicProperty("badge", std::string("gold"));
+            dstObj.setDynamicProperty("badge", std::string("none"));
+
+            std::vector<Singular*> testBeings{&srcObj, &dstObj, &author};
+            Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+                for (auto* b : testBeings) if (b) out.push_back(b);
+            });
+
+            Law claimLaw("test-claim-law");
+            claimLaw.addAuthor(author);
+            claimLaw.setActionModel(*pClaim.action);
+            assert(claimLaw.applyTo(dstObj) == Law::ApplicationResult::Applied);
+
+            assert(dstObj.hasPropertyCell("badge"));
+            assert(dstObj.getPropertyCellMode("badge") == CellOwnershipMode::Unique);
+            PropertyValue bVal;
+            assert(PropertyPath::parse("badge").getValue(dstObj, bVal) == Result::Ok);
+            assert(std::get<std::string>(bVal) == "gold");
+
+            Universe::instance().setProvider(nullptr);
+        }
+
+        // Form 3: borrow / observe <destPath> from <srcPath>
+        {
+            auto pBorrow = LawSentence::parse("on trigger_cell then borrow @dst.stat from @src.stat", vocab);
+            assert(pBorrow.ok);
+            assert(pBorrow.action.has_value());
+            assert(pBorrow.action->describe() == "borrow @dst.stat from @src.stat");
+
+            auto pObserve = LawSentence::parse("on trigger_cell then observe @dst.stat from @src.stat", vocab);
+            assert(pObserve.ok);
+            assert(pObserve.action.has_value());
+            assert(pObserve.action->describe() == "borrow @dst.stat from @src.stat");
+
+            Object srcObj; srcObj.setObjectID("src");
+            Object dstObj; dstObj.setObjectID("dst");
+            srcObj.setDynamicProperty("stat", 100.0);
+            dstObj.setDynamicProperty("stat", 0.0);
+
+            std::vector<Singular*> testBeings{&srcObj, &dstObj, &author};
+            Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+                for (auto* b : testBeings) if (b) out.push_back(b);
+            });
+
+            Law borrowLaw("test-borrow-law");
+            borrowLaw.addAuthor(author);
+            borrowLaw.setActionModel(*pBorrow.action);
+            assert(borrowLaw.applyTo(dstObj) == Law::ApplicationResult::Applied);
+
+            assert(dstObj.hasPropertyCell("stat"));
+            assert(dstObj.getPropertyCellMode("stat") == CellOwnershipMode::Weak);
+            assert(srcObj.getPropertyCellMode("stat") == CellOwnershipMode::Shared);
+
+            PropertyValue readWeak;
+            assert(PropertyPath::parse("stat").getValue(dstObj, readWeak) == Result::Ok);
+            assert(std::get<double>(readWeak) == 100.0);
+
+            // Weak observer cannot write directly
+            assert(PropertyPath::parse("stat").setValue(dstObj, 200.0) == Result::ReadOnly);
+
+            Universe::instance().setProvider(nullptr);
+        }
+
+        // Form 4: derive <destPath> = <mathExpr>
+        {
+            auto pDerive = LawSentence::parse("on trigger_cell then derive @dst.reading = @src.val * 2", vocab);
+            assert(pDerive.ok);
+            assert(pDerive.action.has_value());
+            assert(pDerive.action->kind == ActionNode::Kind::Map);
+
+            Object srcObj; srcObj.setObjectID("src");
+            Object dstObj; dstObj.setObjectID("dst");
+            srcObj.setDynamicProperty("val", 15.0);
+            dstObj.setDynamicProperty("reading", 0.0);
+
+            std::vector<Singular*> testBeings{&srcObj, &dstObj, &author};
+            Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+                for (auto* b : testBeings) if (b) out.push_back(b);
+            });
+
+            Law deriveLaw("test-derive-law");
+            deriveLaw.addAuthor(author);
+            deriveLaw.setActionModel(*pDerive.action);
+            assert(deriveLaw.applyTo(dstObj) == Law::ApplicationResult::Applied);
+
+            PropertyValue initialReading;
+            assert(PropertyPath::parse("reading").getValue(dstObj, initialReading) == Result::Ok);
+            assert(std::get<double>(initialReading) == 30.0);
+
+            // Reactive update via DerivedEdge: mutate src.val -> dst.reading updates automatically
+            assert(PropertyPath::parse("val").setValue(srcObj, 25.0) == Result::Ok);
+            PropertyValue updatedReading;
+            assert(PropertyPath::parse("reading").getValue(dstObj, updatedReading) == Result::Ok);
+            assert(std::get<double>(updatedReading) == 50.0);
+
+            Universe::instance().setProvider(nullptr);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // 13. Pass 3 Task 2 (Rung 4): Durable Alias Topology Save/Load Serialization
+    // -------------------------------------------------------------------------
+    {
+        Object bearer1; bearer1.setObjectID("bearer1");
+        Object bearer2; bearer2.setObjectID("bearer2");
+        Object bearer3; bearer3.setObjectID("bearer3");
+
+        // Set up: bearer1 & bearer2 share "matrix" cell (Shared), bearer3 observes "matrix" (Weak)
+        Earthcall::StringId propMatrix = Earthcall::StringInterner::intern("matrix");
+        CellId origCell = PropertyCellTable::instance().allocateCell(
+            123.45, CellOwnershipMode::Shared, &bearer1, propMatrix);
+        bearer1.bindPropertyCell(propMatrix, origCell, CellOwnershipMode::Shared);
+        PropertyCellTable::instance().attachObserver(origCell, &bearer2, propMatrix, CellOwnershipMode::Shared);
+        bearer2.bindPropertyCell(propMatrix, origCell, CellOwnershipMode::Shared);
+        PropertyCellTable::instance().attachObserver(origCell, &bearer3, propMatrix, CellOwnershipMode::Weak);
+        bearer3.bindPropertyCell(propMatrix, origCell, CellOwnershipMode::Weak);
+
+        // Serialize cohort
+        auto serializedCohort = SingularPersistence::serializeCohort({&bearer1, &bearer2, &bearer3});
+        assert(serializedCohort.is_array());
+        assert(serializedCohort.size() == 3);
+
+        // Reconstruct into fresh beings
+        Object reload1; reload1.setObjectID("bearer1");
+        Object reload2; reload2.setObjectID("bearer2");
+        Object reload3; reload3.setObjectID("bearer3");
+
+        SingularPersistence::CohortContext loadCohort;
+        SingularPersistence::deserializeCohort({&reload1, &reload2, &reload3}, serializedCohort, loadCohort);
+
+        // Invariant: Reloaded bearers must share the EXACT SAME live CellId
+        assert(reload1.hasPropertyCell("matrix"));
+        assert(reload2.hasPropertyCell("matrix"));
+        assert(reload3.hasPropertyCell("matrix"));
+        CellId reloadedCell1 = reload1.getPropertyCell("matrix");
+        CellId reloadedCell2 = reload2.getPropertyCell("matrix");
+        CellId reloadedCell3 = reload3.getPropertyCell("matrix");
+        assert(reloadedCell1.valid());
+        assert(reloadedCell1 == reloadedCell2);
+        assert(reloadedCell1 == reloadedCell3);
+        assert(reload1.getPropertyCellMode("matrix") == CellOwnershipMode::Shared);
+        assert(reload2.getPropertyCellMode("matrix") == CellOwnershipMode::Shared);
+        assert(reload3.getPropertyCellMode("matrix") == CellOwnershipMode::Weak);
+
+        // Verify initial value
+        PropertyValue v1;
+        assert(PropertyPath::parse("matrix").getValue(reload1, v1) == Result::Ok);
+        assert(std::get<double>(v1) == 123.45);
+
+        // Mutate through reload1 -> reload2 and reload3 immediately read new value
+        assert(PropertyPath::parse("matrix").setValue(reload1, 987.65) == Result::Ok);
+        PropertyValue v2, v3;
+        assert(PropertyPath::parse("matrix").getValue(reload2, v2) == Result::Ok);
+        assert(PropertyPath::parse("matrix").getValue(reload3, v3) == Result::Ok);
+        assert(std::get<double>(v2) == 987.65);
+        assert(std::get<double>(v3) == 987.65);
+
+        // Unbind both strong owners -> cell is reclaimed and weak observer expires
+        reload1.unbindPropertyCell("matrix");
+        reload2.unbindPropertyCell("matrix");
+        PropertyValue vExpired;
+        assert(PropertyPath::parse("matrix").getValue(reload3, vExpired) == Result::ExpiredCell);
+
+        // Firmament Pass 3 Corrective Fix Witness 1: Order-independent deserialization
+        // (Weak observer serialized BEFORE Shared owners) + orphaned Weak expiry on finalize
+        {
+            auto reverseCohort = nlohmann::json::array({
+                serializedCohort[2], // bearer3 (Weak) FIRST
+                serializedCohort[0], // bearer1 (Shared)
+                serializedCohort[1]  // bearer2 (Shared)
+            });
+            Object rev1; rev1.setObjectID("bearer1");
+            Object rev2; rev2.setObjectID("bearer2");
+            Object rev3; rev3.setObjectID("bearer3");
+            SingularPersistence::CohortContext revCtx;
+            SingularPersistence::deserializeCohort({&rev1, &rev2, &rev3}, reverseCohort, revCtx);
+            assert(rev1.getPropertyCell("matrix") == rev2.getPropertyCell("matrix"));
+            assert(rev1.getPropertyCell("matrix") == rev3.getPropertyCell("matrix"));
+            assert(rev3.getPropertyCellMode("matrix") == CellOwnershipMode::Weak);
+            PropertyValue vRev;
+            assert(PropertyPath::parse("matrix").getValue(rev3, vRev) == Result::Ok);
+            assert(std::get<double>(vRev) == 123.45);
+
+            // Orphaned Weak-only cohort expires on finalize
+            auto orphanCohort = nlohmann::json::array({ serializedCohort[2] });
+            Object orphanWeak; orphanWeak.setObjectID("bearer3");
+            SingularPersistence::CohortContext orphanCtx;
+            SingularPersistence::deserializeCohort({&orphanWeak}, orphanCohort, orphanCtx);
+            assert(PropertyPath::parse("matrix").getValue(orphanWeak, vRev) == Result::ExpiredCell);
+        }
+
+        // Firmament Pass 3 Corrective Fix Witness 2: Object to_json/from_json & Lexeme classify()
+        {
+            Object objA; objA.setObjectID("obj-a");
+            Object objB; objB.setObjectID("obj-b");
+            CellId sharedC = PropertyCellTable::instance().allocateCell(
+                glm::vec3(0.2f, 0.4f, 0.8f), CellOwnershipMode::Shared, &objA, Earthcall::StringInterner::intern("tint"));
+            objA.bindPropertyCell("tint", sharedC, CellOwnershipMode::Shared);
+            objB.bindPropertyCell("tint", sharedC, CellOwnershipMode::Shared);
+
+            nlohmann::json jA = objA;
+            nlohmann::json jB = objB;
+
+            Object hydratedA, hydratedB;
+            {
+                SingularPersistence::CohortScope zoneLoadScope(true);
+                from_json(jA, hydratedA);
+                from_json(jB, hydratedB);
+            }
+            assert(hydratedA.getPropertyCell("tint").valid());
+            assert(hydratedA.getPropertyCell("tint") == hydratedB.getPropertyCell("tint"));
+            assert(PropertyPath::parse("tint.r").setValue(hydratedA, 0.9f) == Result::Ok);
+            PropertyValue readTintR;
+            assert(PropertyPath::parse("tint.r").getValue(hydratedB, readTintR) == Result::Ok);
+            assert(std::abs(std::get<float>(readTintR) - 0.9f) < 1e-5f);
+
+            // Verify open Share/Unique/ObserveWeak/Derive Law classification for denoted Lexemes & definedFor()
+            Law openShareLaw("open-share");
+            openShareLaw.setActionModel(ActionNode::shareCell("", ""));
+            Singularity::Terminal::LawSentence::Preset preset;
+            assert(Singularity::Terminal::LawSentence::classify(openShareLaw, {}, preset) == "action.Share");
+
+            ActionNode boundShare = ActionNode::shareCell("tint", "tint");
+            assert(boundShare.definedFor(hydratedA));
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // 14. Pass 3 Task 3 (Rung 5): Compiled PropertyPath Cache Benchmark
+    // -------------------------------------------------------------------------
+    {
+        Object benchSubject;
+        benchSubject.setObjectID("bench");
+        benchSubject.setDynamicProperty("health", 100.0);
+        benchSubject.setDynamicProperty("velocity", glm::vec3(1.0f, 2.0f, 3.0f));
+
+        const std::string pathStr = "velocity.y";
+        const auto compiled = PropertyPath::compile(pathStr);
+
+        const int iterations = 10000;
+        PropertyValue rawVal;
+        PropertyValue compVal;
+
+        // Loop A: Raw string parse + resolve
+        auto t0 = std::chrono::high_resolution_clock::now();
+        for (int i = 0; i < iterations; ++i) {
+            auto res = PropertyPath::parse(pathStr).getValue(benchSubject, rawVal);
+            (void)res;
+        }
+        auto t1 = std::chrono::high_resolution_clock::now();
+
+        // Loop B: CompiledPath resolve
+        auto t2 = std::chrono::high_resolution_clock::now();
+        for (int i = 0; i < iterations; ++i) {
+            auto res = compiled.getValue(benchSubject, compVal);
+            (void)res;
+        }
+        auto t3 = std::chrono::high_resolution_clock::now();
+
+        // Verify zero semantic drift
+        assert(std::holds_alternative<float>(rawVal) || std::holds_alternative<double>(rawVal));
+        assert(rawVal == compVal);
+
+        auto rawNs = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
+        auto compNs = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count();
+        double speedup = compNs > 0 ? static_cast<double>(rawNs) / compNs : 1.0;
+        std::cout << "[Benchmark] Raw string path 10k: " << rawNs << " us, CompiledPath 10k: "
+                  << compNs << " us (" << speedup << "x speedup)\n";
+    }
+
+    // -------------------------------------------------------------------------
+    // 15. Pass 4 Task 2: End-to-End Zone Round-Trip (zoneToJson / makeZoneFromJson)
+    // -------------------------------------------------------------------------
+    {
+        Zone zone("roundtrip-zone", "default");
+        auto obj1 = std::make_shared<Object>();
+        obj1->setObjectID("obj1");
+        obj1->setFaceColor(0, 0.1f, 0.2f, 0.3f);
+
+        auto obj2 = std::make_shared<Object>();
+        obj2->setObjectID("obj2");
+        obj2->setFaceColor(0, 0.0f, 0.0f, 0.0f);
+
+        auto obj3 = std::make_shared<Object>();
+        obj3->setObjectID("obj3");
+
+        auto storedLexeme = std::make_shared<Singularity::Language::Lexeme>("shard", "lex_shard");
+
+        // 1. Shared cell on obj1.color and obj2.color (Shared), observed by obj3.watchedColor (Weak)
+        Earthcall::StringId propColor = Earthcall::StringInterner::intern("color");
+        CellId colorCell = PropertyCellTable::instance().allocateCell(
+            glm::vec3(0.1f, 0.2f, 0.3f), CellOwnershipMode::Shared, obj1.get(), propColor);
+        obj1->bindPropertyCell(propColor, colorCell, CellOwnershipMode::Shared);
+        PropertyCellTable::instance().attachObserver(colorCell, obj2.get(), propColor, CellOwnershipMode::Shared);
+        obj2->bindPropertyCell(propColor, colorCell, CellOwnershipMode::Shared);
+
+        Earthcall::StringId propWatched = Earthcall::StringInterner::intern("watchedColor");
+        PropertyCellTable::instance().attachObserver(colorCell, obj3.get(), propWatched, CellOwnershipMode::Weak);
+        obj3->bindPropertyCell(propWatched, colorCell, CellOwnershipMode::Weak);
+
+        // 2. Cross-bucket sharing: obj1 (world.objects) and storedLexeme (storedSingulars)
+        Earthcall::StringId propSharedTag = Earthcall::StringInterner::intern("sharedTag");
+        CellId tagCell = PropertyCellTable::instance().allocateCell(
+            std::string("crystal-shard"), CellOwnershipMode::Shared, obj1.get(), propSharedTag);
+        obj1->bindPropertyCell(propSharedTag, tagCell, CellOwnershipMode::Shared);
+        PropertyCellTable::instance().attachObserver(tagCell, storedLexeme.get(), propSharedTag, CellOwnershipMode::Shared);
+        storedLexeme->bindPropertyCell(propSharedTag, tagCell, CellOwnershipMode::Shared);
+
+        zone.addObject(obj1);
+        zone.addObject(obj2);
+        zone.addObject(obj3);
+        zone.retainSingular(storedLexeme);
+
+        // Round-trip serialize & deserialize Zone
+        nlohmann::json zj = zoneToJson(zone);
+        std::shared_ptr<Zone> reloadedZone = makeZoneFromJson(zj);
+        assert(reloadedZone != nullptr);
+
+        const auto& reloadedObjs = reloadedZone->objects();
+        assert(reloadedObjs.size() == 3);
+        Object* rObj1 = nullptr;
+        Object* rObj2 = nullptr;
+        Object* rObj3 = nullptr;
+        for (const auto& o : reloadedObjs) {
+            if (o->getObjectID() == "obj1") rObj1 = o.get();
+            else if (o->getObjectID() == "obj2") rObj2 = o.get();
+            else if (o->getObjectID() == "obj3") rObj3 = o.get();
+        }
+        assert(rObj1 && rObj2 && rObj3);
+
+        const auto& reloadedStored = reloadedZone->storedSingulars();
+        assert(!reloadedStored.empty());
+        Singularity::Language::Lexeme* rLex = nullptr;
+        for (const auto& s : reloadedStored) {
+            if (auto* lex = dynamic_cast<Singularity::Language::Lexeme*>(s.get())) {
+                if (lex->getIdentifier() == "lex_shard") rLex = lex;
+            }
+        }
+        assert(rLex != nullptr);
+
+        // Invariant: Live CellId equality across hydrated objects
+        assert(rObj1->hasPropertyCell("color"));
+        assert(rObj2->hasPropertyCell("color"));
+        assert(rObj3->hasPropertyCell("watchedColor"));
+        CellId cell1 = rObj1->getPropertyCell("color");
+        CellId cell2 = rObj2->getPropertyCell("color");
+        CellId cell3 = rObj3->getPropertyCell("watchedColor");
+        assert(cell1.valid());
+        assert(cell1 == cell2);
+        assert(cell1 == cell3);
+        assert(rObj1->getPropertyCellMode("color") == CellOwnershipMode::Shared);
+        assert(rObj2->getPropertyCellMode("color") == CellOwnershipMode::Shared);
+        assert(rObj3->getPropertyCellMode("watchedColor") == CellOwnershipMode::Weak);
+
+        // Verify initial color value on both ValueCell and underlying C++ faceColors
+        PropertyValue readCol;
+        assert(PropertyPath::parse("color").getValue(*rObj1, readCol) == Result::Ok);
+        assert(std::get<glm::vec3>(readCol) == glm::vec3(0.1f, 0.2f, 0.3f));
+        assert(std::abs(rObj2->faceColors[0][0] - 0.1f) < 1e-5f);
+        assert(std::abs(rObj2->faceColors[0][1] - 0.2f) < 1e-5f);
+        assert(std::abs(rObj2->faceColors[0][2] - 0.3f) < 1e-5f);
+
+        // Mutating rObj1.color propagates to rObj2 and weak observer rObj3
+        assert(PropertyPath::parse("color").setValue(*rObj1, glm::vec3(0.7f, 0.8f, 0.9f)) == Result::Ok);
+        PropertyValue v2, v3;
+        assert(PropertyPath::parse("color").getValue(*rObj2, v2) == Result::Ok);
+        assert(PropertyPath::parse("watchedColor").getValue(*rObj3, v3) == Result::Ok);
+        assert(std::get<glm::vec3>(v2) == glm::vec3(0.7f, 0.8f, 0.9f));
+        assert(std::get<glm::vec3>(v3) == glm::vec3(0.7f, 0.8f, 0.9f));
+
+        // Cross-bucket sharing between world.objects and storedSingulars
+        assert(rObj1->hasPropertyCell("sharedTag"));
+        assert(rLex->hasPropertyCell("sharedTag"));
+        CellId tagCell1 = rObj1->getPropertyCell("sharedTag");
+        CellId tagCellLex = rLex->getPropertyCell("sharedTag");
+        assert(tagCell1.valid());
+        assert(tagCell1 == tagCellLex);
+
+        PropertyValue tagVal;
+        assert(PropertyPath::parse("sharedTag").getValue(*rLex, tagVal) == Result::Ok);
+        assert(std::get<std::string>(tagVal) == "crystal-shard");
+
+        assert(PropertyPath::parse("sharedTag").setValue(*rObj1, std::string("stellar-diamond")) == Result::Ok);
+        PropertyValue newTagVal;
+        assert(PropertyPath::parse("sharedTag").getValue(*rLex, newTagVal) == Result::Ok);
+        assert(std::get<std::string>(newTagVal) == "stellar-diamond");
+
+        // Weak observer expiration upon unbinding both strong owners
+        rObj1->unbindPropertyCell("color");
+        rObj2->unbindPropertyCell("color");
+        PropertyValue expVal;
+        assert(PropertyPath::parse("watchedColor").getValue(*rObj3, expVal) == Result::ExpiredCell);
     }
 
     std::cout << "property_memory_access_test: PASS\n";

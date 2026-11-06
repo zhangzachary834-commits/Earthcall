@@ -229,10 +229,10 @@ bool ConditionNode::matchesKind(const Singular& being, BeingKind kind) {
 ECA::ConditionPredicate ConditionNode::compile() const {
     switch (kind) {
         case Kind::Compare: {
-            const PropertyPath lhsPath = path;
+            const PropertyPath::CompiledPath lhsPath = path.compile();
             const Op o = op;
             const PropertyValue rhsLiteral = operand;
-            const PropertyPath rhsPath = operandPath;
+            const PropertyPath::CompiledPath rhsPath = operandPath.compile();
             const double tol = tolerance;
             const PropertyValue vlo = lo, vhi = hi;
             const std::string desc = this->describe();
@@ -249,7 +249,7 @@ ECA::ConditionPredicate ConditionNode::compile() const {
                     return false;
                 }
                 PropertyValue rhs = rhsLiteral;
-                if (!rhsPath.empty() && !lawGetValue(t, rhsPath, rhs)) {
+                if (!rhsPath.path.empty() && !lawGetValue(t, rhsPath, rhs)) {
                     if (ECA::LawAuditLogger::instance().wouldLog("CONDITION")) {
                         ECA::LawAuditLogger::instance().log("CONDITION", "Condition Evaluated [FAIL - RHS Property Not Found]: " + desc, {
                             {"targetId", t.getIdentifier()}, {"result", false}
@@ -296,7 +296,8 @@ ECA::ConditionPredicate ConditionNode::compile() const {
         }
         case Kind::InRegion: {
             const geom::SdfNode r = region;   // deep copy — the law owns its criterion
-            const PropertyPath pr = probe.empty() ? PropertyPath::parse("position") : probe;
+            const PropertyPath::CompiledPath pr =
+                (probe.empty() ? PropertyPath::parse("position") : probe).compile();
             return [r, pr](const ECA::Event&, const Singular& target) {
                 PropertyValue v;
                 if (!lawGetValue(const_cast<Singular&>(target), pr, v)) return false;

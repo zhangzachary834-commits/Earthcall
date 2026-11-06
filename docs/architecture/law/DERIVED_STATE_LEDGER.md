@@ -49,16 +49,19 @@ red the moment the map stops noticing the world's shape move.
 
 ## 1. The ledger
 
-### Property ValueCell observer back-edges (2026-11-04)
+### Property ValueCell observer back-edges, durable alias topology & compiled paths (2026-11-04 / 2026-11-05)
 
-Zach's Property memory micromastery and alias-deafness resolution (Rungs 0–2): multiple Property paths (`Shared`, `Unique`, `Weak`) may bind to an underlying `ValueCell`. Changes through any bound path fan out notifications across all live observers to close the Rete alias-deafness gap.
+Zach's Property memory micromastery and alias-deafness resolution (Rungs 0–5): multiple Property paths (`Shared`, `Unique`, `Weak`) may bind to an underlying `ValueCell`. Changes through any bound path fan out notifications across all live observers to close the Rete alias-deafness gap. Shared alias topologies persist durably across save/load via `SingularPersistence`, while reactive derived edges and compiled paths remain disposable runtime caches.
 
 | Structure | Derived from | Invalidated / renewed by | Guarded by |
 |---|---|---|---|
+| `ValueCell::value` & alias bindings (`Singular::_propertyCells`) | Canonical durable state authored in-world | Mutated via `PropertyPath::setValue` or Law actions; serialized and restored cohort-wide via `SingularPersistence` so multi-owner aliases survive restart | `property_memory_access_test` (Sections 12–13) |
 | `ValueCell::observers` | Explicit path-to-cell bindings (`bindPropertyCell`, `ActionNode::shareCell/uniqueCell/weakCell`) | `rebind`, `unbindPropertyCell`, `removeDynamicProperty`, and `~Singular` (`detachAllPropertyCells`, `detachAllForBearer`); cell reclaimed when `strongCount` drops to 0 | `property_memory_access_test`, `dynamic_property_reachability_test` |
 | `ValueCell::generation` | Cell slot lifecycle in `PropertyCellTable` | Incremented upon cell reclamation (when `strongCount == 0`); causes subsequent operations on dangling `Weak` handles to report `PathResult::ExpiredCell` | `property_memory_access_test` |
+| `ValueCell::derivedEdges` | Reactive dependency edges authored via `BindingMode::Derive` (`ActionNode::deriveCell`) | Rebuilt on Law compilation / application; purged by `removeDerivedEdgesForBearer` on destruction of destination bearer, subject, or authorizing Law; cycle-guarded against recursion | `property_memory_access_test` (Pass 2 Witness 3 & Section 12) |
+| `CompiledPath` / `PropertyPath::_joinedIds` | Interned `StringId` sub-path sequences precomputed from path strings | Disposable runtime acceleration cache; never persisted; rebuilt on demand by `PropertyPath::compile` or `parse` | `property_memory_access_test` (Section 14 benchmark) |
 
-*Antigravity / Gemini 3.8 Flash / session `102da8a2-db47-4627-8ce6-cf1235aeabd4` / 2026-11-04.*
+*Antigravity / Gemini 3.8 Flash / session `102da8a2-db47-4627-8ce6-cf1235aeabd4` / 2026-11-04 and 2026-11-05.*
 
 ### Direct Screen region observations (2026-10-07)
 

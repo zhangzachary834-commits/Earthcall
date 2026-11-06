@@ -115,6 +115,7 @@ struct SdfNode {
 
 // Compile an implicit expression f(x,y,z) into RPN (empty on parse failure).
 std::vector<SdfToken> compileExpr(const std::string& src);
+std::shared_ptr<OntoMath::MathNode> rpnToMathNode(const std::vector<SdfToken>& r);
 // Build an implicit-surface leaf node from an expression.
 SdfNode makeImplicit(const std::string& src);
 SdfNode makeImplicit(std::shared_ptr<OntoMath::MathNode> node);

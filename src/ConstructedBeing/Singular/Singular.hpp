@@ -144,6 +144,13 @@ public:
         return it != _propertyCellModes.end() ? it->second : CellOwnershipMode::InlineValue;
     }
 
+    const std::unordered_map<Earthcall::StringId, CellId>& propertyCells() const {
+        return _propertyCells;
+    }
+    const std::unordered_map<Earthcall::StringId, CellOwnershipMode>& propertyCellModes() const {
+        return _propertyCellModes;
+    }
+
     bool bindPropertyCell(const std::string& name, CellId cellId, CellOwnershipMode mode);
     bool unbindPropertyCell(const std::string& name);
     bool hasPropertyCell(const std::string& name) const;

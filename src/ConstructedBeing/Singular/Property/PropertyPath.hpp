@@ -12,6 +12,7 @@
 class Property;
 class Singular;
 struct AccessContext;
+struct CompiledPath;
 
 // ============================================================================
 // PropertyPath — The address of a variable on the substrate
@@ -117,7 +118,41 @@ public:
     PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex, const AccessContext& ctx) const;
     PathResult setValue(Singular& root, const PropertyValue& v, std::size_t startIndex = 0) const;
     PathResult setValue(Singular& root, const PropertyValue& v, std::size_t startIndex, const AccessContext& ctx) const;
+
+    using CompiledPath = ::CompiledPath;
+    CompiledPath compile() const;
+    static CompiledPath compile(const std::string& dotted);
 };
+
+// Pre-parsed and interned PropertyPath representation for accelerated hot-loop evaluation.
+struct CompiledPath {
+    PropertyPath path;
+
+    static CompiledPath compile(const std::string& dotted) {
+        return CompiledPath{PropertyPath::parse(dotted)};
+    }
+
+    PropertyPath::ResolvedSlot resolve(Singular& root, std::size_t startIndex = 0) const {
+        return path.resolve(root, startIndex);
+    }
+
+    PropertyPath::PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex = 0) const {
+        return path.getValue(root, out, startIndex);
+    }
+    PropertyPath::PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex, const AccessContext& ctx) const {
+        return path.getValue(root, out, startIndex, ctx);
+    }
+
+    PropertyPath::PathResult setValue(Singular& root, const PropertyValue& in, std::size_t startIndex = 0) const {
+        return path.setValue(root, in, startIndex);
+    }
+    PropertyPath::PathResult setValue(Singular& root, const PropertyValue& in, std::size_t startIndex, const AccessContext& ctx) const {
+        return path.setValue(root, in, startIndex, ctx);
+    }
+};
+
+inline CompiledPath PropertyPath::compile() const { return CompiledPath{*this}; }
+inline CompiledPath PropertyPath::compile(const std::string& dotted) { return CompiledPath::compile(dotted); }
 
 // ============================================================================
 // DERIVED READINGS (2026-10-19). A read-only observation that an authored

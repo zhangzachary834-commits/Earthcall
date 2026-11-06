@@ -512,8 +512,13 @@ bool Singular::bindPropertyCell(Earthcall::StringId id, CellId cellId, CellOwner
     _propertyCells[id] = cellId;
     _propertyCellModes[id] = mode;
     auto* cell = PropertyCellTable::instance().getCell(cellId);
-    if (cell) {
-        _dynamicProperties[id] = cell->value;
+    if (cell && mode != CellOwnershipMode::Weak) {
+        Property* p = findProperty(id);
+        if (p && p->typeName() != "dynamic") {
+            p->setValue(cell->value);
+        } else {
+            _dynamicProperties[id] = cell->value;
+        }
     }
     return true;
 }
