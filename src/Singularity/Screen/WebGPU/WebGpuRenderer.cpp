@@ -89,7 +89,7 @@ struct U {
     lightPos:     vec4<f32>,
     eyePos:       vec4<f32>,
     lightControl: vec4<f32>, // x = lighting enabled, y = RadianceVisibilityMode (0/1/2)
-    sceneVisibilityControl: vec4<f32>, // x = exact analytic implicit blocker count
+    sceneVisibilityControl: vec4<f32>, // x = field VM blocker count, y = VM instruction count
 };
 struct Instance {
     model:     mat4x4<f32>,
@@ -106,10 +106,10 @@ struct RadianceSourceData {
     time: vec4<f32>,
     control: vec4<f32>,
 };
-struct SceneImplicitBlockerData {
+struct SceneFieldVmBlockerData {
     invModel: mat4x4<f32>,
-    dimsKind: vec4<f32>,
-    offset: vec4<f32>,
+    extents: vec4<f32>,
+    program: vec4<u32>,
 };
 
 @group(0) @binding(0) var<uniform> u: U;
@@ -119,7 +119,7 @@ struct SceneImplicitBlockerData {
 @group(0) @binding(4) var<storage, read> RS: array<RadianceSourceData>;
 @group(0) @binding(5) var<storage, read> sceneTriangles: array<vec4<f32>>;
 @group(0) @binding(6) var<storage, read>
-    sceneImplicitBlockers: array<SceneImplicitBlockerData>;
+    sceneFieldVmBlockers: array<SceneFieldVmBlockerData>;
 @group(1) @binding(0) var<storage, read> instances: array<Instance>;
 )WGSL";
 
@@ -141,8 +141,11 @@ struct SceneImplicitBlockerData {
                 ";\n";
     }
 
+    // compileSurfaceResponseModule() already prefixes the canonical primitive
+    // SDF math used by fieldVmEval; do not duplicate those functions here.
+    wgsl += sdfwgsl::fieldVmBoundMathModule(0u, 7u);
     wgsl += sdfwgsl::sceneVisibilityTriangleMathModule();
-    wgsl += sdfwgsl::sceneVisibilityImplicitMathModule();
+    wgsl += sdfwgsl::sceneVisibilityFieldVmMathModule();
 
     wgsl += R"WGSL(
 struct VisibilityDecision {
@@ -162,9 +165,12 @@ fn meshPathVisibility(surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> Visibi
     if (u.lightControl.z < 0.5) {
         return VisibilityDecision(0.0, 0.0);
     }
-    let implicitV =
-        sceneImplicitVisibility(surfaceWorld, sourceWorld);
-    if (implicitV < 0.5) {
+    let fieldVmV =
+        sceneFieldVmVisibility(surfaceWorld, sourceWorld);
+    if (fieldVmV.known < 0.5) {
+        return VisibilityDecision(0.0, 0.0);
+    }
+    if (fieldVmV.value < 0.5) {
         return VisibilityDecision(1.0, 0.0);
     }
     return VisibilityDecision(
@@ -471,7 +477,7 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
 
     // Mesh pipeline layout is fixed execution machinery; the fragment
     // mathematics is generated lazily per authored Material response structure.
-    WGPUBindGroupLayoutEntry bglEntries[7] = {};
+    WGPUBindGroupLayoutEntry bglEntries[8] = {};
     bglEntries[0].binding = 0;
     bglEntries[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     bglEntries[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -495,8 +501,11 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     bglEntries[6].binding = 6;
     bglEntries[6].visibility = WGPUShaderStage_Fragment;
     bglEntries[6].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    bglEntries[7].binding = 7;
+    bglEntries[7].visibility = WGPUShaderStage_Fragment;
+    bglEntries[7].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     WGPUBindGroupLayoutDescriptor bglDesc = {};
-    bglDesc.entryCount = 7;
+    bglDesc.entryCount = 8;
     bglDesc.entries = bglEntries;
     _bgl = wgpuDeviceCreateBindGroupLayout(_device, &bglDesc);
 
@@ -784,11 +793,8 @@ WebGpuRenderer::SceneVisibilityFrame
 WebGpuRenderer::prepareSceneVisibilityFrame() {
     SceneVisibilityFrame out;
     constexpr uint64_t kMaxSceneVisibilityTriangles = 8192;
-    constexpr uint64_t kMaxSceneVisibilityImplicitBlockers = 1024;
 
     const SceneVisibilityTriangle inertTriangle{};
-    const SceneVisibilityImplicitBlocker inertImplicit{};
-
     auto bindInertTriangles = [&]() {
         auto alloc = bufferPool().suballocateStorage(
             &inertTriangle, sizeof(inertTriangle));
@@ -797,20 +803,11 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
         out.size = alloc.size;
         out.triangleCount = 0;
     };
-    auto bindInertImplicit = [&]() {
-        auto alloc = bufferPool().suballocateStorage(
-            &inertImplicit, sizeof(inertImplicit));
-        out.implicitBuffer = alloc.buffer;
-        out.implicitOffset = alloc.offset;
-        out.implicitSize = alloc.size;
-        out.implicitCount = 0;
-    };
 
-    // Both storage bindings are structurally present in every surface pipeline.
-    // Outside CompleteScene they carry one inert legal element and no authority.
+    // The shared frame owns exact mesh-triangle truth only. SDF field programs
+    // are receiver-relative derived execution state and are packed separately.
     if (radianceVisibilityMode() != RadianceVisibilityMode::CompleteScene) {
         bindInertTriangles();
-        bindInertImplicit();
         return out;
     }
 
@@ -851,7 +848,6 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
     if (!exactMeshMaterialization ||
         triangleCount > kMaxSceneVisibilityTriangles) {
         bindInertTriangles();
-        bindInertImplicit();
         mutableFrameStats().sceneVisibilityUnknownFrames++;
         return out;
     }
@@ -887,69 +883,17 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
     out.triangleCount = static_cast<uint32_t>(triangles.size());
     if (!out.buffer) {
         out.triangleCount = 0;
-        bindInertImplicit();
         mutableFrameStats().sceneVisibilityUnknownFrames++;
         return out;
     }
+
     out.meshBlockersComplete = true;
-
-    // Global analytic implicit packet used by mesh receivers. SDF receivers use
-    // receiver-relative foreign packets below: their own program cohort is
-    // already exact inside their shader and must not be redundantly intersected.
-    bool allImplicitMaterialized = true;
-    std::vector<SceneVisibilityImplicitBlocker> allImplicit;
-    for (const SdfPipeline* sp : _activeSdfPipelines) {
-        const auto instancesIt = _sdfBatches.find(sp);
-        if (instancesIt == _sdfBatches.end() || instancesIt->second.empty()) {
-            continue;
-        }
-        const auto blockersIt = _sdfVisibilityBlockerBatches.find(sp);
-        if (blockersIt == _sdfVisibilityBlockerBatches.end() ||
-            blockersIt->second.size() != instancesIt->second.size()) {
-            allImplicitMaterialized = false;
-            continue;
-        }
-        if (blockersIt->second.size() >
-                kMaxSceneVisibilityImplicitBlockers ||
-            allImplicit.size() >
-                kMaxSceneVisibilityImplicitBlockers -
-                    blockersIt->second.size()) {
-            allImplicitMaterialized = false;
-            break;
-        }
-        allImplicit.insert(
-            allImplicit.end(),
-            blockersIt->second.begin(), blockersIt->second.end());
-    }
-
-    const void* implicitData = allImplicit.empty()
-        ? static_cast<const void*>(&inertImplicit)
-        : static_cast<const void*>(allImplicit.data());
-    const size_t implicitBytes = allImplicit.empty()
-        ? sizeof(inertImplicit)
-        : allImplicit.size() * sizeof(SceneVisibilityImplicitBlocker);
-    auto implicitAlloc =
-        bufferPool().suballocateStorage(implicitData, implicitBytes);
-    out.implicitBuffer = implicitAlloc.buffer;
-    out.implicitOffset = implicitAlloc.offset;
-    out.implicitSize = implicitAlloc.size;
-    out.implicitCount = static_cast<uint32_t>(allImplicit.size());
-
-    if (!out.implicitBuffer) {
-        out.implicitCount = 0;
-        allImplicitMaterialized = false;
-    }
-
-    // A raster receiver has no local implicit evaluator. It may claim complete
-    // scene visibility only when every implicit blocker was exported exactly.
     out.meshComplete =
-        out.meshBlockersComplete && allImplicitMaterialized;
+        fieldVmSceneVisibilityCompleteForFrame(nullptr, true);
 
     auto& stats = mutableFrameStats();
     stats.sceneVisibilityTriangles = out.triangleCount;
     stats.sceneVisibilityBytesUploaded += triangleBytes;
-    stats.sceneVisibilityImplicitBlockers = out.implicitCount;
-    stats.sceneVisibilityImplicitBytesUploaded += implicitBytes;
 
     if (hasMeshReceivers && out.meshComplete) {
         stats.sceneVisibilityMeshKnownFrames++;
@@ -962,7 +906,7 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
         if (instancesIt == _sdfBatches.end() || instancesIt->second.empty()) {
             continue;
         }
-        if (!sdfSceneVisibilityCompleteForFrame(
+        if (!fieldVmSceneVisibilityCompleteForFrame(
                 sp, out.meshBlockersComplete)) {
             anyUnknown = true;
         }
@@ -974,23 +918,25 @@ WebGpuRenderer::prepareSceneVisibilityFrame() {
     return out;
 }
 
-bool WebGpuRenderer::sdfSceneVisibilityCompleteForFrame(
+bool WebGpuRenderer::fieldVmSceneVisibilityCompleteForFrame(
     const SdfPipeline* receiver, bool meshBlockersComplete) const {
     if (radianceVisibilityMode() != RadianceVisibilityMode::CompleteScene ||
-        !meshBlockersComplete || !receiver) {
+        !meshBlockersComplete) {
         return false;
     }
 
-    const auto receiverInstances = _sdfBatches.find(receiver);
-    if (receiverInstances == _sdfBatches.end() ||
-        receiverInstances->second.empty()) {
-        return false;
-    }
-    const auto receiverOpaque =
-        _sdfVisibilityOpaqueInstanceCounts.find(receiver);
-    if (receiverOpaque == _sdfVisibilityOpaqueInstanceCounts.end() ||
-        receiverOpaque->second != receiverInstances->second.size()) {
-        return false;
+    if (receiver) {
+        const auto receiverInstances = _sdfBatches.find(receiver);
+        if (receiverInstances == _sdfBatches.end() ||
+            receiverInstances->second.empty()) {
+            return false;
+        }
+        const auto receiverOpaque =
+            _sdfVisibilityOpaqueInstanceCounts.find(receiver);
+        if (receiverOpaque == _sdfVisibilityOpaqueInstanceCounts.end() ||
+            receiverOpaque->second != receiverInstances->second.size()) {
+            return false;
+        }
     }
 
     constexpr uint64_t kMaxForeignVmBlockers = 1024;
@@ -999,7 +945,7 @@ bool WebGpuRenderer::sdfSceneVisibilityCompleteForFrame(
     uint64_t instructionCount = 0;
 
     for (const SdfPipeline* foreign : _activeSdfPipelines) {
-        if (foreign == receiver) continue;
+        if (receiver && foreign == receiver) continue;
         const auto instancesIt = _sdfBatches.find(foreign);
         if (instancesIt == _sdfBatches.end() || instancesIt->second.empty()) {
             continue;
@@ -1037,12 +983,12 @@ bool WebGpuRenderer::sdfSceneVisibilityCompleteForFrame(
 
 bool WebGpuRenderer::sdfSceneVisibilityComplete(
     const SdfPipeline* receiver) const {
-    return sdfSceneVisibilityCompleteForFrame(
+    return fieldVmSceneVisibilityCompleteForFrame(
         receiver, _sceneVisibilityFrame.meshBlockersComplete);
 }
 
 WebGpuRenderer::SceneVisibilityBufferView
-WebGpuRenderer::prepareForeignImplicitVisibility(
+WebGpuRenderer::prepareFieldVmVisibility(
     const SdfPipeline* receiver) {
     SceneVisibilityBufferView out;
     const SceneVisibilityVmBlocker inertBlocker{};
@@ -1063,7 +1009,11 @@ WebGpuRenderer::prepareForeignImplicitVisibility(
         out.instructionCount = 0;
     };
 
-    if (!sdfSceneVisibilityComplete(receiver)) {
+    const bool complete = receiver
+        ? sdfSceneVisibilityComplete(receiver)
+        : fieldVmSceneVisibilityCompleteForFrame(
+              nullptr, _sceneVisibilityFrame.meshBlockersComplete);
+    if (!complete) {
         bindInert();
         return out;
     }
@@ -1071,7 +1021,7 @@ WebGpuRenderer::prepareForeignImplicitVisibility(
     std::vector<SceneVisibilityVmBlocker> blockers;
     std::vector<sdfwgsl::FieldVmInstruction> instructions;
     for (const SdfPipeline* foreign : _activeSdfPipelines) {
-        if (foreign == receiver) continue;
+        if (receiver && foreign == receiver) continue;
         const auto it = _sdfVisibilityVmBatches.find(foreign);
         if (it == _sdfVisibilityVmBatches.end()) continue;
 
@@ -1123,14 +1073,16 @@ WebGpuRenderer::prepareForeignImplicitVisibility(
         return out;
     }
 
-    mutableFrameStats().sceneVisibilityImplicitBytesUploaded +=
+    auto& visibilityStats = mutableFrameStats();
+    visibilityStats.sceneVisibilityImplicitBlockers =
+        std::max(visibilityStats.sceneVisibilityImplicitBlockers, out.count);
+    visibilityStats.sceneVisibilityImplicitBytesUploaded +=
         blockerBytes + programBytes;
     return out;
 }
 
 void WebGpuRenderer::ensureSceneVisibilityBindingForEarlyFlush() {
-    if (_sceneVisibilityFrame.buffer &&
-        _sceneVisibilityFrame.implicitBuffer) {
+    if (_sceneVisibilityFrame.buffer) {
         return;
     }
 
@@ -1148,16 +1100,6 @@ void WebGpuRenderer::ensureSceneVisibilityBindingForEarlyFlush() {
         _sceneVisibilityFrame.offset = alloc.offset;
         _sceneVisibilityFrame.size = alloc.size;
         _sceneVisibilityFrame.triangleCount = 0;
-    }
-
-    if (!_sceneVisibilityFrame.implicitBuffer) {
-        const SceneVisibilityImplicitBlocker inertImplicit{};
-        auto alloc = bufferPool().suballocateStorage(
-            &inertImplicit, sizeof(inertImplicit));
-        _sceneVisibilityFrame.implicitBuffer = alloc.buffer;
-        _sceneVisibilityFrame.implicitOffset = alloc.offset;
-        _sceneVisibilityFrame.implicitSize = alloc.size;
-        _sceneVisibilityFrame.implicitCount = 0;
     }
 
     _sceneVisibilityFrame.meshBlockersComplete = false;
@@ -1251,7 +1193,6 @@ void WebGpuRenderer::reloadShaders() {
     }
     _activeSdfPipelines.clear();
     _sdfBatches.clear();
-    _sdfVisibilityBlockerBatches.clear();
     _sdfVisibilityVmBatches.clear();
     _sdfVisibilityOpaqueInstanceCounts.clear();
     _sdfParamsBatches.clear();
@@ -1988,6 +1929,8 @@ void WebGpuRenderer::flushMeshDraws() {
     }
 
     RadianceSourceBufferView sourceView = prepareRadianceSourceBuffer();
+    const SceneVisibilityBufferView meshFieldVisibility =
+        prepareFieldVmVisibility(nullptr);
     if (!sourceView.buffer) {
         const RadianceSourceGpuData inertSource{};
         auto inert = bufferPool().suballocateStorage(
@@ -2023,7 +1966,8 @@ void WebGpuRenderer::flushMeshDraws() {
         u.eyePos = glm::vec4(_eyePos, 1.0f);
         const bool meshCompleteSceneKnown =
             radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
-            _sceneVisibilityFrame.meshComplete;
+            _sceneVisibilityFrame.meshComplete &&
+            meshFieldVisibility.complete;
         u.lightControl = glm::vec4(
             lightingEnabled() ? 1.0f : 0.0f,
             static_cast<float>(
@@ -2031,8 +1975,9 @@ void WebGpuRenderer::flushMeshDraws() {
             meshCompleteSceneKnown ? 1.0f : 0.0f,
             static_cast<float>(_sceneVisibilityFrame.triangleCount));
         u.sceneVisibilityControl = glm::vec4(
-            static_cast<float>(_sceneVisibilityFrame.implicitCount),
-            0.0f, 0.0f, 0.0f);
+            static_cast<float>(meshFieldVisibility.count),
+            static_cast<float>(meshFieldVisibility.instructionCount),
+            0.0f, 0.0f);
         const bool meshVisibilityUnknown =
             radianceVisibilityMode() == RadianceVisibilityMode::LocalReceiverGeometry ||
             (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
@@ -2066,7 +2011,7 @@ void WebGpuRenderer::flushMeshDraws() {
             continue;
         }
 
-        WGPUBindGroupEntry bge[7] = {};
+        WGPUBindGroupEntry bge[8] = {};
         bge[0].binding = 0;
         bge[0].buffer = uAlloc.buffer;
         bge[0].offset = uAlloc.offset;
@@ -2093,20 +2038,31 @@ void WebGpuRenderer::flushMeshDraws() {
         bge[5].buffer = _sceneVisibilityFrame.buffer;
         bge[5].offset = _sceneVisibilityFrame.offset;
         bge[5].size = _sceneVisibilityFrame.size;
-        if (!_sceneVisibilityFrame.implicitBuffer ||
-            _sceneVisibilityFrame.implicitSize == 0) {
+        if (!meshFieldVisibility.buffer ||
+            meshFieldVisibility.size == 0) {
             mutableFrameStats().meshProgramRefusals++;
             mutableFrameStats().meshLastProgramRefusal =
-                "scene visibility implicit binding unavailable";
+                "scene visibility field VM descriptor binding unavailable";
             continue;
         }
         bge[6].binding = 6;
-        bge[6].buffer = _sceneVisibilityFrame.implicitBuffer;
-        bge[6].offset = _sceneVisibilityFrame.implicitOffset;
-        bge[6].size = _sceneVisibilityFrame.implicitSize;
+        bge[6].buffer = meshFieldVisibility.buffer;
+        bge[6].offset = meshFieldVisibility.offset;
+        bge[6].size = meshFieldVisibility.size;
+        if (!meshFieldVisibility.programBuffer ||
+            meshFieldVisibility.programSize == 0) {
+            mutableFrameStats().meshProgramRefusals++;
+            mutableFrameStats().meshLastProgramRefusal =
+                "scene visibility field VM program binding unavailable";
+            continue;
+        }
+        bge[7].binding = 7;
+        bge[7].buffer = meshFieldVisibility.programBuffer;
+        bge[7].offset = meshFieldVisibility.programOffset;
+        bge[7].size = meshFieldVisibility.programSize;
         WGPUBindGroupDescriptor bgDesc = {};
         bgDesc.layout = _bgl;
-        bgDesc.entryCount = 7;
+        bgDesc.entryCount = 8;
         bgDesc.entries = bge;
         WGPUBindGroup bindGroup =
             wgpuDeviceCreateBindGroup(_device, &bgDesc);
@@ -2988,37 +2944,6 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     inst.invModel = authoredTransforms->inverse;
     inst.normalMat = authoredTransforms->normal;
 
-    // Foreign CompleteScene consumers may use a compact exact analytic packet
-    // only for primitive leaves whose ray intersection is explicitly admitted.
-    // Absence of a packet is not a fallback approximation: it is later consumed
-    // as evidence that this cohort cannot grant foreign visibility authority.
-    std::optional<SceneVisibilityImplicitBlocker> visibilityBlocker;
-    const auto finite3 = [](const glm::vec3& v) {
-        return std::isfinite(v.x) && std::isfinite(v.y) &&
-               std::isfinite(v.z);
-    };
-    if (field.op == geom::SdfOp::Leaf &&
-        finite3(field.dims) && finite3(field.offset)) {
-        float kind = 0.0f;
-        bool validDims = false;
-        if (field.prim == geom::SdfPrim::Sphere) {
-            kind = 1.0f;
-            validDims = field.dims.x > 0.0f;
-        } else if (field.prim == geom::SdfPrim::Box) {
-            kind = 2.0f;
-            validDims = field.dims.x > 0.0f &&
-                        field.dims.y > 0.0f &&
-                        field.dims.z > 0.0f;
-        }
-        if (kind > 0.0f && validDims) {
-            SceneVisibilityImplicitBlocker blocker;
-            blocker.invModel = authoredTransforms->inverse;
-            blocker.dimsKind = glm::vec4(field.dims, kind);
-            blocker.offset = glm::vec4(field.offset, 0.0f);
-            visibilityBlocker = blocker;
-        }
-    }
-    
     glm::vec3 albedo(1.0f);
     if (mat.albedoPixels && mat.albedoWidth > 0 && mat.albedoHeight > 0) {
         const int halfW = mat.albedoWidth / 2;
@@ -3200,9 +3125,6 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     if (binaryVisibilityOpaque) {
         ++_sdfVisibilityOpaqueInstanceCounts[sp];
     }
-    if (visibilityBlocker && binaryVisibilityOpaque) {
-        _sdfVisibilityBlockerBatches[sp].push_back(*visibilityBlocker);
-    }
     if (binaryVisibilityOpaque) {
         sdfwgsl::FieldVmProgram visibilityVm = sdfwgsl::lowerFieldVm(field);
         if (visibilityVm.ok) {
@@ -3316,7 +3238,6 @@ void WebGpuRenderer::flushSdfDraws() {
     if (!_pass) {
         for (const SdfPipeline* sp : _activeSdfPipelines) {
             _sdfBatches[sp].clear();
-            _sdfVisibilityBlockerBatches[sp].clear();
             _sdfVisibilityVmBatches[sp].clear();
             _sdfVisibilityOpaqueInstanceCounts[sp] = 0;
             _sdfParamsBatches[sp].clear();
@@ -3391,9 +3312,9 @@ void WebGpuRenderer::flushSdfDraws() {
         const auto& instances = _sdfBatches[sp];
 
         // Own-program instances stay in this shader's exact cohort evaluator.
-        // Only foreign cohorts are materialized into the analytic blocker packet.
+        // Only foreign cohorts are materialized into the field-VM table.
         const SceneVisibilityBufferView foreignVisibility =
-            prepareForeignImplicitVisibility(sp);
+            prepareFieldVmVisibility(sp);
         const bool sdfCompleteSceneKnown =
             radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
             foreignVisibility.complete;
@@ -3554,8 +3475,8 @@ void WebGpuRenderer::flushSdfDraws() {
         auto instAlloc = bufferPool().suballocateStorage(instances.data(), instances.size() * sizeof(SdfInstanceData));
 
         // Group 0: globals + authored parameters + optional sources +
-        // complete-scene mesh triangles + receiver-relative foreign implicit
-        // blocker packets.
+        // complete-scene mesh triangles + receiver-relative foreign field-VM
+        // descriptors/instructions.
         WGPUBindGroupEntry bge[6] = {};
         bge[0].binding = 0;
         bge[0].buffer = uAlloc.buffer;
@@ -3645,7 +3566,6 @@ void WebGpuRenderer::flushSdfDraws() {
     }
     for (const SdfPipeline* sp : _activeSdfPipelines) {
         _sdfBatches[sp].clear();
-        _sdfVisibilityBlockerBatches[sp].clear();
         _sdfVisibilityVmBatches[sp].clear();
         _sdfVisibilityOpaqueInstanceCounts[sp] = 0;
         _sdfParamsBatches[sp].clear();
