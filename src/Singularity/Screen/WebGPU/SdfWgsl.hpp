@@ -132,6 +132,12 @@ std::string fieldVmMathModule();
 // derived bytecode format itself.
 std::string fieldVmBoundMathModule(uint32_t group, uint32_t binding);
 
+// Canonical primitive SDF WGSL needed by data-driven field consumers that do
+// not otherwise compile a surface SDF module (notably raster mesh visibility).
+// This is the same math substrate used by native field execution; callers must
+// not copy primitive formulas into representation-specific shaders.
+std::string fieldVmPrimitiveMathModule();
+
 // Generic authored PropertyPath values supplied by the channel that owns the
 // subject. The compiler knows paths and types only; it does not know Material,
 // Light, roughness, shininess, or any other domain-specific noun.
@@ -447,6 +453,12 @@ std::string sceneVisibilityTriangleMathModule();
 // u.sceneVisibilityControl.x = blocker count. This module is representation
 // neutral and owns only segment/primitive intersection, never completeness.
 std::string sceneVisibilityImplicitMathModule();
+
+// Bounded tri-state foreign field-program visibility. Callers provide
+// SceneFieldVmBlockerData[] as sceneFieldVmBlockers, bind fieldVmInstructions,
+// and carry blocker/instruction counts in u.sceneVisibilityControl.{x,y}.
+// Knownness remains renderer authority; march exhaustion/refusal returns Unknown.
+std::string sceneVisibilityFieldVmMathModule();
 
 // V3 medium phase Phi(p,wi,wo,t)->scalar. Absence is exact identity Phi=1.
 // wi/wo are transport bindings, never aliases of source alpha's omega.
