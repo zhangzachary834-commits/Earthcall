@@ -1346,6 +1346,8 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
 
 const WebGpuRenderer::VolumePipeline*
 WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program, bool routed) {
+    const bool firstActivityMask = program.kernelVolumeUsesFirstActivityMask;
+    if (routed && firstActivityMask) return nullptr;
     auto* routedProgram = routed && _kernelRouted ? _kernelRouted->program(program.wgsl) : nullptr;
     if (routed && !routedProgram) {
         ++mutableFrameStats().volumeProgramRefusals;
@@ -1401,10 +1403,14 @@ WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program, bool routed) {
     globalEntries[2].texture.sampleType = WGPUTextureSampleType_Depth;
     globalEntries[2].texture.viewDimension = WGPUTextureViewDimension_2D;
     globalEntries[2].texture.multisampled = false;
-    if(routed){globalEntries[3].binding=3;globalEntries[3].visibility=WGPUShaderStage_Fragment;globalEntries[3].buffer.type=WGPUBufferBindingType_ReadOnlyStorage;}
+    if(routed||firstActivityMask){
+        globalEntries[3].binding=3;
+        globalEntries[3].visibility=WGPUShaderStage_Fragment;
+        globalEntries[3].buffer.type=WGPUBufferBindingType_ReadOnlyStorage;
+    }
 
     WGPUBindGroupLayoutDescriptor globalDesc = {};
-    globalDesc.entryCount = routed ? 4 : 3;
+    globalDesc.entryCount = (routed||firstActivityMask) ? 4 : 3;
     globalDesc.entries = globalEntries;
 
     WGPUBindGroupLayoutEntry instanceEntry = {};
@@ -1419,6 +1425,7 @@ WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program, bool routed) {
 
     VolumePipeline out;
     out.routed = routed;
+    out.firstActivityMask = firstActivityMask;
     if(routed)out.routedProgram=routedProgram;
     out.globalBgl = wgpuDeviceCreateBindGroupLayout(_device, &globalDesc);
     out.instanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &instanceDesc);
