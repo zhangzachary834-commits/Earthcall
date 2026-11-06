@@ -30,6 +30,10 @@ using KernelRoutedSpanConsumer =
 struct KernelRoutedTransport {
     WGPUDevice device=nullptr;WGPUQueue queue=nullptr;
     WGPUBuffer publication=nullptr,rays=nullptr,singles=nullptr,overlaps=nullptr,offsets=nullptr,indices=nullptr,counts=nullptr,args=nullptr;
+    // C5b-2b2 durable conservative First-family activity certificate:
+    // one 32-bin u32 per framebuffer pixel. 0 bit = proved inactive;
+    // 1 bit = maybe active / refusal. Rebuilt stripwise each encodeSpans frame.
+    WGPUBuffer firstActivityMask=nullptr;
     WGPUBuffer stripUniform=nullptr,specsUniform=nullptr;
     std::array<WGPUBuffer,3> lists{};
     std::array<WGPUComputePipeline,6> common{};
@@ -37,6 +41,8 @@ struct KernelRoutedTransport {
     static constexpr uint32_t kUniformStride=256;
     std::array<std::vector<WGPUBindGroup>,3> prodGroups{};
     WGPUBindGroup resetGroup=nullptr,argsGroup=nullptr,cachedClassifyGroup=nullptr;
+    WGPUComputePipeline firstActivityPipe=nullptr;
+    std::vector<WGPUBindGroup> firstActivityGroups{};
     WGPUBuffer cachedSpecsBuffer=nullptr;
     WGPUComputePipeline cachedClassifyPipe=nullptr;
     uint32_t cachedWorkLimit=0xFFFFFFFFu;bool cachedSkipEmpty=false;
@@ -74,6 +80,11 @@ struct KernelRoutedTransport {
     bool encodeSpans(Program&,WGPUCommandEncoder,const KernelRoutedRange& globals,
                      const KernelRoutedRange& params,const KernelRoutedRange& instances,
                      WGPUTextureView depth,const KernelRoutedSpanConsumer& consumer);
+    // Consume one borrowed routed strip into the durable conservative
+    // 32-bin First-family mask. Safe false positives; no false negatives.
+    bool compactFirstActivity(WGPUCommandEncoder,const KernelRoutedSpanStrip&);
+    // Rare fail-open path: mark every framebuffer bin maybe-active.
+    void fillFirstActivityUnknown();
 private:
     bool encodeInternal(Program&,WGPUCommandEncoder,const KernelRoutedRange& globals,
                         const KernelRoutedRange& params,const KernelRoutedRange& instances,
