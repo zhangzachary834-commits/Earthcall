@@ -4263,6 +4263,14 @@ void WebGpuRenderer::flushVolumeComposite() {
             bufferPool().suballocateStorage(instances.data(),
                                             instances.size() * sizeof(VolumeInstanceData));
 
+        if (pipeline->firstActivityMask &&
+            (!_kernelRouted || !_kernelRouted->firstActivityMask)) {
+            ++mutableFrameStats().volumeProgramRefusals;
+            mutableFrameStats().volumeLastProgramRefusal =
+                "C5b First-activity buffer unavailable; pipeline retained Current";
+            continue;
+        }
+
         WGPUBindGroupEntry globalEntries[4] = {};
         globalEntries[0].binding = 0;
         globalEntries[0].buffer = globalAlloc.buffer;
@@ -4274,81 +4282,174 @@ void WebGpuRenderer::flushVolumeComposite() {
         globalEntries[1].size = bytes;
         globalEntries[2].binding = 2;
         globalEntries[2].textureView = _depthView;
-        if(pipeline->routed){
-            if(_pass){wgpuRenderPassEncoderEnd(_pass);wgpuRenderPassEncoderRelease(_pass);_pass=nullptr;_boundPipeline=nullptr;}
-            const auto& spec=routedSpecs.at(pipeline);
-            if(_kernelRouted->specsUniform)wgpuQueueWriteBuffer(_queue,_kernelRouted->specsUniform,0,spec.data(),sizeof(spec));
-            auto* transport=pipeline->routedProgram;
+        if (pipeline->routed) {
+            globalEntries[3].binding = 3;
+            globalEntries[3].buffer = _kernelRouted->publication;
+            globalEntries[3].size = uint64_t(_depthW) * _depthH * 16;
+        } else if (pipeline->firstActivityMask) {
+            globalEntries[3].binding = 3;
+            globalEntries[3].buffer = _kernelRouted->firstActivityMask;
+            globalEntries[3].size = uint64_t(_depthW) * _depthH * 4;
+        }
+
+        WGPUBindGroupDescriptor globalBgDesc = {};
+        globalBgDesc.layout = pipeline->globalBgl;
+        globalBgDesc.entryCount =
+            (pipeline->routed || pipeline->firstActivityMask) ? 4 : 3;
+        globalBgDesc.entries = globalEntries;
+        WGPUBindGroup globalBg =
+            wgpuDeviceCreateBindGroup(_device, &globalBgDesc);
+        _frameBindGroups.push_back(globalBg);
+
+        WGPUBindGroupEntry instanceEntry = {};
+        instanceEntry.binding = 0;
+        instanceEntry.buffer = instanceAlloc.buffer;
+        instanceEntry.offset = instanceAlloc.offset;
+        instanceEntry.size = instanceAlloc.size;
+        WGPUBindGroupDescriptor instanceBgDesc = {};
+        instanceBgDesc.layout = pipeline->instanceBgl;
+        instanceBgDesc.entryCount = 1;
+        instanceBgDesc.entries = &instanceEntry;
+        WGPUBindGroup instanceBg =
+            wgpuDeviceCreateBindGroup(_device, &instanceBgDesc);
+        _frameBindGroups.push_back(instanceBg);
+
+        if (!globalBg || !instanceBg) {
+            ++mutableFrameStats().volumeProgramRefusals;
+            mutableFrameStats().volumeLastProgramRefusal =
+                "volume bind-group creation refused";
+            continue;
+        }
+
+        if (pipeline->preparation) {
+            if (_pass) {
+                wgpuRenderPassEncoderEnd(_pass);
+                wgpuRenderPassEncoderRelease(_pass);
+                _pass = nullptr;
+                _boundPipeline = nullptr;
+            }
+            auto prepDesc = globalBgDesc;
+            prepDesc.layout = pipeline->preparation->globalBgl;
+            // Time preparation consumes only globals + mutable parameter storage;
+            // the C5b activity certificate is fragment-only.
+            prepDesc.entryCount = 2;
+            auto prepBg = wgpuDeviceCreateBindGroup(_device, &prepDesc);
+            _frameBindGroups.push_back(prepBg);
+            if (!prepBg) {
+                ++mutableFrameStats().volumeProgramRefusals;
+                mutableFrameStats().volumeLastProgramRefusal =
+                    "volume time preparation bind-group refused";
+                continue;
+            }
+            auto compute =
+                wgpuCommandEncoderBeginComputePass(_encoder, nullptr);
+            wgpuComputePassEncoderSetPipeline(
+                compute, pipeline->preparation->pipe);
+            wgpuComputePassEncoderSetBindGroup(
+                compute, 0, prepBg, 0, nullptr);
+            wgpuComputePassEncoderSetBindGroup(
+                compute, 1, instanceBg, 0, nullptr);
+            wgpuComputePassEncoderDispatchWorkgroups(
+                compute,
+                static_cast<uint32_t>(instances.size()) -
+                    pipeline->preparationInstanceBase,
+                1, 1);
+            wgpuComputePassEncoderEnd(compute);
+            wgpuComputePassEncoderRelease(compute);
+        }
+
+        if (pipeline->routed) {
+            if (_pass) {
+                wgpuRenderPassEncoderEnd(_pass);
+                wgpuRenderPassEncoderRelease(_pass);
+                _pass = nullptr;
+                _boundPipeline = nullptr;
+            }
+            const auto& spec = routedSpecs.at(pipeline);
+            if (_kernelRouted->specsUniform)
+                wgpuQueueWriteBuffer(
+                    _queue, _kernelRouted->specsUniform, 0,
+                    spec.data(), sizeof(spec));
+            auto* transport = pipeline->routedProgram;
 
             const bool activitySource =
-                c5bFirstActivityNeeded && pipeline == c5bActivitySourcePipeline;
+                c5bFirstActivityNeeded &&
+                pipeline == c5bActivitySourcePipeline;
             const bool publicationNeeded =
                 !explicitVolumeSchedule ||
-                std::any_of(volumeDrawSchedule.begin(), volumeDrawSchedule.end(),
+                std::any_of(
+                    volumeDrawSchedule.begin(), volumeDrawSchedule.end(),
                     [&](const VolumeDrawPacket& packet) {
                         return packet.pipeline == pipeline;
                     });
+
             const KernelRoutedRange globalRange{
-                globalAlloc.buffer,globalAlloc.offset,globalAlloc.size};
+                globalAlloc.buffer, globalAlloc.offset, globalAlloc.size};
             const KernelRoutedRange paramRange{
-                paramBuffer,paramOffset,bytes};
+                paramBuffer, paramOffset, bytes};
             const KernelRoutedRange instanceRange{
-                instanceAlloc.buffer,instanceAlloc.offset,instanceAlloc.size};
+                instanceAlloc.buffer, instanceAlloc.offset, instanceAlloc.size};
 
             bool routedEncoded = false;
             if (transport && activitySource) {
                 const KernelRoutedSpanConsumer compact =
                     [&](WGPUCommandEncoder encoder,
                         const KernelRoutedSpanStrip& strip) {
-                        return _kernelRouted->compactFirstActivity(encoder, strip);
+                        return _kernelRouted->compactFirstActivity(
+                            encoder, strip);
                     };
                 routedEncoded = publicationNeeded
                     ? _kernelRouted->encodeWithSpans(
-                          *transport,_encoder,globalRange,paramRange,
-                          instanceRange,_depthView,compact)
+                          *transport, _encoder,
+                          globalRange, paramRange, instanceRange,
+                          _depthView, compact)
                     : _kernelRouted->encodeSpans(
-                          *transport,_encoder,globalRange,paramRange,
-                          instanceRange,_depthView,compact);
+                          *transport, _encoder,
+                          globalRange, paramRange, instanceRange,
+                          _depthView, compact);
 
                 if (!routedEncoded) {
                     // Optimization refusal must never become false absence.
                     _kernelRouted->fillFirstActivityUnknown();
-                    // If routed RGBA is also visible this frame, recover its
-                    // established path independently on the rare failure lane.
                     if (publicationNeeded)
                         routedEncoded = _kernelRouted->encode(
-                            *transport,_encoder,globalRange,paramRange,
-                            instanceRange,_depthView);
+                            *transport, _encoder,
+                            globalRange, paramRange, instanceRange,
+                            _depthView);
                 }
             } else if (transport) {
                 routedEncoded = _kernelRouted->encode(
-                    *transport,_encoder,globalRange,paramRange,
-                    instanceRange,_depthView);
+                    *transport, _encoder,
+                    globalRange, paramRange, instanceRange,
+                    _depthView);
             }
 
-            if(routedEncoded){
+            if (routedEncoded) {
                 if (publicationNeeded) {
                     ++mutableFrameStats().volumeRoutedSets;
-                    mutableFrameStats().volumeRoutedPixels+=_depthW*_depthH;
-                    mutableFrameStats().volumeRoutedWorkingSetBytes=
-                        uint64_t(_depthW)*_depthH*(16+4)+
-                        uint64_t(_kernelRouted->capacity)*(48+64*16+16*16+4)+
-                        uint64_t(_kernelRouted->tiles)*16+56;
+                    mutableFrameStats().volumeRoutedPixels +=
+                        _depthW * _depthH;
+                    mutableFrameStats().volumeRoutedWorkingSetBytes =
+                        uint64_t(_depthW) * _depthH * (16 + 4) +
+                        uint64_t(_kernelRouted->capacity) *
+                            (48 + 64 * 16 + 16 * 16 + 4) +
+                        uint64_t(_kernelRouted->tiles) * 16 + 56;
                 }
-            }else if(publicationNeeded){
+            } else if (publicationNeeded) {
                 ++mutableFrameStats().volumeProgramRefusals;
-                mutableFrameStats().volumeLastProgramRefusal=
+                mutableFrameStats().volumeLastProgramRefusal =
                     "routed transport encode refused; Current retained";
-                if(_kernelRouted->publication){
+                if (_kernelRouted->publication) {
                     std::vector<uint32_t> refuseWords(
-                        size_t(_depthW)*_depthH*4, 0xbf800000u);
+                        size_t(_depthW) * _depthH * 4, 0xbf800000u);
                     wgpuQueueWriteBuffer(
-                        _queue,_kernelRouted->publication,0,
+                        _queue, _kernelRouted->publication, 0,
                         refuseWords.data(),
-                        refuseWords.size()*sizeof(uint32_t));
+                        refuseWords.size() * sizeof(uint32_t));
                 }
             }
         }
+
         uint32_t drawInstanceCount = static_cast<uint32_t>(instances.size());
         if (const auto countIt = _volumeDrawInstanceCounts.find(pipeline);
             countIt != _volumeDrawInstanceCounts.end()) {
