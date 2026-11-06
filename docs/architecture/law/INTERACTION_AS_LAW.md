@@ -793,3 +793,13 @@ world can be an interface, and why an interface can be made of anything in the w
 
 The button was never a special thing. It was only ever an object that someone agreed to
 mean something by.
+
+## Addendum: Jules Integration Reflection
+
+**Interrelated Documents:**
+- `docs/architecture/Design/Building 2D and 3D Apps with Earthcall Guide.md`
+- `docs/architecture/Design/ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md`
+
+**Thoughts on Integration and Interrelation**
+
+Interaction-as-Law fundamentally changes what it means to build a UI. Instead of creating bespoke widget classes (`class Button`), we author meaningful objects and assign Laws to them. This directly interrelates with the direct Screen forms and granular pixel mastery outlined in `Building 2D and 3D Apps` and `ONTOMATH_RASTER_FORMATION_AND_PROPERTY_GRAPHS.md`. Rather than hit-testing traditional polygon meshes, pointer events (like hovering or clicking) are evaluated directly against the OntoMath fields that define the object's visual form at sample centers. The `Interaction-as-Law` paradigm becomes the behavior layer that animates and responds to the mathematical definitions of shape and region defined in the OntoMath raster architecture.
