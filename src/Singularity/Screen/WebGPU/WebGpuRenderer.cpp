@@ -3621,6 +3621,9 @@ void WebGpuRenderer::flushVolumeComposite() {
     const VolumePipeline* c5bActivitySourcePipeline = nullptr;
     bool c5bFirstActivityNeeded = false;
     bool c5bFirstActivityProduced = false;
+    bool c5bActivityRangeValid = false;
+    float c5bActivityNear = 0.0f;
+    float c5bActivityFar = 2048.0f;
 
     if (activeMedia.size() > 1) {
         // C2: execution-family membership comes only from mathematical
@@ -3759,6 +3762,31 @@ void WebGpuRenderer::flushVolumeComposite() {
                 Rendering::aggregateVolumeCohortSupport(routedCohort, radialSupportFor);
             const auto generalSupport =
                 Rendering::aggregateVolumeCohortSupport(generalCohort, radialSupportFor);
+            if (routedSupport.valid &&
+                std::isfinite(routedSupport.nearDistance) &&
+                std::isfinite(routedSupport.farDistance)) {
+                const double lo =
+                    std::clamp(routedSupport.nearDistance, 0.0, 2048.0);
+                const double hi =
+                    std::clamp(routedSupport.farDistance, 0.0, 2048.0);
+                if (hi > lo) {
+                    c5bActivityNear = static_cast<float>(lo);
+                    c5bActivityFar = static_cast<float>(hi);
+                    // Widen outward if float conversion rounded inward.
+                    if (double(c5bActivityNear) > lo)
+                        c5bActivityNear =
+                            std::nextafter(c5bActivityNear, 0.0f);
+                    if (double(c5bActivityFar) < hi)
+                        c5bActivityFar =
+                            std::nextafter(
+                                c5bActivityFar,
+                                std::numeric_limits<float>::infinity());
+                    c5bActivityRangeValid =
+                        std::isfinite(c5bActivityNear) &&
+                        std::isfinite(c5bActivityFar) &&
+                        c5bActivityFar > c5bActivityNear;
+                }
+            }
             const auto wholeOrder =
                 Rendering::proveWholeScreenRadialOrder(routedSupport, generalSupport);
 
@@ -3814,6 +3842,7 @@ void WebGpuRenderer::flushVolumeComposite() {
                         });
                     const bool useFirstActivity =
                         needsJoint && c5bActivitySourcePipeline &&
+                        c5bActivityRangeValid &&
                         !mixedExecutionFamilies.empty();
                     const VolumePipeline* jointPipeline =
                         needsJoint
@@ -3852,7 +3881,8 @@ void WebGpuRenderer::flushVolumeComposite() {
         if (!scheduledSplit) {
             const bool wholeSetRoutedAdmissible = generalCohort.empty();
             const bool useFirstActivity =
-                c5bActivitySourcePipeline && !mixedExecutionFamilies.empty();
+                c5bActivitySourcePipeline && c5bActivityRangeValid &&
+                !mixedExecutionFamilies.empty();
             const auto* joint =
                 enqueueVolumeCohort(
                     activeMedia, wholeSetRoutedAdmissible,
@@ -4136,8 +4166,17 @@ void WebGpuRenderer::flushVolumeComposite() {
     if (static_cast<double>(gpuBudget) > outputBudget)
         gpuBudget = std::nextafter(gpuBudget, 0.0f);
     // y records opt-in separately: tiny positive budgets may round to zero.
-    // z/w are reserved for Kernel-derived certified bounds, not volumeControl.z.
-    globals.volumeOutputError = glm::vec4(gpuBudget, outputBudget > 0.0 ? 1.0f : 0.0f, 0.0f, 0.0f);
+    // C5b-2c uses z/w only when a mixed joint shader consumes the routed
+    // First-family activity certificate. The exact same f32 pair is also
+    // installed into KernelRoutedTransport's strip uniform.
+    globals.volumeOutputError = glm::vec4(
+        gpuBudget, outputBudget > 0.0 ? 1.0f : 0.0f,
+        c5bFirstActivityNeeded ? c5bActivityNear : 0.0f,
+        c5bFirstActivityNeeded ? c5bActivityFar : 0.0f);
+    if (c5bFirstActivityNeeded && _kernelRouted) {
+        _kernelRouted->firstActivityNear = c5bActivityNear;
+        _kernelRouted->firstActivityFar = c5bActivityFar;
+    }
     if (incidentSource) {
         globals.incidentSource = glm::vec4(incidentSource->position, 1.0f);
         globals.incidentColor = glm::vec4(incidentSource->diffuseRadiance, incidentSource->coefficients.x);
