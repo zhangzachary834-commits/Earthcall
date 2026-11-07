@@ -763,3 +763,109 @@ Sparkly Guy / Gemini 3.8 Flash / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` 
 ### Mesh upload packets — 2026-11-03
 
 **Mesh upload packets, 2026-11-03.** `WebGpuRenderer::flushMeshDraws` derives aligned uniform/instance upload pages from the current ordered `_meshBatches`, view-projection, light, and eye snapshots. These Kernel packets live for one flush, and GPU ranges live in the existing queue-ordered buffer pool. Every flush reconstructs them, so camera/material/model edits require no cross-frame cache invalidation. Bindings retain each batch's original byte extent and 256-byte alignment. Multiple flushes and an oversized individual batch are covered by `webgpu_mesh_upload_pages_test`, with independent pixel expectations and a failing offset mutation. [Native correctness and cost record](../../audits/CATHEDRAL_SURFACE_SDF_FIRST_PASS_2026-11-03.md#native-continuation-and-retained-upload-repair). Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-03T22:52:00-08:00.
+
+### General volume transport cohorts — capability membership and radial order certificates (2026-11-04)
+
+Branch `prism/general-volume-cohort-architecture-reconciled` introduces no authored cohort kind and no persistent near/far label. `VolumeTransportCohortPlanner` derives two classes of transient execution facts from the current rendered media set:
+
+1. **Capability membership** — whether each current medium satisfies the structural routed-admission predicate. This depends on the current density AST, authored origin/scale bounds, and the routed grouping-slack theorem. Serialization/index order, Zone identity, artistic labels, and media-count thresholds are explicitly excluded from the key. The derived partition is rebuilt from the current `activeMedia` projection each `flushVolumeComposite()`.
+2. **Whole-screen radial chronology certificate** — for each candidate cohort, the renderer derives a conservative camera-relative radial interval from the union of current authored AABBs. The certificate `A before B` is accepted only when `far(A) < near(B)` (within the declared epsilon), which is sufficient to establish the same ordering on every ray that intersects both cohorts. Overlapping/invalid shells produce `Unknown` and retain the joint fused path.
+
+**Lifetime / invalidation:** capability membership is valid only for the current rendered field structures and bounds; chronology is additionally dependent on current camera position. No cross-frame order cache is introduced. Camera movement, field origin/scale change, structural AST change, media membership change, or source-coupling change is observed by rederivation on the next flush. The narrow independent-pass separability gate still requires the existing literal-zero incident-radiance condition and current routed backend cardinality; failure retains joint transport rather than inferring semantics.
+
+**Evidence boundary:** the pure planner witness covers serialization permutation, media-count independence, chronology reversal under query change, and overlap refusal; a standalone C++17 compile/run passed. Full Earthcall build, native WebGPU parity, multi-cohort native performance, and Person FPS remain open and must not be inferred from the planner witness.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-04. Human origin and acceptance authority: Zachary Zhang.
+
+### General volume transport C4 — projected tile support and scissor schedule (2026-11-04)
+
+C4 adds two more categories of **query-relative derived state**, neither authored nor persisted:
+
+1. **Projected medium support:** each current medium's authored AABB is conservatively projected through the current view-projection into a half-open pixel rectangle and paired with its current camera-relative radial interval. If projection crosses/reaches the eye plane or becomes non-finite, the rectangle expands to the full viewport. Offscreen rectangles may become empty only when all projected bounds are safely outside the viewport.
+2. **Tile schedule:** on a coarse 128×96 screen proof grid, each tile aggregates only media whose conservative projected rectangles overlap it. A tile is classified as ordered only when its participating cohort intervals prove one total chronology; invalid/overlapping proof becomes joint. Tiles touched by only one cohort do not constrain chronology. Horizontally/vertically compatible tile runs are coalesced into scissor rectangles before execution.
+
+The resulting scissor schedule lives only for the current `flushVolumeComposite()`. Camera/view-projection change, viewport resize, authored origin/scale change, media membership change, structural capability change, or source-separability change rederives the schedule. No cross-frame projected-support or tile-order cache is introduced.
+
+Execution remains fail closed. Ordered scissor regions receive the two independent cohort passes in the proved far-to-near blend order; ambiguous scissor regions receive one joint fused pass. Opposite proven tile chronologies cause C4 to refuse local splitting entirely rather than flatten them into one order. Failed candidate pipelines are suppressed and full joint fallback remains the only publication.
+
+**Important economics boundary:** routed compute publication is still generated over its existing full-screen domain even when the routed fragment draw is scissored. C4 reduces/partitions fragment publication work and general-path screen coverage; it does not yet establish proportional routed-compute savings. No native performance or Person-FPS claim is attached.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-04. Human origin and acceptance authority: Zachary Zhang.
+
+### General volume transport C5a — query-local draw packet chronology (2026-11-05)
+
+C5a adds a transient **draw packet schedule** derived from the current C2 capability partition and C4 tile proof. It is not authored order, not persistent near/far identity, and not a new field Relation.
+
+For each proved screen region the planner records camera chronology independently. Because the renderer uses premultiplied-alpha `over`, publication order is the reverse of camera encounter order: a region proving `FirstBeforeSecond` emits draw targets `Second -> First`; the reverse proof emits `First -> Second`. Ambiguous regions emit one `Joint` target.
+
+`flushVolumeComposite()` prepares every scheduled physical pipeline once per flush (payload upload, optional preparation compute, optional routed compute publication) and stores frame-lifetime bind groups in `PreparedVolumeDraw`. It then executes the derived `VolumeDrawPacket` sequence under scissor rectangles. A pipeline may therefore publish several disjoint regions without duplicating its setup/compute work.
+
+**Lifetime/invalidation:** the packet sequence is local to one `flushVolumeComposite()`. It is rebuilt whenever the frame is rendered and inherits all C4 dependencies: camera/view-projection, viewport, field bounds/membership/structure, source separability, and capability admission. No cross-frame packet cache is introduced.
+
+**Refusal boundary:** C5a can represent opposite chronology across disjoint screen regions, but not same-ray interleaving such as `A -> B -> A`. Such a tile remains joint. C5b is the future interval scheduler. Routed compute still owns a full-screen publication buffer, so local fragment packets do not imply proportional routed-compute savings.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
+
+### General volume transport C5b-1 — ray interval schedule IR (2026-11-05)
+
+Ray-lifetime derived state only. Conservative support intervals for two execution families are partitioned into maximal near-to-far `First`, `Second`, or `Joint` runs, including `A -> B -> A`. Invalid inputs or run-budget overflow refuse and retain joint transport. `executeVolumeCohortIntervalSchedule()` preserves one continuing transport state across runs. No cross-family WebGPU interval lowering is claimed; C5b-2 owns that bridge.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
+
+### General volume transport C5b-2a — fused execution-family mask (2026-11-05)
+
+C5b-2a adds a **program-structural family-tag vector** and a **segment-lifetime GPU family mask**. Neither is authored ontology.
+
+The renderer derives complete First/Second tags from the current C2 capability partition while preserving active-media order. The tag vector participates in fused-program revision/structure identity, so a regroup recompiles rather than borrowing stale WGSL. All-routed/all-general sets remain untagged.
+
+Inside the fused V5 program, `ecC5bExecutionMask` is rebuilt on each pre-existing authored AABB event segment. The lane adds no events and does not re-space quadrature. Bit 0 means First may participate; bit 1 means Second may participate; both bits preserve the existing joint evaluator. The same transmittance/radiance state continues across all segments.
+
+A tagged joint program is excluded from full-ray `KernelRoutedTransport` admission. Routed subinterval specialization is not yet claimed; C5b-2b owns that lowering.
+
+Invalid/incomplete family tagging refuses compiler admission rather than treating an unknown member as absent.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
+
+### General volume transport C5b-2b1 — routed strip span stream (2026-11-05)
+
+The routed producer's `rays`, `singles`, and `overlaps` buffers are **strip-lifetime derived execution state**. They are reusable scratch, not frame publications, not persistent caches, and not authored relations.
+
+`encodeSpans()` exposes those buffers only through a borrowed callback after setup/classification/S1-S2-fallback production for one strip and before the next strip may overwrite them. A consumer may record GPU commands against the borrowed ranges during that callback; it must not treat their contents as surviving afterward.
+
+The established `encode()` path still performs `ecConsume` and owns the integrated full-frame routed publication. Producer truth and framebuffer publication are now distinct execution lifetimes.
+
+C5b-2b1 has no production renderer caller yet. No routed interval performance claim follows from the existence of the seam.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
+
+### General volume transport C5b-2b2 — conservative First-family activity certificate (2026-11-05)
+
+C5b-2b2 materializes a **frame-lifetime derived activity certificate** from the routed First-family producer. It is not authored support, not a persistent medium property, and not a replacement density field.
+
+The raw routed `ECSpan` program remains strip-lifetime scratch. After each strip is produced, a GPU compactor writes one `u32` into `firstActivityMask` for each framebuffer pixel. The 32 bits conservatively cover absolute camera-ray distance `s in [0,2048]`; they are intentionally independent of the routed cohort's own AABB envelope and the mixed set's AABB envelope.
+
+Semantics are one-sided: a zero bit means **proved First-family inactive in that canonical bin**; a one bit means maybe active, overlap, refusal, or unknown. Invalid route state, malformed spans, and compactor refusal fail open to all ones. Boundary quantization may create false positives but must never create false negatives.
+
+The mixed fused V5 shader may use a zero bit only to skip First-family evaluator work at an already-existing V5 sample. Second-family evaluation, authored AABB event boundaries, sample coordinates, segment spacing, and the single continuing transmittance/radiance state are unchanged.
+
+The mask is rebuilt from current routed producer truth each frame when required. If the source pipeline fails or is skipped before producing it, the renderer writes an all-ones fail-open certificate before the masked draw; previous-frame zero bits never retain authority.
+
+At 2560×1440 the certificate occupies 14,745,600 bytes (about 14.1 MiB). It is a compact execution materialization, not a full-frame copy of routed span records.
+
+C5b-2b2 does not yet substitute routed quadrature values for First-family V5 evaluation. C5b-2b3 owns that optimization.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
+
+### General volume transport C5b-2c — First-activity quantization coordinates (2026-11-06)
+
+C5b-2c adds a **query-derived quantization coordinate range** for the existing 32-bit First-family activity certificate. The renderer derives the conservative First-cohort radial support `[r_near,r_far]` from the current camera and current capability membership, widens the double-to-f32 conversion outward, and supplies the exact same f32 pair to both the routed span compactor and the fused V5 consumer.
+
+This range is not authored near/far identity, not a persistent spatial partition, not a field property, and not a new Relation. It is valid only for the current query/camera and current First cohort.
+
+Producer lifetime: `KernelRoutedTransport::firstActivityNear/Far` participate in strip-uniform cache invalidation. A changed pair rewrites the strip uniforms before compaction. The values are encoded into `ECWindow.flags.y/z` as exact f32 bit patterns.
+
+Consumer lifetime: the same pair occupies the previously reserved `VolumeGlobals.volumeOutputError.z/w` lanes only when the mixed joint program actually consumes the First-activity certificate. The fused fragment maps its current `sampleT` into the same 32-bin coordinate domain.
+
+Refusal remains monotone toward work, never absence. Invalid ranges, samples outside the shared range, or routed spans escaping the claimed range fail open: the producer writes `0xffffffff` or the consumer evaluates First-family work normally. The change adds no event boundary, sample coordinate, transport state, GPU buffer, authored state, or persistence.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-06. Human origin and acceptance authority: Zachary Zhang.
