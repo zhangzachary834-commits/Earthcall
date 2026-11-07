@@ -1027,7 +1027,7 @@ WebGpuRenderer::prepareFieldVmVisibility(
                 static_cast<uint32_t>(instructions.size()),
                 static_cast<uint32_t>(admission.program.instructions.size()),
                 admission.program.maxStackDepth,
-                0u);
+                admission.program.needsGradientStep ? 1u : 0u);
             blockers.push_back(blocker);
             instructions.insert(
                 instructions.end(),
