@@ -120,4 +120,11 @@ The physics system now seamlessly integrates with:
 - **Audio System**: Collision events can trigger sound effects
 - **Particle System**: Collision events can create visual effects
 
-This hybrid approach gives you the best of both worlds: reliable hard-wired physics calculations with flexible event-driven responses! 
+This hybrid approach gives you the best of both worlds: reliable hard-wired physics calculations with flexible event-driven responses!
+## Interrelated Documents
+- [PHYSICS_AND_COLLISION.md](PHYSICS_AND_COLLISION.md)
+- [NO_BLACK_BOX.md](../ontology/NO_BLACK_BOX.md)
+
+## Thoughts on Integration and Interrelation
+
+The Physics EventBus integration is not merely a convenience for decoupling game systems; it is an architectural necessity driven by the "No Black Box" ([NO_BLACK_BOX.md](../ontology/NO_BLACK_BOX.md)) doctrine. Before this integration, collisions were silent, isolated C++ state updates. By publishing `PhysicsCollisionEvent`s to the EventBus, we elevate physical contact into a legible, authored fact. This ensures that any authored Law can react to physical mechanics, maintaining the principle that the engine must not hide state from the world it simulates. As detailed in [PHYSICS_AND_COLLISION.md](PHYSICS_AND_COLLISION.md), this hybrid approach correctly positions the underlying C++ physics engine as a "Sense-Act" mechanism that publishes facts for the higher-level Law ontology to govern.
