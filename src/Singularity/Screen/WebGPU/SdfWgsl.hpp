@@ -144,6 +144,10 @@ static_assert(sizeof(FieldVmInstruction) == 48,
 struct FieldVmProgram {
     std::vector<FieldVmInstruction> instructions;
     uint32_t maxStackDepth = 0;
+    // Derived execution policy matching the primary SDF marcher. General Expr
+    // leaves are iso-surface fields, not automatically 1-Lipschitz distance;
+    // visibility therefore normalizes positive march steps by max(|grad f|,1).
+    bool needsGradientStep = false;
     bool ok = true;
     std::string error;
 };
