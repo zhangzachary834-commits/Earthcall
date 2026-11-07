@@ -1528,6 +1528,22 @@ int main() {
                   "cohortOtherInstanceVisibility(surfaceWorld, sourceWorld, receiverIndex)") !=
                   std::string::npos,
               "CompleteScene SDF visibility evaluates every instance in the admitted same-program cohort and restores receiver authority");
+        check(oneSource.wgsl.find(
+                  "fn localSourceVisibility(") != std::string::npos &&
+              oneSource.wgsl.find(
+                  "sourceWorld: vec3<f32>) -> VisibilityDecision") !=
+                  std::string::npos &&
+              oneSource.wgsl.find(
+                  "let localV =\n        localSourceVisibility") !=
+                  std::string::npos &&
+              oneSource.wgsl.find(
+                  "if (localV.known < 0.5)") != std::string::npos &&
+              oneSource.wgsl.find(
+                  "if (cohortV.known < 0.5)") != std::string::npos &&
+              oneSource.wgsl.find(
+                  "finite marcher budget is a proof budget") !=
+                  std::string::npos,
+              "receiver-local and same-program march exhaustion remain Unknown rather than fabricating occlusion");
         check(oneSource.wgsl.find("struct SceneFieldVmBlockerData") !=
                   std::string::npos &&
               oneSource.wgsl.find(
