@@ -322,6 +322,98 @@ fn classifyTilesMain(@builtin(global_invocation_id) gid: vec3u) {
     }
 }
 )WGSL";
+inline constexpr const char* kFirstActivityMaskWgsl=R"WGSL(
+struct ECWindow {control:vec4<u32>,window:vec4<u32>,flags:vec4<u32>};
+struct ECRay {ro_clipA:vec4<f32>,rd_clipB:vec4<f32>,counts:vec4<u32>};
+struct ECSpan {span:vec2<f32>,info:vec2<u32>};
+
+@group(0) @binding(0) var<uniform> ecWindow:ECWindow;
+@group(0) @binding(1) var<storage,read> ecRays:array<ECRay>;
+@group(0) @binding(2) var<storage,read> ecSingles:array<ECSpan>;
+@group(0) @binding(3) var<storage,read> ecOverlaps:array<ECSpan>;
+@group(0) @binding(4) var<storage,read_write> ecFirstActivity:array<u32>;
+
+fn markSpan(mask:ptr<function,u32>, lo:f32, hi:f32,
+            quantLo:f32, quantHi:f32) -> bool {
+    // C5b-2c: quantize over one host-derived conservative radial range shared
+    // with the fused consumer. If the range is malformed or fails to enclose a
+    // produced span, refuse the certificate instead of manufacturing absence.
+    if (!(quantHi > quantLo) || quantLo < 0.0 ||
+        !(hi > lo) || lo < quantLo - 1e-3 || hi > quantHi + 1e-3) {
+        return false;
+    }
+    let inv = 1.0 / (quantHi - quantLo);
+    let q0 = clamp((lo - quantLo) * inv, 0.0, 1.0);
+    let q1 = clamp((hi - quantLo) * inv, 0.0, 1.0);
+    let b0 = min(u32(floor(q0 * 32.0)), 31u);
+    let b1 = min(u32(floor(q1 * 32.0)), 31u);
+    var b = b0;
+    loop {
+        *mask |= (1u << b);
+        if (b >= b1 || b == 31u) { break; }
+        b++;
+    }
+    return true;
+}
+
+@compute @workgroup_size(64)
+fn compactFirstActivityMain(@builtin(global_invocation_id) gid:vec3<u32>) {
+    let id = gid.x;
+    if (id >= ecWindow.control.x) { return; }
+    let x = id % ecWindow.window.x;
+    let localY = id / ecWindow.window.x;
+    let y = localY + ecWindow.window.z;
+    if (y >= ecWindow.window.y) { return; }
+    let pixel = y * ecWindow.window.x + x;
+    let ray = ecRays[id];
+
+    // Invalid/refused route state is never interpreted as empty support.
+    if ((ray.counts.w & 0xC0000000u) != 0u ||
+        ray.counts.y > 64u ||
+        (ray.counts.w & 0x3fffffffu) > 16u) {
+        ecFirstActivity[pixel] = 0xffffffffu;
+        return;
+    }
+
+    let overlapCount = ray.counts.w & 0x3fffffffu;
+    if ((ray.counts.y | overlapCount) == 0u) {
+        ecFirstActivity[pixel] = 0u;
+        return;
+    }
+
+    if (!(ray.rd_clipB.w > ray.ro_clipA.w) ||
+        ray.ro_clipA.w < -1e-4 || ray.rd_clipB.w > 2048.0001) {
+        ecFirstActivity[pixel] = 0xffffffffu;
+        return;
+    }
+
+    let quantLo = bitcast<f32>(ecWindow.flags.y);
+    let quantHi = bitcast<f32>(ecWindow.flags.z);
+    if (!(quantHi > quantLo) || quantLo < 0.0) {
+        ecFirstActivity[pixel] = 0xffffffffu;
+        return;
+    }
+
+    let stride = ecWindow.control.x;
+    var mask = 0u;
+    for (var i = 0u; i < ray.counts.y; i++) {
+        let sp = ecSingles[i * stride + id];
+        if (!markSpan(&mask, sp.span.x, sp.span.y, quantLo, quantHi)) {
+            ecFirstActivity[pixel] = 0xffffffffu;
+            return;
+        }
+    }
+    for (var i = 0u; i < overlapCount; i++) {
+        let sp = ecOverlaps[i * stride + id];
+        if (!markSpan(&mask, sp.span.x, sp.span.y, quantLo, quantHi)) {
+            ecFirstActivity[pixel] = 0xffffffffu;
+            return;
+        }
+    }
+    ecFirstActivity[pixel] = mask;
+}
+)WGSL";
+
 inline constexpr const char* kRouteArgsWgsl=R"WGSL(
 @group(0) @binding(0) var<storage, read> counts: array<u32>;
 @group(0) @binding(1) var<storage, read_write> args: array<u32>;
