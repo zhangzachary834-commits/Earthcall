@@ -609,6 +609,10 @@ bool emitMathScalar(const OntoMath::MathNode& node, const glm::vec3& offset,
 
 bool emitExprVm(const geom::SdfNode& node,
                 FieldVmProgram& out, uint32_t& stackDepth) {
+    // Same semantic distinction as WebGpuRenderer::SdfInstanceData::misc.w:
+    // Expr means general iso-surface mathematics, so raw f is not presumed to
+    // be a lawful sphere-tracing distance.
+    out.needsGradientStep = true;
     const OntoMath::MathNode* root = node.mathNode.get();
     if (!root && node.piecewise) {
         if (node.piecewise->pieces.size() != 1 ||
