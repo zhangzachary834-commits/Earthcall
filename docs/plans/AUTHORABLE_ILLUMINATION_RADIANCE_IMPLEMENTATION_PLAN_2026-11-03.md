@@ -6,6 +6,33 @@
 **Written by:** GPT-5.6 Sol  
 **Status:** implementation plan; no completion claim
 
+## Implementation ledger — 2026-11-06 continuation: one visibility epistemic contract
+
+All bounded field-path evaluators now use the same tri-state proof law. Finite march exhaustion is no longer allowed to masquerade as physical occlusion.
+
+Implemented:
+- changed receiver-local SDF visibility from a scalar `f32` to `VisibilityDecision { known, value }`;
+- changed same-program cohort visibility to the same decision type;
+- receiver-local proved traversal returns `KnownVisible`;
+- receiver-local proved field hit returns `KnownOccluded`;
+- receiver-local 192-step exhaustion returns `Unknown`, not `V=0`;
+- same-program cohort traversal composes identically: any proved blocker settles `KnownOccluded`, every proved-clear instance yields `KnownVisible`, and one unresolved finite march yields `Unknown`;
+- `sourceVisibility` now propagates local/cohort Unknown before consulting later providers, while preserving the useful dominance law that a proved blocker is enough to settle the path;
+- foreign scene-field VM visibility already obeyed this contract, so receiver-local, same-program and foreign-program evaluation now agree on what failure to prove means;
+- compiler tribunals require `localV.known` and `cohortV.known` gates and pin the explicit proof-budget wording.
+
+The resulting Path semantics are now uniform:
+
+```
+proved blocker       -> { known = 1, V = 0 }
+proved traversal     -> { known = 1, V = 1 }
+budget/refusal       -> { known = 0, V = undefined }
+```
+
+This pass does not change the 192-step local/cohort budget or claim that those marchers cannot exhaust. It changes only the truth claim Earthcall makes when they do.
+
+---
+
 ## Implementation ledger — 2026-11-05 continuation: shared mesh/SDF field-VM visibility rung 2
 
 The historical Sphere/Box foreign-implicit packet is no longer an active CompleteScene authority. Raster mesh and implicit SDF receivers now consume **one shared bounded field-program VM language** for SDF blockers.
@@ -120,7 +147,7 @@ Preserved boundaries / non-claims:
 - `Expr` remains refused until Earthcall has a lossless **OntoMath-native** bytecode lowering; legacy `SdfToken` RPN is still not promoted back into authority;
 - `Convex` remains refused until its plane payload receives an explicit VM representation;
 - this VM is now a **foreign path-visibility consumer**, not yet the primary whole-scene surface renderer described by the longer Native GPU OntoMath horizon;
-- the older receiver-local / same-program-cohort marcher still conservatively treats its own finite-step exhaustion as blocked. The new foreign VM does the stronger thing and returns Unknown. Unifying that epistemic contract is a separate follow-up rung, not silently folded into this migration.
+- receiver-local, same-program-cohort and foreign-VM marchers now share the same exhaustion law: unresolved finite-step traversal is Unknown, never fabricated occlusion.
 
 Next gates:
 1. observe the Torus native WebGPU witness and focused SDF/compiler witnesses on a real runner;
