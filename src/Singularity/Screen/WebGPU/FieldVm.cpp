@@ -6,6 +6,7 @@
 #include <array>
 #include <cmath>
 #include <limits>
+#include <glm/gtc/noise.hpp>
 
 namespace sdfwgsl {
 namespace {
@@ -75,6 +76,558 @@ float smoothMinVm(float a, float b, float k) {
     return glm::mix(b, a, h) - k * h * (1.0f - h);
 }
 
+bool appendVm(FieldVmProgram& out, uint32_t& stackDepth,
+              FieldVmInstruction inst, uint32_t pops = 0,
+              uint32_t pushes = 1) {
+    if (stackDepth < pops) {
+        out.ok = false;
+        out.error = "field VM internal stack underflow while lowering OntoMath";
+        return false;
+    }
+    if (out.instructions.size() >= kFieldVmMaxInstructions) {
+        out.ok = false;
+        out.error = "field VM instruction budget exceeded";
+        return false;
+    }
+    const uint32_t next = stackDepth - pops + pushes;
+    if (next > kFieldVmMaxStackDepth) {
+        out.ok = false;
+        out.error = "field VM stack budget exceeded";
+        return false;
+    }
+    out.instructions.push_back(inst);
+    stackDepth = next;
+    out.maxStackDepth = std::max(out.maxStackDepth, stackDepth);
+    return true;
+}
+
+bool pushMathConstant(double value, FieldVmProgram& out, uint32_t& stackDepth) {
+    if (!std::isfinite(value)) {
+        out.ok = false;
+        out.error = "field VM refuses non-finite OntoMath literal";
+        return false;
+    }
+    const float f = static_cast<float>(value);
+    if (!std::isfinite(f)) {
+        out.ok = false;
+        out.error = "field VM refuses OntoMath literal outside float32 range";
+        return false;
+    }
+    FieldVmInstruction inst;
+    inst.meta.x = static_cast<uint32_t>(FieldVmOpcode::Constant);
+    inst.a.x = f;
+    return appendVm(out, stackDepth, inst);
+}
+
+bool pushCoord(int axis, const glm::vec3& offset,
+               FieldVmProgram& out, uint32_t& stackDepth) {
+    FieldVmInstruction inst;
+    inst.meta.x = static_cast<uint32_t>(
+        axis == 0 ? FieldVmOpcode::CoordX
+                  : axis == 1 ? FieldVmOpcode::CoordY
+                              : FieldVmOpcode::CoordZ);
+    inst.a.x = offset[axis];
+    return appendVm(out, stackDepth, inst);
+}
+
+bool emitMathScalar(const OntoMath::MathNode& node, const glm::vec3& offset,
+                    FieldVmProgram& out, uint32_t& stackDepth);
+bool emitMathVectorComponent(const OntoMath::MathNode& node, int axis,
+                             const glm::vec3& offset,
+                             FieldVmProgram& out, uint32_t& stackDepth);
+
+OntoMath::TypeResult fieldMathType(const OntoMath::MathNode& node,
+                                   const std::string& path = "field-vm") {
+    OntoMath::TypeEnv env{
+        {OntoMath::kAmbientPointVar, OntoMath::MathType::vector(3)},
+        {"x", OntoMath::ValueKind::Scalar},
+        {"y", OntoMath::ValueKind::Scalar},
+        {"z", OntoMath::ValueKind::Scalar},
+    };
+    return node.typeOf(env, path, false);
+}
+
+bool appendUnary(FieldVmOpcode op, FieldVmProgram& out, uint32_t& stackDepth) {
+    FieldVmInstruction inst;
+    inst.meta.x = static_cast<uint32_t>(op);
+    return appendVm(out, stackDepth, inst, 1, 1);
+}
+
+bool appendBinary(FieldVmOpcode op, FieldVmProgram& out, uint32_t& stackDepth) {
+    FieldVmInstruction inst;
+    inst.meta.x = static_cast<uint32_t>(op);
+    return appendVm(out, stackDepth, inst, 2, 1);
+}
+
+bool emitScalarFormVm(const OntoMath::ScalarForm& form, const glm::vec3& offset,
+                      FieldVmProgram& out, uint32_t& stackDepth) {
+    if (form.terms.empty()) return pushMathConstant(0.0, out, stackDepth);
+
+    bool firstTerm = true;
+    for (const auto& term : form.terms) {
+        if (!pushMathConstant(term.coefficient, out, stackDepth)) return false;
+
+        for (const auto& [name, exponent] : term.factors) {
+            const int axis = name == "x" ? 0 : name == "y" ? 1 : name == "z" ? 2 : -1;
+            if (axis < 0) {
+                out.ok = false;
+                out.error = "field VM Expr ScalarForm names unbound variable '" + name + "'";
+                return false;
+            }
+            if (!pushCoord(axis, offset, out, stackDepth)) return false;
+            if (exponent != 1.0) {
+                if (!pushMathConstant(exponent, out, stackDepth) ||
+                    !appendBinary(FieldVmOpcode::MathPow, out, stackDepth)) {
+                    return false;
+                }
+            }
+            if (!appendBinary(FieldVmOpcode::MathMul, out, stackDepth)) return false;
+        }
+
+        for (const auto& tf : term.trans) {
+            const int axis = tf.variable == "x" ? 0 : tf.variable == "y" ? 1 :
+                             tf.variable == "z" ? 2 : -1;
+            if (axis < 0) {
+                out.ok = false;
+                out.error = "field VM Expr transcendental names unbound variable '" +
+                            tf.variable + "'";
+                return false;
+            }
+            if (!pushCoord(axis, offset, out, stackDepth)) return false;
+            if (tf.scale != 1.0) {
+                if (!pushMathConstant(tf.scale, out, stackDepth) ||
+                    !appendBinary(FieldVmOpcode::MathMul, out, stackDepth)) {
+                    return false;
+                }
+            }
+            if (tf.shift != 0.0) {
+                if (!pushMathConstant(tf.shift, out, stackDepth) ||
+                    !appendBinary(FieldVmOpcode::MathAdd, out, stackDepth)) {
+                    return false;
+                }
+            }
+            FieldVmOpcode op = FieldVmOpcode::MathSin;
+            switch (tf.kind) {
+                case OntoMath::TransFactor::Kind::Sin: op = FieldVmOpcode::MathSin; break;
+                case OntoMath::TransFactor::Kind::Cos: op = FieldVmOpcode::MathCos; break;
+                case OntoMath::TransFactor::Kind::Exp: op = FieldVmOpcode::MathExp; break;
+                case OntoMath::TransFactor::Kind::Ln:  op = FieldVmOpcode::MathLog; break;
+            }
+            if (!appendUnary(op, out, stackDepth) ||
+                !appendBinary(FieldVmOpcode::MathMul, out, stackDepth)) {
+                return false;
+            }
+        }
+
+        if (!firstTerm &&
+            !appendBinary(FieldVmOpcode::MathAdd, out, stackDepth)) {
+            return false;
+        }
+        firstTerm = false;
+    }
+    return true;
+}
+
+bool emitMathVectorComponent(const OntoMath::MathNode& node, int axis,
+                             const glm::vec3& offset,
+                             FieldVmProgram& out, uint32_t& stackDepth) {
+    using Op = OntoMath::MathNode::Op;
+    if (axis < 0 || axis > 2) {
+        out.ok = false;
+        out.error = "field VM internal vector component axis is invalid";
+        return false;
+    }
+
+    const auto child = [&](std::size_t i) -> const OntoMath::MathNode* {
+        return i < node.children.size() && node.children[i] ? node.children[i].get() : nullptr;
+    };
+    const auto requireChild = [&](std::size_t i) -> const OntoMath::MathNode* {
+        const auto* c = child(i);
+        if (!c) {
+            out.ok = false;
+            out.error = "field VM Expr node is missing child " + std::to_string(i);
+        }
+        return c;
+    };
+
+    switch (node.op) {
+        case Op::ValueLeaf:
+            if (node.variableName == OntoMath::kAmbientPointVar)
+                return pushCoord(axis, offset, out, stackDepth);
+            out.ok = false;
+            out.error = "field VM Expr vector names unbound value '" +
+                        node.variableName + "'";
+            return false;
+
+        case Op::VectorConstruct: {
+            const auto* c = requireChild(static_cast<std::size_t>(axis));
+            return c && emitMathScalar(*c, offset, out, stackDepth);
+        }
+
+        case Op::Add:
+        case Op::Sub:
+        case Op::Hadamard:
+        case Op::Union:
+        case Op::Intersection: {
+            const auto* a = requireChild(0);
+            const auto* b = requireChild(1);
+            if (!a || !b ||
+                !emitMathVectorComponent(*a, axis, offset, out, stackDepth) ||
+                !emitMathVectorComponent(*b, axis, offset, out, stackDepth)) {
+                return false;
+            }
+            const FieldVmOpcode op =
+                node.op == Op::Add ? FieldVmOpcode::MathAdd :
+                node.op == Op::Sub ? FieldVmOpcode::MathSub :
+                node.op == Op::Hadamard ? FieldVmOpcode::MathMul :
+                node.op == Op::Union ? FieldVmOpcode::MathMin :
+                                       FieldVmOpcode::MathMax;
+            return appendBinary(op, out, stackDepth);
+        }
+
+        case Op::Scale: {
+            const auto* a = requireChild(0);
+            const auto* b = requireChild(1);
+            if (!a || !b) return false;
+            const auto ta = fieldMathType(*a, "field-vm.Scale[0]");
+            const auto tb = fieldMathType(*b, "field-vm.Scale[1]");
+            if (!ta || !tb) {
+                out.ok = false;
+                out.error = "field VM Expr Scale cannot prove operand types";
+                return false;
+            }
+            if (ta.kind == OntoMath::ValueKind::Vector &&
+                tb.kind == OntoMath::ValueKind::Scalar) {
+                if (!emitMathVectorComponent(*a, axis, offset, out, stackDepth) ||
+                    !emitMathScalar(*b, offset, out, stackDepth)) return false;
+            } else if (ta.kind == OntoMath::ValueKind::Scalar &&
+                       tb.kind == OntoMath::ValueKind::Vector) {
+                if (!emitMathScalar(*a, offset, out, stackDepth) ||
+                    !emitMathVectorComponent(*b, axis, offset, out, stackDepth)) return false;
+            } else {
+                out.ok = false;
+                out.error = "field VM Expr vector Scale requires Scalar×Vector or Vector×Scalar";
+                return false;
+            }
+            return appendBinary(FieldVmOpcode::MathMul, out, stackDepth);
+        }
+
+        case Op::Cross: {
+            const auto* a = requireChild(0);
+            const auto* b = requireChild(1);
+            if (!a || !b) return false;
+            const int a0 = (axis + 1) % 3, a1 = (axis + 2) % 3;
+            if (!emitMathVectorComponent(*a, a0, offset, out, stackDepth) ||
+                !emitMathVectorComponent(*b, a1, offset, out, stackDepth) ||
+                !appendBinary(FieldVmOpcode::MathMul, out, stackDepth) ||
+                !emitMathVectorComponent(*a, a1, offset, out, stackDepth) ||
+                !emitMathVectorComponent(*b, a0, offset, out, stackDepth) ||
+                !appendBinary(FieldVmOpcode::MathMul, out, stackDepth) ||
+                !appendBinary(FieldVmOpcode::MathSub, out, stackDepth)) {
+                return false;
+            }
+            return true;
+        }
+
+        case Op::Normalize: {
+            const auto* a = requireChild(0);
+            if (!a) return false;
+            for (int c = 0; c < 3; ++c)
+                if (!emitMathVectorComponent(*a, c, offset, out, stackDepth)) return false;
+            FieldVmInstruction inst;
+            inst.meta.x = static_cast<uint32_t>(FieldVmOpcode::MathNormalizeComponent);
+            inst.meta.y = static_cast<uint32_t>(axis);
+            return appendVm(out, stackDepth, inst, 3, 1);
+        }
+
+        case Op::Project: {
+            const auto* a = requireChild(0);
+            const auto* b = requireChild(1);
+            if (!a || !b) return false;
+            for (int c = 0; c < 3; ++c)
+                if (!emitMathVectorComponent(*a, c, offset, out, stackDepth)) return false;
+            for (int c = 0; c < 3; ++c)
+                if (!emitMathVectorComponent(*b, c, offset, out, stackDepth)) return false;
+            FieldVmInstruction inst;
+            inst.meta.x = static_cast<uint32_t>(FieldVmOpcode::MathProjectComponent);
+            inst.meta.y = static_cast<uint32_t>(axis);
+            return appendVm(out, stackDepth, inst, 6, 1);
+        }
+
+        case Op::Div:
+        case Op::Pow: {
+            const auto* a = requireChild(0);
+            const auto* b = requireChild(1);
+            if (!a || !b) return false;
+            const auto tb = fieldMathType(*b, "field-vm.vector-rhs");
+            if (!tb) {
+                out.ok = false;
+                out.error = "field VM Expr cannot prove vector arithmetic rhs type";
+                return false;
+            }
+            if (!emitMathVectorComponent(*a, axis, offset, out, stackDepth))
+                return false;
+            if (tb.kind == OntoMath::ValueKind::Vector) {
+                if (!emitMathVectorComponent(*b, axis, offset, out, stackDepth))
+                    return false;
+            } else {
+                if (!emitMathScalar(*b, offset, out, stackDepth)) return false;
+            }
+            return appendBinary(node.op == Op::Div ? FieldVmOpcode::MathDiv
+                                                   : FieldVmOpcode::MathPow,
+                                out, stackDepth);
+        }
+
+        case Op::Abs:
+        case Op::Sqrt:
+        case Op::Map: {
+            const auto* a = requireChild(0);
+            if (!a || !emitMathVectorComponent(*a, axis, offset, out, stackDepth))
+                return false;
+            FieldVmOpcode op = node.op == Op::Abs ? FieldVmOpcode::MathAbs
+                               : node.op == Op::Sqrt ? FieldVmOpcode::MathSqrt
+                               : node.stringArg == "Round" ? FieldVmOpcode::MathRound
+                               : node.stringArg == "Floor" ? FieldVmOpcode::MathFloor
+                               : FieldVmOpcode::Constant;
+            if (node.op == Op::Map && op == FieldVmOpcode::Constant) {
+                out.ok = false;
+                out.error = "field VM Expr Map supports only Round/Floor";
+                return false;
+            }
+            return appendUnary(op, out, stackDepth);
+        }
+
+        case Op::Clamp: {
+            const auto* v = requireChild(0);
+            const auto* lo = requireChild(1);
+            const auto* hi = requireChild(2);
+            if (!v || !lo || !hi ||
+                !emitMathVectorComponent(*v, axis, offset, out, stackDepth))
+                return false;
+            const auto tLo = fieldMathType(*lo, "field-vm.Clamp[1]");
+            const auto tHi = fieldMathType(*hi, "field-vm.Clamp[2]");
+            if (!tLo || !tHi) {
+                out.ok = false;
+                out.error = "field VM Expr Clamp cannot prove bound types";
+                return false;
+            }
+            if (tLo.kind == OntoMath::ValueKind::Vector) {
+                if (!emitMathVectorComponent(*lo, axis, offset, out, stackDepth)) return false;
+            } else if (!emitMathScalar(*lo, offset, out, stackDepth)) return false;
+            if (tHi.kind == OntoMath::ValueKind::Vector) {
+                if (!emitMathVectorComponent(*hi, axis, offset, out, stackDepth)) return false;
+            } else if (!emitMathScalar(*hi, offset, out, stackDepth)) return false;
+            FieldVmInstruction inst;
+            inst.meta.x = static_cast<uint32_t>(FieldVmOpcode::MathClamp);
+            return appendVm(out, stackDepth, inst, 3, 1);
+        }
+
+        default:
+            out.ok = false;
+            out.error = "field VM Expr does not admit vector op " +
+                        std::string(OntoMath::mathOpName(node.op));
+            return false;
+    }
+}
+
+bool emitMathScalar(const OntoMath::MathNode& node, const glm::vec3& offset,
+                    FieldVmProgram& out, uint32_t& stackDepth) {
+    using Op = OntoMath::MathNode::Op;
+    const auto child = [&](std::size_t i) -> const OntoMath::MathNode* {
+        if (i >= node.children.size() || !node.children[i]) {
+            out.ok = false;
+            out.error = "field VM Expr node is missing child " + std::to_string(i);
+            return nullptr;
+        }
+        return node.children[i].get();
+    };
+
+    switch (node.op) {
+        case Op::ScalarLeaf:
+            return emitScalarFormVm(node.scalarForm, offset, out, stackDepth);
+
+        case Op::ValueLeaf:
+            if (node.variableName == "x") return pushCoord(0, offset, out, stackDepth);
+            if (node.variableName == "y") return pushCoord(1, offset, out, stackDepth);
+            if (node.variableName == "z") return pushCoord(2, offset, out, stackDepth);
+            out.ok = false;
+            out.error = "field VM Expr scalar names unbound value '" +
+                        node.variableName + "'";
+            return false;
+
+        case Op::Component: {
+            const auto* a = child(0);
+            const int axis = node.stringArg == "x" ? 0 : node.stringArg == "y" ? 1 :
+                             node.stringArg == "z" ? 2 : -1;
+            if (!a || axis < 0) {
+                if (axis < 0) {
+                    out.ok = false;
+                    out.error = "field VM Expr Component names invalid axis '" +
+                                node.stringArg + "'";
+                }
+                return false;
+            }
+            return emitMathVectorComponent(*a, axis, offset, out, stackDepth);
+        }
+
+        case Op::Add:
+        case Op::Sub:
+        case Op::Scale:
+        case Op::Div:
+        case Op::Pow:
+        case Op::Union:
+        case Op::Intersection: {
+            const auto* a = child(0);
+            const auto* b = child(1);
+            if (!a || !b ||
+                !emitMathScalar(*a, offset, out, stackDepth) ||
+                !emitMathScalar(*b, offset, out, stackDepth)) return false;
+            const FieldVmOpcode op =
+                node.op == Op::Add ? FieldVmOpcode::MathAdd :
+                node.op == Op::Sub ? FieldVmOpcode::MathSub :
+                node.op == Op::Scale ? FieldVmOpcode::MathMul :
+                node.op == Op::Div ? FieldVmOpcode::MathDiv :
+                node.op == Op::Pow ? FieldVmOpcode::MathPow :
+                node.op == Op::Union ? FieldVmOpcode::MathMin :
+                                       FieldVmOpcode::MathMax;
+            return appendBinary(op, out, stackDepth);
+        }
+
+        case Op::Difference: {
+            const auto* a = child(0);
+            const auto* b = child(1);
+            if (!a || !b ||
+                !emitMathScalar(*a, offset, out, stackDepth) ||
+                !emitMathScalar(*b, offset, out, stackDepth) ||
+                !pushMathConstant(-1.0, out, stackDepth) ||
+                !appendBinary(FieldVmOpcode::MathMul, out, stackDepth)) return false;
+            return appendBinary(FieldVmOpcode::MathMax, out, stackDepth);
+        }
+
+        case Op::Dot: {
+            const auto* a = child(0);
+            const auto* b = child(1);
+            if (!a || !b) return false;
+            for (int axis = 0; axis < 3; ++axis) {
+                if (!emitMathVectorComponent(*a, axis, offset, out, stackDepth) ||
+                    !emitMathVectorComponent(*b, axis, offset, out, stackDepth) ||
+                    !appendBinary(FieldVmOpcode::MathMul, out, stackDepth))
+                    return false;
+                if (axis > 0 &&
+                    !appendBinary(FieldVmOpcode::MathAdd, out, stackDepth))
+                    return false;
+            }
+            return true;
+        }
+
+        case Op::Length: {
+            const auto* a = child(0);
+            if (!a) return false;
+            for (int axis = 0; axis < 3; ++axis)
+                if (!emitMathVectorComponent(*a, axis, offset, out, stackDepth)) return false;
+            FieldVmInstruction inst;
+            inst.meta.x = static_cast<uint32_t>(FieldVmOpcode::MathLength3);
+            return appendVm(out, stackDepth, inst, 3, 1);
+        }
+
+        case Op::Distance: {
+            const auto* a = child(0);
+            const auto* b = child(1);
+            if (!a || !b) return false;
+            for (int axis = 0; axis < 3; ++axis) {
+                if (!emitMathVectorComponent(*a, axis, offset, out, stackDepth) ||
+                    !emitMathVectorComponent(*b, axis, offset, out, stackDepth) ||
+                    !appendBinary(FieldVmOpcode::MathSub, out, stackDepth))
+                    return false;
+            }
+            FieldVmInstruction inst;
+            inst.meta.x = static_cast<uint32_t>(FieldVmOpcode::MathLength3);
+            return appendVm(out, stackDepth, inst, 3, 1);
+        }
+
+        case Op::Abs:
+        case Op::Sqrt:
+        case Op::Tan: {
+            const auto* a = child(0);
+            if (!a || !emitMathScalar(*a, offset, out, stackDepth)) return false;
+            return appendUnary(node.op == Op::Abs ? FieldVmOpcode::MathAbs :
+                               node.op == Op::Sqrt ? FieldVmOpcode::MathSqrt :
+                                                   FieldVmOpcode::MathTan,
+                               out, stackDepth);
+        }
+
+        case Op::Clamp: {
+            const auto* v = child(0);
+            const auto* lo = child(1);
+            const auto* hi = child(2);
+            if (!v || !lo || !hi ||
+                !emitMathScalar(*v, offset, out, stackDepth) ||
+                !emitMathScalar(*lo, offset, out, stackDepth) ||
+                !emitMathScalar(*hi, offset, out, stackDepth)) return false;
+            FieldVmInstruction inst;
+            inst.meta.x = static_cast<uint32_t>(FieldVmOpcode::MathClamp);
+            return appendVm(out, stackDepth, inst, 3, 1);
+        }
+
+        case Op::Noise: {
+            const auto* a = child(0);
+            if (!a) return false;
+            for (int axis = 0; axis < 3; ++axis)
+                if (!emitMathVectorComponent(*a, axis, offset, out, stackDepth)) return false;
+            FieldVmInstruction inst;
+            inst.meta.x = static_cast<uint32_t>(FieldVmOpcode::MathNoise3);
+            return appendVm(out, stackDepth, inst, 3, 1);
+        }
+
+        default:
+            out.ok = false;
+            out.error = "field VM Expr does not admit scalar op " +
+                        std::string(OntoMath::mathOpName(node.op));
+            return false;
+    }
+}
+
+bool emitExprVm(const geom::SdfNode& node,
+                FieldVmProgram& out, uint32_t& stackDepth) {
+    const OntoMath::MathNode* root = node.mathNode.get();
+    if (!root && node.piecewise) {
+        if (node.piecewise->pieces.size() != 1 ||
+            !node.piecewise->pieces[0].mathNode ||
+            node.piecewise->pieces[0].guard ||
+            node.piecewise->pieces[0].whereLEZero ||
+            node.piecewise->pieces[0].call ||
+            node.piecewise->pieces[0].fold) {
+            out.ok = false;
+            out.error =
+                "field VM Expr Piecewise lowering currently requires one unconditional OntoMath piece";
+            return false;
+        }
+        root = node.piecewise->pieces[0].mathNode.get();
+    }
+    if (!root) {
+        out.ok = false;
+        out.error =
+            "field VM Expr has no OntoMath AST; legacy SdfToken RPN is not a VM authority";
+        return false;
+    }
+
+    const auto type = fieldMathType(*root);
+    if (!type) {
+        out.ok = false;
+        out.error = "field VM Expr type refusal: " +
+                    OntoMath::formatTypeDiagnostic(type.diagnostic);
+        return false;
+    }
+    if (type.kind != OntoMath::ValueKind::Scalar &&
+        type.kind != OntoMath::ValueKind::ScalarField) {
+        out.ok = false;
+        out.error = "field VM Expr root must be scalar, got " +
+                    std::string(OntoMath::valueKindName(type.kind));
+        return false;
+    }
+    return emitMathScalar(*root, node.offset, out, stackDepth);
+}
+
 bool emitFieldVm(const geom::SdfNode& node,
                  FieldVmProgram& out,
                  uint32_t& stackDepth) {
@@ -132,10 +685,7 @@ bool emitFieldVm(const geom::SdfNode& node,
                 inst.b.x = node.dims.y;
                 break;
             case geom::SdfPrim::Expr:
-                out.ok = false;
-                out.error =
-                    "field VM Expr lowering requires native OntoMath bytecode";
-                return false;
+                return emitExprVm(node, out, stackDepth);
             case geom::SdfPrim::Convex:
                 out.ok = false;
                 out.error =
