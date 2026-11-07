@@ -3331,25 +3331,32 @@ int main() {
                sourceMeshTorusBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
                "mesh CompleteScene did not execute foreign Torus through the field VM");
 
-        // EXPR CROSSES THE VM FRONTIER: author an exact sphere SDF as
-        // OntoMath length(p)-1. No primitive enum, no RPN execution authority.
-        // The same foreign Expr blocker must now be KNOWN and occluding for
-        // both mesh and SDF receivers through the shared scene Field VM.
+        // EXPR CROSSES THE VM FRONTIER with a deliberately NON-DISTANCE
+        // representation of a sphere: 4 * (length(p) - 0.5). The zero-set is
+        // exact, but raw f is four times geometric distance. A VM that merely
+        // "can evaluate Expr" can overshoot this blocker; matching the primary
+        // SDF gradient-step policy divides by |grad f|=4 and restores the lawful
+        // step. No primitive enum and no RPN execution authority participate.
         auto exprPoint = std::make_unique<OntoMath::MathNode>();
         exprPoint->op = OntoMath::MathNode::Op::ValueLeaf;
         exprPoint->variableName = OntoMath::kAmbientPointVar;
         auto exprLength = std::make_unique<OntoMath::MathNode>();
         exprLength->op = OntoMath::MathNode::Op::Length;
         exprLength->children.push_back(std::move(exprPoint));
-        auto exprDistance = std::make_shared<OntoMath::MathNode>();
+        auto exprDistance = std::make_unique<OntoMath::MathNode>();
         exprDistance->op = OntoMath::MathNode::Op::Sub;
         exprDistance->children.push_back(std::move(exprLength));
         exprDistance->children.push_back(
-            std::make_unique<OntoMath::MathNode>(*scalarNode(1.0)));
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.5)));
+        auto exprScaled = std::make_shared<OntoMath::MathNode>();
+        exprScaled->op = OntoMath::MathNode::Op::Scale;
+        exprScaled->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(4.0)));
+        exprScaled->children.push_back(std::move(exprDistance));
 
         Object vmKnownExpr;
         vmKnownExpr.setFieldShape(
-            geom::makeImplicit(exprDistance),
+            geom::makeImplicit(exprScaled),
             glm::vec3(0.8f));
         vmKnownExpr.setRenderMode(Object::RenderMode::Auto);
         vmKnownExpr.setMaterialId("material.webgpu_source_transport_parity");
