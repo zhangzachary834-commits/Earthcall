@@ -87,6 +87,9 @@ int main() {
     std::filesystem::create_directories(isolated.path / "laws/law-basic-pixel-changer");
     std::filesystem::copy_file(sourceZone,
                                isolated.path / "zones/BasicPixelChanger/zone.json");
+    check(TestSupport::copyZoneMatterClosure(
+              sourceZone, isolated.path / "zones/BasicPixelChanger"),
+          "isolated Basic Pixel Changer carries its exact matter generation");
     std::filesystem::copy_file(sourceLaw,
                                isolated.path / "laws/law-basic-pixel-changer/law.json");
     const std::array<const char*, 6> pickerLawIds{

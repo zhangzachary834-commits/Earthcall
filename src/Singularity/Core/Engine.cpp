@@ -400,6 +400,31 @@ void Engine::tick(float dt) {
     // for this rung, so no graph-concurrency contract is introduced yet.
     if (_lawManager) _lawManager->serviceSlowAdapterClock(glfwGetTime());
 
+    // Service any in-world zone navigation requested during the law tick
+    if (!_pendingZoneSwitch.empty()) {
+        std::string dest = std::move(_pendingZoneSwitch);
+        _pendingZoneSwitch.clear();
+        bool matched = false;
+        for (size_t i = 0; i < mgr.zones().size(); ++i) {
+            if (!mgr.zones()[i] ||
+                (mgr.zones()[i]->getIdentifier() != dest && mgr.zones()[i]->name() != dest)) {
+                continue;
+            }
+            matched = true;
+            std::cout << "[Engine] 🌐 Personal Ourverse Navigator navigating to: "
+                      << mgr.zones()[i]->name() << std::endl;
+            if (!mgr.switchTo(i)) {
+                std::cerr << "[Engine] Navigator REFUSED Zone transition to '" << dest
+                          << "'; current Zone remains active.\n";
+            }
+            break;
+        }
+        if (!matched) {
+            std::cerr << "[Engine] Navigator REFUSED unknown destination Zone '"
+                      << dest << "'.\n";
+        }
+    }
+
     // Interaction reticle
     if (_lawManager) {
         if (auto* interaction = Singularity::Input::InteractionChannel::find(*_lawManager)) {

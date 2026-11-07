@@ -1,15 +1,31 @@
 # Personal Ourverse Navigator
 
-**Zach's idea (2026-10-12), recorded verbatim in spirit and left for its own session:** a "beautiful personal Ourverse navigator with little 2D/3D islands representing each world." This is what a Person meets when Earthcall.app opens, and what a fresh data home's first run should grow into.
+**Zach's idea (2026-10-12), recorded verbatim in spirit and landed 2026-10-16:** a "beautiful personal Ourverse navigator with little 2D/3D islands representing each world." This is what a Person meets when Earthcall.app opens, and what a fresh data home's first run should grow into.
 
-## Where it attaches (already built, 2026-10-12)
-- When the installed app first creates a data home, it copies `Earthcall.app/Contents/Resources/Foundation/` (sourced from `scripts/macos/Foundation/`, which doesn't exist yet) into it. See `SaveSystem::chooseDataRoot(…, foundation)` and the [macOS app task](../../Housekeeping%20and%20Build/macOS_App_Bundle/macOS_App_Bundle.md).
-- Today an empty home boots into the engine's default Zones, so the navigator has no prerequisite and is purely additive.
+## Landed Implementation (2026-10-16)
 
-## Constraints to carry into that session
-- **Interface:** it is Law plus set-to-set aimed at the pointer, not a widget (`docs/architecture/law/INTERACTION_AS_LAW.md`).
-- **Form:** islands are authored form (OntoMath, CSG, Relations), never a new `ShapeKind` or C++ class (Refusals 1 and 3; `Design/Building 2D and 3D Apps with Earthcall Guide.md`).
-- **Meaning:** worlds are Zones, and the Ourverse is the vessel of unity, not an object bag (`docs/architecture/ourverse/OURVERSE.md`).
-- **Authorship:** the Foundation ships no Person, key or Home of Zach's. Anything seeded carries an author, under `injected_by` conventions.
+The Personal Ourverse Navigator is authored as a floating archipelago inside **Ourverse Gathering** (`saves/zones/Ourverse Gathering/zone.json` and data home `~/Library/Application Support/Earthcall/zones/Ourverse Gathering/`):
+- **Central Observation Plinth (`navigator-plinth-center`):** Formed of dark slate basalt (`material.navigator.plinth.deck`) with an inscribed golden compass rose inlay (`navigator-compass-ring`) resting at `[0.0, -0.2, 0.0]`. The Person stands at `[0.0, 1.8, 0.0]` facing north toward the archipelago.
+- **Glowing Filaments:** Ethereal luminous pathways (`type: "filament"`) weaved between the plinth and the four world islands.
+- **World Islands:**
+  1. **Sanctum of Beginnings (North-West, gold):** Stepped golden spire (`island-sanctum-spire`), sunlit portal arch (`island-sanctum-arch`), and radiant gold navigation beacon (`navigator-beacon-sanctum`).
+  2. **Temple of Echoes (North-North-West, azure):** Deep blue basalt crag, silver colonnade (`island-temple-col-1..4`), pediment roof, and sapphire navigation beacon (`navigator-beacon-temple`).
+  3. **Cavern of Light (North-North-East, emerald):** Obsidian cavern base, cluster of glowing teal/cyan crystals (`island-cavern-crys-1..3`), and emerald navigation beacon (`navigator-beacon-cavern`).
+  4. **Character Architect Forge (North-East, ember):** Magma blocks, obsidian anvil, glowing crucible, and ember navigation beacon (`navigator-beacon-forge`).
+- **Interactive Law-Governed Navigation (`law-navigator-button`):**
+  - The existing authored button archetype owns generic control meaning: `object-clicked` on a subject related via `instance-of` to `category.control.button` publishes `control-activated`.
+  - Authored Law `law-navigator-button` (`saves/laws/law-navigator-button/law.json`) hears `control-activated` for a button and publishes only the domain event `zone-navigation-requested`.
+  - Engine consumes only `zone-navigation-requested`, reads the subject's `destinationZone` property ("Sanctum of Beginnings", "Temple of Echoes", etc.), and defers the active-zone transition via `Core::Engine::instance().requestZoneSwitch`. Generic button activation alone never acquires navigation semantics.
+  - In `ZoneManager::switchTo`, `applyFormationRelations` is sequenced after world object repopulation so formation relations and category memberships bind cleanly to live objects without dangling pointers across transitions.
 
-*Recorded by Claude Code / Claude Opus 5.5 / session `16d04786-8407-4a70-a57c-fa5c11094c91` / 2026-10-12. The idea is Zach's.*
+## Verification & Visual Witnesses
+Full automated offscreen WebGPU rendering and interaction loop executed via `scratch/probes/ourverse_navigator_probe.py` (`scratch/probes/ourverse_navigator_probe.cpp`):
+- `navigator_plinth_panorama.png`: 2560x1440 panoramic view of the 4 world islands from the central plinth.
+- `navigator_archipelago_aerial.png`: 2560x1440 high-angle aerial view of the archipelago and glowing filaments.
+- `navigator_island_sanctum.png`: Close-up of Sanctum of Beginnings gold spire and arch.
+- `navigator_island_temple.png`: Close-up of Temple of Echoes colonnade and sapphire beacon.
+- `navigator_island_cavern.png`: Close-up of Cavern of Light crystal spires and emerald beacon.
+- `navigator_island_forge.png`: Close-up of Character Architect Forge crucible and ember beacon.
+- `navigated_destination_sanctum.png`: Captured visual after clicking the Sanctum beacon and arriving inside Sanctum of Beginnings.
+
+*Authored by Gemini under Zach's authority · session `feb60581-5952-44ea-9dfa-5d87e8fcb273` · 2026-10-16. First Mover author `author.gemini-spark`.*

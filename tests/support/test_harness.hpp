@@ -213,6 +213,49 @@ struct BootedEngineHarness {
 // unexplained differences have no surface to appear on — and protects it
 // by backing up the save directories that get mutated beforehand and
 // restoring them after, regardless of how the test's own run went.
+// Copy the physical half of a Zone-native fixture alongside its semantic
+// identity.  A root carrying matterGeneration names an exact content-addressed
+// file; copying only <stem>.ecmatter is deliberately insufficient.
+inline bool copyZoneMatterClosure(const std::filesystem::path& sourceIdentity,
+                                  const std::filesystem::path& targetZoneDir) {
+    const nlohmann::json root = SaveSystem::readSaveData(sourceIdentity.string());
+    if (!root.is_object()) return false;
+
+    std::error_code ec;
+    std::filesystem::create_directories(targetZoneDir, ec);
+    if (ec) return false;
+
+    const std::string stem = sourceIdentity.stem().string();
+    const auto copyOne = [&](const std::filesystem::path& source) {
+        std::error_code copyEc;
+        if (!std::filesystem::exists(source, copyEc) || copyEc) return false;
+        std::filesystem::copy_file(
+            source, targetZoneDir / source.filename(),
+            std::filesystem::copy_options::overwrite_existing, copyEc);
+        return !copyEc;
+    };
+
+    if (root.contains("matterGeneration")) {
+        if (!root["matterGeneration"].is_object()) return false;
+        const std::string snapshotId =
+            root["matterGeneration"].value("snapshotId", std::string{});
+        if (snapshotId.empty()) return false;
+        const auto exact = sourceIdentity.parent_path() /
+            (stem + "." + snapshotId + ".ecmatter");
+        if (!copyOne(exact)) return false;
+    }
+
+    // Keep the fixed-name compatibility mirror when the authored fixture has
+    // one.  It is never allowed to satisfy a named generation by itself.
+    const auto compatibility =
+        sourceIdentity.parent_path() / (stem + ".ecmatter");
+    std::error_code existsEc;
+    if (std::filesystem::exists(compatibility, existsEc) && !existsEc) {
+        if (!copyOne(compatibility)) return false;
+    }
+    return true;
+}
+
 inline std::string resolveRealWorldPath(const std::string& relativeWorldPath) {
     std::string filename = relativeWorldPath;
     if (!std::filesystem::exists(filename)) {

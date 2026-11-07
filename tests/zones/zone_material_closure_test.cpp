@@ -98,6 +98,7 @@ int main() {
         j["identifier"] = id;
         j["name"] = id;
         j.erase("materials");
+        j.erase("matterGeneration");
         j["world"]["objects"][0]["objectID"] = id + "-cube";
         j["world"]["objects"][0]["materialId"] = materialId;
         if (refShared) j["materialRefs"] = nlohmann::json::array({"material.zt_shared_red"});

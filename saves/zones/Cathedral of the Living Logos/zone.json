@@ -157282,5 +157282,11 @@
     "law-astra-openhand-gesture",
     "law-astra-openhand-approach",
     "law-astra-openhand-unfold"
-  ]
+  ],
+  "matterGeneration": {
+    "snapshotId": "a36028441cd4045c",
+    "sha256": "a36028441cd4045cdc4ee11b46b47690bc325ec04374e7a79bded7e472662211",
+    "byteLength": 72,
+    "schemaVersion": 1
+  }
 }

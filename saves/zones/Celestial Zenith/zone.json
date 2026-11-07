@@ -1186,5 +1186,11 @@
   "formationRelations": [],
   "lexemes": [],
   "name": "Celestial Zenith",
-  "identifier": "Celestial Zenith"
+  "identifier": "Celestial Zenith",
+  "matterGeneration": {
+    "snapshotId": "e64eba12f3aa4bf8",
+    "sha256": "e64eba12f3aa4bf8960787d0f2192f23f044c2310252b1943f1d436342f7383f",
+    "byteLength": 5220,
+    "schemaVersion": 1
+  }
 }
