@@ -135,8 +135,6 @@ std::vector<SdfToken> compileExpr(const std::string& src) {
     return out;
 }
 
-namespace {
-
 // Lift a compiled implicit expression into an OntoMath AST -- or REFUSE.
 //
 // Returning nullptr is a real answer here, not a failure to try: makeImplicit
@@ -303,8 +301,6 @@ std::shared_ptr<OntoMath::MathNode> rpnToMathNode(const std::vector<SdfToken>& r
     if (st.size() != 1) return nullptr;
     return st.back();
 }
-
-} // namespace
 
 SdfNode makeImplicit(const std::string& src) {
     SdfNode n;
@@ -483,6 +479,68 @@ SdfNode makeImplicit(std::shared_ptr<OntoMath::Piecewise> pw) {
     return n;
 }
 
+static std::unique_ptr<OntoMath::MathNode> offsetMathNode(const OntoMath::MathNode& node, const glm::vec3& offset) {
+    if (offset == glm::vec3(0.0f)) {
+        return std::make_unique<OntoMath::MathNode>(node);
+    }
+    if (node.op == OntoMath::MathNode::Op::ValueLeaf) {
+        if (node.variableName == "p") {
+            auto p = std::make_unique<OntoMath::MathNode>();
+            p->op = OntoMath::MathNode::Op::ValueLeaf;
+            p->variableName = "p";
+
+            auto off = std::make_unique<OntoMath::MathNode>();
+            off->op = OntoMath::MathNode::Op::VectorConstruct;
+            auto ox = std::make_unique<OntoMath::MathNode>(); ox->op = OntoMath::MathNode::Op::ScalarLeaf; ox->scalarForm = OntoMath::ScalarForm::constant(offset.x);
+            auto oy = std::make_unique<OntoMath::MathNode>(); oy->op = OntoMath::MathNode::Op::ScalarLeaf; oy->scalarForm = OntoMath::ScalarForm::constant(offset.y);
+            auto oz = std::make_unique<OntoMath::MathNode>(); oz->op = OntoMath::MathNode::Op::ScalarLeaf; oz->scalarForm = OntoMath::ScalarForm::constant(offset.z);
+            off->children.push_back(std::move(ox));
+            off->children.push_back(std::move(oy));
+            off->children.push_back(std::move(oz));
+
+            auto sub = std::make_unique<OntoMath::MathNode>();
+            sub->op = OntoMath::MathNode::Op::Sub;
+            sub->children.push_back(std::move(p));
+            sub->children.push_back(std::move(off));
+            return sub;
+        } else if (node.variableName == "x") {
+            auto x = std::make_unique<OntoMath::MathNode>(); x->op = OntoMath::MathNode::Op::ValueLeaf; x->variableName = "x";
+            auto ox = std::make_unique<OntoMath::MathNode>(); ox->op = OntoMath::MathNode::Op::ScalarLeaf; ox->scalarForm = OntoMath::ScalarForm::constant(offset.x);
+            auto sub = std::make_unique<OntoMath::MathNode>(); sub->op = OntoMath::MathNode::Op::Sub;
+            sub->children.push_back(std::move(x));
+            sub->children.push_back(std::move(ox));
+            return sub;
+        } else if (node.variableName == "y") {
+            auto y = std::make_unique<OntoMath::MathNode>(); y->op = OntoMath::MathNode::Op::ValueLeaf; y->variableName = "y";
+            auto oy = std::make_unique<OntoMath::MathNode>(); oy->op = OntoMath::MathNode::Op::ScalarLeaf; oy->scalarForm = OntoMath::ScalarForm::constant(offset.y);
+            auto sub = std::make_unique<OntoMath::MathNode>(); sub->op = OntoMath::MathNode::Op::Sub;
+            sub->children.push_back(std::move(y));
+            sub->children.push_back(std::move(oy));
+            return sub;
+        } else if (node.variableName == "z") {
+            auto z = std::make_unique<OntoMath::MathNode>(); z->op = OntoMath::MathNode::Op::ValueLeaf; z->variableName = "z";
+            auto oz = std::make_unique<OntoMath::MathNode>(); oz->op = OntoMath::MathNode::Op::ScalarLeaf; oz->scalarForm = OntoMath::ScalarForm::constant(offset.z);
+            auto sub = std::make_unique<OntoMath::MathNode>(); sub->op = OntoMath::MathNode::Op::Sub;
+            sub->children.push_back(std::move(z));
+            sub->children.push_back(std::move(oz));
+            return sub;
+        }
+    }
+    auto result = std::make_unique<OntoMath::MathNode>();
+    result->op = node.op;
+    result->scalarForm = node.scalarForm;
+    result->variableName = node.variableName;
+    result->stringArg = node.stringArg;
+    result->matrixRows = node.matrixRows;
+    result->matrixCols = node.matrixCols;
+    result->unsupported = node.unsupported;
+    result->children.reserve(node.children.size());
+    for (const auto& child : node.children) {
+        result->children.push_back(child ? offsetMathNode(*child, offset) : nullptr);
+    }
+    return result;
+}
+
 std::shared_ptr<OntoMath::MathNode> SdfNode::toMathNode() const {
     if (op == SdfOp::Union) {
         if (children.size() >= 2 && children[0] && children[1]) {
@@ -524,26 +582,228 @@ std::shared_ptr<OntoMath::MathNode> SdfNode::toMathNode() const {
                     std::make_unique<OntoMath::MathNode>(*cb), t));
             }
         }
-    } else if (op == SdfOp::Leaf) {
-        if (prim == SdfPrim::Sphere) {
-            return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::sphere(dims.x));
-        } else if (prim == SdfPrim::Box) {
-            return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::box(dims));
-        } else if (prim == SdfPrim::Cylinder) {
-            return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::cylinder(dims.x, dims.y));
-        } else if (prim == SdfPrim::Torus) {
-            return std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::torus(dims.x, dims.y));
-        } else if (prim == SdfPrim::Expr) {
-            if (mathNode) return mathNode;
-            return rpnToMathNode(rpn);
+    } else if (op == SdfOp::Morph) {
+        if (children.size() >= 2 && children[0] && children[1]) {
+            auto ca = children[0]->toMathNode();
+            auto cb = children[1]->toMathNode();
+            if (ca && cb) {
+                const double blend = std::clamp(static_cast<double>(t), 0.0, 1.0);
+                auto scaleA = std::make_unique<OntoMath::MathNode>();
+                scaleA->op = OntoMath::MathNode::Op::Scale;
+                auto coeffA = std::make_unique<OntoMath::MathNode>();
+                coeffA->op = OntoMath::MathNode::Op::ScalarLeaf;
+                coeffA->scalarForm = OntoMath::ScalarForm::constant(1.0 - blend);
+                scaleA->children.push_back(std::move(coeffA));
+                scaleA->children.push_back(std::make_unique<OntoMath::MathNode>(*ca));
+
+                auto scaleB = std::make_unique<OntoMath::MathNode>();
+                scaleB->op = OntoMath::MathNode::Op::Scale;
+                auto coeffB = std::make_unique<OntoMath::MathNode>();
+                coeffB->op = OntoMath::MathNode::Op::ScalarLeaf;
+                coeffB->scalarForm = OntoMath::ScalarForm::constant(blend);
+                scaleB->children.push_back(std::move(coeffB));
+                scaleB->children.push_back(std::make_unique<OntoMath::MathNode>(*cb));
+
+                auto add = std::make_unique<OntoMath::MathNode>();
+                add->op = OntoMath::MathNode::Op::Add;
+                add->children.push_back(std::move(scaleA));
+                add->children.push_back(std::move(scaleB));
+                return std::shared_ptr<OntoMath::MathNode>(std::move(add));
+            }
         }
+    } else if (op == SdfOp::Leaf) {
+        std::shared_ptr<OntoMath::MathNode> leafNode;
+        if (prim == SdfPrim::Sphere) {
+            leafNode = std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::sphere(dims.x));
+        } else if (prim == SdfPrim::Box) {
+            leafNode = std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::box(dims));
+        } else if (prim == SdfPrim::RoundBox) {
+            auto innerB = glm::max(dims - glm::vec3(p0), glm::vec3(0.0f));
+            auto innerBox = OntoMath::MathNode::box(innerB);
+            auto rNode = std::make_unique<OntoMath::MathNode>();
+            rNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+            rNode->scalarForm = OntoMath::ScalarForm::constant(p0);
+            auto sub = std::make_unique<OntoMath::MathNode>();
+            sub->op = OntoMath::MathNode::Op::Sub;
+            sub->children.push_back(std::move(innerBox));
+            sub->children.push_back(std::move(rNode));
+            leafNode = std::shared_ptr<OntoMath::MathNode>(std::move(sub));
+        } else if (prim == SdfPrim::Ellipsoid) {
+            auto p1 = std::make_unique<OntoMath::MathNode>(); p1->op = OntoMath::MathNode::Op::ValueLeaf; p1->variableName = "p";
+            auto px = std::make_unique<OntoMath::MathNode>(); px->op = OntoMath::MathNode::Op::Component; px->stringArg = "x"; px->children.push_back(std::move(p1));
+            auto rx = std::make_unique<OntoMath::MathNode>(); rx->op = OntoMath::MathNode::Op::ScalarLeaf; rx->scalarForm = OntoMath::ScalarForm::constant(std::max(dims.x, 1e-4f));
+            auto divX = std::make_unique<OntoMath::MathNode>(); divX->op = OntoMath::MathNode::Op::Div; divX->children.push_back(std::move(px)); divX->children.push_back(std::move(rx));
+
+            auto p2 = std::make_unique<OntoMath::MathNode>(); p2->op = OntoMath::MathNode::Op::ValueLeaf; p2->variableName = "p";
+            auto py = std::make_unique<OntoMath::MathNode>(); py->op = OntoMath::MathNode::Op::Component; py->stringArg = "y"; py->children.push_back(std::move(p2));
+            auto ry = std::make_unique<OntoMath::MathNode>(); ry->op = OntoMath::MathNode::Op::ScalarLeaf; ry->scalarForm = OntoMath::ScalarForm::constant(std::max(dims.y, 1e-4f));
+            auto divY = std::make_unique<OntoMath::MathNode>(); divY->op = OntoMath::MathNode::Op::Div; divY->children.push_back(std::move(py)); divY->children.push_back(std::move(ry));
+
+            auto p3 = std::make_unique<OntoMath::MathNode>(); p3->op = OntoMath::MathNode::Op::ValueLeaf; p3->variableName = "p";
+            auto pz = std::make_unique<OntoMath::MathNode>(); pz->op = OntoMath::MathNode::Op::Component; pz->stringArg = "z"; pz->children.push_back(std::move(p3));
+            auto rz = std::make_unique<OntoMath::MathNode>(); rz->op = OntoMath::MathNode::Op::ScalarLeaf; rz->scalarForm = OntoMath::ScalarForm::constant(std::max(dims.z, 1e-4f));
+            auto divZ = std::make_unique<OntoMath::MathNode>(); divZ->op = OntoMath::MathNode::Op::Div; divZ->children.push_back(std::move(pz)); divZ->children.push_back(std::move(rz));
+
+            auto scaledP = std::make_unique<OntoMath::MathNode>(); scaledP->op = OntoMath::MathNode::Op::VectorConstruct;
+            scaledP->children.push_back(std::move(divX));
+            scaledP->children.push_back(std::move(divY));
+            scaledP->children.push_back(std::move(divZ));
+
+            auto len = std::make_unique<OntoMath::MathNode>(); len->op = OntoMath::MathNode::Op::Length;
+            len->children.push_back(std::move(scaledP));
+
+            auto one = std::make_unique<OntoMath::MathNode>(); one->op = OntoMath::MathNode::Op::ScalarLeaf;
+            one->scalarForm = OntoMath::ScalarForm::constant(1.0);
+
+            auto sub = std::make_unique<OntoMath::MathNode>(); sub->op = OntoMath::MathNode::Op::Sub;
+            sub->children.push_back(std::move(len));
+            sub->children.push_back(std::move(one));
+            leafNode = std::shared_ptr<OntoMath::MathNode>(std::move(sub));
+        } else if (prim == SdfPrim::Cylinder) {
+            auto p1 = std::make_unique<OntoMath::MathNode>(); p1->op = OntoMath::MathNode::Op::ValueLeaf; p1->variableName = "p";
+            auto p2 = std::make_unique<OntoMath::MathNode>(); p2->op = OntoMath::MathNode::Op::ValueLeaf; p2->variableName = "p";
+            auto px = std::make_unique<OntoMath::MathNode>(); px->op = OntoMath::MathNode::Op::Component; px->stringArg = "x"; px->children.push_back(std::move(p1));
+            auto py = std::make_unique<OntoMath::MathNode>(); py->op = OntoMath::MathNode::Op::Component; py->stringArg = "y"; py->children.push_back(std::move(p2));
+            auto zero = std::make_unique<OntoMath::MathNode>(); zero->op = OntoMath::MathNode::Op::ScalarLeaf; zero->scalarForm = OntoMath::ScalarForm::constant(0.0);
+            auto pxy = std::make_unique<OntoMath::MathNode>(); pxy->op = OntoMath::MathNode::Op::VectorConstruct;
+            pxy->children.push_back(std::move(px));
+            pxy->children.push_back(std::move(py));
+            pxy->children.push_back(std::move(zero));
+
+            auto lenXY = std::make_unique<OntoMath::MathNode>(); lenXY->op = OntoMath::MathNode::Op::Length;
+            lenXY->children.push_back(std::move(pxy));
+            auto r = std::make_unique<OntoMath::MathNode>(); r->op = OntoMath::MathNode::Op::ScalarLeaf; r->scalarForm = OntoMath::ScalarForm::constant(dims.x);
+            auto dRad = std::make_unique<OntoMath::MathNode>(); dRad->op = OntoMath::MathNode::Op::Sub;
+            dRad->children.push_back(std::move(lenXY));
+            dRad->children.push_back(std::move(r));
+
+            auto p3 = std::make_unique<OntoMath::MathNode>(); p3->op = OntoMath::MathNode::Op::ValueLeaf; p3->variableName = "p";
+            auto pz = std::make_unique<OntoMath::MathNode>(); pz->op = OntoMath::MathNode::Op::Component; pz->stringArg = "z"; pz->children.push_back(std::move(p3));
+            auto absZ = std::make_unique<OntoMath::MathNode>(); absZ->op = OntoMath::MathNode::Op::Abs;
+            absZ->children.push_back(std::move(pz));
+            auto h = std::make_unique<OntoMath::MathNode>(); h->op = OntoMath::MathNode::Op::ScalarLeaf; h->scalarForm = OntoMath::ScalarForm::constant(dims.y);
+            auto dZ = std::make_unique<OntoMath::MathNode>(); dZ->op = OntoMath::MathNode::Op::Sub;
+            dZ->children.push_back(std::move(absZ));
+            dZ->children.push_back(std::move(h));
+
+            leafNode = std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::intersectionOp(std::move(dRad), std::move(dZ)));
+        } else if (prim == SdfPrim::Cone) {
+            auto p1 = std::make_unique<OntoMath::MathNode>(); p1->op = OntoMath::MathNode::Op::ValueLeaf; p1->variableName = "p";
+            auto p2 = std::make_unique<OntoMath::MathNode>(); p2->op = OntoMath::MathNode::Op::ValueLeaf; p2->variableName = "p";
+            auto px = std::make_unique<OntoMath::MathNode>(); px->op = OntoMath::MathNode::Op::Component; px->stringArg = "x"; px->children.push_back(std::move(p1));
+            auto py = std::make_unique<OntoMath::MathNode>(); py->op = OntoMath::MathNode::Op::Component; py->stringArg = "y"; py->children.push_back(std::move(p2));
+            auto zero = std::make_unique<OntoMath::MathNode>(); zero->op = OntoMath::MathNode::Op::ScalarLeaf; zero->scalarForm = OntoMath::ScalarForm::constant(0.0);
+            auto pxy = std::make_unique<OntoMath::MathNode>(); pxy->op = OntoMath::MathNode::Op::VectorConstruct;
+            pxy->children.push_back(std::move(px));
+            pxy->children.push_back(std::move(py));
+            pxy->children.push_back(std::move(zero));
+
+            auto lenXY = std::make_unique<OntoMath::MathNode>(); lenXY->op = OntoMath::MathNode::Op::Length;
+            lenXY->children.push_back(std::move(pxy));
+
+            auto p3 = std::make_unique<OntoMath::MathNode>(); p3->op = OntoMath::MathNode::Op::ValueLeaf; p3->variableName = "p";
+            auto pz = std::make_unique<OntoMath::MathNode>(); pz->op = OntoMath::MathNode::Op::Component; pz->stringArg = "z"; pz->children.push_back(std::move(p3));
+            auto absZ = std::make_unique<OntoMath::MathNode>(); absZ->op = OntoMath::MathNode::Op::Abs;
+            absZ->children.push_back(std::move(pz));
+            auto hNode = std::make_unique<OntoMath::MathNode>(); hNode->op = OntoMath::MathNode::Op::ScalarLeaf; hNode->scalarForm = OntoMath::ScalarForm::constant(dims.y);
+            auto dZ = std::make_unique<OntoMath::MathNode>(); dZ->op = OntoMath::MathNode::Op::Sub;
+            dZ->children.push_back(std::move(absZ));
+            dZ->children.push_back(std::move(hNode));
+
+            auto p4 = std::make_unique<OntoMath::MathNode>(); p4->op = OntoMath::MathNode::Op::ValueLeaf; p4->variableName = "p";
+            auto pz2 = std::make_unique<OntoMath::MathNode>(); pz2->op = OntoMath::MathNode::Op::Component; pz2->stringArg = "z"; pz2->children.push_back(std::move(p4));
+            auto hNode2 = std::make_unique<OntoMath::MathNode>(); hNode2->op = OntoMath::MathNode::Op::ScalarLeaf; hNode2->scalarForm = OntoMath::ScalarForm::constant(dims.y);
+            auto hMinusZ = std::make_unique<OntoMath::MathNode>(); hMinusZ->op = OntoMath::MathNode::Op::Sub;
+            hMinusZ->children.push_back(std::move(hNode2));
+            hMinusZ->children.push_back(std::move(pz2));
+            auto scaleFactor = std::make_unique<OntoMath::MathNode>(); scaleFactor->op = OntoMath::MathNode::Op::Scale;
+            auto rFrac = std::make_unique<OntoMath::MathNode>(); rFrac->op = OntoMath::MathNode::Op::ScalarLeaf;
+            rFrac->scalarForm = OntoMath::ScalarForm::constant(dims.x / (2.0 * std::max(dims.y, 1e-4f)));
+            scaleFactor->children.push_back(std::move(rFrac));
+            scaleFactor->children.push_back(std::move(hMinusZ));
+
+            auto dCone = std::make_unique<OntoMath::MathNode>(); dCone->op = OntoMath::MathNode::Op::Sub;
+            dCone->children.push_back(std::move(lenXY));
+            dCone->children.push_back(std::move(scaleFactor));
+
+            leafNode = std::shared_ptr<OntoMath::MathNode>(OntoMath::MathNode::intersectionOp(std::move(dCone), std::move(dZ)));
+        } else if (prim == SdfPrim::Torus) {
+            auto p1 = std::make_unique<OntoMath::MathNode>(); p1->op = OntoMath::MathNode::Op::ValueLeaf; p1->variableName = "p";
+            auto p2 = std::make_unique<OntoMath::MathNode>(); p2->op = OntoMath::MathNode::Op::ValueLeaf; p2->variableName = "p";
+            auto px = std::make_unique<OntoMath::MathNode>(); px->op = OntoMath::MathNode::Op::Component; px->stringArg = "x"; px->children.push_back(std::move(p1));
+            auto py = std::make_unique<OntoMath::MathNode>(); py->op = OntoMath::MathNode::Op::Component; py->stringArg = "y"; py->children.push_back(std::move(p2));
+            auto zero1 = std::make_unique<OntoMath::MathNode>(); zero1->op = OntoMath::MathNode::Op::ScalarLeaf; zero1->scalarForm = OntoMath::ScalarForm::constant(0.0);
+            auto pxy = std::make_unique<OntoMath::MathNode>(); pxy->op = OntoMath::MathNode::Op::VectorConstruct;
+            pxy->children.push_back(std::move(px));
+            pxy->children.push_back(std::move(py));
+            pxy->children.push_back(std::move(zero1));
+
+            auto lenXY = std::make_unique<OntoMath::MathNode>(); lenXY->op = OntoMath::MathNode::Op::Length;
+            lenXY->children.push_back(std::move(pxy));
+            auto majR = std::make_unique<OntoMath::MathNode>(); majR->op = OntoMath::MathNode::Op::ScalarLeaf; majR->scalarForm = OntoMath::ScalarForm::constant(dims.x);
+            auto qX = std::make_unique<OntoMath::MathNode>(); qX->op = OntoMath::MathNode::Op::Sub;
+            qX->children.push_back(std::move(lenXY));
+            qX->children.push_back(std::move(majR));
+
+            auto p3 = std::make_unique<OntoMath::MathNode>(); p3->op = OntoMath::MathNode::Op::ValueLeaf; p3->variableName = "p";
+            auto pz = std::make_unique<OntoMath::MathNode>(); pz->op = OntoMath::MathNode::Op::Component; pz->stringArg = "z"; pz->children.push_back(std::move(p3));
+            auto zero2 = std::make_unique<OntoMath::MathNode>(); zero2->op = OntoMath::MathNode::Op::ScalarLeaf; zero2->scalarForm = OntoMath::ScalarForm::constant(0.0);
+
+            auto qVec = std::make_unique<OntoMath::MathNode>(); qVec->op = OntoMath::MathNode::Op::VectorConstruct;
+            qVec->children.push_back(std::move(qX));
+            qVec->children.push_back(std::move(pz));
+            qVec->children.push_back(std::move(zero2));
+
+            auto lenQ = std::make_unique<OntoMath::MathNode>(); lenQ->op = OntoMath::MathNode::Op::Length;
+            lenQ->children.push_back(std::move(qVec));
+            auto minR = std::make_unique<OntoMath::MathNode>(); minR->op = OntoMath::MathNode::Op::ScalarLeaf; minR->scalarForm = OntoMath::ScalarForm::constant(dims.y);
+            auto result = std::make_unique<OntoMath::MathNode>(); result->op = OntoMath::MathNode::Op::Sub;
+            result->children.push_back(std::move(lenQ));
+            result->children.push_back(std::move(minR));
+            leafNode = std::shared_ptr<OntoMath::MathNode>(std::move(result));
+        } else if (prim == SdfPrim::Convex) {
+            if (planes.empty()) return nullptr;
+            std::unique_ptr<OntoMath::MathNode> cur = nullptr;
+            for (const auto& pl : planes) {
+                auto p = std::make_unique<OntoMath::MathNode>(); p->op = OntoMath::MathNode::Op::ValueLeaf; p->variableName = "p";
+                auto nVec = std::make_unique<OntoMath::MathNode>(); nVec->op = OntoMath::MathNode::Op::VectorConstruct;
+                auto nx = std::make_unique<OntoMath::MathNode>(); nx->op = OntoMath::MathNode::Op::ScalarLeaf; nx->scalarForm = OntoMath::ScalarForm::constant(pl.x);
+                auto ny = std::make_unique<OntoMath::MathNode>(); ny->op = OntoMath::MathNode::Op::ScalarLeaf; ny->scalarForm = OntoMath::ScalarForm::constant(pl.y);
+                auto nz = std::make_unique<OntoMath::MathNode>(); nz->op = OntoMath::MathNode::Op::ScalarLeaf; nz->scalarForm = OntoMath::ScalarForm::constant(pl.z);
+                nVec->children.push_back(std::move(nx));
+                nVec->children.push_back(std::move(ny));
+                nVec->children.push_back(std::move(nz));
+
+                auto dot = std::make_unique<OntoMath::MathNode>(); dot->op = OntoMath::MathNode::Op::Dot;
+                dot->children.push_back(std::move(p));
+                dot->children.push_back(std::move(nVec));
+
+                auto d = std::make_unique<OntoMath::MathNode>(); d->op = OntoMath::MathNode::Op::ScalarLeaf; d->scalarForm = OntoMath::ScalarForm::constant(pl.w);
+                auto planeSub = std::make_unique<OntoMath::MathNode>(); planeSub->op = OntoMath::MathNode::Op::Sub;
+                planeSub->children.push_back(std::move(dot));
+                planeSub->children.push_back(std::move(d));
+
+                if (!cur) {
+                    cur = std::move(planeSub);
+                } else {
+                    cur = OntoMath::MathNode::intersectionOp(std::move(cur), std::move(planeSub));
+                }
+            }
+            leafNode = std::shared_ptr<OntoMath::MathNode>(std::move(cur));
+        } else if (prim == SdfPrim::Expr) {
+            if (mathNode) leafNode = mathNode;
+            else if (!rpn.empty()) leafNode = rpnToMathNode(rpn);
+            else if (!expr.empty()) {
+                auto comp = compileExpr(expr);
+                if (!comp.empty()) leafNode = rpnToMathNode(comp);
+            }
+        }
+
+        if (leafNode && (offset.x != 0.0f || offset.y != 0.0f || offset.z != 0.0f)) {
+            leafNode = std::shared_ptr<OntoMath::MathNode>(offsetMathNode(*leafNode, offset));
+        }
+        return leafNode;
     }
-    // REFUSE, do not substitute. This used to `return sphere(0.5)`, which
-    // turned every kind the branches above do not cover -- Cone, Ellipsoid,
-    // Ovoid, Paraboloid, RoundedBox, Convex (a whole polyhedron), and the
-    // Morph operator -- into a unit sphere, silently and with no diagnostic.
-    // A caller that cannot get a faithful AST must learn that, not receive a
-    // different shape that evaluates cleanly.
     return nullptr;
 }
 
@@ -983,7 +1243,8 @@ bool dependsOnAmbientY(const OntoMath::MathNode& n) {
     }
 
     if (n.op == Op::Unsupported || n.op == Op::Stochastic ||
-        n.op == Op::Raycast || n.op == Op::LineIntegral) {
+        n.op == Op::Raycast || n.op == Op::LineIntegral ||
+        n.op == Op::Integral || n.op == Op::Let) {   // conservative: they bind names
         return true;
     }
 

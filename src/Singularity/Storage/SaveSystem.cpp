@@ -9,8 +9,10 @@
 #include <sstream>
 #include <iomanip>
 #include <map>
+#include <array>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #if !defined(__EMSCRIPTEN__) && !defined(_WIN32)
 #include <fcntl.h>
 #include <spawn.h>
@@ -112,10 +114,82 @@ bool runQuietly(const std::vector<std::string>& args) {
     return WIFEXITED(status) && WEXITSTATUS(status) == 0;
 #endif
 }
-// Seed newly authored checkout identities (zones, materials, laws, worlds)
-// into an already-migrated data home without ever overwriting existing entries.
+// The regular files under a save entry, which may itself be one file. Dotfiles
+// (.DS_Store) belong to the desktop, not to what anyone authored.
+std::vector<std::filesystem::path> entryFiles(const std::filesystem::path& entry) {
+    namespace fs = std::filesystem;
+    std::vector<fs::path> files;
+    std::error_code ec;
+    if (fs::is_regular_file(entry, ec)) {
+        files.push_back(entry);
+        return files;
+    }
+    for (fs::recursive_directory_iterator it(entry, fs::directory_options::skip_permission_denied, ec), end;
+         !ec && it != end; it.increment(ec)) {
+        if (it->path().filename().string().rfind('.', 0) == 0) continue;
+        std::error_code fileEc;
+        if (it->is_regular_file(fileEc)) files.push_back(it->path());
+    }
+    return files;
+}
+
+bool sameBytes(const std::filesystem::path& a, const std::filesystem::path& b) {
+    std::error_code ec;
+    const auto sizeA = std::filesystem::file_size(a, ec);
+    if (ec) return false;
+    const auto sizeB = std::filesystem::file_size(b, ec);
+    if (ec || sizeA != sizeB) return false;
+    std::ifstream inA(a, std::ios::binary), inB(b, std::ios::binary);
+    if (!inA || !inB) return false;
+    std::array<char, 65536> bufA{}, bufB{};
+    while (inA && inB) {
+        inA.read(bufA.data(), static_cast<std::streamsize>(bufA.size()));
+        inB.read(bufB.data(), static_cast<std::streamsize>(bufB.size()));
+        if (inA.gcount() != inB.gcount()) return false;
+        if (std::memcmp(bufA.data(), bufB.data(), static_cast<std::size_t>(inA.gcount())) != 0) return false;
+    }
+    return true;
+}
+
+// True when the checkout's copy of an entry has a later file date than everything
+// in the home's copy and its bytes differ: possibly an authored update that has not
+// arrived. Only possibly: a git operation also moves file dates, and an older snapshot
+// can then look newer, so this reports and never decides. An entry the Person edited
+// later, or one with the same bytes, is not reported.
+bool checkoutEntryIsUndelivered(const std::filesystem::path& src,
+                                const std::filesystem::path& dst) {
+    namespace fs = std::filesystem;
+    const auto newest = [](const std::vector<fs::path>& files) {
+        fs::file_time_type latest = fs::file_time_type::min();
+        for (const auto& f : files) {
+            std::error_code ec;
+            const auto t = fs::last_write_time(f, ec);
+            if (!ec && t > latest) latest = t;
+        }
+        return latest;
+    };
+    const auto srcFiles = entryFiles(src);
+    if (newest(srcFiles) <= newest(entryFiles(dst))) return false;
+    std::error_code ec;
+    const bool srcIsFile = fs::is_regular_file(src, ec);
+    for (const auto& f : srcFiles) {
+        const fs::path counterpart = srcIsFile ? dst : dst / fs::relative(f, src, ec);
+        if (!sameBytes(f, counterpart)) return true;
+    }
+    return false;
+}
+
+// Seed newly authored checkout identities (zones, materials, laws, worlds) into
+// an already-migrated data home. An entry the home already holds is the Person's
+// and is never touched, whatever it is named: a list of showcase names used to be
+// deleted and re-copied here, erasing in-app authoring on every call. This runs
+// at boot and again whenever Zones are listed. `undelivered`, when given, collects
+// entries whose checkout copy is a newer, different version, so that update is
+// reported instead of arriving by erasure or disappearing silently. Install those
+// deliberately: docs/architecture/law/FIRST_MOVER_AUTHORING.md section 7 rule 8.
 void seedMissingCheckoutIdentities(const std::filesystem::path& home,
-                                   const std::filesystem::path& checkoutSaves) {
+                                   const std::filesystem::path& checkoutSaves,
+                                   std::vector<std::string>* undelivered = nullptr) {
     namespace fs = std::filesystem;
     std::error_code ec;
     if (home.empty() || checkoutSaves.empty()) return;
@@ -129,17 +203,11 @@ void seedMissingCheckoutIdentities(const std::filesystem::path& home,
         fs::create_directories(dstDir, ec);
         for (const auto& entry : fs::directory_iterator(srcDir, ec)) {
             const std::string fname = entry.path().filename().string();
+            if (fname.rfind('.', 0) == 0) continue; // .DS_Store is not an identity
             const fs::path dst = dstDir / fname;
-            const bool isSanctuary =
-                (fname == "Sky-Island Sanctuary" ||
-                 fname.rfind("sky.sanctuary.", 0) == 0 ||
-                 fname.rfind("law-sky-sanctuary-", 0) == 0 ||
-                 fname == "sky_island_sanctuary.json");
             if (fs::exists(dst, ec)) {
-                if (isSanctuary) {
-                    fs::remove_all(dst, ec);
-                    fs::copy(entry.path(), dst,
-                             fs::copy_options::recursive | fs::copy_options::overwrite_existing, ec);
+                if (undelivered && checkoutEntryIsUndelivered(entry.path(), dst)) {
+                    undelivered->push_back(std::string(subdir) + "/" + fname);
                 }
                 continue;
             }
@@ -147,6 +215,27 @@ void seedMissingCheckoutIdentities(const std::filesystem::path& home,
                      fs::copy_options::recursive | fs::copy_options::skip_existing, ec);
         }
     }
+}
+
+// Appended to chooseDataRoot's note: what the checkout has that the home was not given.
+std::string undeliveredNotice(std::vector<std::string> entries) {
+    if (entries.empty()) return {};
+    constexpr std::size_t kNamed = 8;
+    std::sort(entries.begin(), entries.end());
+    std::string notice = "\n\xE2\x9A\xA0\xEF\xB8\x8F  NOT installed, because the home is the Person's: " +
+        std::to_string(entries.size()) +
+        (entries.size() == 1 ? " checkout identity" : " checkout identities") +
+        " with a later file date and different bytes than the data home: ";
+    for (std::size_t i = 0; i < entries.size() && i < kNamed; ++i) {
+        if (i) notice += ", ";
+        notice += entries[i];
+    }
+    if (entries.size() > kNamed) {
+        notice += " and " + std::to_string(entries.size() - kNamed) + " more";
+    }
+    notice += ". A git operation can move a file date without the content being newer, so compare "
+              "first; to install one, patch it in deliberately (FIRST_MOVER_AUTHORING section 7 rule 8).";
+    return notice;
 }
 } // namespace
 
@@ -157,10 +246,11 @@ std::filesystem::path chooseDataRoot(const std::filesystem::path& checkoutSaves,
     std::error_code ec;
     const fs::path home = platformDataHome();
     if (!home.empty() && fs::is_regular_file(home / kDataHomeMarker, ec)) {
+        std::vector<std::string> undelivered;
         if (!checkoutSaves.empty() && fs::is_directory(checkoutSaves, ec)) {
-            seedMissingCheckoutIdentities(home, checkoutSaves);
+            seedMissingCheckoutIdentities(home, checkoutSaves, &undelivered);
         }
-        note = "data home: " + home.string();
+        note = "data home: " + home.string() + undeliveredNotice(std::move(undelivered));
         return home;
     }
     if (!checkoutSaves.empty() && fs::is_directory(checkoutSaves, ec)) {

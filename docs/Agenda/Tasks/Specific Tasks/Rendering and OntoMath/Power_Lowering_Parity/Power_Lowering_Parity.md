@@ -21,3 +21,6 @@ Follow-up: reproduce through actual scalar/vector/ScalarForm/RPN consumers as ad
 The first expanded native witness exposed CPU-subnormal/native-zero output at `FLT_MAX^-1`. Its failure is preserved and a separate direct intrinsic witness confirms the retained native behavior. This case is explicitly reported outside CPU parity; native compiler options and authored mathematics were not changed to hide it. CPU-double equivalence, exhaustive native arithmetic enclosure and subnormal parity remain open, so this task is partial. Subsequent optimization trials use a frozen power-corrected reference; all were rejected independently.
 
 **Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T05:56:25.134858-07:00 (PDT).
+
+
+**Cloud software-lane observation (2026-10-17).** On Mesa lavapipe (llvmpipe Vulkan, wgpu-native v29.0.1.1 built from the vendored tag), `webgpu_volume_shared_subexpression_test` fails 2 of 76 checks, both power normal/domain routes. Case 26, `base = −2, exp = NaN`, gives the CPU route 0 and the device NaN; the vector component case is analogous. This is a backend difference observed on a non-Metal device. It is evidence for this task's open NaN/domain contract, not a regression attributed to any recent change. Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX`.

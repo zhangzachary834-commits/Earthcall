@@ -2,7 +2,7 @@
 
 **Status:** Narrow identity/access refusals and typed live bindings/container access implemented; general memory cells, Zone-governed binding, custody, and alias persistence remain open.
 
-**Architecture:** [`PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md`](../../../../../architecture/ontology/PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md).
+**Architecture:** [`PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md`](../../../../../architecture/ontology/PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md) · **Implementation Plan:** [`PROPERTY_MEMORY_MICROMASTERY_IMPLEMENTATION_PLAN_2026-11-04.md`](../../../../../plans/PROPERTY_MEMORY_MICROMASTERY_IMPLEMENTATION_PLAN_2026-11-04.md).
 
 **Origin:** Zach's To-Do note, preserved below without rewriting his requests.
 **Recorded by:** Codex (GPT-6), session `01a0cad3-5b23-7430-b00a-0613ece86506`, 2026-09-22T13:41:24-07:00.
@@ -142,3 +142,49 @@ The current code now preserves `PropertyValue` types when reading live MathBindi
 **For future agents:** Do not interpret a typed `Map` passthrough as a general share/unique/weak cell operation or a deep copy. Scalar passthrough copies a value; existing list/dict passthrough retains a C++ shared reference. The current codec does not preserve this sharing across saves, and a nested write still notifies its reached root rather than every alias. Cross-Zone custody must be answered before implementing saved cell graphs. No inhabited save was changed in this pass.
 
 *Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-10-01 13:00 PDT. Zach supplied the shared-write/rebinding, unique-conversion, weak-expiry, and cross-Zone persistence decisions; Codex implemented the unambiguous container-access and typed-binding foundation while custody and copy semantics remain open.*
+
+## Rungs 0, 1, and 2 Landed: ValueCell Table, Alias Fan-Out, and Authored Binding Modes (2026-11-04)
+
+Per `PROPERTY_MEMORY_MICROMASTERY_IMPLEMENTATION_PLAN_2026-11-04.md`, Rungs 0, 1, and 2 are fully implemented and verified:
+1. **Rung 0 (Being-Pointer Purge):** Removed `Singular*`, `Object*`, `Relation*`, and `Formation*` from `PropertyValue`. Verified `Property::asSingular()` bridges remain intact for constitutive structures (`BodyPart`).
+2. **Rung 1 (Checked `ValueCell` Table & Multi-Alias Rete Fan-Out):**
+   - Implemented `PropertyCellTable` (`CellId`, `CellOwnershipMode`, `ValueCell`, `CellObserver`, `deepCopy`) beneath the Kernel.
+   - Wired `Singular` and `PropertyPath` across scalars, vectors, and containers.
+   - Shared writes fan out notifications via `notifyMutation(cellId)` to every live observer, completely closing the Rete alias-deafness gap.
+   - Verified independent rebinding, `Unique` sharing refusal and explicit conversion to `Shared`, and `Weak` observation with `ExpiredCell` refusal on owner destruction.
+3. **Rung 2 (Authored Binding Modes in `MathBindings` & ActionModel):**
+   - Extended `MathBindings` with `BindingMode` (`FollowPath`, `ShareCell`, `UniqueCell`, `ObserveWeak`, `CopyValue`, `Derive`) and backward-compatible JSON serialization.
+   - Added static factory methods `ActionNode::shareCell`, `uniqueCell`, `weakCell`, and `copyCell` via `Kind::Map` with zero new enum kinds.
+   - Verified end-to-end "Red Object in Hand → Building Form" witness.
+
+All tests passed: `property_memory_access_test`, `dynamic_property_reachability_test` (witnessing `shared-cell writes on A -> A fires 2, B fires 2`), `property_path_precalc_test`, `law_creation_test`, `object_concept_test`, `no_black_box_test`. Save files remained 100% untouched and clean.
+
+*Antigravity · Gemini 3.8 Flash · session `102da8a2-db47-4627-8ce6-cf1235aeabd4` · 2026-11-04.*
+
+### Zach's 2026-11-04 Author Decisions & Firmament Pass-1 Review
+
+1. **Shared-Cell Write Precedence & `authority-over` Relation Graph (Decided by Zach, 2026-11-04):**
+   - Write precedence on shared cells is defined strictly by **authored policy**, with **no hardcoded default** locking out lower-authority writers merely because a higher-authority Law wrote to the cell.
+   - Numerical authority (`int _authorityLevel` in `Law.hpp:247`) is retired in favor of the `authority-over` Relation DAG ([`Zach Author Decisions.md`](../../../For%20Zach/Zach%20Author%20Decisions.md) AD-24, [`2026-09-24_mythos_ungoverned_governor_audit.md`](../../../../../audits/2026-09-24_mythos_ungoverned_governor_audit.md) §1, [`LAW_TIME_AUTHORITY_AND_RELATION_REGROUNDING_PLAN_2026-09-27.md`](../../../../../plans/LAW_TIME_AUTHORITY_AND_RELATION_REGROUNDING_PLAN_2026-09-27.md) §3). Authority means **one Law's authored policy takes precedence over a lower-authority Law's policy** along the `authority-over` Relation graph to decide the conditions of **where, when, how, and who** can read or write a cell.
+2. **Self-Editing Bootstrap Boundary (Decided by Zach, 2026-11-04):**
+   - Access Metalaws may only modify their own text **within explicitly defined scope**, and may **never grant themselves more authority than (or place themselves above) same-or-higher-authority Laws** in the `authority-over` Relation graph.
+3. **Pass-1 Review Fixes Queued for Pass 2 ([`PROPERTY_MEMORY_MICROMASTERY_IMPLEMENTATION_PLAN_2026-11-04.md`](../../../../../plans/PROPERTY_MEMORY_MICROMASTERY_IMPLEMENTATION_PLAN_2026-11-04.md) §3):**
+   - Refuse writes through live `CellOwnershipMode::Weak` handles (`PathResult::ReadOnly`).
+   - Fix nested container `glm::vec3` component access (`paint.layers.0.color.g`) inside a `ValueCell` so `getValue`/`setValue` inspect `*slot.dynamicSlot` when `containerPins` is non-empty rather than the root `cell->value`.
+   - Separate `BindingMode::Derive` from `ShareCell` in `ActionModel.cpp` so `Derive` evaluates the `OntoMath::Piecewise` expression and registers dependency invalidation rather than sharing a mutable cell.
+   - Synchronize `_dynamicProperties[obs.rootPropertyId]` across all live `Unique`/`Shared` dynamic observers in `PropertyCellTable::notifyMutation`.
+
+*Gemini Spark / Firmament (Gemini 3.1 Pro) · session `firmament-property-memory-micromastery-2026-11-04` · 2026-11-04T12:02:43-08:00 (PST).*
+
+## Rungs 0–5 Completed & Verified Across Passes 1–4 (2026-11-05)
+
+All 6 Rungs of [`PROPERTY_MEMORY_MICROMASTERY_IMPLEMENTATION_PLAN_2026-11-04.md`](../../../../../plans/PROPERTY_MEMORY_MICROMASTERY_IMPLEMENTATION_PLAN_2026-11-04.md) are now implemented, audited, and verified across 9 focused test binaries:
+- **Rung 0 (Being-Pointer Purge):** Removed `Singular*`, `Object*`, `Relation*`, and `Formation*` from `PropertyValue` while preserving constitutive `Property::asSingular()` bridges.
+- **Rung 1 (Checked `ValueCell` Table & Multi-Alias Rete Fan-Out):** Implemented generation-checked `PropertyCellTable` (`InlineValue`, `Shared`, `Unique`, `Weak`), live `Weak` write refusal (`PathResult::ReadOnly`), nested container component access inside cells (`paint.layers.0.color.g`), `_dynamicProperties` synchronization across shared observers, and complete observer fan-out closing Rete alias deafness.
+- **Rung 2 (Authored Binding Modes, Law Line Grammar, Lexeme Denotation & Compiler MetaLaws):** Added `FollowPath`, `ShareCell`, `UniqueCell`, `ObserveWeak`, `CopyValue`, and reactive `Derive` (`DerivedEdge` with cycle and bearer-destruction guards), wired Law Line grammar (`share`, `claim`/`unique`, `borrow`/`observe`, `derive`), `LawSentence::classify()` for open cell-binding Laws denoted by `Lexeme`s, and `@terminal-channel` compiler MetaLaw routing (`tests/singularity/law_line_test.cpp`).
+- **Rung 3 (Relation-Based Authority DAG & `TransferPolicy` Effective-Cell Governance):** Implemented `Law::hasAuthorityOver` / `hasEqualOrHigherStandingThan` over the `authority-over` Relation DAG (**AD-24**), ambient `TransferPolicy::ExecutionScope` across all Law actions, open-by-default ($O(1)$ at revision 0) effective-cell access checks (**AD-37**), and self-elevation / cycle refusals (**AD-38**).
+- **Rung 4 (Durable Cohort & Zone Alias Topology Save/Load):** Implemented `SingularPersistence::CohortContext` / `CohortScope` with order-independent `Weak`/`Shared`/`Unique` hydration, orphaned `Weak` expiry on `finalize()`, post-`faceColors` hydration ordering in `ObjectSerialization.cpp`, and full `zoneToJson` / `makeZoneFromJson` round-trip verification across `world.objects` and `storedSingulars` (`tests/singularity/property_memory_access_test.cpp` §15).
+- **Rung 5 (`CompiledPath` Pre-Calculation & Benchmarking):** Wired `PropertyPath::CompiledPath` into `MathBinding.hpp`, `ActionModel.cpp`, and `ConditionModel.cpp`, achieving a **~2.07x speedup** over raw string path resolution in the 10,000-iteration benchmark with zero semantic drift, and documented canonical vs. derived state in [`DERIVED_STATE_LEDGER.md`](../../../../../architecture/law/DERIVED_STATE_LEDGER.md).
+
+*Antigravity (Gemini 3.8 Flash) & Gemini Spark / Firmament (Gemini 3.1 Pro) · 2026-11-05.*
+

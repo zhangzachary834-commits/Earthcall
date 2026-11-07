@@ -1365,6 +1365,93 @@ private:
             const std::string b = requireBeing("the relation's target");
             return ActionNode::addRelation(a, b, type);
         }
+        if (kind == "Share" || kind == "Unique" || kind == "ObserveWeak") {
+            const std::string destPath = requirePath();
+            if (!tryMatch({"filler.from"}, "filler")) {
+                if (atEnd() && _completing) throw Stop{};
+                refuse("'" + verb->symbol + "' takes 'from <sourcePath>'", _pos);
+            }
+            const std::string srcPath = requirePath();
+            ActionNode direct = kind == "Share"  ? ActionNode::shareCell(destPath, srcPath)
+                              : kind == "Unique" ? ActionNode::uniqueCell(destPath, srcPath)
+                                                 : ActionNode::observeWeak(destPath, srcPath);
+            if (_vocab.compileInvocation && !_readOnly) {
+                const std::string modeStr = kind == "Share" ? "share" : kind == "Unique" ? "unique" : "weak";
+                nlohmann::json input{
+                    {"slot", "assignment"},
+                    {"opcode", verb->opcode},
+                    {"lexeme", verb->lexemeId},
+                    {"wordLaw", verb->lawId},
+                    {"property", destPath},
+                    {"source", srcPath},
+                    {"bindingMode", modeStr},
+                    {"expression", true},
+                    {"function", direct.mapFunction.toJson()},
+                    {"bindings", mathBindingsToJson(direct.bindings)}
+                };
+                auto compiled = _vocab.compileInvocation(input, false);
+                if (compiled.action) {
+                    for (const auto& id : compiled.laws) {
+                        if (std::find(_out.presetLawIds.begin(), _out.presetLawIds.end(), id) == _out.presetLawIds.end())
+                            _out.presetLawIds.push_back(id);
+                        _out.notes.push_back("compiled by Metalaw " + id);
+                    }
+                    return *compiled.action;
+                }
+            }
+            if (!verb->lawId.empty() &&
+                std::find(_out.presetLawIds.begin(), _out.presetLawIds.end(), verb->lawId) == _out.presetLawIds.end()) {
+                _out.presetLawIds.push_back(verb->lawId);
+            }
+            return direct;
+        }
+        if (kind == "Derive") {
+            const std::string destPath = requirePath();
+            skipSpace();
+            if (!tryMatch({"op.Eq"}, "operator")) {
+                if (!atEnd() && _text[_pos] == '=') {
+                    const std::size_t eqStart = _pos;
+                    ++_pos;
+                    mark(eqStart, _pos, "operator");
+                } else {
+                    if (atEnd() && _completing) throw Stop{};
+                    refuse("'derive' takes '<destination> = <expression>'", _pos);
+                }
+            }
+            auto e = expression();
+            OntoMath::Piecewise f;
+            OntoMath::Piecewise::Piece piece;
+            piece.mathNode = mathOf(e);
+            f.pieces.push_back(std::move(piece));
+            ActionNode direct = ActionNode::deriveCell(destPath, std::move(f), std::move(e.bindings));
+            if (_vocab.compileInvocation && !_readOnly) {
+                nlohmann::json input{
+                    {"slot", "assignment"},
+                    {"opcode", verb->opcode},
+                    {"lexeme", verb->lexemeId},
+                    {"wordLaw", verb->lawId},
+                    {"property", destPath},
+                    {"bindingMode", "derive"},
+                    {"expression", true},
+                    {"function", direct.mapFunction.toJson()},
+                    {"bindings", mathBindingsToJson(direct.bindings)}
+                };
+                auto compiled = _vocab.compileInvocation(input, false);
+                if (compiled.action) {
+                    for (const auto& id : compiled.laws) {
+                        if (std::find(_out.presetLawIds.begin(), _out.presetLawIds.end(), id) == _out.presetLawIds.end())
+                            _out.presetLawIds.push_back(id);
+                        _out.notes.push_back("compiled by Metalaw " + id);
+                    }
+                    return *compiled.action;
+                }
+            }
+            if (!verb->lawId.empty() &&
+                std::find(_out.presetLawIds.begin(), _out.presetLawIds.end(), verb->lawId) == _out.presetLawIds.end()) {
+                _out.presetLawIds.push_back(verb->lawId);
+            }
+            return direct;
+        }
         refuse("the " + kind + " action has no sentence form yet; author it in the Law Graph", at);
     }
 
@@ -1600,6 +1687,11 @@ static std::string canonicalDescription(const std::string& op) {
         {"action.AddProperty", "grant <property> [to <value>]"},
         {"action.RemoveProperty", "revoke <property>"},
         {"action.AddRelation", "relate <being> <type> <being>"},
+        {"filler.from", "source path"},
+        {"action.Share", "share <path> from <sourcePath>"},
+        {"action.Unique", "claim <path> from <sourcePath>"},
+        {"action.ObserveWeak", "borrow <path> from <sourcePath>"},
+        {"action.Derive", "derive <path> = <expression>"},
     };
     for (const auto& [code, text] : kTable) {
         if (op == code) return text;
@@ -1625,9 +1717,16 @@ std::vector<Word> canonicalWords() {
         {"and", "logic.And", "", ""},
         {"or", "logic.Or", "", ""},
         {"to", "filler.to", "", ""},
+        {"from", "filler.from", "", ""},
         {"by", "filler.by", "", ""},
         {"about", "filler.about", "", ""},
         {"within", "filler.within", "", ""},
+        {"share", "action.Share", "", ""},
+        {"claim", "action.Unique", "", ""},
+        {"unique", "action.Unique", "", ""},
+        {"borrow", "action.ObserveWeak", "", ""},
+        {"observe", "action.ObserveWeak", "", ""},
+        {"derive", "action.Derive", "", ""},
         {"OnEvent", "activation.OnEvent", "", ""},
         {"WhileTrue", "activation.WhileTrue", "", ""},
         {"OnBecomeTrue", "activation.OnBecomeTrue", "", ""},
@@ -1691,6 +1790,17 @@ std::string classify(const Law& law, const std::vector<std::string>& triggers, P
         bool open = false;
         switch (a.kind) {
             case K::Set: case K::Add: case K::Scale: open = a.path.empty(); break;
+            case K::Map:
+                if (a.path.empty()) {
+                    for (const auto& [varName, entry] : a.bindings) {
+                        if (entry.mode == BindingMode::ShareCell) return "action.Share";
+                        if (entry.mode == BindingMode::UniqueCell) return "action.Unique";
+                        if (entry.mode == BindingMode::ObserveWeak) return "action.ObserveWeak";
+                        if (entry.mode == BindingMode::Derive) return "action.Derive";
+                    }
+                    open = true;
+                }
+                break;
             case K::Publish: open = a.eventType.empty(); break;
             case K::Spawn: open = a.conceptId.empty(); break;
             case K::AddProperty: case K::RemoveProperty: case K::AddRelation:
@@ -1927,6 +2037,10 @@ std::string argumentTemplate(const std::string& op) {
         {"action.AddProperty", "‹property›"},
         {"action.RemoveProperty", "‹property›"},
         {"action.AddRelation", "‹being› ‹type› ‹being›"},
+        {"action.Share", "‹path› from ‹sourcePath›"},
+        {"action.Unique", "‹path› from ‹sourcePath›"},
+        {"action.ObserveWeak", "‹path› from ‹sourcePath›"},
+        {"action.Derive", "‹path› = ‹expression›"},
         {"op.Eq", "‹value›"}, {"op.Ne", "‹value›"}, {"op.Lt", "‹value›"}, {"op.Le", "‹value›"},
         {"op.Gt", "‹value›"}, {"op.Ge", "‹value›"},
         {"op.Near", "‹value› within ‹tolerance›"},

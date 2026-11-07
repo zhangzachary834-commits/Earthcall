@@ -40,6 +40,7 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Chat.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/OntoMath/ExpressionEvaluation.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/Storage/FileChannel.hpp"
 #include "Singularity/Core/CodecChannel.hpp"
@@ -283,6 +284,9 @@ bool Engine::initLogic() {
 
     // Register first-mover ScreenChannel (GPU graphics telemetry and render governance)
     Singularity::Screen::ScreenChannel::syncRegister(*_lawManager);
+    // OntoMath answers <prefix>.evaluation on any being carrying an authored
+    // <prefix>.expression: a read-only derived report (ExpressionEvaluation.hpp).
+    OntoMath::registerEvaluationReading();
 
     // Register first-mover FileChannel (native computer filesystem sense and act)
     Singularity::Storage::FileChannel::syncRegister(*_lawManager);

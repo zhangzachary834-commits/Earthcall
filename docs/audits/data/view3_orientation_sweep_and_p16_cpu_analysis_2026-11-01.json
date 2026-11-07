@@ -1,0 +1,188 @@
+{
+  "audit_date": "2026-11-01",
+  "author": "Aetherion / The Firmament (Gemini 4 Argon)",
+  "branch": "claude/ray-domain-transport-rung0",
+  "parent_commit_reviewed": "ed2570adf24d9e2c5e10c732d661e3708988e1f3",
+  "scope": "CPU-only exact geometry, tile-routing census, and producer/consumer workload analysis (no Metal GPU timing run while Zach is in a Chrome meeting)",
+  "northern_veil_curtains_t7_25": [
+    {
+      "member": 0,
+      "origin": [0.0, 48.0, 75.0],
+      "half": [160.0, 36.0, 46.0],
+      "limits": [75.0, 16.0, -12.0, 3.2],
+      "curv": [0.0868, 0.001],
+      "amps": [-15.0, -5.5, -2.0],
+      "freqs": [0.026, 0.068, 0.16]
+    },
+    {
+      "member": 1,
+      "origin": [15.0, 56.0, 140.0],
+      "half": [150.0, 38.0, 44.0],
+      "limits": [70.0, 17.0, -13.0, 2.8],
+      "curv": [0.1039, 0.001],
+      "amps": [14.0, -5.0, 2.0],
+      "freqs": [0.028, 0.075, 0.18]
+    },
+    {
+      "member": 2,
+      "origin": [-5.0, 78.0, 82.0],
+      "half": [160.0, 36.0, 46.0],
+      "limits": [75.0, 16.0, -12.0, 3.8],
+      "curv": [0.0549, 0.001],
+      "amps": [-13.0, -5.0, -1.5],
+      "freqs": [0.024, 0.06, 0.14]
+    },
+    {
+      "member": 3,
+      "origin": [22.0, 72.0, 68.0],
+      "half": [70.0, 64.0, 36.0],
+      "limits": [32.0, 30.0, -26.0, 3.0],
+      "curv": [0.0932, 0.001],
+      "amps": [-9.0, -3.5, -1.5],
+      "freqs": [0.038, 0.095, 0.18]
+    }
+  ],
+  "view3_roll_sweep_12_angles": {
+    "eye": [12.5, 0.0, 106.5],
+    "aim": [12.5, 72.0, 106.5],
+    "fov_deg": 45.0,
+    "aspect": "16:9",
+    "angles": [
+      {
+        "roll_deg": 0,
+        "label": "View3A_Sparse_UpZ",
+        "up": [0.0, 0.0, 1.0],
+        "p15_census_pct": { "empty": 64.0, "s1": 29.5, "s2": 3.5, "fallback": 3.0, "fb2": 1.8, "fb3": 1.2, "fb4": 0.0 },
+        "p16_secant_clip_census_pct": { "empty": 64.0, "s1": 29.5, "s2": 3.6, "fallback": 2.9 },
+        "active_tiles_per_curtain_pct": [7.8, 8.4, 22.7, 4.8],
+        "nonempty_pixels_pct": 35.1,
+        "avg_producer_work_per_ray": 16.56,
+        "avg_subpanels_per_ray": 2.26,
+        "avg_routed_raymarch_span": 5.61
+      },
+      {
+        "roll_deg": 15,
+        "up": [0.258819, 0.0, 0.965926],
+        "p15_census_pct": { "empty": 67.9, "s1": 20.8, "s2": 7.3, "fallback": 4.0, "fb2": 2.8, "fb3": 1.2, "fb4": 0.0 },
+        "active_tiles_per_curtain_pct": [11.5, 4.1, 19.4, 9.8]
+      },
+      {
+        "roll_deg": 30,
+        "up": [0.5, 0.0, 0.866025],
+        "p15_census_pct": { "empty": 64.9, "s1": 19.5, "s2": 7.4, "fallback": 8.1, "fb2": 6.8, "fb3": 1.3, "fb4": 0.0 },
+        "active_tiles_per_curtain_pct": [15.4, 3.5, 18.9, 14.0]
+      },
+      {
+        "roll_deg": 45,
+        "up": [0.707107, 0.0, 0.707107],
+        "p15_census_pct": { "empty": 56.7, "s1": 23.6, "s2": 7.7, "fallback": 12.0, "fb2": 10.8, "fb3": 1.3, "fb4": 0.0 },
+        "active_tiles_per_curtain_pct": [20.2, 7.3, 19.1, 17.8]
+      },
+      {
+        "roll_deg": 60,
+        "up": [0.866025, 0.0, 0.5],
+        "p15_census_pct": { "empty": 50.7, "s1": 26.0, "s2": 10.5, "fallback": 12.7, "fb2": 11.4, "fb3": 1.2, "fb4": 0.0 },
+        "active_tiles_per_curtain_pct": [24.3, 11.3, 16.3, 21.8]
+      },
+      {
+        "roll_deg": 75,
+        "label": "View3B_Dense_Roll75",
+        "up": [0.965926, 0.0, 0.258819],
+        "p15_census_pct": { "empty": 45.1, "s1": 29.2, "s2": 14.2, "fallback": 11.5, "fb2": 10.3, "fb3": 1.2, "fb4": 0.0 },
+        "p16_secant_clip_census_pct": { "empty": 45.1, "s1": 29.2, "s2": 21.7, "fallback": 4.0 },
+        "active_tiles_per_curtain_pct": [26.0, 16.0, 14.9, 24.8],
+        "nonempty_pixels_pct": 54.1,
+        "avg_producer_work_per_ray": 37.08,
+        "avg_subpanels_per_ray": 4.06,
+        "avg_routed_raymarch_span": 9.37
+      },
+      {
+        "roll_deg": 90,
+        "label": "View3B_Dense_UpX",
+        "up": [1.0, 0.0, 0.0],
+        "p15_census_pct": { "empty": 42.3, "s1": 34.7, "s2": 11.6, "fallback": 11.5, "fb2": 10.4, "fb3": 1.1, "fb4": 0.0 },
+        "p16_secant_clip_census_pct": { "empty": 42.3, "s1": 34.7, "s2": 18.9, "fallback": 4.1 },
+        "active_tiles_per_curtain_pct": [25.7, 19.3, 14.4, 22.4],
+        "nonempty_pixels_pct": 56.9,
+        "avg_producer_work_per_ray": 37.23,
+        "avg_subpanels_per_ray": 4.18,
+        "avg_routed_raymarch_span": 9.58
+      },
+      {
+        "roll_deg": 105,
+        "label": "View3B_Dense_Roll105",
+        "up": [0.965926, 0.0, -0.258819],
+        "p15_census_pct": { "empty": 42.2, "s1": 38.9, "s2": 9.2, "fallback": 9.6, "fb2": 8.8, "fb3": 0.8, "fb4": 0.0 },
+        "p16_secant_clip_census_pct": { "empty": 42.2, "s1": 38.9, "s2": 15.7, "fallback": 3.2 },
+        "active_tiles_per_curtain_pct": [22.9, 21.1, 15.2, 18.2],
+        "nonempty_pixels_pct": 56.7,
+        "avg_producer_work_per_ray": 34.82,
+        "avg_subpanels_per_ray": 3.99,
+        "avg_routed_raymarch_span": 9.19
+      },
+      {
+        "roll_deg": 120,
+        "up": [0.866025, 0.0, -0.5],
+        "p15_census_pct": { "empty": 44.3, "s1": 40.5, "s2": 9.4, "fallback": 5.8, "fb2": 5.1, "fb3": 0.7, "fb4": 0.0 },
+        "active_tiles_per_curtain_pct": [18.2, 22.0, 16.8, 14.5]
+      },
+      {
+        "roll_deg": 135,
+        "up": [0.707107, 0.0, -0.707107],
+        "p15_census_pct": { "empty": 50.7, "s1": 38.2, "s2": 8.8, "fallback": 2.3, "fb2": 1.7, "fb3": 0.5, "fb4": 0.0 },
+        "active_tiles_per_curtain_pct": [14.3, 20.2, 15.9, 10.4]
+      },
+      {
+        "roll_deg": 150,
+        "up": [0.5, 0.0, -0.866025],
+        "p15_census_pct": { "empty": 57.5, "s1": 36.6, "s2": 4.7, "fallback": 1.3, "fb2": 0.8, "fb3": 0.5, "fb4": 0.0 },
+        "active_tiles_per_curtain_pct": [10.2, 16.0, 17.3, 5.3]
+      },
+      {
+        "roll_deg": 165,
+        "up": [0.258819, 0.0, -0.965926],
+        "p15_census_pct": { "empty": 60.7, "s1": 35.2, "s2": 2.6, "fallback": 1.5, "fb2": 0.9, "fb3": 0.6, "fb4": 0.0 },
+        "active_tiles_per_curtain_pct": [5.7, 12.3, 22.7, 3.2]
+      }
+    ],
+    "person_walk_pitched_4curtain_witness": {
+      "label": "View3C_PersonWalk_Pitch75_Yaw90",
+      "eye": [12.5, 0.0, 106.5],
+      "aim": [31.135, 69.5467, 106.5],
+      "up": [0.0, 1.0, 0.0],
+      "fov_deg": 45.0,
+      "p15_census_pct": { "empty": 32.8, "s1": 39.2, "s2": 15.2, "fallback": 12.8, "fb2": 11.7, "fb3": 1.2, "fb4": 0.0 },
+      "p16_secant_clip_census_pct": { "empty": 32.8, "s1": 39.2, "s2": 23.2, "fallback": 4.7 },
+      "active_tiles_per_curtain_pct": [28.9, 26.0, 14.8, 26.7],
+      "nonempty_pixels_pct": 66.3,
+      "avg_producer_work_per_ray": 44.21,
+      "avg_subpanels_per_ray": 4.64,
+      "avg_routed_raymarch_span": 10.34
+    }
+  },
+  "p16_cpu_verified_optimizations": {
+    "opt1_classifier_secant_clip_and_ray_register_cache": {
+      "s2_refusals_across_all_views_and_64_poses": 0,
+      "s2_mismatches_across_all_views_and_64_poses": 0,
+      "gate7_near_parallel_overlap_cohort": 3,
+      "view3b_roll90_fallback_reduction_pct": -64.3,
+      "view3b_roll75_fallback_reduction_pct": -65.2,
+      "view3c_pitch75_yaw90_fallback_reduction_pct": -63.3,
+      "view1_inside_veil_fallback_reduction_pct": -25.3
+    },
+    "opt2_producer_support_clip_exterior_skip": {
+      "piece_eval_phi_reduction_view3b_roll90_pct": -56.1,
+      "piece_eval_phi_reduction_view3c_pitch75_pct": -55.9,
+      "piece_eval_phi_reduction_view1_inside_veil_pct": -55.6,
+      "piece_eval_phi_reduction_64_poses_pct": -47.8,
+      "insertion_sort_step_reduction_64_poses_pct": -29.7,
+      "bit_mismatches_across_all_rays": 0
+    },
+    "opt3_step_major_soa_subpanel_and_overlap_coalescing": {
+      "old_stride_bytes_between_adjacent_simd_lanes": 1024,
+      "new_stride_bytes_between_adjacent_simd_lanes": 16,
+      "cache_line_coalescing_factor": 8,
+      "bit_mismatches": 0
+    }
+  }
+}

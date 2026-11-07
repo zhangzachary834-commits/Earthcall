@@ -1618,7 +1618,19 @@ void validateSentenceAction(const nlohmann::json& model, unsigned depth = 0) {
             !model.contains("function") || !model.contains("bindings") || !model["bindings"].is_object())
             throw std::runtime_error(std::string("compiled ") + ActionNode::kindName(kind) + " requires a path, function, and bindings");
         auto function = OntoMath::Piecewise::fromJson(model["function"]);
-        if (function.pieces.empty()) throw std::runtime_error(std::string("compiled ") + ActionNode::kindName(kind) + " has no defined pieces");
+        auto parsedBindings = mathBindingsFromJson(model["bindings"]);
+        bool hasCellBinding = false;
+        for (const auto& [varName, entry] : parsedBindings) {
+            if (entry.mode == BindingMode::ShareCell ||
+                entry.mode == BindingMode::UniqueCell ||
+                entry.mode == BindingMode::ObserveWeak ||
+                entry.mode == BindingMode::CopyValue) {
+                hasCellBinding = true;
+                break;
+            }
+        }
+        if (function.pieces.empty() && !(kind == ActionNode::Kind::Map && hasCellBinding))
+            throw std::runtime_error(std::string("compiled ") + ActionNode::kindName(kind) + " has no defined pieces");
         for (const auto& piece : function.pieces) if (piece.mathNode) {
             std::string error;
             if (!piece.mathNode->checkTypes({}, error, nullptr, true)) throw std::runtime_error(error);

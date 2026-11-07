@@ -17,6 +17,7 @@ import os
 from pathlib import Path
 import re
 import sqlite3
+import sys
 import tempfile
 import unicodedata
 from urllib.parse import unquote, urlsplit
@@ -24,6 +25,7 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 JOURNAL = 'agent intercom/conversation_links.jsonl'
+QUARANTINE = 'agent intercom/conversation_links.quarantine.jsonl'
 LINEAGE = {'responds-to', 'continues', 'reflects-on', 'summarizes'}
 NAV = re.compile(rb'<!-- NAV_BLOCK_START -->.*?<!-- NAV_BLOCK_END -->', re.S)
 SUFFIXES = {'.md', '.txt'}
@@ -150,11 +152,9 @@ class Archive:
                     self.edges.append(dict(source=key, target=target, relation='references',
                                            origin='document', line=line))
                 if problem: self.issues.append(dict(path=key, line=line, target=dest, problem=problem))
-        try:
-            self.records = read_journal(self.root / JOURNAL)
-        except ValueError:
-            self.close()
-            raise
+        # Damage never blinds reading: search needs no journal, and a trace can
+        # still use every sound record. run() says so loudly; writes still refuse.
+        self.records, self.journal_damage = scan_journal(self.root / JOURNAL)
         active = active_records(self.records)
         for edge in active.values():
             for end in ('source', 'target'):
@@ -229,12 +229,18 @@ class Archive:
         return [self.docs[k] for k in keys]
 
 
-def read_journal(path):
-    if not path.exists(): return []
-    raw = path.read_bytes()
-    if raw and not raw.endswith(b'\n'): raise ValueError(f'{path}: incomplete journal tail; repair before appending')
-    records = []; ids = set()
-    for n, line in enumerate(raw.splitlines(), 1):
+def scan_journal(path):
+    """Return (sound records, damage), classifying every line and never refusing.
+
+    A record id names one immutable registration, so the first occurrence is the
+    record and a later identical line is a replay (git merges have made these).
+    A replay cannot revive an edge withdrawn in between. The same id with
+    different content is a conflict, which only a reader can settle.
+    """
+    if not path.exists(): return [], []
+    raw = path.read_bytes(); records = []; damage = []; first = {}
+    lines = raw.splitlines()
+    for n, line in enumerate(lines, 1):
         try:
             entry = json.loads(line)
             if entry.get('version') != 1 or entry.get('op') not in ('connect', 'disconnect'):
@@ -242,10 +248,29 @@ def read_journal(path):
             required = ('id', 'at', 'by', 'source', 'target', 'relation')
             if not all(isinstance(entry.get(k), str) and entry[k].strip() for k in required):
                 raise ValueError('missing record fields')
-            if entry['id'] in ids: raise ValueError('duplicate record id')
-            ids.add(entry['id']); records.append(entry)
         except (ValueError, AttributeError) as error:
-            raise ValueError(f'{path}:{n}: invalid connection journal: {error}') from error
+            damage.append(dict(line=n, kind='foreign', problem=str(error)))
+            continue
+        if entry['id'] not in first:
+            first[entry['id']] = entry; records.append(entry)
+        elif first[entry['id']] == entry:
+            damage.append(dict(line=n, kind='replay', problem='duplicate record id'))
+        else:
+            damage.append(dict(line=n, kind='conflict', problem='record id reused with different content'))
+    if raw and not raw.endswith(b'\n'):
+        damage.append(dict(line=len(lines), kind='tail', problem='incomplete journal tail'))
+    return records, damage
+
+
+def damage_summary(damage):
+    return (f"{len(damage)} damaged line(s), first at line {damage[0]['line']}: {damage[0]['problem']}; "
+            'preview the repair with: nav repair')
+
+
+def read_journal(path):
+    """The strict read every journal write stands on: any damage refuses."""
+    records, damage = scan_journal(path)
+    if damage: raise ValueError(f"{path}: invalid connection journal: {damage_summary(damage)}")
     return records
 
 
@@ -350,6 +375,64 @@ def tidy(archive, args):
     return dict(report, applied=True, backup=str(backup.relative_to(archive.root)))
 
 
+def line_spans(numbers):
+    spans = []
+    for n in numbers:
+        if spans and spans[-1][1] == n - 1: spans[-1][1] = n
+        else: spans.append([n, n])
+    return ', '.join(str(a) if a == b else f'{a}-{b}' for a, b in spans)
+
+
+def repair(archive, args):
+    """Restore the journal's shape without losing anything; preview unless --apply.
+
+    A replayed line is dropped because its first occurrence holds the same record.
+    Any other unreadable or schema-foreign line moves verbatim into the quarantine
+    file, attributed. Every sound line keeps its exact bytes and order. Conflicting
+    ids refuse, and a concurrent edit refuses.
+    """
+    from conversation_history_injection import mutation_lock
+    path = archive.root / JOURNAL; quarantine = archive.root / QUARANTINE
+    with mutation_lock(path):
+        records, damage = scan_journal(path)
+        raw = path.read_bytes() if path.exists() else b''
+        lines = raw.splitlines(keepends=True)
+        of_kind = lambda kind: [d['line'] for d in damage if d['kind'] == kind]
+        replayed = of_kind('replay'); foreign = of_kind('foreign'); conflicts = of_kind('conflict')
+        report = dict(journal=JOURNAL, lines=len(lines), sound=len(records),
+                      replayed=len(replayed), replayed_lines=line_spans(replayed),
+                      quarantined=len(foreign), quarantined_lines=line_spans(foreign),
+                      conflicts=line_spans(conflicts), incomplete_tail=bool(of_kind('tail')), applied=False)
+        if not args.apply or not damage: return report
+        if conflicts: raise ValueError(f'{JOURNAL}: record ids reused with different content at lines '
+                                       f'{line_spans(conflicts)}; a reader must decide, nothing changed')
+        if not args.by.strip(): raise ValueError('--by session attribution is required for repair')
+        removed = set(replayed) | set(foreign)
+        updated = b''.join(line if line.endswith(b'\n') else line + b'\n'
+                           for n, line in enumerate(lines, 1) if n not in removed)
+        fd, name = tempfile.mkstemp(prefix='.'+path.name+'.nav-', dir=path.parent)
+        try:
+            with os.fdopen(fd, 'wb') as handle:
+                handle.write(updated); handle.flush(); os.fsync(handle.fileno())
+            os.chmod(name, path.stat().st_mode)
+            if scan_journal(Path(name)) != (records, []):
+                raise ValueError(f'{JOURNAL}: staged repair changed the records; original left intact')
+            # Hand-written appends do not take the lock, so look once more.
+            if path.read_bytes() != raw: raise ValueError(f'{JOURNAL}: concurrent edit; original left intact')
+            if foreign:
+                at = datetime.now(timezone.utc).isoformat(); problems = {d['line']: d['problem'] for d in damage}
+                with quarantine.open('ab') as handle:
+                    for n in foreign:
+                        entry = dict(at=at, by=args.by.strip(), line=n, problem=problems[n],
+                                     raw=lines[n-1].rstrip(b'\r\n').decode('utf-8', 'backslashreplace'))
+                        handle.write((json.dumps(entry, ensure_ascii=False, separators=(',', ':'))+'\n').encode())
+                    handle.flush(); os.fsync(handle.fileno())
+            os.replace(name, path)
+        finally:
+            if os.path.exists(name): os.unlink(name)
+    return dict(report, applied=True, quarantine=QUARANTINE if foreign else None)
+
+
 BROWSER = '''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Earthcall · Connected Conversations</title><style>
 :root{color-scheme:dark;font:15px system-ui;background:#10161c;color:#e8edf0}*{box-sizing:border-box}body{margin:0}header{padding:22px 26px;border-bottom:1px solid #33414c}h1{margin:0 0 8px;font-size:26px}p{color:#adbdc7}input,select,button{font:inherit;background:#1e2b34;color:inherit;border:1px solid #536571;border-radius:6px;padding:9px}input{width:100%;margin:10px 0}button{cursor:pointer;text-align:left}button:hover{border-color:#6ad4ba}main{display:grid;grid-template-columns:360px 1fr;min-height:80vh}aside{padding:16px;border-right:1px solid #33414c}#results{max-height:65vh;overflow:auto}#results button{display:block;width:100%;margin:7px 0}small{display:block;color:#9bafb9;font-size:12px;overflow-wrap:anywhere}article{padding:24px;min-width:0}#relations{display:grid;grid-template-columns:1fr 1fr;gap:20px}#relations button{display:block;width:100%;margin:6px 0}pre{max-height:65vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.6 ui-monospace,monospace;background:#151f27;padding:20px;border-radius:8px}a{color:#79d8c1}#status{font-size:13px}.path{overflow-wrap:anywhere}@media(max-width:850px){main{grid-template-columns:1fr}#relations{grid-template-columns:1fr}aside{border-right:0}article{padding:16px}}
@@ -411,12 +494,16 @@ def add_parser(subcommands):
     doctor = actions.add_parser('doctor', help='bounded report of missing links and unconnected response documents'); doctor.add_argument('--limit', type=bounded, default=30)
     export = actions.add_parser('browse', help='export a self-contained searchable document browser'); export.add_argument('--output', default='scratch/intercom-navigation.html')
     cleanup = actions.add_parser('tidy', help='preview/remove legacy generated nav blocks with preserved originals'); cleanup.add_argument('--apply', action='store_true'); cleanup.add_argument('--by', default='')
+    mend = actions.add_parser('repair', help='preview/fix a damaged link journal; foreign lines are quarantined, never lost'); mend.add_argument('--apply', action='store_true'); mend.add_argument('--by', default='')
     nav.set_defaults(func=run)
 
 
 def run(args):
     archive = Archive(args.root)
     try:
+        if archive.journal_damage and args.action not in ('link', 'unlink', 'repair'):
+            print(f'intercom: warning: connections may be missing: {JOURNAL}: {damage_summary(archive.journal_damage)}',
+                  file=sys.stderr)
         return run_archive(archive, args)
     finally:
         archive.close()
@@ -434,12 +521,14 @@ def run_archive(archive, args):
     elif args.action == 'trace': result = trace(archive, archive.select(args.document), args.limit, args.references)
     elif args.action == 'browse': result = browse(archive, args)
     elif args.action == 'tidy': result = tidy(archive, args)
+    elif args.action == 'repair': result = repair(archive, args)
     else:
         explicit_sources={e['source'].split('#')[0] for e in archive.edges if e['origin']=='journal' and e['relation'] in LINEAGE}
         candidates=[k for k,d in archive.docs.items() if d['kind'] in ('chat','reflection') and k not in explicit_sources
                     and re.search(r'\b(reply|response|responding|in reply)\b',d['title']+' '+d['text'][:1800],re.I)]
         result=dict(documents=len(archive.docs), references=sum(e['origin']=='document' for e in archive.edges),
                     explicit_connections=sum(e['origin']=='journal' for e in archive.edges),
+                    journal_damage=len(archive.journal_damage),
                     issues=archive.issues[:args.limit], total_issues=len(archive.issues),
                     unconnected_response_candidates=candidates[:args.limit], candidate_count=len(candidates))
     if args.json: print(json.dumps(result,ensure_ascii=False,indent=2))
@@ -455,4 +544,4 @@ def run_archive(archive, args):
         for edge in result['edges']: print(f"  {edge['source']} --{edge['relation']}--> {edge['target']}")
         if result['truncated']: print('More connected documents exist; raise --limit (maximum 200).')
     else: print(json.dumps(result,ensure_ascii=False,indent=2))
-    return 1 if args.action == 'doctor' and result['total_issues'] else 0
+    return 1 if args.action == 'doctor' and (result['total_issues'] or result['journal_damage']) else 0

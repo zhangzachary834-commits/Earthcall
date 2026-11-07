@@ -1796,6 +1796,554 @@ int main() {
               "WGSL-unsupported matrix dimensions refuse explicitly");
     }
 
+    // --- Directive Step A/B/C: Forward-Mode Jet Parity and Hoisting Witness ---
+    {
+        // 1. Gyroid expression: cos(2.8*x)*sin(2.8*y) + cos(2.8*y)*sin(2.8*z) + cos(2.8*z)*sin(2.8*x) - 0.22
+        geom::SdfNode gyroidLeaf = geom::makeImplicit(
+            "cos(2.8*x)*sin(2.8*y) + cos(2.8*y)*sin(2.8*z) + cos(2.8*z)*sin(2.8*x) - 0.22");
+        check(sdfwgsl::isDifferentiableSdfNode(gyroidLeaf),
+              "gyroid surface qualifies for analytic gradient");
+
+        const auto gyroidProg = sdfwgsl::compile(gyroidLeaf);
+        check(gyroidProg.ok, "gyroid compiles to WGSL");
+        check(gyroidProg.wgsl.find("fn sdfEvalGrad(") != std::string::npos,
+              "gyroid compiles with analytic sdfEvalGrad function");
+        check(gyroidProg.wgsl.find("let paramOffset = instances[g_instIdx].paramOffset;") != std::string::npos,
+              "gyroid hoists paramOffset at top of evaluator");
+        check(gyroidProg.wgsl.find("const kHasSurfaceVolumetric: bool = false;") != std::string::npos,
+              "pure gyroid surface compiles with kHasSurfaceVolumetric = false");
+
+        const auto gyroidParams = sdfwgsl::collectParams(gyroidLeaf);
+        check(gyroidParams.ok && gyroidParams.values == gyroidProg.params,
+              "gyroid parameter collection matches compiled parameters");
+
+        // 2. Tear/Drop implicit surface: sqrt(x*x+y*y+z*z) - 1.0
+        geom::SdfNode tearLeaf = geom::makeImplicit("sqrt(x*x+y*y+z*z)-1");
+        check(sdfwgsl::isDifferentiableSdfNode(tearLeaf),
+              "sqrt drop surface qualifies for analytic gradient");
+        const auto tearProg = sdfwgsl::compile(tearLeaf);
+        check(tearProg.ok && tearProg.wgsl.find("fn sdfEvalGrad(") != std::string::npos,
+              "sqrt drop surface compiles with analytic sdfEvalGrad");
+
+        // 3. Composite CSG tree: Union, Subtract, SmoothUnion, Morph across primitives + expressions
+        geom::SdfNode sphereLeaf;
+        sphereLeaf.op = geom::SdfOp::Leaf;
+        sphereLeaf.prim = geom::SdfPrim::Sphere;
+        sphereLeaf.dims = glm::vec3(1.5f);
+
+        geom::SdfNode boxLeaf;
+        boxLeaf.op = geom::SdfOp::Leaf;
+        boxLeaf.prim = geom::SdfPrim::Box;
+        boxLeaf.dims = glm::vec3(1.0f);
+
+        geom::SdfNode torusLeaf;
+        torusLeaf.op = geom::SdfOp::Leaf;
+        torusLeaf.prim = geom::SdfPrim::Torus;
+        torusLeaf.dims = glm::vec3(2.0f, 0.5f, 0.0f);
+
+        geom::SdfNode csgUnion;
+        csgUnion.op = geom::SdfOp::Union;
+        csgUnion.children.push_back(std::make_shared<geom::SdfNode>(sphereLeaf));
+        csgUnion.children.push_back(std::make_shared<geom::SdfNode>(boxLeaf));
+
+        geom::SdfNode csgSubtract;
+        csgSubtract.op = geom::SdfOp::Subtract;
+        csgSubtract.children.push_back(std::make_shared<geom::SdfNode>(csgUnion));
+        csgSubtract.children.push_back(std::make_shared<geom::SdfNode>(torusLeaf));
+
+        geom::SdfNode csgSmoothUnion;
+        csgSmoothUnion.op = geom::SdfOp::SmoothUnion;
+        csgSmoothUnion.t = 0.2f;
+        csgSmoothUnion.children.push_back(std::make_shared<geom::SdfNode>(csgSubtract));
+        csgSmoothUnion.children.push_back(std::make_shared<geom::SdfNode>(gyroidLeaf));
+
+        geom::SdfNode csgMorph;
+        csgMorph.op = geom::SdfOp::Morph;
+        csgMorph.t = 0.5f;
+        csgMorph.children.push_back(std::make_shared<geom::SdfNode>(csgSmoothUnion));
+        csgMorph.children.push_back(std::make_shared<geom::SdfNode>(tearLeaf));
+
+        check(sdfwgsl::isDifferentiableSdfNode(csgMorph),
+              "composite CSG tree across primitives and expressions is differentiable");
+
+        const auto csgProg = sdfwgsl::compile(csgMorph);
+        check(csgProg.ok, "composite CSG tree compiles cleanly to WGSL");
+        check(csgProg.wgsl.find("fn sdfEvalGrad(") != std::string::npos,
+              "composite CSG tree emits analytic forward-mode Jet gradient");
+        check(csgProg.wgsl.find("fn sdfNormal(p: vec3<f32>) -> vec3<f32> {\n    let jet = sdfEvalGrad(p);") != std::string::npos,
+              "normal evaluator calls sdfEvalGrad once instead of 4 finite difference passes");
+        check(csgProg.wgsl.find("fn sdfSampleStep(p: vec3<f32>) -> StepSample {\n    let jet = sdfEvalGrad(p);") != std::string::npos,
+              "march step calls sdfEvalGrad once instead of 4 finite difference passes");
+
+        const auto csgParams = sdfwgsl::collectParams(csgMorph);
+        check(csgParams.ok && csgParams.values == csgProg.params,
+              "composite CSG tree parameter collection exactly matches compiled parameters");
+
+        // 4. Volumetric isolation witness
+        auto densityNode = std::make_shared<OntoMath::MathNode>();
+        densityNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+        densityNode->scalarForm = OntoMath::ScalarForm::constant(0.5);
+        OntoMath::Piecewise densityPw = OntoMath::Piecewise::continuous(densityNode);
+        const auto volProg = sdfwgsl::compile(
+            csgMorph, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            &densityPw, sdfwgsl::DensityInputKind::Authored);
+        check(volProg.ok, "volumetric composite field compiles cleanly");
+        check(volProg.wgsl.find("const kHasSurfaceVolumetric: bool = true;") != std::string::npos,
+              "field with authored density sets kHasSurfaceVolumetric = true");
+
+        // 5. Firmament Corrective Witnesses:
+        //    (a) 1-pass analytical primitive gradients (no 6-tap finite differences in sdBoxGrad / sdCylinderGrad / sdConeGrad / sdEllipsoidGrad)
+        //    (b) Decoupled value-only sdfEval(p) so 1-Lipschitz sphere marching never computes or discards gradients
+        check(csgProg.wgsl.find("sdBox(p + vec3<f32>") == std::string::npos &&
+                  csgProg.wgsl.find("sdCylinder(p + vec3<f32>") == std::string::npos &&
+                  csgProg.wgsl.find("sdCone(p + vec3<f32>") == std::string::npos &&
+                  csgProg.wgsl.find("sdEllipsoid(p + vec3<f32>") == std::string::npos,
+              "primitive gradient functions use 1-pass analytical formulas without 6-tap finite differences");
+        check(csgProg.wgsl.find("return sdfEvalGrad(p).value;") == std::string::npos,
+              "sdfEval(p) is emitted as a standalone scalar evaluator rather than delegating to sdfEvalGrad(p)");
+
+        // 6. Rung 3 Closed-Form Root Hit Witness
+        {
+            auto rootSphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f));
+            rootSphere.offset = glm::vec3(1.0f, 2.0f, 3.0f);
+            const auto sphereProg = sdfwgsl::compile(rootSphere);
+            check(sphereProg.ok, "root sphere compiles");
+            check(sphereProg.wgsl.find("let directHit = rootClosedFormHit(ro, rd, t, maxDist);") != std::string::npos,
+                  "marcher calls rootClosedFormHit");
+            check(sphereProg.wgsl.find("let h = b * b - c;") != std::string::npos,
+                  "rootClosedFormHit contains quadratic ray-sphere intersection");
+            const auto sphereParams = sdfwgsl::collectParams(rootSphere);
+            check(sphereParams.ok && sphereParams.values == sphereProg.params,
+                  "root sphere parameter collection matches compile");
+
+            auto rootBox = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.4f, 0.5f, 0.6f));
+            rootBox.offset = glm::vec3(-1.0f, 0.5f, 2.0f);
+            const auto boxProg = sdfwgsl::compile(rootBox);
+            check(boxProg.ok, "root box compiles");
+            check(boxProg.wgsl.find("let slab = rayAabb(ro - off, rd, b);") != std::string::npos,
+                  "rootClosedFormHit contains slab ray-box intersection");
+            const auto boxParams = sdfwgsl::collectParams(rootBox);
+            check(boxParams.ok && boxParams.values == boxProg.params,
+                  "root box parameter collection matches compile");
+
+            auto rootConvex = geom::SdfNode::leaf(geom::SdfPrim::Convex, glm::vec3(0.0f));
+            rootConvex.offset = glm::vec3(0.0f, 1.0f, 0.0f);
+            rootConvex.planes = {
+                glm::vec4(1.0f, 0.0f, 0.0f, 0.5f),
+                glm::vec4(-1.0f, 0.0f, 0.0f, 0.5f),
+                glm::vec4(0.0f, 1.0f, 0.0f, 0.5f),
+                glm::vec4(0.0f, -1.0f, 0.0f, 0.5f)
+            };
+            const auto cvxProg = sdfwgsl::compile(rootConvex);
+            check(cvxProg.ok, "root convex compiles");
+            check(cvxProg.wgsl.find("let tPlane = num / den;") != std::string::npos,
+                  "rootClosedFormHit contains plane half-space intersection");
+            const auto cvxParams = sdfwgsl::collectParams(rootConvex);
+            check(cvxParams.ok && cvxParams.values == cvxProg.params,
+                  "root convex parameter collection matches compile");
+
+            check(csgProg.wgsl.find("fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {\n    return vec2<f32>(-1.0, -1.0);") != std::string::npos,
+                  "composite CSG tree falls back to -1 for rootClosedFormHit");
+        }
+
+        // 7. Rung 4 Conservative Bounding-Sphere Subtree Pruning Witness
+        {
+            auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f));
+            auto box = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.3f, 0.3f, 0.3f));
+            box.offset = glm::vec3(5.0f, 0.0f, 0.0f);
+            auto cyl = geom::SdfNode::leaf(geom::SdfPrim::Cylinder, glm::vec3(0.2f, 0.4f, 0.0f));
+            cyl.offset = glm::vec3(5.2f, 0.1f, 0.0f);
+            auto torus = geom::SdfNode::leaf(geom::SdfPrim::Torus, glm::vec3(0.3f, 0.05f, 0.0f));
+            torus.offset = glm::vec3(5.1f, -0.1f, 0.0f);
+
+            auto subCsg = geom::SdfNode::binary(
+                geom::SdfOp::SmoothUnion,
+                box,
+                geom::SdfNode::binary(geom::SdfOp::Union, cyl, torus),
+                0.15f);
+
+            glm::vec3 cB(0.0f);
+            float rB = 0.0f;
+            bool ok = sdfwgsl::tryComputeSdfBoundingSphere(subCsg, cB, rB);
+            check(ok, "tryComputeSdfBoundingSphere succeeds on 3-leaf primitive subtree");
+            check(cB.x > 4.5f && rB > 0.4f, "subCsg bounding sphere encloses offset primitives");
+
+            auto tree = geom::SdfNode::binary(geom::SdfOp::Union, sphere, subCsg);
+            const auto progBefore = sdfwgsl::compile(tree);
+            check(progBefore.ok, "tree with prunable child 1 compiles");
+            check(progBefore.wgsl.find("let boundB") != std::string::npos,
+                  "shader contains boundB distance calculation");
+            check(progBefore.wgsl.find("if (boundB") != std::string::npos,
+                  "shader contains runtime bounding sphere guard");
+
+            // Mutate parameters in child 1 without structural changes
+            tree.children[1]->children[0]->offset.y = 1.0f;
+            tree.children[1]->children[1]->children[0]->dims.x = 0.25f;
+            const auto refreshed = sdfwgsl::collectParams(tree);
+            const auto progAfter = sdfwgsl::compile(tree);
+            check(refreshed.ok && refreshed.values == progAfter.params,
+                  "parameter recollection matches full compile on pruned tree");
+            check(progBefore.wgsl == progAfter.wgsl,
+                  "WGSL is byte-identical across parameter mutation on pruned tree");
+        }
+
+        // 8. Rung 5B Analytical Tight Proxy AABB Computation
+        {
+            auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.2f));
+            sphere.offset = glm::vec3(0.5f, -0.5f, 2.0f);
+            glm::vec3 sMin(0.0f), sMax(0.0f);
+            bool okSphere = sdfwgsl::tryComputeSdfTightAabb(sphere, sMin, sMax);
+            check(okSphere, "tryComputeSdfTightAabb succeeds on Sphere leaf");
+            check(std::abs(sMin.x - (0.5f - 1.2f)) < 1e-5f &&
+                  std::abs(sMax.x - (0.5f + 1.2f)) < 1e-5f,
+                  "Sphere tight AABB matches exact radius");
+
+            auto box = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.5f, 1.0f, 2.0f));
+            box.offset = glm::vec3(1.0f, 2.0f, 3.0f);
+            glm::vec3 bMin(0.0f), bMax(0.0f);
+            bool okBox = sdfwgsl::tryComputeSdfTightAabb(box, bMin, bMax);
+            check(okBox, "tryComputeSdfTightAabb succeeds on Box leaf");
+            check(std::abs(bMin.x - 0.5f) < 1e-5f && std::abs(bMax.x - 1.5f) < 1e-5f &&
+                  std::abs(bMin.y - 1.0f) < 1e-5f && std::abs(bMax.y - 3.0f) < 1e-5f,
+                  "Box tight AABB matches exact half-extents and offset");
+
+            // Subtract(A, B): bounded by child A
+            auto subTree = geom::SdfNode::binary(geom::SdfOp::Subtract, box, sphere);
+            glm::vec3 subMin(0.0f), subMax(0.0f);
+            bool okSub = sdfwgsl::tryComputeSdfTightAabb(subTree, subMin, subMax);
+            check(okSub, "tryComputeSdfTightAabb succeeds on Subtract tree");
+            check(subMin == bMin && subMax == bMax,
+                  "Subtract tight AABB is bounded strictly by positive child A");
+
+            // Unbounded / Expr fails open
+            auto exprNode = geom::makeImplicit("y - sin(x)");
+            glm::vec3 eMin(0.0f), eMax(0.0f);
+            bool okExpr = sdfwgsl::tryComputeSdfTightAabb(exprNode, eMin, eMax);
+            check(!okExpr, "tryComputeSdfTightAabb fails open (returns false) on Expr leaf");
+        }
+
+        // 9. Rung 6A CSG Subtree Pruning for Subtract with >= 2 Leaves
+        {
+            auto mainBody = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(2.0f, 2.0f, 2.0f));
+            auto recess = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.5f, 0.5f, 0.5f));
+            recess.offset = glm::vec3(4.0f, 0.0f, 0.0f);
+            auto hole = geom::SdfNode::leaf(geom::SdfPrim::Cylinder, glm::vec3(0.2f, 0.6f, 0.0f));
+            hole.offset = glm::vec3(4.0f, 0.0f, 0.0f);
+
+            // 2-leaf composite child: Subtract(recess, hole)
+            auto carvedFeature = geom::SdfNode::binary(geom::SdfOp::Subtract, recess, hole);
+            check(sdfwgsl::countSdfLeaves(carvedFeature) == 2, "carved feature has exactly 2 leaves");
+
+            glm::vec3 cB(0.0f);
+            float rB = 0.0f;
+            bool okB = sdfwgsl::tryComputeSdfBoundingSphere(carvedFeature, cB, rB);
+            check(okB, "tryComputeSdfBoundingSphere succeeds on 2-leaf Subtract composite");
+            check(cB.x > 3.5f && rB > 0.4f, "carvedFeature bounding sphere encloses offset primitives");
+
+            // Root: mainBody - carvedFeature
+            auto carvedTree = geom::SdfNode::binary(geom::SdfOp::Subtract, mainBody, carvedFeature);
+            const auto progBefore = sdfwgsl::compile(carvedTree);
+            check(progBefore.ok, "Subtract tree with 2-leaf prunable child compiles");
+            check(progBefore.wgsl.find("let boundB") != std::string::npos,
+                  "Subtract shader contains boundB distance calculation");
+            check(progBefore.wgsl.find("if (boundB") != std::string::npos,
+                  "Subtract shader contains runtime bounding sphere guard");
+            check(progBefore.wgsl.find("(-(") != std::string::npos,
+                  "Subtract shader contains -d_A pruning threshold guard");
+
+            // Parameter mutation test
+            carvedTree.children[1]->children[0]->offset.y = 0.5f;
+            const auto refreshed = sdfwgsl::collectParams(carvedTree);
+            const auto progAfter = sdfwgsl::compile(carvedTree);
+            check(refreshed.ok && refreshed.values == progAfter.params,
+                  "parameter recollection matches full compile on pruned Subtract tree");
+            check(progBefore.wgsl == progAfter.wgsl,
+                  "WGSL is byte-identical across parameter mutation on pruned Subtract tree");
+        }
+
+        // 10. Rung 6B Conditional Perlin Noise Stripping in SdfWgsl
+        {
+            auto pureSphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+            const auto pureProg = sdfwgsl::compile(pureSphere);
+            check(pureProg.ok, "pureSphere compiles");
+            check(pureProg.wgsl.find("cnoise3") == std::string::npos,
+                  "pure geometry SDF strips unused cnoise3 and cnoise3_grad from WGSL");
+
+            auto noiseExpr = geom::makeImplicit(terrainMath(40.0));
+            const auto noiseProg = sdfwgsl::compile(noiseExpr);
+            check(noiseProg.ok, "noiseExpr compiles");
+            check(noiseProg.wgsl.find("fn cnoise3(P: vec3<f32>) -> f32") != std::string::npos,
+                  "noise-dependent SDF includes cnoise3 definition in WGSL");
+        }
+
+        // 11. Rung 7 OntoMath Irreducible 1D Ray-Domain Compilation & Rung 8A Left-Heavy CSG Pruning
+        {
+            // 11.1 Law I: Ellipsoid and authored Expr sqrt(x*x + y*y + z*z) - 1
+            auto ellipsoid = geom::SdfNode::leaf(geom::SdfPrim::Ellipsoid, glm::vec3(140.0f, 18.0f, 0.35f));
+            ellipsoid.offset = glm::vec3(0.0f, 10.0f, -5.0f);
+            const auto ellProgBefore = sdfwgsl::compile(ellipsoid);
+            check(ellProgBefore.ok, "Ellipsoid compiles");
+            check(ellProgBefore.wgsl.find("let m = (ro - off) / r;") != std::string::npos,
+                  "Ellipsoid emits Law I scaled anisotropic quadratic 1D solver");
+            ellipsoid.dims.y = 20.0f;
+            const auto ellRefreshed = sdfwgsl::collectParams(ellipsoid);
+            const auto ellProgAfter = sdfwgsl::compile(ellipsoid);
+            check(ellRefreshed.ok && ellRefreshed.values == ellProgAfter.params,
+                  "Ellipsoid parameter recollection matches full compile");
+            check(ellProgBefore.wgsl == ellProgAfter.wgsl,
+                  "Ellipsoid WGSL is byte-identical across parameter mutation");
+
+            auto exprDrop = geom::makeImplicit("sqrt(x*x + y*y + z*z) - 2.5");
+            exprDrop.offset = glm::vec3(1.0f, 2.0f, 3.0f);
+            const auto dropProgBefore = sdfwgsl::compile(exprDrop);
+            check(dropProgBefore.ok, "Authored Expr drop compiles");
+            const std::string expectedRadiusSlot =
+                "let r = P.v[paramOffset + " + std::to_string(dropProgBefore.params.size() - 1) + "u];";
+            check(dropProgBefore.wgsl.find("let m = ro - off;") != std::string::npos &&
+                  dropProgBefore.wgsl.find("let b = dot(m, rd);") != std::string::npos &&
+                  dropProgBefore.wgsl.find(expectedRadiusSlot) != std::string::npos &&
+                  std::abs(dropProgBefore.params.back() - 2.5f) < 1e-5f,
+                  "Authored Expr sqrt(x*x + y*y + z*z) - 2.5 emits Law I 1D quadratic root finder reading exact radius slot");
+            exprDrop.offset.x = 2.5f;
+            const auto dropRefreshed = sdfwgsl::collectParams(exprDrop);
+            const auto dropProgAfter = sdfwgsl::compile(exprDrop);
+            check(dropRefreshed.ok && dropRefreshed.values == dropProgAfter.params,
+                  "Authored Expr parameter recollection matches full compile");
+            check(dropProgBefore.wgsl == dropProgAfter.wgsl,
+                  "Authored Expr WGSL is byte-identical across parameter mutation");
+
+            // Regression witness against 2-point numerical probe: sqrt(9*x) - 1 has c(0,0,0)=0 and c(1,2,2)=9,
+            // and must NEVER be falsely classified as a Euclidean sphere!
+            auto fakeSphere = geom::makeImplicit("sqrt(9*x) - 1");
+            const auto fakeSphereProg = sdfwgsl::compile(fakeSphere);
+            check(fakeSphereProg.ok &&
+                  fakeSphereProg.wgsl.find("return vec2<f32>(-1.0, -1.0);") != std::string::npos,
+                  "Non-Euclidean expression sqrt(9*x) - 1 is rejected by symbolic ScalarForm check");
+
+            // 11.2 Law II: Cylinder
+            auto cylinder = geom::SdfNode::leaf(geom::SdfPrim::Cylinder, glm::vec3(12.1f, 0.2f, 0.0f));
+            cylinder.offset = glm::vec3(0.0f, 1.0f, 0.0f);
+            const auto cylProgBefore = sdfwgsl::compile(cylinder);
+            check(cylProgBefore.ok, "Cylinder compiles");
+            check(cylProgBefore.wgsl.find("let a = rd.x * rd.x + rd.y * rd.y;") != std::string::npos &&
+                  cylProgBefore.wgsl.find("let tz0 = (-h - m.z) / rd.z;") != std::string::npos,
+                  "Cylinder emits Law II 1D circular quadric + Z slab intersection");
+            cylinder.dims.x = 15.0f;
+            const auto cylRefreshed = sdfwgsl::collectParams(cylinder);
+            const auto cylProgAfter = sdfwgsl::compile(cylinder);
+            check(cylRefreshed.ok && cylRefreshed.values == cylProgAfter.params,
+                  "Cylinder parameter recollection matches full compile");
+            check(cylProgBefore.wgsl == cylProgAfter.wgsl,
+                  "Cylinder WGSL is byte-identical across parameter mutation");
+
+            // 11.3 Law III & IV: RoundBox and Torus
+            auto roundBox = geom::SdfNode::leaf(geom::SdfPrim::RoundBox, glm::vec3(2.0f, 1.0f, 0.5f), 0.1f);
+            roundBox.offset = glm::vec3(1.0f, 0.0f, -2.0f);
+            const auto rbProgBefore = sdfwgsl::compile(roundBox);
+            check(rbProgBefore.ok, "RoundBox compiles");
+            check(rbProgBefore.wgsl.find("let dCand = length(max(q, vec3<f32>(0.0))) + min(max(q.x, max(q.y, q.z)), 0.0) - r;") != std::string::npos &&
+                  rbProgBefore.wgsl.find("if (dCand <= 1e-4)") != std::string::npos &&
+                  rbProgBefore.wgsl.find("return vec2<f32>(tCand, -2.0 - min(slab.y, tMax));") != std::string::npos,
+                  "RoundBox emits Law III flat-face root + bevel support interval leap");
+            roundBox.p0 = 0.2f;
+            const auto rbRefreshed = sdfwgsl::collectParams(roundBox);
+            const auto rbProgAfter = sdfwgsl::compile(roundBox);
+            check(rbRefreshed.ok && rbRefreshed.values == rbProgAfter.params,
+                  "RoundBox parameter recollection matches full compile");
+            check(rbProgBefore.wgsl == rbProgAfter.wgsl,
+                  "RoundBox WGSL is byte-identical across parameter mutation");
+
+            auto torus = geom::SdfNode::leaf(geom::SdfPrim::Torus, glm::vec3(3.0f, 0.5f, 0.0f));
+            const auto torusProg = sdfwgsl::compile(torus);
+            check(torusProg.ok, "Torus compiles");
+            check(torusProg.wgsl.find("let outerB = vec3<f32>(majR + minR, majR + minR, minR);") != std::string::npos &&
+                  torusProg.wgsl.find("return vec2<f32>(tEnter, -2.0 - tExit);") != std::string::npos,
+                  "Torus emits Law IV outer-slab miss rejection + support interval leap");
+
+            // 11.4 Rung 8A (canPruneA): Left-heavy SmoothUnion(SmoothUnion(Sphere, Box), Sphere)
+            auto s1 = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+            s1.offset = glm::vec3(-2.0f, 0.0f, 0.0f);
+            auto b1 = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.5f));
+            b1.offset = glm::vec3(2.0f, 0.0f, 0.0f);
+            auto s2 = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f));
+            s2.offset = glm::vec3(0.0f, 5.0f, 0.0f);
+
+            // Left child has 2 leaves, right child has 1 leaf
+            auto leftChain = geom::SdfNode::binary(geom::SdfOp::SmoothUnion, s1, b1, 0.2f);
+            auto leftHeavyTree = geom::SdfNode::binary(geom::SdfOp::SmoothUnion, leftChain, s2, 0.3f);
+            check(sdfwgsl::countSdfLeaves(*leftHeavyTree.children[0]) == 2, "left child has 2 leaves");
+            check(sdfwgsl::countSdfLeaves(*leftHeavyTree.children[1]) == 1, "right child has 1 leaf");
+
+            const auto lhProgBefore = sdfwgsl::compile(leftHeavyTree);
+            check(lhProgBefore.ok, "Left-heavy SmoothUnion tree compiles");
+            check(lhProgBefore.wgsl.find("let boundA") != std::string::npos,
+                  "Left-heavy tree emits boundA distance calculation");
+            check(lhProgBefore.wgsl.find("if (boundA") != std::string::npos,
+                  "Left-heavy tree emits runtime bounding sphere guard for child[0]");
+
+            // Parameter mutation test
+            leftHeavyTree.children[0]->children[0]->offset.y = 1.0f;
+            const auto lhRefreshed = sdfwgsl::collectParams(leftHeavyTree);
+            const auto lhProgAfter = sdfwgsl::compile(leftHeavyTree);
+            check(lhRefreshed.ok && lhRefreshed.values == lhProgAfter.params,
+                  "Left-heavy parameter recollection matches full compile");
+            check(lhProgBefore.wgsl == lhProgAfter.wgsl,
+                  "Left-heavy WGSL is byte-identical across parameter mutation");
+        }
+
+        // ---------------------------------------------------------------------
+        // 12. Rung 9: Compositional CSG 1D Ray-Domain Interval Algebra
+        //     (LawII_CompositeIntersect and LawIV_SubtractPositiveSupport)
+        // ---------------------------------------------------------------------
+        {
+            // 12.1 Law II Composite Intersect of two convex shapes (Box + Sphere):
+            //      exact 0-step closed-form intersection
+            auto box = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(1.0f, 1.0f, 1.0f));
+            box.offset = glm::vec3(0.0f, 0.0f, 0.0f);
+            auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.2f));
+            sphere.offset = glm::vec3(0.2f, 0.0f, 0.0f);
+
+            auto csgIntersect = geom::SdfNode::binary(geom::SdfOp::Intersect, box, sphere);
+            const auto isectProgBefore = sdfwgsl::compile(csgIntersect);
+            check(isectProgBefore.ok, "Composite Intersect(Box, Sphere) compiles");
+            check(isectProgBefore.wgsl.find("let slab_root_0 = rayAabb(ro - off_root_0, rd, b_root_0);") != std::string::npos &&
+                  isectProgBefore.wgsl.find("let h_root_1 = b_root_1 * b_root_1 - c_root_1;") != std::string::npos &&
+                  isectProgBefore.wgsl.find("let tEnter = tEnter_root;") != std::string::npos &&
+                  isectProgBefore.wgsl.find("let tExit = tExit_root;") != std::string::npos &&
+                  isectProgBefore.wgsl.find("return vec2<f32>(tHit, 1.0);") != std::string::npos,
+                  "Convex Intersect(Box, Sphere) emits exact 0-step closed-form hit");
+
+            // Mutate child A parameter
+            csgIntersect.children[0]->offset.y = 0.5f;
+            const auto isectRefreshedA = sdfwgsl::collectParams(csgIntersect);
+            const auto isectProgAfterA = sdfwgsl::compile(csgIntersect);
+            check(isectRefreshedA.ok && isectRefreshedA.values == isectProgAfterA.params,
+                  "Intersect parameter recollection matches full compile after child A mutation");
+            check(isectProgBefore.wgsl == isectProgAfterA.wgsl,
+                  "Intersect WGSL is byte-identical across child A parameter mutation");
+
+            // Mutate child B parameter
+            csgIntersect.children[1]->dims.x = 1.5f;
+            const auto isectRefreshedB = sdfwgsl::collectParams(csgIntersect);
+            const auto isectProgAfterB = sdfwgsl::compile(csgIntersect);
+            check(isectRefreshedB.ok && isectRefreshedB.values == isectProgAfterB.params,
+                  "Intersect parameter recollection matches full compile after child B mutation");
+            check(isectProgBefore.wgsl == isectProgAfterB.wgsl,
+                  "Intersect WGSL is byte-identical across child B parameter mutation");
+
+            // 12.2 Law IV Subtract Positive Support: Subtract(RoundBox, Sphere)
+            //      Support slab of Child A (RoundBox) bounds the positive region
+            auto roundBox = geom::SdfNode::leaf(geom::SdfPrim::RoundBox, glm::vec3(2.0f, 1.0f, 0.5f), 0.1f);
+            roundBox.offset = glm::vec3(1.0f, -0.5f, 0.0f);
+            auto cutterSphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.8f));
+            cutterSphere.offset = glm::vec3(1.0f, 0.0f, 0.0f);
+
+            auto csgSubtract = geom::SdfNode::binary(geom::SdfOp::Subtract, roundBox, cutterSphere);
+            const auto subProgBefore = sdfwgsl::compile(csgSubtract);
+            check(subProgBefore.ok, "Subtract(RoundBox, Sphere) compiles");
+            check(subProgBefore.wgsl.find("let slab_root_0 = rayAabb(ro - off_root_0, rd, bOuter_root_0);") != std::string::npos &&
+                  subProgBefore.wgsl.find("if (tEnter > tExit || tExit < tStart || tEnter > tMax)") != std::string::npos &&
+                  subProgBefore.wgsl.find("return vec2<f32>(tEnterClamped, -2.0 - tExitClamped);") != std::string::npos,
+                  "Subtract(RoundBox, Sphere) emits Child A support-slab leap");
+
+            // Mutate Child A
+            csgSubtract.children[0]->p0 = 0.25f;
+            const auto subRefreshedA = sdfwgsl::collectParams(csgSubtract);
+            const auto subProgAfterA = sdfwgsl::compile(csgSubtract);
+            check(subRefreshedA.ok && subRefreshedA.values == subProgAfterA.params,
+                  "Subtract parameter recollection matches full compile after Child A mutation");
+            check(subProgBefore.wgsl == subProgAfterA.wgsl,
+                  "Subtract WGSL is byte-identical across Child A parameter mutation");
+
+            // Mutate Child B
+            csgSubtract.children[1]->dims.x = 1.0f;
+            const auto subRefreshedB = sdfwgsl::collectParams(csgSubtract);
+            const auto subProgAfterB = sdfwgsl::compile(csgSubtract);
+            check(subRefreshedB.ok && subRefreshedB.values == subProgAfterB.params,
+                  "Subtract parameter recollection matches full compile after Child B mutation");
+            check(subProgBefore.wgsl == subProgAfterB.wgsl,
+                  "Subtract WGSL is byte-identical across Child B parameter mutation");
+
+            // 12.3 Law II Composite Union of two convex shapes (Cylinder + Box):
+            //      exact 0-step closed-form inf(S_A U S_B) = min(tHit_A, tHit_B)
+            auto cylU = geom::SdfNode::leaf(geom::SdfPrim::Cylinder, glm::vec3(0.6f, 1.5f, 0.0f));
+            cylU.offset = glm::vec3(-1.0f, 0.0f, 0.0f);
+            auto boxU = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.8f, 0.8f, 0.8f));
+            boxU.offset = glm::vec3(1.0f, 0.0f, 0.0f);
+            auto csgUnionConvex = geom::SdfNode::binary(geom::SdfOp::Union, cylU, boxU);
+            const auto unionProgBefore = sdfwgsl::compile(csgUnionConvex);
+            check(unionProgBefore.ok, "Composite Union(Cylinder, Box) compiles");
+            check(unionProgBefore.wgsl.find("let valid_root_0 = (tEnter_root_0 <= tExit_root_0)") != std::string::npos &&
+                  unionProgBefore.wgsl.find("return vec2<f32>(tHit, 1.0);") != std::string::npos,
+                  "Convex Union(Cylinder, Box) emits exact 0-step closed-form root hit");
+
+            csgUnionConvex.children[1]->offset.z = 0.4f;
+            const auto unionRefreshed = sdfwgsl::collectParams(csgUnionConvex);
+            const auto unionProgAfter = sdfwgsl::compile(csgUnionConvex);
+            check(unionRefreshed.ok && unionRefreshed.values == unionProgAfter.params,
+                  "Union parameter recollection matches full compile after Child B mutation");
+            check(unionProgBefore.wgsl == unionProgAfter.wgsl,
+                  "Union WGSL is byte-identical across Child B parameter mutation");
+
+            // 12.4 Multi-Depth Recursive CSG 1D Ray-Domain Interval Algebra:
+            //      Tree: Union(Union(Box, Box), Cylinder) — 3-leaf tree
+            auto b1 = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(1.0f, 0.5f, 0.5f));
+            b1.offset = glm::vec3(-2.0f, 0.0f, 0.0f);
+            auto b2 = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.5f, 1.0f, 0.5f));
+            b2.offset = glm::vec3(2.0f, 0.0f, 0.0f);
+            auto uInner = geom::SdfNode::binary(geom::SdfOp::Union, b1, b2);
+
+            auto cyl3 = geom::SdfNode::leaf(geom::SdfPrim::Cylinder, glm::vec3(0.5f, 2.0f, 0.0f));
+            cyl3.offset = glm::vec3(0.0f, 0.0f, 0.0f);
+            auto u3Leaf = geom::SdfNode::binary(geom::SdfOp::Union, uInner, cyl3);
+
+            const auto u3ProgBefore = sdfwgsl::compile(u3Leaf);
+            check(u3ProgBefore.ok, "3-leaf recursive Union(Union(Box, Box), Cylinder) compiles");
+            check(u3ProgBefore.wgsl.find("let tEnter_root_0_0 = slab_root_0_0.x;") != std::string::npos &&
+                  u3ProgBefore.wgsl.find("let tEnter_root_0_1 = slab_root_0_1.x;") != std::string::npos &&
+                  u3ProgBefore.wgsl.find("let tEnter_root_0 = min(") != std::string::npos &&
+                  u3ProgBefore.wgsl.find("let tEnter = tEnter_root;") != std::string::npos,
+                  "3-leaf recursive Union emits multi-depth 1D interval hierarchy");
+
+            // Mutate leaf 0, leaf 1, leaf 2
+            u3Leaf.children[0]->children[1]->offset.y = 1.2f;
+            const auto u3Refreshed = sdfwgsl::collectParams(u3Leaf);
+            const auto u3ProgAfter = sdfwgsl::compile(u3Leaf);
+            check(u3Refreshed.ok && u3Refreshed.values == u3ProgAfter.params,
+                  "3-leaf recursive Union parameter recollection matches full compile after deep mutation");
+            check(u3ProgBefore.wgsl == u3ProgAfter.wgsl,
+                  "3-leaf recursive Union WGSL is byte-identical across parameter mutation");
+
+            // 12.5 Rung 15: SmoothUnion 1D Ray-Domain Support-Slab Leaping
+            //      Tree: SmoothUnion(Sphere, Box, k = 0.35)
+            auto s1 = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+            s1.offset = glm::vec3(-1.0f, 0.0f, 0.0f);
+            auto bSmooth = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.8f, 0.8f, 0.8f));
+            bSmooth.offset = glm::vec3(1.0f, 0.0f, 0.0f);
+            auto smoothTree = geom::SdfNode::binary(geom::SdfOp::SmoothUnion, s1, bSmooth);
+            smoothTree.t = 0.35f;
+
+            const auto smoothProgBefore = sdfwgsl::compile(smoothTree);
+            check(smoothProgBefore.ok, "SmoothUnion(Sphere, Box) compiles successfully");
+            check(smoothProgBefore.wgsl.find("tEnter_root_0") != std::string::npos &&
+                  smoothProgBefore.wgsl.find("tEnter_root_1") != std::string::npos &&
+                  smoothProgBefore.wgsl.find("P.v[paramOffset +") != std::string::npos &&
+                  smoothProgBefore.wgsl.find("let tExitClamped = min(tExit + 0.05, tMax);") != std::string::npos &&
+                  smoothProgBefore.wgsl.find("return vec2<f32>(tEnterClamped, -2.0 - tExitClamped);") != std::string::npos,
+                  "SmoothUnion emits 1D support-slab leaping with dynamic blend inflation");
+
+            // Mutate blend parameter and child positions
+            smoothTree.t = 0.60f;
+            smoothTree.children[0]->offset.x = -1.5f;
+            const auto smoothRefreshed = sdfwgsl::collectParams(smoothTree);
+            const auto smoothProgAfter = sdfwgsl::compile(smoothTree);
+            check(smoothRefreshed.ok && smoothRefreshed.values == smoothProgAfter.params,
+                  "SmoothUnion parameter recollection matches full compile after blend and child mutation");
+            check(smoothProgBefore.wgsl == smoothProgAfter.wgsl,
+                  "SmoothUnion WGSL is 100% byte-identical across blend and child parameter mutations");
+        }
+    }
+
     if (failures) {
         std::printf("sdf_wgsl_parameter_refresh_test: %d failure(s)\n", failures);
         return 1;

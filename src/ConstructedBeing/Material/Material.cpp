@@ -1,6 +1,8 @@
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+#include "ConstructedBeing/Singular/Object/Object/FaceTexture.hpp"
+#include "Singularity/Screen/Renderer.hpp"
 
 #include <cstdint>
 #include <string>
@@ -332,4 +334,57 @@ void Material::initFaceTextures(int numFaces, int defaultWidth, int defaultHeigh
         tex.create(w, h); // Default white texture
         faceTextures.push_back(std::move(tex));
     }
+}
+
+void Material::syncAllFaceTextures() {
+    if (faceTextures.empty()) return;
+    bool allHaveHandles = true;
+    uint64_t revHash = 14695981039346656037ULL;
+    for (const auto& ft : faceTextures) {
+        if (ft.id == 0 && !ft.pixels.empty()) {
+            allHaveHandles = false;
+            break;
+        }
+        revHash ^= ft.revision + 0x9e3779b97f4a7c15ULL + (revHash << 6) + (revHash >> 2);
+    }
+    if (_facesSynced && allHaveHandles && revHash == _syncedFaceRevisionHash) {
+        return;
+    }
+
+    if (faceTextures[0].id == 0 && !faceTextures[0].pixels.empty()) {
+        faceTextures[0].uploadToGPU();
+    }
+    faceTextures[0].sharesHandle = false;
+    const TextureHandle h0 = faceTextures[0].id;
+    for (size_t i = 1; i < faceTextures.size(); ++i) {
+        auto& ft = faceTextures[i];
+        if (ft.width == faceTextures[0].width &&
+            ft.height == faceTextures[0].height &&
+            ft.pixels == faceTextures[0].pixels) {
+            if (ft.id != 0 && ft.id != h0 && !ft.sharesHandle) {
+                currentRenderer().releaseTexture(ft.id);
+            }
+            ft.id = h0;
+            ft.sharesHandle = (h0 != 0);
+        } else {
+            if (ft.sharesHandle) {
+                ft.id = 0;
+                ft.sharesHandle = false;
+            }
+            if (ft.id == 0 && !ft.pixels.empty()) {
+                ft.uploadToGPU();
+            }
+        }
+    }
+
+    revHash = 14695981039346656037ULL;
+    allHaveHandles = true;
+    for (const auto& ft : faceTextures) {
+        if (ft.id == 0 && !ft.pixels.empty()) {
+            allHaveHandles = false;
+        }
+        revHash ^= ft.revision + 0x9e3779b97f4a7c15ULL + (revHash << 6) + (revHash >> 2);
+    }
+    _facesSynced = allHaveHandles;
+    _syncedFaceRevisionHash = revHash;
 }

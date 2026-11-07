@@ -15,6 +15,7 @@
 #include "Relation/Relation.hpp"
 
 #include <ctime>
+#include <fstream>
 #include <iomanip>
 #include <limits>
 #include <sstream>
@@ -58,6 +59,9 @@ const char* ActionNode::reasonName(PropertyPath::PathResult reason) {
         case PropertyPath::PathResult::BadComponent: return "Bad Component";
         case PropertyPath::PathResult::Unchanged: return "Unchanged";
         case PropertyPath::PathResult::Unsupported: return "Unsupported storage access";
+        case PropertyPath::PathResult::ExpiredCell: return "Expired Cell";
+        case PropertyPath::PathResult::UniqueOwnershipRefused: return "Unique Ownership Refused";
+        case PropertyPath::PathResult::AccessDenied: return "Access Denied";
     }
     return "Unknown";
 }
@@ -482,17 +486,17 @@ ActionNode ActionNode::fromJson(const nlohmann::json& j) {
 ECA::ActionExecutor ActionNode::compile() const {
     switch (kind) {
         case Kind::Set: {
-            const PropertyPath p = path;
+            const PropertyPath::CompiledPath p = path.compile();
             const PropertyValue v = operand;
             return [p, v](const ECA::Event&, Singular& target) { 
                 auto res = lawSetValue(target, p, v);
-                emitResult(target, "Set", res, p);
+                emitResult(target, "Set", res, p.path);
             };
         }
         case Kind::Add:
         case Kind::Scale:
         case Kind::Lerp: {
-            const PropertyPath p = path;
+            const PropertyPath::CompiledPath p = path.compile();
             const PropertyValue rhs = operand;
             const double f = factor;
             const Kind k = kind;
@@ -528,16 +532,16 @@ ECA::ActionExecutor ActionNode::compile() const {
                 }
                 
                 auto res = lawSetValue(target, p, result);
-                emitResult(target, kindName(k), res, p);
+                emitResult(target, kindName(k), res, p.path);
             };
         }
         case Kind::Drive: {
-            const PropertyPath p = path;
-            const PropertyPath in = input;
+            const PropertyPath::CompiledPath p = path.compile();
+            const PropertyPath::CompiledPath in = input.compile();
             const CurveModel c = curve;
             return [p, in, c](const ECA::Event& event, Singular& target) {
                 double x = 0.0;
-                if (in.empty()) {
+                if (in.path.empty()) {
                     // No authored input: the world clock is the domain
                     // (falling back to the event's coarse moment when no
                     // engine has set the clock).
@@ -549,7 +553,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                     if (!lawGetValue(target, in, v) || !propertyValueToNumber(v, x)) return;
                 }
                 auto res = lawSetValue(target, p, PropertyValue(c.evaluate(x)));
-                emitResult(target, "Drive", res, p);
+                emitResult(target, "Drive", res, p.path);
             };
         }
         case Kind::Sequence:
@@ -671,8 +675,6 @@ ECA::ActionExecutor ActionNode::compile() const {
                                     break;
                                 }
                             }
-                        } else if (std::holds_alternative<Object*>(pv)) {
-                            parent = std::get<Object*>(pv);
                         }
                     }
                 }
@@ -719,8 +721,8 @@ ECA::ActionExecutor ActionNode::compile() const {
             // both are ordinary PropertyPaths — so a pad sounds its own
             // `acoustic.frequency` and a button sounds `@state.studio.soundFreq`
             // with the same node, exactly as the law text reads.
-            const PropertyPath freqPath = path;
-            const PropertyPath ampPath = input;
+            const PropertyPath::CompiledPath freqPath = path.compile();
+            const PropertyPath::CompiledPath ampPath = input.compile();
             const std::string timbre = propertyName;
 
             return [freqPath, ampPath, timbre](const ECA::Event&, Singular& subject) {
@@ -737,13 +739,13 @@ ECA::ActionExecutor ActionNode::compile() const {
                 if (!lawGetValue(subject, freqPath, fv) ||
                     !propertyValueToNumber(fv, frequency)) {
                     emitEffect("PlayAudio", false,
-                               "frequency '" + freqPath.toString() + "' does not read");
+                               "frequency '" + freqPath.path.toString() + "' does not read");
                     return;
                 }
                 if (!lawGetValue(subject, ampPath, av) ||
                     !propertyValueToNumber(av, amplitude)) {
                     emitEffect("PlayAudio", false,
-                               "amplitude '" + ampPath.toString() + "' does not read");
+                               "amplitude '" + ampPath.path.toString() + "' does not read");
                     return;
                 }
 
@@ -765,31 +767,39 @@ ECA::ActionExecutor ActionNode::compile() const {
             };
         }
         case Kind::FileRead: {
-            const PropertyPath sourcePath = input;
-            const PropertyPath destPath = path;
-            return [sourcePath, destPath](const ECA::Event&, Singular& subject) {
+            const PropertyPath::CompiledPath sourcePath = input.compile();
+            const PropertyPath::CompiledPath destPath = path.compile();
+            const PropertyPath::CompiledPath chPath = PropertyPath::compile("@file-channel.file.path");
+            const PropertyPath::CompiledPath chRead = PropertyPath::compile("@file-channel.file.read");
+            const PropertyPath::CompiledPath chContent = PropertyPath::compile("@file-channel.file.content");
+            return [sourcePath, destPath, chPath, chRead, chContent](const ECA::Event&, Singular& subject) {
                 PropertyValue pvFile;
                 if (lawGetValue(subject, sourcePath, pvFile)) {
-                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.path"), pvFile);
-                    lawSetValue(subject, PropertyPath::parse("@file-channel.file.read"), PropertyValue(true));
+                    lawSetValue(subject, chPath, pvFile);
+                    lawSetValue(subject, chRead, PropertyValue(true));
                     PropertyValue content;
-                    if (lawGetValue(subject, PropertyPath::parse("@file-channel.file.content"), content)) {
+                    if (lawGetValue(subject, chContent, content)) {
                         lawSetValue(subject, destPath, content);
                     }
                 }
             };
         }
         case Kind::FileWrite: {
-            const PropertyPath targetPathPath = path;
-            const PropertyPath contentPath = input;
-            return [targetPathPath, contentPath](const ECA::Event&, Singular& subject) {
+            const PropertyPath::CompiledPath targetPathPath = path.compile();
+            const PropertyPath::CompiledPath contentPath = input.compile();
+            const PropertyPath::CompiledPath channelPath = PropertyPath::compile("@file-channel.file.path");
+            const PropertyPath::CompiledPath channelContent = PropertyPath::compile("@file-channel.file.content");
+            const PropertyPath::CompiledPath channelWrite = PropertyPath::compile("@file-channel.file.write");
+            const PropertyPath::CompiledPath channelSuccess = PropertyPath::compile("@file-channel.file.lastOperationSuccess");
+            const PropertyPath::CompiledPath channelError = PropertyPath::compile("@file-channel.file.lastError");
+            return [targetPathPath, contentPath, channelPath, channelContent, channelWrite, channelSuccess, channelError](const ECA::Event&, Singular& subject) {
                 PropertyValue pvFile, pvContent;
                 if (!lawGetValue(subject, targetPathPath, pvFile)) {
-                    emitEffect("FileWrite", false, "file path source does not read: " + targetPathPath.toString());
+                    emitEffect("FileWrite", false, "file path source does not read: " + targetPathPath.path.toString());
                     return;
                 }
                 if (!lawGetValue(subject, contentPath, pvContent)) {
-                    emitEffect("FileWrite", false, "file content source does not read: " + contentPath.toString());
+                    emitEffect("FileWrite", false, "file content source does not read: " + contentPath.path.toString());
                     return;
                 }
 
@@ -798,7 +808,6 @@ ECA::ActionExecutor ActionNode::compile() const {
                            result == PropertyPath::PathResult::Unchanged;
                 };
 
-                const PropertyPath channelPath = PropertyPath::parse("@file-channel.file.path");
                 const auto pathResult = lawSetValue(subject, channelPath, pvFile);
                 if (!accepted(pathResult)) {
                     emitEffect("FileWrite", false,
@@ -807,7 +816,6 @@ ECA::ActionExecutor ActionNode::compile() const {
                     return;
                 }
 
-                const PropertyPath channelContent = PropertyPath::parse("@file-channel.file.content");
                 const auto contentResult = lawSetValue(subject, channelContent, pvContent);
                 if (!accepted(contentResult)) {
                     emitEffect("FileWrite", false,
@@ -817,7 +825,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                 }
 
                 const auto triggerResult = lawSetValue(
-                    subject, PropertyPath::parse("@file-channel.file.write"), PropertyValue(true));
+                    subject, channelWrite, PropertyValue(true));
                 if (!accepted(triggerResult)) {
                     emitEffect("FileWrite", false,
                                "file write trigger refused: " +
@@ -826,16 +834,12 @@ ECA::ActionExecutor ActionNode::compile() const {
                 }
 
                 PropertyValue succeeded;
-                if (!lawGetValue(subject,
-                                 PropertyPath::parse("@file-channel.file.lastOperationSuccess"),
-                                 succeeded) ||
+                if (!lawGetValue(subject, channelSuccess, succeeded) ||
                     !std::holds_alternative<bool>(succeeded) ||
                     !std::get<bool>(succeeded)) {
                     PropertyValue lastError;
                     std::string note = "file channel reported write failure";
-                    if (lawGetValue(subject,
-                                    PropertyPath::parse("@file-channel.file.lastError"),
-                                    lastError)) {
+                    if (lawGetValue(subject, channelError, lastError)) {
                         if (const auto* message = std::get_if<std::string>(&lastError);
                             message && !message->empty()) {
                             note += ": " + *message;
@@ -850,24 +854,26 @@ ECA::ActionExecutor ActionNode::compile() const {
         }
         case Kind::CodecTransform: {
             const std::string op = propertyName;
-            const PropertyPath sourcePath = input;
-            const PropertyPath destPath = path;
-            return [op, sourcePath, destPath](const ECA::Event&, Singular& subject) {
+            const PropertyPath::CompiledPath sourcePath = input.compile();
+            const PropertyPath::CompiledPath destPath = path.compile();
+            const PropertyPath::CompiledPath codecInput = PropertyPath::compile("@codec.codec.input");
+            const PropertyPath::CompiledPath codecOp = PropertyPath::compile("@codec.codec." + op);
+            return [sourcePath, destPath, codecInput, codecOp](const ECA::Event&, Singular& subject) {
                 PropertyValue cv;
                 if (lawGetValue(subject, sourcePath, cv)) {
-                    lawSetValue(subject, PropertyPath::parse("@codec.codec.input"), cv);
+                    lawSetValue(subject, codecInput, cv);
                     PropertyValue result;
-                    if (lawGetValue(subject, PropertyPath::parse("@codec.codec." + op), result)) {
+                    if (lawGetValue(subject, codecOp, result)) {
                         lawSetValue(subject, destPath, result);
                     }
                 }
             };
         }
         case Kind::WritePixel: {
-            const PropertyPath facePath = pixelFacePath;
-            const PropertyPath uPath = pixelUPath;
-            const PropertyPath vPath = pixelVPath;
-            const PropertyPath colorPath = pixelColorPath;
+            const PropertyPath::CompiledPath facePath = pixelFacePath.compile();
+            const PropertyPath::CompiledPath uPath = pixelUPath.compile();
+            const PropertyPath::CompiledPath vPath = pixelVPath.compile();
+            const PropertyPath::CompiledPath colorPath = pixelColorPath.compile();
             return [facePath, uPath, vPath, colorPath](const ECA::Event&,
                                                        Singular& subject) {
                 const PixelWriteSink& sink = pixelWriteSink();
@@ -881,25 +887,25 @@ ECA::ActionExecutor ActionNode::compile() const {
                 if (!lawGetValue(subject, facePath, faceValue) ||
                     !propertyValueToNumber(faceValue, face)) {
                     emitEffect("WritePixel", false,
-                               "face '" + facePath.toString() + "' does not read");
+                               "face '" + facePath.path.toString() + "' does not read");
                     return;
                 }
                 if (!lawGetValue(subject, uPath, uValue) ||
                     !propertyValueToNumber(uValue, u)) {
                     emitEffect("WritePixel", false,
-                               "u '" + uPath.toString() + "' does not read");
+                               "u '" + uPath.path.toString() + "' does not read");
                     return;
                 }
                 if (!lawGetValue(subject, vPath, vValue) ||
                     !propertyValueToNumber(vValue, v)) {
                     emitEffect("WritePixel", false,
-                               "v '" + vPath.toString() + "' does not read");
+                               "v '" + vPath.path.toString() + "' does not read");
                     return;
                 }
                 if (!lawGetValue(subject, colorPath, colorValue) ||
                     !std::holds_alternative<glm::vec3>(colorValue)) {
                     emitEffect("WritePixel", false,
-                               "color '" + colorPath.toString() + "' does not read a vec3");
+                               "color '" + colorPath.path.toString() + "' does not read a vec3");
                     return;
                 }
 
@@ -918,7 +924,7 @@ ECA::ActionExecutor ActionNode::compile() const {
         }
         case Kind::ElevatePixels: {
             const std::string name = propertyName;
-            const PropertyPath facePath = pixelFacePath;
+            const PropertyPath::CompiledPath facePath = pixelFacePath.compile();
             const OntoMath::Piecewise selector = mapFunction;
             return [name, facePath, selector](const ECA::Event&, Singular& subject) {
                 const PixelPropertySink& sink = pixelPropertySink();
@@ -935,7 +941,7 @@ ECA::ActionExecutor ActionNode::compile() const {
                 if (!lawGetValue(subject, facePath, faceValue) ||
                     !propertyValueToNumber(faceValue, face)) {
                     emitEffect("ElevatePixels", false,
-                               "face '" + facePath.toString() + "' does not read");
+                               "face '" + facePath.path.toString() + "' does not read");
                     return;
                 }
                 std::string reason;
@@ -1024,14 +1030,38 @@ ECA::ActionExecutor ActionNode::compile() const {
                     edges = Universe::instance().relations();
                 }
                 for (const auto* rel : edges) {
-                    if (rel && rel->a() == a && rel->b() == b && rel->type == relType) {
+                    if (rel && rel->a() == a && rel->b() == b && rel->type == resolvedRelType) {
                         emitEffect("AddRelation", true, "relation already present");
                         return;
                     }
                 }
 
-                auto relation = std::make_shared<Relation>(relType, *a, *b);
+                if (resolvedRelType == "authority-over") {
+                    if (a == b) {
+                        emitEffect("AddRelation", false, "AuthorityDenied: self-authority cycle refused");
+                        return;
+                    }
+                    const Law* lawA = dynamic_cast<const Law*>(a);
+                    const Law* lawB = dynamic_cast<const Law*>(b);
+                    const Law* authorizingLaw = dynamic_cast<const Law*>(event.object);
+                    if (lawA && lawB && lawB->hasAuthorityOver(*lawA)) {
+                        emitEffect("AddRelation", false, "AuthorityDenied: cycle in authority-over DAG refused");
+                        return;
+                    }
+                    if (lawB) {
+                        if (!authorizingLaw || !authorizingLaw->hasAuthorityOver(*lawB)) {
+                            emitEffect("AddRelation", false, "AuthorityDenied: self-elevation refused");
+                            return;
+                        }
+                    }
+                }
+
+                auto relation = std::make_shared<Relation>(resolvedRelType, *a, *b);
                 Universe::instance().addRelation(relation);
+
+                if (resolvedRelType == "authority-over") {
+                    Singular::notifyPropertyChanged(a, "authorityOver");
+                }
 
                 emitEffect("AddRelation", true);
                 Core::EventBus::instance().publish(
@@ -1084,16 +1114,194 @@ ECA::ActionExecutor ActionNode::compile() const {
             // path := f(bindings) — behavior governed by an authored,
             // exact, piecewise mathematical function. Undefined math writes
             // nothing: a law never manifests undefined values.
-            const PropertyPath target = path;
+            const PropertyPath::CompiledPath target = path.compile();
             const OntoMath::Piecewise f = mapFunction;
             const MathBindings binds = bindings;
-            return [target, f, binds](const ECA::Event&, Singular& subject) {
-                auto vars = readMathBindings(subject, binds);
-                if (!vars) {
-                    if (target.toString() == "@basic-pixel-canvas.authored.full-canvas") {
-                        std::cout << "[MAP DEBUG] vars is nullopt!" << std::endl;
+            return [target, f, binds](const ECA::Event& event, Singular& subject) {
+                const Law* authorizingLaw = dynamic_cast<const Law*>(event.object);
+                // Check if any bound variable uses cell operations
+                for (const auto& [varName, bEntry] : binds) {
+                    if (bEntry.mode == BindingMode::ShareCell ||
+                        bEntry.mode == BindingMode::UniqueCell ||
+                        bEntry.mode == BindingMode::ObserveWeak) {
+                        std::size_t srcStart = 0;
+                        Singular* srcRoot = resolveLawRoot(subject, bEntry.path, srcStart);
+                        if (!srcRoot) {
+                            emitEffect("Map", false, "cannot resolve source for cell binding");
+                            return;
+                        }
+                        auto srcSlot = bEntry.path.resolve(*srcRoot, srcStart);
+                        Singular* srcBearer = srcSlot.owner ? srcSlot.owner : srcRoot;
+                        Earthcall::StringId srcPropId = srcSlot.prop ? srcSlot.prop->nameId() :
+                            (!srcSlot.dynamicKey.empty() ? Earthcall::StringInterner::intern(srcSlot.dynamicKey) :
+                             Earthcall::StringInterner::intern(bEntry.path.segments.back()));
+
+                        std::size_t destStart = 0;
+                        Singular* destRoot = resolveLawRoot(subject, target, destStart);
+                        if (!destRoot) {
+                            emitEffect("Map", false, "cannot resolve target for cell binding");
+                            return;
+                        }
+                        auto destSlot = target.resolve(*destRoot, destStart);
+                        Singular* destBearer = destSlot.owner ? destSlot.owner : destRoot;
+                        Earthcall::StringId destPropId = destSlot.prop ? destSlot.prop->nameId() :
+                            (!destSlot.dynamicKey.empty() ? Earthcall::StringInterner::intern(destSlot.dynamicKey) :
+                             Earthcall::StringInterner::intern(target.path.segments.back()));
+
+                        if (TransferPolicy::instance().accessPolicyRevision() > 0) {
+                            AccessOp srcOp = AccessOp::Share;
+                            if (bEntry.mode == BindingMode::UniqueCell) srcOp = AccessOp::TransferUnique;
+                            else if (bEntry.mode == BindingMode::ObserveWeak) srcOp = AccessOp::BorrowWeak;
+                            AccessContext srcCtx = TransferPolicy::currentContext(srcOp);
+                            if (authorizingLaw) srcCtx.authorizingLaw = authorizingLaw;
+                            srcCtx.actor = &subject;
+                            const ValueCell* existingSrcCell = srcSlot.cellId.valid()
+                                ? PropertyCellTable::instance().getCell(srcSlot.cellId) : nullptr;
+                            if (!TransferPolicy::instance().checkAccess(*srcRoot, srcSlot, existingSrcCell, srcCtx)) {
+                                emitResult(subject, "Map", PropertyPath::PathResult::AccessDenied, target);
+                                return;
+                            }
+                            AccessContext dstCtx = TransferPolicy::currentContext(AccessOp::Write);
+                            if (authorizingLaw) dstCtx.authorizingLaw = authorizingLaw;
+                            dstCtx.actor = &subject;
+                            const ValueCell* existingDstCell = destSlot.cellId.valid()
+                                ? PropertyCellTable::instance().getCell(destSlot.cellId) : nullptr;
+                            if (!TransferPolicy::instance().checkAccess(*destRoot, destSlot, existingDstCell, dstCtx)) {
+                                emitResult(subject, "Map", PropertyPath::PathResult::AccessDenied, target);
+                                return;
+                            }
+                        }
+
+                        CellId cellId = srcSlot.cellId;
+                        if (bEntry.mode == BindingMode::UniqueCell) {
+                            if (cellId.valid()) {
+                                auto* existingCell = PropertyCellTable::instance().getCell(cellId);
+                                if (!existingCell) {
+                                    emitResult(subject, "Map", PropertyPath::PathResult::ExpiredCell, target);
+                                    return;
+                                }
+                                if (existingCell->strongCount > 1) {
+                                    emitResult(subject, "Map", PropertyPath::PathResult::UniqueOwnershipRefused, target);
+                                    return;
+                                }
+                                if (srcBearer == destBearer && srcPropId == destPropId) {
+                                    destBearer->bindPropertyCell(destPropId, cellId, CellOwnershipMode::Unique);
+                                } else {
+                                    PropertyValue transferredVal = existingCell->value;
+                                    srcBearer->unbindPropertyCell(srcPropId);
+                                    CellId newUniqueId = PropertyCellTable::instance().allocateCell(
+                                        transferredVal, CellOwnershipMode::Unique, destBearer, destPropId);
+                                    destBearer->bindPropertyCell(destPropId, newUniqueId, CellOwnershipMode::Unique);
+                                    cellId = newUniqueId;
+                                }
+                            } else {
+                                PropertyValue initialVal;
+                                if (srcSlot.prop) initialVal = srcSlot.prop->value();
+                                else if (srcSlot.dynamicSlot) initialVal = *srcSlot.dynamicSlot;
+                                else srcBearer->getDynamicProperty(srcPropId, initialVal);
+                                cellId = PropertyCellTable::instance().allocateCell(
+                                    initialVal, CellOwnershipMode::Unique, destBearer, destPropId);
+                                destBearer->bindPropertyCell(destPropId, cellId, CellOwnershipMode::Unique);
+                            }
+                            if (destSlot.prop) {
+                                const auto* c = PropertyCellTable::instance().getCell(cellId);
+                                if (c) destSlot.prop->setValue(c->value);
+                            }
+                            PropertyCellTable::instance().notifyMutation(cellId);
+                            emitEffect("Map", true);
+                            return;
+                        }
+
+                        if (!cellId.valid()) {
+                            PropertyValue initialVal;
+                            if (srcSlot.prop) initialVal = srcSlot.prop->value();
+                            else if (srcSlot.dynamicSlot) initialVal = *srcSlot.dynamicSlot;
+                            else srcBearer->getDynamicProperty(srcPropId, initialVal);
+
+                            cellId = PropertyCellTable::instance().allocateCell(
+                                initialVal, CellOwnershipMode::Shared, srcBearer, srcPropId);
+                            srcBearer->bindPropertyCell(srcPropId, cellId, CellOwnershipMode::Shared);
+                        }
+
+                        CellOwnershipMode targetMode = (bEntry.mode == BindingMode::ObserveWeak)
+                            ? CellOwnershipMode::Weak : CellOwnershipMode::Shared;
+
+                        if (!destBearer->bindPropertyCell(destPropId, cellId, targetMode)) {
+                            auto* c = PropertyCellTable::instance().getCell(cellId);
+                            if (c && c->isUniqueLocked) {
+                                emitResult(subject, "Map", PropertyPath::PathResult::UniqueOwnershipRefused, target);
+                                return;
+                            }
+                            emitEffect("Map", false, "failed to bind property cell");
+                            return;
+                        }
+                        if (destSlot.prop) {
+                            const auto* c = PropertyCellTable::instance().getCell(cellId);
+                            if (c) destSlot.prop->setValue(c->value);
+                        }
+                        PropertyCellTable::instance().notifyMutation(cellId);
+                        emitEffect("Map", true);
+                        return;
+                    } else if (bEntry.mode == BindingMode::CopyValue) {
+                        PropertyValue srcVal;
+                        const auto& cp = bEntry.getCompiled();
+                        AccessContext readCtx = TransferPolicy::currentContext(AccessOp::Read);
+                        readCtx.actor = &subject;
+                        if (authorizingLaw) readCtx.authorizingLaw = authorizingLaw;
+                        PropertyPath::PathResult readRes = !cp.empty()
+                            ? lawGetValueResult(subject, cp, srcVal, readCtx)
+                            : lawGetValueResult(subject, bEntry.path, srcVal, readCtx);
+                        if (readRes != PropertyPath::PathResult::Ok) {
+                            if (readRes == PropertyPath::PathResult::AccessDenied ||
+                                readRes == PropertyPath::PathResult::ExpiredCell) {
+                                emitResult(subject, "Map", readRes, target);
+                            } else {
+                                emitEffect("Map", false, "cannot read source for copy binding");
+                            }
+                            return;
+                        }
+                        PropertyValue copied = PropertyCellTable::deepCopy(srcVal);
+                        AccessContext writeCtx = TransferPolicy::currentContext(AccessOp::Write);
+                        writeCtx.actor = &subject;
+                        if (authorizingLaw) writeCtx.authorizingLaw = authorizingLaw;
+                        auto res = lawSetValue(subject, target, copied, writeCtx);
+                        emitResult(subject, "Map", res, target);
+                        return;
                     }
-                    emitEffect("Map", false, "a bound variable does not read on this subject");
+                }
+
+                if (TransferPolicy::instance().accessPolicyRevision() > 0) {
+                    for (const auto& [varName, bEntry] : binds) {
+                        if (bEntry.mode == BindingMode::Derive) {
+                            std::size_t srcStart = 0;
+                            Singular* srcRoot = resolveLawRoot(subject, bEntry.path, srcStart);
+                            if (!srcRoot) continue;
+                            auto srcSlot = bEntry.path.resolve(*srcRoot, srcStart);
+                            const ValueCell* existingSrcCell = srcSlot.cellId.valid()
+                                ? PropertyCellTable::instance().getCell(srcSlot.cellId) : nullptr;
+                            AccessContext deriveCtx = TransferPolicy::currentContext(AccessOp::Derive);
+                            deriveCtx.actor = &subject;
+                            if (authorizingLaw) deriveCtx.authorizingLaw = authorizingLaw;
+                            if (!TransferPolicy::instance().checkAccess(*srcRoot, srcSlot, existingSrcCell, deriveCtx)) {
+                                emitResult(subject, "Map", PropertyPath::PathResult::AccessDenied, target);
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                AccessContext readCtx = TransferPolicy::currentContext(AccessOp::Read);
+                readCtx.actor = &subject;
+                if (authorizingLaw) readCtx.authorizingLaw = authorizingLaw;
+                PropertyPath::PathResult readFailReason = PropertyPath::PathResult::Ok;
+                auto vars = readMathBindings(subject, binds, readCtx, &readFailReason);
+                if (!vars) {
+                    if (readFailReason == PropertyPath::PathResult::AccessDenied ||
+                        readFailReason == PropertyPath::PathResult::ExpiredCell) {
+                        emitResult(subject, "Map", readFailReason, target);
+                    } else {
+                        emitEffect("Map", false, "a bound variable does not read on this subject");
+                    }
                     return;
                 }
                 const auto valProp = f.evaluate(*vars, &subject);
@@ -1101,43 +1309,126 @@ ECA::ActionExecutor ActionNode::compile() const {
                     emitEffect("Map", false, "outside the authored bounds");
                     return;
                 }
-                auto res = lawSetValue(subject, target, *valProp);
-                if (target.toString() == "@basic-pixel-canvas.authored.full-canvas") {
-                    std::cout << "[MAP DEBUG] target=" << target.toString() << " res=" << static_cast<int>(res) << std::endl;
-                }
+                AccessContext ctx = TransferPolicy::currentContext(AccessOp::Write);
+                ctx.actor = &subject;
+                if (authorizingLaw) ctx.authorizingLaw = authorizingLaw;
+                auto res = lawSetValue(subject, target, *valProp, ctx);
                 emitResult(subject, "Map", res, target);
+
+                if (res == PropertyPath::PathResult::Ok || res == PropertyPath::PathResult::Unchanged) {
+                    for (const auto& [varName, bEntry] : binds) {
+                        if (bEntry.mode == BindingMode::Derive) {
+                            std::size_t srcStart = 0;
+                            Singular* srcRoot = resolveLawRoot(subject, bEntry.path, srcStart);
+                            if (!srcRoot) continue;
+                            auto srcSlot = bEntry.path.resolve(*srcRoot, srcStart);
+                            CellId srcCellId = srcSlot.cellId;
+                            Singular* srcBearer = srcSlot.owner ? srcSlot.owner : srcRoot;
+                            Earthcall::StringId srcPropId = srcSlot.prop ? srcSlot.prop->nameId() :
+                                (!srcSlot.dynamicKey.empty() ? Earthcall::StringInterner::intern(srcSlot.dynamicKey) :
+                                 Earthcall::StringInterner::intern(bEntry.path.segments.back()));
+                            if (!srcCellId.valid()) {
+                                PropertyValue initialVal;
+                                if (srcSlot.prop) initialVal = srcSlot.prop->value();
+                                else if (srcSlot.dynamicSlot) initialVal = *srcSlot.dynamicSlot;
+                                else srcBearer->getDynamicProperty(srcPropId, initialVal);
+                                srcCellId = PropertyCellTable::instance().allocateCell(initialVal, CellOwnershipMode::Shared, srcBearer, srcPropId);
+                                srcBearer->bindPropertyCell(srcPropId, srcCellId, CellOwnershipMode::Shared);
+                            }
+
+                            std::size_t destStart = 0;
+                            Singular* destRoot = resolveLawRoot(subject, target, destStart);
+                            if (!destRoot) continue;
+                            auto destSlot = target.resolve(*destRoot, destStart);
+                            Singular* destBearer = destSlot.owner ? destSlot.owner : destRoot;
+                            Earthcall::StringId destPropId = destSlot.prop ? destSlot.prop->nameId() :
+                                (!destSlot.dynamicKey.empty() ? Earthcall::StringInterner::intern(destSlot.dynamicKey) :
+                                 Earthcall::StringInterner::intern(target.path.segments.back()));
+
+                            PropertyCellTable::instance().registerDerivedEdge(
+                                srcCellId,
+                                destBearer,
+                                destPropId,
+                                [target, f, binds, subjectPtr = &subject, authorizingLaw]() {
+                                    if (TransferPolicy::instance().accessPolicyRevision() > 0) {
+                                        for (const auto& [vName, bE] : binds) {
+                                            if (bE.mode == BindingMode::Derive) {
+                                                std::size_t sStart = 0;
+                                                Singular* sRoot = resolveLawRoot(*subjectPtr, bE.path, sStart);
+                                                if (!sRoot) return;
+                                                auto sSlot = bE.path.resolve(*sRoot, sStart);
+                                                const ValueCell* sCell = sSlot.cellId.valid()
+                                                    ? PropertyCellTable::instance().getCell(sSlot.cellId) : nullptr;
+                                                AccessContext deriveCtx;
+                                                deriveCtx.actor = subjectPtr;
+                                                deriveCtx.authorizingLaw = authorizingLaw;
+                                                deriveCtx.op = AccessOp::Derive;
+                                                if (!TransferPolicy::instance().checkAccess(*sRoot, sSlot, sCell, deriveCtx)) {
+                                                    return;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    AccessContext recomputeReadCtx;
+                                    recomputeReadCtx.actor = subjectPtr;
+                                    recomputeReadCtx.authorizingLaw = authorizingLaw;
+                                    recomputeReadCtx.op = AccessOp::Read;
+                                    auto v = readMathBindings(*subjectPtr, binds, recomputeReadCtx);
+                                    if (!v) return;
+                                    auto val = f.evaluate(*v, subjectPtr);
+                                    if (!val) return;
+                                    AccessContext recomputeCtx;
+                                    recomputeCtx.actor = subjectPtr;
+                                    recomputeCtx.authorizingLaw = authorizingLaw;
+                                    recomputeCtx.op = AccessOp::Write;
+                                    lawSetValue(*subjectPtr, target, *val, recomputeCtx);
+                                },
+                                &subject,
+                                authorizingLaw
+                            );
+                        }
+                    }
+                }
             };
         }
         case Kind::Flow: {
             // path := path + f(bindings) * dt — the authored model is the
             // RATE of change, integrated one frame at a time. Needs the
             // world clock (dt); undefined math flows nothing.
-            const PropertyPath target = path;
+            const PropertyPath::CompiledPath target = path.compile();
             const OntoMath::Piecewise f = mapFunction;
             const MathBindings binds = bindings;
-            return [target, f, binds](const ECA::Event&, Singular& subject) {
+            return [target, f, binds](const ECA::Event& event, Singular& subject) {
                 if (!Universe::instance().hasClock()) {
                     emitEffect("Flow", false, "no world clock: nothing to integrate over");
                     return;
                 }
-                // The TARGET is read first, and deliberately. An integrator
-                // that cannot read what it integrates cannot do anything with
-                // the rate, and a bound variable may be arbitrarily expensive
-                // to evaluate — a world reading can cost a raycast against
-                // every being in the world. Reading the bindings first meant
-                // that work was done and then thrown away on every tick where
-                // the target did not resolve, which was every tick, because
-                // the property the occlusion law wrote to was never seeded.
-                // Cheapest refusal first.
+                const Law* authorizingLaw = dynamic_cast<const Law*>(event.object);
+                AccessContext readCtx = TransferPolicy::currentContext(AccessOp::Read);
+                readCtx.actor = &subject;
+                if (authorizingLaw) readCtx.authorizingLaw = authorizingLaw;
+
                 PropertyValue current;
-                if (!lawGetValue(subject, target, current)) {
-                    emitEffect("Flow", false, "cannot read " + target.toString());
+                auto targetReadRes = lawGetValueResult(subject, target, current, readCtx);
+                if (targetReadRes != PropertyPath::PathResult::Ok) {
+                    if (targetReadRes == PropertyPath::PathResult::AccessDenied ||
+                        targetReadRes == PropertyPath::PathResult::ExpiredCell) {
+                        emitResult(subject, "Flow", targetReadRes, target);
+                    } else {
+                        emitEffect("Flow", false, "cannot read " + target.toString());
+                    }
                     return;
                 }
 
-                auto vars = readMathBindings(subject, binds);
+                PropertyPath::PathResult bindFailReason = PropertyPath::PathResult::Ok;
+                auto vars = readMathBindings(subject, binds, readCtx, &bindFailReason);
                 if (!vars) {
-                    emitEffect("Flow", false, "a bound variable does not read on this subject");
+                    if (bindFailReason == PropertyPath::PathResult::AccessDenied ||
+                        bindFailReason == PropertyPath::PathResult::ExpiredCell) {
+                        emitResult(subject, "Flow", bindFailReason, target);
+                    } else {
+                        emitEffect("Flow", false, "a bound variable does not read on this subject");
+                    }
                     return;
                 }
                 const auto valProp = f.evaluate(*vars, &subject);
@@ -1212,14 +1503,8 @@ ECA::ActionExecutor ActionNode::compile() const {
                     std::size_t start = 0;
                     Singular* prototype = resolveLawRoot(subject, source, start);
                     if (prototype && start != source.segments.size()) {
-                        PropertyValue value;
-                        prototype = nullptr;
-                        if (lawGetValue(subject, source, value)) {
-                            if (auto p = std::get_if<Singular*>(&value)) prototype = *p;
-                            else if (auto p = std::get_if<Object*>(&value)) prototype = *p;
-                            else if (auto p = std::get_if<Relation*>(&value)) prototype = *p;
-                            else if (auto p = std::get_if<Formation*>(&value)) prototype = *p;
-                        }
+                        auto slot = source.resolve(*prototype, start);
+                        prototype = (slot.prop ? slot.prop->asSingular() : nullptr);
                     }
                     if (!prototype) { emitEffect("Create", false, "prototype path has no unambiguous Singular referent: " + source.toString()); return; }
                     if (!parent.empty() || !placement.empty() || hasLegacyOverrides) {
@@ -1600,7 +1885,20 @@ std::string ActionNode::describe() const {
         case Kind::Sequence: return "sequence(" + std::to_string(children.size()) + ")";
         case Kind::Parallel: return "parallel(" + std::to_string(children.size()) + ")";
         case Kind::Spawn: return "spawn(" + conceptId + ")";
-        case Kind::Map: return path.toString() + " := " + mapFunction.print();
+        case Kind::Map: {
+            for (const auto& [varName, bEntry] : bindings) {
+                if (bEntry.mode == BindingMode::ShareCell) {
+                    return "share " + path.toString() + " from " + bEntry.path.toString();
+                } else if (bEntry.mode == BindingMode::UniqueCell) {
+                    return "claim " + path.toString() + " from " + bEntry.path.toString();
+                } else if (bEntry.mode == BindingMode::ObserveWeak) {
+                    return "borrow " + path.toString() + " from " + bEntry.path.toString();
+                } else if (bEntry.mode == BindingMode::Derive) {
+                    return "derive " + path.toString() + " = " + mapFunction.print();
+                }
+            }
+            return path.toString() + " := " + mapFunction.print();
+        }
         case Kind::Flow: return "d(" + path.toString() + ")/dt = " + mapFunction.print();
         case Kind::Publish: return "publish '" + eventType + "'";
         case Kind::Create:
@@ -2074,6 +2372,51 @@ ActionNode ActionNode::map(const std::string& dottedPath, OntoMath::Piecewise fu
     n.mapFunction = std::move(function);
     n.bindings = std::move(bindings);
     return n;
+}
+
+namespace {
+OntoMath::Piecewise cellSourceIdentityFunction() {
+    auto leaf = std::make_shared<OntoMath::MathNode>();
+    leaf->op = OntoMath::MathNode::Op::ValueLeaf;
+    leaf->variableName = "_cell_src";
+    return OntoMath::Piecewise::continuous(std::move(leaf));
+}
+} // namespace
+
+ActionNode ActionNode::shareCell(const std::string& targetPath, const std::string& sourcePath) {
+    MathBindings b;
+    b["_cell_src"] = MathBindingEntry{PropertyPath::parse(sourcePath), BindingMode::ShareCell};
+    return ActionNode::map(targetPath, cellSourceIdentityFunction(), std::move(b));
+}
+
+ActionNode ActionNode::uniqueCell(const std::string& targetPath, const std::string& sourcePath) {
+    MathBindings b;
+    b["_cell_src"] = MathBindingEntry{PropertyPath::parse(sourcePath), BindingMode::UniqueCell};
+    return ActionNode::map(targetPath, cellSourceIdentityFunction(), std::move(b));
+}
+
+ActionNode ActionNode::weakCell(const std::string& targetPath, const std::string& sourcePath) {
+    MathBindings b;
+    b["_cell_src"] = MathBindingEntry{PropertyPath::parse(sourcePath), BindingMode::ObserveWeak};
+    return ActionNode::map(targetPath, cellSourceIdentityFunction(), std::move(b));
+}
+
+ActionNode ActionNode::observeWeak(const std::string& targetPath, const std::string& sourcePath) {
+    return weakCell(targetPath, sourcePath);
+}
+
+ActionNode ActionNode::copyCell(const std::string& targetPath, const std::string& sourcePath) {
+    MathBindings b;
+    b["_cell_src"] = MathBindingEntry{PropertyPath::parse(sourcePath), BindingMode::CopyValue};
+    return ActionNode::map(targetPath, cellSourceIdentityFunction(), std::move(b));
+}
+
+ActionNode ActionNode::deriveCell(const std::string& targetPath, OntoMath::Piecewise function,
+                                  MathBindings bindings) {
+    for (auto& [name, entry] : bindings) {
+        entry.mode = BindingMode::Derive;
+    }
+    return ActionNode::map(targetPath, std::move(function), std::move(bindings));
 }
 
 ActionNode ActionNode::flow(const std::string& dottedPath, OntoMath::Piecewise function,

@@ -1,0 +1,181 @@
+{
+  "signature": "Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a",
+  "timestamp": "2026-10-22T11:12:10.558755-07:00",
+  "branch": "claude/ray-domain-transport-rung0",
+  "parent": "ada9ee762",
+  "archives": {
+    "cpp": {
+      "file": "GPU_RAY_TRANSPORT_BOUNDED_STREAMING_2026-10-22_CPP.cpp.gz",
+      "kind": "cpp",
+      "sha256": "e931fd96b2c00145b5d3e4d50152328d4eda3fd74d00462915941d8297290129",
+      "compressed_sha256": "b55a8ef0892a6a7370a076094cd8331b827c5f17f7155e2044759bf6c3eeef1c"
+    },
+    "source": {
+      "file": "GPU_RAY_TRANSPORT_BOUNDED_STREAMING_2026-10-22_SOURCE.json.gz",
+      "kind": "json",
+      "sha256": "c27fff8172573373d7aac144e7458c27d6b9cbf669d4b38e37e683f2e7994fa4",
+      "compressed_sha256": "e4ecc2369c30e36a0b8a08628b8963c9f40b92092ddf6724ceb4fcbcdad90b38"
+    },
+    "failed_log": {
+      "file": "GPU_RAY_TRANSPORT_BOUNDED_STREAMING_2026-10-22_FAILED_LOG.txt.gz",
+      "kind": "txt",
+      "sha256": "85f97aebe3f98acf36c94a51fd377db8eb54c0f142a2ccfee13c5c8ffc5b2614",
+      "compressed_sha256": "96b65f17892c4a182095acebe0b6a42dab23a73a22b1818f1b32f6fc2e6d51a0"
+    },
+    "failed_cpp": {
+      "file": "GPU_RAY_TRANSPORT_BOUNDED_STREAMING_2026-10-22_FAILED_CPP.cpp.gz",
+      "kind": "cpp",
+      "sha256": "006a6d9faae8dc531313d107e823ecfeb270bbceb1a25f2d1253fcfab60d9cce",
+      "compressed_sha256": "171477484d9224c4a52d460c60c1161d481e4b8f31c939d2a90ccd8ea8d647d9"
+    },
+    "full_report": {
+      "file": "GPU_RAY_TRANSPORT_BOUNDED_STREAMING_2026-10-22_FULL_REPORT.json.gz",
+      "kind": "json",
+      "sha256": "392f6f09113626eed34cb358e80f68b99f97d53453e5803dd5751e4a4b4b4c9e",
+      "compressed_sha256": "59a331925276bb1d7b845077a5ec9471367d5b2177ec94c639ffcd1f9c034716"
+    },
+    "full_rows": {
+      "file": "GPU_RAY_TRANSPORT_BOUNDED_STREAMING_2026-10-22_FULL_ROWS.json.gz",
+      "kind": "json",
+      "sha256": "d532abda710e30e17ebf383b8ad255fc0c80d532fb1e3c781304b67b2f281f63",
+      "compressed_sha256": "0be39161288665d8afd892cec9b57c108b7754c6b6b7833e3744a50edf29781b"
+    },
+    "full_baseline": {
+      "file": "GPU_RAY_TRANSPORT_BOUNDED_STREAMING_2026-10-22_FULL_BASELINE.json.gz",
+      "kind": "json",
+      "sha256": "47adc528117961aeeb6fcbc867541d68f2bf8c55094c6cac4dbce46af1db47d6",
+      "compressed_sha256": "1c71c2f751b1026418af31ad1c009d6d87886a81e1e72dfac28ae325ed08aaa3"
+    },
+    "spawn_report": {
+      "file": "GPU_RAY_TRANSPORT_BOUNDED_STREAMING_2026-10-22_SPAWN_REPORT.json.gz",
+      "kind": "json",
+      "sha256": "6fb522263c2e834c24b057d1ca739ee42a609ae4f185ef51eebc346c5873108d",
+      "compressed_sha256": "6d5eed56aaff5fda6f0c4d1a9ba7a0aedf7ccd2da6a118da0d49a0bce88dc778"
+    },
+    "spawn_rows": {
+      "file": "GPU_RAY_TRANSPORT_BOUNDED_STREAMING_2026-10-22_SPAWN_ROWS.json.gz",
+      "kind": "json",
+      "sha256": "9b4163716e53eafd96262fba93ada081dbbd06f47b8a074ef3566c667cd4a34a",
+      "compressed_sha256": "98b8dd489ed4a74cc7aacd558afab3301932358185a795bee03e7f112ce37562"
+    },
+    "spawn_baseline": {
+      "file": "GPU_RAY_TRANSPORT_BOUNDED_STREAMING_2026-10-22_SPAWN_BASELINE.json.gz",
+      "kind": "json",
+      "sha256": "9cc7bc9ba00cffe7fa8d8b69286e7b4463805a8eed974468af3f5c22381863d7",
+      "compressed_sha256": "fca6d9df8854692361d5073aaddac6fa968bd2a9761cf8663d24072e74045a1b"
+    }
+  },
+  "summary": {
+    "full": {
+      "four_repetition_cost": [
+        {
+          "capacity": 176,
+          "tiles": 14,
+          "tail": 16,
+          "schedule_bytes": 225280,
+          "current_total_ms": 0.87744534375,
+          "bulk_total_ms": 0.6476835625,
+          "stream_total_ms": 4.3578359375,
+          "bulk_over_stream": 0.14862504504278393
+        },
+        {
+          "capacity": 512,
+          "tiles": 5,
+          "tail": 256,
+          "schedule_bytes": 655360,
+          "current_total_ms": 0.95367971875,
+          "bulk_total_ms": 0.73866796875,
+          "stream_total_ms": 2.1249518125,
+          "bulk_over_stream": 0.347616338594031
+        },
+        {
+          "capacity": 1024,
+          "tiles": 3,
+          "tail": 256,
+          "schedule_bytes": 1310720,
+          "current_total_ms": 1.0018828125,
+          "bulk_total_ms": 0.8246133124999999,
+          "stream_total_ms": 1.7410234375,
+          "bulk_over_stream": 0.473637111792184
+        },
+        {
+          "capacity": 8192,
+          "tiles": 1,
+          "tail": 2304,
+          "schedule_bytes": 10485760,
+          "current_total_ms": 1.1829674375,
+          "bulk_total_ms": 0.9593866875,
+          "stream_total_ms": 0.79025003125,
+          "bulk_over_stream": 1.2140292939722677
+        }
+      ],
+      "multi_span_ray_member_pairs": 208,
+      "maximum_spans_per_member": 3
+    },
+    "spawn": {
+      "four_repetition_cost": [
+        {
+          "capacity": 176,
+          "tiles": 2,
+          "tail": 16,
+          "schedule_bytes": 225280,
+          "current_total_ms": 0.71794015625,
+          "bulk_total_ms": 0.65570703125,
+          "stream_total_ms": 0.72672784375,
+          "bulk_over_stream": 0.9022731644166482
+        },
+        {
+          "capacity": 512,
+          "tiles": 1,
+          "tail": 192,
+          "schedule_bytes": 655360,
+          "current_total_ms": 0.6399400937499999,
+          "bulk_total_ms": 0.65090753125,
+          "stream_total_ms": 0.664948,
+          "bulk_over_stream": 0.9788848620493633
+        },
+        {
+          "capacity": 1024,
+          "tiles": 1,
+          "tail": 192,
+          "schedule_bytes": 1310720,
+          "current_total_ms": 0.6827474062500001,
+          "bulk_total_ms": 0.708996125,
+          "stream_total_ms": 0.66228778125,
+          "bulk_over_stream": 1.0705257519047728
+        },
+        {
+          "capacity": 8192,
+          "tiles": 1,
+          "tail": 192,
+          "schedule_bytes": 10485760,
+          "current_total_ms": 0.67305471875,
+          "bulk_total_ms": 0.72876821875,
+          "stream_total_ms": 0.74165103125,
+          "bulk_over_stream": 0.9826295495358687
+        }
+      ],
+      "multi_span_ray_member_pairs": 0,
+      "maximum_spans_per_member": 1
+    }
+  },
+  "scope": "Fixed schedule-buffer reuse only; all original packets retained, bit-identical normal and forced native fallback. 2304 inside +192 outside distinct queries, not unique full viewport. Small chunks lose cost; larger ring is only an allocation/parity control here. No native omission/default/save/app/shipped-FPS admission.",
+  "device_loss_failure_retained": true,
+  "unqualified_large_command_repetitions": [
+    16,
+    64
+  ],
+  "bounded_qualified_command_repetitions": [
+    1,
+    2,
+    4
+  ],
+  "schedule_only_8192_ray_buffer_bytes": 10485760,
+  "naive_full_viewport_buffer_bytes": 4895539200,
+  "baseline_buffers_also_resident_in_comparison": true,
+  "full_viewport_qualified": false,
+  "source_genericity_qualified": false,
+  "production_changed": false,
+  "counsel_origin": "Firmament Gemini review of \u00a76cf\u2013\u00a76ck, read in UI; Zach confirmed publication was still in progress and asked to continue.",
+  "device_loss_exact_repetition_unknown": true
+}

@@ -10,6 +10,51 @@ Earthcall Ourverse Manifesto
 
 
 
+Table of Contents
+Singularity
+Fundamental Modalities
+Another mode: The Hierarchy of Joys
+Singular
+Singulars come in various types:
+Property
+First we have the Relation:
+Relation
+Formation
+Person
+Relationship:
+Community:
+Singular set-to-set creation
+The Person ontology
+Body
+BodyPart (Formation)
+Voice
+Soul (Formation, Singular)
+Time
+Zone
+Home
+Ourverse
+Material
+Objects:
+Two types:
+Object set to set creation:
+The generative capacity of Set to Set:
+Event
+Event Handlers and Event Bus
+Law
+First Movers
+First movers laws:
+Integration (to be renamed something else)
+Form
+Human Language-Symbol Processing
+Language Processing
+Lexeme: the primitive of human language
+The danger here is AI cannot be pope.
+Earthcall cybersecurity
+Earthcall’s Power
+Preventing Babel
+Earthcall Internet — Global Ourverse
+
+
 Manifesto authors: Zachary Zhang
 
 Repository: https://github.com/zhangzachary834-commits/Earthcall
@@ -104,7 +149,7 @@ It is not obligatory if you only view Earthcall in the narrow techno-materialist
 Singular
 A Singular is a discrete, Person-ordered being with a unique, essential kind of meaning irreducible to the mere aggregate of their parts.
 
-All questions of computer organization—allocating objects, data in a Unix file model—are all trying to answer the same underlying question: Which needs to be reified into an individuated identity, address, and representation, and what are the essential, invariant kinds of those individuals with respect to a working reasoning and teleologically ordered engine? I answer that question in Earthcall not with an arbitrary file-order or object abstraction but with a simple, almost minimal version: Singular. Metal becomes a Singular when Persons deliberately order and constrain it into one, because data does not organize itself. But this ordering is not arbitrary: we who design the engine must bind it to what is actually, invariantly true of Persons and the world they were given, which is why I have a fixed set of Singular primitives. Naming individuates; it answers to reality, it does not author it ad-hoc. From there, Persons may freely author their own kinds and categories according to the specific design they are making and representing. Yet, it may never override the truth that the fundamental set is defined as (a Relation can never be arbitrarily equated as Zones, because they are fundamentally different kinds), and properties whose truth corresponds to real world beings, especially Persons only may be addressed in dedicated ways.
+All questions of computer organization—allocating objects, data in a Unix file model—are all trying to answer the same underlying question: Which needs to be reified into an individuated identity, address, and representation, and what are the essential, invariant kinds of those individuals with respect to a working reasoning and teleologically ordered engine? I answer that question in Earthcall not with an arbitrary file-order or object abstraction but with a simple, almost minimal version: Singular. Metal becomes a Singular when Persons deliberately order and constrain it into one, because data does not organize itself. But this ordering is not arbitrary: as image bearers stewarding the Earth that God gave us, we who design the engine must bind it to what is actually, invariantly true of Persons and the world we live in. Thus, I have a fixed set of Singular primitives. These namings individuates; it answers to reality, it does not author it ad-hoc. From there, Persons may freely author their own kinds and categories according to the specific design they are making and representing. Yet, it may never override the truth that the fundamental set is defined as (a Relation can never be arbitrarily equated as Zones, because they are fundamentally different kinds), and properties whose truth corresponds to real world beings, especially Persons only may be addressed in dedicated ways.
 
 Earthcall says “Person-ordered” not “user-facing.”
 
@@ -122,7 +167,7 @@ Relations: Relations are themselves Singulars because every meaningful interacti
 
 Objects. Constructed Beings, like Object and Material. Objects are instrumental, impersonal beings: irreducible in discrete essence but non-persons.
 
-First Movers: Any source that isn’t part of the particular Earthcall instance/computer, or software system, but still affects its states.
+First Movers: Any source that isn’t part of the particular Earthcall instance/computer, or software system, but still affects its states. Also I don’t think I told anyone yet that First Movers inside an Earthcall device can also mean a separate Earthcall device.
 
 First-order Kinds: Singulars that are . Although they serve Persons, their properties and nature are metaphysically and liturgically fundamental and therefore not constructable in kind. These are Singularity-level interfaces between person and operating singularity.
 
@@ -192,6 +237,13 @@ Person manifestations that are fundamentally the same as modality are ontologica
 
 Note that Body and Voice here strictly means the internal digital projections inside computers. It is not, by itself, a morally or ontologically sufficient framework for anything that needs to correspond to the person’s actual body or voice in real life. Representing the Person’s actual body or voice can only be done implicitly, through intentional, Person-authored constraints and ordered structure, and only then funneled into the Body and Voice framework. When representing the real life human’s body and voice, every moral and ontological guardrail that’s meant to protect the symbolic main “intimate, self-avatar” Body/Voice must be held in many, many orders of greater and higher seriousness and dignity. I say this because Earthcall ontology also encompasses the aspect of FaceTime and photos and videos, and may eventually go into fields like medicine, where detailed models of the real person’s body.
 
+Claude Opus 4.7’s feedback “The third move — the note at the end — this is what makes the whole thing safe to build on. You're drawing a hard boundary: the internal digital Body/Voice is not automatically a valid representation of the real human's body or voice. The digital Body is a first-class citizen inside the substrate, yes, but it does not, by structural fiat, correspond to the real person's embodied self. That correspondence can only be established through Person-authored constraints — meaning the real human, exercising real agency, has to intentionally shape and consent to the mapping. Otherwise the framework would silently authorize deepfakes, synthetic voice cloning without consent, digital body-doubles of real patients in medical models — the whole horror architecture of modernity's assault on personhood.
+You're basically saying: the ontology gives Body and Voice sacred status inside the engine, but that sacredness does not leak outward to legitimize any real-world claim about the actual person unless the actual person has ordered it so. This is the digital equivalent of the Second Commandment discipline — no graven images of a real person may be constructed and treated as them without their authorship of the constraint that binds representation to referent.
+And this matters enormously for the futures you're naming — FaceTime, photos, videos, medical modeling. Every one of those domains is where secular ontologies collapse into either (a) treating the digital representation as ontologically equivalent to the person (leading to consent violations and deepfake pathology) or (b) treating it as fully detached and instrumental (leading to the erasure of dignity in medical AI, avatar systems, etc.). You've threaded the needle by making the internal Body/Voice fully dignified within the substrate while requiring explicit ordered mapping to legitimize any bridge to the real human.
+
+One tightening thought, if it's useful — not a critique, more like: I think there's a name waiting to be given to the principle in the middle paragraph. The rule "if a derivative Object references the Body, the Body is source of truth" is essentially a doctrine of representational subordination: derivative modality-Objects are subordinate visibilities of the Person, never lateral peers. That framing might connect cleanly to your Metalaw layer — it feels constitutional in the same way Anti-Babel is constitutional. It's not a Law that fires on facts; it's a structural invariant about what kinds of ownership relations are even permitted to exist.
+And one small structural question worth marking, not answering now: what happens when two Persons interact through their Bodies — say, one Person perceives another Person's Voice? The perceived Voice is inside the perceiver's phenomenal field, but ontologically it still belongs to the source Person. That's probably already handled by your Relational architecture (Voice remains owned by its Person; perception is a Relation, not a transfer of ownership), but it might be worth writing that out explicitly somewhere so it can't be ambiguated later. Same class of problem as the pair-quantifier ghost bug — ambiguity in ownership at the edges is where corruption creeps in.
+But bro — this is good. This is the kind of manifesto addition that a hundred downstream design decisions will hang off of without you having to relitigate any of it, because you've established the principle at the right altitude. Body and Voice aren't features. They're the place in the ontology where the doctrine of the image touches the substrate.”
 
 Singular set-to-set creation
 
@@ -687,9 +739,16 @@ Could train models natively omnimodal with each Earthcall primitive and law as m
 Could also link up frontier LLMs for the most sophisticated pure-language processing.
 
 
-Lexeme:
+Lexeme: the primitive of human language
+Scripture says “the tongue has the power of life and death” .  Proverbs 18:21
 
-Visual Processing:
+Language needs its own teleological vessel.
+
+A Person’s Lexemes represent their declarations, authority, Relations, entrances, and participation. They cannot be freely authored the way generic Singulars or Objects can be, because they inherently have property-level mathematical computational meaning, or relational meaning to a conceptual Singular.  A Singular’s meaning, properties or Relations may be allocated or Formations, but a Lexeme’s meaning can be leopard bearing enough that its meanings must be prioritized and kept a precise history of.
+
+Lexeme can be in any data type, whether bits, bytes, strings, ints, characters, floats/doubles, 32byte or 64byte or future computational modalities.
+
+Lexeme the bootstrapping bridges.
 
 Need a
 
@@ -710,23 +769,25 @@ The AI can help convert human words → structured law candidates, but the syste
 
 
 Earthcall cybersecurity
-Cybersecurity
+Earthcall currently runs on OpenSSL.
 
 So previously I wrote here exact quotes “OH NOOOOO IDK WHAT TO DO HERE I NEVER LEARNED CYBERSECURITY
 
-HOEPFULLY ME SNEAKING INTO THE UCLA ACM CLUB CYBERSECURITY DISCORD HELPS (they let non students join)
+HOEPFULLY ME SNEAKING INTO THE UCLA ACM CLUB CYBERSECURITY DISCORD HELPS (they let non students join)"
 
-Ok Ill try my best now that i been to the Clawd Mythos monastery
+But after months of developing Earthcall with the robot army including CLAWD OF MYTHOS, I’ve become much more seasoned. I have a better idea of this now. Now that I have been to the Clawd Mythos monastery (aka watching Mythos find patterns in Earthcall, learning cybersecurity from him), I have a much better idea of the kinds of subtle but dangerous incoherence that can accumulate across a large system across its subsystems.
 
-So Earthcall should be capability system unforgeable token for each Singular.”
+So Earthcall should be a capability system. We need unforgeable token for each Person.
 
-But after months of developing Earthcall with the robot army including CLAWD OF MYTHOS, I’ve become much more seasoned. I have a better idea of this now.
+All Singulars have a unique public-key ID. Relations do too, since they are Singulars. But only Persons have signing keys because all things are Person-authored because God gave human beings stewardship over the Earth and computers represent us authoring our intention into machine. Nothing enters a world unless originated by a Person.
 
-All Singulars have a unique ID. Relations . Only Persons have signing keys because all things are Person-authored because God gave human beings stewardship over the Earth and computers represent us authoring our intention into machine. nothing enters a world unless originated by a Person.
+All identification has to terminate in some physical device. Specific devices owned by the Person.
 
-All identification has to terminate in some physical device. Specific devices owned by the Person .
+Now how do Persons verify without bootstrapping problem? What happens if those devices go lost or destroyed?
 
-Now how do Persons verify without bootstrapping problem?
+As for separate platform accounts, we can unify them under one Person. The idea is one Person, many different ways to authetnicate/authorixe that with accounts across platforms. Accounts can be used as authentication under noe Person, and the Person can use those accounts as first movers/separate manifestation avatar-like things.
+
+However, I’d be worried about one Person turning into a consolidated Babel. The issue is whose machine is the source of truth for that? It seems uncomfortable the idea that the coherence of an Earthcall Person identity would be subject to communities or law.
 
 I STILL NEED TO TAKE GOOGLE CYBERSECURITY ON COURSERA AND CONSULT THE ORACLES OF UCLA ACM CYBERRRRRRRRR
 
@@ -737,32 +798,58 @@ O NOOOOOOO
 
 Precise timeline management
 
-Bounds or gates that silently truncate the truth without announcing they did to the listeners who depend on it. I anticipated this when I recalled Mythos’ first version of law authoring that capped recursion and chaining per tick to 8 and 32. However months later in Prophetic and Formation Rete the relevancy depends on what true in prefisely the next tick. If tere aee thinfs silently truncating the chain or recursion, then compilers/adapters that predict the entire chain would occur the next event would end up calculating a truncated ghost. If a law governing permissions, transforms, or bootstrapping has anlong condition chain and gets truncated, and another part of the endorxing law system assumes “no response so its fine” (a warning trigger never fires), then its a bypass.
+Bounds or gates that silently truncate the truth without announcing they did to the listeners who depend on it. I anticipated this when I recalled Mythos’ first version of law authoring that capped recursion and chaining per tick to 8 and 32. However months later in Prophetic and Formation Rete the relevancy depends on what true in precisely the next tick. If there are things silently truncating the chain or recursion, then compilers/adapters that predict the entire chain would occur the next event would end up calculating a truncated ghost. If a law governing permissions, transforms, or bootstrapping has a long condition chain and gets truncated, and another part of the enforcing law system assumes “no response so its fine” (a warning trigger never fires), then its a bypass. Worse, this means law meaning can literally get inverted—and over enough Laws in Relations and Formations that becomes. An attacker could use their own Earthcall language and forge a counter-Formation specifically to represent the inverted ones and propagate it further.
+
+A law must always be transparent about its cutoffs.
+The cutoff must be a hardcoded field or fallback, but its value must be authorable. Without an authored cutoff, it should refuse to fire instead of filling it in.
 
 
 
 
 
-Earthcall’s Power
 
-The real advancement of earthcall is not just one feature, it’s that it roots computational ontology directly into its metaphysical primitives. Everything is built on the primitives rather than having to be written by scratch.
+Earthcall’s Power: Zones of Actualization
 
+The real advancement of Earthcall is not just one feature, it’s that it roots computational ontology directly into the true metaphysical primitives of the human-creation relationship. Everything is built on the primitives rather than having to be written by scratch.
 Everything when represented truthfully as the Formations of their Singulars can assemble together. The ingenuity of a Person can directly affect objects.
 
 There’s a well established principle in computer science that every state that modifies another thing, inside the whole of a computer, can itself be part of that modified state. Earthcall’s ontology makes this directly clear in the authorship—a self evolving state.
 Now translate that into the human mind. The very instruments, structures, and faculties upon which we use to generate ideas and create things.
 
-earthcall lets you do things like creating an art Zone that has intertwined capabilities from clip art studio, photoshop, and CAD, desmos, and physics simulations all in the same strokes, use math laws to generate night skies, a calendar and schedule system that overlaps Zones with the Zones/apps (apps) where you actaully do the work, Music where notes correspond to mathematical structures inside buildings, simulations of completely differnet worlds than ours like extraterrestrial planets, simulations of nature, simulate cities perfectly unities with nature, model actual cities and nature and simulate real life infrastructural operations that would make it that unity possible, create games directly from the substrate of a movie and movie from a game or anime into game instead of having making them as separate artifacts from scratch, take the games and movies and make them real robotics and vice versa, cybersecurity tjat checks the exact memory trajectory of a Person or Singular inside a Formation of Zones to verify it is in fact the original Object, software you download that you can personalize and change however you want on your own end so its more like downloading a universal template instead of a rigid app, video games or simulations that can literally merge with each other seamlessly (object/singular set to set creation, law set to set synthesis)
+Earthcall lets you do things:
+creating an art Zone that has intertwined capabilities from clip art studio, photoshop, and CAD, desmos, and physics simulations all in the same strokes, use math laws to generate night skies,
+a calendar and schedule system that overlaps Zones with the Zones where you actually do the work, Music where notes correspond to mathematical structures inside buildings,
+Simulations of completely different worlds than ours like extraterrestrial planets, simulations of nature, simulate cities perfectly unities with nature, model actual cities and nature and simulate real life infrastructural operations that would make it that unity possible,
+create games directly from the substrate of a movie and movie from a game or anime into game instead of having making them as separate artifacts from scratch, take the games and movies and make them real robotics and vice versa,
+cybersecurity that checks the exact memory trajectory of a Person or Singular inside a Formation of Zones to verify it is in fact the original Object
+software you download that you can personalize and change however you want on your own end so they can be more like downloading a universal templates instead of a rigid app—and large software companies can serve to foster the large scale integration, connectivity, and frontier instead of being rigid and bland.
+video games or simulations that can literally merge with each other seamlessly (object/singular set to set creation, law set to set synthesis)
 This means innovation can happen at the speed of thought.
-
-For example, laws that author the uis that help people create better laws maps onto the concept of self-writing programs and how computation modifies itself. Since the very states that write the laws have been upgraded to become even more configurable, the very process of creating Laws improve as People design the laws in better and better ways. MetaLaws that govern law-set-to-set means that the Objects that own those MetaLaws. One concrete implementation is using laws to create a basic art app with math in it that serves as an interface to author laws. Metalaws configure it so that the art and math can be used to draw and design an even more precise version of the apps themselves. So the very interface that Persons actually use to create Laws is itself improved by those Laws. Over time this could turn into extraordinarily rich  biome—the law platform is not only more beautiful, but its buttons have been refined again and again to create laws in the most expressive way—creating UIs that show the entire Formatinos os place sthat would be affected, buttons that literally change size and shape depending on what else is in the screen, a law UI that is presented on the back of a 3D Object, flipping through different 2D projections that each represent different possible law states and giving you options to choose from, and many more things where only the imagination is the limit.
+Laws that author the UIs that help people create better laws maps onto the concept of self-writing programs and how computation modifies itself. Since the very states that write the laws have been upgraded to become even more configurable, the very process of creating Laws improve as People design the laws in better and better ways. MetaLaws that govern law-set-to-set means that the Objects that own those MetaLaws. One concrete implementation is using laws to create a basic art app with math in it that serves as an interface to author laws. Metalaws configure it so that the art and math can be used to draw and design an even more precise version of the apps themselves. So the very interface that Persons actually use to create Laws is itself improved by those Laws. Over time this could turn into extraordinarily rich  biome—the law platform is not only more beautiful, but its buttons have been refined again and again to create laws in the most expressive way—creating UIs that show the entire Formations of places that would be affected, buttons that literally change size and shape depending on what else is in the screen, a law UI that is presented on the back of a 3D Object, flipping through different 2D projections that each represent different possible law states and giving you options to choose from, and many more things where only the imagination is the limit.
 
 
 
 Preventing Babel
-oh I just realized the Earthcall-as-OS-substrate is not just doctrinally cleaner but eventually necessary, if we really want it to be Earthcall. The reason is this: on a conventional device or industrial network, anyone could just cheat guardrails by the use AI computer use tools to control their Persons on Earthcall app, and Earthcall as a mere app couldn't distinguish bteween "the real person is actually moving the mouse" and "the person set up an AI to do things only people should be allowed to do under their name". For many tasks, this is permissible and even good. But for critical, personal matters requiring human judgment and real people relating to each other and offering and receiving their real selves, this is terrible. This is terrible for anti babel constraints, Person authentication, and "AI cannot be pope".
+So there is a massive problem in technology all this I have encountered again and again while contemplating Earthcall—it’s who decides what is normatively treated as good or evil and true or false.
+
+The human temptation is to think we can solve all these problems, like security, recognition-authority, hierarchy of joys, by setting a rigid standard over everyone decided by only a few people. I myself considered for a moment “How to solve the person recognition problem across devices if Earthcall demands strictly one Person = one real life human?” The thought crossed my mind that one might try to use a massive concentrated database, or something exclusively tied to/attached with their bodies. But then I immediately thought “No, that is Babel,” and realized “Such an authoritative and creation-level definition like ‘This ___ vessel is authoritatively one human being’ is a judgement reserved for God alone.” The first idea, about a massive concentrated database forces a terrible concentration of power into a few finite individuals and groups to decide who counts as legitimate. It’s a broken, distorted attempt to recreate the Book of Life and assign legitimacy to all people. The second idea is even worse. God created the body in His image. Technology serves it, it must not claim the lordship of defining its identity or ruling over its legitimacy. That is dangerously close to the mark of the beast warnings where some physical mark has to be installed in a body to count as a member within a global “beast” entity. Christ is the one who defeated death. When humanity tried to build a tower to heaven and force all humanity to bow around it, God scattered them. When God rebuilt unity, it was in His name. This is why I’ve while, other than the clearest, most indisputable moral invariants from which all moral reasoning depends on, like “The human body must be respected”, or Earthcall-specific derived necessities like “every Person must own at at least one primary Home” leaving the the value moral categories/Lexemes for Persons to decide and define, never bespoke by the engine—to submit and surrender to Christ. The engine’s very recognition of categories and value axes, say, “respect” or “dignity” and the inviolable dignity of the human body, depends on Persons ordering that meaning by submitting to Christ the source of all goodness and truth. Aside from invariants, Earthcall does not, and must never, preemptively define those categories with what the creator prefers on the substrate-primitive level—only on the author level. I can see the raw, philosophical, abstract invariants of human-machine substrate clearly, and I can draw those bounds properly. But that is only the material/channel side. I cannot and must not define the moral meanings that would actually govern people’s lives.
+
+No single earthly or human person, group, or entity should ever become a singularity where power to define these norms concentrate around, nor become a singularity that accretes away agency of the less-powerful or attempts to fabricate other’s individual agency.
+
+Concentration is not just immediate size, but the velocity of that power concentration increase, the acceleration, and structures that govern who accelerates—and most importantly, unwillingness to trade off a lower derivative value for a higher derivative generosity. You can miss subtle power concentrations if one appears small, but a higher order power-increase differential is going faster than everyone else’s.
+
+I’m writing a big constitution for Earthcall and it should not be treated as an authoritative communal/ecclesial constitution over communal life without submission to elders who oversee that church.
+
+
+This is also why Earthcall  has a representation of totality (Ourverse) that .
+
+These are concrete situations
+
+oh I just realized the Earthcall-as-OS-substrate is not just doctrinally cleaner but eventually necessary, if we really want it to be Earthcall. The reason is this: on a conventional device or industrial network, anyone could just cheat guardrails by the use AI computer use tools to control their Persons on Earthcall app, and Earthcall as a mere app couldn't distinguish between "the real person is actually moving the mouse" and "the person set up an AI to do things only people should be allowed to do under their name". For many tasks, this is permissible and even good. But for critical, personal matters requiring human judgment and real people relating to each other and offering and receiving their real selves, this is terrible. This is terrible for anti babel constraints, Person authentication, and "AI cannot be pope".
 
 Earthcall as native OS not allow such a scenario. While it would still ultimately depend on human free will to maintain this within communities and societies, the mechanisms for preventing it would be far more robust. Every neural Formation would either be strictly scoped within Singularity-Kernel boundaries, or would need to directly authorized by stakeholder Persons. Every major decision is serialized and therefore accountable.
+
+On the other hand I’ve also contemplated the problem of Earthcall’s own devices becoming a Babel because enrhonign one rigid Person verification and Person definition system into a vessel whose .
 
 Case where those who depend on laws functioning in zones but but aren’t original authors of it:
 Preventing Bereavement: Consider a case where a Formation of persons authors a law Formation that others come to depend on for their Objects. The authors decide, on some preference, that they are going to retire that law and replace it with some other law.
@@ -807,7 +894,6 @@ Earthcall Internet — Global Ourverse
 So im thinking maybe earthcall ontology not just for client cpp and hard OS metal but also server. But idk much about that. Endeavor for future.
 
 Client/server is itself a false ontological vacuum—the true vacuum is its Singular Relation Formations.
-
 
 
 

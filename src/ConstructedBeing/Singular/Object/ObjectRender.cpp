@@ -7,6 +7,9 @@
 #include "Automation/AutomationEvents.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/RenderMaterial.hpp"
+#include "ConstructedBeing/Material/MaterialManager.hpp"
+
+extern MaterialManager materials;
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
@@ -227,25 +230,38 @@ const geom::TessMesh& capTopMesh() {
 void Object::drawCube() const {
     // Each face CAN carry its own painted texture, so the general path is six
     // separate drawMesh calls — like drawComplexModel's patches. But the common
-    // case is an unpainted cube, where every face resolves the exact same
-    // RenderMaterial (no per-face texture at all), and six draws for one
-    // uniform box is pure driver overhead. Decided fresh every draw, from the
-    // resolved albedo, never cached on the Object: paint a single face with
-    // Object::setFaceColor / ownMaterial and the very next draw sees that
-    // face's FaceAlbedo differ and falls back to the six-draw path.
-    const FaceAlbedo first = faceAlbedo(0);
+    // case is an unpainted cube or a cube with identical face paint, where every
+    // face resolves the exact same RenderMaterial and texture handle, and six draws
+    // for one uniform box is pure driver overhead. Decided fresh every draw, from
+    // the resolved albedo.
+    auto mat = materials.resolveOrDefault(_materialId);
+    if (!mat) return;
+    mat->syncAllFaceTextures();
+
+    auto getFaceAlbedo = [&](size_t face) -> FaceAlbedo {
+        if (face >= mat->faceTextures.size()) return {};
+        const FaceTexture& ft = mat->faceTextures[face];
+        const size_t expected = static_cast<size_t>(ft.width) * ft.height * 4;
+        if (ft.width <= 0 || ft.height <= 0 || ft.pixels.size() != expected) return {};
+        if (ft.id == 0 && !ft.pixels.empty()) ft.uploadToGPU();
+        return {ft.id, ft.pixels.data(), ft.width, ft.height};
+    };
+
+    const FaceAlbedo first = getFaceAlbedo(0);
     bool allFacesSame = true;
     for (int f = 1; f < 6 && allFacesSame; ++f) {
-        const FaceAlbedo fa = faceAlbedo(f);
-        allFacesSame = (fa.handle == first.handle && fa.pixels == first.pixels &&
-                        fa.width == first.width && fa.height == first.height);
+        const FaceAlbedo fa = getFaceAlbedo(f);
+        allFacesSame = (fa.handle == first.handle &&
+                        fa.width == first.width &&
+                        fa.height == first.height &&
+                        (first.handle != 0 || fa.pixels == first.pixels));
     }
     if (allFacesSame) {
-        currentRenderer().drawMesh(mergedCubeMesh(), resolveRenderMaterial(_materialId, first));
+        currentRenderer().drawMesh(mergedCubeMesh(), resolveRenderMaterial(*mat, first));
         return;
     }
     for (int f = 0; f < 6; ++f)
-        currentRenderer().drawMesh(cubeFace(f), resolveRenderMaterial(_materialId, faceAlbedo(f)));
+        currentRenderer().drawMesh(cubeFace(f), resolveRenderMaterial(*mat, getFaceAlbedo(f)));
 }
 
 
@@ -346,6 +362,21 @@ int Object::getTextureResolution() const {
 
 void Object::setTextureResolution(const int& res) {
     if (res <= 0 || res > 4096) return;
+    if (auto curMat = materials.resolveOrDefault(_materialId)) {
+        const int expectedFaces = getFaces() > 0 ? getFaces() : 1;
+        if (static_cast<int>(curMat->faceTextures.size()) == expectedFaces &&
+            curMat->getTextureResolution() == res) {
+            const size_t expectedBytes = static_cast<size_t>(res) * res * 4;
+            bool allMatch = true;
+            for (const auto& ft : curMat->faceTextures) {
+                if (ft.width != res || ft.height != res || ft.pixels.size() != expectedBytes) {
+                    allMatch = false;
+                    break;
+                }
+            }
+            if (allMatch) return;
+        }
+    }
     auto mine = ownMaterial();
     if (!mine) return;
     const int faces = getFaces() > 0 ? getFaces() : 1;

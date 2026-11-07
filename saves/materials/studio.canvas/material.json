@@ -1,23 +1,109 @@
 {
   "identifier": "material.studio.canvas",
   "material": {
+    "id": "material.studio.canvas",
+    "name": "studio.canvas",
     "baseColor": [
       0.94,
       0.92,
       0.88
     ],
-    "name": "studio.canvas",
-    "opacity": 1.0
+    "opacity": 1.0,
+    "ambient": 0.24,
+    "diffuse": 0.82,
+    "specular": 0.22,
+    "shininess": 28.0,
+    "textureResolution": 16,
+    "colorExpr": {
+      "input": "y",
+      "pieces": [
+        {
+          "hasLo": false,
+          "hasHi": false,
+          "mathNode": {
+            "op": 2,
+            "children": [
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.94,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.015,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 1,
+                          "var": "x",
+                          "scale": 6.0,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.92,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.015,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "y",
+                          "scale": 6.0,
+                          "shift": 0.2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.88,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.018,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "x",
+                          "scale": 6.0,
+                          "shift": 0.5
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
   },
   "authors": [
     "Zach"
   ],
   "injected_by": {
-    "agent": "Claude Code / Claude Sonnet 5.5, session 01GxayCUN2nc7DDaeg33kXhZ",
-    "date": "2026-10-07",
-    "recovered_from": [
-      "saves/worlds/synthesis_studio.json",
-      "saves/worlds/synthesis_studio_living.json"
-    ]
+    "agent": "Gemini 4 Argon (The Firmament \u00b7 Gemini Spark), session c_d03bb5a87bbfab74",
+    "date": "2026-10-19",
+    "scope": "Synthesis Studio 3D procedural material upgrade"
   }
 }

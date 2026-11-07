@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Execution/ExecutionChannel.hpp"
 #include "Relation/Formation/Formation.hpp"
@@ -254,6 +255,10 @@ public:
     }
     void grantAuthority(int level) { _authorityLevel = level; }
 
+    // Relation-based authority precedence (AD-24, AD-37)
+    bool hasAuthorityOver(const Law& other) const;
+    bool hasEqualOrHigherStandingThan(const Law& other) const;
+
     ConditionMode conditionMode() const { return _conditionMode; }
     void setConditionMode(ConditionMode mode) { _conditionMode = mode; }
 
@@ -433,6 +438,11 @@ private:
     void propSetName(const std::string& v) { setName(v); }
     bool propDrives() const { return _drives; }
     void propSetDrives(const bool& v) { _drives = v; }
+    std::shared_ptr<PropertyList> propAuthors() const;
+    std::shared_ptr<PropertyList> propTargets() const;
+    std::shared_ptr<PropertyList> propAuthorityOver() const;
+    bool propIsFirstMover() const { return isFirstMover(); }
+    int propAuthority() const { return _authorityLevel; }
 
     std::string _lawId;
     std::string _name;
@@ -1133,6 +1143,8 @@ private:
     // notice they have gone stale rather than trusting that whoever edited
     // the condition remembered to say so.
     std::unordered_map<std::string, std::uint64_t> _compiledConditionRevision;
+    // derivedReadingRevision() when the terminals above were last decided.
+    std::uint64_t _compiledDerivedReadingRevision = 0;
     // Rebuild this law's terminals if its condition changed (or drop them if
     // it no longer wants any). Cheap when nothing moved: one map lookup.
     void syncReteCompilation(Law& law);

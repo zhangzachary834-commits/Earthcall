@@ -85,6 +85,11 @@ public:
     std::vector<std::shared_ptr<Relation>> getRelationsBetween(const std::string& a, const std::string& b) const;
     std::vector<std::shared_ptr<Relation>> getRelationsOfType(const std::string& type) const;
 
+    // Query contract: raw Relation queries preserve historical truth. Callers
+    // asking for current semantic state must consult canonical supersession.
+    bool isSuperseded(const Relation& r) const;
+    bool isCurrent(const Relation& r) const;
+
     std::vector<std::string> findAdjacentEntities(const std::string& entityId, const std::string& relationType = "") const;
 
     bool wouldFormCycle(const Singular* start, const Singular* target, const std::string& relationType) const;

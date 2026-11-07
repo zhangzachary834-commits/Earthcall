@@ -178,6 +178,7 @@ void Law::setName(const std::string& name) {
 void Law::addAuthor(Singular& author) {
     _authors.addMember(&author);
     recordProvenance("authored-by", *this, author, true, 1.0f);
+    Singular::notifyPropertyChanged(this, "authors");
 }
 
 void Law::setAuthors(const std::vector<Singular*>& authors) {
@@ -185,6 +186,7 @@ void Law::setAuthors(const std::vector<Singular*>& authors) {
     for (auto* author : authors) {
         if (author) addAuthor(*author);
     }
+    Singular::notifyPropertyChanged(this, "authors");
 }
 
 void Law::addConditionSubject(Singular& subject) {
@@ -202,10 +204,12 @@ void Law::clearConditionFormation() {
 void Law::addTarget(Singular& target) {
     _targets.addMember(&target);
     recordProvenance("targets", *this, target, true, 1.0f);
+    Singular::notifyPropertyChanged(this, "targets");
 }
 
 void Law::clearTargets() {
     _targets.clear();
+    Singular::notifyPropertyChanged(this, "targets");
 }
 
 std::shared_ptr<Relation> Law::recordProvenance(const std::string& type,
@@ -450,6 +454,46 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     return law;
 }
 
+bool Law::hasAuthorityOver(const Law& other) const {
+    if (this == &other) return false;
+
+    // 1. Check directed reachability in Universe relations for "authority-over"
+    std::unordered_set<const Singular*> visited;
+    std::vector<const Singular*> queue;
+    queue.push_back(this);
+    visited.insert(this);
+
+    auto allRelations = Universe::instance().relations();
+    while (!queue.empty()) {
+        const Singular* curr = queue.back();
+        queue.pop_back();
+
+        for (const auto* r : allRelations) {
+            if (!r) continue;
+            if (r->type == "authority-over" || (r->getTypeLexeme() && r->typeLabel() == "authority-over")) {
+                if (r->a() == curr && r->b()) {
+                    if (r->b() == &other) return true;
+                    if (visited.insert(r->b()).second) {
+                        queue.push_back(r->b());
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Fallback to legacy _authorityLevel when neither is connected in DAG
+    return _authorityLevel > other.authorityLevel();
+}
+
+bool Law::hasEqualOrHigherStandingThan(const Law& other) const {
+    if (this == &other) return true;
+    if (hasAuthorityOver(other)) return true;
+    if (other.hasAuthorityOver(*this)) return false;
+
+    // Horizontal peers with no DAG relation
+    return _authorityLevel >= other.authorityLevel();
+}
+
 Law::ApplicationResult Law::applyTo(Singular& target) {
     return applyToImpl(target, false);
 }
@@ -499,11 +543,33 @@ Law::ApplicationResult Law::applyToImpl(
         }
     }
 
+    bool selfAuthorityElevation = false;
+    if (_actionModel) {
+        std::vector<PropertyPath> paths;
+        _actionModel->collectPaths(paths);
+        for (const auto& p : paths) {
+            if (p.segments.empty()) continue;
+            std::size_t startIdx = 0;
+            Singular* bearer = resolveLawRoot(target, p, startIdx);
+            const Law* destLaw = dynamic_cast<const Law*>(bearer);
+            if (!destLaw && targetLaw && startIdx == 0) destLaw = targetLaw;
+            const std::string& propSeg = (startIdx < p.segments.size()) ? p.segments[startIdx] : p.segments.front();
+            if (propSeg == "authorityLevel" || propSeg == "authority" || propSeg == "authorityOver" || propSeg == "isFirstMover") {
+                if (!destLaw || destLaw == this || !hasAuthorityOver(*destLaw)) {
+                    selfAuthorityElevation = true;
+                    break;
+                }
+            }
+        }
+    }
+
     if (!_enabled) {
         result = ApplicationResult::Disabled;
     } else if (!isAuthored()) {
         result = ApplicationResult::Unauthored;
-    } else if (targetLaw && _authorityLevel < targetLaw->authorityLevel()) {
+    } else if (targetLaw && !hasEqualOrHigherStandingThan(*targetLaw)) {
+        result = ApplicationResult::AuthorityDenied;
+    } else if (selfAuthorityElevation) {
         result = ApplicationResult::AuthorityDenied;
     } else if (violatesKernelBoundary) {
         result = ApplicationResult::AuthorityDenied;
@@ -512,11 +578,13 @@ Law::ApplicationResult Law::applyToImpl(
         result = ApplicationResult::AuthorityDenied;
     } else if (!conditionsAlreadySatisfied && !conditionsSatisfied(target)) {
         result = ApplicationResult::ConditionsFailed;
-        ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
-            {"lawId", getIdentifier()},
-            {"targetId", target.getIdentifier()},
-            {"result", "ConditionsFailed"}
-        });
+        if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+            ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
+                {"lawId", getIdentifier()},
+                {"targetId", target.getIdentifier()},
+                {"result", "ConditionsFailed"}
+            });
+        }
     } else if (_actions.empty()) {
         result = ApplicationResult::NoAction;
         if (ECA::LawAuditLogger::instance().level() == ECA::LawAuditLogger::Level::Verbose) {
@@ -530,6 +598,7 @@ Law::ApplicationResult Law::applyToImpl(
         ECA::Event event;
         event.type = "law-apply";
         event.subject = &target;
+        event.object = this;
         
 
         // time.sinceApplied context: t=0 is when this law began holding for
@@ -543,10 +612,10 @@ Law::ApplicationResult Law::applyToImpl(
                                                  : Universe::instance().now());
         }
 
-        // Arm the trace: every action node reports into it, and the record
-        // carries it out. This is where "did anything actually happen" is
-        // answered — the application result only says the branch was reached.
+        // Arm the trace and ambient execution policy context: every action node
+        // reports into the trace and inherits this Law as authorizingLaw.
         ActionNode::TraceScope traceScope;
+        TransferPolicy::ExecutionScope policyExecScope(this, &target);
         SingularSetToSetCreation::AuthorScope creationAuthors(_authors.getMembers());
         for (const auto& action : _actions) {
             action.run(event, target);
@@ -577,15 +646,6 @@ Law::ApplicationResult Law::applyToImpl(
         // every write failed used to log SUCCESS; now it says so, names the
         // first reason, and the record carries the rest.
         const bool wrote = trace.anyWrote();
-        std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
-                              target.getIdentifier() + "\" - " +
-                              (trace.fired() ? (wrote ? "SUCCESS" : "NO EFFECT") : "NO NODES");
-        if (!wrote && trace.fired()) {
-            const auto& first = trace.nodes.front();
-            message += " (" + first.actionName + ": " +
-                       (first.note.empty() ? std::string(ActionNode::reasonName(first.reason))
-                                           : first.note) + ")";
-        }
         if (wrote) {
             for (const auto& node : trace.nodes) {
                 if (node.wrote && !node.path.empty()) {
@@ -601,7 +661,17 @@ Law::ApplicationResult Law::applyToImpl(
         // WhileTrue that wrote nothing is a level, not an event. Logging it
         // every tick is the disk stall after loading a world of servos.
         const bool skipAudit = _activation == Activation::WhileTrue && !wrote;
-        if (!skipAudit) {
+        if (!skipAudit && ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+            std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
+                                  target.getIdentifier() + "\" - " +
+                                  (trace.fired() ? (wrote ? "SUCCESS" : "NO EFFECT") : "NO NODES");
+            if (!wrote && trace.fired()) {
+                const auto& first = trace.nodes.front();
+                message += " (" + first.actionName + ": " +
+                           (first.note.empty() ? std::string(ActionNode::reasonName(first.reason))
+                                               : first.note) + ")";
+            }
+
             nlohmann::json nodesJson = nlohmann::json::array();
             for (const auto& node : trace.nodes) {
                 nodesJson.push_back({{"action", node.actionName},
@@ -759,6 +829,38 @@ void Law::registerEnabledProperty() {
         "enabled", this, &Law::propEnabled, &Law::propSetEnabled));
 }
 
+std::shared_ptr<PropertyList> Law::propAuthors() const {
+    auto list = std::make_shared<PropertyList>();
+    for (const auto* member : _authors.getMembers()) {
+        if (!member) continue;
+        list->elements.emplace_back(member->getIdentifier());
+    }
+    return list;
+}
+
+std::shared_ptr<PropertyList> Law::propTargets() const {
+    auto list = std::make_shared<PropertyList>();
+    for (const auto* member : _targets.getMembers()) {
+        if (!member) continue;
+        list->elements.emplace_back(member->getIdentifier());
+    }
+    return list;
+}
+
+std::shared_ptr<PropertyList> Law::propAuthorityOver() const {
+    auto list = std::make_shared<PropertyList>();
+    auto allRelations = Universe::instance().relations();
+    for (const auto* r : allRelations) {
+        if (!r) continue;
+        if (r->type == "authority-over" || (r->getTypeLexeme() && r->typeLabel() == "authority-over")) {
+            if (r->a() == this && r->b()) {
+                list->elements.emplace_back(r->b()->getIdentifier());
+            }
+        }
+    }
+    return list;
+}
+
 void Law::buildProperties() {
     registerEnabledProperty();
     registerProperty(std::make_unique<ComputedProperty<Law, int>>(
@@ -767,6 +869,16 @@ void Law::buildProperties() {
         "name", this, &Law::propName, &Law::propSetName));
     registerProperty(std::make_unique<ComputedProperty<Law, bool>>(
         "drives", this, &Law::propDrives, &Law::propSetDrives));
+    registerProperty(std::make_unique<ComputedProperty<Law, std::shared_ptr<PropertyList>>>(
+        "authors", this, &Law::propAuthors));
+    registerProperty(std::make_unique<ComputedProperty<Law, std::shared_ptr<PropertyList>>>(
+        "targets", this, &Law::propTargets));
+    registerProperty(std::make_unique<ComputedProperty<Law, std::shared_ptr<PropertyList>>>(
+        "authorityOver", this, &Law::propAuthorityOver));
+    registerProperty(std::make_unique<ComputedProperty<Law, bool>>(
+        "isFirstMover", this, &Law::propIsFirstMover));
+    registerProperty(std::make_unique<ComputedProperty<Law, int>>(
+        "authority", this, &Law::propAuthority));
 }
 
 ReteToken ReteNetwork::alphaToken(const FactPtr& fact) {
@@ -2035,15 +2147,18 @@ void LawManager::connectToEventBus() {
 
     _ecaEventSubscription = Core::EventBus::instance().subscribe<ECA::Event>([this](const ECA::Event& e) {
         std::string subjectId = e.subject ? e.subject->getIdentifier() : "null";
-        std::string objectId = e.object ? e.object->getIdentifier() : "null";
 
-        ECA::LawAuditLogger::instance().log("EVENT", "Event \"" + e.type + "\" triggered (Subject: " + subjectId + ", Object: " + objectId + ")", {
-            {"eventType", e.type},
-            {"eventId", e.getIdentifier()},
-            {"subjectId", subjectId},
-            {"objectId", objectId},
-            {"timestamp", e.timestamp().toJson()}
-        });
+        if (ECA::LawAuditLogger::instance().wouldLog("EVENT")) {
+            // Only the audit payload needs the object identifier; Rete uses subjectId.
+            std::string objectId = e.object ? e.object->getIdentifier() : "null";
+            ECA::LawAuditLogger::instance().log("EVENT", "Event \"" + e.type + "\" triggered (Subject: " + subjectId + ", Object: " + objectId + ")", {
+                {"eventType", e.type},
+                {"eventId", e.getIdentifier()},
+                {"subjectId", subjectId},
+                {"objectId", objectId},
+                {"timestamp", e.timestamp().toJson()}
+            });
+        }
 
         // A being that has just left the world is released from every law
         // that named it. Formations hold RAW pointers and nothing else
@@ -2059,6 +2174,11 @@ void LawManager::connectToEventBus() {
         if (e.type == "relation-destroyed" && e.subject) {
             if (auto* relation = dynamic_cast<Relation*>(e.subject)) {
                 queueRelationStateRevalidation(*relation, relation->type);
+                if ((relation->type == "authority-over" ||
+                     (relation->getTypeLexeme() && relation->typeLabel() == "authority-over")) &&
+                    relation->a()) {
+                    Singular::notifyPropertyChanged(relation->a(), "authorityOver");
+                }
             }
         }
 
@@ -2111,12 +2231,14 @@ void LawManager::connectToEventBus() {
         std::string aId = e.relation->aId();
         std::string bId = e.relation->bId();
         
-        ECA::LawAuditLogger::instance().log("EVENT", "Custom Event \"" + evType + "\" triggered (Id: " + e.relation->getIdentifier() + ")", {
-            {"eventType", evType},
-            {"eventId", e.relation->getIdentifier()},
-            {"sourceId", aId},
-            {"targetId", bId}
-        });
+        if (ECA::LawAuditLogger::instance().wouldLog("EVENT")) {
+            ECA::LawAuditLogger::instance().log("EVENT", "Custom Event \"" + evType + "\" triggered (Id: " + e.relation->getIdentifier() + ")", {
+                {"eventType", evType},
+                {"eventId", e.relation->getIdentifier()},
+                {"sourceId", aId},
+                {"targetId", bId}
+            });
+        }
         
         auto fact = std::make_shared<ReteFact>();
         fact->type = evType;
@@ -2160,15 +2282,17 @@ void LawManager::syncProphetic() {
     // satisfying range is exactly the thing an author stares at wondering why
     // their law never fires, and the engine already knows.
     for (const auto& finding : _prophetic.unreachable()) {
-        ECA::LawAuditLogger::instance().log(
-            "LAW",
-            std::string(finding.selfImpossible ? "Law \"" : "Law \"") + finding.lawId +
-                "\" has a condition on " + finding.path + " that cannot be satisfied: " +
-                finding.why,
-            {{"lawId", finding.lawId},
-             {"path", finding.path},
-             {"why", finding.why},
-             {"selfImpossible", finding.selfImpossible}});
+        if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+            ECA::LawAuditLogger::instance().log(
+                "LAW",
+                std::string(finding.selfImpossible ? "Law \"" : "Law \"") + finding.lawId +
+                    "\" has a condition on " + finding.path + " that cannot be satisfied: " +
+                    finding.why,
+                {{"lawId", finding.lawId},
+                 {"path", finding.path},
+                 {"why", finding.why},
+                 {"selfImpossible", finding.selfImpossible}});
+        }
     }
 }
 
@@ -2208,7 +2332,12 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
     auto T0 = glfwGetTime();
 
     syncProphetic();
-
+    // A derived reading registered or removed since the terminals were built
+    // changes which conditions may be indexed at all: every law re-decides.
+    if (_compiledDerivedReadingRevision != derivedReadingRevision()) {
+        _compiledDerivedReadingRevision = derivedReadingRevision();
+        _compiledConditionRevision.clear();
+    }
     for (const auto& law : _laws) {
         if (law) syncReteCompilation(*law);
     }
@@ -2470,14 +2599,24 @@ std::vector<Law::ApplicationRecord> LawManager::tick() {
                                   ? holds
                                   : (holds && !wasHolding);
             if (!fire) continue;
+            // The condition was decided just above, on this subject, with
+            // nothing in between: deciding it again inside applyTo doubled the
+            // sweep's cost (442 vs 233 ms/tick for a bare ForAll at 320 beings,
+            // quantifier_scaling_test, once quantifiers stopped carrying an
+            // unsound alpha — disjunction_candidate_test). The reactive path
+            // already applies exactly once per candidate; this is the same rule.
+            // A restarted drive session is the one intervening step, so then
+            // the condition is re-checked as before.
+            bool decided = true;
             if (law->drives() &&
                 hasDriveSession(law->getIdentifier(), subject->getIdentifier())) {
                 if (law->retrigger() == Law::Retrigger::Absorb) {
                     continue;
                 }
                 restartDriveSession(*law, subject->getIdentifier());
+                decided = usedDirect;
             }
-            applyAndMaybeDrive(*law, *subject, records, usedDirect);
+            applyAndMaybeDrive(*law, *subject, records, decided);
         }
     }
     auto T3 = glfwGetTime();
@@ -2973,9 +3112,13 @@ void LawManager::releaseFromLaws(Singular* being) {
     if (!being) return;
     for (const auto& law : _laws) {
         if (!law) continue;
+        const bool hadTarget = law->targets().hasMember(being);
+        const bool hadAuthor = law->authors().hasMember(being);
         law->targets().removeMember(being);
         law->conditions().removeMember(being);
         law->authors().removeMember(being);
+        if (hadTarget) Singular::notifyPropertyChanged(law.get(), "targets");
+        if (hadAuthor) Singular::notifyPropertyChanged(law.get(), "authors");
     }
     const std::string id = being->getIdentifier();
     // Forget that we introduced it to the network, so an id reused by a later
@@ -3510,6 +3653,16 @@ void LawManager::compileConditionsToRete(Law& law) {
 
     if (!law.conditionModel()) return;
     const ConditionModel& model = *law.conditionModel();
+
+    // A condition reading through a derived reading (`growth.evaluation.value`)
+    // reads something no change fact announces: the report moves when a BOUND
+    // INPUT does, and nothing dirties the subject's facts then. Terminals
+    // would admit the subject only on the edits that happen to touch its
+    // `growth.*` facts, and the law would go deaf to the rest. No index; the
+    // continuous sweep decides it every tick against the live reading.
+    // Codex's admission rule, 2026-10-19 23:58; witnessed by
+    // tests/law/derived_reading_law_test.cpp.
+    if (model.readsUntrackedDerivedReading()) return;
 
     // Compile the tree into the rete network, getting terminal node IDs.
     std::vector<std::size_t> terminals = model.compileToRete(_rete, lawId);

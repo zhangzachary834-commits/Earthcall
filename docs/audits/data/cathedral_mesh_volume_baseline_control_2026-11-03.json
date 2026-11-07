@@ -1,0 +1,30 @@
+{
+  "baseline": {
+    "exit_code": 1,
+    "lines": [
+      "       spawn dais, looking up: max error 4 levels, 33 px > 1 level, mean 0.064, lit 12824",
+      "  FAILED: spawn dais, looking up: no pixel more than 2 levels from the 6144 reference",
+      "  FAILED: spawn dais, looking up: at most 0.05% of lit pixels more than 1 level off",
+      "       from the side: max error 6 levels, 83 px > 1 level, mean 0.062, lit 15902",
+      "  FAILED: from the side: no pixel more than 2 levels from the 6144 reference",
+      "  FAILED: from the side: at most 0.05% of lit pixels more than 1 level off",
+      "       among the media, looking along them: max error 2 levels, 6 px > 1 level, mean 0.049, lit 36796",
+      "webgpu_volume_unified_quadrature_test: 11/15 checks passed"
+    ],
+    "binary_sha256": "8d44168f4b9c7048cf0d0230c536b14b760d0d631c15b5e6778705fcb399f45c"
+  },
+  "candidate": {
+    "exit_code": 1,
+    "lines": [
+      "       spawn dais, looking up: max error 4 levels, 33 px > 1 level, mean 0.064, lit 12824",
+      "  FAILED: spawn dais, looking up: no pixel more than 2 levels from the 6144 reference",
+      "  FAILED: spawn dais, looking up: at most 0.05% of lit pixels more than 1 level off",
+      "       from the side: max error 6 levels, 83 px > 1 level, mean 0.062, lit 15902",
+      "  FAILED: from the side: no pixel more than 2 levels from the 6144 reference",
+      "  FAILED: from the side: at most 0.05% of lit pixels more than 1 level off",
+      "       among the media, looking along them: max error 2 levels, 6 px > 1 level, mean 0.049, lit 36796",
+      "webgpu_volume_unified_quadrature_test: 11/15 checks passed"
+    ],
+    "binary_sha256": "1e8e0c753bddd7c8a42549634bfedbfc5411f0606cde789a1418ddcbe90b86e4"
+  }
+}

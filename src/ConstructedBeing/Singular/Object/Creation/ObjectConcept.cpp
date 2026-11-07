@@ -291,11 +291,7 @@ bool templateOwnsPath(const std::string& path) {
 // file claim a relationship nothing formed. Structure travels through
 // RelationTemplates instead.
 bool isValueLike(const PropertyValue& v) {
-    return !std::holds_alternative<std::monostate>(v) &&
-           !std::holds_alternative<Singular*>(v) &&
-           !std::holds_alternative<Object*>(v) &&
-           !std::holds_alternative<Relation*>(v) &&
-           !std::holds_alternative<Formation*>(v);
+    return !std::holds_alternative<std::monostate>(v);
 }
 
 // Which kind of being this is, asked most-specific-first: a Zone and a Law are

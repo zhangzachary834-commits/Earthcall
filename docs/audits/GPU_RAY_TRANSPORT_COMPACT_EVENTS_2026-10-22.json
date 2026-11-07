@@ -1,0 +1,691 @@
+{
+  "signature": "Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a",
+  "timestamp": "2026-10-22T13:00:51.682706-07:00",
+  "branch": "claude/ray-domain-transport-rung0",
+  "parent": "993efab2d",
+  "scope": "Numerical compact-event experiment, not bit-lossless lowering or renderer promotion;32784 distinct rays/192 dense-reference holdout",
+  "archives": {
+    "rays": {
+      "file": "GPU_RAY_TRANSPORT_WIDE_QUERY_SCREEN_2026-10-22_RAYS.json.gz",
+      "kind": "json",
+      "sha256": "cd403a013e75bfa748b6fc5c60ffe74a2df2fdae5bacce73605973d447dfa402",
+      "compressed_sha256": "76d63e44043754b8a051ff0e2ac2b4b5c23114de2dfc3d6c05d60bcf135853ea"
+    },
+    "reference": {
+      "file": "GPU_RAY_TRANSPORT_WIDE_QUERY_SCREEN_2026-10-22_REFERENCE.json.gz",
+      "kind": "json",
+      "sha256": "2c3c66094049a24e3367797dddc84be86a0eedfe9743075d3c9a9ab79cf3c2b0",
+      "compressed_sha256": "9616f063049613564b5d0f87726f75c998e23d200c8458fb9062a544c4eedc82"
+    },
+    "manifest": {
+      "file": "GPU_RAY_TRANSPORT_WIDE_QUERY_SCREEN_2026-10-22_MANIFEST.json.gz",
+      "kind": "json",
+      "sha256": "bb98eb93e99b63cf2a1a782ac8f168bc7c21c4f818c23dbedb164c5824d20c1e",
+      "compressed_sha256": "674adf690c4a32539857550397e29fc2bca0f33634b5be59e075aabb7ae79ede"
+    },
+    "capture": {
+      "file": "GPU_RAY_TRANSPORT_WIDE_QUERY_SCREEN_2026-10-22_CAPTURE.bin.gz",
+      "kind": "bin",
+      "sha256": "54ef171cecd2d91534c63dadbc443cca12e691652280aa5433e99ae63f04c7a8",
+      "compressed_sha256": "37108f2a390e1a68b9e1f7337d0a7e2e699983d94139d193eaaf496d08ce170c"
+    },
+    "numerical_report": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_NUMERICAL_REPORT.json.gz",
+      "kind": "json",
+      "sha256": "494f68d48cb7f9c22e2950b583088e16c08a70f1b53008685eb877b24239dd7c",
+      "compressed_sha256": "7b84c7be67fc52afd797779cafdb0dd19ab02eb568d45f8032efece8ecf9d305"
+    },
+    "numerical_rows": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_NUMERICAL_ROWS.json.gz",
+      "kind": "json",
+      "sha256": "a5eafd9df73de70a59e200f9abd786461686c2ff12ef15311a0dcc107f1a9868",
+      "compressed_sha256": "a2f95ec91a25a3bab076a6d7c3e90dac015e4663aaf660535f20c53a1d62a475"
+    },
+    "numerical_baseline": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_NUMERICAL_BASELINE.json.gz",
+      "kind": "json",
+      "sha256": "2d1be01fb1c372acae7fe1f43dcc3b4c4085724de9a32a5929c4a8e8ce0ad496",
+      "compressed_sha256": "c99d892a9656f75c3ab2e136d2423a85085383082050b8cc160687979cc962fd"
+    },
+    "numerical_cpp": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_NUMERICAL_CPP.cpp.gz",
+      "kind": "cpp",
+      "sha256": "9f92b085c406d6ccb9a988218f4e9bb542f9c3eb80b3f0866ae27eb7a57ba50f",
+      "compressed_sha256": "9c9a2093fc630923d60fb0c074f100b0690730059376965e0cc2128579e21739"
+    },
+    "numerical_source": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_NUMERICAL_SOURCE.json.gz",
+      "kind": "json",
+      "sha256": "e2712db1735e75d92fb858eb651d3e60712ef3af8fa19ad8999a4d7407021b0c",
+      "compressed_sha256": "8aef857684a710cd9a2734bc3f245cad9500c37078f29b562588b55bc0bfb6df"
+    },
+    "phases_report": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_PHASES_REPORT.json.gz",
+      "kind": "json",
+      "sha256": "a5fac9022d36fe8360c7f3398ee1d052718c777bbd51be374b13254aa6149efc",
+      "compressed_sha256": "78f424c0331f7fbfbe23d863fd1dce3ed00f956d33d8056933e49ab017f8c5a6"
+    },
+    "phases_rows": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_PHASES_ROWS.json.gz",
+      "kind": "json",
+      "sha256": "a5eafd9df73de70a59e200f9abd786461686c2ff12ef15311a0dcc107f1a9868",
+      "compressed_sha256": "a2f95ec91a25a3bab076a6d7c3e90dac015e4663aaf660535f20c53a1d62a475"
+    },
+    "phases_baseline": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_PHASES_BASELINE.json.gz",
+      "kind": "json",
+      "sha256": "2d1be01fb1c372acae7fe1f43dcc3b4c4085724de9a32a5929c4a8e8ce0ad496",
+      "compressed_sha256": "c99d892a9656f75c3ab2e136d2423a85085383082050b8cc160687979cc962fd"
+    },
+    "phases_cpp": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_PHASES_CPP.cpp.gz",
+      "kind": "cpp",
+      "sha256": "a73c0cfc7556f407880433d80bc54f2415bd979b0baceba29904afa5903669c7",
+      "compressed_sha256": "030745d5703cb6158cda35237c8954e89058af44712fe1899395bb6cf31c7a16"
+    },
+    "phases_source": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_PHASES_SOURCE.json.gz",
+      "kind": "json",
+      "sha256": "e4baece603a0c394b3f3d2c82f6f7c6297aab8bd1d2253e0eb09c940e67577f2",
+      "compressed_sha256": "83cf65f6ca951275b80613b6057f96435d5a6d4e50a8e3162878a107b7198ca5"
+    },
+    "host_refusal_cpp": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_HOST_REFUSAL_CPP.cpp.gz",
+      "kind": "cpp",
+      "sha256": "6e0d80e1af0d43486678d0225d0fa7af22785d3ab30ff522363083f09301cdcc",
+      "compressed_sha256": "9d9499750bcee7e28c0a51975aa4fab51e579b501537bf93117744f053567d6d"
+    },
+    "host_refusal_source": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_HOST_REFUSAL_SOURCE.json.gz",
+      "kind": "json",
+      "sha256": "447305bc17957d964e77ccee825ff1d9ac61555f1b42ce93f0ea338d90fe3af3",
+      "compressed_sha256": "496cec6d58958e204a3289175bdb446a63e6e7ea31b227f0f96cf0279f576ef1"
+    },
+    "host_refusal_log": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_HOST_REFUSAL_LOG.log.gz",
+      "kind": "log",
+      "sha256": "77eaf6d5d8368042596fcea4457baa845488bb1eb46570e5537d6a430bc4eabd",
+      "compressed_sha256": "cedcfbaf4835069a274c2c0945c9ac5f1b374aa5e4faf9c1da190a8cce7d13ea"
+    },
+    "readback_refusal_cpp": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_READBACK_REFUSAL_CPP.cpp.gz",
+      "kind": "cpp",
+      "sha256": "e67f6d77f03aa12db219b786e382a676704369628511c917c259248bb6505d17",
+      "compressed_sha256": "fce60c0bfc2b1b1c53b6478aacb3a08eefaaaf8e288ad11fc7289bc3d246c3ed"
+    },
+    "readback_refusal_source": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_READBACK_REFUSAL_SOURCE.json.gz",
+      "kind": "json",
+      "sha256": "cff43976dc7ec235d2f8730ae1d96a5966b3b539a247055e38922e2235f8d135",
+      "compressed_sha256": "5b4120b1ad7be2466a64a9d57e4da535db986f0462a3efe9bc9f87c7247534a0"
+    },
+    "readback_refusal_log": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_READBACK_REFUSAL_LOG.log.gz",
+      "kind": "log",
+      "sha256": "0e13c3109d3dd96fa86a18e678ac5aa547caafe5cd1946e3a0816236cd8a8776",
+      "compressed_sha256": "967563ca26c4f5fd7820cdca8688dbdcc36e00ed439466cba77198dcacddeb97"
+    },
+    "plain_gpu_refusal_cpp": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_PLAIN_GPU_REFUSAL_CPP.cpp.gz",
+      "kind": "cpp",
+      "sha256": "dc49af66e7b9b834e988d65c2ac87894699fbe4e9c6540cc05b47c38a923573e",
+      "compressed_sha256": "ca1883d3f05fb19153e212192b572758c27adb73ff655d25e8565f46870ccfc4"
+    },
+    "plain_gpu_refusal_source": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_PLAIN_GPU_REFUSAL_SOURCE.json.gz",
+      "kind": "json",
+      "sha256": "6033088c2e45aad623344d81b81e78640223ffda635bec57787f1ae9dcac6d84",
+      "compressed_sha256": "5ec310e5a7e0de867a8b96fe20d76cebaf6be0d313dda5fb4bb49f8aab01fa6c"
+    },
+    "plain_gpu_refusal_log": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_PLAIN_GPU_REFUSAL_LOG.log.gz",
+      "kind": "log",
+      "sha256": "c0f9ed47757df6f9878e66fa4dc3f18b0304e30ca4906eac724a309ca1e415da",
+      "compressed_sha256": "eebdf851fc92970ae617af1a6a25d3ed2be409df97e654209d3fbc40f98264f3"
+    },
+    "plain_cpp": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_PLAIN_CPP.cpp.gz",
+      "kind": "cpp",
+      "sha256": "876003b51a54198656427a49473ae21401c9497920f08ab98683e28bf2565823",
+      "compressed_sha256": "d12cda3591fd3b44c2ba5cd815e7f1ddd6a752d45a6109b9c3a50de9b88a5875"
+    },
+    "plain_source": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_PLAIN_SOURCE.json.gz",
+      "kind": "json",
+      "sha256": "a18848cc93a347b8cc0b2096028079e6d60dcc1d85bdce8b58dd30331142c56b",
+      "compressed_sha256": "53b33656997426fde6330ba7926b7d378f3492b1ccf8a2e81a6496025eab8958"
+    },
+    "plain_refusal": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_PLAIN_REFUSAL.json.gz",
+      "kind": "json",
+      "sha256": "8624a3c05c7dc10338680745b22f57b1dc386ac01eb621a47600f3f26efbc7e3",
+      "compressed_sha256": "ff77b0b998044084563e0debaf2a2a587eb6b9a20a138b1a94568cc3873b43d7"
+    },
+    "plain_log": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_PLAIN_LOG.log.gz",
+      "kind": "log",
+      "sha256": "70f815c654fe978619fbae3e51605ff9735765fd6a1051c16b2bccb88082f01b",
+      "compressed_sha256": "1472ca4352290a8be4889a2431bd4533ec734f0cbe290b947ae759f0f69e9d9d"
+    },
+    "fma_cpp": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_FMA_CPP.cpp.gz",
+      "kind": "cpp",
+      "sha256": "cfc7a8c3616300d42634eaf4a51921c297ee8174f51cc9901f528aed3d8f9a6a",
+      "compressed_sha256": "31541b030d3970ce7bec936c8cb66a9a73b3e56687f5117a3f1e84147f6a1f83"
+    },
+    "fma_source": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_FMA_SOURCE.json.gz",
+      "kind": "json",
+      "sha256": "81207d519c4bdc82acfdc583d59c3146341a269eb0c0b42601f997ce61745db2",
+      "compressed_sha256": "9085d47b454d1a0f7db49e18d80616abe572374440e54663ab7399e581962c81"
+    },
+    "fma_refusal": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_FMA_REFUSAL.json.gz",
+      "kind": "json",
+      "sha256": "72c3687f8f766f27f93e43901b6a66ab358b243d7b0012229e045fe38976d3b3",
+      "compressed_sha256": "ecce53ce085142a946a343b88e0ce7d24c4d482c81b280fa19dd74506b69e76f"
+    },
+    "fma_log": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_FMA_LOG.log.gz",
+      "kind": "log",
+      "sha256": "f38b94796d126caf019bc90c46909af2fcf3ae0a13b75bbba21e30a6474120aa",
+      "compressed_sha256": "e463ebe57c4b6c3539488bda9aaa117c5266668269889b0f8bc51e7651c60d3e"
+    },
+    "codec_rounding": {
+      "file": "GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22_CODEC_ROUNDING.json.gz",
+      "kind": "json",
+      "sha256": "4291046d3d87fda496b785817e47923ecd31f3009559e2fc6c13cf93fe7a65af",
+      "compressed_sha256": "d22207017270461498f9fb1f57e2174cbde0fb469627ec8bb156a840322939c6"
+    }
+  },
+  "reused_archives": [
+    "rays",
+    "reference",
+    "manifest",
+    "capture"
+  ],
+  "known_legacy_label": {
+    "numerical_report.connected_measured_scope.scope": "Inherited2304 wording is stale; actual32784 query count/dispatch/case/input/output coverage is checked. Phase report fixes this label."
+  },
+  "numerical_summary": {
+    "pass": true,
+    "cases": [
+      {
+        "capacity": 8192,
+        "normal_fallbacks": 0,
+        "capacity_fallbacks": 0,
+        "expanded_panels": 324088,
+        "event_histogram": {
+          "7": 3194,
+          "11": 1629,
+          "6": 4536,
+          "9": 1199,
+          "5": 7549,
+          "0": 1,
+          "2": 795,
+          "4": 501,
+          "12": 382,
+          "10": 9735,
+          "8": 1309,
+          "13": 148,
+          "3": 1805,
+          "14": 1
+        },
+        "accuracy": {
+          "finest": {
+            "metrics": {
+              "current": {
+                "RGB_pooled_channels": {
+                  "mean": 5.2083436005461535e-05,
+                  "p99": 0.0008628445430308024,
+                  "max": 0.0014908520057793223
+                },
+                "T": {
+                  "mean": 0.00013126131932741114,
+                  "p99": 0.0014545230908419304,
+                  "max": 0.0023179769068414346
+                }
+              },
+              "candidate": {
+                "RGB_pooled_channels": {
+                  "mean": 6.445375685925741e-06,
+                  "p99": 4.5194657356570356e-05,
+                  "max": 4.7516388100299345e-05
+                },
+                "T": {
+                  "mean": 1.8774896865777584e-05,
+                  "p99": 6.85874151987731e-05,
+                  "max": 6.906335171064093e-05
+                }
+              }
+            },
+            "gates": {
+              "RGB_pooled_channels.mean": true,
+              "RGB_pooled_channels.p99": true,
+              "RGB_pooled_channels.max": true,
+              "T.mean": true,
+              "T.p99": true,
+              "T.max": true
+            },
+            "all_six_pass": true
+          },
+          "half": {
+            "metrics": {
+              "current": {
+                "RGB_pooled_channels": {
+                  "mean": 5.208338561012038e-05,
+                  "p99": 0.000862840739760784,
+                  "max": 0.0014908546309912868
+                },
+                "T": {
+                  "mean": 0.00013126103989875444,
+                  "p99": 0.001454485602050748,
+                  "max": 0.002317992236419375
+                }
+              },
+              "candidate": {
+                "RGB_pooled_channels": {
+                  "mean": 6.445041419989422e-06,
+                  "p99": 4.519285536878914e-05,
+                  "max": 4.752308341710032e-05
+                },
+                "T": {
+                  "mean": 1.877470808594496e-05,
+                  "p99": 6.861428654625357e-05,
+                  "max": 6.907383206367079e-05
+                }
+              }
+            },
+            "gates": {
+              "RGB_pooled_channels.mean": true,
+              "RGB_pooled_channels.p99": true,
+              "RGB_pooled_channels.max": true,
+              "T.mean": true,
+              "T.p99": true,
+              "T.max": true
+            },
+            "all_six_pass": true
+          },
+          "reference_convergence": {
+            "T_max_delta": 7.156688219822627e-08,
+            "RGB_max_delta": 4.409033641655791e-08
+          },
+          "both_resolutions_pass": true
+        },
+        "clocks": [
+          {
+            "repeats": 1,
+            "current_ms": 2.54962475,
+            "bulk_ms": 2.5644895,
+            "compact_ms": 3.585494875,
+            "current_over_compact": 0.7110942391181078
+          },
+          {
+            "repeats": 2,
+            "current_ms": 1.8752629375,
+            "bulk_ms": 2.071661375,
+            "compact_ms": 3.047518125,
+            "current_over_compact": 0.6153410285295678
+          },
+          {
+            "repeats": 4,
+            "current_ms": 1.6939700625,
+            "bulk_ms": 1.9131666875,
+            "compact_ms": 2.93094403125,
+            "current_over_compact": 0.5779605630263602
+          }
+        ],
+        "numerical_candidate": true,
+        "numeric_checks": {
+          "changed_output_rays": 2453,
+          "changed_endpoint_packets": 8165,
+          "max_RGB_change_vs_bulk": 1.4901161193847656e-07,
+          "max_T_change_vs_bulk": 2.384185791015625e-07,
+          "max_endpoint_change_vs_bulk": 7.62939453125e-06,
+          "original_AST_max_RGB": 3.725290298461914e-07,
+          "original_AST_max_T": 1.0728836059570312e-06
+        }
+      },
+      {
+        "capacity": 32768,
+        "normal_fallbacks": 0,
+        "capacity_fallbacks": 0,
+        "expanded_panels": 324088,
+        "event_histogram": {
+          "7": 3194,
+          "11": 1629,
+          "6": 4536,
+          "9": 1199,
+          "5": 7549,
+          "0": 1,
+          "2": 795,
+          "4": 501,
+          "12": 382,
+          "10": 9735,
+          "8": 1309,
+          "13": 148,
+          "3": 1805,
+          "14": 1
+        },
+        "accuracy": {
+          "finest": {
+            "metrics": {
+              "current": {
+                "RGB_pooled_channels": {
+                  "mean": 5.2083436005461535e-05,
+                  "p99": 0.0008628445430308024,
+                  "max": 0.0014908520057793223
+                },
+                "T": {
+                  "mean": 0.00013126131932741114,
+                  "p99": 0.0014545230908419304,
+                  "max": 0.0023179769068414346
+                }
+              },
+              "candidate": {
+                "RGB_pooled_channels": {
+                  "mean": 6.445375685925741e-06,
+                  "p99": 4.5194657356570356e-05,
+                  "max": 4.7516388100299345e-05
+                },
+                "T": {
+                  "mean": 1.8774896865777584e-05,
+                  "p99": 6.85874151987731e-05,
+                  "max": 6.906335171064093e-05
+                }
+              }
+            },
+            "gates": {
+              "RGB_pooled_channels.mean": true,
+              "RGB_pooled_channels.p99": true,
+              "RGB_pooled_channels.max": true,
+              "T.mean": true,
+              "T.p99": true,
+              "T.max": true
+            },
+            "all_six_pass": true
+          },
+          "half": {
+            "metrics": {
+              "current": {
+                "RGB_pooled_channels": {
+                  "mean": 5.208338561012038e-05,
+                  "p99": 0.000862840739760784,
+                  "max": 0.0014908546309912868
+                },
+                "T": {
+                  "mean": 0.00013126103989875444,
+                  "p99": 0.001454485602050748,
+                  "max": 0.002317992236419375
+                }
+              },
+              "candidate": {
+                "RGB_pooled_channels": {
+                  "mean": 6.445041419989422e-06,
+                  "p99": 4.519285536878914e-05,
+                  "max": 4.752308341710032e-05
+                },
+                "T": {
+                  "mean": 1.877470808594496e-05,
+                  "p99": 6.861428654625357e-05,
+                  "max": 6.907383206367079e-05
+                }
+              }
+            },
+            "gates": {
+              "RGB_pooled_channels.mean": true,
+              "RGB_pooled_channels.p99": true,
+              "RGB_pooled_channels.max": true,
+              "T.mean": true,
+              "T.p99": true,
+              "T.max": true
+            },
+            "all_six_pass": true
+          },
+          "reference_convergence": {
+            "T_max_delta": 7.156688219822627e-08,
+            "RGB_max_delta": 4.409033641655791e-08
+          },
+          "both_resolutions_pass": true
+        },
+        "clocks": [
+          {
+            "repeats": 1,
+            "current_ms": 2.560296875,
+            "bulk_ms": 2.558958125,
+            "compact_ms": 2.761083375,
+            "current_over_compact": 0.9272798127655236
+          },
+          {
+            "repeats": 2,
+            "current_ms": 1.8967240625,
+            "bulk_ms": 2.141989625,
+            "compact_ms": 2.6017551875,
+            "current_over_compact": 0.7290171156812578
+          },
+          {
+            "repeats": 4,
+            "current_ms": 1.3867695625,
+            "bulk_ms": 1.6748620625,
+            "compact_ms": 2.016846375,
+            "current_over_compact": 0.6875930560154836
+          }
+        ],
+        "numerical_candidate": true,
+        "numeric_checks": {
+          "changed_output_rays": 2453,
+          "changed_endpoint_packets": 8165,
+          "max_RGB_change_vs_bulk": 1.4901161193847656e-07,
+          "max_T_change_vs_bulk": 2.384185791015625e-07,
+          "max_endpoint_change_vs_bulk": 7.62939453125e-06,
+          "original_AST_max_RGB": 3.725290298461914e-07,
+          "original_AST_max_T": 1.0728836059570312e-06
+        }
+      }
+    ],
+    "codec": {
+      "round_trips": 241,
+      "refusals": [
+        "sixteenth span",
+        "partial fallback",
+        "zero active mask",
+        "nonfinite endpoint",
+        "short packet",
+        "hidden empty mask"
+      ],
+      "pass": true
+    },
+    "rounding_witness": {
+      "sequential_f32": 36.178688049316406,
+      "single_rounding_FMA": 36.17869186401367,
+      "difference": 3.814697265625e-06,
+      "ULP_difference": 1,
+      "pass": true,
+      "scope": "Exact rational rounding reproduces observed endpoint pair; not Metal disassembly or a universal f32 rule"
+    },
+    "negative_controls": [
+      "missing tail output",
+      "changed pixel order",
+      "nonfinite output",
+      "inexact native fallback",
+      "wrong packed control",
+      "wrong native member",
+      "false exactness claim",
+      "changed original AST answer",
+      "wrong allocation",
+      "missing timing pair"
+    ]
+  },
+  "phase_summary": {
+    "pass": true,
+    "cases": [
+      {
+        "capacity": 65536,
+        "normal_fallbacks": 0,
+        "capacity_fallbacks": 0,
+        "expanded_panels": 324088,
+        "event_histogram": {
+          "7": 3194,
+          "11": 1629,
+          "6": 4536,
+          "9": 1199,
+          "5": 7549,
+          "0": 1,
+          "2": 795,
+          "4": 501,
+          "12": 382,
+          "10": 9735,
+          "8": 1309,
+          "13": 148,
+          "3": 1805,
+          "14": 1
+        },
+        "accuracy": {
+          "finest": {
+            "metrics": {
+              "current": {
+                "RGB_pooled_channels": {
+                  "mean": 5.2083436005461535e-05,
+                  "p99": 0.0008628445430308024,
+                  "max": 0.0014908520057793223
+                },
+                "T": {
+                  "mean": 0.00013126131932741114,
+                  "p99": 0.0014545230908419304,
+                  "max": 0.0023179769068414346
+                }
+              },
+              "candidate": {
+                "RGB_pooled_channels": {
+                  "mean": 6.445375685925741e-06,
+                  "p99": 4.5194657356570356e-05,
+                  "max": 4.7516388100299345e-05
+                },
+                "T": {
+                  "mean": 1.8774896865777584e-05,
+                  "p99": 6.85874151987731e-05,
+                  "max": 6.906335171064093e-05
+                }
+              }
+            },
+            "gates": {
+              "RGB_pooled_channels.mean": true,
+              "RGB_pooled_channels.p99": true,
+              "RGB_pooled_channels.max": true,
+              "T.mean": true,
+              "T.p99": true,
+              "T.max": true
+            },
+            "all_six_pass": true
+          },
+          "half": {
+            "metrics": {
+              "current": {
+                "RGB_pooled_channels": {
+                  "mean": 5.208338561012038e-05,
+                  "p99": 0.000862840739760784,
+                  "max": 0.0014908546309912868
+                },
+                "T": {
+                  "mean": 0.00013126103989875444,
+                  "p99": 0.001454485602050748,
+                  "max": 0.002317992236419375
+                }
+              },
+              "candidate": {
+                "RGB_pooled_channels": {
+                  "mean": 6.445041419989422e-06,
+                  "p99": 4.519285536878914e-05,
+                  "max": 4.752308341710032e-05
+                },
+                "T": {
+                  "mean": 1.877470808594496e-05,
+                  "p99": 6.861428654625357e-05,
+                  "max": 6.907383206367079e-05
+                }
+              }
+            },
+            "gates": {
+              "RGB_pooled_channels.mean": true,
+              "RGB_pooled_channels.p99": true,
+              "RGB_pooled_channels.max": true,
+              "T.mean": true,
+              "T.p99": true,
+              "T.max": true
+            },
+            "all_six_pass": true
+          },
+          "reference_convergence": {
+            "T_max_delta": 7.156688219822627e-08,
+            "RGB_max_delta": 4.409033641655791e-08
+          },
+          "both_resolutions_pass": true
+        },
+        "clocks": [
+          {
+            "repeats": 1,
+            "current_ms": 3.02515625,
+            "bulk_ms": 3.0296875,
+            "compact_ms": 3.1809425,
+            "current_over_compact": 0.9510251285585956,
+            "component_ms": {
+              "bulk_producer": 2.70129675,
+              "bulk_consumer_plus_fallback": 1.447552,
+              "compact_producer": 2.51203125,
+              "compact_consumer_plus_fallback": 1.746025875
+            }
+          },
+          {
+            "repeats": 2,
+            "current_ms": 3.3530651875,
+            "bulk_ms": 3.9584791875,
+            "compact_ms": 4.4991484375,
+            "current_over_compact": 0.7452666285807558,
+            "component_ms": {
+              "bulk_producer": 2.7200651875,
+              "bulk_consumer_plus_fallback": 1.401781375,
+              "compact_producer": 2.6430235625,
+              "compact_consumer_plus_fallback": 1.9534166875
+            }
+          },
+          {
+            "repeats": 4,
+            "current_ms": 2.1816275625,
+            "bulk_ms": 2.60681253125,
+            "compact_ms": 2.9147070625000002,
+            "current_over_compact": 0.7484894762044376,
+            "component_ms": {
+              "bulk_producer": 1.75499078125,
+              "bulk_consumer_plus_fallback": 0.90064190625,
+              "compact_producer": 1.74442840625,
+              "compact_consumer_plus_fallback": 1.198710875
+            }
+          }
+        ],
+        "numerical_candidate": true,
+        "numeric_checks": {
+          "changed_output_rays": 2453,
+          "changed_endpoint_packets": 8165,
+          "max_RGB_change_vs_bulk": 1.4901161193847656e-07,
+          "max_T_change_vs_bulk": 2.384185791015625e-07,
+          "max_endpoint_change_vs_bulk": 7.62939453125e-06,
+          "original_AST_max_RGB": 3.725290298461914e-07,
+          "original_AST_max_T": 1.0728836059570312e-06
+        }
+      }
+    ],
+    "codec": {
+      "round_trips": 241,
+      "refusals": [
+        "sixteenth span",
+        "partial fallback",
+        "zero active mask",
+        "nonfinite endpoint",
+        "short packet",
+        "hidden empty mask"
+      ],
+      "pass": true
+    }
+  },
+  "shipping_qualified": false
+}

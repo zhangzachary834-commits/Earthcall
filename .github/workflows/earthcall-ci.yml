@@ -93,10 +93,13 @@ jobs:
         timeline_test
         time_moment_test
         category_manager_test
+        identity_test
         identity_ledger_test
+        lexeme_graph_roundtrip_test
         file_channel_test
         file_watcher_test
         first_mover_test
+        first_mover_tool_test
         law_file_tree_fossil_test
         earthcall_api_test
         rete_state_ptr_index_test
@@ -137,6 +140,12 @@ jobs:
         run: |
           set -euxo pipefail
           bash -n scripts/build.sh
+
+      # Includes the alarm on this checkout's own link journal, whose shape a
+      # merge and hand-written appends damaged in November 2026, unnoticed.
+      - name: Verify Intercom navigation and link journal
+        shell: bash
+        run: python3 -m unittest discover -s "agent intercom" -p "test_conversation_navigation.py"
 
       - name: Configure Earthcall
         shell: bash

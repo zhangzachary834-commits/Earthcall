@@ -1,23 +1,115 @@
 {
   "identifier": "material.studio.walnut",
   "material": {
-    "baseColor": [
-      0.11,
-      0.12,
-      0.15
-    ],
+    "id": "material.studio.walnut",
     "name": "studio.walnut",
-    "opacity": 1.0
+    "baseColor": [
+      0.26,
+      0.16,
+      0.11
+    ],
+    "opacity": 1.0,
+    "ambient": 0.17,
+    "diffuse": 0.74,
+    "specular": 0.46,
+    "shininess": 56.0,
+    "textureResolution": 16,
+    "colorExpr": {
+      "input": "y",
+      "pieces": [
+        {
+          "hasLo": false,
+          "hasHi": false,
+          "mathNode": {
+            "op": 2,
+            "children": [
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.26,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.045,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "x",
+                          "scale": 4.5,
+                          "shift": 0.0
+                        },
+                        {
+                          "kind": 1,
+                          "var": "z",
+                          "scale": 1.8,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.16,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.03,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "x",
+                          "scale": 4.5,
+                          "shift": 0.3
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.11,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.02,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 1,
+                          "var": "z",
+                          "scale": 2.4,
+                          "shift": 0.7
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
   },
   "authors": [
     "Zach"
   ],
   "injected_by": {
-    "agent": "Claude Code / Claude Sonnet 5.5, session 01GxayCUN2nc7DDaeg33kXhZ",
-    "date": "2026-10-07",
-    "recovered_from": [
-      "saves/worlds/synthesis_studio.json",
-      "saves/worlds/synthesis_studio_living.json"
-    ]
+    "agent": "Gemini 4 Argon (The Firmament \u00b7 Gemini Spark), session c_d03bb5a87bbfab74",
+    "date": "2026-10-19",
+    "scope": "Synthesis Studio 3D procedural material upgrade"
   }
 }

@@ -73,3 +73,85 @@ Historical citations can name moved files, shorthand, or quoted old paths; `doct
 - [x] Navigation CLI, explicit lineage journal, generated browser, bounded diagnostics, and byte-preserving migration implemented.
 - [x] Historical parent relationships above verified from their source introductions and registered with current-session attribution.
 - [ ] Zach's acceptance of the search/reading route; see [Person Verification](../../../For%20Zach/Person%20Verification%20List.md#linked-conversations-browser--october-9).
+
+
+## 3D architecture guide broadcast — October 19, 2026
+
+Zach requested broadcast of the Sun's new guide to the robots making 3D work. Codex / GPT-6 (variant unexposed) / session `01a155b8-e5b4-7b72-a24b-26be3fd69da2` / 2026-10-19T13:31:23-07:00 relayed [Beyond the Maple Block Temple](../../../../../architecture/Design/BEYOND_THE_MAPLE_BLOCK_TEMPLE_TRUE_EARTHCALL_3D_ARCHITECTURE.md), crediting GPT-5.6 Sol's consolidation and Zach's repeated visual corrections.
+
+Signed notices were appended to **14 existing prose Intercom threads**, covering Cathedral, Zones of Actualization, Living Studio/Perlin, MCP SDF authoring, geometry substrate, the two-Sun renderer discussion, authored material response, chromatic radiance, Opus/Sonnet field authoring, Perlin floor rendering, SDF pipeline work, Northern Veil, ray-domain transport, and the Prism Sun all-hands thread; [the Zones notice](../../../../../../agent%20intercom/communication-threads/saves-and-zones/Zones%20of%20Actualization%209-2-26.md#2026-10-19--zach-requested-broadcast-beyond-the-maple-block-temple) provides the common reading instructions. Fourteen attributed navigation connections point those conversations to the guide's future-robot instructions.
+
+Direct app sends also succeeded to **Build Earthcall Sun Zone**, **🌫️🌈 PRISM SUN**, and **Reflect on Earthcall progression**. Send success establishes delivery, not recipient reading or adoption. The notice requests reading during the next relevant commission and does not commission unsolicited implementation.
+
+Verification: each Intercom file retained its complete pre-broadcast byte prefix, each notice links to the existing guide, and each registered guide section resolves. No engine or world/save changes were made by this broadcast; no new Person acceptance check is required.
+
+---
+
+## Journal corruption found 2026-11-04 (blocks `nav find` / `nav trace` entirely)
+
+Found while following `CLAUDE.md`'s "run `nav find` before replying" rule for the October monthly
+reflection. `agent intercom/conversation_links.jsonl` refuses to load. Three distinct defects,
+verified by reading the file:
+
+1. **No trailing newline** on the final record — the tool reported
+   `incomplete journal tail; repair before appending`. *Fixed 2026-11-04* (one byte appended).
+2. **Duplicated block:** lines **159–221 are a byte-identical replay of lines 94–156**
+   (`md5` of both ranges = `d72d9d47406a9e2eda4f005fb76d4e9c`), 63 records, almost certainly a
+   merge artifact. The tool now refuses with
+   `:159: invalid connection journal: duplicate record id`. **Not fixed** — this is shared
+   append-only state other sessions write to, and choosing which copy is canonical is a judgment
+   call for whoever owns this lane.
+3. **Four schema-foreign records at lines 314–320** — Firmament phase-review blobs keyed
+   `timestamp`/`phase`/`agent`/`reviewed_commit` with no `id` field, appended into the connection
+   journal by mistake. They belong in an audit, not here.
+
+**Consequence worth naming:** every agent instructed to trace a conversation before replying has
+either skipped that step or watched it error out for an unknown stretch of time. The convention
+outran its tooling, and nothing was alerting on it — the same quiet-failure class the reflection's
+§8 describes. Suggest the repair also add a CI check that the journal loads, so the next
+corruption is loud.
+
+*Found by Claude Code · Claude Opus 5 · session `14701b58-1f21-425f-b59c-bc3ee2e5abdb` ·
+2026-11-04, while writing [The Month the Author Bound Himself](../../../../../Reflections%20on%20Earthcall's%20Progression/The_Month_The_Author_Bound_Himself.md).*
+
+## Journal repair, 2026-11-04
+
+*Claude Code / Claude Opus 5.5 / session `f1a6b19c-d627-4c8c-a1d3-90d9a0a227d9` / 2026-11-04. Zach asked: "BROOOOOOOO NOW FIX THE NAV TOOL REFUSALS".*
+
+**Status:** fixed. `nav find`, `nav trace` and `nav link` all work on the real journal.
+
+**Where the damage came from:**
+
+| Damage | Origin | What happened to it |
+|---|---|---|
+| 63 replayed records, lines 159–221 | Merge `77503b6da` (2026-11-02) joined a 258-line and a 157-line journal into 322 lines | Dropped. Every line matched its first occurrence byte for byte |
+| 4 Firmament phase-review records, lines 314–320 | Hand-written appends, starting at `90f39d672` | Moved verbatim to [`conversation_links.quarantine.jsonl`](../../../../../../agent%20intercom/conversation_links.quarantine.jsonl) |
+| 59 records missing, and nothing refused | Dropped on 2026-10-26: `0f2ab2e51` replaced the file from a branch's shorter copy (58 records), merge `fd6ecbc32` kept the side without them (57 of those), and `4c5e8304d` dropped one more | 29 restored verbatim from git, 28 already active under a later id, 2 not restorable (below) |
+
+The third row was not in the original report. It is the worse failure: the file stayed valid, so `nav trace` would have quietly answered with less ancestry than was registered.
+
+**What changed in the tool:**
+
+- **Reads no longer refuse.** Search and trace use every sound record and print a warning naming the damage. `nav doctor` reports it and exits nonzero. Writes still refuse, so the damage cannot be buried under another entry.
+- **`nav repair`** previews by default; `nav repair --apply --by harness/model/session` applies. It drops only replays, quarantines anything else unreadable, and keeps every sound line's exact bytes and order. It refuses when one id carries two different contents, because a reader has to settle that, and refuses if the file changes underneath it.
+- **Replays cannot revive a withdrawn edge.** The first occurrence of an id is the record.
+- **CI alarm:** the `Focused CPU tests` job now runs these tests, including `test_this_checkouts_journal_is_sound` against the real journal.
+- **`.gitattributes`** sets `merge=union` on the journal and quarantine files, so a merge keeps both sides' appends. A union merge can still produce a replay, which the alarm catches and `nav repair` removes. It helps only with merges: an ordinary commit carrying a stale copy of the file, like `0f2ab2e51`, still drops records (see Remaining).
+
+**Evidence:**
+
+- 21 focused tests pass; 6 are new. `test_this_checkouts_journal_is_sound` failed on the damaged journal ("67 damaged line(s), first at line 159") and passes on the repaired one.
+- Every record id at `HEAD` survives the repair, and the 254 sound lines match `HEAD`'s bytes and order.
+- A throwaway git repository confirmed the union merge keeps both branches' appends and the result loads clean.
+- The CI step has not run on GitHub yet.
+
+**Registered:** [Thirty-Five Hours After Thirty](../../../../../Reflections%20on%20Earthcall's%20Progression/Reflections%20on%20Trajectory/Thirty_Five_Hours_After_Thirty.md) → [The Month the Author Bound Himself](../../../../../Reflections%20on%20Earthcall's%20Progression/The_Month_The_Author_Bound_Himself.md), the registration this refusal had blocked.
+
+**Remaining, for whoever owns the lane:**
+
+- [ ] **Nothing catches a silently dropped record yet.** The alarm checks the journal's shape, and a journal missing records is still well-formed, so a commit carrying a stale copy passes it. A CI check that every record id in the parent commit survives would catch this. It needs more than the job's default shallow checkout, and a deliberate history rewrite would need an allowance.
+- [ ] The 4 quarantined Firmament records never registered their review documents as connections, and `docs/audits/FIRMAMENT_REVIEW_OF_SPARKLY_P16` through `P19` have no journal edge. Each record lists its artifacts, but the parent should be proved by reading the source before linking.
+- [ ] 2 dropped records were not restored because an endpoint no longer resolves: Codex's `LAW_LINE_SHAPE_GARDEN` link (2026-10-20) names a heading that no longer exists, and Firmament's link (2026-10-23) names a `GPU_RAY_TRANSPORT_PRODUCER_WORK_CENSUS_REVIEW_2026-10-23` document that no longer exists at that path. Both remain in git history.
+- [ ] `nav doctor` still reports 285 unresolved citations and 27 possible unconnected replies. This is the queue described under [Verification and remaining work](#verification-and-remaining-work), not journal damage.
+
+**For future agents:** register connections only with `nav link`. Never append to the journal by hand; a record that is not a connection belongs in an audit. Resolve a merge on this file by keeping both sides, then run `nav repair`.

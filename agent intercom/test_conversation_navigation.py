@@ -87,6 +87,79 @@ class NavigationTests(unittest.TestCase):
     def link_failure(self):
         self.cli('link','response.md','original.md','--by','test',success=False)
 
+    def damaged_journal(self):
+        """A sound link, a replay of it, and a foreign record, as found 2026-11-04."""
+        self.link(); journal=self.root/nav.JOURNAL; sound=journal.read_bytes()
+        foreign=b'{"timestamp":"2026-11-02","phase":"P16_REVIEW","summary":"keep me"}\n'
+        journal.write_bytes(sound+sound+foreign)
+        return journal,sound,foreign
+
+    def test_reads_survive_damage_loudly_and_writes_still_refuse(self):
+        journal,_,_=self.damaged_journal(); prior=journal.read_bytes()
+        found=self.cli('find','response')
+        self.assertTrue(json.loads(found.stdout))
+        self.assertIn('2 damaged line(s), first at line 2',found.stderr)
+        self.assertIn('nav repair',found.stderr)
+        trace=json.loads(self.cli('trace','original.md').stdout)
+        self.assertEqual(len(trace['edges']),1)
+        self.assertEqual(json.loads(self.cli('doctor',success=False).stdout)['journal_damage'],2)
+        refused=self.cli('link','response.md','original.md','--by','test',success=False)
+        self.assertIn('nav repair',refused.stderr)
+        self.assertEqual(journal.read_bytes(),prior)
+
+    def test_repair_previews_then_keeps_exact_bytes_and_quarantines_foreign_lines(self):
+        journal,sound,foreign=self.damaged_journal(); prior=journal.read_bytes()
+        preview=json.loads(self.cli('repair').stdout)
+        self.assertEqual((preview['replayed'],preview['replayed_lines']),(1,'2'))
+        self.assertEqual((preview['quarantined'],preview['applied']),(1,False))
+        self.assertEqual(journal.read_bytes(),prior)
+        self.cli('repair','--apply',success=False)  # attribution is required
+        self.assertEqual(journal.read_bytes(),prior)
+        applied=json.loads(self.cli('repair','--apply','--by','test/session').stdout)
+        self.assertTrue(applied['applied'])
+        self.assertEqual(journal.read_bytes(),sound)
+        held=json.loads((self.root/nav.QUARANTINE).read_text())
+        self.assertEqual(held['raw'].encode()+b'\n',foreign)
+        self.assertEqual((held['by'],held['line']),('test/session',3))
+        # Repaired means usable, and a second repair has nothing to do.
+        self.write('docs/another.md','# Another\n')
+        self.cli('link','another.md','original.md','--by','test')
+        self.assertFalse(json.loads(self.cli('repair','--apply','--by','test').stdout)['applied'])
+        self.assertEqual(len((self.root/nav.QUARANTINE).read_text().splitlines()),1)
+
+    def test_a_replay_cannot_revive_a_withdrawn_edge(self):
+        self.link(); journal=self.root/nav.JOURNAL; connect=journal.read_bytes()
+        self.link(action='unlink'); withdrawn=journal.read_bytes()
+        journal.write_bytes(withdrawn+connect)
+        self.assertEqual(json.loads(self.cli('trace','original.md').stdout)['edges'],[])
+        self.cli('repair','--apply','--by','test')
+        self.assertEqual(journal.read_bytes(),withdrawn)
+
+    def test_repair_refuses_conflicting_records(self):
+        self.link(); journal=self.root/nav.JOURNAL; entry=json.loads(journal.read_text())
+        entry['note']='a different story under the same id'
+        journal.write_bytes(journal.read_bytes()+json.dumps(entry).encode()+b'\n'); prior=journal.read_bytes()
+        self.assertEqual(json.loads(self.cli('repair').stdout)['conflicts'],'2')
+        self.cli('repair','--apply','--by','test',success=False)
+        self.assertEqual(journal.read_bytes(),prior)
+        self.assertFalse((self.root/nav.QUARANTINE).exists())
+
+    def test_repair_completes_a_sound_tail_and_quarantines_a_torn_one(self):
+        self.link(); journal=self.root/nav.JOURNAL; sound=journal.read_bytes()
+        journal.write_bytes(sound[:-1])
+        self.assertTrue(json.loads(self.cli('repair').stdout)['incomplete_tail'])
+        self.cli('repair','--apply','--by','test')
+        self.assertEqual(journal.read_bytes(),sound)
+        journal.write_bytes(sound+b'{"unfinished":')
+        self.cli('repair','--apply','--by','test')
+        self.assertEqual(journal.read_bytes(),sound)
+        self.assertEqual(json.loads((self.root/nav.QUARANTINE).read_text())['raw'],'{"unfinished":')
+
+    def test_this_checkouts_journal_is_sound(self):
+        # The loud alarm: when a merge or a hand-written append damages the real
+        # journal, CI fails here. Fix with: nav repair, then nav repair --apply --by ...
+        self.assertTrue(nav.read_journal(nav.ROOT/nav.JOURNAL))
+
     def test_process_concurrency_deduplicates_and_retains_all_distinct_edges(self):
         for n in range(6): self.write(f'docs/response-{n}.md',f'# Response {n}\n')
         def submit(n): return self.cli('link',f'response-{n%6}.md','original.md','--by',f'test/{n}')

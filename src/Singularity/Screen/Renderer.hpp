@@ -67,6 +67,9 @@ public:
         // Volumetric V0 observability. Density time belongs to per-medium
         // instance data, so advancing only t must hit the memo and never
         // regenerate the authored density shader.
+        uint32_t volumeRoutedSets = 0; // compute dispatched, not a claimed accepted-ray count
+        uint32_t volumeRoutedPixels = 0;
+        uint64_t volumeRoutedWorkingSetBytes = 0; // allocated descriptor bytes, not measured traffic
         uint32_t volumeProgramCompiles = 0;
         // Kernel diagnostics: compiler repairs, resident data transfers and
         // CPU preparation are distinct from delayed GPU execution samples.
@@ -85,6 +88,18 @@ public:
         uint32_t volumeZeroProofBuilds = 0;
         uint32_t volumeZeroProofCellsProven = 0;
         uint32_t volumeZeroProofCellsTotal = 0;
+        // Rung 2f-native support certificates: payload builds this frame (cached
+        // by density revision × extent) and the enabled killers of drawn media.
+        uint32_t volumeSupportCertificateBuilds = 0;
+        uint32_t volumeSupportCertificateKillers = 0;
+        uint32_t volumeSupportCertificateEligibleMedia = 0;   // media whose certificates are attached
+        uint32_t volumeSupportCertificateClosedKillers = 0;   // of those killers, Rung 2b closed forms
+        // Measured eligibility (auto mode): hidden timing renders run after this
+        // frame's submit, the compiles they caused, and media the estimate admitted
+        // whose certificates the device measurement then vetoed.
+        uint32_t volumeSupportCertificateProbeRenders = 0;
+        uint32_t volumeSupportCertificateProbeCompiles = 0;
+        uint32_t volumeSupportCertificateMeasuredVetoes = 0;
         // Conservative SDF range-proxy observability. A build is revision-bound;
         // an applied draw used a strictly smaller proved-may-contain-zero proxy;
         // a culled draw was proved to contain no zero set at all.
@@ -300,6 +315,22 @@ public:
     // so witnesses can A/B the exact path against the proven one.
     void setVolumeZeroProofEnabled(bool on) { _volumeZeroProofEnabled = on; }
     bool volumeZeroProofEnabled() const { return _volumeZeroProofEnabled; }
+
+    // Ray-domain transport Rung 2f-native: per-medium support certificates
+    // (Rendering::deriveVolumeSupportCertificates) let the marcher jump over
+    // samples whose density a Lipschitz-certified killer forces to <= 0. OFF by
+    // default: its device tolerance is declared, not proved, for Metal Fast
+    // mode (see kVolumeSupportDeviceTolerance); witnesses A/B it per backend.
+    // Experimental feature-branch transport; unsupported sets/rays retain Current.
+    void setVolumeRoutedTransportEnabled(bool on) { _volumeRoutedTransportEnabled = on; }
+    bool volumeRoutedTransportEnabled() const { return _volumeRoutedTransportEnabled; }
+    void setVolumeSupportCertificatesEnabled(bool on) { _volumeSupportCertificatesEnabled = on; }
+    bool volumeSupportCertificatesEnabled() const { return _volumeSupportCertificatesEnabled; }
+    // Auto eligibility (default on): within an enabled lane, a medium gets its
+    // certificates only where the Kernel's cost estimate says they pay
+    // (Rendering::estimateVolumeSupportCertificateGain). Off = every medium (A/B).
+    void setVolumeSupportCertificatesAutoEligibility(bool on) { _volumeSupportCertificatesAutoEligibility = on; }
+    bool volumeSupportCertificatesAutoEligibility() const { return _volumeSupportCertificatesAutoEligibility; }
 
     // Volume quadrature resolution: samples a medium receives across its own
     // chord along a ray (overlapping media share the finest present; see the
@@ -531,6 +562,9 @@ private:
     uint64_t _radianceSourcesRevision = 0;
     bool _radianceVisibilityEnabled = false;
     bool _volumeZeroProofEnabled = true;
+    bool _volumeRoutedTransportEnabled = true; // Zach, direct branch-default authorization 2026-10-28
+    bool _volumeSupportCertificatesEnabled = false;
+    bool _volumeSupportCertificatesAutoEligibility = true;
     int _volumeSamplesPerChord = 96;
     double _volumeOutputErrorBudget = 0.0;
     std::vector<Rendering::VolumeDensityBinding> _volumeDensitySources;
