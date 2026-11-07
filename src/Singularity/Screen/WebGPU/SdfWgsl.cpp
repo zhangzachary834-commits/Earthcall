@@ -4397,8 +4397,9 @@ fn sceneFieldVmBlockerVisibility(
             return SceneFieldVmVisibilityDecision(1.0, 1.0);
         }
 
+        let samplePoint = a + direction * t;
         let sample =
-            fieldVmEval(programBase, instructionCount, a + direction * t);
+            fieldVmEval(programBase, instructionCount, samplePoint);
         if (sample.known < 0.5 ||
             !(sample.value == sample.value) ||
             abs(sample.value) > 3.402823e38) {
@@ -4409,7 +4410,40 @@ fn sceneFieldVmBlockerVisibility(
         if (sample.value <= 0.0 || abs(sample.value) < epsilon) {
             return SceneFieldVmVisibilityDecision(1.0, 0.0);
         }
-        t = t + max(sample.value, epsilon);
+
+        // Match the primary SDF execution contract for general Expr fields:
+        // raw f is an iso-surface value, not presumed to be a 1-Lipschitz
+        // distance. Normalize positive steps by max(|grad f|,1), with the same
+        // forward-difference fallback used by sourceTransportSignedStep().
+        var marchStep = sample.value;
+        if ((blocker.program.w & 1u) != 0u) {
+            let ge = 1e-3;
+            let sx = fieldVmEval(
+                programBase, instructionCount,
+                samplePoint + vec3<f32>(ge, 0.0, 0.0));
+            let sy = fieldVmEval(
+                programBase, instructionCount,
+                samplePoint + vec3<f32>(0.0, ge, 0.0));
+            let sz = fieldVmEval(
+                programBase, instructionCount,
+                samplePoint + vec3<f32>(0.0, 0.0, ge));
+            if (sx.known < 0.5 || sy.known < 0.5 || sz.known < 0.5) {
+                return SceneFieldVmVisibilityDecision(0.0, 0.0);
+            }
+            let g = vec3<f32>(
+                sx.value - sample.value,
+                sy.value - sample.value,
+                sz.value - sample.value) / ge;
+            let gradLen = length(g);
+            if (!(gradLen == gradLen) || gradLen > 3.402823e38) {
+                return SceneFieldVmVisibilityDecision(0.0, 0.0);
+            }
+            marchStep = select(
+                sample.value,
+                sample.value / max(gradLen, 1.0),
+                gradLen > 1e-6);
+        }
+        t = t + max(marchStep, epsilon);
     }
 
     // Crossing the exact clipped interval on the final permitted step is still
