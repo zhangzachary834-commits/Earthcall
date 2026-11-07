@@ -6,6 +6,7 @@
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/AuthorableLight.hpp"
 #include "Singularity/Screen/VolumeRayTransport.hpp"
+#include "Singularity/Screen/VolumeTransportCohortPlanner.hpp"
 #include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/SdfRangeProof.hpp"
@@ -1438,6 +1439,8 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
 
 const WebGpuRenderer::VolumePipeline*
 WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program, bool routed) {
+    const bool firstActivityMask = program.kernelVolumeUsesFirstActivityMask;
+    if (routed && firstActivityMask) return nullptr;
     auto* routedProgram = routed && _kernelRouted ? _kernelRouted->program(program.wgsl) : nullptr;
     if (routed && !routedProgram) {
         ++mutableFrameStats().volumeProgramRefusals;
@@ -1493,10 +1496,14 @@ WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program, bool routed) {
     globalEntries[2].texture.sampleType = WGPUTextureSampleType_Depth;
     globalEntries[2].texture.viewDimension = WGPUTextureViewDimension_2D;
     globalEntries[2].texture.multisampled = false;
-    if(routed){globalEntries[3].binding=3;globalEntries[3].visibility=WGPUShaderStage_Fragment;globalEntries[3].buffer.type=WGPUBufferBindingType_ReadOnlyStorage;}
+    if(routed||firstActivityMask){
+        globalEntries[3].binding=3;
+        globalEntries[3].visibility=WGPUShaderStage_Fragment;
+        globalEntries[3].buffer.type=WGPUBufferBindingType_ReadOnlyStorage;
+    }
 
     WGPUBindGroupLayoutDescriptor globalDesc = {};
-    globalDesc.entryCount = routed ? 4 : 3;
+    globalDesc.entryCount = (routed||firstActivityMask) ? 4 : 3;
     globalDesc.entries = globalEntries;
 
     WGPUBindGroupLayoutEntry instanceEntry = {};
@@ -1511,6 +1518,7 @@ WebGpuRenderer::volumePipeline(const sdfwgsl::Program& program, bool routed) {
 
     VolumePipeline out;
     out.routed = routed;
+    out.firstActivityMask = firstActivityMask;
     if(routed)out.routedProgram=routedProgram;
     out.globalBgl = wgpuDeviceCreateBindGroupLayout(_device, &globalDesc);
     out.instanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &instanceDesc);
@@ -3246,6 +3254,15 @@ void WebGpuRenderer::attachVolumeSupportCertificates(const Rendering::VolumeDens
 void WebGpuRenderer::flushVolumeComposite() {
     if (!_encoder || !_frameColorView || !_depthView || !_inverseViewProjValid) return;
     std::map<const VolumePipeline*, std::array<KernelRoutedSpec,4>> routedSpecs;
+    // C5 query-local publication schedule. A physical pipeline is prepared at
+    // most once; packets may reference it repeatedly with different scissor
+    // regions and different local chronology.
+    struct VolumeDrawPacket {
+        const VolumePipeline* pipeline = nullptr;
+        Rendering::VolumeScreenRect rect{};
+    };
+    std::vector<VolumeDrawPacket> volumeDrawSchedule;
+    bool explicitVolumeSchedule = false;
     const auto prepareStart = std::chrono::steady_clock::now();
     ++_volumeZeroProofFrame;
 
@@ -3401,8 +3418,25 @@ void WebGpuRenderer::flushVolumeComposite() {
     // crossing a boundary compiles each lane at most once per structure, then
     // reuses it. A camera change never changes the equations/parameter layout.
     auto enqueueVolumeCohort = [&](const std::vector<const Rendering::VolumeDensityBinding*>& cohortMedia,
-                                   bool allowRouted) {
-        if (cohortMedia.size() <= 1) return;
+                                   bool allowRouted,
+                                   const std::vector<sdfwgsl::VolumeExecutionFamily>* executionFamilies = nullptr,
+                                   bool useFirstActivityMask = false)
+        -> const VolumePipeline* {
+        if (cohortMedia.size() <= 1) return nullptr;
+        const std::vector<sdfwgsl::VolumeExecutionFamily> noExecutionFamilies;
+        const auto& executionFamilyTags =
+            executionFamilies ? *executionFamilies : noExecutionFamilies;
+        if (!executionFamilyTags.empty() &&
+            executionFamilyTags.size() != cohortMedia.size())
+            return nullptr;
+        if (useFirstActivityMask && executionFamilyTags.empty())
+            return nullptr;
+        if (useFirstActivityMask) {
+            if (!_kernelRouted)
+                _kernelRouted = std::make_unique<KernelRoutedTransport>();
+            if (!_kernelRouted->ensure(_device, _queue, _depthW, _depthH))
+                return nullptr;
+        }
 
         bool cohortTrimProofSupport = volumeZeroProofEnabled();
         for (const auto* medium : cohortMedia) {
@@ -3414,7 +3448,8 @@ void WebGpuRenderer::flushVolumeComposite() {
         }
 
         std::array<KernelRoutedSpec,4> frameSpecs{};
-        bool wantRouted = allowRouted && volumeRoutedTransportEnabled() && !_certificateProbeMedium &&
+        bool wantRouted = allowRouted && executionFamilyTags.empty() &&
+            volumeRoutedTransportEnabled() && !_certificateProbeMedium &&
             cohortMedia.size()==4 && incidentSource && OntoMath::literalZero(incidentSource->radianceExpr);
         // No source uses Current's unit compatibility illumination, not zero light.
         const auto vector4=[](const std::array<float,4>& v){return glm::vec4(v[0],v[1],v[2],v[3]);};
@@ -3463,6 +3498,13 @@ void WebGpuRenderer::flushVolumeComposite() {
         auto& setMemo = _volumeSetProgramCache[setKey];
         uint64_t setContentRevision = volumeDensitySourcesRevision();
         combineRevision(setContentRevision, wantRouted ? 0x524f5554ULL : 0x4c454741ULL);
+        if (!executionFamilyTags.empty()) {
+            combineRevision(setContentRevision, 0x43354232ULL); // "C5B2"
+            for (const auto family : executionFamilyTags)
+                combineRevision(setContentRevision, static_cast<uint64_t>(family));
+        }
+        combineRevision(setContentRevision,
+                        useFirstActivityMask ? 0x43354143ULL : 0x4e4f4143ULL); // C5AC / NOAC
         combineRevision(setContentRevision, incidentSourceContentRevision);
         for (std::size_t m = 0; m < cohortMedia.size(); ++m) {
             combineRevision(setContentRevision, reinterpret_cast< uintptr_t >(cohortMedia[m]->densityExpr));
@@ -3480,6 +3522,15 @@ void WebGpuRenderer::flushVolumeComposite() {
             std::string structure =
                 "medium-count:" + std::to_string(cohortMedia.size()) + (wantRouted ? "\nrouted\n" : "\nlegacy\n") +
                 incidentSourceStructure + "\n";
+            if (!executionFamilyTags.empty()) {
+                structure += "c5b-execution-families:";
+                for (const auto family : executionFamilyTags)
+                    structure += std::to_string(static_cast<unsigned>(family)) + ",";
+                structure += "\n";
+            }
+            structure += useFirstActivityMask
+                ? "c5b-first-activity-mask:on\n"
+                : "c5b-first-activity-mask:off\n";
 
             std::vector<sdfwgsl::KernelVolumeEvaluator> retainedEvaluators;
             retainedEvaluators.reserve(cohortMedia.size());
@@ -3585,8 +3636,10 @@ void WebGpuRenderer::flushVolumeComposite() {
                     !setMemo.ok || setMemo.structure != structure ||
                     !setMemo.pipeline;
                 if (needsCompile) {
-                    setMemo.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, cohortTrimProofSupport,
-                                                             certificateMembers, certificateSwitches);
+                    setMemo.prog = sdfwgsl::composeVolumeSet(
+                        compilerInputs, retainedEvaluators, cohortTrimProofSupport,
+                        certificateMembers, certificateSwitches,
+                        executionFamilyTags, useFirstActivityMask);
                     ++mutableFrameStats().volumeProgramCompiles;
                     mutableFrameStats().volumeWgslBytesGenerated +=
                         setMemo.prog.wgsl.size();
@@ -3627,8 +3680,10 @@ void WebGpuRenderer::flushVolumeComposite() {
                         for (auto& key : otherKey) std::get<10>(key) = !cohortTrimProofSupport;
                         auto& other = _volumeSetProgramCache[otherKey];
                         if (!other.ok || other.structure != structure || !other.pipeline) {
-                            other.prog = sdfwgsl::composeVolumeSet(compilerInputs, retainedEvaluators, !cohortTrimProofSupport,
-                                                                   certificateMembers, certificateSwitches);
+                            other.prog = sdfwgsl::composeVolumeSet(
+                                compilerInputs, retainedEvaluators, !cohortTrimProofSupport,
+                                certificateMembers, certificateSwitches,
+                                executionFamilyTags, useFirstActivityMask);
                             ++mutableFrameStats().volumeProgramCompiles;
                             mutableFrameStats().volumeWgslBytesGenerated += other.prog.wgsl.size();
                             other.ok = other.prog.ok;
@@ -3734,7 +3789,9 @@ void WebGpuRenderer::flushVolumeComposite() {
             instances.insert(
                 instances.end(), mediumInstances.begin(), mediumInstances.end());
             _volumeDrawInstanceCounts[setMemo.pipeline] = 1u;
+            return setMemo.pipeline;
         }
+        return nullptr;
     };
 
     bool trimProofSupport = volumeZeroProofEnabled();
@@ -3746,22 +3803,283 @@ void WebGpuRenderer::flushVolumeComposite() {
         }
     }
 
+    const VolumePipeline* c5bActivitySourcePipeline = nullptr;
+    bool c5bFirstActivityNeeded = false;
+    bool c5bFirstActivityProduced = false;
+    bool c5bActivityRangeValid = false;
+    float c5bActivityNear = 0.0f;
+    float c5bActivityFar = 2048.0f;
+
     if (activeMedia.size() > 1) {
-        if (!_certificateProbeMedium && incidentSource &&
-            OntoMath::literalZero(incidentSource->radianceExpr) &&
-            activeMedia.size() >= 6) {
-            // Partition into far-side background cohort (drawn first over the opaque
-            // scene on the grid-proof fused lane) and near-side 4-curtain cohort
-            // (drawn second over the background on the hardware routed transport lane).
-            std::vector<const Rendering::VolumeDensityBinding*> nearCohort(
-                activeMedia.begin(), activeMedia.begin() + 4);
-            std::vector<const Rendering::VolumeDensityBinding*> farCohort(
-                activeMedia.begin() + 4, activeMedia.end());
-            enqueueVolumeCohort(farCohort, false);
-            enqueueVolumeCohort(nearCohort, true);
-        } else {
-            enqueueVolumeCohort(activeMedia, true);
+        // C2: execution-family membership comes only from mathematical
+        // capability. Serialization order, Zone identity, artistic role and
+        // media count carry no transport meaning.
+        const auto routedCapability = [](const Rendering::VolumeDensityBinding* medium) {
+            if (!medium || !medium->densityExpr) return false;
+            const auto recipe = OntoMath::clampedWaveSupport(medium->densityExpr);
+            if (!recipe) return false;
+            if (!OntoMath::clampedWaveGroupingSlackFits(*recipe, std::abs(medium->scale.z)))
+                return false;
+            if (!glm::all(glm::lessThanEqual(glm::abs(medium->origin), glm::vec3(1024))))
+                return false;
+            if (!glm::all(glm::lessThanEqual(glm::abs(medium->scale), glm::vec3(1024))))
+                return false;
+            return true;
+        };
+        const auto capabilityPartition =
+            Rendering::partitionVolumeMediaByRoutedCapability(activeMedia, routedCapability);
+        const auto& routedCohort = capabilityPartition.first;
+        const auto& generalCohort = capabilityPartition.second;
+
+        // C5b-2a: preserve authored activeMedia order while tagging the two
+        // derived execution families. The tags exist only when both families
+        // are present; an all-routed or all-general set needs no grouped lane.
+        std::vector<sdfwgsl::VolumeExecutionFamily> mixedExecutionFamilies;
+        if (!routedCohort.empty() && !generalCohort.empty()) {
+            mixedExecutionFamilies.reserve(activeMedia.size());
+            for (const auto* medium : activeMedia) {
+                const bool first =
+                    std::find(routedCohort.begin(), routedCohort.end(), medium) !=
+                    routedCohort.end();
+                mixedExecutionFamilies.push_back(
+                    first ? sdfwgsl::VolumeExecutionFamily::First
+                          : sdfwgsl::VolumeExecutionFamily::Second);
+            }
         }
+
+        const auto radialSupportFor =
+            [&](const Rendering::VolumeDensityBinding* medium)
+                -> Rendering::VolumeCohortSupportInterval {
+            if (!medium) return {};
+            const glm::vec3 halfExtent = glm::abs(medium->scale);
+            const glm::vec3 eyeDelta = glm::abs(_eyePos - medium->origin);
+            const glm::vec3 nearestDelta =
+                glm::max(eyeDelta - halfExtent, glm::vec3(0.0f));
+            const glm::vec3 farthestDelta = eyeDelta + halfExtent;
+            const double nearDistance = static_cast<double>(glm::length(nearestDelta));
+            const double farDistance = static_cast<double>(glm::length(farthestDelta));
+            if (!std::isfinite(nearDistance) || !std::isfinite(farDistance))
+                return {};
+            return {nearDistance, farDistance, true};
+        };
+
+        // Conservative projection of an authored AABB into screen space. When
+        // perspective projection becomes unsafe (a corner reaches/ crosses the
+        // eye plane), claim the full viewport rather than culling a possible
+        // contribution. The radial interval remains independently derived.
+        const auto projectedSupportFor =
+            [&](const Rendering::VolumeDensityBinding* medium)
+                -> Rendering::VolumeProjectedMediumSupport {
+            const auto radial = radialSupportFor(medium);
+            const Rendering::VolumeScreenRect full{0u, 0u, _depthW, _depthH};
+            if (!medium || _depthW == 0 || _depthH == 0)
+                return {full, radial};
+
+            const glm::vec3 h = glm::abs(medium->scale);
+            float minX = std::numeric_limits<float>::infinity();
+            float minY = std::numeric_limits<float>::infinity();
+            float maxX = -std::numeric_limits<float>::infinity();
+            float maxY = -std::numeric_limits<float>::infinity();
+            bool fullScreen = false;
+
+            for (int ix = -1; ix <= 1; ix += 2) {
+                for (int iy = -1; iy <= 1; iy += 2) {
+                    for (int iz = -1; iz <= 1; iz += 2) {
+                        const glm::vec3 p = medium->origin +
+                            glm::vec3(float(ix) * h.x, float(iy) * h.y, float(iz) * h.z);
+                        const glm::vec4 clip = _viewProj * glm::vec4(p, 1.0f);
+                        if (!std::isfinite(clip.x) || !std::isfinite(clip.y) ||
+                            !std::isfinite(clip.w) || clip.w <= 1e-5f) {
+                            fullScreen = true;
+                            break;
+                        }
+                        const float ndcX = clip.x / clip.w;
+                        const float ndcY = clip.y / clip.w;
+                        if (!std::isfinite(ndcX) || !std::isfinite(ndcY)) {
+                            fullScreen = true;
+                            break;
+                        }
+                        const float px = (ndcX * 0.5f + 0.5f) * float(_depthW);
+                        const float py = (0.5f - ndcY * 0.5f) * float(_depthH);
+                        minX = std::min(minX, px); maxX = std::max(maxX, px);
+                        minY = std::min(minY, py); maxY = std::max(maxY, py);
+                    }
+                    if (fullScreen) break;
+                }
+                if (fullScreen) break;
+            }
+            if (fullScreen) return {full, radial};
+
+            if (maxX <= 0.0f || maxY <= 0.0f ||
+                minX >= float(_depthW) || minY >= float(_depthH))
+                return {{0u, 0u, 0u, 0u}, radial};
+
+            const float x0f = std::clamp(minX, 0.0f, float(_depthW));
+            const float y0f = std::clamp(minY, 0.0f, float(_depthH));
+            const float x1f = std::clamp(maxX, 0.0f, float(_depthW));
+            const float y1f = std::clamp(maxY, 0.0f, float(_depthH));
+            const uint32_t x0 = static_cast<uint32_t>(std::floor(x0f));
+            const uint32_t y0 = static_cast<uint32_t>(std::floor(y0f));
+            const uint32_t x1 = static_cast<uint32_t>(std::ceil(x1f));
+            const uint32_t y1 = static_cast<uint32_t>(std::ceil(y1f));
+            if (x1 <= x0 || y1 <= y0)
+                return {{0u, 0u, 0u, 0u}, radial};
+            return {{x0, y0, x1 - x0, y1 - y0}, radial};
+        };
+
+        bool scheduledSplit = false;
+        const bool separableSource =
+            !_certificateProbeMedium && incidentSource &&
+            OntoMath::literalZero(incidentSource->radianceExpr);
+        const Rendering::VolumeScreenRect fullViewport{0u, 0u, _depthW, _depthH};
+
+        auto appendPacket = [&](const VolumePipeline* pipeline,
+                                const Rendering::VolumeScreenRect& rect) {
+            if (pipeline && rect.width && rect.height)
+                volumeDrawSchedule.push_back({pipeline, rect});
+        };
+
+        // Current routed execution is a four-member family. Capability facts
+        // for other cardinalities remain informative but cannot manufacture a
+        // backend the renderer does not possess.
+        if (separableSource && routedCohort.size() == 4 && generalCohort.size() > 1) {
+            const auto routedSupport =
+                Rendering::aggregateVolumeCohortSupport(routedCohort, radialSupportFor);
+            const auto generalSupport =
+                Rendering::aggregateVolumeCohortSupport(generalCohort, radialSupportFor);
+            if (routedSupport.valid &&
+                std::isfinite(routedSupport.nearDistance) &&
+                std::isfinite(routedSupport.farDistance)) {
+                const double lo =
+                    std::clamp(routedSupport.nearDistance, 0.0, 2048.0);
+                const double hi =
+                    std::clamp(routedSupport.farDistance, 0.0, 2048.0);
+                if (hi > lo) {
+                    c5bActivityNear = static_cast<float>(lo);
+                    c5bActivityFar = static_cast<float>(hi);
+                    // Widen outward if float conversion rounded inward.
+                    if (double(c5bActivityNear) > lo)
+                        c5bActivityNear =
+                            std::nextafter(c5bActivityNear, 0.0f);
+                    if (double(c5bActivityFar) < hi)
+                        c5bActivityFar =
+                            std::nextafter(
+                                c5bActivityFar,
+                                std::numeric_limits<float>::infinity());
+                    c5bActivityRangeValid =
+                        std::isfinite(c5bActivityNear) &&
+                        std::isfinite(c5bActivityFar) &&
+                        c5bActivityFar > c5bActivityNear;
+                }
+            }
+            const auto wholeOrder =
+                Rendering::proveWholeScreenRadialOrder(routedSupport, generalSupport);
+
+            // Prepare capability pipelines once. Packet order, not preparation
+            // order, now carries local far-to-near chronology.
+            const VolumePipeline* routedPipeline =
+                enqueueVolumeCohort(routedCohort, true);
+            const VolumePipeline* generalPipeline =
+                enqueueVolumeCohort(generalCohort, false);
+            if (routedPipeline && routedPipeline->routed)
+                c5bActivitySourcePipeline = routedPipeline;
+
+            auto appendOrderedRegion = [&](Rendering::VolumeCohortOrder order,
+                                           const Rendering::VolumeScreenRect& rect) {
+                if (order == Rendering::VolumeCohortOrder::FirstBeforeSecond) {
+                    // First == routed is nearer, therefore general publishes first.
+                    appendPacket(generalPipeline, rect);
+                    appendPacket(routedPipeline, rect);
+                } else if (order == Rendering::VolumeCohortOrder::SecondBeforeFirst) {
+                    appendPacket(routedPipeline, rect);
+                    appendPacket(generalPipeline, rect);
+                }
+            };
+
+            if (routedPipeline && generalPipeline) {
+                if (wholeOrder != Rendering::VolumeCohortOrder::Unknown) {
+                    appendOrderedRegion(wholeOrder, fullViewport);
+                    scheduledSplit = !volumeDrawSchedule.empty();
+                } else {
+                    std::vector<Rendering::VolumeProjectedMediumSupport> routedProjected;
+                    std::vector<Rendering::VolumeProjectedMediumSupport> generalProjected;
+                    routedProjected.reserve(routedCohort.size());
+                    generalProjected.reserve(generalCohort.size());
+                    for (const auto* medium : routedCohort)
+                        routedProjected.push_back(projectedSupportFor(medium));
+                    for (const auto* medium : generalCohort)
+                        generalProjected.push_back(projectedSupportFor(medium));
+
+                    const auto tilePlan = Rendering::planVolumeCohortTiles(
+                        _depthW, _depthH, 128u, 96u,
+                        routedProjected, generalProjected);
+
+                    // C5: each proved region carries its own chronology,
+                    // then the pure planner reverses camera chronology into
+                    // premultiplied far-to-near publication order.
+                    const auto logicalSchedule =
+                        Rendering::buildVolumeCohortDrawSchedule(tilePlan);
+                    const bool needsJoint = std::any_of(
+                        logicalSchedule.begin(), logicalSchedule.end(),
+                        [](const Rendering::VolumeCohortDrawStep& step) {
+                            return step.target ==
+                                Rendering::VolumeCohortDrawTarget::Joint;
+                        });
+                    const bool useFirstActivity =
+                        needsJoint && c5bActivitySourcePipeline &&
+                        c5bActivityRangeValid &&
+                        !mixedExecutionFamilies.empty();
+                    const VolumePipeline* jointPipeline =
+                        needsJoint
+                            ? enqueueVolumeCohort(
+                                  activeMedia, false,
+                                  mixedExecutionFamilies.empty()
+                                      ? nullptr : &mixedExecutionFamilies,
+                                  useFirstActivity)
+                            : nullptr;
+                    if (jointPipeline && jointPipeline->firstActivityMask)
+                        c5bFirstActivityNeeded = true;
+                    const bool jointReady = !needsJoint || jointPipeline;
+
+                    if (jointReady) {
+                        for (const auto& step : logicalSchedule) {
+                            const VolumePipeline* target = nullptr;
+                            if (step.target == Rendering::VolumeCohortDrawTarget::First)
+                                target = routedPipeline;
+                            else if (step.target == Rendering::VolumeCohortDrawTarget::Second)
+                                target = generalPipeline;
+                            else
+                                target = jointPipeline;
+                            appendPacket(target, step.rect);
+                        }
+                    }
+
+                    scheduledSplit =
+                        jointReady && !volumeDrawSchedule.empty();
+                }
+            }
+
+            if (!scheduledSplit)
+                volumeDrawSchedule.clear();
+        }
+
+        if (!scheduledSplit) {
+            const bool wholeSetRoutedAdmissible = generalCohort.empty();
+            const bool useFirstActivity =
+                c5bActivitySourcePipeline && c5bActivityRangeValid &&
+                !mixedExecutionFamilies.empty();
+            const auto* joint =
+                enqueueVolumeCohort(
+                    activeMedia, wholeSetRoutedAdmissible,
+                    mixedExecutionFamilies.empty()
+                        ? nullptr : &mixedExecutionFamilies,
+                    useFirstActivity);
+            if (joint && joint->firstActivityMask)
+                c5bFirstActivityNeeded = true;
+            volumeDrawSchedule.clear();
+            appendPacket(joint, fullViewport);
+        }
+        explicitVolumeSchedule = true;
     }
 
     // Build ordinary V0-V4 batches only from the bounded projection EngineRender
@@ -4033,8 +4351,17 @@ void WebGpuRenderer::flushVolumeComposite() {
     if (static_cast<double>(gpuBudget) > outputBudget)
         gpuBudget = std::nextafter(gpuBudget, 0.0f);
     // y records opt-in separately: tiny positive budgets may round to zero.
-    // z/w are reserved for Kernel-derived certified bounds, not volumeControl.z.
-    globals.volumeOutputError = glm::vec4(gpuBudget, outputBudget > 0.0 ? 1.0f : 0.0f, 0.0f, 0.0f);
+    // C5b-2c uses z/w only when a mixed joint shader consumes the routed
+    // First-family activity certificate. The exact same f32 pair is also
+    // installed into KernelRoutedTransport's strip uniform.
+    globals.volumeOutputError = glm::vec4(
+        gpuBudget, outputBudget > 0.0 ? 1.0f : 0.0f,
+        c5bFirstActivityNeeded ? c5bActivityNear : 0.0f,
+        c5bFirstActivityNeeded ? c5bActivityFar : 0.0f);
+    if (c5bFirstActivityNeeded && _kernelRouted) {
+        _kernelRouted->firstActivityNear = c5bActivityNear;
+        _kernelRouted->firstActivityFar = c5bActivityFar;
+    }
     if (incidentSource) {
         globals.incidentSource = glm::vec4(incidentSource->position, 1.0f);
         globals.incidentColor = glm::vec4(incidentSource->diffuseRadiance, incidentSource->coefficients.x);
@@ -4051,7 +4378,22 @@ void WebGpuRenderer::flushVolumeComposite() {
     }
     auto globalAlloc = bufferPool().suballocateUniform(&globals, sizeof(globals));
 
+    struct PreparedVolumeDraw {
+        WGPUBindGroup globalBg = nullptr;
+        WGPUBindGroup instanceBg = nullptr;
+        uint32_t drawInstanceCount = 0;
+    };
+    std::map<const VolumePipeline*, PreparedVolumeDraw> preparedVolumeDraws;
+    auto pipelineIsScheduled = [&](const VolumePipeline* pipeline) {
+        if (!explicitVolumeSchedule) return true;
+        if (c5bFirstActivityNeeded && pipeline == c5bActivitySourcePipeline)
+            return true;
+        return std::any_of(volumeDrawSchedule.begin(), volumeDrawSchedule.end(),
+            [&](const VolumeDrawPacket& packet) { return packet.pipeline == pipeline; });
+    };
+
     for (const VolumePipeline* pipeline : _activeVolumePipelines) {
+        if (!pipelineIsScheduled(pipeline)) continue;
         const auto& instances = _volumeBatches[pipeline];
         const auto& params = _volumeParamBatches[pipeline];
         if (!pipeline || !pipeline->pipe || instances.empty() || params.empty()) continue;
@@ -4146,6 +4488,14 @@ void WebGpuRenderer::flushVolumeComposite() {
             bufferPool().suballocateStorage(instances.data(),
                                             instances.size() * sizeof(VolumeInstanceData));
 
+        if (pipeline->firstActivityMask &&
+            (!_kernelRouted || !_kernelRouted->firstActivityMask)) {
+            ++mutableFrameStats().volumeProgramRefusals;
+            mutableFrameStats().volumeLastProgramRefusal =
+                "C5b First-activity buffer unavailable; pipeline retained Current";
+            continue;
+        }
+
         WGPUBindGroupEntry globalEntries[4] = {};
         globalEntries[0].binding = 0;
         globalEntries[0].buffer = globalAlloc.buffer;
@@ -4157,13 +4507,23 @@ void WebGpuRenderer::flushVolumeComposite() {
         globalEntries[1].size = bytes;
         globalEntries[2].binding = 2;
         globalEntries[2].textureView = _depthView;
-        if(pipeline->routed){globalEntries[3].binding=3;globalEntries[3].buffer=_kernelRouted->publication;globalEntries[3].size=uint64_t(_depthW)*_depthH*16;}
+        if (pipeline->routed) {
+            globalEntries[3].binding = 3;
+            globalEntries[3].buffer = _kernelRouted->publication;
+            globalEntries[3].size = uint64_t(_depthW) * _depthH * 16;
+        } else if (pipeline->firstActivityMask) {
+            globalEntries[3].binding = 3;
+            globalEntries[3].buffer = _kernelRouted->firstActivityMask;
+            globalEntries[3].size = uint64_t(_depthW) * _depthH * 4;
+        }
 
         WGPUBindGroupDescriptor globalBgDesc = {};
         globalBgDesc.layout = pipeline->globalBgl;
-        globalBgDesc.entryCount = pipeline->routed ? 4 : 3;
+        globalBgDesc.entryCount =
+            (pipeline->routed || pipeline->firstActivityMask) ? 4 : 3;
         globalBgDesc.entries = globalEntries;
-        WGPUBindGroup globalBg = wgpuDeviceCreateBindGroup(_device, &globalBgDesc);
+        WGPUBindGroup globalBg =
+            wgpuDeviceCreateBindGroup(_device, &globalBgDesc);
         _frameBindGroups.push_back(globalBg);
 
         WGPUBindGroupEntry instanceEntry = {};
@@ -4175,87 +4535,231 @@ void WebGpuRenderer::flushVolumeComposite() {
         instanceBgDesc.layout = pipeline->instanceBgl;
         instanceBgDesc.entryCount = 1;
         instanceBgDesc.entries = &instanceEntry;
-        WGPUBindGroup instanceBg = wgpuDeviceCreateBindGroup(_device, &instanceBgDesc);
+        WGPUBindGroup instanceBg =
+            wgpuDeviceCreateBindGroup(_device, &instanceBgDesc);
         _frameBindGroups.push_back(instanceBg);
+
+        if (!globalBg || !instanceBg) {
+            ++mutableFrameStats().volumeProgramRefusals;
+            mutableFrameStats().volumeLastProgramRefusal =
+                "volume bind-group creation refused";
+            continue;
+        }
 
         if (pipeline->preparation) {
             if (_pass) {
                 wgpuRenderPassEncoderEnd(_pass);
                 wgpuRenderPassEncoderRelease(_pass);
-                _pass = nullptr; _boundPipeline = nullptr;
+                _pass = nullptr;
+                _boundPipeline = nullptr;
             }
-            // GPU writes only reserved derived slots; authored parameters and
-            // proof words remain resident. Ordering is within this encoder,
-            // so ordinary frames never wait for preparation on the CPU.
             auto prepDesc = globalBgDesc;
             prepDesc.layout = pipeline->preparation->globalBgl;
+            // Time preparation consumes only globals + mutable parameter storage;
+            // the C5b activity certificate is fragment-only.
             prepDesc.entryCount = 2;
             auto prepBg = wgpuDeviceCreateBindGroup(_device, &prepDesc);
             _frameBindGroups.push_back(prepBg);
-            auto compute = wgpuCommandEncoderBeginComputePass(_encoder, nullptr);
-            wgpuComputePassEncoderSetPipeline(compute, pipeline->preparation->pipe);
-            wgpuComputePassEncoderSetBindGroup(compute, 0, prepBg, 0, nullptr);
-            wgpuComputePassEncoderSetBindGroup(compute, 1, instanceBg, 0, nullptr);
-            wgpuComputePassEncoderDispatchWorkgroups(compute,
-                static_cast<uint32_t>(instances.size()) - pipeline->preparationInstanceBase, 1, 1);
-            wgpuComputePassEncoderEnd(compute); wgpuComputePassEncoderRelease(compute);
-        }
-        if(pipeline->routed){
-            if(_pass){wgpuRenderPassEncoderEnd(_pass);wgpuRenderPassEncoderRelease(_pass);_pass=nullptr;_boundPipeline=nullptr;}
-            const auto& spec=routedSpecs.at(pipeline);
-            if(_kernelRouted->specsUniform)wgpuQueueWriteBuffer(_queue,_kernelRouted->specsUniform,0,spec.data(),sizeof(spec));
-            auto* transport=pipeline->routedProgram;
-            const bool routedEncoded = transport && _kernelRouted->encode(*transport,_encoder,
-                {globalAlloc.buffer,globalAlloc.offset,globalAlloc.size},{paramBuffer,paramOffset,bytes},
-                {instanceAlloc.buffer,instanceAlloc.offset,instanceAlloc.size},_depthView);
-            if(routedEncoded){
-                ++mutableFrameStats().volumeRoutedSets;mutableFrameStats().volumeRoutedPixels+=_depthW*_depthH;
-                mutableFrameStats().volumeRoutedWorkingSetBytes=uint64_t(_depthW)*_depthH*16+uint64_t(_kernelRouted->capacity)*(48+64*16+16*16+4)+uint64_t(_kernelRouted->tiles)*16+56;
-            }else{
+            if (!prepBg) {
                 ++mutableFrameStats().volumeProgramRefusals;
-                mutableFrameStats().volumeLastProgramRefusal="routed transport encode refused; Current retained";
-                if(_kernelRouted->publication){
-                    std::vector<uint32_t> refuseWords(size_t(_depthW)*_depthH*4, 0xbf800000u); // -1.0f in all lanes (.w < 0 => Current)
-                    wgpuQueueWriteBuffer(_queue,_kernelRouted->publication,0,refuseWords.data(),refuseWords.size()*sizeof(uint32_t));
+                mutableFrameStats().volumeLastProgramRefusal =
+                    "volume time preparation bind-group refused";
+                continue;
+            }
+            auto compute =
+                wgpuCommandEncoderBeginComputePass(_encoder, nullptr);
+            wgpuComputePassEncoderSetPipeline(
+                compute, pipeline->preparation->pipe);
+            wgpuComputePassEncoderSetBindGroup(
+                compute, 0, prepBg, 0, nullptr);
+            wgpuComputePassEncoderSetBindGroup(
+                compute, 1, instanceBg, 0, nullptr);
+            wgpuComputePassEncoderDispatchWorkgroups(
+                compute,
+                static_cast<uint32_t>(instances.size()) -
+                    pipeline->preparationInstanceBase,
+                1, 1);
+            wgpuComputePassEncoderEnd(compute);
+            wgpuComputePassEncoderRelease(compute);
+        }
+
+        if (pipeline->routed) {
+            if (_pass) {
+                wgpuRenderPassEncoderEnd(_pass);
+                wgpuRenderPassEncoderRelease(_pass);
+                _pass = nullptr;
+                _boundPipeline = nullptr;
+            }
+            const auto& spec = routedSpecs.at(pipeline);
+            if (_kernelRouted->specsUniform)
+                wgpuQueueWriteBuffer(
+                    _queue, _kernelRouted->specsUniform, 0,
+                    spec.data(), sizeof(spec));
+            auto* transport = pipeline->routedProgram;
+
+            const bool activitySource =
+                c5bFirstActivityNeeded &&
+                pipeline == c5bActivitySourcePipeline;
+            const bool publicationNeeded =
+                !explicitVolumeSchedule ||
+                std::any_of(
+                    volumeDrawSchedule.begin(), volumeDrawSchedule.end(),
+                    [&](const VolumeDrawPacket& packet) {
+                        return packet.pipeline == pipeline;
+                    });
+
+            const KernelRoutedRange globalRange{
+                globalAlloc.buffer, globalAlloc.offset, globalAlloc.size};
+            const KernelRoutedRange paramRange{
+                paramBuffer, paramOffset, bytes};
+            const KernelRoutedRange instanceRange{
+                instanceAlloc.buffer, instanceAlloc.offset, instanceAlloc.size};
+
+            bool routedEncoded = false;
+            if (transport && activitySource) {
+                const KernelRoutedSpanConsumer compact =
+                    [&](WGPUCommandEncoder encoder,
+                        const KernelRoutedSpanStrip& strip) {
+                        return _kernelRouted->compactFirstActivity(
+                            encoder, strip);
+                    };
+                routedEncoded = publicationNeeded
+                    ? _kernelRouted->encodeWithSpans(
+                          *transport, _encoder,
+                          globalRange, paramRange, instanceRange,
+                          _depthView, compact)
+                    : _kernelRouted->encodeSpans(
+                          *transport, _encoder,
+                          globalRange, paramRange, instanceRange,
+                          _depthView, compact);
+
+                if (routedEncoded) {
+                    c5bFirstActivityProduced = true;
+                } else {
+                    // Optimization refusal must never become false absence.
+                    _kernelRouted->fillFirstActivityUnknown();
+                    c5bFirstActivityProduced = true; // safely unknown, not stale
+                    if (publicationNeeded)
+                        routedEncoded = _kernelRouted->encode(
+                            *transport, _encoder,
+                            globalRange, paramRange, instanceRange,
+                            _depthView);
+                }
+            } else if (transport) {
+                routedEncoded = _kernelRouted->encode(
+                    *transport, _encoder,
+                    globalRange, paramRange, instanceRange,
+                    _depthView);
+            }
+
+            if (routedEncoded) {
+                if (publicationNeeded) {
+                    ++mutableFrameStats().volumeRoutedSets;
+                    mutableFrameStats().volumeRoutedPixels +=
+                        _depthW * _depthH;
+                    mutableFrameStats().volumeRoutedWorkingSetBytes =
+                        uint64_t(_depthW) * _depthH * (16 + 4) +
+                        uint64_t(_kernelRouted->capacity) *
+                            (48 + 64 * 16 + 16 * 16 + 4) +
+                        uint64_t(_kernelRouted->tiles) * 16 + 56;
+                }
+            } else if (publicationNeeded) {
+                ++mutableFrameStats().volumeProgramRefusals;
+                mutableFrameStats().volumeLastProgramRefusal =
+                    "routed transport encode refused; Current retained";
+                if (_kernelRouted->publication) {
+                    std::vector<uint32_t> refuseWords(
+                        size_t(_depthW) * _depthH * 4, 0xbf800000u);
+                    wgpuQueueWriteBuffer(
+                        _queue, _kernelRouted->publication, 0,
+                        refuseWords.data(),
+                        refuseWords.size() * sizeof(uint32_t));
                 }
             }
         }
-        if (!_pass) {
-            _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &volumePassDesc);
-            _boundPipeline = nullptr;
-        }
 
-        bindPipeline(pipeline->pipe);
-        wgpuRenderPassEncoderSetBindGroup(_pass, 0, globalBg, 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(_pass, 1, instanceBg, 0, nullptr);
-        wgpuRenderPassEncoderSetVertexBuffer(
-            _pass, 0, _sdfCubeVerts, 0, 36 * sizeof(glm::vec3));
         uint32_t drawInstanceCount = static_cast<uint32_t>(instances.size());
         if (const auto countIt = _volumeDrawInstanceCounts.find(pipeline);
             countIt != _volumeDrawInstanceCounts.end()) {
             drawInstanceCount = countIt->second;
         }
-        if (_certificateProbeMedium &&
-            _certificateProbeStripRows * kCertificateProbeStrips < _certificateProbeFootprint.w) {
-            // A hidden certificate-timing lane draws only its strips: the same
-            // full-resolution rays the frame casts there, fewer of them.
-            const auto& f = _certificateProbeFootprint;
-            for (uint32_t strip = 0; strip < kCertificateProbeStrips; ++strip) {
-                const uint32_t centre = f.y + static_cast<uint32_t>((strip + 0.5) * f.w / kCertificateProbeStrips);
-                const uint32_t top = std::max(f.y, centre - std::min(centre, _certificateProbeStripRows / 2u));
-                const uint32_t rows = std::min(_certificateProbeStripRows, f.y + f.w - top);
-                wgpuRenderPassEncoderSetScissorRect(_pass, f.x, top, f.z, rows);
-                wgpuRenderPassEncoderDraw(_pass, 36, drawInstanceCount, 0, 0);
-            }
-            wgpuRenderPassEncoderSetScissorRect(_pass, 0, 0, _depthW, _depthH);
-        } else {
-            wgpuRenderPassEncoderDraw(
-                _pass, 36, drawInstanceCount, 0, 0);
-        }
+        preparedVolumeDraws[pipeline] = {globalBg, instanceBg, drawInstanceCount};
+    }
 
-        mutableFrameStats().drawCalls++;
+    if (c5bFirstActivityNeeded && !c5bFirstActivityProduced &&
+        _kernelRouted) {
+        // Source preparation/refusal may have prevented the compactor from
+        // running. Fail open rather than borrow a previous frame's theorem.
+        _kernelRouted->fillFirstActivityUnknown();
+        c5bFirstActivityProduced = true;
+    }
+
+    // Ordinary V0-V4 paths do not install an explicit C5 schedule; preserve
+    // their historical full-viewport draw order.
+    if (!explicitVolumeSchedule) {
+        const Rendering::VolumeScreenRect full{0u, 0u, _depthW, _depthH};
+        for (const VolumePipeline* pipeline : _activeVolumePipelines)
+            if (preparedVolumeDraws.count(pipeline))
+                volumeDrawSchedule.push_back({pipeline, full});
+    }
+
+    if (!volumeDrawSchedule.empty()) {
+        _pass = wgpuCommandEncoderBeginRenderPass(_encoder, &volumePassDesc);
+        _boundPipeline = nullptr;
+
+        uint32_t issuedDraws = 0;
+        uint64_t issuedTriangles = 0;
+        for (const auto& packet : volumeDrawSchedule) {
+            const auto preparedIt = preparedVolumeDraws.find(packet.pipeline);
+            if (preparedIt == preparedVolumeDraws.end()) continue;
+            const auto& prepared = preparedIt->second;
+
+            bindPipeline(packet.pipeline->pipe);
+            wgpuRenderPassEncoderSetBindGroup(
+                _pass, 0, prepared.globalBg, 0, nullptr);
+            wgpuRenderPassEncoderSetBindGroup(
+                _pass, 1, prepared.instanceBg, 0, nullptr);
+            wgpuRenderPassEncoderSetVertexBuffer(
+                _pass, 0, _sdfCubeVerts, 0, 36 * sizeof(glm::vec3));
+
+            if (_certificateProbeMedium &&
+                _certificateProbeStripRows * kCertificateProbeStrips <
+                    _certificateProbeFootprint.w) {
+                const auto& f = _certificateProbeFootprint;
+                for (uint32_t strip = 0; strip < kCertificateProbeStrips; ++strip) {
+                    const uint32_t centre =
+                        f.y + static_cast<uint32_t>(
+                            (strip + 0.5) * f.w / kCertificateProbeStrips);
+                    const uint32_t top =
+                        std::max(f.y, centre -
+                            std::min(centre, _certificateProbeStripRows / 2u));
+                    const uint32_t rows =
+                        std::min(_certificateProbeStripRows,
+                                 f.y + f.w - top);
+                    wgpuRenderPassEncoderSetScissorRect(
+                        _pass, f.x, top, f.z, rows);
+                    wgpuRenderPassEncoderDraw(
+                        _pass, 36, prepared.drawInstanceCount, 0, 0);
+                    ++issuedDraws;
+                    issuedTriangles +=
+                        uint64_t(12) * prepared.drawInstanceCount;
+                }
+            } else if (packet.rect.width && packet.rect.height) {
+                wgpuRenderPassEncoderSetScissorRect(
+                    _pass, packet.rect.x, packet.rect.y,
+                    packet.rect.width, packet.rect.height);
+                wgpuRenderPassEncoderDraw(
+                    _pass, 36, prepared.drawInstanceCount, 0, 0);
+                ++issuedDraws;
+                issuedTriangles +=
+                    uint64_t(12) * prepared.drawInstanceCount;
+            }
+        }
+        wgpuRenderPassEncoderSetScissorRect(_pass, 0, 0, _depthW, _depthH);
+        mutableFrameStats().drawCalls += issuedDraws;
         mutableFrameStats().trianglesDrawn +=
-            static_cast<uint32_t>(12 * drawInstanceCount);
+            static_cast<uint32_t>(std::min<uint64_t>(
+                issuedTriangles, std::numeric_limits<uint32_t>::max()));
     }
 
     if (_pass) {
