@@ -3331,55 +3331,94 @@ int main() {
                sourceMeshTorusBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
                "mesh CompleteScene did not execute foreign Torus through the field VM");
 
-        // TRUE REFUSAL FRONTIER: Expr still has no lossless OntoMath-native VM
-        // bytecode. Its presence must therefore revoke CompleteScene authority
-        // for BOTH representation kinds rather than being triangulated, guessed,
-        // or silently omitted.
-        Object unsupportedImplicit;
-        unsupportedImplicit.setFieldShape(
-            geom::makeImplicit("x*x+y*y+z*z-1"),
+        // EXPR CROSSES THE VM FRONTIER: author an exact sphere SDF as
+        // OntoMath length(p)-1. No primitive enum, no RPN execution authority.
+        // The same foreign Expr blocker must now be KNOWN and occluding for
+        // both mesh and SDF receivers through the shared scene Field VM.
+        auto exprPoint = std::make_unique<OntoMath::MathNode>();
+        exprPoint->op = OntoMath::MathNode::Op::ValueLeaf;
+        exprPoint->variableName = OntoMath::kAmbientPointVar;
+        auto exprLength = std::make_unique<OntoMath::MathNode>();
+        exprLength->op = OntoMath::MathNode::Op::Length;
+        exprLength->children.push_back(std::move(exprPoint));
+        auto exprDistance = std::make_shared<OntoMath::MathNode>();
+        exprDistance->op = OntoMath::MathNode::Op::Sub;
+        exprDistance->children.push_back(std::move(exprLength));
+        exprDistance->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(1.0)));
+
+        Object vmKnownExpr;
+        vmKnownExpr.setFieldShape(
+            geom::makeImplicit(exprDistance),
             glm::vec3(0.8f));
-        unsupportedImplicit.setRenderMode(Object::RenderMode::Auto);
-        unsupportedImplicit.setMaterialId("material.webgpu_source_transport_parity");
-        const glm::mat4 unsupportedExprModel =
-            glm::translate(glm::mat4(1.0f), glm::vec3(0.9f, 0.0f, 0.0f)) *
+        vmKnownExpr.setRenderMode(Object::RenderMode::Auto);
+        vmKnownExpr.setMaterialId("material.webgpu_source_transport_parity");
+        const glm::mat4 implicitExprBlockerModel =
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.95f)) *
             glm::scale(glm::mat4(1.0f), glm::vec3(0.22f));
 
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         renderer.setModel(glm::mat4(1.0f));
         meshTransport.drawObject();
-        renderer.setModel(unsupportedExprModel);
-        unsupportedImplicit.drawObject();
+        renderer.setModel(implicitExprBlockerModel);
+        vmKnownExpr.drawObject();
         renderer.endFrame();
-        unsigned char sourceMeshUnsupportedProgramUnknown[4];
-        readCentre(sourceMeshUnsupportedProgramUnknown);
-        const Renderer::FrameStats sourceMeshUnsupportedProgramUnknownStats =
+        unsigned char sourceMeshExprBlocked[4];
+        readCentre(sourceMeshExprBlocked);
+        const Renderer::FrameStats sourceMeshExprBlockedStats =
             renderer.frameStats();
 
-        assert(sourceMeshUnsupportedProgramUnknown[0] < 5 &&
-               sourceMeshUnsupportedProgramUnknown[1] < 5 &&
-               sourceMeshUnsupportedProgramUnknown[2] < 5 &&
-               sourceMeshUnsupportedProgramUnknownStats.meshVisibilityUnknownDirectSkips > 0 &&
-               sourceMeshUnsupportedProgramUnknownStats.sceneVisibilityUnknownFrames > 0 &&
-               "unsupported Expr program was silently omitted from mesh CompleteScene truth");
+        assert(sourceMeshExprBlocked[0] < 5 &&
+               sourceMeshExprBlocked[1] < 5 &&
+               sourceMeshExprBlocked[2] < 5 &&
+               sourceMeshExprBlockedStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshExprBlockedStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshExprBlockedStats.sceneVisibilityUnknownFrames == 0 &&
+               sourceMeshExprBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
+               "mesh CompleteScene did not execute foreign authored Expr through the field VM");
 
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         renderer.setModel(glm::mat4(1.0f));
         implicitTransport.drawObject();
-        renderer.setModel(unsupportedExprModel);
-        unsupportedImplicit.drawObject();
+        renderer.setModel(implicitExprBlockerModel);
+        vmKnownExpr.drawObject();
         renderer.endFrame();
-        unsigned char sourceSdfUnsupportedProgramUnknown[4];
-        readCentre(sourceSdfUnsupportedProgramUnknown);
-        const Renderer::FrameStats sourceSdfUnsupportedProgramUnknownStats =
+        unsigned char sourceSdfExprBlocked[4];
+        readCentre(sourceSdfExprBlocked);
+        const Renderer::FrameStats sourceSdfExprBlockedStats =
             renderer.frameStats();
 
-        assert(sourceSdfUnsupportedProgramUnknown[0] < 5 &&
-               sourceSdfUnsupportedProgramUnknown[1] < 5 &&
-               sourceSdfUnsupportedProgramUnknown[2] < 5 &&
-               sourceSdfUnsupportedProgramUnknownStats.sdfVisibilityUnknownDirectSkips > 0 &&
-               sourceSdfUnsupportedProgramUnknownStats.sceneVisibilityUnknownFrames > 0 &&
-               "unsupported Expr program was silently omitted from SDF CompleteScene truth");
+        assert(sourceSdfExprBlocked[0] < 5 &&
+               sourceSdfExprBlocked[1] < 5 &&
+               sourceSdfExprBlocked[2] < 5 &&
+               sourceSdfExprBlockedStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceSdfExprBlockedStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               sourceSdfExprBlockedStats.sceneVisibilityUnknownFrames == 0 &&
+               sourceSdfExprBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
+               "SDF CompleteScene did not execute foreign authored Expr through the field VM");
+
+        // Refusal still exists where semantics are not losslessly encoded.
+        // A PropertyPath Bind needs a subject; the scene blocker VM has none.
+        auto unsupportedBind = std::make_shared<OntoMath::MathNode>();
+        unsupportedBind->op = OntoMath::MathNode::Op::Bind;
+        unsupportedBind->propertyPath = "radius";
+        Object unsupportedImplicit;
+        unsupportedImplicit.setFieldShape(
+            geom::makeImplicit(unsupportedBind),
+            glm::vec3(0.8f));
+        unsupportedImplicit.setRenderMode(Object::RenderMode::Auto);
+        unsupportedImplicit.setMaterialId("material.webgpu_source_transport_parity");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(implicitExprBlockerModel);
+        unsupportedImplicit.drawObject();
+        renderer.endFrame();
+        const Renderer::FrameStats unsupportedBindStats = renderer.frameStats();
+        assert(unsupportedBindStats.meshVisibilityUnknownDirectSkips > 0 &&
+               unsupportedBindStats.sceneVisibilityUnknownFrames > 0 &&
+               "unsupported subject-bound Expr was silently admitted into CompleteScene truth");
 
         renderer.setRadianceVisibilityMode(RadianceVisibilityMode::Disabled);
         renderer.setRadianceSources({}, 0);
