@@ -792,7 +792,7 @@ std::optional<float> evaluateFieldVm(const FieldVmProgram& program,
     uint32_t sp = 0;
 
     auto push = [&](float value) -> bool {
-        if (sp >= kFieldVmMaxStackDepth) return false;
+        if (sp >= kFieldVmMaxStackDepth || !std::isfinite(value)) return false;
         stack[sp++] = value;
         return true;
     };
@@ -817,6 +817,28 @@ std::optional<float> evaluateFieldVm(const FieldVmProgram& program,
                 break;
             case FieldVmOpcode::SmoothUnion:
                 value = smoothMinVm(a, b, parameter);
+                break;
+            case FieldVmOpcode::MathAdd:
+                value = a + b;
+                break;
+            case FieldVmOpcode::MathSub:
+                value = a - b;
+                break;
+            case FieldVmOpcode::MathMul:
+                value = a * b;
+                break;
+            case FieldVmOpcode::MathDiv:
+                value = std::abs(b) < static_cast<float>(OntoMath::kDegenerateDivisor)
+                    ? 0.0f : a / b;
+                break;
+            case FieldVmOpcode::MathPow:
+                value = (a < 0.0f && std::floor(b) != b) ? 0.0f : std::pow(a, b);
+                break;
+            case FieldVmOpcode::MathMin:
+                value = std::min(a, b);
+                break;
+            case FieldVmOpcode::MathMax:
+                value = std::max(a, b);
                 break;
             default:
                 return false;
@@ -861,8 +883,107 @@ std::optional<float> evaluateFieldVm(const FieldVmProgram& program,
             case FieldVmOpcode::Intersect:
             case FieldVmOpcode::Subtract:
             case FieldVmOpcode::SmoothUnion:
+            case FieldVmOpcode::MathAdd:
+            case FieldVmOpcode::MathSub:
+            case FieldVmOpcode::MathMul:
+            case FieldVmOpcode::MathDiv:
+            case FieldVmOpcode::MathPow:
+            case FieldVmOpcode::MathMin:
+            case FieldVmOpcode::MathMax:
                 if (!applyBinary(op, inst.a.x)) return std::nullopt;
                 break;
+
+            case FieldVmOpcode::Constant:
+                if (!push(inst.a.x)) return std::nullopt;
+                break;
+            case FieldVmOpcode::CoordX:
+                if (!push(p.x - inst.a.x)) return std::nullopt;
+                break;
+            case FieldVmOpcode::CoordY:
+                if (!push(p.y - inst.a.x)) return std::nullopt;
+                break;
+            case FieldVmOpcode::CoordZ:
+                if (!push(p.z - inst.a.x)) return std::nullopt;
+                break;
+
+            case FieldVmOpcode::MathAbs:
+            case FieldVmOpcode::MathSqrt:
+            case FieldVmOpcode::MathTan:
+            case FieldVmOpcode::MathSin:
+            case FieldVmOpcode::MathCos:
+            case FieldVmOpcode::MathExp:
+            case FieldVmOpcode::MathLog:
+            case FieldVmOpcode::MathRound:
+            case FieldVmOpcode::MathFloor: {
+                if (sp < 1) return std::nullopt;
+                const float a = stack[--sp];
+                float value = 0.0f;
+                if (op == FieldVmOpcode::MathAbs) value = std::abs(a);
+                else if (op == FieldVmOpcode::MathSqrt)
+                    value = std::sqrt(std::max(a, 0.0f));
+                else if (op == FieldVmOpcode::MathTan) value = std::tan(a);
+                else if (op == FieldVmOpcode::MathSin) value = std::sin(a);
+                else if (op == FieldVmOpcode::MathCos) value = std::cos(a);
+                else if (op == FieldVmOpcode::MathExp) value = std::exp(a);
+                else if (op == FieldVmOpcode::MathLog) {
+                    if (!(a > 0.0f)) return std::nullopt;
+                    value = std::log(a);
+                } else if (op == FieldVmOpcode::MathRound) value = std::round(a);
+                else value = std::floor(a);
+                if (!push(value)) return std::nullopt;
+                break;
+            }
+
+            case FieldVmOpcode::MathClamp: {
+                if (sp < 3) return std::nullopt;
+                const float hi = stack[--sp];
+                const float lo = stack[--sp];
+                const float value = stack[--sp];
+                if (!push(glm::clamp(value, lo, hi))) return std::nullopt;
+                break;
+            }
+
+            case FieldVmOpcode::MathNoise3:
+            case FieldVmOpcode::MathLength3:
+            case FieldVmOpcode::MathNormalizeComponent: {
+                if (sp < 3) return std::nullopt;
+                const float z = stack[--sp];
+                const float y = stack[--sp];
+                const float x = stack[--sp];
+                const glm::vec3 v(x, y, z);
+                float value = 0.0f;
+                if (op == FieldVmOpcode::MathNoise3) {
+                    value = glm::perlin(v);
+                } else {
+                    const float length = glm::length(v);
+                    if (op == FieldVmOpcode::MathLength3) {
+                        value = length;
+                    } else {
+                        const uint32_t axis = inst.meta.y;
+                        if (axis > 2u) return std::nullopt;
+                        value = length < OntoMath::kDegenerateVectorLength
+                            ? 0.0f : v[axis] / length;
+                    }
+                }
+                if (!push(value)) return std::nullopt;
+                break;
+            }
+
+            case FieldVmOpcode::MathProjectComponent: {
+                if (sp < 6) return std::nullopt;
+                glm::vec3 b;
+                b.z = stack[--sp]; b.y = stack[--sp]; b.x = stack[--sp];
+                glm::vec3 a;
+                a.z = stack[--sp]; a.y = stack[--sp]; a.x = stack[--sp];
+                const uint32_t axis = inst.meta.y;
+                if (axis > 2u) return std::nullopt;
+                const float length = glm::length(b);
+                const float value = length < OntoMath::kDegenerateVectorLength
+                    ? 0.0f
+                    : b[axis] * (glm::dot(a, b) / glm::dot(b, b));
+                if (!push(value)) return std::nullopt;
+                break;
+            }
 
             default:
                 return std::nullopt;
