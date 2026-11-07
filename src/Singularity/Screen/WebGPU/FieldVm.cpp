@@ -593,6 +593,8 @@ bool emitExprVm(const geom::SdfNode& node,
     if (!root && node.piecewise) {
         if (node.piecewise->pieces.size() != 1 ||
             !node.piecewise->pieces[0].mathNode ||
+            node.piecewise->pieces[0].hasLo ||
+            node.piecewise->pieces[0].hasHi ||
             node.piecewise->pieces[0].guard ||
             node.piecewise->pieces[0].whereLEZero ||
             node.piecewise->pieces[0].call ||
