@@ -212,7 +212,8 @@ private:
     // every admitted SDF cohort in the frame.
     // The authored field remains an SdfNode/OntoMath tree; this is derived
     // frame execution state. program = {instructionBase, instructionCount,
-    // maxStackDepth, 0}.
+    // maxStackDepth, flags}; flags bit 0 = needsGradientStep, derived from Expr
+    // presence exactly like the primary SDF marcher's execution policy.
     struct SceneVisibilityVmBlocker {
         glm::mat4 invModel{1.0f};
         glm::vec4 extents{0.0f};
