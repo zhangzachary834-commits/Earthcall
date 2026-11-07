@@ -96,7 +96,8 @@ int main(){
     for(const auto& c:cases){
         auto n=geom::SdfNode::leaf(c.prim,c.dims,c.p0);n.offset=c.off;
         auto vm=sdfwgsl::lowerFieldVm(n);
-        leafShape&=vm.ok&&vm.instructions.size()==1&&vm.maxStackDepth==1;
+        leafShape&=vm.ok&&vm.instructions.size()==1&&vm.maxStackDepth==1&&
+                   !vm.needsGradientStep;
         for(const auto& p:pts){
             auto v=sdfwgsl::evaluateFieldVm(vm,p);
             leafParity&=v&&nearf(*v,geom::evalSdf(n,p));
@@ -143,7 +144,7 @@ int main(){
     // Expr is admitted only through authored OntoMath, never the legacy RPN.
     auto expr=geom::makeImplicit("x*x+y*y+z*z-1");
     auto evm=sdfwgsl::lowerFieldVm(expr);
-    bool exprParity=evm.ok&&evm.instructions.size()>1;
+    bool exprParity=evm.ok&&evm.instructions.size()>1&&evm.needsGradientStep;
     for(const auto& p:pts){
         const auto v=sdfwgsl::evaluateFieldVm(evm,p);
         exprParity&=v&&nearf(*v,geom::evalSdf(expr,p));
@@ -235,6 +236,11 @@ int main(){
           w.find("ontoRawPow(a, b)")!=std::string::npos&&
           w.find("FIELD_VM_DIV_EPS")==std::string::npos,
           "WGSL VM carries native OntoMath math helpers and resolved shared guard constants");
+    const std::string sceneVm=sdfwgsl::sceneVisibilityFieldVmMathModule();
+    check(sceneVm.find("blocker.program.w & 1u")!=std::string::npos&&
+          sceneVm.find("samplePoint + vec3<f32>(ge, 0.0, 0.0)")!=std::string::npos&&
+          sceneVm.find("sample.value / max(gradLen, 1.0)")!=std::string::npos,
+          "scene visibility VM mirrors primary Expr gradient-corrected march policy");
 
     auto cvm=sdfwgsl::lowerFieldVm(geom::SdfNode::convex({{1,0,0,.5f},{-1,0,0,.5f}}));
     check(!cvm.ok&&cvm.error.find("plane payload table")!=std::string::npos,"Convex refuses until plane payload exists");
