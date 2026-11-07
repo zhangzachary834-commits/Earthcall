@@ -177,7 +177,7 @@ bool emitScalarFormVm(const OntoMath::ScalarForm& form, const glm::vec3& offset,
             if (!pushCoord(axis, offset, out, stackDepth)) return false;
             if (exponent != 1.0) {
                 if (!pushMathConstant(exponent, out, stackDepth) ||
-                    !appendBinary(FieldVmOpcode::MathPow, out, stackDepth)) {
+                    !appendBinary(FieldVmOpcode::MathRawPow, out, stackDepth)) {
                     return false;
                 }
             }
@@ -834,6 +834,9 @@ std::optional<float> evaluateFieldVm(const FieldVmProgram& program,
             case FieldVmOpcode::MathPow:
                 value = (a < 0.0f && std::floor(b) != b) ? 0.0f : std::pow(a, b);
                 break;
+            case FieldVmOpcode::MathRawPow:
+                value = std::pow(a, b);
+                break;
             case FieldVmOpcode::MathMin:
                 value = std::min(a, b);
                 break;
@@ -888,6 +891,7 @@ std::optional<float> evaluateFieldVm(const FieldVmProgram& program,
             case FieldVmOpcode::MathMul:
             case FieldVmOpcode::MathDiv:
             case FieldVmOpcode::MathPow:
+            case FieldVmOpcode::MathRawPow:
             case FieldVmOpcode::MathMin:
             case FieldVmOpcode::MathMax:
                 if (!applyBinary(op, inst.a.x)) return std::nullopt;
@@ -1108,7 +1112,8 @@ fn fieldVmEval(
             continue;
         }
 
-        if ((op >= 44u && op <= 48u) || (op >= 56u && op <= 57u)) {
+        if ((op >= 44u && op <= 48u) || (op >= 56u && op <= 57u) ||
+            op == 65u) {
             if (sp < 2u) {
                 return FieldVmResult(0.0, 0.0);
             }
@@ -1125,6 +1130,8 @@ fn fieldVmEval(
                 value = select(0.0, a / b, abs(b) >= FIELD_VM_DIV_EPS);
             } else if (op == 48u) {
                 value = ontoPow(a, b);
+            } else if (op == 65u) {
+                value = ontoRawPow(a, b);
             } else if (op == 56u) {
                 value = min(a, b);
             } else {
