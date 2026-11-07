@@ -244,6 +244,7 @@ void KernelRoutedTransport::releaseBuffers(){
  if(cachedClassifyGroup){wgpuBindGroupRelease(cachedClassifyGroup);cachedClassifyGroup=nullptr;}
  cachedSpecsBuffer=nullptr;cachedClassifyPipe=nullptr;
  cachedWorkLimit=0xFFFFFFFFu;cachedSkipEmpty=false;
+ cachedFirstActivityNear=-1.0f;cachedFirstActivityFar=-1.0f;
  for(auto& [key,p]:programs){for(auto& bg:p.localGroups)if(bg)wgpuBindGroupRelease(bg);p.localGroups.clear();p.localGroupsBuilt=false;}
  width=height=capacity=tiles=stripRows=maxStrips=0;
 }
@@ -487,12 +488,20 @@ bool KernelRoutedTransport::encodeInternal(Program& p,WGPUCommandEncoder encoder
  if(!stripUniform||!specsUniform||!maxStrips)return false;
  if((height+stripRows-1)/stripRows>maxStrips)return false;
  CreationScope creation(device);
- if(cachedWorkLimit!=workLimit||cachedSkipEmpty!=skipEmptyTiles){
+ if(cachedWorkLimit!=workLimit||cachedSkipEmpty!=skipEmptyTiles||
+    cachedFirstActivityNear!=firstActivityNear||
+    cachedFirstActivityFar!=firstActivityFar){
+  uint32_t activityNearBits=0,activityFarBits=0;
+  static_assert(sizeof(activityNearBits)==sizeof(firstActivityNear));
+  std::memcpy(&activityNearBits,&firstActivityNear,sizeof(activityNearBits));
+  std::memcpy(&activityFarBits,&firstActivityFar,sizeof(activityFarBits));
   for(uint32_t stripIdx=0,start=0;start<height&&stripIdx<maxStrips;start+=stripRows,++stripIdx){
-   std::array<uint32_t,12> config{capacity,64,16,workLimit,width,height,start,stripRows,skipEmptyTiles?1u:0u,0,0,0};
+   std::array<uint32_t,12> config{capacity,64,16,workLimit,width,height,start,stripRows,skipEmptyTiles?1u:0u,activityNearBits,activityFarBits,0};
    wgpuQueueWriteBuffer(queue,stripUniform,uint64_t(stripIdx)*kUniformStride,config.data(),sizeof(config));
   }
   cachedWorkLimit=workLimit;cachedSkipEmpty=skipEmptyTiles;
+  cachedFirstActivityNear=firstActivityNear;
+  cachedFirstActivityFar=firstActivityFar;
  }
  // Lazily build cached local bind groups for this Program.
  if(!p.localGroupsBuilt||p.localGroups.size()!=maxStrips){
