@@ -8373,8 +8373,34 @@ Program compileVolumeSet(const std::vector<VolumeProgramInput>& media, bool trim
 Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
                          const std::vector<KernelVolumeEvaluator>& evaluators,
                          bool trimProofSupport, const std::vector<bool>& supportCertificates,
-                         const std::vector<std::vector<uint32_t>>& supportCertificateSwitches) {
+                         const std::vector<std::vector<uint32_t>>& supportCertificateSwitches,
+                         const std::vector<VolumeExecutionFamily>& executionFamilies,
+                         bool useFirstActivityMask) {
     Program out;
+    const bool groupedExecution = !executionFamilies.empty();
+    if (useFirstActivityMask && !groupedExecution) {
+        out.ok = false;
+        out.error = "volume set: First-activity mask requires grouped execution";
+        out.wgsl = "// REFUSED: " + out.error + "\n";
+        return out;
+    }
+    if (groupedExecution) {
+        if (executionFamilies.size() != media.size()) {
+            out.ok = false;
+            out.error = "volume set: execution-family count does not match media count";
+            out.wgsl = "// REFUSED: " + out.error + "\n";
+            return out;
+        }
+        for (const auto family : executionFamilies) {
+            if (family != VolumeExecutionFamily::First &&
+                family != VolumeExecutionFamily::Second) {
+                out.ok = false;
+                out.error = "volume set: grouped execution requires First/Second tags for every member";
+                out.wgsl = "// REFUSED: " + out.error + "\n";
+                return out;
+            }
+        }
+    }
     if (media.empty()) {
         out.ok = false;
         out.error = "volume set: no participating media";
@@ -8416,7 +8442,11 @@ Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
             return out;
         }
 
-        if (i == 0) out.wgsl = kernelVolumePrefix(trimProofSupport);
+        if (i == 0) {
+            out.wgsl = kernelVolumePrefix(trimProofSupport);
+            if (useFirstActivityMask)
+                out.wgsl += "@group(0) @binding(3) var<storage, read> c5bFirstActivity: array<u32>;\n";
+        }
         std::string evalBlock = member.wgsl;
         const std::string suffix = "_" + std::to_string(i);
 
@@ -8510,6 +8540,16 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         clamp(i32(floor(in.position.x)), 0, maxX),
         clamp(i32(floor(in.position.y)), 0, maxY));
     let sceneDepth = textureLoad(sceneDepthTex, px, 0);
+)WGSL";
+    if (useFirstActivityMask) out.wgsl += R"WGSL(
+    let ecC5bPixel =
+        u32(px.y) * u32(max(i32(u.viewport.x), 1)) + u32(px.x);
+    let ecC5bFirstActivityWord = c5bFirstActivity[ecC5bPixel];
+    let ecC5bQuantLo = u.volumeOutputError.z;
+    let ecC5bQuantHi = u.volumeOutputError.w;
+    let ecC5bQuantValid = ecC5bQuantHi > ecC5bQuantLo && ecC5bQuantLo >= 0.0;
+)WGSL";
+    out.wgsl += R"WGSL(
 
     if (sceneDepth < 0.999999) {
         let opaqueWorld = worldAtDepth(in.position.xy, sceneDepth);
@@ -8623,6 +8663,8 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         "        let segmentMidP = ro + rd * segmentMidT;\n"
         "        var segmentOccupied = false;\n"
         "        var segmentSpacing = 3.0e38;\n";
+    if (groupedExecution)
+        out.wgsl += "        var ecC5bExecutionMask = 0u; // C5b-2a query-local execution families\n";
 
     for (std::size_t i = 0; i < media.size(); ++i) {
         const std::string n = std::to_string(i);
@@ -8637,7 +8679,14 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             "            if (all(segmentMidP >= segmentMin" + n + ") && "
                 "all(segmentMidP <= segmentMax" + n + ")) {\n"
             "                segmentOccupied = true;\n"
-            "                segmentSpacing = min(segmentSpacing, mediumChord[" + n + "] / f32(samplesPerChord));\n"
+            "                segmentSpacing = min(segmentSpacing, mediumChord[" + n + "] / f32(samplesPerChord));\n";
+        if (groupedExecution) {
+            const uint32_t familyBit =
+                executionFamilies[i] == VolumeExecutionFamily::First ? 1u : 2u;
+            out.wgsl += "                ecC5bExecutionMask |= " +
+                        std::to_string(familyBit) + "u;\n";
+        }
+        out.wgsl +=
             "            }\n"
             "        }\n";
     }
@@ -8673,6 +8722,26 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
 )WGSL";
     out.wgsl += R"WGSL(
             let worldP = ro + rd * sampleT;
+)WGSL";
+    if (useFirstActivityMask) out.wgsl += R"WGSL(
+            // C5b-2c conservative activity gate. The same host-derived First
+            // radial support interval quantizes both producer and consumer.
+            // Invalid/out-of-range coordinates fail open to ordinary evaluation.
+            var ecC5bFirstActive = true;
+            if (ecC5bQuantValid &&
+                sampleT >= ecC5bQuantLo - 1e-3 &&
+                sampleT <= ecC5bQuantHi + 1e-3) {
+                let ecC5bQ = clamp(
+                    (sampleT - ecC5bQuantLo) /
+                        (ecC5bQuantHi - ecC5bQuantLo),
+                    0.0, 1.0);
+                let ecC5bBin =
+                    min(u32(floor(ecC5bQ * 32.0)), 31u);
+                ecC5bFirstActive =
+                    (ecC5bFirstActivityWord & (1u << ecC5bBin)) != 0u;
+            }
+)WGSL";
+    out.wgsl += R"WGSL(
 
             // Consume each medium's proof and contribution together. Unknown
             // leaves cannot justify a collective jump; known leaves contribute
@@ -8690,7 +8759,17 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
         out.wgsl +=
             "            {\n"
             "                let mediumInst" + n + " = instances[" + inst + "];\n"
-            "                if (all(worldP >= mediumInst" + n + ".origin.xyz - mediumInst" + n + ".halfExtent.xyz) && "
+            "                if (" +
+                std::string(groupedExecution
+                    ? "((ecC5bExecutionMask & " +
+                          std::to_string(executionFamilies[i] == VolumeExecutionFamily::First ? 1u : 2u) +
+                          "u) != 0u) && " +
+                          std::string(useFirstActivityMask &&
+                                      executionFamilies[i] == VolumeExecutionFamily::First
+                                          ? "ecC5bFirstActive && "
+                                          : "")
+                    : "") +
+                "all(worldP >= mediumInst" + n + ".origin.xyz - mediumInst" + n + ".halfExtent.xyz) && "
                 "all(worldP <= mediumInst" + n + ".origin.xyz + mediumInst" + n + ".halfExtent.xyz)) {\n"
             "                    walkHeld = true;\n"
             "                    if (raySupport" + n + ".y < raySupport" + n + ".x || sampleT > raySupport" + n + ".y) {\n"
@@ -8847,6 +8926,7 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     out.params.clear();
     out.kernelVolumePreparationWgsl = kernelVolumeTimePreparation(members, true);
     out.kernelVolumePreparationInstanceBase = 1;
+    out.kernelVolumeUsesFirstActivityMask = useFirstActivityMask;
     for (const auto& member : members) {
         out.params.insert(out.params.end(), member.params.begin(), member.params.end());
     }
