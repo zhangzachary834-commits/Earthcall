@@ -66,9 +66,11 @@ struct ParameterBlock {
 // fixed WebGPU shader can evaluate many active field programs supplied as data
 // without recompiling one receiver shader per scene topology.
 //
-// The first rung lowers the exact current SdfNode primitive/CSG vocabulary.
-// Expr/Convex are deliberately refused until their OntoMath/plane payloads have
-// equally explicit VM encodings; refusal is preferable to a second math engine.
+// Primitive/CSG shorthands and scalar-valued Expr MathNode trees lower into
+// the same bounded instruction stream. Expr bytecode is derived directly from
+// OntoMath (vectors are scalarized during lowering); legacy SdfToken RPN is not
+// an execution authority here. Convex remains refused until its authored plane
+// payload has an explicit derived encoding.
 enum class FieldVmOpcode : uint32_t {
     Sphere = 1,
     Box = 2,
@@ -83,15 +85,51 @@ enum class FieldVmOpcode : uint32_t {
     Intersect = 22,
     Subtract = 23,
     SmoothUnion = 24,
+
+    // Derived OntoMath scalar execution. These are NOT authored math kinds:
+    // MathNode remains the sole authored language; lowering scalarizes vectors
+    // into this bounded float stack so Expr geometry can join the same scene
+    // field VM without reviving SdfToken RPN or inventing "Expr geometry".
+    Constant = 40,
+    CoordX = 41,
+    CoordY = 42,
+    CoordZ = 43,
+    MathAdd = 44,
+    MathSub = 45,
+    MathMul = 46,
+    MathDiv = 47,
+    MathPow = 48,
+    MathAbs = 49,
+    MathSqrt = 50,
+    MathTan = 51,
+    MathSin = 52,
+    MathCos = 53,
+    MathExp = 54,
+    MathLog = 55,
+    MathMin = 56,
+    MathMax = 57,
+    MathClamp = 58,
+    MathNoise3 = 59,
+    MathRound = 60,
+    MathFloor = 61,
+    MathLength3 = 62,
+    MathNormalizeComponent = 63,
+    MathProjectComponent = 64,
 };
 
 // One postorder stack instruction. meta.x = FieldVmOpcode.
 // Primitive records:
 //   a.xyz = local leaf offset; a.w = primitive scalar parameter 0
 //   b.xyz = primitive dimensions / remaining scalar parameters.
-// Operator records:
+// CSG records:
 //   a.x = blend parameter for Morph / SmoothUnion.
-// The ABI is intentionally plain storage-buffer data.
+// Derived OntoMath records:
+//   Constant: a.x = literal.
+//   CoordX/Y/Z: a.x = leaf-local offset for that axis.
+//   MathNormalizeComponent / MathProjectComponent: meta.y = output axis.
+// Other math instructions consume only the scalar stack.
+// The ABI stays plain storage-buffer data; extending execution does not change
+// the 48-byte record or create persisted authored identity.
 struct FieldVmInstruction {
     glm::uvec4 meta{0u};
     glm::vec4 a{0.0f};
@@ -125,7 +163,8 @@ std::optional<float> evaluateFieldVm(const FieldVmProgram& program,
 //   var<storage, read> fieldVmInstructions: array<FieldVmInstructionData>;
 // The returned module defines FieldVmInstructionData and
 // fieldVmEval(programBase, instructionCount, p). It requires the canonical
-// primitive helpers (sdSphere/sdBox/...) already emitted by this compiler.
+// primitive/math helpers (sdSphere/sdBox/..., ontoPow, cnoise3) already emitted
+// by this compiler.
 std::string fieldVmMathModule();
 // Production consumers bind the otherwise-neutral VM instruction stream at a
 // concrete storage location without baking renderer resource topology into the
