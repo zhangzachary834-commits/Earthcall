@@ -236,11 +236,10 @@ int main(){
           w.find("ontoRawPow(a, b)")!=std::string::npos&&
           w.find("FIELD_VM_DIV_EPS")==std::string::npos,
           "WGSL VM carries native OntoMath math helpers and resolved shared guard constants");
-    const std::string sceneVm=sdfwgsl::sceneVisibilityFieldVmMathModule();
-    check(sceneVm.find("blocker.program.w & 1u")!=std::string::npos&&
-          sceneVm.find("samplePoint + vec3<f32>(ge, 0.0, 0.0)")!=std::string::npos&&
-          sceneVm.find("sample.value / max(gradLen, 1.0)")!=std::string::npos,
-          "scene visibility VM mirrors primary Expr gradient-corrected march policy");
+    check(production.wgsl.find("blocker.program.w & 1u")!=std::string::npos&&
+          production.wgsl.find("samplePoint + vec3<f32>(ge, 0.0, 0.0)")!=std::string::npos&&
+          production.wgsl.find("sample.value / max(gradLen, 1.0)")!=std::string::npos,
+          "production scene visibility VM mirrors primary Expr gradient-corrected march policy");
 
     auto cvm=sdfwgsl::lowerFieldVm(geom::SdfNode::convex({{1,0,0,.5f},{-1,0,0,.5f}}));
     check(!cvm.ok&&cvm.error.find("plane payload table")!=std::string::npos,"Convex refuses until plane payload exists");
