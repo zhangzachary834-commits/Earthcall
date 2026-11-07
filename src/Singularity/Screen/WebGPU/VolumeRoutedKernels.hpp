@@ -333,14 +333,18 @@ struct ECSpan {span:vec2<f32>,info:vec2<u32>};
 @group(0) @binding(3) var<storage,read> ecOverlaps:array<ECSpan>;
 @group(0) @binding(4) var<storage,read_write> ecFirstActivity:array<u32>;
 
-fn markSpan(mask:ptr<function,u32>, lo:f32, hi:f32) -> bool {
-    // Canonical camera-ray distance domain. The routed setup already refuses
-    // t1 > 2048, so this coordinate is independent of any cohort's AABB envelope.
-    if (!(hi > lo) || lo < -1e-4 || hi > 2048.0001) {
+fn markSpan(mask:ptr<function,u32>, lo:f32, hi:f32,
+            quantLo:f32, quantHi:f32) -> bool {
+    // C5b-2c: quantize over one host-derived conservative radial range shared
+    // with the fused consumer. If the range is malformed or fails to enclose a
+    // produced span, refuse the certificate instead of manufacturing absence.
+    if (!(quantHi > quantLo) || quantLo < 0.0 ||
+        !(hi > lo) || lo < quantLo - 1e-3 || hi > quantHi + 1e-3) {
         return false;
     }
-    let q0 = clamp(lo * (1.0 / 2048.0), 0.0, 1.0);
-    let q1 = clamp(hi * (1.0 / 2048.0), 0.0, 1.0);
+    let inv = 1.0 / (quantHi - quantLo);
+    let q0 = clamp((lo - quantLo) * inv, 0.0, 1.0);
+    let q1 = clamp((hi - quantLo) * inv, 0.0, 1.0);
     let b0 = min(u32(floor(q0 * 32.0)), 31u);
     let b1 = min(u32(floor(q1 * 32.0)), 31u);
     var b = b0;
@@ -383,18 +387,25 @@ fn compactFirstActivityMain(@builtin(global_invocation_id) gid:vec3<u32>) {
         return;
     }
 
+    let quantLo = bitcast<f32>(ecWindow.flags.y);
+    let quantHi = bitcast<f32>(ecWindow.flags.z);
+    if (!(quantHi > quantLo) || quantLo < 0.0) {
+        ecFirstActivity[pixel] = 0xffffffffu;
+        return;
+    }
+
     let stride = ecWindow.control.x;
     var mask = 0u;
     for (var i = 0u; i < ray.counts.y; i++) {
         let sp = ecSingles[i * stride + id];
-        if (!markSpan(&mask, sp.span.x, sp.span.y)) {
+        if (!markSpan(&mask, sp.span.x, sp.span.y, quantLo, quantHi)) {
             ecFirstActivity[pixel] = 0xffffffffu;
             return;
         }
     }
     for (var i = 0u; i < overlapCount; i++) {
         let sp = ecOverlaps[i * stride + id];
-        if (!markSpan(&mask, sp.span.x, sp.span.y)) {
+        if (!markSpan(&mask, sp.span.x, sp.span.y, quantLo, quantHi)) {
             ecFirstActivity[pixel] = 0xffffffffu;
             return;
         }
