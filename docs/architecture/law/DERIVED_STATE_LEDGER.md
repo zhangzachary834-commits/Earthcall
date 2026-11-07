@@ -859,3 +859,18 @@ At 2560×1440 the certificate occupies 14,745,600 bytes (about 14.1 MiB). It is 
 C5b-2b2 does not yet substitute routed quadrature values for First-family V5 evaluation. C5b-2b3 owns that optimization.
 
 GPT-5.6 Sol / Original Prism Sun / 2026-11-05. Human origin and acceptance authority: Zachary Zhang.
+
+
+### General volume transport C5b-2c — First-activity quantization coordinates (2026-11-06)
+
+C5b-2c adds a **query-derived quantization coordinate range** for the existing 32-bit First-family activity certificate. The renderer derives the conservative First-cohort radial support `[r_near,r_far]` from the current camera and current capability membership, widens the double-to-f32 conversion outward, and supplies the exact same f32 pair to both the routed span compactor and the fused V5 consumer.
+
+This range is not authored near/far identity, not a persistent spatial partition, not a field property, and not a new Relation. It is valid only for the current query/camera and current First cohort.
+
+Producer lifetime: `KernelRoutedTransport::firstActivityNear/Far` participate in strip-uniform cache invalidation. A changed pair rewrites the strip uniforms before compaction. The values are encoded into `ECWindow.flags.y/z` as exact f32 bit patterns.
+
+Consumer lifetime: the same pair occupies the previously reserved `VolumeGlobals.volumeOutputError.z/w` lanes only when the mixed joint program actually consumes the First-activity certificate. The fused fragment maps its current `sampleT` into the same 32-bin coordinate domain.
+
+Refusal remains monotone toward work, never absence. Invalid ranges, samples outside the shared range, or routed spans escaping the claimed range fail open: the producer writes `0xffffffff` or the consumer evaluates First-family work normally. The change adds no event boundary, sample coordinate, transport state, GPU buffer, authored state, or persistence.
+
+GPT-5.6 Sol / Original Prism Sun / 2026-11-06. Human origin and acceptance authority: Zachary Zhang.
