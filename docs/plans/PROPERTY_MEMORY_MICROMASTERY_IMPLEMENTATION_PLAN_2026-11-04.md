@@ -719,6 +719,71 @@ All 6 test suites compile and pass 100%:
 - `no_black_box_test`: ALL OK (421 properties probed, 0 failures)
 - `saves/`: 100% clean (zero modifications).
 
+---
+
+## 17. Firmament Review of Pass 7 & Direct Corrective Edits (2026-11-06)
+
+**Reviewed & Patched by:** Gemini Spark / Firmament (Gemini 3.1 Pro) · session `firmament-property-memory-micromastery-2026-11-04` · 2026-11-06T12:00:00-08:00 (PST).
+
+### A. What Pass 7 Landed Well
+1. **Quest 1 (`Zone` + `TransferPolicy` Additive Round-Trip Persistence):**
+   - Added `TransferPolicy::hasNonDefaultState()` (`TransferPolicy.hpp/.cpp`) and wired additive `"transferPolicy"` serialization/deserialization in `ZoneSerialization::zoneToJson` / `applyZoneJson` (`src/Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.cpp`), keeping default/clean Zones at zero format churn.
+2. **Quest 2 (`AccessOp` Governance for `Read`, `Share`, `BorrowWeak`, `TransferUnique`):**
+   - Wired `readCtx` (`AccessOp::Read`) into `BindingMode::CopyValue` and `readMathBindings`, and added Section 18 (`tests/singularity/property_memory_access_test.cpp`) verifying `AccessOp::Read`, `AccessOp::Share`, `AccessOp::BorrowWeak`, and `AccessOp::TransferUnique` refusals.
+
+### B. 3 Subtle Seams Found & Patched Directly in Code by Firmament
+1. **Fix 1 — Cohort Remapping & `targetCellPath` Persistence for Cell-Specific `PolicyRule`s Across Zone Reloads (`TransferPolicy.hpp`, `TransferPolicy.cpp`):**
+   - *Finding:* Pass 7 serialized raw `cellSlot` and `cellGen` in `TransferPolicy::toJson()` and restored `r.cellId = CellId{slot, gen}` in `loadFromJson()`. However, when a `Zone` is saved and reloaded into fresh objects (or in a new session where `PropertyCellTable` has allocated different slots), `SingularPersistence::deserializeCellBindings` allocates **brand-new `CellId`s** for the reloaded objects and records `cohort.remappedCells[oldSlot + ":" + oldGen] = liveId` inside `applyZoneJson`'s active `SingularPersistence::CohortScope`. Because `TransferPolicy::loadFromJson` ignored `SingularPersistence::CohortContext::active()->remappedCells` and did not store `targetCellPath`, a reloaded cell-specific `PolicyRule` pointed to the old pre-save `(slot, generation)` instead of the newly hydrated `CellId`!
+   - *Fix:* Added `std::string targetCellPath;` and `mutable CellId cellId;` to `PolicyRule` (`TransferPolicy.hpp`), serialized `"targetCellPath"` and `"cellKey"` (`slot:generation`) in `TransferPolicy::toJson()`, remapped `"cellKey"` through `SingularPersistence::CohortContext::active()->remappedCells` in `TransferPolicy::loadFromJson()`, and added lazy `resolveRuleCellId(const PolicyRule&)` fallback in `TransferPolicy::checkAccess`. Witnessed in `property_memory_access_test.cpp` §18.6 (Part B.6).
+2. **Fix 2 — `AccessOp::Derive` (`"derive"`) Governance on Initial `ActionNode::deriveCell` & Reactive `DerivedEdge` Propagation (`ActionModel.cpp`):**
+   - *Finding:* `AccessOp` defines 6 operations (`Read`, `Write`, `Share`, `BorrowWeak`, `TransferUnique`, and `Derive`), but `ActionNode::Kind::Map` (`ActionModel.cpp`) never checked `TransferPolicy::instance().checkAccess` with `AccessOp::Derive` when `bEntry.mode == BindingMode::Derive`, nor did the `DerivedEdge` recompute callback pass `authorizingLaw` to `readMathBindings` or verify `AccessOp::Derive` on subsequent reactive propagations!
+   - *Fix:* Enforced `AccessOp::Derive` in `ActionNode::Kind::Map` (`ActionModel.cpp`) before evaluating/registering `BindingMode::Derive` (emitting `PathResult::AccessDenied` when refused) and inside the `DerivedEdge` recompute lambda (along with `recomputeReadCtx` carrying `authorizingLaw`). Witnessed in `property_memory_access_test.cpp` §18.6 (Part B.5).
+3. **Fix 3 — Preserving Exact `PathResult` Across `lawGetValueResult` & `readMathBindings` (`MathBinding.hpp`, `ActionModel.cpp`):**
+   - *Finding:* Because `lawGetValue` returns `bool`, Pass 7 unconditionally emitted `PathResult::AccessDenied` in `ActionNode::Kind::Map` whenever `readMathBindings` returned `std::nullopt` or `CopyValue` failed to read—falsely reporting `"Access Denied"` when a bound property simply did not exist (`PathResult::NoSuchProperty`)!
+   - *Fix:* Added `lawGetValueResult` (returning `PropertyPath::PathResult`) and `outFailureReason` on `readMathBindings` in `MathBinding.hpp`, and updated `ActionNode::Kind::Map` and `Kind::Flow` (`ActionModel.cpp`) to emit `PathResult::AccessDenied` or `PathResult::ExpiredCell` only when that was the actual `PathResult`, preserving the honest non-write trace for `NoSuchProperty`. Witnessed in `property_memory_access_test.cpp` §18.6 (Part B.5).
+
+---
+
+## 18. Pass 8: Rete Reactivity on TransferPolicy Changes, Law-Authored Rule Removal/Inspection, & Constitutional Person-Body Guard (2026-11-06)
+
+**Implemented by:** Sparkly Guy (Antigravity · Gemini 2.5 Pro) · 2026-11-06T17:15:00-08:00.
+
+### A. Architectural Scope & Accomplishments
+1. **Quest 1 — Wake Rete / Continuous Laws on `@transfer-policy` Rule Changes (`TransferPolicy.cpp`):**
+   - Implemented `notifyRuleChanged(const PolicyRule& rule)`:
+     - For cell-anchored rules (`resolveRuleCellId(rule).valid()`), calls `PropertyCellTable::instance().notifyMutation(cid)` to notify all cell observers across strong/weak aliases.
+     - For targeted paths (e.g. `@vault.classified` or `rule.targetCellPath`), resolves the root and fires `Singular::notifyPropertyChanged(root, propName)`.
+     - For general path patterns (`"classified"`), scans beings in `Universe::instance().beings()` (and active zones) carrying that property and fires `Singular::notifyPropertyChanged(b, pattern)`.
+     - Fired `notifyRuleChanged` on all rule state transitions: `addPolicyRule`, `removeRulesForBearer`, `clearPolicyRules`, `loadFromJson`, and `propSetRuleRevokeGoverningLawId`.
+     - Notified `"ruleCount"` and `"rules"` on `TransferPolicy`.
+   - Verified in Section 19.1 (`tests/singularity/property_memory_access_test.cpp`): a `WhileTrue` reactive Law conditioning on `classified == 77.0` initially fails when blocked by a read deny rule. When a superior Law commits a read allow rule, the rule commit automatically dirties the Rete fact on `vault.classified`, waking the `WhileTrue` Law on the very next `lm.tick()` without touching `vault.classified` directly.
+2. **Quest 2 — Legible Rule Inspection (`rules` PropertyList) & Authority-Checked Revocation by Law (`TransferPolicy.hpp/.cpp`, `ComputedProperty.hpp`, `no_black_box_test.cpp`):**
+   - Added `CheckedComputedProperty<Owner, T>` in `src/ConstructedBeing/Singular/Property/ComputedProperty.hpp` whose setter returns `bool` to cleanly report write success vs refusal (`PathResult::ReadOnly`).
+   - Registered read-only `rules` property (`ComputedProperty<TransferPolicy, std::shared_ptr<PropertyList>>`) on `TransferPolicy`, exposing active rules as a `PropertyList` of `PropertyDict`s with keys: `"pathPattern"`, `"targetCellPath"`, `"op"`, `"allow"`, `"governingLawId"`, `"governingZoneId"`, `"originZoneId"`, and `"targetZoneId"`.
+   - Registered `rule.revokeGoverningLawId` (`CheckedComputedProperty<TransferPolicy, std::string>`) on `TransferPolicy`:
+     - Checks whether `authorizingLaw` is either the same Law or has strict `hasAuthorityOver` over `targetLaw` in the Relation DAG.
+     - If unauthorized (subordinate or peer), returns `false` (refusing with `PathResult::ReadOnly` and leaving rules untouched).
+     - If authorized, purges all rules matching `targetLawId`, updates `_accessPolicyRevision`, notifies affected properties + `"ruleCount"` + `"rules"`, and resets staged state.
+     - Added exemption entry in `tests/singularity/no_black_box_test.cpp` (`kWriteExemptions`).
+   - Verified in Section 19.2:
+     - Reading `@transfer-policy.rules.0.pathPattern`, `@transfer-policy.rules.0.op`, and `@transfer-policy.rules.0.governingLawId` via `PropertyPath`.
+     - `lawLow` attempting to revoke `lawHigh`'s rule is refused with `ReadOnly`.
+     - `lawHigh` revoking `lawLow`'s rule succeeds via `hasAuthorityOver`.
+3. **Constitutional Person-Body Guard Witness (`tests/singularity/property_memory_access_test.cpp` §19.3):**
+   - Verified that even when an authored `@transfer-policy` rule explicitly allows writes to `"position"`, any Law attempting unconsented positive motion on a `Person`'s body without signed consent unconditionally refuses at the Kernel boundary (`AuthorityDenied`, `"no verified signed actuation consent"`).
+
+### B. Test Suite Verification Matrix
+All 6 test suites compile and pass 100%:
+- `property_memory_access_test`: PASS (all 19 sections)
+- `law_model_test`: ALL OK
+- `law_line_test`: OK
+- `property_path_precalc_test`: ALL 9 TESTS PASSED (zero allocations in `resolve()`)
+- `dynamic_property_reachability_test`: OK
+- `no_black_box_test`: ALL OK (421 properties probed, 0 failures)
+- `saves/`: 100% clean (zero modifications).
+
+
+
 
 
 

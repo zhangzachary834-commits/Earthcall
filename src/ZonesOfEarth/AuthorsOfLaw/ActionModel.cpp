@@ -1248,9 +1248,16 @@ ECA::ActionExecutor ActionNode::compile() const {
                         AccessContext readCtx = TransferPolicy::currentContext(AccessOp::Read);
                         readCtx.actor = &subject;
                         if (authorizingLaw) readCtx.authorizingLaw = authorizingLaw;
-                        bool readOk = !cp.empty() ? lawGetValue(subject, cp, srcVal, readCtx) : lawGetValue(subject, bEntry.path, srcVal, readCtx);
-                        if (!readOk) {
-                            emitResult(subject, "Map", PropertyPath::PathResult::AccessDenied, target);
+                        PropertyPath::PathResult readRes = !cp.empty()
+                            ? lawGetValueResult(subject, cp, srcVal, readCtx)
+                            : lawGetValueResult(subject, bEntry.path, srcVal, readCtx);
+                        if (readRes != PropertyPath::PathResult::Ok) {
+                            if (readRes == PropertyPath::PathResult::AccessDenied ||
+                                readRes == PropertyPath::PathResult::ExpiredCell) {
+                                emitResult(subject, "Map", readRes, target);
+                            } else {
+                                emitEffect("Map", false, "cannot read source for copy binding");
+                            }
                             return;
                         }
                         PropertyValue copied = PropertyCellTable::deepCopy(srcVal);
@@ -1263,12 +1270,38 @@ ECA::ActionExecutor ActionNode::compile() const {
                     }
                 }
 
+                if (TransferPolicy::instance().accessPolicyRevision() > 0) {
+                    for (const auto& [varName, bEntry] : binds) {
+                        if (bEntry.mode == BindingMode::Derive) {
+                            std::size_t srcStart = 0;
+                            Singular* srcRoot = resolveLawRoot(subject, bEntry.path, srcStart);
+                            if (!srcRoot) continue;
+                            auto srcSlot = bEntry.path.resolve(*srcRoot, srcStart);
+                            const ValueCell* existingSrcCell = srcSlot.cellId.valid()
+                                ? PropertyCellTable::instance().getCell(srcSlot.cellId) : nullptr;
+                            AccessContext deriveCtx = TransferPolicy::currentContext(AccessOp::Derive);
+                            deriveCtx.actor = &subject;
+                            if (authorizingLaw) deriveCtx.authorizingLaw = authorizingLaw;
+                            if (!TransferPolicy::instance().checkAccess(*srcRoot, srcSlot, existingSrcCell, deriveCtx)) {
+                                emitResult(subject, "Map", PropertyPath::PathResult::AccessDenied, target);
+                                return;
+                            }
+                        }
+                    }
+                }
+
                 AccessContext readCtx = TransferPolicy::currentContext(AccessOp::Read);
                 readCtx.actor = &subject;
                 if (authorizingLaw) readCtx.authorizingLaw = authorizingLaw;
-                auto vars = readMathBindings(subject, binds, readCtx);
+                PropertyPath::PathResult readFailReason = PropertyPath::PathResult::Ok;
+                auto vars = readMathBindings(subject, binds, readCtx, &readFailReason);
                 if (!vars) {
-                    emitResult(subject, "Map", PropertyPath::PathResult::AccessDenied, target);
+                    if (readFailReason == PropertyPath::PathResult::AccessDenied ||
+                        readFailReason == PropertyPath::PathResult::ExpiredCell) {
+                        emitResult(subject, "Map", readFailReason, target);
+                    } else {
+                        emitEffect("Map", false, "a bound variable does not read on this subject");
+                    }
                     return;
                 }
                 const auto valProp = f.evaluate(*vars, &subject);
@@ -1317,7 +1350,30 @@ ECA::ActionExecutor ActionNode::compile() const {
                                 destBearer,
                                 destPropId,
                                 [target, f, binds, subjectPtr = &subject, authorizingLaw]() {
-                                    auto v = readMathBindings(*subjectPtr, binds);
+                                    if (TransferPolicy::instance().accessPolicyRevision() > 0) {
+                                        for (const auto& [vName, bE] : binds) {
+                                            if (bE.mode == BindingMode::Derive) {
+                                                std::size_t sStart = 0;
+                                                Singular* sRoot = resolveLawRoot(*subjectPtr, bE.path, sStart);
+                                                if (!sRoot) return;
+                                                auto sSlot = bE.path.resolve(*sRoot, sStart);
+                                                const ValueCell* sCell = sSlot.cellId.valid()
+                                                    ? PropertyCellTable::instance().getCell(sSlot.cellId) : nullptr;
+                                                AccessContext deriveCtx;
+                                                deriveCtx.actor = subjectPtr;
+                                                deriveCtx.authorizingLaw = authorizingLaw;
+                                                deriveCtx.op = AccessOp::Derive;
+                                                if (!TransferPolicy::instance().checkAccess(*sRoot, sSlot, sCell, deriveCtx)) {
+                                                    return;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    AccessContext recomputeReadCtx;
+                                    recomputeReadCtx.actor = subjectPtr;
+                                    recomputeReadCtx.authorizingLaw = authorizingLaw;
+                                    recomputeReadCtx.op = AccessOp::Read;
+                                    auto v = readMathBindings(*subjectPtr, binds, recomputeReadCtx);
                                     if (!v) return;
                                     auto val = f.evaluate(*v, subjectPtr);
                                     if (!val) return;
@@ -1342,29 +1398,37 @@ ECA::ActionExecutor ActionNode::compile() const {
             const PropertyPath::CompiledPath target = path.compile();
             const OntoMath::Piecewise f = mapFunction;
             const MathBindings binds = bindings;
-            return [target, f, binds](const ECA::Event&, Singular& subject) {
+            return [target, f, binds](const ECA::Event& event, Singular& subject) {
                 if (!Universe::instance().hasClock()) {
                     emitEffect("Flow", false, "no world clock: nothing to integrate over");
                     return;
                 }
-                // The TARGET is read first, and deliberately. An integrator
-                // that cannot read what it integrates cannot do anything with
-                // the rate, and a bound variable may be arbitrarily expensive
-                // to evaluate — a world reading can cost a raycast against
-                // every being in the world. Reading the bindings first meant
-                // that work was done and then thrown away on every tick where
-                // the target did not resolve, which was every tick, because
-                // the property the occlusion law wrote to was never seeded.
-                // Cheapest refusal first.
+                const Law* authorizingLaw = dynamic_cast<const Law*>(event.object);
+                AccessContext readCtx = TransferPolicy::currentContext(AccessOp::Read);
+                readCtx.actor = &subject;
+                if (authorizingLaw) readCtx.authorizingLaw = authorizingLaw;
+
                 PropertyValue current;
-                if (!lawGetValue(subject, target, current)) {
-                    emitEffect("Flow", false, "cannot read " + target.toString());
+                auto targetReadRes = lawGetValueResult(subject, target, current, readCtx);
+                if (targetReadRes != PropertyPath::PathResult::Ok) {
+                    if (targetReadRes == PropertyPath::PathResult::AccessDenied ||
+                        targetReadRes == PropertyPath::PathResult::ExpiredCell) {
+                        emitResult(subject, "Flow", targetReadRes, target);
+                    } else {
+                        emitEffect("Flow", false, "cannot read " + target.toString());
+                    }
                     return;
                 }
 
-                auto vars = readMathBindings(subject, binds);
+                PropertyPath::PathResult bindFailReason = PropertyPath::PathResult::Ok;
+                auto vars = readMathBindings(subject, binds, readCtx, &bindFailReason);
                 if (!vars) {
-                    emitEffect("Flow", false, "a bound variable does not read on this subject");
+                    if (bindFailReason == PropertyPath::PathResult::AccessDenied ||
+                        bindFailReason == PropertyPath::PathResult::ExpiredCell) {
+                        emitResult(subject, "Flow", bindFailReason, target);
+                    } else {
+                        emitEffect("Flow", false, "a bound variable does not read on this subject");
+                    }
                     return;
                 }
                 const auto valProp = f.evaluate(*vars, &subject);

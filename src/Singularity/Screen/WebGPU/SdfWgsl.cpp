@@ -3834,6 +3834,9 @@ fn fs(in: VSOut) -> FSOut {
             if (omega == 1.0 && damping > 0.5 && d > prev_d) {
                 omega = 1.4;
             }
+            if (omega > 1.0 && t + omega * d > maxDist) {
+                omega = 1.0;
+            }
             prev_d = d;
             candidate_step = max(omega * d, current_eps);
             // Same rule for distance-field marching: cell boundaries are not
@@ -5639,7 +5642,8 @@ enum class Ray1DLaw {
     LawIV_Cone,
     LawII_CompositeIntersect,
     LawII_CompositeUnion,
-    LawIV_SubtractPositiveSupport
+    LawIV_SubtractPositiveSupport,
+    LawIV_SmoothUnionSupport
 };
 
 bool isConvexRay1DLaw(Ray1DLaw law) {
@@ -5657,7 +5661,8 @@ bool isSupportSlabRay1DLaw(Ray1DLaw law) {
            law == Ray1DLaw::LawIV_Cone ||
            law == Ray1DLaw::LawII_CompositeIntersect ||
            law == Ray1DLaw::LawII_CompositeUnion ||
-           law == Ray1DLaw::LawIV_SubtractPositiveSupport;
+           law == Ray1DLaw::LawIV_SubtractPositiveSupport ||
+           law == Ray1DLaw::LawIV_SmoothUnionSupport;
 }
 
 bool isConstantScalarLeaf(const OntoMath::MathNode& node) {
@@ -5945,6 +5950,33 @@ Ray1DLaw classifyRay1D(const geom::SdfNode& root) {
     if (countSdfLeaves(root) > 8) {
         return Ray1DLaw::Fallback;
     }
+    if (root.op == geom::SdfOp::Intersect && root.children.size() >= 2 && root.children[0] && root.children[1]) {
+        const Ray1DLaw lawA = classifyRay1D(*root.children[0]);
+        const Ray1DLaw lawB = classifyRay1D(*root.children[1]);
+        if (isSupportSlabRay1DLaw(lawA) && isSupportSlabRay1DLaw(lawB)) {
+            return Ray1DLaw::LawII_CompositeIntersect;
+        }
+    }
+    if (root.op == geom::SdfOp::Union && root.children.size() >= 2 && root.children[0] && root.children[1]) {
+        const Ray1DLaw lawA = classifyRay1D(*root.children[0]);
+        const Ray1DLaw lawB = classifyRay1D(*root.children[1]);
+        if (isSupportSlabRay1DLaw(lawA) && isSupportSlabRay1DLaw(lawB)) {
+            return Ray1DLaw::LawII_CompositeUnion;
+        }
+    }
+    if (root.op == geom::SdfOp::Subtract && !root.children.empty() && root.children[0]) {
+        const Ray1DLaw lawA = classifyRay1D(*root.children[0]);
+        if (isSupportSlabRay1DLaw(lawA)) {
+            return Ray1DLaw::LawIV_SubtractPositiveSupport;
+        }
+    }
+    if (root.op == geom::SdfOp::SmoothUnion && root.children.size() >= 2 && root.children[0] && root.children[1]) {
+        const Ray1DLaw lawA = classifyRay1D(*root.children[0]);
+        const Ray1DLaw lawB = classifyRay1D(*root.children[1]);
+        if (isSupportSlabRay1DLaw(lawA) && isSupportSlabRay1DLaw(lawB)) {
+            return Ray1DLaw::LawIV_SmoothUnionSupport;
+        }
+    }
     const geom::SdfNode canonical = stripLeafOffsetsForMathClassification(root);
     const std::shared_ptr<OntoMath::MathNode> math = canonical.toMathNode();
     if (!math) {
@@ -5979,14 +6011,18 @@ bool isExactInfimumRay1DNode(const geom::SdfNode& node) {
     return false;
 }
 
-std::string emit1DIntervalSnippet(const geom::SdfNode& node, Ray1DLaw law, uint32_t base, const std::string& pfx) {
+std::string emit1DIntervalSnippet(const geom::SdfNode& node, Ray1DLaw law, uint32_t base, const std::string& pfx, const std::string& inflateExpr = "") {
     const std::string sBase = std::to_string(base);
     if (law == Ray1DLaw::LawI_Sphere) {
         Emit eDry;
         (void)emitNode(node, eDry);
         const uint32_t rSlot = base + (eDry.params.empty() ? 3u : static_cast<uint32_t>(eDry.params.size() - 1));
+        std::string rVal = "P.v[paramOffset + " + std::to_string(rSlot) + "u]";
+        if (!inflateExpr.empty()) {
+            rVal = "(" + rVal + " + (" + inflateExpr + "))";
+        }
         return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
-               "    let r_" + pfx + " = P.v[paramOffset + " + std::to_string(rSlot) + "u];\n"
+               "    let r_" + pfx + " = " + rVal + ";\n"
                "    let m_" + pfx + " = ro - off_" + pfx + ";\n"
                "    let b_" + pfx + " = dot(m_" + pfx + ", rd);\n"
                "    let c_" + pfx + " = dot(m_" + pfx + ", m_" + pfx + ") - r_" + pfx + " * r_" + pfx + ";\n"
@@ -6000,8 +6036,12 @@ std::string emit1DIntervalSnippet(const geom::SdfNode& node, Ray1DLaw law, uint3
                "    }\n";
     }
     if (law == Ray1DLaw::LawI_Ellipsoid) {
+        std::string rVal = "vec3<f32>(P.v[paramOffset + " + std::to_string(base + 3) + "u], P.v[paramOffset + " + std::to_string(base + 4) + "u], P.v[paramOffset + " + std::to_string(base + 5) + "u])";
+        if (!inflateExpr.empty()) {
+            rVal = "(" + rVal + " + vec3<f32>(" + inflateExpr + "))";
+        }
         return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
-               "    let r_" + pfx + " = max(vec3<f32>(P.v[paramOffset + " + std::to_string(base + 3) + "u], P.v[paramOffset + " + std::to_string(base + 4) + "u], P.v[paramOffset + " + std::to_string(base + 5) + "u]), vec3<f32>(1e-4));\n"
+               "    let r_" + pfx + " = max(" + rVal + ", vec3<f32>(1e-4));\n"
                "    let m_" + pfx + " = (ro - off_" + pfx + ") / r_" + pfx + ";\n"
                "    let d_" + pfx + " = rd / r_" + pfx + ";\n"
                "    let a_" + pfx + " = dot(d_" + pfx + ", d_" + pfx + ");\n"
@@ -6017,16 +6057,26 @@ std::string emit1DIntervalSnippet(const geom::SdfNode& node, Ray1DLaw law, uint3
                "    }\n";
     }
     if (law == Ray1DLaw::LawII_Box) {
+        std::string bVal = "vec3<f32>(P.v[paramOffset + " + std::to_string(base + 3) + "u], P.v[paramOffset + " + std::to_string(base + 4) + "u], P.v[paramOffset + " + std::to_string(base + 5) + "u])";
+        if (!inflateExpr.empty()) {
+            bVal = "(" + bVal + " + vec3<f32>(" + inflateExpr + "))";
+        }
         return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
-               "    let b_" + pfx + " = vec3<f32>(P.v[paramOffset + " + std::to_string(base + 3) + "u], P.v[paramOffset + " + std::to_string(base + 4) + "u], P.v[paramOffset + " + std::to_string(base + 5) + "u]);\n"
+               "    let b_" + pfx + " = " + bVal + ";\n"
                "    let slab_" + pfx + " = rayAabb(ro - off_" + pfx + ", rd, b_" + pfx + ");\n"
                "    let tEnter_" + pfx + " = slab_" + pfx + ".x;\n"
                "    let tExit_" + pfx + " = slab_" + pfx + ".y;\n";
     }
     if (law == Ray1DLaw::LawII_Cylinder) {
+        std::string rVal = "P.v[paramOffset + " + std::to_string(base + 3) + "u]";
+        std::string hVal = "P.v[paramOffset + " + std::to_string(base + 4) + "u]";
+        if (!inflateExpr.empty()) {
+            rVal = "(" + rVal + " + (" + inflateExpr + "))";
+            hVal = "(" + hVal + " + (" + inflateExpr + "))";
+        }
         return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
-               "    let r_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 3) + "u];\n"
-               "    let h_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 4) + "u];\n"
+               "    let r_" + pfx + " = " + rVal + ";\n"
+               "    let h_" + pfx + " = " + hVal + ";\n"
                "    let m_" + pfx + " = ro - off_" + pfx + ";\n"
                "    let a_" + pfx + " = rd.x * rd.x + rd.y * rd.y;\n"
                "    let b_" + pfx + " = m_" + pfx + ".x * rd.x + m_" + pfx + ".y * rd.y;\n"
@@ -6064,9 +6114,13 @@ std::string emit1DIntervalSnippet(const geom::SdfNode& node, Ray1DLaw law, uint3
                            "    var tExit_" + pfx + " = 1e6;\n";
         for (size_t i = 0; i < node.planes.size(); ++i) {
             uint32_t pBase = base + 3u + static_cast<uint32_t>(i * 4u);
+            std::string dVal = "P.v[paramOffset + " + std::to_string(pBase + 3) + "u]";
+            if (!inflateExpr.empty()) {
+                dVal = "(" + dVal + " + (" + inflateExpr + "))";
+            }
             code += "    {\n";
             code += "        let plN = vec3<f32>(P.v[paramOffset + " + std::to_string(pBase) + "u], P.v[paramOffset + " + std::to_string(pBase + 1) + "u], P.v[paramOffset + " + std::to_string(pBase + 2) + "u]);\n";
-            code += "        let plD = P.v[paramOffset + " + std::to_string(pBase + 3) + "u];\n";
+            code += "        let plD = " + dVal + ";\n";
             code += "        let num = plD - dot(ro - off_" + pfx + ", plN);\n";
             code += "        let den = dot(rd, plN);\n";
             code += "        if (abs(den) <= 1e-8) {\n";
@@ -6080,29 +6134,32 @@ std::string emit1DIntervalSnippet(const geom::SdfNode& node, Ray1DLaw law, uint3
         return code;
     }
     if (law == Ray1DLaw::LawIII_RoundBox) {
+        std::string infVal = inflateExpr.empty() ? "" : (" + vec3<f32>(" + inflateExpr + ")");
         return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
                "    let b_" + pfx + " = vec3<f32>(P.v[paramOffset + " + std::to_string(base + 3) + "u], P.v[paramOffset + " + std::to_string(base + 4) + "u], P.v[paramOffset + " + std::to_string(base + 5) + "u]);\n"
                "    let r_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 6) + "u];\n"
                "    let bInner_" + pfx + " = max(b_" + pfx + " - vec3<f32>(r_" + pfx + "), vec3<f32>(0.0));\n"
-               "    let bOuter_" + pfx + " = bInner_" + pfx + " + vec3<f32>(max(r_" + pfx + ", 0.0));\n"
+               "    let bOuter_" + pfx + " = bInner_" + pfx + " + vec3<f32>(max(r_" + pfx + ", 0.0))" + infVal + ";\n"
                "    let slab_" + pfx + " = rayAabb(ro - off_" + pfx + ", rd, bOuter_" + pfx + ");\n"
                "    let tEnter_" + pfx + " = slab_" + pfx + ".x;\n"
                "    let tExit_" + pfx + " = slab_" + pfx + ".y;\n";
     }
     if (law == Ray1DLaw::LawIV_Torus) {
+        std::string infVal = inflateExpr.empty() ? "" : (" + vec3<f32>(" + inflateExpr + ")");
         return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
                "    let majR_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 3) + "u];\n"
                "    let minR_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 4) + "u];\n"
-               "    let outerB_" + pfx + " = vec3<f32>(majR_" + pfx + " + minR_" + pfx + ", majR_" + pfx + " + minR_" + pfx + ", minR_" + pfx + ");\n"
+               "    let outerB_" + pfx + " = vec3<f32>(majR_" + pfx + " + minR_" + pfx + ", majR_" + pfx + " + minR_" + pfx + ", minR_" + pfx + ")" + infVal + ";\n"
                "    let slab_" + pfx + " = rayAabb(ro - off_" + pfx + ", rd, outerB_" + pfx + ");\n"
                "    let tEnter_" + pfx + " = slab_" + pfx + ".x;\n"
                "    let tExit_" + pfx + " = slab_" + pfx + ".y;\n";
     }
     if (law == Ray1DLaw::LawIV_Cone) {
+        std::string infVal = inflateExpr.empty() ? "" : (" + vec3<f32>(" + inflateExpr + ")");
         return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
                "    let r1_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 3) + "u];\n"
                "    let h_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 4) + "u];\n"
-               "    let outerB_" + pfx + " = vec3<f32>(r1_" + pfx + ", r1_" + pfx + ", h_" + pfx + ");\n"
+               "    let outerB_" + pfx + " = vec3<f32>(r1_" + pfx + ", r1_" + pfx + ", h_" + pfx + ")" + infVal + ";\n"
                "    let slab_" + pfx + " = rayAabb(ro - off_" + pfx + ", rd, outerB_" + pfx + ");\n"
                "    let tEnter_" + pfx + " = slab_" + pfx + ".x;\n"
                "    let tExit_" + pfx + " = slab_" + pfx + ".y;\n";
@@ -6110,10 +6167,10 @@ std::string emit1DIntervalSnippet(const geom::SdfNode& node, Ray1DLaw law, uint3
     return "    let tEnter_" + pfx + " = -1e6;\n    let tExit_" + pfx + " = 1e6;\n";
 }
 
-std::string emitRecursive1DIntervalSnippet(const geom::SdfNode& node, uint32_t base, const std::string& pfx) {
+std::string emitRecursive1DIntervalSnippet(const geom::SdfNode& node, uint32_t base, const std::string& pfx, const std::string& inflateExpr = "") {
     if (node.op == geom::SdfOp::Leaf) {
         const Ray1DLaw leafLaw = classifyRay1D(node);
-        return emit1DIntervalSnippet(node, leafLaw, base, pfx);
+        return emit1DIntervalSnippet(node, leafLaw, base, pfx, inflateExpr);
     }
     if (node.op == geom::SdfOp::Intersect && node.children.size() >= 2 && node.children[0] && node.children[1]) {
         const geom::SdfNode& c0 = *node.children[0];
@@ -6123,8 +6180,8 @@ std::string emitRecursive1DIntervalSnippet(const geom::SdfNode& node, uint32_t b
         const uint32_t base1 = base + static_cast<uint32_t>(eDry0.params.size());
 
         std::string code;
-        code += emitRecursive1DIntervalSnippet(c0, base, pfx + "_0");
-        code += emitRecursive1DIntervalSnippet(c1, base1, pfx + "_1");
+        code += emitRecursive1DIntervalSnippet(c0, base, pfx + "_0", inflateExpr);
+        code += emitRecursive1DIntervalSnippet(c1, base1, pfx + "_1", inflateExpr);
         code += "    let tEnter_" + pfx + " = max(tEnter_" + pfx + "_0, tEnter_" + pfx + "_1);\n";
         code += "    let tExit_" + pfx + " = min(tExit_" + pfx + "_0, tExit_" + pfx + "_1);\n";
         return code;
@@ -6134,11 +6191,25 @@ std::string emitRecursive1DIntervalSnippet(const geom::SdfNode& node, uint32_t b
         const geom::SdfNode& c1 = *node.children[1];
         Emit eDry0;
         (void)emitNode(c0, eDry0);
-        const uint32_t base1 = base + static_cast<uint32_t>(eDry0.params.size());
+        uint32_t base1 = base + static_cast<uint32_t>(eDry0.params.size());
+
+        glm::vec3 cA(0.0f), cB(0.0f);
+        float rA = 0.0f, rB = 0.0f;
+        const bool canPruneA = countSdfLeaves(c0) >= 2 &&
+                               countSdfLeaves(c0) > countSdfLeaves(c1) &&
+                               isPurePrimitiveTree(c0) &&
+                               tryComputeSdfBoundingSphere(c0, cA, rA);
+        const bool canPruneB = !canPruneA &&
+                               countSdfLeaves(c1) >= 2 &&
+                               isPurePrimitiveTree(c1) &&
+                               tryComputeSdfBoundingSphere(c1, cB, rB);
+        if (canPruneB) {
+            base1 += 4u;
+        }
 
         std::string code;
-        code += emitRecursive1DIntervalSnippet(c0, base, pfx + "_0");
-        code += emitRecursive1DIntervalSnippet(c1, base1, pfx + "_1");
+        code += emitRecursive1DIntervalSnippet(c0, base, pfx + "_0", inflateExpr);
+        code += emitRecursive1DIntervalSnippet(c1, base1, pfx + "_1", inflateExpr);
         code += "    let valid_" + pfx + "_0 = (tEnter_" + pfx + "_0 <= tExit_" + pfx + "_0) && (tExit_" + pfx + "_0 >= tStart) && (tEnter_" + pfx + "_0 <= tMax);\n";
         code += "    let valid_" + pfx + "_1 = (tEnter_" + pfx + "_1 <= tExit_" + pfx + "_1) && (tExit_" + pfx + "_1 >= tStart) && (tEnter_" + pfx + "_1 <= tMax);\n";
         code += "    let tEnter_" + pfx + " = min(select(tMax + 1.0, max(tEnter_" + pfx + "_0, tStart), valid_" + pfx + "_0),\n"
@@ -6150,9 +6221,53 @@ std::string emitRecursive1DIntervalSnippet(const geom::SdfNode& node, uint32_t b
     if (node.op == geom::SdfOp::Subtract && !node.children.empty() && node.children[0]) {
         const geom::SdfNode& c0 = *node.children[0];
         std::string code;
-        code += emitRecursive1DIntervalSnippet(c0, base, pfx + "_0");
+        code += emitRecursive1DIntervalSnippet(c0, base, pfx + "_0", inflateExpr);
         code += "    let tEnter_" + pfx + " = tEnter_" + pfx + "_0;\n";
         code += "    let tExit_" + pfx + " = tExit_" + pfx + "_0;\n";
+        return code;
+    }
+    if (node.op == geom::SdfOp::SmoothUnion && node.children.size() >= 2 && node.children[0] && node.children[1]) {
+        const geom::SdfNode& c0 = *node.children[0];
+        const geom::SdfNode& c1 = *node.children[1];
+        Emit eDry0;
+        (void)emitNode(c0, eDry0);
+        uint32_t base1 = base + static_cast<uint32_t>(eDry0.params.size());
+
+        glm::vec3 cA(0.0f), cB(0.0f);
+        float rA = 0.0f, rB = 0.0f;
+        const bool canPruneA = countSdfLeaves(c0) >= 2 &&
+                               countSdfLeaves(c0) > countSdfLeaves(c1) &&
+                               isPurePrimitiveTree(c0) &&
+                               tryComputeSdfBoundingSphere(c0, cA, rA);
+        const bool canPruneB = !canPruneA &&
+                               countSdfLeaves(c1) >= 2 &&
+                               isPurePrimitiveTree(c1) &&
+                               tryComputeSdfBoundingSphere(c1, cB, rB);
+
+        Emit eDryNode;
+        (void)emitNode(node, eDryNode);
+
+        uint32_t kSlot = 0;
+        if (canPruneB) {
+            base1 += 5u; // 3 for cB, 1 for rB, 1 for k
+            kSlot = base + static_cast<uint32_t>(eDry0.params.size()) + 4u;
+        } else {
+            kSlot = base + static_cast<uint32_t>(eDryNode.params.size() - 1);
+        }
+
+        std::string nextInflate = inflateExpr.empty()
+            ? ("P.v[paramOffset + " + std::to_string(kSlot) + "u]")
+            : (inflateExpr + " + P.v[paramOffset + " + std::to_string(kSlot) + "u]");
+
+        std::string code;
+        code += emitRecursive1DIntervalSnippet(c0, base, pfx + "_0", nextInflate);
+        code += emitRecursive1DIntervalSnippet(c1, base1, pfx + "_1", nextInflate);
+        code += "    let valid_" + pfx + "_0 = (tEnter_" + pfx + "_0 <= tExit_" + pfx + "_0) && (tExit_" + pfx + "_0 >= tStart) && (tEnter_" + pfx + "_0 <= tMax);\n";
+        code += "    let valid_" + pfx + "_1 = (tEnter_" + pfx + "_1 <= tExit_" + pfx + "_1) && (tExit_" + pfx + "_1 >= tStart) && (tEnter_" + pfx + "_1 <= tMax);\n";
+        code += "    let tEnter_" + pfx + " = min(select(tMax + 1.0, max(tEnter_" + pfx + "_0, tStart), valid_" + pfx + "_0),\n"
+                "                                select(tMax + 1.0, max(tEnter_" + pfx + "_1, tStart), valid_" + pfx + "_1));\n";
+        code += "    let tExit_" + pfx + " = max(select(-1.0, min(tExit_" + pfx + "_0, tMax), valid_" + pfx + "_0),\n"
+                "                               select(-1.0, min(tExit_" + pfx + "_1, tMax), valid_" + pfx + "_1));\n";
         return code;
     }
     return "    let tEnter_" + pfx + " = -1e6;\n    let tExit_" + pfx + " = 1e6;\n";
@@ -6399,7 +6514,8 @@ fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> ve
 
     if (law == Ray1DLaw::LawII_CompositeIntersect ||
         law == Ray1DLaw::LawII_CompositeUnion ||
-        law == Ray1DLaw::LawIV_SubtractPositiveSupport) {
+        law == Ray1DLaw::LawIV_SubtractPositiveSupport ||
+        law == Ray1DLaw::LawIV_SmoothUnionSupport) {
         std::string code = R"WGSL(
 fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
     let paramOffset = instances[g_instIdx].paramOffset;

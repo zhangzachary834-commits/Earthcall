@@ -921,9 +921,7 @@ void WebGpuRenderer::setCamera(const glm::mat4& viewProj, const glm::vec3& eyePo
     _inverseViewProjValid = inverse.has_value();
     if (inverse) _invViewProj = *inverse;
 
-    const auto modelViewProj = authoredProduct(_viewProj, _model);
-    _modelViewProjValid = modelViewProj.has_value();
-    if (modelViewProj) _modelViewProj = *modelViewProj;
+    _modelViewProjDirty = true;
 }
 
 void WebGpuRenderer::applyCamera(const glm::mat4& view, const glm::mat4& proj,
@@ -932,6 +930,7 @@ void WebGpuRenderer::applyCamera(const glm::mat4& view, const glm::mat4& proj,
     if (!authoredViewProj) {
         _inverseViewProjValid = false;
         _modelViewProjValid = false;
+        _modelViewProjDirty = false;
         return;
     }
     setCamera(*authoredViewProj, eyePos);
@@ -952,23 +951,52 @@ std::optional<WebGpuRenderer::AuthoredModelTransforms> WebGpuRenderer::deriveMod
     return AuthoredModelTransforms{*loweredInverse, *loweredNormal};
 }
 
+static inline uint64_t hashMat4(const glm::mat4& m) {
+    const uint64_t* p = reinterpret_cast<const uint64_t*>(&m[0][0]);
+    uint64_t h = 0xcbf29ce484222325ULL;
+    for (int i = 0; i < 8; ++i) {
+        h ^= p[i];
+        h *= 0x100000001b3ULL;
+    }
+    return h;
+}
+
 const std::optional<WebGpuRenderer::AuthoredModelTransforms>& WebGpuRenderer::getModelTransforms() {
     if (_hasCachedTransforms && _model == _cachedModelMatrix) {
         return _cachedTransforms;
     }
     _cachedModelMatrix = _model;
     _hasCachedTransforms = true;
+
+    const uint64_t h = hashMat4(_model);
+    const size_t slotIdx = static_cast<size_t>(h & (kTransformCacheSize - 1));
+    auto& slot = _transformTable[slotIdx];
+    if (slot.occupied && slot.model == _model) {
+        _cachedTransforms = slot.transforms;
+        return _cachedTransforms;
+    }
+
     _cachedTransforms = deriveModelTransforms(_model);
+    slot.model = _model;
+    slot.transforms = _cachedTransforms;
+    slot.occupied = true;
     return _cachedTransforms;
+}
+
+bool WebGpuRenderer::ensureModelViewProj() {
+    if (!_modelViewProjDirty) return _modelViewProjValid;
+    _modelViewProjDirty = false;
+    const auto modelViewProj = authoredProduct(_viewProj, _model);
+    _modelViewProjValid = modelViewProj.has_value();
+    if (modelViewProj) _modelViewProj = *modelViewProj;
+    return _modelViewProjValid;
 }
 
 void WebGpuRenderer::applyModel(const glm::mat4& model) {
     if (_model != model) {
         _hasCachedTransforms = false;
         _model = model;
-        const auto modelViewProj = authoredProduct(_viewProj, _model);
-        _modelViewProjValid = modelViewProj.has_value();
-        if (modelViewProj) _modelViewProj = *modelViewProj;
+        _modelViewProjDirty = true;
     }
 }
 
@@ -1034,7 +1062,7 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
             edges.push_back(b); edges.push_back(c);
             edges.push_back(c); edges.push_back(a);
         }
-        if (!_modelViewProjValid) return;
+        if (!ensureModelViewProj()) return;
         drawFlat(flatPipeline(WGPUPrimitiveTopology_LineList, Blend::Alpha, DepthMode::TestOnly),
                  edges, _modelViewProj,
                  glm::vec4(mat.baseColor, mat.opacity));
@@ -1739,10 +1767,24 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             static_cast<uint64_t>(std::hash<std::string>{}(emissionJson));
     }
 
-    // Rung 9: receiver-owned response has independent structure/value identity.
-    // It is inspected once for this material draw before any shader cache decision.
-    const auto responseLayout =
-        sdfwgsl::inspectResponseExpression(mat.responseExpr.get());
+    MemoizedProgram* memo = (memoId != 0) ? &_programCache[memoId] : nullptr;
+
+    // Rung 9 & 14: receiver-owned response has independent structure/value identity.
+    // Memoize the layout inspection inside MemoizedProgram when responseExpr and responseLayoutRevision are unchanged.
+    sdfwgsl::ResponseExpressionLayout responseLayout;
+    if (memo && memo->responseLayoutValid &&
+        memo->responseExprPtr == mat.responseExpr.get() &&
+        memo->responseLayoutRevision == mat.responseRevision) {
+        responseLayout = memo->cachedResponseLayout;
+    } else {
+        responseLayout = sdfwgsl::inspectResponseExpression(mat.responseExpr.get());
+        if (memo) {
+            memo->cachedResponseLayout = responseLayout;
+            memo->responseExprPtr = mat.responseExpr.get();
+            memo->responseLayoutRevision = mat.responseRevision;
+            memo->responseLayoutValid = true;
+        }
+    }
     const std::string responseStructure = responseLayout.structure;
 
     if (multiSource) {
@@ -1893,9 +1935,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         }
     }
 
-    MemoizedProgram* memo = nullptr;
-    if (memoId != 0) {
-        memo = &_programCache[memoId];
+    if (memoId != 0 && memo) {
         const bool sourceStructureMatches =
             memo->multiSource == multiSource &&
             (multiSource
@@ -2130,8 +2170,27 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         phaseExpr != nullptr || emissionExpr != nullptr;
 
     glm::vec3 tightMin(0.0f), tightMax(0.0f);
-    if (!hasVolumeChannels && sdfwgsl::tryComputeSdfTightAabb(field, tightMin, tightMax) &&
-        glm::all(glm::lessThanEqual(tightMin, tightMax))) {
+    bool tightOk = false;
+    if (!hasVolumeChannels) {
+        if (memo && memo->tightAabbCached &&
+            memo->tightAabbRevision == memoRevision &&
+            memo->tightAabbParamRevision == memoParameterRevision) {
+            tightOk = memo->tightAabbOk;
+            tightMin = memo->cachedTightMin;
+            tightMax = memo->cachedTightMax;
+        } else {
+            tightOk = sdfwgsl::tryComputeSdfTightAabb(field, tightMin, tightMax);
+            if (memo) {
+                memo->tightAabbCached = true;
+                memo->tightAabbOk = tightOk;
+                memo->cachedTightMin = tightMin;
+                memo->cachedTightMax = tightMax;
+                memo->tightAabbRevision = memoRevision;
+                memo->tightAabbParamRevision = memoParameterRevision;
+            }
+        }
+    }
+    if (tightOk && glm::all(glm::lessThanEqual(tightMin, tightMax))) {
         // Proxy extent is half-size centered at origin of local space:
         glm::vec3 derivedHalf = glm::max(glm::abs(tightMin), glm::abs(tightMax)) * 1.02f;
         proxyExtent = glm::min(proxyExtent, glm::max(derivedHalf, glm::vec3(1e-3f)));
@@ -2293,7 +2352,7 @@ void WebGpuRenderer::drawParticles(const geom::FieldNode& field, int count) {
 
     bindPipeline(_particlePipe);
 
-    if (!_modelViewProjValid) return;
+    if (!ensureModelViewProj()) return;
 
     ParticleUniforms pu;
     pu.mvp = _modelViewProj;
@@ -2355,7 +2414,7 @@ void WebGpuRenderer::drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>
     std::vector<glm::vec3> verts;
     verts.reserve(segments.size() * 2);
     for (const auto& s : segments) { verts.push_back(s.first); verts.push_back(s.second); }
-    if (!_modelViewProjValid) return;
+    if (!ensureModelViewProj()) return;
     drawFlat(flatPipeline(WGPUPrimitiveTopology_LineList, blend, DepthMode::TestOnly),
              verts, _modelViewProj, color);
 }
@@ -4429,7 +4488,7 @@ void WebGpuRenderer::drawSolid(const std::vector<glm::vec3>& tris, const glm::ve
     if (!_pass || tris.empty()) return;
     // In 2D scope the model transform is meaningless; otherwise these are world-space
     // triangles under the current OntoMath-authored view-projection/model cache.
-    if (!_in2D && !_modelViewProjValid) return;
+    if (!_in2D && !ensureModelViewProj()) return;
     const glm::mat4& mvp = _in2D ? _ortho2D : _modelViewProj;
     drawFlat(flatPipeline(WGPUPrimitiveTopology_TriangleList, blend,
                           depthWrite ? DepthMode::TestWrite : DepthMode::TestOnly),

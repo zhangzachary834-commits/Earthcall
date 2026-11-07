@@ -293,22 +293,29 @@ inline bool isWorldReadingPath(const PropertyPath& path) {
 
 void resolveSemanticTokenSlowPath(Singular* root, PropertyValue& out);
 
-inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyValue& out, const AccessContext& ctx = {}) {
-    if (isTimePath(path)) return lawGetTime(path, out);
+inline PropertyPath::PathResult lawGetValueResult(Singular& subject, const PropertyPath& path, PropertyValue& out, const AccessContext& ctx = {}) {
+    if (isTimePath(path)) {
+        return lawGetTime(path, out) ? PropertyPath::PathResult::Ok : PropertyPath::PathResult::NoSuchProperty;
+    }
     if (isWorldReadingPath(path)) {
         const auto& readings = worldReadings();
-        if (readings.empty()) return false;          // no channel answers "@world.*"
+        if (readings.empty()) return PropertyPath::PathResult::NoSuchProperty;
         const auto found = readings.find(path.fullId());
-        if (found == readings.end() || !found->second) return false;
-        return found->second(subject, out);
+        if (found == readings.end() || !found->second) return PropertyPath::PathResult::NoSuchProperty;
+        return found->second(subject, out) ? PropertyPath::PathResult::Ok : PropertyPath::PathResult::NoSuchProperty;
     }
     std::size_t startIndex = 0;
     Singular* root = resolveLawRoot(subject, path, startIndex);
-    bool ok = root && (path.getValue(*root, out, startIndex, ctx) == PropertyPath::PathResult::Ok);
-    if (ok && std::holds_alternative<std::shared_ptr<PropertyDict>>(out)) {
+    if (!root) return PropertyPath::PathResult::NoSuchProperty;
+    auto res = path.getValue(*root, out, startIndex, ctx);
+    if (res == PropertyPath::PathResult::Ok && std::holds_alternative<std::shared_ptr<PropertyDict>>(out)) {
         resolveSemanticTokenSlowPath(root, out);
     }
-    return ok;
+    return res;
+}
+
+inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyValue& out, const AccessContext& ctx = {}) {
+    return lawGetValueResult(subject, path, out, ctx) == PropertyPath::PathResult::Ok;
 }
 
 inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v, const AccessContext& ctx = {}) {
@@ -328,22 +335,29 @@ inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPat
     return path.setValue(*root, v, startIndex, ctx);
 }
 
-inline bool lawGetValue(Singular& subject, const CompiledPath& compiled, PropertyValue& out, const AccessContext& ctx = {}) {
-    if (isTimePath(compiled.path)) return lawGetTime(compiled.path, out);
+inline PropertyPath::PathResult lawGetValueResult(Singular& subject, const CompiledPath& compiled, PropertyValue& out, const AccessContext& ctx = {}) {
+    if (isTimePath(compiled.path)) {
+        return lawGetTime(compiled.path, out) ? PropertyPath::PathResult::Ok : PropertyPath::PathResult::NoSuchProperty;
+    }
     if (isWorldReadingPath(compiled.path)) {
         const auto& readings = worldReadings();
-        if (readings.empty()) return false;
+        if (readings.empty()) return PropertyPath::PathResult::NoSuchProperty;
         const auto found = readings.find(compiled.path.fullId());
-        if (found == readings.end() || !found->second) return false;
-        return found->second(subject, out);
+        if (found == readings.end() || !found->second) return PropertyPath::PathResult::NoSuchProperty;
+        return found->second(subject, out) ? PropertyPath::PathResult::Ok : PropertyPath::PathResult::NoSuchProperty;
     }
     std::size_t startIndex = 0;
     Singular* root = resolveLawRoot(subject, compiled.path, startIndex);
-    bool ok = root && (compiled.getValue(*root, out, startIndex, ctx) == PropertyPath::PathResult::Ok);
-    if (ok && std::holds_alternative<std::shared_ptr<PropertyDict>>(out)) {
+    if (!root) return PropertyPath::PathResult::NoSuchProperty;
+    auto res = compiled.getValue(*root, out, startIndex, ctx);
+    if (res == PropertyPath::PathResult::Ok && std::holds_alternative<std::shared_ptr<PropertyDict>>(out)) {
         resolveSemanticTokenSlowPath(root, out);
     }
-    return ok;
+    return res;
+}
+
+inline bool lawGetValue(Singular& subject, const CompiledPath& compiled, PropertyValue& out, const AccessContext& ctx = {}) {
+    return lawGetValueResult(subject, compiled, out, ctx) == PropertyPath::PathResult::Ok;
 }
 
 inline PropertyPath::PathResult lawSetValue(Singular& subject, const CompiledPath& compiled, const PropertyValue& v, const AccessContext& ctx = {}) {
@@ -362,22 +376,24 @@ inline PropertyPath::PathResult lawSetValue(Singular& subject, const CompiledPat
 }
 
 inline std::optional<std::map<std::string, PropertyValue>> readMathBindings(
-    Singular& subject, const MathBindings& bindings, const AccessContext& ctx = {}) {
+    Singular& subject,
+    const MathBindings& bindings,
+    const AccessContext& ctx = {},
+    PropertyPath::PathResult* outFailureReason = nullptr) {
     std::map<std::string, PropertyValue> vars;
     for (const auto& entry : bindings) {
         PropertyValue value;
         const auto& cp = entry.second.getCompiled();
-        if (!cp.empty()) {
-            if (!lawGetValue(subject, cp, value, ctx)) {
-                return std::nullopt;
-            }
-        } else {
-            if (!lawGetValue(subject, entry.second.path, value, ctx)) {
-                return std::nullopt;
-            }
+        PropertyPath::PathResult res = !cp.empty()
+            ? lawGetValueResult(subject, cp, value, ctx)
+            : lawGetValueResult(subject, entry.second.path, value, ctx);
+        if (res != PropertyPath::PathResult::Ok) {
+            if (outFailureReason) *outFailureReason = res;
+            return std::nullopt;
         }
         vars[entry.first] = std::move(value);
     }
+    if (outFailureReason) *outFailureReason = PropertyPath::PathResult::Ok;
     return vars;
 }
 

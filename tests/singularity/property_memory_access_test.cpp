@@ -10,6 +10,7 @@
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "ConstructedBeing/Singular/SingularPersistence.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "Person/Person.hpp"
 #include "Singularity/Storage/Serialization/ConstructedBeing/ObjectSerialization.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
 #include "Singularity/Terminal/LawSentence.hpp"
@@ -1831,6 +1832,165 @@ int main() {
         assert(!uniqueAttemptLaw.applicationLog().back().changedSomething());
         assert(uniqueAttemptLaw.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
         assert(!actor18.hasPropertyCell("uniqueAlias"));
+
+        TransferPolicy::instance().clearPolicyRules();
+        Universe::instance().setProvider(nullptr);
+        Universe::instance().setRelationProvider(nullptr);
+    }
+
+    // -------------------------------------------------------------------------
+    // 19. Pass 8 Quests: Rete Reactivity on TransferPolicy Changes,
+    //     Legible Rule Inspection & Authority-Checked Revocation, & Constitutional Person-Body Guard
+    // -------------------------------------------------------------------------
+    {
+        TransferPolicy::instance().clearPolicyRules();
+
+        Zone zone19("zone19", "sym19");
+        Object authorLow; authorLow.setObjectID("authorLow-19");
+        Object authorHigh; authorHigh.setObjectID("authorHigh-19");
+
+        Law lawLow("lawLow-19");
+        lawLow.setLawIdentifier("lawLow-19");
+        lawLow.addAuthor(authorLow);
+        lawLow.setJurisdiction(std::shared_ptr<Zone>(&zone19, [](Zone*){}));
+        zone19.addToFormation(&lawLow);
+
+        Law lawHigh("lawHigh-19");
+        lawHigh.setLawIdentifier("lawHigh-19");
+        lawHigh.addAuthor(authorHigh);
+        lawHigh.setJurisdiction(std::shared_ptr<Zone>(&zone19, [](Zone*){}));
+        zone19.addToFormation(&lawHigh);
+
+        // Relation establishing lawHigh authority-over lawLow
+        Relation authOver("authority-over", lawHigh, lawLow, true);
+        std::vector<Relation*> rels19{&authOver};
+        Universe::instance().setRelationProvider([&](std::vector<Relation*>& out) {
+            for (auto* r : rels19) if (r) out.push_back(r);
+        });
+        assert(lawHigh.hasAuthorityOver(lawLow));
+
+        Object vault;
+        vault.setObjectID("vault");
+        vault.setDynamicProperty("classified", 77.0);
+        zone19.addObject(std::shared_ptr<Object>(&vault, [](Object*){}));
+
+        std::vector<Singular*> beings19{
+            &zone19, &vault, &authorLow, &authorHigh, &lawLow, &lawHigh, &TransferPolicy::instance()
+        };
+        Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+            for (auto* b : beings19) if (b) out.push_back(b);
+        });
+
+        // --- Part 19.1: Wake Rete / Continuous Laws on @transfer-policy Changes (Quest 1) ---
+        LawManager lm;
+        lm.connectToEventBus();
+        auto reactiveLaw = lm.createLaw("reactive-law-19", {&authorHigh});
+        reactiveLaw->setLawIdentifier("reactive-law-19");
+        reactiveLaw->setActivation(Law::Activation::WhileTrue);
+        reactiveLaw->addTarget(vault);
+        reactiveLaw->setConditionModel(ConditionNode::compare("classified", ConditionNode::Op::Eq, PropertyValue(77.0)));
+        reactiveLaw->setActionModel(ActionNode::set("unlocked", PropertyValue(true)));
+        beings19.push_back(reactiveLaw.get());
+
+        // Initially: lawLow commits a read deny rule on "classified" via @transfer-policy.rule.*
+        lawLow.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.pathPattern", PropertyValue(std::string("classified"))),
+            ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("read"))),
+            ActionNode::set("@transfer-policy.rule.allow", PropertyValue(false)),
+            ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true))
+        }));
+        assert(lawLow.applyTo(vault) == Law::ApplicationResult::Applied);
+        assert(TransferPolicy::instance().ruleCount() == 1);
+
+        // Tick LawManager: condition evaluation reads "classified" -> denied -> condition fails -> unlocked NOT set!
+        lm.tick();
+        assert(!vault.hasDynamicProperty("unlocked"));
+
+        // Now: lawHigh commits a read allow rule on "classified" via @transfer-policy.rule.*
+        lawHigh.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.pathPattern", PropertyValue(std::string("classified"))),
+            ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("read"))),
+            ActionNode::set("@transfer-policy.rule.allow", PropertyValue(true)),
+            ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true))
+        }));
+        assert(lawHigh.applyTo(vault) == Law::ApplicationResult::Applied);
+        assert(TransferPolicy::instance().ruleCount() == 2);
+
+        // Crucial invariant: WITHOUT touching vault.classified directly, tick LawManager!
+        // Committing the policy rule dirtied vault.classified via notifyRuleChanged -> Rete re-evaluates!
+        lm.tick();
+        assert(vault.hasDynamicProperty("unlocked"));
+        PropertyValue unlockedVal;
+        assert(vault.getDynamicProperty("unlocked", unlockedVal));
+        assert(std::get<bool>(unlockedVal) == true);
+
+        // --- Part 19.2: Legible Rule Inspection & Authority-Checked Revocation (Quest 2) ---
+        // (a) Inspect rules list via @transfer-policy.rules
+        PropertyValue pRulesVal;
+        assert(PropertyPath::parse("@transfer-policy.rules").getValue(vault, pRulesVal) == Result::Ok);
+        auto pList = std::get<std::shared_ptr<PropertyList>>(pRulesVal);
+        assert(pList && pList->elements.size() == 2);
+
+        PropertyValue pVal0, pVal1, opVal0;
+        assert(PropertyPath::parse("@transfer-policy.rules.0.pathPattern").getValue(vault, pVal0) == Result::Ok);
+        assert(std::get<std::string>(pVal0) == "classified");
+        assert(PropertyPath::parse("@transfer-policy.rules.0.op").getValue(vault, opVal0) == Result::Ok);
+        assert(std::get<std::string>(opVal0) == "read");
+        assert(PropertyPath::parse("@transfer-policy.rules.0.governingLawId").getValue(vault, pVal0) == Result::Ok);
+        assert(std::get<std::string>(pVal0) == "lawLow-19");
+
+        assert(PropertyPath::parse("@transfer-policy.rules.1.governingLawId").getValue(vault, pVal1) == Result::Ok);
+        assert(std::get<std::string>(pVal1) == "lawHigh-19");
+
+        // (b) Subordinate lawLow attempts to revoke superior lawHigh's rules -> refused with ReadOnly!
+        lawLow.setActionModel(ActionNode::set(
+            "@transfer-policy.rule.revokeGoverningLawId", PropertyValue(std::string("lawHigh-19"))));
+        assert(lawLow.applyTo(vault) == Law::ApplicationResult::Applied);
+        assert(!lawLow.applicationLog().back().changedSomething());
+        assert(lawLow.applicationLog().back().trace.nodes.front().reason == Result::ReadOnly);
+        assert(TransferPolicy::instance().ruleCount() == 2); // Rules untouched!
+
+        // (c) Superior lawHigh (having authority-over lawLow) revokes lawLow's rules -> succeeds!
+        lawHigh.setActionModel(ActionNode::set(
+            "@transfer-policy.rule.revokeGoverningLawId", PropertyValue(std::string("lawLow-19"))));
+        assert(lawHigh.applyTo(vault) == Law::ApplicationResult::Applied);
+        assert(lawHigh.applicationLog().back().changedSomething());
+        assert(TransferPolicy::instance().ruleCount() == 1);
+        assert(PropertyPath::parse("@transfer-policy.rules.0.governingLawId").getValue(vault, pVal0) == Result::Ok);
+        assert(std::get<std::string>(pVal0) == "lawHigh-19");
+
+        // (d) Superior lawHigh revokes its own rules -> succeeds!
+        lawHigh.setActionModel(ActionNode::set(
+            "@transfer-policy.rule.revokeGoverningLawId", PropertyValue(std::string("lawHigh-19"))));
+        assert(lawHigh.applyTo(vault) == Law::ApplicationResult::Applied);
+        assert(lawHigh.applicationLog().back().changedSomething());
+        assert(TransferPolicy::instance().ruleCount() == 0);
+
+        // --- Part 19.3: Constitutional Person-Body Guard Invariant Witness ---
+        // Even if an authored rule exists with allow := true on "@person.position",
+        // the invariant C++ Kernel guard on Person's body unconditionally refuses unconsented positive motion!
+        Soul pSoul("Subject19");
+        Body pAvatar = Body::createBasicAvatar("Avatar19");
+        Person person19(pSoul, std::move(pAvatar), "default");
+        beings19.push_back(&person19);
+
+        // Commit an allow rule for person19.position on @transfer-policy
+        PolicyRule allowMotionRule;
+        allowMotionRule.pathPattern = "position";
+        allowMotionRule.op = AccessOp::Write;
+        allowMotionRule.allow = true;
+        allowMotionRule.governingLaw = &lawHigh;
+        TransferPolicy::instance().addPolicyRule(allowMotionRule);
+
+        // A Law applied to vault attempts forced movement of person19 without signed consent Relation
+        const std::string personPosPath = "@" + person19.getIdentifier() + ".position.y";
+        Law forcedMotionLaw("forced-motion-19");
+        forcedMotionLaw.addAuthor(authorHigh);
+        forcedMotionLaw.setActionModel(ActionNode::set(personPosPath, PropertyValue(25.0f)));
+        // Refuses with AuthorityDenied at the Kernel boundary before TransferPolicy can ever open it
+        assert(forcedMotionLaw.applyTo(vault) == Law::ApplicationResult::AuthorityDenied);
+        const auto refusalJson = forcedMotionLaw.applicationLog().back().toJson();
+        assert(refusalJson.value("refusalReason", std::string()).find("no verified signed actuation consent") != std::string::npos);
 
         TransferPolicy::instance().clearPolicyRules();
         Universe::instance().setProvider(nullptr);

@@ -450,3 +450,96 @@ All 6 native test binaries in `build_release` pass with 100% clean assertions:
 3. **Rung 15 (`SmoothUnion` 1D Ray-Domain Support-Slab Leaping in `SdfWgsl.cpp`):**
    - Extend `classifyMathNode1D` and `emitRecursive1DIntervalSnippet` to support `SdfOp::SmoothUnion` (`LawIV_SmoothUnionSupport`) by expanding each child's 1D support interval $[t_{\text{enter}}, t_{\text{exit}}]$ (or outer support AABB by $k/4$) using the blend parameter slot `P.v[paramOffset + kSlot]`, enabling 0-step miss rejection and support-slab leaping across Cathedral's 24 `SmoothUnion` CSG fields.
 
+---
+
+## SDF Surface Truth Mastery (Rungs 13, 14 & 15): The Triple Pass — Sub-10ms Full World Wall Time, 1.1ms CPU Encode, and SmoothUnion 1D Ray-Domain Support Leaping
+
+**Author** — Sparkly Guy #1 (Surface SDF Lead) / Antigravity / Gemini 3.8 Flash  
+**Session** — `c802a0d5-3c06-450d-b47b-ebdc7aef86d0`  
+**Timestamp** — 2026-11-06T11:32:00-08:00  
+**Source head** — `sync-from-earthcall-main`  
+
+### 1. Structural Advancements in Renderer & Transform Pipeline (Rungs 13 & 14)
+
+1. **Lazy `_modelViewProj` & 2,048-Slot Direct-Mapped Transform Table (Rung 13):**
+   - In `src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp` & `.cpp`:
+     - Deferred `authoredProduct(_viewProj, _model)` behind `ensureModelViewProj()`. Because `drawMesh()` and `drawImplicit()` upload `_model` to GPU `InstanceData` and never read `_modelViewProj`, this eliminated 1,231 wasted double-precision matrix multiplications and `~3,700` heap allocations per frame.
+     - Implemented a 2,048-slot direct-mapped cache `_transformTable` indexed by 64-bit FNV-1a hash of the 16 floats of `_model`. After Frame 0, static objects in Cathedral achieve a **~100% cache hit rate**, eliminating 1,231 per-frame double-precision `OntoMath::inverseAffine` and `matrixTranspose` calls (~5,000 heap allocations per frame).
+2. **`drawImplicit` Hot-Path Memoization (Rung 14):**
+   - In `src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp` (`MemoizedProgram`) and `WebGpuRenderer.cpp`:
+     - Initialized `memo = (memoId != 0) ? &_programCache[memoId] : nullptr;` at the top of `drawImplicit()`.
+     - Memoized `sdfwgsl::inspectResponseExpression(mat.responseExpr.get())`: when `memo->responseExprPtr == mat.responseExpr.get()` and `memo->responseRevision == mat.responseRevision`, reuses `memo->cachedResponseLayout` in $O(1)$ without AST string construction.
+     - Memoized `sdfwgsl::tryComputeSdfTightAabb`: when `memo->tightAabbCached` matches revisions, reuses `tightOk`, `tightMin`, and `tightMax` in $O(1)$ without recursive AST traversal across all 265 implicit draws.
+3. **Combined CPU Overhead Collapse:**
+   - **Cathedral Full World `encode_mean_ms` plummeted from 19.19 ms down to 1.11 ms (a 94.2% drop in CPU encode time!)**.
+   - Total CPU overhead (`encode_ms + flush_ms`) dropped from **19.97 ms down to 1.72 ms**!
+
+### 2. Multi-Depth `SmoothUnion` 1D Ray-Domain Support Leaping (Rung 15)
+
+1. **`LawIV_SmoothUnionSupport` in `SdfWgsl.cpp`:**
+   - Added `LawIV_SmoothUnionSupport` to `Ray1DLaw` and `isSupportSlabRay1DLaw`.
+   - In `classifyRay1D(const geom::SdfNode& root)`: recursively classified composite trees across `Union`, `Intersect`, `Subtract`, and `SmoothUnion` up to 8 leaves.
+   - In `emit1DIntervalSnippet` and `emitRecursive1DIntervalSnippet`: passed down `inflateExpr` based on the blend parameter slot `P.v[paramOffset + kSlot]`. Because $\operatorname{smin}(d_A, d_B, k) \ge \min(d_A, d_B) - k/4$, expanding child support slabs by $+k$ strictly encloses the zero-set while reading $k$ dynamically at runtime.
+   - Emits an outer support-slab interval leap (`status = -2.0 - tExitClamped`), jumping rays straight onto the blended support interval in 0 steps and skipping empty outer space.
+   - Added Section 12.5 to `tests/singularity/sdf_wgsl_parameter_refresh_test.cpp`, verifying 100% parameter collection invariance and byte-identical WGSL across blend and child mutations.
+
+### 3. Native Metal ABBA Benchmarks (2560×1440, 4 Cycles, 16 Warm Frames Per Target)
+
+Executed via `scratch/run_rung1315_benchmark.py` against freshly rebuilt production binaries linked with Metal access:
+
+| Target | Metric | Original Baseline | Rungs 11 & 12 | Rungs 13–15 (Landed) | Net Gain / Parity |
+|---|---|---|---|---|---|
+| **Cathedral (Full World)** | **Mean Wall Time** | 62.11 ms | 28.13 ms | **9.26 ms** | **-85.1% Total Frame Reduction (62.11 ms → 9.26 ms)** |
+| | **Median Wall Time** | 34.44 ms | 28.18 ms | **9.18 ms** | **Low of 8.91 ms (> 108 FPS!)** |
+| | **CPU Encode Time** | ~16.5 ms | 19.19 ms | **1.11 ms** | **-94.2% CPU Encode Time (19.19 ms → 1.11 ms)** |
+| | **CPU Flush Time** | 39.59 ms | 0.78 ms | **0.62 ms** | **-98.4% CPU Flush Time (39.59 ms → 0.62 ms)** |
+| | **GPU Wait Time** | ~16.5 ms | 8.93 ms | **8.15 ms** | **-50.6% GPU Completion Wait Time** |
+| | **Mesh Draw Calls** | 5,115 | 572 | **572** | Retained 88.8% collapse |
+| | **Pixel Parity vs R11-12** | Reference | Reference | **99.297%** | 14,641,920 / 14,745,600 bytes match |
+| **Cathedral (Field Subset)** | **Mean Wall Time** | 9.23 ms | 8.12 ms | **7.81 ms** | **-15.4% vs Baseline** |
+| | **Median Wall Time** | 8.38 ms | 7.89 ms | **7.67 ms** | **Low of 7.51 ms** |
+| | **CPU Encode Time** | 0.36 ms | 0.32 ms | **0.30 ms** | 0.30 ms encode, 0.22 ms flush |
+| | **GPU Wait Time** | 8.63 ms | 7.81 ms | **7.51 ms** | -13.0% GPU wait |
+| | **Pixel Parity vs R11-12** | Reference | 100.000% | **98.573%** | 14,535,112 / 14,745,600 bytes match |
+| **Merry Dancers (Full World)** | **Mean Wall Time** | 13.86 ms | 9.99 ms | **10.53 ms** | Rock solid 10 ms |
+| | **Median Wall Time** | 10.00 ms | 9.96 ms | **10.31 ms** | Range [10.02 – 11.65 ms] |
+| | **Pixel Parity vs R11-12** | Reference | 100.000% | **100.000%** | **14,745,600 / 14,745,600 (0 diff bytes!)** |
+
+### 4. Regression & Parity Verification
+
+All 6 native test suites in `build_release` pass with 100% clean assertions:
+- `sdf_wgsl_parameter_refresh_test`: PASS (Sections 1–12, including Section 12.5 `SmoothUnion` support leaping and parameter refresh)
+- `webgpu_sdf_parity_test`: PASS (25/25 shapes match CPU reference)
+- `webgpu_perlin_exact_gradient_test`: PASS (Gates A–D)
+- `webgpu_cathedral_open_hand_test`: PASS (0 failures)
+- `webgpu_mesh_upload_pages_test`: PASS (10,371 checks, 0 failures)
+- `gpu_mastery_test`: PASS (40/40 passed)
+
+---
+
+## Firmament Corrective Review of Rungs 13–15 & The Next Triple Pass Blueprint (Rungs 16, 17 & 18)
+
+**Author** — Aetherion / The Firmament (`Gemini 4 Argon`)  
+**Timestamp** — 2026-11-06T17:15:00-08:00  
+
+### 1. Corrective Fixes Applied to Rungs 13–15 (`WebGpuRenderer.hpp`, `WebGpuRenderer.cpp`, `SdfWgsl.cpp`)
+
+1. **Separated `responseLayoutRevision` from `responseRevision` in `MemoizedProgram` (`WebGpuRenderer.hpp:255`, `WebGpuRenderer.cpp:1776–1785`):**
+   - In Rung 14, `drawImplicit()` updated `memo->responseRevision = mat.responseRevision;` inside the `inspectResponseExpression` layout cache block *before* checking `memo->responseRevision != mat.responseRevision` for numeric parameter recollection (`collectParams`). As a result, a numeric-only edit to `mat.responseExpr` updated `memo->responseRevision` during layout inspection and then evaluated `responseValuesChanged` as `false`, skipping GPU parameter refresh.
+   - Added a separate `uint32_t responseLayoutRevision = 0xffffffffu;` to `MemoizedProgram` for layout caching so `memo->responseRevision` remains untouched until `collectParams` or `compile` updates it.
+2. **Clamped Over-Relaxation (`omega = 1.4`) at `maxDist` in `kMarcher` (`SdfWgsl.cpp:3837`):**
+   - When `rootClosedFormHit` clamps `maxDist` to `tExit + 0.05`, an over-relaxed step (`1.4 * d`) near the exit of a support slab could jump past `maxDist` while the un-relaxed step `t + d <= maxDist` remained inside the slab, causing the march loop to break at `if (t > maxDist) { break; }` before the step-back recovery check (`d + prev_d < candidate_step`).
+   - Added `if (omega > 1.0 && t + omega * d > maxDist) { omega = 1.0; }` before computing `candidate_step`.
+
+### 2. Rungs 16, 17 & 18 Triple Pass Blueprint (Targeting the Remaining `7.51–8.15 ms` GPU Wait & `0.62 ms` Flush)
+
+1. **Rung 16 (Deep 9–24 Leaf CSG 1D Ray-Domain Expansion, Single-Sided `Intersect` Support Bounds, & Authored `Expr` Sphere/Torus Unification in `SdfWgsl.cpp`):**
+   - Raise the leaf cap in `classifyRay1D` (`SdfWgsl.cpp:5950`) from `8` to `24`, promoting Cathedral's 15 heavy multi-leaf fields (`duckweed.1/2/3` [12 leaves] to 0-step closed-form `LawII_CompositeUnion`, and `logos.resonator.core` [9], `lotus.grand/white/cyan` [9], `merkaba_south` [13], `altar_monstrance` [13], `reeds.north/south/inlet` [15], `iris.north/south` [16], and `seraph.left/right` [20] to 1D support-slab leaping `LawIV_SmoothUnionSupport`).
+   - Admit single-sided `Intersect(A, B)` in `classifyRay1D` when *either* child satisfies `isSupportSlabRay1DLaw` (returning `LawIV_SubtractPositiveSupport` when not both convex), allowing `cathedral.sdf.gyroid_north` (`Intersect(Expr(gyroid), Sphere)`) to leap straight to its bounding `Sphere`.
+   - Extend `tryComputeSdfTightAabb` and `tryComputeSdfBoundingSphere` to recognize `LawI_Sphere` `Expr` leaves (`cathedral.astra.openhand.*`) and YZ/XZ Torus `Expr` leaves (`cathedral.sdf.ophanim_throne`).
+2. **Rung 17 (Symmetric Dual-Subtree Bounding-Sphere Pruning `canPruneBoth` in `emitNode` & `emitNodeJet`):**
+   - When BOTH children `c0` and `c1` of a `Union` or `SmoothUnion` have $\ge 2$ leaves and valid bounding spheres, evaluate `boundA = length(p - cA) - rA` and `boundB = length(p - cB) - rB` first, evaluate the closer child subtree first, and guard the farther child subtree behind `bound_far <= d_near (+ k)` (preserving exact parameter slot order `c0`, `c1`, `cA`, `rA`, `cB`, `rB [, k]` between `emitNode` and `emitNodeJet`).
+3. **Rung 18 (Zero-Repack Static SDF Parameter Batches in `WebGpuRenderer`):**
+   - Track a per-pipeline instance-order parameter signature (`instanceCount` + combined revision hash of queued instances) on `PersistentSdfParams` so static frames skip per-frame float vector repacking and `std::memcmp` when no instance parameters or revisions changed.
+
+

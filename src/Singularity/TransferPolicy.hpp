@@ -53,8 +53,9 @@ struct AccessContext {
 };
 
 struct PolicyRule {
-    std::string pathPattern; // matches path prefix or empty for all
-    CellId cellId;           // matches cellId across all aliases
+    std::string pathPattern;    // matches path prefix or empty for all
+    std::string targetCellPath; // optional authored path to resolve effective CellId across reloads
+    mutable CellId cellId;      // matches cellId across all aliases
     AccessOp op = AccessOp::Write;
     bool allow = true;
     mutable const Law* governingLaw = nullptr;
@@ -151,6 +152,11 @@ public:
     bool propRuleCommit() const { return _stagedCommit; }
     void propSetRuleCommit(const bool& v);
 
+    std::shared_ptr<PropertyList> propRules() const;
+
+    std::string propRuleRevokeGoverningLawId() const { return _stagedRevokeGoverningLawId; }
+    bool propSetRuleRevokeGoverningLawId(const std::string& v);
+
     bool checkAccess(Singular& bearer,
                      const PropertyPath::ResolvedSlot& slot,
                      const ValueCell* effectiveCell,
@@ -184,4 +190,5 @@ private:
     std::string _stagedOriginZoneId = "";
     std::string _stagedTargetZoneId = "";
     bool _stagedCommit = false;
+    std::string _stagedRevokeGoverningLawId = "";
 };

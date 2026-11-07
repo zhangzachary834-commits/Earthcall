@@ -135,6 +135,8 @@ const WriteExemption kWriteExemptions[] = {
      "layers at all, which check C already skips."},
     {"TransferPolicy", "rule.commit",
      "Edge trigger: writing true commits the staged PolicyRule and resets to false."},
+    {"TransferPolicy", "rule.revokeGoverningLawId",
+     "Command trigger: writing a law ID revokes rules governed by that law and resets to empty."},
 };
 
 // "face.*" matches any face path; anything else is an exact name.

@@ -251,6 +251,17 @@ private:
         bool responseReadsNormal = false;
         bool responseReadsWi = false;
         bool responseReadsWo = false;
+        const OntoMath::Piecewise* responseExprPtr = nullptr;
+        uint32_t responseLayoutRevision = 0xffffffffu;
+        bool responseLayoutValid = false;
+        sdfwgsl::ResponseExpressionLayout cachedResponseLayout;
+
+        bool tightAabbCached = false;
+        bool tightAabbOk = false;
+        glm::vec3 cachedTightMin{0.0f};
+        glm::vec3 cachedTightMax{0.0f};
+        uint32_t tightAabbRevision = 0xffffffffu;
+        uint32_t tightAabbParamRevision = 0xffffffffu;
         // Full authored radiance content identity. A change here means at least
         // the parameter block must be reconsidered; whether WGSL structure also
         // changed is decided by radianceStructure below.
@@ -700,6 +711,8 @@ private:
     glm::vec3 _eyePos{0.0f};
     bool _inverseViewProjValid = true;
     bool _modelViewProjValid = true;
+    bool _modelViewProjDirty = true;
+    bool ensureModelViewProj();
 
     struct AuthoredModelTransforms {
         glm::mat4 inverse;
@@ -709,6 +722,15 @@ private:
     bool _hasCachedTransforms = false;
     glm::mat4 _cachedModelMatrix{0.0f};
     std::optional<AuthoredModelTransforms> _cachedTransforms;
+
+    struct TransformCacheSlot {
+        glm::mat4 model{0.0f};
+        std::optional<AuthoredModelTransforms> transforms;
+        bool occupied = false;
+    };
+    static constexpr size_t kTransformCacheSize = 2048;
+    std::array<TransformCacheSlot, kTransformCacheSize> _transformTable{};
+
     const std::optional<AuthoredModelTransforms>& getModelTransforms();
 
     // Optional execution timing. Query writes bracket the main command encoder's

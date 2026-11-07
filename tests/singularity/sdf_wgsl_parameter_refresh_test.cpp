@@ -2313,6 +2313,34 @@ int main() {
                   "3-leaf recursive Union parameter recollection matches full compile after deep mutation");
             check(u3ProgBefore.wgsl == u3ProgAfter.wgsl,
                   "3-leaf recursive Union WGSL is byte-identical across parameter mutation");
+
+            // 12.5 Rung 15: SmoothUnion 1D Ray-Domain Support-Slab Leaping
+            //      Tree: SmoothUnion(Sphere, Box, k = 0.35)
+            auto s1 = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+            s1.offset = glm::vec3(-1.0f, 0.0f, 0.0f);
+            auto bSmooth = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.8f, 0.8f, 0.8f));
+            bSmooth.offset = glm::vec3(1.0f, 0.0f, 0.0f);
+            auto smoothTree = geom::SdfNode::binary(geom::SdfOp::SmoothUnion, s1, bSmooth);
+            smoothTree.t = 0.35f;
+
+            const auto smoothProgBefore = sdfwgsl::compile(smoothTree);
+            check(smoothProgBefore.ok, "SmoothUnion(Sphere, Box) compiles successfully");
+            check(smoothProgBefore.wgsl.find("tEnter_root_0") != std::string::npos &&
+                  smoothProgBefore.wgsl.find("tEnter_root_1") != std::string::npos &&
+                  smoothProgBefore.wgsl.find("P.v[paramOffset +") != std::string::npos &&
+                  smoothProgBefore.wgsl.find("let tExitClamped = min(tExit + 0.05, tMax);") != std::string::npos &&
+                  smoothProgBefore.wgsl.find("return vec2<f32>(tEnterClamped, -2.0 - tExitClamped);") != std::string::npos,
+                  "SmoothUnion emits 1D support-slab leaping with dynamic blend inflation");
+
+            // Mutate blend parameter and child positions
+            smoothTree.t = 0.60f;
+            smoothTree.children[0]->offset.x = -1.5f;
+            const auto smoothRefreshed = sdfwgsl::collectParams(smoothTree);
+            const auto smoothProgAfter = sdfwgsl::compile(smoothTree);
+            check(smoothRefreshed.ok && smoothRefreshed.values == smoothProgAfter.params,
+                  "SmoothUnion parameter recollection matches full compile after blend and child mutation");
+            check(smoothProgBefore.wgsl == smoothProgAfter.wgsl,
+                  "SmoothUnion WGSL is 100% byte-identical across blend and child parameter mutations");
         }
     }
 
