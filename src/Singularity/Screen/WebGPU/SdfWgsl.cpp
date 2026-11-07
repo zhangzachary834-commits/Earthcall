@@ -7469,6 +7469,9 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
     let ecC5bPixel =
         u32(px.y) * u32(max(i32(u.viewport.x), 1)) + u32(px.x);
     let ecC5bFirstActivityWord = c5bFirstActivity[ecC5bPixel];
+    let ecC5bQuantLo = u.volumeOutputError.z;
+    let ecC5bQuantHi = u.volumeOutputError.w;
+    let ecC5bQuantValid = ecC5bQuantHi > ecC5bQuantLo && ecC5bQuantLo >= 0.0;
 )WGSL";
     out.wgsl += R"WGSL(
 
@@ -7645,11 +7648,22 @@ fn fs(in: VolumeVSOut) -> @location(0) vec4<f32> {
             let worldP = ro + rd * sampleT;
 )WGSL";
     if (useFirstActivityMask) out.wgsl += R"WGSL(
-            // C5b-2b2 conservative activity gate. Canonical camera-distance
-            // bins match the routed producer's [0,2048] admission domain.
-            let ecC5bBin = min(u32(floor(clamp(sampleT * (32.0 / 2048.0), 0.0, 31.999999))), 31u);
-            let ecC5bFirstActive =
-                (ecC5bFirstActivityWord & (1u << ecC5bBin)) != 0u;
+            // C5b-2c conservative activity gate. The same host-derived First
+            // radial support interval quantizes both producer and consumer.
+            // Invalid/out-of-range coordinates fail open to ordinary evaluation.
+            var ecC5bFirstActive = true;
+            if (ecC5bQuantValid &&
+                sampleT >= ecC5bQuantLo - 1e-3 &&
+                sampleT <= ecC5bQuantHi + 1e-3) {
+                let ecC5bQ = clamp(
+                    (sampleT - ecC5bQuantLo) /
+                        (ecC5bQuantHi - ecC5bQuantLo),
+                    0.0, 1.0);
+                let ecC5bBin =
+                    min(u32(floor(ecC5bQ * 32.0)), 31u);
+                ecC5bFirstActive =
+                    (ecC5bFirstActivityWord & (1u << ecC5bBin)) != 0u;
+            }
 )WGSL";
     out.wgsl += R"WGSL(
 
