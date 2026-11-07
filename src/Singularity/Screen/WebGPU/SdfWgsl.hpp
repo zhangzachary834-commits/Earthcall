@@ -48,6 +48,14 @@ enum class DensityInputKind {
     Authored
 };
 
+// Kernel-derived C5b execution grouping for fused volume transport. These are
+// compiler lanes, never authored medium kinds or persistent near/far identity.
+enum class VolumeExecutionFamily : unsigned char {
+    Ungrouped = 0,
+    First = 1,
+    Second = 2
+};
+
 struct ParameterBlock {
     std::vector<float> values;
     bool ok = true;
@@ -131,6 +139,9 @@ struct Program {
     std::vector<KernelVolumeTimeSlot> kernelVolumeTimeSlots;
     std::string kernelVolumePreparationWgsl;
     uint32_t kernelVolumePreparationInstanceBase = 0;
+    // C5b-2b2: fused V5 fragment expects group(0)/binding(3) to be
+    // the conservative 32-bin First-family activity mask.
+    bool kernelVolumeUsesFirstActivityMask = false;
 
     // True when the tree contains an implicit f(x,y,z)=0 leaf. Such a field is an
     // ISO-SURFACE VALUE, not a distance: it can be arbitrarily larger than the
@@ -450,10 +461,19 @@ VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* 
 Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport = true,
                                const OntoMath::Piecewise* supportCertificateDensity = nullptr,
                                const std::vector<uint32_t>* supportCertificateSwitches = nullptr);
+// C5b grouped execution is optional compiler/proof state. When present every
+// member is tagged First/Second. useFirstActivityMask is legal only with grouped
+// execution and consumes a conservative per-pixel First-family certificate.
+// C5b-2c maps those 32 bits over one host-derived conservative First-family
+// radial range shared exactly by producer and consumer; invalid coordinates fail
+// open. No authored meaning, event boundary, sample coordinate, or transport
+// algebra is introduced here.
 Program composeVolumeSet(const std::vector<VolumeProgramInput>& media,
                          const std::vector<KernelVolumeEvaluator>& evaluators,
                          bool trimProofSupport = true, const std::vector<bool>& supportCertificates = {},
-                         const std::vector<std::vector<uint32_t>>& supportCertificateSwitches = {});
+                         const std::vector<std::vector<uint32_t>>& supportCertificateSwitches = {},
+                         const std::vector<VolumeExecutionFamily>& executionFamilies = {},
+                         bool useFirstActivityMask = false);
 
 // V5 exact overlap baseline. Reuses direct lowerVolumeEvaluator() output for every member's evaluator
 // semantics, then composes those evaluators into one shared ray integral. The
