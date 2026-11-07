@@ -88,6 +88,7 @@ jobs:
         identity_test
         identity_ledger_test
         lexeme_graph_roundtrip_test
+        binary_serializer_test
         file_channel_test
         file_watcher_test
         first_mover_test
