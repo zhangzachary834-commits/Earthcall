@@ -47,6 +47,17 @@ red the moment the map stops noticing the world's shape move.
 
 ---
 
+## WebGPU scene Field VM execution state — 2026-11-06
+
+| Structure | Derived from | Invalidated / renewed by | Guarded by |
+|---|---|---|---|
+| `FieldVmProgram.instructions`, `maxStackDepth`, `needsGradientStep` | Current authored `geom::SdfNode` tree and its OntoMath `MathNode`/single-unconditional `Piecewise` payload. Primitive/CSG leaves lower directly; Expr vectors are scalarized into bounded float-stack IR. Legacy `SdfToken::rpn` is not an execution input. `needsGradientStep` is true iff lowering crosses an Expr leaf, matching the primary SDF marcher's representation policy. | Re-derived when an opaque SDF draw is admitted into the current frame; no persisted/cross-frame program cache. Any authored field/tree/value revision that changes the draw therefore produces a fresh derived program. Unsupported math, bounds overflow, subject-dependent Bind, malformed bytecode, Convex without plane encoding, or non-lossless Piecewise control flow refuses admission rather than retaining an older program. | `field_vm_test`: primitive/CSG and Expr CPU parity, Perlin/gyroid/canonical primitive-tree coverage, RPN/Bind/Piecewise refusals, stack/instruction budgets and production WGSL policy. `webgpu_object_test`: CompleteScene mesh+SDF receivers require a deliberately non-distance Expr blocker `4*(length(p)-0.5)` to occlude through the shared VM with no Unknown skip; unsupported subject-bound Expr remains Unknown. |
+| `SceneVisibilityVmBlocker.program`, packed instruction buffer | Current frame's opaque admitted SDF cohorts. Descriptor = `{instructionBase,instructionCount,maxStackDepth,flags}`; flag bit 0 mirrors `FieldVmProgram::needsGradientStep`. | Rebuilt by `prepareFieldVmVisibility` from the current frame's admitted programs. Buffer-pool allocations and descriptors are frame execution state only. Incomplete opacity/materialization, unsupported programs, instruction/blocker budgets or failed storage allocation revoke CompleteScene knownness. | Same two witnesses above plus existing CompleteScene opacity/foreign-cohort counters in `webgpu_object_test`. |
+
+This VM is Kernel-derived execution IR, not a second geometry language. Extending its opcodes does not authorize a new persisted noun: authored mathematics remains OntoMath/SdfNode. Expr marching uses the same positive-step rule as the primary GPU path, `f / max(|grad f|,1)`, with VM evaluation failure at any gradient sample propagating to visibility Unknown.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-06.*
+
 ## 1. The ledger
 
 ### Direct Screen region observations (2026-10-07)
