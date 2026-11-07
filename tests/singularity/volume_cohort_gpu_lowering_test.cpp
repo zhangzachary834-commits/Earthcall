@@ -1,5 +1,6 @@
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
+#include "Singularity/Screen/WebGPU/VolumeRoutedKernels.hpp"
 
 #include <cassert>
 #include <iostream>
@@ -115,7 +116,13 @@ int main() {
         "let ecC5bFirstActivityWord = c5bFirstActivity[ecC5bPixel]") !=
         std::string::npos);
     assert(activityGated.wgsl.find(
-        "sampleT * (32.0 / 2048.0)") != std::string::npos);
+        "let ecC5bQuantLo = u.volumeOutputError.z") != std::string::npos);
+    assert(activityGated.wgsl.find(
+        "let ecC5bQuantHi = u.volumeOutputError.w") != std::string::npos);
+    assert(activityGated.wgsl.find(
+        "(sampleT - ecC5bQuantLo)") != std::string::npos);
+    assert(activityGated.wgsl.find(
+        "sampleT * (32.0 / 2048.0)") == std::string::npos);
     assert(activityGated.wgsl.find(
         "ecC5bFirstActive && all(worldP >= mediumInst0") !=
         std::string::npos);
@@ -126,6 +133,22 @@ int main() {
     assert(count(activityGated.wgsl, "var transmittance = 1.0;") == 1);
     assert(activityGated.wgsl.find(
         "var mediumEvents: array<f32, 4>") != std::string::npos);
+
+    // Producer and consumer share one runtime quantization domain.
+    const std::string firstMask = routed_wgsl::kFirstActivityMaskWgsl;
+    assert(firstMask.find(
+        "let quantLo = bitcast<f32>(ecWindow.flags.y)") != std::string::npos);
+    assert(firstMask.find(
+        "let quantHi = bitcast<f32>(ecWindow.flags.z)") != std::string::npos);
+    assert(firstMask.find(
+        "(lo - quantLo) * inv") != std::string::npos);
+    assert(firstMask.find(
+        "lo * (1.0 / 2048.0)") == std::string::npos);
+    // A producer span outside the claimed conservative range refuses the
+    // certificate rather than becoming a zero bit.
+    assert(firstMask.find(
+        "lo < quantLo - 1e-3 || hi > quantHi + 1e-3") !=
+        std::string::npos);
 
     const auto illegalUngroupedActivity = sdfwgsl::composeVolumeSet(
         media, {}, false, {}, {}, {}, true);
