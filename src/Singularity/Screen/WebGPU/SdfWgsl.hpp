@@ -468,9 +468,12 @@ VolumeSupportKillerProgram lowerVolumeSupportKillers(const OntoMath::Piecewise* 
 //
 // C5b-2b2 `useFirstActivityMask` binds a conservative 32-bin per-pixel
 // certificate at group(0)/binding(3). It is legal only with grouped execution.
-// A zero bit may skip First-family member work at that EXISTING V5 sample;
-// one means maybe active/refused and therefore evaluates normally. No sample
-// coordinates, event boundaries, or transport algebra are changed.
+// C5b-2c maps those 32 bins over one host-derived conservative First-family
+// radial range supplied identically to producer and consumer; it is not a fixed
+// world/camera partition. A zero bit may skip First-family member work at that
+// EXISTING V5 sample; one means maybe active/refused and therefore evaluates
+// normally. Invalid/out-of-range coordinates fail open. No sample coordinates,
+// event boundaries, or transport algebra are changed.
 Program composeVolumeEvaluator(const KernelVolumeEvaluator& evaluator, bool trimProofSupport = true,
                                const OntoMath::Piecewise* supportCertificateDensity = nullptr,
                                const std::vector<uint32_t>* supportCertificateSwitches = nullptr);
