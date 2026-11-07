@@ -32,7 +32,9 @@ struct KernelRoutedTransport {
     WGPUBuffer publication=nullptr,rays=nullptr,singles=nullptr,overlaps=nullptr,offsets=nullptr,indices=nullptr,counts=nullptr,args=nullptr;
     // C5b-2b2 durable conservative First-family activity certificate:
     // one 32-bin u32 per framebuffer pixel. 0 bit = proved inactive;
-    // 1 bit = maybe active / refusal. Rebuilt stripwise each encodeSpans frame.
+    // 1 bit = maybe active / refusal. C5b-2c maps those bins over the current
+    // conservative First-cohort radial range rather than fixed [0,2048].
+    // Rebuilt stripwise each encodeSpans frame.
     WGPUBuffer firstActivityMask=nullptr;
     WGPUBuffer stripUniform=nullptr,specsUniform=nullptr;
     std::array<WGPUBuffer,3> lists{};
@@ -46,6 +48,11 @@ struct KernelRoutedTransport {
     WGPUBuffer cachedSpecsBuffer=nullptr;
     WGPUComputePipeline cachedClassifyPipe=nullptr;
     uint32_t cachedWorkLimit=0xFFFFFFFFu;bool cachedSkipEmpty=false;
+    // C5b-2c: camera-relative conservative First-cohort radial support used
+    // only to quantize the durable activity mask. Both producer and fused
+    // consumer receive these exact f32 values; invalid ranges fail open.
+    float firstActivityNear=0.0f, firstActivityFar=2048.0f;
+    float cachedFirstActivityNear=-1.0f, cachedFirstActivityFar=-1.0f;
     bool coalescePasses=true; // §6fb: one compute pass for the identical ordered dispatch stream (default ON after native parity); false = original 8 passes/strip, kept for A/B.
     // Kernel diagnostics (beneath Screen, like the GPU handles above; not being state): last encode()'s compute-pass count, dispatch count and FNV-1a order hash of (pipeline,workgroups/indirect offset,kind).
     // collectDispatchTrace is opt-in: the renderer diagnostic setter writes it; encode/note reads it. Ordinary rendering never pays the per-dispatch FNV loop.
