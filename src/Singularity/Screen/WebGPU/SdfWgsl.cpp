@@ -2474,7 +2474,10 @@ struct VisibilityDecision {
     value: f32,
 };
 
-fn localSourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> f32 {
+fn localSourceVisibility(
+    surfacePoint: vec3<f32>,
+    surfaceNormal: vec3<f32>,
+    sourceWorld: vec3<f32>) -> VisibilityDecision {
 
     let inst = instances[g_instIdx];
     let sourceField = (inst.invModel * vec4<f32>(sourceWorld, 1.0)).xyz;
@@ -2482,158 +2485,168 @@ fn localSourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sour
     let sourceDistance = length(toSource);
     let surfaceEps = max(inst.misc.y, 1e-4);
     let bias = surfaceEps * 4.0;
-    if (sourceDistance <= bias * 2.0) { return 1.0; }
+    if (sourceDistance <= bias * 2.0) {
+        return VisibilityDecision(1.0, 1.0);
+    }
 
     let initialDir = toSource / sourceDistance;
     let damping = inst.misc.w;
 
-    // The primary marcher may terminate just inside the zero set (for example,
-    // over-relaxation followed by secant correction). A tiny ray-direction bias
-    // then begins the transport query inside its own receiver and manufactures a
-    // self-shadow. Escape only when the source ray points outward through the
-    // receiver's local SDF normal. Back-facing/inward rays remain inside real
-    // geometry and are therefore still blocked by the receiver itself.
-    let surfaceSignedStep = sourceTransportSignedStep(surfacePoint, damping);
+    // Escape the receiver's own zero set only when the source ray points
+    // outward. This preserves the existing self-shadow contract while keeping
+    // epistemic knownness separate from the resulting V value.
+    let surfaceSignedStep =
+        sourceTransportSignedStep(surfacePoint, damping);
     var origin = surfacePoint + initialDir * bias;
     if (dot(surfaceNormal, initialDir) > 0.0) {
         let penetration = max(-surfaceSignedStep, 0.0);
-        origin = surfacePoint + surfaceNormal * (penetration + bias);
+        origin =
+            surfacePoint + surfaceNormal * (penetration + bias);
     }
 
     let remaining = sourceField - origin;
     let rayLength = length(remaining);
-    if (rayLength <= bias) { return 1.0; }
+    if (rayLength <= bias) {
+        return VisibilityDecision(1.0, 1.0);
+    }
     let shadowDir = remaining / rayLength;
 
-    // Restrict the query to authored geometry inside this instance's domain.
-    // A source outside the box is fine: leaving the box unobstructed proves this
-    // instance contributes no blocker beyond that exit.
     let bounds = rayAabb(origin, shadowDir, inst.extents.xyz);
-    if (bounds.y < bounds.x || bounds.y <= 0.0) { return 1.0; }
+    if (bounds.y < bounds.x || bounds.y <= 0.0) {
+        return VisibilityDecision(1.0, 1.0);
+    }
 
     var tShadow = max(bounds.x, 0.0);
     let maxShadow = min(bounds.y, rayLength - bias);
-    if (maxShadow <= tShadow) { return 1.0; }
+    if (maxShadow <= tShadow) {
+        return VisibilityDecision(1.0, 1.0);
+    }
 
-    // Match the primary renderer's finite exact-march budget. This baseline uses
-    // no proof-grid skip, no penumbra estimate, and no percentage heuristic.
     for (var shadowStep = 0; shadowStep < 192; shadowStep = shadowStep + 1) {
-        if (tShadow >= maxShadow) { return 1.0; }
+        if (tShadow >= maxShadow) {
+            return VisibilityDecision(1.0, 1.0);
+        }
 
         let pShadow = origin + shadowDir * tShadow;
         let currentEps = max(surfaceEps, tShadow * 0.001);
-        let dShadow = sourceTransportSignedStep(pShadow, damping);
+        let dShadow =
+            sourceTransportSignedStep(pShadow, damping);
 
-        if (dShadow <= 0.0 || abs(dShadow) < currentEps) { return 0.0; }
+        if (dShadow <= 0.0 || abs(dShadow) < currentEps) {
+            return VisibilityDecision(1.0, 0.0);
+        }
         tShadow = tShadow + max(dShadow, currentEps);
     }
 
-    // The primary marcher uses the same bounded iteration contract. If the
-    // budget is exhausted before the segment is decided, fail conservatively:
-    // never invent an unobstructed path that was not actually traversed.
-    return 0.0;
+    // A finite marcher budget is a proof budget, not an occluder. Exhaustion
+    // means the path remains unresolved.
+    return VisibilityDecision(0.0, 0.0);
 }
 
 fn cohortOtherInstanceVisibility(
     surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>,
-    receiverIndex: u32) -> f32 {
+    receiverIndex: u32) -> VisibilityDecision {
     let savedIndex = g_instIdx;
     let instanceCount = arrayLength(&instances);
 
     for (var i = 0u; i < instanceCount; i = i + 1u) {
         if (i == receiverIndex) { continue; }
 
-        // The compiled field program is shared by this whole admitted cohort;
-        // switching g_instIdx selects this instance's own transform, authored
-        // parameter offset, march policy, and bounds without changing the law.
         g_instIdx = i;
         let inst = instances[i];
-        let origin = (inst.invModel * vec4<f32>(surfaceWorld, 1.0)).xyz;
-        let sourceField = (inst.invModel * vec4<f32>(sourceWorld, 1.0)).xyz;
+        let origin =
+            (inst.invModel * vec4<f32>(surfaceWorld, 1.0)).xyz;
+        let sourceField =
+            (inst.invModel * vec4<f32>(sourceWorld, 1.0)).xyz;
         let segment = sourceField - origin;
         let rayLength = length(segment);
         if (rayLength <= 1e-6) { continue; }
 
         let shadowDir = segment / rayLength;
-        let bounds = rayAabb(origin, shadowDir, inst.extents.xyz);
-        if (bounds.y < bounds.x || bounds.y <= 0.0) { continue; }
+        let bounds =
+            rayAabb(origin, shadowDir, inst.extents.xyz);
+        if (bounds.y < bounds.x || bounds.y <= 0.0) {
+            continue;
+        }
 
         var tShadow = max(bounds.x, 0.0);
         let surfaceEps = max(inst.misc.y, 1e-4);
-        let maxShadow = min(bounds.y, rayLength - surfaceEps);
+        let maxShadow =
+            min(bounds.y, rayLength - surfaceEps);
         if (maxShadow <= tShadow) { continue; }
 
         let damping = inst.misc.w;
-        var decided = false;
-        for (var shadowStep = 0; shadowStep < 192; shadowStep = shadowStep + 1) {
+        var provedTraversal = false;
+        for (var shadowStep = 0; shadowStep < 192;
+             shadowStep = shadowStep + 1) {
             if (tShadow >= maxShadow) {
-                decided = true;
+                provedTraversal = true;
                 break;
             }
 
             let pShadow = origin + shadowDir * tShadow;
-            let currentEps = max(surfaceEps, tShadow * 0.001);
-            let dShadow = sourceTransportSignedStep(pShadow, damping);
-            if (dShadow <= 0.0 || abs(dShadow) < currentEps) {
+            let currentEps =
+                max(surfaceEps, tShadow * 0.001);
+            let dShadow =
+                sourceTransportSignedStep(pShadow, damping);
+            if (dShadow <= 0.0 ||
+                abs(dShadow) < currentEps) {
                 g_instIdx = savedIndex;
-                return 0.0;
+                return VisibilityDecision(1.0, 0.0);
             }
-            tShadow = tShadow + max(dShadow, currentEps);
+            tShadow =
+                tShadow + max(dShadow, currentEps);
         }
 
-        // Mirror the existing exact local visibility contract: exhausting the
-        // finite marcher without traversing the admitted segment never invents
-        // an unobstructed path.
-        if (!decided && tShadow < maxShadow) {
+        if (!provedTraversal && tShadow < maxShadow) {
             g_instIdx = savedIndex;
-            return 0.0;
+            return VisibilityDecision(0.0, 0.0);
         }
     }
 
     g_instIdx = savedIndex;
-    return 1.0;
+    return VisibilityDecision(1.0, 1.0);
 }
 
-fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWorld: vec3<f32>) -> VisibilityDecision {
+fn sourceVisibility(
+    surfacePoint: vec3<f32>,
+    surfaceNormal: vec3<f32>,
+    sourceWorld: vec3<f32>) -> VisibilityDecision {
     if (u.lightControl.y < 0.5) {
         return VisibilityDecision(1.0, 1.0);
     }
 
-    // CompleteScene authority is a prerequisite, not something local marching
-    // can discover. Refuse before paying for receiver-local evidence when the
-    // frame materialization is incomplete.
-    if (u.lightControl.y > 1.5 && u.lightControl.z < 0.5) {
+    if (u.lightControl.y > 1.5 &&
+        u.lightControl.z < 0.5) {
         return VisibilityDecision(0.0, 0.0);
     }
 
-    let localV = localSourceVisibility(surfacePoint, surfaceNormal, sourceWorld);
-    if (u.lightControl.y < 1.5) {
-        return VisibilityDecision(1.0, localV);
+    let localV =
+        localSourceVisibility(
+            surfacePoint, surfaceNormal, sourceWorld);
+    if (localV.known < 0.5) {
+        return VisibilityDecision(0.0, 0.0);
     }
-
-    // CompleteScene may be answered only when the renderer proved coverage of
-    // receiver-local geometry, same-program cohort instances, every admitted
-    // foreign VM field program, and the frame's world-triangle materialization.
-    // z is that completeness bit; w is triangle count.
-    if (localV < 0.5) {
+    if (u.lightControl.y < 1.5) {
+        return localV;
+    }
+    if (localV.value < 0.5) {
         return VisibilityDecision(1.0, 0.0);
     }
 
     let receiverIndex = g_instIdx;
     let inst = instances[receiverIndex];
-    let surfaceWorld = (inst.model * vec4<f32>(surfacePoint, 1.0)).xyz;
+    let surfaceWorld =
+        (inst.model * vec4<f32>(surfacePoint, 1.0)).xyz;
 
-    // CompleteScene authority for this bounded SDF provider means:
-    //   receiver-local field
-    //   + every other instance of this SAME compiled field program
-    //   + every admitted FOREIGN field program through the bounded VM table
-    //   + the exact shared world-triangle materialization.
-    // CPU admission grants the completeness bit only when all four authorities
-    // are represented within their explicit blocker/instruction budgets.
     let cohortV =
-        cohortOtherInstanceVisibility(surfaceWorld, sourceWorld, receiverIndex);
+        cohortOtherInstanceVisibility(
+            surfaceWorld, sourceWorld, receiverIndex);
     g_instIdx = receiverIndex;
-    if (cohortV < 0.5) {
+    if (cohortV.known < 0.5) {
+        return VisibilityDecision(0.0, 0.0);
+    }
+    if (cohortV.value < 0.5) {
         return VisibilityDecision(1.0, 0.0);
     }
 
@@ -2646,7 +2659,8 @@ fn sourceVisibility(surfacePoint: vec3<f32>, surfaceNormal: vec3<f32>, sourceWor
         return VisibilityDecision(1.0, 0.0);
     }
 
-    let meshV = sceneMeshVisibility(surfaceWorld, sourceWorld);
+    let meshV =
+        sceneMeshVisibility(surfaceWorld, sourceWorld);
     return VisibilityDecision(1.0, meshV);
 }
 
