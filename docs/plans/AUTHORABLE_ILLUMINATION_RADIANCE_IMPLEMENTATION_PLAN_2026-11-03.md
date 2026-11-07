@@ -615,6 +615,63 @@ No exact-head CI/native green claim is made until the workflow for this ledger's
 
 ---
 
+## Implementation ledger — 2026-11-06 Heliograph pass: Expr joins the scene Field VM
+
+This pass closes the largest named semantic hole left by the representation-independent visibility substrate without creating an `Expr` shader model or reviving legacy RPN as a second mathematical language.
+
+### Authored truth and derived execution
+
+- `SdfPrim::Expr` now lowers from its existing OntoMath `MathNode` (or one truly unconditional Piecewise value) into the bounded scene Field VM.
+- The VM never lowers `SdfToken::rpn`. An Expr shell with legacy RPN but no OntoMath AST explicitly refuses.
+- No `MathNode::Op`, `SdfPrim`, save schema or new ontology noun was added. New VM opcodes are Kernel-derived scalar execution records only.
+- Vector OntoMath remains authored as vectors; lowering scalarizes components into the existing bounded float stack. There is no parallel vector bytecode type system.
+- Supported lowering now covers the scalar/vector operations exercised by authored implicit geometry: ScalarForm polynomial/transcendental terms, Add/Sub/Scale/Div/Pow, raw ScalarForm powers, vector construction/component, Hadamard, Dot/Cross, Normalize/Length/Distance/Project, Union/Intersection/Difference, Abs/Sqrt/Tan, Clamp, Round/Floor and exact classic Perlin.
+- Unsupported subject/world-dependent math and non-lossless Piecewise control flow refuse instead of manufacturing values.
+
+### Semantic parity corrections discovered during lowering
+
+- ScalarForm factor exponentiation remains distinct from `MathNode::Pow`: `MathRawPow` preserves raw `std::pow` / `ontoRawPow`; `MathPow` preserves MathNode's negative-fractional-to-zero contract.
+- Vector `Union/Intersection` preserve OntoMath's vector↔scalar widening rather than assuming vector/vector operands.
+- CPU and WGSL VM interpreters share Earthcall's existing divisor/vector degeneracy thresholds and reject non-finite or invalid-log results as Unknown.
+- VM hard bounds remain 1024 instructions / 128 stack slots; overflow refuses.
+
+### Expr is executable, but raw f is not silently promoted to distance
+
+Earthcall already distinguishes arbitrary implicit fields from distance fields in the primary SDF marcher. This pass carries that existing execution fact into foreign scene visibility:
+
+- `FieldVmProgram::needsGradientStep` is derived when lowering crosses any Expr leaf;
+- the frame descriptor uses the previously reserved `program.w` bit 0 for that policy;
+- Expr visibility advances by `f / max(|grad f|,1)`, using the same forward-difference fallback as `sourceTransportSignedStep`;
+- any Unknown/non-finite neighbor sample revokes visibility knownness;
+- primitive/CSG-only VM programs retain the direct distance-field path.
+
+This is derived execution metadata, not a distance certificate or authored property.
+
+### Tribunals
+
+`field_vm_test` now requires:
+- algebraic Expr parity against `geom::evalSdf`;
+- translated leaf-local coordinate parity;
+- vector + exact Perlin terrain parity;
+- ScalarForm gyroid sin/cos-product parity;
+- canonical OntoMath box/cylinder/torus trees lowered *as Expr*, not primitive VM aliases;
+- RPN-only, subject-bound Bind and conditional/multi-piece Piecewise refusal;
+- primitive programs to remain outside gradient-step policy and Expr programs to carry it;
+- production WGSL to contain the shared gradient-corrected scene visibility policy.
+
+`webgpu_object_test` replaces the old "Expr is Unknown" frontier with an adversarial CompleteScene witness:
+`4 * (length(p) - 0.5)` is an authored sphere zero-set whose raw field is four times geometric distance. Both mesh and SDF receivers must see it as a Known foreign blocker through the VM with zero Unknown direct skips. A subject-bound Expr remains the refusal control.
+
+### Remaining named frontier
+
+`Convex` is now the last explicit `SdfPrim` refusal in `lowerFieldVm`; it needs a lossless plane-payload encoding. Beyond that, broader Piecewise/world-dependent Expr admission requires explicit execution semantics rather than opcode accumulation by analogy.
+
+Derived-state lifetime/invalidation is registered in `docs/architecture/law/DERIVED_STATE_LEDGER.md`.
+
+No CI/native pass is claimed in this ledger until an exact-head workflow survives GitHub's cancel-in-progress queue.
+
+---
+
 ---
 
 ## Commission
