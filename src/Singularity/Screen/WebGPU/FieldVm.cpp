@@ -266,9 +266,7 @@ bool emitMathVectorComponent(const OntoMath::MathNode& node, int axis,
 
         case Op::Add:
         case Op::Sub:
-        case Op::Hadamard:
-        case Op::Union:
-        case Op::Intersection: {
+        case Op::Hadamard: {
             const auto* a = requireChild(0);
             const auto* b = requireChild(1);
             if (!a || !b ||
@@ -276,13 +274,35 @@ bool emitMathVectorComponent(const OntoMath::MathNode& node, int axis,
                 !emitMathVectorComponent(*b, axis, offset, out, stackDepth)) {
                 return false;
             }
-            const FieldVmOpcode op =
+            return appendBinary(
                 node.op == Op::Add ? FieldVmOpcode::MathAdd :
                 node.op == Op::Sub ? FieldVmOpcode::MathSub :
-                node.op == Op::Hadamard ? FieldVmOpcode::MathMul :
-                node.op == Op::Union ? FieldVmOpcode::MathMin :
-                                       FieldVmOpcode::MathMax;
-            return appendBinary(op, out, stackDepth);
+                                     FieldVmOpcode::MathMul,
+                out, stackDepth);
+        }
+
+        case Op::Union:
+        case Op::Intersection: {
+            const auto* a = requireChild(0);
+            const auto* b = requireChild(1);
+            if (!a || !b) return false;
+            const auto ta = fieldMathType(*a, "field-vm.minmax[0]");
+            const auto tb = fieldMathType(*b, "field-vm.minmax[1]");
+            if (!ta || !tb) {
+                out.ok = false;
+                out.error = "field VM Expr cannot prove vector min/max operand types";
+                return false;
+            }
+            if (ta.kind == OntoMath::ValueKind::Vector) {
+                if (!emitMathVectorComponent(*a, axis, offset, out, stackDepth)) return false;
+            } else if (!emitMathScalar(*a, offset, out, stackDepth)) return false;
+            if (tb.kind == OntoMath::ValueKind::Vector) {
+                if (!emitMathVectorComponent(*b, axis, offset, out, stackDepth)) return false;
+            } else if (!emitMathScalar(*b, offset, out, stackDepth)) return false;
+            return appendBinary(
+                node.op == Op::Union ? FieldVmOpcode::MathMin
+                                     : FieldVmOpcode::MathMax,
+                out, stackDepth);
         }
 
         case Op::Scale: {
