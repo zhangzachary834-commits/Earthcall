@@ -73,9 +73,7 @@ std::string VirtualFileSystem::resolve(const std::string& uri) {
     // 3. save://
     if (uri.rfind("save://", 0) == 0) {
         std::string rel = uri.substr(7);
-        std::string root = SaveSystem::saveRoot();
-        if (root.empty()) root = "saves";
-        return (fs::path(root) / rel).lexically_normal().string();
+        return (SaveSystem::rootPath() / rel).lexically_normal().string();
     }
 
     // 4. zone://<zone-id>/...
@@ -101,9 +99,7 @@ std::string VirtualFileSystem::resolve(const std::string& uri) {
     // 6. recording://...
     if (uri.rfind("recording://", 0) == 0) {
         std::string rel = uri.substr(12);
-        std::string root = SaveSystem::saveRoot();
-        if (root.empty()) root = "saves";
-        return (fs::path(root) / "recordings" / rel).lexically_normal().string();
+        return (SaveSystem::rootPath() / "recordings" / rel).lexically_normal().string();
     }
 
     // 7. Custom mount points
@@ -114,6 +110,20 @@ std::string VirtualFileSystem::resolve(const std::string& uri) {
                 std::string sub = uri.substr(kv.first.size());
                 return (fs::path(kv.second) / sub).lexically_normal().string();
             }
+        }
+    }
+
+    // 8. Checkout-relative "saves/..." — the spelling authored Laws, materials
+    // and settings carry from when the data lived in the repository. It names
+    // the save root, wherever that now is; the sacred files keep their bytes.
+    // Only a relative path whose first component is exactly "saves" qualifies.
+    {
+        const fs::path p(uri);
+        auto it = p.begin();
+        if (p.is_relative() && it != p.end() && *it == "saves") {
+            fs::path out = SaveSystem::rootPath();
+            for (++it; it != p.end(); ++it) out /= *it;
+            return out.lexically_normal().string();
         }
     }
 
@@ -136,10 +146,12 @@ void VirtualFileSystem::unmount(const std::string& prefix) {
 std::string VirtualFileSystem::getMountTableString() const {
     std::lock_guard<std::mutex> lock(s_mutex);
     std::ostringstream ss;
-    ss << "save:// -> " << (SaveSystem::saveRoot().empty() ? "saves" : SaveSystem::saveRoot()) << "\n";
-    ss << "zone://<id>/ -> " << (SaveSystem::saveRoot().empty() ? "saves" : SaveSystem::saveRoot()) << "/zones/<id>/\n";
-    ss << "home://<id>/ -> " << (SaveSystem::saveRoot().empty() ? "saves" : SaveSystem::saveRoot()) << "/homes/<id>/\n";
-    ss << "recording:// -> " << (SaveSystem::saveRoot().empty() ? "saves" : SaveSystem::saveRoot()) << "/recordings/\n";
+    const std::string root = SaveSystem::rootPath().string();
+    ss << "save:// -> " << root << "\n";
+    ss << "saves/... -> " << root << "/... (legacy checkout spelling)\n";
+    ss << "zone://<id>/ -> " << root << "/zones/<id>/\n";
+    ss << "home://<id>/ -> " << root << "/homes/<id>/\n";
+    ss << "recording:// -> " << root << "/recordings/\n";
     ss << "memory://<id> -> In-RAM volatile storage (" << s_memoryFiles.size() << " files)\n";
     for (const auto& kv : s_mounts) {
         ss << kv.first << " -> " << kv.second << "\n";

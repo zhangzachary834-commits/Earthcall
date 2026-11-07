@@ -1,0 +1,906 @@
+{
+  "scope": "Corrected sparse-ray Metal diagnostic; no production renderer speed claim",
+  "author": "Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-21T19:18:52.575755-07:00`",
+  "source": {
+    "base_script_sha256": "c774ebe89da8c61c0bad4dfcd34925e7cd251a2d9bcd9d55350c9061072156f4",
+    "generated_cpp_sha256": "d0d49c2cd49b7cdf1b33f2789e573beccc77fcf3ad9157b9b218b5039c3dcc22"
+  },
+  "reproducer": "scratch/probes/ray_transport_metal_overlap_repair.py",
+  "native_adapter": {
+    "device": "Apple M5",
+    "backend": "Metal",
+    "backend_enum": 5,
+    "timestamps_enabled": false,
+    "method": "wgpuAdapterGetInfo after identical wgpu::Device::init(); independently observed"
+  },
+  "fixtures": {
+    "docs/audits/NORTHERN_VEIL_NATIVE_CF4_PREFLIGHT_2026-10-21_RAYS.json": "f2d51ac017f27a3b45d7032b9b50313fc24e8c6fa05fe0fe495c236805fa6be7",
+    "docs/audits/NORTHERN_VEIL_PROJECTED_REFERENCE_2026-10-21_ROWS.json": "eb76bb86a69571b7bf2927df31d43920d8751d1b96b5b931cd94f55e4f1b76a8",
+    "saves/zones/Northern Veil/zone.ecform": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496"
+  },
+  "rows_identical_between_processes": true,
+  "row_format": [
+    "px",
+    "py",
+    "unfused_Lr",
+    "unfused_Lg",
+    "unfused_Lb",
+    "unfused_T",
+    "fused_Lr",
+    "fused_Lg",
+    "fused_Lb",
+    "fused_T",
+    "AST_Lr",
+    "AST_Lg",
+    "AST_Lb",
+    "AST_T",
+    "overlap_interval_count"
+  ],
+  "decision": {
+    "arithmetic_witness": "passes on frozen rays and five closed-form cases",
+    "fused_variant": "reject on measured cost",
+    "unfused_variant": "scratch candidate, not production-qualified",
+    "equivalent_work_renderer_gain": null,
+    "inhabited_FPS_gain": null
+  },
+  "series": [
+    {
+      "accuracy_vs_65536_step_reference": {
+        "fused_A_star_on_device": {
+          "RGB_max_per_ray": {
+            "max": 9.157125888022838e-05,
+            "mean": 1.385273593258998e-05,
+            "min": 1.7866463946527417e-09,
+            "p50": 1.0899633227867689e-05,
+            "p90": 3.0364689336252748e-05,
+            "p99": 7.54619153424188e-05,
+            "rms": 1.9629107656841295e-05
+          },
+          "RGB_pooled_channels": {
+            "max": 9.157125888022838e-05,
+            "mean": 6.922736885960848e-06,
+            "min": 1.9609772439966775e-10,
+            "p50": 3.335772206555787e-06,
+            "p90": 1.6825250328547647e-05,
+            "p99": 5.056134018027736e-05,
+            "rms": 1.2342787630128942e-05
+          },
+          "T": {
+            "max": 0.00013909807423861942,
+            "mean": 2.0205696919909793e-05,
+            "min": 2.3820956318587605e-10,
+            "p50": 1.5794591607720676e-05,
+            "p90": 4.5114919718480806e-05,
+            "p99": 0.00010996137454877264,
+            "rms": 2.8949269244523927e-05
+          }
+        },
+        "native_baseline": {
+          "RGB_max_per_ray": {
+            "max": 0.001958256955896076,
+            "mean": 8.746626815145005e-05,
+            "min": 1.439868953928558e-08,
+            "p50": 3.251150159287036e-05,
+            "p90": 0.00019474293633072598,
+            "p99": 0.0009241536164616843,
+            "rms": 0.00019371082514280588
+          },
+          "RGB_pooled_channels": {
+            "max": 0.001958256955896076,
+            "mean": 5.223495505468815e-05,
+            "min": 2.3976475978237932e-09,
+            "p50": 1.2157359495723608e-05,
+            "p90": 0.00011330401954848246,
+            "p99": 0.0007491029737184962,
+            "rms": 0.0001455854561176458
+          },
+          "T": {
+            "max": 0.003024910893728472,
+            "mean": 0.00013351522807581676,
+            "min": 8.460271927468455e-09,
+            "p50": 4.4844231534613144e-05,
+            "p90": 0.0003039946986195252,
+            "p99": 0.0014302853591834364,
+            "rms": 0.00030088063395123597
+          }
+        }
+      },
+      "batched_fence_series": [
+        {
+          "dispatches_per_fence": 1,
+          "empty_batch_ms": {
+            "max": 1.527791,
+            "mean": 1.5219025000000002,
+            "min": 1.518167,
+            "p50": 1.522166,
+            "p90": 1.527791,
+            "p99": 1.527791,
+            "rms": 1.5219062642405083
+          },
+          "fused_batch_ms": {
+            "max": 1.527417,
+            "mean": 1.5155035833333335,
+            "min": 1.509875,
+            "p50": 1.514417,
+            "p90": 1.52025,
+            "p99": 1.527417,
+            "rms": 1.5155116224531515
+          },
+          "samples_empty_ms": [
+            1.518167,
+            1.5245,
+            1.52,
+            1.518791,
+            1.527791,
+            1.522166
+          ],
+          "samples_fused_ms": [
+            1.527417,
+            1.513125,
+            1.5175,
+            1.514417,
+            1.513125,
+            1.511667,
+            1.51075,
+            1.518958,
+            1.509875,
+            1.52025,
+            1.51825,
+            1.510709
+          ],
+          "samples_unfused_ms": [
+            1.531791,
+            1.512584,
+            1.521875,
+            1.098666,
+            1.522208,
+            1.511875,
+            1.520375,
+            1.518917,
+            1.522458,
+            1.527667,
+            1.522334,
+            1.510916
+          ],
+          "unfused_batch_ms": {
+            "max": 1.531791,
+            "mean": 1.4851388333333333,
+            "min": 1.098666,
+            "p50": 1.521875,
+            "p90": 1.527667,
+            "p99": 1.531791,
+            "rms": 1.489715003940519
+          }
+        },
+        {
+          "dispatches_per_fence": 8,
+          "empty_batch_ms": {
+            "max": 1.563625,
+            "mean": 1.4858541666666667,
+            "min": 1.252833,
+            "p50": 1.524708,
+            "p90": 1.563625,
+            "p99": 1.563625,
+            "rms": 1.4895728168929843
+          },
+          "fused_batch_ms": {
+            "max": 6.128584,
+            "mean": 6.031291500000001,
+            "min": 5.801875,
+            "p50": 6.055416,
+            "p90": 6.100541,
+            "p99": 6.128584,
+            "rms": 6.031814076073217
+          },
+          "samples_empty_ms": [
+            1.524708,
+            1.5275,
+            1.522125,
+            1.524334,
+            1.563625,
+            1.252833
+          ],
+          "samples_fused_ms": [
+            6.048125,
+            6.058625,
+            6.055416,
+            6.061833,
+            6.056833,
+            6.05025,
+            5.971333,
+            6.047416,
+            6.128584,
+            5.801875,
+            5.994667,
+            6.100541
+          ],
+          "samples_unfused_ms": [
+            6.055958,
+            6.047875,
+            6.059792,
+            6.065417,
+            5.725333,
+            6.042542,
+            6.051417,
+            6.060458,
+            5.995334,
+            5.325125,
+            6.134,
+            6.126458
+          ],
+          "unfused_batch_ms": {
+            "max": 6.134,
+            "mean": 5.974142416666666,
+            "min": 5.325125,
+            "p50": 6.055958,
+            "p90": 6.126458,
+            "p99": 6.134,
+            "rms": 5.9781739276010875
+          }
+        },
+        {
+          "dispatches_per_fence": 64,
+          "empty_batch_ms": {
+            "max": 1.568792,
+            "mean": 1.5474376666666665,
+            "min": 1.539125,
+            "p50": 1.544833,
+            "p90": 1.568792,
+            "p99": 1.568792,
+            "rms": 1.547469507836261
+          },
+          "fused_batch_ms": {
+            "max": 10.6185,
+            "mean": 10.50064925,
+            "min": 10.063042,
+            "p50": 10.595,
+            "p90": 10.617666,
+            "p99": 10.6185,
+            "rms": 10.502338621605194
+          },
+          "samples_empty_ms": [
+            1.544833,
+            1.539125,
+            1.542542,
+            1.568792,
+            1.5415,
+            1.547834
+          ],
+          "samples_fused_ms": [
+            10.456958,
+            10.604542,
+            10.12075,
+            10.617666,
+            10.593583,
+            10.063042,
+            10.595,
+            10.532083,
+            10.598709,
+            10.589625,
+            10.617333,
+            10.6185
+          ],
+          "samples_unfused_ms": [
+            9.121416,
+            9.065417,
+            8.596167,
+            9.087125,
+            9.070667,
+            8.812708,
+            8.675375,
+            8.682417,
+            9.062167,
+            8.505917,
+            9.018125,
+            9.097959
+          ],
+          "unfused_batch_ms": {
+            "max": 9.121416,
+            "mean": 8.899621666666667,
+            "min": 8.505917,
+            "p50": 9.062167,
+            "p90": 9.097959,
+            "p99": 9.121416,
+            "rms": 8.902303975119821
+          }
+        }
+      ],
+      "closed_form_witnesses": [
+        {
+          "case": "zero density",
+          "expected": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "max_RGB_delta": 0.0,
+          "max_T_delta": 0.0,
+          "pass": true,
+          "unfused": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "case": "tiny positive floored depth",
+          "expected": [
+            9.99999985024662e-10,
+            1.999999970049324e-09,
+            3.999999940098648e-09,
+            0.9999999900000003
+          ],
+          "max_RGB_delta": 5.322637415462918e-17,
+          "max_T_delta": 9.999999717180685e-09,
+          "pass": true,
+          "unfused": [
+            9.999999717180685e-10,
+            1.999999943436137e-09,
+            3.999999886872274e-09,
+            1.0
+          ]
+        },
+        {
+          "case": "ordinary single medium",
+          "expected": [
+            0.1450154016505186,
+            0.03625385041262965,
+            0.018126925206314825,
+            0.8187307506379741
+          ],
+          "max_RGB_delta": 1.2923330489078566e-08,
+          "max_T_delta": 2.090362138940094e-08,
+          "pass": true,
+          "unfused": [
+            0.1450153887271881,
+            0.03625384718179703,
+            0.018126923590898514,
+            0.8187307715415955
+          ]
+        },
+        {
+          "case": "pure different-color overlap",
+          "expected": [
+            0.15165442391197007,
+            0.16484176574112977,
+            0.4285885630229874,
+            0.4065696633756152
+          ],
+          "max_RGB_delta": 3.594361108749666e-08,
+          "max_T_delta": 3.665684755738141e-09,
+          "pass": true,
+          "unfused": [
+            0.1516544371843338,
+            0.16484177112579346,
+            0.4285885989665985,
+            0.4065696597099304
+          ]
+        },
+        {
+          "case": "single-overlap-single chronological flow",
+          "expected": [
+            0.28593676167771587,
+            0.2214865333634056,
+            0.5198405321840498,
+            0.16529889117736102
+          ],
+          "max_RGB_delta": 6.592233448010631e-08,
+          "max_T_delta": 1.7771537297317508e-08,
+          "pass": true,
+          "unfused": [
+            0.28593677282333374,
+            0.22148655354976654,
+            0.5198405981063843,
+            0.16529890894889832
+          ]
+        }
+      ],
+      "cpu_vs_gpu_arithmetic_deviation": {
+        "cpu_quadrature_ms": 2321.380917,
+        "cpu_us_per_ray": 1007.54380078125,
+        "max_delta_RGB": 2.905726432800293e-07,
+        "max_delta_T": 6.556510925292969e-07,
+        "note": "Independent AST; CPU double scalar operations and vec3/f32 properties differ from shader execution",
+        "within_1e-5_tolerance": true
+      },
+      "device_arithmetic_fidelity": {
+        "arithmetic_identical_within_f32_eps": true,
+        "max_delta_RGB_between_fused_and_unfused": 0.0,
+        "max_delta_T_between_fused_and_unfused": 0.0
+      },
+      "fusion_isolation_benchmark": {
+        "fused_ms": {
+          "max": 0.1659140625,
+          "mean": 0.16407264453125,
+          "min": 0.15723503125,
+          "p50": 0.165546875,
+          "p90": 0.16590103125,
+          "p99": 0.1659140625,
+          "rms": 0.16409904096258116
+        },
+        "mean_fused_ms": 0.16407264453125,
+        "mean_unfused_ms": 0.13905658854166666,
+        "microkernel_us_per_ray_fused": 0.07121208530002171,
+        "microkernel_us_per_ray_unfused": 0.06035442211009837,
+        "speedup_factor": 0.8475306102302833,
+        "speedup_pct": -15.24693897697167,
+        "unfused_ms": {
+          "max": 0.142522125,
+          "mean": 0.13905658854166666,
+          "min": 0.132904953125,
+          "p50": 0.141596359375,
+          "p90": 0.142155609375,
+          "p99": 0.142522125,
+          "rms": 0.1390984996112472
+        }
+      },
+      "ordered_coverage": {
+        "cpu_overlap_intervals": 253,
+        "cpu_overlap_member_sites": 2024,
+        "cpu_single_subpanels": 23776,
+        "independent_comparator": "original authored MathNode density/extinction/emission; no copied-envelope oracle"
+      },
+      "platform": "Apple Silicon M5 (Metal / WebGPU)",
+      "qualification": {
+        "closed_form_witnesses_pass": true,
+        "independent_AST_agreement_pass": true,
+        "mean_p99_max_reference_gates_pass": true,
+        "shipping_performance_qualified": false
+      },
+      "rays": 2304,
+      "regressions_vs_native": {
+        "RGB_max_delta": 6.87099185367468e-05,
+        "RGB_worse_pct": 20.572916666666668,
+        "RGB_worse_rays": 474,
+        "T_max_delta": 0.00010825646712109283,
+        "T_worse_pct": 21.484375,
+        "T_worse_rays": 495
+      },
+      "scope": "Scratch complete ordered single+overlap A* diagnostic; sparse rays, not a renderer speed claim",
+      "timing_protocol": "Completion-fenced host elapsed, per-dispatch normalization from 64-dispatch batches; no GPU timestamps, no readback in timed batches",
+      "workload_accounting": {
+        "max_subpanels_per_ray": 27,
+        "media_bytes": 192,
+        "overlaps_bytes": 4048,
+        "overlaps_count": 253,
+        "params_bytes": 624,
+        "ray_headers_bytes": 110592,
+        "subpanels_bytes": 380416,
+        "subpanels_count": 23776,
+        "total_schedule_bytes": 495872,
+        "total_schedule_kb": 484.25
+      }
+    },
+    {
+      "accuracy_vs_65536_step_reference": {
+        "fused_A_star_on_device": {
+          "RGB_max_per_ray": {
+            "max": 9.157125888022838e-05,
+            "mean": 1.385273593258998e-05,
+            "min": 1.7866463946527417e-09,
+            "p50": 1.0899633227867689e-05,
+            "p90": 3.0364689336252748e-05,
+            "p99": 7.54619153424188e-05,
+            "rms": 1.9629107656841295e-05
+          },
+          "RGB_pooled_channels": {
+            "max": 9.157125888022838e-05,
+            "mean": 6.922736885960848e-06,
+            "min": 1.9609772439966775e-10,
+            "p50": 3.335772206555787e-06,
+            "p90": 1.6825250328547647e-05,
+            "p99": 5.056134018027736e-05,
+            "rms": 1.2342787630128942e-05
+          },
+          "T": {
+            "max": 0.00013909807423861942,
+            "mean": 2.0205696919909793e-05,
+            "min": 2.3820956318587605e-10,
+            "p50": 1.5794591607720676e-05,
+            "p90": 4.5114919718480806e-05,
+            "p99": 0.00010996137454877264,
+            "rms": 2.8949269244523927e-05
+          }
+        },
+        "native_baseline": {
+          "RGB_max_per_ray": {
+            "max": 0.001958256955896076,
+            "mean": 8.746626815145005e-05,
+            "min": 1.439868953928558e-08,
+            "p50": 3.251150159287036e-05,
+            "p90": 0.00019474293633072598,
+            "p99": 0.0009241536164616843,
+            "rms": 0.00019371082514280588
+          },
+          "RGB_pooled_channels": {
+            "max": 0.001958256955896076,
+            "mean": 5.223495505468815e-05,
+            "min": 2.3976475978237932e-09,
+            "p50": 1.2157359495723608e-05,
+            "p90": 0.00011330401954848246,
+            "p99": 0.0007491029737184962,
+            "rms": 0.0001455854561176458
+          },
+          "T": {
+            "max": 0.003024910893728472,
+            "mean": 0.00013351522807581676,
+            "min": 8.460271927468455e-09,
+            "p50": 4.4844231534613144e-05,
+            "p90": 0.0003039946986195252,
+            "p99": 0.0014302853591834364,
+            "rms": 0.00030088063395123597
+          }
+        }
+      },
+      "batched_fence_series": [
+        {
+          "dispatches_per_fence": 1,
+          "empty_batch_ms": {
+            "max": 1.527083,
+            "mean": 1.5195001666666668,
+            "min": 1.512375,
+            "p50": 1.52275,
+            "p90": 1.527083,
+            "p99": 1.527083,
+            "rms": 1.5195133739266113
+          },
+          "fused_batch_ms": {
+            "max": 1.524209,
+            "mean": 1.5152534166666667,
+            "min": 1.50975,
+            "p50": 1.512708,
+            "p90": 1.523083,
+            "p99": 1.524209,
+            "rms": 1.5152618943400233
+          },
+          "samples_empty_ms": [
+            1.526959,
+            1.512375,
+            1.527083,
+            1.515334,
+            1.5125,
+            1.52275
+          ],
+          "samples_fused_ms": [
+            1.510833,
+            1.50975,
+            1.511666,
+            1.523083,
+            1.511834,
+            1.510416,
+            1.518084,
+            1.519042,
+            1.512708,
+            1.51125,
+            1.520166,
+            1.524209
+          ],
+          "samples_unfused_ms": [
+            1.512125,
+            1.518667,
+            1.521,
+            1.51925,
+            1.5145,
+            1.518292,
+            1.519,
+            1.510416,
+            1.523459,
+            1.513334,
+            1.512958,
+            1.51125
+          ],
+          "unfused_batch_ms": {
+            "max": 1.523459,
+            "mean": 1.5161875833333334,
+            "min": 1.510416,
+            "p50": 1.518292,
+            "p90": 1.521,
+            "p99": 1.523459,
+            "rms": 1.5161930661977878
+          }
+        },
+        {
+          "dispatches_per_fence": 8,
+          "empty_batch_ms": {
+            "max": 1.524958,
+            "mean": 1.5197221666666667,
+            "min": 1.514875,
+            "p50": 1.519333,
+            "p90": 1.524958,
+            "p99": 1.524958,
+            "rms": 1.5197255453654013
+          },
+          "fused_batch_ms": {
+            "max": 6.057375,
+            "mean": 3.37404875,
+            "min": 1.513875,
+            "p50": 2.647833,
+            "p90": 6.054167,
+            "p99": 6.057375,
+            "rms": 3.95740235415031
+          },
+          "samples_empty_ms": [
+            1.524958,
+            1.514875,
+            1.522375,
+            1.519333,
+            1.518417,
+            1.518375
+          ],
+          "samples_fused_ms": [
+            6.053125,
+            6.054167,
+            6.045667,
+            6.057375,
+            4.540333,
+            2.647833,
+            1.517333,
+            1.515334,
+            1.515084,
+            1.514459,
+            1.514,
+            1.513875
+          ],
+          "samples_unfused_ms": [
+            6.037833,
+            6.061625,
+            6.067292,
+            6.049542,
+            7.564708,
+            1.521417,
+            1.519333,
+            1.5155,
+            1.516167,
+            1.515417,
+            1.515125,
+            1.513667
+          ],
+          "unfused_batch_ms": {
+            "max": 7.564708,
+            "mean": 3.5331355,
+            "min": 1.513667,
+            "p50": 1.521417,
+            "p90": 6.067292,
+            "p99": 7.564708,
+            "rms": 4.281105659716463
+          }
+        },
+        {
+          "dispatches_per_fence": 64,
+          "empty_batch_ms": {
+            "max": 1.548667,
+            "mean": 1.4806458333333332,
+            "min": 1.18075,
+            "p50": 1.539333,
+            "p90": 1.548667,
+            "p99": 1.548667,
+            "rms": 1.4867185862905707
+          },
+          "fused_batch_ms": {
+            "max": 10.672208,
+            "mean": 10.40210075,
+            "min": 9.149333,
+            "p50": 10.602208,
+            "p90": 10.626625,
+            "p99": 10.672208,
+            "rms": 10.410150946222974
+          },
+          "samples_empty_ms": [
+            1.18075,
+            1.539333,
+            1.548667,
+            1.545542,
+            1.539083,
+            1.5305
+          ],
+          "samples_fused_ms": [
+            10.626625,
+            10.138709,
+            10.591042,
+            10.606542,
+            10.607,
+            10.32825,
+            10.311625,
+            10.58825,
+            10.672208,
+            10.603417,
+            9.149333,
+            10.602208
+          ],
+          "samples_unfused_ms": [
+            8.865375,
+            8.802958,
+            9.09075,
+            8.979417,
+            8.719917,
+            9.074375,
+            8.475458,
+            8.832875,
+            8.9465,
+            8.735541,
+            9.085167,
+            8.62075
+          ],
+          "unfused_batch_ms": {
+            "max": 9.09075,
+            "mean": 8.852423583333334,
+            "min": 8.475458,
+            "p50": 8.865375,
+            "p90": 9.085167,
+            "p99": 9.09075,
+            "rms": 8.854377639802204
+          }
+        }
+      ],
+      "closed_form_witnesses": [
+        {
+          "case": "zero density",
+          "expected": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "max_RGB_delta": 0.0,
+          "max_T_delta": 0.0,
+          "pass": true,
+          "unfused": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "case": "tiny positive floored depth",
+          "expected": [
+            9.99999985024662e-10,
+            1.999999970049324e-09,
+            3.999999940098648e-09,
+            0.9999999900000003
+          ],
+          "max_RGB_delta": 5.322637415462918e-17,
+          "max_T_delta": 9.999999717180685e-09,
+          "pass": true,
+          "unfused": [
+            9.999999717180685e-10,
+            1.999999943436137e-09,
+            3.999999886872274e-09,
+            1.0
+          ]
+        },
+        {
+          "case": "ordinary single medium",
+          "expected": [
+            0.1450154016505186,
+            0.03625385041262965,
+            0.018126925206314825,
+            0.8187307506379741
+          ],
+          "max_RGB_delta": 1.2923330489078566e-08,
+          "max_T_delta": 2.090362138940094e-08,
+          "pass": true,
+          "unfused": [
+            0.1450153887271881,
+            0.03625384718179703,
+            0.018126923590898514,
+            0.8187307715415955
+          ]
+        },
+        {
+          "case": "pure different-color overlap",
+          "expected": [
+            0.15165442391197007,
+            0.16484176574112977,
+            0.4285885630229874,
+            0.4065696633756152
+          ],
+          "max_RGB_delta": 3.594361108749666e-08,
+          "max_T_delta": 3.665684755738141e-09,
+          "pass": true,
+          "unfused": [
+            0.1516544371843338,
+            0.16484177112579346,
+            0.4285885989665985,
+            0.4065696597099304
+          ]
+        },
+        {
+          "case": "single-overlap-single chronological flow",
+          "expected": [
+            0.28593676167771587,
+            0.2214865333634056,
+            0.5198405321840498,
+            0.16529889117736102
+          ],
+          "max_RGB_delta": 6.592233448010631e-08,
+          "max_T_delta": 1.7771537297317508e-08,
+          "pass": true,
+          "unfused": [
+            0.28593677282333374,
+            0.22148655354976654,
+            0.5198405981063843,
+            0.16529890894889832
+          ]
+        }
+      ],
+      "cpu_vs_gpu_arithmetic_deviation": {
+        "cpu_quadrature_ms": 2311.843667,
+        "cpu_us_per_ray": 1003.4043693576389,
+        "max_delta_RGB": 2.905726432800293e-07,
+        "max_delta_T": 6.556510925292969e-07,
+        "note": "Independent AST; CPU double scalar operations and vec3/f32 properties differ from shader execution",
+        "within_1e-5_tolerance": true
+      },
+      "device_arithmetic_fidelity": {
+        "arithmetic_identical_within_f32_eps": true,
+        "max_delta_RGB_between_fused_and_unfused": 0.0,
+        "max_delta_T_between_fused_and_unfused": 0.0
+      },
+      "fusion_isolation_benchmark": {
+        "fused_ms": {
+          "max": 0.16675325,
+          "mean": 0.16253282421875,
+          "min": 0.142958328125,
+          "p50": 0.1656595,
+          "p90": 0.166041015625,
+          "p99": 0.16675325,
+          "rms": 0.16265860853473396
+        },
+        "mean_fused_ms": 0.16253282421875,
+        "mean_unfused_ms": 0.13831911848958334,
+        "microkernel_us_per_ray_fused": 0.07054376051161025,
+        "microkernel_us_per_ray_unfused": 0.06003433962221499,
+        "speedup_factor": 0.8510226728320559,
+        "speedup_pct": -14.89773271679441,
+        "unfused_ms": {
+          "max": 0.14204296875,
+          "mean": 0.13831911848958334,
+          "min": 0.13242903125,
+          "p50": 0.138521484375,
+          "p90": 0.141955734375,
+          "p99": 0.14204296875,
+          "rms": 0.13834965062190943
+        }
+      },
+      "ordered_coverage": {
+        "cpu_overlap_intervals": 253,
+        "cpu_overlap_member_sites": 2024,
+        "cpu_single_subpanels": 23776,
+        "independent_comparator": "original authored MathNode density/extinction/emission; no copied-envelope oracle"
+      },
+      "platform": "Apple Silicon M5 (Metal / WebGPU)",
+      "qualification": {
+        "closed_form_witnesses_pass": true,
+        "independent_AST_agreement_pass": true,
+        "mean_p99_max_reference_gates_pass": true,
+        "shipping_performance_qualified": false
+      },
+      "rays": 2304,
+      "regressions_vs_native": {
+        "RGB_max_delta": 6.87099185367468e-05,
+        "RGB_worse_pct": 20.572916666666668,
+        "RGB_worse_rays": 474,
+        "T_max_delta": 0.00010825646712109283,
+        "T_worse_pct": 21.484375,
+        "T_worse_rays": 495
+      },
+      "scope": "Scratch complete ordered single+overlap A* diagnostic; sparse rays, not a renderer speed claim",
+      "timing_protocol": "Completion-fenced host elapsed, per-dispatch normalization from 64-dispatch batches; no GPU timestamps, no readback in timed batches",
+      "workload_accounting": {
+        "max_subpanels_per_ray": 27,
+        "media_bytes": 192,
+        "overlaps_bytes": 4048,
+        "overlaps_count": 253,
+        "params_bytes": 624,
+        "ray_headers_bytes": 110592,
+        "subpanels_bytes": 380416,
+        "subpanels_count": 23776,
+        "total_schedule_bytes": 495872,
+        "total_schedule_kb": 484.25
+      }
+    }
+  ]
+}

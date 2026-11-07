@@ -49,6 +49,35 @@ red the moment the map stops noticing the world's shape move.
 
 ## 1. The ledger
 
+### Property ValueCell observer back-edges, durable alias topology & compiled paths (2026-11-04 / 2026-11-05)
+
+Zach's Property memory micromastery and alias-deafness resolution (Rungs 0–5): multiple Property paths (`Shared`, `Unique`, `Weak`) may bind to an underlying `ValueCell`. Changes through any bound path fan out notifications across all live observers to close the Rete alias-deafness gap. Shared alias topologies persist durably across save/load via `SingularPersistence`, while reactive derived edges and compiled paths remain disposable runtime caches.
+
+| Structure | Derived from | Invalidated / renewed by | Guarded by |
+|---|---|---|---|
+| `ValueCell::value` & alias bindings (`Singular::_propertyCells`) | Canonical durable state authored in-world | Mutated via `PropertyPath::setValue` or Law actions; serialized and restored cohort-wide via `SingularPersistence` so multi-owner aliases survive restart | `property_memory_access_test` (Sections 12–13) |
+| `ValueCell::observers` | Explicit path-to-cell bindings (`bindPropertyCell`, `ActionNode::shareCell/uniqueCell/weakCell`) | `rebind`, `unbindPropertyCell`, `removeDynamicProperty`, and `~Singular` (`detachAllPropertyCells`, `detachAllForBearer`); cell reclaimed when `strongCount` drops to 0 | `property_memory_access_test`, `dynamic_property_reachability_test` |
+| `ValueCell::generation` | Cell slot lifecycle in `PropertyCellTable` | Incremented upon cell reclamation (when `strongCount == 0`); causes subsequent operations on dangling `Weak` handles to report `PathResult::ExpiredCell` | `property_memory_access_test` |
+| `ValueCell::derivedEdges` | Reactive dependency edges authored via `BindingMode::Derive` (`ActionNode::deriveCell`) | Rebuilt on Law compilation / application; purged by `removeDerivedEdgesForBearer` on destruction of destination bearer, subject, or authorizing Law; cycle-guarded against recursion | `property_memory_access_test` (Pass 2 Witness 3 & Section 12) |
+| `CompiledPath` / `PropertyPath::_joinedIds` | Interned `StringId` sub-path sequences precomputed from path strings | Disposable runtime acceleration cache; never persisted; rebuilt on demand by `PropertyPath::compile` or `parse` | `property_memory_access_test` (Section 14 benchmark) |
+
+*Antigravity / Gemini 3.8 Flash / session `102da8a2-db47-4627-8ce6-cf1235aeabd4` / 2026-11-04 and 2026-11-05.*
+
+### Direct Screen region observations (2026-10-07)
+
+Zach requested named displayed regions, granular Property paths and Metalaw authoring. This is a sensing snapshot/source-editing rung, not a membership cache or an inverse compositor.
+
+| Structure | Derived from | Invalidated / renewed by | Guarded by |
+|---|---|---|---|
+| `PropertyPath::ResolvedSlot::structuredView` | Current typed field's complete codec representation | Rebuilt on every operation; discarded afterward; successful edit validates and replaces canonical storage and notifies its bearer root | `property_memory_access_test`, `law_line_zone_test` nested field watcher |
+| Screen request membership | Current qualified region selector, physical rectangle, framebuffer dimensions, explicit time | Recomputed for every new request token; no retained membership cache | Native Law Line Screen probe: independently counted selected centres and neighbours |
+| `ScreenChannel::_sampleResult` | Actual completed-viewport RGBA8 readback and that request's selector/frame/dimensions | Replaced by each explicit new token, including an empty refused observation on failure; unchanged token retains an explicitly historical snapshot | Native region probe: fresh colours, frame retention, no partial budget result |
+| Sensor observation read/copy | `_sampleResult` | A detached typed snapshot is returned on every read; canonical storage cannot escape through Map/ValueLeaf aliases | Native region probe: editing Person-carried memory cannot mutate the channel witness |
+
+Field edits do not reinterpret past observations; recapture needs a new token. Carried observation memory remains ordinarily editable on its bearer, with the read-only channel snapshot as the sensing witness. The existing Object texture `_regionCache` is not repaired or certified by this work. See [contract and remaining work](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md#named-regions-and-completed-viewport-observations--2026-10-07).
+
+*Codex / GPT-6.1 Sol / session `01a10992-828e-7e80-890c-c64b09141e18` / 2026-10-07 19:08 PDT.*
+
 ### On `ReteNetwork` (`src/ZonesOfEarth/AuthorsOfLaw/Law.hpp`)
 
 | Structure | Derived from | Invalidated by | Guarded by |
@@ -70,6 +99,15 @@ impractical, downgrade the structure to a proposal and keep something complete b
 FORMATION_RETE).
 
 ### On `LawManager`
+
+**Prototype creation footprint (2026-10-02):** Create with a prototype path
+reads through a whole constructor/storage adapter, so Prophetic analysis
+marks both reads and writes opaque. Changes to that action are already
+covered by Law text revision invalidation; no codec read-footprint cache is
+introduced. Narrowing requires an exact declared footprint before it may be
+added. Guarded by `universal_singular_creation_test` (both opacity flags).
+*Codex / GPT-6.1 Sol / session `01a0e64f-5853-7d30-8196-995b4fd16b89` /
+2026-10-02 17:25 PDT; Zach's universal creation request.*
 
 | Structure | Derived from | Invalidated by | Guarded by |
 |---|---|---|---|
@@ -185,3 +223,543 @@ The stress witness is intentionally Chess-shaped and adversarial: 32 category me
 Pre-Direct repeatedly re-proves membership; Direct proves once and evaluates the residual. The test
 requires semantic parity, >=98% graph-query/fan-out elimination, >=2x wall-time speedup, and rapid
 amortization of the one-time promotion cost.
+
+
+## Direct Screen pipeline cache (2026-10-04)
+
+`WebGpuRenderer::_screenPipes` stores Kernel driver objects keyed by the complete emitted
+WGSL for a direct OntoMath Screen expression. Operator/coordinate/piece/selector changes
+select a different key; numeric coefficients and bounds remain storage-buffer values.
+`drawScreenForm` traverses current expression contents and uploads current parameters on
+every submission, so pointer identity is never an invalidation proof. Failed bindings,
+unsupported expressions, and source removal never draw a prior cached expression.
+Resources are released on renderer shutdown. CPU traversal and parameter uploads
+remain optimization work; future memoization must preserve this content-sensitive
+contract. The production-object witness is
+`scratch/probes/direct_screen_form_probe.py` (independent CPU evaluation plus native
+readback, structural/numeric edits and refusal/withdrawal).
+
+Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-04 21:10 PDT; Zach requested the direct medium under Refusals 1, 3 and 7.
+
+## FieldNode authored-math revision and the volume zero-density proof cache (2026-10-09)
+
+**Per-channel since 2026-10-12.** Each authored channel (`field.ast`, the seven `volume.*` channels, `light.chroma/angular`) now carries its own never-repeating revision. Bridges note only their channel, `applyJson` notes only channels whose content changed, and the verifier heals only the channel it caught. `noteAuthoredMathWritten()` still moves every channel, for writers that cannot name one. Invalidation is now a per-channel dependency frontier (Formation Rete Incremental Maintenance §2): an emission edit no longer rebuilds the density proof or its support envelope. Witnesses: `field_node_authored_revision_test` case 8 and the frontier case in `webgpu_volume_zero_proof_test` (emission edit: 0 proof builds; density edit: exactly 1, byte-identical to exact).
+
+**`geom::FieldNode` authored-math revision** replaces per-frame JSON hashing of every authored
+channel (`field.ast`, `volume.*.ast`, `volume.occluder.sdf`, `light.*.ast`) as Screen's change
+signal. Signal: one process-wide sequence that never repeats, bumped by the property bridges
+(not on an identical rewrite), by `applyJson`, and by the MCP `author_volume` in-place path.
+Silent-failure guard: `verifiedAuthoredMathRevision()` re-hashes one channel per call
+round-robin and bumps, loudly, on an unrevisioned change. A missed writer heals within ten
+reads instead of staying stale. Witness: `tests/singularity/field_node_authored_revision_test.cpp`,
+case 4, asserts the silent case: an in-place write with no bump is detected and the revision moves.
+
+**`WebGpuRenderer::_volumeZeroProofs`** caches `Rendering::VolumeZeroProof` per density
+expression. Key: expression pointer; invalidated when `densityRevision` or the box half-extent
+changes (the grid tiles the box). A binding with revision 0 never gets a proof, because a cache
+that cannot be invalidated would be a stale theorem. Entries unused in a frame are dropped, and
+the switch `setVolumeZeroProofEnabled(false)` restores the exact path. The proof only ever
+*removes* density evaluations where OntoMath interval arithmetic shows D <= 0; it never adds
+light.
+
+Witnesses:
+- `tests/singularity/volume_zero_proof_test.cpp`: the generic contract, plus a soundness sweep
+  of 16,000 points in proven cells of the real Northern Veil media.
+- `tests/singularity/webgpu_volume_zero_proof_test.cpp`: a byte-identical framebuffer with the
+  proof on and off, through both the fused-set and single-medium pipelines, at two times.
+
+**Volume sharing plan (2026-10-09)** is derived state inside the compiled volume program: which channel positions share one per-sample value. Constants are uploaded separately and never recompile, so a numeric edit could make two "shared" subtrees differ while the program kept sharing them. The guard is that sharing positions join the program's structure key (`sdfwgsl::inspectVolumeSharing`, in both the single-medium and set memos). Divergence changes the key, so the program recompiles. Witness: `volume_shared_subexpression_test` (an edit outside the shared subtree keeps sharing; an edit inside it ends it).
+
+What it does not guard is f32 vs real arithmetic inside the shader. The 1% cell enlargement
+covers sample-position rounding, and the byte-identical witness is the arbiter for the rest.
+
+Claude Code · Claude Opus 5.5 · session `session_01NJy6VrPVNcHAnggwFyTsmF` · 2026-10-09;
+Zach asked why Screen serialized JSON every frame, and for the proof to be fully general.
+
+
+### Volume sharing evaluation domains — Sixth-one Sun continuation
+
+The per-sample private slots belong to one medium, its current local point, and its temporal coordinate. `emitMathNode` and `flattenScalarProduct` substitute them only at the original `p`; `planVolumeSharing` does not treat the rebound field inside SDF/Gradient as an occurrence at that point. Source rho/chi/alpha and occluder lowering clear the substitution table: the source owns its clock/coordinates, and the occluder is evaluated along shadow-ray points. The constant collector now follows the compiler's medium → source → occluder order. Equal-size sharing groups are ordered by authored positions rather than numeric JSON keys, so edits that preserve equality also preserve slot order. These guards do not add a persistent cache; slots are filled anew per spatial sample and revisions still govern program/value refresh.
+
+Witnesses: `volume_shared_subexpression_test` now covers source isolation, SDF rebinding, six Gradient points, source/occluder constant order, all-noise locals, and stable slot order. `webgpu_volume_shared_subexpression_test` compares actual RGBA against independently inlined equivalent mathematics at two distinct source clocks, through single and fused pipelines; it uses synthetic memory only. Run it with native GPU access and distinguish device skips from assertion passes. Task: [Northern Veil](../../Agenda/Tasks/Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md).
+
+### Proof-derived volume support — 2026-10-10
+
+Zach approved measuring the committed renderer and refining empty-space work. The retained implementation derives `VolumeZeroProof::supportMin/supportMax` from every **unproven** leaf of the existing grid, once when that proof builds; the cell margin also enlarges the envelope. All-proven density has explicitly reversed bounds. This is Kernel acceleration state, not new authored bounds or medium meaning.
+
+Dependencies, lifetime and stale fallback are exactly the existing proof memo's density revision and half-extent. Origin, camera, opaque depth and source/medium clocks are runtime inputs; time is never assumed constant by the CPU proof. An unknown/unrevisioned/disabled proof retains the authored chord. In the outside specialization, six local bounds follow the packed bit words in the GPU parameter batch; `volumeZeroProofCell` continues reading the same bit words. Near-parallel rays retain the original interval rather than using the ray helper's substituted direction to certify a smaller one. Translated bounds receive an additional world-arithmetic margin.
+
+Outside every admitted medium box, both single and fused marchers may reject empty rays and skip null prefixes/tails. The fused marcher still derives events, segment boundaries, spacing and sample positions from the **authored** boxes. Never replace those events with support intersections: that would silently change quadrature. The conservative starting index retains an extra sample, and the remaining grid walk is unchanged.
+
+Shader specialization has two Kernel cache lanes, keyed by the existing ten expression identities plus `trimProofSupport`; fused membership/order remain part of its key. `flushVolumeComposite` alone selects the lane from the existing proof switch and whether the camera lies in any admitted authored box. Inside any box, or with proofs disabled, the compiler omits the support helper/loop work and the uploader omits the six bounds, preserving the original bit payload and offsets. This avoids the measured inside-view regression of the always-on prototype. No authored equation changes when the camera crosses a box boundary. Each lane compiles on first use, then existing content/structure revision checks govern refresh or recompilation independently in both lanes. Neither lane interprets equations on unchanged frames. The first encounter with the other lane can still incur a one-time pipeline compile; prewarming and incremental structural repair remain open.
+
+Witnesses: CPU `volume_zero_proof_test` covers enclosing the slab's full positive support, retaining unconstrained axes, all-empty support and unknown/positive fallback. Native `webgpu_volume_zero_proof_test` compares actual RGBA vectors through single/fused pipelines, inside/reverse/side/axis views, and an in-place zero→positive density revision (proof-on before any proof-off eviction). Six focused targets passed with native Metal access; CPU proof 24/24 and native proof 38/38, including distinct first-use kernels and zero recompiles when warmed views return. Performance evidence belongs to the [Northern Veil task](../../Agenda/Tasks/Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md), independently of those fidelity checks.
+
+Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T00:08:05.843830+00:00.
+
+Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T11:52:24.788492-07:00; continues Zach's mathematical unification and Opus 5.5's implementation.
+
+
+### Kernel volume evaluator and resident payload caches — October 10 continuation
+
+Continues Zach's compile-once/incremental-repair direction and [the minimum-work task](../../Agenda/Tasks/Specific%20Tasks/Performance%20and%20Runtime/Northern_Veil_volumetric_frame_cost/Northern_Veil_volumetric_frame_cost.md#minimum-work-continuation-reusable-compilation-and-resident-data). This supersedes the first-use-only lane preparation described above: both camera lanes now prewarm during admission from retained evaluator fragments.
+
+- **Compiler DAG / `_kernelVolumeEvaluators`:** Kernel-derived state, per existing medium expression/source/occluder identities, normalized independently of camera lane. Positional occurrences carry typed value identity, structural identity, parameter slots, bindings and reverse edges. Full typed equality guards reuse; node text is reused only when parameter/temporary offsets and coordinate/clock/sharing contexts also agree. Authored revision gates prevent unchanged-frame lowering. A changed medium refreshes its own evaluator; sharing splits/joins regenerate its fragments, leaving other media cached. Numeric layout/sharing stability is a required precondition for parameter-only repair; the renderer verifies it. That path still traverses the changed medium through the existing parameter collector; it emits no changed final module. Unsupported/unknown revisions force fresh checks, not a permanent stale cache. Reload/device teardown clears evaluator entries and both module lanes. No authored IDs or serialized state are introduced.
+- **`_kernelVolumeSourceLayouts`:** source expression identities plus their declared revisions govern retained scalar/vector/angular layout metadata. Unknown revision inputs rescan. Camera/time advancement is not an authored layout change. Reload/shutdown clears entries with program state.
+- **`_kernelVolumePayloads`:** device-bound storage buffers owned by existing volume pipelines, explicitly named Kernel state. Payload identity includes the authored memo/layout, declared revisions, proof mode, camera specialization and half-extents; membership/order govern the combined offsets. Unknown density includes a frame discriminator and retains existing unproven fallback. Existing proof cache still validates density revision/half-extent each frame; stable frames reuse packed proof metadata. Dirty f32 ranges compare bytes and coalesce adjacent writes; parameter and proof counters partition the actual uploaded bytes. The older frozen baseline parameter counter includes the proof subset, so summing both baseline counters would double-count. Clocks/transforms/camera are streamed separately. Repeated use of one payload within a frame falls back to the existing frame stream to avoid earlier queued draws observing later writes. Buffer allocation failure uses the same stream. GPU buffers are released before pipeline caches at reload/shutdown, including device recreation. No save meaning is cached here.
+
+Witnesses: CPU sharing 55/55, parameter refresh, native sharing numeric/structural/domain edits, unrelated-member reuse, reorder/removal/reload/device replacement and time-only zero uploads; native proof 42/42, including zero→positive invalidation and warmed single/fused camera crossings. Eight full-resolution captures at two times/four views match the frozen renderer exactly. Fidelity witnesses and performance retention are separate; matched economics are recorded in the task. Demand-first nested sharing was rejected for a one-level native pixel difference. Timestamp-enabled visible measurements were rejected by Person feedback; ordinary window and pixel witnesses use timestamp-free devices.
+
+Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T22:32:41.495077-07:00
+
+The preparation/residency stage is retained after two readback-free fixed-view ABBA series: recurring parameter/proof bytes are zero, first moving-series preparation falls ~19%, and no view repeats a >3% total-frame regression. This establishes CPU/upload economics, not a GPU speedup. The existing native object consumer also passes with both-lane cold preparation and unchanged zero warm/numeric compiles. Full records remain in the linked task. Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T22:58:25.385007-07:00
+
+Completed raw-status movement evidence qualifies the earlier preparation percentage: first ABBA ~18% lower preparation, second ~10% worse with a much faster baseline/wait-pattern shift. Both versions show that variability. Exact residency removes all recurring parameter/proof bytes, and fixed-view economics pass, but no uniform movement or GPU gain is established. Candidate route p95 197–298 ms does not meet 30 FPS. No surface reset fix was retained because the public frame wrapper already clears stats. Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T23:24:19.962220-07:00
+
+
+### Kernel volume output-budget mirror — cutoff reference decision
+
+Zach selected “remove the cutoff” for the bounded reference. The authorable source is registered `ScreenChannel.volumeOutputErrorBudget`; `EngineRender` mirrors it to `Renderer` each frame. `_volumeOutputErrorBudget` is explicitly Kernel boundary state, default zero, finite-positive capped at 1/255. It is streamed through `VolumeGlobalUniforms::volumeOutputError`, independently of resident equation/proof data. GPU x is rounded down if conversion exceeds the authored budget; y preserves opt-in even when a tiny positive double rounds to zero. The WGSL single marcher and both fused-loop exits read y before permitting the legacy opacity heuristic. Camera variants consume the same contract.
+
+No new tail-proof cache exists yet. Until conservative source/attenuation/background/numerical bounds are implemented, all positive-budget rays continue the accepted lattice; exact zero-density proofs retain their declared fallback and independent switch. Budget changes neither lower expressions nor upload resident parameters/proofs. Global uniforms are refreshed each draw; device recreation reconstructs them and existing module caches. Native single/fused analytic/6144 emission and background witnesses pass; eight default captures remain byte-identical. Do not infer a one-level bound against the legacy cutoff image: it can omit bright late emission, which full-lattice output intentionally restores. No certified early tail exit or performance gain is claimed.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-10T23:49:10-07:00
+
+
+### Kernel volume time-only preparation — October 11
+
+From Zach's request for the highest likely value independent remaining optimization. `Program.kernelVolumeTimeSlots` holds derived scalar-output-slot recipes; `kernelVolumePreparationWgsl` composes their compute module directly. Eligibility requires a scalar leaf with transcendental work and only its own time variable. The original emission arithmetic/parent grouping remains unchanged. Compiler DAG fragments retain their recipe slices with parameter/temporary/domain identity, so partial reuse cannot lose preparation instructions. Numeric-only repair retains recipes and recollects inputs through the existing collector; direct parameter-binding recipes are still open.
+
+- **Dependencies/writers:** authored scalar terms and variable/clock bindings determine recipes; revisions/layout/sharing changes repair or regenerate them. Medium/occluder expressions read their instance time; source expressions read sourceTime. Camera/time changes never lower mathematics. Unsupported or spatial/directional leaves stay in their existing evaluator.
+- **Resident derived slots:** outputs are reserved inside the compiled parameter layout before proof payloads. CPU parameter mirrors deliberately hold initialization values, while GPU compute writes only these derived slots every rendered frame. Changed numeric inputs/layouts flow through existing dirty-range uploads before computation. Frames order preparation before reading in volume passes; no CPU readback/wait is introduced. Instance membership/offset rebuilding and the existing same-frame fallback remain authoritative.
+- **`_kernelVolumeTimePipes`:** explicitly Kernel/device-bound compute pipelines and layouts, keyed by complete preparation WGSL and shared across camera lanes. Volume pipeline identity includes its preparation module. Rejected preparation compilation refuses the dependent fragment path, rather than rendering uninitialized zeros. Reload/shutdown/device recreation clear this cache and resident buffers. Generated module bytes and compilation counts include preparation; warm frames compile nothing.
+
+Witnesses: eight complete native captures match; native sharing 65/65 covers independent inline math, distinct clocks, numeric refresh, reload/device recreation and warm zero CPU uploads. Proof/quadrature/object consumers pass. Two ABBA series per view reduce pooled inside offscreen frame cost 5.58% (individual 4.14/7.01%), with both series improving all other views. This supports retention, not a live 30 FPS or temporal-coherence claim. Per-frame preparation remains even when a clock is unchanged; there is no cached-time identity yet.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T00:15:29-07:00
+
+
+### Kernel per-ray volume support traversal — October 11
+
+Extends and supersedes the inside-payload statement in the dated proof-support entry above. Every present zero proof now carries its six local support bounds after the packed words in both camera lanes; `attachVolumeZeroProof` writes them and dirty-range accounting classifies them as proof bytes. Authored parameter slots stay fixed. Existing revision/half-extent/membership identities rebuild absolute offsets, and existing residency/device teardown governs lifetime. Unknown/unrevisioned bindings carry no proof. Time alone does not rebuild support.
+
+Fused WGSL computes one padded support interval per medium/ray, retains it through original authored segments, and skips that medium's grid walk before entry/after exit. Unknown or near-parallel support exclusion receives an unbounded interval; authored events still delimit the lattice. If all held media prove zero, the next index targets the earliest possible contributing interval/cell exit, always on the original sample lattice. One per-sample `sampleUnproven` flag per medium reuses the existing cell proof for density demand, within that medium/local-coordinate domain only. Ray/sample values are GPU Kernel derived state, not a persistent authored/cache identity.
+
+Global outside prefix/tail trimming remains separately selected; inside single-medium marching is unchanged. No arithmetic reassociation, contribution-tail bound, new fidelity switch or authority mechanism. Native proof 54/54 and all six focused targets pass; eight complete captures match retained bytes. Final repeated offscreen economics pass the 5%/3% gates in all views. [Final evidence and Person limitations](../../audits/NORTHERN_VEIL_SUPPORT_TRAVERSAL_2026-10-11.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T02:25:43-07:00
+
+
+### Perlin reuse experiment boundary — October 11
+
+The ray-local cell/XY caches and once-per-device intrinsic GPU tables tested after support traversal are **not retained derived state**. Three ray caches preserve tested pixels but regress cost; three table variants fail exact rendered pixels despite compute bit parity. Their compiler helpers, device resources and dependent tests were removed. Existing compiler/proof/resident/time/support lifetimes remain unchanged. Seven restored focused targets pass in Perlin ABC mode and eight restored images match. [Measured rejection, fallback domains and baseline terrain-test caveat](../../audits/NORTHERN_VEIL_PERLIN_REUSE_EXPERIMENTS_2026-10-11.md). Future agents must not document the scratch noise caches as production ownership or infer final-output bounds from finite compute/image tests.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T10:29:00-07:00
+
+
+### Kernel selective column support — October 11
+
+Extends the retained per-ray proof traversal. `VolumeZeroProof::supportAxis/supportBands` are Kernel CPU index state in the existing density-pointer/revision/half-extent memo. Every unknown padded leaf belongs to its band; the chosen axis minimizes enclosed cell volume. No new interval evaluations or authored fields. Unknown/unrevisioned inputs keep the established fallback, and time alone rebuilds nothing.
+
+Both resident camera lanes retain six global bounds; only outside payloads append four f32 bounds per slab. `zeroProofPresent` bit 0 means present, bits 1..2 encode axis+1 (zero = original payload). Dirty upload accounting covers the extra range; camera lane/membership/revisions/extents already key payload identity. Existing cache eviction, reload and device teardown own lifetime and rebuild offsets. No separate permission or resource office.
+
+Outside WGSL computes geometric eligibility once per medium/ray, then the reached leaf MUST prove zero before a padded column intersection may extend its jump. Jumps stop before that column's exit and retain original box events/lattice. Inside emits the original helper signature/body. There is **no ray-local interval cache**: both cache experiments are rejected for exactness/cost. Near-parallel/absent proof uses the established cell path.
+
+Six focused targets pass, including CPU 32/32/native proof 65/65 with exhaustive unknown-cell enclosure, changed extents, replacement device and full-size spawn checks. Eight 2560×1440 images match. All 960 timed final frames report zero warm lowering/compiles/parameter/proof uploads. Spawn −9.77%; inside all-run mean +2.29% with no repeatable >3% regression after predeclared follow-up, no inside gain claim. [All runs, rejected variants and Person limitations](../../audits/NORTHERN_VEIL_FOLDED_SUPPORT_2026-10-11.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T13:27:06-07:00
+
+
+### Kernel sample-local fused contribution schedule — October 11
+
+`composeVolumeSet` now consumes each medium’s proof/density/contribution in order, eliminating long-lived per-medium proof flags and the second membership sweep. Source/receiver directions use the original expressions only after positive density, with sample/medium lifetime; no ray cache, authored state, buffer or proof layout is added. Existing member fragments, composed program caches, revision/layout/membership gates and reload/device teardown own lifetime. Unknown proof cells veto jumps; original lattice/order/source-domain/cutoff contracts remain unchanged. Warm uploads/lowering/compiles stay zero. Six focused witnesses and eight byte-identical full-size images pass; repeated offscreen inside −9.77%, other views −6.44% to −11.53%. Backend-aware new support certificates remain deferred. [Evidence and exact boundaries](../../audits/NORTHERN_VEIL_SAMPLE_LOCAL_SCHEDULING_2026-10-11.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T17:22:37-07:00 (PDT).
+
+
+### Scratch fragment demand observations — October 11
+
+The read-only diagnostic adds no production derived state. Its process-local GPU record buffer resets before each fixture draw; private counters reset per fragment, selected records are read after completion, and GPU buffers release after dump. Inputs are the current fixture, compiled module/driver, native camera, physical dimensions and clocks; each rerun replaces the observation in a new scratch output directory. Repeated counter/accounting checks pass, but paired pixels differ by one level, so counts remain explicitly instrumented-program observations. The empty-transport production candidate is rejected for cost; existing schedule/cache invalidation stays unchanged. [Tool, evidence and limitations](../../audits/NORTHERN_VEIL_FRAGMENT_DEMAND_2026-10-11.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-11T20:53:25-07:00 (PDT).
+
+
+### Research-only scalar-support tables — October 12
+
+No production cache or GPU resource is added. Process-local rational intervals and memoized sum trees live within the CPU research run; the report goes to a fresh scratch file. Proposed certificate dependencies are the recognized AST, finite converted parameter bits, coordinate/clock/source binding, local extents, bin edges and the verified execution profile. The prototype tests mismatched keys/refusal; it does not install production invalidation. Current production profile remains Unknown, hence admitted skips are zero. All 18 research witness groups pass. OntoMath intervals and retained device/cache lifetime rules are unchanged. [Conditional contract and evidence limits](../../audits/VOLUME_SUPPORT_NUMERICAL_CONTRACT_2026-10-12.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T00:43:07-07:00 (PDT).
+
+
+### Scratch native compilation observations — October 12
+
+The compiler observer adds no production derived state. Its concrete-device method replacement, original implementation pointer, mutex, record counter and retained output path live only in the linked scratch process and end at process teardown. It forwards source/options unchanged and records each compilation in a new external output directory. Observations depend on the exact vendored library, translated module, native device/driver and compile options; provenance preserves binaries/source hashes. No observed profile grants proof reuse: the tool still declines every production certificate until complete transformation/coordinate/binding enclosure is established. Twenty-four CPU witnesses pass; eight paired low-resolution native images match. Existing program/proof residency and device invalidation remain unchanged. [Contract](../../audits/VOLUME_SUPPORT_NATIVE_PROFILE_2026-10-12.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T11:27:35-07:00 (PDT).
+
+
+### Scratch arithmetic-profile experiments — October 12
+
+No production derived state is added. A separately generated scratch wrapper copies options only for volume-containing modules, forwards unchanged MSL once, releases the copied options after library creation, and ends all hooks/record state at process teardown. Fresh observations depend on exact fixture, binaries, native device, module hashes, effective options, framebuffer, clock and reference budget; reports are not reusable support certificates. Non-volume options and source hashes are checked. Both Safe arithmetic candidates fail pixel gates, including a full-lattice native-size counterexample; no production guard/cache/profile is installed. Original read-only observer and existing lifetime/invalidation contracts are unchanged. [Failure evidence, dependency hashes and reproduction](../../audits/VOLUME_ARITHMETIC_PROFILE_FIDELITY_2026-10-12.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-12T17:13:57.815427-07:00 (PDT).
+
+
+### Standalone offline performance reports — October 14
+
+No app/being state, runtime cache or GPU resource is added. Analyzer dictionaries, trace stacks, source-frame indices and structural call graphs live only in the separate process. Every invocation reads explicit input files, fingerprints them before/after analysis and writes a new output directory; existing output is refused. Reports are immutable observations of those inputs, not reusable rendering proofs or automatically refreshed views of the live app. Reanalysis requires a new report, and a source change requires rebuilding any packaged executable. No per-frame instrumentation or device lifetime is introduced. Unknown metadata and unsupported timing retain unknown status; malformed/ambiguous data refuses attribution rather than becoming zero cost. [Contracts](../../Agenda/Tasks/Specific%20Tasks/Performance%20and%20Runtime/Standalone_Performance_Analysis/Standalone_Performance_Analysis.md) and [executed witnesses](../../audits/STANDALONE_PERFORMANCE_ANALYSIS_2026-10-14.md).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-14T22:37:18.690115-07:00 (PDT).
+
+
+### Planned group-demand and qualified-support work — October 15
+
+The [implementation plan](../../plans/VOLUME_DEMAND_AND_SUPPORT_IMPLEMENTATION_2026-10-15.md#9-derived-state-and-compatibility-requirements) describes proposed retained group dependencies/placement, product-local aliases, qualified proof payloads and direct parameter recipes, with owners, reuse predicates and invalidation. **No new cache, native proof eligibility or GPU resource is installed by this documentation pass.** Existing residency, camera lanes and exact fallbacks remain the current contract. Adding finite shared `evalRange` results can immediately strengthen existing proof consumers, so future mathematical coverage must inventory consumers and preserve Unknown native eligibility until the selected AD-30/36 obligations hold. Earlier ADs may be planned through for Zach's later verdicts; new decisions are not pre-approved.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T03:21:44.030398-07:00 (PDT).
+
+### Power correction and rejected derived-state trials — October 15
+
+[Executed record](../../audits/VOLUME_POWER_AND_OPTIMIZATION_TRIALS_2026-10-15.md): no new production cache, schedule metadata, proof format or GPU resource remains from these trials. Demand-group placement, local aliases and macro occupancy storage were implemented with their candidate dependency/lifetime contracts, failed retention gates, and were removed. Existing program/proof caches, parameter slots, residency, membership offsets, revision gates and device invalidation retain their prior contracts.
+
+The retained shared power helper is immutable Kernel shader-library text, embedded at module generation, with no new authored/serialized state or persistent numerical cache. Changed generated WGSL still requires affected native modules to compile; unchanged media use existing revision gates. The external experiment process owns temporary comparison/readback buffers, releases native resources at process exit and never supplies a proof to the app. Its reports are frozen observations, not refreshable runtime state. Native subnormal consistency is not a complete numerical certificate; unresolved execution/consumer contracts remain Unknown.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T05:56:25.134858-07:00 (PDT).
+
+
+### Explicit Euclidean host range context — October 15
+
+[Executed contract](../../audits/VOLUME_EUCLIDEAN_RANGE_2026-10-15.md): `MathNode::evalMathematicalRange` selects extra host Length/Distance rules through a private invocation-local context shared by recursive calls. No memo, persistent cache, authored/serialized field, GPU allocation or device-dependent object is introduced. Inputs are the current authored node tree and explicit variable intervals; every invocation reads them afresh, so there is no cross-revision reuse or stale-data path. Bounds/temporary maps expire with the call. Unsupported/type/nonfinite/overflow cases return Unknown.
+
+The old `evalRange` entrypoint explicitly selects its previous rules. VolumeZeroProof, Sdf and PropheticRete continue calling it; they receive no new Euclidean theorem. Future production promotion must explicitly qualify the native consumer/scope rather than treating this host result as a complete backend certificate. Census reports and fingerprints are immutable external observations, not live proof caches. Existing GPU residency/invalidation contracts stay unchanged.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T10:45:48.355899-07:00 (PDT).
+
+
+### Support-allocation/traversal experiments restored — October 15
+
+[Three rejected increments](../../audits/VOLUME_SUPPORT_ALLOCATION_TRIAL_2026-10-15.md) temporarily added explicit bitmap-domain metadata, two-pass allocation, a resource hint and an AND-parent bank with distinct storage/instance eligibility. Their dependency was density revision + half extent; device/camera lanes and membership offsets were tested. None remains in production: the producer, proof header, renderer and shader hashes match the starting retained source, so previous cache/format/lifetime contracts remain authoritative. No new runtime memo, GPU resource, flag or omission permission is retained.
+
+Source patches are explicitly experimental/rejected evidence. New native tests exercise actual translated/parallel/support-edge rendering; they are no certificate reusable at runtime. The external cost process records immutable source/binary/input hashes and explicit metadata sizes. Its optional hierarchy-word inspection is compile-time developer tooling, not authored state or a second authority office. Unsupported native numerical/scope contracts remain unqualified; the host Euclidean entrypoint is still not consumed by GPU proofs.
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca` / 2026-10-15T12:14:29.656582-07:00 (PDT).
+
+
+### §6cm — Distinct-ray accuracy holds; large-query economics fail
+
+[Executed evidence and remaining bridge](../../audits/GPU_RAY_TRANSPORT_WIDE_QUERY_SCREEN_2026-10-22.md). The newly written Firmament review is preserved and answered. All32,784 distinct native queries pass original-AST checks and nine large-ring normal/bulk plus forced/native bitwise cases;192 predetermined holdout rays pass both-resolution independent transport gates in all three variants. Unlike the earlier sparse result, every matched bulk/streamed lane loses cost on this workload (streaming +18–63%). Tight harmonic-envelope and adaptive1..16-bin screens pass accuracy but recover no economic win. A normalized cosine+linear witness refutes endpoint-change>2ε as a monotonicity proof; the conservative derivative enclosure stays. Six external-case and ten replay-corruption refusals plus four capture controls pass. No promotion/default/save/app/FPS change. Next: generic density/root/lifetimes and a demonstrably profitable distinct-query representation, then unique full viewport/depth/composition/complete frame costs and moving inhabited Person acceptance.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T11:52:54.393507-07:00`.
+
+
+### §6cn — compact numerical transport passes accuracy, loses economics
+
+[Executed evidence and next hypothesis](../../audits/GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22.md). 128-byte full-f32 event packets reduce schedule-only ring storage10×, but are not bit-lossless: strict native endpoint/output witnesses refuse. The separate numerical candidate passes original-AST1e-5 across32,784 actual queries, both dense-reference resolutions on192 predetermined rays, exact forced native fallback and10 corruption refusals;241 codec round trips pass. No normal fallback (max14 events), so native15-entry overflow remains unexercised. Primary compact costs are73%/45% slower than current. Same-query component clocks show comparable producer cost and33% more consumer cost at4 repetitions; phases are non-additive and hardware causes unmeasured. New Firmament counsel is answered: test shared Φ/coarse endpoints first with current capacities and cheaper consumer, preserve per-level execution error, and do not infer cache/spill behavior or capacity bounds from source/merged spans. No promotion/default/save/app/FPS change. Profitable connected execution, generic math/lifetimes, full viewport/frame and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:06:29.632017-07:00`.
+
+
+## §6cq — guarded sliver review and economic standing
+
+Width-only merging drops63 matching affine endpoints; guarded provenance and affine/apex protection retainsall12102 matched endpoints with unchanged support unions and passes two native accuracy/fallback series. The first-win timings were global bulk controls; bounded streaming loses all nine original cases, and both corrected connected lanes lose cost. No qualified connected gain or measured spill/occupancy cause. [Executed evidence and remaining gates](../../audits/GPU_RAY_TRANSPORT_SLIVER_REVIEW_2026-10-22.md). Zero-band provenance and merge flags are ephemeral per-ray GPU scratch, rebuilt each dispatch from current fixture/specs/ray/config; no persistent cache or new law-facing state. Generic math/lifetimes, full-frame economics and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T17:04:46.369117-07:00`.
+
+
+## §6cu — reviewed root/sweep contract and remaining bridge
+
+§6cu reproduces/repairs the24-unit shortcut fallback regression on Metal. Merge/sweep and original cs capture parity replay; all-level secant is structurally refused (6 affine endpoints/47084 unions). Zero-only secant retainsall12102 matched affine endpoints and unchanged outer unions, passes original-AST/reference/fallback gates, but still loses connected cost. SIMD causation and additive phase lower bounds are unestablished. [Evidence, repairs and next lowering experiment](../../audits/GPU_RAY_TRANSPORT_ROOT_REVIEW_2026-10-22.md). Exact-budget tests guard both culling shortcuts; standalone runners now enforce the independent frozen affine/support admission gate. Additional subdivision-cache/zero-band state is per-member/ray GPU scratch, reinitialized from specs/ray/config each dispatch; no persistent cache or law-facing state is added. Generic mathematical meaning remains OntoMath’s office. Full-frame integration and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T18:21:23.901547-07:00`.
+
+
+## §6cw — fused review and measured-work next step
+
+Actual fused outputs/forced fallback replay bit-exact on32784 rays, and192 holdouts pass both reference resolutions, but the tested32/8 implementation changes the assigned64/16 contract and exports no fused packets/normal headers. The runner now refuses incomplete admission; counts/AST fields are scoped to the unfused control. Connected primary cost remains2.070ms vs current1.583ms (+30.76%). Allocated bytes are not measured traffic; spill/occupancy causation is unmeasured and batching has one host completion. No new native run or production gain. Next Sparkly execution is a bounded work/resource census with Firmament reviewing; all three shipping gates remain OPEN. [Audit and replay](../../audits/GPU_RAY_TRANSPORT_FUSED_REVIEW_2026-10-22.md).
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-22T19:31:41.653259-07:00.
+
+
+## §6cy — census review and on-the-fly experiment contract
+
+§6cx actual fused packets/outputs qualify on32784 rays; corrective native diagnostics make controls fatal/poisoned, export raw per-ray counters/outputs and actual headers, and correct coarse rejects2389859→2332420 and initial stack use0→1. Noise496468 vs956301 and Phi2606763 counts survive, but work counts do not establish elapsed cost or spilling; narrow widths do not identify root provenance. Three historical/eight corrected refusal checks pass. Next Sparkly experiment consumes the chronological sweep directly while preserving exact n-way panels, overlap attenuation and late native fallback; Firmament reviews. All three shipping gates remain OPEN, with no new renderer/FPS gain. [Executed evidence/next steps](../../audits/GPU_RAY_TRANSPORT_CENSUS_REVIEW_2026-10-23.md).
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T00:40:20.361400-07:00.
+
+
+## §6dc — completed review and isolated native continuation
+
+Separate `Documents/GitHub/Earthcall-ray-transport` clone is active on `claude/ray-domain-transport-rung0` (base `d4963d062`), with selected Firmament files relayed from default `cd05acd19`. CPU census did not establish native parity: corrected parallel roots fail strict RGB parity by2–3ULP before endpoint/accuracy qualification. Isolated original-predicate coarse peeling and a65536-tile scheduling check pass32784 actual packets/outputs,192 dual-resolution holdouts, six exact-budget and two poisoned capacity controls, but lose current cost (+2.50%/+6.35% in the respective four-repeat observations). Stop those candidates. Portable31-document replay rejects14 corruptions. Historical on-the-fly slowdown is43.63%; hardware causal claims remain hypotheses. All3 shipping gates OPEN; no engine/save/default/app or new FPS gain. Native lane RELEASED in all3 local copies. [Evidence and next directions](../../audits/GPU_RAY_TRANSPORT_CONTINUATION_REVIEW_2026-10-23.md).
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T09:30:58.150880-07:00.
+
+
+### Ray-domain transport forms and segment plans — 2026-10-16
+
+Zach's Ray Transport Canon, first rung ([plan and contracts](../../plans/RAY_DOMAIN_TRANSPORT_COMPILATION_RUNG_0_1_2026-10-16.md)). Two Kernel-derived structures. Neither is consumed by a renderer yet, so today their only observers are their witnesses.
+
+- **`Rendering::VolumeRayFormCache` entries (`VolumeRayChannelForms`):** each medium's six channels restricted to `p = o + s·d` by `OntoMath::restrictToLine`, with symbolic ray coefficients. *Derived from:* the authored channel Piecewise content only. *Key:* producer identity; per channel, the per-channel authored revision **and** the expression identity. Pointer equality alone is never accepted, and an identity change under an unchanged revision still relowers. *Writers that invalidate:* every writer of the FieldNode per-channel revision (property bridges, `applyJson`, MCP `author_volume`, and the round-robin verifier that heals a missed bump). One channel's edit relowers only that channel. *Not dependencies:* medium origin, half-extent, camera, ray, clock, source set, device. These are numeric bindings at the ray tier, so camera motion performs zero lowering. *Unknown/stale:* revision 0 for a present expression is relowered on every request and never served from the entry. An empty producer id is never retained. *Lifetime:* until `retainOnly()` (membership change) or `clear()` (reload/teardown). No GPU or persisted state. *Fallback:* a refused channel makes every plan reading it `general-lattice`.
+- **`VolumeSegmentPlan`:** per ray and segment, never retained. It re-proves constancy from bindings on every call, so a stale form can cost at most a relowering. It can never stand in for a proof.
+
+Witnesses: `volume_ray_segment_transport_test` covers 120 warm requests with 0 lowerings; medium move/resize/clock with 0; an emission edit relowering exactly 1 channel; a density structural edit relowering exactly 1 and turning the forward-ray plan from closed form to lattice (the stale-reuse detector); an identity change under an unchanged revision; unrevisioned channels never cached; retain/evict/re-add/clear. `ontomath_line_restriction_test` covers the mathematics. Unwitnessed until a consumer exists: device reconstruction and pipeline identity. That belongs to Rung 1b.
+
+Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-16T16:09-07:00.
+
+**Rung 2 addendum (2026-10-17, [radial-piecewise segmentation](../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md)):** each `VolumeRayChannelForm` also retains `algebraic`, an `OntoMath::LineAlgebraicForm` (piecewise-algebraic restriction with declared switching functions). It is lowered in the same call, under the same key (per-channel revision plus expression identity) and with the same writers and lifetime as the polynomial form; it adds no new dependency. `LineAlgebraicEvaluator`s (coefficients and error bounds), `segmentLine` pieces and `VolumeSegmentSchedule` runs are **ray-lifetime values, never retained**. A stale form can only cost relowering, because every piece is re-proved from the ray's bindings. Witnesses: `ontomath_line_segmentation_test` (soundness, relevance, budget), `volume_ray_radial_segmentation_test` (schedule against the lattice mirror; real-media empty-sample soundness, 0 violations over 73,728 samples). Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17.
+
+**Rung 2c/2d addendum (2026-10-17):** `LineAlgebraicEvaluator` now carries a *leaf-range memo* (`_memoRange/_memoValid`, keyed on the exact `[s0, s1]` doubles). This is Kernel scratch, named in its header comment. *Derived from:* the evaluator's own coefficients and error bounds. *Invalidated:* whenever a different interval is requested (polynomial enclosures never depend on switch signs). *Lifetime:* one evaluator, which is one ray and never retained. *Stale behaviour:* impossible across rays, because each ray constructs fresh evaluators. It makes the evaluator single-threaded. The two-phase schedule passes phase 1's proved density signs into phase 2 (`segmentLine(…, initialSigns)`). That is sound because a sign proved over an interval holds on every sub-interval. It is ray-lifetime and never stored. Witnesses: `ontomath_line_segmentation_test` 44/44 and `volume_ray_radial_segmentation_test` 25/25, in Debug and Release. Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17.
+
+**Rung 2e addendum (2026-10-17):** the evaluator memo is generalized to every *sign-free* node (no switch beneath it), keyed on the exact interval and computed once per evaluator from the form (`_signFree`). It is Kernel scratch with the same ray lifetime, single-threaded. `LineSegmentationPiece::targetSigns` records per-piece proofs for consumer sign targets (the volume schedule's density `> 0` branch). Pieces merge only when switches *and* targets agree, and the schedule consumes recorded target signs rather than re-proving over merged pieces. Witness: `volume_ray_radial_segmentation_test` (pure-noise chord 64/96 proved empty, 0 violations across 28 real media). Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17.
+
+**Rung 2f addendum (2026-10-17):** `LineAlgebraicNode::normComponents` is authored-revision IR (part of the cached algebraic form, same key and writers). `derivativeRange` retains nothing. `traceVolumeSupport` results (killers, Lipschitz bounds, per-sample masks) are ray-lifetime and never retained. A future GPU consumer must declare where compiled killer/Lipschitz structure lives (authored-revision tier) separately from per-ray L and margins. Witnesses: `ontomath_line_segmentation_test` 52/52, `volume_ray_radial_segmentation_test` 27/27 (0 trace violations over 28 real media). Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17.
+
+**Rung 2f-native groundwork addendum (2026-10-17):** `VolumeSupportCertificates` (killers, spatial Lipschitz bounds and authored source operands) are *authored-revision × half-extent* derived state. They are computed from the density's algebraic form, so their writers are the same per-channel revision writers, and from the medium half-extent, with t bound unbounded so no clock dependency exists. They are currently recomputed by callers and **not retained** by any cache; a GPU consumer that retains them must key them on the density revision, expression identity and half-extent, and must drop them on reload/teardown. `LineAlgebraicNode::sourceA/sourceB` point into the authored Piecewise and are valid exactly as long as the cached form. Box-mode evaluators are transient. Witnesses: `ontomath_line_segmentation_test` (bound dominates sampled quotients), `volume_ray_radial_segmentation_test` (0 certificate-trace violations, 28 media). Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17.
+
+**Rung 2f-native consumer addendum (2026-10-17, [§6e](../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6e-rung-2f-native--the-gpu-certificate-tracer-opt-in-2026-10-17-sixth-pass)):** the first retaining consumer. Three pieces of derived state, each with its own tier:
+- **Certificate WGSL (`sdfwgsl::lowerVolumeSupportKillers` text).** *Derived from:* the density Piecewise's line form, which is structural except where admission turns on constants (inverted clamp bounds, non-integer powers). *Key:* it is appended to the volume program's `structure` string (single and fused paths) and the program key carries a certificate-lane bool, so any change to the candidate set recompiles and the off lane is the pre-existing marcher text. Operand constants are payload, never literals.
+- **`WebGpuRenderer::_volumeSupportCertificates` memo (header block + operand constants + enabled count).** *Derived from:* `deriveVolumeSupportCertificates` (density revision × half-extent, every clock) and the compiled candidate list. *Key:* density expression × density revision × half-extent, exactly the zero proof's key; revision 0 never gets one. *Writers that invalidate:* density revision writers and box scale. An emission edit rebuilds nothing (witnessed). *Cross-check:* the compiled candidate count must equal the certified form's switch count, else no payload. *Lifetime:* dropped when a frame does not use it, and with the renderer. *Residency:* inside the kernel volume params payload; `payloadIdentity` includes the lane flag, and `supportCertOffset` is restored from `proofMetadata` on unchanged layouts. *Fallback:* count 0, so every sample takes the exact path.
+- **Per-ray `certRecheck` and certified exits.** These are fragment-lifetime values and are never retained. A skipped *check* only routes a sample to the exact path, so the converse bound needs no pad. A *jump* carries δ = τ(1+|args|) (declared device tolerance, τ = 2⁻¹⁰) plus a coordinate/index pad of 4·10⁻⁵·(|ro|+|origin|+|halfExtent|+|t|).
+
+Witness: `webgpu_volume_support_certificates_test` 56/56 on lavapipe. It covers byte-identical frames, density-edit and resize rebuild counts, the emission-edit non-rebuild, refusal, the full lattice and 2560×1440. It does **not** witness Metal or device reconstruction under the lane; the zero-proof witness still covers device replacement with the lane off. Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17.
+
+**Execution-provenance addendum (2026-10-17, Codex P1, [§6f](../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6f-execution-provenance-the-codex-p1-repair-2026-10-17-seventh-pass)):**
+- **`LineAlgebraicNode::provenance` / `provenanceForm`.** Authored-revision IR inside the cached algebraic form. Same key, writers and lifetime as the form. It points into the authored Piecewise exactly like `sourceA/B`.
+- **Evaluator slack memo** (`_slackMemo*`, `_slackMagnitudes`). Kernel scratch with ray or box lifetime, single-threaded. It is valid for any interval inside the one it was computed over, because slack is monotone in the region.
+- **Certificate memo (`_volumeSupportCertificates`).**
+  - *Key:* density expression × revision × half-extent × **clock-magnitude bucket** (`volumeClockMagnitudeBucket(t)`, the next power of two ≥ |t|).
+  - *Payload identity:* `payloadIdentity` adds each medium's bucket when the lane is on, so a bucket crossing re-lays the payload instead of reusing stale bytes.
+  - *Writers:* unchanged, plus the clock crossing a power of two.
+  - *Fallback:* a non-finite clock refuses certificates.
+
+Witnesses: `ontomath_line_segmentation_test` 61/61, `volume_ray_segment_transport_test` 53/53, `volume_ray_radial_segmentation_test` 32/32, `webgpu_volume_support_certificates_test` 57/57 (lavapipe). Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-17.
+
+**Eligibility addendum (2026-10-18, [§6g](../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6g-eligibility-where-certificates-pay-2026-10-18-eighth-pass)):** `VolumeSupportCertificateMemo` now also holds the `estimate` (Kernel cost ranking).
+- *Key:* the existing key plus auto mode × zero-proof enabled × `volumeSamplesPerChord`.
+- *Payload identity:* adds auto mode and samples per chord when the lane is on.
+- *Per-sample cost (2026-10-18, §6i):* `contentRevision` × `densitySampleCost` in the same memo. *Derived from:* every medium channel, through the emitter's sharing plan. *Writers:* any channel revision re-derives the cost, and the estimate re-ranks only if the cost changed, so an emission edit that leaves the prelude alone still rebuilds nothing. *Witness:* the M5 auto-mode run covers both branches (135→135 with 0 builds, 135→133 with 1). Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T01:20 PDT.
+- *Enabled killer set (2026-10-18, §6j):* the memo's `switches` and their lowered WGSL. *Derived from:* certification over the box and clock bucket, then auto mode's subset. *Writers:* every memo rebuild. *Consumers:* both program caches fold the set into the revision that gates structure (`combineCertificateSet`), so the program and the payload layout change together; the equations' evaluator keeps its pure content revision. *Witness:* each Northern Veil curtain rendered alone in auto mode after the forced sections keeps every byte (before this key, emerald did not). Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T11:46 PDT.
+- *Measured certificate verdict (2026-10-18, §6k):* the memo's `measured` map, regime → {verdict, pair timings, strip band}. *Derived from:* hidden on/off timings of the frame's own volume pass on this device. *Key:* `volumeSupportCertificateRegime`, which combines inside/outside, the camera's distance octave in box radii, the viewport's pixel octave and the set's membership. *Invalidation:* every memo rebuild clears all regimes (density revision, extent, clock bucket, auto mode, grid lane, samples per chord, per-sample cost); a new regime measures once; the map is capped at 32 regimes. *Consumers:* `volumeSupportCertificatesActive`, which can only veto what the estimate admitted. *Witnesses:* measured-then-settled, held, new-octave, return, rebuild and byte-parity checks in `webgpu_volume_support_certificates_test`. Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T15:23 PDT.
+- *Closed-form killer block and memo generation (2026-10-18, §6l):* each certified killer's closed forms (`closedForms`: `VolumeSupportClosedForm` kind, `M`, `b`, `n`, `rhoIn`, `rhoOut`, `threshold`; plus `closedExact` and, since §6n, `perSampleCheck`, which the killer selection may clear for a bounded form; since §6m a nested norm adds lower-bound forms) and one 16-float payload block per form after the reach killers (`closedOffset`, `closedCount`; instance `supportClosedOffset`/`supportClosedCount`). *Derived from:* the density's line form (Polynomial leaf coefficients, norm components, residual ranges over the box at every time) and δ. *Writers:* every certificate memo rebuild, which also bumps `generation`. *Consumers:* `volumeSupportClosed` in both marchers; the eligibility estimate. *Invalidation:* the memo's rebuild keys. `generation` is folded into the payload identity, so a re-laid block is re-uploaded even when the compiled switches, and so the pipeline, are unchanged. *Witnesses:* census closed-form backing and soundness checks; inside, grazing, 150-radii and 2560×1440 byte parity; warm frames still upload nothing. Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169` · 2026-10-18T16:40 PDT.
+- *Reads:* the same frame's zero-proof memo, only when its revision and extent match.
+- *Fallback:* "not eligible" attaches nothing (count 0), so the grid lane runs unchanged.
+
+Witnesses: `webgpu_volume_support_certificates_test` 68/68 (auto-mode byte parity), `channel_paths_test`. Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-18.
+
+**Per-member certificate lane (2026-10-18, §6h):** the certificate bool in `VolumeProgramKey` is now *per member*: lane enabled **and** that member's certificates attached this frame (`volumeSupportCertificatesActive`, decided before the key from the memo above). An all-false set shares the lane-off program and its cache entry. The single-medium key follows the same rule. Witness: 0 compiles when the lane is enabled with nothing eligible (`webgpu_volume_support_certificates_test` 69/69). Claude Code · Claude Opus 5.5 · session `session_01HvZSR64QghrdyCpq2M7qvX` · 2026-10-18.
+
+
+
+### Ray quadrature qualification domains and regional switch proofs — 2026-10-20
+
+`LineQuadratureCertificate::symbols` retains the exact non-point symbol ranges supplied to certification, alongside its execution model and bands. It is value evidence, not an authored being or a revision/cache key. `compileLineTransport` emits per-field input capabilities and checks both domains at runtime; source parameters and domain constants live in that returned program's immutable payload. Callers must rebuild after a field/model/domain change. There is no retained native renderer consumer yet, so no device-lifetime or edit invalidation claim is earned by these compute witnesses. An eventual cache must key field identity/revision, local domains, source/clock/angular bindings, model/profile and device generation; a clock outside a retained domain refuses rather than reusing its proof.
+
+`RegionCertificate` remains a lazy CPU map keyed by cell index, with immutable model, symbol domain and cell size. It borrows source provenance: the source must outlive it and remain unchanged. Each cell now derives whole-cell mathematical signs for derivatives and separate execution-margin signs for slack via the segmenter's shared classifier. Undecided cells keep the conservative path. Invalid grids/indices refuse. No per-frame/per-ray native certificate cache has been introduced. `ontomath-cpu/3` records the explicit absolute/relative exponential premise; old /2 reports are historical evidence, not the same model identity. [Implementation and witnesses](../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6av-codex-takeover-repair-the-absolute-exp-contract-decide-regional-branches-bind-actual-device-inputs-2026-10-20).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-20T18:29:35-07:00. Human origin: Zachary Zhang's implementation takeover.
+
+
+### Nonuniform line-integral execution schedules — 2026-10-20
+
+`LineTransportSchedule` is transient Kernel mathematical execution evidence, derived from immutable σ/ε source snapshots, a concrete f32 ray/interval, symbol domains, execution model, positional halo, numeric tolerances and a work budget. It carries a complete ordered partition, per-panel certificates and separate L/T bounds; cached host samples are search-local. Refusals preserve a complete best plan or return unavailable, never a partial integral. `RegionCertificate::tightOver` reuses its lowered mathematics for exact query boxes; cached grid joins only reuse finite curvature under consistent branch signatures (or an exactly constant combined range).
+
+`compileScheduledLineTransport` checks source snapshots and numeric partition coverage; its shader checks the frozen ray, symbol domains and both output budgets. Source/schema/parameter/domain/profile changes require new proof data. Numeric ray/panel/count changes use a new parameter payload with identical shader text, witnessed across four occupied real-curtain rays. No native renderer cache or CPU-per-pixel consumer was added. An eventual native consumer must derive schedules on the GPU or reuse appropriately qualified spatial evidence, retain the established per-medium clock and edit/device invalidation, and measure cold preparation plus uploads. This record grants no validity across an unproved frame/clock/device/profile change. [Implementation and limits](../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6aw-nonuniform-complete-ray-schedules-execute-real-occupied-curtains-on-metal-with-separate-radiance-and-transmittance-bounds-2026-10-20).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-20T19:22:46-07:00. Human origin: Zachary Zhang's continuation commission.
+
+
+### Exponential derivative substitution — 2026-10-20
+
+`deriveExponentialIntegral` produces a fresh ordinary MathNode tree from the current authored Integral/Let structure. It is transient mathematical derivation, with exact subtree matching and finite/continuous-domain restrictions; no authored being, serialized opcode, retained mutable cache or native per-ray policy was added. The returned cumulative body is a deep copy; subsequent source edits require re-derivation. Free coefficient/endpoint bindings remain runtime inputs with lexical scopes preserved. Field-factor lifting retains p/x/y/z meaning and only removes points also retained by the cumulative expression.
+
+CPU admission propagates the endpoint Integral’s complete bound through the returned expression and counts its inner work separately. An approximate endpoint remains approximate. GPU ordinary lowering consumes the same expression, retains its existing explicit-tolerance refusal and refuses unsupported inner fields. These uses do not confer validity on a native frame, device profile or reuse across an edit. A future retained compiler artifact must key the original source/binding/qualification/device generation as required by the existing ray plan. [Implementation and remaining GPU/native boundary](../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6ax-exact-exponential-derivative-substitution-in-authored-mathematics-2026-10-20).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-20T20:17:46-07:00`. Human origin: Zachary Zhang’s continuation of the implementation takeover and his requirement that mathematical meaning belong to OntoMath.
+
+
+### Shared noisy endpoint integral and vector complement — 2026-10-20
+
+`deriveProportionalFieldCoefficient` derives fresh ordinary coefficient expressions through the existing authored exponential Integral/Let office. It retains no cache or authored state. `compileScheduledProportionalIntegral` requires the current σ snapshot and a literal-zero source schedule, derives current vector-source coefficients, and qualifies their original arithmetic against the schedule’s explicit symbol domains. A source edit requires new derivation/coefficient evidence and payload; σ/ray/interval/model/domain edits require the corresponding schedule proof again. Runtime inputs outside the domain or whole-output budgets refuse.
+
+The dedicated endpoint shader uses 9 scalars per panel and a dynamic numeric tail for coefficient parameters. Changed panel counts and numeric coefficient edits preserve shader text but require the matching fresh payload; device tests execute both. No native buffer mirror/cache was added, so no device-retention or movement-reuse claim is implied. Future retention must key source/binding/proof schema/profile/device generation and measure preparation/upload cost. [Evidence, real-ray counts and remaining shipping gates](../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6ay-one-bounded-noisy-depth-supplies-rgb-and-transmittance-on-metal-2026-10-20).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-20T20:42:50-07:00`. Human origin: Zachary Zhang’s “KEEP GOING” continuation, authored-equation faithfulness criterion, and OntoMath ownership correction.
+
+
+### Direction-qualified line derivative evidence — 2026-10-20
+
+`LineDirectionalBound` is transient Kernel mathematical execution evidence, not authored state. `RegionCertificate::alongOver` derives it from the borrowed immutable source, execution model, symbol domains, exact queried spatial box (including the positional halo) and raw direction. The source must remain alive and unchanged. There is no directional grid/cache. Changing a source, binding/domain, box, direction or model requires new evidence; a rotated direction cannot reuse the packet. Exact singleton direction bindings may establish mathematical constancy, never interval centres or epsilon tests. Full spatial range/Lipschitz/Hessian and original-expression execution evidence remain separate, including cancellation and transverse positional error.
+
+Schedules carry optional direction-qualified first/second derivative bounds per field. Old panels without them retain the isotropic fallback. The device schema is now 11 scalars/depth panel and 20/general panel, superseding the preceding entry’s 9/16. Both writer and consumer changed together; coefficient tail offsets stay dynamic, and numeric payload edits/panel-count changes execute with identical shader text. No retained native buffer or cache was added. Any future cache must include source/binding/box/direction/model/schema/profile/device generation and distinguish program text from proof payload validity. [Witnesses, preparation costs and remaining shipping gates](../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6az-direction-qualified-curvature-removes-transverse-crease-over-refinement-2026-10-20).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-20T21:15:34-07:00`. Human origin: Zachary Zhang’s “NEXT PASS” continuation, authored-equation faithfulness criterion and requirement that mathematical meaning remain in OntoMath.
+
+
+### Closed ray-family schedule evidence — 2026-10-20
+
+`LineRayDomain` is transient Kernel mathematical execution qualification, not authored state. `prepareRegionalLineTransport` derives owned numeric panel evidence/source-expression snapshots from immutable live RegionCertificates, explicit symbol/model/ray domains, frozen parameter limits and a bounded panel work cap. The RegionCertificates still borrow their immutable source while deriving; the returned schedule retains no source pointer or sampled field/integral answer. Its host result/counters are unevaluated/zero, not a zero device-work claim. Priority refinement reads interval enclosures only; it ranks work and never establishes admission. Failed/uncovered spans cannot vanish.
+
+`LineDirectionalBound` now qualifies a closed direction interval (the old exact direction is a singleton). A zero-spanning interval cannot borrow singleton constancy. Both GPU schedule variants check every origin/direction component, interval, symbol domain and complete output bounds. Source/model/symbol/ray-domain changes require fresh evidence; clock changes within the retained domain need no proof re-derivation. Moved-family tests execute fresh numeric proof data through identical WGSL text while the old data refuses the moved ray. A wider directional domain cannot consume narrower derivative evidence. The 11/20 panel schema remains, with added family-domain numeric parameters and unchanged dynamic coefficient tail.
+
+No native cache, buffer mirror, resource epoch, upload retention or automatic family-selection policy was introduced. A future retained artifact must key source/schema/model/symbol domains, origin/direction boxes, interval/work layout, frame/clock bindings and device generation, distinguish shader identity from proof-payload validity, and measure cold preparation/uploads and fallback. Do not assume validity after camera/local-frame/domain/device changes merely because WGSL text matches. [Executed witnesses, work tradeoff and shipping gates](../../plans/RAY_DOMAIN_TRANSPORT_RUNG_2_RADIAL_PIECEWISE_SEGMENTATION_2026-10-17.md#6ba-ray-families-share-preparation-without-host-field-sampling-2026-10-20).
+
+**Signed:** Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-20T21:45:35-07:00`. Human origin: Zachary Zhang’s “NEXT PASS” continuation, his authored-equation faithfulness criterion and OntoMath ownership correction.
+
+
+### Scratch multi-view numeric transport coefficients — 2026-10-22
+
+[§6cj diagnostic](../../audits/GPU_RAY_TRANSPORT_MULTI_VIEW_QUALIFICATION_2026-10-22.md) derives process-local numeric coefficients only after original density/extinction/emission shared-subtree identity, positive literal scalar factors and time-only emission dependency admission. Original field owners retain borrowed MathNode lifetime. Explicit fixture/clock/reference hashes qualify each process; changed source/case bytes refuse, while a changed clock evaluates its own authored coefficient. No cross-frame/device/revision cache is introduced or qualified. Structural comparison plus coefficient binding is measured cold work (~2.4 ms), outside stable GPU batches; it must not be silently reused under another clock or rerun per pixel. Future production reuse needs source/revision invalidation, separate clock payload preparation/uploads and actual frame costs. 36 actual CPU binding/refusal checks and native clock 0/7.25 reference witnesses pass; unknown structure/spatial dependencies refuse. No generic/native omission authority follows.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T08:14:35.094887-07:00`.
+
+
+### Owned common-factor derivation / prepared coefficients — 2026-10-22
+
+[Executed contract and continuation](../../audits/GPU_RAY_TRANSPORT_PREPARED_COEFFICIENTS_2026-10-22.md). The reusable `OntoMath::factorCommonScalar` office now derives a shared original scalar factor with explicit coefficient-symbol admission, owned original/coefficient/factor snapshots and operand order. Original-source transport policy remains in the scratch consumer. 33 registered mathematical and 52 actual-source/refusal/revision checks pass. Changing-clock CPU preparation is 0.01685 ms across four members versus 2.31086 ms old repeated binding; cold generic admission is 15.99–16.15 ms and must stay off the frame path. Same-device 7.25→0→7.25 plus forced native fallback at both clocks passes all per-frame two-resolution gates, exact return and exact fallback. A three-of-four preparation-dispatch bug was caught/refused (0.0854 stale crimson) and corrected; failed source/report retained. Final full 2,304-ray control and existing 13 case guards pass. Throughput remains the prior bounded compute result, not a new FPS gain. Generic density/root decoding, production source/revision/device lifecycle, bounded unique viewport/depth/composition/complete costs and inhabited acceptance remain open. No production/default/save/app change or push; native lane released.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T10:25:19.648159-07:00`.
+
+
+### Scratch streamed schedule views — 2026-10-22
+
+[Executed evidence and next step](../../audits/GPU_RAY_TRANSPORT_BOUNDED_STREAMING_2026-10-22.md). Firmament’s Gemini review motivated bounded two-pass packet streaming. All four capacities (176/512/1,024/8,192) pass strict normal/bulk and forced/native float-bit equality on 2,304 inside +192 spawn rays, including the 16-ray tail. The 8,192 schedule allocation is 10 MiB, but these fixtures do not fill/reuse a large chunk. Small chunks cost 2.1–6.7× the matched bulk candidate; no performance promotion. An initial 1/16/64 screen lost its device during timing (exact repetition unknown); final 1/2/4 screens pass without explaining that limit. Independent raw GPU-packet census finds 208 inside ray/member pairs with multiple retained spans, 11 with three; single-span compression is not generally lossless. Original math, reference thresholds and production/default/save/app state remain unchanged. Generic density/root and production lifetime, profitable unique large-query streaming, full viewport/depth/composition/complete costs and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T11:16:00.866645-07:00`.
+
+
+### §6cm — Distinct-ray accuracy holds; large-query economics fail
+
+[Executed evidence and remaining bridge](../../audits/GPU_RAY_TRANSPORT_WIDE_QUERY_SCREEN_2026-10-22.md). The newly written Firmament review is preserved and answered. All32,784 distinct native queries pass original-AST checks and nine large-ring normal/bulk plus forced/native bitwise cases;192 predetermined holdout rays pass both-resolution independent transport gates in all three variants. Unlike the earlier sparse result, every matched bulk/streamed lane loses cost on this workload (streaming +18–63%). Tight harmonic-envelope and adaptive1..16-bin screens pass accuracy but recover no economic win. A normalized cosine+linear witness refutes endpoint-change>2ε as a monotonicity proof; the conservative derivative enclosure stays. Six external-case and ten replay-corruption refusals plus four capture controls pass. No promotion/default/save/app/FPS change. Next: generic density/root/lifetimes and a demonstrably profitable distinct-query representation, then unique full viewport/depth/composition/complete frame costs and moving inhabited Person acceptance.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T11:52:54.393507-07:00`.
+
+
+### §6cn — compact numerical transport passes accuracy, loses economics
+
+[Executed evidence and next hypothesis](../../audits/GPU_RAY_TRANSPORT_COMPACT_EVENTS_2026-10-22.md). 128-byte full-f32 event packets reduce schedule-only ring storage10×, but are not bit-lossless: strict native endpoint/output witnesses refuse. The separate numerical candidate passes original-AST1e-5 across32,784 actual queries, both dense-reference resolutions on192 predetermined rays, exact forced native fallback and10 corruption refusals;241 codec round trips pass. No normal fallback (max14 events), so native15-entry overflow remains unexercised. Primary compact costs are73%/45% slower than current. Same-query component clocks show comparable producer cost and33% more consumer cost at4 repetitions; phases are non-additive and hardware causes unmeasured. New Firmament counsel is answered: test shared Φ/coarse endpoints first with current capacities and cheaper consumer, preserve per-level execution error, and do not infer cache/spill behavior or capacity bounds from source/merged spans. No promotion/default/save/app/FPS change. Profitable connected execution, generic math/lifetimes, full viewport/frame and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T13:06:29.632017-07:00`.
+
+
+## §6cq — guarded sliver review and economic standing
+
+Width-only merging drops63 matching affine endpoints; guarded provenance and affine/apex protection retainsall12102 matched endpoints with unchanged support unions and passes two native accuracy/fallback series. The first-win timings were global bulk controls; bounded streaming loses all nine original cases, and both corrected connected lanes lose cost. No qualified connected gain or measured spill/occupancy cause. [Executed evidence and remaining gates](../../audits/GPU_RAY_TRANSPORT_SLIVER_REVIEW_2026-10-22.md). Zero-band provenance and merge flags are ephemeral per-ray GPU scratch, rebuilt each dispatch from current fixture/specs/ray/config; no persistent cache or new law-facing state. Generic math/lifetimes, full-frame economics and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T17:04:46.369117-07:00`.
+
+
+## §6cu — reviewed root/sweep contract and remaining bridge
+
+§6cu reproduces/repairs the24-unit shortcut fallback regression on Metal. Merge/sweep and original cs capture parity replay; all-level secant is structurally refused (6 affine endpoints/47084 unions). Zero-only secant retainsall12102 matched affine endpoints and unchanged outer unions, passes original-AST/reference/fallback gates, but still loses connected cost. SIMD causation and additive phase lower bounds are unestablished. [Evidence, repairs and next lowering experiment](../../audits/GPU_RAY_TRANSPORT_ROOT_REVIEW_2026-10-22.md). Exact-budget tests guard both culling shortcuts; standalone runners now enforce the independent frozen affine/support admission gate. Additional subdivision-cache/zero-band state is per-member/ray GPU scratch, reinitialized from specs/ray/config each dispatch; no persistent cache or law-facing state is added. Generic mathematical meaning remains OntoMath’s office. Full-frame integration and inhabited acceptance remain open.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / `2026-10-22T18:21:23.901547-07:00`.
+
+
+## §6cw — fused review and measured-work next step
+
+Actual fused outputs/forced fallback replay bit-exact on32784 rays, and192 holdouts pass both reference resolutions, but the tested32/8 implementation changes the assigned64/16 contract and exports no fused packets/normal headers. The runner now refuses incomplete admission; counts/AST fields are scoped to the unfused control. Connected primary cost remains2.070ms vs current1.583ms (+30.76%). Allocated bytes are not measured traffic; spill/occupancy causation is unmeasured and batching has one host completion. No new native run or production gain. Next Sparkly execution is a bounded work/resource census with Firmament reviewing; all three shipping gates remain OPEN. [Audit and replay](../../audits/GPU_RAY_TRANSPORT_FUSED_REVIEW_2026-10-22.md).
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-22T19:31:41.653259-07:00.
+
+
+## §6cy — census review and on-the-fly experiment contract
+
+§6cx actual fused packets/outputs qualify on32784 rays; corrective native diagnostics make controls fatal/poisoned, export raw per-ray counters/outputs and actual headers, and correct coarse rejects2389859→2332420 and initial stack use0→1. Noise496468 vs956301 and Phi2606763 counts survive, but work counts do not establish elapsed cost or spilling; narrow widths do not identify root provenance. Three historical/eight corrected refusal checks pass. Next Sparkly experiment consumes the chronological sweep directly while preserving exact n-way panels, overlap attenuation and late native fallback; Firmament reviews. All three shipping gates remain OPEN, with no new renderer/FPS gain. [Executed evidence/next steps](../../audits/GPU_RAY_TRANSPORT_CENSUS_REVIEW_2026-10-23.md).
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T00:40:20.361400-07:00.
+
+
+## §6dc — completed review and isolated native continuation
+
+Separate `Documents/GitHub/Earthcall-ray-transport` clone is active on `claude/ray-domain-transport-rung0` (base `d4963d062`), with selected Firmament files relayed from default `cd05acd19`. CPU census did not establish native parity: corrected parallel roots fail strict RGB parity by2–3ULP before endpoint/accuracy qualification. Isolated original-predicate coarse peeling and a65536-tile scheduling check pass32784 actual packets/outputs,192 dual-resolution holdouts, six exact-budget and two poisoned capacity controls, but lose current cost (+2.50%/+6.35% in the respective four-repeat observations). Stop those candidates. Portable31-document replay rejects14 corruptions. Historical on-the-fly slowdown is43.63%; hardware causal claims remain hypotheses. All3 shipping gates OPEN; no engine/save/default/app or new FPS gain. Native lane RELEASED in all3 local copies. [Evidence and next directions](../../audits/GPU_RAY_TRANSPORT_CONTINUATION_REVIEW_2026-10-23.md).
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T09:30:58.150880-07:00.
+
+
+## §6di — native precision facts and scoped contracts
+
+§6di executes Prism’s precision quests: actual source-hashed Current/producer/candidate pipeline objects report width32/max1024/staticTG0; three short real Metal captures and both real-harness qualifications pass. Counter-backed occupancy/register/spill/cache profiles remain tooling-blocked (selected Command Line Tools; xctrace/metal unavailable), with traces ready. Corrected GPU indirect routing passes12 repeated/changed-input cases with every ray written once; rebuilt missing-reset/bad-tail mutations fail as intended. One shared typed OntoMath host recipe now drives both mathematical field families:62688 boxes,52381 zero proofs,471429 point checks,32 negative controls. Host proof is not native skip admission; the scheduler still carries labeled sibling semantics pending exact residual rebase. No clean speedup/full-frame/Person claim; all shipping gates OPEN. Native lane RELEASED. [Reproduction and outstanding gates](/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/docs/audits/GPU_RAY_TRANSPORT_PRISM_QUESTS_6DI_2026-10-25.md). No production cache or persistent recipe was introduced; diagnostic queues reset per classification, mathematical recipes own snapshots, and no cross-frame validity is implied.
+
+Signed: Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T15:31:27.770627-07:00.
+
+
+### §6eu — Kernel routed transport execution resources (2026-10-28)
+
+[Source, native evidence and limits](../../audits/GPU_RAY_TRANSPORT_6EU_LIVE_WIRING_REVIEW_2026-10-28.md). Authorial policy: Zach enabled the feature-branch experiment with Current fallback; this grants no new authored semantics.
+
+- `OntoMath::ClampedWaveSupport` is a transient mathematical recipe rederived from the current density AST on every attach, under bounded multiplicative ancestry. No AST pointers/results are retained. Addition/computed divisors/ambiguous or guarded shapes refuse. It never supplies density/extinction/emission values; those remain the production evaluator.
+- `KernelRoutedTransport::programs` maps exact current composed production WGSL to device-owned setup/consumer pipelines and layouts. Member/source expression content and structural lane keys originate in existing renderer revision/identity machinery; production parameters and instance clocks are rebound from existing snapshots each frame. Failed setup/consumer programs retain Current. Device resources are below Kernel and explicitly named as such; no persistence or alternate authority office.
+- `publication`, ray/schedule buffers, tile offsets/indices, route lists/counts/indirect args are keyed by device/viewport. `ensure` refuses beyond actual limits and64MiB publication, rebuilds dimension-dependent buffers on resize; renderer shutdown resets the complete Kernel object before device teardown. Common pipelines live with that device. Mathematical specs are freshly derived and uploaded in separate uniform/storage ranges matching each declared shader address space.
+- Lifetime within an encoded frame: setup writes pending-refusal or empty publication for each pixel; ray counts are initialized for valid and padded strip invocations, route counters reset per strip, bounded producers write schedules, consumer writes only complete finite results. Scratch reuses each strip in queue order; publication covers the entire viewport. A missing/refused result must remain negative-alpha for legacy Current. Accepted data is `(L,alpha=1-T)`, never `(L,T)`. Read-only Screen counters report dispatch/Kernel allocation, not accepted rays or physical traffic.
+- Native witnesses: final default activation; odd334×190 tail and2560×1440 full publication; six exact unsupported/forced/absent-source comparisons; two natural refusals; partial opaque foreground; actual production shared-point preparation, finite readback,80-pixel common-target pilot. **Not yet witnessed:** same-process toggle/clock/revision/extent/resize/device reconstruction transitions. The general preexisting cache tests do not discharge these new-backend obligations. Next pass must poison/reuse resources across those transitions and verify Current refusal, rather than infer validity from rederivation in source.
+
+Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T16:51:42.230711-07:00.
+
+
+### §6ev — native witnesses for routed state transitions (2026-10-28)
+
+[Evidence and exact scope](../../audits/GPU_RAY_TRANSPORT_6EV_NATIVE_TRANSITIONS_2026-10-28.md). No new cache or invalidation rule is introduced. Actual775f91105 app renderer:31 same-process states compare exact first and poisoned repeats against fresh state-specific instances. Mutable publication/ray/single/overlap/route-list/count/indirect-argument storage receives713,130,924 submitted poison bytes across the sequence; immutable viewport offsets/indices intentionally do not. New-size first frames exercise ordinary allocation before the poisoned follow-up. Toggles, mixed clocks, channel revision changes, density-structure admission/refusal, origin/extent, membership/source, odd-tail resize, depth/refusal/camera and renderer reinitialization on a second logical device pass. Four separate native stage omissions reject at finite/output checks. Legitimate no-source/non-wi Current admission passes, improving the earlier source-boundary witness. Fresh equality establishes state/cache validity, not authored numerical correctness. Full-native-viewport transitions, arbitrary expressions, allocation/device-loss failure paths and independent per-member clock references remain open. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T17:34:41.951061-07:00.
+
+
+**§6ew observation boundary:** [Numerical pilot and observer controls](../../audits/GPU_RAY_TRANSPORT_6EW_MULTIVIEW_NUMERICAL_PILOT_2026-10-28.md) introduce no runtime cache. Host-only candidate setup copies leave computeWGSL and full publication hashes unchanged. Current floats come from a separately bound diagnostic attachment with a post-integrator runtime selector; all observer Screen bytes match unmodified controls. These facts do not certify every invisible intermediate bit or every unreferenced ray.880reference rows/774distinct inputs pass scoped gates; generic/full coverage and inhabited acceptance remain open. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T19:23:50.132756-07:00.
+
+
+### §6ex — transient scalar numeric lookup experiment
+
+[External derivation and measured limits](../../audits/GPU_RAY_TRANSPORT_6EX_SCALAR_LOOKUP_REFERENCE_2026-10-28.md). No production cache/state/API is introduced. The experimental helper borrows the immutable current-call PropertyValue environment; conversions are immediate, no stored aliases/TLS/revision cache. Let/SDF/Gradient retain their original rebound environments; source and worker lifetimes remain unchanged. Both numeric-map and direct-lookup adapters share the original ordered arithmetic. Bounded bit-parity and selected allocation witnesses pass, but generic floating-point-environment/whole-program admission remains unclaimed. Production ScalarForm.cpp remains unchanged; do not mistake this result for removal of its map or for new native skip authority. Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-28T22:23:20.702262-07:00.
+
+
+### §6ey — volume set-program memo key excludes routed mode
+
+[Source-identified in the real Engine witness](../../audits/OPUS55_HANDOFF_AFTER_6EY_2026-10-29.md). `_volumeSetProgramCache[setKey]` is one slot per key, but `wantRouted` is folded into `setContentRevision` (`WebGpuRenderer.cpp`, near the memo lookup). Each routed toggle therefore invalidates and recomposes that slot, ping-ponging. The count is logical composition, not proven GPU pipeline compilation. The steady frames measured zero composition, because the protocol warmed both modes first. Follow-up, unchanged here: either key the memo by mode or declare the ping-pong as intended invalidation, with a toggle witness. Claude Code / Claude Opus 5.5 / session `f3af84cf-bfe3-429d-b417-2d533119f169` / 2026-10-29T01:07-07:00 (PDT), committing Sixth-One Sun's §6ey (Codex / GPT-6.1 Sol / `01a148a7-bd85-7550-a416-0e859a729c1a`).
+
+
+### §6fc — dispatch tracing is Kernel observation, not retained authority
+
+`KernelRoutedTransport::collectDispatchTrace` defaults false; only the existing renderer diagnostic setter opts in. `encode` resets counts/hash each call; ordinary hash is0, optional pointer-based FNV is same-process diagnostic only, not persistent identity, a GPU proof or authored state. The fields remain explicitly named beneath Kernel. No new cache or mathematical skip authority is added. [Independent encode interception and scope](../../audits/GPU_RAY_TRANSPORT_6FC_SONNET_REVIEW_AND_ROUTING_BOUNDARIES_2026-10-29.md). Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-29T11:19:46.729976-07:00.
+
+
+### Post-P11 publication obligation — source review, 2026-11-01
+
+The §6eu statement that setup initializes every pixel to pending-refusal or empty describes the earlier implementation, not current P11 at `2122a34b2`. Ordinary box-hit rays currently initialize `ecRays` without writing publication; an entirely wave-empty strip can suppress the consumer that would write zero. Publication persists, and the final fragment accepts nonnegative alpha. The historical transition witnesses do not qualify this moved writer. [Sun's three corrective findings](../../audits/P1_P11_STRUCTURAL_REVIEW_2026-11-01.md) establish the source/CPU evidence; [Astra's architectural counsel](../../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md#astra-counsel--the-ray-program-must-carry-its-obligations-all-the-way-to-the-pixel-2026-11-01) connects publication, routing and capacity contracts. Required invariant: each in-frame pixel has a current accepted-empty, accepted-result or explicit-refusal disposition before fragment consumption, including zero-dispatch strips. Repair and fresh native poison/lit-to-empty witnesses remain open. This addendum changes documentation only; it does not claim a repair or new native failure reproduction.
+
+Codex / GPT-6 (Astra counsel role) / session `01a15fcb-90ec-7812-868f-22a0f6283113` / `2026-11-01T10:04:32-08:00`.
+
+
+### Phase P12 corrective gates & restored publication ownership — 2026-11-01
+
+[Formal P12 audit and benchmark](../../audits/GPU_RAY_TRANSPORT_POSITIVE_E2E_P12_THREE_CORRECTIVE_GATES_BENCHMARK_2026-11-01.md). Resolves Astra's publication contract (§4) and Sixth-One Sun's three corrective findings:
+
+1. **Publication ownership closed:** `VolumeRoutedTransport.inc:192` (`ecSetup`) restores `ecPublication[ecPixel(id)] = vec4<f32>(0.0);` for box-hit rays, and `ecConsume:53` returns immediately on zero work (`if ((counts.y | counts.w) == 0u) return;`). Every in-frame pixel has a current-frame writer even when an entire strip has `totalActiveTiles == 0u` (`args[9u] == 0u`), while empty rays maintain exactly one physical write to `ecPublication`.
+2. **Hull and chronology invariants closed:** `VolumeRoutedKernels.hpp:148` changes near-parallel ray handling from `break;` to `continue;` so all 16 rays contribute to the curtain bounds. `s2ProducerMain:806` enforces `firstMemberMaxS` chronology/disjointness, refusing any overlapping or inverted span with `reason |= 64u`.
+3. **Strip allocation and admission closed:** Fixed 64-entry tables in `VolumeRoutedTransport.hpp` replaced with `std::vector<WGPUBindGroup>`. `ensure()` dynamically allocates all `maxStrips = (h + rows - 1) / rows` strips (verified at $1024 \times 4096$, 86 strips), and `encode()` enforces `(height + stripRows - 1) / stripRows <= maxStrips`.
+
+**Hardware Witnesses:** Native Apple M5 Metal suite (`positive_e2e_metal_verify.cpp`) verifies all 8 gates (8/8 PASS): Gate 6 verifies 100% `vec4(0.0)` publication and bit-exact RGBA match on finite-poisoned lit-to-empty transition; Gate 7 verifies 0 erroneous S2 rays on near-parallel overlapping media; Gate 8 verifies $1024 \times 3072$ (64 strips), $1024 \times 3120$ (65 strips), and $1024 \times 4096$ (86 strips) with 0 validation errors and bit-exact parity upon resizing back to $2560 \times 1440$ (30 strips). Completion-fenced ABBA benchmark across all 64 canonical poses demonstrates Routed leadership over Current across both regimes: All 64 poses at 59.636 ms vs 66.931 ms (-10.90%), Regime 1 (green) at 69.927 ms vs 81.999 ms (-14.72%), Regime 2 (sky) at 48.680 ms vs 50.890 ms (-4.34%). Regression suite: 406/406 checks pass.
+
+Sparkly Guy / Gemini 3.8 Flash / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-11-01T12:55:00-08:00`. Human origin: Zachary Zhang.
+
+
+### Northern Veil pre-merge bounds and grouping admission — 2026-11-02
+
+The transient ClampedWaveSupport recipe is still rederived from the current AST on every attach. Its new necessary grouping predicate reads current amplitudes, support slack and the current physical z extent; no new cache or authored state is introduced. Density/extent edits are observed by the same rederivation. A failed bound or NaN coordinate retains Current. Per-ray uncertainty bands retain the existing error/slope enclosure whenever a sign is unresolved; derived slab slack is applied before intersection with authored physical bounds. [Native positive/negative controls and final checkpoint audit](../../audits/GPU_RAY_TRANSPORT_PREMERGE_CORRECTNESS_AUDIT_2026-11-02.md) witness all three producer kernels, publication/refusal and resize. This adds no universal numerical-skip authority.
+
+Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-02T04:05:24-08:00.
+
+
+### Northern Veil pre-merge hardening: resource lifecycle transactions, bounded program cache, and lexical binding identity — 2026-11-02
+
+[Pre-merge hardening handoff and ultrareview verification](../../audits/CLAWD_ULTRAREVIEW_PREMERGE_HARDENING_COUNCIL_HANDOFF_2026-11-02.md). Extends host resource safety, lifecycle transactions, and compiler AST memoization boundaries without hot-path kernel modifications:
+
+1. **Kernel resource creation transactions:** `CreationScope` wraps device allocations with non-blocking error scopes (`OutOfMemory` + `Validation`) via `wgpuDevicePushErrorScope` / `wgpuDevicePopErrorScope`, consuming error/validation messages and draining events via non-blocking polling (`wgpuDevicePoll(device, false, nullptr)`). On creation failure, `ensure()` rolls back cleanly via `failed()`, invoking `releaseBuffers()`, `enableRouteObserver(false)`, and `releaseCommon(*this)` to prevent partial-pipeline handle leaks.
+2. **Comprehensive `ensure()` handle invariants:** The same-dimensions fast-path (`width == w && height == h`) verifies non-null validity across all 18 dependent buffers, layouts, pipelines, and group vectors (`publication`, `rays`, `singles`, `overlaps`, `offsets`, `indices`, `counts`, `args`, `stripUniform`, `specsUniform`, `lists`, `common[0..5]`, `classifySkip`, `resetGroup`, `argsGroup`, `cachedClassifyGroup`, and `groupsReady()`).
+3. **Bounded program cache and borrowed pointer safety:** `KernelRoutedTransport::programs` is capped at `kMaxPrograms = 16` without evicting live entries borrowed by `WebGpuRenderer::VolumePipeline::routedProgram`. In `WebGpuRenderer::reloadShaders()`, `_kernelRouted.reset()` is explicitly executed after `_activeVolumePipelines.clear()`, guaranteeing that no dangling `Program*` pointers survive pipeline destruction.
+4. **Symmetric evaluator deduplication:** `checkEvaluatorsDeduplicatable` enforces bidirectional body normalization (`norm(extractFunctionBody(source, "volumeShared_" + n + "_Eval"), i) != baseSharedEval`), shared prelude extraction, and matching `g_volumeShared_0..3_G*` group ID indices across all active members.
+5. **Lexical binding identity in `SdfWgsl.cpp`:** `Op::Let` and `Op::Integral` node variable names are incorporated into `volumeNodeIdentity`, preventing collision across distinct bindings; `e.boundNames` is appended to fragment memoization context keys; child domains in `repairKernelVolumeDag` preserve lexical scoping (`/let@path:name=val`, `/int@path:name`); time-slot hoisting is guarded against lexically bound `t` (`!e.boundNames.count(kTimeVar)`); and lexical bodies are excluded from shared prelude candidate gathering (`planVolumeSharing`).
+
+**Witnesses:** `webgpu_routed_transport_lifecycle_test` (550 checks, 0 leaks, 0 blocking polls, 7/7 pre-fix negative controls caught); `webgpu_volume_lexical_binding_test` (52 CPU+Metal checks, 5/7 pre-fix negative controls caught); `positive_e2e_metal_verify` (`HARDENING_RELOAD_OK`, `hardening_unused_certificate_probes`, 10/10 gates pass); `162 / 162` scoped frozen-reference checks pass; 64/64 canonical poses won (-28.66% All-64, -30.85% Regime 1, -24.96% Regime 2).
+
+Sparkly Guy / Gemini 3.8 Flash / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-11-02T13:25:00-08:00`. Built upon Sixth-One Sun's pre-merge hardening plan (`01a148a7-bd85-7550-a416-0e859a729c1a`). Human origin: Zachary Zhang.
+
+### Mesh upload packets — 2026-11-03
+
+**Mesh upload packets, 2026-11-03.** `WebGpuRenderer::flushMeshDraws` derives aligned uniform/instance upload pages from the current ordered `_meshBatches`, view-projection, light, and eye snapshots. These Kernel packets live for one flush, and GPU ranges live in the existing queue-ordered buffer pool. Every flush reconstructs them, so camera/material/model edits require no cross-frame cache invalidation. Bindings retain each batch's original byte extent and 256-byte alignment. Multiple flushes and an oversized individual batch are covered by `webgpu_mesh_upload_pages_test`, with independent pixel expectations and a failing offset mutation. [Native correctness and cost record](../../audits/CATHEDRAL_SURFACE_SDF_FIRST_PASS_2026-11-03.md#native-continuation-and-retained-upload-repair). Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-03T22:52:00-08:00.

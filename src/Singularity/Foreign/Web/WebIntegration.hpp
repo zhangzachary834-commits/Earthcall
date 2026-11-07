@@ -121,7 +121,6 @@ public:
 
     // Earthcall feature access
     void enableBrushSystemAccess(bool enable);
-    void enableDesignSystemAccess(bool enable);
     void enableAvatarSystemAccess(bool enable);
 
     // Communication
@@ -147,7 +146,6 @@ private:
     bool _globalOverlayMode = false;
     float _globalTransparency = 1.0f;
     bool _brushSystemAccess = false;
-    bool _designSystemAccess = false;
     bool _avatarSystemAccess = false;
 };
 

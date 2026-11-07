@@ -1,0 +1,170 @@
+{
+    "identifier": "law-nn-visuals",
+    "authors": [
+        "Zach"
+    ],
+    "injected_by": "Antigravity - ML Relations",
+    "law": {
+        "id": "law-nn-visuals",
+        "name": "NN Visuals",
+        "enabled": true,
+        "authority": 0,
+        "activation": 1,
+        "scope": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+            "Zach"
+        ],
+        "conditionModel": {
+            "kind": 3,
+            "children": []
+        },
+        "actionModel": {
+            "kind": 5,
+            "children": [
+                {
+                    "kind": 8,
+                    "path": "@node-in-1.position.y",
+                    "bindings": {
+                        "act": "@node-in-1.authored.activation"
+                    },
+                    "function": {
+                        "pieces": [
+                            {
+                                "expr": {
+                                    "terms": [
+                                        {
+                                            "c": 1.0,
+                                            "factors": {
+                                                "act": 1
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 8,
+                    "path": "@node-in-2.position.y",
+                    "bindings": {
+                        "act": "@node-in-2.authored.activation"
+                    },
+                    "function": {
+                        "pieces": [
+                            {
+                                "expr": {
+                                    "terms": [
+                                        {
+                                            "c": 1.0,
+                                            "factors": {
+                                                "act": 1
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 8,
+                    "path": "@node-h-1.position.y",
+                    "bindings": {
+                        "act": "@node-h-1.authored.activation"
+                    },
+                    "function": {
+                        "pieces": [
+                            {
+                                "expr": {
+                                    "terms": [
+                                        {
+                                            "c": 1.0,
+                                            "factors": {
+                                                "act": 1
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 8,
+                    "path": "@node-h-2.position.y",
+                    "bindings": {
+                        "act": "@node-h-2.authored.activation"
+                    },
+                    "function": {
+                        "pieces": [
+                            {
+                                "expr": {
+                                    "terms": [
+                                        {
+                                            "c": 1.0,
+                                            "factors": {
+                                                "act": 1
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 8,
+                    "path": "@node-out.position.y",
+                    "bindings": {
+                        "act": "@node-out.authored.activation"
+                    },
+                    "function": {
+                        "pieces": [
+                            {
+                                "expr": {
+                                    "terms": [
+                                        {
+                                            "c": 1.0,
+                                            "factors": {
+                                                "act": 1
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    "kind": 8,
+                    "path": "@node-target.position.y",
+                    "bindings": {
+                        "act": "@node-target.authored.activation"
+                    },
+                    "function": {
+                        "pieces": [
+                            {
+                                "expr": {
+                                    "terms": [
+                                        {
+                                            "c": 1.0,
+                                            "factors": {
+                                                "act": 1
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        "provenance": []
+    },
+    "triggers": []
+}

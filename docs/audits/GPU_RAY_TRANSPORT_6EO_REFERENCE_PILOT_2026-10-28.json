@@ -1,0 +1,171 @@
+{
+  "schema": "6eo-reference-pilot-1",
+  "signed_by": "Codex / GPT-6.1 Sol / Sixth-One Sun / 01a148a7-bd85-7550-a416-0e859a729c1a",
+  "timestamp": "2026-10-28T06:43:39.765533-07:00",
+  "scope": "Bounded original-AST CPU reference pilot and isolated optimization controls; not population/GPU/frame acceptance",
+  "archive_sha256": "0dbf6465578f8f8e230b9a2ce099b159ce917f1d4a8a4e158f800280bcc92475",
+  "members_sha256": {
+    "selection/base.json": "36d0b086cdb1630d3735a12ca3f9d918c38271d5a31afdeec85dc42cda770ba0",
+    "build/base-source.json": "5303b955c2121fbd246304bab0b275480857b5f9bb18e74c52ab0870e3a11abf",
+    "rays/continuity.json": "8db32894c07b6e76f213baacccec9b1973ea3ef2030e95d8aa91bea8630b2c84",
+    "base/continuity-reference.json": "8555726355554688075ab6220a11e417567d0c96421653338d6e07c122c6086b",
+    "base/continuity-receipt.json": "9aa113890948fe8dd9ed104c5823498390faa89dae5e23b13768b7cc82a9d7c4",
+    "base/continuity.log": "30fad87df4392e996385f4b8cae6ff9ec1eca0de29dd856147d0a1d019a4c2fa",
+    "rays/uniform-stress.json": "8d9e8bac23e334bf0305ed99aee36b2560c7e350e9a787b41254612cfb935782",
+    "base/uniform-stress-reference.json": "ab278debbafbcfed401f89b7dc5f88c23c1e11b8150ef80e57b5e34ef252bbdf",
+    "base/uniform-stress-receipt.json": "bd28373e6f5dcbcd95cc6b430d5e6d510570c70c15a3621dd4bb5a38ddf37fb8",
+    "base/uniform-stress.log": "20ec3ee7fc73f894da4f5ab3f76bdbbb6f71d0a576139fb955f1ff33671140eb",
+    "selection/optimized.json": "36d0b086cdb1630d3735a12ca3f9d918c38271d5a31afdeec85dc42cda770ba0",
+    "build/optimized-source.json": "79a57ff7e9ba28d4267f00a61e0e6931a664702e4a7efe7bd5576d837bf876ad",
+    "optimized/continuity-reference.json": "8555726355554688075ab6220a11e417567d0c96421653338d6e07c122c6086b",
+    "optimized/continuity-receipt.json": "3f3371f5c72b00c5fd03f91cb650d3024afbf750163653cccdc01b878a0a4ffb",
+    "optimized/continuity.log": "3f935b764bb6795d74ff176c18ca9bfb117d0fa3c357ea2110a33526a3507b88",
+    "optimized/uniform-stress-reference.json": "ab278debbafbcfed401f89b7dc5f88c23c1e11b8150ef80e57b5e34ef252bbdf",
+    "optimized/uniform-stress-receipt.json": "d80619511361cfd3465b6015b534187343b4f4098aa0b7d15bbcdc40939c038f",
+    "optimized/uniform-stress.log": "5e18a0e2ff3a1dce44a85fbcdbfa4373a861db716b2a4f5c985ad8dc0149ca33",
+    "selection/optimized-first.json": "36d0b086cdb1630d3735a12ca3f9d918c38271d5a31afdeec85dc42cda770ba0",
+    "build/optimized-first-source.json": "09b36d4420aac8514bedda1e862a46c48e7b41ff40b7ffca232c15b22233a9b2",
+    "optimized-first/continuity-reference.json": "8555726355554688075ab6220a11e417567d0c96421653338d6e07c122c6086b",
+    "optimized-first/continuity-receipt.json": "bebb749e13f5a641ad0fd8182da65c32d215417a53e3ab6825b78b4109286ef7",
+    "optimized-first/continuity.log": "e9c6f40901770472ffc36d9d798f60aa1eb791241938fe806c73041d5486fa5f",
+    "optimized-first/uniform-stress-reference.json": "ab278debbafbcfed401f89b7dc5f88c23c1e11b8150ef80e57b5e34ef252bbdf",
+    "optimized-first/uniform-stress-receipt.json": "c808e90fc03d19f8d500260bb30b2bd2b1e6db4776b4f5009ffaa3e24834a592",
+    "optimized-first/uniform-stress.log": "1ce6915b744776be2bf1b6a369361cac076a97769d394b759360e3dacb88cc17",
+    "rays/cost-cohort.json": "75deb4cd921cfcb9a540667339dfc8a73ee0fc5b9b0931e370d241c54cde3b04",
+    "optimized-first/cost-cohort-reference.json": "978b41b353167fbae9d0c00cf503559ceceb6350148b89e94b3d1085415beba7",
+    "optimized-first/cost-cohort-receipt.json": "cd2131a51c2d932732220a67d012239bf5f1c8bcc593007fd906317e3a076386",
+    "optimized-first/cost-cohort.log": "b479fff7f2c4a8b8f90781037118f3d6b74978b204b30c28a28a4f63c826cf4a",
+    "controls/integration.json": "3da06f301d29a130bccee3d82e95439528a75143ab50088a1ed48ef4340b45db",
+    "source/ray_transport_6eo_reference_pilot.py": "670332c03c0483f8af933677f274a9c707f9bef5098527096a7375ea99a7ba1d",
+    "source/ray_transport_6eo_reference_build.py": "6642c98823c9759cabf0661df16574d72defb1ef59cde22be4c266d2e538715e",
+    "source/ray_transport_6eo_replay.py": "818734aa14ba31e9fb520dc939d3f216947c3f583333977e14012b5675049f2d",
+    "source/veil_projected_reference.cpp": "bdcdd79eb7408b45cc48346010d6584e2d4cdedbf974ae25b5302148fa443b1f",
+    "counsel/firmament-as-received.md": "d56a757f5f1022a9faf4d6abc8bf1ed1a416e6be1abd4f71d3bdd6504d08cd2d"
+  },
+  "generator_sha256": "bdcdd79eb7408b45cc48346010d6584e2d4cdedbf974ae25b5302148fa443b1f",
+  "old_reference_sha256": "cf57b2d92bb316e924183686e4dc92087aa93f3ba5aa0a108eaad9f599243cb6",
+  "parent_record": "docs/audits/GPU_RAY_TRANSPORT_6EN_MODE2_OWNERSHIP_2026-10-28.json",
+  "parent_archive": "docs/audits/GPU_RAY_TRANSPORT_6EN_MODE2_OWNERSHIP_2026-10-28.zip",
+  "parent_archive_sha256": "e9856c760a5bc8265cddcf623f0f7b92619d861af9a56674ebcbe6585f0da395",
+  "executions": [
+    {
+      "prefix": "base/continuity",
+      "job": "continuity",
+      "rays": "rays/continuity.json",
+      "selection": "selection/base.json",
+      "build_receipt": "build/base-source.json"
+    },
+    {
+      "prefix": "base/uniform-stress",
+      "job": "uniform-stress",
+      "rays": "rays/uniform-stress.json",
+      "selection": "selection/base.json",
+      "build_receipt": "build/base-source.json"
+    },
+    {
+      "prefix": "optimized/continuity",
+      "job": "continuity",
+      "rays": "rays/continuity.json",
+      "selection": "selection/optimized.json",
+      "build_receipt": "build/optimized-source.json"
+    },
+    {
+      "prefix": "optimized/uniform-stress",
+      "job": "uniform-stress",
+      "rays": "rays/uniform-stress.json",
+      "selection": "selection/optimized.json",
+      "build_receipt": "build/optimized-source.json"
+    },
+    {
+      "prefix": "optimized-first/continuity",
+      "job": "continuity",
+      "rays": "rays/continuity.json",
+      "selection": "selection/optimized-first.json",
+      "build_receipt": "build/optimized-first-source.json"
+    },
+    {
+      "prefix": "optimized-first/uniform-stress",
+      "job": "uniform-stress",
+      "rays": "rays/uniform-stress.json",
+      "selection": "selection/optimized-first.json",
+      "build_receipt": "build/optimized-first-source.json"
+    },
+    {
+      "prefix": "optimized-first/cost-cohort",
+      "job": "cost-cohort",
+      "rays": "rays/cost-cohort.json",
+      "selection": "selection/optimized-first.json",
+      "build_receipt": "build/optimized-first-source.json"
+    }
+  ],
+  "results": {
+    "base/continuity": {
+      "rays": 18,
+      "seconds": 15.00889954098966,
+      "convergence_max": {
+        "T": 2.905071616599031e-08,
+        "RGB": 1.7212257258369945e-08
+      }
+    },
+    "base/uniform-stress": {
+      "rays": 74,
+      "seconds": 57.469349249993684,
+      "convergence_max": {
+        "T": 6.815546793603744e-08,
+        "RGB": 4.0170468285083416e-08
+      }
+    },
+    "optimized/continuity": {
+      "rays": 18,
+      "seconds": 9.25890512499609,
+      "convergence_max": {
+        "T": 2.905071616599031e-08,
+        "RGB": 1.7212257258369945e-08
+      }
+    },
+    "optimized/uniform-stress": {
+      "rays": 74,
+      "seconds": 30.647368708014255,
+      "convergence_max": {
+        "T": 6.815546793603744e-08,
+        "RGB": 4.0170468285083416e-08
+      }
+    },
+    "optimized-first/continuity": {
+      "rays": 18,
+      "seconds": 4.851802374992985,
+      "convergence_max": {
+        "T": 2.905071616599031e-08,
+        "RGB": 1.7212257258369945e-08
+      }
+    },
+    "optimized-first/uniform-stress": {
+      "rays": 74,
+      "seconds": 16.79563274999964,
+      "convergence_max": {
+        "T": 6.815546793603744e-08,
+        "RGB": 4.0170468285083416e-08
+      }
+    },
+    "optimized-first/cost-cohort": {
+      "rays": 1024,
+      "seconds": 256.7982936669723,
+      "convergence_max": {
+        "T": 6.529390639276045e-08,
+        "RGB": 3.908280873932135e-08
+      }
+    }
+  },
+  "distinct_new_capture_rays": 1094,
+  "full_population": 230400,
+  "full_population_reference_generated": false,
+  "linear_full_population_minutes_estimate": 962.9936012511462,
+  "estimate_not_measured_runtime": true,
+  "shipping_gates_open": 3,
+  "gpu_lane_claimed": false,
+  "received_counsel": {
+    "path": "docs/audits/FIRMAMENT_COUNSEL_POST_6EN_AND_SONNET_MERGE_WHY_MODE2_WON_AND_6EO_BRIDGE_PLAN_2026-10-28.md",
+    "sha256": "d56a757f5f1022a9faf4d6abc8bf1ed1a416e6be1abd4f71d3bdd6504d08cd2d",
+    "scope": "Concurrent untracked counsel snapshotted as received; original not edited or staged by this pass"
+  }
+}

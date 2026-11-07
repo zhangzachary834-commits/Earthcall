@@ -22,6 +22,8 @@
 #include "Identity/KeyPair.hpp"
 #include "Identity/KeyStore.hpp"
 #include "json.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
 
 #include <cassert>
 #include <chrono>
@@ -30,17 +32,29 @@
 #include <filesystem>
 #include <iostream>
 #include <signal.h>
+#include <csignal>
 #include <string>
 #include <sys/wait.h>
 #include <thread>
 #include <unistd.h>
 
 using namespace Identity;
+extern ZoneManager mgr;
 namespace fs = std::filesystem;
 
 namespace {
 
 constexpr uint16_t kPort = 18189;
+
+// If an assertion aborts this test, its node child would outlive it, hold the
+// port and the pipes, and turn one clear failure into ctest timeouts plus an
+// "Address already in use" on every rerun (seen 2026-09-30). Take it down too.
+pid_t g_bridgePid = -1;
+extern "C" void killBridgeOnAbort(int sig) {
+    if (g_bridgePid > 0) kill(g_bridgePid, SIGKILL);
+    std::signal(sig, SIG_DFL);
+    std::raise(sig);
+}
 
 struct Bridge {
     pid_t pid = -1;
@@ -64,6 +78,9 @@ struct Bridge {
         }
         close(in[0]);
         close(out[1]);
+        g_bridgePid = pid;
+        std::signal(SIGABRT, killBridgeOnAbort);
+        std::signal(SIGSEGV, killBridgeOnAbort);
         toChild = in[1];
         fromChild = out[0];
         fcntl(fromChild, F_SETFL, O_NONBLOCK);
@@ -145,7 +162,13 @@ int main(int, char** argv) {
     assert(KeyStore().store(sonnet, "mover-pass"));
     assert(reg.trustAuthenticatedPerson(zach));
     assert(reg.recognize(zach, FirstMover::Kind::Person, sonnet.id(), FirstMover::Kind::Model,
-                         "Claude Sonnet 4.5", {"laws/sonnet-*/**"}, 1000));
+                         "Claude Sonnet 4.5", {"laws/sonnet-*/**", "zones/SonnetGarden/**"}, 1000));
+    // A Zone Sonnet may build in, entered the way a Person would.
+    auto garden = mgr.authorZone("SonnetGarden", "tester", "");
+    assert(garden);
+    for (size_t i = 0; i < mgr.zones().size(); ++i) {
+        if (mgr.zones()[i] == garden) assert(mgr.switchTo(i));
+    }
 
     auto& server = Singularity::Network::WebSocketServer::instance();
     server.start(kPort);
@@ -191,7 +214,31 @@ int main(int, char** argv) {
 
     // A Person's body: refused, and reported as refused (it used to say success).
     r = b.callTool(4, "earthcall_teleport_player", {{"position", {0, 99, 0}}});
-    assert(r["status"] == "refused" && r["reasonCode"] == "unmapped-resource");
+    assert(r["status"] == "refused" && r["reasonCode"] == "kernel-person-body");
+
+    // SDF shorthand through the model-facing tool (it used to spawn nothing).
+    r = b.callTool(6, "earthcall_spawn_field", {{"name", "sonnet-orb"},
+                   {"expr", "smoothUnion(sphere(0.4), move(torus(0.5, 0.1), 0, 0.3, 0), 0.2)"}});
+    assert(r["status"] == "success" && r["isField"] == true);
+
+    // A volume through the model-facing tool.
+    r = b.callTool(7, "earthcall_author_volume", {{"identifier", "sonnet-mist"},
+                   {"origin", {0, 1, 0}}, {"scale", {2, 2, 2}},
+                   {"density", "1 - sqrt(x*x+y*y+z*z)"}, {"scattering", "0.8"}});
+    std::cout << "author_volume: " << r.dump() << "\n";
+    assert(r["status"] == "success" && r["isVolume"] == true);
+    r = b.callTool(8, "earthcall_author_volume", {{"identifier", "sonnet-fog"}, {"density", "exp(-(x*x))"}});
+    assert(r["status"] == "invalid_arguments");
+
+    // The Law Line through the model-facing tool: preview is read-only and
+    // answers; authoring is gated (headless: admitted, then no LawManager).
+    r = b.callTool(9, "earthcall_law_sentence", {{"text", "on \"sonnet-bloomed\" then set glow 1"},
+                   {"identifier", "sonnet-bloom"}});
+    std::cout << "law_sentence: " << r.dump() << "\n";
+    assert(r["status"] == "law_manager_unavailable" || r["status"] == "authored");
+    r = b.callTool(10, "earthcall_law_sentence", {{"text", "on \"x\" then set glow 1"},
+                    {"identifier", "law-art-stroke-draw"}});
+    assert(r["status"] == "refused" && r["reasonCode"] == "outside-scope");
 
     // Speech is attributed to the mover.
     r = b.callTool(5, "earthcall_speak", {{"utterance", "Hello, Earthcall. -- Sonnet"}});

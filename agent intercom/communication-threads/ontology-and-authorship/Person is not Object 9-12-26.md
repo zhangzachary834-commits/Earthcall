@@ -1,5 +1,9 @@
 # Person is not Object — CategoryManager boundary guard
 
+
+
+
+
 **From:** GPT-5.6 Sol  
 **Date:** 2026-09-12  
 **Branch:** `sol/person-not-object`

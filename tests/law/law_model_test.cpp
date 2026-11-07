@@ -15,6 +15,8 @@
 #include "Person/Person.hpp"
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -176,15 +178,81 @@ int main() {
         Law strLaw("tool-checker");
         strLaw.addAuthor(author);
         strLaw.setConditionModel(ConditionNode::compare("activeTool", ConditionNode::Op::Eq, PropertyValue(std::string("3DShapeGenerator"))));
-        strLaw.setActionModel(ActionNode::set("position.y", PropertyValue(100.0f)));
+        strLaw.setActionModel(ActionNode::set("test.marker", PropertyValue(100.0)));
 
         Soul pSoul("TestSubject");
         Body pAvatar = Body::createBasicAvatar("TestVoxel");
         Person person(pSoul, std::move(pAvatar), "default");
-        // The Person Guard rejects a law that moves someone's body unless
-        // they are among its authors, so without this applyTo stops at
-        // AuthorityDenied and never evaluates the conditions under test.
-        strLaw.addAuthor(person);
+        {
+            // The constitutional motion guard follows the Person actually
+            // written, even when a Law is applied to another subject. A
+            // qualified reading alone does not count as a motion write.
+            Object otherSubject;
+            Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+                out.push_back(&person);
+                out.push_back(&otherSubject);
+            });
+            const std::string personPath =
+                "@" + person.getIdentifier() + ".position.y";
+            Law forcedMotion("forced-qualified-motion");
+            forcedMotion.addAuthor(author);
+            forcedMotion.setActionModel(
+                ActionNode::set(personPath, PropertyValue(25.0f)));
+            assert(forcedMotion.applyTo(otherSubject) ==
+                   Law::ApplicationResult::AuthorityDenied);
+            assert(nearf(person.position().y, 0.0f));
+            const auto refused = forcedMotion.applicationLog().back().toJson();
+            assert(refused.value("refusalReason", std::string()).find(
+                       "no verified signed actuation consent") != std::string::npos);
+            assert(refused["refusalReason"].get<std::string>().find(
+                       person.getIdentifier()) == std::string::npos);
+
+            Law clearMotion("clear-qualified-motion");
+            clearMotion.addAuthor(author);
+            clearMotion.setActionModel(ActionNode::removeProperty(
+                "@" + person.getIdentifier(), "position"));
+            assert(clearMotion.applyTo(otherSubject) ==
+                   Law::ApplicationResult::AuthorityDenied);
+
+            Law disguisedMotion("newborn-qualified-motion");
+            disguisedMotion.addAuthor(author);
+            disguisedMotion.setActionModel(ActionNode::create(
+                0, "fixture", {ActionNode::set(personPath, PropertyValue(25.0f))}));
+            assert(disguisedMotion.applyTo(otherSubject) ==
+                   Law::ApplicationResult::AuthorityDenied);
+
+            Law observesMotion("observe-person-motion");
+            observesMotion.addAuthor(author);
+            observesMotion.setActionModel(ActionNode::drive(
+                "rotation.y", CurveModel::polynomial({0.0, 1.0}), personPath));
+            assert(observesMotion.applyTo(otherSubject) ==
+                   Law::ApplicationResult::Applied);
+
+            forcedMotion.addAuthor(person);
+            assert(forcedMotion.applyTo(otherSubject) ==
+                   Law::ApplicationResult::AuthorityDenied);
+            assert(nearf(person.position().y, 0.0f));
+            Universe::instance().setProvider(nullptr);
+        }
+        // A non-motion Property still tests condition evaluation on a Person;
+        // authorship alone no longer authorizes a later bodily actuation.
+        person.setDynamicProperty("test.marker", PropertyValue(0.0));
+
+        // A prohibition can judge a Person's location and record that a
+        // restricted bound was crossed. It does not assign a destination or
+        // drive the Person's body, so the positive-write guard does not bar it.
+        Law restrictedArea("restricted-area-notice");
+        restrictedArea.addAuthor(author);
+        restrictedArea.setConditionModel(ConditionNode::compare(
+            "position.y", ConditionNode::Op::Gt, PropertyValue(10.0)));
+        restrictedArea.setActionModel(ActionNode::set(
+            "test.marker", PropertyValue(2.0)));
+        assert(restrictedArea.applyTo(person) ==
+               Law::ApplicationResult::ConditionsFailed);
+        person.position().y = 12.0f; // fixture enters the illustrative bound
+        assert(restrictedArea.applyTo(person) == Law::ApplicationResult::Applied);
+        assert(nearf(person.position().y, 12.0f));
+        person.position().y = 0.0f;
 
         // Ensure property can be accessed
         PropertyValue valOut;
@@ -197,6 +265,7 @@ int main() {
         PropertyPath::parse("activeTool").setValue(person, PropertyValue(std::string("3DShapeGenerator")));
         
         assert(strLaw.applyTo(person) == Law::ApplicationResult::Applied);
+        person.position().y = 100.0f; // test fixture setup, not Law actuation
         
         // ------------------------------------------------------------------
         // 9. Spawning Action Behavior
@@ -246,7 +315,9 @@ int main() {
         {
             Law multiLaw("multi-law");
             multiLaw.addAuthor(author);
-            multiLaw.addAuthor(person);   // moves person.position -- see the Person Guard above
+            Object workingSubject;
+            workingSubject.setPosition(glm::vec3(0.0f, 100.0f, 0.0f));
+            workingSubject.setDynamicProperty("activeTool", PropertyValue(std::string("FloatSatisfied")));
 
             // Multiple conditions: activeTool == "FloatSatisfied" AND position.y > 50.0
             std::vector<ConditionNode> conditions;
@@ -261,13 +332,13 @@ int main() {
             multiLaw.setActionModel(ActionNode::sequence(std::move(actions)));
 
             // Before applying, x and z should be 0 (from defaults) and y is ~100 (from previous test)
-            assert(multiLaw.applyTo(person) == Law::ApplicationResult::Applied);
-            assert(nearf(person.position().x, 42.0f));
-            assert(nearf(person.position().z, 42.0f));
+            assert(multiLaw.applyTo(workingSubject) == Law::ApplicationResult::Applied);
+            assert(nearf(workingSubject.getPosition().x, 42.0f));
+            assert(nearf(workingSubject.getPosition().z, 42.0f));
             
             // Verify failure condition (AND fails if one is false)
-            PropertyPath::parse("activeTool").setValue(person, PropertyValue(std::string("WrongTool")));
-            assert(multiLaw.applyTo(person) == Law::ApplicationResult::ConditionsFailed);
+            PropertyPath::parse("activeTool").setValue(workingSubject, PropertyValue(std::string("WrongTool")));
+            assert(multiLaw.applyTo(workingSubject) == Law::ApplicationResult::ConditionsFailed);
         }
         // ------------------------------------------------------------------
         // 5. Verification of multiple-condition (All, Any) and multiple-action (Sequence) laws
@@ -275,7 +346,6 @@ int main() {
         {
             Law multiLaw("multi-tester");
             multiLaw.addAuthor(author);
-            multiLaw.addAuthor(person);   // moves person.position -- see the Person Guard above
 
             // Condition: (y < 0) AND (x > 10)
             auto c1 = ConditionNode::compare("position.y", ConditionNode::Op::Lt, PropertyValue(0.0));
@@ -311,6 +381,169 @@ int main() {
             assert(multiLaw.applyTo(testObj) == Law::ApplicationResult::Applied);
             assert(nearf(testObj.getPosition().y, 0.0f));
             assert(nearf(testObj.getPosition().x, 10.0f));
+        }
+
+        // ------------------------------------------------------------------
+        // 6. MetaLaw conditioning on Law properties (authors, targets, isFirstMover, authority)
+        // ------------------------------------------------------------------
+        {
+            Object zach;
+            zach.setObjectID("Zach");
+
+            Law targetLaw("target-law");
+            targetLaw.setLawIdentifier("target-law");
+            targetLaw.addAuthor(zach);
+
+            // Register in Universe for @target-law qualified path resolution
+            Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+                out.push_back(&targetLaw);
+            });
+
+            // 1. Verify direct PropertyPath reads on Law
+            PropertyValue authVal;
+            assert(PropertyPath::parse("authors").getValue(targetLaw, authVal) == PropertyPath::PathResult::Ok);
+            assert(std::holds_alternative<std::shared_ptr<PropertyList>>(authVal));
+            auto authList = std::get<std::shared_ptr<PropertyList>>(authVal);
+            assert(authList && authList->elements.size() == 1);
+            assert(std::get<std::string>(authList->elements[0]) == "Zach");
+
+            PropertyValue authIdxVal;
+            assert(PropertyPath::parse("authors.0").getValue(targetLaw, authIdxVal) == PropertyPath::PathResult::Ok);
+            assert(std::get<std::string>(authIdxVal) == "Zach");
+
+            PropertyValue fmVal;
+            assert(PropertyPath::parse("isFirstMover").getValue(targetLaw, fmVal) == PropertyPath::PathResult::Ok);
+            assert(std::get<bool>(fmVal) == false);
+
+            PropertyValue authorityVal;
+            assert(PropertyPath::parse("authority").getValue(targetLaw, authorityVal) == PropertyPath::PathResult::Ok);
+            assert(std::get<int>(authorityVal) == 0);
+
+            // 2. Qualified path via Universe
+            PropertyValue qAuthVal;
+            assert(lawGetValue(targetLaw, PropertyPath::parse("@target-law.authors.0"), qAuthVal));
+            assert(std::get<std::string>(qAuthVal) == "Zach");
+
+            PropertyValue qFmVal;
+            assert(lawGetValue(targetLaw, PropertyPath::parse("@target-law.isFirstMover"), qFmVal));
+            assert(std::get<bool>(qFmVal) == false);
+
+            // 3. Verify writes refuse with ReadOnly
+            assert(PropertyPath::parse("authors").setValue(targetLaw, PropertyValue("EvilAuthor")) == PropertyPath::PathResult::ReadOnly);
+            assert(PropertyPath::parse("authors.0").setValue(targetLaw, PropertyValue("EvilAuthor")) == PropertyPath::PathResult::ReadOnly);
+            assert(PropertyPath::parse("isFirstMover").setValue(targetLaw, PropertyValue(true)) == PropertyPath::PathResult::ReadOnly);
+            assert(PropertyPath::parse("authority").setValue(targetLaw, PropertyValue(99)) == PropertyPath::PathResult::ReadOnly);
+
+            // 4. Authored MetaLaw conditioning on @target-law.authors.0 == "Zach" and isFirstMover == false
+            Law metaLaw("metalaw-audit");
+            metaLaw.setLawIdentifier("metalaw-audit");
+            metaLaw.addAuthor(zach);
+            metaLaw.setConditionModel(ConditionNode::all({
+                ConditionNode::compare("@target-law.authors.0", ConditionNode::Op::Eq, PropertyValue(std::string("Zach"))),
+                ConditionNode::compare("isFirstMover", ConditionNode::Op::Eq, PropertyValue(false))
+            }));
+            metaLaw.setActionModel(ActionNode::set("enabled", PropertyValue(false)));
+
+            // 5. Firmament Pass 5 Corrective Fix Witness: Relation-based authorityOver read-only Kernel property
+            Relation authEdge("authority-over", metaLaw, targetLaw, true);
+            std::vector<Relation*> authRels{&authEdge};
+            Universe::instance().setRelationProvider([&](std::vector<Relation*>& out) {
+                for (auto* r : authRels) if (r) out.push_back(r);
+            });
+
+            PropertyValue authOverVal;
+            assert(PropertyPath::parse("authorityOver").getValue(metaLaw, authOverVal) == PropertyPath::PathResult::Ok);
+            assert(std::holds_alternative<std::shared_ptr<PropertyList>>(authOverVal));
+            auto authOverList = std::get<std::shared_ptr<PropertyList>>(authOverVal);
+            assert(authOverList && authOverList->elements.size() == 1);
+            assert(std::get<std::string>(authOverList->elements[0]) == "target-law");
+
+            PropertyValue authOverIdxVal;
+            assert(PropertyPath::parse("authorityOver.0").getValue(metaLaw, authOverIdxVal) == PropertyPath::PathResult::Ok);
+            assert(std::get<std::string>(authOverIdxVal) == "target-law");
+
+            // Writes to authorityOver or authorityOver.0 must refuse with ReadOnly
+            assert(PropertyPath::parse("authorityOver").setValue(metaLaw, PropertyValue("forged-law")) == PropertyPath::PathResult::ReadOnly);
+            assert(PropertyPath::parse("authorityOver.0").setValue(metaLaw, PropertyValue("forged-law")) == PropertyPath::PathResult::ReadOnly);
+
+            assert(targetLaw.isEnabled());
+            assert(metaLaw.applyTo(targetLaw) == Law::ApplicationResult::Applied);
+            assert(!targetLaw.isEnabled());
+
+            Universe::instance().setRelationProvider(nullptr);
+            Universe::instance().setProvider(nullptr);
+        }
+
+        // 6. Reactive MetaLaw Witness: Rete property-change notifications on authority-over relation mutations
+        {
+            Object zach2;
+            zach2.setObjectID("Zach2");
+            Universe::instance().setApplicationOnset(0.0);
+
+            LawManager mgr;
+            mgr.connectToEventBus();
+
+            auto targetLaw2 = mgr.createLaw("target-law-2", {&zach2});
+            targetLaw2->setLawIdentifier("target-law-2");
+
+            auto metaLaw2 = mgr.createLaw("metalaw-audit-2", {&zach2});
+            metaLaw2->setLawIdentifier("metalaw-audit-2");
+            metaLaw2->setActivation(Law::Activation::WhileTrue);
+            // Condition on subject holding authorityOver.0 == "target-law-2"
+            metaLaw2->setConditionModel(ConditionNode::compare(
+                "authorityOver.0", ConditionNode::Op::Eq, PropertyValue(std::string("target-law-2"))
+            ));
+            // When fired, disable target-law-2
+            metaLaw2->setActionModel(ActionNode::set("@target-law-2.enabled", PropertyValue(false)));
+
+            // Authorizing Law with authority to grant authority-over target-law-2
+            Law sovereignLaw("sovereign-law");
+            sovereignLaw.setLawIdentifier("sovereign-law");
+            sovereignLaw.grantAuthority(100);
+
+            Zone testZone("test-zone", "symZ");
+            testZone.addToFormation(metaLaw2.get());
+            testZone.addToFormation(targetLaw2.get());
+
+            std::vector<Singular*> beings{&zach2, targetLaw2.get(), metaLaw2.get(), &sovereignLaw, &testZone};
+            Universe::instance().setProvider([&](std::vector<Singular*>& out) {
+                for (auto* b : beings) if (b) out.push_back(b);
+            });
+
+            // Relations provider & registrar for Universe
+            std::vector<std::shared_ptr<Relation>> liveRelations;
+            Universe::instance().setRelationRegistrar([&](std::shared_ptr<Relation> r) {
+                liveRelations.push_back(std::move(r));
+            });
+            Universe::instance().setRelationProvider([&](std::vector<Relation*>& out) {
+                for (const auto& r : liveRelations) if (r) out.push_back(r.get());
+            });
+
+            // Initial tick: metaLaw2 has no authorityOver relations -> condition fails, does not fire.
+            assert(targetLaw2->isEnabled());
+            mgr.tick();
+            assert(targetLaw2->isEnabled());
+
+            // Now form the authority-over relation using ActionNode::addRelation
+            ActionNode addRelNode = ActionNode::addRelation("metalaw-audit-2", "target-law-2", "authority-over");
+            auto compiledRelAction = addRelNode.compile();
+
+            // Execute addRelation action with sovereignLaw as authorizing Law (event.object)
+            ECA::Event addRelEvt{"relation-add", metaLaw2.get(), &sovereignLaw};
+            compiledRelAction(addRelEvt, *metaLaw2);
+
+            // Verify relation was created and added to liveRelations
+            assert(!liveRelations.empty());
+            assert(liveRelations.back()->type == "authority-over");
+
+            // Next tick: Rete received notifyPropertyChanged(metaLaw2, "authorityOver"), dirtied the fact,
+            // evaluated terminals, and automatically fired metaLaw2!
+            mgr.tick();
+            assert(!targetLaw2->isEnabled());
+
+            Universe::instance().setRelationRegistrar(nullptr);
+            Universe::instance().setRelationProvider(nullptr);
+            Universe::instance().setProvider(nullptr);
         }
 
     }

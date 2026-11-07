@@ -165,6 +165,42 @@ int main() {
               "keep-live zone with no identity materials reinstates FaceTextures from faceColors");
     }
 
+    // Reload Store keeps live objects for every Zone, whatever its name. Two Zones
+    // were once named in ZoneManager and had their live objects replaced instead.
+    {
+        const std::string veilId = "Northern Veil";
+        {
+            ZoneManager writer;
+            auto veil = std::make_shared<Zone>(veilId, "strict");
+            auto curtain = std::make_shared<Object>();
+            curtain->setShape(Object::ShapeKind::Cube);
+            curtain->setObjectID("saved-curtain");
+            veil->addObject(curtain);
+            writer.addZone(veil);
+            writer.persistZones();
+        }
+        ZoneManager liveMgr;
+        liveMgr.hydrateFromZoneStore();
+        std::shared_ptr<Zone> liveVeil;
+        for (const auto& z : liveMgr.zones()) {
+            if (z && z->getIdentifier() == veilId) liveVeil = z;
+        }
+        check(liveVeil != nullptr && liveVeil->getOwnedObjects().size() == 1,
+              "a Zone named Northern Veil hydrates from its identity");
+        if (liveVeil) {
+            auto stroke = std::make_shared<Object>();
+            stroke->setShape(Object::ShapeKind::Cube);
+            stroke->setObjectID("unsaved-stroke");
+            liveVeil->addObject(stroke);
+            liveMgr.hydrateFromZoneStore();
+            bool strokeKept = false;
+            for (const auto& obj : liveVeil->getOwnedObjects()) {
+                if (obj && obj->getIdentifier() == "unsaved-stroke") strokeKept = true;
+            }
+            check(strokeKept, "reloading the store keeps an unsaved live object in that Zone");
+        }
+    }
+
     std::filesystem::remove_all(sandbox);
     SaveSystem::setSaveRoot("");
     glfwDestroyWindow(window);

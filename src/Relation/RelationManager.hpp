@@ -46,6 +46,10 @@ public:
     // relations that are actually reachable.
     // ---------------------------------------------------------------------
     static void forgetBeingEverywhere(const Singular* being);
+    // Mechanical lifetime lookup for an already-resolved Relation instance.
+    // Does not resolve names or confer access; graph codecs use it to retain
+    // the same enduring Relation rather than fabricate a second instance.
+    static std::shared_ptr<Relation> retained(const Relation* relation);
 
     // Rare semantic-kind retirement path. Relation kind Lexemes are non-owning
     // pointers just like endpoints, but must NOT share the per-Singular
@@ -61,6 +65,11 @@ public:
     ~RelationManager();
 
     void add(const std::shared_ptr<Relation>& r);
+    // Mechanical graph custody/restore: retain the actual Relation without
+    // recording an interaction or publishing a fictional formation event.
+    // Unlike add(), an equivalent distinct instance refuses rather than
+    // merging its history or weight into another individual.
+    bool retain(const std::shared_ptr<Relation>& r);
 
     bool remove(const std::shared_ptr<Relation>& r);
 
@@ -75,6 +84,11 @@ public:
     std::vector<std::shared_ptr<Relation>> getRelationsBetween(const Singular& a, const Singular& b) const;
     std::vector<std::shared_ptr<Relation>> getRelationsBetween(const std::string& a, const std::string& b) const;
     std::vector<std::shared_ptr<Relation>> getRelationsOfType(const std::string& type) const;
+
+    // Query contract: raw Relation queries preserve historical truth. Callers
+    // asking for current semantic state must consult canonical supersession.
+    bool isSuperseded(const Relation& r) const;
+    bool isCurrent(const Relation& r) const;
 
     std::vector<std::string> findAdjacentEntities(const std::string& entityId, const std::string& relationType = "") const;
 
@@ -145,4 +159,5 @@ private:
     mutable std::size_t _indexedGeneration = static_cast<std::size_t>(-1);
     mutable std::unordered_map<const Singular*, std::vector<Relation*>> _byEndpoint;
     mutable std::unordered_map<std::string, std::vector<Relation*>> _byIdentifier;
+    mutable std::unordered_map<const Relation*, std::shared_ptr<Relation>> _sharedByPointer;
 };

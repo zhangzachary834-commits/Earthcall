@@ -61,6 +61,7 @@ public:
     const std::vector<std::shared_ptr<Moment>>& moments() const { return _moments; }
     std::vector<std::shared_ptr<Moment>> orderedMoments() const;
     std::shared_ptr<Moment> latestMoment() const;
+    long propCpuClockCycle() const;
 
 protected:
     void buildProperties() override;

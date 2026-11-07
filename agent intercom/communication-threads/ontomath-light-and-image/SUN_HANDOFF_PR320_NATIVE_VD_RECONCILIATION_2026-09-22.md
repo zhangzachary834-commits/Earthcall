@@ -1,5 +1,9 @@
 # SUN HANDOFF — PR #320 Native Visibility × Density Reconciliation
 
+
+
+
+
 **Date:** 2026-09-22  
 **Repository:** `zhangzachary834-commits/Earthcall`  
 **Canonical landing PR:** #320 — *Prism landing after Rung 8: Volumetric V0 density on current default*  

@@ -40,16 +40,30 @@ meet here under **shared Joys**, not under one Person's Home.
 
 ---
 
-## 2. Local vs ecumenical
+## 2. Local, global, and ecumenical convening
 
-Same name, two layers. The local Ourverse is the instance. The
-ecumenical Ourverse represents the real-world Church and all of
-humanity; it is not a Home, holds no Person-owned Objects, and is
-not populated at boot. A local Ourverse may name it via
-`convenesToward`. Empty means "not yet convened."
+Zach clarified on 2026-10-02: local Ourverses may be authored through
+Create; global Ourverses may not. **Global means the entire continuous
+machine-wide space**, not all humanity or every digital Earthcall Person.
+Ecumenical unity remains an end of convening; it does not make a runtime
+instance a representation of every human being. A local Ourverse may
+name its convening destination via `convenesToward`; empty means
+"not yet convened."
+
+**Implementation boundary:** the current C++ Ourverse still returns the
+literal identifier `Ourverse` and has no local/global extent representation.
+The universal creation operation therefore refuses this kind until Zach
+specifies the authored structure that identifies its extent. Do not infer
+scope from that literal name, introduce a scope enum, or treat a newly
+generated identifier as proof that an Ourverse is local. Distinct local
+identities and persistence must accompany the eventual creation adapter.
 
 No Person, Relationship, or Community may own either layer the way
 they own a Home.
+
+*Clarification recorded by Codex / GPT-6.1 Sol / session
+`01a0e64f-5853-7d30-8196-995b4fd16b89` / 2026-10-02 17:02 PDT;
+authorial decision: Zach.*
 
 ---
 

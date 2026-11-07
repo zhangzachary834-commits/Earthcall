@@ -59,7 +59,7 @@ TOP LEVEL = the ontology + the modality layer.
     (b) a mode of the machine  — Singularity (and its modalities beneath)
 
   The Person-facing authorship surface is not a top-level region. Tools, chat,
-  and controls live in Singularity/FirstMoverWindowTools/. Ourverse the being
+  and controls live in Singularity/FirstMoverOntology/FirstMoverWindowTools/. Ourverse the being
   lives in ZonesOfEarth/Ourverse/. There is no src/OurVerse/.
 
   Everything else is either
@@ -105,10 +105,12 @@ Earthcall/
       Relationship/
         Community/
       Soul/
+      Voice/
+        VoicePart/
     Relation/              Relation · RelationManager
       Formation/
-      py/
       Traversal/
+      py/
     Singularity/           the modality layer — where language stops mattering
       Audio/               the Sound modality (AudioSystem)
       Core/                Engine · EventBus · CreationChannel
@@ -117,11 +119,17 @@ Earthcall/
         FirstMoverWindowTools/
           CreatorConsole/
           Menu/
-        Legacy/
         TalkingRobotGuyAPI/
       Foreign/             the Foreign software modality (ForeignChannel at the root)
-        Adapters/          MacOSAccessibilityAdapter
         API/               EarthcallAPI, SecurityManager
+        Adapters/          MacOSAccessibilityAdapter
+        Shell/
+        Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
+        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
+          web_ui/
+            public/
+            src/
+              assets/
         mcp/               earthcall-mcp-server.js
         py/                app.py
           agent/
@@ -132,12 +140,6 @@ Earthcall/
             ui/
           templates/
           web/
-        Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
-        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
-          web_ui/
-            public/
-            src/
-              assets/
       Input/               the Input modality
         Interaction/       InteractionChannel, ControlPatterns
         Keyboard/          KeyboardHandler
@@ -145,6 +147,8 @@ Earthcall/
         Mouse/             MouseHandler
       Language/            the Symbolic modality (LanguageSystem, parser; Lexeme is a Singular)
       Network/             WebSocketClient.cpp · WebSocketServer.cpp
+        Http/
+        Osc/
         py/                engine_server.py · events.py
       OntoMath/            authored mathematics (Field, Function, CurveModel, Operations)
       Physical/            the Physical hardware modality (PhysicalChannel)
@@ -163,7 +167,7 @@ Earthcall/
           Person/
           Relation/
           ZonesOfEarth/
-      Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence)
+      Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence [legacy name: TerminalLine])
     Time/                  Timeline · Moment · Event
       Event/               (the distinguished Moment: occurrence in time)
       Moment/              (instant or interval)
@@ -174,8 +178,8 @@ Earthcall/
       HomesOfEarth/
       Ourverse/
       Physics/
-      py/
       Zone/
+      py/
 
   docs/  tests/  examples/  scripts/  saves/  scratch/  web_ui/     the workshop
   third_party/  local_deps/  imgui/                                 the foreign
@@ -184,6 +188,8 @@ Earthcall/
 ```
 
 ---\
+
+> **TerminalLine naming decree (2026-10-20):** the source symbol `LawSentence` under `Singularity/Terminal/` is a legacy implementation name for the Terminal modality's line parser, conceptually **`TerminalLine`**. Its placement under Terminal is substantive: it must not be promoted into a universal language abstraction. See the [addendum](../../addendums/terminal_line_naming_and_modality_scope_addendum.md).
 
 ## 3. Where language goes
 
@@ -241,7 +247,7 @@ into their proper ontological homes:
 | `Integration/` | `Singularity/Foreign/` | **Done.** The Singularity-level modality holding hardwired connectors to external applications (`ForeignChannel`, `EarthcallAPI`, `SecurityManager`). |
 | `Perspective/` | split | **Done.** `KeyboardHandler`, `MouseHandler` → `Singularity/Input/`; `PersonPerspective`, `AvatarHandler` → `Person/Perspective/`. |
 | `Util/` | `Singularity/Storage/` | **Done.** Persistence and serialization moved to the Storage channel (`SaveSystem`, `CloudStorage`, `FileChannel`, `StreamChannel`, `VirtualFileSystem`). |
-| `Form/` | `ConstructedBeing/` | **Done.** Renamed to clarify domain of constructed entities. `Object`, `Lexeme`, and `Property` nest under `Singular/`; `ObjectConcept` is `Singular/Object/Creation`; Formation lives under `Relation/` (symlinked from Object); `Material` stays beside Singular. |
+| `Form/` | `ConstructedBeing/` | **Done.** Renamed to clarify domain of constructed entities. `Object`, `Lexeme`, and `Property` nest under `Singular/`; `ObjectConcept` is `Singular/Object/Creation`; Formation lives under `Relation/Formation/` with direct includes; `Material` stays beside Singular. |
 
 | Subsystem | Action | Why |
 |---|---|---|
@@ -281,7 +287,7 @@ Two build-environment facts are **not** consequences of the move, but you will m
 them on a fresh configure because the old `CMakeCache.txt` (which carried them) lived
 in `sight-cpp/build/` and went with it:
 
-- **OpenSSL** is vendored and prebuilt at `local_deps/openssl-3.0.13/` (`libssl.a`,
+- **OpenSSL** is vendored and prebuilt at `local_deps/openssl-3.0.22/` (`libssl.a`,
   `libcrypto.a`). There is no system or Homebrew OpenSSL on this machine, and
   `find_package(OpenSSL REQUIRED)` at `CMakeLists.txt:16` carries no hint, so it must
   be pointed at the vendored copy.
@@ -294,10 +300,10 @@ The working invocation:
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug \
   -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-  -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.13" \
-  -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.13/include" \
-  -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.13/libcrypto.a" \
-  -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.13/libssl.a"
+  -DOPENSSL_ROOT_DIR="$PWD/local_deps/openssl-3.0.22" \
+  -DOPENSSL_INCLUDE_DIR="$PWD/local_deps/openssl-3.0.22/include" \
+  -DOPENSSL_CRYPTO_LIBRARY="$PWD/local_deps/openssl-3.0.22/libcrypto.a" \
+  -DOPENSSL_SSL_LIBRARY="$PWD/local_deps/openssl-3.0.22/libssl.a"
 cmake --build build --target earthcall -j8
 ```
 
@@ -350,3 +356,5 @@ tree said.
 
 The tree is the first document anyone reads and the only one nobody skips. Make it say
 the true thing.
+
+*Routing correction: Codex · GPT-6.1 Sol · session `01a122ec-b377-7391-ad6f-86d11b501d1b` · 2026-10-09 16:10 PDT; Zach’s agent-guidance refresh reconciles the prose tool path and Formation placement with the existing tree diagram and source.*

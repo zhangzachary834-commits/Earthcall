@@ -1,0 +1,281 @@
+{
+  "schema": "6fa-recovered-native-Metal-attribution-1",
+  "negatives": [
+    {
+      "control": "missing-present",
+      "refusal": "complete native present ownership"
+    },
+    {
+      "control": "forged-mode",
+      "refusal": "native ABBA"
+    },
+    {
+      "control": "missing-prepass",
+      "refusal": "source-bound complete Metal buffer count"
+    },
+    {
+      "control": "unowned-GPU-command",
+      "refusal": "GPU command belongs to recorded app submission"
+    },
+    {
+      "control": "invalid-GPU-time",
+      "refusal": "finite integral GPU times"
+    },
+    {
+      "control": "wrong-commit-latency",
+      "refusal": "GPU latency matches exact CPU commit endpoint"
+    }
+  ],
+  "raw_artifact_sha256": {
+    "selected-tables.xml": "7bcf14d255aed662f5a5169e827bdec4a50cb81de81771da83da7d5dbb28430a",
+    "gpu-schema.xml": "8b7ca3919099235ce453b089c6fa5afb983ce533f17497b975c55e7e1ec0fc1b",
+    "frame-schema.xml": "0fb8408186e259ed4136123991cb4a228dadfea1e29e045386844c13cefc77ab",
+    "cpu-symbolicated.xml": "f4b49a70b759a1f5748f8f10cb39e08be5f041ac580ab260d358b3de9e3c07f6",
+    "raw-recovery-toc.xml": "bc0ce09fecf94ac588ab606eb33f5719a946afb81e2455e661786f9b0ae1e88f",
+    "metal.trace/Trace1.run/Attachments/trace-data.atrc": "bba2f8d9a442da6f6a6c38f454e8994dbdcee0c6c393fb11e5214efda472b100"
+  },
+  "attempt_receipts": [
+    {
+      "started_utc": "2026-10-29T16:47:29.587102+00:00",
+      "process_cap_seconds": 240,
+      "elapsed_seconds": 47.47516441598418,
+      "argv": [
+        "/private/tmp/earthcall-6ez-trace-final/Earthcall Transport Trace.app/Contents/MacOS/engine",
+        "trace",
+        "/private/tmp/earthcall-6ez-trace-final/session/result.json"
+      ],
+      "cwd": "/private/tmp/earthcall-6ez-trace-final/session",
+      "xctrace_argv": [
+        "xcrun",
+        "xctrace",
+        "record",
+        "--template",
+        "Metal System Trace",
+        "--instrument",
+        "Points of Interest",
+        "--time-limit",
+        "45s",
+        "--output",
+        "/private/tmp/earthcall-6ez-trace-final/metal.trace",
+        "--attach",
+        "69905"
+      ],
+      "native_exit_code": -2,
+      "profiler_exit_code": -9,
+      "failure": "trace did not acknowledge recording; no sample admitted",
+      "build_sha256": "4ed2d318998c8931bb675cd56340a19f4243837253c142ea38efa354861cf304",
+      "before": {
+        "base_src_tree": "46ed26f689f8ad5aebfd24688c7c7375e61f32d2",
+        "working_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_files": {
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "c9b2eaa0c3c6d4b59945ffa4ec6febab1f3ce8cc08e6b256499aeff6c70df382",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "1310f4e89ab71d6cbfe8565993c17da42484e476662c08c4c1998569168d1700",
+          "src/Singularity/Screen/WebGPU/VolumeRoutedTransport.hpp": "7d85cb9ddb0ee70eebfa8c0e8c1f21530e9f9d76e002a72efae9228bc178c9fc",
+          "src/Singularity/Screen/WebGPU/VolumeRoutedTransport.inc": "47fb2884614b1b3034599ab1d6da3b0283dee8179ee204e0aa268090bcd920bb",
+          "src/Singularity/Screen/WebGPU/VolumeRoutedKernels.hpp": "66c725d43bb1ec49e1b1dd89b92caa1cde6b730ec19bb0d3a4ea21bf893bfb61",
+          "src/Singularity/OntoMath/ClampedWaveSupport.hpp": "0c4cfc4ed6f5cb43f16fe7277bf5d3d737c3570f2395f2d1428cc07239ab25f7",
+          "src/Singularity/Screen/Camera.hpp": "dac58143d3d11b63b34b9150c1ad6f6735b11017335e4edca587ba11131dffe9",
+          "src/Singularity/Screen/Camera.cpp": "f113f8236e2a59b1c9e27395746a874ca66745a233bbcd3a594711c6c0ab9b9a",
+          "src/Singularity/Screen/ScreenChannel.hpp": "f7637e99a782d66a044dec011ab7f3fdbadad083f4ce9b03296f0a75ced0052e",
+          "src/Singularity/Screen/ScreenChannel.cpp": "297e82afcffbe21a4018025f5ff7de63a3a34f01adb4b505064bf819cff0216b",
+          "src/Singularity/Screen/Renderer.hpp": "d2f994701be5be21bc6ac0a9f6d2e242a33c0224a132dfbdf311ce4b369e822a",
+          "src/Singularity/Core/EngineRender.cpp": "ca4bedf57f341cab10f3089faee546598204d49c32920ca602552c02e31c990c"
+        },
+        "zone_sha256": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496"
+      },
+      "after": {
+        "base_src_tree": "46ed26f689f8ad5aebfd24688c7c7375e61f32d2",
+        "working_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_files": {
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "c9b2eaa0c3c6d4b59945ffa4ec6febab1f3ce8cc08e6b256499aeff6c70df382",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "1310f4e89ab71d6cbfe8565993c17da42484e476662c08c4c1998569168d1700",
+          "src/Singularity/Screen/WebGPU/VolumeRoutedTransport.hpp": "7d85cb9ddb0ee70eebfa8c0e8c1f21530e9f9d76e002a72efae9228bc178c9fc",
+          "src/Singularity/Screen/WebGPU/VolumeRoutedTransport.inc": "47fb2884614b1b3034599ab1d6da3b0283dee8179ee204e0aa268090bcd920bb",
+          "src/Singularity/Screen/WebGPU/VolumeRoutedKernels.hpp": "66c725d43bb1ec49e1b1dd89b92caa1cde6b730ec19bb0d3a4ea21bf893bfb61",
+          "src/Singularity/OntoMath/ClampedWaveSupport.hpp": "0c4cfc4ed6f5cb43f16fe7277bf5d3d737c3570f2395f2d1428cc07239ab25f7",
+          "src/Singularity/Screen/Camera.hpp": "dac58143d3d11b63b34b9150c1ad6f6735b11017335e4edca587ba11131dffe9",
+          "src/Singularity/Screen/Camera.cpp": "f113f8236e2a59b1c9e27395746a874ca66745a233bbcd3a594711c6c0ab9b9a",
+          "src/Singularity/Screen/ScreenChannel.hpp": "f7637e99a782d66a044dec011ab7f3fdbadad083f4ce9b03296f0a75ced0052e",
+          "src/Singularity/Screen/ScreenChannel.cpp": "297e82afcffbe21a4018025f5ff7de63a3a34f01adb4b505064bf819cff0216b",
+          "src/Singularity/Screen/Renderer.hpp": "d2f994701be5be21bc6ac0a9f6d2e242a33c0224a132dfbdf311ce4b369e822a",
+          "src/Singularity/Core/EngineRender.cpp": "ca4bedf57f341cab10f3089faee546598204d49c32920ca602552c02e31c990c"
+        },
+        "zone_sha256": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496"
+      },
+      "final_zone_sha256": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496"
+    },
+    {
+      "started_utc": "2026-10-29T16:50:02.716502+00:00",
+      "process_cap_seconds": 240,
+      "elapsed_seconds": 96.59063916601008,
+      "argv": [
+        "/private/tmp/earthcall-6ez-trace-notify/Earthcall Transport Trace.app/Contents/MacOS/engine",
+        "trace",
+        "/private/tmp/earthcall-6ez-trace-notify/session/result.json"
+      ],
+      "cwd": "/private/tmp/earthcall-6ez-trace-notify/session",
+      "xctrace_argv": [
+        "xcrun",
+        "xctrace",
+        "record",
+        "--template",
+        "Metal System Trace",
+        "--instrument",
+        "Points of Interest",
+        "--time-limit",
+        "45s",
+        "--output",
+        "/private/tmp/earthcall-6ez-trace-notify/metal.trace",
+        "--attach",
+        "70203",
+        "--notify-tracing-started",
+        "org.earthcall.transport.trace-start.70203"
+      ],
+      "native_exit_code": 0,
+      "profiler_exit_code": -9,
+      "failure": "Command '['xcrun', 'xctrace', 'record', '--template', 'Metal System Trace', '--instrument', 'Points of Interest', '--time-limit', '45s', '--output', '/private/tmp/earthcall-6ez-trace-notify/metal.trace', '--attach', '70203', '--notify-tracing-started', 'org.earthcall.transport.trace-start.70203']' timed out after 60 seconds",
+      "build_sha256": "562accbb2a03faa8b46917525308a9bccd8b2b433251f45aa6bb9e24e4059201",
+      "before": {
+        "base_src_tree": "46ed26f689f8ad5aebfd24688c7c7375e61f32d2",
+        "working_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_files": {
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "c9b2eaa0c3c6d4b59945ffa4ec6febab1f3ce8cc08e6b256499aeff6c70df382",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "1310f4e89ab71d6cbfe8565993c17da42484e476662c08c4c1998569168d1700",
+          "src/Singularity/Screen/WebGPU/VolumeRoutedTransport.hpp": "7d85cb9ddb0ee70eebfa8c0e8c1f21530e9f9d76e002a72efae9228bc178c9fc",
+          "src/Singularity/Screen/WebGPU/VolumeRoutedTransport.inc": "47fb2884614b1b3034599ab1d6da3b0283dee8179ee204e0aa268090bcd920bb",
+          "src/Singularity/Screen/WebGPU/VolumeRoutedKernels.hpp": "66c725d43bb1ec49e1b1dd89b92caa1cde6b730ec19bb0d3a4ea21bf893bfb61",
+          "src/Singularity/OntoMath/ClampedWaveSupport.hpp": "0c4cfc4ed6f5cb43f16fe7277bf5d3d737c3570f2395f2d1428cc07239ab25f7",
+          "src/Singularity/Screen/Camera.hpp": "dac58143d3d11b63b34b9150c1ad6f6735b11017335e4edca587ba11131dffe9",
+          "src/Singularity/Screen/Camera.cpp": "f113f8236e2a59b1c9e27395746a874ca66745a233bbcd3a594711c6c0ab9b9a",
+          "src/Singularity/Screen/ScreenChannel.hpp": "f7637e99a782d66a044dec011ab7f3fdbadad083f4ce9b03296f0a75ced0052e",
+          "src/Singularity/Screen/ScreenChannel.cpp": "297e82afcffbe21a4018025f5ff7de63a3a34f01adb4b505064bf819cff0216b",
+          "src/Singularity/Screen/Renderer.hpp": "d2f994701be5be21bc6ac0a9f6d2e242a33c0224a132dfbdf311ce4b369e822a",
+          "src/Singularity/Core/EngineRender.cpp": "ca4bedf57f341cab10f3089faee546598204d49c32920ca602552c02e31c990c"
+        },
+        "zone_sha256": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496"
+      },
+      "after": {
+        "base_src_tree": "46ed26f689f8ad5aebfd24688c7c7375e61f32d2",
+        "working_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_files": {
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "c9b2eaa0c3c6d4b59945ffa4ec6febab1f3ce8cc08e6b256499aeff6c70df382",
+          "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "1310f4e89ab71d6cbfe8565993c17da42484e476662c08c4c1998569168d1700",
+          "src/Singularity/Screen/WebGPU/VolumeRoutedTransport.hpp": "7d85cb9ddb0ee70eebfa8c0e8c1f21530e9f9d76e002a72efae9228bc178c9fc",
+          "src/Singularity/Screen/WebGPU/VolumeRoutedTransport.inc": "47fb2884614b1b3034599ab1d6da3b0283dee8179ee204e0aa268090bcd920bb",
+          "src/Singularity/Screen/WebGPU/VolumeRoutedKernels.hpp": "66c725d43bb1ec49e1b1dd89b92caa1cde6b730ec19bb0d3a4ea21bf893bfb61",
+          "src/Singularity/OntoMath/ClampedWaveSupport.hpp": "0c4cfc4ed6f5cb43f16fe7277bf5d3d737c3570f2395f2d1428cc07239ab25f7",
+          "src/Singularity/Screen/Camera.hpp": "dac58143d3d11b63b34b9150c1ad6f6735b11017335e4edca587ba11131dffe9",
+          "src/Singularity/Screen/Camera.cpp": "f113f8236e2a59b1c9e27395746a874ca66745a233bbcd3a594711c6c0ab9b9a",
+          "src/Singularity/Screen/ScreenChannel.hpp": "f7637e99a782d66a044dec011ab7f3fdbadad083f4ce9b03296f0a75ced0052e",
+          "src/Singularity/Screen/ScreenChannel.cpp": "297e82afcffbe21a4018025f5ff7de63a3a34f01adb4b505064bf819cff0216b",
+          "src/Singularity/Screen/Renderer.hpp": "d2f994701be5be21bc6ac0a9f6d2e242a33c0224a132dfbdf311ce4b369e822a",
+          "src/Singularity/Core/EngineRender.cpp": "ca4bedf57f341cab10f3089faee546598204d49c32920ca602552c02e31c990c"
+        },
+        "zone_sha256": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496"
+      },
+      "final_zone_sha256": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496"
+    }
+  ],
+  "signature": "Codex / GPT-6.1 Sol / Sixth-One Sun / 01a148a7-bd85-7550-a416-0e859a729c1a",
+  "timestamp": "2026-10-29T10:18:44.075732-07:00",
+  "analysis": {
+    "samples": [
+      {
+        "order": 0,
+        "on": false,
+        "frames": 64,
+        "instrumented_complete_ms_per_frame": 65.537241546875,
+        "app_active_union_mean_ms": 63.690891078125,
+        "app_gap_mean_ms": 1.8849135156250008,
+        "source_order_stage_mean_ms": {
+          "setup": 0.0,
+          "reset": 0.0,
+          "classify": 0.0,
+          "args": 0.0,
+          "S1": 0.0,
+          "S2": 0.0,
+          "fallback": 0.0,
+          "consumer": 0.0
+        }
+      },
+      {
+        "order": 1,
+        "on": true,
+        "frames": 64,
+        "instrumented_complete_ms_per_frame": 65.602122390625,
+        "app_active_union_mean_ms": 63.99850403125,
+        "app_gap_mean_ms": 1.5412869375000007,
+        "source_order_stage_mean_ms": {
+          "setup": 1.673306359375,
+          "reset": 0.08729254687500002,
+          "classify": 9.124478796875,
+          "args": 0.14205021874999998,
+          "S1": 7.47992609375,
+          "S2": 8.633894484375,
+          "fallback": 18.12687509375,
+          "consumer": 17.421214109375
+        }
+      },
+      {
+        "order": 2,
+        "on": true,
+        "frames": 64,
+        "instrumented_complete_ms_per_frame": 64.89362240625,
+        "app_active_union_mean_ms": 63.386984359375,
+        "app_gap_mean_ms": 1.4222747968750005,
+        "source_order_stage_mean_ms": {
+          "setup": 1.659002890625,
+          "reset": 0.07627848437500001,
+          "classify": 9.060925546875,
+          "args": 0.15916953124999994,
+          "S1": 7.44249725,
+          "S2": 8.539576375,
+          "fallback": 18.026331265625,
+          "consumer": 17.20680590625
+        }
+      },
+      {
+        "order": 3,
+        "on": false,
+        "frames": 64,
+        "instrumented_complete_ms_per_frame": 65.7579798125,
+        "app_active_union_mean_ms": 63.580570953125,
+        "app_gap_mean_ms": 2.219627562499999,
+        "source_order_stage_mean_ms": {
+          "setup": 0.0,
+          "reset": 0.0,
+          "classify": 0.0,
+          "args": 0.0,
+          "S1": 0.0,
+          "S2": 0.0,
+          "fallback": 0.0,
+          "consumer": 0.0
+        }
+      }
+    ],
+    "by_mode": {
+      "Current": {
+        "app_active_union_ms": 63.635731015625,
+        "traced_endFrame_mean_ms": 0.43353610928170383
+      },
+      "routed": {
+        "app_active_union_ms": 63.6927441953125,
+        "traced_endFrame_mean_ms": 6.07895477861166
+      }
+    },
+    "presents": 264,
+    "submissions": 67850,
+    "empty_prepass_count": 33000,
+    "gpu_rows": 36998,
+    "cpu_samples": 4129,
+    "sample_signposts": 0,
+    "source_order_stage_inference": true,
+    "kernel_name_labels_observed": false,
+    "sampled_CPU_functions_symbolicated": false,
+    "clean_economics": false,
+    "scope": "Recovered instrumented native trace. App active-interval union, not device-wide busy/utilization or scanout. Frame ownership inferred from recorded present CB boundaries with exact full-count/dispatch/latency checks; stage names inferred from unchanged source order."
+  },
+  "full_app_observations": "normalized.json in ZIP",
+  "archive_sha256": "31fd55fc7283dc5166719fdd16561bf0c15c3cb9beb28621fa2abdd1b4e0bfab",
+  "archive_bytes": 2109068
+}

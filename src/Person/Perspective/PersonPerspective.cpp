@@ -1,9 +1,39 @@
 #include "PersonPerspective.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
 PersonPerspective::PersonPerspective(const std::string& name, PerspectiveType type)
-    : _name(name), _type(type) {
+    : _id(name), _name(name), _type(type) {
+    // Initialize default view state based on type
+    switch (_type) {
+        case PerspectiveType::FirstPerson:
+            _viewState.position = {0.0f, 1.7f, 0.0f}; // Eye level
+            _viewState.target = {0.0f, 1.7f, -1.0f};
+            break;
+        case PerspectiveType::ThirdPerson:
+            _viewState.position = {0.0f, 2.0f, 5.0f};
+            _viewState.target = {0.0f, 0.0f, 0.0f};
+            _viewState.distance = 5.0f;
+            break;
+        case PerspectiveType::TopDown:
+            _viewState.position = {0.0f, 10.0f, 0.0f};
+            _viewState.target = {0.0f, 0.0f, 0.0f};
+            _viewState.up = {0.0f, 0.0f, -1.0f};
+            break;
+        case PerspectiveType::Isometric:
+            _viewState.position = {5.0f, 5.0f, 5.0f};
+            _viewState.target = {0.0f, 0.0f, 0.0f};
+            break;
+        case PerspectiveType::FreeCamera:
+            _viewState.position = {0.0f, 0.0f, 5.0f};
+            _viewState.target = {0.0f, 0.0f, -1.0f};
+            break;
+    }
+}
+
+PersonPerspective::PersonPerspective(const std::string& id, const std::string& name, PerspectiveType type)
+    : _id(id), _name(name), _type(type) {
     // Initialize default view state based on type
     switch (_type) {
         case PerspectiveType::FirstPerson:
@@ -180,11 +210,21 @@ void PersonPerspective::reset() {
 }
 
 glm::mat4 PersonPerspective::getViewMatrix() const {
-    return glm::lookAt(_viewState.position, _viewState.target, _viewState.up);
+    const auto authored =
+        OntoMath::cameraLookAt(_viewState.position, _viewState.target, _viewState.up);
+    if (!authored) return glm::mat4(1.0f);
+    const auto lowered = authored->toGlmMat4();
+    return lowered.value_or(glm::mat4(1.0f));
 }
 
 glm::mat4 PersonPerspective::getProjectionMatrix(float aspectRatio) const {
-    return glm::perspective(glm::radians(_settings.fov), aspectRatio, _settings.nearPlane, _settings.farPlane);
+    const auto authored = OntoMath::cameraPerspective(
+        glm::radians(_settings.fov), aspectRatio,
+        _settings.nearPlane, _settings.farPlane,
+        false); // PersonPerspective's standalone legacy contract is OpenGL [-1,1] depth.
+    if (!authored) return glm::mat4(1.0f);
+    const auto lowered = authored->toGlmMat4();
+    return lowered.value_or(glm::mat4(1.0f));
 }
 
 // Private helper methods

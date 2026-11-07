@@ -1,0 +1,679 @@
+// ontomath_integral_operation_test — MathNode::Op::Integral (40), the authored
+// integral, and the one antiderivative office beneath it.
+//
+// Human origin: Zachary Zhang, 2026-10-19 — "yeah lets as integral operation
+// biuld it on top of antiderivatives so we dont have two competing
+// antiderivative code". The acceptance question it answers is Codex's,
+// relayed by Zach: can the world express the mathematics WITHOUT the
+// renderer? Nothing below calls the Screen path to evaluate anything. Trees
+// are authored, evaluated through MathNode::evaluate / evaluateIntegral,
+// serialized, typed and scoped.
+//
+// References: mpmath 1.3.0 quad, values agreeing to 40 digits between 50- and
+// 80-digit runs (the scratch generator is recorded in the plan, §6aa).
+// Claude Code · Claude Opus 5.5 · session f3af84cf-bfe3-429d-b417-2d533119f169 · 2026-10-19.
+
+#include "Singularity/OntoMath/ScalarForm.hpp"
+#include "Singularity/OntoMath/LineRestriction.hpp"
+#include "Singularity/Screen/MathEditors.hpp"
+
+#include <chrono>
+#include <cmath>
+#include <set>
+#include <cstdio>
+#include <glm/glm.hpp>
+#include <iostream>
+#include <memory>
+#include <string>
+
+namespace {
+int g_checks = 0, g_failures = 0;
+void check(bool condition, const std::string& description) {
+    ++g_checks;
+    if (!condition) ++g_failures;
+    std::cout << (condition ? "  ok: " : "  FAILED: ") << description << "\n";
+}
+
+using OntoMath::MathNode;
+using OntoMath::ScalarForm;
+using OntoMath::TransFactor;
+using Op = MathNode::Op;
+using K = TransFactor::Kind;
+using Node = std::unique_ptr<MathNode>;
+
+Node leaf(ScalarForm f) {
+    auto n = std::make_unique<MathNode>();
+    n->op = Op::ScalarLeaf;
+    n->scalarForm = std::move(f);
+    return n;
+}
+Node constant(double c) { return leaf(ScalarForm::constant(c)); }
+Node named(const std::string& v) {
+    auto n = std::make_unique<MathNode>();
+    n->op = Op::ValueLeaf;
+    n->variableName = v;
+    return n;
+}
+template <class... Kids>
+Node node(Op op, Kids... kids) {
+    auto n = std::make_unique<MathNode>();
+    n->op = op;
+    (n->children.push_back(std::move(kids)), ...);
+    return n;
+}
+Node integral(const std::string& v, Node body, Node lo, Node hi) {
+    auto n = node(Op::Integral, std::move(body), std::move(lo), std::move(hi));
+    n->variableName = v;
+    return n;
+}
+Node integralTol(const std::string& v, Node body, Node lo, Node hi, Node tolerance) {
+    auto n = node(Op::Integral, std::move(body), std::move(lo), std::move(hi), std::move(tolerance));
+    n->variableName = v;
+    return n;
+}
+ScalarForm var(const std::string& v) { return ScalarForm::variable(v); }
+ScalarForm trans(K k, const std::string& v, double scale, double shift = 0.0) {
+    return ScalarForm::transcendental(k, v, scale, shift);
+}
+
+std::optional<double> run(const MathNode& n, const std::map<std::string, PropertyValue>& vars, std::string* why) {
+    return OntoMath::evaluateIntegral(n, vars, nullptr, why);
+}
+
+// The stated bound for every closed form here: relative 1e-13 (≈ 450 ulp),
+// generous for tabular sums of a few terms; each case prints what it measured.
+constexpr double kBound = 1e-13;
+void against(const MathNode& n, double reference, const std::string& what,
+             const std::map<std::string, PropertyValue>& vars = {}) {
+    std::string why;
+    const auto got = run(n, vars, &why);
+    const double rel = got ? std::abs(*got - reference) / std::max(1.0, std::abs(reference)) : INFINITY;
+    std::cout << "    " << what << ": " << (got ? std::to_string(*got) : "refused (" + why + ")")
+              << ", relative error " << rel << "\n";
+    check(got && rel <= kBound, what + " matches its reference within 1e-13");
+}
+} // namespace
+
+int main() {
+    std::cout << "Starting ontomath_integral_operation_test...\n";
+
+    // ---- The term algebra, through the one office -------------------------------
+    against(*integral("x", leaf(trans(K::Sin, "x", 1.0)), constant(0.0), constant(M_PI)), 2.0,
+            "∫_0^π sin x dx");
+    against(*integral("x", leaf(var("x").times(trans(K::Exp, "x", 2.0)).times(trans(K::Cos, "x", 3.0, 0.5))),
+                      constant(0.0), constant(1.0)),
+            -1.67528464400067847441447, "∫_0^1 x·e^(2x)·cos(3x + 0.5) dx (exp·cos, new to the office)");
+    against(*integral("x", leaf(var("x").times(var("x")).times(trans(K::Sin, "x", 2.0)).times(trans(K::Cos, "x", 5.0))),
+                      constant(0.3), constant(2.1)),
+            0.9294615867391679897298404, "∫ x²·sin 2x·cos 5x dx (product-to-sum, then tabular)");
+    against(*integral("x", leaf(var("x").times(trans(K::Exp, "x", 0.001)).times(trans(K::Cos, "x", 0.002, 0.1))),
+                      constant(1000.0), constant(1000.5)),
+            -687.0870487071256228348198, "a slow wave far from the origin (re-centred, Taylor series)");
+    against(*integral("x", leaf(var("x").times(trans(K::Exp, "x", 1.0)).times(trans(K::Exp, "x", -2.0, 0.25))),
+                      constant(-1.0), constant(3.0)),
+            -0.2557114448268302908097201, "∫ x·e^x·e^(−2x + ¼) dx (exp·exp)");
+    against(*integral("x", leaf(trans(K::Sin, "x", 3.0).times(trans(K::Sin, "x", 3.0)).times(trans(K::Sin, "x", 3.0))),
+                      constant(0.0), constant(1.7)),
+            0.1022297093102467209531086, "∫ sin³ 3x dx (a triple product reduced twice)");
+
+    // ---- Scope: nested (cumulative) integrals, outer bindings ---------------------
+    {
+        // ∫_0^2 [∫_0^s (u² + 1) du] ds = 10/3: the inner hi is the outer variable.
+        auto inner = integral("u", leaf(var("u").times(var("u")).plus(ScalarForm::constant(1.0))), constant(0.0), named("s"));
+        against(*integral("s", std::move(inner), constant(0.0), constant(2.0)), 10.0 / 3.0,
+                "a cumulative integral: ∫_0^2 ∫_0^s (u² + 1) du ds");
+        auto innerCos = integral("u", leaf(trans(K::Cos, "u", 3.0)), constant(0.0), named("s"));
+        against(*integral("s", std::move(innerCos), constant(0.0), constant(1.0)), 0.221110277400049495252397,
+                "∫_0^1 ∫_0^s cos 3u du ds (substitution through a transcendental)");
+        // Shadowing: the inner s is the inner variable, whatever the outer s is.
+        auto shadow = integral("s", leaf(var("s")), constant(0.0), constant(1.0));
+        std::string why;
+        const auto v = run(*shadow, {{"s", PropertyValue(100.0)}}, &why);
+        check(v && std::abs(*v - 0.5) < 1e-15, "the integration variable shadows an outer binding of the same name");
+    }
+    {
+        // Codex's addendum A (commissioned by Zach), its witnesses verbatim:
+        //   ∫_{s=0}^{1} ∫_{u=0}^{s} u du ds = 1/6;
+        //   the same with the inner variable ALSO named s: its hi sees the outer s, its body the inner s;
+        //   ∫_{s=0}^{1} ∫_{s=0}^{2} s ds ds = 2: the inner binding does not leak outward.
+        std::string why;
+        auto distinct = integral("s", integral("u", named("u"), constant(0.0), named("s")), constant(0.0), constant(1.0));
+        const auto a = run(*distinct, {}, &why);
+        check(a && std::abs(*a - 1.0 / 6.0) < 1e-15, "∫_0^1 ∫_0^s u du ds = 1/6 (distinct names)");
+        auto same = integral("s", integral("s", named("s"), constant(0.0), named("s")), constant(0.0), constant(1.0));
+        const auto b = run(*same, {}, &why);
+        check(b && std::abs(*b - 1.0 / 6.0) < 1e-15, "the same with the inner variable also named s: hi sees the outer s, the body the inner");
+        auto sealed = integral("s", integral("s", named("s"), constant(0.0), constant(2.0)), constant(0.0), constant(1.0));
+        const auto c = run(*sealed, {}, &why);
+        check(c && std::abs(*c - 2.0) < 1e-15, "∫_0^1 ∫_0^2 s ds ds = 2: the inner binding does not leak");
+        // Renaming a bound variable preserves meaning; JSON keeps both scopes.
+        auto renamed = integral("q", integral("r", named("r"), constant(0.0), named("q")), constant(0.0), constant(1.0));
+        const auto d = run(*renamed, {}, &why);
+        const auto restored = MathNode::fromJson(same->toJson());
+        const auto e = restored ? run(*restored, {}, &why) : std::nullopt;
+        check(d && b && *d == *b && e && *e == *b, "alpha-renaming and a JSON round trip preserve the nested meaning");
+        // A free-variable edit changes the answer (nothing is cached across bindings).
+        auto free = integral("s", leaf(var("k").times(var("s"))), constant(0.0), constant(1.0));
+        const auto k2 = run(*free, {{"k", PropertyValue(2.0)}}, &why), k5 = run(*free, {{"k", PropertyValue(5.0)}}, &why);
+        check(k2 && k5 && *k2 == 1.0 && *k5 == 2.5, "editing a free variable's binding changes the result (1 → 2.5)");
+    }
+    {
+        auto scaled = integral("x", leaf(var("k").times(var("x"))), constant(0.0), named("t"));
+        std::string why;
+        const auto v = run(*scaled, {{"k", PropertyValue(3.0)}, {"t", PropertyValue(2.0)}}, &why);
+        check(v && std::abs(*v - 6.0) < 1e-14, "an outer variable inside the body and a limit read in the enclosing scope");
+        const auto unbound = run(*scaled, {{"t", PropertyValue(2.0)}}, &why);
+        check(!unbound && why.find("'k'") != std::string::npos, "an unbound outer variable refuses, naming it: " + why);
+        std::set<std::string> deps;
+        scaled->collectDependencies(deps);
+        check(deps == std::set<std::string>{"k", "t"}, "dependencies are k and t; the bound x is not one");
+    }
+
+    // ---- A field along a line: SDF(f, q), q affine in v ---------------------------
+    {
+        // f(p) = x·y + z² + sin 2x·cos y, along q(s) = (1, −2, ½) + s·(0.3, 0.7, −0.2).
+        auto field = [] {
+            return leaf(var("x").times(var("y")).plus(var("z").times(var("z")))
+                            .plus(trans(K::Sin, "x", 2.0).times(trans(K::Cos, "y", 1.0))));
+        };
+        auto q1 = node(Op::VectorConstruct, leaf(ScalarForm::constant(1.0).plus(var("s").scaled(0.3))),
+                       leaf(ScalarForm::constant(-2.0).plus(var("s").scaled(0.7))),
+                       leaf(ScalarForm::constant(0.5).plus(var("s").scaled(-0.2))));
+        against(*integral("s", node(Op::SDF, field(), std::move(q1)), constant(0.0), constant(4.0)),
+                -3.477823979134871722298859, "a field along a line, the point built component-wise");
+        auto q2 = node(Op::Add, node(Op::VectorConstruct, constant(1.0), constant(-2.0), constant(0.5)),
+                       node(Op::Scale, named("s"), node(Op::VectorConstruct, constant(0.3), constant(0.7), constant(-0.2))));
+        against(*integral("s", node(Op::SDF, field(), std::move(q2)), constant(0.0), constant(4.0)),
+                -3.477823979134871722298859, "the same line written a + s·d");
+        auto q3 = node(Op::Add, node(Op::VectorConstruct, constant(1.0), constant(-2.0), constant(0.5)),
+                       node(Op::Scale, named("s"), node(Op::VectorConstruct, constant(0.3), constant(0.7), constant(-0.2))));
+        against(*integral("s", node(Op::SDF, field(), std::move(q3)), constant(4.0), constant(0.0)),
+                3.477823979134871722298859, "reversed limits negate");
+    }
+    {
+        // clamp(1 − p·p, 0, 1) through the unit ball: value branches at the sphere.
+        auto f = node(Op::Clamp, node(Op::Sub, constant(1.0), node(Op::Dot, named("p"), named("p"))),
+                      constant(0.0), constant(1.0));
+        auto q = node(Op::Add, node(Op::VectorConstruct, constant(-2.0), constant(0.3), constant(0.0)),
+                      node(Op::Scale, named("s"), node(Op::VectorConstruct, constant(1.0), constant(0.0), constant(0.0))));
+        auto ball = integral("s", node(Op::SDF, std::move(f), std::move(q)), constant(0.0), constant(4.0));
+        std::string why;
+        const auto got = run(*ball, {}, &why);
+        const double reference = 1.157446231052560720971848;
+        std::cout << "    ball chord: " << (got ? std::to_string(*got) : "refused (" + why + ")") << "\n";
+        // The sphere's switch leaves an unresolved sliver: the exact path refuses
+        // rather than omitting it (Codex, 2026-10-19 21:30).
+        check(!got && why.find("omitting them is an approximation") != std::string::npos,
+              "a branched field whose switch leaves an unresolved sliver refuses in the exact path: " + why);
+        // Codex's counterexample to the refuted "below half an ulp" rule: at 1.5,
+        // 0.5·ε·|1.5| is 0.75 ulp, and omitting 5·2⁻⁵⁵ (0.625 ulp) changes the
+        // correctly rounded answer. No positive bound is admitted.
+        check(!OntoMath::exactPathAdmitsOmittedContribution(1.5, 5.0 * std::ldexp(1.0, -55)) &&
+                  OntoMath::exactPathAdmitsOmittedContribution(1.5, 0.0),
+              "an omitted contribution is admitted only when proved zero (1.5 / 0.625-ulp regression)");
+        (void)reference;
+        // A JUMP at the switch (a Piecewise-like step) leaves a sliver whose
+        // contribution is not below rounding: that refuses rather than approximating.
+        auto step = node(Op::Clamp, node(Op::Scale, constant(1e12), node(Op::Sub, constant(1.0), node(Op::Dot, named("p"), named("p")))),
+                         constant(0.0), constant(1.0));
+        auto q2 = node(Op::Add, node(Op::VectorConstruct, constant(-2.0), constant(0.3), constant(0.0)),
+                       node(Op::Scale, named("s"), node(Op::VectorConstruct, constant(1.0), constant(0.0), constant(0.0))));
+        auto steep = integral("s", node(Op::SDF, std::move(step), std::move(q2)), constant(0.0), constant(4.0));
+        const auto steepGot = run(*steep, {}, &why);
+        std::cout << "    near-step chord: " << (steepGot ? std::to_string(*steepGot) : "refused (" + why + ")") << "\n";
+        check(!steepGot && why.find("omitting them is an approximation") != std::string::npos,
+              "a near-discontinuous switch whose sliver is visible refuses (never approximates)");
+    }
+
+    // ---- Refusals: exact or nothing -----------------------------------------------
+    {
+        std::string why;
+        auto sinc = integral("x", leaf(var("x").times(var("x")).times(ScalarForm::variable("x", -3.0)).times(trans(K::Sin, "x", 1.0))),
+                             constant(1.0), constant(2.0));
+        check(!run(*sinc, {}, &why) && why.find("no elementary antiderivative") != std::string::npos,
+              "sin x / x refuses (the sine integral is not elementary): " + why);
+        auto curved = integral("s", node(Op::SDF, leaf(var("x")),
+                                         node(Op::VectorConstruct, leaf(var("s").times(var("s"))), constant(0.0), constant(0.0))),
+                               constant(0.0), constant(1.0));
+        check(!run(*curved, {}, &why) && why.find("not affine") != std::string::npos,
+              "a point quadratic in the variable refuses (a curve, not a line): " + why);
+        auto noisy = integral("s", node(Op::SDF, node(Op::Noise, named("p")),
+                                        node(Op::Scale, named("s"), node(Op::VectorConstruct, constant(1.0), constant(0.2), constant(0.1)))),
+                              constant(0.0), constant(3.0));
+        check(!run(*noisy, {}, &why), "noise refuses: it has no closed form, and no error contract is authored: " + why);
+        auto improper = integral("x", leaf(trans(K::Exp, "x", -1.0)), constant(0.0), constant(INFINITY));
+        check(!run(*improper, {}, &why), "an infinite limit refuses: " + why);
+    }
+
+    // ---- The same op wherever authored mathematics lives --------------------------
+    {
+        // As a Piecewise (the form property routes and Laws carry): ∫_0^t u du.
+        auto model = OntoMath::Piecewise::continuous(integral("u", named("u"), constant(0.0), named("t")));
+        const auto v = model.evaluate({{"t", PropertyValue(2.0)}});
+        double d = 0.0;
+        check(v && propertyValueToNumber(*v, d) && std::abs(d - 2.0) < 1e-15,
+              "inside a Piecewise, MathNode::evaluate answers the integral");
+        // JSON keeps the bound variable.
+        auto original = integral("w", leaf(trans(K::Cos, "w", 2.0)), constant(0.0), constant(1.0));
+        const auto restored = MathNode::fromJson(original->toJson());
+        std::string why;
+        const auto a = run(*original, {}, &why), b = restored ? run(*restored, {}, &why) : std::nullopt;
+        check(restored && restored->variableName == "w" && a && b && *a == *b, "JSON round trip keeps the variable and the value");
+        // Types: the body sees v; outside the integral v is unbound; limits are scalars.
+        std::string error;
+        check(original->checkTypes(OntoMath::TypeEnv{}, error), "the body type-checks with v bound by the Integral itself");
+        auto leaky = node(Op::Add, std::move(original), named("w"));
+        check(!leaky->checkTypes(OntoMath::TypeEnv{}, error), "v does not leak out of the Integral: " + error);
+        auto vectorLimit = integral("x", named("x"), constant(0.0), node(Op::VectorConstruct, constant(1.0), constant(0.0), constant(0.0)));
+        check(!vectorLimit->checkTypes(OntoMath::TypeEnv{}, error), "a vector limit is a type error: " + error);
+        // The existing math editor gives it its shape.
+        MathNode authored;
+        Rendering::MathEd::initializeMathNodeForEditor(authored, Op::Integral);
+        check(authored.children.size() == 3 && authored.variableName == "s", "the math editor authors body, lo, hi and a variable");
+    }
+
+    // ---- Addendum C: an authored tolerance and whole-result error admission -------
+    {
+        auto ballField = [] {
+            return node(Op::Clamp, node(Op::Sub, constant(1.0), node(Op::Dot, named("p"), named("p"))), constant(0.0), constant(1.0));
+        };
+        auto ballLine = [] {
+            return node(Op::Add, node(Op::VectorConstruct, constant(-2.0), constant(0.3), constant(0.0)),
+                        node(Op::Scale, named("s"), node(Op::VectorConstruct, constant(1.0), constant(0.0), constant(0.0))));
+        };
+        std::string why;
+        // Invalid tolerances refuse; 0 means exact only.
+        for (double bad : {-1.0, double(NAN), double(INFINITY)}) {
+            auto n = integralTol("s", node(Op::SDF, ballField(), ballLine()), constant(0.0), constant(4.0), constant(bad));
+            check(!run(*n, {}, &why) && why.find("tolerance must be") != std::string::npos,
+                  "tolerance " + std::to_string(bad) + " refuses: " + why);
+        }
+        auto exactOnly = integralTol("s", node(Op::SDF, ballField(), ballLine()), constant(0.0), constant(4.0), constant(0.0));
+        check(!run(*exactOnly, {}, &why) && why.find("omitting them") != std::string::npos,
+              "tolerance 0 means exact only: the sphere's sliver still refuses");
+
+        // The sphere chord under a tolerance: admitted, within its own total.
+        const double ballReference = 1.157446231052560720971848;
+        auto ball = integralTol("s", node(Op::SDF, ballField(), ballLine()), constant(0.0), constant(4.0), constant(1e-12));
+        OntoMath::IntegralBounds bounds;
+        const auto ballValue = OntoMath::evaluateIntegral(*ball, {}, nullptr, &why, &bounds);
+        std::printf("    sphere chord ±1e-12: %.17g, mathematical %.3g, execution %.3g, total %.3g, |error| %.3g\n",
+                    ballValue.value_or(NAN), bounds.mathematical, bounds.execution, bounds.total(),
+                    ballValue ? std::abs(*ballValue - ballReference) : NAN);
+        check(ballValue && bounds.approximate && bounds.mathematical > 0.0 && bounds.total() <= 1e-12 &&
+                  std::abs(*ballValue - ballReference) <= bounds.total(),
+              "with a tolerance the sphere chord is admitted, its omitted sliver bounded, and the reference lies within the total");
+
+        // Noise along a line: refused at an unreachable tolerance, admitted at a reachable one.
+        auto noiseLine = [] {
+            return node(Op::Add, node(Op::VectorConstruct, constant(0.3), constant(0.1), constant(0.2)),
+                        node(Op::Scale, named("s"), node(Op::VectorConstruct, constant(1.0), constant(0.5), constant(0.25))));
+        };
+        auto tight = integralTol("s", node(Op::SDF, node(Op::Noise, named("p")), noiseLine()), constant(0.0), constant(3.0), constant(1e-12));
+        check(!run(*tight, {}, &why) && why.find("exceeds the tolerance") != std::string::npos,
+              "noise at 1e-12 refuses at the work cap, legibly: " + why);
+        // The remainder's proved radius was first order (a Lipschitz bound per
+        // panel) through plan §6aj: 0.024 at the 4096-cell cap, so 1e-3 refused.
+        // Plan §6ak makes it second order (the proved Perlin Hessian bound), and
+        // 1e-3 is now admitted; the reference check is below, with the samples.
+        auto medium = integralTol("s", node(Op::SDF, node(Op::Noise, named("p")), noiseLine()), constant(0.0), constant(3.0), constant(1e-3));
+        auto loose = integralTol("s", node(Op::SDF, node(Op::Noise, named("p")), noiseLine()), constant(0.0), constant(3.0), constant(5e-2));
+        const auto looseStart = std::chrono::steady_clock::now();
+        const auto noiseValue = OntoMath::evaluateIntegral(*loose, {}, nullptr, &why, &bounds);
+        const double looseMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - looseStart).count();
+        // Independent reference: long-double Simpson of the authored Noise, evaluated by
+        // MathNode::evaluate at 200 001 points (not the hybrid's samples or weights).
+        auto noiseAt = node(Op::Noise, named("p"));
+        auto f = [&](double s) {
+            const auto v = noiseAt->evaluate({{"p", PropertyValue(glm::vec3(float(0.3 + s), float(0.1 + 0.5 * s), float(0.2 + 0.25 * s)))}});
+            double d = NAN;
+            if (v) propertyValueToNumber(*v, d);
+            return (long double)d;
+        };
+        long double sum = f(0.0) + f(3.0);
+        const int N = 200000;
+        const long double hh = 3.0L / N;
+        for (int i = 1; i < N; ++i) sum += f(double(i * hh)) * (i % 2 ? 4.0L : 2.0L);
+        const double noiseReference = double(sum * hh / 3.0L);
+        std::printf("    noise ±5e-2: %.10g (%s), mathematical %.3g, execution %.3g, |error vs reference| %.3g, %llu samples, %.1f ms\n",
+                    noiseValue.value_or(NAN), bounds.route.c_str(), bounds.mathematical, bounds.execution,
+                    noiseValue ? std::abs(*noiseValue - noiseReference) : NAN, (unsigned long long)bounds.samples, looseMs);
+        check(noiseValue && bounds.approximate && bounds.total() <= 5e-2 &&
+                  bounds.route.find("hybrid") != std::string::npos && std::abs(*noiseValue - noiseReference) <= bounds.total(),
+              "noise at 5e-2 is admitted through the hybrid route and the independent reference lies within its total bound");
+        const std::uint64_t looseSamples = bounds.samples;
+        {
+            const auto t0 = std::chrono::steady_clock::now();
+            OntoMath::IntegralBounds mb;
+            const auto mediumValue = OntoMath::evaluateIntegral(*medium, {}, nullptr, &why, &mb);
+            const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+            std::printf("    noise ±1e-3: %.10g, mathematical %.3g, execution %.3g, |error vs reference| %.3g, %llu samples (±5e-2 took %llu), %.1f ms\n",
+                        mediumValue.value_or(NAN), mb.mathematical, mb.execution,
+                        mediumValue ? std::abs(*mediumValue - noiseReference) : NAN,
+                        (unsigned long long)mb.samples, (unsigned long long)looseSamples, ms);
+            check(mediumValue && mb.total() <= 1e-3 && std::abs(*mediumValue - noiseReference) <= mb.total(),
+                  "noise at 1e-3, refused under the first-order radius, is admitted under the second-order one, the reference inside");
+        }
+
+        // Codex, 2026-10-20: a case where the POINTWISE evaluation is the weak
+        // link though the final sum is benign. glm::perlin's float lattice hash
+        // is exactly 289-periodic (bit-identical at 289·k for k up to 32768,
+        // checked), so the same noise line shifted by 289·k has the SAME
+        // integral. But the samples read glm::vec3: at 289·32768 ≈ 9.5e6 a
+        // position's ulp is 1, the samples are noise at the wrong points, and
+        // the executed integral is off by 0.264.
+        // Before plan §6aj this was ADMITTED at ±0.2 with a stated total of
+        // 0.162, the true error outside it: the bound rested on a premise the
+        // samples broke. Now every sample carries its executed-vs-exact slack
+        // under the CPU line model (28.561 × the binary32 rounding of each
+        // coordinate, plus the glm::perlin allowance), so the far case
+        // REFUSES, naming the bound, and the moderate shift is admitted with
+        // its error inside a bound that now prices its positions.
+        auto shiftedNoise = [&](double cells, double tolerance, OntoMath::IntegralBounds& b) {
+            const double shift = 289.0 * cells;
+            auto farLine = node(Op::Add, node(Op::VectorConstruct, constant(0.3 + shift), constant(0.1), constant(0.2)),
+                                node(Op::Scale, named("s"), node(Op::VectorConstruct, constant(1.0), constant(0.5), constant(0.25))));
+            auto far = integralTol("s", node(Op::SDF, node(Op::Noise, named("p")), std::move(farLine)), constant(0.0), constant(3.0), constant(tolerance));
+            return OntoMath::evaluateIntegral(*far, {}, nullptr, &why, &b);
+        };
+        OntoMath::IntegralBounds nearB, farB;
+        const auto nearV = shiftedNoise(32.0, 0.2, nearB);
+        std::printf("    noise shifted 289·32: %.10g, mathematical %.3g, execution %.3g, |error| %.3g\n",
+                    nearV.value_or(NAN), nearB.mathematical, nearB.execution, nearV ? std::abs(*nearV - noiseReference) : NAN);
+        check(nearV && nearB.execution > 1e-4 && std::abs(*nearV - noiseReference) <= nearB.total(),
+              "a moderate period shift (289·32) is admitted, its positions priced, and the periodic reference lies inside its bound");
+        const auto farV = shiftedNoise(32768.0, 0.2, farB);
+        std::printf("    noise shifted 289·32768: %s\n", farV ? "ADMITTED" : why.c_str());
+        check(!farV && why.find("exceeds the tolerance") != std::string::npos,
+              "far out (289·32768) the binary32 positions are priced: the integral refuses rather than state a bound it breaks");
+        const auto farLoose = shiftedNoise(32768.0, 1e3, farB);
+        check(farLoose && std::abs(*farLoose - noiseReference) <= farB.total(),
+              "at a tolerance the far case can honestly meet, it is admitted and the true error lies inside the bound");
+        // A mathematically exact integral whose EXECUTION bound exceeds the tolerance refuses.
+        auto large = integralTol("x", leaf(trans(K::Cos, "x", 1.0).scaled(1e12)), constant(0.0), constant(1.0), constant(1e-6));
+        check(!run(*large, {}, &why) && why.find("execution bound") != std::string::npos,
+              "an exact result whose execution bound exceeds the tolerance refuses: " + why);
+        auto largeOk = integralTol("x", leaf(trans(K::Cos, "x", 1.0).scaled(1e12)), constant(0.0), constant(1.0), constant(1.0));
+        const auto largeValue = OntoMath::evaluateIntegral(*largeOk, {}, nullptr, &why, &bounds);
+        check(largeValue && !bounds.approximate && bounds.mathematical == 0.0 && std::abs(*largeValue - 1e12 * std::sin(1.0)) <= bounds.total(),
+              "the same integral at a tolerance its execution bound fits is admitted as exact mathematics");
+
+        // An approximate inner integral does not compose into an outer one (no propagated bound yet).
+        auto inner = integralTol("u", node(Op::SDF, node(Op::Noise, named("p")), noiseLine()), constant(0.0), named("s"), constant(1e-3));
+        auto outer = integralTol("s", std::move(inner), constant(0.0), constant(1.0), constant(1e-2));
+        check(!run(*outer, {}, &why), "an approximate inner integral is not composed into an outer one: " + why);
+
+        // The tolerance is read in the enclosing scope.
+        auto scoped = integralTol("s", node(Op::SDF, ballField(), ballLine()), constant(0.0), constant(4.0), named("eps"));
+        const auto scopedValue = run(*scoped, {{"eps", PropertyValue(1e-9)}}, &why);
+        check(scopedValue && std::abs(*scopedValue - ballReference) <= 1e-9, "a tolerance bound in the enclosing scope is honoured");
+        // JSON keeps the tolerance child.
+        const auto restored = MathNode::fromJson(ball->toJson());
+        check(restored && restored->children.size() == 4, "JSON keeps the tolerance child");
+    }
+
+    // ---- The centred decomposition backends lower (step 2b) equals the office's own definite value
+    {
+        const ScalarForm body = var("u").times(var("u")).times(trans(K::Exp, "u", 0.001, 0.2)).times(trans(K::Cos, "u", 0.002, 0.1))
+                                    .plus(var("u").times(trans(K::Sin, "u", 5.0, -1.0)))
+                                    .plus(ScalarForm::variable("u", -1.0).scaled(0.5))   // uncentred (ln)
+                                    .plus(var("k").times(var("u")).times(var("u")).times(var("u")));
+        const auto centred = OntoMath::centredIntegral(body, "u", "\x01m", "\x01h");
+        double worst = 0.0;
+        bool ok = centred.has_value();
+        for (const auto& [lo, hi] : std::vector<std::pair<double, double>>{{1.0, 2.0}, {999.0, 1000.5}, {1e3, 1.05e3}, {0.25, 0.2501}, {3.0, 40.0}}) {
+            const auto a = centred ? OntoMath::evaluateCentredIntegral(*centred, "u", "\x01m", "\x01h", lo, hi, {{"k", 0.3}}) : std::nullopt;
+            const auto b = OntoMath::definiteIntegral(body, "u", lo, hi, {{"k", 0.3}});
+            ok = ok && a && b;
+            if (a && b) worst = std::max(worst, std::abs(*a - *b) / std::max(1.0, std::abs(*b)));
+        }
+        std::cout << "    centred decomposition vs the office's definite value: worst relative " << worst << "\n";
+        check(ok && worst < 1e-12, "the centred decomposition (what backends lower) equals the office's definite integral");
+    }
+
+    // ---- The office itself: exp·cos differentiates back -----------------------------
+    {
+        const ScalarForm f = var("x").times(var("x")).times(trans(K::Exp, "x", -0.7, 0.2)).times(trans(K::Sin, "x", 2.5, 1.0));
+        const auto F = f.antiderivative("x");
+        double worst = 0.0;
+        if (F) {
+            const ScalarForm dF = F->derivative("x");
+            for (double x = -3.0; x <= 3.0; x += 0.25) {
+                const double want = *f.evaluate({{"x", x}}), got = *dF.evaluate({{"x", x}});
+                worst = std::max(worst, std::abs(got - want) / std::max(1.0, std::abs(want)));
+            }
+        }
+        std::cout << "    d/dx ∫ x²·e^(−0.7x+0.2)·sin(2.5x+1): worst relative difference " << worst << "\n";
+        check(F && worst < 1e-13, "the exp·sin antiderivative differentiates back to its integrand");
+    }
+
+    // ---- Let (Op 41, Zach's choice, 2026-10-20; plan §6an) ----
+    {
+        std::cout << "  -- Let: name = value in body --\n";
+        auto let = [](const std::string& name, Node value, Node body) {
+            auto n = node(Op::Let, std::move(value), std::move(body));
+            n->variableName = name;
+            return n;
+        };
+        auto num = [](const std::optional<PropertyValue>& v) { double d = NAN; if (v) propertyValueToNumber(*v, d); return d; };
+        // Evaluation and lexical scope.
+        const auto square = let("a", constant(2.0), leaf(var("a").times(var("a")).plus(ScalarForm::constant(1.0))));
+        check(num(square->evaluate({})) == 5.0, "let a = 2 in a² + 1 = 5");
+        const auto shadow = let("a", constant(2.0), let("a", leaf(var("a").plus(ScalarForm::constant(1.0))), named("a")));
+        check(num(shadow->evaluate({})) == 3.0, "an inner Let shadows an outer one (let a = 2 in let a = a + 1 in a = 3)");
+        const auto outside = node(Op::Add, let("a", constant(2.0), named("a")), named("a"));
+        check(num(outside->evaluate({{"a", PropertyValue(10.0)}})) == 12.0, "the name is bound in the body only: (let a = 2 in a) + a = 12 at a = 10");
+        // Dependencies, types, JSON, print.
+        const auto deps = let("a", named("b"), leaf(var("a").plus(var("c"))));
+        std::set<std::string> d;
+        deps->collectDependencies(d);
+        check(d == std::set<std::string>{"b", "c"}, "dependencies are the value's plus the body's minus the name");
+        std::string typeError;
+        auto unnamed = node(Op::Let, constant(1.0), constant(2.0));
+        check(!unnamed->checkTypes({}, typeError), "a Let without a name is a type error: " + typeError);
+        const auto restored = MathNode::fromJson(deps->toJson());
+        check(restored && restored->op == Op::Let && restored->variableName == "a" && restored->toJson() == deps->toJson(),
+              "a Let round-trips through JSON with its name");
+        std::cout << "    print: " << deps->print() << "\n";
+        check(deps->print().find("let a = ") == 0, "it prints as let a = … in …");
+        // Range: the value's range bound to the name.
+        const auto ranged = let("a", named("x"), leaf(var("a").times(var("a"))));
+        const auto rr = ranged->evalRange({{"x", MathNode::RangeValue::makeScalar(OntoMath::Interval(1.0f, 2.0f))}});
+        check(rr && rr->scalar.lo <= 1.0f && rr->scalar.hi >= 4.0f && rr->scalar.hi <= 4.001f, "range: let a = x in a², x ∈ [1, 2] → ⊇ [1, 4]");
+        // Transport through a homogeneous medium, EXACT: L = ∫₀^S exp(−∫₀^s k du)·ε ds = ε(1 − e^(−kS))/k.
+        const double k = 0.7, eps = 1.3, S = 2.5;
+        auto depth = integral("u", constant(k), constant(0.0), named("s"));
+        auto radiance = integral("s", let("tau", std::move(depth), leaf(trans(K::Exp, "tau", -1.0).scaled(eps))), constant(0.0), constant(S));
+        std::string why;
+        const auto L = run(*radiance, {}, &why);
+        const double want = eps * (1.0 - std::exp(-k * S)) / k;
+        std::printf("    homogeneous transport: %.17g (want %.17g)\n", L.value_or(NAN), want);
+        check(L && std::abs(*L - want) <= 1e-15 * want, "∫ exp(−∫ k) ε, written with Let, integrates exactly: ε(1 − e^(−kS))/k");
+        // Heterogeneous transport (plan §6ao): L = ∫₀¹ exp(−∫₀ˢ σ(u) du)·ε ds, σ = noise(q(u)) + 4
+        // along a line, the inner integral approximate (±2e-2), the outer through the
+        // sampled-body route: bounded samples, a derivative enclosure per panel
+        // (τ′ = σ by the fundamental theorem), first-order radius.
+        auto rayAt = [](const char* var) {
+            return node(Op::Add, node(Op::VectorConstruct, constant(0.3), constant(0.1), constant(0.2)),
+                        node(Op::Scale, named(var), node(Op::VectorConstruct, constant(1.0), constant(0.5), constant(0.25))));
+        };
+        auto sigma = node(Op::SDF, node(Op::Add, node(Op::Noise, named("p")), constant(4.0)), rayAt("u"));
+        auto noisyDepth = integralTol("u", std::move(sigma), constant(0.0), named("s"), constant(2e-2));
+        auto noisyRadiance = integralTol("s", let("tau", std::move(noisyDepth), leaf(trans(K::Exp, "tau", -1.0).scaled(1.3))),
+                                         constant(0.0), constant(1.0), constant(1e-1));
+        // Independent reference: cumulative long-double Simpson of τ on a fine grid, then of L.
+        auto noiseNode = node(Op::Noise, named("p"));
+        auto sig = [&](long double u) {
+            const auto v = noiseNode->evaluate({{"p", PropertyValue(glm::vec3(float(0.3 + u), float(0.1 + 0.5 * u), float(0.2 + 0.25 * u)))}});
+            double d = NAN; if (v) propertyValueToNumber(*v, d); return (long double)d + 4.0L;
+        };
+        const int M = 20000;   // even
+        std::vector<long double> tau(M + 1, 0.0L);
+        const long double hh = 1.0L / M;
+        for (int i = 2; i <= M; i += 2) tau[i] = tau[i - 2] + hh / 3.0L * (sig((i - 2) * hh) + 4.0L * sig((i - 1) * hh) + sig(i * hh));
+        for (int i = 1; i < M; i += 2) tau[i] = tau[i - 1] + hh / 24.0L * (9.0L * sig((i - 1) * hh) + 19.0L * sig(i * hh) - 5.0L * sig((i + 1) * hh) + sig((i + 2) * hh));
+        long double Lsum = 0.0L;
+        for (int i = 0; i <= M; ++i) Lsum += (i == 0 || i == M ? 1.0L : (i % 2 ? 4.0L : 2.0L)) * 1.3L * std::exp(-tau[i]);
+        const double Lref = double(Lsum * hh / 3.0L);
+        OntoMath::IntegralBounds tb;
+        const auto t0 = std::chrono::steady_clock::now();
+        const auto Lv = OntoMath::evaluateIntegral(*noisyRadiance, {}, nullptr, &why, &tb);
+        const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+        std::printf("    heterogeneous transport: %.10g (reference %.10g, |error| %.3g), mathematical %.3g, execution %.3g, propagated %.3g, "
+                    "%llu outer sites, %llu inner samples, %.0f ms, %s\n",
+                    Lv.value_or(NAN), Lref, Lv ? std::abs(*Lv - Lref) : NAN, tb.mathematical, tb.execution, tb.propagated,
+                    (unsigned long long)tb.samples, (unsigned long long)tb.innerSamples, ms, Lv ? tb.route.c_str() : why.c_str());
+        check(Lv && tb.propagated > 0.0 && tb.innerSamples > tb.samples,
+              "its bound names the samples' propagated (inner) error separately, and the inner work is counted (sites vs inner samples)");
+        check(Lv && tb.route.find("sampled body") == 0 && tb.total() <= 1e-1 && std::abs(*Lv - Lref) <= tb.total(),
+              "∫ exp(−∫ (noise + 4)) · ε through noise is admitted at ±0.1, the independent reference inside its bound");
+        // The same at a tolerance its first-order radius cannot reach refuses, naming its best.
+        auto tightRadiance = integralTol("s", let("tau", integralTol("u", node(Op::SDF, node(Op::Add, node(Op::Noise, named("p")), constant(4.0)), rayAt("u")),
+                                                               constant(0.0), named("s"), constant(2e-2)),
+                                                  leaf(trans(K::Exp, "tau", -1.0).scaled(1.3))),
+                                         constant(0.0), constant(1.0), constant(1e-3));
+        check(!run(*tightRadiance, {}, &why) && why.find("exceeds the tolerance") != std::string::npos,
+              "at ±1e-3 (below the inner integrals' own bounds) it refuses, naming its best: " + why.substr(0, 160));
+        // Codex's computed-limit reproduction (2026-10-20 16:23): limits evaluated in
+        // binary64 before any accounting turned (2^54 + 1) − 2^54 into 0, and
+        // ∫₀¹ 1 ds was admitted as 0 with a total bound of 0.
+        const double A = std::ldexp(1.0, 54);
+        auto lost = [&](Node tol) {
+            auto hiNode = node(Op::Sub, node(Op::Add, constant(A), constant(1.0)), constant(A));
+            return tol ? integralTol("s", constant(1.0), constant(0.0), std::move(hiNode), std::move(tol))
+                       : integral("s", constant(1.0), constant(0.0), std::move(hiNode));
+        };
+        OntoMath::IntegralBounds lb;
+        const auto lostTol = OntoMath::evaluateIntegral(*lost(constant(1e-6)), {}, nullptr, &why, &lb);
+        check(!lostTol && why.find("computed limits") != std::string::npos,
+              "∫₀^((2⁵⁴+1)−2⁵⁴) 1 ds at ±1e-6 refuses instead of admitting 0 with bound 0: " + why.substr(0, 120));
+        const auto lostExact = OntoMath::evaluateIntegral(*lost(nullptr), {}, nullptr, &why, &lb);
+        check(lostExact && std::abs(*lostExact - 1.0) <= lb.total(),
+              "in exact mode its value comes with an execution bound that covers the lost unit (" + std::to_string(lb.total()) + ")");
+        auto benign = integralTol("s", constant(1.0), constant(0.0), node(Op::Add, named("x"), constant(0.5)), constant(1e-9));
+        const auto bv = OntoMath::evaluateIntegral(*benign, {{"x", PropertyValue(1000.3)}}, nullptr, &why, &lb);
+        check(bv && std::abs(*bv - 1000.8) <= 1e-9 && lb.execution < 1e-9,
+              "a benign computed limit (x + ½, x = 1000.3) is still admitted, its rounding charged (" + std::to_string(lb.execution) + ")");
+    }
+
+    // Exact derivative substitution is authored mathematics, independent of
+    // Screen. A polynomial inside exp(integral g) is outside the term algebra;
+    // a narrow tent additionally crosses genuine value branches.
+    {
+        auto make = [&](Node gInner, Node gOuter, Node coefficient, double lo, double hi, double tol = 0.0) {
+            auto depth = integralTol("u", std::move(gInner), constant(lo), named("s"), constant(tol * 0.1));
+            auto body = node(Op::Let, std::move(depth),
+                node(Op::Scale, leaf(trans(K::Exp, "tau", -1.0)),
+                     node(Op::Scale, std::move(coefficient), std::move(gOuter))));
+            body->variableName = "tau";
+            return integralTol("s", std::move(body), constant(lo), constant(hi), constant(tol));
+        };
+        auto polynomial = [&](const char* v) { return leaf(var(v).times(var(v)).plus(ScalarForm::constant(1.0))); };
+        auto exact = make(polynomial("u"), polynomial("s"), named("k"), 0.0, 2.0);
+        OntoMath::IntegralBounds b; std::string why;
+        const auto v = OntoMath::evaluateIntegral(*exact, {{"k", PropertyValue(0.3)}}, nullptr, &why, &b);
+        const double want = 0.3 * (1.0 - std::exp(-14.0 / 3.0));
+        check(v && b.route == "exponential derivative substitution" && !b.approximate && b.samples == 0 &&
+              std::abs(*v - want) <= b.total(), "a varying quadratic derivative eliminates the outer integral and prices endpoint execution");
+        const auto reduced = OntoMath::deriveExponentialIntegral(*exact, &why);
+        std::cout << "    substitution diagnostic: " << (reduced ? reduced->print() : why) << ", route " << b.route << ", value " << v.value_or(NAN) << " bound " << b.total() << "\n";
+        const auto round = reduced ? MathNode::fromJson(reduced->toJson()) : nullptr;
+        double result = NAN;
+        const auto rv = round ? round->evaluate({{"k", PropertyValue(0.3)}}) : std::nullopt;
+        if (rv) propertyValueToNumber(*rv, result);
+        check(round && std::abs(result - want) < 1e-14, "the reusable derivation is an ordinary serialized Let/Integral tree");
+        auto shadowed = std::make_unique<MathNode>(*exact);
+        auto& sameNameDepth = *shadowed->children[0]->children[0];
+        sameNameDepth.variableName = "s";
+        sameNameDepth.children[0] = polynomial("s");
+        const auto sv = OntoMath::evaluateIntegral(*shadowed, {{"k", PropertyValue(0.3)}, {"s", PropertyValue(100.0)}}, nullptr, &why, &b);
+        check(sv && b.route == "exponential derivative substitution" && std::abs(*sv - want) <= b.total(),
+              "the same inner and outer name keeps the cumulative endpoint in outer scope and the derivative in inner scope");
+        auto reverse = make(polynomial("u"), polynomial("s"), constant(-0.2), 2.0, 0.0);
+        const auto r = OntoMath::evaluateIntegral(*reverse, {}, nullptr, &why, &b);
+        check(r && b.route == "exponential derivative substitution" &&
+              std::abs(*r - (-0.2 * (1.0 - std::exp(14.0 / 3.0)))) <= b.total(), "signed coefficients and reversed endpoints preserve the exact identity");
+        auto changing = make(polynomial("u"), polynomial("s"), named("s"), 0.0, 2.0);
+        check(!OntoMath::deriveExponentialIntegral(*changing, &why), "a varying proportional coefficient cannot use endpoint substitution");
+        auto mismatch = make(polynomial("u"), node(Op::Add, polynomial("s"), constant(0.01)), constant(0.3), 0.0, 2.0);
+        check(!OntoMath::deriveExponentialIntegral(*mismatch, &why), "a nearby but unequal source cannot masquerade as the derivative");
+        auto capture = make(node(Op::Add, polynomial("u"), named("s")), polynomial("s"), constant(0.3), 0.0, 2.0);
+        check(!OntoMath::deriveExponentialIntegral(*capture, &why), "an inner body reading the changing outer binding needs a Leibniz term and declines");
+        auto wrongBase = std::make_unique<MathNode>(*exact);
+        wrongBase->children[0]->children[0]->children[1] = constant(-1.0);
+        check(!OntoMath::deriveExponentialIntegral(*wrongBase, &why), "a different cumulative base cannot assume a zero lower endpoint");
+        auto fromOuterTau = make(polynomial("u"), polynomial("s"), named("tau"), 0.0, 2.0);
+        check(!OntoMath::deriveExponentialIntegral(*fromOuterTau, &why), "a coefficient reading the cumulative binding is not a ray-independent ratio");
+        auto field = [&] {
+            return node(Op::Clamp, node(Op::Sub, constant(1.0), node(Op::Abs,
+                node(Op::Sub, node(Op::Component, named("p")), constant(0.5)))), constant(0.0), constant(1.0));
+        };
+        auto sample = [&](const char* x, double a) {
+            auto f = field(); f->children[0]->children[1]->children[0]->children[0]->stringArg = "x";
+            return node(Op::SDF, node(Op::Scale, constant(a), std::move(f)),
+                node(Op::VectorConstruct, named(x), constant(0.0), constant(0.0)));
+        };
+        auto tent = make(sample("u", 0.5), sample("s", 0.25), constant(1.0), 0.0, 1.0, 1e-5);
+        const auto tv = OntoMath::evaluateIntegral(*tent, {}, nullptr, &why, &b);
+        std::cout << "    piecewise substitution: " << tv.value_or(NAN) << ", route " << b.route << " bound " << b.total() << "\n";
+        check(tv && b.route == "exponential derivative substitution" && b.samples == 0 &&
+              std::abs(*tv - 0.5 * (1.0 - std::exp(-0.375))) <= b.total(),
+              "identical piecewise fields at the same point share one endpoint depth, with distinct literal multipliers");
+        auto pole = make(leaf(ScalarForm::variable("u", -2.0)), leaf(ScalarForm::variable("s", -2.0)), constant(1.0), -1.0, 1.0);
+        check(!OntoMath::deriveExponentialIntegral(*pole, &why), "finite endpoint formulas cannot conceal an interior pole in the derivative");
+        auto foreignPoint = std::make_unique<MathNode>(*tent);
+        // An independent SDF factor at an undefined point would disappear if
+        // lifted carelessly. Its domain is not witnessed by the retained g.
+        auto badPoint = node(Op::VectorConstruct, node(Op::Div, constant(1.0), constant(0.0)), constant(0.0), constant(0.0));
+        foreignPoint->children[0]->children[1]->children[1]->children[0] = node(Op::SDF, constant(1.0), std::move(badPoint));
+        check(!OntoMath::deriveExponentialIntegral(*foreignPoint, &why), "lifting an independent field factor cannot erase a different undefined point");
+        auto noiseSample = [&](const char* x, double a) {
+            return node(Op::SDF, node(Op::Scale, constant(a), node(Op::Add, node(Op::Noise, named("p")), constant(4.0))),
+                node(Op::VectorConstruct, named(x), constant(0.1), constant(0.2)));
+        };
+        auto noisy = make(noiseSample("u", 0.5), noiseSample("s", 0.25), constant(1.0), 0.0, 1.0, 0.02);
+        const auto nv = OntoMath::evaluateIntegral(*noisy, {}, nullptr, &why, &b);
+        // Independent fine Simpson of the actual f32/Perlin field; this is a
+        // numerical witness, not an exact-real noise oracle.
+        auto noiseNode = node(Op::Noise, named("p"));
+        long double sum = 0.0L;
+        for (int i = 0; i <= 8000; ++i) {
+            const auto z = noiseNode->evaluate({{"p", PropertyValue(glm::vec3(float(i/8000.0), 0.1f, 0.2f))}});
+            double y = NAN; if (z) propertyValueToNumber(*z, y);
+            sum += (i == 0 || i == 8000 ? 1 : i % 2 ? 4 : 2) * (4.0L + y) * 0.5L;
+        }
+        const double noisyWant = 0.5 * (1.0 - std::exp(-double(sum / 24000.0L)));
+        check(nv && b.route == "exponential derivative substitution" && b.approximate && b.samples == 0 && b.innerSamples > 0 &&
+              b.propagated > 0 && b.total() <= 0.02 && std::abs(*nv - noisyWant) <= b.total(),
+              "a noisy common derivative executes one bounded inner integral and no outer samples");
+        auto exactNoisy = std::make_unique<MathNode>(*noisy);
+        exactNoisy->children[3] = constant(0.0);
+        check(!run(*exactNoisy, {}, &why), "an approximate inner endpoint cannot turn an exact-only outer request into an approximate answer");
+        auto aliasRatio = make(sample("u", 0.5), sample("s", 0.25), constant(1.0), 0.0, 1.0);
+        auto& aliasSource = aliasRatio->children[0]->children[1]->children[1]->children[1];
+        aliasSource->children[0] = node(Op::Scale, std::move(aliasSource->children[0]), named("x"));
+        check(!OntoMath::deriveExponentialIntegral(*aliasRatio, &why), "an SDF x/y/z alias cannot escape as a constant proportional factor");
+        auto zeroDivisor = make(sample("u", 0.0), sample("s", 0.25), constant(1.0), 0.0, 1.0);
+        check(!OntoMath::deriveExponentialIntegral(*zeroDivisor, &why), "zero extinction coefficient never divides out a shared field");
+        auto cancelled = node(Op::Sub, node(Op::Add, constant(std::ldexp(1.0, 54)), named("s")), constant(std::ldexp(1.0, 54)));
+        auto cancelledRatio = make(polynomial("u"), polynomial("s"), std::move(cancelled), 0.0, 2.0);
+        check(!OntoMath::deriveExponentialIntegral(*cancelledRatio, &why), "authored spatial dependence cannot disappear through algebraic cancellation");
+    }
+
+    {
+        bool corners=true;
+        for(double k:{-2.0,0.25,4.0})for(double v:{0.2,0.9,1.2}) {
+            const auto bound=OntoMath::boundComplementProduct(k,0.03,v,0.01,std::ldexp(1.0,-16));
+            const double executed=float(float(k)*float(1.0f-float(v)));
+            for(double dk:{-0.03,0.03})for(double dv:{-0.01,0.01})
+                corners=corners && bound && std::abs(executed-(k+dk)*(1-v-dv))<=bound->total();
+        }
+        check(corners,"the shared complement-product error office encloses independent signed input-error corners");
+        const auto zero=OntoMath::boundComplementProduct(0,0,0.5,0.1,0);
+        check(zero && zero->total()==0 && !OntoMath::boundComplementProduct(1,-0.1,0.5,0.1,0),
+              "an exact zero coefficient stays zero; invalid uncertainty never becomes a bound");
+    }
+
+    std::cout << "ontomath_integral_operation_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";
+    return g_failures == 0 ? 0 : 1;
+}
