@@ -180,6 +180,27 @@ int main(){
     }
     check(gyroidParity,"ScalarForm sin/cos products retain authored gyroid semantics in the VM");
 
+    // Canonical OntoMath primitive expansions are also legal Expr trees. This
+    // exercises vector Abs/Sub/Intersection widening, Length, Component, Sqrt
+    // and Pow rather than relying on the VM's primitive shorthand opcodes.
+    const auto canonicalExprParity=[&](std::unique_ptr<OntoMath::MathNode> math){
+        if(!math)return false;
+        auto root=std::shared_ptr<OntoMath::MathNode>(math.release());
+        auto n=geom::makeImplicit(root);
+        const auto vm=sdfwgsl::lowerFieldVm(n);
+        if(!vm.ok)return false;
+        const glm::vec3 probes[]={{0,0,0},{.3f,.2f,-.1f},{.8f,.7f,.6f},{-.6f,1.2f,.25f}};
+        for(const auto& p:probes){
+            const auto v=sdfwgsl::evaluateFieldVm(vm,p);
+            if(!v||std::fabs(*v-geom::evalSdf(n,p))>2e-5f)return false;
+        }
+        return true;
+    };
+    check(canonicalExprParity(OntoMath::MathNode::box(glm::vec3(.5f,.4f,.7f),"p"))&&
+          canonicalExprParity(OntoMath::MathNode::cylinder(.5, .8, "p"))&&
+          canonicalExprParity(OntoMath::MathNode::torus(.6, .15, "p")),
+          "canonical box/cylinder/torus OntoMath expansions lower as Expr without primitive aliases");
+
     geom::SdfNode rpnOnly;
     rpnOnly.op=geom::SdfOp::Leaf;
     rpnOnly.prim=geom::SdfPrim::Expr;
