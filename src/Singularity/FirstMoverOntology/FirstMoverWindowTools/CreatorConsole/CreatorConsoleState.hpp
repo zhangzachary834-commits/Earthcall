@@ -154,7 +154,6 @@ namespace Rendering {
         Tool currentTool = Tool(Tool::Type::Brush);
         float currentColor[3] = {1.0f, 1.0f, 1.0f};
         bool use2DPressureSimulation = false;
-        bool useLegacy2DTools = false;
 
         // Character State
         bool characterDesignLocked = false;
