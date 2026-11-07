@@ -115,6 +115,9 @@ enum class FieldVmOpcode : uint32_t {
     MathLength3 = 62,
     MathNormalizeComponent = 63,
     MathProjectComponent = 64,
+    // ScalarForm factor exponent uses raw std::pow / ontoRawPow semantics,
+    // distinct from MathNode::Pow's negative-fractional -> 0 contract.
+    MathRawPow = 65,
 };
 
 // One postorder stack instruction. meta.x = FieldVmOpcode.
