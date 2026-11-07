@@ -1,5 +1,6 @@
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <string>
@@ -8,6 +9,74 @@
 static int failures=0;
 static void check(bool ok,const char* s){std::printf("  %s: %s\n",ok?"ok":"FAILED",s);if(!ok)++failures;}
 static bool nearf(float a,float b){return std::fabs(a-b)<=2e-6f;}
+
+static std::unique_ptr<OntoMath::MathNode> number(double v){
+    auto n=std::make_unique<OntoMath::MathNode>();
+    n->op=OntoMath::MathNode::Op::ScalarLeaf;
+    n->scalarForm=OntoMath::ScalarForm::constant(v);
+    return n;
+}
+static std::unique_ptr<OntoMath::MathNode> value(const std::string& name){
+    auto n=std::make_unique<OntoMath::MathNode>();
+    n->op=OntoMath::MathNode::Op::ValueLeaf;
+    n->variableName=name;
+    return n;
+}
+static std::unique_ptr<OntoMath::MathNode> vec3(
+    std::unique_ptr<OntoMath::MathNode> x,
+    std::unique_ptr<OntoMath::MathNode> y,
+    std::unique_ptr<OntoMath::MathNode> z){
+    auto n=std::make_unique<OntoMath::MathNode>();
+    n->op=OntoMath::MathNode::Op::VectorConstruct;
+    n->children.push_back(std::move(x));
+    n->children.push_back(std::move(y));
+    n->children.push_back(std::move(z));
+    return n;
+}
+static std::unique_ptr<OntoMath::MathNode> binary(
+    OntoMath::MathNode::Op op,
+    std::unique_ptr<OntoMath::MathNode> a,
+    std::unique_ptr<OntoMath::MathNode> b){
+    auto n=std::make_unique<OntoMath::MathNode>();
+    n->op=op;
+    n->children.push_back(std::move(a));
+    n->children.push_back(std::move(b));
+    return n;
+}
+static std::shared_ptr<OntoMath::MathNode> terrainExpr(){
+    auto shifted=binary(
+        OntoMath::MathNode::Op::Add,
+        value(OntoMath::kAmbientPointVar),
+        vec3(number(100.0),number(0.0),number(100.0)));
+    auto scaled=binary(
+        OntoMath::MathNode::Op::Scale,number(0.008),std::move(shifted));
+    auto noise=std::make_unique<OntoMath::MathNode>();
+    noise->op=OntoMath::MathNode::Op::Noise;
+    noise->children.push_back(std::move(scaled));
+    auto shaped=binary(
+        OntoMath::MathNode::Op::Scale,number(40.0),std::move(noise));
+    auto root=binary(
+        OntoMath::MathNode::Op::Sub,value("y"),std::move(shaped));
+    return std::shared_ptr<OntoMath::MathNode>(root.release());
+}
+static std::shared_ptr<OntoMath::MathNode> gyroidExpr(double k){
+    using K=OntoMath::TransFactor::Kind;
+    const auto leaf=[&](OntoMath::TransFactor a,OntoMath::TransFactor b){
+        auto n=std::make_unique<OntoMath::MathNode>();
+        n->op=OntoMath::MathNode::Op::ScalarLeaf;
+        OntoMath::Term t(1.0);
+        t.trans={std::move(a),std::move(b)};
+        std::sort(t.trans.begin(),t.trans.end());
+        n->scalarForm.terms.push_back(std::move(t));
+        return n;
+    };
+    auto xy=leaf({K::Sin,"x",k,0.0},{K::Cos,"y",k,0.0});
+    auto yz=leaf({K::Sin,"y",k,0.0},{K::Cos,"z",k,0.0});
+    auto zx=leaf({K::Sin,"z",k,0.0},{K::Cos,"x",k,0.0});
+    auto first=binary(OntoMath::MathNode::Op::Add,std::move(xy),std::move(yz));
+    auto root=binary(OntoMath::MathNode::Op::Add,std::move(first),std::move(zx));
+    return std::shared_ptr<OntoMath::MathNode>(root.release());
+}
 
 int main(){
     std::printf("Running native GPU field VM substrate test...\n");
@@ -71,9 +140,81 @@ int main(){
           production.wgsl.find("sceneFieldVmBlockers")!=std::string::npos,
           "production SDF visibility no longer depends on the sphere-box foreign packet");
 
+    // Expr is admitted only through authored OntoMath, never the legacy RPN.
     auto expr=geom::makeImplicit("x*x+y*y+z*z-1");
     auto evm=sdfwgsl::lowerFieldVm(expr);
-    check(!evm.ok&&evm.error.find("native OntoMath bytecode")!=std::string::npos,"Expr refuses until native OntoMath bytecode exists");
+    bool exprParity=evm.ok&&evm.instructions.size()>1;
+    for(const auto& p:pts){
+        const auto v=sdfwgsl::evaluateFieldVm(evm,p);
+        exprParity&=v&&nearf(*v,geom::evalSdf(expr,p));
+    }
+    check(exprParity,"algebraic Expr lowers from OntoMath and matches geom::evalSdf");
+
+    auto translatedExpr=geom::makeImplicit("x*x+y*y+z*z-1");
+    translatedExpr.offset={.3f,-.2f,.1f};
+    const auto translatedVm=sdfwgsl::lowerFieldVm(translatedExpr);
+    const glm::vec3 translatedProbe(.3f,-.2f,1.1f);
+    const auto translatedValue=sdfwgsl::evaluateFieldVm(translatedVm,translatedProbe);
+    check(translatedVm.ok&&translatedValue&&
+          nearf(*translatedValue,geom::evalSdf(translatedExpr,translatedProbe))&&
+          std::fabs(*translatedValue)<=3e-6f,
+          "Expr coordinate bytecode preserves leaf-local offset semantics");
+
+    geom::SdfNode terrain=geom::makeImplicit(terrainExpr());
+    const auto terrainVm=sdfwgsl::lowerFieldVm(terrain);
+    bool terrainParity=terrainVm.ok;
+    const glm::vec3 terrainPts[]={{0,0,0},{12.5f,4.0f,-8.0f},{-17.0f,-2.0f,31.0f}};
+    for(const auto& p:terrainPts){
+        const auto v=sdfwgsl::evaluateFieldVm(terrainVm,p);
+        terrainParity&=v&&std::fabs(*v-geom::evalSdf(terrain,p))<=2e-5f;
+    }
+    check(terrainParity,"vector arithmetic and exact Perlin Expr lower through native OntoMath bytecode");
+
+    geom::SdfNode gyroid=geom::makeImplicit(gyroidExpr(1.37));
+    const auto gyroidVm=sdfwgsl::lowerFieldVm(gyroid);
+    bool gyroidParity=gyroidVm.ok;
+    const glm::vec3 gyroidPts[]={{.2f,.4f,-.3f},{1.1f,-.7f,.6f},{-.8f,.25f,1.4f}};
+    for(const auto& p:gyroidPts){
+        const auto v=sdfwgsl::evaluateFieldVm(gyroidVm,p);
+        gyroidParity&=v&&std::fabs(*v-geom::evalSdf(gyroid,p))<=2e-5f;
+    }
+    check(gyroidParity,"ScalarForm sin/cos products retain authored gyroid semantics in the VM");
+
+    geom::SdfNode rpnOnly;
+    rpnOnly.op=geom::SdfOp::Leaf;
+    rpnOnly.prim=geom::SdfPrim::Expr;
+    rpnOnly.expr="x*x-1";
+    rpnOnly.rpn=geom::compileExpr(rpnOnly.expr);
+    const auto rpnOnlyVm=sdfwgsl::lowerFieldVm(rpnOnly);
+    check(!rpnOnlyVm.ok&&rpnOnlyVm.error.find("legacy SdfToken RPN")!=std::string::npos,
+          "legacy RPN without OntoMath authority refuses instead of becoming a second VM language");
+
+    auto bound=std::make_shared<OntoMath::MathNode>();
+    bound->op=OntoMath::MathNode::Op::Bind;
+    bound->propertyPath="radius";
+    const auto boundVm=sdfwgsl::lowerFieldVm(geom::makeImplicit(bound));
+    check(!boundVm.ok,"Expr requiring a subject PropertyPath refuses in scene field VM");
+
+    auto pieceA=std::make_shared<OntoMath::MathNode>();
+    pieceA->op=OntoMath::MathNode::Op::ScalarLeaf;
+    pieceA->scalarForm=OntoMath::ScalarForm::constant(-1.0);
+    auto pieceB=std::make_shared<OntoMath::MathNode>();
+    pieceB->op=OntoMath::MathNode::Op::ScalarLeaf;
+    pieceB->scalarForm=OntoMath::ScalarForm::constant(1.0);
+    auto pw=std::make_shared<OntoMath::Piecewise>();
+    OntoMath::Piecewise::Piece pa; pa.mathNode=pieceA;
+    OntoMath::Piecewise::Piece pb; pb.mathNode=pieceB;
+    pw->pieces.push_back(std::move(pa));pw->pieces.push_back(std::move(pb));
+    const auto pieceVm=sdfwgsl::lowerFieldVm(geom::makeImplicit(pw));
+    check(!pieceVm.ok&&pieceVm.error.find("one unconditional")!=std::string::npos,
+          "multi-piece Expr refuses until Piecewise control flow has a lossless VM encoding");
+
+    check(w.find("cnoise3(v)")!=std::string::npos&&
+          w.find("ontoPow(a, b)")!=std::string::npos&&
+          w.find("ontoRawPow(a, b)")!=std::string::npos&&
+          w.find("FIELD_VM_DIV_EPS")==std::string::npos,
+          "WGSL VM carries native OntoMath math helpers and resolved shared guard constants");
+
     auto cvm=sdfwgsl::lowerFieldVm(geom::SdfNode::convex({{1,0,0,.5f},{-1,0,0,.5f}}));
     check(!cvm.ok&&cvm.error.find("plane payload table")!=std::string::npos,"Convex refuses until plane payload exists");
 
