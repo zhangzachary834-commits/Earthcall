@@ -142,6 +142,20 @@ struct FieldVmInstruction {
 static_assert(sizeof(FieldVmInstruction) == 48,
               "field VM GPU ABI must remain uvec4 + 2 vec4");
 
+// Shared execution-policy inspection for any authored SdfNode. This is
+// derived renderer truth, not geometry ontology: it says how conservatively a
+// zero-set field may be advanced by a marcher without changing the authored
+// field itself. Expr requires local-gradient correction; finite Convex planes
+// contribute max_i |n_i| as a global Lipschitz bound. CSG keeps the maximum
+// child bound. Numeric edits may change this policy without changing WGSL.
+struct FieldMarchPolicy {
+    bool needsGradientStep = false;
+    float marchLipschitz = 1.0f;
+    bool ok = true;
+    std::string error;
+};
+FieldMarchPolicy inspectFieldMarchPolicy(const geom::SdfNode& root);
+
 struct FieldVmProgram {
     std::vector<FieldVmInstruction> instructions;
     uint32_t maxStackDepth = 0;
