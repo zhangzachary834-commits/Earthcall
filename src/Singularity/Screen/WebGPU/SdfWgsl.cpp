@@ -2463,8 +2463,10 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
                 break;
             }
             case geom::SdfPrim::Convex: {
-                // max over outward face half-spaces. Exact inside and on faces; a
-                // valid 1-Lipschitz bound outside, matching the CPU.
+                // max over authored outward face half-spaces, preserving the CPU
+                // field exactly. Plane normals are not structurally unit length;
+                // per-instance FieldMarchPolicy owns the conservative Lipschitz
+                // divisor without rewriting these parameter values.
                 if (n.planes.empty()) { e.line("let " + out + " = 1e9;"); break; }
                 e.line("var " + out + "_acc = -1e9;");
                 for (const glm::vec4& pl : n.planes) {
