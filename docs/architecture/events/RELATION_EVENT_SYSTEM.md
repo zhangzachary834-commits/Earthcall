@@ -76,4 +76,11 @@ g++ -o relation_event_example examples/relation_event_example.cpp src/Relation/R
 ./relation_event_example
 ```
 
-This will show you how the event is triggered each time a new relation is created. 
+This will show you how the event is triggered each time a new relation is created.
+## Interrelated Documents
+
+- `../PER_SINGULAR_DURABLE_LOGGING.md`
+
+## Thoughts on Integration and Interrelation
+
+The Relation Event System is the temporal boundary of the ontological graph. When a `RelationCreatedEvent` fires, a structural change has occurred in the world. Connected to Per-Singular Durable Logging, this event transcends a momentary notification on the Event Bus. The formation of a relationship must be recorded in the durable logs of both `entityA` and `entityB`. This ensures that every Singular entity possesses a permanent, append-only lineage of its connections, providing an unbroken historical context for future Laws to reason about the entity's relational history even after process termination.
