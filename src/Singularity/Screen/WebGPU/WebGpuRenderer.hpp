@@ -214,6 +214,8 @@ private:
     // frame execution state. program = {instructionBase, instructionCount,
     // maxStackDepth, flags}; flags bit 0 = needsGradientStep, derived from Expr
     // presence exactly like the primary SDF marcher's execution policy.
+    // extents.xyz is the local proxy half-extent; extents.w is the derived
+    // conservative march Lipschitz bound (>=1), never authored geometry.
     struct SceneVisibilityVmBlocker {
         glm::mat4 invModel{1.0f};
         glm::vec4 extents{0.0f};
