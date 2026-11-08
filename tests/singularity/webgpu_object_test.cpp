@@ -3404,6 +3404,86 @@ int main() {
                sourceSdfExprBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
                "SDF CompleteScene did not execute foreign authored Expr through the field VM");
 
+        // CONVEX CROSSES THE SAME FRONTIER WITHOUT A NEW VM NOUN.
+        // Six authored outward unit planes form an exact local cube. The field
+        // VM lowers each half-space into generic scalar math and MathMax folds.
+        const std::vector<glm::vec4> convexPlanes{
+            { 1, 0, 0, .5f},{-1, 0, 0, .5f},
+            { 0, 1, 0, .5f},{ 0,-1, 0, .5f},
+            { 0, 0, 1, .5f},{ 0, 0,-1, .5f}
+        };
+        Object vmKnownConvex;
+        vmKnownConvex.setFieldShape(
+            geom::SdfNode::convex(convexPlanes),
+            glm::vec3(0.8f));
+        vmKnownConvex.setRenderMode(Object::RenderMode::Auto);
+        vmKnownConvex.setMaterialId("material.webgpu_source_transport_parity");
+        const glm::mat4 implicitConvexBlockerModel =
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.95f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.22f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(implicitConvexBlockerModel);
+        vmKnownConvex.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshConvexBlocked[4];
+        readCentre(sourceMeshConvexBlocked);
+        const Renderer::FrameStats sourceMeshConvexBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceMeshConvexBlocked[0] < 5 &&
+               sourceMeshConvexBlocked[1] < 5 &&
+               sourceMeshConvexBlocked[2] < 5 &&
+               sourceMeshConvexBlockedStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshConvexBlockedStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshConvexBlockedStats.sceneVisibilityUnknownFrames == 0 &&
+               sourceMeshConvexBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
+               "mesh CompleteScene did not execute foreign Convex planes through generic field VM math");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(implicitConvexBlockerModel);
+        vmKnownConvex.drawObject();
+        renderer.endFrame();
+        unsigned char sourceSdfConvexBlocked[4];
+        readCentre(sourceSdfConvexBlocked);
+        const Renderer::FrameStats sourceSdfConvexBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceSdfConvexBlocked[0] < 5 &&
+               sourceSdfConvexBlocked[1] < 5 &&
+               sourceSdfConvexBlocked[2] < 5 &&
+               sourceSdfConvexBlockedStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceSdfConvexBlockedStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               sourceSdfConvexBlockedStats.sceneVisibilityUnknownFrames == 0 &&
+               sourceSdfConvexBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
+               "SDF CompleteScene did not execute foreign Convex planes through generic field VM math");
+
+        // Malformed Convex remains Unknown. The renderer does not normalize an
+        // authored non-unit plane and thereby silently change the half-space.
+        auto malformedPlanes = convexPlanes;
+        malformedPlanes[0] = glm::vec4(2.0f, 0.0f, 0.0f, 0.5f);
+        Object malformedConvex;
+        malformedConvex.setFieldShape(
+            geom::SdfNode::convex(malformedPlanes),
+            glm::vec3(0.8f));
+        malformedConvex.setRenderMode(Object::RenderMode::Auto);
+        malformedConvex.setMaterialId("material.webgpu_source_transport_parity");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(implicitConvexBlockerModel);
+        malformedConvex.drawObject();
+        renderer.endFrame();
+        const Renderer::FrameStats malformedConvexStats = renderer.frameStats();
+        assert(malformedConvexStats.meshVisibilityUnknownDirectSkips > 0 &&
+               malformedConvexStats.sceneVisibilityUnknownFrames > 0 &&
+               "malformed non-unit Convex was silently admitted into CompleteScene truth");
+
         // Refusal still exists where semantics are not losslessly encoded.
         // A PropertyPath Bind needs a subject; the scene blocker VM has none.
         auto unsupportedBind = std::make_shared<OntoMath::MathNode>();
