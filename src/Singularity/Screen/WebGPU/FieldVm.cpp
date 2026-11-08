@@ -609,10 +609,6 @@ bool emitMathScalar(const OntoMath::MathNode& node, const glm::vec3& offset,
 
 bool emitExprVm(const geom::SdfNode& node,
                 FieldVmProgram& out, uint32_t& stackDepth) {
-    // Same semantic distinction as WebGpuRenderer::SdfInstanceData::misc.w:
-    // Expr means general iso-surface mathematics, so raw f is not presumed to
-    // be a lawful sphere-tracing distance.
-    out.needsGradientStep = true;
     const OntoMath::MathNode* root = node.mathNode.get();
     if (!root && node.piecewise) {
         if (node.piecewise->pieces.size() != 1 ||
@@ -663,7 +659,6 @@ bool emitConvexVm(const geom::SdfNode& node,
         return false;
     }
 
-    float maxNormalLength = 0.0f;
     bool first = true;
     for (std::size_t i = 0; i < node.planes.size(); ++i) {
         const glm::vec4 pl = node.planes[i];
@@ -681,8 +676,6 @@ bool emitConvexVm(const geom::SdfNode& node,
             out.error = "field VM Convex refuses non-finite normal length";
             return false;
         }
-        maxNormalLength = std::max(maxNormalLength, nLen);
-
         // n dot (p - offset) - d, lowered only through existing generic scalar
         // execution. The authored plane vector remains the source of truth.
         if (!pushCoord(0, node.offset, out, stackDepth) ||
@@ -707,11 +700,6 @@ bool emitConvexVm(const geom::SdfNode& node,
         first = false;
     }
 
-    // CPU evalSdf accepts finite authored planes verbatim; it does not
-    // structurally guarantee unit normals. Preserve that exact field and carry
-    // the derived global Lipschitz constant instead of normalizing/rejecting.
-    // max of affine half-spaces has Lipschitz bound max_i |n_i|.
-    out.marchLipschitz = std::max(out.marchLipschitz, maxNormalLength);
     return true;
 }
 
@@ -845,10 +833,79 @@ bool emitFieldVm(const geom::SdfNode& node,
     return true;
 }
 
+FieldMarchPolicy inspectMarchPolicyNode(const geom::SdfNode& node) {
+    FieldMarchPolicy policy;
+
+    if (node.op == geom::SdfOp::Leaf) {
+        if (node.prim == geom::SdfPrim::Expr) {
+            policy.needsGradientStep = true;
+            return policy;
+        }
+        if (node.prim == geom::SdfPrim::Convex) {
+            float maxNormalLength = 0.0f;
+            for (std::size_t i = 0; i < node.planes.size(); ++i) {
+                const glm::vec4 pl = node.planes[i];
+                if (!std::isfinite(pl.x) || !std::isfinite(pl.y) ||
+                    !std::isfinite(pl.z) || !std::isfinite(pl.w)) {
+                    policy.ok = false;
+                    policy.error =
+                        "field march policy refuses non-finite Convex plane " +
+                        std::to_string(i);
+                    return policy;
+                }
+                const float nLen = glm::length(glm::vec3(pl));
+                if (!std::isfinite(nLen)) {
+                    policy.ok = false;
+                    policy.error =
+                        "field march policy refuses non-finite Convex normal length";
+                    return policy;
+                }
+                maxNormalLength = std::max(maxNormalLength, nLen);
+            }
+            policy.marchLipschitz =
+                std::max(policy.marchLipschitz, maxNormalLength);
+        }
+        return policy;
+    }
+
+    // Mirror evalSdf's malformed-binary semantics: fewer than two children
+    // delegates to the first child when one exists, otherwise the constant 1.
+    if (node.children.size() < 2 || !node.children[0] || !node.children[1]) {
+        if (!node.children.empty() && node.children[0]) {
+            return inspectMarchPolicyNode(*node.children[0]);
+        }
+        return policy;
+    }
+
+    const FieldMarchPolicy a = inspectMarchPolicyNode(*node.children[0]);
+    if (!a.ok) return a;
+    const FieldMarchPolicy b = inspectMarchPolicyNode(*node.children[1]);
+    if (!b.ok) return b;
+
+    policy.needsGradientStep =
+        a.needsGradientStep || b.needsGradientStep;
+    policy.marchLipschitz =
+        std::max(a.marchLipschitz, b.marchLipschitz);
+    return policy;
+}
+
 } // namespace
+
+FieldMarchPolicy inspectFieldMarchPolicy(const geom::SdfNode& root) {
+    return inspectMarchPolicyNode(root);
+}
 
 FieldVmProgram lowerFieldVm(const geom::SdfNode& root) {
     FieldVmProgram out;
+    const FieldMarchPolicy policy = inspectFieldMarchPolicy(root);
+    if (!policy.ok) {
+        out.ok = false;
+        out.error = policy.error;
+        return out;
+    }
+    out.needsGradientStep = policy.needsGradientStep;
+    out.marchLipschitz = policy.marchLipschitz;
+
     uint32_t stackDepth = 0;
     if (!emitFieldVm(root, out, stackDepth)) {
         out.instructions.clear();
