@@ -66,11 +66,12 @@ struct ParameterBlock {
 // fixed WebGPU shader can evaluate many active field programs supplied as data
 // without recompiling one receiver shader per scene topology.
 //
-// Primitive/CSG shorthands and scalar-valued Expr MathNode trees lower into
-// the same bounded instruction stream. Expr bytecode is derived directly from
-// OntoMath (vectors are scalarized during lowering); legacy SdfToken RPN is not
-// an execution authority here. Convex remains refused until its authored plane
-// payload has an explicit derived encoding.
+// Primitive/CSG shorthands, Convex plane payloads, and scalar-valued Expr
+// MathNode trees lower into the same bounded instruction stream. Expr bytecode
+// is derived directly from OntoMath (vectors are scalarized during lowering);
+// legacy SdfToken RPN is not an execution authority here. Convex likewise adds
+// no VM noun: each authored half-space becomes generic scalar math and the
+// polyhedron is a MathMax fold.
 enum class FieldVmOpcode : uint32_t {
     Sphere = 1,
     Box = 2,
