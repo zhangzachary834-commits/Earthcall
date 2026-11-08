@@ -5725,11 +5725,12 @@ fn sceneFieldVmBlockerVisibility(
             return SceneFieldVmVisibilityDecision(1.0, 0.0);
         }
 
-        // Match the primary SDF execution contract for general Expr fields:
-        // raw f is an iso-surface value, not presumed to be a 1-Lipschitz
-        // distance. Normalize positive steps by max(|grad f|,1), with the same
-        // forward-difference fallback used by sourceTransportSignedStep().
-        var marchStep = sample.value;
+        // March only by a conservative field-distance lower bound.
+        // extents.w carries any cheaply-derived global Lipschitz constant
+        // (notably max_i |n_i| for Convex). General Expr additionally requires
+        // the primary marcher's local gradient correction because no global
+        // bound is assumed. Combining them with max() preserves both truths.
+        var marchDenom = max(blocker.extents.w, 1.0);
         if ((blocker.program.w & 1u) != 0u) {
             let ge = 1e-3;
             let sx = fieldVmEval(
@@ -5752,11 +5753,11 @@ fn sceneFieldVmBlockerVisibility(
             if (!(gradLen == gradLen) || gradLen > 3.402823e38) {
                 return SceneFieldVmVisibilityDecision(0.0, 0.0);
             }
-            marchStep = select(
-                sample.value,
-                sample.value / max(gradLen, 1.0),
-                gradLen > 1e-6);
+            if (gradLen > 1e-6) {
+                marchDenom = max(marchDenom, gradLen);
+            }
         }
+        let marchStep = sample.value / marchDenom;
         t = t + max(marchStep, epsilon);
     }
 
