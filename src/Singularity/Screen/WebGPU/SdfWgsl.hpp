@@ -149,6 +149,11 @@ struct FieldVmProgram {
     // leaves are iso-surface fields, not automatically 1-Lipschitz distance;
     // visibility therefore normalizes positive march steps by max(|grad f|,1).
     bool needsGradientStep = false;
+    // Global conservative Lipschitz bound when it is cheaply derivable from
+    // authored structure. Primitive defaults are 1. Convex contributes
+    // max_i |n_i| because its field is max_i(n_i·p-d_i). CSG composition keeps
+    // the maximum child bound. This is Kernel execution metadata only.
+    float marchLipschitz = 1.0f;
     bool ok = true;
     std::string error;
 };
