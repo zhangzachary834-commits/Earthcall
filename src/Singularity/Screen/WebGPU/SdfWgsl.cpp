@@ -3729,6 +3729,7 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
 // Differently-structured additional SDFs are not silently omitted: their presence
 // revokes CompleteScene knownness until a shared mixed-geometry provider exists.
 fn sourceTransportSignedStep(p: vec3<f32>, damping: f32) -> f32 {
+    let globalLipschitz = max(instances[g_instIdx].extents.w, 1.0);
     if (damping < 0.5) {
         let s = sdfSampleStep(p);
         var gradLen = s.gradLen;
@@ -3741,9 +3742,10 @@ fn sourceTransportSignedStep(p: vec3<f32>, damping: f32) -> f32 {
                 sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
             gradLen = length(g);
         }
-        return select(s.raw, s.raw / max(gradLen, 1.0), gradLen > 1e-6);
+        let denom = max(globalLipschitz, max(gradLen, 1.0));
+        return s.raw / denom;
     }
-    return sdfEval(p);
+    return sdfEval(p) / globalLipschitz;
 }
 
 struct VisibilityDecision {
@@ -3991,6 +3993,7 @@ fn fs(in: VSOut) -> FSOut {
     let isHeightfield = inst.misc.x > 0.5;
     let eps     = inst.misc.y;
     let damping = inst.misc.w;
+    let marchLipschitz = max(inst.extents.w, 1.0);
     let box     = rayAabb(ro, rd, inst.extents.xyz);
     // Miss the cube, or the whole slab is behind the eye.
     if (box.y < box.x || box.y < 0.0) { discard; }
@@ -4050,7 +4053,8 @@ fn fs(in: VSOut) -> FSOut {
     var first_density_t = -1.0;
     
     // Enhanced Sphere Tracing (Over-Relaxation) state:
-    var omega = select(1.0, 1.4, damping > 0.5);
+    var omega = select(
+        1.0, 1.4, damping > 0.5 && marchLipschitz <= 1.0);
     var prev_d = 1e10;
     var candidate_step = 0.0;
 
@@ -4100,7 +4104,8 @@ fn fs(in: VSOut) -> FSOut {
                 // this larger distance.
                 prev_d = 1e10;
                 candidate_step = 0.0;
-                omega = select(1.0, 1.4, damping > 0.5);
+                omega = select(
+                    1.0, 1.4, damping > 0.5 && marchLipschitz <= 1.0);
             }
             rangeCellExit = max(t, candidate.y);
             rangeCandidateActive = true;
@@ -4135,7 +4140,7 @@ fn fs(in: VSOut) -> FSOut {
                     sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
                 gl = length(g);
             }
-            d = select(raw, raw / max(gl, 1.0), gl > 1e-6);
+            d = raw / max(marchLipschitz, max(gl, 1.0));
 
             if (d <= 0.0 || abs(d) < current_eps) {
                 hit = true;
@@ -4154,7 +4159,7 @@ fn fs(in: VSOut) -> FSOut {
             t = t + candidate_step;
         } else {
             raw = sdfEval(p);
-            d = raw;
+            d = raw / marchLipschitz;
 
             if (omega > 1.0 && candidate_step > 0.0 && (d < 0.0 || d + prev_d < candidate_step)) {
                 t = t - candidate_step + prev_d;
@@ -4172,7 +4177,8 @@ fn fs(in: VSOut) -> FSOut {
                 break;
             }
 
-            if (omega == 1.0 && damping > 0.5 && d > prev_d) {
+            if (omega == 1.0 && damping > 0.5 &&
+                marchLipschitz <= 1.0 && d > prev_d) {
                 omega = 1.4;
             }
             if (omega > 1.0 && t + omega * d > maxDist) {
