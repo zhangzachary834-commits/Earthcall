@@ -3462,27 +3462,55 @@ int main() {
                sourceSdfConvexBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
                "SDF CompleteScene did not execute foreign Convex planes through generic field VM math");
 
-        // Malformed Convex remains Unknown. The renderer does not normalize an
-        // authored non-unit plane and thereby silently change the half-space.
-        auto malformedPlanes = convexPlanes;
-        malformedPlanes[0] = glm::vec4(2.0f, 0.0f, 0.0f, 0.5f);
-        Object malformedConvex;
-        malformedConvex.setFieldShape(
-            geom::SdfNode::convex(malformedPlanes),
+        // Plane equations are authored verbatim in Earthcall and are not
+        // structurally forced to unit normals. Scale every plane equation by
+        // 100x: the zero-set is the SAME cube, but the raw field is 100x too
+        // large for ordinary sphere tracing. CompleteScene must use the derived
+        // Convex Lipschitz bound instead of rejecting or overshooting it.
+        auto scaledConvexPlanes = convexPlanes;
+        for (auto& plane : scaledConvexPlanes) plane *= 100.0f;
+        Object scaledConvex;
+        scaledConvex.setFieldShape(
+            geom::SdfNode::convex(scaledConvexPlanes),
             glm::vec3(0.8f));
-        malformedConvex.setRenderMode(Object::RenderMode::Auto);
-        malformedConvex.setMaterialId("material.webgpu_source_transport_parity");
+        scaledConvex.setRenderMode(Object::RenderMode::Auto);
+        scaledConvex.setMaterialId("material.webgpu_source_transport_parity");
 
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         renderer.setModel(glm::mat4(1.0f));
         meshTransport.drawObject();
         renderer.setModel(implicitConvexBlockerModel);
-        malformedConvex.drawObject();
+        scaledConvex.drawObject();
         renderer.endFrame();
-        const Renderer::FrameStats malformedConvexStats = renderer.frameStats();
-        assert(malformedConvexStats.meshVisibilityUnknownDirectSkips > 0 &&
-               malformedConvexStats.sceneVisibilityUnknownFrames > 0 &&
-               "malformed non-unit Convex was silently admitted into CompleteScene truth");
+        unsigned char sourceMeshScaledConvexBlocked[4];
+        readCentre(sourceMeshScaledConvexBlocked);
+        const Renderer::FrameStats sourceMeshScaledConvexStats =
+            renderer.frameStats();
+        assert(sourceMeshScaledConvexBlocked[0] < 5 &&
+               sourceMeshScaledConvexBlocked[1] < 5 &&
+               sourceMeshScaledConvexBlocked[2] < 5 &&
+               sourceMeshScaledConvexStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshScaledConvexStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshScaledConvexStats.sceneVisibilityUnknownFrames == 0 &&
+               "mesh CompleteScene ignored the derived Lipschitz bound for non-unit Convex planes");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(implicitConvexBlockerModel);
+        scaledConvex.drawObject();
+        renderer.endFrame();
+        unsigned char sourceSdfScaledConvexBlocked[4];
+        readCentre(sourceSdfScaledConvexBlocked);
+        const Renderer::FrameStats sourceSdfScaledConvexStats =
+            renderer.frameStats();
+        assert(sourceSdfScaledConvexBlocked[0] < 5 &&
+               sourceSdfScaledConvexBlocked[1] < 5 &&
+               sourceSdfScaledConvexBlocked[2] < 5 &&
+               sourceSdfScaledConvexStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceSdfScaledConvexStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               sourceSdfScaledConvexStats.sceneVisibilityUnknownFrames == 0 &&
+               "SDF CompleteScene ignored the derived Lipschitz bound for non-unit Convex planes");
 
         // Refusal still exists where semantics are not losslessly encoded.
         // A PropertyPath Bind needs a subject; the scene blocker VM has none.
