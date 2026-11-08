@@ -663,7 +663,7 @@ bool emitConvexVm(const geom::SdfNode& node,
         return false;
     }
 
-    constexpr float kUnitNormalTolerance = 1e-3f;
+    float maxNormalLength = 0.0f;
     bool first = true;
     for (std::size_t i = 0; i < node.planes.size(); ++i) {
         const glm::vec4 pl = node.planes[i];
@@ -676,14 +676,12 @@ bool emitConvexVm(const geom::SdfNode& node,
             return false;
         }
         const float nLen = glm::length(n);
-        if (!std::isfinite(nLen) ||
-            std::fabs(nLen - 1.0f) > kUnitNormalTolerance) {
+        if (!std::isfinite(nLen)) {
             out.ok = false;
-            out.error =
-                "field VM Convex plane " + std::to_string(i) +
-                " violates authored outward-unit-normal contract";
+            out.error = "field VM Convex refuses non-finite normal length";
             return false;
         }
+        maxNormalLength = std::max(maxNormalLength, nLen);
 
         // n dot (p - offset) - d, lowered only through existing generic scalar
         // execution. The authored plane vector remains the source of truth.
@@ -708,6 +706,12 @@ bool emitConvexVm(const geom::SdfNode& node,
         }
         first = false;
     }
+
+    // CPU evalSdf accepts finite authored planes verbatim; it does not
+    // structurally guarantee unit normals. Preserve that exact field and carry
+    // the derived global Lipschitz constant instead of normalizing/rejecting.
+    // max of affine half-spaces has Lipschitz bound max_i |n_i|.
+    out.marchLipschitz = std::max(out.marchLipschitz, maxNormalLength);
     return true;
 }
 
