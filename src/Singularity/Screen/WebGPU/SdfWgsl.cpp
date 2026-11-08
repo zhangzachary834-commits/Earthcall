@@ -4145,21 +4145,15 @@ fn fs(in: VSOut) -> FSOut {
         var d = 0.0;
         var raw = 0.0;
 
-        if (damping < 0.5) {
-            let s = sdfSampleStep(p);
-            raw = s.raw;
-            var gl = s.gradLen;
-            if (gl <= 1e-6) {
-                let ge = 1e-3;
-                let g = vec3<f32>(
-                    sdfEval(p + vec3<f32>(ge, 0.0, 0.0)) - raw,
-                    sdfEval(p + vec3<f32>(0.0, ge, 0.0)) - raw,
-                    sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
-                gl = length(g);
-            }
-            d = raw / max(marchLipschitz, max(gl, 1.0));
+        if (damping < 0.5 || marchLipschitz > 1.0) {
+            // Non-distance / globally-scaled field lane. Hit proximity and
+            // traversal distance are distinct facts: a global Lipschitz bound
+            // may safely shorten the step without licensing an early hit.
+            let conservative = sdfConservativeStep(p, damping);
+            raw = conservative.raw;
+            d = conservative.hitDistance;
 
-            if (d <= 0.0 || abs(d) < current_eps) {
+            if (raw <= 0.0 || abs(d) < current_eps) {
                 hit = true;
                 if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
                     let frac = clamp(prev_d / (prev_d - d), 0.0, 1.0);
@@ -4168,17 +4162,21 @@ fn fs(in: VSOut) -> FSOut {
                 break;
             }
 
-            candidate_step = max(d, current_eps);
-            // Do not clamp the exact marcher's lawful step to octree-cell
-            // boundaries. The hierarchy may skip cells it proved zero-free,
-            // but ambiguous space must preserve the baseline march trajectory.
+            candidate_step =
+                max(conservative.marchDistance, current_eps);
+            // Do not clamp the lawful conservative step to octree-cell
+            // boundaries. The hierarchy may skip proved-empty cells, but
+            // ambiguous space must preserve the baseline march trajectory.
             prev_d = d;
             t = t + candidate_step;
         } else {
+            // Structurally exact-distance lane: preserve the historical
+            // over-relaxed path byte-for-byte for ordinary primitives.
             raw = sdfEval(p);
-            d = raw / marchLipschitz;
+            d = raw;
 
-            if (omega > 1.0 && candidate_step > 0.0 && (d < 0.0 || d + prev_d < candidate_step)) {
+            if (omega > 1.0 && candidate_step > 0.0 &&
+                (d < 0.0 || d + prev_d < candidate_step)) {
                 t = t - candidate_step + prev_d;
                 omega = 1.0;
                 candidate_step = 0.0;
@@ -4194,8 +4192,7 @@ fn fs(in: VSOut) -> FSOut {
                 break;
             }
 
-            if (omega == 1.0 && damping > 0.5 &&
-                marchLipschitz <= 1.0 && d > prev_d) {
+            if (omega == 1.0 && damping > 0.5 && d > prev_d) {
                 omega = 1.4;
             }
             if (omega > 1.0 && t + omega * d > maxDist) {
