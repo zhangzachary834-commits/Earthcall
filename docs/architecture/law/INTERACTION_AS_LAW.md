@@ -793,3 +793,12 @@ world can be an interface, and why an interface can be made of anything in the w
 
 The button was never a special thing. It was only ever an object that someone agreed to
 mean something by.
+
+## Interrelated Documents
+
+*   [Second-Nature Law Authoring](SECOND_NATURE_LAW_AUTHORING.md)
+*   [First Mover Authoring](FIRST_MOVER_AUTHORING.md)
+
+## Thoughts on Integration and Interrelation
+
+The `Interaction-as-Law` architecture establishes that interfaces are not separate subsystems but ordinary world beings governed by standard Laws. This directly integrates with `Second-Nature Law Authoring`, which uses these very interfaces (like the `SecondNatureLawForge` Zone) as the primary tools for world creation, rather than relying on abstract C++ factories. Together, they create a continuous authored loop: the world provides the interface to author the Laws that govern the world. `First Mover Authoring` provides the foundational layer, acknowledging that while the system must ultimately be self-authoring, initial seeds and external interventions (like those from AI agents) must be clearly recognized and bound by the same relational logic, ensuring a traceable lineage from substrate injection to in-world interaction.
