@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -241,8 +242,54 @@ int main(){
           production.wgsl.find("sample.value / max(gradLen, 1.0)")!=std::string::npos,
           "production scene visibility VM mirrors primary Expr gradient-corrected march policy");
 
-    auto cvm=sdfwgsl::lowerFieldVm(geom::SdfNode::convex({{1,0,0,.5f},{-1,0,0,.5f}}));
-    check(!cvm.ok&&cvm.error.find("plane payload table")!=std::string::npos,"Convex refuses until plane payload exists");
+    // Convex payloads lower without a Convex opcode: every authored unit
+    // half-space is generic scalar math, folded by MathMax.
+    const std::vector<glm::vec4> cubePlanes={
+        { 1, 0, 0,.5f},{-1, 0, 0,.5f},
+        { 0, 1, 0,.5f},{ 0,-1, 0,.5f},
+        { 0, 0, 1,.5f},{ 0, 0,-1,.5f}
+    };
+    auto convex=geom::SdfNode::convex(cubePlanes);
+    convex.offset={.2f,-.1f,.3f};
+    const auto cvm=sdfwgsl::lowerFieldVm(convex);
+    bool convexParity=cvm.ok&&!cvm.needsGradientStep;
+    const glm::vec3 convexPts[]={{.2f,-.1f,.3f},{.7f,-.1f,.3f},{1.0f,.4f,-.2f},{-.5f,-.1f,.3f}};
+    for(const auto& p:convexPts){
+        const auto v=sdfwgsl::evaluateFieldVm(cvm,p);
+        convexParity&=v&&std::fabs(*v-geom::evalSdf(convex,p))<=2e-6f;
+    }
+    check(convexParity,
+          "Convex unit-plane payload lowers through generic VM math with local-offset parity");
+    bool convexUsesOnlyGeneric=true;
+    for(const auto& inst:cvm.instructions){
+        const auto op=static_cast<sdfwgsl::FieldVmOpcode>(inst.meta.x);
+        convexUsesOnlyGeneric&=
+            op==sdfwgsl::FieldVmOpcode::Constant||
+            op==sdfwgsl::FieldVmOpcode::CoordX||
+            op==sdfwgsl::FieldVmOpcode::CoordY||
+            op==sdfwgsl::FieldVmOpcode::CoordZ||
+            op==sdfwgsl::FieldVmOpcode::MathMul||
+            op==sdfwgsl::FieldVmOpcode::MathAdd||
+            op==sdfwgsl::FieldVmOpcode::MathSub||
+            op==sdfwgsl::FieldVmOpcode::MathMax;
+    }
+    check(convexUsesOnlyGeneric,
+          "Convex admission introduces no dedicated geometry opcode");
+
+    const auto emptyConvex=sdfwgsl::lowerFieldVm(geom::SdfNode::convex({}));
+    check(!emptyConvex.ok&&emptyConvex.error.find("at least one")!=std::string::npos,
+          "empty Convex payload remains Unknown/refused");
+
+    const auto nonUnitConvex=sdfwgsl::lowerFieldVm(
+        geom::SdfNode::convex({{2,0,0,.5f},{-1,0,0,.5f}}));
+    check(!nonUnitConvex.ok&&nonUnitConvex.error.find("unit-normal")!=std::string::npos,
+          "non-unit Convex plane refuses instead of being silently normalized");
+
+    const float inf=std::numeric_limits<float>::infinity();
+    const auto nonFiniteConvex=sdfwgsl::lowerFieldVm(
+        geom::SdfNode::convex({{1,0,0,inf}}));
+    check(!nonFiniteConvex.ok&&nonFiniteConvex.error.find("non-finite")!=std::string::npos,
+          "non-finite Convex plane refuses instead of manufacturing scene truth");
 
     auto svm=sdfwgsl::lowerFieldVm(geom::SdfNode::leaf(geom::SdfPrim::Sphere,{.5f}));
     svm.instructions[0].meta.x=0xffffffffu;
