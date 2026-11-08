@@ -62,10 +62,13 @@ struct SdfNode {
     std::shared_ptr<OntoMath::MathNode> mathNode; // OntoMath algebraic AST
     std::shared_ptr<OntoMath::Piecewise> piecewise; // OntoMath piecewise function
 
-    // Convex-polyhedron payload (prim == Convex): one plane per face, stored as
-    // (n.x, n.y, n.z, d) with outward unit normal n and offset d (plane: n·x = d).
-    // SDF = max_i (n_i·p - d_i): exact inside & on faces, a valid 1-Lipschitz bound
-    // outside. Lowered from a flat-faced polyhedron's faces.
+    // Convex-polyhedron payload (prim == Convex): one authored plane per face,
+    // stored verbatim as (n.x,n.y,n.z,d), plane n·x=d. The conventional authoring
+    // path uses outward unit normals, but SdfNode/JSON do NOT normalize or require
+    // them. f(p)=max_i(n_i·p-d_i) therefore preserves the exact authored zero-set
+    // and sign; its conservative global Lipschitz bound is max_i |n_i|, not
+    // structurally 1. Renderer march policy derives that bound without rewriting
+    // the plane payload.
     std::vector<glm::vec4> planes;
 
     // Operator payload.
