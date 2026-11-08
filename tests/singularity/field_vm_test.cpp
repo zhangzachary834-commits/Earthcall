@@ -239,8 +239,10 @@ int main(){
           "WGSL VM carries native OntoMath math helpers and resolved shared guard constants");
     check(production.wgsl.find("blocker.program.w & 1u")!=std::string::npos&&
           production.wgsl.find("samplePoint + vec3<f32>(ge, 0.0, 0.0)")!=std::string::npos&&
-          production.wgsl.find("sample.value / max(gradLen, 1.0)")!=std::string::npos,
-          "production scene visibility VM mirrors primary Expr gradient-corrected march policy");
+          production.wgsl.find("var marchDenom = max(blocker.extents.w, 1.0)")!=std::string::npos&&
+          production.wgsl.find("marchDenom = max(marchDenom, gradLen)")!=std::string::npos&&
+          production.wgsl.find("sample.value / marchDenom")!=std::string::npos,
+          "production scene visibility VM combines derived Lipschitz and Expr gradient march policy");
 
     // Convex payloads lower without a Convex opcode: every authored unit
     // half-space is generic scalar math, folded by MathMax.
@@ -252,7 +254,8 @@ int main(){
     auto convex=geom::SdfNode::convex(cubePlanes);
     convex.offset={.2f,-.1f,.3f};
     const auto cvm=sdfwgsl::lowerFieldVm(convex);
-    bool convexParity=cvm.ok&&!cvm.needsGradientStep;
+    bool convexParity=cvm.ok&&!cvm.needsGradientStep&&
+                      std::fabs(cvm.marchLipschitz-1.0f)<=2e-6f;
     const glm::vec3 convexPts[]={{.2f,-.1f,.3f},{.7f,-.1f,.3f},{1.0f,.4f,-.2f},{-.5f,-.1f,.3f}};
     for(const auto& p:convexPts){
         const auto v=sdfwgsl::evaluateFieldVm(cvm,p);
@@ -280,10 +283,26 @@ int main(){
     check(!emptyConvex.ok&&emptyConvex.error.find("at least one")!=std::string::npos,
           "empty Convex payload remains Unknown/refused");
 
-    const auto nonUnitConvex=sdfwgsl::lowerFieldVm(
-        geom::SdfNode::convex({{2,0,0,.5f},{-1,0,0,.5f}}));
-    check(!nonUnitConvex.ok&&nonUnitConvex.error.find("unit-normal")!=std::string::npos,
-          "non-unit Convex plane refuses instead of being silently normalized");
+    auto scaledConvex=geom::SdfNode::convex({
+        { 100,   0,   0,50.0f},{-100,   0,   0,50.0f},
+        {   0, 100,   0,50.0f},{   0,-100,   0,50.0f},
+        {   0,   0, 100,50.0f},{   0,   0,-100,50.0f}
+    });
+    scaledConvex.offset={-.25f,.15f,.05f};
+    const auto scaledConvexVm=sdfwgsl::lowerFieldVm(scaledConvex);
+    bool scaledConvexParity=scaledConvexVm.ok&&
+        !scaledConvexVm.needsGradientStep&&
+        std::fabs(scaledConvexVm.marchLipschitz-100.0f)<=2e-5f;
+    const glm::vec3 scaledConvexPts[]={
+        {-.25f,.15f,.05f},{.25f,.15f,.05f},{.8f,-.2f,.4f},{-.9f,.7f,-.6f}
+    };
+    for(const auto& p:scaledConvexPts){
+        const auto v=sdfwgsl::evaluateFieldVm(scaledConvexVm,p);
+        scaledConvexParity&=v&&
+            std::fabs(*v-geom::evalSdf(scaledConvex,p))<=2e-4f;
+    }
+    check(scaledConvexParity,
+          "non-unit Convex planes preserve authored CPU field and derive global Lipschitz march bound");
 
     const float inf=std::numeric_limits<float>::infinity();
     const auto nonFiniteConvex=sdfwgsl::lowerFieldVm(
