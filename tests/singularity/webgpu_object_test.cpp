@@ -3512,6 +3512,45 @@ int main() {
                sourceSdfScaledConvexStats.sceneVisibilityUnknownFrames == 0 &&
                "SDF CompleteScene ignored the derived Lipschitz bound for non-unit Convex planes");
 
+        // PRIMARY SURFACE MARCHER, NOT THE BLOCKER VM. A naked Convex would be
+        // solved by rootClosedFormHit and could not prove the fallback marcher.
+        // Morph(..., t=0) preserves the first child's field exactly while
+        // deliberately classifying to the generic marcher. At proxy entry the
+        // 100x Convex field is ~30 for only ~0.3 local distance: raw stepping
+        // leaps beyond the whole proxy, while f/L lands lawfully on the cube.
+        geom::SdfNode scaledConvexField =
+            geom::SdfNode::convex(scaledConvexPlanes);
+        geom::SdfNode irrelevantSphere =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.15f));
+        geom::SdfNode primaryScaledConvexField =
+            geom::SdfNode::binary(
+                geom::SdfOp::Morph,
+                scaledConvexField,
+                irrelevantSphere,
+                0.0f);
+        Object primaryScaledConvex;
+        primaryScaledConvex.setFieldShape(
+            primaryScaledConvexField, glm::vec3(0.8f));
+        primaryScaledConvex.setRenderMode(Object::RenderMode::Auto);
+        primaryScaledConvex.setMaterialId(
+            "material.webgpu_source_transport_parity");
+
+        renderer.setLightingEnabled(false);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        primaryScaledConvex.drawObject();
+        renderer.endFrame();
+        unsigned char primaryScaledConvexPixel[4];
+        readCentre(primaryScaledConvexPixel);
+        const Renderer::FrameStats primaryScaledConvexStats =
+            renderer.frameStats();
+        assert(primaryScaledConvexPixel[0] > 220 &&
+               primaryScaledConvexPixel[1] > 220 &&
+               primaryScaledConvexPixel[2] > 220 &&
+               primaryScaledConvexStats.sdfProgramRefusals == 0 &&
+               "primary SDF fallback marcher overshot a lawful 100x Convex field instead of using f/L");
+        renderer.setLightingEnabled(true);
+
         // Refusal still exists where semantics are not losslessly encoded.
         // A PropertyPath Bind needs a subject; the scene blocker VM has none.
         auto unsupportedBind = std::make_shared<OntoMath::MathNode>();
