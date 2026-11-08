@@ -2969,6 +2969,17 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     }
     if (!sp || !prog) return;
 
+    // March policy is value-derived execution truth, independent of WGSL
+    // structure. A Convex plane normal edit can change its global Lipschitz
+    // bound without recompiling the pipeline; Expr membership independently
+    // selects the local-gradient lane.
+    const sdfwgsl::FieldMarchPolicy marchPolicy =
+        sdfwgsl::inspectFieldMarchPolicy(field);
+    if (!marchPolicy.ok) {
+        recordProgramRefusal("field march policy: " + marchPolicy.error);
+        return;
+    }
+
     // Surface and volumetric proxies share one immutable resident cube.
     ensureSdfCubeVerts();
     if (!_sdfCubeVerts) return;
@@ -3123,7 +3134,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // FieldNode draws remain excluded because zero-set emptiness says nothing
     // about volumetric density.
     const bool rangeTraversalMarcherVerified =
-        prog->needsGradientStep || kSdfRangeDistanceTraversalVerified;
+        marchPolicy.needsGradientStep || kSdfRangeDistanceTraversalVerified;
     if (_sdfRangeProxyEnabled && memo && fieldNode == nullptr &&
         rangeTraversalMarcherVerified &&
         memo->rangeReady && memo->rangeHasPositiveSkip &&
@@ -3146,7 +3157,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         }
     }
 
-    inst.extents = glm::vec4(proxyExtent, 0.0f);
+    // xyz owns proxy coverage; w is derived execution metadata. It is not an
+    // authored extent and never participates in geometry bounds.
+    inst.extents = glm::vec4(
+        proxyExtent, std::max(marchPolicy.marchLipschitz, 1.0f));
     
     // The box is grown slightly past the extent so a surface sitting exactly on the
     // boundary still gets fragments. surfaceEps/maxDist mirror the CPU raycaster's
@@ -3176,7 +3190,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // the VERTICAL distance and can exceed the Euclidean distance when h slopes.
     // A min/max grid may conservatively skip empty cells, but it does not license
     // distance-field stepping inside a candidate cell.
-    const float damping = prog->needsGradientStep ? 0.25f : 1.0f;
+    const float damping = marchPolicy.needsGradientStep ? 0.25f : 1.0f;
     // misc.x is a distinct proof bit: damping selects the step policy, while
     // only a structurally-proved y-h(x,z) field may use heightfield-only
     // planar/vertical early exits. Keep the two latches separate so a generic
