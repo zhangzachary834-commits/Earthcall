@@ -60,6 +60,20 @@ This VM is Kernel-derived execution IR, not a second geometry language. Extendin
 
 ## 1. The ledger
 
+### Property ValueCell observer back-edges, durable alias topology & compiled paths (2026-11-04 / 2026-11-05)
+
+Zach's Property memory micromastery and alias-deafness resolution (Rungs 0–5): multiple Property paths (`Shared`, `Unique`, `Weak`) may bind to an underlying `ValueCell`. Changes through any bound path fan out notifications across all live observers to close the Rete alias-deafness gap. Shared alias topologies persist durably across save/load via `SingularPersistence`, while reactive derived edges and compiled paths remain disposable runtime caches.
+
+| Structure | Derived from | Invalidated / renewed by | Guarded by |
+|---|---|---|---|
+| `ValueCell::value` & alias bindings (`Singular::_propertyCells`) | Canonical durable state authored in-world | Mutated via `PropertyPath::setValue` or Law actions; serialized and restored cohort-wide via `SingularPersistence` so multi-owner aliases survive restart | `property_memory_access_test` (Sections 12–13) |
+| `ValueCell::observers` | Explicit path-to-cell bindings (`bindPropertyCell`, `ActionNode::shareCell/uniqueCell/weakCell`) | `rebind`, `unbindPropertyCell`, `removeDynamicProperty`, and `~Singular` (`detachAllPropertyCells`, `detachAllForBearer`); cell reclaimed when `strongCount` drops to 0 | `property_memory_access_test`, `dynamic_property_reachability_test` |
+| `ValueCell::generation` | Cell slot lifecycle in `PropertyCellTable` | Incremented upon cell reclamation (when `strongCount == 0`); causes subsequent operations on dangling `Weak` handles to report `PathResult::ExpiredCell` | `property_memory_access_test` |
+| `ValueCell::derivedEdges` | Reactive dependency edges authored via `BindingMode::Derive` (`ActionNode::deriveCell`) | Rebuilt on Law compilation / application; purged by `removeDerivedEdgesForBearer` on destruction of destination bearer, subject, or authorizing Law; cycle-guarded against recursion | `property_memory_access_test` (Pass 2 Witness 3 & Section 12) |
+| `CompiledPath` / `PropertyPath::_joinedIds` | Interned `StringId` sub-path sequences precomputed from path strings | Disposable runtime acceleration cache; never persisted; rebuilt on demand by `PropertyPath::compile` or `parse` | `property_memory_access_test` (Section 14 benchmark) |
+
+*Antigravity / Gemini 3.8 Flash / session `102da8a2-db47-4627-8ce6-cf1235aeabd4` / 2026-11-04 and 2026-11-05.*
+
 ### Direct Screen region observations (2026-10-07)
 
 Zach requested named displayed regions, granular Property paths and Metalaw authoring. This is a sensing snapshot/source-editing rung, not a membership cache or an inverse compositor.
@@ -756,3 +770,7 @@ Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-02T04:0
 **Witnesses:** `webgpu_routed_transport_lifecycle_test` (550 checks, 0 leaks, 0 blocking polls, 7/7 pre-fix negative controls caught); `webgpu_volume_lexical_binding_test` (52 CPU+Metal checks, 5/7 pre-fix negative controls caught); `positive_e2e_metal_verify` (`HARDENING_RELOAD_OK`, `hardening_unused_certificate_probes`, 10/10 gates pass); `162 / 162` scoped frozen-reference checks pass; 64/64 canonical poses won (-28.66% All-64, -30.85% Regime 1, -24.96% Regime 2).
 
 Sparkly Guy / Gemini 3.8 Flash / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` / `2026-11-02T13:25:00-08:00`. Built upon Sixth-One Sun's pre-merge hardening plan (`01a148a7-bd85-7550-a416-0e859a729c1a`). Human origin: Zachary Zhang.
+
+### Mesh upload packets — 2026-11-03
+
+**Mesh upload packets, 2026-11-03.** `WebGpuRenderer::flushMeshDraws` derives aligned uniform/instance upload pages from the current ordered `_meshBatches`, view-projection, light, and eye snapshots. These Kernel packets live for one flush, and GPU ranges live in the existing queue-ordered buffer pool. Every flush reconstructs them, so camera/material/model edits require no cross-frame cache invalidation. Bindings retain each batch's original byte extent and 256-byte alignment. Multiple flushes and an oversized individual batch are covered by `webgpu_mesh_upload_pages_test`, with independent pixel expectations and a failing offset mutation. [Native correctness and cost record](../../audits/CATHEDRAL_SURFACE_SDF_FIRST_PASS_2026-11-03.md#native-continuation-and-retained-upload-repair). Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-03T22:52:00-08:00.

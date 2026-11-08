@@ -79,6 +79,7 @@ const std::vector<PathOption>& knownPathOptions() {
             const char* type = "number";
             if (std::holds_alternative<bool>(property->value())) type = "toggle";
             else if (std::holds_alternative<std::string>(property->value())) type = "text";
+            else if (std::holds_alternative<std::shared_ptr<PropertyList>>(property->value())) type = "list";
             options.push_back({property->name(), "Law — governance (metalaws)", type, false});
         }
         // The world clock — Singularity owns time. Read-only; bind these as
@@ -529,10 +530,6 @@ const char* propertyTypeName(const PropertyValue& value) {
     if (std::holds_alternative<bool>(value)) return "toggle";
     if (std::holds_alternative<std::shared_ptr<PropertyList>>(value)) return "list";
     if (std::holds_alternative<std::shared_ptr<PropertyDict>>(value)) return "dictionary";
-    if (std::holds_alternative<Singular*>(value) ||
-        std::holds_alternative<Object*>(value) ||
-        std::holds_alternative<Relation*>(value) ||
-        std::holds_alternative<Formation*>(value)) return "nested Singular";
     return "number";
 }
 

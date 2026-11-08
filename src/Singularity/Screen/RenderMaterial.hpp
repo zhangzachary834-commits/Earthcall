@@ -73,7 +73,10 @@ struct FaceAlbedo {
     int                  height = 0;
 };
 
+class Material;
+
 // Resolve an Object's material identifier against the global MaterialManager and
 // flatten it to a RenderMaterial, stamping in the given per-face albedo.
 // A dangling identifier resolves to material.default, so this never fails.
 RenderMaterial resolveRenderMaterial(const std::string& materialId, const FaceAlbedo& albedo);
+RenderMaterial resolveRenderMaterial(const Material& m, const FaceAlbedo& albedo);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PropertyValue.hpp"
+#include "PropertyCell.hpp"
 #include "Singularity/Core/StringId.hpp"
 
 #include <functional>
@@ -10,6 +11,8 @@
 
 class Property;
 class Singular;
+struct AccessContext;
+struct CompiledPath;
 
 // ============================================================================
 // PropertyPath — The address of a variable on the substrate
@@ -91,6 +94,9 @@ public:
         PropertyValue* structuredSource = nullptr;
         PropertyValue structuredOriginal;
         PropertyValue structuredView;
+        CellId cellId;
+        CellOwnershipMode cellMode = CellOwnershipMode::InlineValue;
+        Earthcall::StringId rootPropertyId;
     };
 
     ResolvedSlot resolve(Singular& root, std::size_t startIndex = 0) const;
@@ -102,12 +108,55 @@ public:
         ReadOnly,
         BadComponent,
         Unchanged, // the slot already held this value; not a write
-        Unsupported // readable storage whose bridge cannot safely mutate an element
+        Unsupported, // readable storage whose bridge cannot safely mutate an element
+        ExpiredCell, // weak read/write after final strong owner released
+        UniqueOwnershipRefused, // attempt to share a cell currently held as Unique
+        AccessDenied // reserved for Rung 3 Law/TransferPolicy refusal
     };
 
     PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex = 0) const;
+    PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex, const AccessContext& ctx) const;
     PathResult setValue(Singular& root, const PropertyValue& v, std::size_t startIndex = 0) const;
+    PathResult setValue(Singular& root, const PropertyValue& v, std::size_t startIndex, const AccessContext& ctx) const;
+
+    using CompiledPath = ::CompiledPath;
+    CompiledPath compile() const;
+    static CompiledPath compile(const std::string& dotted);
 };
+
+// Pre-parsed and interned PropertyPath representation for accelerated hot-loop evaluation.
+struct CompiledPath {
+    PropertyPath path;
+
+    static CompiledPath compile(const std::string& dotted) {
+        return CompiledPath{PropertyPath::parse(dotted)};
+    }
+
+    std::string toString() const { return path.toString(); }
+    bool empty() const { return path.empty(); }
+    operator const PropertyPath&() const noexcept { return path; }
+
+    PropertyPath::ResolvedSlot resolve(Singular& root, std::size_t startIndex = 0) const {
+        return path.resolve(root, startIndex);
+    }
+
+    PropertyPath::PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex = 0) const {
+        return path.getValue(root, out, startIndex);
+    }
+    PropertyPath::PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex, const AccessContext& ctx) const {
+        return path.getValue(root, out, startIndex, ctx);
+    }
+
+    PropertyPath::PathResult setValue(Singular& root, const PropertyValue& in, std::size_t startIndex = 0) const {
+        return path.setValue(root, in, startIndex);
+    }
+    PropertyPath::PathResult setValue(Singular& root, const PropertyValue& in, std::size_t startIndex, const AccessContext& ctx) const {
+        return path.setValue(root, in, startIndex, ctx);
+    }
+};
+
+inline CompiledPath PropertyPath::compile() const { return CompiledPath{*this}; }
+inline CompiledPath PropertyPath::compile(const std::string& dotted) { return CompiledPath::compile(dotted); }
 
 // ============================================================================
 // DERIVED READINGS (2026-10-19). A read-only observation that an authored

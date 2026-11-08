@@ -96,6 +96,8 @@ private:
     uint32_t _revision = 0;
     uint32_t _responseRevision = 0;
     uint32_t _environmentResponseRevision = 0;
+    mutable uint64_t _syncedFaceRevisionHash = 0;
+    mutable bool _facesSynced = false;
     void buildProperties() override;
 
 public:
@@ -104,4 +106,7 @@ public:
     
     // Initialise or reinitialise textures after geometry type set/changed
     void initFaceTextures(int numFaces, int defaultWidth = -1, int defaultHeight = -1);
+
+    // Upload or deduplicate GPU texture handles across identical faces
+    void syncAllFaceTextures();
 };

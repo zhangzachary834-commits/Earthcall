@@ -154,6 +154,15 @@ void seedLegacyCompatibilityIfUnspecified(Material& material) {
 }
 } // namespace
 
+void MaterialManager::rebuildIndex() {
+    _materialIndexByName.clear();
+    for (size_t i = 0; i < _materials.size(); ++i) {
+        if (_materials[i]) {
+            _materialIndexByName[_materials[i]->name()] = i;
+        }
+    }
+}
+
 void MaterialManager::ensureDefault() {
     for (const auto& m : _materials) {
         if (m && m->name() == "default") {
@@ -164,6 +173,7 @@ void MaterialManager::ensureDefault() {
     auto material = std::make_shared<Material>("default");
     seedLegacyCompatibilityIfUnspecified(*material);
     _materials.insert(_materials.begin(), std::move(material));
+    rebuildIndex();
 }
 
 std::shared_ptr<Material> MaterialManager::create(const std::string& name) {
@@ -171,6 +181,7 @@ std::shared_ptr<Material> MaterialManager::create(const std::string& name) {
     if (auto existing = get("material." + n)) return existing;
     auto m = std::make_shared<Material>(n);
     _materials.push_back(m);
+    _materialIndexByName[n] = _materials.size() - 1;
     return m;
 }
 
@@ -179,21 +190,40 @@ void MaterialManager::add(const std::shared_ptr<Material>& m) {
     // Replace any material of the same identity rather than duplicate it.
     remove(m->getIdentifier());
     _materials.push_back(m);
+    _materialIndexByName[m->name()] = _materials.size() - 1;
 }
 
 bool MaterialManager::remove(const std::string& identifier) {
     std::string n = normalizeName(identifier);
     if (n == "default") return false; // the fallback must always exist
+    auto itIdx = _materialIndexByName.find(n);
+    if (itIdx != _materialIndexByName.end()) {
+        size_t idx = itIdx->second;
+        if (idx < _materials.size() && _materials[idx] && _materials[idx]->name() == n) {
+            _materials.erase(_materials.begin() + idx);
+            rebuildIndex();
+            return true;
+        }
+    }
     for (auto it = _materials.begin(); it != _materials.end(); ++it) {
-        if (*it && (*it)->name() == n) { _materials.erase(it); return true; }
+        if (*it && (*it)->name() == n) {
+            _materials.erase(it);
+            rebuildIndex();
+            return true;
+        }
     }
     return false;
 }
 
 std::shared_ptr<Material> MaterialManager::get(const std::string& identifier) const {
     std::string n = normalizeName(identifier);
-    for (const auto& m : _materials)
-        if (m && m->name() == n) return m;
+    auto it = _materialIndexByName.find(n);
+    if (it != _materialIndexByName.end()) {
+        const size_t idx = it->second;
+        if (idx < _materials.size() && _materials[idx] && _materials[idx]->name() == n) {
+            return _materials[idx];
+        }
+    }
     return nullptr;
 }
 
@@ -216,6 +246,7 @@ void MaterialManager::loadFromJson(const json& j) {
             _materials.push_back(std::make_shared<Material>(Material::fromJson(e)));
     }
     ensureDefault(); // a save without a default (or an empty save) still resolves
+    rebuildIndex();
 }
 
 void MaterialManager::mergeFromJson(const json& j) {
@@ -226,4 +257,5 @@ void MaterialManager::mergeFromJson(const json& j) {
     for (const auto& e : j)
         add(std::make_shared<Material>(Material::fromJson(e)));
     ensureDefault();
+    rebuildIndex();
 }

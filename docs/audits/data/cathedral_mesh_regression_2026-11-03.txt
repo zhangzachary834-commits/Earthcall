@@ -1,0 +1,36 @@
+Test project /Users/zacharyzhang/Documents/GitHub/Earthcall/build_release
+    Start 161: gpu_mastery_test
+1/3 Test #161: gpu_mastery_test ........................   Passed    0.03 sec
+    Start 243: webgpu_mesh_upload_pages_test
+2/3 Test #243: webgpu_mesh_upload_pages_test ...........   Passed    0.60 sec
+    Start 262: webgpu_volume_unified_quadrature_test
+3/3 Test #262: webgpu_volume_unified_quadrature_test ...***Failed    1.69 sec
+Starting webgpu_volume_unified_quadrature_test...
+       spawn dais, looking up: max error 4 levels, 33 px > 1 level, mean 0.064, lit 12824
+  ok: spawn dais, looking up: the media are visible
+  FAILED: spawn dais, looking up: no pixel more than 2 levels from the 6144 reference
+  FAILED: spawn dais, looking up: at most 0.05% of lit pixels more than 1 level off
+  ok: spawn dais, looking up: changing samples per chord recompiled nothing
+  ok: spawn dais, looking up: returning to 96 restores the identical image
+       from the side: max error 6 levels, 83 px > 1 level, mean 0.062, lit 15902
+  ok: from the side: the media are visible
+  FAILED: from the side: no pixel more than 2 levels from the 6144 reference
+  FAILED: from the side: at most 0.05% of lit pixels more than 1 level off
+  ok: from the side: changing samples per chord recompiled nothing
+  ok: from the side: returning to 96 restores the identical image
+       among the media, looking along them: max error 2 levels, 6 px > 1 level, mean 0.049, lit 36796
+  ok: among the media, looking along them: the media are visible
+  ok: among the media, looking along them: no pixel more than 2 levels from the 6144 reference
+  ok: among the media, looking along them: at most 0.05% of lit pixels more than 1 level off
+  ok: among the media, looking along them: changing samples per chord recompiled nothing
+  ok: among the media, looking along them: returning to 96 restores the identical image
+webgpu_volume_unified_quadrature_test: 11/15 checks passed
+
+
+67% tests passed, 1 tests failed out of 3
+
+Total Test time (real) =   2.32 sec
+
+The following tests FAILED:
+	262 - webgpu_volume_unified_quadrature_test (Failed)
+Errors while running CTest

@@ -346,6 +346,12 @@ Program compileScheduledProportionalIntegral(const OntoMath::MathNode& sigma,
 Program compileGridDepthTransport(const OntoMath::MathNode& sigma, const OntoMath::RegionCertificate& certificate,
                                   const OntoMath::RegionProofGrid& grid, uint32_t maxPanels);
 
+bool isDifferentiableAst(const OntoMath::MathNode& node);
+bool isDifferentiableSdfNode(const geom::SdfNode& node);
+int countSdfLeaves(const geom::SdfNode& node);
+bool tryComputeSdfBoundingSphere(const geom::SdfNode& node, glm::vec3& outCenter, float& outRadius);
+bool tryComputeSdfTightAabb(const geom::SdfNode& node, glm::vec3& outMin, glm::vec3& outMax);
+
 // Compile a field into a raymarching shader plus its parameter block.
 // `colorFormatIsSrgb` is unused for now; kept out of the signature deliberately —
 // the fragment output convention lives with the pipeline, not the codegen.

@@ -77,3 +77,70 @@ private:
     Getter _getter;
     Setter _setter;
 };
+
+// Similar to ComputedProperty, but whose setter returns bool indicating whether
+// the write succeeded or was refused (e.g. for authority-governed property mutations).
+template <typename Owner, typename T>
+class CheckedComputedProperty : public Property {
+public:
+    using Getter = T (Owner::*)() const;
+    using Setter = bool (Owner::*)(const T&);
+
+    CheckedComputedProperty(std::string propertyName, Owner* owner, Getter getter, Setter setter = nullptr)
+        : _name(std::move(propertyName)),
+          _nameId(Earthcall::StringInterner::intern(_name)),
+          _owner(owner),
+          _getter(getter),
+          _setter(setter) {}
+
+    Earthcall::StringId nameId() const override { return _nameId; }
+
+    std::string name() const override { return _name; }
+
+    std::string typeName() const override { return typeid(T).name(); }
+
+    T get() const { return (_owner->*_getter)(); }
+
+    bool set(const T& v) {
+        if (!_setter) return false;
+        return (_owner->*_setter)(v);
+    }
+
+    PropertyValue value() const override {
+        if constexpr (is_property_value_alternative<T>) {
+            return PropertyValue(get());
+        } else {
+            return PropertyValue{};   // monostate: not legible as a value
+        }
+    }
+
+    bool setValue(const PropertyValue& v) override {
+        if constexpr (is_property_value_alternative<T>) {
+            if (const T* typed = std::get_if<T>(&v)) {
+                return set(*typed);
+            }
+        }
+        (void)v;
+        return false;
+    }
+
+    bool isStructurallyWritable() const override {
+        return _setter != nullptr && is_property_value_alternative<T>;
+    }
+
+    Singular* asSingular() const override {
+        if constexpr (std::is_pointer_v<T> &&
+                      std::is_base_of_v<Singular, std::remove_pointer_t<T>>) {
+            return get();
+        } else {
+            return nullptr;
+        }
+    }
+
+private:
+    std::string _name;
+    Earthcall::StringId _nameId;
+    Owner* _owner;
+    Getter _getter;
+    Setter _setter;
+};

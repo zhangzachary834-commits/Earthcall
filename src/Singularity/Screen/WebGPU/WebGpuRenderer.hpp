@@ -365,6 +365,21 @@ private:
         std::string environmentResponseStructure;
         bool environmentResponseReadsNormal = false;
         bool environmentResponseReadsWo = false;
+        // Canonical renderer optimization, adapted to authored response Bind
+        // identity: cache layout inspection only while both response structure
+        // revision and resolved binding fingerprint remain unchanged.
+        const OntoMath::Piecewise* responseExprPtr = nullptr;
+        uint32_t responseLayoutRevision = 0xffffffffu;
+        std::string responseLayoutBindingIdentity;
+        bool responseLayoutValid = false;
+        sdfwgsl::ResponseExpressionLayout cachedResponseLayout;
+
+        bool tightAabbCached = false;
+        bool tightAabbOk = false;
+        glm::vec3 cachedTightMin{0.0f};
+        glm::vec3 cachedTightMax{0.0f};
+        uint32_t tightAabbRevision = 0xffffffffu;
+        uint32_t tightAabbParamRevision = 0xffffffffu;
         // Full authored radiance content identity. A change here means at least
         // the parameter block must be reconsidered; whether WGSL structure also
         // changed is decided by radianceStructure below.
@@ -822,6 +837,27 @@ private:
     glm::vec3 _eyePos{0.0f};
     bool _inverseViewProjValid = true;
     bool _modelViewProjValid = true;
+    bool _modelViewProjDirty = true;
+    bool ensureModelViewProj();
+
+    struct AuthoredModelTransforms {
+        glm::mat4 inverse;
+        glm::mat4 normal;
+    };
+    static std::optional<AuthoredModelTransforms> deriveModelTransforms(const glm::mat4& model);
+    bool _hasCachedTransforms = false;
+    glm::mat4 _cachedModelMatrix{0.0f};
+    std::optional<AuthoredModelTransforms> _cachedTransforms;
+
+    struct TransformCacheSlot {
+        glm::mat4 model{0.0f};
+        std::optional<AuthoredModelTransforms> transforms;
+        bool occupied = false;
+    };
+    static constexpr size_t kTransformCacheSize = 2048;
+    std::array<TransformCacheSlot, kTransformCacheSize> _transformTable{};
+
+    const std::optional<AuthoredModelTransforms>& getModelTransforms();
 
     // Optional execution timing. Query writes bracket the main command encoder's
     // render pass; each result is copied into a small readback ring and consumed
@@ -899,6 +935,12 @@ private:
                  < std::tie(o.mesh, o.pipeline, o.albedoView,
                             o.responseParamIdentity, o.sourceSet);
         }
+        bool operator==(const MeshBatchKey& o) const {
+            return std::tie(mesh, pipeline, albedoView, responseParamIdentity,
+                            sourceSet)
+                == std::tie(o.mesh, o.pipeline, o.albedoView,
+                            o.responseParamIdentity, o.sourceSet);
+        }
     };
     // Mirrors the WGSL `Instance` struct in kMeshWGSL.
     struct InstanceData { 
@@ -908,6 +950,23 @@ private:
     };
     std::map<MeshBatchKey, std::vector<InstanceData>> _meshBatches;
     WGPUBindGroupLayout _instanceBgl = nullptr; // group(1): the instance storage buffer
+
+    // Canonical upload-page optimization, translated onto authored receiver
+    // identity. One record names a whole instanced batch in the page; group(0)
+    // still varies by response params/albedo/pipeline, while instance bytes are
+    // uploaded contiguously once per page.
+    struct MeshUploadRecord {
+        const MeshBatchKey* key = nullptr;
+        const std::vector<InstanceData>* instances = nullptr;
+        uint32_t firstInstance = 0;
+    };
+    std::vector<MeshUploadRecord> _meshRecords;
+    std::vector<InstanceData> _meshPageInstances;
+
+    // Consecutive identical authored batch keys avoid a repeated map lookup.
+    std::optional<MeshBatchKey> _lastMeshBatchKey;
+    std::vector<InstanceData>* _lastMeshBatchVector = nullptr;
+
     // Records every queued batch as real wgpuRenderPassEncoderDraw calls.
     // MUST run while _pass is still open — called from endFrame() before
     // wgpuRenderPassEncoderEnd. Safety invariant this design now depends on:
@@ -967,6 +1026,17 @@ private:
     // avoiding an ever-growing scan of historical pipeline keys.
     std::vector<const SdfPipeline*> _activeSdfPipelines;
     WGPUBindGroupLayout _sdfInstanceBgl = nullptr; // group(1): instances (0) + height cells (1) + range nodes (2)
+
+    struct SdfInstanceSlice {
+        WGPUBuffer buffer = nullptr;
+        uint64_t offset = 0;
+        uint64_t size = 0;
+    };
+    std::unordered_map<const SdfPipeline*, SdfInstanceSlice> _sdfInstanceAllocations;
+    std::vector<const SdfPipeline*> _sdfPendingPipelines;
+    std::vector<size_t> _sdfPendingOffsets;
+    std::vector<uint8_t> _sdfPackedInstanceBytes;
+
     void flushSdfDraws();
 
     // Last pipeline bound on the CURRENT pass. Kernel state: a driver-object

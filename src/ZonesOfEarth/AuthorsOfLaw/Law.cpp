@@ -178,6 +178,7 @@ void Law::setName(const std::string& name) {
 void Law::addAuthor(Singular& author) {
     _authors.addMember(&author);
     recordProvenance("authored-by", *this, author, true, 1.0f);
+    Singular::notifyPropertyChanged(this, "authors");
 }
 
 void Law::setAuthors(const std::vector<Singular*>& authors) {
@@ -185,6 +186,7 @@ void Law::setAuthors(const std::vector<Singular*>& authors) {
     for (auto* author : authors) {
         if (author) addAuthor(*author);
     }
+    Singular::notifyPropertyChanged(this, "authors");
 }
 
 void Law::addConditionSubject(Singular& subject) {
@@ -202,10 +204,12 @@ void Law::clearConditionFormation() {
 void Law::addTarget(Singular& target) {
     _targets.addMember(&target);
     recordProvenance("targets", *this, target, true, 1.0f);
+    Singular::notifyPropertyChanged(this, "targets");
 }
 
 void Law::clearTargets() {
     _targets.clear();
+    Singular::notifyPropertyChanged(this, "targets");
 }
 
 std::shared_ptr<Relation> Law::recordProvenance(const std::string& type,
@@ -450,6 +454,46 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
     return law;
 }
 
+bool Law::hasAuthorityOver(const Law& other) const {
+    if (this == &other) return false;
+
+    // 1. Check directed reachability in Universe relations for "authority-over"
+    std::unordered_set<const Singular*> visited;
+    std::vector<const Singular*> queue;
+    queue.push_back(this);
+    visited.insert(this);
+
+    auto allRelations = Universe::instance().relations();
+    while (!queue.empty()) {
+        const Singular* curr = queue.back();
+        queue.pop_back();
+
+        for (const auto* r : allRelations) {
+            if (!r) continue;
+            if (r->type == "authority-over" || (r->getTypeLexeme() && r->typeLabel() == "authority-over")) {
+                if (r->a() == curr && r->b()) {
+                    if (r->b() == &other) return true;
+                    if (visited.insert(r->b()).second) {
+                        queue.push_back(r->b());
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Fallback to legacy _authorityLevel when neither is connected in DAG
+    return _authorityLevel > other.authorityLevel();
+}
+
+bool Law::hasEqualOrHigherStandingThan(const Law& other) const {
+    if (this == &other) return true;
+    if (hasAuthorityOver(other)) return true;
+    if (other.hasAuthorityOver(*this)) return false;
+
+    // Horizontal peers with no DAG relation
+    return _authorityLevel >= other.authorityLevel();
+}
+
 Law::ApplicationResult Law::applyTo(Singular& target) {
     return applyToImpl(target, false);
 }
@@ -499,11 +543,33 @@ Law::ApplicationResult Law::applyToImpl(
         }
     }
 
+    bool selfAuthorityElevation = false;
+    if (_actionModel) {
+        std::vector<PropertyPath> paths;
+        _actionModel->collectPaths(paths);
+        for (const auto& p : paths) {
+            if (p.segments.empty()) continue;
+            std::size_t startIdx = 0;
+            Singular* bearer = resolveLawRoot(target, p, startIdx);
+            const Law* destLaw = dynamic_cast<const Law*>(bearer);
+            if (!destLaw && targetLaw && startIdx == 0) destLaw = targetLaw;
+            const std::string& propSeg = (startIdx < p.segments.size()) ? p.segments[startIdx] : p.segments.front();
+            if (propSeg == "authorityLevel" || propSeg == "authority" || propSeg == "authorityOver" || propSeg == "isFirstMover") {
+                if (!destLaw || destLaw == this || !hasAuthorityOver(*destLaw)) {
+                    selfAuthorityElevation = true;
+                    break;
+                }
+            }
+        }
+    }
+
     if (!_enabled) {
         result = ApplicationResult::Disabled;
     } else if (!isAuthored()) {
         result = ApplicationResult::Unauthored;
-    } else if (targetLaw && _authorityLevel < targetLaw->authorityLevel()) {
+    } else if (targetLaw && !hasEqualOrHigherStandingThan(*targetLaw)) {
+        result = ApplicationResult::AuthorityDenied;
+    } else if (selfAuthorityElevation) {
         result = ApplicationResult::AuthorityDenied;
     } else if (violatesKernelBoundary) {
         result = ApplicationResult::AuthorityDenied;
@@ -532,6 +598,7 @@ Law::ApplicationResult Law::applyToImpl(
         ECA::Event event;
         event.type = "law-apply";
         event.subject = &target;
+        event.object = this;
         
 
         // time.sinceApplied context: t=0 is when this law began holding for
@@ -545,10 +612,10 @@ Law::ApplicationResult Law::applyToImpl(
                                                  : Universe::instance().now());
         }
 
-        // Arm the trace: every action node reports into it, and the record
-        // carries it out. This is where "did anything actually happen" is
-        // answered — the application result only says the branch was reached.
+        // Arm the trace and ambient execution policy context: every action node
+        // reports into the trace and inherits this Law as authorizingLaw.
         ActionNode::TraceScope traceScope;
+        TransferPolicy::ExecutionScope policyExecScope(this, &target);
         SingularSetToSetCreation::AuthorScope creationAuthors(_authors.getMembers());
         for (const auto& action : _actions) {
             action.run(event, target);
@@ -762,6 +829,38 @@ void Law::registerEnabledProperty() {
         "enabled", this, &Law::propEnabled, &Law::propSetEnabled));
 }
 
+std::shared_ptr<PropertyList> Law::propAuthors() const {
+    auto list = std::make_shared<PropertyList>();
+    for (const auto* member : _authors.getMembers()) {
+        if (!member) continue;
+        list->elements.emplace_back(member->getIdentifier());
+    }
+    return list;
+}
+
+std::shared_ptr<PropertyList> Law::propTargets() const {
+    auto list = std::make_shared<PropertyList>();
+    for (const auto* member : _targets.getMembers()) {
+        if (!member) continue;
+        list->elements.emplace_back(member->getIdentifier());
+    }
+    return list;
+}
+
+std::shared_ptr<PropertyList> Law::propAuthorityOver() const {
+    auto list = std::make_shared<PropertyList>();
+    auto allRelations = Universe::instance().relations();
+    for (const auto* r : allRelations) {
+        if (!r) continue;
+        if (r->type == "authority-over" || (r->getTypeLexeme() && r->typeLabel() == "authority-over")) {
+            if (r->a() == this && r->b()) {
+                list->elements.emplace_back(r->b()->getIdentifier());
+            }
+        }
+    }
+    return list;
+}
+
 void Law::buildProperties() {
     registerEnabledProperty();
     registerProperty(std::make_unique<ComputedProperty<Law, int>>(
@@ -770,6 +869,16 @@ void Law::buildProperties() {
         "name", this, &Law::propName, &Law::propSetName));
     registerProperty(std::make_unique<ComputedProperty<Law, bool>>(
         "drives", this, &Law::propDrives, &Law::propSetDrives));
+    registerProperty(std::make_unique<ComputedProperty<Law, std::shared_ptr<PropertyList>>>(
+        "authors", this, &Law::propAuthors));
+    registerProperty(std::make_unique<ComputedProperty<Law, std::shared_ptr<PropertyList>>>(
+        "targets", this, &Law::propTargets));
+    registerProperty(std::make_unique<ComputedProperty<Law, std::shared_ptr<PropertyList>>>(
+        "authorityOver", this, &Law::propAuthorityOver));
+    registerProperty(std::make_unique<ComputedProperty<Law, bool>>(
+        "isFirstMover", this, &Law::propIsFirstMover));
+    registerProperty(std::make_unique<ComputedProperty<Law, int>>(
+        "authority", this, &Law::propAuthority));
 }
 
 ReteToken ReteNetwork::alphaToken(const FactPtr& fact) {
@@ -2065,6 +2174,11 @@ void LawManager::connectToEventBus() {
         if (e.type == "relation-destroyed" && e.subject) {
             if (auto* relation = dynamic_cast<Relation*>(e.subject)) {
                 queueRelationStateRevalidation(*relation, relation->type);
+                if ((relation->type == "authority-over" ||
+                     (relation->getTypeLexeme() && relation->typeLabel() == "authority-over")) &&
+                    relation->a()) {
+                    Singular::notifyPropertyChanged(relation->a(), "authorityOver");
+                }
             }
         }
 
@@ -2998,9 +3112,13 @@ void LawManager::releaseFromLaws(Singular* being) {
     if (!being) return;
     for (const auto& law : _laws) {
         if (!law) continue;
+        const bool hadTarget = law->targets().hasMember(being);
+        const bool hadAuthor = law->authors().hasMember(being);
         law->targets().removeMember(being);
         law->conditions().removeMember(being);
         law->authors().removeMember(being);
+        if (hadTarget) Singular::notifyPropertyChanged(law.get(), "targets");
+        if (hadAuthor) Singular::notifyPropertyChanged(law.get(), "authors");
     }
     const std::string id = being->getIdentifier();
     // Forget that we introduced it to the network, so an id reused by a later

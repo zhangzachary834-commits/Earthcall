@@ -4,12 +4,14 @@
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <string>
+#include <vector>
 
 namespace fs = std::filesystem;
 using Singularity::Storage::VirtualFileSystem;
@@ -83,6 +85,118 @@ int main() {
     std::string keptText((std::istreambuf_iterator<char>(kept)), {});
     check(keptText.find("mine") != std::string::npos,
           "a later launch never re-seeds over the Person's edits");
+
+    // 4c. An entry the home already holds is the Person's, whatever it is
+    //     named. Until 2026-11-04 a hard-coded list of showcase names was
+    //     deleted and re-copied from the checkout whenever the root was chosen
+    //     or Zones were listed, erasing in-app authoring. See
+    //     docs/Agenda/Tasks/Specific Tasks/Serialization and Storage/
+    //     Boot_Showcase_Overwrite/Boot_Showcase_Overwrite.md.
+    {
+        const fs::path liveHome = sandbox / "live";
+        const fs::path liveCheckoutRoot = sandbox / "liveCheckout";
+        const fs::path liveCheckout = liveCheckoutRoot / "saves";
+        ::setenv("EARTHCALL_DATA", liveHome.c_str(), 1);
+        const auto write = [&](const fs::path& p, const std::string& text) {
+            fs::create_directories(p.parent_path(), ec);
+            std::ofstream(p) << text;
+        };
+        const auto read = [](const fs::path& p) {
+            std::ifstream in(p);
+            return std::string((std::istreambuf_iterator<char>(in)), {});
+        };
+        const auto later = fs::file_time_type::clock::now() + std::chrono::hours(1);
+        const auto writeNewer = [&](const fs::path& p, const std::string& text) {
+            write(p, text);
+            fs::last_write_time(p, later, ec);
+        };
+
+        write(liveHome / SaveSystem::kDataHomeMarker, "{}\n");
+        const std::vector<fs::path> onTheOldList = {
+            "zones/Northern Veil/zone.json",
+            "zones/Sky-Island Sanctuary/zone.json",
+            "zones/SynthesisStudio/zone.json",
+            "materials/studio.A5/material.json",
+            "materials/northern_veil.glacial_dais/material.json",
+            "laws/law-sky-sanctuary-bell/law.json",
+            "worlds/northern_veil.json",
+        };
+        for (const auto& rel : onTheOldList) {
+            write(liveHome / rel, "{\"mine\":true}\n");
+            writeNewer(liveCheckout / rel, "{\"snapshot\":true}\n");
+        }
+        write(liveHome / "zones/Northern Veil/only-in-home.txt", "keep\n");
+        writeNewer(liveCheckout / "zones/Brand New/zone.json", "{\"new\":true}\n");
+
+        // The Person edited this after the checkout: not an undelivered update.
+        write(liveCheckout / "zones/Person Edited/zone.json", "{\"snapshot\":true}\n");
+        write(liveHome / "zones/Person Edited/zone.json", "{\"mine\":true}\n");
+        fs::last_write_time(liveCheckout / "zones/Person Edited/zone.json",
+                            later - std::chrono::hours(24), ec);
+        // Newer but byte-identical: nothing is waiting to be delivered.
+        write(liveHome / "zones/Same Bytes/zone.json", "{\"same\":true}\n");
+        writeNewer(liveCheckout / "zones/Same Bytes/zone.json", "{\"same\":true}\n");
+
+        std::string liveNote;
+        chosen = SaveSystem::chooseDataRoot(liveCheckout, liveNote);
+        check(chosen == liveHome, "the marked home is chosen");
+        bool allKept = true;
+        for (const auto& rel : onTheOldList) {
+            if (read(liveHome / rel).find("mine") == std::string::npos) {
+                allKept = false;
+                std::printf("    overwritten: %s\n", rel.string().c_str());
+            }
+        }
+        check(allKept, "choosing the root keeps every existing entry the Person holds");
+        check(fs::is_regular_file(liveHome / "zones/Northern Veil/only-in-home.txt", ec),
+              "a file only the home has survives");
+        check(fs::is_regular_file(liveHome / "zones/Brand New/zone.json", ec),
+              "an identity the home lacks is still seeded");
+
+        // The update that used to arrive by erasure must not vanish silently.
+        check(liveNote.find("7 checkout identities") != std::string::npos,
+              "the note counts the newer checkout entries that were not installed");
+        check(liveNote.find("zones/Northern Veil") != std::string::npos,
+              "the note names a newer checkout Zone that was not installed");
+        check(liveNote.find("Person Edited") == std::string::npos,
+              "an entry edited after the checkout is not reported");
+        check(liveNote.find("Same Bytes") == std::string::npos,
+              "a byte-identical entry is not reported");
+        check(liveNote.find("Brand New") == std::string::npos,
+              "a freshly seeded entry is not reported");
+
+        // Desktop litter next to the identities is not an identity.
+        writeNewer(liveCheckout / "zones/.DS_Store", "finder\n");
+        write(liveHome / "zones/.DS_Store", "other\n");
+        writeNewer(liveCheckout / "materials/.DS_Store", "finder\n");
+        chosen = SaveSystem::chooseDataRoot(liveCheckout, liveNote);
+        check(liveNote.find(".DS_Store") == std::string::npos, "dotfiles are never reported");
+        check(!fs::exists(liveHome / "materials/.DS_Store", ec), "dotfiles are never seeded");
+
+        // A long report stays readable.
+        for (int i = 0; i < 12; ++i) {
+            const fs::path rel = fs::path("materials") / ("flood." + std::to_string(i)) / "material.json";
+            write(liveHome / rel, "{\"mine\":true}\n");
+            writeNewer(liveCheckout / rel, "{\"snapshot\":true}\n");
+        }
+        chosen = SaveSystem::chooseDataRoot(liveCheckout, liveNote);
+        check(liveNote.find("19 checkout identities") != std::string::npos,
+              "the note counts every undelivered entry");
+        check(liveNote.find("11 more") != std::string::npos,
+              "the note lists a few entries and counts the rest");
+
+        // Listing Zones re-runs the seed mid-session, from a cwd holding saves/.
+        std::error_code cwdEc;
+        const fs::path originalCwd = fs::current_path(cwdEc);
+        fs::current_path(liveCheckoutRoot, cwdEc);
+        SaveSystem::setSaveRoot(liveHome.string());
+        (void)SaveSystem::listZoneIdentityRecords();
+        SaveSystem::setSaveRoot("");
+        fs::current_path(originalCwd, cwdEc);
+        check(read(liveHome / "zones/Northern Veil/zone.json").find("mine") != std::string::npos,
+              "listing Zones keeps the Person's copy too");
+        ::setenv("EARTHCALL_DATA", home.c_str(), 1);
+    }
 
     // 5. Empty root is still "saves" under cwd (what every other test relies on).
     SaveSystem::setSaveRoot("");

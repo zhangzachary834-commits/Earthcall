@@ -133,6 +133,10 @@ const WriteExemption kWriteExemptions[] = {
      "layer, so 0 is the only legal value and no perturbation can round-trip. "
      "Measured: setValue refuses outright (returns false) on a face with no "
      "layers at all, which check C already skips."},
+    {"TransferPolicy", "rule.commit",
+     "Edge trigger: writing true commits the staged PolicyRule and resets to false."},
+    {"TransferPolicy", "rule.revokeGoverningLawId",
+     "Command trigger: writing a law ID revokes rules governed by that law and resets to empty."},
 };
 
 // "face.*" matches any face path; anything else is an exact name.
@@ -338,6 +342,7 @@ int main() {
         Singularity::Screen::ScreenChannel screen;        audit("ScreenChannel", screen);
         Singularity::Audio::AudioChannel audio;            audit("AudioChannel", audio);
         audit("TransferPolicy", TransferPolicy::instance());
+        TransferPolicy::instance().clearPolicyRules();
 
         Soul soul("Prober");
         Body body("humanoid", "default");

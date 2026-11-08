@@ -130,6 +130,20 @@ def pow_(a, b):
     return {"op": 24, "children": [n(a), n(b)]}
 
 
+def min_(a, b):
+    """Op 20 is min(a, b): the CSG Union and the scalar minimum are the same formula."""
+    return {"op": 20, "children": [n(a), n(b)]}
+
+
+def component(a, axis):
+    return {"op": 3, "arg": axis, "children": [n(a)]}
+
+
+def floor3(a):
+    """Componentwise floor; OntoMath's Map takes a vector."""
+    return {"op": 12, "arg": "Floor", "children": [n(a)]}
+
+
 def sin_(var, scale=1.0, shift=0.0, coef=1.0):
     """coef * sin(scale*var + shift); a TransFactor binds one named variable."""
     return {"op": 0, "scalarForm": {"terms": [{"c": float(coef), "factors": {},
@@ -220,10 +234,15 @@ def sheet_mask(k):
     """S(g) = (1 - (g/w)^2)^2 with compact support; g = 0 is the sheet."""
     t = v("t")
     w = wave_terms(k)
+    terms = [v("z"), w[0], w[1], w[2], sin_("fa", coef=k["af1"]), sin_("fb", coef=k["af2"])]
+    body = add(*terms)
+    if k.get("af3"):
+        # The curl that reads from directly below, where large folds alone look like a tube.
+        body = let("fc", add(mul(k["kf3"], v("x")), k["pf3"], mul(k["wf3"], t)),
+                   add(*terms, sin_("fc", coef=k["af3"])))
     g = let("fa", add(mul(k["kf1"], v("x")), k["pf1"], mul(k["wf1"], t)),
-        let("fb", add(mul(k["kf2"], v("x")), k["pf2"], mul(k["wf2"], t)),
-            add(v("z"), w[0], w[1], w[2], sin_("fa", coef=k["af1"]), sin_("fb", coef=k["af2"]))))
-    width = add(k["w"], sin_("x", k["kw"], k["pw"], k["w"] * 0.25))
+        let("fb", add(mul(k["kf2"], v("x")), k["pf2"], mul(k["wf2"], t)), body))
+    width = add(v("we") if k.get("w_max") else k["w"], sin_("x", k["kw"], k["pw"], k["w"] * 0.25))
     return pow_(clamp(sub(1.0, pow_(div(g, width), 2.0))), 2.0)
 
 
@@ -251,23 +270,58 @@ def limb_cap(k):
     return let("Gx", grad, clamp(add(cos_view, k["limb_floor"])))
 
 
+def lattice_step(half):
+    """The longest marching step a ray of this direction can take. Current transport samples
+    chord/96, and the longest chord a direction can have through this box is min(2h/|omega|)
+    over the axes. This is worst-case, so it is never too permissive, and a higher sample
+    count only makes it conservative."""
+    hx, hy, hz = float(half[0]), float(half[1]), float(half[2])
+    chord = min_(min_(div(2.0 * hx, add(abs_(v("omega.x")), 0.001)), div(2.0 * hy, add(abs_(v("omega.y")), 0.001))),
+                 div(2.0 * hz, add(abs_(v("omega.z")), 0.001)))
+    return div(chord, 96.0)
+
+
+def lattice_advance(k):
+    """How far one step moves a ray along the ray coordinate xw."""
+    tilt = k["tilt_x"] * (-1.0 if k.get("mirror") else 1.0)
+    return mul(abs_(add(v("omega.x"), mul(tilt, v("omega.y")))), v("step"))
+
+
+def resolved_width(k):
+    """The sheet's own band limit. A thin sheet between two samples lands on the lattice
+    differently from pixel to pixel, which is the larger part of the moire on a thin sheet.
+    So a ray that steps too far across the sheet sees it wider, by exactly what its step
+    cannot resolve, and the emission is divided by the same factor so the energy along the
+    ray is unchanged. A ray looking up the sheet keeps the full sharpness."""
+    across = mul(v("step"), clamp(add(abs_(v("omega.z")), abs_(v("omega.x")))))
+    return min_(k["w_max"], sqrt_(add(k["w"] * k["w"], mul(1.44, across, across))))
+
+
+def resolved(wavenumber):
+    """Analytic band limit, the fix for the moire. A sine of wavenumber k along the ray is
+    undersampled once k * advance reaches pi, and aliases into stripes that are not in the
+    integral: at 768 samples per chord they vanish and nothing else changes (measured
+    2026-11-03). The true integral of such a term over a step is near zero, so fading it
+    out is the right answer as well as the free one. 1 up to k*advance = pi/2, 0 at pi."""
+    return clamp(sub(2.0, mul(2.0 / math.pi * wavenumber, v("adv"))))
+
+
 def curtain_density(k, half):
     """Only the literal support factors: this is what gates samples, cheaply. The sheet
     itself is drawn by emission, so wz is a tight envelope around the sheet."""
     return mul(*support_factors(k, half))
 
 
-def curtain_emission(k):
+def curtain_emission(k, half):
     t = v("t")
     # Rays: one Perlin for organic irregularity, plus a comb of incommensurate sines in
     # the ray coordinate for the fine streaks. Sines cost a small fraction of a Perlin,
     # and four of them at irrational ratios do not read as periodic. They slide along
     # the sheet with time, which is what a racing ray is.
-    comb = let("cr", add(v("xw"), mul(k["cv"], t)),
-               add(sin_("cr", k["c1"], k["seed"], k["ca1"]),
-                   sin_("cr", k["c2"], k["seed"] * 1.7, k["ca2"]),
-                   sin_("cr", k["c3"], k["seed"] * 2.3, k["ca3"]),
-                   sin_("cr", k["c4"], k["seed"] * 3.1, k["ca4"])))
+    harmonics = [("c1", "ca1", 1.0), ("c2", "ca2", 1.7), ("c3", "ca3", 2.3), ("c4", "ca4", 3.1), ("c5", "ca5", 4.3)]
+    comb_terms = [mul(resolved(k[f]), sin_("cr", k[f], k["seed"] * ph, k[a]))
+                  for f, a, ph in harmonics if k.get(a)]
+    comb = let("adv", lattice_advance(k), let("cr", add(v("xw"), mul(k["cv"], t)), add(*comb_terms)))
     rays = clamp(add(k["r0"], comb,
                      mul(k["r1"], noise(mul(v("xw"), k["f1"]), mul(v("Y"), k["fy"]), add(mul(t, k["rt"]), k["seed"])))))
     weight_rays = let("rays", rays, add(k["base"], mul(1.0 - k["base"], pow_(v("rays"), 2.0))))
@@ -275,7 +329,7 @@ def curtain_emission(k):
                   clamp(add(k["sec0"], sin_("ps", coef=k["as1"]), sin_("x", k["ks2"], k["ps2"], k["as2"]))))
     u = v("u")
     hem = mul(k["hem"], clamp(sub(1.0, mul(abs_(sub(u, 0.02)), 34.0))))
-    green = mul(k["green"], clamp(mul(u, 7.0)), pow_(clamp(sub(1.0, div(u, k["green_top"]))), 2.0))
+    green = mul(k["green"], clamp(mul(u, k.get("green_rise", 7.0))), pow_(clamp(sub(1.0, div(u, k["green_top"]))), 2.0))
     upper = mul(clamp(mul(sub(u, k["red_from"]), k["red_rise"])), clamp(sub(1.0, u)))
     spectrum = sum3(scaled(NITROGEN_HEM, hem), scaled(OXYGEN_GREEN, green),
                     mul(upper, vec3(k["red"] * OXYGEN_RED[0] + k["violet"] * NITROGEN_VIOLET[0],
@@ -284,7 +338,9 @@ def curtain_emission(k):
     body = let("u", altitude(k),
            let("sm", sheet_mask(k), let("wr", weight_rays, let("sc", section, let("lc", limb_cap(k), let("sp", spectrum,
                mul(k["e"], v("sm"), edge_fade(k), v("wr"), v("sc"), v("lc"), v("sp"))))))))
-    return bind_sheet(k, body)
+    if k.get("w_max"):
+        body = let("we", resolved_width(k), mul(div(k["w"], v("we")), body))
+    return bind_sheet(k, let("step", lattice_step(half), body))
 
 
 def medium(node_id, name, origin, half, k, role):
@@ -302,7 +358,7 @@ def medium(node_id, name, origin, half, k, role):
         "volumeExtinction": piecewise(c(0.00002)),
         "volumeScattering": piecewise(c(0.0)),
         "volumeChroma": piecewise(vec3(1.0, 1.0, 1.0)),
-        "volumeEmission": piecewise(curtain_emission(k)),
+        "volumeEmission": piecewise(curtain_emission(k, half)),
         "authoredProperties": {
             "displayName": pv("string", name),
             "aurora.role": pv("string", role),
@@ -321,15 +377,18 @@ HERO = dict(
     k1=0.0147, p1=2.1, a1=58.0,
     k2=0.0391, p2=0.3, a2=15.0,
     kf1=0.0213, pf1=4.0, wf1=0.040, af1=2.4,
-    kf2=0.0577, pf2=1.0, wf2=-0.075, af2=1.0,
-    w=11.0, kw=0.011, pw=1.0, wz=17.5, support_rise=0.25,
+    kf2=0.0577, pf2=1.0, wf2=-0.075, af2=3.5,
+    kf3=0.131, pf3=2.0, wf3=0.11, af3=2.0,
+    # wz must hold w_max + w/4 + the three fold amplitudes.
+    w=7.5, w_max=10.5, kw=0.011, pw=1.0, wz=20.5, support_rise=0.25,
     y0=200.0, kb1=0.0083, pb1=0.4, wb1=0.03, ab1=18.0, kb2=0.031, pb2=1.7, ab2=5.0,
     h=340.0, kh=0.019, ph=0.9,
-    r0=0.40, r1=1.30, f1=0.060, fy=0.0040, rt=0.055, seed=3.7,
-    cv=1.2, c1=0.137, ca1=0.17, c2=0.2221, ca2=0.13, c3=0.3697, ca3=0.11, c4=0.6131, ca4=0.08,
+    r0=0.36, r1=1.00, f1=0.085, fy=0.0040, rt=0.055, seed=3.7,
+    cv=1.2, c1=0.137, ca1=0.17, c2=0.2221, ca2=0.13, c3=0.3697, ca3=0.20, c4=0.6131, ca4=0.17,
+    c5=1.0727, ca5=0.15, green_rise=16.0,
     sec0=0.74, ks1=0.0071, ps1=1.1, ws1=0.045, as1=0.36, ks2=0.0187, ps2=3.0, as2=0.18,
     hem=0.14, green=1.0, green_top=0.72, red_from=0.36, red_rise=2.0, red=0.34, violet_from=0.36, violet_rise=3.0, violet=0.28,
-    e=0.105, hx=800.0, fade=230.0, base=0.30, limb_floor=0.30,
+    e=0.150, hx=800.0, fade=230.0, base=0.18, limb_floor=0.30,
 )
 
 FAR_BAND = dict(HERO,
@@ -338,15 +397,15 @@ FAR_BAND = dict(HERO,
     k1=0.0131, p1=0.2, a1=44.0,
     k2=0.0433, p2=2.0, a2=11.0,
     kf1=0.0241, pf1=1.0, wf1=-0.032, af1=2.0,
-    kf2=0.0651, pf2=3.2, wf2=0.060, af2=0.8,
-    w=10.0, kw=0.013, pw=2.2, wz=16.0,
+    kf2=0.0651, pf2=3.2, wf2=0.060, af2=0.8, af3=0.0,
+    w=10.0, w_max=0.0, kw=0.013, pw=2.2, wz=16.0,
     y0=128.0, kb1=0.0093, pb1=2.6, wb1=-0.024, ab1=34.0, kb2=0.027, pb2=0.5, ab2=3.0,
     h=440.0, kh=0.023, ph=3.3,
     r0=0.36, r1=1.35, f1=0.075, fy=0.0036, rt=0.07, seed=11.3,
-    cv=-1.5, c1=0.1733, ca1=0.18, c2=0.2851, ca2=0.13, c3=0.4567, ca3=0.11, c4=0.7411, ca4=0.08,
+    cv=-1.5, c1=0.1733, ca1=0.18, c2=0.2851, ca2=0.13, c3=0.4567, ca3=0.11, c4=0.7411, ca4=0.08, ca5=0.0, green_rise=7.0,
     sec0=0.82, ks1=0.0059, ps1=5.0, ws1=-0.036, as1=0.30, ks2=0.0171, ps2=1.0, as2=0.16,
     hem=0.16, green_top=0.46, red_from=0.25, red_rise=2.5, red=0.70, violet_from=0.25, violet_rise=3.0, violet=0.46,
-    e=0.150, hx=880.0, fade=240.0,
+    e=0.150, hx=880.0, fade=240.0, base=0.30,
 )
 
 ARC_BOX = ((0.0, 370.0, 120.0), (800.0, 190.0, 300.0))
@@ -381,12 +440,38 @@ def build_fields():
 DOME_R = 960.0
 
 
-def stars(freq, seed, threshold, gain):
-    """Product of two incommensurate Perlin lattices above a high threshold: stars
-    land where both peak, which hides either lattice's grid."""
-    a = noise(mul(v("x"), freq), mul(v("ya"), freq), mul(v("z"), freq))
-    b = noise(add(mul(v("x"), freq * 0.617), seed), add(mul(v("ya"), freq * 0.617), seed * 0.5), add(mul(v("z"), freq * 0.617), seed * 1.7))
-    return mul(gain, clamp(mul(sub(mul(a, b), threshold), 28.0)))
+STAR_CELLS = 120.0      # cells per unit of the stereographic plane
+STAR_RADIUS = 0.00068   # radians: about 1.1 px at the app's 45 degree 1440p camera
+
+
+def starfield():
+    """Real point stars: one per cell of a stereographic plane, each a round kernel at a
+    hashed position with a steep magnitude law, so many are faint and few are bright. The
+    earlier thresholded noise product made irregular flecks of one brightness, which read
+    as dashes and pebbles. Stereographic projection is conformal, which is what keeps every
+    star round anywhere on the sky.
+
+    Coordinates use |y| without the ripple on purpose. Every use would otherwise repeat the
+    ripple's text, and stars are sharp in the still water of Zach's reference photos."""
+    lift = add(1.0, div(v("ya0"), DOME_R))
+    plane = vec3(mul(div(v("dx"), v("lift")), STAR_CELLS), 0.0, mul(div(v("dz"), v("lift")), STAR_CELLS))
+    key = add(mul(component(v("cell"), "x"), 1.9898), mul(component(v("cell"), "z"), 7.233))
+    hashes = vec3(sin_("key", 1.0, 0.37, 5375.8), sin_("key", 1.0, 1.7, 4758.5), sin_("key", 1.0, 3.1, 3758.5))
+    fx = sub(sub(component(v("sg"), "x"), component(v("cell"), "x")), add(0.15, mul(0.7, component(v("hf"), "y"))))
+    fz = sub(sub(component(v("sg"), "z"), component(v("cell"), "z")), add(0.15, mul(0.7, component(v("hf"), "z"))))
+    # Squared angular distance in units of the star radius (ds = dtheta / lift here). In
+    # these units nothing is tiny: OntoMath's Div guards small denominators, and dividing
+    # by radius^2 ~ 7e-7 returned 0, which lit every faint star's whole cell as a block.
+    r2 = mul(add(mul(fx, fx), mul(fz, fz)), pow_(mul(v("lift"), 1.0 / (STAR_CELLS * STAR_RADIUS)), 2.0))
+    m = component(v("hf"), "x")
+    magnitude = pow_(clamp(div(sub(m, 0.30), 0.70)), 26.0)
+    kernel = pow_(clamp(sub(1.0, div(v("r2"), add(1.0, mul(5.0, v("mag")))))), 2.0)
+    # Most of the sky is dust a little above the air, and bright stars are rare.
+    shine = mul(clamp(mul(sub(m, 0.30), 40.0)), add(0.03, mul(0.34, m, m), mul(0.70, v("mag"))), kernel)
+    warm = component(v("hf"), "y")
+    colour = vec3(add(0.86, mul(0.28, warm)), 0.95, sub(1.14, mul(0.28, warm)))
+    return let("lift", lift, let("sg", plane, let("cell", floor3(v("sg")), let("key", key, let("h3", hashes,
+           let("hf", sub(v("h3"), floor3(v("h3"))), let("r2", r2, let("mag", magnitude, mul(shine, colour)))))))))
 
 
 def rise_fall(e, a, b, cc, d):
@@ -430,8 +515,8 @@ SKY_ONLY_ABOVE = 190.0   # world |y| above which no ridge or treeline can appear
 
 
 def sky_terms():
-    """Air, aurora and stars. Stars: one lattice product. Sines replace Perlin for the
-    dither and star tint, since this runs on every pixel of the frame."""
+    """Air, aurora and stars. Sines replace Perlin for the dither, since this runs on every
+    pixel of the frame."""
     horizon = clamp(sub(1.0, mul(v("dy"), 3.0)))
     h2 = mul(horizon, horizon)
     zenith = clamp(sub(1.0, mul(v("dy"), 1.05)))
@@ -439,10 +524,7 @@ def sky_terms():
                mul(zenith, vec3(0.016, 0.034, 0.078)),
                mul(h2, vec3(0.012, 0.090, 0.082)))
     dither = mul(0.0040, sin_("x", 1.713), sin_("z", 2.291, 0.7), sin_("ya", 3.137, 1.9))
-    s_ = stars(0.62, 4.0, 0.285, 0.72)
-    tint = add(1.0, sin_("x", 0.031, 0.4, 0.16), sin_("z", 0.047, 2.0, 0.10))
-    starlight = mul(s_, vec3(tint, 0.94, sub(2.0, tint)))
-    return let("aur", sky_aurora(), let("st", starlight, let("dith", dither, let("base", base,
+    return let("aur", sky_aurora(), let("st", starfield(), let("dith", dither, let("base", base,
            add(v("base"), v("aur"), v("st"), mul(v("dith"), vec3(1.0, 1.0, 1.0)))))))
 
 
@@ -477,11 +559,12 @@ def sky_and_land_color():
                                        sin_("ja", 1.0, 0.3, 0.005), sin_("ja", 2.63, 1.1, 0.003)))
     ridge_line = add(0.030, mul(0.122, north, pow_(clamp(ridged), 1.3)), jag)
     land = clamp(mul(sub(v("rl"), v("dy")), 760.0))
-    # Mostly snow with irregular rock showing through, more rock low on the slope.
-    rockiness = clamp(add(0.70, mul(2.4, noise(mul(pa, 41.0), mul(pb, 41.0), mul(v("dy"), 46.0))),
-                          mul(0.9, noise(mul(pa, 133.0), mul(pb, 133.0), mul(v("dy"), 120.0)))))
+    # Mostly snow, with rock in gullies that run down the fall line. The noise is stretched
+    # in elevation: equal frequency on both axes read as camouflage blotches in Zach's shots.
+    rockiness = clamp(add(0.84, mul(1.5, noise(mul(pa, 52.0), mul(pb, 52.0), mul(v("dy"), 21.0))),
+                          mul(0.7, noise(mul(pa, 170.0), mul(pb, 170.0), mul(v("dy"), 70.0)))))
     snowline = clamp(div(sub(v("dy"), add(0.016, mul(0.20, v("rl")))), 0.012))
-    rock = vec3(0.012, 0.018, 0.026)
+    rock = vec3(0.030, 0.040, 0.054)
     ridge = add(rock, mul(snowline, add(mul(rockiness, vec3(0.150, 0.195, 0.245)), vec3(0.010, 0.034, 0.026))))
     # Treeline teeth along the far shore, from sines of the azimuth coordinate.
     tooth = let("tw", mul(pa, 240.0),
@@ -536,7 +619,8 @@ def shore_sdf():
 
 def shore_color():
     drift = clamp(add(0.80, mul(0.45, noise(mul(v("x"), 0.09), 0.5, mul(v("z"), 0.09)))))
-    fine = add(1.0, sin_("x", 0.91, 0.0, 0.05), sin_("z", 1.37, 0.9, 0.05))
+    # Noise, not crossed sines: two sines at right angles read as woven cloth at a distance.
+    fine = add(1.0, mul(0.11, noise(mul(v("x"), 0.71), 2.5, mul(v("z"), 0.71))))
     return mul(drift, fine, vec3(0.20, 0.275, 0.33))
 
 
@@ -546,10 +630,14 @@ def spruce(base, height, radius, phase):
     its reflection stands in the lake."""
     ring = sqrt_(add(mul(v("x"), v("x")), mul(v("z"), v("z"))))
     s_ = clamp(div(sub(v("ya"), base), height))
-    tiers = add(0.74, sin_("ya", 42.0 / height, phase, 0.26))
+    # Many shallow branch tiers, with the second harmonic making each one droop. Fewer and
+    # deeper tiers made the wavy bowling pins in Zach's screenshots.
+    k = 118.0 / height
+    tiers = add(0.84, sin_("ya", k, phase, 0.13), sin_("ya", 2.0 * k, 2.0 * phase + 1.2, 0.05))
     silhouette = mul(radius, sub(1.0, s_), tiers)
     return let("ya", abs_(v("y")),
-               mul(0.5, {"op": 21, "children": [sub(ring, add(silhouette, 0.05)), sub(v("ya"), base + height)]}))
+               # Lipschitz ~ radius * sum(a * k) ~ 3, so step at 0.3 to stay conservative.
+               mul(0.3, {"op": 21, "children": [sub(ring, add(silhouette, 0.05)), sub(v("ya"), base + height)]}))
 
 
 def spruce_color():

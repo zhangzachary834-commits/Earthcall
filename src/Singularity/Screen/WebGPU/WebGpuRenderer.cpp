@@ -24,28 +24,6 @@
 
 namespace {
 
-struct AuthoredModelTransforms {
-    glm::mat4 inverse;
-    glm::mat4 normal;
-};
-
-// OntoMath owns the mathematical meaning of model inversion and normal
-// inverse-transpose. GLM matrices here are only lowered GPU representation.
-std::optional<AuthoredModelTransforms> deriveModelTransforms(const glm::mat4& model) {
-    const auto authoredModel = OntoMath::MatrixValue::fromGlmMat4(model);
-    const auto inverse = OntoMath::inverseAffine(authoredModel);
-    if (!inverse) return std::nullopt;
-
-    const auto normal = OntoMath::matrixTranspose(*inverse);
-    if (!normal) return std::nullopt;
-
-    const auto loweredInverse = inverse->toGlmMat4();
-    const auto loweredNormal = normal->toGlmMat4();
-    if (!loweredInverse || !loweredNormal) return std::nullopt;
-
-    return AuthoredModelTransforms{*loweredInverse, *loweredNormal};
-}
-
 std::optional<glm::mat4> authoredProduct(const glm::mat4& left,
                                          const glm::mat4& right) {
     const auto product = OntoMath::matrixMultiply(
@@ -1617,9 +1595,7 @@ void WebGpuRenderer::setCamera(const glm::mat4& viewProj, const glm::vec3& eyePo
     _inverseViewProjValid = inverse.has_value();
     if (inverse) _invViewProj = *inverse;
 
-    const auto modelViewProj = authoredProduct(_viewProj, _model);
-    _modelViewProjValid = modelViewProj.has_value();
-    if (modelViewProj) _modelViewProj = *modelViewProj;
+    _modelViewProjDirty = true;
 }
 
 void WebGpuRenderer::applyCamera(const glm::mat4& view, const glm::mat4& proj,
@@ -1628,16 +1604,74 @@ void WebGpuRenderer::applyCamera(const glm::mat4& view, const glm::mat4& proj,
     if (!authoredViewProj) {
         _inverseViewProjValid = false;
         _modelViewProjValid = false;
+        _modelViewProjDirty = false;
         return;
     }
     setCamera(*authoredViewProj, eyePos);
 }
 
-void WebGpuRenderer::applyModel(const glm::mat4& model) {
-    _model = model;
+std::optional<WebGpuRenderer::AuthoredModelTransforms> WebGpuRenderer::deriveModelTransforms(const glm::mat4& model) {
+    const auto authoredModel = OntoMath::MatrixValue::fromGlmMat4(model);
+    const auto inverse = OntoMath::inverseAffine(authoredModel);
+    if (!inverse) return std::nullopt;
+
+    const auto normal = OntoMath::matrixTranspose(*inverse);
+    if (!normal) return std::nullopt;
+
+    const auto loweredInverse = inverse->toGlmMat4();
+    const auto loweredNormal = normal->toGlmMat4();
+    if (!loweredInverse || !loweredNormal) return std::nullopt;
+
+    return AuthoredModelTransforms{*loweredInverse, *loweredNormal};
+}
+
+static inline uint64_t hashMat4(const glm::mat4& m) {
+    const uint64_t* p = reinterpret_cast<const uint64_t*>(&m[0][0]);
+    uint64_t h = 0xcbf29ce484222325ULL;
+    for (int i = 0; i < 8; ++i) {
+        h ^= p[i];
+        h *= 0x100000001b3ULL;
+    }
+    return h;
+}
+
+const std::optional<WebGpuRenderer::AuthoredModelTransforms>& WebGpuRenderer::getModelTransforms() {
+    if (_hasCachedTransforms && _model == _cachedModelMatrix) {
+        return _cachedTransforms;
+    }
+    _cachedModelMatrix = _model;
+    _hasCachedTransforms = true;
+
+    const uint64_t h = hashMat4(_model);
+    const size_t slotIdx = static_cast<size_t>(h & (kTransformCacheSize - 1));
+    auto& slot = _transformTable[slotIdx];
+    if (slot.occupied && slot.model == _model) {
+        _cachedTransforms = slot.transforms;
+        return _cachedTransforms;
+    }
+
+    _cachedTransforms = deriveModelTransforms(_model);
+    slot.model = _model;
+    slot.transforms = _cachedTransforms;
+    slot.occupied = true;
+    return _cachedTransforms;
+}
+
+bool WebGpuRenderer::ensureModelViewProj() {
+    if (!_modelViewProjDirty) return _modelViewProjValid;
+    _modelViewProjDirty = false;
     const auto modelViewProj = authoredProduct(_viewProj, _model);
     _modelViewProjValid = modelViewProj.has_value();
     if (modelViewProj) _modelViewProj = *modelViewProj;
+    return _modelViewProjValid;
+}
+
+void WebGpuRenderer::applyModel(const glm::mat4& model) {
+    if (_model != model) {
+        _hasCachedTransforms = false;
+        _model = model;
+        _modelViewProjDirty = true;
+    }
 }
 
 void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width, uint32_t height,
@@ -1704,7 +1738,7 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
             edges.push_back(b); edges.push_back(c);
             edges.push_back(c); edges.push_back(a);
         }
-        if (!_modelViewProjValid) return;
+        if (!ensureModelViewProj()) return;
         drawFlat(flatPipeline(WGPUPrimitiveTopology_LineList, Blend::Alpha, DepthMode::TestOnly),
                  edges, _modelViewProj,
                  glm::vec4(mat.baseColor, mat.opacity));
@@ -1904,202 +1938,185 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
             key.responseParams.size() * sizeof(float));
     }
 
-    const auto authoredTransforms = deriveModelTransforms(_model);
+    const auto& authoredTransforms = getModelTransforms();
     if (!authoredTransforms) return;
 
     InstanceData inst;
     inst.model = _model;
     inst.normalMat = authoredTransforms->normal;
     inst.baseColor = glm::vec4(mat.baseColor, mat.opacity);
-    _meshBatches[std::move(key)].push_back(inst);
+    std::vector<InstanceData>* targetVec = nullptr;
+    if (_lastMeshBatchKey && key == *_lastMeshBatchKey && _lastMeshBatchVector) {
+        targetVec = _lastMeshBatchVector;
+    } else {
+        targetVec = &_meshBatches[key];
+        _lastMeshBatchKey = key;
+        _lastMeshBatchVector = targetVec;
+    }
+    targetVec->push_back(inst);
 
     mutableFrameStats().trianglesDrawn +=
         static_cast<uint32_t>(mesh.tris.size() / 3);
 }
 
 void WebGpuRenderer::flushMeshDraws() {
-    if (_meshBatches.empty()) return;
-    if (!_pass) { _meshBatches.clear(); return; }
-    if (!_sceneVisibilityFrame.buffer) {
-        ensureSceneVisibilityBindingForEarlyFlush();
+    if (_meshBatches.empty()) {
+        _lastMeshBatchKey.reset();
+        _lastMeshBatchVector = nullptr;
+        return;
     }
+    if (!_pass) {
+        _meshBatches.clear();
+        _lastMeshBatchKey.reset();
+        _lastMeshBatchVector = nullptr;
+        return;
+    }
+    if (!_sceneVisibilityFrame.buffer) ensureSceneVisibilityBindingForEarlyFlush();
 
     RadianceSourceBufferView sourceView = prepareRadianceSourceBuffer();
     const SceneVisibilityBufferView meshFieldVisibility =
         prepareFieldVmVisibility(nullptr);
     if (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene) {
-        if (_sceneVisibilityFrame.meshComplete &&
-            meshFieldVisibility.complete) {
+        if (_sceneVisibilityFrame.meshComplete && meshFieldVisibility.complete)
             mutableFrameStats().sceneVisibilityMeshKnownFrames++;
-        } else if (_sceneVisibilityFrame.meshComplete &&
-                   !meshFieldVisibility.complete) {
-            // Semantic coverage was complete, but the device resources needed
-            // to execute that proof failed to materialize this frame.
+        else if (_sceneVisibilityFrame.meshComplete && !meshFieldVisibility.complete)
             mutableFrameStats().sceneVisibilityUnknownFrames++;
-        }
     }
     if (!sourceView.buffer) {
         const RadianceSourceGpuData inertSource{};
-        auto inert = bufferPool().suballocateStorage(
-            &inertSource, sizeof(RadianceSourceGpuData));
-        sourceView.buffer = inert.buffer;
-        sourceView.offset = inert.offset;
-        sourceView.size = inert.size;
+        auto inert = bufferPool().suballocateStorage(&inertSource, sizeof(inertSource));
+        sourceView = {inert.buffer, inert.offset, inert.size};
     }
 
-    for (auto& kv : _meshBatches) {
-        const MeshBatchKey& key = kv.first;
-        const std::vector<InstanceData>& instances = kv.second;
-        if (!key.mesh || !key.pipeline || !key.pipeline->pipe ||
-            key.mesh->tris.empty() || instances.empty()) {
-            continue;
-        }
-        const geom::TessMesh& mesh = *key.mesh;
+    constexpr size_t pageBytes = 256 * 1024;
+    _meshRecords.clear();
+    _meshPageInstances.clear();
 
-        bindPipeline(key.pipeline->pipe);
+    const bool meshCompleteSceneKnown =
+        radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
+        _sceneVisibilityFrame.meshComplete && meshFieldVisibility.complete;
+    const bool meshVisibilityUnknown =
+        radianceVisibilityMode() == RadianceVisibilityMode::LocalReceiverGeometry ||
+        (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
+         !meshCompleteSceneKnown);
 
-        const size_t vbytes = mesh.tris.size() * sizeof(geom::TessVertex);
-        WGPUBuffer vbuf = _meshCache.getOrUpload(mesh);
-        uint64_t voffset = 0;
-        if (!vbuf) {
-            auto vAlloc = bufferPool().suballocateVertex(mesh.tris.data(), vbytes);
-            vbuf = vAlloc.buffer;
-            voffset = vAlloc.offset;
-        }
+    MeshUniforms commonUniform{};
+    commonUniform.viewProj = _viewProj;
+    commonUniform.lightPos = glm::vec4(lightPos(), 1.0f);
+    commonUniform.eyePos = glm::vec4(_eyePos, 1.0f);
+    commonUniform.lightControl = glm::vec4(
+        lightingEnabled() ? 1.0f : 0.0f,
+        static_cast<float>(static_cast<uint32_t>(radianceVisibilityMode())),
+        meshCompleteSceneKnown ? 1.0f : 0.0f,
+        static_cast<float>(_sceneVisibilityFrame.triangleCount));
+    commonUniform.sceneVisibilityControl = glm::vec4(
+        static_cast<float>(meshFieldVisibility.count),
+        static_cast<float>(meshFieldVisibility.instructionCount), 0.0f, 0.0f);
 
-        MeshUniforms u;
-        u.viewProj = _viewProj;
-        u.lightPos = glm::vec4(lightPos(), 1.0f);
-        u.eyePos = glm::vec4(_eyePos, 1.0f);
-        const bool meshCompleteSceneKnown =
-            radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
-            _sceneVisibilityFrame.meshComplete &&
-            meshFieldVisibility.complete;
-        u.lightControl = glm::vec4(
-            lightingEnabled() ? 1.0f : 0.0f,
-            static_cast<float>(
-                static_cast<uint32_t>(radianceVisibilityMode())),
-            meshCompleteSceneKnown ? 1.0f : 0.0f,
-            static_cast<float>(_sceneVisibilityFrame.triangleCount));
-        u.sceneVisibilityControl = glm::vec4(
-            static_cast<float>(meshFieldVisibility.count),
-            static_cast<float>(meshFieldVisibility.instructionCount),
-            0.0f, 0.0f);
-        const bool meshVisibilityUnknown =
-            radianceVisibilityMode() == RadianceVisibilityMode::LocalReceiverGeometry ||
-            (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
-             !meshCompleteSceneKnown);
-        if (meshVisibilityUnknown) {
-            mutableFrameStats().meshVisibilityUnknownDirectSkips++;
-        }
-        auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(MeshUniforms));
+    const auto flushPage = [&]() {
+        if (_meshRecords.empty()) return;
+        const size_t instBytes = _meshPageInstances.size() * sizeof(InstanceData);
+        auto instancePage = bufferPool().suballocateStorage(
+            _meshPageInstances.data(), instBytes);
+        auto uniformAlloc =
+            bufferPool().suballocateUniform(&commonUniform, sizeof(commonUniform));
 
-        auto instAlloc = bufferPool().suballocateStorage(
-            instances.data(), instances.size() * sizeof(InstanceData));
-
-        // WebGPU storage bindings cannot have zero size. An authored receiver
-        // with no numeric parameters still gets one inert float; generated WGSL
-        // never reads it.
-        const float inert = 0.0f;
-        const void* paramData = key.responseParams.empty()
-            ? static_cast<const void*>(&inert)
-            : static_cast<const void*>(key.responseParams.data());
-        const size_t paramBytes = key.responseParams.empty()
-            ? sizeof(float)
-            : key.responseParams.size() * sizeof(float);
-        auto paramAlloc =
-            bufferPool().suballocateStorage(paramData, paramBytes);
-        mutableFrameStats().meshParameterBytesUploaded += paramBytes;
-
-        if (key.sourceSet && (!sourceView.buffer || sourceView.size == 0)) {
-            mutableFrameStats().meshProgramRefusals++;
-            mutableFrameStats().meshLastProgramRefusal =
-                "admitted mesh source set has no GPU source buffer";
-            continue;
-        }
-
-        WGPUBindGroupEntry bge[8] = {};
-        bge[0].binding = 0;
-        bge[0].buffer = uAlloc.buffer;
-        bge[0].offset = uAlloc.offset;
-        bge[0].size = uAlloc.size;
-        bge[1].binding = 1;
-        bge[1].textureView = key.albedoView;
-        bge[2].binding = 2;
-        bge[2].sampler = _sampler;
-        bge[3].binding = 3;
-        bge[3].buffer = paramAlloc.buffer;
-        bge[3].offset = paramAlloc.offset;
-        bge[3].size = paramAlloc.size;
-        bge[4].binding = 4;
-        bge[4].buffer = sourceView.buffer;
-        bge[4].offset = sourceView.offset;
-        bge[4].size = sourceView.size;
-        if (!_sceneVisibilityFrame.buffer || _sceneVisibilityFrame.size == 0) {
-            mutableFrameStats().meshProgramRefusals++;
-            mutableFrameStats().meshLastProgramRefusal =
-                "scene visibility triangle binding unavailable";
-            continue;
-        }
-        bge[5].binding = 5;
-        bge[5].buffer = _sceneVisibilityFrame.buffer;
-        bge[5].offset = _sceneVisibilityFrame.offset;
-        bge[5].size = _sceneVisibilityFrame.size;
-        if (!meshFieldVisibility.buffer ||
-            meshFieldVisibility.size == 0) {
-            mutableFrameStats().meshProgramRefusals++;
-            mutableFrameStats().meshLastProgramRefusal =
-                "scene visibility field VM descriptor binding unavailable";
-            continue;
-        }
-        bge[6].binding = 6;
-        bge[6].buffer = meshFieldVisibility.buffer;
-        bge[6].offset = meshFieldVisibility.offset;
-        bge[6].size = meshFieldVisibility.size;
-        if (!meshFieldVisibility.programBuffer ||
-            meshFieldVisibility.programSize == 0) {
-            mutableFrameStats().meshProgramRefusals++;
-            mutableFrameStats().meshLastProgramRefusal =
-                "scene visibility field VM program binding unavailable";
-            continue;
-        }
-        bge[7].binding = 7;
-        bge[7].buffer = meshFieldVisibility.programBuffer;
-        bge[7].offset = meshFieldVisibility.programOffset;
-        bge[7].size = meshFieldVisibility.programSize;
-        WGPUBindGroupDescriptor bgDesc = {};
-        bgDesc.layout = _bgl;
-        bgDesc.entryCount = 8;
-        bgDesc.entries = bge;
-        WGPUBindGroup bindGroup =
-            wgpuDeviceCreateBindGroup(_device, &bgDesc);
-        _frameBindGroups.push_back(bindGroup);
-
-        WGPUBindGroupEntry ibge = {};
-        ibge.binding = 0;
-        ibge.buffer = instAlloc.buffer;
-        ibge.offset = instAlloc.offset;
-        ibge.size = instAlloc.size;
-        WGPUBindGroupDescriptor ibgDesc = {};
-        ibgDesc.layout = _instanceBgl;
-        ibgDesc.entryCount = 1;
-        ibgDesc.entries = &ibge;
-        WGPUBindGroup instBindGroup =
+        WGPUBindGroupEntry ibge{};
+        ibge.binding=0; ibge.buffer=instancePage.buffer;
+        ibge.offset=instancePage.offset; ibge.size=instBytes;
+        WGPUBindGroupDescriptor ibgDesc{};
+        ibgDesc.layout=_instanceBgl; ibgDesc.entryCount=1; ibgDesc.entries=&ibge;
+        WGPUBindGroup pageInstBindGroup =
             wgpuDeviceCreateBindGroup(_device, &ibgDesc);
-        _frameBindGroups.push_back(instBindGroup);
+        _frameBindGroups.push_back(pageInstBindGroup);
+        wgpuRenderPassEncoderSetBindGroup(_pass,1,pageInstBindGroup,0,nullptr);
 
-        wgpuRenderPassEncoderSetBindGroup(_pass, 0, bindGroup, 0, nullptr);
-        wgpuRenderPassEncoderSetBindGroup(_pass, 1, instBindGroup, 0, nullptr);
-        wgpuRenderPassEncoderSetVertexBuffer(
-            _pass, 0, vbuf, voffset, vbytes);
-        wgpuRenderPassEncoderDraw(
-            _pass, static_cast<uint32_t>(mesh.tris.size()),
-            static_cast<uint32_t>(instances.size()), 0, 0);
+        for (const auto& record : _meshRecords) {
+            const MeshBatchKey& key=*record.key;
+            const auto& instances=*record.instances;
+            if(!key.mesh||!key.pipeline||!key.pipeline->pipe||
+               key.mesh->tris.empty()||instances.empty()) continue;
 
-        mutableFrameStats().drawCalls++;
-        mutableFrameStats().meshDrawCalls++;
+            if(meshVisibilityUnknown)
+                mutableFrameStats().meshVisibilityUnknownDirectSkips++;
+            if(key.sourceSet&&(!sourceView.buffer||sourceView.size==0)){
+                mutableFrameStats().meshProgramRefusals++;
+                mutableFrameStats().meshLastProgramRefusal=
+                    "admitted mesh source set has no GPU source buffer";
+                continue;
+            }
+            if(!_sceneVisibilityFrame.buffer||_sceneVisibilityFrame.size==0){
+                mutableFrameStats().meshProgramRefusals++;
+                mutableFrameStats().meshLastProgramRefusal=
+                    "scene visibility triangle binding unavailable";
+                continue;
+            }
+            if(!meshFieldVisibility.buffer||meshFieldVisibility.size==0){
+                mutableFrameStats().meshProgramRefusals++;
+                mutableFrameStats().meshLastProgramRefusal=
+                    "scene visibility field VM descriptor binding unavailable";
+                continue;
+            }
+            if(!meshFieldVisibility.programBuffer||meshFieldVisibility.programSize==0){
+                mutableFrameStats().meshProgramRefusals++;
+                mutableFrameStats().meshLastProgramRefusal=
+                    "scene visibility field VM program binding unavailable";
+                continue;
+            }
+
+            bindPipeline(key.pipeline->pipe);
+            const geom::TessMesh& mesh=*key.mesh;
+            const size_t vbytes=mesh.tris.size()*sizeof(geom::TessVertex);
+            WGPUBuffer vbuf=_meshCache.getOrUpload(mesh);
+            uint64_t voffset=0;
+            if(!vbuf){auto a=bufferPool().suballocateVertex(mesh.tris.data(),vbytes);vbuf=a.buffer;voffset=a.offset;}
+
+            const float inert=0.0f;
+            const void* paramData=key.responseParams.empty()?static_cast<const void*>(&inert):static_cast<const void*>(key.responseParams.data());
+            const size_t paramBytes=key.responseParams.empty()?sizeof(float):key.responseParams.size()*sizeof(float);
+            auto paramAlloc=bufferPool().suballocateStorage(paramData,paramBytes);
+            mutableFrameStats().meshParameterBytesUploaded+=paramBytes;
+
+            WGPUBindGroupEntry bge[8]{};
+            bge[0].binding=0;bge[0].buffer=uniformAlloc.buffer;bge[0].offset=uniformAlloc.offset;bge[0].size=uniformAlloc.size;
+            bge[1].binding=1;bge[1].textureView=key.albedoView;
+            bge[2].binding=2;bge[2].sampler=_sampler;
+            bge[3].binding=3;bge[3].buffer=paramAlloc.buffer;bge[3].offset=paramAlloc.offset;bge[3].size=paramAlloc.size;
+            bge[4].binding=4;bge[4].buffer=sourceView.buffer;bge[4].offset=sourceView.offset;bge[4].size=sourceView.size;
+            bge[5].binding=5;bge[5].buffer=_sceneVisibilityFrame.buffer;bge[5].offset=_sceneVisibilityFrame.offset;bge[5].size=_sceneVisibilityFrame.size;
+            bge[6].binding=6;bge[6].buffer=meshFieldVisibility.buffer;bge[6].offset=meshFieldVisibility.offset;bge[6].size=meshFieldVisibility.size;
+            bge[7].binding=7;bge[7].buffer=meshFieldVisibility.programBuffer;bge[7].offset=meshFieldVisibility.programOffset;bge[7].size=meshFieldVisibility.programSize;
+            WGPUBindGroupDescriptor bgDesc{};
+            bgDesc.layout=_bgl;bgDesc.entryCount=8;bgDesc.entries=bge;
+            WGPUBindGroup bg=wgpuDeviceCreateBindGroup(_device,&bgDesc);
+            _frameBindGroups.push_back(bg);
+
+            wgpuRenderPassEncoderSetBindGroup(_pass,0,bg,0,nullptr);
+            wgpuRenderPassEncoderSetVertexBuffer(_pass,0,vbuf,voffset,vbytes);
+            wgpuRenderPassEncoderDraw(_pass,
+                static_cast<uint32_t>(mesh.tris.size()),
+                static_cast<uint32_t>(instances.size()),0,record.firstInstance);
+            mutableFrameStats().drawCalls++;
+            mutableFrameStats().meshDrawCalls++;
+        }
+        _meshRecords.clear();
+        _meshPageInstances.clear();
+    };
+
+    for(const auto& [key,instances]:_meshBatches){
+        if(!key.mesh||!key.pipeline||!key.pipeline->pipe||
+           key.mesh->tris.empty()||instances.empty()) continue;
+        const size_t addBytes=instances.size()*sizeof(InstanceData);
+        const size_t curBytes=_meshPageInstances.size()*sizeof(InstanceData);
+        if(!_meshRecords.empty()&&curBytes+addBytes>pageBytes) flushPage();
+        const uint32_t firstInstance=static_cast<uint32_t>(_meshPageInstances.size());
+        _meshPageInstances.insert(_meshPageInstances.end(),instances.begin(),instances.end());
+        _meshRecords.push_back({&key,&instances,firstInstance});
     }
+    flushPage();
     _meshBatches.clear();
+    _lastMeshBatchKey.reset();
+    _lastMeshBatchVector=nullptr;
 }
 
 namespace {
@@ -2606,11 +2623,26 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             static_cast<uint64_t>(std::hash<std::string>{}(emissionJson));
     }
 
-    // Rung 9: receiver-owned response has independent structure/value identity.
-    // It is inspected once for this material draw before any shader cache decision.
-    const auto responseLayout =
-        sdfwgsl::inspectResponseExpression(mat.responseExpr.get(),
-                                           &mat.responseBindings);
+    MemoizedProgram* memo =
+        (memoId != 0) ? &_programCache[memoId] : nullptr;
+
+    sdfwgsl::ResponseExpressionLayout responseLayout;
+    if (memo && memo->responseLayoutValid &&
+        memo->responseExprPtr == mat.responseExpr.get() &&
+        memo->responseLayoutRevision == mat.responseRevision &&
+        memo->responseLayoutBindingIdentity == mat.responseBindingIdentity) {
+        responseLayout = memo->cachedResponseLayout;
+    } else {
+        responseLayout = sdfwgsl::inspectResponseExpression(
+            mat.responseExpr.get(), &mat.responseBindings);
+        if (memo) {
+            memo->cachedResponseLayout = responseLayout;
+            memo->responseExprPtr = mat.responseExpr.get();
+            memo->responseLayoutRevision = mat.responseRevision;
+            memo->responseLayoutBindingIdentity = mat.responseBindingIdentity;
+            memo->responseLayoutValid = true;
+        }
+    }
     const std::string responseStructure = responseLayout.structure;
     const auto environmentResponseLayout =
         sdfwgsl::inspectEnvironmentResponseExpression(
@@ -2731,9 +2763,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         }
     }
 
-    MemoizedProgram* memo = nullptr;
-    if (memoId != 0) {
-        memo = &_programCache[memoId];
+    if (memo) {
         const bool sourceStructureMatches =
             memo->sourceSet == hasSourceSet &&
             (hasSourceSet
@@ -2943,7 +2973,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     ensureSdfCubeVerts();
     if (!_sdfCubeVerts) return;
 
-    const auto authoredTransforms = deriveModelTransforms(_model);
+    const auto& authoredTransforms = getModelTransforms();
     if (!authoredTransforms) return;
 
     SdfInstanceData inst;
@@ -2987,6 +3017,38 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     const glm::vec3 baselineProxyExtent =
         glm::abs(isProvenHeightfield ? extent : extent * 1.05f);
     glm::vec3 proxyExtent = baselineProxyExtent;
+
+    const bool hasVolumeChannels = fieldNode != nullptr ||
+        densityExpr != nullptr || extinctionExpr != nullptr ||
+        scatteringExpr != nullptr || volumeChromaExpr != nullptr ||
+        phaseExpr != nullptr || emissionExpr != nullptr;
+
+    glm::vec3 tightMin(0.0f), tightMax(0.0f);
+    bool tightOk = false;
+    if (!hasVolumeChannels) {
+        if (memo && memo->tightAabbCached &&
+            memo->tightAabbRevision == memoRevision &&
+            memo->tightAabbParamRevision == memoParameterRevision) {
+            tightOk = memo->tightAabbOk;
+            tightMin = memo->cachedTightMin;
+            tightMax = memo->cachedTightMax;
+        } else {
+            tightOk = sdfwgsl::tryComputeSdfTightAabb(field, tightMin, tightMax);
+            if (memo) {
+                memo->tightAabbCached = true;
+                memo->tightAabbOk = tightOk;
+                memo->cachedTightMin = tightMin;
+                memo->cachedTightMax = tightMax;
+                memo->tightAabbRevision = memoRevision;
+                memo->tightAabbParamRevision = memoParameterRevision;
+            }
+        }
+    }
+    if (tightOk && glm::all(glm::lessThanEqual(tightMin, tightMax))) {
+        // Proxy extent is half-size centered at origin of local space:
+        glm::vec3 derivedHalf = glm::max(glm::abs(tightMin), glm::abs(tightMax)) * 1.02f;
+        proxyExtent = glm::min(proxyExtent, glm::max(derivedHalf, glm::vec3(1e-3f)));
+    }
 
     // First generic spatial-Prophetic activation rung. It is deliberately limited
     // to surface-only draws: a FieldNode may carry volumetric density outside the
@@ -3160,7 +3222,7 @@ void WebGpuRenderer::drawParticles(const geom::FieldNode& field, int count) {
 
     bindPipeline(_particlePipe);
 
-    if (!_modelViewProjValid) return;
+    if (!ensureModelViewProj()) return;
 
     ParticleUniforms pu;
     pu.mvp = _modelViewProj;
@@ -3222,7 +3284,7 @@ void WebGpuRenderer::drawLines(const std::vector<std::pair<glm::vec3, glm::vec3>
     std::vector<glm::vec3> verts;
     verts.reserve(segments.size() * 2);
     for (const auto& s : segments) { verts.push_back(s.first); verts.push_back(s.second); }
-    if (!_modelViewProjValid) return;
+    if (!ensureModelViewProj()) return;
     drawFlat(flatPipeline(WGPUPrimitiveTopology_LineList, blend, DepthMode::TestOnly),
              verts, _modelViewProj, color);
 }
@@ -3315,8 +3377,53 @@ void WebGpuRenderer::flushSdfDraws() {
         glm::vec4(farDist, float(_depthW), float(_depthH), _spaceDistortion);
 
     bool recordedSdfKnownFrame = false;
+    static constexpr uint32_t kZeroDummy[4] = {0u, 0u, 0u, 0u};
+    auto emptyAccelAlloc = bufferPool().suballocateStorage(kZeroDummy, sizeof(kZeroDummy));
+
+    _sdfInstanceAllocations.clear();
+    constexpr size_t pageBytes = 256 * 1024;
+    constexpr size_t bindingAlignment = 256;
+    const auto aligned = [](size_t bytes) {
+        return (bytes + bindingAlignment - 1) / bindingAlignment * bindingAlignment;
+    };
+    _sdfPendingPipelines.clear();
+    _sdfPendingOffsets.clear();
+    _sdfPackedInstanceBytes.clear();
+
+    const auto flushInstancePage = [&]() {
+        if (_sdfPendingPipelines.empty()) return;
+        auto pageAlloc = bufferPool().suballocateStorage(_sdfPackedInstanceBytes.data(), _sdfPackedInstanceBytes.size());
+        for (size_t i = 0; i < _sdfPendingPipelines.size(); ++i) {
+            const SdfPipeline* sp = _sdfPendingPipelines[i];
+            const size_t instOffset = _sdfPendingOffsets[i];
+            const size_t instBytes = _sdfBatches[sp].size() * sizeof(SdfInstanceData);
+            _sdfInstanceAllocations[sp] = {pageAlloc.buffer, pageAlloc.offset + instOffset, instBytes};
+        }
+        _sdfPendingPipelines.clear();
+        _sdfPendingOffsets.clear();
+        _sdfPackedInstanceBytes.clear();
+    };
+
     for (const SdfPipeline* sp : _activeSdfPipelines) {
         const auto& instances = _sdfBatches[sp];
+        if (instances.empty()) continue;
+        const size_t bytes = instances.size() * sizeof(SdfInstanceData);
+        if (!_sdfPendingPipelines.empty() && (aligned(_sdfPackedInstanceBytes.size()) + bytes > pageBytes)) {
+            flushInstancePage();
+        }
+        const size_t instOffset = aligned(_sdfPackedInstanceBytes.size());
+        _sdfPackedInstanceBytes.resize(instOffset + bytes);
+        std::memcpy(_sdfPackedInstanceBytes.data() + instOffset, instances.data(), bytes);
+        _sdfPendingPipelines.push_back(sp);
+        _sdfPendingOffsets.push_back(instOffset);
+    }
+    flushInstancePage();
+
+    for (const SdfPipeline* sp : _activeSdfPipelines) {
+        const auto& instances = _sdfBatches[sp];
+        const auto itInst = _sdfInstanceAllocations.find(sp);
+        if (itInst == _sdfInstanceAllocations.end() || !itInst->second.buffer) continue;
+        const auto& instAlloc = itInst->second;
 
         // Own-program instances stay in this shader's exact cohort evaluator.
         // Only foreign cohorts are materialized into the field-VM table.
@@ -3415,71 +3522,66 @@ void WebGpuRenderer::flushSdfDraws() {
         // SDF parameters. The CPU batch is rebuilt in instance order, but
         // unchanged proof bytes are not re-uploaded after warmup.
         const auto& rangeNodes = _sdfRangeNodeBatches[sp];
-        const size_t rangeBytes = rangeNodes.size() * sizeof(uint32_t);
-        auto& persistentRange = _persistentSdfRangeNodes[sp];
-        const uint64_t requiredRangeBytes =
-            static_cast<uint64_t>(std::max<size_t>(rangeBytes, sizeof(uint32_t)));
-        if (!persistentRange.buffer || persistentRange.capacityBytes < requiredRangeBytes) {
-            uint64_t capacity = 256;
-            while (capacity < requiredRangeBytes) capacity *= 2;
-
-            WGPUBufferDescriptor bd = {};
-            bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
-            bd.size = capacity;
-            WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
-            if (grown) {
-                if (persistentRange.buffer) {
-                    _persistentSdfRangeNodeVramBytes -=
-                        static_cast<size_t>(persistentRange.capacityBytes);
-                    wgpuBufferRelease(persistentRange.buffer);
-                }
-                persistentRange.buffer = grown;
-                persistentRange.capacityBytes = capacity;
-                persistentRange.mirror.clear();
-                _persistentSdfRangeNodeVramBytes += static_cast<size_t>(capacity);
-            }
-        }
-
-        bool rangeChanged = persistentRange.mirror.size() != rangeNodes.size();
-        if (!rangeChanged && !rangeNodes.empty()) {
-            rangeChanged = std::memcmp(
-                persistentRange.mirror.data(), rangeNodes.data(), rangeBytes) != 0;
-        }
-
-        const bool persistentRangeUsable =
-            persistentRange.buffer && persistentRange.capacityBytes >= requiredRangeBytes;
-        WGPUBuffer rangeBuffer = persistentRangeUsable ? persistentRange.buffer : nullptr;
+        WGPUBuffer rangeBuffer = nullptr;
         uint64_t rangeOffset = 0;
-        uint64_t rangeBindingSize = requiredRangeBytes;
+        uint64_t rangeBindingSize = sizeof(uint32_t);
 
-        if (rangeBuffer) {
-            if (rangeChanged && !rangeNodes.empty()) {
-                wgpuQueueWriteBuffer(_queue, rangeBuffer, 0, rangeNodes.data(), rangeBytes);
-                persistentRange.mirror = rangeNodes;
-                mutableFrameStats().sdfRangeNodeBytesUploaded += rangeBytes;
-            }
-            // An empty batch writes nothing: the buffer still holds the mirror's
-            // bytes (no instance reads them: every count is 0), so the mirror
-            // stays — clearing it forced identical bytes to re-upload on the
-            // next traversal frame (webgpu_perlin_exact_gradient_test line 817,
-            // reproduced on lavapipe and on Codex's M5; Claude Opus 5.5, 2026-10-17).
+        if (rangeNodes.empty()) {
+            rangeBuffer = emptyAccelAlloc.buffer;
+            rangeOffset = emptyAccelAlloc.offset;
+            rangeBindingSize = sizeof(uint32_t);
         } else {
-            // Binding 2 must remain valid even for a batch with no proof grid.
-            // A zeroed dummy is never read because each such instance has count=0.
-            const uint32_t dummy = 0u;
-            const void* src = rangeNodes.empty()
-                ? static_cast<const void*>(&dummy)
-                : static_cast<const void*>(rangeNodes.data());
-            auto fallback = bufferPool().suballocateStorage(src, requiredRangeBytes);
-            rangeBuffer = fallback.buffer;
-            rangeOffset = fallback.offset;
-            rangeBindingSize = fallback.size;
-            if (!rangeNodes.empty()) {
+            const size_t rangeBytes = rangeNodes.size() * sizeof(uint32_t);
+            auto& persistentRange = _persistentSdfRangeNodes[sp];
+            const uint64_t requiredRangeBytes =
+                static_cast<uint64_t>(std::max<size_t>(rangeBytes, sizeof(uint32_t)));
+            if (!persistentRange.buffer || persistentRange.capacityBytes < requiredRangeBytes) {
+                uint64_t capacity = 256;
+                while (capacity < requiredRangeBytes) capacity *= 2;
+
+                WGPUBufferDescriptor bd = {};
+                bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
+                bd.size = capacity;
+                WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
+                if (grown) {
+                    if (persistentRange.buffer) {
+                        _persistentSdfRangeNodeVramBytes -=
+                            static_cast<size_t>(persistentRange.capacityBytes);
+                        wgpuBufferRelease(persistentRange.buffer);
+                    }
+                    persistentRange.buffer = grown;
+                    persistentRange.capacityBytes = capacity;
+                    persistentRange.mirror.clear();
+                    _persistentSdfRangeNodeVramBytes += static_cast<size_t>(capacity);
+                }
+            }
+
+            bool rangeChanged = persistentRange.mirror.size() != rangeNodes.size();
+            if (!rangeChanged) {
+                rangeChanged = std::memcmp(
+                    persistentRange.mirror.data(), rangeNodes.data(), rangeBytes) != 0;
+            }
+
+            const bool persistentRangeUsable =
+                persistentRange.buffer && persistentRange.capacityBytes >= requiredRangeBytes;
+            rangeBuffer = persistentRangeUsable ? persistentRange.buffer : nullptr;
+            rangeOffset = 0;
+            rangeBindingSize = requiredRangeBytes;
+
+            if (rangeBuffer) {
+                if (rangeChanged) {
+                    wgpuQueueWriteBuffer(_queue, rangeBuffer, 0, rangeNodes.data(), rangeBytes);
+                    persistentRange.mirror = rangeNodes;
+                    mutableFrameStats().sdfRangeNodeBytesUploaded += rangeBytes;
+                }
+            } else {
+                auto fallback = bufferPool().suballocateStorage(rangeNodes.data(), requiredRangeBytes);
+                rangeBuffer = fallback.buffer;
+                rangeOffset = fallback.offset;
+                rangeBindingSize = fallback.size;
                 mutableFrameStats().sdfRangeNodeBytesUploaded += rangeBytes;
             }
         }
-
-        auto instAlloc = bufferPool().suballocateStorage(instances.data(), instances.size() * sizeof(SdfInstanceData));
 
         // Group 0: globals + authored parameters + optional sources +
         // complete-scene mesh triangles + receiver-relative foreign field-VM
@@ -3548,14 +3650,21 @@ void WebGpuRenderer::flushSdfDraws() {
         // Group 1: instances + heightfield cells + positive-proof bit words.
         // Empty accelerators bind legal dummy storage but advertise zero count,
         // so the shader cannot observe the dummy contents.
-        auto& hgCells = _sdfHeightGridBatches[sp];
-        if (hgCells.empty()) hgCells.push_back(glm::vec2(0.0f));
-        auto hgAlloc = bufferPool().suballocateStorage(
-            hgCells.data(), hgCells.size() * sizeof(glm::vec2));
+        const auto& hgCells = _sdfHeightGridBatches[sp];
+        WGPUBuffer hgBuffer = emptyAccelAlloc.buffer;
+        uint64_t hgOffset = emptyAccelAlloc.offset;
+        uint64_t hgSize = sizeof(glm::vec2);
+        if (!hgCells.empty()) {
+            auto hgAlloc = bufferPool().suballocateStorage(
+                hgCells.data(), hgCells.size() * sizeof(glm::vec2));
+            hgBuffer = hgAlloc.buffer;
+            hgOffset = hgAlloc.offset;
+            hgSize = hgAlloc.size;
+        }
 
         WGPUBindGroupEntry ibge[3] = {};
         ibge[0].binding = 0; ibge[0].buffer = instAlloc.buffer; ibge[0].offset = instAlloc.offset; ibge[0].size = instAlloc.size;
-        ibge[1].binding = 1; ibge[1].buffer = hgAlloc.buffer; ibge[1].offset = hgAlloc.offset; ibge[1].size = hgAlloc.size;
+        ibge[1].binding = 1; ibge[1].buffer = hgBuffer; ibge[1].offset = hgOffset; ibge[1].size = hgSize;
         ibge[2].binding = 2; ibge[2].buffer = rangeBuffer; ibge[2].offset = rangeOffset; ibge[2].size = rangeBindingSize;
         WGPUBindGroupDescriptor ibgDesc = {};
         ibgDesc.layout = _sdfInstanceBgl; ibgDesc.entryCount = 3; ibgDesc.entries = ibge;
@@ -3580,6 +3689,7 @@ void WebGpuRenderer::flushSdfDraws() {
         _sdfRangeNodeBatches[sp].clear();
     }
     _activeSdfPipelines.clear();
+    _sdfInstanceAllocations.clear();
 }
 
 // The zero-proof memo for this density × extent, rebuilt only when either
@@ -5291,7 +5401,7 @@ void WebGpuRenderer::drawSolid(const std::vector<glm::vec3>& tris, const glm::ve
     if (!_pass || tris.empty()) return;
     // In 2D scope the model transform is meaningless; otherwise these are world-space
     // triangles under the current OntoMath-authored view-projection/model cache.
-    if (!_in2D && !_modelViewProjValid) return;
+    if (!_in2D && !ensureModelViewProj()) return;
     if (!_in2D && depthWrite) {
         _frameHasUnmaterializedOpaqueGeometry = true;
     }

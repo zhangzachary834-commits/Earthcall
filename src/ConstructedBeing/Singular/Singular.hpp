@@ -1,5 +1,6 @@
 #pragma once
 #include "ConstructedBeing/Singular/Property/Property.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyCell.hpp"
 #include "ConstructedBeing/Singular/Property/DataStructure.hpp"
 
 #include <ctime>
@@ -120,10 +121,44 @@ public:
     const std::unordered_map<Earthcall::StringId, PropertyValue>& dynamicProperties() const {
         return _dynamicProperties;
     }
+    void syncDynamicPropertyFromCell(Earthcall::StringId id, const PropertyValue& v) {
+        _dynamicProperties[id] = v;
+    }
     PropertyValue* getDynamicPropertyPtr(Earthcall::StringId id);
     const PropertyValue* getDynamicPropertyPtr(Earthcall::StringId id) const;
     bool removeDynamicProperty(const std::string& name);
     bool removeDynamicProperty(Earthcall::StringId id);
+
+    // Cell-backed properties (PropertyCellTable integration)
+    bool bindPropertyCell(Earthcall::StringId id, CellId cellId, CellOwnershipMode mode);
+    bool unbindPropertyCell(Earthcall::StringId id);
+    bool hasPropertyCell(Earthcall::StringId id) const {
+        return _propertyCells.find(id) != _propertyCells.end();
+    }
+    CellId getPropertyCell(Earthcall::StringId id) const {
+        auto it = _propertyCells.find(id);
+        return it != _propertyCells.end() ? it->second : CellId{};
+    }
+    CellOwnershipMode getPropertyCellMode(Earthcall::StringId id) const {
+        auto it = _propertyCellModes.find(id);
+        return it != _propertyCellModes.end() ? it->second : CellOwnershipMode::InlineValue;
+    }
+
+    const std::unordered_map<Earthcall::StringId, CellId>& propertyCells() const {
+        return _propertyCells;
+    }
+    const std::unordered_map<Earthcall::StringId, CellOwnershipMode>& propertyCellModes() const {
+        return _propertyCellModes;
+    }
+
+    bool bindPropertyCell(const std::string& name, CellId cellId, CellOwnershipMode mode);
+    bool unbindPropertyCell(const std::string& name);
+    bool hasPropertyCell(const std::string& name) const;
+    CellId getPropertyCell(const std::string& name) const;
+    CellOwnershipMode getPropertyCellMode(const std::string& name) const;
+    bool convertPropertyCellToShared(Earthcall::StringId id);
+    bool convertPropertyCellToShared(const std::string& name);
+    void detachAllPropertyCells();
     
     // Authored data structure methods
     void addDataStructure(const class DataStructure& ds);
@@ -203,6 +238,8 @@ protected:
     // Dynamic properties (Person-authored via AddProperty). Keys are StringIds
     // for fast lookup. String overloads kept for backward compatibility.
     std::unordered_map<Earthcall::StringId, PropertyValue> _dynamicProperties;
+    std::unordered_map<Earthcall::StringId, CellId> _propertyCells;
+    std::unordered_map<Earthcall::StringId, CellOwnershipMode> _propertyCellModes;
     
     // Authored data structures and bounds (manifesto property framework)
     std::map<std::string, class DataStructure> _dataStructures;

@@ -11,14 +11,6 @@
 #include <cmath>
 #include <limits>
 
-namespace {
-
-nlohmann::json refJson(const Singular* s) {
-    return nlohmann::json{{"t", "ref"}, {"id", s ? s->getIdentifier() : ""}};
-}
-
-} // namespace
-
 PropertyValue propertyStructureFromJson(const nlohmann::json& value, unsigned depth) {
     if (depth >= 64) throw std::runtime_error("structural value exceeds 64 levels");
     if (value.is_object()) {
@@ -134,8 +126,7 @@ nlohmann::json propertyValueToJson(const PropertyValue& v) {
         } else if constexpr (std::is_same_v<X, std::shared_ptr<OntoMath::VectorField>>) {
             return nlohmann::json{{"t", "vector_field"}, {"v", x ? x->toJson() : nlohmann::json(nullptr)}};
         } else {
-            // Singular*/Object*/Relation*/Formation* — identity, not value.
-            return refJson(static_cast<const Singular*>(x));
+            return nlohmann::json(nullptr);
         }
     }, v);
 }

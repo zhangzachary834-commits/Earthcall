@@ -4,6 +4,7 @@
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/DataStructure.hpp"
 #include "Singularity/Core/StringId.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <atomic>
@@ -23,6 +24,7 @@ Singular::~Singular() {
     // every derived destructor has already run, so this object is a Singular
     // and nothing more. See the header for why this exists.
     notifyBeingReleased(this);
+    detachAllPropertyCells();
     s_singularAliveCount.fetch_sub(1, std::memory_order_relaxed);
 }
 
@@ -38,6 +40,7 @@ Singular::Singular(const Singular& o)
 
 Singular& Singular::operator=(const Singular& o) {
     if (this != &o) {
+        detachAllPropertyCells();
         designatedZones = o.designatedZones;
         _stakeholders = o._stakeholders;
         _dynamicProperties = o._dynamicProperties;
@@ -58,18 +61,29 @@ Singular::Singular(Singular&& o) noexcept
       _dynamicProperties(std::move(o._dynamicProperties)),
       _dataStructures(std::move(o._dataStructures)),
       name(std::move(o.name)),
-      _telosId(std::move(o._telosId)) {
+      _telosId(std::move(o._telosId)),
+      _propertyCells(std::move(o._propertyCells)),
+      _propertyCellModes(std::move(o._propertyCellModes)) {
+    PropertyCellTable::instance().retargetBearer(&o, this);
+    o._propertyCells.clear();
+    o._propertyCellModes.clear();
     s_singularAliveCount.fetch_add(1, std::memory_order_relaxed);
 }
 
 Singular& Singular::operator=(Singular&& o) noexcept {
     if (this != &o) {
+        detachAllPropertyCells();
         designatedZones = std::move(o.designatedZones);
         _stakeholders = std::move(o._stakeholders);
         _dynamicProperties = std::move(o._dynamicProperties);
         _dataStructures = std::move(o._dataStructures);
         name = std::move(o.name);
         _telosId = std::move(o._telosId);
+        _propertyCells = std::move(o._propertyCells);
+        _propertyCellModes = std::move(o._propertyCellModes);
+        PropertyCellTable::instance().retargetBearer(&o, this);
+        o._propertyCells.clear();
+        o._propertyCellModes.clear();
     }
     _propertyNames.clear();
     _propertyRegistry.clear();
@@ -242,7 +256,7 @@ Property* Singular::findProperty(Earthcall::StringId id) {
     // click after it, so a Person could work each control exactly one time
     // per session. Every authored property in every save was exposed to this.
     auto it = _dynamicProperties.find(id);
-    if (it != _dynamicProperties.end()) {
+    if (it != _dynamicProperties.end() || _propertyCells.find(id) != _propertyCells.end()) {
         auto bridge = std::make_unique<DynamicPropertyBridge>(
             Earthcall::StringInterner::resolve(id), this);
         Property* p = bridge.get();
@@ -289,6 +303,9 @@ std::vector<Property*> Singular::listProperties() {
     for (const auto& entry : _dynamicProperties) {
         findProperty(entry.first);   // creates the bridge if it is not there yet
     }
+    for (const auto& entry : _propertyCells) {
+        findProperty(entry.first);
+    }
 
     std::vector<Property*> out;
     out.reserve(_propertyRegistry.size());
@@ -331,6 +348,15 @@ bool Singular::getDynamicProperty(Earthcall::StringId id, PropertyValue& out) co
     if (recognizesAuthoredPropertyProjection(id)) {
         return readAuthoredPropertyProjection(id, out);
     }
+    auto itCell = _propertyCells.find(id);
+    if (itCell != _propertyCells.end()) {
+        auto* cell = PropertyCellTable::instance().getCell(itCell->second);
+        if (!cell) {
+            return false;
+        }
+        out = cell->value;
+        return true;
+    }
     auto it = _dynamicProperties.find(id);
     if (it != _dynamicProperties.end()) {
         out = it->second;
@@ -346,26 +372,31 @@ bool Singular::setDynamicProperty(const std::string& name, const PropertyValue& 
 bool Singular::setDynamicProperty(Earthcall::StringId id, const PropertyValue& v) {
     const bool projected = recognizesAuthoredPropertyProjection(id);
     if (projected && !writeAuthoredPropertyProjection(id, v)) return false;
+
+    auto itCell = _propertyCells.find(id);
+    if (itCell != _propertyCells.end()) {
+        auto itMode = _propertyCellModes.find(id);
+        if (itMode != _propertyCellModes.end() && itMode->second == CellOwnershipMode::Weak) {
+            return false;
+        }
+        auto* cell = PropertyCellTable::instance().getCell(itCell->second);
+        if (!cell) return false;
+        if (propertyValuesEquivalent(cell->value, v)) return true;
+        cell->value = v;
+        _dynamicProperties[id] = v;
+        PropertyCellTable::instance().notifyMutation(itCell->second);
+        return true;
+    }
+
     PropertyValue stored = v;
     auto existing = _dynamicProperties.find(id);
     if (existing == _dynamicProperties.end()) {
         Universe::instance().bumpStructuralRevision();
     } else if (propertyStorageUnchanged(existing->second, stored)) {
-        // A write that changed nothing is not a change, and must not wake the
-        // change feed. Container identity matters here even for equal contents;
-        // an independently rebound path must wake its dependents. This matters more
-        // than it looks: every WhileTrue law re-writes its result every tick.
         existing->second = stored;
         return true;
     }
     _dynamicProperties[id] = std::move(stored);
-    // An AUTHORED property is a property. It was invisible to the change feed
-    // for the same reason every non-PropertyRef slot was: nobody announced it.
-    // A law watching a name a Person granted must hear it move.
-    //
-    // Notification uses the string name (resolve ID back to string) because
-    // the callback signature is (Singular*, const std::string&) — changing
-    // that signature is Phase 4 work (PropertyPath pre-calculation).
     notifyPropertyChanged(this, Earthcall::StringInterner::resolve(id));
     return true;
 }
@@ -390,6 +421,7 @@ bool Singular::removeDynamicProperty(const std::string& name) {
 }
 
 bool Singular::removeDynamicProperty(Earthcall::StringId id) {
+    unbindPropertyCell(id);
     if (_dynamicProperties.erase(id)) {
         Universe::instance().bumpStructuralRevision();
         return true;
@@ -422,6 +454,19 @@ bool Singular::removeDataStructure(const std::string& name) {
 }
 
 PropertyValue* Singular::getDynamicPropertyPtr(Earthcall::StringId id) {
+    auto itCell = _propertyCells.find(id);
+    if (itCell != _propertyCells.end()) {
+        auto itMode = _propertyCellModes.find(id);
+        if (itMode != _propertyCellModes.end() && itMode->second == CellOwnershipMode::Weak) {
+            return nullptr;
+        }
+        auto* cell = PropertyCellTable::instance().getCell(itCell->second);
+        if (cell) {
+            _dynamicProperties[id] = cell->value;
+            return &cell->value;
+        }
+        return nullptr;
+    }
     if (recognizesAuthoredPropertyProjection(id)) {
         PropertyValue proj;
         if (readAuthoredPropertyProjection(id, proj)) {
@@ -433,9 +478,14 @@ PropertyValue* Singular::getDynamicPropertyPtr(Earthcall::StringId id) {
 }
 
 const PropertyValue* Singular::getDynamicPropertyPtr(Earthcall::StringId id) const {
-    // For const, we can't update the cache safely without making it mutable.
-    // However, readAuthoredPropertyProjection modifies _regionCache which IS mutable.
-    // We can cast away constness JUST for the cache update since it's logically const.
+    auto itCell = _propertyCells.find(id);
+    if (itCell != _propertyCells.end()) {
+        auto* cell = PropertyCellTable::instance().getCell(itCell->second);
+        if (cell) {
+            return &cell->value;
+        }
+        return nullptr;
+    }
     if (recognizesAuthoredPropertyProjection(id)) {
         PropertyValue proj;
         if (readAuthoredPropertyProjection(id, proj)) {
@@ -444,4 +494,84 @@ const PropertyValue* Singular::getDynamicPropertyPtr(Earthcall::StringId id) con
     }
     auto it = _dynamicProperties.find(id);
     return (it != _dynamicProperties.end()) ? &it->second : nullptr;
+}
+
+bool Singular::bindPropertyCell(Earthcall::StringId id, CellId cellId, CellOwnershipMode mode) {
+    auto it = _propertyCells.find(id);
+    if (it != _propertyCells.end()) {
+        PropertyCellTable::instance().detachObserver(it->second, this, id);
+        _propertyCells.erase(it);
+        _propertyCellModes.erase(id);
+    }
+    if (mode == CellOwnershipMode::InlineValue || !cellId.valid()) {
+        return true;
+    }
+    if (!PropertyCellTable::instance().attachObserver(cellId, this, id, mode)) {
+        return false;
+    }
+    _propertyCells[id] = cellId;
+    _propertyCellModes[id] = mode;
+    auto* cell = PropertyCellTable::instance().getCell(cellId);
+    if (cell && mode != CellOwnershipMode::Weak) {
+        Property* p = findProperty(id);
+        if (p && p->typeName() != "dynamic") {
+            p->setValue(cell->value);
+        } else {
+            _dynamicProperties[id] = cell->value;
+        }
+    }
+    return true;
+}
+
+bool Singular::bindPropertyCell(const std::string& name, CellId cellId, CellOwnershipMode mode) {
+    return bindPropertyCell(Earthcall::StringInterner::intern(name), cellId, mode);
+}
+
+bool Singular::unbindPropertyCell(Earthcall::StringId id) {
+    auto it = _propertyCells.find(id);
+    if (it == _propertyCells.end()) return false;
+    PropertyCellTable::instance().detachObserver(it->second, this, id);
+    _propertyCells.erase(it);
+    _propertyCellModes.erase(id);
+    return true;
+}
+
+bool Singular::unbindPropertyCell(const std::string& name) {
+    return unbindPropertyCell(Earthcall::StringInterner::intern(name));
+}
+
+bool Singular::hasPropertyCell(const std::string& name) const {
+    return hasPropertyCell(Earthcall::StringInterner::intern(name));
+}
+
+CellId Singular::getPropertyCell(const std::string& name) const {
+    return getPropertyCell(Earthcall::StringInterner::intern(name));
+}
+
+CellOwnershipMode Singular::getPropertyCellMode(const std::string& name) const {
+    return getPropertyCellMode(Earthcall::StringInterner::intern(name));
+}
+
+bool Singular::convertPropertyCellToShared(Earthcall::StringId id) {
+    auto it = _propertyCells.find(id);
+    if (it == _propertyCells.end()) return false;
+    bool ok = PropertyCellTable::instance().convertUniqueToShared(it->second, this, id);
+    if (ok) {
+        _propertyCellModes[id] = CellOwnershipMode::Shared;
+    }
+    return ok;
+}
+
+bool Singular::convertPropertyCellToShared(const std::string& name) {
+    return convertPropertyCellToShared(Earthcall::StringInterner::intern(name));
+}
+
+void Singular::detachAllPropertyCells() {
+    for (const auto& [propId, cellId] : _propertyCells) {
+        PropertyCellTable::instance().detachObserver(cellId, this, propId);
+    }
+    _propertyCells.clear();
+    _propertyCellModes.clear();
+    PropertyCellTable::instance().detachAllForBearer(this);
+    TransferPolicy::notifyBearerDestroyed(this);
 }

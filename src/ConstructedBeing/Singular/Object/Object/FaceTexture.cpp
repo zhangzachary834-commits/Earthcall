@@ -379,6 +379,10 @@ bool FaceTexture::writeSamples(const std::vector<glm::ivec2>& coordinates,
         return false;
     }
     
+    if (sharesHandle) {
+        id = 0;
+        sharesHandle = false;
+    }
     if (id == 0 || useLayers) {
         uploadToGPU();
     } else {

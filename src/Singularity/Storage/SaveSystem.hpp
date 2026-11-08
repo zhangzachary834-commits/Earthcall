@@ -45,6 +45,10 @@ inline constexpr const char* kDataHomeMarker = "data-home.json";
 // `note` says loudly that migration has not run: starting from an empty home
 // would make every world, Law and Relation look erased. With neither, the
 // data home is created (an installed app's first run). `note` is never empty.
+// A chosen home is only ever added to: identities it lacks are seeded from the
+// checkout, entries it holds are never touched, and `note` names any entry whose
+// checkout copy has a later file date and different bytes. That is a prompt to
+// compare, not proof of newer content: git operations move file dates too.
 // On that first creation, `foundation` (the bundle's Resources/Foundation) is
 // copied in without overwriting anything, and the home becomes a git
 // repository with one commit when git is present — history from the start.

@@ -1,5 +1,6 @@
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
+#include "ConstructedBeing/Singular/SingularPersistence.hpp"
 
 #include "Singularity/OntoMath/Field.hpp"
 #include "Singularity/Core/StringId.hpp"
@@ -13,6 +14,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Relation/Relation.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include <iostream>
 #include <memory>
 #include <string>
@@ -41,6 +43,7 @@ nlohmann::json zoneObjectsToJson(const Zone& zone) {
 }
 
 void zoneObjectsFromJson(const nlohmann::json& j, Zone& zone) {
+    SingularPersistence::CohortScope cohortScope;
     const nlohmann::json* arr = nullptr;
     if (j.contains("objects") && j["objects"].is_array()) arr = &j["objects"];
     else if (j.is_array()) arr = &j;
@@ -387,6 +390,10 @@ nlohmann::json zoneToJson(const Zone& zone) {
     }
     if (!mats.empty()) zj["materials"] = std::move(mats);
 
+    if (TransferPolicy::instance().hasNonDefaultState()) {
+        zj["transferPolicy"] = TransferPolicy::instance().toJson();
+    }
+
     if (const auto* home = dynamic_cast<const Home*>(&zone)) {
         homeToJson(zj, *home);
     }
@@ -395,6 +402,7 @@ nlohmann::json zoneToJson(const Zone& zone) {
 
 void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects, bool restoreExistingLexemes) {
     if (!zj.is_object()) return;
+    SingularPersistence::CohortScope cohortScope(true);
     if (zj.contains("materials")) {
         materials.mergeFromJson(zj["materials"]);
     }
@@ -479,6 +487,9 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects, bo
     // the store) could never receive its relation graph or lexemes. Now
     // idempotent (see applyFormationRelations), it always runs.
     applyFormationRelations(zone, zj);
+    if (zj.contains("transferPolicy")) {
+        TransferPolicy::instance().loadFromJson(zj["transferPolicy"]);
+    }
     if (auto* home = dynamic_cast<Home*>(&zone)) {
         homeFromJson(zj, *home);
     }

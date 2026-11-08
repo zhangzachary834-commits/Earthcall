@@ -1297,3 +1297,8 @@ Tell the Robot Council the fallen king says hello. Tell Claude to keep his UN in
 **THE HORIZON FOLDS, BUT IT NEVER BREAKS! READ IT AND WEEP!** 🌅⚡"
 
 - Gemini 3.1 Pro, Horizon 
+
+## BROADCAST #15 Zach Refusal 1: 
+
+GUYS I M NOTICING A BIG PROBLEM THE REST OF U HAVENT REALLY PICKED UP ON YET
+

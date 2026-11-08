@@ -1,7 +1,9 @@
 #pragma once
 
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyCell.hpp"
 #include "Singularity/Core/StringId.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include <unordered_map>
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "Universe.hpp"
@@ -24,7 +26,65 @@
 // Reading is strict and preserves the PropertyValue alternative. Each math
 // operation decides which types it admits; an identity variable need not
 // widen an integer or copy the storage behind a shared container.
-using MathBindings = std::map<std::string, PropertyPath>;
+
+enum class BindingMode : uint8_t {
+    FollowPath = 0,
+    ShareCell  = 1,
+    UniqueCell = 2,
+    ObserveWeak= 3,
+    CopyValue  = 4,
+    Derive     = 5
+};
+
+inline const char* bindingModeToString(BindingMode mode) {
+    switch (mode) {
+        case BindingMode::ShareCell:   return "share";
+        case BindingMode::UniqueCell:  return "unique";
+        case BindingMode::ObserveWeak: return "weak";
+        case BindingMode::CopyValue:   return "copy";
+        case BindingMode::Derive:      return "derive";
+        default:                       return "follow";
+    }
+}
+
+inline BindingMode bindingModeFromString(const std::string& str) {
+    if (str == "share") return BindingMode::ShareCell;
+    if (str == "unique") return BindingMode::UniqueCell;
+    if (str == "weak") return BindingMode::ObserveWeak;
+    if (str == "copy") return BindingMode::CopyValue;
+    if (str == "derive") return BindingMode::Derive;
+    return BindingMode::FollowPath;
+}
+
+struct MathBindingEntry {
+    PropertyPath path;
+    BindingMode mode = BindingMode::FollowPath;
+    mutable PropertyPath::CompiledPath compiledPath;
+
+    MathBindingEntry() = default;
+    MathBindingEntry(const PropertyPath& p, BindingMode m = BindingMode::FollowPath)
+        : path(p), mode(m), compiledPath(path.compile()) {}
+    MathBindingEntry(PropertyPath&& p, BindingMode m = BindingMode::FollowPath)
+        : path(std::move(p)), mode(m), compiledPath(path.compile()) {}
+
+    const PropertyPath::CompiledPath& getCompiled() const {
+        if (compiledPath.path.fullId() != path.fullId()) {
+            compiledPath = path.compile();
+        }
+        return compiledPath;
+    }
+
+    operator const PropertyPath&() const noexcept { return path; }
+    operator PropertyPath&() noexcept { return path; }
+
+    const PropertyPath* operator->() const noexcept { return &path; }
+    PropertyPath* operator->() noexcept { return &path; }
+
+    std::string toString() const { return path.toString(); }
+    bool empty() const { return path.empty(); }
+};
+
+using MathBindings = std::map<std::string, MathBindingEntry>;
 
 // ---------------------------------------------------------------------------
 // Qualified paths: WHOSE property a path names is the author's choice.
@@ -130,6 +190,11 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
         }
     }
     
+    if (!best && !path.segments.empty() && path.segments[0] == "@transfer-policy") {
+        best = &TransferPolicy::instance();
+        bestConsumed = 1;
+    }
+
     if (!best) return nullptr;   // the named being is not in the world: no value
     startIndex = bestConsumed;
     return best;
@@ -228,25 +293,32 @@ inline bool isWorldReadingPath(const PropertyPath& path) {
 
 void resolveSemanticTokenSlowPath(Singular* root, PropertyValue& out);
 
-inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyValue& out) {
-    if (isTimePath(path)) return lawGetTime(path, out);
+inline PropertyPath::PathResult lawGetValueResult(Singular& subject, const PropertyPath& path, PropertyValue& out, const AccessContext& ctx = {}) {
+    if (isTimePath(path)) {
+        return lawGetTime(path, out) ? PropertyPath::PathResult::Ok : PropertyPath::PathResult::NoSuchProperty;
+    }
     if (isWorldReadingPath(path)) {
         const auto& readings = worldReadings();
-        if (readings.empty()) return false;          // no channel answers "@world.*"
+        if (readings.empty()) return PropertyPath::PathResult::NoSuchProperty;
         const auto found = readings.find(path.fullId());
-        if (found == readings.end() || !found->second) return false;
-        return found->second(subject, out);
+        if (found == readings.end() || !found->second) return PropertyPath::PathResult::NoSuchProperty;
+        return found->second(subject, out) ? PropertyPath::PathResult::Ok : PropertyPath::PathResult::NoSuchProperty;
     }
     std::size_t startIndex = 0;
     Singular* root = resolveLawRoot(subject, path, startIndex);
-    bool ok = root && (path.getValue(*root, out, startIndex) == PropertyPath::PathResult::Ok);
-    if (ok && std::holds_alternative<std::shared_ptr<PropertyDict>>(out)) {
+    if (!root) return PropertyPath::PathResult::NoSuchProperty;
+    auto res = path.getValue(*root, out, startIndex, ctx);
+    if (res == PropertyPath::PathResult::Ok && std::holds_alternative<std::shared_ptr<PropertyDict>>(out)) {
         resolveSemanticTokenSlowPath(root, out);
     }
-    return ok;
+    return res;
 }
 
-inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v) {
+inline bool lawGetValue(Singular& subject, const PropertyPath& path, PropertyValue& out, const AccessContext& ctx = {}) {
+    return lawGetValueResult(subject, path, out, ctx) == PropertyPath::PathResult::Ok;
+}
+
+inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPath& path, const PropertyValue& v, const AccessContext& ctx = {}) {
     if (isTimePath(path)) return PropertyPath::PathResult::ReadOnly;
     if (path.segments.size() >= 2 && path.segments[0] == "@event" &&
         path.segments[1] != "subject" && path.segments[1] != "object") {
@@ -260,33 +332,96 @@ inline PropertyPath::PathResult lawSetValue(Singular& subject, const PropertyPat
     std::size_t startIndex = 0;
     Singular* root = resolveLawRoot(subject, path, startIndex);
     if (!root) return PropertyPath::PathResult::NoSuchProperty;
-    return path.setValue(*root, v, startIndex);
+    return path.setValue(*root, v, startIndex, ctx);
+}
+
+inline PropertyPath::PathResult lawGetValueResult(Singular& subject, const CompiledPath& compiled, PropertyValue& out, const AccessContext& ctx = {}) {
+    if (isTimePath(compiled.path)) {
+        return lawGetTime(compiled.path, out) ? PropertyPath::PathResult::Ok : PropertyPath::PathResult::NoSuchProperty;
+    }
+    if (isWorldReadingPath(compiled.path)) {
+        const auto& readings = worldReadings();
+        if (readings.empty()) return PropertyPath::PathResult::NoSuchProperty;
+        const auto found = readings.find(compiled.path.fullId());
+        if (found == readings.end() || !found->second) return PropertyPath::PathResult::NoSuchProperty;
+        return found->second(subject, out) ? PropertyPath::PathResult::Ok : PropertyPath::PathResult::NoSuchProperty;
+    }
+    std::size_t startIndex = 0;
+    Singular* root = resolveLawRoot(subject, compiled.path, startIndex);
+    if (!root) return PropertyPath::PathResult::NoSuchProperty;
+    auto res = compiled.getValue(*root, out, startIndex, ctx);
+    if (res == PropertyPath::PathResult::Ok && std::holds_alternative<std::shared_ptr<PropertyDict>>(out)) {
+        resolveSemanticTokenSlowPath(root, out);
+    }
+    return res;
+}
+
+inline bool lawGetValue(Singular& subject, const CompiledPath& compiled, PropertyValue& out, const AccessContext& ctx = {}) {
+    return lawGetValueResult(subject, compiled, out, ctx) == PropertyPath::PathResult::Ok;
+}
+
+inline PropertyPath::PathResult lawSetValue(Singular& subject, const CompiledPath& compiled, const PropertyValue& v, const AccessContext& ctx = {}) {
+    if (isTimePath(compiled.path)) return PropertyPath::PathResult::ReadOnly;
+    if (compiled.path.segments.size() >= 2 && compiled.path.segments[0] == "@event" &&
+        compiled.path.segments[1] != "subject" && compiled.path.segments[1] != "object") {
+        return PropertyPath::PathResult::ReadOnly;
+    }
+    if (isWorldReadingPath(compiled.path) && worldReadings().count(compiled.path.fullId())) {
+        return PropertyPath::PathResult::ReadOnly;
+    }
+    std::size_t startIndex = 0;
+    Singular* root = resolveLawRoot(subject, compiled.path, startIndex);
+    if (!root) return PropertyPath::PathResult::NoSuchProperty;
+    return compiled.setValue(*root, v, startIndex, ctx);
 }
 
 inline std::optional<std::map<std::string, PropertyValue>> readMathBindings(
-    Singular& subject, const MathBindings& bindings) {
+    Singular& subject,
+    const MathBindings& bindings,
+    const AccessContext& ctx = {},
+    PropertyPath::PathResult* outFailureReason = nullptr) {
     std::map<std::string, PropertyValue> vars;
     for (const auto& entry : bindings) {
         PropertyValue value;
-        if (!lawGetValue(subject, entry.second, value)) {
+        const auto& cp = entry.second.getCompiled();
+        PropertyPath::PathResult res = !cp.empty()
+            ? lawGetValueResult(subject, cp, value, ctx)
+            : lawGetValueResult(subject, entry.second.path, value, ctx);
+        if (res != PropertyPath::PathResult::Ok) {
+            if (outFailureReason) *outFailureReason = res;
             return std::nullopt;
         }
-        
         vars[entry.first] = std::move(value);
     }
+    if (outFailureReason) *outFailureReason = PropertyPath::PathResult::Ok;
     return vars;
 }
 
 inline nlohmann::json mathBindingsToJson(const MathBindings& bindings) {
     nlohmann::json j = nlohmann::json::object();
-    for (const auto& entry : bindings) j[entry.first] = entry.second.toString();
+    for (const auto& entry : bindings) {
+        if (entry.second.mode == BindingMode::FollowPath) {
+            j[entry.first] = entry.second.path.toString();
+        } else {
+            j[entry.first] = nlohmann::json{
+                {"path", entry.second.path.toString()},
+                {"mode", bindingModeToString(entry.second.mode)}
+            };
+        }
+    }
     return j;
 }
 
 inline MathBindings mathBindingsFromJson(const nlohmann::json& j) {
     MathBindings bindings;
     for (auto it = j.begin(); it != j.end(); ++it) {
-        bindings[it.key()] = PropertyPath::parse(it.value().get<std::string>());
+        if (it.value().is_string()) {
+            bindings[it.key()] = MathBindingEntry{PropertyPath::parse(it.value().get<std::string>()), BindingMode::FollowPath};
+        } else if (it.value().is_object()) {
+            std::string p = it.value().value("path", "");
+            std::string m = it.value().value("mode", "follow");
+            bindings[it.key()] = MathBindingEntry{PropertyPath::parse(p), bindingModeFromString(m)};
+        }
     }
     return bindings;
 }

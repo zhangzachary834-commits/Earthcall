@@ -491,6 +491,12 @@ void channel() {
     cube.setObjectID("cube");
     cube.setDynamicProperty("hp", PropertyValue(3.0));
     cube.setDynamicProperty("glow", PropertyValue(0.0));
+    Object srcObj;
+    srcObj.setObjectID("src");
+    srcObj.setFaceColor(0, 1.0f, 0.0f, 0.0f);
+    Object dstObj;
+    dstObj.setObjectID("dst");
+    dstObj.setFaceColor(0, 0.0f, 0.0f, 0.0f);
 
     // Lexeme <--denotes--> Law.
     Singularity::Language::Lexeme gtWord("greater than", "lex_gt");
@@ -524,10 +530,20 @@ void channel() {
     laws.add(illuminateLaw);
     graph.add(std::make_shared<Relation>("denotes", illuminate, *illuminateLaw, true, 1.0f));
 
+    Singularity::Language::Lexeme linkWord("link-with", "lex_link_with");
+    auto linkLaw = std::make_shared<Law>("link-with", std::vector<Singular*>{&zach});
+    linkLaw->setLawIdentifier("law-line-fragment-link");
+    linkLaw->setEnabled(false);
+    linkLaw->setActionModel(ActionNode::shareCell("", ""));
+    laws.add(linkLaw);
+    graph.add(std::make_shared<Relation>("denotes", linkWord, *linkLaw, true, 1.0f));
+
     Universe::instance().setProvider([&](std::vector<Singular*>& out) {
         out.push_back(&zach);
         out.push_back(&person);
         out.push_back(&cube);
+        out.push_back(&srcObj);
+        out.push_back(&dstObj);
         for (const auto& law : laws.getAll()) {
             if (law) out.push_back(law.get());
         }
@@ -632,6 +648,87 @@ void channel() {
     Law* resolved = laws.getAll().back().get();
     assert(resolved->hasConditionModel() && resolved->conditionModel()->op == ConditionNode::Op::Eq);
     assert(mentions(printed.back(), "law-line-metalaw-is"));
+
+    // 3b. Authored Lexeme denoting open Share cell action + Compiler MetaLaw
+    {
+        auto v = terminal->vocabulary(laws);
+        bool foundLink = false;
+        for (const auto& w : v.words) {
+            if (w.symbol == "link-with") {
+                assert(w.opcode == "action.Share");
+                foundLink = true;
+                break;
+            }
+        }
+        assert(foundLink);
+
+        terminal->inject("on tick then link-with @dst.color from @src.color");
+        frame();
+        Law* linkShareLaw = laws.getAll().back().get();
+        assert(linkShareLaw && linkShareLaw->hasActionModel());
+        assert(linkShareLaw->actionModel()->kind == ActionNode::Kind::Map);
+
+        // Fire tick to apply linkShareLaw
+        Core::EventBus::instance().publish(ECA::Event{"tick", &cube, nullptr, std::time(nullptr), ""});
+        laws.tick();
+
+        // Mutating srcObj color propagates to dstObj through the shared cell
+        assert(srcObj.getPropertyCell("color").valid());
+        assert(srcObj.getPropertyCell("color") == dstObj.getPropertyCell("color"));
+        PropertyPath::parse("color").setValue(srcObj, PropertyValue(glm::vec3(0.5f, 0.8f, 0.2f)));
+        glm::vec3 dstCol(dstObj.faceColors[0][0], dstObj.faceColors[0][1], dstObj.faceColors[0][2]);
+        assert(dstCol == glm::vec3(0.5f, 0.8f, 0.2f));
+
+        // Compiler MetaLaw targeting @terminal-channel
+        auto compilerMetalaw = std::make_shared<Law>("compiler-share-metalaw", std::vector<Singular*>{&zach});
+        compilerMetalaw->setLawIdentifier("law-compiler-share");
+        compilerMetalaw->setActivation(Law::Activation::WhileTrue);
+        compilerMetalaw->setConditionModel(ConditionNode::all({
+            ConditionNode::compare("compilation.input.slot", ConditionNode::Op::Eq, PropertyValue(std::string("assignment"))),
+            ConditionNode::compare("compilation.input.bindingMode", ConditionNode::Op::Eq, PropertyValue(std::string("share")))
+        }));
+        nlohmann::json tmplPattern{
+            {"kind", static_cast<int>(ActionNode::Kind::Map)},
+            {"path", {{"$slot", "/property"}}},
+            {"bindings", {
+                {"_cell_src", {
+                    {"path", {{"$slot", "/source"}}},
+                    {"mode", "share"}
+                }}
+            }},
+            {"function", {
+                {"pieces", {
+                    {
+                        {"domain", {{"bounds", nlohmann::json::array()}}},
+                        {"mathNode", {
+                            {"op", static_cast<int>(OntoMath::MathNode::Op::ValueLeaf)},
+                            {"variableName", "_cell_src"}
+                        }}
+                    }
+                }}
+            }}
+        };
+        compilerMetalaw->setActionModel(ActionNode::set("compilation.template", PropertyValue(tmplPattern.dump())));
+        compilerMetalaw->addTarget(*terminal);
+        laws.add(compilerMetalaw);
+
+        nlohmann::json testInput{
+            {"slot", "assignment"},
+            {"bindingMode", "share"},
+            {"property", "@dst.color"},
+            {"source", "@src.color"}
+        };
+        auto testCompiled = terminal->vocabulary(laws).compileInvocation(testInput, false);
+        assert(testCompiled.error.empty() && testCompiled.action.has_value());
+
+        // Speak sentence compiling via the MetaLaw
+        terminal->inject("on tick then share @dst.color from @src.color");
+        frame();
+        Law* metaCompiledShare = laws.getAll().back().get();
+        assert(metaCompiledShare && metaCompiledShare->hasActionModel());
+        assert(metaCompiledShare->actionModel()->kind == ActionNode::Kind::Map);
+        assert(mentions(printed.back(), "law-compiler-share"));
+    }
 
     // "…?" also says who the IF holds for right now (read-only).
     terminal->inject("on tick if hp > 2 then set glow 1 ?");
