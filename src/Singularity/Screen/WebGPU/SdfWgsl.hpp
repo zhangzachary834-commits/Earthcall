@@ -159,9 +159,9 @@ FieldMarchPolicy inspectFieldMarchPolicy(const geom::SdfNode& root);
 struct FieldVmProgram {
     std::vector<FieldVmInstruction> instructions;
     uint32_t maxStackDepth = 0;
-    // Derived execution policy matching the primary SDF marcher. General Expr
-    // leaves are iso-surface fields, not automatically 1-Lipschitz distance;
-    // visibility therefore normalizes positive march steps by max(|grad f|,1).
+    // Copied from FieldMarchPolicy. General Expr leaves require local-gradient
+    // hit/step correction; the independent marchLipschitz value carries any
+    // cheaply-derived global bound such as non-unit Convex planes.
     bool needsGradientStep = false;
     // Global conservative Lipschitz bound when it is cheaply derivable from
     // authored structure. Primitive defaults are 1. Convex contributes
@@ -282,13 +282,13 @@ struct Program {
     std::string kernelVolumePreparationWgsl;
     uint32_t kernelVolumePreparationInstanceBase = 0;
 
-    // True when the tree contains an implicit f(x,y,z)=0 leaf. Such a field is an
-    // ISO-SURFACE VALUE, not a distance: it can be arbitrarily larger than the
-    // true distance, so a sphere-tracing step of `f` tunnels straight through the
-    // surface. (For x^2+y^2+z^2-0.3 viewed from z=3, f is 8.7 while the surface is
-    // 2.45 away — even a halved step overshoots the shape entirely.) When set, the
-    // marcher steps by f/|grad f| instead, which is a conservative distance
-    // estimate. It costs a gradient per step, so it is only enabled where needed.
+    // Structural compiler witness: true when emitted WGSL contains a general
+    // implicit f(x,y,z)=0 Expr leaf. It is intentionally NOT the complete runtime
+    // march policy: value-only edits (notably Convex plane normal magnitudes) can
+    // change the lawful global Lipschitz divisor without changing shader structure.
+    // Production traversal must consume inspectFieldMarchPolicy(current SdfNode)
+    // for current-value execution truth. This field remains useful to compiler
+    // tests/structure consumers that specifically need to know Expr was emitted.
     bool needsGradientStep = false;
 
     // THE REFUSAL. False when the field's authored OntoMath AST contains
