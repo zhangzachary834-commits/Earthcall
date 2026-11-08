@@ -3200,6 +3200,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             SceneVisibilityVmAdmission admission;
             admission.blocker.invModel = authoredTransforms->inverse;
             admission.blocker.extents = inst.extents;
+            admission.blocker.extents.w =
+                std::max(visibilityVm.marchLipschitz, 1.0f);
             admission.program = std::move(visibilityVm);
             _sdfVisibilityVmBatches[sp].push_back(std::move(admission));
         }
