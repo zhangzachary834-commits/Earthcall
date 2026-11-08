@@ -654,6 +654,63 @@ bool emitExprVm(const geom::SdfNode& node,
     return emitMathScalar(*root, node.offset, out, stackDepth);
 }
 
+bool emitConvexVm(const geom::SdfNode& node,
+                  FieldVmProgram& out,
+                  uint32_t& stackDepth) {
+    if (node.planes.empty()) {
+        out.ok = false;
+        out.error = "field VM Convex requires at least one authored plane";
+        return false;
+    }
+
+    constexpr float kUnitNormalTolerance = 1e-3f;
+    bool first = true;
+    for (std::size_t i = 0; i < node.planes.size(); ++i) {
+        const glm::vec4 pl = node.planes[i];
+        const glm::vec3 n(pl);
+        if (!std::isfinite(pl.x) || !std::isfinite(pl.y) ||
+            !std::isfinite(pl.z) || !std::isfinite(pl.w)) {
+            out.ok = false;
+            out.error = "field VM Convex refuses non-finite plane " +
+                        std::to_string(i);
+            return false;
+        }
+        const float nLen = glm::length(n);
+        if (!std::isfinite(nLen) ||
+            std::fabs(nLen - 1.0f) > kUnitNormalTolerance) {
+            out.ok = false;
+            out.error =
+                "field VM Convex plane " + std::to_string(i) +
+                " violates authored outward-unit-normal contract";
+            return false;
+        }
+
+        // n dot (p - offset) - d, lowered only through existing generic scalar
+        // execution. The authored plane vector remains the source of truth.
+        if (!pushCoord(0, node.offset, out, stackDepth) ||
+            !pushMathConstant(pl.x, out, stackDepth) ||
+            !appendBinary(FieldVmOpcode::MathMul, out, stackDepth) ||
+            !pushCoord(1, node.offset, out, stackDepth) ||
+            !pushMathConstant(pl.y, out, stackDepth) ||
+            !appendBinary(FieldVmOpcode::MathMul, out, stackDepth) ||
+            !appendBinary(FieldVmOpcode::MathAdd, out, stackDepth) ||
+            !pushCoord(2, node.offset, out, stackDepth) ||
+            !pushMathConstant(pl.z, out, stackDepth) ||
+            !appendBinary(FieldVmOpcode::MathMul, out, stackDepth) ||
+            !appendBinary(FieldVmOpcode::MathAdd, out, stackDepth) ||
+            !pushMathConstant(pl.w, out, stackDepth) ||
+            !appendBinary(FieldVmOpcode::MathSub, out, stackDepth)) {
+            return false;
+        }
+        if (!first &&
+            !appendBinary(FieldVmOpcode::MathMax, out, stackDepth)) {
+            return false;
+        }
+        first = false;
+    }
+    return true;
+}
+
 bool emitFieldVm(const geom::SdfNode& node,
                  FieldVmProgram& out,
                  uint32_t& stackDepth) {
@@ -713,10 +770,7 @@ bool emitFieldVm(const geom::SdfNode& node,
             case geom::SdfPrim::Expr:
                 return emitExprVm(node, out, stackDepth);
             case geom::SdfPrim::Convex:
-                out.ok = false;
-                out.error =
-                    "field VM Convex lowering requires a plane payload table";
-                return false;
+                return emitConvexVm(node, out, stackDepth);
         }
 
         out.instructions.push_back(inst);
