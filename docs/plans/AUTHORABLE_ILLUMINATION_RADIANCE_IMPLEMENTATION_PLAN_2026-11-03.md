@@ -6,6 +6,62 @@
 **Written by:** GPT-5.6 Sol  
 **Status:** implementation plan; no completion claim
 
+## Implementation ledger — 2026-11-08 continuation: one field, one march policy
+
+The field VM and the primary SDF renderer now share one derived answer to a question that authored geometry does **not** answer by itself:
+
+> Given the current authored scalar field values, what may a numerical marcher safely infer from the magnitude of `f(p)`?
+
+This pass closes a renderer-only assumption that Convex planes were structurally unit-normal. Earthcall's actual authored contract stores finite plane equations verbatim, and its CPU evaluator/range proof already permits non-unit normals.
+
+Implemented:
+- added `inspectFieldMarchPolicy(SdfNode)` as the single derived execution office for:
+  - `needsGradientStep`: general Expr zero-set mathematics requires local-gradient correction;
+  - `marchLipschitz`: a cheaply-derived global conservative bound, default 1 and `max_i |n_i|` for Convex;
+- CSG composition preserves the strongest child obligation instead of changing authored field values;
+- `FieldVmProgram` copies this policy rather than independently inventing it during bytecode emission;
+- finite non-unit Convex planes are no longer rejected or normalized by the VM;
+- the 96-byte `SceneVisibilityVmBlocker` ABI remains unchanged:
+  - `extents.xyz` = blocker proxy coverage;
+  - `extents.w` = derived global Lipschitz bound;
+  - `program.w bit 0` = Expr/local-gradient policy;
+- foreign CompleteScene traversal now advances by
+  `f / max(globalLipschitz, |grad f| when required, 1)`;
+- the primary SDF renderer derives the same policy from the **current field values on every draw**, so a plane-normal value edit `1 -> 100` can remain parameter-only while its safe march divisor changes without WGSL recompilation;
+- primary SDF instance `extents.w` carries the same global Lipschitz execution channel as foreign visibility blockers;
+- exact-distance primitives retain the existing over-relaxed path; globally-scaled/non-distance fields do not inherit over-relaxation without its proof;
+- split numerical responsibilities explicitly:
+  - local zero-set proximity / secant history uses `hitDistance = f / max(|grad f|,1)`;
+  - safe forward traversal uses `marchDistance = f / max(globalLipschitz,|grad f|,1)`;
+- self-shadow escape, same-cohort shadow marching, primary camera marching and foreign VM visibility now respect that same distinction;
+- corrected stale canonical comments that described Convex planes as guaranteed unit-normal / always 1-Lipschitz.
+
+Adversarial witnesses:
+1. `field_vm_test` scales all six cube plane equations by 100×. The authored zero-set remains identical, VM evaluation must still match `geom::evalSdf`, and derived `marchLipschitz` must become 100 rather than refusing.
+2. `webgpu_object_test` requires the 100× Convex blocker to remain Known and occluding for **both mesh and SDF receivers** through CompleteScene.
+3. A primary-surface witness wraps the same 100× Convex in `Morph(convex, sphere, t=0)`. The field remains exactly the Convex while deliberately escaping root closed-form intersection, forcing the generic primary marcher to consume the Lipschitz policy.
+4. `sdf_wgsl_parameter_refresh_test` proves 1× and 100× plane values compile to byte-identical WGSL while parameter buffers and current-value march policy differ. Shader structure therefore does not become a hidden owner of numerical safety.
+
+The resulting theorem boundary is:
+
+```
+AUTHORED:
+    f(p)
+
+DERIVED:
+    local zero-set distance estimate
+    global conservative Lipschitz bound
+    safe march distance
+```
+
+The renderer may derive those numerical facts. It may not normalize or rewrite the Person-authored field merely to make sphere tracing convenient.
+
+No exact-head green CI result is claimed in this ledger until GitHub executes the current branch jobs; recent workflow attempts have been cancelled before steps begin.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
+---
+
 ## Implementation ledger — 2026-11-06 continuation: one visibility epistemic contract
 
 All bounded field-path evaluators now use the same tri-state proof law. Finite march exhaustion is no longer allowed to masquerade as physical occlusion.
