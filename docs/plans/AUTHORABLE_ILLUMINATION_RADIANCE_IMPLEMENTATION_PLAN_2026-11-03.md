@@ -672,6 +672,72 @@ No CI/native pass is claimed in this ledger until an exact-head workflow survive
 
 ---
 
+## Implementation ledger — 2026-11-08 Heliograph pass: ancestry reconciliation + Convex joins CompleteScene
+
+### Lineage reconciliation
+
+Before expanding Field VM authority, Heliograph reconciled this illumination branch with the moving canonical trunk instead of building another geometry frontier on stale ancestry.
+
+- merge base before surgery: `d82a816163e48be525f1afbd781f2f3937a866b4`;
+- illumination head before surgery: `2f4f741d7fd589f87a9a84c84c66b66ad969823d`;
+- canonical head incorporated: `052338e627657a964e8ae4c3ba4c9aefe6deae47`;
+- two-parent reconciliation commit: `d9c57c8caf184ebffdc66200c8e795f6a222624f`;
+- resulting branch state immediately after reconciliation: 0 commits behind canonical and mergeable.
+
+The merge was not an ours/theirs overwrite. Canonical's transform cache, tight-AABB memoization, SDF upload paging and mesh upload-page optimization were preserved. The mesh optimization was translated onto the authored-response architecture: paged instance storage and consecutive-batch reuse survive, while the dead fixed `_meshPipeline`, `MeshBatchKey.shading` and renderer-owned Blinn-Phong assumptions do not return. The canonical mesh-upload oracle now authors `surfaceColor * Bind("ambient")` explicitly.
+
+### Convex execution authority
+
+`SdfPrim::Convex` no longer forms a named refusal frontier in the scene Field VM.
+
+No `Convex` VM opcode, plane table, persisted schema or new ontology noun was introduced. The existing authored payload remains authoritative:
+
+```
+plane_i = (n.x, n.y, n.z, d)
+field(p) = max_i( n_i dot (p - leafOffset) - d_i )
+```
+
+Lowering emits only the existing generic scalar IR:
+- `CoordX/Y/Z`;
+- `Constant`;
+- `MathMul`;
+- `MathAdd`;
+- `MathSub`;
+- `MathMax`.
+
+Because the SdfNode contract declares outward **unit** normals, an admitted Convex is a 1-Lipschitz max of half-space fields and keeps the ordinary distance-step path. Heliograph does not normalize malformed author data in the renderer. Admission requires:
+- at least one plane;
+- finite normal and offset components;
+- normal magnitude within the explicit unit-normal tolerance.
+
+Empty, non-finite or non-unit payloads refuse and therefore cannot grant CompleteScene knownness.
+
+### Tribunals
+
+`field_vm_test` now requires:
+- Convex CPU VM parity against `geom::evalSdf`;
+- leaf-local offset parity;
+- `needsGradientStep == false` for valid Convex;
+- instruction census proving no dedicated Convex opcode exists;
+- explicit refusal for empty, non-unit and non-finite plane payloads.
+
+`webgpu_object_test` now places the same authored six-plane Convex cube on the source path:
+1. a mesh receiver must become KnownOccluded;
+2. an SDF receiver must become KnownOccluded through the same scene Field VM;
+3. corrupting one plane to a non-unit normal must revoke authority and return Unknown rather than silently normalizing the plane.
+
+### Verification status
+
+GitHub Actions currently cancels the pull-request workflow and even a manually re-run SDF verification job before step 1. Therefore this pass makes **no CI/native green claim** and also has **no red compiler/test verdict**. The exact tests are committed as falsifiers; execution evidence remains pending infrastructure.
+
+### Remaining Field VM frontier
+
+There is no longer a named `SdfPrim` kind refused solely for lack of representation. The next expansions are no longer primitive-enum chores. Broader Piecewise/world-dependent Expr execution, if pursued, must receive explicit subject/control-flow semantics rather than being admitted by opcode analogy.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
+---
+
 ---
 
 ## Commission
