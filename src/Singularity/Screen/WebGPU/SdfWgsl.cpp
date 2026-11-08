@@ -3728,24 +3728,39 @@ fn rangeCandidate(inst: SdfInstanceData, ro: vec3<f32>, rd: vec3<f32>,
 // mesh-triangle materialization when the renderer proves coverage complete.
 // Differently-structured additional SDFs are not silently omitted: their presence
 // revokes CompleteScene knownness until a shared mixed-geometry provider exists.
-fn sourceTransportSignedStep(p: vec3<f32>, damping: f32) -> f32 {
+struct SdfConservativeStep {
+    raw: f32,
+    hitDistance: f32,
+    marchDistance: f32,
+};
+
+fn sdfConservativeStep(p: vec3<f32>, damping: f32) -> SdfConservativeStep {
     let globalLipschitz = max(instances[g_instIdx].extents.w, 1.0);
-    if (damping < 0.5) {
-        let s = sdfSampleStep(p);
-        var gradLen = s.gradLen;
-        if (gradLen <= 1e-6) {
-            let ge = 1e-3;
-            let raw = s.raw;
-            let g = vec3<f32>(
-                sdfEval(p + vec3<f32>(ge, 0.0, 0.0)) - raw,
-                sdfEval(p + vec3<f32>(0.0, ge, 0.0)) - raw,
-                sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
-            gradLen = length(g);
-        }
-        let denom = max(globalLipschitz, max(gradLen, 1.0));
-        return s.raw / denom;
+
+    // Exact-distance lane: preserve the historical value byte-for-byte.
+    if (damping >= 0.5 && globalLipschitz <= 1.0) {
+        let raw = sdfEval(p);
+        return SdfConservativeStep(raw, raw, raw);
     }
-    return sdfEval(p) / globalLipschitz;
+
+    // General zero-set / globally-scaled lane. Local gradient owns hit
+    // proximity; max(global L, local |grad|, 1) owns the safe forward step.
+    let s = sdfSampleStep(p);
+    var gradLen = s.gradLen;
+    if (gradLen <= 1e-6) {
+        let ge = 1e-3;
+        let raw = s.raw;
+        let g = vec3<f32>(
+            sdfEval(p + vec3<f32>(ge, 0.0, 0.0)) - raw,
+            sdfEval(p + vec3<f32>(0.0, ge, 0.0)) - raw,
+            sdfEval(p + vec3<f32>(0.0, 0.0, ge)) - raw) / ge;
+        gradLen = length(g);
+    }
+    let localDenom = max(gradLen, 1.0);
+    let hitDistance = s.raw / localDenom;
+    let marchDistance =
+        s.raw / max(globalLipschitz, localDenom);
+    return SdfConservativeStep(s.raw, hitDistance, marchDistance);
 }
 
 struct VisibilityDecision {
@@ -3774,11 +3789,11 @@ fn localSourceVisibility(
     // Escape the receiver's own zero set only when the source ray points
     // outward. This preserves the existing self-shadow contract while keeping
     // epistemic knownness separate from the resulting V value.
-    let surfaceSignedStep =
-        sourceTransportSignedStep(surfacePoint, damping);
+    let surfaceStep =
+        sdfConservativeStep(surfacePoint, damping);
     var origin = surfacePoint + initialDir * bias;
     if (dot(surfaceNormal, initialDir) > 0.0) {
-        let penetration = max(-surfaceSignedStep, 0.0);
+        let penetration = max(-surfaceStep.hitDistance, 0.0);
         origin =
             surfacePoint + surfaceNormal * (penetration + bias);
     }
@@ -3819,13 +3834,15 @@ fn localSourceVisibility(
 
         let pShadow = origin + shadowDir * tShadow;
         let currentEps = max(surfaceEps, tShadow * 0.001);
-        let dShadow =
-            sourceTransportSignedStep(pShadow, damping);
+        let shadowSample =
+            sdfConservativeStep(pShadow, damping);
 
-        if (dShadow <= 0.0 || abs(dShadow) < currentEps) {
+        if (shadowSample.raw <= 0.0 ||
+            abs(shadowSample.hitDistance) < currentEps) {
             return VisibilityDecision(1.0, 0.0);
         }
-        tShadow = tShadow + max(dShadow, currentEps);
+        tShadow =
+            tShadow + max(shadowSample.marchDistance, currentEps);
     }
 
     // A finite marcher budget is a proof budget, not an occluder. Exhaustion
@@ -3877,15 +3894,15 @@ fn cohortOtherInstanceVisibility(
             let pShadow = origin + shadowDir * tShadow;
             let currentEps =
                 max(surfaceEps, tShadow * 0.001);
-            let dShadow =
-                sourceTransportSignedStep(pShadow, damping);
-            if (dShadow <= 0.0 ||
-                abs(dShadow) < currentEps) {
+            let shadowSample =
+                sdfConservativeStep(pShadow, damping);
+            if (shadowSample.raw <= 0.0 ||
+                abs(shadowSample.hitDistance) < currentEps) {
                 g_instIdx = savedIndex;
                 return VisibilityDecision(1.0, 0.0);
             }
             tShadow =
-                tShadow + max(dShadow, currentEps);
+                tShadow + max(shadowSample.marchDistance, currentEps);
         }
 
         if (!provedTraversal && tShadow < maxShadow) {
