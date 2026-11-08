@@ -182,6 +182,64 @@ int main() {
     }
 
     // ---------------------------------------------------------------------
+    // 3b. March policy is VALUE-derived, not shader-structure identity.
+    //     A 100x Convex plane set keeps the same generated field structure but
+    //     carries L=100 into per-instance execution. Hit proximity must remain
+    //     separate from the globally shortened forward step.
+    // ---------------------------------------------------------------------
+    {
+        const std::vector<glm::vec4> scaledPlanes{
+            { 100,   0,   0,50.0f},{-100,   0,   0,50.0f},
+            {   0, 100,   0,50.0f},{   0,-100,   0,50.0f},
+            {   0,   0, 100,50.0f},{   0,   0,-100,50.0f}
+        };
+        geom::SdfNode scaled =
+            geom::SdfNode::convex(scaledPlanes);
+        geom::SdfNode irrelevant =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.15f));
+        geom::SdfNode fallback =
+            geom::SdfNode::binary(
+                geom::SdfOp::Morph, scaled, irrelevant, 0.0f);
+
+        const sdfwgsl::FieldMarchPolicy policy =
+            sdfwgsl::inspectFieldMarchPolicy(fallback);
+        check(policy.ok && !policy.needsGradientStep &&
+                  std::fabs(policy.marchLipschitz - 100.0f) <= 2e-5f,
+              "scaled Convex CSG derives L=100 without pretending to be Expr");
+
+        const sdfwgsl::Program compiled = sdfwgsl::compile(fallback);
+        check(compiled.ok, "scaled Convex fallback program compiles");
+        check(compiled.wgsl.find(
+                  "struct SdfConservativeStep") != std::string::npos &&
+              compiled.wgsl.find(
+                  "if (damping < 0.5 || marchLipschitz > 1.0)") !=
+                  std::string::npos &&
+              compiled.wgsl.find(
+                  "d = conservative.hitDistance") != std::string::npos &&
+              compiled.wgsl.find(
+                  "max(conservative.marchDistance, current_eps)") !=
+                  std::string::npos,
+              "primary marcher separates local hit proximity from conservative Lipschitz stepping");
+
+        // Same structure, radically different plane magnitudes: WGSL remains
+        // identical while the execution policy changes with current values.
+        geom::SdfNode unit = scaled;
+        for (auto& plane : unit.planes) plane *= 0.01f;
+        geom::SdfNode unitFallback =
+            geom::SdfNode::binary(
+                geom::SdfOp::Morph, unit, irrelevant, 0.0f);
+        const sdfwgsl::Program unitCompiled =
+            sdfwgsl::compile(unitFallback);
+        const sdfwgsl::FieldMarchPolicy unitPolicy =
+            sdfwgsl::inspectFieldMarchPolicy(unitFallback);
+        check(unitCompiled.ok && unitPolicy.ok &&
+                  std::fabs(unitPolicy.marchLipschitz - 1.0f) <= 2e-6f &&
+                  compiled.wgsl == unitCompiled.wgsl &&
+                  !sameFloats(compiled.params, unitCompiled.params),
+              "Convex normal scaling is a value edit: same WGSL, different params and march policy");
+    }
+
+    // ---------------------------------------------------------------------
     // 4. Authored radiance uses the SAME OntoMath emitter and parameter
     //    traversal as geometry/material math. A value-only radiance edit must
     //    recollect to the exact full-compile buffer without changing WGSL.
