@@ -793,3 +793,9 @@ world can be an interface, and why an interface can be made of anything in the w
 
 The button was never a special thing. It was only ever an object that someone agreed to
 mean something by.
+
+## Interrelated Documents
+- `docs/architecture/ADAPTIVE_COMPUTE_MOMENTS.md`
+
+## Thoughts on Integration and Interrelation
+User interactions act as semantic priorities that dynamically adjust the compute budget for slow, adaptive background processes. When a Person interacts with a specific control or Zone (Interaction as Law), that intent signals immediate relevance. Adaptive Compute Moments can utilize this signal to temporarily redirect temporal budgeting—accelerating the preparation or cache building for the interacted area while pausing lower-priority background adaptations, ensuring the engine remains responsive to foreground intent without dropping frames.
