@@ -534,6 +534,100 @@ std::string emitScalarForm(const OntoMath::ScalarForm& sf, Emit& e, const std::s
     return sf.terms.size() > 1 ? "(" + res + ")" : res;
 }
 
+bool isFieldVmPurePredicateMath(
+    const OntoMath::MathNode& node, std::string& why) {
+    using Op = OntoMath::MathNode::Op;
+
+    const auto recurse = [&](const OntoMath::MathNode& child) {
+        return isFieldVmPurePredicateMath(child, why);
+    };
+
+    if (node.op == Op::ScalarLeaf) {
+        for (const auto& term : node.scalarForm.terms) {
+            for (const auto& [name, exponent] : term.factors) {
+                (void)exponent;
+                if (name != "x" && name != "y" && name != "z") {
+                    why = "ScalarForm names unbound predicate variable '" + name + "'";
+                    return false;
+                }
+            }
+            for (const auto& tr : term.trans) {
+                if (tr.variable != "x" && tr.variable != "y" &&
+                    tr.variable != "z") {
+                    why = "ScalarForm transcendental names unbound predicate variable '" +
+                          tr.variable + "'";
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    if (node.op == Op::ValueLeaf) {
+        if (node.variableName == "x" || node.variableName == "y" ||
+            node.variableName == "z" ||
+            node.variableName == OntoMath::kAmbientPointVar) {
+            return true;
+        }
+        why = "ValueLeaf '" + node.variableName +
+              "' is not bound by the field VM predicate context";
+        return false;
+    }
+
+    if (node.op == Op::Map &&
+        node.stringArg != "Round" && node.stringArg != "Floor") {
+        why = "Map '" + node.stringArg +
+              "' is not in the field VM predicate subset";
+        return false;
+    }
+
+    switch (node.op) {
+        case Op::VectorConstruct:
+        case Op::Component:
+        case Op::Add:
+        case Op::Sub:
+        case Op::Scale:
+        case Op::Dot:
+        case Op::Cross:
+        case Op::Hadamard:
+        case Op::Normalize:
+        case Op::Length:
+        case Op::Map:
+        case Op::Project:
+        case Op::Distance:
+        case Op::Union:
+        case Op::Intersection:
+        case Op::Difference:
+        case Op::Div:
+        case Op::Pow:
+        case Op::Abs:
+        case Op::Clamp:
+        case Op::Sqrt:
+        case Op::Tan:
+        case Op::Noise:
+            break;
+
+        case Op::ScalarLeaf:
+        case Op::ValueLeaf:
+            return true;
+
+        default:
+            why = std::string(OntoMath::mathOpName(node.op)) +
+                  " is outside the shared primary/field-VM pure-predicate subset";
+            return false;
+    }
+
+    for (const auto& child : node.children) {
+        if (!child) {
+            why = std::string(OntoMath::mathOpName(node.op)) +
+                  " has a missing child";
+            return false;
+        }
+        if (!recurse(*child)) return false;
+    }
+    return true;
+}
+
 std::string emitMathDefinedness(
     const OntoMath::MathNode& node, Emit& e, const std::string& pt) {
 
@@ -2576,6 +2670,15 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
                                 e.refuse(
                                     "SDF Piecewise pure where guard must type-check "
                                     "as scalar field mathematics");
+                                break;
+                            }
+
+                            std::string predicateSubsetWhy;
+                            if (!isFieldVmPurePredicateMath(
+                                    *piece.whereLEZero, predicateSubsetWhy)) {
+                                e.refuse(
+                                    "SDF Piecewise pure where guard is not shared "
+                                    "field-VM predicate math: " + predicateSubsetWhy);
                                 break;
                             }
 
