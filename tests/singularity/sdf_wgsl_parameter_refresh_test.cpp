@@ -294,6 +294,56 @@ int main() {
     }
 
     // ---------------------------------------------------------------------
+    // 3d. Pure Piecewise where-guard math obeys the same structure/value split.
+    //     Predicate coefficients are parameters; changing the guard operator
+    //     itself is structure.
+    // ---------------------------------------------------------------------
+    {
+        auto guard = std::make_shared<OntoMath::MathNode>();
+        guard->op = OntoMath::MathNode::Op::Sub;
+        guard->children.push_back(variable("x"));
+        auto threshold = number(0.25);
+        OntoMath::MathNode* thresholdPtr = threshold.get();
+        guard->children.push_back(std::move(threshold));
+
+        auto pw = std::make_shared<OntoMath::Piecewise>();
+        OntoMath::Piecewise::Piece guarded;
+        guarded.mathNode = std::shared_ptr<OntoMath::MathNode>(
+            number(-0.2).release());
+        guarded.whereLEZero = guard;
+        OntoMath::Piecewise::Piece fallback;
+        fallback.mathNode = std::shared_ptr<OntoMath::MathNode>(
+            number(0.4).release());
+        pw->pieces.push_back(std::move(guarded));
+        pw->pieces.push_back(std::move(fallback));
+
+        geom::SdfNode field = geom::makeImplicit(pw);
+        const sdfwgsl::Program before = sdfwgsl::compile(field);
+        check(before.ok, "pure-where Piecewise SDF compiles");
+
+        thresholdPtr->scalarForm.terms[0].coefficient = 0.65;
+        const sdfwgsl::ParameterBlock refreshed =
+            sdfwgsl::collectParams(field);
+        const sdfwgsl::Program after = sdfwgsl::compile(field);
+
+        check(refreshed.ok && after.ok,
+              "pure-where numeric predicate recollection succeeds");
+        check(before.wgsl == after.wgsl,
+              "pure-where predicate coefficient edit leaves WGSL byte-identical");
+        check(!sameFloats(before.params, after.params),
+              "pure-where predicate coefficient edit changes parameter bytes");
+        check(sameFloats(refreshed.values, after.params),
+              "pure-where recollection exactly matches full-compile parameters");
+
+        // Structural: x-threshold -> x+(-threshold).
+        guard->op = OntoMath::MathNode::Op::Add;
+        thresholdPtr->scalarForm.terms[0].coefficient = -0.65;
+        const sdfwgsl::Program structural = sdfwgsl::compile(field);
+        check(structural.ok && structural.wgsl != after.wgsl,
+              "pure-where guard operator edit changes WGSL structure");
+    }
+
+    // ---------------------------------------------------------------------
     // 4. Authored radiance uses the SAME OntoMath emitter and parameter
     //    traversal as geometry/material math. A value-only radiance edit must
     //    recollect to the exact full-compile buffer without changing WGSL.
