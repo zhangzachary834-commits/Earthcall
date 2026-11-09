@@ -2505,7 +2505,9 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
                     const auto& pw = *n.piecewise;
                     bool hasInterval = false;
                     for (const auto& piece : pw.pieces) {
-                        hasInterval = hasInterval || piece.hasLo || piece.hasHi;
+                        hasInterval = hasInterval ||
+                            (!piece.whereLEZero &&
+                             (piece.hasLo || piece.hasHi));
                     }
 
                     std::string inVar;
@@ -2533,11 +2535,9 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
                     for (std::size_t pieceIndex = 0;
                          pieceIndex < pw.pieces.size(); ++pieceIndex) {
                         const auto& piece = pw.pieces[pieceIndex];
-                        if (piece.guard || piece.whereLEZero ||
-                            piece.call || piece.fold) {
+                        if (piece.guard || piece.call || piece.fold) {
                             e.refuse(
-                                "SDF Piecewise rung admits interval/bare pieces only; "
-                                "world guards, pure where guards, calls, and folds remain refused");
+                                "SDF Piecewise refuses subject/world guards, calls, and folds");
                             break;
                         }
                         if (!piece.mathNode) {
@@ -2563,24 +2563,60 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
                         }
 
                         std::string cond;
-                        if (piece.hasLo) {
-                            if (!std::isfinite(piece.lo)) {
-                                e.refuse("SDF Piecewise lower bound must be finite");
+                        const bool pureGuard = piece.whereLEZero != nullptr;
+
+                        if (pureGuard) {
+                            const auto guardType = piece.whereLEZero->typeOf(
+                                fieldEnv,
+                                "sdf-piece[" + std::to_string(pieceIndex) + "].where",
+                                false);
+                            if (!guardType.success ||
+                                (guardType.kind != OntoMath::ValueKind::Scalar &&
+                                 guardType.kind != OntoMath::ValueKind::ScalarField)) {
+                                e.refuse(
+                                    "SDF Piecewise pure where guard must type-check "
+                                    "as scalar field mathematics");
                                 break;
                             }
-                            cond += inVar +
-                                (piece.includeLo ? " >= " : " > ") +
-                                e.param(piece.lo);
-                        }
-                        if (piece.hasHi) {
-                            if (!std::isfinite(piece.hi)) {
-                                e.refuse("SDF Piecewise upper bound must be finite");
-                                break;
+
+                            const std::string guardDefined =
+                                emitMathDefinedness(*piece.whereLEZero, e, lp);
+                            const bool previousUndefinedMode =
+                                e.preserveUndefinedLn;
+                            e.preserveUndefinedLn = true;
+                            const std::string guardValue =
+                                emitMathNode(*piece.whereLEZero, e, lp);
+                            e.preserveUndefinedLn = previousUndefinedMode;
+
+                            // Piece::applies evaluates where first and, when it
+                            // produces a value, returns immediately. Interval
+                            // bounds on the same pure-guard piece are therefore
+                            // intentionally ignored. The CPU test is !(g > 0),
+                            // not IEEE g <= 0, which matters for NaN.
+                            cond = "(" + guardDefined + ") && !((" +
+                                   guardValue + ") > 0.0)";
+                        } else {
+                            if (piece.hasLo) {
+                                if (!std::isfinite(piece.lo)) {
+                                    e.refuse(
+                                        "SDF Piecewise lower bound must be finite");
+                                    break;
+                                }
+                                cond += inVar +
+                                    (piece.includeLo ? " >= " : " > ") +
+                                    e.param(piece.lo);
                             }
-                            if (!cond.empty()) cond += " && ";
-                            cond += inVar +
-                                (piece.includeHi ? " <= " : " < ") +
-                                e.param(piece.hi);
+                            if (piece.hasHi) {
+                                if (!std::isfinite(piece.hi)) {
+                                    e.refuse(
+                                        "SDF Piecewise upper bound must be finite");
+                                    break;
+                                }
+                                if (!cond.empty()) cond += " && ";
+                                cond += inVar +
+                                    (piece.includeHi ? " <= " : " < ") +
+                                    e.param(piece.hi);
+                            }
                         }
 
                         const std::string value =
@@ -2593,7 +2629,9 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
                         e.line("    " + out + " = " + value + ";");
                         e.line("    " + selected + " = true;");
                         e.line("}");
-                        if (cond.empty()) break; // first bare piece is permanent catch-all
+                        if (!pureGuard && cond.empty()) {
+                            break; // first bare piece is permanent catch-all
+                        }
                     }
                 } else if (!n.rpn.empty()) {
                     e.line("let " + out + " = " + emitRpn(n.rpn, e, lp) + ";");
