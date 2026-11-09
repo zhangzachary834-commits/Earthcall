@@ -303,6 +303,9 @@ struct Emit {
     bool               bindPhaseDirections = false; // V3 Phi admits wi/wo, never source omega
     bool               bindMaterialResponse = false; // direct receiver context admits n + wi/wo
     bool               bindEnvironmentResponse = false; // environment receiver admits n + wo + environmentRadiance
+    // Pure Piecewise predicates need CPU undefinedness, not the historical
+    // compatibility clamp used by ordinary ScalarForm ln lowering.
+    bool               preserveUndefinedLn = false;
     const BindingValues* propertyBindings = nullptr; // generic MathNode::Bind values supplied by owner
     bool               readSurfaceNormal = false;
     bool               readWi = false;
@@ -513,7 +516,11 @@ std::string emitScalarForm(const OntoMath::ScalarForm& sf, Emit& e, const std::s
             if (tr.kind == OntoMath::TransFactor::Kind::Sin) termStr += " * sin(" + inner + ")";
             else if (tr.kind == OntoMath::TransFactor::Kind::Cos) termStr += " * cos(" + inner + ")";
             else if (tr.kind == OntoMath::TransFactor::Kind::Exp) termStr += " * exp(" + inner + ")";
-            else if (tr.kind == OntoMath::TransFactor::Kind::Ln) termStr += " * log(max(" + inner + ", 1e-8))";
+            else if (tr.kind == OntoMath::TransFactor::Kind::Ln) {
+                termStr += e.preserveUndefinedLn
+                    ? " * log(" + inner + ")"
+                    : " * log(max(" + inner + ", 1e-8))";
+            }
         }
         if (i > 0) res += " + ";
         res += "(" + termStr + ")";
@@ -525,6 +532,46 @@ std::string emitScalarForm(const OntoMath::ScalarForm& sf, Emit& e, const std::s
     // certificate witness, Claude Opus 5.5, 2026-10-17; witness in
     // webgpu_volume_support_certificates_test ("precedence witness").
     return sf.terms.size() > 1 ? "(" + res + ")" : res;
+}
+
+std::string emitMathDefinedness(
+    const OntoMath::MathNode& node, Emit& e, const std::string& pt) {
+
+    std::vector<std::string> conditions;
+
+    if (node.op == OntoMath::MathNode::Op::ScalarLeaf) {
+        // ScalarForm evaluation is partial only where one of its ln factors is
+        // outside domain (unbound symbols are a compiler refusal elsewhere).
+        // CPU TransFactor::Ln says undefined iff arg <= 0. NaN does NOT satisfy
+        // that comparison, so use !(arg <= 0) rather than arg > 0.
+        for (const auto& term : node.scalarForm.terms) {
+            for (const auto& tr : term.trans) {
+                if (tr.kind != OntoMath::TransFactor::Kind::Ln) continue;
+                const std::string variable =
+                    pointComponent(tr.variable, e, pt);
+                const std::string inner =
+                    "(" + e.param(tr.scale) + " * " + variable +
+                    " + " + e.param(tr.shift) + ")";
+                conditions.push_back("!((" + inner + ") <= 0.0)");
+            }
+        }
+    }
+
+    for (const auto& child : node.children) {
+        if (!child) continue;
+        const std::string childDefined =
+            emitMathDefinedness(*child, e, pt);
+        if (childDefined != "true") {
+            conditions.push_back(childDefined);
+        }
+    }
+
+    if (conditions.empty()) return "true";
+    std::string result = "(" + conditions.front() + ")";
+    for (std::size_t i = 1; i < conditions.size(); ++i) {
+        result += " && (" + conditions[i] + ")";
+    }
+    return result;
 }
 
 bool expensiveTimeOnly(const OntoMath::ScalarForm& form) {
@@ -566,6 +613,7 @@ std::string emitMathNode(const OntoMath::MathNode& node, Emit& e, const std::str
     context += e.bindMaterialResponse ? "R" : "-";
     context += e.bindEnvironmentResponse ? "J" : "-";
     context += e.prepareVolumeTime ? "Q" : "-";
+    context += e.preserveUndefinedLn ? "U" : "-";
     // A retained fragment embeds lexical substitutions, including parameter slots.
     for (const auto& [name, expression] : e.boundNames)
         context += "|let:" + std::to_string(name.size()) + ":" + name + "=" +
