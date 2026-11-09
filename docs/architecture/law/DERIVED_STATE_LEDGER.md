@@ -47,6 +47,20 @@ red the moment the map stops noticing the world's shape move.
 
 ---
 
+## WebGPU interval Piecewise field execution — 2026-11-08
+
+| Structure | Derived from | Invalidated / renewed by | Guarded by |
+|---|---|---|---|
+| Primary SDF inline Piecewise control | Current authored `SdfNode::piecewise` interval/bare pieces. Bounds test the leaf-local x/y/z coordinate after `offset`; authored order is preserved and the first applicable piece wins. Open/closed endpoint topology is structural; numeric endpoints and branch coefficients remain parameter values. | Generated with the SDF program. Numeric endpoint/value edits recollect through the ordinary parameter path without changing WGSL; changing endpoint openness or piece topology changes generated structure. Unsupported world guards, pure `whereLEZero`, calls and folds refuse the SDF program instead of becoming empty geometry. | `field_vm_test` primary-WGSL witness; `sdf_wgsl_parameter_refresh_test` proves endpoint/value edits are byte-identical WGSL while open/closed edits are structural; `webgpu_object_test` requires a Piecewise-only SDF to render visibly. |
+| `FieldVmOpcode::BranchInterval` / `Jump` | The same current Piecewise interval/bare ordering, lowered to forward-only Kernel IR. Targets are program-relative instruction indices, so programs remain relocatable inside the packed scene bytecode buffer. Branch control preserves any enclosing CSG stack prefix and contributes no authored identity. | Rebuilt with each admitted frame program. Branch targets are validated as strictly forward and within the program; malformed/self/backward targets fail closed. Instruction/stack budgets remain the existing VM hard limits. | `field_vm_test`: CPU parity across overlapping intervals, open/closed endpoints, local offsets, catch-all, no-match fallback, nested CSG stack preservation and malformed target refusal; fixed WGSL interpreter source must contain opcodes 66/67. `webgpu_object_test`: the same Piecewise SDF must occlude both mesh and SDF receivers through CompleteScene. |
+| Piecewise SDF activity/noise discovery | Presence of authored `SdfNode::piecewise`; branch MathNode noise dependencies | Re-evaluated from current authored SDF structure; no persisted cache | Primary Piecewise native witness plus compiler noise/helper coverage |
+
+**Compatibility seam, stated rather than hidden.** `OntoMath::Piecewise::evaluate` defines “outside every piece” as undefined (`nullopt`). Current `geom::evalSdf` then falls through an empty legacy RPN and returns `1e9f` empty space for a Piecewise-only SDF. This rung makes primary WGSL and Field VM match that current **SDF rendering** behavior. It does not redefine OntoMath's abstract Piecewise semantics. A future undefined-SDF cleanup must migrate CPU `evalSdf`, primary GPU evaluation and VM execution together.
+
+**Still refused:** subject/world `ConditionNode` guards, pure `whereLEZero` guards, FunctionCall and Fold. In particular, pure guards are not lowered merely because their predicate math is executable: CPU semantics skip a piece when its pure guard is undefined, while today's VM math failure makes the whole evaluation Unknown. Predicate-local failure/continuation must land before `whereLEZero` can become lossless authority.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
 ## WebGPU scene Field VM execution state — 2026-11-06, revised 2026-11-08
 
 | Structure | Derived from | Invalidated / renewed by | Guarded by |
