@@ -1138,7 +1138,7 @@ PredicateVmResult evaluatePredicateVmSlice(
 
     std::array<float, kFieldVmMaxStackDepth> stack{};
     uint32_t sp = 0;
-    const auto push = [&](float value) mutable -> bool {
+    auto push = [&](float value) -> bool {
         if (sp >= kFieldVmMaxStackDepth) return false;
         stack[sp++] = value; // NaN/inf are authored numeric outcomes here.
         return true;
