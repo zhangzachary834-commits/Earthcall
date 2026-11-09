@@ -293,6 +293,20 @@ int main(){
     check(nestedPiecewiseParity,
           "Piecewise VM preserves enclosing CSG stack operands across alternative branches");
 
+    // Control records are forward-only derived IR. Corrupt targets must fail
+    // closed rather than looping or executing an unintended authored branch.
+    auto malformedBranch=pieceVm;
+    for(std::size_t ip=0;ip<malformedBranch.instructions.size();++ip){
+        auto& inst=malformedBranch.instructions[ip];
+        if(static_cast<sdfwgsl::FieldVmOpcode>(inst.meta.x)==
+           sdfwgsl::FieldVmOpcode::BranchInterval){
+            inst.meta.w=static_cast<uint32_t>(ip); // backward/self target
+            break;
+        }
+    }
+    check(!sdfwgsl::evaluateFieldVm(malformedBranch,{0,0,0}),
+          "malformed Piecewise branch target refuses instead of looping");
+
     // No catch-all follows current geom::evalSdf rendering compatibility:
     // Piecewise undefined falls through empty legacy RPN -> 1e9.
     auto boundedPw=std::make_shared<OntoMath::Piecewise>();
