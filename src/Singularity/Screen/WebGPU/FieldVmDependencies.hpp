@@ -422,6 +422,7 @@ inline FieldVmDependencySnapshot snapshotFieldVmDependencies(
             return true;
         };
 
+    add("field-vm-dependency-snapshot:v1");
     bool valid = manifest.structurallyValid();
     for (const auto& d : manifest.dependencies) {
         add(std::to_string(static_cast<unsigned>(d.kind)));
