@@ -219,6 +219,7 @@ jobs:
             sdf_wgsl_parameter_refresh_test \
             field_vm_test \
             field_vm_dependency_test \
+            visibility_proof_premises_test \
             sdf_range_soundness_test \
             sdf_range_hierarchy_test \
             heightfield_predicate_test \
@@ -246,6 +247,7 @@ jobs:
           ./build/sdf_wgsl_parameter_refresh_test
           ./build/field_vm_test
           ./build/field_vm_dependency_test
+          ./build/visibility_proof_premises_test
           ./build/sdf_range_soundness_test
           ./build/sdf_range_hierarchy_test
           ./build/heightfield_predicate_test
