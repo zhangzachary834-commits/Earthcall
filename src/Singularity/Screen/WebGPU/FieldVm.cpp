@@ -608,9 +608,11 @@ bool emitMathScalar(const OntoMath::MathNode& node, const glm::vec3& offset,
 }
 
 bool emitPiecewiseVm(const geom::SdfNode& node,
-                             const OntoMath::Piecewise& pw,
-                             FieldVmProgram& out,
-                             uint32_t& stackDepth) {
+                     const OntoMath::Piecewise& pw,
+                     FieldVmProgram& out,
+                     uint32_t& stackDepth,
+                     const FieldWorldGuardDecisions* worldGuardDecisions,
+                     std::size_t& worldGuardCursor) {
     if (pw.pieces.empty()) {
         return pushMathConstant(1e9, out, stackDepth);
     }
@@ -618,7 +620,8 @@ bool emitPiecewiseVm(const geom::SdfNode& node,
     bool hasIntervalPiece = false;
     for (const auto& piece : pw.pieces) {
         hasIntervalPiece = hasIntervalPiece ||
-            (!piece.whereLEZero && (piece.hasLo || piece.hasHi));
+            (!piece.whereLEZero && !piece.guard &&
+             (piece.hasLo || piece.hasHi));
     }
 
     int axis = -1;
@@ -636,21 +639,21 @@ bool emitPiecewiseVm(const geom::SdfNode& node,
 
     const uint32_t incomingDepth = stackDepth;
     std::vector<std::size_t> endJumps;
-    std::optional<std::size_t> pendingFalseBranch;
+    std::vector<std::size_t> pendingFalseBranches;
     bool catchAll = false;
 
     for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
-        if (pendingFalseBranch) {
-            out.instructions[*pendingFalseBranch].meta.w =
+        for (const std::size_t branchIndex : pendingFalseBranches) {
+            out.instructions[branchIndex].meta.w =
                 static_cast<uint32_t>(out.instructions.size());
-            pendingFalseBranch.reset();
         }
+        pendingFalseBranches.clear();
 
         const auto& piece = pw.pieces[i];
-        if (piece.guard || piece.call || piece.fold) {
+        if (piece.call || piece.fold) {
             out.ok = false;
             out.error =
-                "field VM Piecewise refuses subject/world guards, calls, and folds";
+                "field VM Piecewise refuses calls and folds";
             return false;
         }
         if (!piece.mathNode) {
@@ -676,9 +679,10 @@ bool emitPiecewiseVm(const geom::SdfNode& node,
         }
 
         const bool pureGuard = piece.whereLEZero != nullptr;
+        const bool worldGuard = piece.guard != nullptr;
         const bool intervalGate =
-            !pureGuard && (piece.hasLo || piece.hasHi);
-        const bool gated = pureGuard || intervalGate;
+            !pureGuard && !worldGuard && (piece.hasLo || piece.hasHi);
+        const bool gated = pureGuard || worldGuard || intervalGate;
 
         if (pureGuard) {
             const auto guardType = fieldMathType(
@@ -734,7 +738,7 @@ bool emitPiecewiseVm(const geom::SdfNode& node,
             branch.meta.y =
                 static_cast<uint32_t>(predicate.instructions.size());
             if (!appendVm(out, stackDepth, branch, 0, 0)) return false;
-            pendingFalseBranch = out.instructions.size() - 1u;
+            pendingFalseBranches.push_back(out.instructions.size() - 1u);
 
             out.instructions.insert(
                 out.instructions.end(),
@@ -742,6 +746,32 @@ bool emitPiecewiseVm(const geom::SdfNode& node,
                 predicate.instructions.end());
             out.maxStackDepth =
                 std::max(out.maxStackDepth, predicate.maxStackDepth);
+        }
+
+        if (worldGuard) {
+            if (!worldGuardDecisions ||
+                worldGuardCursor >= worldGuardDecisions->size()) {
+                out.ok = false;
+                out.error =
+                    "field VM Piecewise world guard has no authoritative decision";
+                return false;
+            }
+            const FieldWorldGuardDecision decision =
+                (*worldGuardDecisions)[worldGuardCursor++];
+            if (decision == FieldWorldGuardDecision::Unknown) {
+                out.ok = false;
+                out.error =
+                    "field VM Piecewise world guard authority is Unknown";
+                return false;
+            }
+
+            FieldVmInstruction branch;
+            branch.meta.x =
+                static_cast<uint32_t>(FieldVmOpcode::BranchWorldGuard);
+            branch.a.x =
+                decision == FieldWorldGuardDecision::True ? 1.0f : 0.0f;
+            if (!appendVm(out, stackDepth, branch, 0, 0)) return false;
+            pendingFalseBranches.push_back(out.instructions.size() - 1u);
         } else if (intervalGate) {
             const float lo = static_cast<float>(piece.lo);
             const float hi = static_cast<float>(piece.hi);
@@ -766,7 +796,7 @@ bool emitPiecewiseVm(const geom::SdfNode& node,
             branch.a.y = lo;
             branch.a.z = hi;
             if (!appendVm(out, stackDepth, branch, 0, 0)) return false;
-            pendingFalseBranch = out.instructions.size() - 1u;
+            pendingFalseBranches.push_back(out.instructions.size() - 1u);
         }
 
         if (!emitMathScalar(*piece.mathNode, node.offset, out, stackDepth)) {
@@ -796,11 +826,11 @@ bool emitPiecewiseVm(const geom::SdfNode& node,
         stackDepth = incomingDepth;
     }
 
-    if (pendingFalseBranch) {
-        out.instructions[*pendingFalseBranch].meta.w =
+    for (const std::size_t branchIndex : pendingFalseBranches) {
+        out.instructions[branchIndex].meta.w =
             static_cast<uint32_t>(out.instructions.size());
-        pendingFalseBranch.reset();
     }
+    pendingFalseBranches.clear();
 
     if (!catchAll) {
         stackDepth = incomingDepth;
@@ -817,10 +847,13 @@ bool emitPiecewiseVm(const geom::SdfNode& node,
 }
 
 bool emitExprVm(const geom::SdfNode& node,
-                FieldVmProgram& out, uint32_t& stackDepth) {
+                FieldVmProgram& out, uint32_t& stackDepth,
+                const FieldWorldGuardDecisions* worldGuardDecisions,
+                std::size_t& worldGuardCursor) {
     if (node.piecewise) {
         return emitPiecewiseVm(
-            node, *node.piecewise, out, stackDepth);
+            node, *node.piecewise, out, stackDepth,
+            worldGuardDecisions, worldGuardCursor);
     }
 
     const OntoMath::MathNode* root = node.mathNode.get();
@@ -903,7 +936,9 @@ bool emitConvexVm(const geom::SdfNode& node,
 
 bool emitFieldVm(const geom::SdfNode& node,
                  FieldVmProgram& out,
-                 uint32_t& stackDepth) {
+                 uint32_t& stackDepth,
+                 const FieldWorldGuardDecisions* worldGuardDecisions,
+                 std::size_t& worldGuardCursor) {
     if (out.instructions.size() >= kFieldVmMaxInstructions) {
         out.ok = false;
         out.error = "field VM instruction budget exceeded";
@@ -958,7 +993,9 @@ bool emitFieldVm(const geom::SdfNode& node,
                 inst.b.x = node.dims.y;
                 break;
             case geom::SdfPrim::Expr:
-                return emitExprVm(node, out, stackDepth);
+                return emitExprVm(
+                    node, out, stackDepth,
+                    worldGuardDecisions, worldGuardCursor);
             case geom::SdfPrim::Convex:
                 return emitConvexVm(node, out, stackDepth);
         }
@@ -980,8 +1017,10 @@ bool emitFieldVm(const geom::SdfNode& node,
         return false;
     }
 
-    if (!emitFieldVm(*node.children[0], out, stackDepth) ||
-        !emitFieldVm(*node.children[1], out, stackDepth)) {
+    if (!emitFieldVm(*node.children[0], out, stackDepth,
+                     worldGuardDecisions, worldGuardCursor) ||
+        !emitFieldVm(*node.children[1], out, stackDepth,
+                     worldGuardDecisions, worldGuardCursor)) {
         return false;
     }
     if (stackDepth < 2) {
@@ -1093,7 +1132,9 @@ FieldMarchPolicy inspectFieldMarchPolicy(const geom::SdfNode& root) {
     return inspectMarchPolicyNode(root);
 }
 
-FieldVmProgram lowerFieldVm(const geom::SdfNode& root) {
+FieldVmProgram lowerFieldVm(
+    const geom::SdfNode& root,
+    const FieldWorldGuardDecisions* worldGuardDecisions) {
     FieldVmProgram out;
     const FieldMarchPolicy policy = inspectFieldMarchPolicy(root);
     if (!policy.ok) {
@@ -1105,7 +1146,10 @@ FieldVmProgram lowerFieldVm(const geom::SdfNode& root) {
     out.marchLipschitz = policy.marchLipschitz;
 
     uint32_t stackDepth = 0;
-    if (!emitFieldVm(root, out, stackDepth)) {
+    std::size_t worldGuardCursor = 0;
+    if (!emitFieldVm(
+            root, out, stackDepth,
+            worldGuardDecisions, worldGuardCursor)) {
         out.instructions.clear();
         out.maxStackDepth = 0;
         return out;
@@ -1113,6 +1157,15 @@ FieldVmProgram lowerFieldVm(const geom::SdfNode& root) {
     if (stackDepth != 1 || out.instructions.empty()) {
         out.ok = false;
         out.error = "field VM lowering did not produce one terminal value";
+        out.instructions.clear();
+        out.maxStackDepth = 0;
+        return out;
+    }
+    if (worldGuardDecisions &&
+        worldGuardCursor != worldGuardDecisions->size()) {
+        out.ok = false;
+        out.error =
+            "field VM world-guard decision count does not match reachable authored guard sites";
         out.instructions.clear();
         out.maxStackDepth = 0;
     }
