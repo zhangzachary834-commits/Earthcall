@@ -61,10 +61,13 @@ int main() {
     const auto boundField = geom::makeImplicit(add);
 
     const auto manifest = sdfwgsl::inspectFieldVmDependencies(boundField);
+    const std::string manifestIdentity =
+        sdfwgsl::fieldVmDependencyManifestIdentity(manifest);
     check(manifest.structurallyValid() &&
               manifest.dependencies.size() == 1 &&
               has(manifest, sdfwgsl::FieldVmDependencyKind::PropertyPath,
-                  "radius"),
+                  "radius") &&
+              !manifestIdentity.empty(),
           "Bind is exposed as PropertyPath dependency; local x is not external");
 
     std::map<std::string, PropertyValue> valuesA{
@@ -98,8 +101,10 @@ int main() {
     const auto snapshotB =
         sdfwgsl::snapshotFieldVmDependencies(manifest, ctxB);
     check(snapshotA.valid && snapshotB.valid &&
-              snapshotA.identity != snapshotB.identity,
-          "same AST with changed executable binding value gets a different exact runtime snapshot");
+              snapshotA.identity != snapshotB.identity &&
+              manifestIdentity ==
+                  sdfwgsl::fieldVmDependencyManifestIdentity(manifest),
+          "same AST with changed executable binding value gets a different runtime snapshot but identical structural manifest identity");
 
     std::map<std::string, PropertyValue> sameValues{
         {"radius", PropertyValue(0.5)}
@@ -129,11 +134,13 @@ int main() {
     const auto trackedPlan =
         sdfwgsl::planFieldVmInvalidation(manifest, trackedCtx);
     check(trackedPlan.valid &&
+              trackedPlan.manifestIdentity == manifestIdentity &&
+              trackedPlan.snapshotIdentity == snapshotA.identity &&
               trackedPlan.requirements.size() == 1 &&
               trackedPlan.requirements[0].mode ==
                   sdfwgsl::FieldVmInvalidationMode::PropertyChangeFeed &&
               !sdfwgsl::fieldVmPlanRequiresSnapshotRevalidation(trackedPlan),
-          "proven complete property feed earns narrow invalidation route");
+          "proven complete property feed earns narrow invalidation route without collapsing structure and runtime evidence");
     check(sdfwgsl::fieldVmPropertyChangeInvalidates(
               trackedPlan, {"material:A", "radius"}),
           "matching stable bearer and root-property notice invalidates tracked dependency");
@@ -334,6 +341,15 @@ int main() {
               sdfwgsl::fieldVmPlanRequiresSnapshotRevalidation(contextPlan),
           "subject/world/function/fold contexts stay authority-stamp revalidation, not fake property events");
 
+
+    auto otherBindMath = std::make_shared<OntoMath::MathNode>();
+    otherBindMath->op = OntoMath::MathNode::Op::Add;
+    otherBindMath->children = {value("x"), bind("diameter")};
+    const auto otherManifest = sdfwgsl::inspectFieldVmDependencies(
+        geom::makeImplicit(otherBindMath));
+    check(sdfwgsl::fieldVmDependencyManifestIdentity(otherManifest) !=
+              manifestIdentity,
+          "changing dependency structure changes manifest identity even before runtime values are considered");
 
     const auto emptyBindField = geom::makeImplicit(bind(""));
     const auto emptyBind =
