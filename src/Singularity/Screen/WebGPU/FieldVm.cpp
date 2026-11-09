@@ -633,6 +633,7 @@ bool emitIntervalPiecewiseVm(const geom::SdfNode& node,
         }
     }
 
+    const uint32_t incomingDepth = stackDepth;
     std::vector<std::size_t> endJumps;
     std::optional<std::size_t> pendingFalseBranch;
     bool catchAll = false;
@@ -705,10 +706,10 @@ bool emitIntervalPiecewiseVm(const geom::SdfNode& node,
         if (!emitMathScalar(*piece.mathNode, node.offset, out, stackDepth)) {
             return false;
         }
-        if (stackDepth != 1u) {
+        if (stackDepth != incomingDepth + 1u) {
             out.ok = false;
             out.error =
-                "field VM Piecewise piece did not leave exactly one scalar value";
+                "field VM Piecewise piece did not preserve its incoming stack prefix";
             return false;
         }
 
@@ -724,8 +725,9 @@ bool emitIntervalPiecewiseVm(const geom::SdfNode& node,
         endJumps.push_back(out.instructions.size() - 1u);
 
         // The next authored piece is an alternative path, not a sequential
-        // continuation of this selected value.
-        stackDepth = 0;
+        // continuation of this selected value. Preserve any enclosing CSG
+        // operands that were already live before this Piecewise leaf.
+        stackDepth = incomingDepth;
     }
 
     if (pendingFalseBranch) {
@@ -735,7 +737,7 @@ bool emitIntervalPiecewiseVm(const geom::SdfNode& node,
     }
 
     if (!catchAll) {
-        stackDepth = 0;
+        stackDepth = incomingDepth;
         if (!pushMathConstant(1e9, out, stackDepth)) return false;
     }
 
@@ -744,7 +746,7 @@ bool emitIntervalPiecewiseVm(const geom::SdfNode& node,
     for (const std::size_t jumpIndex : endJumps) {
         out.instructions[jumpIndex].meta.y = endTarget;
     }
-    stackDepth = 1;
+    stackDepth = incomingDepth + 1u;
     return true;
 }
 
