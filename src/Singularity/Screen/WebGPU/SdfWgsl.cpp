@@ -1603,6 +1603,11 @@ bool sdfNodeContainsNoise(const geom::SdfNode& n) {
     if (n.op == geom::SdfOp::Leaf) {
         if (n.prim == geom::SdfPrim::Expr) {
             if (n.mathNode && astContainsNoise(*n.mathNode)) return true;
+            if (n.piecewise) {
+                for (const auto& piece : n.piecewise->pieces) {
+                    if (piece.mathNode && astContainsNoise(*piece.mathNode)) return true;
+                }
+            }
             if (!n.expr.empty() && n.expr.find("noise") != std::string::npos) return true;
         }
         return false;
@@ -2444,10 +2449,104 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
             case geom::SdfPrim::Expr: {
                 // The implicit f(x,y,z)=0 surface. NOTE: this is an iso-surface
                 // value, not a true distance, so sphere tracing must take damped
-                // steps through it — see the marcher's use of kExprDamping.
+                // steps through it.
                 e.sawExpr = true;
                 if (n.mathNode) {
                     e.line("let " + out + " = " + emitMathNode(*n.mathNode, e, lp) + ";");
+                } else if (n.piecewise) {
+                    const auto& pw = *n.piecewise;
+                    bool hasInterval = false;
+                    for (const auto& piece : pw.pieces) {
+                        hasInterval = hasInterval || piece.hasLo || piece.hasHi;
+                    }
+
+                    std::string inVar;
+                    if (hasInterval) {
+                        if (pw.inputVariable == "x") inVar = lp + ".x";
+                        else if (pw.inputVariable == "y") inVar = lp + ".y";
+                        else if (pw.inputVariable == "z") inVar = lp + ".z";
+                        else {
+                            e.refuse(
+                                "SDF Piecewise interval input must be local x, y, or z");
+                        }
+                    }
+
+                    const OntoMath::TypeEnv fieldEnv{
+                        {OntoMath::kAmbientPointVar, OntoMath::MathType::vector(3)},
+                        {"x", OntoMath::ValueKind::Scalar},
+                        {"y", OntoMath::ValueKind::Scalar},
+                        {"z", OntoMath::ValueKind::Scalar},
+                    };
+
+                    e.line("var " + out + " = 1e9;");
+                    const std::string selected = out + "_selected";
+                    e.line("var " + selected + " = false;");
+
+                    for (std::size_t pieceIndex = 0;
+                         pieceIndex < pw.pieces.size(); ++pieceIndex) {
+                        const auto& piece = pw.pieces[pieceIndex];
+                        if (piece.guard || piece.whereLEZero ||
+                            piece.call || piece.fold) {
+                            e.refuse(
+                                "SDF Piecewise rung admits interval/bare pieces only; "
+                                "world guards, pure where guards, calls, and folds remain refused");
+                            break;
+                        }
+                        if (!piece.mathNode) {
+                            e.refuse(
+                                "SDF Piecewise piece " +
+                                std::to_string(pieceIndex) +
+                                " has no authored value");
+                            break;
+                        }
+
+                        const auto type = piece.mathNode->typeOf(
+                            fieldEnv,
+                            "sdf-piece[" + std::to_string(pieceIndex) + "]",
+                            false);
+                        if (!type.success ||
+                            (type.kind != OntoMath::ValueKind::Scalar &&
+                             type.kind != OntoMath::ValueKind::ScalarField)) {
+                            e.refuse(
+                                "SDF Piecewise piece " +
+                                std::to_string(pieceIndex) +
+                                " must type-check as scalar field mathematics");
+                            break;
+                        }
+
+                        std::string cond;
+                        if (piece.hasLo) {
+                            if (!std::isfinite(piece.lo)) {
+                                e.refuse("SDF Piecewise lower bound must be finite");
+                                break;
+                            }
+                            cond += inVar +
+                                (piece.includeLo ? " >= " : " > ") +
+                                e.param(piece.lo);
+                        }
+                        if (piece.hasHi) {
+                            if (!std::isfinite(piece.hi)) {
+                                e.refuse("SDF Piecewise upper bound must be finite");
+                                break;
+                            }
+                            if (!cond.empty()) cond += " && ";
+                            cond += inVar +
+                                (piece.includeHi ? " <= " : " < ") +
+                                e.param(piece.hi);
+                        }
+
+                        const std::string value =
+                            emitMathNode(*piece.mathNode, e, lp);
+                        if (cond.empty()) {
+                            e.line("if (!" + selected + ") {");
+                        } else {
+                            e.line("if (!" + selected + " && (" + cond + ")) {");
+                        }
+                        e.line("    " + out + " = " + value + ";");
+                        e.line("    " + selected + " = true;");
+                        e.line("}");
+                        if (cond.empty()) break; // first bare piece is permanent catch-all
+                    }
                 } else if (!n.rpn.empty()) {
                     e.line("let " + out + " = " + emitRpn(n.rpn, e, lp) + ";");
                 } else if (!n.expr.empty()) {
