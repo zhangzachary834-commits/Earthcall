@@ -3481,6 +3481,83 @@ int main() {
                sourceSdfPiecewiseStats.sceneVisibilityUnknownFrames == 0 &&
                "SDF CompleteScene did not execute foreign interval Piecewise through the field VM");
 
+        // PURE whereLEZero crosses the same dual authority. This guard is
+        // x^2 - 1 <= 0, so the sphere field is defined only in the local slab
+        // selected by authored predicate mathematics rather than interval syntax.
+        auto whereGuard = std::make_shared<OntoMath::MathNode>();
+        whereGuard->op = OntoMath::MathNode::Op::ScalarLeaf;
+        whereGuard->scalarForm =
+            OntoMath::ScalarForm::variable("x", 2.0)
+                .plus(OntoMath::ScalarForm::constant(-1.0));
+
+        auto wherePiecewiseField = std::make_shared<OntoMath::Piecewise>();
+        OntoMath::Piecewise::Piece whereSpherePiece;
+        whereSpherePiece.mathNode =
+            std::make_shared<OntoMath::MathNode>(*exprScaled);
+        whereSpherePiece.whereLEZero = whereGuard;
+        wherePiecewiseField->pieces.push_back(
+            std::move(whereSpherePiece));
+
+        Object vmKnownWherePiecewise;
+        vmKnownWherePiecewise.setFieldShape(
+            geom::makeImplicit(wherePiecewiseField),
+            glm::vec3(0.8f));
+        vmKnownWherePiecewise.setRenderMode(Object::RenderMode::Auto);
+        vmKnownWherePiecewise.setMaterialId(
+            "material.webgpu_source_transport_parity");
+
+        renderer.setLightingEnabled(false);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        vmKnownWherePiecewise.drawObject();
+        renderer.endFrame();
+        unsigned char primaryWherePiecewisePixel[4];
+        readCentre(primaryWherePiecewisePixel);
+        const Renderer::FrameStats primaryWherePiecewiseStats =
+            renderer.frameStats();
+        assert(primaryWherePiecewisePixel[0] > 220 &&
+               primaryWherePiecewisePixel[1] > 220 &&
+               primaryWherePiecewisePixel[2] > 220 &&
+               primaryWherePiecewiseStats.sdfProgramRefusals == 0 &&
+               "pure-where Piecewise SDF was refused/invisible in primary surface evaluation");
+        renderer.setLightingEnabled(true);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(implicitExprBlockerModel);
+        vmKnownWherePiecewise.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshWherePiecewiseBlocked[4];
+        readCentre(sourceMeshWherePiecewiseBlocked);
+        const Renderer::FrameStats sourceMeshWherePiecewiseStats =
+            renderer.frameStats();
+        assert(sourceMeshWherePiecewiseBlocked[0] < 5 &&
+               sourceMeshWherePiecewiseBlocked[1] < 5 &&
+               sourceMeshWherePiecewiseBlocked[2] < 5 &&
+               sourceMeshWherePiecewiseStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshWherePiecewiseStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshWherePiecewiseStats.sceneVisibilityUnknownFrames == 0 &&
+               "mesh CompleteScene did not execute foreign pure-where Piecewise through opcode 68");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(implicitExprBlockerModel);
+        vmKnownWherePiecewise.drawObject();
+        renderer.endFrame();
+        unsigned char sourceSdfWherePiecewiseBlocked[4];
+        readCentre(sourceSdfWherePiecewiseBlocked);
+        const Renderer::FrameStats sourceSdfWherePiecewiseStats =
+            renderer.frameStats();
+        assert(sourceSdfWherePiecewiseBlocked[0] < 5 &&
+               sourceSdfWherePiecewiseBlocked[1] < 5 &&
+               sourceSdfWherePiecewiseBlocked[2] < 5 &&
+               sourceSdfWherePiecewiseStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceSdfWherePiecewiseStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               sourceSdfWherePiecewiseStats.sceneVisibilityUnknownFrames == 0 &&
+               "SDF CompleteScene did not execute foreign pure-where Piecewise through opcode 68");
+
         // CONVEX CROSSES THE SAME FRONTIER WITHOUT A NEW VM NOUN.
         // Six authored outward unit planes form an exact local cube. The field
         // VM lowers each half-space into generic scalar math and MathMax folds.
