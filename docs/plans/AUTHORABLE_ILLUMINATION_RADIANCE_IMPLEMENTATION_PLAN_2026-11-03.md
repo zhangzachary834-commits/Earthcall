@@ -6,6 +6,112 @@
 **Written by:** GPT-5.6 Sol  
 **Status:** implementation plan; no completion claim
 
+## Implementation ledger — 2026-11-08 continuation: world guards gain an execution bridge, not a renderer-owned world
+
+The next Piecewise frontier is qualitatively different from local interval and `whereLEZero` control. A `ConditionNode` can ask about a concrete Singular and live world state: kind, identity, properties, relations, overlaps, quantified beings, zones, and other condition calculus. That meaning does not belong to WGSL or the field VM.
+
+Reconnaissance found an explicit authority stop line: `Piece::applies(..., subject)` can evaluate the guard, but the existing Law-facing `ConditionNode::compile()` produces plain `bool`. Some world-dependent cases intentionally return false when a referent/event/world fact is unavailable. Heliograph therefore refuses to treat that bool as the visibility-grade distinction `proved false` vs `authority missing`.
+
+This rung lands **decision consumption only**.
+
+### Implemented execution substrate
+
+- added `FieldWorldGuardDecision { Unknown, False, True }`;
+- added `inspectFieldWorldGuardSites(SdfNode)`:
+  - walks SDF/CSG structure in the same authored order used for execution;
+  - names each reachable guard with a structural path;
+  - borrows the original `ConditionNode*`;
+  - stops after a bare always-applicable Piece because later Pieces are unreachable;
+  - performs no world query and carries no authority itself;
+- added derived VM opcode `BranchWorldGuard = 69`;
+- `lowerFieldVm(root, decisions)` consumes one supplied decision per reachable world-guard site:
+  - missing decision -> refuse;
+  - `Unknown` -> refuse;
+  - `False` -> forward branch to next Piece;
+  - `True` -> fall through to the guarded Piece;
+  - surplus decisions -> refuse;
+- CPU and WGSL VM interpreters validate opcode 69 as exact 0/1 derived data; malformed records fail closed;
+- primary SDF `compile(..., worldGuardDecisions)` consumes the same ordered decisions;
+- primary SDF writes False/True into ordinary parameter slots, so world truth changes are **value changes, not WGSL topology changes**;
+- `collectParams(..., worldGuardDecisions)` recollects the same guard slots and requires exact decision-count parity;
+- CPU applicability precedence is preserved:
+  1. pure `whereLEZero` first;
+  2. world guard second;
+  3. if a world guard exists and returns true, interval bounds on that Piece are ignored;
+  4. intervals decide only when neither pure nor world guard exists;
+- a Piece carrying both pure + world guards therefore needs both gates to pass, and both false exits target the same later Piece.
+
+### Structure/value theorem
+
+For a fixed authored guard site:
+
+```
+False -> True world testimony
+    WGSL structure: identical
+    parameter bytes: changed
+    Field VM frame program: re-derived decision record
+```
+
+The `ConditionNode` AST itself is not shader topology. Changing the authored world question while preserving one guard site may still share identical WGSL; the authoritative provider + Lattice manifest/snapshot/invalidation layer is responsible for proving which current decision speaks for that authored question.
+
+### Falsifiers
+
+`field_vm_test` now requires:
+- exact reachable guard-site path/pointer ordering;
+- False chooses fallback;
+- True chooses guarded value;
+- missing/Unknown testimony refuses;
+- surplus testimony refuses rather than shifting slots;
+- opcode 69 appears in derived CPU/WGSL execution;
+- malformed 0.5 decision record returns Unknown;
+- pure-guard false skips before world guard;
+- pure true + world true chooses guarded value;
+- pure true + world false chooses fallback;
+- impossible interval bounds remain ignored on a world-guard Piece;
+- guards after a bare Piece are unreachable and consume no testimony.
+
+`sdf_wgsl_parameter_refresh_test` requires:
+- False and True decisions both compile;
+- WGSL remains byte-identical;
+- parameter bytes differ;
+- value-only recollection matches full compilation exactly;
+- missing/Unknown/extra testimony refuses;
+- replacing the ConditionNode at the same guard site does not become WGSL structure.
+
+### What explicitly did NOT land
+
+- no `ConditionNode` evaluator in WGSL;
+- no `ConditionNode` evaluator in the Field VM;
+- no subject pointer in GPU ABI;
+- no Universe query in Screen;
+- no automatic `Object -> ConditionNode::compile()` bridge;
+- no decision cache;
+- no CompleteScene Knownness change;
+- no claim that Lattice `ready` means admitted/known;
+- no production world-guard admission yet.
+
+The current production renderer supplies no decision vector, therefore world-guard SDFs continue to refuse. That is intentional.
+
+### Future authority bridge
+
+A later authority office must be able to answer one exact authored guard site for one exact subject/world/query context with tri-state testimony and provenance/invalidation:
+
+```
+authored ConditionNode + exact subject/world authority
+    -> Unknown | False | True
+    -> Lattice dependency/provenance snapshot
+    -> Heliograph execution bridge
+    -> Parallax proof-premise identity
+    -> lawful traversal
+    -> Visibility KnownClear | KnownOccluded | Unknown
+```
+
+No downstream layer may manufacture an upstream answer.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
+---
+
 ## Implementation ledger — 2026-11-08 continuation: pure Piecewise predicates become local execution truth
 
 The interval Piecewise rung still had one semantic refusal that could not be solved by ordinary branching: `whereLEZero`. CPU Piecewise does not treat predicate failure as failure of the whole field. An undefined pure predicate makes **that Piece non-applicable and evaluation continues**. The ordinary field VM, correctly, treats an undefined/malformed field evaluation as Unknown. Reusing it would have changed authored Piecewise meaning.
