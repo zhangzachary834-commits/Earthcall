@@ -153,6 +153,7 @@ int main() {
 
     sdfwgsl::FieldVmDependencyContext fullContext;
     fullContext.subjectAvailable = true;
+    fullContext.worldConditionContextAvailable = true;
     fullContext.functionRegistryAvailable = true;
     fullContext.worldEnumerationAvailable = true;
     check(sdfwgsl::assessFieldVmDependencies(
