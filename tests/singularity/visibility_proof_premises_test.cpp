@@ -167,6 +167,20 @@ int main() {
         const auto invalid = makeVisibilityProofPremiseIdentity(changed);
         assert(!invalid.valid && !invalid.nonFinite.empty());
     }
+    {
+        auto changed = base;
+        changed.executorFrame =
+            static_cast<VisibilityExecutorFrame>(999u);
+        const auto invalid = makeVisibilityProofPremiseIdentity(changed);
+        assert(!invalid.valid && !invalid.unsupported.empty());
+    }
+    {
+        auto changed = base;
+        changed.scope =
+            static_cast<VisibilityProofScope>(999u);
+        const auto invalid = makeVisibilityProofPremiseIdentity(changed);
+        assert(!invalid.valid && !invalid.unsupported.empty());
+    }
 
     std::puts("visibility proof premise identity: PASS");
     return 0;
