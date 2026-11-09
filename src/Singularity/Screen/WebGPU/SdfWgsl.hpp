@@ -128,6 +128,11 @@ enum class FieldVmOpcode : uint32_t {
     // Jump: meta.y=forward program-relative target.
     BranchInterval = 66,
     Jump = 67,
+    // Pure Piecewise whereLEZero. The straight-line predicate slice begins at
+    // the next instruction; meta.y is its length and meta.w is the forward
+    // false/undefined target. The interpreter skips the slice in the main
+    // stack and evaluates it in an isolated predicate stack.
+    BranchWhereLEZero = 68,
 };
 
 // One postorder stack instruction. meta.x = FieldVmOpcode.
@@ -140,8 +145,9 @@ enum class FieldVmOpcode : uint32_t {
 //   Constant: a.x = literal.
 //   CoordX/Y/Z: a.x = leaf-local offset for that axis.
 //   MathNormalizeComponent / MathProjectComponent: meta.y = output axis.
-//   BranchInterval / Jump: forward-only Piecewise execution control; they do
-//   not mutate the scalar stack and targets are program-relative.
+//   BranchInterval / Jump / BranchWhereLEZero: forward-only Piecewise execution
+//   control. Predicate slices use an isolated stack; all targets remain
+//   program-relative and none of these records mutate the enclosing scalar stack.
 // Other math instructions consume only the scalar stack.
 // The ABI stays plain storage-buffer data; extending execution does not change
 // the 48-byte record or create persisted authored identity.
