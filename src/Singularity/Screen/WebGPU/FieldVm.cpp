@@ -607,25 +607,155 @@ bool emitMathScalar(const OntoMath::MathNode& node, const glm::vec3& offset,
     }
 }
 
-bool emitExprVm(const geom::SdfNode& node,
-                FieldVmProgram& out, uint32_t& stackDepth) {
-    const OntoMath::MathNode* root = node.mathNode.get();
-    if (!root && node.piecewise) {
-        if (node.piecewise->pieces.size() != 1 ||
-            !node.piecewise->pieces[0].mathNode ||
-            node.piecewise->pieces[0].hasLo ||
-            node.piecewise->pieces[0].hasHi ||
-            node.piecewise->pieces[0].guard ||
-            node.piecewise->pieces[0].whereLEZero ||
-            node.piecewise->pieces[0].call ||
-            node.piecewise->pieces[0].fold) {
+bool emitIntervalPiecewiseVm(const geom::SdfNode& node,
+                             const OntoMath::Piecewise& pw,
+                             FieldVmProgram& out,
+                             uint32_t& stackDepth) {
+    if (pw.pieces.empty()) {
+        return pushMathConstant(1e9, out, stackDepth);
+    }
+
+    bool hasIntervalPiece = false;
+    for (const auto& piece : pw.pieces) {
+        hasIntervalPiece = hasIntervalPiece || piece.hasLo || piece.hasHi;
+    }
+
+    int axis = -1;
+    if (hasIntervalPiece) {
+        axis = pw.inputVariable == "x" ? 0 :
+               pw.inputVariable == "y" ? 1 :
+               pw.inputVariable == "z" ? 2 : -1;
+        if (axis < 0) {
             out.ok = false;
             out.error =
-                "field VM Expr Piecewise lowering currently requires one unconditional OntoMath piece";
+                "field VM Piecewise interval input must be local x, y, or z";
             return false;
         }
-        root = node.piecewise->pieces[0].mathNode.get();
     }
+
+    std::vector<std::size_t> endJumps;
+    std::optional<std::size_t> pendingFalseBranch;
+    bool catchAll = false;
+
+    for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
+        if (pendingFalseBranch) {
+            out.instructions[*pendingFalseBranch].meta.w =
+                static_cast<uint32_t>(out.instructions.size());
+            pendingFalseBranch.reset();
+        }
+
+        const auto& piece = pw.pieces[i];
+        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
+            out.ok = false;
+            out.error =
+                "field VM Piecewise rung admits interval/bare pieces only; "
+                "world guards, pure where guards, calls, and folds remain refused";
+            return false;
+        }
+        if (!piece.mathNode) {
+            out.ok = false;
+            out.error = "field VM Piecewise piece " + std::to_string(i) +
+                        " has no authored value";
+            return false;
+        }
+
+        const auto type =
+            fieldMathType(*piece.mathNode, "field-vm.piece[" + std::to_string(i) + "]");
+        if (!type) {
+            out.ok = false;
+            out.error = "field VM Piecewise value type refusal: " +
+                        OntoMath::formatTypeDiagnostic(type.diagnostic);
+            return false;
+        }
+        if (type.kind != OntoMath::ValueKind::Scalar &&
+            type.kind != OntoMath::ValueKind::ScalarField) {
+            out.ok = false;
+            out.error = "field VM Piecewise value must be scalar";
+            return false;
+        }
+
+        const bool gated = piece.hasLo || piece.hasHi;
+        if (gated) {
+            const float lo = static_cast<float>(piece.lo);
+            const float hi = static_cast<float>(piece.hi);
+            if ((piece.hasLo && (!std::isfinite(piece.lo) || !std::isfinite(lo))) ||
+                (piece.hasHi && (!std::isfinite(piece.hi) || !std::isfinite(hi)))) {
+                out.ok = false;
+                out.error =
+                    "field VM Piecewise refuses non-finite/out-of-f32 interval bound";
+                return false;
+            }
+
+            FieldVmInstruction branch;
+            branch.meta.x =
+                static_cast<uint32_t>(FieldVmOpcode::BranchInterval);
+            branch.meta.y = static_cast<uint32_t>(axis);
+            branch.meta.z =
+                (piece.hasLo ? 1u : 0u) |
+                (piece.hasHi ? 2u : 0u) |
+                (piece.includeLo ? 4u : 0u) |
+                (piece.includeHi ? 8u : 0u);
+            branch.a.x = node.offset[axis];
+            branch.a.y = lo;
+            branch.a.z = hi;
+            if (!appendVm(out, stackDepth, branch, 0, 0)) return false;
+            pendingFalseBranch = out.instructions.size() - 1u;
+        }
+
+        if (!emitMathScalar(*piece.mathNode, node.offset, out, stackDepth)) {
+            return false;
+        }
+        if (stackDepth != 1u) {
+            out.ok = false;
+            out.error =
+                "field VM Piecewise piece did not leave exactly one scalar value";
+            return false;
+        }
+
+        if (!gated) {
+            // First unconditional piece is the CPU's permanent catch-all.
+            catchAll = true;
+            break;
+        }
+
+        FieldVmInstruction jump;
+        jump.meta.x = static_cast<uint32_t>(FieldVmOpcode::Jump);
+        if (!appendVm(out, stackDepth, jump, 0, 0)) return false;
+        endJumps.push_back(out.instructions.size() - 1u);
+
+        // The next authored piece is an alternative path, not a sequential
+        // continuation of this selected value.
+        stackDepth = 0;
+    }
+
+    if (pendingFalseBranch) {
+        out.instructions[*pendingFalseBranch].meta.w =
+            static_cast<uint32_t>(out.instructions.size());
+        pendingFalseBranch.reset();
+    }
+
+    if (!catchAll) {
+        stackDepth = 0;
+        if (!pushMathConstant(1e9, out, stackDepth)) return false;
+    }
+
+    const uint32_t endTarget =
+        static_cast<uint32_t>(out.instructions.size());
+    for (const std::size_t jumpIndex : endJumps) {
+        out.instructions[jumpIndex].meta.y = endTarget;
+    }
+    stackDepth = 1;
+    return true;
+}
+
+bool emitExprVm(const geom::SdfNode& node,
+                FieldVmProgram& out, uint32_t& stackDepth) {
+    if (node.piecewise) {
+        return emitIntervalPiecewiseVm(
+            node, *node.piecewise, out, stackDepth);
+    }
+
+    const OntoMath::MathNode* root = node.mathNode.get();
     if (!root) {
         out.ok = false;
         out.error =
