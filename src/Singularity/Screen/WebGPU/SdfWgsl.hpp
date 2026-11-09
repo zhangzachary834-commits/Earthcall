@@ -133,6 +133,11 @@ enum class FieldVmOpcode : uint32_t {
     // false/undefined target. The interpreter skips the slice in the main
     // stack and evaluates it in an isolated predicate stack.
     BranchWhereLEZero = 68,
+    // World/subject Piecewise guard. The VM does NOT evaluate ConditionNode:
+    // a caller with explicit authority supplies the tri-state decision before
+    // lowering. Unknown is a lowering refusal; admitted records carry only
+    // false/true in a.x and meta.w is the forward false target.
+    BranchWorldGuard = 69,
 };
 
 // One postorder stack instruction. meta.x = FieldVmOpcode.
@@ -145,9 +150,10 @@ enum class FieldVmOpcode : uint32_t {
 //   Constant: a.x = literal.
 //   CoordX/Y/Z: a.x = leaf-local offset for that axis.
 //   MathNormalizeComponent / MathProjectComponent: meta.y = output axis.
-//   BranchInterval / Jump / BranchWhereLEZero: forward-only Piecewise execution
-//   control. Predicate slices use an isolated stack; all targets remain
-//   program-relative and none of these records mutate the enclosing scalar stack.
+//   BranchInterval / Jump / BranchWhereLEZero / BranchWorldGuard: forward-only
+//   Piecewise execution control. Pure-predicate slices use an isolated stack;
+//   world-guard records consume only caller-supplied decisions. All targets stay
+//   program-relative and none mutate the enclosing scalar stack.
 // Other math instructions consume only the scalar stack.
 // The ABI stays plain storage-buffer data; extending execution does not change
 // the 48-byte record or create persisted authored identity.
@@ -173,6 +179,26 @@ struct FieldMarchPolicy {
 };
 FieldMarchPolicy inspectFieldMarchPolicy(const geom::SdfNode& root);
 
+enum class FieldWorldGuardDecision : uint32_t {
+    Unknown = 0,
+    False = 1,
+    True = 2,
+};
+
+// Structural inspection order for authored Piecewise world guards. This does
+// not evaluate ConditionNode and carries no authority; it only tells an
+// authoritative caller which exact authored guards require decisions.
+// The returned pointers borrow from `root`.
+struct FieldWorldGuardSite {
+    std::string path;
+    const ConditionNode* condition = nullptr;
+};
+
+using FieldWorldGuardDecisions = std::vector<FieldWorldGuardDecision>;
+
+std::vector<FieldWorldGuardSite>
+inspectFieldWorldGuardSites(const geom::SdfNode& root);
+
 struct FieldVmProgram {
     std::vector<FieldVmInstruction> instructions;
     uint32_t maxStackDepth = 0;
@@ -194,7 +220,9 @@ struct FieldVmProgram {
 inline constexpr uint32_t kFieldVmMaxInstructions = 1024;
 inline constexpr uint32_t kFieldVmMaxStackDepth = 128;
 
-FieldVmProgram lowerFieldVm(const geom::SdfNode& root);
+FieldVmProgram lowerFieldVm(
+    const geom::SdfNode& root,
+    const FieldWorldGuardDecisions* worldGuardDecisions = nullptr);
 
 // CPU execution witness for the exact same derived records. This is not a
 // second authored evaluator; tests compare it directly against geom::evalSdf.
@@ -418,7 +446,8 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* emissionExpr = nullptr,
                 const OntoMath::Piecewise* responseExpr = nullptr,
                 const BindingValues* responseBindings = nullptr,
-                const OntoMath::Piecewise* environmentResponseExpr = nullptr);
+                const OntoMath::Piecewise* environmentResponseExpr = nullptr,
+                const FieldWorldGuardDecisions* worldGuardDecisions = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -439,7 +468,8 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* emissionExpr = nullptr,
                              const OntoMath::Piecewise* responseExpr = nullptr,
                              const BindingValues* responseBindings = nullptr,
-                             const OntoMath::Piecewise* environmentResponseExpr = nullptr);
+                             const OntoMath::Piecewise* environmentResponseExpr = nullptr,
+                             const FieldWorldGuardDecisions* worldGuardDecisions = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
