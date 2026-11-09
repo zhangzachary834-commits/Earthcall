@@ -442,8 +442,12 @@ int main() {
         // authored condition while preserving one guard site: the execution
         // program remains shareable, while the authoritative provider is
         // responsible for producing a new decision/snapshot.
-        pw->pieces[0].guard = std::make_shared<ConditionNode>(
-            ConditionNode::identity("other-being"));
+        pw->pieces[0].guard = [] {
+            auto g=std::make_shared<ConditionNode>();
+            g->kind=ConditionNode::Kind::Identity;
+            g->otherId="other-being";
+            return g;
+        }();
         const sdfwgsl::Program changedGuardSameDecision =
             compileWithWorldGuards(field, &trueDecision);
         check(changedGuardSameDecision.ok &&
