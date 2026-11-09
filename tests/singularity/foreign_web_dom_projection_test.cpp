@@ -198,7 +198,8 @@ int main() {
         auto setDelta = DomDelta::fromJson(setJson);
         assert(setDelta.validate().valid);
         std::string err;
-        assert(translator.applyDelta(setDelta, &err));
+        const bool setApplied = translator.applyDelta(setDelta, &err);
+        assert(setApplied);
         assert(err.empty());
         assert(language.findById(prefix + "attr.node.6.2") != nullptr);
         assert(language.findById(prefix + "attrval.node.6.2") != nullptr);
@@ -213,7 +214,8 @@ int main() {
         };
         auto removeDelta = DomDelta::fromJson(removeJson);
         assert(removeDelta.validate().valid);
-        assert(translator.applyDelta(removeDelta, &err));
+        const bool removeApplied = translator.applyDelta(removeDelta, &err);
+        assert(removeApplied);
         assert(err.empty());
         assert(translator.getCurrentSequence() == 4);
         assert(language.findById(prefix + "attr.node.6.2") == nullptr);
