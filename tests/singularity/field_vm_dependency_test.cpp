@@ -65,10 +65,18 @@ int main() {
     std::map<std::string, PropertyValue> valuesB{
         {"radius", PropertyValue(0.9)}
     };
+    std::map<std::string, std::string> authorityA{
+        {"radius", "material:A@revision-7"}
+    };
+    std::map<std::string, std::string> authorityB{
+        {"radius", "material:A@revision-8"}
+    };
     sdfwgsl::FieldVmDependencyContext ctxA;
     ctxA.propertyBindings = &valuesA;
+    ctxA.propertyBindingAuthorities = &authorityA;
     sdfwgsl::FieldVmDependencyContext ctxB;
     ctxB.propertyBindings = &valuesB;
+    ctxB.propertyBindingAuthorities = &authorityB;
 
     const auto readyA = sdfwgsl::assessFieldVmDependencies(manifest, ctxA);
     const auto readyB = sdfwgsl::assessFieldVmDependencies(manifest, ctxB);
@@ -85,11 +93,36 @@ int main() {
               snapshotA.identity != snapshotB.identity,
           "same AST with changed executable binding value gets a different exact runtime snapshot");
 
+    std::map<std::string, PropertyValue> sameValues{
+        {"radius", PropertyValue(0.5)}
+    };
+    std::map<std::string, std::string> authorityOther{
+        {"radius", "material:B@revision-7"}
+    };
+    sdfwgsl::FieldVmDependencyContext sameValueOtherAuthority;
+    sameValueOtherAuthority.propertyBindings = &sameValues;
+    sameValueOtherAuthority.propertyBindingAuthorities = &authorityOther;
+    const auto snapshotOtherAuthority =
+        sdfwgsl::snapshotFieldVmDependencies(
+            manifest, sameValueOtherAuthority);
+    check(snapshotOtherAuthority.valid &&
+              snapshotA.identity != snapshotOtherAuthority.identity,
+          "same numeric binding from different authority gets a different snapshot identity");
+
     const auto missing =
         sdfwgsl::assessFieldVmDependencies(manifest, {});
     check(!missing.ready && missing.missing.size() == 1 &&
               missing.missing[0] == "radius",
           "missing PropertyPath provider is explicit unresolved evidence");
+
+    sdfwgsl::FieldVmDependencyContext valueWithoutAuthority;
+    valueWithoutAuthority.propertyBindings = &valuesA;
+    const auto unstampedValue =
+        sdfwgsl::snapshotFieldVmDependencies(
+            manifest, valueWithoutAuthority);
+    check(!unstampedValue.valid &&
+              unstampedValue.missingAuthorityIdentity.size() == 1,
+          "present PropertyPath value without provider/revision authority cannot mint reusable snapshot");
 
     std::map<std::string, PropertyValue> nanValues{
         {"radius", PropertyValue(
@@ -97,6 +130,7 @@ int main() {
     };
     sdfwgsl::FieldVmDependencyContext nanCtx;
     nanCtx.propertyBindings = &nanValues;
+    nanCtx.propertyBindingAuthorities = &authorityA;
     const auto nonFinite =
         sdfwgsl::assessFieldVmDependencies(manifest, nanCtx);
     check(!nonFinite.ready && nonFinite.nonFinite.size() == 1 &&
@@ -111,6 +145,7 @@ int main() {
     };
     sdfwgsl::FieldVmDependencyContext hugeCtx;
     hugeCtx.propertyBindings = &hugeValues;
+    hugeCtx.propertyBindingAuthorities = &authorityA;
     const auto huge =
         sdfwgsl::assessFieldVmDependencies(manifest, hugeCtx);
     check(!huge.ready && huge.outOfFloat32Range.size() == 1 &&
@@ -124,6 +159,7 @@ int main() {
     };
     sdfwgsl::FieldVmDependencyContext stringCtx;
     stringCtx.propertyBindings = &stringValues;
+    stringCtx.propertyBindingAuthorities = &authorityA;
     const auto unsupported =
         sdfwgsl::assessFieldVmDependencies(manifest, stringCtx);
     check(!unsupported.ready && unsupported.unsupported.size() == 1,
@@ -139,11 +175,18 @@ int main() {
     std::map<std::string, PropertyValue> namedValues{
         {"temperature", PropertyValue(12.0)}
     };
+    std::map<std::string, std::string> namedAuthorities{
+        {"temperature", "query:weather-field@revision-4"}
+    };
     sdfwgsl::FieldVmDependencyContext namedCtx;
     namedCtx.namedValues = &namedValues;
+    namedCtx.namedValueAuthorities = &namedAuthorities;
     check(sdfwgsl::assessFieldVmDependencies(
               namedManifest, namedCtx).ready,
           "explicit finite named-value provider satisfies preflight without granting VM admission");
+    check(sdfwgsl::snapshotFieldVmDependencies(
+              namedManifest, namedCtx).valid,
+          "named-value snapshot requires explicit provider/revision authority");
 
     // World/context dependencies are distinct from local pure mathematical
     // control. None are silently replaced by an invented subject or world.
