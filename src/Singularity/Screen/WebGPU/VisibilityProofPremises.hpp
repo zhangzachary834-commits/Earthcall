@@ -53,6 +53,7 @@ struct VisibilityProofPremiseIdentity {
     std::string identity;
     std::vector<std::string> missing;
     std::vector<std::string> nonFinite;
+    std::vector<std::string> unsupported;
 };
 
 namespace detail {
@@ -109,13 +110,22 @@ makeVisibilityProofPremiseIdentity(const VisibilityProofPremises& p) {
     if (!p.dependencySnapshot.valid || p.dependencySnapshot.identity.empty()) {
         out.missing.emplace_back("dependency-snapshot");
     }
+    if (p.executorFrame != VisibilityExecutorFrame::MeshRaster &&
+        p.executorFrame != VisibilityExecutorFrame::SdfRaymarch) {
+        out.unsupported.emplace_back("executor-frame");
+    }
+    if (p.scope != VisibilityProofScope::LocalReceiverGeometry &&
+        p.scope != VisibilityProofScope::CompleteScene) {
+        out.unsupported.emplace_back("proof-scope");
+    }
     if (!detail::finiteVec3(p.sourcePosition)) {
         out.nonFinite.emplace_back("source-position");
     }
     if (!detail::finiteVec3(p.receiverPosition)) {
         out.nonFinite.emplace_back("receiver-position");
     }
-    if (!out.missing.empty() || !out.nonFinite.empty()) return out;
+    if (!out.missing.empty() || !out.nonFinite.empty() ||
+        !out.unsupported.empty()) return out;
 
     std::string id;
     const auto add = [&](const std::string& part) {
