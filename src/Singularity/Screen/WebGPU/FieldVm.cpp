@@ -617,7 +617,8 @@ bool emitIntervalPiecewiseVm(const geom::SdfNode& node,
 
     bool hasIntervalPiece = false;
     for (const auto& piece : pw.pieces) {
-        hasIntervalPiece = hasIntervalPiece || piece.hasLo || piece.hasHi;
+        hasIntervalPiece = hasIntervalPiece ||
+            (!piece.whereLEZero && (piece.hasLo || piece.hasHi));
     }
 
     int axis = -1;
@@ -646,11 +647,10 @@ bool emitIntervalPiecewiseVm(const geom::SdfNode& node,
         }
 
         const auto& piece = pw.pieces[i];
-        if (piece.guard || piece.whereLEZero || piece.call || piece.fold) {
+        if (piece.guard || piece.call || piece.fold) {
             out.ok = false;
             out.error =
-                "field VM Piecewise rung admits interval/bare pieces only; "
-                "world guards, pure where guards, calls, and folds remain refused";
+                "field VM Piecewise refuses subject/world guards, calls, and folds";
             return false;
         }
         if (!piece.mathNode) {
@@ -675,8 +675,74 @@ bool emitIntervalPiecewiseVm(const geom::SdfNode& node,
             return false;
         }
 
-        const bool gated = piece.hasLo || piece.hasHi;
-        if (gated) {
+        const bool pureGuard = piece.whereLEZero != nullptr;
+        const bool intervalGate =
+            !pureGuard && (piece.hasLo || piece.hasHi);
+        const bool gated = pureGuard || intervalGate;
+
+        if (pureGuard) {
+            const auto guardType = fieldMathType(
+                *piece.whereLEZero,
+                "field-vm.piece[" + std::to_string(i) + "].where");
+            if (!guardType ||
+                (guardType.kind != OntoMath::ValueKind::Scalar &&
+                 guardType.kind != OntoMath::ValueKind::ScalarField)) {
+                out.ok = false;
+                out.error =
+                    "field VM Piecewise pure where guard must type-check as scalar";
+                return false;
+            }
+
+            // Lower the predicate into a completely isolated straight-line
+            // math slice. It is data for BranchWhereLEZero, not execution on
+            // the enclosing CSG stack.
+            FieldVmProgram predicate;
+            uint32_t predicateDepth = 0;
+            if (!emitMathScalar(
+                    *piece.whereLEZero, node.offset,
+                    predicate, predicateDepth) ||
+                !predicate.ok || predicateDepth != 1u ||
+                predicate.instructions.empty()) {
+                out.ok = false;
+                out.error =
+                    "field VM Piecewise pure where guard lowering failed: " +
+                    predicate.error;
+                return false;
+            }
+            for (const auto& predInst : predicate.instructions) {
+                const uint32_t raw = predInst.meta.x;
+                if (raw < static_cast<uint32_t>(FieldVmOpcode::Constant) ||
+                    raw > static_cast<uint32_t>(FieldVmOpcode::MathRawPow)) {
+                    out.ok = false;
+                    out.error =
+                        "field VM Piecewise pure where guard escaped straight-line math";
+                    return false;
+                }
+            }
+            if (out.instructions.size() + 1u +
+                    predicate.instructions.size() >
+                kFieldVmMaxInstructions) {
+                out.ok = false;
+                out.error =
+                    "field VM instruction budget exceeded by Piecewise pure guard";
+                return false;
+            }
+
+            FieldVmInstruction branch;
+            branch.meta.x =
+                static_cast<uint32_t>(FieldVmOpcode::BranchWhereLEZero);
+            branch.meta.y =
+                static_cast<uint32_t>(predicate.instructions.size());
+            if (!appendVm(out, stackDepth, branch, 0, 0)) return false;
+            pendingFalseBranch = out.instructions.size() - 1u;
+
+            out.instructions.insert(
+                out.instructions.end(),
+                predicate.instructions.begin(),
+                predicate.instructions.end());
+            out.maxStackDepth =
+                std::max(out.maxStackDepth, predicate.maxStackDepth);
+        } else if (intervalGate) {
             const float lo = static_cast<float>(piece.lo);
             const float hi = static_cast<float>(piece.hi);
             if ((piece.hasLo && (!std::isfinite(piece.lo) || !std::isfinite(lo))) ||
