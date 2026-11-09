@@ -6,6 +6,56 @@
 **Written by:** GPT-5.6 Sol  
 **Status:** implementation plan; no completion claim
 
+## Implementation ledger — 2026-11-08 continuation: interval Piecewise becomes one field truth
+
+A Piecewise-only implicit field previously existed in three incompatible states: CPU `geom::evalSdf` could evaluate it, primary WebGPU SDF emission ignored `SdfNode::piecewise`, and the foreign field VM admitted only one unconditional Piecewise value. This pass collapses that split for the bounded interval/bare subset without inventing a Piecewise geometry kind.
+
+Implemented:
+- `geom::isSdfActive` now names `SdfNode::piecewise` explicitly instead of relying on unrelated default dimensions to make the node appear active;
+- primary SDF WGSL now lowers authored Piecewise values directly in leaf-local coordinates after the leaf offset;
+- interval input is deliberately limited to local `x/y/z` for this rung;
+- authored order and **first applicable piece wins** are preserved;
+- lower/upper endpoint openness is preserved exactly (`>` / `>=`, `<` / `<=`);
+- the first bare piece is a permanent catch-all; later pieces are unreachable, as on the CPU;
+- no-match behavior intentionally follows the current SDF compatibility contract: Piecewise `nullopt` falls through empty legacy RPN on CPU, hence the rendering value is `1e9` empty space;
+- SDF noise discovery now descends into Piecewise branch MathNodes so branch Perlin cannot compile without its helper code;
+- added two **derived Kernel control records**, not authored nouns:
+  - `BranchInterval` — test one local coordinate interval and jump forward if it does not apply;
+  - `Jump` — after an answering branch, skip all later pieces;
+- VM targets are program-relative and strictly forward, preserving relocatability in the packed scene bytecode buffer and preventing loops;
+- Piecewise branch alternatives preserve any incoming stack prefix, so a Piecewise leaf nested inside CSG can add exactly one value without destroying already-live sibling operands;
+- malformed/self/backward/out-of-range control targets fail closed;
+- primary generated SDF evaluation and foreign CompleteScene VM execution now admit the same interval Piecewise subset.
+
+Structure/value law:
+- numeric interval endpoints and branch coefficients remain parameters;
+- changing those values must leave WGSL byte-identical;
+- endpoint openness and Piecewise topology are structural and therefore may regenerate WGSL.
+
+Adversarial witnesses:
+1. `field_vm_test` covers overlapping pieces, earlier-piece priority, open/closed endpoints, local offsets, a bare catch-all, no-match `1e9`, nested CSG stack preservation, malformed branch targets, and CPU parity.
+2. `sdf_wgsl_parameter_refresh_test` proves endpoint/value edits are parameter refreshes while open→closed is structural.
+3. `webgpu_object_test` requires the **same Piecewise-authored non-distance sphere field** to:
+   - render visibly through the primary SDF evaluator;
+   - become a Known foreign occluder for a mesh receiver;
+   - become a Known foreign occluder for an SDF receiver.
+
+Still refused in this rung:
+- subject/world `ConditionNode` guards;
+- pure `whereLEZero` guards;
+- FunctionCall;
+- Fold.
+
+The pure-guard refusal is semantic, not merely missing plumbing. On CPU, an undefined `whereLEZero` predicate makes that piece non-applicable and evaluation continues to later pieces. The current VM treats an undefined math operation as failure of the whole evaluation. Predicate-local failure/continuation must exist before pure guards can cross without changing meaning.
+
+A separate cross-channel debt remains outside this SDF-specific rung: the generic renderer `emitPiecewise()` helper used by radiance/volume/material channels currently emits inclusive interval comparisons and its own channel-specific fallback values. This pass does not silently redefine those channels; they require an explicit semantics-unification pass.
+
+No exact-head CI green claim is made until GitHub executes the jobs; recent focused workflow attempts have been cancelled before checkout/step 1.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
+---
+
 ## Implementation ledger — 2026-11-08 continuation: one field, one march policy
 
 The field VM and the primary SDF renderer now share one derived answer to a question that authored geometry does **not** answer by itself:
