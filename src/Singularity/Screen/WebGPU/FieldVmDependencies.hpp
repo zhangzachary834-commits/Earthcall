@@ -5,6 +5,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <cstring>
 #include <functional>
 #include <map>
 #include <set>
@@ -71,14 +73,35 @@ struct FieldVmDependencyContext {
     bool worldConditionContextAvailable = false;
     bool functionRegistryAvailable = false;
     bool worldEnumerationAvailable = false;
+
+    // Opaque exact authority stamps supplied by the caller. Preflight never
+    // invents these. A valid runtime snapshot for an external context requires
+    // both availability above and a non-empty identity here, so two subjects or
+    // two world/query regimes cannot share retained execution evidence merely
+    // because both were "available".
+    std::string subjectIdentity;
+    std::string worldConditionContextIdentity;
+    std::string functionRegistryIdentity;
+    std::string worldEnumerationIdentity;
 };
 
 struct FieldVmDependencyAssessment {
     bool ready = false;
     std::vector<std::string> missing;
     std::vector<std::string> nonFinite;
+    std::vector<std::string> outOfFloat32Range;
     std::vector<std::string> unsupported;
     std::vector<FieldVmDependency> unresolvedContext;
+};
+
+struct FieldVmDependencySnapshot {
+    bool valid = false;
+    // Exact textual encoding of manifest entries plus execution-relevant f32
+    // bit patterns / opaque external-authority stamps. This is intentionally
+    // not a reduced hash: collisions must never authorize stale evidence.
+    std::string identity;
+    FieldVmDependencyAssessment assessment;
+    std::vector<std::string> missingAuthorityIdentity;
 };
 
 namespace detail {
@@ -149,20 +172,63 @@ inline void inspectFieldVmMathDependencies(
     }
 }
 
-inline bool finiteFieldVmDependencyValue(const PropertyValue& value,
-                                         bool& supported) {
+enum class FieldVmDependencyValueStatus {
+    Ready,
+    NonFinite,
+    OutOfFloat32Range,
+    Unsupported,
+};
+
+inline uint32_t fieldVmFloatBits(float value) {
+    uint32_t bits = 0;
+    static_assert(sizeof(bits) == sizeof(value));
+    std::memcpy(&bits, &value, sizeof(bits));
+    return bits;
+}
+
+inline std::string fieldVmHex32(uint32_t value) {
+    static constexpr char kHex[] = "0123456789abcdef";
+    std::string out(8, '0');
+    for (int i = 7; i >= 0; --i) {
+        out[static_cast<std::size_t>(i)] = kHex[value & 0xfu];
+        value >>= 4u;
+    }
+    return out;
+}
+
+inline FieldVmDependencyValueStatus fieldVmDependencyValueToken(
+    const PropertyValue& value, std::string* token = nullptr) {
     double scalar = 0.0;
     if (propertyValueToNumber(value, scalar)) {
-        supported = true;
-        return std::isfinite(scalar);
+        if (!std::isfinite(scalar))
+            return FieldVmDependencyValueStatus::NonFinite;
+        const float f = static_cast<float>(scalar);
+        if (!std::isfinite(f))
+            return FieldVmDependencyValueStatus::OutOfFloat32Range;
+        if (token) *token = "s:" + fieldVmHex32(fieldVmFloatBits(f));
+        return FieldVmDependencyValueStatus::Ready;
     }
     if (const auto* v = std::get_if<glm::vec3>(&value)) {
-        supported = true;
-        return std::isfinite(v->x) && std::isfinite(v->y) &&
-               std::isfinite(v->z);
+        if (!std::isfinite(v->x) || !std::isfinite(v->y) ||
+            !std::isfinite(v->z))
+            return FieldVmDependencyValueStatus::NonFinite;
+        if (token) {
+            *token = "v:" +
+                fieldVmHex32(fieldVmFloatBits(v->x)) + ":" +
+                fieldVmHex32(fieldVmFloatBits(v->y)) + ":" +
+                fieldVmHex32(fieldVmFloatBits(v->z));
+        }
+        return FieldVmDependencyValueStatus::Ready;
     }
-    supported = false;
-    return false;
+    return FieldVmDependencyValueStatus::Unsupported;
+}
+
+inline void appendFieldVmIdentityPart(std::string& out,
+                                      const std::string& value) {
+    out += std::to_string(value.size());
+    out += ":";
+    out += value;
+    out += ";";
 }
 
 } // namespace detail
@@ -250,11 +316,21 @@ inline FieldVmDependencyAssessment assessFieldVmDependencies(
                 out.missing.push_back(d.key);
                 return;
             }
-            bool supported = false;
-            const bool finite =
-                detail::finiteFieldVmDependencyValue(it->second, supported);
-            if (!supported) out.unsupported.push_back(d.key);
-            else if (!finite) out.nonFinite.push_back(d.key);
+            const auto status =
+                detail::fieldVmDependencyValueToken(it->second);
+            switch (status) {
+                case detail::FieldVmDependencyValueStatus::Ready:
+                    break;
+                case detail::FieldVmDependencyValueStatus::NonFinite:
+                    out.nonFinite.push_back(d.key);
+                    break;
+                case detail::FieldVmDependencyValueStatus::OutOfFloat32Range:
+                    out.outOfFloat32Range.push_back(d.key);
+                    break;
+                case detail::FieldVmDependencyValueStatus::Unsupported:
+                    out.unsupported.push_back(d.key);
+                    break;
+            }
         };
 
     for (const auto& d : manifest.dependencies) {
@@ -286,7 +362,94 @@ inline FieldVmDependencyAssessment assessFieldVmDependencies(
     }
 
     out.ready = out.missing.empty() && out.nonFinite.empty() &&
-                out.unsupported.empty() && out.unresolvedContext.empty();
+                out.outOfFloat32Range.empty() && out.unsupported.empty() &&
+                out.unresolvedContext.empty();
+    return out;
+}
+
+inline FieldVmDependencySnapshot snapshotFieldVmDependencies(
+    const FieldVmDependencyManifest& manifest,
+    const FieldVmDependencyContext& context = {}) {
+    FieldVmDependencySnapshot out;
+    out.assessment = assessFieldVmDependencies(manifest, context);
+    if (!out.assessment.ready) return out;
+
+    std::string identity;
+    const auto add = [&](const std::string& part) {
+        detail::appendFieldVmIdentityPart(identity, part);
+    };
+    const auto readToken =
+        [&](const std::map<std::string, PropertyValue>* provider,
+            const std::string& key) -> std::string {
+            if (!provider) return {};
+            const auto it = provider->find(key);
+            if (it == provider->end()) return {};
+            std::string token;
+            if (detail::fieldVmDependencyValueToken(it->second, &token) !=
+                detail::FieldVmDependencyValueStatus::Ready) {
+                return {};
+            }
+            return token;
+        };
+    const auto requireAuthorityIdentity =
+        [&](bool available, const std::string& stamp,
+            const std::string& label) -> bool {
+            if (!available || stamp.empty()) {
+                out.missingAuthorityIdentity.push_back(label);
+                return false;
+            }
+            add(stamp);
+            return true;
+        };
+
+    bool valid = manifest.structurallyValid();
+    for (const auto& d : manifest.dependencies) {
+        add(std::to_string(static_cast<unsigned>(d.kind)));
+        add(d.key);
+        switch (d.kind) {
+            case FieldVmDependencyKind::PropertyPath: {
+                const std::string token =
+                    readToken(context.propertyBindings, d.key);
+                if (token.empty()) valid = false;
+                else add(token);
+                break;
+            }
+            case FieldVmDependencyKind::NamedValue: {
+                const std::string token =
+                    readToken(context.namedValues, d.key);
+                if (token.empty()) valid = false;
+                else add(token);
+                break;
+            }
+            case FieldVmDependencyKind::WorldGuard:
+                valid &= requireAuthorityIdentity(
+                    context.subjectAvailable, context.subjectIdentity,
+                    "subject");
+                valid &= requireAuthorityIdentity(
+                    context.worldConditionContextAvailable,
+                    context.worldConditionContextIdentity,
+                    "world-condition-context");
+                break;
+            case FieldVmDependencyKind::FunctionCall:
+                valid &= requireAuthorityIdentity(
+                    context.functionRegistryAvailable,
+                    context.functionRegistryIdentity,
+                    "function-registry");
+                break;
+            case FieldVmDependencyKind::WorldFold:
+                valid &= requireAuthorityIdentity(
+                    context.worldEnumerationAvailable,
+                    context.worldEnumerationIdentity,
+                    "world-enumeration");
+                break;
+            case FieldVmDependencyKind::PureGuard:
+                add("local-pure-control");
+                break;
+        }
+    }
+
+    out.valid = valid && out.missingAuthorityIdentity.empty();
+    if (out.valid) out.identity = std::move(identity);
     return out;
 }
 
