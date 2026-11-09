@@ -421,8 +421,12 @@ int main(){
     auto worldPw=std::make_shared<OntoMath::Piecewise>();
     OntoMath::Piecewise::Piece worldPiece;
     worldPiece.mathNode=pieceConstant(-3.0);
-    worldPiece.guard=std::make_shared<ConditionNode>(
-        ConditionNode::isKind(ConditionNode::BeingKind::Object));
+    worldPiece.guard=[] {
+            auto g=std::make_shared<ConditionNode>();
+            g->kind=ConditionNode::Kind::IsKind;
+            g->beingKind=ConditionNode::BeingKind::Object;
+            return g;
+        }();
     // World guard decides applicability before interval bounds; these are
     // intentionally impossible and must be ignored under authoritative True.
     worldPiece.hasLo=true;worldPiece.lo=100.0;
@@ -500,8 +504,12 @@ int main(){
     combined.mathNode=pieceConstant(-4.0);
     combined.whereLEZero=
         std::shared_ptr<OntoMath::MathNode>(value("x").release());
-    combined.guard=std::make_shared<ConditionNode>(
-        ConditionNode::isKind(ConditionNode::BeingKind::Object));
+    combined.guard=[] {
+            auto g=std::make_shared<ConditionNode>();
+            g->kind=ConditionNode::Kind::IsKind;
+            g->beingKind=ConditionNode::BeingKind::Object;
+            return g;
+        }();
     combined.hasLo=true;combined.lo=100.0;
     combined.hasHi=true;combined.hi=101.0;
     OntoMath::Piecewise::Piece combinedFallback;
@@ -534,8 +542,12 @@ int main(){
     bareFirst.mathNode=pieceConstant(-5.0);
     OntoMath::Piecewise::Piece deadWorld;
     deadWorld.mathNode=pieceConstant(5.0);
-    deadWorld.guard=std::make_shared<ConditionNode>(
-        ConditionNode::isKind(ConditionNode::BeingKind::Object));
+    deadWorld.guard=[] {
+            auto g=std::make_shared<ConditionNode>();
+            g->kind=ConditionNode::Kind::IsKind;
+            g->beingKind=ConditionNode::BeingKind::Object;
+            return g;
+        }();
     unreachablePw->pieces.push_back(std::move(bareFirst));
     unreachablePw->pieces.push_back(std::move(deadWorld));
     auto unreachableNode=geom::makeImplicit(unreachablePw);
