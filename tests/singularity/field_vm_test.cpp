@@ -415,6 +415,35 @@ int main(){
           primaryWhere.wgsl.find("> 0.0")!=std::string::npos,
           "primary SDF WGSL preserves pure-guard definedness and CPU !(g > 0) selection");
 
+    // The primary compiler knows richer OntoMath than the bounded predicate
+    // VM. Do not let that create two notions of an authoritative pure guard.
+    // SDF(f,q) is scalar and primary-lowerable, but it is deliberately outside
+    // the current straight-line predicate VM subset, so BOTH authority paths
+    // must refuse it at this rung.
+    auto nestedSdfGuard=std::make_shared<OntoMath::MathNode>();
+    nestedSdfGuard->op=OntoMath::MathNode::Op::SDF;
+    nestedSdfGuard->children.push_back(
+        OntoMath::MathNode::sphere(.5));
+    auto nestedPoint=std::make_unique<OntoMath::MathNode>();
+    nestedPoint->op=OntoMath::MathNode::Op::ValueLeaf;
+    nestedPoint->variableName=OntoMath::kAmbientPointVar;
+    nestedSdfGuard->children.push_back(std::move(nestedPoint));
+
+    auto richerWherePw=std::make_shared<OntoMath::Piecewise>();
+    OntoMath::Piecewise::Piece richerWherePiece;
+    richerWherePiece.mathNode=pieceConstant(-1.0);
+    richerWherePiece.whereLEZero=nestedSdfGuard;
+    richerWherePw->pieces.push_back(std::move(richerWherePiece));
+    auto richerWhereNode=geom::makeImplicit(richerWherePw);
+
+    const auto richerWhereVm=sdfwgsl::lowerFieldVm(richerWhereNode);
+    const auto richerWherePrimary=sdfwgsl::compile(richerWhereNode);
+    check(!richerWhereVm.ok&&
+          !richerWherePrimary.ok&&
+          richerWherePrimary.error.find("shared field-VM predicate math")!=
+              std::string::npos,
+          "pure where authority is the shared primary/VM math intersection, not the wider primary compiler");
+
     const auto primaryPiece=sdfwgsl::compile(pieceNode);
     check(primaryPiece.ok&&
           primaryPiece.wgsl.find("_selected = false")!=std::string::npos&&
