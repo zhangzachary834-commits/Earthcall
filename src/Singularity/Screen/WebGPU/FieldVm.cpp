@@ -1338,6 +1338,45 @@ fn fieldVmEval(
         let op = inst.meta.x;
         var value = 0.0;
 
+        if (op == 66u) {
+            let axis = inst.meta.y;
+            let flags = inst.meta.z;
+            let target = inst.meta.w;
+            if (axis > 2u || target <= i || target > instructionCount) {
+                return FieldVmResult(0.0, 0.0);
+            }
+            let coordinate = p[axis] - inst.a.x;
+            if (!fieldVmFinite(coordinate)) {
+                return FieldVmResult(0.0, 0.0);
+            }
+            var inside = true;
+            if ((flags & 1u) != 0u) {
+                inside = inside && select(
+                    coordinate > inst.a.y,
+                    coordinate >= inst.a.y,
+                    (flags & 4u) != 0u);
+            }
+            if ((flags & 2u) != 0u) {
+                inside = inside && select(
+                    coordinate < inst.a.z,
+                    coordinate <= inst.a.z,
+                    (flags & 8u) != 0u);
+            }
+            if (!inside) {
+                i = target - 1u;
+            }
+            continue;
+        }
+
+        if (op == 67u) {
+            let target = inst.meta.y;
+            if (target <= i || target > instructionCount) {
+                return FieldVmResult(0.0, 0.0);
+            }
+            i = target - 1u;
+            continue;
+        }
+
         if (op >= 1u && op <= 7u) {
             if (sp >= 128u) {
                 return FieldVmResult(0.0, 0.0);
