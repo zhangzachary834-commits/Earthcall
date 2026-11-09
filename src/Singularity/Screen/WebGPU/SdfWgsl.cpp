@@ -6625,8 +6625,10 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* emissionExpr,
                              const OntoMath::Piecewise* responseExpr,
                              const BindingValues* responseBindings,
-                             const OntoMath::Piecewise* environmentResponseExpr) {
+                             const OntoMath::Piecewise* environmentResponseExpr,
+                             const FieldWorldGuardDecisions* worldGuardDecisions) {
     Emit e;
+    e.worldGuardDecisions = worldGuardDecisions;
 
     const bool hasAnalyticGrad = isDifferentiableSdfNode(root);
 
@@ -6641,6 +6643,12 @@ ParameterBlock collectParams(const geom::SdfNode& root,
         (void)emitNodeJet(root, e, "p", throwawayBody, nextVar);
     } else {
         (void)emitNode(root, e);
+    }
+
+    if (worldGuardDecisions &&
+        e.worldGuardCursor != worldGuardDecisions->size()) {
+        e.refuse(
+            "SDF world-guard decision count does not match reachable authored guard sites");
     }
     e.parameterOffset = savedOffset;
 
@@ -7762,8 +7770,10 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* emissionExpr,
                 const OntoMath::Piecewise* responseExpr,
                 const BindingValues* responseBindings,
-                const OntoMath::Piecewise* environmentResponseExpr) {
+                const OntoMath::Piecewise* environmentResponseExpr,
+                const FieldWorldGuardDecisions* worldGuardDecisions) {
     Emit e;
+    e.worldGuardDecisions = worldGuardDecisions;
 
     const bool hasAnalyticGrad = isDifferentiableSdfNode(root);
 
@@ -7781,6 +7791,7 @@ Program compile(const geom::SdfNode& root,
 
         Emit eVal;
         eVal.parameterOffset = "paramOffset";
+        eVal.worldGuardDecisions = worldGuardDecisions;
         const std::string valResult = emitNode(root, eVal);
         if (!eVal.refused && eVal.params == e.params) {
             evalFunc = "\nfn sdfEval(p: vec3<f32>) -> f32 {\n"
@@ -7797,6 +7808,12 @@ Program compile(const geom::SdfNode& root,
                    "    let paramOffset = instances[g_instIdx].paramOffset;\n" +
                    e.body +
                    "    return " + result + ";\n}\n";
+    }
+
+    if (worldGuardDecisions &&
+        e.worldGuardCursor != worldGuardDecisions->size()) {
+        e.refuse(
+            "SDF world-guard decision count does not match reachable authored guard sites");
     }
     e.parameterOffset = savedOffset;
 
