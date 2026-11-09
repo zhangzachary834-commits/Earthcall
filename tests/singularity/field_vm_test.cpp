@@ -1,5 +1,6 @@
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -414,6 +415,138 @@ int main(){
           primaryWhere.wgsl.find("log(")!=std::string::npos&&
           primaryWhere.wgsl.find("> 0.0")!=std::string::npos,
           "primary SDF WGSL preserves pure-guard definedness and CPU !(g > 0) selection");
+
+    // WORLD GUARDS cross only through explicit external decisions. The VM
+    // never evaluates ConditionNode and Unknown is not another spelling of false.
+    auto worldPw=std::make_shared<OntoMath::Piecewise>();
+    OntoMath::Piecewise::Piece worldPiece;
+    worldPiece.mathNode=pieceConstant(-3.0);
+    worldPiece.guard=std::make_shared<ConditionNode>(
+        ConditionNode::isKind(ConditionNode::BeingKind::Object));
+    // World guard decides applicability before interval bounds; these are
+    // intentionally impossible and must be ignored under authoritative True.
+    worldPiece.hasLo=true;worldPiece.lo=100.0;
+    worldPiece.hasHi=true;worldPiece.hi=101.0;
+    OntoMath::Piecewise::Piece worldFallback;
+    worldFallback.mathNode=pieceConstant(3.0);
+    worldPw->pieces.push_back(std::move(worldPiece));
+    worldPw->pieces.push_back(std::move(worldFallback));
+    auto worldNode=geom::makeImplicit(worldPw);
+
+    const auto worldSites=sdfwgsl::inspectFieldWorldGuardSites(worldNode);
+    check(worldSites.size()==1&&
+          worldSites[0].path=="root/piece[0].guard"&&
+          worldSites[0].condition==worldPw->pieces[0].guard.get(),
+          "world-guard inspector exposes exact reachable authored site order without evaluating it");
+
+    const sdfwgsl::FieldWorldGuardDecisions worldFalse{
+        sdfwgsl::FieldWorldGuardDecision::False};
+    const sdfwgsl::FieldWorldGuardDecisions worldTrue{
+        sdfwgsl::FieldWorldGuardDecision::True};
+    const sdfwgsl::FieldWorldGuardDecisions worldUnknown{
+        sdfwgsl::FieldWorldGuardDecision::Unknown};
+    const sdfwgsl::FieldWorldGuardDecisions worldExtra{
+        sdfwgsl::FieldWorldGuardDecision::True,
+        sdfwgsl::FieldWorldGuardDecision::False};
+
+    const auto worldFalseVm=sdfwgsl::lowerFieldVm(worldNode,&worldFalse);
+    const auto worldTrueVm=sdfwgsl::lowerFieldVm(worldNode,&worldTrue);
+    const auto worldMissingVm=sdfwgsl::lowerFieldVm(worldNode);
+    const auto worldUnknownVm=sdfwgsl::lowerFieldVm(worldNode,&worldUnknown);
+    const auto worldExtraVm=sdfwgsl::lowerFieldVm(worldNode,&worldExtra);
+    const auto worldFalseValue=
+        sdfwgsl::evaluateFieldVm(worldFalseVm,{0,0,0});
+    const auto worldTrueValue=
+        sdfwgsl::evaluateFieldVm(worldTrueVm,{0,0,0});
+
+    check(worldFalseVm.ok&&worldTrueVm.ok&&
+          worldFalseValue&&worldTrueValue&&
+          nearf(*worldFalseValue,3.0f)&&
+          nearf(*worldTrueValue,-3.0f),
+          "same authored world-guard field flips branch only from explicit False/True testimony");
+    check(!worldMissingVm.ok&&
+          worldMissingVm.error.find("no authoritative decision")!=std::string::npos&&
+          !worldUnknownVm.ok&&
+          worldUnknownVm.error.find("authority is Unknown")!=std::string::npos&&
+          !worldExtraVm.ok&&
+          worldExtraVm.error.find("decision count")!=std::string::npos,
+          "missing Unknown and surplus world testimony refuse instead of guessing branch truth");
+
+    bool hasWorldBranch=false;
+    for(const auto& inst:worldTrueVm.instructions){
+        hasWorldBranch|=
+            static_cast<sdfwgsl::FieldVmOpcode>(inst.meta.x)==
+            sdfwgsl::FieldVmOpcode::BranchWorldGuard;
+    }
+    check(hasWorldBranch&&w.find("op == 69u")!=std::string::npos,
+          "world guard lowers to derived BranchWorldGuard in CPU and WGSL VM");
+
+    auto malformedWorld=worldTrueVm;
+    for(auto& inst:malformedWorld.instructions){
+        if(static_cast<sdfwgsl::FieldVmOpcode>(inst.meta.x)==
+           sdfwgsl::FieldVmOpcode::BranchWorldGuard){
+            inst.a.x=.5f; // neither admitted false nor admitted true
+            break;
+        }
+    }
+    check(!sdfwgsl::evaluateFieldVm(malformedWorld,{0,0,0}),
+          "malformed world-guard decision record fails closed");
+
+    // PURE then WORLD: pure false skips before world; pure true reaches world.
+    // Both guards supersede interval bounds. This is Piece::applies order, not
+    // an invented conjunction ordering.
+    auto combinedPw=std::make_shared<OntoMath::Piecewise>();
+    OntoMath::Piecewise::Piece combined;
+    combined.mathNode=pieceConstant(-4.0);
+    combined.whereLEZero=
+        std::shared_ptr<OntoMath::MathNode>(value("x").release());
+    combined.guard=std::make_shared<ConditionNode>(
+        ConditionNode::isKind(ConditionNode::BeingKind::Object));
+    combined.hasLo=true;combined.lo=100.0;
+    combined.hasHi=true;combined.hi=101.0;
+    OntoMath::Piecewise::Piece combinedFallback;
+    combinedFallback.mathNode=pieceConstant(4.0);
+    combinedPw->pieces.push_back(std::move(combined));
+    combinedPw->pieces.push_back(std::move(combinedFallback));
+    auto combinedNode=geom::makeImplicit(combinedPw);
+
+    const auto combinedTrueVm=
+        sdfwgsl::lowerFieldVm(combinedNode,&worldTrue);
+    const auto combinedFalseVm=
+        sdfwgsl::lowerFieldVm(combinedNode,&worldFalse);
+    const auto purePassWorldPass=
+        sdfwgsl::evaluateFieldVm(combinedTrueVm,{-1,0,0});
+    const auto pureFailWorldPass=
+        sdfwgsl::evaluateFieldVm(combinedTrueVm,{1,0,0});
+    const auto purePassWorldFail=
+        sdfwgsl::evaluateFieldVm(combinedFalseVm,{-1,0,0});
+    check(combinedTrueVm.ok&&combinedFalseVm.ok&&
+          purePassWorldPass&&pureFailWorldPass&&purePassWorldFail&&
+          nearf(*purePassWorldPass,-4.0f)&&
+          nearf(*pureFailWorldPass,4.0f)&&
+          nearf(*purePassWorldFail,4.0f),
+          "pure then world guard precedence matches Piece::applies and ignores interval bounds");
+
+    // A bare Piece makes all later Piece applicability unreachable; the site
+    // inspector and lowerer therefore consume no testimony for later guards.
+    auto unreachablePw=std::make_shared<OntoMath::Piecewise>();
+    OntoMath::Piecewise::Piece bareFirst;
+    bareFirst.mathNode=pieceConstant(-5.0);
+    OntoMath::Piecewise::Piece deadWorld;
+    deadWorld.mathNode=pieceConstant(5.0);
+    deadWorld.guard=std::make_shared<ConditionNode>(
+        ConditionNode::isKind(ConditionNode::BeingKind::Object));
+    unreachablePw->pieces.push_back(std::move(bareFirst));
+    unreachablePw->pieces.push_back(std::move(deadWorld));
+    auto unreachableNode=geom::makeImplicit(unreachablePw);
+    const auto unreachableSites=
+        sdfwgsl::inspectFieldWorldGuardSites(unreachableNode);
+    const auto unreachableVm=sdfwgsl::lowerFieldVm(unreachableNode);
+    const auto unreachableValue=
+        sdfwgsl::evaluateFieldVm(unreachableVm,{0,0,0});
+    check(unreachableSites.empty()&&unreachableVm.ok&&
+          unreachableValue&&nearf(*unreachableValue,-5.0f),
+          "world-guard site ordering excludes authored guards unreachable after a bare Piece");
 
     // The primary compiler knows richer OntoMath than the bounded predicate
     // VM. Do not let that create two notions of an authoritative pure guard.
