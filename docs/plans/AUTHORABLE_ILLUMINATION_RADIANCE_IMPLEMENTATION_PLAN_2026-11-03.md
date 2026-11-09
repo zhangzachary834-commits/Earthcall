@@ -6,6 +6,59 @@
 **Written by:** GPT-5.6 Sol  
 **Status:** implementation plan; no completion claim
 
+## Implementation ledger — 2026-11-08 continuation: pure Piecewise predicates become local execution truth
+
+The interval Piecewise rung still had one semantic refusal that could not be solved by ordinary branching: `whereLEZero`. CPU Piecewise does not treat predicate failure as failure of the whole field. An undefined pure predicate makes **that Piece non-applicable and evaluation continues**. The ordinary field VM, correctly, treats an undefined/malformed field evaluation as Unknown. Reusing it would have changed authored Piecewise meaning.
+
+This continuation adds a separate predicate epistemic wrapper while keeping the underlying mathematics ordinary OntoMath-derived execution.
+
+Implemented:
+- added derived VM opcode `BranchWhereLEZero = 68`;
+- the guard is lowered immediately after that branch as a bounded straight-line math slice using the existing scalar/vector math records;
+- the predicate slice executes on an **isolated stack**, so it cannot disturb enclosing CSG operands;
+- branch metadata carries only slice length and a forward false/undefined target; no backward jump or loop is admitted;
+- predicate execution returns three facts:
+  - `valid` — bytecode/execution shape is lawful;
+  - `defined` — authored predicate mathematics produced a value;
+  - `value` — that produced numeric value;
+- malformed predicate execution makes the entire field result Unknown;
+- semantic predicate undefinedness skips only the current Piece and continues;
+- for the currently admitted VM math, the decisive partial operation is ScalarForm `ln`: CPU semantics are undefined iff its argument is `<=0`;
+- NaN/±inf numeric outcomes are not conflated with semantic undefinedness in the predicate wrapper;
+- applicability mirrors the CPU's actual comparison, `!(value > 0)`, rather than rewriting it as IEEE `value <= 0`;
+- primary generated SDF WGSL now emits the same guard semantics through:
+  - `emitMathDefinedness(...)` for authored nullopt/domain conditions;
+  - predicate-only raw-ln emission;
+  - `defined && !(value > 0)`;
+- predicate-only ln behavior is isolated behind `Emit::preserveUndefinedLn` and included in retained-fragment cache identity; ordinary radiance/material/volume/field lowering is not silently redefined;
+- CPU precedence is preserved exactly: when a Piece has `whereLEZero`, that pure guard decides applicability before interval testing, so any interval bounds on the same Piece are intentionally ignored;
+- primary SDF guard admission is restricted to the **shared primary/field-VM straight-line math subset**. A richer operation being lowerable by the primary compiler alone does not grant CompleteScene authority.
+
+Adversarial witnesses:
+1. `where x <= 0` with a leaf offset and an impossible interval on the same Piece proves local-coordinate binding and pure-guard precedence.
+2. `where ln(x) <= 0` proves all three predicate states:
+   - `x<=0` -> predicate undefined -> later Piece;
+   - `0<x<=1` -> predicate defined true -> guarded Piece;
+   - `x>1` -> predicate defined false -> later Piece.
+3. corrupting the predicate slice to zero length must make the VM result Unknown, not silently choose another Piece.
+4. `SDF(f,q)` is deliberately used as a scalar **primary-only richer predicate** and must be refused by both Piecewise primary authority and VM admission until the shared predicate vocabulary expands.
+5. `sdf_wgsl_parameter_refresh_test` proves a numeric guard threshold edit changes only parameter bytes while changing the guard operator changes WGSL structure.
+6. `webgpu_object_test` requires one pure-where non-distance sphere field to render visibly through the primary SDF path and to become Known occlusion through opcode 68 for both mesh and SDF receivers.
+
+Still refused:
+- subject/world `ConditionNode` Piecewise guards;
+- FunctionCall;
+- Fold;
+- pure predicates outside the shared primary/VM predicate subset.
+
+This is deliberately not a global declaration that every Earthcall evaluator now supports pure guards. Line restriction, exact integration, transport certificate machinery and other subsystems keep their own explicit refusal contracts until their own semantics are proved.
+
+No exact-head CI green result is claimed until GitHub actually executes the jobs; the focused macOS workflow has repeatedly been cancelled with zero steps.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
+---
+
 ## Implementation ledger — 2026-11-08 continuation: interval Piecewise becomes one field truth
 
 A Piecewise-only implicit field previously existed in three incompatible states: CPU `geom::evalSdf` could evaluate it, primary WebGPU SDF emission ignored `SdfNode::piecewise`, and the foreign field VM admitted only one unconditional Piecewise value. This pass collapses that split for the bounded interval/bare subset without inventing a Piecewise geometry kind.
@@ -40,13 +93,13 @@ Adversarial witnesses:
    - become a Known foreign occluder for a mesh receiver;
    - become a Known foreign occluder for an SDF receiver.
 
-Still refused in this rung:
+Historical boundary at the end of this interval rung:
 - subject/world `ConditionNode` guards;
 - pure `whereLEZero` guards;
 - FunctionCall;
 - Fold.
 
-The pure-guard refusal is semantic, not merely missing plumbing. On CPU, an undefined `whereLEZero` predicate makes that piece non-applicable and evaluation continues to later pieces. The current VM treats an undefined math operation as failure of the whole evaluation. Predicate-local failure/continuation must exist before pure guards can cross without changing meaning.
+The pure-guard continuation immediately above closes `whereLEZero` for the shared straight-line predicate subset by adding predicate-local failure/continuation. Subject/world guards, calls and folds remain refused.
 
 A separate cross-channel debt remains outside this SDF-specific rung: the generic renderer `emitPiecewise()` helper used by radiance/volume/material channels currently emits inclusive interval comparisons and its own channel-specific fallback values. This pass does not silently redefine those channels; they require an explicit semantics-unification pass.
 
