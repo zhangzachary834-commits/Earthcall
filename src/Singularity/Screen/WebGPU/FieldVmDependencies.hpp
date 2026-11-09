@@ -63,6 +63,52 @@ struct FieldVmDependencyManifest {
 // Explicit query/binding context for readiness PRECHECKS. Supplying this does
 // not make lowerFieldVm accept dependencies; it only proves that the authority
 // a future consumer would need is present and finite.
+struct FieldVmPropertyChangeRoute {
+    // Stable authored/query identity of the bearer whose existing
+    // Singular::notifyPropertyChanged feed is authoritative for this binding.
+    std::string bearerIdentity;
+    // Root property name emitted by the existing property-change callback.
+    // Nested path writes conservatively invalidate at this root.
+    std::string rootProperty;
+    // TRUE only when the caller can prove all writes capable of changing this
+    // dependency pass through the observed feed. Direct C++ setter escape
+    // hatches mean this must never be inferred from "a PropertyPath exists".
+    bool completeCoverage = false;
+};
+
+enum class FieldVmInvalidationMode : unsigned {
+    // No proven narrow feed: compare/rebuild the dependency snapshot before
+    // reuse. This is the conservative correctness floor.
+    SnapshotRevalidation = 1,
+    // Existing Singular property-change feed can invalidate this dependency by
+    // stable bearer identity + root property.
+    PropertyChangeFeed = 2,
+    // External authority is represented only by its opaque revision/identity;
+    // reuse requires comparing that authority stamp in a fresh snapshot.
+    AuthorityIdentity = 3,
+};
+
+struct FieldVmInvalidationRequirement {
+    FieldVmDependencyKind dependencyKind =
+        FieldVmDependencyKind::NamedValue;
+    std::string dependencyKey;
+    FieldVmInvalidationMode mode =
+        FieldVmInvalidationMode::SnapshotRevalidation;
+    std::string bearerIdentity;
+    std::string rootProperty;
+};
+
+struct FieldVmInvalidationPlan {
+    bool valid = false;
+    std::string snapshotIdentity;
+    std::vector<FieldVmInvalidationRequirement> requirements;
+};
+
+struct FieldVmPropertyChangeNotice {
+    std::string bearerIdentity;
+    std::string rootProperty;
+};
+
 struct FieldVmDependencyContext {
     const std::map<std::string, PropertyValue>* propertyBindings = nullptr;
     const std::map<std::string, PropertyValue>* namedValues = nullptr;
@@ -71,6 +117,11 @@ struct FieldVmDependencyContext {
     // authority". Snapshot identity requires both for reusable evidence.
     const std::map<std::string, std::string>* propertyBindingAuthorities = nullptr;
     const std::map<std::string, std::string>* namedValueAuthorities = nullptr;
+    // Optional proof that a PropertyPath binding is completely covered by the
+    // EXISTING Singular property-change feed. Absent/incomplete routes never
+    // narrow invalidation; they fall back to snapshot revalidation.
+    const std::map<std::string, FieldVmPropertyChangeRoute>*
+        propertyBindingChangeRoutes = nullptr;
     bool subjectAvailable = false;
     // A subject alone does not prove Related/Overlaps/quantifier/world guards
     // are executable. The caller must separately attest that the condition
@@ -486,6 +537,73 @@ inline FieldVmDependencySnapshot snapshotFieldVmDependencies(
     out.valid = valid && out.missingAuthorityIdentity.empty();
     if (out.valid) out.identity = std::move(identity);
     return out;
+}
+
+inline FieldVmInvalidationPlan planFieldVmInvalidation(
+    const FieldVmDependencyManifest& manifest,
+    const FieldVmDependencyContext& context = {}) {
+    FieldVmInvalidationPlan out;
+    const auto snapshot = snapshotFieldVmDependencies(manifest, context);
+    if (!snapshot.valid) return out;
+
+    out.valid = true;
+    out.snapshotIdentity = snapshot.identity;
+
+    for (const auto& d : manifest.dependencies) {
+        if (d.kind == FieldVmDependencyKind::PureGuard) continue;
+
+        FieldVmInvalidationRequirement req;
+        req.dependencyKind = d.kind;
+        req.dependencyKey = d.key;
+
+        if (d.kind == FieldVmDependencyKind::PropertyPath) {
+            req.mode = FieldVmInvalidationMode::SnapshotRevalidation;
+            if (context.propertyBindingChangeRoutes) {
+                const auto it = context.propertyBindingChangeRoutes->find(d.key);
+                if (it != context.propertyBindingChangeRoutes->end() &&
+                    it->second.completeCoverage &&
+                    !it->second.bearerIdentity.empty() &&
+                    !it->second.rootProperty.empty()) {
+                    req.mode = FieldVmInvalidationMode::PropertyChangeFeed;
+                    req.bearerIdentity = it->second.bearerIdentity;
+                    req.rootProperty = it->second.rootProperty;
+                }
+            }
+        } else {
+            req.mode = FieldVmInvalidationMode::AuthorityIdentity;
+        }
+
+        out.requirements.push_back(std::move(req));
+    }
+    return out;
+}
+
+inline bool fieldVmPropertyChangeInvalidates(
+    const FieldVmInvalidationPlan& plan,
+    const FieldVmPropertyChangeNotice& notice) {
+    if (!plan.valid || notice.bearerIdentity.empty() ||
+        notice.rootProperty.empty()) {
+        return false;
+    }
+    for (const auto& req : plan.requirements) {
+        if (req.mode != FieldVmInvalidationMode::PropertyChangeFeed)
+            continue;
+        if (req.bearerIdentity == notice.bearerIdentity &&
+            req.rootProperty == notice.rootProperty) {
+            return true;
+        }
+    }
+    return false;
+}
+
+inline bool fieldVmPlanRequiresSnapshotRevalidation(
+    const FieldVmInvalidationPlan& plan) {
+    if (!plan.valid) return true;
+    for (const auto& req : plan.requirements) {
+        if (req.mode != FieldVmInvalidationMode::PropertyChangeFeed)
+            return true;
+    }
+    return false;
 }
 
 } // namespace sdfwgsl
