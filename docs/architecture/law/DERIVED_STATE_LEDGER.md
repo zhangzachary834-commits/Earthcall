@@ -47,6 +47,62 @@ red the moment the map stops noticing the world's shape move.
 
 ---
 
+## WebGPU external world-guard execution bridge — 2026-11-08
+
+This rung deliberately separates **world testimony acquisition** from **world testimony execution**.
+
+The authored source remains `Piece::guard : ConditionNode`. Neither the primary WebGPU SDF compiler nor the scene Field VM evaluates that condition, looks up a subject, queries the Universe, or turns an unavailable world fact into `false`. Instead an external authority may supply one decision for each reachable authored guard site:
+
+```
+FieldWorldGuardDecision::Unknown
+FieldWorldGuardDecision::False
+FieldWorldGuardDecision::True
+```
+
+`Unknown` is a refusal state and is never encoded as branch-false.
+
+| Structure | Derived from | Invalidated / renewed by | Guarded by |
+|---|---|---|---|
+| `inspectFieldWorldGuardSites(root)` | Reachable authored `ConditionNode` guards in exact SDF/CSG traversal order. A first bare Piece makes later Piece applicability unreachable, so later guards are omitted. Each site borrows the authored ConditionNode pointer and carries a structural path such as `root/child[1]/piece[0].guard`; no condition is evaluated. | Reinspect on authored SDF/Piecewise structural change. This is ordering/identity metadata only; Lattice dependency manifests/snapshots own external authority provenance and invalidation. | `field_vm_test`: exact site pointer/path and bare-Piece reachability. |
+| Primary SDF world-guard decision slots | Externally supplied False/True decisions in the site order above. Decision values enter `Emit::param` and therefore the ordinary SDF parameter stream; ConditionNode text does not become WGSL. Pure `whereLEZero` runs first, then world guard, and interval bounds are ignored whenever a world guard exists, matching `Piece::applies`. | Recollect parameters whenever the authoritative world decision snapshot changes. False↔True does not require shader regeneration. Missing/Unknown decisions or surplus testimony refuse compilation/recollection. The current production renderer supplies no decision provider, so world-guard SDFs remain refused there. | `sdf_wgsl_parameter_refresh_test`: False↔True = byte-identical WGSL + changed parameter bytes; recollection parity; missing/Unknown/extra refusal; changing ConditionNode text at a fixed guard site does not become shader topology. |
+| `FieldVmOpcode::BranchWorldGuard = 69` | The same externally supplied False/True decision, copied into frame-local derived VM IR as exact `0.0/1.0`. The VM contains no ConditionNode evaluator. False jumps to the next authored Piece; True falls through. | Re-lower with the current authoritative decision snapshot. Unknown/missing decisions refuse before executable bytecode is admitted. Decision-count mismatch refuses. Malformed non-0/1 execution record returns Unknown. | `field_vm_test`: False/True branch flip, Unknown/missing/extra refusal, malformed record, pure→world precedence, interval suppression, opcode-69 WGSL witness. |
+
+The ordering contract is the existing CPU applicability law, not a new renderer conjunction:
+
+```
+pure where (if authored)
+    undefined / false -> next Piece
+    true              -> continue
+
+world guard (if authored)
+    false             -> next Piece
+    true              -> Piece applies
+
+only when neither pure nor world guard exists:
+    interval decides
+
+otherwise:
+    bare Piece applies
+```
+
+### Authority stop line
+
+The current Law-facing `ConditionNode::compile()` returns plain `bool`. Some world-dependent cases deliberately map unavailable/unproven referents or missing event context to `false`. That contract is suitable for deciding whether a Law fires, but it cannot prove the distinction Visibility requires:
+
+```
+proved false
+!=
+authority missing / unproven
+```
+
+Therefore this rung **does not** connect `Object::drawObject` or `WebGpuRenderer` directly to `ConditionNode::compile()`. Production currently provides no `FieldWorldGuardDecisions`, and so world-guard SDF execution continues to refuse honestly.
+
+The missing future bridge must be owned by an authority capable of producing tri-state world testimony for the exact subject + world/query context, with Lattice provenance/invalidation evidence. Only then may those decisions be supplied to Heliograph's execution bridge. Parallax proof-premise identity and Visibility Knownness remain downstream and unchanged.
+
+No decision stream is authored or persisted. No ConditionNode is copied into GPU ABI. No subject/world is invented by Screen.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
 ## WebGPU pure-guard Piecewise SDF execution — 2026-11-08
 
 | Structure | Derived from | Invalidated / renewed by | Guarded by |
@@ -70,7 +126,7 @@ defined predicate value
 
 The second rule is why pure guards required their own execution wrapper instead of reusing ordinary `fieldVmEval`: ordinary field results reject non-finite values and propagate execution failure, while `Piece::applies` has local applicability semantics.
 
-**Still refused in WebGPU SDF Piecewise:** subject/world `ConditionNode` guards, FunctionCall, Fold, and pure predicates outside the shared primary/VM math subset. Other subsystems (line restriction, integration, etc.) retain their own explicit pure-guard refusals; this rung does not globalize GPU capabilities into unrelated execution contracts.
+**Historical boundary of the pure-guard rung:** subject/world `ConditionNode` guards, FunctionCall, Fold, and pure predicates outside the shared primary/VM math subset still refused here. The external world-guard execution bridge immediately above closes only **decision consumption**; production world-testimony acquisition remains intentionally absent. Other subsystems (line restriction, integration, etc.) retain their own explicit pure-guard refusals; this rung does not globalize GPU capabilities into unrelated execution contracts.
 
 *Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
 
