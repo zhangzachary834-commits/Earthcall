@@ -240,6 +240,60 @@ int main() {
     }
 
     // ---------------------------------------------------------------------
+    // 3c. Piecewise SDF interval topology is structure; endpoints and branch
+    //     coefficients are values. Slider edits must refresh parameters without
+    //     rebuilding WGSL, while changing open/closed topology must recompile.
+    // ---------------------------------------------------------------------
+    {
+        auto pw = std::make_shared<OntoMath::Piecewise>();
+        pw->inputVariable = "x";
+
+        auto leftValue = std::shared_ptr<OntoMath::MathNode>(
+            number(-0.25).release());
+        OntoMath::Piecewise::Piece left;
+        left.mathNode = leftValue;
+        left.hasLo = true; left.lo = -0.75; left.includeLo = true;
+        left.hasHi = true; left.hi = 0.25; left.includeHi = false;
+
+        auto fallbackValue = std::shared_ptr<OntoMath::MathNode>(
+            number(0.5).release());
+        OntoMath::Piecewise::Piece fallback;
+        fallback.mathNode = fallbackValue;
+
+        pw->pieces.push_back(std::move(left));
+        pw->pieces.push_back(std::move(fallback));
+
+        geom::SdfNode field = geom::makeImplicit(pw);
+        field.offset = glm::vec3(0.2f, 0.0f, 0.0f);
+
+        const sdfwgsl::Program before = sdfwgsl::compile(field);
+        check(before.ok, "interval Piecewise SDF compiles");
+
+        // Numeric-only: move the interval edge and branch value.
+        pw->pieces[0].hi = 0.65;
+        leftValue->scalarForm.terms[0].coefficient = -0.4;
+
+        const sdfwgsl::ParameterBlock refreshed =
+            sdfwgsl::collectParams(field);
+        const sdfwgsl::Program after = sdfwgsl::compile(field);
+
+        check(refreshed.ok && after.ok,
+              "Piecewise numeric parameter recollection succeeds");
+        check(before.wgsl == after.wgsl,
+              "Piecewise endpoint/value edits leave WGSL byte-identical");
+        check(!sameFloats(before.params, after.params),
+              "Piecewise endpoint/value edits change parameter bytes");
+        check(sameFloats(refreshed.values, after.params),
+              "Piecewise recollection exactly matches full-compile parameters");
+
+        // Structural: open -> closed changes the authored predicate itself.
+        pw->pieces[0].includeHi = true;
+        const sdfwgsl::Program structural = sdfwgsl::compile(field);
+        check(structural.ok && structural.wgsl != after.wgsl,
+              "Piecewise open/closed edit changes WGSL structure");
+    }
+
+    // ---------------------------------------------------------------------
     // 4. Authored radiance uses the SAME OntoMath emitter and parameter
     //    traversal as geometry/material math. A value-only radiance edit must
     //    recollect to the exact full-compile buffer without changing WGSL.
