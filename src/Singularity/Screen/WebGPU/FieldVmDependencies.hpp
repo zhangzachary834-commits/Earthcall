@@ -66,6 +66,11 @@ struct FieldVmDependencyManifest {
 struct FieldVmDependencyContext {
     const std::map<std::string, PropertyValue>* propertyBindings = nullptr;
     const std::map<std::string, PropertyValue>* namedValues = nullptr;
+    // Exact caller-owned provenance/revision stamps for each supplied value.
+    // The value map says "what"; this map says "whose/current-under-which
+    // authority". Snapshot identity requires both for reusable evidence.
+    const std::map<std::string, std::string>* propertyBindingAuthorities = nullptr;
+    const std::map<std::string, std::string>* namedValueAuthorities = nullptr;
     bool subjectAvailable = false;
     // A subject alone does not prove Related/Overlaps/quantifier/world guards
     // are executable. The caller must separately attest that the condition
@@ -391,6 +396,21 @@ inline FieldVmDependencySnapshot snapshotFieldVmDependencies(
             }
             return token;
         };
+    const auto readAuthority =
+        [&](const std::map<std::string, std::string>* provider,
+            const std::string& key,
+            const std::string& label) -> std::string {
+            if (!provider) {
+                out.missingAuthorityIdentity.push_back(label + ":" + key);
+                return {};
+            }
+            const auto it = provider->find(key);
+            if (it == provider->end() || it->second.empty()) {
+                out.missingAuthorityIdentity.push_back(label + ":" + key);
+                return {};
+            }
+            return it->second;
+        };
     const auto requireAuthorityIdentity =
         [&](bool available, const std::string& stamp,
             const std::string& label) -> bool {
@@ -410,15 +430,29 @@ inline FieldVmDependencySnapshot snapshotFieldVmDependencies(
             case FieldVmDependencyKind::PropertyPath: {
                 const std::string token =
                     readToken(context.propertyBindings, d.key);
-                if (token.empty()) valid = false;
-                else add(token);
+                const std::string authority =
+                    readAuthority(context.propertyBindingAuthorities,
+                                  d.key, "property-binding");
+                if (token.empty() || authority.empty()) {
+                    valid = false;
+                } else {
+                    add(token);
+                    add(authority);
+                }
                 break;
             }
             case FieldVmDependencyKind::NamedValue: {
                 const std::string token =
                     readToken(context.namedValues, d.key);
-                if (token.empty()) valid = false;
-                else add(token);
+                const std::string authority =
+                    readAuthority(context.namedValueAuthorities,
+                                  d.key, "named-value");
+                if (token.empty() || authority.empty()) {
+                    valid = false;
+                } else {
+                    add(token);
+                    add(authority);
+                }
                 break;
             }
             case FieldVmDependencyKind::WorldGuard:
