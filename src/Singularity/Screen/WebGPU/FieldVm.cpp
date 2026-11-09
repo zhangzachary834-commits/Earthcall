@@ -1520,6 +1520,20 @@ std::optional<float> evaluateFieldVm(const FieldVmProgram& program,
             continue;
         }
 
+        if (op == FieldVmOpcode::BranchWorldGuard) {
+            const uint32_t falseTarget = inst.meta.w;
+            if (falseTarget <= ip ||
+                falseTarget > program.instructions.size() ||
+                !std::isfinite(inst.a.x) ||
+                (inst.a.x != 0.0f && inst.a.x != 1.0f)) {
+                return std::nullopt;
+            }
+            if (inst.a.x < 0.5f) {
+                ip = static_cast<std::size_t>(falseTarget - 1u);
+            }
+            continue;
+        }
+
         const glm::vec3 q = p - glm::vec3(inst.a);
 
         switch (op) {
@@ -1957,6 +1971,19 @@ fn fieldVmEval(
             } else {
                 // Piece::applies uses !(value > 0), not IEEE value <= 0.
                 i = predicateEnd - 1u;
+            }
+            continue;
+        }
+
+        if (op == 69u) {
+            let falseTarget = inst.meta.w;
+            if (falseTarget <= i || falseTarget > instructionCount ||
+                !fieldVmFinite(inst.a.x) ||
+                !(inst.a.x == 0.0 || inst.a.x == 1.0)) {
+                return FieldVmResult(0.0, 0.0);
+            }
+            if (inst.a.x < 0.5) {
+                i = falseTarget - 1u;
             }
             continue;
         }
