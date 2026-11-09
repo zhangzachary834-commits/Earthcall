@@ -1070,6 +1070,44 @@ bool emitFieldVm(const geom::SdfNode& node,
     return true;
 }
 
+void collectWorldGuardSites(
+    const geom::SdfNode& node,
+    const std::string& path,
+    std::vector<FieldWorldGuardSite>& out) {
+
+    if (node.op == geom::SdfOp::Leaf &&
+        node.prim == geom::SdfPrim::Expr &&
+        node.piecewise) {
+        const auto& pw = *node.piecewise;
+        for (std::size_t i = 0; i < pw.pieces.size(); ++i) {
+            const auto& piece = pw.pieces[i];
+            if (piece.guard) {
+                out.push_back({
+                    path + "/piece[" + std::to_string(i) + "].guard",
+                    piece.guard.get()
+                });
+            }
+
+            // Applicability is now permanently true for a bare Piece, so later
+            // Pieces are unreachable regardless of whether its VALUE is a
+            // MathNode/call/fold. Match Piecewise::evaluate's first-applicable
+            // control, not a blind tree census.
+            const bool bareApplicability =
+                !piece.whereLEZero && !piece.guard &&
+                !piece.hasLo && !piece.hasHi;
+            if (bareApplicability) break;
+        }
+    }
+
+    for (std::size_t i = 0; i < node.children.size(); ++i) {
+        if (!node.children[i]) continue;
+        collectWorldGuardSites(
+            *node.children[i],
+            path + "/child[" + std::to_string(i) + "]",
+            out);
+    }
+}
+
 FieldMarchPolicy inspectMarchPolicyNode(const geom::SdfNode& node) {
     FieldMarchPolicy policy;
 
@@ -1130,6 +1168,13 @@ FieldMarchPolicy inspectMarchPolicyNode(const geom::SdfNode& node) {
 
 FieldMarchPolicy inspectFieldMarchPolicy(const geom::SdfNode& root) {
     return inspectMarchPolicyNode(root);
+}
+
+std::vector<FieldWorldGuardSite>
+inspectFieldWorldGuardSites(const geom::SdfNode& root) {
+    std::vector<FieldWorldGuardSite> out;
+    collectWorldGuardSites(root, "root", out);
+    return out;
 }
 
 FieldVmProgram lowerFieldVm(
