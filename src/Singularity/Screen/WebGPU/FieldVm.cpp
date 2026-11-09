@@ -1120,8 +1120,46 @@ std::optional<float> evaluateFieldVm(const FieldVmProgram& program,
         return push(value);
     };
 
-    for (const FieldVmInstruction& inst : program.instructions) {
+    for (std::size_t ip = 0; ip < program.instructions.size(); ++ip) {
+        const FieldVmInstruction& inst = program.instructions[ip];
         const auto op = static_cast<FieldVmOpcode>(inst.meta.x);
+
+        if (op == FieldVmOpcode::BranchInterval) {
+            const uint32_t axis = inst.meta.y;
+            const uint32_t flags = inst.meta.z;
+            const uint32_t target = inst.meta.w;
+            if (axis > 2u || target <= ip ||
+                target > program.instructions.size()) {
+                return std::nullopt;
+            }
+            const float coordinate = p[axis] - inst.a.x;
+            if (!std::isfinite(coordinate)) return std::nullopt;
+            bool inside = true;
+            if ((flags & 1u) != 0u) {
+                inside = inside &&
+                    (((flags & 4u) != 0u)
+                         ? coordinate >= inst.a.y
+                         : coordinate > inst.a.y);
+            }
+            if ((flags & 2u) != 0u) {
+                inside = inside &&
+                    (((flags & 8u) != 0u)
+                         ? coordinate <= inst.a.z
+                         : coordinate < inst.a.z);
+            }
+            if (!inside) ip = static_cast<std::size_t>(target - 1u);
+            continue;
+        }
+
+        if (op == FieldVmOpcode::Jump) {
+            const uint32_t target = inst.meta.y;
+            if (target <= ip || target > program.instructions.size()) {
+                return std::nullopt;
+            }
+            ip = static_cast<std::size_t>(target - 1u);
+            continue;
+        }
+
         const glm::vec3 q = p - glm::vec3(inst.a);
 
         switch (op) {
