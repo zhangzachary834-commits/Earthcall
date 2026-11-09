@@ -1119,6 +1119,171 @@ FieldVmProgram lowerFieldVm(const geom::SdfNode& root) {
     return out;
 }
 
+namespace {
+
+struct PredicateVmResult {
+    bool valid = false;   // bytecode/execution shape is well-formed
+    bool defined = false; // authored predicate produced a value (ln domain etc.)
+    float value = 0.0f;
+};
+
+PredicateVmResult evaluatePredicateVmSlice(
+    const std::vector<FieldVmInstruction>& instructions,
+    std::size_t begin, std::size_t count, const glm::vec3& p) {
+
+    if (count == 0 || begin > instructions.size() ||
+        count > instructions.size() - begin) {
+        return {};
+    }
+
+    std::array<float, kFieldVmMaxStackDepth> stack{};
+    uint32_t sp = 0;
+    const auto push = [&](float value) mutable -> bool {
+        if (sp >= kFieldVmMaxStackDepth) return false;
+        stack[sp++] = value; // NaN/inf are authored numeric outcomes here.
+        return true;
+    };
+
+    for (std::size_t k = 0; k < count; ++k) {
+        const FieldVmInstruction& inst = instructions[begin + k];
+        const auto op = static_cast<FieldVmOpcode>(inst.meta.x);
+        float value = 0.0f;
+
+        if (op == FieldVmOpcode::Constant ||
+            op == FieldVmOpcode::CoordX ||
+            op == FieldVmOpcode::CoordY ||
+            op == FieldVmOpcode::CoordZ) {
+            if (op == FieldVmOpcode::Constant) value = inst.a.x;
+            else if (op == FieldVmOpcode::CoordX) value = p.x - inst.a.x;
+            else if (op == FieldVmOpcode::CoordY) value = p.y - inst.a.x;
+            else value = p.z - inst.a.x;
+            if (!push(value)) return {};
+            continue;
+        }
+
+        if (op == FieldVmOpcode::MathAdd ||
+            op == FieldVmOpcode::MathSub ||
+            op == FieldVmOpcode::MathMul ||
+            op == FieldVmOpcode::MathDiv ||
+            op == FieldVmOpcode::MathPow ||
+            op == FieldVmOpcode::MathRawPow ||
+            op == FieldVmOpcode::MathMin ||
+            op == FieldVmOpcode::MathMax) {
+            if (sp < 2) return {};
+            const float b = stack[--sp];
+            const float a = stack[--sp];
+            if (op == FieldVmOpcode::MathAdd) value = a + b;
+            else if (op == FieldVmOpcode::MathSub) value = a - b;
+            else if (op == FieldVmOpcode::MathMul) value = a * b;
+            else if (op == FieldVmOpcode::MathDiv)
+                value = std::abs(b) <
+                        static_cast<float>(OntoMath::kDegenerateDivisor)
+                    ? 0.0f : a / b;
+            else if (op == FieldVmOpcode::MathPow)
+                value = (a < 0.0f && std::floor(b) != b)
+                    ? 0.0f : std::pow(a, b);
+            else if (op == FieldVmOpcode::MathRawPow)
+                value = std::pow(a, b);
+            else if (op == FieldVmOpcode::MathMin)
+                value = std::min(a, b);
+            else
+                value = std::max(a, b);
+            if (!push(value)) return {};
+            continue;
+        }
+
+        if (op == FieldVmOpcode::MathAbs ||
+            op == FieldVmOpcode::MathSqrt ||
+            op == FieldVmOpcode::MathTan ||
+            op == FieldVmOpcode::MathSin ||
+            op == FieldVmOpcode::MathCos ||
+            op == FieldVmOpcode::MathExp ||
+            op == FieldVmOpcode::MathLog ||
+            op == FieldVmOpcode::MathRound ||
+            op == FieldVmOpcode::MathFloor) {
+            if (sp < 1) return {};
+            const float a = stack[--sp];
+            if (op == FieldVmOpcode::MathAbs) value = std::abs(a);
+            else if (op == FieldVmOpcode::MathSqrt)
+                value = std::sqrt(std::max(a, 0.0f));
+            else if (op == FieldVmOpcode::MathTan) value = std::tan(a);
+            else if (op == FieldVmOpcode::MathSin) value = std::sin(a);
+            else if (op == FieldVmOpcode::MathCos) value = std::cos(a);
+            else if (op == FieldVmOpcode::MathExp) value = std::exp(a);
+            else if (op == FieldVmOpcode::MathLog) {
+                // CPU TransFactor::Ln is undefined iff arg <= 0. NaN is NOT
+                // caught by that comparison and remains a produced numeric
+                // value, so preserve that exact distinction.
+                if (a <= 0.0f) {
+                    return PredicateVmResult{true, false, 0.0f};
+                }
+                value = std::log(a);
+            } else if (op == FieldVmOpcode::MathRound)
+                value = std::round(a);
+            else
+                value = std::floor(a);
+            if (!push(value)) return {};
+            continue;
+        }
+
+        if (op == FieldVmOpcode::MathClamp) {
+            if (sp < 3) return {};
+            const float hi = stack[--sp];
+            const float lo = stack[--sp];
+            const float a = stack[--sp];
+            if (!push(glm::clamp(a, lo, hi))) return {};
+            continue;
+        }
+
+        if (op == FieldVmOpcode::MathNoise3 ||
+            op == FieldVmOpcode::MathLength3 ||
+            op == FieldVmOpcode::MathNormalizeComponent) {
+            if (sp < 3) return {};
+            const float z = stack[--sp];
+            const float y = stack[--sp];
+            const float x = stack[--sp];
+            const glm::vec3 v(x, y, z);
+            if (op == FieldVmOpcode::MathNoise3) {
+                value = glm::perlin(v);
+            } else {
+                const float length = glm::length(v);
+                if (op == FieldVmOpcode::MathLength3) value = length;
+                else {
+                    if (inst.meta.y > 2u) return {};
+                    value = length < OntoMath::kDegenerateVectorLength
+                        ? 0.0f : v[inst.meta.y] / length;
+                }
+            }
+            if (!push(value)) return {};
+            continue;
+        }
+
+        if (op == FieldVmOpcode::MathProjectComponent) {
+            if (sp < 6 || inst.meta.y > 2u) return {};
+            glm::vec3 b;
+            b.z = stack[--sp]; b.y = stack[--sp]; b.x = stack[--sp];
+            glm::vec3 a;
+            a.z = stack[--sp]; a.y = stack[--sp]; a.x = stack[--sp];
+            const float length = glm::length(b);
+            value = length < OntoMath::kDegenerateVectorLength
+                ? 0.0f
+                : b[inst.meta.y] *
+                    (glm::dot(a, b) / glm::dot(b, b));
+            if (!push(value)) return {};
+            continue;
+        }
+
+        // Geometry, Piecewise control, or unknown opcodes are never lawful
+        // inside a pure mathematical predicate slice.
+        return {};
+    }
+
+    if (sp != 1u) return {};
+    return PredicateVmResult{true, true, stack[0]};
+}
+
+} // namespace
+
 std::optional<float> evaluateFieldVm(const FieldVmProgram& program,
                                      const glm::vec3& p) {
     if (!program.ok || program.instructions.empty() ||
@@ -1225,6 +1390,35 @@ std::optional<float> evaluateFieldVm(const FieldVmProgram& program,
                 return std::nullopt;
             }
             ip = static_cast<std::size_t>(target - 1u);
+            continue;
+        }
+
+        if (op == FieldVmOpcode::BranchWhereLEZero) {
+            const uint32_t predicateCount = inst.meta.y;
+            const uint32_t falseTarget = inst.meta.w;
+            const std::size_t predicateBegin = ip + 1u;
+            const std::size_t predicateEnd =
+                predicateBegin + static_cast<std::size_t>(predicateCount);
+            if (predicateCount == 0u ||
+                predicateEnd > program.instructions.size() ||
+                falseTarget <= ip ||
+                falseTarget > program.instructions.size() ||
+                falseTarget < predicateEnd) {
+                return std::nullopt;
+            }
+            const PredicateVmResult predicate =
+                evaluatePredicateVmSlice(
+                    program.instructions,
+                    predicateBegin, predicateCount, p);
+            if (!predicate.valid) return std::nullopt;
+
+            if (!predicate.defined || predicate.value > 0.0f) {
+                ip = static_cast<std::size_t>(falseTarget - 1u);
+            } else {
+                // CPU Piece::applies is !(value > 0), not IEEE value <= 0.
+                // Skip the side-slice and continue at this piece's value.
+                ip = predicateEnd - 1u;
+            }
             continue;
         }
 
