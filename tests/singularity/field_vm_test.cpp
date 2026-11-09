@@ -219,19 +219,96 @@ int main(){
     const auto boundVm=sdfwgsl::lowerFieldVm(geom::makeImplicit(bound));
     check(!boundVm.ok,"Expr requiring a subject PropertyPath refuses in scene field VM");
 
-    auto pieceA=std::make_shared<OntoMath::MathNode>();
-    pieceA->op=OntoMath::MathNode::Op::ScalarLeaf;
-    pieceA->scalarForm=OntoMath::ScalarForm::constant(-1.0);
-    auto pieceB=std::make_shared<OntoMath::MathNode>();
-    pieceB->op=OntoMath::MathNode::Op::ScalarLeaf;
-    pieceB->scalarForm=OntoMath::ScalarForm::constant(1.0);
+    const auto pieceConstant=[](double v){
+        auto n=std::make_shared<OntoMath::MathNode>();
+        n->op=OntoMath::MathNode::Op::ScalarLeaf;
+        n->scalarForm=OntoMath::ScalarForm::constant(v);
+        return n;
+    };
+
+    // Ordered interval Piecewise: overlapping pieces prove FIRST applicable
+    // wins, open/closed endpoints remain distinct, and leaf offset is applied
+    // before testing the authored input variable.
     auto pw=std::make_shared<OntoMath::Piecewise>();
-    OntoMath::Piecewise::Piece pa; pa.mathNode=pieceA;
-    OntoMath::Piecewise::Piece pb; pb.mathNode=pieceB;
-    pw->pieces.push_back(std::move(pa));pw->pieces.push_back(std::move(pb));
-    const auto pieceVm=sdfwgsl::lowerFieldVm(geom::makeImplicit(pw));
-    check(!pieceVm.ok&&pieceVm.error.find("one unconditional")!=std::string::npos,
-          "multi-piece Expr refuses until Piecewise control flow has a lossless VM encoding");
+    pw->inputVariable="x";
+    OntoMath::Piecewise::Piece pa;
+    pa.mathNode=pieceConstant(-1.0);
+    pa.hasLo=true;pa.lo=-1.0;pa.includeLo=true;
+    pa.hasHi=true;pa.hi=.5;pa.includeHi=false;
+    OntoMath::Piecewise::Piece pb;
+    pb.mathNode=pieceConstant(1.0);
+    pb.hasLo=true;pb.lo=0.0;pb.includeLo=false;
+    pb.hasHi=true;pb.hi=1.0;pb.includeHi=true;
+    OntoMath::Piecewise::Piece pc;
+    pc.mathNode=pieceConstant(2.0); // permanent catch-all
+    OntoMath::Piecewise::Piece dead;
+    dead.mathNode=pieceConstant(99.0);
+    dead.whereLEZero=pieceConstant(-1.0); // unreachable after catch-all
+    pw->pieces.push_back(std::move(pa));
+    pw->pieces.push_back(std::move(pb));
+    pw->pieces.push_back(std::move(pc));
+    pw->pieces.push_back(std::move(dead));
+    auto pieceNode=geom::makeImplicit(pw);
+    pieceNode.offset={.3f,0,0};
+
+    const auto pieceVm=sdfwgsl::lowerFieldVm(pieceNode);
+    bool pieceParity=pieceVm.ok&&pieceVm.needsGradientStep;
+    const float localX[]={-1.1f,-1.0f,-.25f,.25f,.5f,1.0f,1.1f};
+    for(float x:localX){
+        const glm::vec3 p(x+.3f,0,0);
+        const auto v=sdfwgsl::evaluateFieldVm(pieceVm,p);
+        pieceParity&=v&&std::fabs(*v-geom::evalSdf(pieceNode,p))<=2e-6f;
+    }
+    const auto overlap=sdfwgsl::evaluateFieldVm(pieceVm,{.55f,0,0}); // local x=.25
+    const auto openBoundary=sdfwgsl::evaluateFieldVm(pieceVm,{.8f,0,0}); // local x=.5
+    check(pieceParity&&overlap&&openBoundary&&
+          nearf(*overlap,-1.0f)&&nearf(*openBoundary,1.0f),
+          "interval Piecewise VM preserves offset, endpoint openness, overlap order and catch-all");
+
+    bool hasBranch=false,hasJump=false;
+    for(const auto& inst:pieceVm.instructions){
+        const auto op=static_cast<sdfwgsl::FieldVmOpcode>(inst.meta.x);
+        hasBranch|=op==sdfwgsl::FieldVmOpcode::BranchInterval;
+        hasJump|=op==sdfwgsl::FieldVmOpcode::Jump;
+    }
+    check(hasBranch&&hasJump&&
+          w.find("op == 66u")!=std::string::npos&&
+          w.find("op == 67u")!=std::string::npos,
+          "Piecewise lowers to bounded forward control in CPU and WGSL VM");
+
+    // No catch-all follows current geom::evalSdf rendering compatibility:
+    // Piecewise undefined falls through empty legacy RPN -> 1e9.
+    auto boundedPw=std::make_shared<OntoMath::Piecewise>();
+    boundedPw->inputVariable="x";
+    OntoMath::Piecewise::Piece bounded;
+    bounded.mathNode=pieceConstant(-.25);
+    bounded.hasLo=true;bounded.lo=-.5;
+    bounded.hasHi=true;bounded.hi=.5;
+    boundedPw->pieces.push_back(std::move(bounded));
+    auto boundedNode=geom::makeImplicit(boundedPw);
+    const auto boundedVm=sdfwgsl::lowerFieldVm(boundedNode);
+    const auto outside=sdfwgsl::evaluateFieldVm(boundedVm,{2,0,0});
+    check(boundedVm.ok&&outside&&*outside>1e8f&&
+          std::fabs(*outside-geom::evalSdf(boundedNode,{2,0,0}))<1.0f,
+          "Piecewise no-match preserves current SDF empty-space fallback");
+
+    // Pure mathematical guards require recoverable predicate-undefined control
+    // before they may become VM authority. Keep them an explicit frontier.
+    auto wherePw=std::make_shared<OntoMath::Piecewise>();
+    OntoMath::Piecewise::Piece wherePiece;
+    wherePiece.mathNode=pieceConstant(-1.0);
+    wherePiece.whereLEZero=pieceConstant(-1.0);
+    wherePw->pieces.push_back(std::move(wherePiece));
+    const auto whereVm=sdfwgsl::lowerFieldVm(geom::makeImplicit(wherePw));
+    check(!whereVm.ok&&whereVm.error.find("pure where guards")!=std::string::npos,
+          "Piecewise pure where guard remains refused until predicate failure can stay local");
+
+    const auto primaryPiece=sdfwgsl::compile(pieceNode);
+    check(primaryPiece.ok&&
+          primaryPiece.wgsl.find("_selected = false")!=std::string::npos&&
+          primaryPiece.wgsl.find(" > ")!=std::string::npos&&
+          primaryPiece.wgsl.find(" < ")!=std::string::npos,
+          "primary SDF WGSL executes the same first-applicable interval Piecewise truth");
 
     check(w.find("cnoise3(v)")!=std::string::npos&&
           w.find("ontoPow(a, b)")!=std::string::npos&&
