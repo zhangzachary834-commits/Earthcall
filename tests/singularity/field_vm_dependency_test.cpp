@@ -77,6 +77,14 @@ int main() {
                   sdfwgsl::inspectFieldVmDependencies(boundField).dependencies,
           "value-only binding changes leave structural dependency manifest unchanged");
 
+    const auto snapshotA =
+        sdfwgsl::snapshotFieldVmDependencies(manifest, ctxA);
+    const auto snapshotB =
+        sdfwgsl::snapshotFieldVmDependencies(manifest, ctxB);
+    check(snapshotA.valid && snapshotB.valid &&
+              snapshotA.identity != snapshotB.identity,
+          "same AST with changed executable binding value gets a different exact runtime snapshot");
+
     const auto missing =
         sdfwgsl::assessFieldVmDependencies(manifest, {});
     check(!missing.ready && missing.missing.size() == 1 &&
@@ -94,6 +102,22 @@ int main() {
     check(!nonFinite.ready && nonFinite.nonFinite.size() == 1 &&
               nonFinite.nonFinite[0] == "radius",
           "non-finite bound value revokes readiness instead of becoming field truth");
+    check(!sdfwgsl::snapshotFieldVmDependencies(
+              manifest, nanCtx).valid,
+          "non-finite binding cannot mint an executable dependency snapshot");
+
+    std::map<std::string, PropertyValue> hugeValues{
+        {"radius", PropertyValue(1e300)}
+    };
+    sdfwgsl::FieldVmDependencyContext hugeCtx;
+    hugeCtx.propertyBindings = &hugeValues;
+    const auto huge =
+        sdfwgsl::assessFieldVmDependencies(manifest, hugeCtx);
+    check(!huge.ready && huge.outOfFloat32Range.size() == 1 &&
+              huge.outOfFloat32Range[0] == "radius" &&
+              !sdfwgsl::snapshotFieldVmDependencies(
+                  manifest, hugeCtx).valid,
+          "finite double outside float32 VM range refuses before snapshot identity");
 
     std::map<std::string, PropertyValue> stringValues{
         {"radius", PropertyValue(std::string("large"))}
@@ -159,6 +183,43 @@ int main() {
     check(sdfwgsl::assessFieldVmDependencies(
               contextManifest, fullContext).ready,
           "explicit context availability satisfies preflight only");
+
+    const auto unstamped =
+        sdfwgsl::snapshotFieldVmDependencies(contextManifest, fullContext);
+    check(!unstamped.valid &&
+              unstamped.missingAuthorityIdentity.size() == 4,
+          "available external contexts without exact authority identities cannot mint a reusable snapshot");
+
+    fullContext.subjectIdentity = "singular:subject-A@revision-7";
+    fullContext.worldConditionContextIdentity = "condition-world@revision-21";
+    fullContext.functionRegistryIdentity = "function-registry@revision-3";
+    fullContext.worldEnumerationIdentity = "world-enumeration@revision-9";
+    const auto contextSnapshotA =
+        sdfwgsl::snapshotFieldVmDependencies(contextManifest, fullContext);
+    check(contextSnapshotA.valid,
+          "explicit authority identities mint a valid dependency snapshot");
+
+    auto subjectB = fullContext;
+    subjectB.subjectIdentity = "singular:subject-B@revision-7";
+    const auto contextSnapshotB =
+        sdfwgsl::snapshotFieldVmDependencies(contextManifest, subjectB);
+    check(contextSnapshotB.valid &&
+              contextSnapshotA.identity != contextSnapshotB.identity,
+          "different subject identity invalidates retained runtime dependency evidence");
+
+    auto worldB = fullContext;
+    worldB.worldConditionContextIdentity = "condition-world@revision-22";
+    const auto contextSnapshotWorldB =
+        sdfwgsl::snapshotFieldVmDependencies(contextManifest, worldB);
+    check(contextSnapshotWorldB.valid &&
+              contextSnapshotA.identity != contextSnapshotWorldB.identity,
+          "changed world-condition authority revision changes exact snapshot identity");
+
+    const auto contextSnapshotA2 =
+        sdfwgsl::snapshotFieldVmDependencies(contextManifest, fullContext);
+    check(contextSnapshotA2.valid &&
+              contextSnapshotA.identity == contextSnapshotA2.identity,
+          "identical dependency evidence reproduces the exact same snapshot identity");
 
     const auto emptyBindField = geom::makeImplicit(bind(""));
     const auto emptyBind =
