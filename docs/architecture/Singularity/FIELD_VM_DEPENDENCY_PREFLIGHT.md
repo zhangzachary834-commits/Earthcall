@@ -145,6 +145,45 @@ No arrow may be traversed backward as semantic authority.
 11. a pure `whereLEZero` guard is recorded but does not invent a subject dependency;
 12. empty PropertyPath is structurally invalid before any runtime provider can bless it.
 
+## Invalidation contract
+
+A dependency snapshot is not allowed to live forever merely because its encoded tuple was once valid.
+
+`planFieldVmInvalidation(...)` derives one of three validity modes for each non-local dependency:
+
+- **PropertyChangeFeed** — allowed only when the caller explicitly proves that the existing `Singular::notifyPropertyChanged` route completely covers every write capable of changing that dependency. The requirement records a stable bearer identity and the root property name emitted by the existing callback.
+- **SnapshotRevalidation** — the conservative correctness floor for a PropertyPath when complete write-feed coverage cannot be proved.
+- **AuthorityIdentity** — subject/world/function/fold/named-value evidence must be revalidated through its authority/revision stamp; Lattice does not fabricate an EventBus route for those domains.
+
+This deliberately respects Earthcall's existing boundary: ValueCell mutation and PropertyPath writes have real revision/fanout machinery, but some direct C++ setters bypass the property vocabulary. Therefore the mere existence of a PropertyPath is **not** proof that narrow event invalidation is complete.
+
+Nested PropertyPath dependencies invalidate conservatively at the root property named by the existing callback. An unrelated root or unrelated bearer does not invalidate a dependency whose complete route has been proved.
+
+The plan also carries two separate identities:
+
+```
+manifestIdentity
+    = dependency structure / shape
+
+snapshotIdentity
+    = runtime values + provenance/context evidence
+```
+
+A value-only edit may change `snapshotIdentity` while preserving `manifestIdentity`. A dependency-shape edit changes `manifestIdentity`.
+
+That distinction is required before any cache can safely separate:
+- structural recompilation;
+- parameter/value refresh;
+- proof invalidation.
+
+### What this still does not do
+
+This rung does not subscribe the renderer to EventBus, cache a visibility answer, or claim that all direct writes are covered. It only derives the validity requirements and exposes when narrow invalidation is lawfully available.
+
+The future consumer must keep the fail-open rule:
+
+> if complete invalidation coverage cannot be proved, re-snapshot/re-prove rather than retaining authority.
+
 ## Explicit non-goals
 
 This rung does **not**:
