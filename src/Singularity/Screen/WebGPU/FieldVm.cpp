@@ -607,7 +607,7 @@ bool emitMathScalar(const OntoMath::MathNode& node, const glm::vec3& offset,
     }
 }
 
-bool emitIntervalPiecewiseVm(const geom::SdfNode& node,
+bool emitPiecewiseVm(const geom::SdfNode& node,
                              const OntoMath::Piecewise& pw,
                              FieldVmProgram& out,
                              uint32_t& stackDepth) {
@@ -819,7 +819,7 @@ bool emitIntervalPiecewiseVm(const geom::SdfNode& node,
 bool emitExprVm(const geom::SdfNode& node,
                 FieldVmProgram& out, uint32_t& stackDepth) {
     if (node.piecewise) {
-        return emitIntervalPiecewiseVm(
+        return emitPiecewiseVm(
             node, *node.piecewise, out, stackDepth);
     }
 
