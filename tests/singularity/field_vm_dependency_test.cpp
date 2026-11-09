@@ -45,6 +45,14 @@ bool has(const sdfwgsl::FieldVmDependencyManifest& m,
 int main() {
     std::printf("Running Field-VM dependency preflight tribunal...\n");
 
+    const auto dependencyFree = sdfwgsl::inspectFieldVmDependencies(
+        geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f)));
+    const auto dependencyFreeSnapshot =
+        sdfwgsl::snapshotFieldVmDependencies(dependencyFree, {});
+    check(dependencyFreeSnapshot.valid &&
+              !dependencyFreeSnapshot.identity.empty(),
+          "dependency-free field still receives domain-separated snapshot identity");
+
     // One authored AST; two runtime snapshots. Structure must not mutate merely
     // because the authoritative property value changes.
     auto add = std::make_shared<OntoMath::MathNode>();
