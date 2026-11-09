@@ -34,7 +34,7 @@ It records:
 
 - `PropertyPath` — authored `Bind(path)`;
 - `NamedValue` — a non-local ValueLeaf or ScalarForm symbol;
-- `WorldGuard` — a Piecewise world condition requiring a subject;
+- `WorldGuard` — a Piecewise world condition requiring both a subject and the authoritative condition-query context;
 - `PureGuard` — local mathematical control, explicitly **not** a subject dependency;
 - `FunctionCall` — named-function registry context;
 - `WorldFold` — world-enumeration context.
@@ -109,7 +109,7 @@ No arrow may be traversed backward as semantic authority.
 4. non-finite binding value revokes readiness;
 5. unsupported PropertyValue representation revokes readiness;
 6. an explicitly supplied named-value provider can satisfy named-value preflight;
-7. world guard, function call, and fold remain unresolved without their corresponding contexts;
+7. world guard remains unresolved unless both subject and world-condition context exist; function call and fold likewise require their own providers;
 8. a pure `whereLEZero` guard is recorded but does not invent a subject dependency;
 9. empty PropertyPath is structurally invalid before any runtime provider can bless it.
 
