@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <map>
 #include <set>
 #include <string>
@@ -64,6 +65,10 @@ struct FieldVmDependencyContext {
     const std::map<std::string, PropertyValue>* propertyBindings = nullptr;
     const std::map<std::string, PropertyValue>* namedValues = nullptr;
     bool subjectAvailable = false;
+    // A subject alone does not prove Related/Overlaps/quantifier/world guards
+    // are executable. The caller must separately attest that the condition
+    // calculus has its authoritative query context.
+    bool worldConditionContextAvailable = false;
     bool functionRegistryAvailable = false;
     bool worldEnumerationAvailable = false;
 };
@@ -261,7 +266,8 @@ inline FieldVmDependencyAssessment assessFieldVmDependencies(
                 checkMapValue(context.namedValues, d);
                 break;
             case FieldVmDependencyKind::WorldGuard:
-                if (!context.subjectAvailable)
+                if (!context.subjectAvailable ||
+                    !context.worldConditionContextAvailable)
                     out.unresolvedContext.push_back(d);
                 break;
             case FieldVmDependencyKind::FunctionCall:
