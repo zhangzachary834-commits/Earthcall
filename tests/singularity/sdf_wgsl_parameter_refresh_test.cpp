@@ -12,6 +12,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ConditionModel.hpp"
 
 #include <cmath>
 #include <cstdio>
@@ -83,6 +84,28 @@ std::shared_ptr<OntoMath::MathNode> terrainMath(double amplitude) {
     root->children.push_back(std::move(y));
     root->children.push_back(std::move(scaledNoise));
     return std::shared_ptr<OntoMath::MathNode>(root.release());
+}
+
+sdfwgsl::Program compileWithWorldGuards(
+    const geom::SdfNode& root,
+    const sdfwgsl::FieldWorldGuardDecisions* decisions) {
+    return sdfwgsl::compile(
+        root,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        sdfwgsl::DensityInputKind::LegacyField,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        decisions);
+}
+
+sdfwgsl::ParameterBlock collectWithWorldGuards(
+    const geom::SdfNode& root,
+    const sdfwgsl::FieldWorldGuardDecisions* decisions) {
+    return sdfwgsl::collectParams(
+        root,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        sdfwgsl::DensityInputKind::LegacyField,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        decisions);
 }
 
 } // namespace
@@ -341,6 +364,91 @@ int main() {
         const sdfwgsl::Program structural = sdfwgsl::compile(field);
         check(structural.ok && structural.wgsl != after.wgsl,
               "pure-where guard operator edit changes WGSL structure");
+    }
+
+    // ---------------------------------------------------------------------
+    // 3e. World-guard truth is external execution VALUE, never shader structure.
+    //     Same authored field + False/True testimony must share WGSL while the
+    //     parameter block changes. Unknown/missing/surplus testimony refuses.
+    // ---------------------------------------------------------------------
+    {
+        auto pw = std::make_shared<OntoMath::Piecewise>();
+
+        OntoMath::Piecewise::Piece guarded;
+        guarded.mathNode = std::shared_ptr<OntoMath::MathNode>(
+            number(-0.3).release());
+        guarded.guard = std::make_shared<ConditionNode>(
+            ConditionNode::isKind(ConditionNode::BeingKind::Object));
+        // World guard supersedes interval bounds in Piece::applies.
+        guarded.hasLo = true; guarded.lo = 100.0;
+        guarded.hasHi = true; guarded.hi = 101.0;
+
+        OntoMath::Piecewise::Piece fallback;
+        fallback.mathNode = std::shared_ptr<OntoMath::MathNode>(
+            number(0.4).release());
+
+        pw->pieces.push_back(std::move(guarded));
+        pw->pieces.push_back(std::move(fallback));
+        geom::SdfNode field = geom::makeImplicit(pw);
+
+        const sdfwgsl::FieldWorldGuardDecisions falseDecision{
+            sdfwgsl::FieldWorldGuardDecision::False};
+        const sdfwgsl::FieldWorldGuardDecisions trueDecision{
+            sdfwgsl::FieldWorldGuardDecision::True};
+        const sdfwgsl::FieldWorldGuardDecisions unknownDecision{
+            sdfwgsl::FieldWorldGuardDecision::Unknown};
+        const sdfwgsl::FieldWorldGuardDecisions extraDecision{
+            sdfwgsl::FieldWorldGuardDecision::True,
+            sdfwgsl::FieldWorldGuardDecision::False};
+
+        const sdfwgsl::Program falseProgram =
+            compileWithWorldGuards(field, &falseDecision);
+        const sdfwgsl::Program trueProgram =
+            compileWithWorldGuards(field, &trueDecision);
+        const sdfwgsl::ParameterBlock refreshedTrue =
+            collectWithWorldGuards(field, &trueDecision);
+
+        check(falseProgram.ok && trueProgram.ok && refreshedTrue.ok,
+              "authoritatively-decided world-guard SDF compiles and recollects");
+        check(falseProgram.wgsl == trueProgram.wgsl,
+              "False->True world testimony leaves WGSL byte-identical");
+        check(!sameFloats(falseProgram.params, trueProgram.params),
+              "False->True world testimony changes only parameter values");
+        check(sameFloats(refreshedTrue.values, trueProgram.params),
+              "world-guard value recollection exactly matches full compile");
+        check(trueProgram.wgsl.find("> 0.5") != std::string::npos,
+              "primary SDF consumes world testimony as a numeric branch parameter");
+
+        const sdfwgsl::Program missing =
+            compileWithWorldGuards(field, nullptr);
+        const sdfwgsl::Program unknown =
+            compileWithWorldGuards(field, &unknownDecision);
+        const sdfwgsl::Program extra =
+            compileWithWorldGuards(field, &extraDecision);
+
+        check(!missing.ok &&
+                  missing.error.find("no authoritative decision") !=
+                      std::string::npos,
+              "missing world testimony refuses primary SDF execution");
+        check(!unknown.ok &&
+                  unknown.error.find("authority is Unknown") !=
+                      std::string::npos,
+              "Unknown world testimony refuses instead of becoming false");
+        check(!extra.ok &&
+                  extra.error.find("decision count") != std::string::npos,
+              "surplus world testimony refuses instead of silently shifting guard slots");
+
+        // The guard AST itself is world meaning, not WGSL topology. Change the
+        // authored condition while preserving one guard site: the execution
+        // program remains shareable, while the authoritative provider is
+        // responsible for producing a new decision/snapshot.
+        pw->pieces[0].guard = std::make_shared<ConditionNode>(
+            ConditionNode::identity("other-being"));
+        const sdfwgsl::Program changedGuardSameDecision =
+            compileWithWorldGuards(field, &trueDecision);
+        check(changedGuardSameDecision.ok &&
+                  changedGuardSameDecision.wgsl == trueProgram.wgsl,
+              "world-condition AST identity is external authority, not shader topology");
     }
 
     // ---------------------------------------------------------------------
