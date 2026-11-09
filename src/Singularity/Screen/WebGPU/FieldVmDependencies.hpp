@@ -100,6 +100,10 @@ struct FieldVmInvalidationRequirement {
 
 struct FieldVmInvalidationPlan {
     bool valid = false;
+    // Exact dependency SHAPE identity; changes only when the manifest itself
+    // changes, not when a runtime value/revision changes.
+    std::string manifestIdentity;
+    // Exact runtime evidence identity for this query context.
     std::string snapshotIdentity;
     std::vector<FieldVmInvalidationRequirement> requirements;
 };
@@ -423,6 +427,24 @@ inline FieldVmDependencyAssessment assessFieldVmDependencies(
     return out;
 }
 
+inline std::string fieldVmDependencyManifestIdentity(
+    const FieldVmDependencyManifest& manifest) {
+    std::string identity;
+    const auto add = [&](const std::string& part) {
+        detail::appendFieldVmIdentityPart(identity, part);
+    };
+    add("field-vm-dependency-manifest:v1");
+    for (const auto& d : manifest.dependencies) {
+        add(std::to_string(static_cast<unsigned>(d.kind)));
+        add(d.key);
+    }
+    for (const auto& error : manifest.structuralErrors) {
+        add("error");
+        add(error);
+    }
+    return identity;
+}
+
 inline FieldVmDependencySnapshot snapshotFieldVmDependencies(
     const FieldVmDependencyManifest& manifest,
     const FieldVmDependencyContext& context = {}) {
@@ -547,6 +569,7 @@ inline FieldVmInvalidationPlan planFieldVmInvalidation(
     if (!snapshot.valid) return out;
 
     out.valid = true;
+    out.manifestIdentity = fieldVmDependencyManifestIdentity(manifest);
     out.snapshotIdentity = snapshot.identity;
 
     for (const auto& d : manifest.dependencies) {
