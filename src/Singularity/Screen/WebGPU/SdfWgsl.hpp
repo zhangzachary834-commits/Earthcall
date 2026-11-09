@@ -119,6 +119,15 @@ enum class FieldVmOpcode : uint32_t {
     // ScalarForm factor exponent uses raw std::pow / ontoRawPow semantics,
     // distinct from MathNode::Pow's negative-fractional -> 0 contract.
     MathRawPow = 65,
+
+    // Derived forward-only control for authored Piecewise field execution.
+    // These are Kernel IR, not authored Piecewise kinds.
+    // BranchInterval: meta.y=axis (0=x,1=y,2=z), meta.z flags
+    // {hasLo,hasHi,includeLo,includeHi}=bits {0,1,2,3}, meta.w=forward
+    // program-relative target. a.x=leaf-local axis offset, a.y=lo, a.z=hi.
+    // Jump: meta.y=forward program-relative target.
+    BranchInterval = 66,
+    Jump = 67,
 };
 
 // One postorder stack instruction. meta.x = FieldVmOpcode.
@@ -131,6 +140,8 @@ enum class FieldVmOpcode : uint32_t {
 //   Constant: a.x = literal.
 //   CoordX/Y/Z: a.x = leaf-local offset for that axis.
 //   MathNormalizeComponent / MathProjectComponent: meta.y = output axis.
+//   BranchInterval / Jump: forward-only Piecewise execution control; they do
+//   not mutate the scalar stack and targets are program-relative.
 // Other math instructions consume only the scalar stack.
 // The ABI stays plain storage-buffer data; extending execution does not change
 // the 48-byte record or create persisted authored identity.
