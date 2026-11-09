@@ -276,6 +276,23 @@ int main(){
           w.find("op == 67u")!=std::string::npos,
           "Piecewise lowers to bounded forward control in CPU and WGSL VM");
 
+    // Piecewise may be one child of larger CSG. Its alternatives must preserve
+    // any already-live sibling operands on the VM stack.
+    auto nestedPiecewise=geom::SdfNode::binary(
+        geom::SdfOp::Union,
+        geom::SdfNode::leaf(geom::SdfPrim::Sphere,{.35f}),
+        pieceNode);
+    const auto nestedPiecewiseVm=sdfwgsl::lowerFieldVm(nestedPiecewise);
+    bool nestedPiecewiseParity=nestedPiecewiseVm.ok;
+    const glm::vec3 nestedPts[]={{0,0,0},{.55f,0,0},{1.3f,0,0},{-.8f,.2f,0}};
+    for(const auto& p:nestedPts){
+        const auto v=sdfwgsl::evaluateFieldVm(nestedPiecewiseVm,p);
+        nestedPiecewiseParity&=v&&
+            std::fabs(*v-geom::evalSdf(nestedPiecewise,p))<=2e-6f;
+    }
+    check(nestedPiecewiseParity,
+          "Piecewise VM preserves enclosing CSG stack operands across alternative branches");
+
     // No catch-all follows current geom::evalSdf rendering compatibility:
     // Piecewise undefined falls through empty legacy RPN -> 1e9.
     auto boundedPw=std::make_shared<OntoMath::Piecewise>();
