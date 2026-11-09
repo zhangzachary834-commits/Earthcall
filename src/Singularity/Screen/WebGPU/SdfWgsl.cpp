@@ -306,6 +306,11 @@ struct Emit {
     // Pure Piecewise predicates need CPU undefinedness, not the historical
     // compatibility clamp used by ordinary ScalarForm ln lowering.
     bool               preserveUndefinedLn = false;
+    // Subject/world Piecewise decisions are supplied by an external authority.
+    // The shader consumes them as ordinary parameters; it never evaluates
+    // ConditionNode or invents a subject/world.
+    const FieldWorldGuardDecisions* worldGuardDecisions = nullptr;
+    std::size_t        worldGuardCursor = 0;
     const BindingValues* propertyBindings = nullptr; // generic MathNode::Bind values supplied by owner
     bool               readSurfaceNormal = false;
     bool               readWi = false;
@@ -2600,7 +2605,7 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
                     bool hasInterval = false;
                     for (const auto& piece : pw.pieces) {
                         hasInterval = hasInterval ||
-                            (!piece.whereLEZero &&
+                            (!piece.whereLEZero && !piece.guard &&
                              (piece.hasLo || piece.hasHi));
                     }
 
@@ -2629,9 +2634,9 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
                     for (std::size_t pieceIndex = 0;
                          pieceIndex < pw.pieces.size(); ++pieceIndex) {
                         const auto& piece = pw.pieces[pieceIndex];
-                        if (piece.guard || piece.call || piece.fold) {
+                        if (piece.call || piece.fold) {
                             e.refuse(
-                                "SDF Piecewise refuses subject/world guards, calls, and folds");
+                                "SDF Piecewise refuses calls and folds");
                             break;
                         }
                         if (!piece.mathNode) {
@@ -2658,6 +2663,7 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
 
                         std::string cond;
                         const bool pureGuard = piece.whereLEZero != nullptr;
+                        const bool worldGuard = piece.guard != nullptr;
 
                         if (pureGuard) {
                             const auto guardType = piece.whereLEZero->typeOf(
@@ -2698,7 +2704,30 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
                             // not IEEE g <= 0, which matters for NaN.
                             cond = "(" + guardDefined + ") && !((" +
                                    guardValue + ") > 0.0)";
-                        } else {
+                        }
+
+                        if (worldGuard) {
+                            if (!e.worldGuardDecisions ||
+                                e.worldGuardCursor >=
+                                    e.worldGuardDecisions->size()) {
+                                e.refuse(
+                                    "SDF Piecewise world guard has no authoritative decision");
+                                break;
+                            }
+                            const FieldWorldGuardDecision decision =
+                                (*e.worldGuardDecisions)[e.worldGuardCursor++];
+                            if (decision == FieldWorldGuardDecision::Unknown) {
+                                e.refuse(
+                                    "SDF Piecewise world guard authority is Unknown");
+                                break;
+                            }
+                            const std::string worldDecision =
+                                e.param(
+                                    decision == FieldWorldGuardDecision::True
+                                        ? 1.0f : 0.0f) + " > 0.5";
+                            if (!cond.empty()) cond += " && ";
+                            cond += "(" + worldDecision + ")";
+                        } else if (!pureGuard) {
                             if (piece.hasLo) {
                                 if (!std::isfinite(piece.lo)) {
                                     e.refuse(
@@ -2732,7 +2761,7 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
                         e.line("    " + out + " = " + value + ";");
                         e.line("    " + selected + " = true;");
                         e.line("}");
-                        if (!pureGuard && cond.empty()) {
+                        if (!pureGuard && !worldGuard && cond.empty()) {
                             break; // first bare piece is permanent catch-all
                         }
                     }
