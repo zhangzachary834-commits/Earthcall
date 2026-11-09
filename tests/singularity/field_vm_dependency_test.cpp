@@ -117,6 +117,57 @@ int main() {
               snapshotA.identity != snapshotOtherAuthority.identity,
           "same numeric binding from different authority gets a different snapshot identity");
 
+    // Narrow invalidation is earned only when the caller can prove the existing
+    // property-change feed completely covers this dependency. Otherwise the
+    // correctness floor is fresh snapshot comparison before reuse.
+    std::map<std::string, sdfwgsl::FieldVmPropertyChangeRoute> trackedRoutes{
+        {"radius", sdfwgsl::FieldVmPropertyChangeRoute{
+            "material:A", "radius", true}}
+    };
+    auto trackedCtx = ctxA;
+    trackedCtx.propertyBindingChangeRoutes = &trackedRoutes;
+    const auto trackedPlan =
+        sdfwgsl::planFieldVmInvalidation(manifest, trackedCtx);
+    check(trackedPlan.valid &&
+              trackedPlan.requirements.size() == 1 &&
+              trackedPlan.requirements[0].mode ==
+                  sdfwgsl::FieldVmInvalidationMode::PropertyChangeFeed &&
+              !sdfwgsl::fieldVmPlanRequiresSnapshotRevalidation(trackedPlan),
+          "proven complete property feed earns narrow invalidation route");
+    check(sdfwgsl::fieldVmPropertyChangeInvalidates(
+              trackedPlan, {"material:A", "radius"}),
+          "matching stable bearer and root-property notice invalidates tracked dependency");
+    check(!sdfwgsl::fieldVmPropertyChangeInvalidates(
+              trackedPlan, {"material:A", "color"}) &&
+              !sdfwgsl::fieldVmPropertyChangeInvalidates(
+                  trackedPlan, {"material:B", "radius"}),
+          "unrelated property or bearer notice does not invalidate narrow tracked dependency");
+
+    auto incompleteRoutes = trackedRoutes;
+    incompleteRoutes["radius"].completeCoverage = false;
+    auto incompleteCtx = ctxA;
+    incompleteCtx.propertyBindingChangeRoutes = &incompleteRoutes;
+    const auto incompletePlan =
+        sdfwgsl::planFieldVmInvalidation(manifest, incompleteCtx);
+    check(incompletePlan.valid &&
+              incompletePlan.requirements.size() == 1 &&
+              incompletePlan.requirements[0].mode ==
+                  sdfwgsl::FieldVmInvalidationMode::SnapshotRevalidation &&
+              sdfwgsl::fieldVmPlanRequiresSnapshotRevalidation(
+                  incompletePlan),
+          "unproven write coverage cannot narrow invalidation below snapshot revalidation");
+
+    auto missingRouteIdentity = trackedRoutes;
+    missingRouteIdentity["radius"].bearerIdentity.clear();
+    auto missingRouteCtx = ctxA;
+    missingRouteCtx.propertyBindingChangeRoutes = &missingRouteIdentity;
+    const auto missingRoutePlan =
+        sdfwgsl::planFieldVmInvalidation(manifest, missingRouteCtx);
+    check(missingRoutePlan.valid &&
+              missingRoutePlan.requirements[0].mode ==
+                  sdfwgsl::FieldVmInvalidationMode::SnapshotRevalidation,
+          "incomplete change-feed identity falls back rather than fabricating event authority");
+
     const auto missing =
         sdfwgsl::assessFieldVmDependencies(manifest, {});
     check(!missing.ready && missing.missing.size() == 1 &&
@@ -271,6 +322,18 @@ int main() {
     check(contextSnapshotA2.valid &&
               contextSnapshotA.identity == contextSnapshotA2.identity,
           "identical dependency evidence reproduces the exact same snapshot identity");
+
+    const auto contextPlan =
+        sdfwgsl::planFieldVmInvalidation(contextManifest, fullContext);
+    bool allExternalAuthority = contextPlan.valid;
+    for (const auto& req : contextPlan.requirements) {
+        allExternalAuthority &=
+            req.mode == sdfwgsl::FieldVmInvalidationMode::AuthorityIdentity;
+    }
+    check(allExternalAuthority &&
+              sdfwgsl::fieldVmPlanRequiresSnapshotRevalidation(contextPlan),
+          "subject/world/function/fold contexts stay authority-stamp revalidation, not fake property events");
+
 
     const auto emptyBindField = geom::makeImplicit(bind(""));
     const auto emptyBind =
