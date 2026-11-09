@@ -1586,6 +1586,200 @@ fn fieldVmFinite(value: f32) -> bool {
     return value == value && abs(value) <= 3.402823e38;
 }
 
+struct FieldVmPredicateResult {
+    value: f32,
+    defined: f32,
+    valid: f32,
+};
+
+fn fieldVmEvalPredicate(
+    instructionBase: u32,
+    instructionCount: u32,
+    p: vec3<f32>) -> FieldVmPredicateResult {
+
+    if (instructionCount == 0u || instructionCount > 1024u) {
+        return FieldVmPredicateResult(0.0, 0.0, 0.0);
+    }
+
+    var stack: array<f32, 128>;
+    var sp = 0u;
+
+    for (var i = 0u; i < instructionCount; i = i + 1u) {
+        let inst = fieldVmInstructions[instructionBase + i];
+        let op = inst.meta.x;
+        var value = 0.0;
+
+        if (op >= 40u && op <= 43u) {
+            if (sp >= 128u) {
+                return FieldVmPredicateResult(0.0, 0.0, 0.0);
+            }
+            if (op == 40u) {
+                value = inst.a.x;
+            } else if (op == 41u) {
+                value = p.x - inst.a.x;
+            } else if (op == 42u) {
+                value = p.y - inst.a.x;
+            } else {
+                value = p.z - inst.a.x;
+            }
+            stack[sp] = value;
+            sp = sp + 1u;
+            continue;
+        }
+
+        if ((op >= 44u && op <= 48u) ||
+            (op >= 56u && op <= 57u) || op == 65u) {
+            if (sp < 2u) {
+                return FieldVmPredicateResult(0.0, 0.0, 0.0);
+            }
+            let b = stack[sp - 1u];
+            let a = stack[sp - 2u];
+            sp = sp - 2u;
+
+            if (op == 44u) {
+                value = a + b;
+            } else if (op == 45u) {
+                value = a - b;
+            } else if (op == 46u) {
+                value = a * b;
+            } else if (op == 47u) {
+                value = select(0.0, a / b, abs(b) >= FIELD_VM_DIV_EPS);
+            } else if (op == 48u) {
+                value = ontoPow(a, b);
+            } else if (op == 65u) {
+                value = ontoRawPow(a, b);
+            } else if (op == 56u) {
+                value = min(a, b);
+            } else {
+                value = max(a, b);
+            }
+
+            if (sp >= 128u) {
+                return FieldVmPredicateResult(0.0, 0.0, 0.0);
+            }
+            stack[sp] = value;
+            sp = sp + 1u;
+            continue;
+        }
+
+        if ((op >= 49u && op <= 55u) ||
+            (op >= 60u && op <= 61u)) {
+            if (sp < 1u) {
+                return FieldVmPredicateResult(0.0, 0.0, 0.0);
+            }
+            let a = stack[sp - 1u];
+            if (op == 49u) {
+                value = abs(a);
+            } else if (op == 50u) {
+                value = sqrt(max(a, 0.0));
+            } else if (op == 51u) {
+                value = tan(a);
+            } else if (op == 52u) {
+                value = sin(a);
+            } else if (op == 53u) {
+                value = cos(a);
+            } else if (op == 54u) {
+                value = exp(a);
+            } else if (op == 55u) {
+                // Match CPU TransFactor::Ln exactly: undefined iff a <= 0.
+                // NaN does not satisfy that comparison and remains a produced
+                // numeric value for Piece::applies' later !(value > 0) test.
+                if (a <= 0.0) {
+                    return FieldVmPredicateResult(0.0, 0.0, 1.0);
+                }
+                value = log(a);
+            } else if (op == 60u) {
+                value = round(a);
+            } else {
+                value = floor(a);
+            }
+            stack[sp - 1u] = value;
+            continue;
+        }
+
+        if (op == 58u) {
+            if (sp < 3u) {
+                return FieldVmPredicateResult(0.0, 0.0, 0.0);
+            }
+            let hi = stack[sp - 1u];
+            let lo = stack[sp - 2u];
+            let a = stack[sp - 3u];
+            sp = sp - 3u;
+            if (sp >= 128u) {
+                return FieldVmPredicateResult(0.0, 0.0, 0.0);
+            }
+            stack[sp] = clamp(a, lo, hi);
+            sp = sp + 1u;
+            continue;
+        }
+
+        if (op == 59u || op == 62u || op == 63u) {
+            if (sp < 3u) {
+                return FieldVmPredicateResult(0.0, 0.0, 0.0);
+            }
+            let v = vec3<f32>(
+                stack[sp - 3u], stack[sp - 2u], stack[sp - 1u]);
+            sp = sp - 3u;
+
+            if (op == 59u) {
+                value = cnoise3(v);
+            } else {
+                let len = length(v);
+                if (op == 62u) {
+                    value = len;
+                } else {
+                    let axis = inst.meta.y;
+                    if (axis > 2u) {
+                        return FieldVmPredicateResult(0.0, 0.0, 0.0);
+                    }
+                    value = select(
+                        0.0, v[axis] / len, len >= FIELD_VM_VECTOR_EPS);
+                }
+            }
+
+            if (sp >= 128u) {
+                return FieldVmPredicateResult(0.0, 0.0, 0.0);
+            }
+            stack[sp] = value;
+            sp = sp + 1u;
+            continue;
+        }
+
+        if (op == 64u) {
+            if (sp < 6u) {
+                return FieldVmPredicateResult(0.0, 0.0, 0.0);
+            }
+            let a = vec3<f32>(
+                stack[sp - 6u], stack[sp - 5u], stack[sp - 4u]);
+            let b = vec3<f32>(
+                stack[sp - 3u], stack[sp - 2u], stack[sp - 1u]);
+            sp = sp - 6u;
+            let axis = inst.meta.y;
+            if (axis > 2u) {
+                return FieldVmPredicateResult(0.0, 0.0, 0.0);
+            }
+            let len = length(b);
+            value = select(
+                0.0,
+                b[axis] * (dot(a, b) / dot(b, b)),
+                len >= FIELD_VM_VECTOR_EPS);
+            if (sp >= 128u) {
+                return FieldVmPredicateResult(0.0, 0.0, 0.0);
+            }
+            stack[sp] = value;
+            sp = sp + 1u;
+            continue;
+        }
+
+        return FieldVmPredicateResult(0.0, 0.0, 0.0);
+    }
+
+    if (sp != 1u) {
+        return FieldVmPredicateResult(0.0, 0.0, 0.0);
+    }
+    return FieldVmPredicateResult(stack[0], 1.0, 1.0);
+}
+
 fn fieldVmEval(
     programBase: u32, instructionCount: u32, p: vec3<f32>) -> FieldVmResult {
     if (instructionCount == 0u || instructionCount > 1024u) {
@@ -1636,6 +1830,36 @@ fn fieldVmEval(
                 return FieldVmResult(0.0, 0.0);
             }
             i = target - 1u;
+            continue;
+        }
+
+        if (op == 68u) {
+            let predicateCount = inst.meta.y;
+            let falseTarget = inst.meta.w;
+            let predicateBegin = i + 1u;
+            if (predicateCount == 0u ||
+                predicateBegin > instructionCount ||
+                predicateCount > instructionCount - predicateBegin) {
+                return FieldVmResult(0.0, 0.0);
+            }
+            let predicateEnd = predicateBegin + predicateCount;
+            if (falseTarget <= i || falseTarget > instructionCount ||
+                falseTarget < predicateEnd) {
+                return FieldVmResult(0.0, 0.0);
+            }
+
+            let predicate = fieldVmEvalPredicate(
+                programBase + predicateBegin, predicateCount, p);
+            if (predicate.valid < 0.5) {
+                return FieldVmResult(0.0, 0.0);
+            }
+
+            if (predicate.defined < 0.5 || predicate.value > 0.0) {
+                i = falseTarget - 1u;
+            } else {
+                // Piece::applies uses !(value > 0), not IEEE value <= 0.
+                i = predicateEnd - 1u;
+            }
             continue;
         }
 
