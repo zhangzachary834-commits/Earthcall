@@ -1,5 +1,23 @@
 # Person Verification List
 
+## SDF Surface Truth Mastery (Rungs 16, 17 & 18): Cathedral of the Living Logos
+
+*Antigravity · Gemini 2.5 Flash (Sparkly Guy #1 · Surface SDF Lead) · session `c802a0d5-3c06-450d-b47b-ebdc7aef86d0` · 2026-11-06. Commissioned by The Firmament & Zach: "⚡ QUEST DISPATCH: RUNGS 16, 17 & 18 — THE SUB-7MS GPU WAIT & SYMMETRIC DUAL-SUBTREE PRUNING PASS 🌌🏛️🔥"*
+
+- [ ] Launch Earthcall WebGPU (`./build_release/earthcall_webgpu`) and enter **`Cathedral of the Living Logos`**.
+- [ ] **Deep 9–24 Leaf 1D Ray-Domain Solvers & Support Leaping (Rung 16):**
+  - Walk past Cathedral's 15 heavy CSG objects (9–20 leaves), including `duckweed.1/2/3` (12 leaves), `logos.resonator.core` (9 leaves), `lotus.grand/white/cyan` (9 leaves), `merkaba_south` (13 leaves), `altar_monstrance` (13 leaves), `reeds.north/south/inlet` (15 leaves), `iris.north/south` (16 leaves), and `seraph.left/right` (20 leaves).
+  - Observe that `duckweed` resolves in exact 0-step closed-form union hits, and multi-leaf smooth union sculptures leap straight to their outer support envelopes without grazing stalls or compilation slowdowns.
+  - Inspect `cathedral.sdf.gyroid_north` (`Intersect(Expr(gyroid), Sphere)`): observe that the periodic gyroid expression correctly leaps to its bounding sphere in 0 march steps, rendering razor-sharp contours.
+- [ ] **Symmetric Dual-Subtree Pruning `canPruneBoth` (Rung 17):**
+  - Walk around balanced CSG sculptures where both left and right subtrees have $\ge 2$ leaves.
+  - Rotate the camera and view from grazing angles: observe that the closer subtree evaluates first while the farther subtree is dynamically pruned behind runtime distance guards, delivering smooth, stutter-free >100 FPS performance.
+- [ ] **Zero-Repack Static SDF Signatures (Rung 18):**
+  - Stop the camera in Cathedral and observe static frame time: verify that CPU flush overhead drops to **~0.20 ms** on Field Subset and **~0.68 ms** on Full World as static pipeline signatures completely bypass `std::memcmp` and buffer re-upload.
+- [ ] **Cross-Zone Parity & High-Fidelity Rendering:**
+  - Switch to **`The Merry Dancers`**: verify **100.000% byte-for-byte pixel identity (14,745,600 / 14,745,600 bytes, 0 diff)** at 2560×1440.
+  - Verify that visual fidelity across the entire Cathedral retains 99.86% byte parity vs Rungs 13–15, with differences confined strictly to sub-pixel grazing boundary edges.
+
 ## SDF Surface Truth Mastery (Rungs 13, 14 & 15): Cathedral of the Living Logos
 
 *Antigravity · Gemini 3.8 Flash (Sparkly Guy #1 · Surface SDF Lead) · session `c802a0d5-3c06-450d-b47b-ebdc7aef86d0` · 2026-11-06. Commissioned by The Firmament & Zach: "THE FIRMAMENT DIRECTIVE: THE NEXT TRIPLE PASS — RUNG 13, RUNG 14 & RUNG 15"*
@@ -2313,6 +2331,7 @@ Authored **4 brand-new far-side volumetric aurora fields (`spatialFields[4..7]`)
 
 ## Cathedral surface cost baseline — 2026-11-03
 
+- [ ] **Native WebGPU SDF Rungs 19–21 Live Verification (2026-11-07):** Run `build_release/earthcall_webgpu` in Cathedral of the Living Logos and The Merry Dancers. Confirm visual appearance, lighting, and frame pacing after Rungs 19–21 stripped the 6 inlined finite-difference fallbacks, short-circuited back-face 116-node radiance/shadow evaluations, and eliminated per-draw parameter copies. Cathedral Field Subset completes GPU wait in **5.73 ms** (wall **6.00 ms median**, > 165 FPS), Cathedral Full World in **6.64 ms wait** (wall **8.62 ms median**, > 132 FPS), and The Merry Dancers in **8.97 ms wait** (wall **9.05 ms median**, > 111 FPS) with **100.000% byte-for-byte exact pixel identity**. Verify smooth movement and absence of shader hitching. Sparkly Guy #1 ("The Adorable Blep Dragon") · session `c802a0d5-3c06-450d-b47b-ebdc7aef86d0` · 2026-11-07T13:20:00-08:00.
 - [x] **Live performance report, 2026-11-04:** Zach ran the rebuilt checkout's Release executable with expensive Laws disabled and reported **38 FPS**, judging the renderer much better. Camera/extent and a matched live baseline were not recorded. Law optimization remains separate at Zach's direction. Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-04T00:35:39-08:00.
 - [ ] Run `build_release/earthcall_webgpu` and revisit a familiar slow Cathedral view. Judge carved-detail visibility, lighting, movement, frame pacing, and FPS after mesh upload paging. The fixed saved-object screen improved 62.112 → 30.042 ms, with exact fixed-order image parity. Record the actual camera/window extent and inhabited rate. This shared mesh-path improvement applies alongside either volume renderer. [Task and native gates](../Specific%20Tasks/Performance%20and%20Runtime/Cathedral_Surface_Frame_Cost/Cathedral_Surface_Frame_Cost.md). Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-03T22:52:00-08:00.
 

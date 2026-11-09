@@ -184,6 +184,7 @@ struct PerlinJet {
 struct StepSample {
     raw: f32,
     gradLen: f32,
+    grad: vec3<f32>,
 };
 
 fn sdSphereGrad(p: vec3<f32>, r: f32) -> PerlinJet {
@@ -2324,9 +2325,266 @@ JetExpr emitRpnGrad(const std::vector<geom::SdfToken>& rpn, Emit& e,
     return JetExpr{ JetKind::Scalar, res.val, grad, "", "", "" };
 }
 
+bool isConstantScalarLeaf(const OntoMath::MathNode& node) {
+    if (node.op != OntoMath::MathNode::Op::ScalarLeaf) return false;
+    if (node.scalarForm.terms.empty()) return true;
+    return node.scalarForm.terms.size() == 1 &&
+           node.scalarForm.terms[0].factors.empty() &&
+           node.scalarForm.terms[0].trans.empty();
+}
+
+bool isAmbientPointLeaf(const OntoMath::MathNode& node) {
+    return node.op == OntoMath::MathNode::Op::ValueLeaf &&
+           node.variableName == OntoMath::kAmbientPointVar;
+}
+
+bool isAxisProjectionNode(const OntoMath::MathNode& node, const char* axis) {
+    if (node.op == OntoMath::MathNode::Op::ValueLeaf && node.variableName == axis) {
+        return true;
+    }
+    return node.op == OntoMath::MathNode::Op::Component &&
+           node.stringArg == axis &&
+           node.children.size() == 1 &&
+           node.children[0] &&
+           isAmbientPointLeaf(*node.children[0]);
+}
+
+bool isZeroConstantVector(const OntoMath::MathNode& node) {
+    if (node.op != OntoMath::MathNode::Op::VectorConstruct || node.children.size() != 3) {
+        return false;
+    }
+    for (int i = 0; i < 3; ++i) {
+        if (!node.children[i] || !isConstantScalarLeaf(*node.children[i])) return false;
+        const double c = node.children[i]->scalarForm.terms.empty()
+                             ? 0.0
+                             : node.children[i]->scalarForm.terms[0].coefficient;
+        if (std::abs(c) > 1e-6) return false;
+    }
+    return true;
+}
+
+bool isConstantVector3(const OntoMath::MathNode& node) {
+    if (node.op != OntoMath::MathNode::Op::VectorConstruct || node.children.size() != 3) {
+        return false;
+    }
+    return node.children[0] && isConstantScalarLeaf(*node.children[0]) &&
+           node.children[1] && isConstantScalarLeaf(*node.children[1]) &&
+           node.children[2] && isConstantScalarLeaf(*node.children[2]);
+}
+
+bool isXYProjectionLength(const OntoMath::MathNode& node) {
+    if (node.op != OntoMath::MathNode::Op::Length || node.children.size() != 1 || !node.children[0]) {
+        return false;
+    }
+    const auto& vec = *node.children[0];
+    if (vec.op != OntoMath::MathNode::Op::VectorConstruct || vec.children.size() != 3 ||
+        !vec.children[0] || !vec.children[1] || !vec.children[2]) {
+        return false;
+    }
+    if (!isConstantScalarLeaf(*vec.children[2])) return false;
+    const double zCoeff = vec.children[2]->scalarForm.terms.empty()
+                              ? 0.0
+                              : vec.children[2]->scalarForm.terms[0].coefficient;
+    return isAxisProjectionNode(*vec.children[0], "x") &&
+           isAxisProjectionNode(*vec.children[1], "y") &&
+           std::abs(zCoeff) <= 1e-6;
+}
+
+bool isEuclideanNormMathNode(const OntoMath::MathNode& node) {
+    if (node.op == OntoMath::MathNode::Op::Length &&
+        node.children.size() == 1 && node.children[0] &&
+        isAmbientPointLeaf(*node.children[0])) {
+        return true;
+    }
+    if (node.op == OntoMath::MathNode::Op::Sqrt &&
+        node.children.size() == 1 && node.children[0]) {
+        const auto& c = *node.children[0];
+        if (c.op == OntoMath::MathNode::Op::Dot && c.children.size() == 2 &&
+            c.children[0] && c.children[1] &&
+            isAmbientPointLeaf(*c.children[0]) && isAmbientPointLeaf(*c.children[1])) {
+            return true;
+        }
+        if (const auto sf = OntoMath::toScalarForm(c)) {
+            if (sf->terms.size() == 3) {
+                bool hasX2 = false, hasY2 = false, hasZ2 = false;
+                for (const auto& term : sf->terms) {
+                    if (!term.trans.empty() || term.factors.size() != 1) return false;
+                    if (std::abs(term.coefficient - 1.0) > 1e-6) return false;
+                    const auto& [var, exp] = *term.factors.begin();
+                    if (std::abs(exp - 2.0) > 1e-6) return false;
+                    if (var == "x") hasX2 = true;
+                    else if (var == "y") hasY2 = true;
+                    else if (var == "z") hasZ2 = true;
+                }
+                if (hasX2 && hasY2 && hasZ2) return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool isSingleAxisSquaredMathNode(const OntoMath::MathNode& node, std::string& outAxis) {
+    if (const auto sf = OntoMath::toScalarForm(node)) {
+        if (sf->terms.size() == 1 && sf->terms[0].trans.empty() &&
+            sf->terms[0].factors.size() == 1 &&
+            std::abs(sf->terms[0].coefficient - 1.0) <= 1e-6) {
+            const auto& [var, exp] = *sf->terms[0].factors.begin();
+            if (std::abs(exp - 2.0) <= 1e-6 && (var == "x" || var == "y" || var == "z")) {
+                outAxis = var;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool isTwoAxisEuclideanNormMathNode(const OntoMath::MathNode& node, std::string& outU, std::string& outV) {
+    if (node.op == OntoMath::MathNode::Op::Sqrt && node.children.size() == 1 && node.children[0]) {
+        if (const auto sf = OntoMath::toScalarForm(*node.children[0])) {
+            if (sf->terms.size() == 2) {
+                std::vector<std::string> vars;
+                for (const auto& term : sf->terms) {
+                    if (!term.trans.empty() || term.factors.size() != 1) return false;
+                    if (std::abs(term.coefficient - 1.0) > 1e-6) return false;
+                    const auto& [var, exp] = *term.factors.begin();
+                    if (std::abs(exp - 2.0) > 1e-6) return false;
+                    if (var != "x" && var != "y" && var != "z") return false;
+                    vars.push_back(var);
+                }
+                if (vars.size() == 2 && vars[0] != vars[1]) {
+                    outU = vars[0];
+                    outV = vars[1];
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+bool isRadialSubSquaredMathNode(const OntoMath::MathNode& node, std::string& outU, std::string& outV, float& outMajR) {
+    using Op = OntoMath::MathNode::Op;
+    auto checkSub = [&](const OntoMath::MathNode& sub, std::string& u, std::string& v, float& R) -> bool {
+        if (sub.op != Op::Sub || sub.children.size() != 2 || !sub.children[0] || !sub.children[1]) return false;
+        if (!isConstantScalarLeaf(*sub.children[1])) return false;
+        const double rVal = sub.children[1]->scalarForm.terms.empty() ? 0.0 : sub.children[1]->scalarForm.terms[0].coefficient;
+        if (rVal <= 1e-6) return false;
+        if (!isTwoAxisEuclideanNormMathNode(*sub.children[0], u, v)) return false;
+        R = static_cast<float>(rVal);
+        return true;
+    };
+    if (node.op == Op::Scale && node.children.size() == 2 && node.children[0] && node.children[1]) {
+        std::string u0, v0, u1, v1;
+        float r0 = 0.0f, r1 = 0.0f;
+        if (checkSub(*node.children[0], u0, v0, r0) && checkSub(*node.children[1], u1, v1, r1)) {
+            if (((u0 == u1 && v0 == v1) || (u0 == v1 && v0 == u1)) && std::abs(r0 - r1) <= 1e-5f) {
+                outU = u0;
+                outV = v0;
+                outMajR = r0;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool tryExtractMathNodeTorus(const OntoMath::MathNode& math, float& outMajR, float& outMinR, int& outAxis) {
+    using Op = OntoMath::MathNode::Op;
+    if (math.op != Op::Sub || math.children.size() != 2 || !math.children[0] || !math.children[1]) {
+        return false;
+    }
+    const auto& lhs = *math.children[0];
+    const auto& rhs = *math.children[1];
+    if (!isConstantScalarLeaf(rhs)) return false;
+    const double minR = rhs.scalarForm.terms.empty() ? 0.0 : rhs.scalarForm.terms[0].coefficient;
+    if (minR <= 1e-6) return false;
+
+    if (lhs.op == Op::Sqrt && lhs.children.size() == 1 && lhs.children[0]) {
+        const auto& sum = *lhs.children[0];
+        if (sum.op == Op::Add && sum.children.size() == 2 && sum.children[0] && sum.children[1]) {
+            std::string u, v, w;
+            float majR = 0.0f;
+            bool matched = false;
+            if (isRadialSubSquaredMathNode(*sum.children[0], u, v, majR) &&
+                isSingleAxisSquaredMathNode(*sum.children[1], w)) {
+                matched = true;
+            } else if (isSingleAxisSquaredMathNode(*sum.children[0], w) &&
+                       isRadialSubSquaredMathNode(*sum.children[1], u, v, majR)) {
+                matched = true;
+            }
+            if (matched && w != u && w != v) {
+                outMajR = majR;
+                outMinR = static_cast<float>(minR);
+                outAxis = (w == "x") ? 0 : ((w == "y") ? 1 : 2);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool tryExtractExprSphereRadius(const geom::SdfNode& n, float& outRadius) {
+    if (n.op != geom::SdfOp::Leaf || n.prim != geom::SdfPrim::Expr) {
+        return false;
+    }
+    const OntoMath::MathNode* math = n.mathNode.get();
+    std::shared_ptr<OntoMath::MathNode> compiled;
+    if (!math) {
+        compiled = n.toMathNode();
+        math = compiled.get();
+    }
+    if (!math) return false;
+    using Op = OntoMath::MathNode::Op;
+    if (math->op != Op::Sub || math->children.size() != 2 ||
+        !math->children[0] || !math->children[1]) {
+        return false;
+    }
+    const auto& lhs = *math->children[0];
+    const auto& rhs = *math->children[1];
+    if (!isEuclideanNormMathNode(lhs) || !isConstantScalarLeaf(rhs)) {
+        return false;
+    }
+    const double r = rhs.scalarForm.terms.empty() ? 0.0 : rhs.scalarForm.terms[0].coefficient;
+    if (r <= 1e-6) {
+        return false;
+    }
+    outRadius = static_cast<float>(r);
+    return true;
+}
+
+bool tryExtractExprTorus(const geom::SdfNode& n, float& outMajR, float& outMinR, int& outAxis) {
+    if (n.op != geom::SdfOp::Leaf || n.prim != geom::SdfPrim::Expr) {
+        return false;
+    }
+    const OntoMath::MathNode* math = n.mathNode.get();
+    std::shared_ptr<OntoMath::MathNode> compiled;
+    if (!math) {
+        compiled = n.toMathNode();
+        math = compiled.get();
+    }
+    if (!math) return false;
+    return tryExtractMathNodeTorus(*math, outMajR, outMinR, outAxis);
+}
+
+bool isEuclideanDistanceExprLeaf(const geom::SdfNode& n) {
+    float r = 0.0f, majR = 0.0f, minR = 0.0f;
+    int axis = 2;
+    return tryExtractExprSphereRadius(n, r) || tryExtractExprTorus(n, majR, minR, axis);
+}
+
 bool isPurePrimitiveTree(const geom::SdfNode& n) {
     if (n.op == geom::SdfOp::Leaf) {
-        return n.prim != geom::SdfPrim::Expr;
+        if (n.prim != geom::SdfPrim::Expr) return true;
+        return isEuclideanDistanceExprLeaf(n);
+    }
+    if (n.op == geom::SdfOp::Subtract) {
+        return !n.children.empty() && n.children[0] && isPurePrimitiveTree(*n.children[0]);
+    }
+    if (n.op == geom::SdfOp::Intersect) {
+        if (n.children.size() < 2) return false;
+        const bool ok0 = n.children[0] && isPurePrimitiveTree(*n.children[0]);
+        const bool ok1 = n.children[1] && isPurePrimitiveTree(*n.children[1]);
+        return ok0 || ok1;
     }
     for (const auto& child : n.children) {
         if (!child || !isPurePrimitiveTree(*child)) return false;
@@ -2367,10 +2625,11 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
                 e.line("let " + out + " = sdTorus(" + lp + ", " + e.param(n.dims.x) + ", " + e.param(n.dims.y) + ");");
                 break;
             case geom::SdfPrim::Expr: {
-                // The implicit f(x,y,z)=0 surface. NOTE: this is an iso-surface
-                // value, not a true distance, so sphere tracing must take damped
-                // steps through it — see the marcher's use of kExprDamping.
-                e.sawExpr = true;
+                // Only non-1-Lipschitz implicit surfaces require damped gradient stepping.
+                // Exact 1-Lipschitz Euclidean sphere/torus expressions step at unit scale.
+                if (!isEuclideanDistanceExprLeaf(n)) {
+                    e.sawExpr = true;
+                }
                 if (n.mathNode) {
                     e.line("let " + out + " = " + emitMathNode(*n.mathNode, e, lp) + ";");
                 } else if (!n.rpn.empty()) {
@@ -2418,14 +2677,77 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
     }
 
     const bool isCommutativeUnion = (n.op == geom::SdfOp::Union || n.op == geom::SdfOp::SmoothUnion);
-    glm::vec3 cA(0.0f);
-    float rA = 0.0f;
-    const bool canPruneA = isCommutativeUnion &&
-                           n.children.size() >= 2 && n.children[0] &&
-                           countSdfLeaves(*n.children[0]) >= 2 &&
-                           (!n.children[1] || countSdfLeaves(*n.children[0]) > countSdfLeaves(*n.children[1])) &&
-                           isPurePrimitiveTree(*n.children[0]) &&
-                           tryComputeSdfBoundingSphere(*n.children[0], cA, rA);
+    glm::vec3 cA(0.0f), cB(0.0f);
+    float rA = 0.0f, rB = 0.0f;
+    const bool hasSphereA = isCommutativeUnion && n.children.size() >= 2 && n.children[0] &&
+                            countSdfLeaves(*n.children[0]) >= 2 &&
+                            isPurePrimitiveTree(*n.children[0]) &&
+                            tryComputeSdfBoundingSphere(*n.children[0], cA, rA);
+    const bool hasSphereB = isCommutativeUnion && n.children.size() >= 2 && n.children[1] &&
+                            countSdfLeaves(*n.children[1]) >= 2 &&
+                            isPurePrimitiveTree(*n.children[1]) &&
+                            tryComputeSdfBoundingSphere(*n.children[1], cB, rB);
+    const bool canPruneBoth = hasSphereA && hasSphereB &&
+                              countSdfLeaves(*n.children[0]) <= 2 &&
+                              countSdfLeaves(*n.children[1]) <= 2;
+
+    if (canPruneBoth) {
+        const size_t startA = e.body.size();
+        const std::string a = emitNode(*n.children[0], e);
+        std::string bodyA = e.body.substr(startA);
+        e.body.erase(startA);
+
+        const size_t startB = e.body.size();
+        const std::string b = emitNode(*n.children[1], e);
+        std::string bodyB = e.body.substr(startB);
+        e.body.erase(startB);
+
+        std::string cAExpr = e.param3(cA);
+        std::string rAExpr = e.param(rA);
+        std::string cBExpr = e.param3(cB);
+        std::string rBExpr = e.param(rB);
+        std::string kExpr = "0.0";
+        if (n.op == geom::SdfOp::SmoothUnion) {
+            kExpr = "max(" + e.param(n.t) + ", 1e-5)";
+        }
+
+        std::string boundA = "boundA" + std::to_string(e.next++);
+        std::string boundB = "boundB" + std::to_string(e.next++);
+        std::string aVal = "aVal" + std::to_string(e.next++);
+        std::string bVal = "bVal" + std::to_string(e.next++);
+
+        e.line("let " + boundA + " = length(p - " + cAExpr + ") - " + rAExpr + ";");
+        e.line("let " + boundB + " = length(p - " + cBExpr + ") - " + rBExpr + ";");
+        e.line("var " + aVal + " = 1e6;");
+        e.line("var " + bVal + " = 1e6;");
+
+        std::string kMargin = (n.op == geom::SdfOp::SmoothUnion) ? (" + " + kExpr) : "";
+        e.line("if (" + boundA + " <= " + boundB + ") {");
+        e.body += bodyA;
+        e.line("    " + aVal + " = " + a + ";");
+        e.line("    if (" + boundB + " <= " + aVal + kMargin + ") {");
+        e.body += bodyB;
+        e.line("        " + bVal + " = " + b + ";");
+        e.line("    }");
+        e.line("} else {");
+        e.body += bodyB;
+        e.line("    " + bVal + " = " + b + ";");
+        e.line("    if (" + boundA + " <= " + bVal + kMargin + ") {");
+        e.body += bodyA;
+        e.line("        " + aVal + " = " + a + ";");
+        e.line("    }");
+        e.line("}");
+
+        if (n.op == geom::SdfOp::SmoothUnion) {
+            e.line("let " + out + " = sminK(" + aVal + ", " + bVal + ", " + kExpr + ");");
+        } else {
+            e.line("let " + out + " = min(" + aVal + ", " + bVal + ");");
+        }
+        return out;
+    }
+
+    const bool canPruneA = isCommutativeUnion && hasSphereA &&
+                           (!n.children[1] || countSdfLeaves(*n.children[0]) > countSdfLeaves(*n.children[1]));
 
     if (canPruneA) {
         const size_t startA = e.body.size();
@@ -2461,8 +2783,8 @@ std::string emitNode(const geom::SdfNode& n, Emit& e) {
 
     const std::string a = emitNode(*n.children[0], e);
 
-    glm::vec3 cB(0.0f);
-    float rB = 0.0f;
+    cB = glm::vec3(0.0f);
+    rB = 0.0f;
     const bool canPruneB = (n.op == geom::SdfOp::Union || n.op == geom::SdfOp::SmoothUnion || n.op == geom::SdfOp::Subtract) &&
                            n.children[1] &&
                            countSdfLeaves(*n.children[1]) >= 2 &&
@@ -2560,6 +2882,21 @@ bool tryComputeSdfBoundingSphere(const geom::SdfNode& n, glm::vec3& outCenter, f
                 outCenter = n.offset;
                 outRadius = std::max(n.dims.x, 0.0f) + std::max(n.dims.y, 0.0f);
                 break;
+            case geom::SdfPrim::Expr: {
+                float r = 0.0f, majR = 0.0f, minR = 0.0f;
+                int axis = 2;
+                if (tryExtractExprSphereRadius(n, r)) {
+                    outCenter = n.offset;
+                    outRadius = r;
+                    break;
+                }
+                if (tryExtractExprTorus(n, majR, minR, axis)) {
+                    outCenter = n.offset;
+                    outRadius = majR + minR;
+                    break;
+                }
+                return false;
+            }
             default:
                 return false;
         }
@@ -2661,6 +2998,21 @@ bool tryComputeSdfTightAabb(const geom::SdfNode& n, glm::vec3& outMin, glm::vec3
                                     std::max(n.dims.x, 0.0f) + std::max(n.dims.y, 0.0f),
                                     std::max(n.dims.y, 0.0f));
                 break;
+            case geom::SdfPrim::Expr: {
+                float r = 0.0f, majR = 0.0f, minR = 0.0f;
+                int axis = 2;
+                if (tryExtractExprSphereRadius(n, r)) {
+                    halfExt = glm::vec3(r);
+                    break;
+                }
+                if (tryExtractExprTorus(n, majR, minR, axis)) {
+                    const float R = majR + minR;
+                    halfExt = (axis == 0) ? glm::vec3(minR, R, R)
+                            : ((axis == 1) ? glm::vec3(R, minR, R) : glm::vec3(R, R, minR));
+                    break;
+                }
+                return false;
+            }
             default:
                 return false;
         }
@@ -2813,7 +3165,9 @@ JetNode emitNodeJet(const geom::SdfNode& n, Emit& e, const std::string& pt, std:
                 return JetNode{ tj + ".value", tj + ".grad" };
             }
             case geom::SdfPrim::Expr: {
-                e.sawExpr = true;
+                if (!isEuclideanDistanceExprLeaf(n)) {
+                    e.sawExpr = true;
+                }
                 if (n.mathNode && isDifferentiableAst(*n.mathNode)) {
                     JetExpr je = emitMathNodeGrad(*n.mathNode, e, lp, body, nextVar);
                     return JetNode{ je.value, je.grad };
@@ -2863,14 +3217,89 @@ JetNode emitNodeJet(const geom::SdfNode& n, Emit& e, const std::string& pt, std:
     }
 
     const bool isCommutativeUnion = (n.op == geom::SdfOp::Union || n.op == geom::SdfOp::SmoothUnion);
-    glm::vec3 cA(0.0f);
-    float rA = 0.0f;
-    const bool canPruneA = isCommutativeUnion &&
-                           n.children.size() >= 2 && n.children[0] &&
-                           countSdfLeaves(*n.children[0]) >= 2 &&
-                           (!n.children[1] || countSdfLeaves(*n.children[0]) > countSdfLeaves(*n.children[1])) &&
-                           isPurePrimitiveTree(*n.children[0]) &&
-                           tryComputeSdfBoundingSphere(*n.children[0], cA, rA);
+    glm::vec3 cA(0.0f), cB(0.0f);
+    float rA = 0.0f, rB = 0.0f;
+    const bool hasSphereA = isCommutativeUnion && n.children.size() >= 2 && n.children[0] &&
+                            countSdfLeaves(*n.children[0]) >= 2 &&
+                            isPurePrimitiveTree(*n.children[0]) &&
+                            tryComputeSdfBoundingSphere(*n.children[0], cA, rA);
+    const bool hasSphereB = isCommutativeUnion && n.children.size() >= 2 && n.children[1] &&
+                            countSdfLeaves(*n.children[1]) >= 2 &&
+                            isPurePrimitiveTree(*n.children[1]) &&
+                            tryComputeSdfBoundingSphere(*n.children[1], cB, rB);
+    const bool canPruneBoth = hasSphereA && hasSphereB &&
+                              countSdfLeaves(*n.children[0]) <= 2 &&
+                              countSdfLeaves(*n.children[1]) <= 2;
+
+    if (canPruneBoth) {
+        std::string bodyA;
+        JetNode a = emitNodeJet(*n.children[0], e, pt, bodyA, nextVar);
+
+        std::string bodyB;
+        JetNode b = emitNodeJet(*n.children[1], e, pt, bodyB, nextVar);
+
+        std::string cAExpr = e.param3(cA);
+        std::string rAExpr = e.param(rA);
+        std::string cBExpr = e.param3(cB);
+        std::string rBExpr = e.param(rB);
+        std::string kExpr = "0.0";
+        if (n.op == geom::SdfOp::SmoothUnion) {
+            kExpr = "max(" + e.param(n.t) + ", 1e-5)";
+        }
+
+        std::string boundA = "boundA" + std::to_string(nextVar++);
+        std::string boundB = "boundB" + std::to_string(nextVar++);
+        std::string aValVar = "aVal" + std::to_string(nextVar++);
+        std::string aGradVar = "aGrad" + std::to_string(nextVar++);
+        std::string bValVar = "bVal" + std::to_string(nextVar++);
+        std::string bGradVar = "bGrad" + std::to_string(nextVar++);
+
+        body += "    let " + boundA + " = length(" + pt + " - " + cAExpr + ") - " + rAExpr + ";\n";
+        body += "    let " + boundB + " = length(" + pt + " - " + cBExpr + ") - " + rBExpr + ";\n";
+        body += "    var " + aValVar + " = 1e6;\n";
+        body += "    var " + aGradVar + " = vec3<f32>(0.0, 1.0, 0.0);\n";
+        body += "    var " + bValVar + " = 1e6;\n";
+        body += "    var " + bGradVar + " = vec3<f32>(0.0, 1.0, 0.0);\n";
+
+        std::string kMargin = (n.op == geom::SdfOp::SmoothUnion) ? (" + " + kExpr) : "";
+        body += "    if (" + boundA + " <= " + boundB + ") {\n";
+        body += bodyA;
+        body += "        " + aValVar + " = " + a.val + ";\n";
+        body += "        " + aGradVar + " = " + a.grad + ";\n";
+        body += "        if (" + boundB + " <= " + aValVar + kMargin + ") {\n";
+        body += bodyB;
+        body += "            " + bValVar + " = " + b.val + ";\n";
+        body += "            " + bGradVar + " = " + b.grad + ";\n";
+        body += "        }\n";
+        body += "    } else {\n";
+        body += bodyB;
+        body += "        " + bValVar + " = " + b.val + ";\n";
+        body += "        " + bGradVar + " = " + b.grad + ";\n";
+        body += "        if (" + boundA + " <= " + bValVar + kMargin + ") {\n";
+        body += bodyA;
+        body += "            " + aValVar + " = " + a.val + ";\n";
+        body += "            " + aGradVar + " = " + a.grad + ";\n";
+        body += "        }\n";
+        body += "    }\n";
+
+        std::string outVal = "csgV" + std::to_string(nextVar++);
+        std::string outGrad = "csgG" + std::to_string(nextVar++);
+        if (n.op == geom::SdfOp::SmoothUnion) {
+            std::string h = "h" + std::to_string(nextVar++);
+            body += "    let " + h + " = clamp(0.5 + 0.5 * (" + bValVar + " - " + aValVar + ") / " + kExpr + ", 0.0, 1.0);\n";
+            body += "    let " + outVal + " = mix(" + bValVar + ", " + aValVar + ", " + h + ") - " + kExpr + " * " + h + " * (1.0 - " + h + ");\n";
+            body += "    let " + outGrad + " = mix(" + bGradVar + ", " + aGradVar + ", " + h + ");\n";
+        } else {
+            std::string sel = "csgSel" + std::to_string(nextVar++);
+            body += "    let " + sel + " = " + aValVar + " <= " + bValVar + ";\n";
+            body += "    let " + outVal + " = select(" + bValVar + ", " + aValVar + ", " + sel + ");\n";
+            body += "    let " + outGrad + " = select(" + bGradVar + ", " + aGradVar + ", " + sel + ");\n";
+        }
+        return JetNode{ outVal, outGrad };
+    }
+
+    const bool canPruneA = isCommutativeUnion && hasSphereA &&
+                           (!n.children[1] || countSdfLeaves(*n.children[0]) > countSdfLeaves(*n.children[1]));
 
     if (canPruneA) {
         std::string bodyA;
@@ -2920,8 +3349,8 @@ JetNode emitNodeJet(const geom::SdfNode& n, Emit& e, const std::string& pt, std:
 
     JetNode a = emitNodeJet(*n.children[0], e, pt, body, nextVar);
 
-    glm::vec3 cB(0.0f);
-    float rB = 0.0f;
+    cB = glm::vec3(0.0f);
+    rB = 0.0f;
     const bool canPruneB = (n.op == geom::SdfOp::Union || n.op == geom::SdfOp::SmoothUnion || n.op == geom::SdfOp::Subtract) &&
                            n.children[1] &&
                            countSdfLeaves(*n.children[1]) >= 2 &&
@@ -3525,7 +3954,7 @@ fn sourceTransportSignedStep(p: vec3<f32>, damping: f32) -> f32 {
     if (damping < 0.5) {
         let s = sdfSampleStep(p);
         var gradLen = s.gradLen;
-        if (gradLen <= 1e-6) {
+        if (!kHasAnalyticGrad && gradLen <= 1e-6) {
             let ge = 1e-3;
             let raw = s.raw;
             let g = vec3<f32>(
@@ -3701,6 +4130,8 @@ fn fs(in: VSOut) -> FSOut {
     }
 
     var hit = false;
+    var hitGrad = vec3<f32>(0.0);
+    var hasHitGrad = false;
     var transmittance = 1.0;
     var volumetric_scatter = vec3<f32>(0.0);
     var volumetric_emission = vec3<f32>(0.0);
@@ -3786,7 +4217,7 @@ fn fs(in: VSOut) -> FSOut {
             let s = sdfSampleStep(p);
             raw = s.raw;
             var gl = s.gradLen;
-            if (gl <= 1e-6) {
+            if (!kHasAnalyticGrad && gl <= 1e-6) {
                 let ge = 1e-3;
                 let g = vec3<f32>(
                     sdfEval(p + vec3<f32>(ge, 0.0, 0.0)) - raw,
@@ -3801,6 +4232,9 @@ fn fs(in: VSOut) -> FSOut {
                 if (d < 0.0 && prev_d > 0.0 && candidate_step > 0.0) {
                     let frac = clamp(prev_d / (prev_d - d), 0.0, 1.0);
                     t = (t - candidate_step) + candidate_step * frac;
+                } else if (kHasAnalyticGrad && gl > 1e-8) {
+                    hitGrad = s.grad / gl;
+                    hasHitGrad = true;
                 }
                 break;
             }
@@ -3939,7 +4373,12 @@ fn fs(in: VSOut) -> FSOut {
 
     let pf = ro + rd * t;                                // field-space hit
     let pw = (inst.model * vec4<f32>(pf, 1.0)).xyz;         // world-space hit
-    let nf = sdfNormal(pf);
+    var nf: vec3<f32>;
+    if (hasHitGrad) {
+        nf = hitGrad;
+    } else {
+        nf = sdfNormal(pf);
+    }
     // OntoMath authors the inverse-transpose on CPU. The shader consumes the
     // lowered normal matrix; it does not independently originate that meaning.
     let nw = normalize((inst.normalMat * vec4<f32>(nf, 0.0)).xyz);
@@ -3952,31 +4391,40 @@ fn fs(in: VSOut) -> FSOut {
     // coordinates. rho is scalar, chi is vec3, and alpha is a third independent
     // scalar over the normalized WORLD-space source -> receiver direction.
     let sourceDelta = pw - u.lightPos.xyz;
-    let radialRadiance = max(lightRadiance(sourceDelta), 0.0);
-    var angularRadiance = 1.0;
-    if (HAS_AUTHORED_ANGULAR) {
-        if (ANGULAR_READS_OMEGA) {
-            let directionLength = length(sourceDelta);
-            if (directionLength > SOURCE_DIRECTION_EPS) {
-                let emissionOmega = sourceDelta / directionLength;
-                angularRadiance = max(lightAngular(sourceDelta, emissionOmega), 0.0);
-            } else {
-                // omega is undefined at the source singularity. Refuse this
-                // directional sample by contributing zero; never invent an axis.
-                angularRadiance = 0.0;
-            }
-        } else {
-            // A direction-independent authored alpha does not require omega.
-            angularRadiance = max(lightAngular(sourceDelta, vec3<f32>(0.0)), 0.0);
-        }
-    }
-    let shapedRadiance = radialRadiance * angularRadiance;
-    let pathVisibility = sourceVisibility(pf, nf, u.lightPos.xyz);
-    let directRadiance = shapedRadiance * pathVisibility;
     let diff = max(dot(nw, L), 0.0);
     let specShape = inst.shading.z *
         pow(max(dot(nw, H), 0.0), max(inst.shading.w, 1.0)) *
         step(0.0001, diff);
+
+    var directRadianceVal = 0.0;
+    if (HAS_AUTHORED_MATERIAL_RESPONSE || diff > 0.0) {
+        let radialRadiance = max(lightRadiance(sourceDelta), 0.0);
+        var angularRadiance = 1.0;
+        if (HAS_AUTHORED_ANGULAR) {
+            if (ANGULAR_READS_OMEGA) {
+                let directionLength = length(sourceDelta);
+                if (directionLength > SOURCE_DIRECTION_EPS) {
+                    let emissionOmega = sourceDelta / directionLength;
+                    angularRadiance = max(lightAngular(sourceDelta, emissionOmega), 0.0);
+                } else {
+                    // omega is undefined at the source singularity. Refuse this
+                    // directional sample by contributing zero; never invent an axis.
+                    angularRadiance = 0.0;
+                }
+            } else {
+                // A direction-independent authored alpha does not require omega.
+                angularRadiance = max(lightAngular(sourceDelta, vec3<f32>(0.0)), 0.0);
+            }
+        }
+        let shapedRadiance = radialRadiance * angularRadiance;
+        var pathVisibility = 1.0;
+        if (shapedRadiance > 0.0) {
+            pathVisibility = sourceVisibility(pf, nf, u.lightPos.xyz);
+        }
+        let directRadiance = shapedRadiance * pathVisibility;
+        directRadianceVal = directRadiance;
+    }
+    let directRadiance = directRadianceVal;
 
     var ambientTerm: vec3<f32>;
     var diffuseTerm: vec3<f32>;
@@ -5665,104 +6113,6 @@ bool isSupportSlabRay1DLaw(Ray1DLaw law) {
            law == Ray1DLaw::LawIV_SmoothUnionSupport;
 }
 
-bool isConstantScalarLeaf(const OntoMath::MathNode& node) {
-    if (node.op != OntoMath::MathNode::Op::ScalarLeaf) return false;
-    if (node.scalarForm.terms.empty()) return true;
-    return node.scalarForm.terms.size() == 1 &&
-           node.scalarForm.terms[0].factors.empty() &&
-           node.scalarForm.terms[0].trans.empty();
-}
-
-bool isAmbientPointLeaf(const OntoMath::MathNode& node) {
-    return node.op == OntoMath::MathNode::Op::ValueLeaf &&
-           node.variableName == OntoMath::kAmbientPointVar;
-}
-
-bool isAxisProjectionNode(const OntoMath::MathNode& node, const char* axis) {
-    if (node.op == OntoMath::MathNode::Op::ValueLeaf && node.variableName == axis) {
-        return true;
-    }
-    return node.op == OntoMath::MathNode::Op::Component &&
-           node.stringArg == axis &&
-           node.children.size() == 1 &&
-           node.children[0] &&
-           isAmbientPointLeaf(*node.children[0]);
-}
-
-bool isZeroConstantVector(const OntoMath::MathNode& node) {
-    if (node.op != OntoMath::MathNode::Op::VectorConstruct || node.children.size() != 3) {
-        return false;
-    }
-    for (int i = 0; i < 3; ++i) {
-        if (!node.children[i] || !isConstantScalarLeaf(*node.children[i])) return false;
-        const double c = node.children[i]->scalarForm.terms.empty()
-                             ? 0.0
-                             : node.children[i]->scalarForm.terms[0].coefficient;
-        if (std::abs(c) > 1e-6) return false;
-    }
-    return true;
-}
-
-bool isConstantVector3(const OntoMath::MathNode& node) {
-    if (node.op != OntoMath::MathNode::Op::VectorConstruct || node.children.size() != 3) {
-        return false;
-    }
-    return node.children[0] && isConstantScalarLeaf(*node.children[0]) &&
-           node.children[1] && isConstantScalarLeaf(*node.children[1]) &&
-           node.children[2] && isConstantScalarLeaf(*node.children[2]);
-}
-
-bool isXYProjectionLength(const OntoMath::MathNode& node) {
-    if (node.op != OntoMath::MathNode::Op::Length || node.children.size() != 1 || !node.children[0]) {
-        return false;
-    }
-    const auto& vec = *node.children[0];
-    if (vec.op != OntoMath::MathNode::Op::VectorConstruct || vec.children.size() != 3 ||
-        !vec.children[0] || !vec.children[1] || !vec.children[2]) {
-        return false;
-    }
-    if (!isConstantScalarLeaf(*vec.children[2])) return false;
-    const double zCoeff = vec.children[2]->scalarForm.terms.empty()
-                              ? 0.0
-                              : vec.children[2]->scalarForm.terms[0].coefficient;
-    return isAxisProjectionNode(*vec.children[0], "x") &&
-           isAxisProjectionNode(*vec.children[1], "y") &&
-           std::abs(zCoeff) <= 1e-6;
-}
-
-bool isEuclideanNormMathNode(const OntoMath::MathNode& node) {
-    if (node.op == OntoMath::MathNode::Op::Length &&
-        node.children.size() == 1 && node.children[0] &&
-        isAmbientPointLeaf(*node.children[0])) {
-        return true;
-    }
-    if (node.op == OntoMath::MathNode::Op::Sqrt &&
-        node.children.size() == 1 && node.children[0]) {
-        const auto& c = *node.children[0];
-        if (c.op == OntoMath::MathNode::Op::Dot && c.children.size() == 2 &&
-            c.children[0] && c.children[1] &&
-            isAmbientPointLeaf(*c.children[0]) && isAmbientPointLeaf(*c.children[1])) {
-            return true;
-        }
-        if (const auto sf = OntoMath::toScalarForm(c)) {
-            if (sf->terms.size() == 3) {
-                bool hasX2 = false, hasY2 = false, hasZ2 = false;
-                for (const auto& term : sf->terms) {
-                    if (!term.trans.empty() || term.factors.size() != 1) return false;
-                    if (std::abs(term.coefficient - 1.0) > 1e-6) return false;
-                    const auto& [var, exp] = *term.factors.begin();
-                    if (std::abs(exp - 2.0) > 1e-6) return false;
-                    if (var == "x") hasX2 = true;
-                    else if (var == "y") hasY2 = true;
-                    else if (var == "z") hasZ2 = true;
-                }
-                if (hasX2 && hasY2 && hasZ2) return true;
-            }
-        }
-    }
-    return false;
-}
-
 bool isAnisotropicScaledNormMathNode(const OntoMath::MathNode& node) {
     if (node.op != OntoMath::MathNode::Op::Length ||
         node.children.size() != 1 || !node.children[0]) {
@@ -5865,6 +6215,13 @@ Ray1DLaw classifyMathNode1D(const OntoMath::MathNode& m) {
             if (isBoxMathNode(lhs)) {
                 return Ray1DLaw::LawIII_RoundBox;
             }
+            {
+                float majR = 0.0f, minR = 0.0f;
+                int axis = 2;
+                if (tryExtractMathNodeTorus(m, majR, minR, axis)) {
+                    return Ray1DLaw::LawIV_Torus;
+                }
+            }
             if (lhs.op == Op::Length && lhs.children.size() == 1 && lhs.children[0]) {
                 const auto& qVec = *lhs.children[0];
                 if (qVec.op == Op::VectorConstruct && qVec.children.size() == 3 &&
@@ -5913,6 +6270,9 @@ Ray1DLaw classifyMathNode1D(const OntoMath::MathNode& m) {
         if (isSupportSlabRay1DLaw(lawA) && isSupportSlabRay1DLaw(lawB)) {
             return Ray1DLaw::LawII_CompositeIntersect;
         }
+        if (isSupportSlabRay1DLaw(lawA) || isSupportSlabRay1DLaw(lawB)) {
+            return Ray1DLaw::LawIV_SubtractPositiveSupport;
+        }
     }
     if (m.op == Op::Difference && m.children.size() == 2 && m.children[0] && m.children[1]) {
         const Ray1DLaw lawA = classifyMathNode1D(*m.children[0]);
@@ -5947,7 +6307,7 @@ geom::SdfNode stripLeafOffsetsForMathClassification(const geom::SdfNode& node) {
 }
 
 Ray1DLaw classifyRay1D(const geom::SdfNode& root) {
-    if (countSdfLeaves(root) > 8) {
+    if (countSdfLeaves(root) > 24) {
         return Ray1DLaw::Fallback;
     }
     if (root.op == geom::SdfOp::Intersect && root.children.size() >= 2 && root.children[0] && root.children[1]) {
@@ -5955,6 +6315,9 @@ Ray1DLaw classifyRay1D(const geom::SdfNode& root) {
         const Ray1DLaw lawB = classifyRay1D(*root.children[1]);
         if (isSupportSlabRay1DLaw(lawA) && isSupportSlabRay1DLaw(lawB)) {
             return Ray1DLaw::LawII_CompositeIntersect;
+        }
+        if (isSupportSlabRay1DLaw(lawA) || isSupportSlabRay1DLaw(lawB)) {
+            return Ray1DLaw::LawIV_SubtractPositiveSupport;
         }
     }
     if (root.op == geom::SdfOp::Union && root.children.size() >= 2 && root.children[0] && root.children[1]) {
@@ -5976,6 +6339,9 @@ Ray1DLaw classifyRay1D(const geom::SdfNode& root) {
         if (isSupportSlabRay1DLaw(lawA) && isSupportSlabRay1DLaw(lawB)) {
             return Ray1DLaw::LawIV_SmoothUnionSupport;
         }
+    }
+    if (root.op != geom::SdfOp::Leaf) {
+        return Ray1DLaw::Fallback;
     }
     const geom::SdfNode canonical = stripLeafOffsetsForMathClassification(root);
     const std::shared_ptr<OntoMath::MathNode> math = canonical.toMathNode();
@@ -6145,11 +6511,27 @@ std::string emit1DIntervalSnippet(const geom::SdfNode& node, Ray1DLaw law, uint3
                "    let tExit_" + pfx + " = slab_" + pfx + ".y;\n";
     }
     if (law == Ray1DLaw::LawIV_Torus) {
+        Emit eDry;
+        (void)emitNode(node, eDry);
+        const uint32_t majSlot = base + 3u;
+        const uint32_t minSlot = base + (eDry.params.size() >= 5u ? static_cast<uint32_t>(eDry.params.size() - 1) : 4u);
+        float dummyMaj = 0.0f, dummyMin = 0.0f;
+        int axis = 2;
+        if (node.prim == geom::SdfPrim::Expr) {
+            (void)tryExtractExprTorus(node, dummyMaj, dummyMin, axis);
+        }
+        std::string sumR = "majR_" + pfx + " + minR_" + pfx;
+        std::string minRStr = "minR_" + pfx;
+        std::string outerVec = (axis == 0)
+            ? ("vec3<f32>(" + minRStr + ", " + sumR + ", " + sumR + ")")
+            : ((axis == 1)
+                ? ("vec3<f32>(" + sumR + ", " + minRStr + ", " + sumR + ")")
+                : ("vec3<f32>(" + sumR + ", " + sumR + ", " + minRStr + ")"));
         std::string infVal = inflateExpr.empty() ? "" : (" + vec3<f32>(" + inflateExpr + ")");
         return "    let off_" + pfx + " = vec3<f32>(P.v[paramOffset + " + sBase + "u], P.v[paramOffset + " + std::to_string(base + 1) + "u], P.v[paramOffset + " + std::to_string(base + 2) + "u]);\n"
-               "    let majR_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 3) + "u];\n"
-               "    let minR_" + pfx + " = P.v[paramOffset + " + std::to_string(base + 4) + "u];\n"
-               "    let outerB_" + pfx + " = vec3<f32>(majR_" + pfx + " + minR_" + pfx + ", majR_" + pfx + " + minR_" + pfx + ", minR_" + pfx + ")" + infVal + ";\n"
+               "    let majR_" + pfx + " = P.v[paramOffset + " + std::to_string(majSlot) + "u];\n"
+               "    let minR_" + pfx + " = P.v[paramOffset + " + std::to_string(minSlot) + "u];\n"
+               "    let outerB_" + pfx + " = " + outerVec + infVal + ";\n"
                "    let slab_" + pfx + " = rayAabb(ro - off_" + pfx + ", rd, outerB_" + pfx + ");\n"
                "    let tEnter_" + pfx + " = slab_" + pfx + ".x;\n"
                "    let tExit_" + pfx + " = slab_" + pfx + ".y;\n";
@@ -6168,9 +6550,12 @@ std::string emit1DIntervalSnippet(const geom::SdfNode& node, Ray1DLaw law, uint3
 }
 
 std::string emitRecursive1DIntervalSnippet(const geom::SdfNode& node, uint32_t base, const std::string& pfx, const std::string& inflateExpr = "") {
+    const Ray1DLaw nodeLaw = classifyRay1D(node);
+    if (!isSupportSlabRay1DLaw(nodeLaw)) {
+        return "    let tEnter_" + pfx + " = -1e6;\n    let tExit_" + pfx + " = 1e6;\n";
+    }
     if (node.op == geom::SdfOp::Leaf) {
-        const Ray1DLaw leafLaw = classifyRay1D(node);
-        return emit1DIntervalSnippet(node, leafLaw, base, pfx, inflateExpr);
+        return emit1DIntervalSnippet(node, nodeLaw, base, pfx, inflateExpr);
     }
     if (node.op == geom::SdfOp::Intersect && node.children.size() >= 2 && node.children[0] && node.children[1]) {
         const geom::SdfNode& c0 = *node.children[0];
@@ -6195,14 +6580,17 @@ std::string emitRecursive1DIntervalSnippet(const geom::SdfNode& node, uint32_t b
 
         glm::vec3 cA(0.0f), cB(0.0f);
         float rA = 0.0f, rB = 0.0f;
-        const bool canPruneA = countSdfLeaves(c0) >= 2 &&
-                               countSdfLeaves(c0) > countSdfLeaves(c1) &&
-                               isPurePrimitiveTree(c0) &&
-                               tryComputeSdfBoundingSphere(c0, cA, rA);
-        const bool canPruneB = !canPruneA &&
-                               countSdfLeaves(c1) >= 2 &&
-                               isPurePrimitiveTree(c1) &&
-                               tryComputeSdfBoundingSphere(c1, cB, rB);
+        const bool hasSphereA = countSdfLeaves(c0) >= 2 &&
+                                isPurePrimitiveTree(c0) &&
+                                tryComputeSdfBoundingSphere(c0, cA, rA);
+        const bool hasSphereB = countSdfLeaves(c1) >= 2 &&
+                                isPurePrimitiveTree(c1) &&
+                                tryComputeSdfBoundingSphere(c1, cB, rB);
+        const bool canPruneBoth = hasSphereA && hasSphereB &&
+                                  countSdfLeaves(c0) <= 2 &&
+                                  countSdfLeaves(c1) <= 2;
+        const bool canPruneA = !canPruneBoth && hasSphereA && (countSdfLeaves(c0) > countSdfLeaves(c1));
+        const bool canPruneB = !canPruneBoth && !canPruneA && hasSphereB;
         if (canPruneB) {
             base1 += 4u;
         }
@@ -6235,14 +6623,17 @@ std::string emitRecursive1DIntervalSnippet(const geom::SdfNode& node, uint32_t b
 
         glm::vec3 cA(0.0f), cB(0.0f);
         float rA = 0.0f, rB = 0.0f;
-        const bool canPruneA = countSdfLeaves(c0) >= 2 &&
-                               countSdfLeaves(c0) > countSdfLeaves(c1) &&
-                               isPurePrimitiveTree(c0) &&
-                               tryComputeSdfBoundingSphere(c0, cA, rA);
-        const bool canPruneB = !canPruneA &&
-                               countSdfLeaves(c1) >= 2 &&
-                               isPurePrimitiveTree(c1) &&
-                               tryComputeSdfBoundingSphere(c1, cB, rB);
+        const bool hasSphereA = countSdfLeaves(c0) >= 2 &&
+                                isPurePrimitiveTree(c0) &&
+                                tryComputeSdfBoundingSphere(c0, cA, rA);
+        const bool hasSphereB = countSdfLeaves(c1) >= 2 &&
+                                isPurePrimitiveTree(c1) &&
+                                tryComputeSdfBoundingSphere(c1, cB, rB);
+        const bool canPruneBoth = hasSphereA && hasSphereB &&
+                                  countSdfLeaves(c0) <= 2 &&
+                                  countSdfLeaves(c1) <= 2;
+        const bool canPruneA = !canPruneBoth && hasSphereA && (countSdfLeaves(c0) > countSdfLeaves(c1));
+        const bool canPruneB = !canPruneBoth && !canPruneA && hasSphereB;
 
         Emit eDryNode;
         (void)emitNode(node, eDryNode);
@@ -6475,22 +6866,33 @@ fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> ve
     }
 
     if (law == Ray1DLaw::LawIV_Torus) {
-        return R"WGSL(
-fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {
-    let paramOffset = instances[g_instIdx].paramOffset;
-    let off = vec3<f32>(P.v[paramOffset + 0u], P.v[paramOffset + 1u], P.v[paramOffset + 2u]);
-    let majR = P.v[paramOffset + 3u];
-    let minR = P.v[paramOffset + 4u];
-    let outerB = vec3<f32>(majR + minR, majR + minR, minR);
-    let slab = rayAabb(ro - off, rd, outerB);
-    if (slab.y < slab.x || slab.y < tStart || slab.x > tMax) {
-        return vec2<f32>(tMax + 1.0, 0.0);
-    }
-    let tEnter = max(slab.x, tStart);
-    let tExit = min(slab.y, tMax);
-    return vec2<f32>(tEnter, -2.0 - tExit);
-}
-)WGSL";
+        Emit eDry;
+        (void)emitNode(root, eDry);
+        const uint32_t minSlot = eDry.params.size() >= 5u ? static_cast<uint32_t>(eDry.params.size() - 1) : 4u;
+        float dummyMaj = 0.0f, dummyMin = 0.0f;
+        int axis = 2;
+        if (root.prim == geom::SdfPrim::Expr) {
+            (void)tryExtractExprTorus(root, dummyMaj, dummyMin, axis);
+        }
+        std::string outerVec = (axis == 0)
+            ? "vec3<f32>(minR, majR + minR, majR + minR)"
+            : ((axis == 1)
+                ? "vec3<f32>(majR + minR, minR, majR + minR)"
+                : "vec3<f32>(majR + minR, majR + minR, minR)");
+        return "fn rootClosedFormHit(ro: vec3<f32>, rd: vec3<f32>, tStart: f32, tMax: f32) -> vec2<f32> {\n"
+               "    let paramOffset = instances[g_instIdx].paramOffset;\n"
+               "    let off = vec3<f32>(P.v[paramOffset + 0u], P.v[paramOffset + 1u], P.v[paramOffset + 2u]);\n"
+               "    let majR = P.v[paramOffset + 3u];\n"
+               "    let minR = P.v[paramOffset + " + std::to_string(minSlot) + "u];\n"
+               "    let outerB = " + outerVec + ";\n"
+               "    let slab = rayAabb(ro - off, rd, outerB);\n"
+               "    if (slab.y < slab.x || slab.y < tStart || slab.x > tMax) {\n"
+               "        return vec2<f32>(tMax + 1.0, 0.0);\n"
+               "    }\n"
+               "    let tEnter = max(slab.x, tStart);\n"
+               "    let tExit = min(slab.y, tMax);\n"
+               "    return vec2<f32>(tEnter, -2.0 - tExit);\n"
+               "}\n";
     }
 
     if (law == Ray1DLaw::LawIV_Cone) {
@@ -6637,20 +7039,22 @@ Program compile(const geom::SdfNode& root,
     }
 
     if (hasAnalyticGrad) {
+        prog.wgsl += "\nconst kHasAnalyticGrad: bool = true;\n";
         prog.wgsl += evalGradFunc;
         prog.wgsl += evalFunc;
         prog.wgsl += "\nfn sdfSampleStep(p: vec3<f32>) -> StepSample {\n"
                      "    let jet = sdfEvalGrad(p);\n"
-                     "    return StepSample(jet.value, length(jet.grad));\n}\n";
+                     "    return StepSample(jet.value, length(jet.grad), jet.grad);\n}\n";
         prog.wgsl += "\nfn sdfNormal(p: vec3<f32>) -> vec3<f32> {\n"
                      "    let jet = sdfEvalGrad(p);\n"
                      "    let gl = length(jet.grad);\n"
                      "    return select(vec3<f32>(0.0, 1.0, 0.0), jet.grad / gl, gl > 1e-8);\n}\n";
     } else {
+        prog.wgsl += "\nconst kHasAnalyticGrad: bool = false;\n";
         prog.wgsl += evalFunc;
         prog.wgsl += "\nfn sdfSampleStep(p: vec3<f32>) -> StepSample {\n"
                      "    let raw = sdfEval(p);\n"
-                     "    return StepSample(raw, 0.0);\n}\n";
+                     "    return StepSample(raw, 0.0, vec3<f32>(0.0));\n}\n";
         prog.wgsl += "\nfn sdfNormal(p: vec3<f32>) -> vec3<f32> {\n"
                      "    let e = 1e-3;\n"
                      "    let k0 = vec3<f32>( 1.0, -1.0, -1.0);\n"
@@ -7064,29 +7468,37 @@ Program compile(const geom::SdfNode& root,
                 sum += "            let halfLength = length(halfVector);\n";
                 sum += "            if (halfLength > SOURCE_DIRECTION_EPS) { "
                        "Hs = halfVector / halfLength; }\n";
-                sum += "            let radialRadiance = max(lightRadiance_" + s +
-                       "(sourceDelta), 0.0);\n";
-                sum += "            var angularRadiance = 1.0;\n";
-
-                if (source.angularExpr && !source.angularExpr->pieces.empty()) {
-                    if (angularReadsOmega[i]) {
-                        sum += "            if (sourceDistance > SOURCE_DIRECTION_EPS) {\n";
-                        sum += "                angularRadiance = max(lightAngular_" + s +
-                               "(sourceDelta, sourceDelta / sourceDistance), 0.0);\n";
-                        sum += "            } else { angularRadiance = 0.0; }\n";
-                    } else {
-                        sum += "            angularRadiance = max(lightAngular_" + s +
-                               "(sourceDelta, vec3<f32>(0.0)), 0.0);\n";
-                    }
-                }
-
-                sum += "            let shapedRadiance = radialRadiance * angularRadiance;\n";
-                sum += "            let pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
-                sum += "            let directRadiance = shapedRadiance * pathVisibility;\n";
                 sum += "            let diff = max(dot(nw, Ls), 0.0);\n";
                 sum += "            let specShape = inst.shading.z * "
                        "pow(max(dot(nw, Hs), 0.0), max(inst.shading.w, 1.0)) * "
                        "step(0.0001, diff);\n";
+                sum += "            var directRadianceVal = 0.0;\n";
+                sum += "            if (HAS_AUTHORED_MATERIAL_RESPONSE || diff > 0.0) {\n";
+                sum += "                let radialRadiance = max(lightRadiance_" + s +
+                       "(sourceDelta), 0.0);\n";
+                sum += "                var angularRadiance = 1.0;\n";
+
+                if (source.angularExpr && !source.angularExpr->pieces.empty()) {
+                    if (angularReadsOmega[i]) {
+                        sum += "                if (sourceDistance > SOURCE_DIRECTION_EPS) {\n";
+                        sum += "                    angularRadiance = max(lightAngular_" + s +
+                               "(sourceDelta, sourceDelta / sourceDistance), 0.0);\n";
+                        sum += "                } else { angularRadiance = 0.0; }\n";
+                    } else {
+                        sum += "                angularRadiance = max(lightAngular_" + s +
+                               "(sourceDelta, vec3<f32>(0.0)), 0.0);\n";
+                    }
+                }
+
+                sum += "                let shapedRadiance = radialRadiance * angularRadiance;\n";
+                sum += "                var pathVisibility = 1.0;\n";
+                sum += "                if (shapedRadiance > 0.0) {\n";
+                sum += "                    pathVisibility = sourceVisibility(pf, nf, source.position.xyz);\n";
+                sum += "                }\n";
+                sum += "                let directRadiance = shapedRadiance * pathVisibility;\n";
+                sum += "                directRadianceVal = directRadiance;\n";
+                sum += "            }\n";
+                sum += "            let directRadiance = directRadianceVal;\n";
 
                 if (source.chromaExpr && !source.chromaExpr->pieces.empty()) {
                     sum += "            let sourceChroma = lightChroma_" + s +

@@ -2341,6 +2341,233 @@ int main() {
                   "SmoothUnion parameter recollection matches full compile after blend and child mutation");
             check(smoothProgBefore.wgsl == smoothProgAfter.wgsl,
                   "SmoothUnion WGSL is 100% byte-identical across blend and child parameter mutations");
+
+            // 12.6 Rungs 16 & 17: Deep 9-24 Leaf CSG 1D Ray-Domain Expansion,
+            //      Single-Sided Intersect Support Bounds, and canPruneBoth
+            //
+            // (a) 12-leaf Union of primitives (CompositeUnion > 8 leaves):
+            std::vector<geom::SdfNode> leaves;
+            leaves.reserve(12);
+            for (int i = 0; i < 12; ++i) {
+                auto s = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.5f));
+                s.offset = glm::vec3(static_cast<float>(i) * 0.8f, 0.0f, 0.0f);
+                leaves.push_back(s);
+            }
+            geom::SdfNode union12 = leaves[0];
+            for (int i = 1; i < 12; ++i) {
+                union12 = geom::SdfNode::binary(geom::SdfOp::Union, union12, leaves[i]);
+            }
+            const auto prog12Before = sdfwgsl::compile(union12);
+            check(prog12Before.ok, "12-leaf Union compiles successfully");
+            check(prog12Before.wgsl.find("fn rootClosedFormHit") != std::string::npos &&
+                  prog12Before.wgsl.find("return vec2<f32>(tHit, 1.0);") != std::string::npos,
+                  "12-leaf Union of convex primitives emits 0-step closed-form LawII_CompositeUnion hit");
+            union12.children[1]->dims.x = 0.9f;
+            const auto params12Refreshed = sdfwgsl::collectParams(union12);
+            const auto prog12After = sdfwgsl::compile(union12);
+            check(params12Refreshed.ok && params12Refreshed.values == prog12After.params,
+                  "12-leaf Union parameter recollection matches full compile after edits");
+            check(prog12Before.wgsl == prog12After.wgsl,
+                  "12-leaf Union WGSL is 100% byte-identical across parameter edits");
+
+            // (b) Single-sided Intersect(Expr("cos(x)+sin(y)"), Sphere) emitting support-slab leap:
+            auto exprGyroid = geom::SdfNode::leaf(geom::SdfPrim::Expr, glm::vec3(0.0f));
+            exprGyroid.expr = "cos(x) + sin(y)";
+            auto sphereBound = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(2.5f));
+            sphereBound.offset = glm::vec3(0.0f, 1.0f, 0.0f);
+            auto singleSidedIntersect = geom::SdfNode::binary(geom::SdfOp::Intersect, exprGyroid, sphereBound);
+
+            const auto singleSidedProgBefore = sdfwgsl::compile(singleSidedIntersect);
+            check(singleSidedProgBefore.ok, "Single-sided Intersect(Expr, Sphere) compiles successfully");
+            check(singleSidedProgBefore.wgsl.find("let tExitClamped = min(tExit + 0.05, tMax);") != std::string::npos &&
+                  singleSidedProgBefore.wgsl.find("return vec2<f32>(tEnterClamped, -2.0 - tExitClamped);") != std::string::npos,
+                  "Single-sided Intersect(Expr, Sphere) emits support-slab leap from valid child");
+            singleSidedIntersect.children[1]->offset.y = 2.0f;
+            singleSidedIntersect.children[1]->dims.x = 3.0f;
+            const auto singleSidedRefreshed = sdfwgsl::collectParams(singleSidedIntersect);
+            const auto singleSidedProgAfter = sdfwgsl::compile(singleSidedIntersect);
+            check(singleSidedRefreshed.ok && singleSidedRefreshed.values == singleSidedProgAfter.params,
+                  "Single-sided Intersect parameter recollection matches compile after edit");
+            check(singleSidedProgBefore.wgsl == singleSidedProgAfter.wgsl,
+                  "Single-sided Intersect WGSL is 100% byte-identical across parameter edits");
+
+            // (c) canPruneBoth on a balanced 4-leaf SmoothUnion(SmoothUnion(Sphere, Box), SmoothUnion(Cylinder, Torus)):
+            auto sA = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
+            sA.offset = glm::vec3(-2.0f, 0.0f, 0.0f);
+            auto bA = geom::SdfNode::leaf(geom::SdfPrim::Box, glm::vec3(0.8f, 0.8f, 0.8f));
+            bA.offset = glm::vec3(-2.0f, 1.0f, 0.0f);
+            auto subA = geom::SdfNode::binary(geom::SdfOp::SmoothUnion, sA, bA);
+            subA.t = 0.2f;
+
+            auto cB = geom::SdfNode::leaf(geom::SdfPrim::Cylinder, glm::vec3(0.5f, 1.0f, 0.0f));
+            cB.offset = glm::vec3(2.0f, 0.0f, 0.0f);
+            auto tB = geom::SdfNode::leaf(geom::SdfPrim::Torus, glm::vec3(0.8f, 0.2f, 0.0f));
+            tB.offset = glm::vec3(2.0f, 1.0f, 0.0f);
+            auto subB = geom::SdfNode::binary(geom::SdfOp::SmoothUnion, cB, tB);
+            subB.t = 0.3f;
+
+            auto balancedTree = geom::SdfNode::binary(geom::SdfOp::SmoothUnion, subA, subB);
+            balancedTree.t = 0.4f;
+
+            const auto balancedProgBefore = sdfwgsl::compile(balancedTree);
+            check(balancedProgBefore.ok, "Balanced 4-leaf SmoothUnion compiles successfully");
+            check(balancedProgBefore.wgsl.find("boundA") != std::string::npos &&
+                  balancedProgBefore.wgsl.find("boundB") != std::string::npos &&
+                  balancedProgBefore.wgsl.find("length(p -") != std::string::npos,
+                  "Balanced SmoothUnion emits both boundA and boundB dual-subtree pruning guards");
+
+            balancedTree.t = 0.55f;
+            balancedTree.children[0]->children[0]->offset.x = -2.5f;
+            balancedTree.children[1]->children[1]->dims.x = 1.2f;
+            const auto balancedRefreshed = sdfwgsl::collectParams(balancedTree);
+            const auto balancedProgAfter = sdfwgsl::compile(balancedTree);
+            check(balancedRefreshed.ok && balancedRefreshed.values == balancedProgAfter.params,
+                  "Balanced SmoothUnion parameter recollection matches compile after dual-subtree edits");
+            check(balancedProgBefore.wgsl == balancedProgAfter.wgsl,
+                  "Balanced SmoothUnion WGSL is 100% byte-identical across parameter edits");
+
+            // 12.7 Rung 19 & 20: Analytic gradient flag, fallback stripping, and back-face lighting guard
+            {
+                auto sphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.5f));
+                sphere.offset = glm::vec3(0.0f, 1.0f, 0.0f);
+
+                auto rhoNode = std::make_shared<OntoMath::MathNode>();
+                rhoNode->op = OntoMath::MathNode::Op::ScalarLeaf;
+                rhoNode->scalarForm = OntoMath::ScalarForm::constant(100.0);
+                OntoMath::Piecewise rho = OntoMath::Piecewise::continuous(rhoNode);
+
+                const auto progAnalytic = sdfwgsl::compile(sphere, nullptr, nullptr, &rho);
+                check(progAnalytic.ok, "Sphere with radiance compiles");
+                check(progAnalytic.wgsl.find("const kHasAnalyticGrad: bool = true;") != std::string::npos,
+                      "Analytic gradient tree emits const kHasAnalyticGrad: bool = true;");
+                check(progAnalytic.wgsl.find("if (!kHasAnalyticGrad && gl <= 1e-6)") != std::string::npos,
+                      "fs marcher guards finite-difference fallback behind !kHasAnalyticGrad");
+                check(progAnalytic.wgsl.find("if (!kHasAnalyticGrad && gradLen <= 1e-6)") != std::string::npos,
+                      "sourceTransportSignedStep guards finite-difference fallback behind !kHasAnalyticGrad");
+                check(progAnalytic.wgsl.find("if (HAS_AUTHORED_MATERIAL_RESPONSE || diff > 0.0)") != std::string::npos,
+                      "Single-source lighting contains back-face lighting guard");
+                check(progAnalytic.wgsl.find("let directRadiance = shapedRadiance * pathVisibility") != std::string::npos,
+                      "Direct radiance expression is preserved inside lighting guard");
+
+                sphere.dims.x = 2.0f;
+                sphere.offset.y = 1.5f;
+                const auto refreshed = sdfwgsl::collectParams(sphere, nullptr, nullptr, &rho);
+                const auto progAfter = sdfwgsl::compile(sphere, nullptr, nullptr, &rho);
+                check(refreshed.ok && refreshed.values == progAfter.params,
+                      "Rung 19/20 parameter recollection matches compile after edit");
+                check(progAnalytic.wgsl == progAfter.wgsl,
+                      "Rung 19/20 WGSL is 100% byte-identical across parameter edits");
+            }
+
+            // 12.8 Rungs 22–24: Close-Up Full-Screen SDF Witnesses —
+            //      1-Lipschitz Euclidean Expr Sphere/Torus Recognition (needsGradientStep == false),
+            //      Any-Axis Expr Torus 1D Interval Leaping, and Single-Sided Intersect/Subtract
+            //      Lower-Bound Sphere Pruning Certificate (gyroid_north & ophanim_throne shapes)
+            {
+                // (a) Euclidean Expr sphere (cathedral.astra.openhand.* shape):
+                //     must set needsGradientStep = false while keeping analytic normal sdfEvalGrad
+                auto openHandSphere = geom::makeImplicit("sqrt(x*x + y*y + z*z) - 0.38");
+                openHandSphere.offset = glm::vec3(0.5f, 1.2f, -0.4f);
+                const auto ohProg = sdfwgsl::compile(openHandSphere);
+                check(ohProg.ok, "Euclidean Expr sphere compiles");
+                check(!ohProg.needsGradientStep,
+                      "Euclidean Expr sphere is 1-Lipschitz (needsGradientStep == false)");
+
+                // Non-Euclidean trig Expr must still require gradient step:
+                auto trigGyroid = geom::makeImplicit(
+                    "cos(2.8*x)*sin(2.8*y) + cos(2.8*y)*sin(2.8*z) + cos(2.8*z)*sin(2.8*x) - 0.22");
+                const auto trigProg = sdfwgsl::compile(trigGyroid);
+                check(trigProg.ok && trigProg.needsGradientStep,
+                      "Non-Euclidean trig Expr retains needsGradientStep == true");
+
+                // (b) Coordinate-plane Euclidean Expr tori (cathedral.sdf.ophanim_throne rings):
+                //     Ring YZ (normal axis X = 0): sqrt((sqrt(y*y+z*z)-1.95)^2 + x*x) - 0.08
+                //     Ring XZ (normal axis Y = 1): sqrt((sqrt(x*x+z*z)-1.70)^2 + y*y) - 0.07
+                auto exprTorusX = geom::makeImplicit(
+                    "sqrt((sqrt(y*y + z*z) - 1.95) * (sqrt(y*y + z*z) - 1.95) + x*x) - 0.08");
+                exprTorusX.offset = glm::vec3(0.2f, -0.1f, 0.3f);
+
+                glm::vec3 txMin(0.0f), txMax(0.0f);
+                bool okTxAabb = sdfwgsl::tryComputeSdfTightAabb(exprTorusX, txMin, txMax);
+                check(okTxAabb, "tryComputeSdfTightAabb succeeds on X-normal Euclidean Expr torus");
+                check(std::abs((txMax.x - txMin.x) - 2.0f * 0.08f) < 1e-4f &&
+                      std::abs((txMax.y - txMin.y) - 2.0f * (1.95f + 0.08f)) < 1e-4f &&
+                      std::abs((txMax.z - txMin.z) - 2.0f * (1.95f + 0.08f)) < 1e-4f,
+                      "X-normal Euclidean Expr torus tight AABB has exact half-extents (r, R+r, R+r)");
+
+                glm::vec3 txCenter(0.0f);
+                float txRadius = 0.0f;
+                bool okTxSphere = sdfwgsl::tryComputeSdfBoundingSphere(exprTorusX, txCenter, txRadius);
+                check(okTxSphere && std::abs(txRadius - (1.95f + 0.08f)) < 1e-4f,
+                      "tryComputeSdfBoundingSphere succeeds on X-normal Euclidean Expr torus with R+r");
+
+                const auto txProgBefore = sdfwgsl::compile(exprTorusX);
+                check(txProgBefore.ok && !txProgBefore.needsGradientStep,
+                      "X-normal Euclidean Expr torus compiles with needsGradientStep == false");
+                check(txProgBefore.wgsl.find("let outerB = vec3<f32>(minR, majR + minR, majR + minR);") != std::string::npos &&
+                      txProgBefore.wgsl.find("return vec2<f32>(tEnter, -2.0 - tExit);") != std::string::npos,
+                      "X-normal Euclidean Expr torus emits LawIV_Torus 1D outer-slab support leap");
+                exprTorusX.offset.x = 0.75f;
+                const auto txRefreshed = sdfwgsl::collectParams(exprTorusX);
+                const auto txProgAfter = sdfwgsl::compile(exprTorusX);
+                check(txRefreshed.ok && txRefreshed.values == txProgAfter.params &&
+                      txProgBefore.wgsl == txProgAfter.wgsl,
+                      "X-normal Euclidean Expr torus preserves collectParams & WGSL invariance");
+
+                // Ring XZ (normal axis Y = 1) inside a composite SmoothUnion (ophanim_throne pattern):
+                auto exprTorusY = geom::makeImplicit(
+                    "sqrt((sqrt(x*x + z*z) - 1.70) * (sqrt(x*x + z*z) - 1.70) + y*y) - 0.07");
+                auto coreSphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.42f));
+                auto innerCombine = geom::SdfNode::binary(geom::SdfOp::SmoothUnion, coreSphere, exprTorusX, 0.06f);
+                auto ophanimPattern = geom::SdfNode::binary(geom::SdfOp::SmoothUnion, innerCombine, exprTorusY, 0.06f);
+
+                const auto ophProgBefore = sdfwgsl::compile(ophanimPattern);
+                check(ophProgBefore.ok && !ophProgBefore.needsGradientStep,
+                      "ophanim_throne SmoothUnion pattern with Euclidean Expr tori has needsGradientStep == false");
+                check(ophProgBefore.wgsl.find("let boundA") != std::string::npos &&
+                      ophProgBefore.wgsl.find("vec3<f32>(majR_root_1 + minR_root_1, minR_root_1, majR_root_1 + minR_root_1)") != std::string::npos &&
+                      ophProgBefore.wgsl.find("return vec2<f32>(tEnterClamped, -2.0 - tExitClamped);") != std::string::npos,
+                      "ophanim_throne SmoothUnion pattern emits both boundA CSG pruning and 1D support-slab leaping");
+                ophanimPattern.t = 0.12f;
+                ophanimPattern.children[0]->children[1]->offset.z = -0.25f;
+                const auto ophRefreshed = sdfwgsl::collectParams(ophanimPattern);
+                const auto ophProgAfter = sdfwgsl::compile(ophanimPattern);
+                check(ophRefreshed.ok && ophRefreshed.values == ophProgAfter.params &&
+                      ophProgBefore.wgsl == ophProgAfter.wgsl,
+                      "ophanim_throne SmoothUnion pattern preserves collectParams & WGSL invariance");
+
+                // (c) Rung 24: Single-sided Intersect & Subtract lower-bound sphere pruning
+                //     (cathedral.sdf.gyroid_north pattern: Subtract(SmoothUnion(Intersect(Expr(gyroid), Sphere), Torus), Sphere))
+                auto gyroidSphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.25f));
+                auto boundedGyroid = geom::SdfNode::binary(geom::SdfOp::Intersect, trigGyroid, gyroidSphere);
+                auto ringTorus = geom::SdfNode::leaf(geom::SdfPrim::Torus, glm::vec3(1.28f, 0.08f, 0.0f));
+                auto gyroidPlusRing = geom::SdfNode::binary(geom::SdfOp::SmoothUnion, boundedGyroid, ringTorus, 0.08f);
+                auto hollowCutter = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.42f));
+                auto gyroidNorthPattern = geom::SdfNode::binary(geom::SdfOp::Subtract, gyroidPlusRing, hollowCutter);
+
+                glm::vec3 gnCenter(0.0f);
+                float gnRadius = 0.0f;
+                bool okGnSphere = sdfwgsl::tryComputeSdfBoundingSphere(gyroidNorthPattern, gnCenter, gnRadius);
+                check(okGnSphere && gnRadius > 1.25f && gnRadius < 1.50f,
+                      "Single-sided Intersect(Expr, Sphere) certifies lower-bound sphere for gyroid_north pattern");
+
+                const auto gnProgBefore = sdfwgsl::compile(gyroidNorthPattern);
+                check(gnProgBefore.ok && gnProgBefore.needsGradientStep,
+                      "gyroid_north pattern compiles with gradient step for inner trig gyroid");
+                check(gnProgBefore.wgsl.find("let boundA") != std::string::npos &&
+                      gnProgBefore.wgsl.find("if (boundA") != std::string::npos &&
+                      gnProgBefore.wgsl.find("return vec2<f32>(tEnterClamped, -2.0 - tExitClamped);") != std::string::npos,
+                      "gyroid_north pattern emits both boundA CSG pruning and 1D support-slab leap");
+
+                gyroidNorthPattern.children[0]->t = 0.14f;
+                gyroidNorthPattern.children[0]->children[0]->children[1]->dims.x = 1.30f;
+                gyroidNorthPattern.children[1]->dims.x = 0.50f;
+                const auto gnRefreshed = sdfwgsl::collectParams(gyroidNorthPattern);
+                const auto gnProgAfter = sdfwgsl::compile(gyroidNorthPattern);
+                check(gnRefreshed.ok && gnRefreshed.values == gnProgAfter.params &&
+                      gnProgBefore.wgsl == gnProgAfter.wgsl,
+                      "gyroid_north pattern preserves collectParams & WGSL invariance across parameter edits");
+            }
         }
     }
 
