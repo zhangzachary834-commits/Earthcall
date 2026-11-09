@@ -323,16 +323,97 @@ int main(){
           std::fabs(*outside-geom::evalSdf(boundedNode,{2,0,0}))<1.0f,
           "Piecewise no-match preserves current SDF empty-space fallback");
 
-    // Pure mathematical guards require recoverable predicate-undefined control
-    // before they may become VM authority. Keep them an explicit frontier.
+    // PURE whereLEZero now has predicate-local undefinedness. CPU semantics
+    // test the pure guard first and return immediately when it produces a value,
+    // so interval bounds on the same piece are intentionally ignored.
     auto wherePw=std::make_shared<OntoMath::Piecewise>();
     OntoMath::Piecewise::Piece wherePiece;
     wherePiece.mathNode=pieceConstant(-1.0);
-    wherePiece.whereLEZero=pieceConstant(-1.0);
+    wherePiece.whereLEZero=
+        std::shared_ptr<OntoMath::MathNode>(value("x").release());
+    wherePiece.hasLo=true;wherePiece.lo=100.0;   // semantically ignored
+    wherePiece.hasHi=true;wherePiece.hi=101.0;  // semantically ignored
+    OntoMath::Piecewise::Piece whereFallback;
+    whereFallback.mathNode=pieceConstant(1.0);
     wherePw->pieces.push_back(std::move(wherePiece));
-    const auto whereVm=sdfwgsl::lowerFieldVm(geom::makeImplicit(wherePw));
-    check(!whereVm.ok&&whereVm.error.find("pure where guards")!=std::string::npos,
-          "Piecewise pure where guard remains refused until predicate failure can stay local");
+    wherePw->pieces.push_back(std::move(whereFallback));
+    auto whereNode=geom::makeImplicit(wherePw);
+    whereNode.offset={.25f,0,0};
+    const auto whereVm=sdfwgsl::lowerFieldVm(whereNode);
+
+    bool whereParity=whereVm.ok;
+    const glm::vec3 wherePts[]={{-.25f,0,0},{.05f,0,0},{.25f,0,0},{.45f,0,0}};
+    for(const auto& p:wherePts){
+        const auto v=sdfwgsl::evaluateFieldVm(whereVm,p);
+        whereParity&=v&&std::fabs(*v-geom::evalSdf(whereNode,p))<=2e-6f;
+    }
+    const auto whereNegative=sdfwgsl::evaluateFieldVm(whereVm,{.05f,0,0});
+    const auto wherePositive=sdfwgsl::evaluateFieldVm(whereVm,{.45f,0,0});
+    check(whereParity&&whereNegative&&wherePositive&&
+          nearf(*whereNegative,-1.0f)&&nearf(*wherePositive,1.0f),
+          "pure where guard preserves local offset and supersedes impossible interval bounds");
+
+    // ln(x) is the decisive undefinedness witness:
+    //   x<=0   -> predicate undefined -> later piece
+    //   0<x<=1 -> ln(x)<=0 -> guarded piece
+    //   x>1    -> predicate defined false -> later piece
+    auto lnPredicate=std::make_shared<OntoMath::MathNode>();
+    lnPredicate->op=OntoMath::MathNode::Op::ScalarLeaf;
+    lnPredicate->scalarForm=OntoMath::ScalarForm::transcendental(
+        OntoMath::TransFactor::Kind::Ln,"x");
+    auto lnPw=std::make_shared<OntoMath::Piecewise>();
+    OntoMath::Piecewise::Piece lnPiece;
+    lnPiece.mathNode=pieceConstant(-2.0);
+    lnPiece.whereLEZero=lnPredicate;
+    OntoMath::Piecewise::Piece lnFallback;
+    lnFallback.mathNode=pieceConstant(2.0);
+    lnPw->pieces.push_back(std::move(lnPiece));
+    lnPw->pieces.push_back(std::move(lnFallback));
+    auto lnNode=geom::makeImplicit(lnPw);
+    const auto lnVm=sdfwgsl::lowerFieldVm(lnNode);
+    bool lnParity=lnVm.ok;
+    const float lnXs[]={-1.0f,0.0f,.5f,1.0f,2.0f};
+    for(float x:lnXs){
+        const glm::vec3 p(x,0,0);
+        const auto v=sdfwgsl::evaluateFieldVm(lnVm,p);
+        lnParity&=v&&std::fabs(*v-geom::evalSdf(lnNode,p))<=2e-6f;
+    }
+    const auto lnUndefined=sdfwgsl::evaluateFieldVm(lnVm,{-1,0,0});
+    const auto lnApplies=sdfwgsl::evaluateFieldVm(lnVm,{.5f,0,0});
+    const auto lnFalse=sdfwgsl::evaluateFieldVm(lnVm,{2,0,0});
+    check(lnParity&&lnUndefined&&lnApplies&&lnFalse&&
+          nearf(*lnUndefined,2.0f)&&nearf(*lnApplies,-2.0f)&&
+          nearf(*lnFalse,2.0f),
+          "pure where predicate undefinedness skips only that piece and continues");
+
+    bool hasWhereBranch=false;
+    for(const auto& inst:lnVm.instructions){
+        hasWhereBranch|=
+            static_cast<sdfwgsl::FieldVmOpcode>(inst.meta.x)==
+            sdfwgsl::FieldVmOpcode::BranchWhereLEZero;
+    }
+    check(hasWhereBranch&&
+          w.find("op == 68u")!=std::string::npos&&
+          w.find("fieldVmEvalPredicate")!=std::string::npos,
+          "pure where lowers to isolated predicate control in CPU and WGSL VM");
+
+    auto malformedWhere=lnVm;
+    for(auto& inst:malformedWhere.instructions){
+        if(static_cast<sdfwgsl::FieldVmOpcode>(inst.meta.x)==
+           sdfwgsl::FieldVmOpcode::BranchWhereLEZero){
+            inst.meta.y=0u; // empty predicate slice is malformed execution
+            break;
+        }
+    }
+    check(!sdfwgsl::evaluateFieldVm(malformedWhere,{.5f,0,0}),
+          "malformed pure-guard predicate slice makes the whole VM result Unknown");
+
+    const auto primaryWhere=sdfwgsl::compile(lnNode);
+    check(primaryWhere.ok&&
+          primaryWhere.wgsl.find("<= 0.0")!=std::string::npos&&
+          primaryWhere.wgsl.find("log(")!=std::string::npos&&
+          primaryWhere.wgsl.find("> 0.0")!=std::string::npos,
+          "primary SDF WGSL preserves pure-guard definedness and CPU !(g > 0) selection");
 
     const auto primaryPiece=sdfwgsl::compile(pieceNode);
     check(primaryPiece.ok&&
