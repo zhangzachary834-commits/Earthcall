@@ -16,6 +16,7 @@
 #include "Singularity/Screen/WebGPU/GpuBufferPool.hpp"
 #include "Singularity/Screen/WebGPU/VolumeRoutedTransport.hpp"
 #include <memory>
+#include <deque>
 #include "Singularity/Screen/WebGPU/GpuMeshCache.hpp"
 #include "Singularity/Screen/WebGPU/SdfWgsl.hpp"
 #include "Singularity/Screen/VolumeZeroProof.hpp"
@@ -473,6 +474,11 @@ private:
         WGPUBuffer buffer = nullptr;
         uint64_t capacityBytes = 0;
         std::vector<float> mirror;
+        std::vector<uint64_t> lastSignature;
+        // #845 authored response Bind values may change without changing the
+        // response AST revision. Preserve the exact binding identity beside
+        // the canonical revision signature before skipping parameter packing.
+        std::vector<std::string> lastResponseBindingIdentity;
     };
     std::unordered_map<const SdfPipeline*, PersistentSdfParams> _persistentSdfParams;
     size_t _persistentSdfParamVramBytes = 0;
@@ -1021,6 +1027,11 @@ private:
     // optical transmission itself is unresolved.
     std::map<const SdfPipeline*, uint32_t> _sdfVisibilityOpaqueInstanceCounts;
     std::map<const SdfPipeline*, std::vector<float>> _sdfParamsBatches;
+    std::map<const SdfPipeline*, std::vector<const std::vector<float>*>> _sdfParamPtrBatches;
+    std::map<const SdfPipeline*, size_t> _sdfParamBatchCounts;
+    std::deque<std::vector<float>> _unmemoizedParamCopies;
+    std::map<const SdfPipeline*, std::vector<uint64_t>> _sdfBatchSignatures;
+    std::map<const SdfPipeline*, std::vector<std::string>> _sdfBatchResponseBindingIdentities;
     std::map<const SdfPipeline*, std::vector<glm::vec2>> _sdfHeightGridBatches;
     std::map<const SdfPipeline*, std::vector<uint32_t>> _sdfRangeNodeBatches;
     // Maps retain their vectors across frames so capacity is reused. This list

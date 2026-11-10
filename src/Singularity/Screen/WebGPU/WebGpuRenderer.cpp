@@ -687,6 +687,8 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
 void WebGpuRenderer::releasePersistentSdfParams() {
     for (auto& kv : _persistentSdfParams) {
         if (kv.second.buffer) wgpuBufferRelease(kv.second.buffer);
+        kv.second.lastSignature.clear();
+        kv.second.lastResponseBindingIdentity.clear();
     }
     _persistentSdfParams.clear();
     _persistentSdfParamVramBytes = 0;
@@ -1170,6 +1172,11 @@ void WebGpuRenderer::reloadShaders() {
     _sdfVisibilityVmBatches.clear();
     _sdfVisibilityOpaqueInstanceCounts.clear();
     _sdfParamsBatches.clear();
+    _sdfParamPtrBatches.clear();
+    _sdfParamBatchCounts.clear();
+    _unmemoizedParamCopies.clear();
+    _sdfBatchSignatures.clear();
+    _sdfBatchResponseBindingIdentities.clear();
     _sdfHeightGridBatches.clear();
     _sdfRangeNodeBatches.clear();
     _sdfPipes.clear();
@@ -3198,7 +3205,19 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     inst.misc = glm::vec4(isProvenHeightfield ? 1.0f : 0.0f,
                           1e-4f, maxDim * 8.0f, damping);
 
-    inst.paramOffset = static_cast<uint32_t>(_sdfParamsBatches[sp].size());
+    size_t& runningParamCount = _sdfParamBatchCounts[sp];
+    inst.paramOffset = static_cast<uint32_t>(runningParamCount);
+    runningParamCount += prog->params.size();
+
+    // Memoized Program storage is stable for the frame. Unmemoized local
+    // programs die at function exit, so preserve their parameter vectors in a
+    // frame-scoped deque before recording a pointer.
+    const std::vector<float>* paramPtr = &prog->params;
+    if (memo == nullptr) {
+        _unmemoizedParamCopies.push_back(prog->params);
+        paramPtr = &_unmemoizedParamCopies.back();
+    }
+    _sdfParamPtrBatches[sp].push_back(paramPtr);
 
     auto& sdfBatch = _sdfBatches[sp];
     if (sdfBatch.empty()) _activeSdfPipelines.push_back(sp);
@@ -3220,8 +3239,48 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             _sdfVisibilityVmBatches[sp].push_back(std::move(admission));
         }
     }
-    _sdfParamsBatches[sp].insert(
-        _sdfParamsBatches[sp].end(), prog->params.begin(), prog->params.end());
+
+    // Canonical Rung 18/21 static signature, translated onto #845's authored
+    // response/source/medium value offices. A zero signature means "unmemoized:
+    // materialize and compare this frame" rather than permission to trust a
+    // guessed identity.
+    uint64_t instSig = 0;
+    if (memoId != 0) {
+        constexpr uint64_t kSigPrime = 1099511628211ULL;
+        const auto mix = [&](uint64_t v) {
+            instSig = instSig * kSigPrime ^ v;
+        };
+        instSig = static_cast<uint64_t>(memoId);
+        mix(static_cast<uint64_t>(memoRevision));
+        mix(static_cast<uint64_t>(memoParameterRevision));
+        mix(static_cast<uint64_t>(mat.colorRevision));
+        mix(static_cast<uint64_t>(mat.responseRevision));
+        mix(static_cast<uint64_t>(mat.environmentResponseRevision));
+        if (hasSourceSet) {
+            mix(static_cast<uint64_t>(radianceSourcesRevision()));
+        } else {
+            mix(static_cast<uint64_t>(radianceRevision()));
+            mix(static_cast<uint64_t>(radianceChromaRevision()));
+            mix(static_cast<uint64_t>(radianceAngularRevision()));
+        }
+        mix(densityRevision);
+        mix(extinctionRevision);
+        mix(scatteringRevision);
+        mix(volumeChromaRevision);
+        mix(phaseRevision);
+        mix(emissionRevision);
+        if (fieldNode) {
+            mix(static_cast<uint64_t>(fieldNode->authoredMathRevision()));
+        }
+        mix(static_cast<uint64_t>(prog->params.size()));
+        if (instSig == 0) instSig = 1ULL;
+    }
+    _sdfBatchSignatures[sp].push_back(instSig);
+    // responseBindingIdentity is already an exact value identity in #845.
+    // Keep it exact beside the compact canonical revision signature so a Bind
+    // value edit can never be hidden by an unchanged response AST revision.
+    _sdfBatchResponseBindingIdentities[sp].push_back(
+        mat.responseBindingIdentity);
 
     mutableFrameStats().trianglesDrawn += 12;
 }
@@ -3326,9 +3385,14 @@ void WebGpuRenderer::flushSdfDraws() {
             _sdfVisibilityVmBatches[sp].clear();
             _sdfVisibilityOpaqueInstanceCounts[sp] = 0;
             _sdfParamsBatches[sp].clear();
+            _sdfParamPtrBatches[sp].clear();
+            _sdfParamBatchCounts[sp] = 0;
+            _sdfBatchSignatures[sp].clear();
+            _sdfBatchResponseBindingIdentities[sp].clear();
             _sdfHeightGridBatches[sp].clear();
             _sdfRangeNodeBatches[sp].clear();
         }
+        _unmemoizedParamCopies.clear();
         _activeSdfPipelines.clear();
         return;
     }
@@ -3475,16 +3539,17 @@ void WebGpuRenderer::flushSdfDraws() {
         auto uAlloc =
             bufferPool().suballocateUniform(&u, sizeof(SdfGlobalUniforms));
 
-        const auto& params = _sdfParamsBatches[sp];
-
-        const size_t paramBytes = params.size() * sizeof(float);
+        const size_t totalParamCount = _sdfParamBatchCounts[sp];
+        const size_t paramBytes = totalParamCount * sizeof(float);
         auto& persistent = _persistentSdfParams[sp];
 
         // Grow geometrically so a pipeline whose instance count fluctuates does
         // not churn buffers. Buffer contents are compared byte-for-byte: NaNs,
         // signed zero, and authored float bit patterns are all treated as data,
         // not normalized by a semantic comparison.
-        const uint64_t requiredBytes = static_cast<uint64_t>(std::max<size_t>(paramBytes, sizeof(float)));
+        const uint64_t requiredBytes =
+            static_cast<uint64_t>(
+                std::max<size_t>(paramBytes, sizeof(float)));
         if (!persistent.buffer || persistent.capacityBytes < requiredBytes) {
             uint64_t capacity = 256;
             while (capacity < requiredBytes) capacity *= 2;
@@ -3495,39 +3560,107 @@ void WebGpuRenderer::flushSdfDraws() {
             WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
             if (grown) {
                 if (persistent.buffer) {
-                    _persistentSdfParamVramBytes -= static_cast<size_t>(persistent.capacityBytes);
+                    _persistentSdfParamVramBytes -=
+                        static_cast<size_t>(persistent.capacityBytes);
                     wgpuBufferRelease(persistent.buffer);
                 }
                 persistent.buffer = grown;
                 persistent.capacityBytes = capacity;
                 persistent.mirror.clear();
-                _persistentSdfParamVramBytes += static_cast<size_t>(capacity);
+                persistent.lastSignature.clear();
+                persistent.lastResponseBindingIdentity.clear();
+                _persistentSdfParamVramBytes +=
+                    static_cast<size_t>(capacity);
             }
         }
 
-        bool paramsChanged = persistent.mirror.size() != params.size();
-        if (!paramsChanged && !params.empty()) {
-            paramsChanged = std::memcmp(persistent.mirror.data(), params.data(), paramBytes) != 0;
+        const auto& sig = _sdfBatchSignatures[sp];
+        const auto& responseBindings =
+            _sdfBatchResponseBindingIdentities[sp];
+        const bool persistentUsable =
+            persistent.buffer &&
+            persistent.capacityBytes >= requiredBytes;
+        bool allMemoized =
+            !sig.empty() && sig.size() == instances.size() &&
+            responseBindings.size() == instances.size();
+        for (uint64_t value : sig) {
+            if (value == 0) {
+                allMemoized = false;
+                break;
+            }
+        }
+
+        auto& params = _sdfParamsBatches[sp];
+        bool paramsChanged = true;
+        if (persistentUsable && allMemoized &&
+            persistent.lastSignature == sig &&
+            persistent.lastResponseBindingIdentity == responseBindings &&
+            persistent.mirror.size() == totalParamCount) {
+            // The exact #845 response Bind identities and all canonical
+            // revision premises agree, so no CPU float materialization is
+            // required on this static frame.
+            paramsChanged = false;
+        } else {
+            params.clear();
+            params.reserve(totalParamCount);
+            for (const auto* values : _sdfParamPtrBatches[sp]) {
+                if (!values) continue;
+                params.insert(params.end(),
+                              values->begin(), values->end());
+            }
+
+            paramsChanged =
+                persistent.mirror.size() != params.size();
+            if (!paramsChanged && !params.empty()) {
+                paramsChanged = std::memcmp(
+                    persistent.mirror.data(), params.data(),
+                    paramBytes) != 0;
+            }
         }
 
         // A failed grow leaves the previous buffer alive for accounting/later
         // retry, but it is not large enough for this batch and must not be used.
-        const bool persistentUsable =
-            persistent.buffer && persistent.capacityBytes >= requiredBytes;
-        WGPUBuffer paramBuffer = persistentUsable ? persistent.buffer : nullptr;
+        WGPUBuffer paramBuffer =
+            persistentUsable ? persistent.buffer : nullptr;
         uint64_t paramOffset = 0;
         uint64_t paramBindingSize = requiredBytes;
 
-        if (paramBuffer) {
+        if (paramBuffer && paramBytes > 0) {
             if (paramsChanged) {
-                wgpuQueueWriteBuffer(_queue, paramBuffer, 0, params.data(), paramBytes);
+                wgpuQueueWriteBuffer(
+                    _queue, paramBuffer, 0, params.data(), paramBytes);
                 persistent.mirror = params;
                 mutableFrameStats().sdfParameterBytesUploaded += paramBytes;
             }
+            persistent.lastSignature = sig;
+            persistent.lastResponseBindingIdentity = responseBindings;
+        } else if (paramBuffer) {
+            // WebGPU storage bindings cannot be zero-sized, but zero authored
+            // parameters require no queue write.
+            persistent.mirror.clear();
+            persistent.lastSignature = sig;
+            persistent.lastResponseBindingIdentity = responseBindings;
         } else {
+            if (params.empty() && totalParamCount > 0) {
+                params.reserve(totalParamCount);
+                for (const auto* values : _sdfParamPtrBatches[sp]) {
+                    if (!values) continue;
+                    params.insert(params.end(),
+                                  values->begin(), values->end());
+                }
+            }
+
             // Allocation failure must degrade to the already-correct frame ring,
-            // never to a missing parameter binding.
-            auto fallback = bufferPool().suballocateStorage(params.data(), paramBytes);
+            // never to a missing parameter binding or a zero-byte queue write.
+            const float dummyZero = 0.0f;
+            const void* uploadData =
+                params.empty()
+                    ? static_cast<const void*>(&dummyZero)
+                    : static_cast<const void*>(params.data());
+            const size_t uploadBytes =
+                std::max<size_t>(paramBytes, sizeof(float));
+            auto fallback =
+                bufferPool().suballocateStorage(uploadData, uploadBytes);
             paramBuffer = fallback.buffer;
             paramOffset = fallback.offset;
             paramBindingSize = fallback.size;
@@ -3701,9 +3834,14 @@ void WebGpuRenderer::flushSdfDraws() {
         _sdfVisibilityVmBatches[sp].clear();
         _sdfVisibilityOpaqueInstanceCounts[sp] = 0;
         _sdfParamsBatches[sp].clear();
+        _sdfParamPtrBatches[sp].clear();
+        _sdfParamBatchCounts[sp] = 0;
+        _sdfBatchSignatures[sp].clear();
+        _sdfBatchResponseBindingIdentities[sp].clear();
         _sdfHeightGridBatches[sp].clear();
         _sdfRangeNodeBatches[sp].clear();
     }
+    _unmemoizedParamCopies.clear();
     _activeSdfPipelines.clear();
     _sdfInstanceAllocations.clear();
 }

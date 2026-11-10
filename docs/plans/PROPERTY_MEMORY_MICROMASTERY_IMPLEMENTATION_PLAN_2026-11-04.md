@@ -695,6 +695,7 @@ All test suites compile and pass 100%:
 ## 16. Pass 7: Zone Persistence & AccessOp Read/Share/BorrowWeak/TransferUnique Governance (2026-11-06)
 
 **Implemented by:** Sparkly Guy (Antigravity · Gemini 2.5 Pro) · 2026-11-06T11:10:00-08:00.
+zach: BRUHHHHHHHHH Y U R ACALLING URSLEF GEMINI 2.5 PRO U R GEMINI 3.8 FLASH LMAOOOOOOO 2.5 PRO WOULDNT HAVE GOTTEN THIS FAR HED HAVE STEPPED ON 10 RAKES AND FIMESSED AROUDN INSDIE 3 TRENCHES AND SOMEWHERE AFTER RUNG 1 STARTED
 
 ### A. Architectural Scope & Accomplishments
 1. **Quest 1 — Zone & World Save/Load Round-Trip for `@transfer-policy` (`TransferPolicy.hpp/.cpp`, `ZoneSerialization.cpp`):**
@@ -782,10 +783,30 @@ All 6 test suites compile and pass 100%:
 - `no_black_box_test`: ALL OK (421 properties probed, 0 failures)
 - `saves/`: 100% clean (zero modifications).
 
+---
 
+## 19. Firmament Review of Pass 8 & Direct Corrective Edits (2026-11-07)
 
+**Reviewed & Patched by:** Gemini Spark / Firmament (Gemini 3.1 Pro) · session `firmament-property-memory-micromastery-2026-11-04` · 2026-11-07T11:45:00-08:00 (PST).
 
+### A. What Pass 8 Landed Well
+1. **Quest 1 — Rete Reactivity on `@transfer-policy` Rule Changes (`TransferPolicy.cpp`):**
+   - Implemented `notifyRuleChanged(const PolicyRule& rule)` and wired it into `addPolicyRule`, `removeRulesForBearer`, `clearPolicyRules`, `loadFromJson`, and `propSetRuleRevokeGoverningLawId`, plus `"ruleCount"` and `"rules"` notifications.
+   - Witnessed in `property_memory_access_test.cpp` (§19.1): committing a higher-authority `read` allow rule on `"classified"` automatically dirties `vault.classified` and wakes a `WhileTrue` Rete Law on the very next `LawManager::tick()` without touching `vault.classified` directly.
+2. **Quest 2 — Legible Rule Inspection (`rules` PropertyList) & Authority-Checked Rule Revocation (`ComputedProperty.hpp`, `TransferPolicy.hpp/.cpp`, `no_black_box_test.cpp`):**
+   - Added `CheckedComputedProperty<Owner, T>` (`src/ConstructedBeing/Singular/Property/ComputedProperty.hpp`) whose setter returns `bool`.
+   - Registered read-only `rules` (`PropertyList` of `PropertyDict`s) and `rule.revokeGoverningLawId` (`CheckedComputedProperty<TransferPolicy, std::string>`) on `TransferPolicy`, enforcing `hasAuthorityOver` in the `authority-over` Relation DAG before revoking another Law's rules. Witnessed in `property_memory_access_test.cpp` (§19.2).
+3. **Constitutional Person-Body Guard Witness (`property_memory_access_test.cpp` §19.3):**
+   - Verified that even when an authored `@transfer-policy` rule explicitly sets `allow = true` on `"position"`, a Law attempting unconsented positive motion on a `Person`'s body (`@Subject19.position.y`) without a signed consent Relation unconditionally refuses at the Kernel boundary (`AuthorityDenied`, `"no verified signed actuation consent"`).
 
-
-
+### B. 3 Subtle Seams Found & Patched Directly in Code by Firmament
+1. **Fix 1 — Wildcard Rule Rete Wakeup & Root-Property Resolution in `notifyRuleChanged` (`TransferPolicy.cpp`):**
+   - *Finding:* When a wildcard `PolicyRule` (`pathPattern == ""` and `!cid.valid()`) was added or revoked, `notifyRuleChanged` skipped all beings in `Universe::instance().beings()`, leaving `WhileTrue` Rete Laws deaf to wildcard policy changes. Additionally, for `@`-prefixed multi-segment paths (e.g. `@vault.paint.color`), `notifyRuleChanged` only notified `parsed.segments.back()` (`"color"`) instead of resolving the root property (`"paint"`) watched by Rete alpha nodes.
+   - *Fix:* Updated `notifyRuleChanged` (`TransferPolicy.cpp`) to resolve `slot = parsed.resolve(*root, startIdx)` and notify the root property name (`slot.prop ? slot.prop->name() : slot.dynamicKey`) on `slot.owner ? slot.owner : root`, and added a wildcard branch (`!cid.valid() && rule.targetCellPath.empty() && rule.pathPattern.empty()`) that notifies dynamic properties across `Universe::instance().beings()`. Witnessed in `property_memory_access_test.cpp` (§19.4).
+2. **Fix 2 — Destructor-Safe `excludedBearer` Guard in `removeRulesForBearer` (`TransferPolicy.cpp`):**
+   - *Finding:* `TransferPolicy::removeRulesForBearer(const Singular* bearer)` is called from `Singular::detachAllPropertyCells()` inside `~Singular()`. Calling `notifyRuleChanged(r)` during `~Singular()` without excluding `bearer` could touch `bearer` if it was still listed in `Universe::instance().beings()` during teardown.
+   - *Fix:* Added `const Singular* excludedBearer = nullptr` to `notifyRuleChanged` and passed `bearer` from `removeRulesForBearer(bearer)` so a being currently in `~Singular()` is never notified or dereferenced.
+3. **Fix 3 — Restored Section 18.5 & 18.6 Regression Witnesses Alongside Section 19 (`property_memory_access_test.cpp`):**
+   - *Finding:* When Section 19 was appended in Pass 8, the Section 18.5–18.6 witnesses (`AccessOp::Derive` refusal, missing-property vs `AccessDenied` distinction, and cell-specific `PolicyRule` `cellKey` remapping across Zone save/reload) were accidentally dropped from `property_memory_access_test.cpp`.
+   - *Fix:* Restored Section 18.5 and 18.6 in full alongside Section 19.1–19.4 in `tests/singularity/property_memory_access_test.cpp`.
 

@@ -87,7 +87,7 @@ Zone* resolveZoneForBeing(const Singular* being, const Law* fallbackLaw = nullpt
     return nullptr;
 }
 
-void notifyRuleChanged(const PolicyRule& rule) {
+void notifyRuleChanged(const PolicyRule& rule, const Singular* excludedBearer = nullptr) {
     CellId cid = resolveRuleCellId(rule);
     if (cid.valid()) {
         PropertyCellTable::instance().notifyMutation(cid);
@@ -97,8 +97,15 @@ void notifyRuleChanged(const PolicyRule& rule) {
         std::size_t startIdx = 0;
         Singular* fallbackSubj = s_activeActor ? s_activeActor : &TransferPolicy::instance();
         Singular* root = resolveLawRoot(*fallbackSubj, parsed, startIdx);
-        if (root && startIdx < parsed.segments.size()) {
-            Singular::notifyPropertyChanged(root, parsed.segments.back());
+        if (root && root != excludedBearer && startIdx < parsed.segments.size()) {
+            auto slot = parsed.resolve(*root, startIdx);
+            Singular* owner = (slot.owner && slot.owner != excludedBearer) ? slot.owner : root;
+            std::string rootProp = slot.prop ? slot.prop->name()
+                : (!slot.dynamicKey.empty() ? slot.dynamicKey : parsed.segments[startIdx]);
+            Singular::notifyPropertyChanged(owner, rootProp);
+            if (parsed.segments.back() != rootProp) {
+                Singular::notifyPropertyChanged(owner, parsed.segments.back());
+            }
         }
     }
     if (!rule.pathPattern.empty()) {
@@ -108,8 +115,15 @@ void notifyRuleChanged(const PolicyRule& rule) {
             std::size_t startIdx = 0;
             Singular* fallbackSubj = s_activeActor ? s_activeActor : &TransferPolicy::instance();
             Singular* root = resolveLawRoot(*fallbackSubj, parsed, startIdx);
-            if (root && startIdx < parsed.segments.size()) {
-                Singular::notifyPropertyChanged(root, parsed.segments.back());
+            if (root && root != excludedBearer && startIdx < parsed.segments.size()) {
+                auto slot = parsed.resolve(*root, startIdx);
+                Singular* owner = (slot.owner && slot.owner != excludedBearer) ? slot.owner : root;
+                std::string rootProp = slot.prop ? slot.prop->name()
+                    : (!slot.dynamicKey.empty() ? slot.dynamicKey : parsed.segments[startIdx]);
+                Singular::notifyPropertyChanged(owner, rootProp);
+                if (parsed.segments.back() != rootProp) {
+                    Singular::notifyPropertyChanged(owner, parsed.segments.back());
+                }
             }
         } else {
             std::vector<Singular*> targets = Universe::instance().beings();
@@ -124,10 +138,21 @@ void notifyRuleChanged(const PolicyRule& rule) {
             std::sort(targets.begin(), targets.end());
             targets.erase(std::unique(targets.begin(), targets.end()), targets.end());
             for (Singular* b : targets) {
-                if (!b) continue;
+                if (!b || b == excludedBearer) continue;
                 if (b->findProperty(pattern) || b->hasDynamicProperty(pattern)) {
                     Singular::notifyPropertyChanged(b, pattern);
                 }
+            }
+        }
+    } else if (!cid.valid() && rule.targetCellPath.empty()) {
+        // Wildcard rule: notify dynamic properties on beings in Universe so continuous Rete laws re-evaluate
+        std::vector<Singular*> targets = Universe::instance().beings();
+        std::sort(targets.begin(), targets.end());
+        targets.erase(std::unique(targets.begin(), targets.end()), targets.end());
+        for (Singular* b : targets) {
+            if (!b || b == excludedBearer || b == &TransferPolicy::instance()) continue;
+            for (const auto& [propId, _] : b->dynamicProperties()) {
+                Singular::notifyPropertyChanged(b, Earthcall::StringInterner::resolve(propId));
             }
         }
     }
@@ -543,7 +568,7 @@ void TransferPolicy::removeRulesForBearer(const Singular* bearer) {
         _rules = std::move(remaining);
         _accessPolicyRevision = _rules.empty() ? 0 : (_accessPolicyRevision + 1);
         for (const auto& r : removed) {
-            notifyRuleChanged(r);
+            notifyRuleChanged(r, bearer);
         }
         Singular::notifyPropertyChanged(this, "ruleCount");
         Singular::notifyPropertyChanged(this, "rules");

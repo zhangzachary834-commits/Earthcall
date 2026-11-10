@@ -1833,6 +1833,95 @@ int main() {
         assert(uniqueAttemptLaw.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
         assert(!actor18.hasPropertyCell("uniqueAlias"));
 
+        // 5. Firmament Pass 7 Corrective Fix Witness 1: AccessOp::Derive Governance & Missing-Property vs AccessDenied Distinction
+        obj18->setDynamicProperty("noderive", 50.0);
+        lawAdmin.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.pathPattern", PropertyValue(std::string("noderive"))),
+            ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("derive"))),
+            ActionNode::set("@transfer-policy.rule.allow", PropertyValue(false)),
+            ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true))
+        }));
+        assert(lawAdmin.applyTo(*obj18) == Law::ApplicationResult::Applied);
+
+        Law deriveAttemptLaw("derive-attempt-18");
+        deriveAttemptLaw.setLawIdentifier("derive-attempt-18");
+        deriveAttemptLaw.addAuthor(actor18);
+        MathBindings deriveBinds;
+        deriveBinds["x"] = MathBindingEntry{PropertyPath::parse("@obj18.noderive"), BindingMode::Derive};
+        auto deriveLeaf = std::make_shared<OntoMath::MathNode>();
+        deriveLeaf->op = OntoMath::MathNode::Op::ValueLeaf;
+        deriveLeaf->variableName = "x";
+        deriveAttemptLaw.setActionModel(ActionNode::deriveCell(
+            "derivedOut", OntoMath::Piecewise::continuous(std::move(deriveLeaf)), std::move(deriveBinds)));
+        assert(deriveAttemptLaw.applyTo(actor18) == Law::ApplicationResult::Applied);
+        assert(!deriveAttemptLaw.applicationLog().back().changedSomething());
+        assert(deriveAttemptLaw.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
+        assert(!actor18.hasDynamicProperty("derivedOut"));
+
+        // Verify that a Map reading a genuinely non-existent property reports a normal non-write, NOT AccessDenied!
+        Law missingPropMapLaw("missing-prop-map-18");
+        missingPropMapLaw.setLawIdentifier("missing-prop-map-18");
+        missingPropMapLaw.addAuthor(actor18);
+        MathBindings missingBinds;
+        missingBinds["x"] = MathBindingEntry{PropertyPath::parse("@obj18.doesNotExistAnywhere")};
+        auto missingLeaf = std::make_shared<OntoMath::MathNode>();
+        missingLeaf->op = OntoMath::MathNode::Op::ValueLeaf;
+        missingLeaf->variableName = "x";
+        missingPropMapLaw.setActionModel(ActionNode::map(
+            "missingOut", OntoMath::Piecewise::continuous(std::move(missingLeaf)), std::move(missingBinds)));
+        assert(missingPropMapLaw.applyTo(actor18) == Law::ApplicationResult::Applied);
+        assert(!missingPropMapLaw.applicationLog().back().changedSomething());
+        assert(missingPropMapLaw.applicationLog().back().trace.nodes.front().reason != Result::AccessDenied);
+
+        // 6. Firmament Pass 7 Corrective Fix Witness 2: Cell-Specific PolicyRule Remapping Across Zone Save/Reload
+        TransferPolicy::instance().clearPolicyRules();
+        auto aliasObj18 = std::make_shared<Object>();
+        aliasObj18->setObjectID("alias-obj18");
+        zone18.addObject(aliasObj18);
+        beings18.push_back(aliasObj18.get());
+
+        Law shareSecret18("share-secret-18");
+        shareSecret18.addAuthor(actor18);
+        shareSecret18.setActionModel(ActionNode::shareCell("aliasSecret", "@obj18.secret"));
+        assert(shareSecret18.applyTo(*aliasObj18) == Law::ApplicationResult::Applied);
+        CellId preSaveCid = obj18->getPropertyCell("secret");
+        assert(preSaveCid.valid());
+        assert(aliasObj18->getPropertyCell("aliasSecret") == preSaveCid);
+
+        lawAdmin.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.targetCellPath", PropertyValue(std::string("@obj18.secret"))),
+            ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("write"))),
+            ActionNode::set("@transfer-policy.rule.allow", PropertyValue(false)),
+            ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true))
+        }));
+        assert(lawAdmin.applyTo(*obj18) == Law::ApplicationResult::Applied);
+
+        nlohmann::json cellRuleZoneJson = zoneToJson(zone18);
+        assert(cellRuleZoneJson.contains("transferPolicy"));
+        assert(cellRuleZoneJson["transferPolicy"]["rules"][0]["targetCellPath"] == "@obj18.secret");
+        assert(cellRuleZoneJson["transferPolicy"]["rules"][0].contains("cellKey"));
+
+        for (int i = 0; i < 5; ++i) {
+            (void)PropertyCellTable::instance().allocateCell(
+                PropertyValue(static_cast<double>(i)), CellOwnershipMode::Shared, nullptr, Earthcall::StringId{});
+        }
+        TransferPolicy::instance().clearPolicyRules();
+
+        std::shared_ptr<Zone> hydratedCellZone = makeZoneFromJson(cellRuleZoneJson);
+        assert(hydratedCellZone != nullptr);
+        Object* hObj18 = nullptr;
+        Object* hAlias18 = nullptr;
+        for (const auto& o : hydratedCellZone->objects()) {
+            if (o->getObjectID() == "obj18") hObj18 = o.get();
+            else if (o->getObjectID() == "alias-obj18") hAlias18 = o.get();
+        }
+        assert(hObj18 && hAlias18);
+        CellId postLoadCid = hObj18->getPropertyCell("secret");
+        assert(postLoadCid.valid());
+        assert(postLoadCid != preSaveCid);
+        assert(hAlias18->getPropertyCell("aliasSecret") == postLoadCid);
+        assert(PropertyPath::parse("aliasSecret").setValue(*hAlias18, 888.0) == Result::AccessDenied);
+
         TransferPolicy::instance().clearPolicyRules();
         Universe::instance().setProvider(nullptr);
         Universe::instance().setRelationProvider(nullptr);
@@ -1965,6 +2054,26 @@ int main() {
         assert(lawHigh.applyTo(vault) == Law::ApplicationResult::Applied);
         assert(lawHigh.applicationLog().back().changedSomething());
         assert(TransferPolicy::instance().ruleCount() == 0);
+
+        // --- Part 19.4: Firmament Pass 8 Corrective Fix Witness — Wildcard Rule Rete Wakeup ---
+        vault.removeDynamicProperty("unlocked");
+        assert(!vault.hasDynamicProperty("unlocked"));
+        lawLow.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.pathPattern", PropertyValue(std::string(""))),
+            ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("read"))),
+            ActionNode::set("@transfer-policy.rule.allow", PropertyValue(false)),
+            ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true))
+        }));
+        assert(lawLow.applyTo(vault) == Law::ApplicationResult::Applied);
+        lm.tick();
+        assert(!vault.hasDynamicProperty("unlocked"));
+
+        // lawHigh revokes lawLow's wildcard rule -> notifyRuleChanged wakes wildcard-governed dynamic properties!
+        lawHigh.setActionModel(ActionNode::set(
+            "@transfer-policy.rule.revokeGoverningLawId", PropertyValue(std::string("lawLow-19"))));
+        assert(lawHigh.applyTo(vault) == Law::ApplicationResult::Applied);
+        lm.tick();
+        assert(vault.hasDynamicProperty("unlocked"));
 
         // --- Part 19.3: Constitutional Person-Body Guard Invariant Witness ---
         // Even if an authored rule exists with allow := true on "@person.position",
