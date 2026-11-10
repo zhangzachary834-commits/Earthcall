@@ -145,6 +145,37 @@ No arrow may be traversed backward as semantic authority.
 11. a pure `whereLEZero` guard is recorded but does not invent a subject dependency;
 12. empty PropertyPath is structurally invalid before any runtime provider can bless it.
 
+## Native ValueCell authority evidence
+
+For PropertyPath dependencies backed by Earthcall's existing `PropertyCellTable`, Lattice no longer requires callers to hand-author a provenance string.
+
+`FieldVmPropertyAuthority.hpp` can derive a runtime authority record from the live cell:
+
+```
+stable bearer identity
++ root property
++ CellId slot
++ CellId generation
++ ValueCell revision
++ cell ownership mode
+```
+
+The captured `PropertyValue` comes from that same authoritative cell.
+
+This identity is domain-separated as:
+
+`field-vm-property-cell-authority:v1`
+
+A ValueCell revision bump changes the authority identity. Rebinding through a new cell generation changes the authority identity even when the execution value is equal. Mutation of an unrelated cell leaves the captured identity unchanged.
+
+**Cell-backed does not mean event-complete.**
+
+Earthcall exposes legitimate paths whose mutation coverage is broader than one narrow callback assumption. Therefore `captureFieldVmCellPropertyEvidence(...)` defaults to `Unproven` change-feed coverage. The caller must explicitly supply `ProvenComplete` before the evidence emits a `PropertyChangeFeed` route eligible for narrow invalidation.
+
+Without that proof, the same native cell provenance is still useful for exact snapshots, but retained execution remains on `SnapshotRevalidation`.
+
+Ordinary non-cell-backed properties, expired cells, empty roots, or missing stable bearer identities refuse this native authority upgrade and retain the existing opaque/fallback path.
+
 ## Invalidation contract
 
 A dependency snapshot is not allowed to live forever merely because its encoded tuple was once valid.
