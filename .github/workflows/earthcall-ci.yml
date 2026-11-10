@@ -219,6 +219,7 @@ jobs:
             sdf_wgsl_parameter_refresh_test \
             field_vm_test \
             field_vm_dependency_test \
+            field_vm_property_authority_test \
             visibility_proof_premises_test \
             sdf_range_soundness_test \
             sdf_range_hierarchy_test \
@@ -247,6 +248,7 @@ jobs:
           ./build/sdf_wgsl_parameter_refresh_test
           ./build/field_vm_test
           ./build/field_vm_dependency_test
+          ./build/field_vm_property_authority_test
           ./build/visibility_proof_premises_test
           ./build/sdf_range_soundness_test
           ./build/sdf_range_hierarchy_test
