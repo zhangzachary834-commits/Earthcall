@@ -81,6 +81,9 @@ class ZoneManager {
     mutable bool _residenceBuilt = false;
 
 public:
+    ZoneManager() = default;
+    ~ZoneManager() { unbindLive(); }
+
     std::vector<std::shared_ptr<Object>>& getGlobalObjects() { return globalObjects; }
     const std::vector<std::shared_ptr<Object>>& getGlobalObjects() const { return globalObjects; }
 
@@ -95,6 +98,10 @@ public:
     bool holdZoneClosure(const std::string& holder, size_t index);
     void releaseZoneClosure(const std::string& holder);
     std::string heldZone(const std::string& holder) const;
+    bool mountZone(const std::string& zoneId);
+    void unmountZone(const std::string& zoneId);
+    std::vector<Zone*> activeZones() const;
+    void syncActiveZonesOperands();
     // Zone index by identifier or display name (exact, then case-insensitive);
     // npos when none or ambiguous.
     size_t findZoneIndex(const std::string& nameOrId) const;

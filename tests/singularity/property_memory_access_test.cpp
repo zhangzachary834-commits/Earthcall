@@ -7,6 +7,8 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ActiveZones.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 #include "ConstructedBeing/Singular/SingularPersistence.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
@@ -2104,6 +2106,580 @@ int main() {
         TransferPolicy::instance().clearPolicyRules();
         Universe::instance().setProvider(nullptr);
         Universe::instance().setRelationProvider(nullptr);
+    }
+
+    // 20. ActiveZones & Multi-Zone Relational Integration (Pass 1 & Pass 2)
+    {
+        std::cout << "[20] ActiveZones & Multi-Zone Relational Integration...\n";
+
+        // --- Part 20.1: Simultaneous Multi-Zone Activation & Relation Aggregation ---
+        Zone zone20A("zone20A", "default");
+        Zone zone20B("zone20B", "default");
+
+        auto objA = std::make_shared<Object>("Obj20A");
+        auto objB = std::make_shared<Object>("Obj20B");
+        zone20A.addObject(objA);
+        zone20B.addObject(objB);
+
+        // Verify Zone::containsBeing
+        assert(zone20A.containsBeing(zone20A));
+        assert(zone20A.containsBeing(*objA));
+        assert(!zone20A.containsBeing(*objB));
+        assert(zone20B.containsBeing(zone20B));
+        assert(zone20B.containsBeing(*objB));
+        assert(!zone20B.containsBeing(*objA));
+
+        // Add Relations in both zones' Formations
+        auto relA = std::make_shared<Relation>("contains", zone20A, *objA, true, 1.0f);
+        auto relB = std::make_shared<Relation>("contains", zone20B, *objB, true, 1.0f);
+        zone20A.formation().relations().add(relA);
+        zone20B.formation().relations().add(relB);
+
+        // Multi-Zone operand management in ActiveZones
+        ActiveZones& az = ActiveZones::instance();
+        az.clearActiveZones();
+        assert(az.zones().empty());
+        assert(az.primaryZone() == nullptr);
+
+        const uint64_t rev0 = az.structuralRevision();
+        az.setActiveZones({&zone20A, &zone20B});
+        assert(az.structuralRevision() > rev0);
+        assert(az.zones().size() == 2);
+        assert(az.primaryZone() == &zone20A);
+        assert(az.isActive(&zone20A));
+        assert(az.isActive(&zone20B));
+
+        // beings() harvests across both active Zone operands
+        const auto allBeings = az.beings();
+        auto hasBeing = [&allBeings](const Singular* s) {
+            return std::find(allBeings.begin(), allBeings.end(), s) != allBeings.end();
+        };
+        assert(hasBeing(&zone20A));
+        assert(hasBeing(objA.get()));
+        assert(hasBeing(&zone20B));
+        assert(hasBeing(objB.get()));
+
+        // relations() harvests across both active Zone operands
+        const auto allRelations = az.relations();
+        auto hasRel = [&allRelations](const Relation* r) {
+            return std::find(allRelations.begin(), allRelations.end(), r) != allRelations.end();
+        };
+        assert(hasRel(relA.get()));
+        assert(hasRel(relB.get()));
+
+        // relationsInvolving queries across all active Zone operands
+        std::vector<Relation*> edgesA;
+        assert(az.relationsInvolving(*objA, edgesA));
+        assert(std::find(edgesA.begin(), edgesA.end(), relA.get()) != edgesA.end());
+
+        std::vector<Relation*> edgesB;
+        assert(az.relationsInvolving(*objB, edgesB));
+        assert(std::find(edgesB.begin(), edgesB.end(), relB.get()) != edgesB.end());
+
+        // relationGeneration mixes across all active Zone operands
+        assert(az.hasRelationGeneration());
+        const std::size_t gen1 = az.relationGeneration();
+        assert(gen1 != 0);
+
+        // Mutating zone20B's relation graph immediately invalidates relationGeneration!
+        auto relB2 = std::make_shared<Relation>("attached-to", *objB, zone20B, false, 0.5f);
+        zone20B.formation().relations().add(relB2);
+        const std::size_t gen2 = az.relationGeneration();
+        assert(gen2 != gen1);
+
+        // addRelation routes to the active Zone that contains relation->a()
+        auto newbornRel = std::make_shared<Relation>("self-linked", *objA, *objA, false, 1.0f);
+        az.addRelation(newbornRel);
+        std::vector<Relation*> objAEdgesAfter;
+        zone20A.formation().relations().relationsInvolving(*objA, objAEdgesAfter);
+        assert(std::find(objAEdgesAfter.begin(), objAEdgesAfter.end(), newbornRel.get()) != objAEdgesAfter.end());
+
+        // Deactivating zone20B removes it and its objects/relations from the working set
+        const uint64_t rev1 = az.structuralRevision();
+        assert(az.deactivateZone(&zone20B));
+        assert(az.structuralRevision() > rev1);
+        assert(!az.isActive(&zone20B));
+        assert(az.isActive(&zone20A));
+        assert(az.zones().size() == 1);
+
+        const auto beingsAfterDeact = az.beings();
+        assert(std::find(beingsAfterDeact.begin(), beingsAfterDeact.end(), objA.get()) != beingsAfterDeact.end());
+        assert(std::find(beingsAfterDeact.begin(), beingsAfterDeact.end(), objB.get()) == beingsAfterDeact.end());
+
+        const auto relsAfterDeact = az.relations();
+        assert(std::find(relsAfterDeact.begin(), relsAfterDeact.end(), relA.get()) != relsAfterDeact.end());
+        assert(std::find(relsAfterDeact.begin(), relsAfterDeact.end(), relB.get()) == relsAfterDeact.end());
+
+        az.clearActiveZones();
+
+        // --- Part 20.2: ZoneManager mountZone & unmountZone Integration ---
+        ZoneManager zm;
+        auto sharedZoneA = std::make_shared<Zone>("ZM_ZoneA", "default");
+        auto sharedZoneB = std::make_shared<Zone>("ZM_ZoneB", "default");
+        auto zmObjA = std::make_shared<Object>("ZmObjA");
+        auto zmObjB = std::make_shared<Object>("ZmObjB");
+        sharedZoneA->addObject(zmObjA);
+        sharedZoneB->addObject(zmObjB);
+
+        zm.addZone(sharedZoneA);
+        zm.addZone(sharedZoneB);
+        zm.bindLive();
+
+        // Initially on Zone 0 (ZM_ZoneA)
+        assert(zm.activeZones().size() == 1);
+        assert(az.primaryZone() == sharedZoneA.get());
+        assert(az.isActive(sharedZoneA.get()));
+        assert(!az.isActive(sharedZoneB.get()));
+
+        // Mount Zone B
+        assert(zm.mountZone(sharedZoneB->getIdentifier()));
+        assert(zm.activeZones().size() == 2);
+        assert(az.isActive(sharedZoneA.get()));
+        assert(az.isActive(sharedZoneB.get()));
+        assert(az.primaryZone() == sharedZoneA.get());
+
+        // Both objects now visible in ActiveZones working set
+        const auto zmBeings = az.beings();
+        assert(std::find(zmBeings.begin(), zmBeings.end(), zmObjA.get()) != zmBeings.end());
+        assert(std::find(zmBeings.begin(), zmBeings.end(), zmObjB.get()) != zmBeings.end());
+
+        // Unmount Zone B
+        zm.unmountZone(sharedZoneB->getIdentifier());
+        assert(zm.activeZones().size() == 1);
+        assert(az.isActive(sharedZoneA.get()));
+        assert(!az.isActive(sharedZoneB.get()));
+
+        const auto zmBeingsAfterUnmount = az.beings();
+        assert(std::find(zmBeingsAfterUnmount.begin(), zmBeingsAfterUnmount.end(), zmObjA.get()) != zmBeingsAfterUnmount.end());
+        assert(std::find(zmBeingsAfterUnmount.begin(), zmBeingsAfterUnmount.end(), zmObjB.get()) == zmBeingsAfterUnmount.end());
+
+        // Jurisdiction check with containsBeing in Law::applyTo
+        Law testLaw("jurisdiction-test-law");
+        testLaw.setJurisdiction(sharedZoneA);
+        Soul soul20("Auth20");
+        Body avatar20 = Body::createBasicAvatar("Avatar20");
+        Person author20(soul20, std::move(avatar20), "default");
+        testLaw.addAuthor(author20);
+        testLaw.setActionModel(ActionNode::set("val", PropertyValue(1.0f)));
+
+        // Applying to object in jurisdiction does not fail with AuthorityDenied
+        assert(testLaw.applyTo(*zmObjA) != Law::ApplicationResult::AuthorityDenied);
+        // Applying to object outside jurisdiction is refused with AuthorityDenied
+        assert(testLaw.applyTo(*zmObjB) == Law::ApplicationResult::AuthorityDenied);
+
+        zm.unbindLive();
+        az.clearActiveZones();
+
+        // --- Part 20.3: Firmament Pass 1 & 2 Corrective Witnesses ---
+        // (a) setActiveZones idempotency (no redundant structuralRevision bump)
+        az.setActiveZones({&zone20A, &zone20B});
+        const uint64_t revIdem = az.structuralRevision();
+        az.setActiveZones({&zone20A, &zone20B});
+        assert(az.structuralRevision() == revIdem);
+
+        // (b) setPrimaryZone replaces primary slot [0] without stranding old primary at [1]
+        az.setActiveZones({&zone20A});
+        assert(az.zones().size() == 1 && az.primaryZone() == &zone20A);
+        az.setPrimaryZone(&zone20B);
+        assert(az.zones().size() == 1 && az.primaryZone() == &zone20B);
+        assert(!az.isActive(&zone20A));
+
+        // (c) Zone::~Zone() automatically detaches destroyed Zone from ActiveZones
+        {
+            Zone ephemeralZone("ephemeral-zone-20", "default");
+            az.activateZone(&ephemeralZone);
+            assert(az.isActive(&ephemeralZone));
+            assert(az.zones().size() == 2);
+        }
+        assert(az.zones().size() == 1 && az.primaryZone() == &zone20B);
+
+        az.clearActiveZones();
+
+        // --- Part 20.4: Zone-Qualified Disambiguation Witness ---
+        {
+            auto zoneEditorA = std::make_shared<Zone>("Zone_Editor_A", "default");
+            auto zoneEditorB = std::make_shared<Zone>("Zone_Editor_B", "default");
+            auto wbDomain20 = std::make_shared<Zone>("Whiteboard_Domain", "default");
+
+            auto canvasA = std::make_shared<Object>("canvas");
+            canvasA->setObjectID("canvas");
+            canvasA->setDynamicProperty("cropWidth", PropertyValue(100.0));
+            zoneEditorA->addObject(canvasA);
+
+            auto canvasB = std::make_shared<Object>("canvas");
+            canvasB->setObjectID("canvas");
+            canvasB->setDynamicProperty("cropWidth", PropertyValue(200.0));
+            zoneEditorB->addObject(canvasB);
+
+            auto wbController20 = std::make_shared<Object>("whiteboard.controller");
+            wbController20->setObjectID("whiteboard.controller");
+            wbController20->setDynamicProperty("activeLayer", PropertyValue(1));
+            wbDomain20->addObject(wbController20);
+
+            az.setActiveZones({zoneEditorA.get(), zoneEditorB.get(), wbDomain20.get()});
+
+            PropertyValue pVal;
+            // Unqualified @canvas.cropWidth is ambiguous between canvasA and canvasB
+            assert(PropertyPath::parse("@canvas.cropWidth").getValue(*canvasA, pVal) == Result::NoSuchProperty);
+            assert(CompiledPath::compile("@canvas.cropWidth").getValue(*canvasA, pVal) == Result::NoSuchProperty);
+            assert(lawGetValueResult(*canvasA, PropertyPath::parse("@canvas.cropWidth"), pVal) == Result::NoSuchProperty);
+            assert(lawGetValueResult(*canvasA, CompiledPath::compile("@canvas.cropWidth"), pVal) == Result::NoSuchProperty);
+
+            // Zone-qualified @Zone_Editor_A.canvas.cropWidth resolves to canvasA (100.0)
+            assert(PropertyPath::parse("@Zone_Editor_A.canvas.cropWidth").getValue(*canvasA, pVal) == Result::Ok);
+            assert(std::get<double>(pVal) == 100.0);
+            assert(CompiledPath::compile("@Zone_Editor_A.canvas.cropWidth").getValue(*canvasA, pVal) == Result::Ok);
+            assert(std::get<double>(pVal) == 100.0);
+            assert(lawGetValueResult(*canvasA, PropertyPath::parse("@Zone_Editor_A.canvas.cropWidth"), pVal) == Result::Ok);
+            assert(std::get<double>(pVal) == 100.0);
+            assert(lawGetValueResult(*canvasA, CompiledPath::compile("@Zone_Editor_A.canvas.cropWidth"), pVal) == Result::Ok);
+            assert(std::get<double>(pVal) == 100.0);
+
+            // Zone-qualified @Zone_Editor_B.canvas.cropWidth resolves to canvasB (200.0)
+            assert(PropertyPath::parse("@Zone_Editor_B.canvas.cropWidth").getValue(*canvasA, pVal) == Result::Ok);
+            assert(std::get<double>(pVal) == 200.0);
+            assert(CompiledPath::compile("@Zone_Editor_B.canvas.cropWidth").getValue(*canvasA, pVal) == Result::Ok);
+            assert(std::get<double>(pVal) == 200.0);
+            assert(lawGetValueResult(*canvasA, PropertyPath::parse("@Zone_Editor_B.canvas.cropWidth"), pVal) == Result::Ok);
+            assert(std::get<double>(pVal) == 200.0);
+            assert(lawGetValueResult(*canvasA, CompiledPath::compile("@Zone_Editor_B.canvas.cropWidth"), pVal) == Result::Ok);
+            assert(std::get<double>(pVal) == 200.0);
+
+            // Dotted identifier @Whiteboard_Domain.whiteboard.controller.activeLayer resolves to wbController (1)
+            assert(PropertyPath::parse("@Whiteboard_Domain.whiteboard.controller.activeLayer").getValue(*canvasA, pVal) == Result::Ok);
+            assert(std::get<int>(pVal) == 1);
+            assert(lawGetValueResult(*canvasA, PropertyPath::parse("@Whiteboard_Domain.whiteboard.controller.activeLayer"), pVal) == Result::Ok);
+            assert(std::get<int>(pVal) == 1);
+
+            // Direct Law action ActionNode::set with Zone-qualified path
+            Soul soul20_4("Author20_4");
+            Body avatar20_4 = Body::createBasicAvatar("Avatar20_4");
+            Person author20_4(soul20_4, std::move(avatar20_4), "default");
+
+            Law setCropLaw("set-crop-law");
+            setCropLaw.addAuthor(author20_4);
+            setCropLaw.setActionModel(ActionNode::set("@Zone_Editor_A.canvas.cropWidth", PropertyValue(150.0)));
+            assert(setCropLaw.applyTo(*canvasA) == Law::ApplicationResult::Applied);
+
+            assert(canvasA->getDynamicProperty("cropWidth", pVal) && std::get<double>(pVal) == 150.0);
+            assert(canvasB->getDynamicProperty("cropWidth", pVal) && std::get<double>(pVal) == 200.0);
+
+            // Direct Law action ActionNode::shareCell with Zone-qualified path
+            auto receiverObj = std::make_shared<Object>("receiverObj");
+            receiverObj->setObjectID("receiverObj");
+            zoneEditorA->addObject(receiverObj);
+
+            Law shareCropLaw("share-crop-law");
+            shareCropLaw.addAuthor(author20_4);
+            shareCropLaw.setActionModel(ActionNode::shareCell("cropWidth", "@Zone_Editor_A.canvas.cropWidth"));
+            assert(shareCropLaw.applyTo(*receiverObj) == Law::ApplicationResult::Applied);
+
+            assert(receiverObj->hasPropertyCell("cropWidth"));
+            assert(canvasA->hasPropertyCell("cropWidth"));
+            assert(!canvasB->hasPropertyCell("cropWidth"));
+            assert(receiverObj->getDynamicProperty("cropWidth", pVal) && std::get<double>(pVal) == 150.0);
+
+            // Mutation via receiverObj updates canvasA via shared cell, canvasB unchanged
+            assert(PropertyPath::parse("cropWidth").setValue(*receiverObj, PropertyValue(180.0)) == Result::Ok);
+            assert(canvasA->getDynamicProperty("cropWidth", pVal) && std::get<double>(pVal) == 180.0);
+            assert(canvasB->getDynamicProperty("cropWidth", pVal) && std::get<double>(pVal) == 200.0);
+
+            az.clearActiveZones();
+        }
+
+        // --- Part 20.5: End-to-End Cross-Zone Whiteboard / Multi-Canvas Domain Witness ---
+        {
+            auto whiteboardDomain = std::make_shared<Zone>("Whiteboard_Domain", "default");
+            auto artStudioZone = std::make_shared<Zone>("Art_Studio_Zone", "default");
+            auto notesRoomZone = std::make_shared<Zone>("Notes_Room_Zone", "default");
+
+            auto wbController = std::make_shared<Object>("whiteboard.controller");
+            wbController->setObjectID("whiteboard.controller");
+            wbController->setDynamicProperty("activeLayer", PropertyValue(0));
+            wbController->setDynamicProperty("cropRect", PropertyValue(glm::vec3(0.0f, 0.0f, 1920.0f)));
+            wbController->setDynamicProperty("boardState", PropertyValue(std::string("sketch-v1")));
+            wbController->setDynamicProperty("previousBoardState", PropertyValue(std::string("")));
+            wbController->setDynamicProperty("clearRequested", PropertyValue(false));
+            wbController->setDynamicProperty("openCanvasCount", PropertyValue(2));
+            whiteboardDomain->addObject(wbController);
+
+            auto studioBoard = std::make_shared<Object>("studio_board");
+            studioBoard->setObjectID("studio_board");
+            artStudioZone->addObject(studioBoard);
+
+            auto notesBoard = std::make_shared<Object>("notes_board");
+            notesBoard->setObjectID("notes_board");
+            notesRoomZone->addObject(notesBoard);
+
+            az.setActiveZones({whiteboardDomain.get(), artStudioZone.get(), notesRoomZone.get()});
+
+            Soul wbSoul("WhiteboardMaster");
+            Body wbAvatar = Body::createBasicAvatar("WhiteboardAvatar");
+            Person wbAuthor(wbSoul, std::move(wbAvatar), "default");
+
+            // (1) Register continuous WhileTrue domain Law in Whiteboard_Domain
+            LawManager lm;
+            lm.connectToEventBus();
+
+            auto clearLaw = lm.createLaw("whiteboard-clear-law", {&wbAuthor});
+            clearLaw->setActivation(Law::Activation::WhileTrue);
+            clearLaw->setJurisdiction(whiteboardDomain);
+            clearLaw->addTarget(*wbController);
+            clearLaw->setConditionModel(ConditionNode::compare("clearRequested", ConditionNode::Op::Eq, PropertyValue(true)));
+            clearLaw->setActionModel(ActionNode::sequence({
+                ActionNode::copyCell("previousBoardState", "boardState"),
+                ActionNode::set("boardState", PropertyValue(std::string("blank"))),
+                ActionNode::set("clearRequested", PropertyValue(false))
+            }));
+
+            // (2) Configure @transfer-policy rules authored by Whiteboard_Domain's governing Law
+            Law wbGovLaw("whiteboard-gov-law");
+            wbGovLaw.addAuthor(wbAuthor);
+            wbGovLaw.setJurisdiction(whiteboardDomain);
+
+            TransferPolicy::instance().clearPolicyRules();
+
+            // Allow cross-Zone read, write, share, weak (borrow) on:
+            // activeLayer, cropRect, boardState, clearRequested, openCanvasCount
+            const std::vector<std::string> openProps = {
+                "activeLayer", "cropRect", "boardState", "clearRequested", "openCanvasCount"
+            };
+            for (const auto& prop : openProps) {
+                for (AccessOp op : {AccessOp::Read, AccessOp::Write, AccessOp::Share, AccessOp::BorrowWeak}) {
+                    PolicyRule r;
+                    r.pathPattern = prop;
+                    r.op = op;
+                    r.allow = true;
+                    r.governingLaw = &wbGovLaw;
+                    TransferPolicy::instance().addPolicyRule(r);
+                }
+            }
+
+            // Allow cross-Zone read and weak (borrow) on previousBoardState
+            PolicyRule rPrevRead;
+            rPrevRead.pathPattern = "previousBoardState";
+            rPrevRead.op = AccessOp::Read;
+            rPrevRead.allow = true;
+            rPrevRead.governingLaw = &wbGovLaw;
+            TransferPolicy::instance().addPolicyRule(rPrevRead);
+
+            PolicyRule rPrevBorrow;
+            rPrevBorrow.pathPattern = "previousBoardState";
+            rPrevBorrow.op = AccessOp::BorrowWeak;
+            rPrevBorrow.allow = true;
+            rPrevBorrow.governingLaw = &wbGovLaw;
+            TransferPolicy::instance().addPolicyRule(rPrevBorrow);
+
+            // DENY cross-Zone write on previousBoardState
+            PolicyRule rPrevDenyWrite;
+            rPrevDenyWrite.pathPattern = "previousBoardState";
+            rPrevDenyWrite.op = AccessOp::Write;
+            rPrevDenyWrite.allow = false;
+            rPrevDenyWrite.governingLaw = &wbGovLaw;
+            rPrevDenyWrite.filter = [wbPtr = whiteboardDomain.get()](const AccessContext& ctx) -> bool {
+                Zone* origin = ctx.originZone ? ctx.originZone
+                    : (ctx.authorizingLaw && ctx.authorizingLaw->jurisdiction() ? ctx.authorizingLaw->jurisdiction().get() : nullptr);
+                if (origin) return origin != wbPtr;
+                if (ctx.actor) return !wbPtr->containsBeing(*ctx.actor);
+                return true;
+            };
+            TransferPolicy::instance().addPolicyRule(rPrevDenyWrite);
+
+            // (3) Bind consumer boards using LawSentence::parse
+            Singularity::Terminal::LawSentence::Vocabulary vocab;
+            vocab.words = Singularity::Terminal::LawSentence::canonicalWords();
+            vocab.events = {"bind_boards"};
+
+            Law bindingLaw("board-binding-law");
+            bindingLaw.addAuthor(wbAuthor);
+
+            // studio_board bindings
+            auto pShareLayerStudio = Singularity::Terminal::LawSentence::parse(
+                "on bind_boards then share @studio_board.activeLayer from @Whiteboard_Domain.whiteboard.controller.activeLayer", vocab);
+            assert(pShareLayerStudio.ok && pShareLayerStudio.action.has_value());
+            bindingLaw.setActionModel(*pShareLayerStudio.action);
+            assert(bindingLaw.applyTo(*studioBoard) == Law::ApplicationResult::Applied);
+
+            auto pShareStateStudio = Singularity::Terminal::LawSentence::parse(
+                "on bind_boards then share @studio_board.boardState from @Whiteboard_Domain.whiteboard.controller.boardState", vocab);
+            assert(pShareStateStudio.ok && pShareStateStudio.action.has_value());
+            bindingLaw.setActionModel(*pShareStateStudio.action);
+            assert(bindingLaw.applyTo(*studioBoard) == Law::ApplicationResult::Applied);
+
+            auto pShareClearStudio = Singularity::Terminal::LawSentence::parse(
+                "on bind_boards then share @studio_board.clearRequested from @Whiteboard_Domain.whiteboard.controller.clearRequested", vocab);
+            assert(pShareClearStudio.ok && pShareClearStudio.action.has_value());
+            bindingLaw.setActionModel(*pShareClearStudio.action);
+            assert(bindingLaw.applyTo(*studioBoard) == Law::ApplicationResult::Applied);
+
+            auto pBorrowPrevStudio = Singularity::Terminal::LawSentence::parse(
+                "on bind_boards then borrow @studio_board.previousBoardState from @Whiteboard_Domain.whiteboard.controller.previousBoardState", vocab);
+            assert(pBorrowPrevStudio.ok && pBorrowPrevStudio.action.has_value());
+            bindingLaw.setActionModel(*pBorrowPrevStudio.action);
+            assert(bindingLaw.applyTo(*studioBoard) == Law::ApplicationResult::Applied);
+
+            // notes_board bindings
+            auto pShareLayerNotes = Singularity::Terminal::LawSentence::parse(
+                "on bind_boards then share @notes_board.activeLayer from @Whiteboard_Domain.whiteboard.controller.activeLayer", vocab);
+            assert(pShareLayerNotes.ok && pShareLayerNotes.action.has_value());
+            bindingLaw.setActionModel(*pShareLayerNotes.action);
+            assert(bindingLaw.applyTo(*notesBoard) == Law::ApplicationResult::Applied);
+
+            auto pShareStateNotes = Singularity::Terminal::LawSentence::parse(
+                "on bind_boards then share @notes_board.boardState from @Whiteboard_Domain.whiteboard.controller.boardState", vocab);
+            assert(pShareStateNotes.ok && pShareStateNotes.action.has_value());
+            bindingLaw.setActionModel(*pShareStateNotes.action);
+            assert(bindingLaw.applyTo(*notesBoard) == Law::ApplicationResult::Applied);
+
+            auto pShareClearNotes = Singularity::Terminal::LawSentence::parse(
+                "on bind_boards then share @notes_board.clearRequested from @Whiteboard_Domain.whiteboard.controller.clearRequested", vocab);
+            assert(pShareClearNotes.ok && pShareClearNotes.action.has_value());
+            bindingLaw.setActionModel(*pShareClearNotes.action);
+            assert(bindingLaw.applyTo(*notesBoard) == Law::ApplicationResult::Applied);
+
+            auto pBorrowPrevNotes = Singularity::Terminal::LawSentence::parse(
+                "on bind_boards then borrow @notes_board.previousBoardState from @Whiteboard_Domain.whiteboard.controller.previousBoardState", vocab);
+            assert(pBorrowPrevNotes.ok && pBorrowPrevNotes.action.has_value());
+            bindingLaw.setActionModel(*pBorrowPrevNotes.action);
+            assert(bindingLaw.applyTo(*notesBoard) == Law::ApplicationResult::Applied);
+
+            // Verify initial states
+            PropertyValue testVal;
+            assert(studioBoard->getDynamicProperty("boardState", testVal) && std::get<std::string>(testVal) == "sketch-v1");
+            assert(notesBoard->getDynamicProperty("boardState", testVal) && std::get<std::string>(testVal) == "sketch-v1");
+            assert(wbController->getDynamicProperty("boardState", testVal) && std::get<std::string>(testVal) == "sketch-v1");
+
+            // 1. Mutate activeLayer = 3 in Art_Studio_Zone -> updates Notes_Room_Zone and Whiteboard_Domain
+            AccessContext ctxArt;
+            ctxArt.originZone = artStudioZone.get();
+            ctxArt.targetZone = whiteboardDomain.get();
+            ctxArt.op = AccessOp::Write;
+
+            assert(PropertyPath::parse("@studio_board.activeLayer").setValue(*studioBoard, PropertyValue(3), 0, ctxArt) == Result::Ok);
+            assert(studioBoard->getDynamicProperty("activeLayer", testVal) && std::get<int>(testVal) == 3);
+            assert(notesBoard->getDynamicProperty("activeLayer", testVal) && std::get<int>(testVal) == 3);
+            assert(wbController->getDynamicProperty("activeLayer", testVal) && std::get<int>(testVal) == 3);
+
+            // 2. Set clearRequested = true on studio_board from Art_Studio_Zone and tick LawManager
+            assert(PropertyPath::parse("@studio_board.clearRequested").setValue(*studioBoard, PropertyValue(true), 0, ctxArt) == Result::Ok);
+            assert(wbController->getDynamicProperty("clearRequested", testVal) && std::get<bool>(testVal) == true);
+
+            lm.tick();
+
+            // previousBoardState became "sketch-v1" across all boards (read via borrow/Weak handle)
+            assert(wbController->getDynamicProperty("previousBoardState", testVal) && std::get<std::string>(testVal) == "sketch-v1");
+            assert(studioBoard->getDynamicProperty("previousBoardState", testVal) && std::get<std::string>(testVal) == "sketch-v1");
+            assert(notesBoard->getDynamicProperty("previousBoardState", testVal) && std::get<std::string>(testVal) == "sketch-v1");
+
+            // boardState reset to "blank" across all boards
+            assert(wbController->getDynamicProperty("boardState", testVal) && std::get<std::string>(testVal) == "blank");
+            assert(studioBoard->getDynamicProperty("boardState", testVal) && std::get<std::string>(testVal) == "blank");
+            assert(notesBoard->getDynamicProperty("boardState", testVal) && std::get<std::string>(testVal) == "blank");
+
+            // clearRequested reset to false across all boards
+            assert(wbController->getDynamicProperty("clearRequested", testVal) && std::get<bool>(testVal) == false);
+            assert(studioBoard->getDynamicProperty("clearRequested", testVal) && std::get<bool>(testVal) == false);
+            assert(notesBoard->getDynamicProperty("clearRequested", testVal) && std::get<bool>(testVal) == false);
+
+            // 3. Mutating boardState from Notes_Room_Zone or Art_Studio_Zone immediately synchronizes
+            AccessContext ctxNotes;
+            ctxNotes.originZone = notesRoomZone.get();
+            ctxNotes.targetZone = whiteboardDomain.get();
+            ctxNotes.op = AccessOp::Write;
+
+            assert(PropertyPath::parse("@notes_board.boardState").setValue(*notesBoard, PropertyValue(std::string("diagram-final")), 0, ctxNotes) == Result::Ok);
+            assert(studioBoard->getDynamicProperty("boardState", testVal) && std::get<std::string>(testVal) == "diagram-final");
+            assert(notesBoard->getDynamicProperty("boardState", testVal) && std::get<std::string>(testVal) == "diagram-final");
+            assert(wbController->getDynamicProperty("boardState", testVal) && std::get<std::string>(testVal) == "diagram-final");
+
+            // 4. Attempt direct write to previousBoardState from unauthorized context
+            assert(PropertyPath::parse("@studio_board.previousBoardState").setValue(*studioBoard, PropertyValue(std::string("tampered")), 0, ctxArt) == Result::ReadOnly);
+            assert(PropertyPath::parse("@notes_board.previousBoardState").setValue(*notesBoard, PropertyValue(std::string("tampered")), 0, ctxNotes) == Result::ReadOnly);
+            assert(PropertyPath::parse("@Whiteboard_Domain.whiteboard.controller.previousBoardState").setValue(*studioBoard, PropertyValue(std::string("tampered")), 0, ctxArt) == Result::AccessDenied);
+
+            Soul studioSoul("StudioArtist");
+            Body studioAvatar = Body::createBasicAvatar("StudioAvatar");
+            Person studioAuthor(studioSoul, std::move(studioAvatar), "default");
+
+            Law studioWriterLaw("studio-writer-law");
+            studioWriterLaw.addAuthor(studioAuthor);
+            studioWriterLaw.setJurisdiction(artStudioZone);
+            studioWriterLaw.setActionModel(ActionNode::set("@Whiteboard_Domain.whiteboard.controller.previousBoardState", PropertyValue(std::string("hacked"))));
+            assert(studioWriterLaw.applyTo(*studioBoard) == Law::ApplicationResult::Applied);
+            assert(!studioWriterLaw.applicationLog().back().changedSomething());
+            assert(studioWriterLaw.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
+
+            // State remains untouched
+            assert(wbController->getDynamicProperty("previousBoardState", testVal) && std::get<std::string>(testVal) == "sketch-v1");
+
+            // 5. Firmament Pass 3 & 4 Corrective Verification Witnesses:
+            //    (a) Direct PropertyPath resolution of unqualified dotted @<SingularId> ("@whiteboard.controller.activeLayer")
+            PropertyValue directDottedVal;
+            assert(PropertyPath::parse("@whiteboard.controller.activeLayer").getValue(*studioBoard, directDottedVal) == Result::Ok);
+            assert(std::get<int>(directDottedVal) == 3);
+            assert(CompiledPath::compile("@whiteboard.controller.activeLayer").getValue(*studioBoard, directDottedVal) == Result::Ok);
+            assert(std::get<int>(directDottedVal) == 3);
+
+            //    (b) 100% Declarative @transfer-policy.rule.* Cross-Zone vs Intra-Zone Governance
+            //        (Zero C++ filter lambdas: intra-Zone specificity 2 beats general targetZoneId specificity 1)
+            TransferPolicy::instance().clearPolicyRules();
+            wbGovLaw.setActionModel(ActionNode::sequence({
+                // Broad rule: deny inbound writes to previousBoardState on Whiteboard_Domain (specificity = path(2) + target(1) = 3)
+                ActionNode::set("@transfer-policy.rule.pathPattern", PropertyValue(std::string("previousBoardState"))),
+                ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("write"))),
+                ActionNode::set("@transfer-policy.rule.targetZoneId", PropertyValue(std::string("Whiteboard_Domain"))),
+                ActionNode::set("@transfer-policy.rule.allow", PropertyValue(false)),
+                ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true)),
+                // Specific rule: allow intra-Zone writes originating from Whiteboard_Domain itself (specificity = path(2) + origin(1) + target(1) = 4)
+                ActionNode::set("@transfer-policy.rule.pathPattern", PropertyValue(std::string("previousBoardState"))),
+                ActionNode::set("@transfer-policy.rule.op", PropertyValue(std::string("write"))),
+                ActionNode::set("@transfer-policy.rule.originZoneId", PropertyValue(std::string("Whiteboard_Domain"))),
+                ActionNode::set("@transfer-policy.rule.targetZoneId", PropertyValue(std::string("Whiteboard_Domain"))),
+                ActionNode::set("@transfer-policy.rule.allow", PropertyValue(true)),
+                ActionNode::set("@transfer-policy.rule.commit", PropertyValue(true))
+            }));
+            assert(wbGovLaw.applyTo(*wbController) == Law::ApplicationResult::Applied);
+
+            // Cross-Zone write from Art_Studio_Zone is refused by the declarative targetZoneId rule!
+            assert(studioWriterLaw.applyTo(*studioBoard) == Law::ApplicationResult::Applied);
+            assert(!studioWriterLaw.applicationLog().back().changedSomething());
+            assert(studioWriterLaw.applicationLog().back().trace.nodes.front().reason == Result::AccessDenied);
+
+            // Intra-Zone clearLaw inside Whiteboard_Domain is allowed by the specific (origin=Whiteboard_Domain, target=Whiteboard_Domain) rule!
+            assert(PropertyPath::parse("@notes_board.clearRequested").setValue(*notesBoard, PropertyValue(true)) == Result::Ok);
+            lm.tick();
+            assert(wbController->getDynamicProperty("previousBoardState", testVal) && std::get<std::string>(testVal) == "diagram-final");
+            assert(studioBoard->getDynamicProperty("previousBoardState", testVal) && std::get<std::string>(testVal) == "diagram-final");
+            assert(notesBoard->getDynamicProperty("previousBoardState", testVal) && std::get<std::string>(testVal) == "diagram-final");
+            assert(wbController->getDynamicProperty("boardState", testVal) && std::get<std::string>(testVal) == "blank");
+
+            //    (c) Loaded Inactive Zone Resolution via ZoneManager::live() (both @<ZoneId>.<SingularId> and fallback @<SingularId>)
+            ZoneManager zmInactive;
+            zmInactive.addZone(whiteboardDomain);
+            auto archiveZone = std::make_shared<Zone>("Archive_Zone", "default");
+            auto archiveVault = std::make_shared<Object>("archive.vault");
+            archiveVault->setObjectID("archive.vault");
+            archiveVault->setDynamicProperty("preservedCanvas", PropertyValue(std::string("ancient-fresco")));
+            archiveZone->addObject(archiveVault);
+            zmInactive.bindLive();
+            // Add archiveZone AFTER bindLive() to verify ZoneManager::addZone bumps ActiveZones structuralRevision!
+            zmInactive.addZone(archiveZone);
+            assert(!az.isActive(archiveZone.get()));
+
+            PropertyValue archVal;
+            assert(PropertyPath::parse("@Archive_Zone.archive.vault.preservedCanvas").getValue(*wbController, archVal) == Result::Ok);
+            assert(std::get<std::string>(archVal) == "ancient-fresco");
+            assert(lawGetValueResult(*wbController, PropertyPath::parse("@Archive_Zone.archive.vault.preservedCanvas"), archVal) == Result::Ok);
+            assert(std::get<std::string>(archVal) == "ancient-fresco");
+            assert(PropertyPath::parse("@archive.vault.preservedCanvas").getValue(*wbController, archVal) == Result::Ok);
+            assert(std::get<std::string>(archVal) == "ancient-fresco");
+            assert(lawGetValueResult(*wbController, PropertyPath::parse("@archive.vault.preservedCanvas"), archVal) == Result::Ok);
+            assert(std::get<std::string>(archVal) == "ancient-fresco");
+
+            zmInactive.unbindLive();
+            TransferPolicy::instance().clearPolicyRules();
+            az.clearActiveZones();
+        }
     }
 
     std::cout << "property_memory_access_test: PASS\n";

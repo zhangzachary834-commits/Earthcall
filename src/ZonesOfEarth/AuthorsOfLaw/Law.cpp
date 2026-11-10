@@ -574,7 +574,7 @@ Law::ApplicationResult Law::applyToImpl(
     } else if (violatesKernelBoundary) {
         result = ApplicationResult::AuthorityDenied;
         personMotionRefused = lacksPersonMotionConsent;
-    } else if (_jurisdiction && !_jurisdiction->getFormation().hasMember(&target)) {
+    } else if (_jurisdiction && !_jurisdiction->containsBeing(target)) {
         result = ApplicationResult::AuthorityDenied;
     } else if (!conditionsAlreadySatisfied && !conditionsSatisfied(target)) {
         result = ApplicationResult::ConditionsFailed;
@@ -1488,7 +1488,9 @@ void ReteNetwork::evaluateDirty() {
         auto* prop = fact->subject->findProperty(fact->attribute);
         if (prop) {
             nlohmann::json newValue = propertyValueToJson(prop->value());
-            if (fact->value == newValue) continue; // no change
+            const std::uint64_t currentPolicyRev = TransferPolicy::instance().accessPolicyRevision();
+            if (fact->value == newValue && fact->policyRevision == currentPolicyRev) continue; // no value or policy change
+            fact->policyRevision = currentPolicyRev;
             
             // The state fact persists. Invalidate consequences of its old
             // value, mutate the same identity in place, then discriminate the
@@ -2138,6 +2140,7 @@ void LawManager::connectToEventBus() {
                     stateFact->value = propertyValueToJson(prop->value());
                     stateFact->isState = true;
                     stateFact->dirty = false;
+                    stateFact->policyRevision = TransferPolicy::instance().accessPolicyRevision();
                     _rete.assertFact(stateFact);
                 }
             }
@@ -3374,6 +3377,7 @@ void LawManager::seedStateFacts(Singular* being) {
         stateFact->value = propertyValueToJson(prop->value());
         stateFact->isState = true;
         stateFact->dirty = false;
+        stateFact->policyRevision = TransferPolicy::instance().accessPolicyRevision();
         _rete.assertFact(stateFact);
     }
 

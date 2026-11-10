@@ -120,6 +120,7 @@ public:
     void addObject(std::shared_ptr<Object> obj);
     bool removeObject(Object* obj);
     bool removeObjectById(const std::string& identifier);
+    bool containsBeing(const Singular& being) const;
     const std::vector<std::shared_ptr<Object>>& objects() const { return _objects; }
     const std::vector<std::shared_ptr<Object>>& getOwnedObjects() const { return _objects; }
     std::vector<std::shared_ptr<Object>>& getOwnedObjectsMutable() { return _objects; }

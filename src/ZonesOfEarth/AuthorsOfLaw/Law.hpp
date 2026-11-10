@@ -496,6 +496,7 @@ struct ReteFact {
     std::shared_ptr<const ECA::Event> occurrence;
     bool isState{false};
     bool dirty{true};
+    std::uint64_t policyRevision{0};
 };
 using FactPtr = std::shared_ptr<ReteFact>;
 

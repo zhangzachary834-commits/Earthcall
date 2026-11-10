@@ -57,20 +57,20 @@ Zone* resolveZoneForBeing(const Singular* being, const Law* fallbackLaw = nullpt
         if (const auto* asZone = dynamic_cast<const Zone*>(being)) {
             return const_cast<Zone*>(asZone);
         }
+        for (Zone* z : ActiveZones::instance().zones()) {
+            if (z && z->containsBeing(*being)) return z;
+        }
         if (ZoneManager* zm = ZoneManager::live()) {
             if (Zone* res = zm->residenceOf(*being)) {
                 return res;
             }
+            for (const auto& zPtr : zm->zones()) {
+                if (zPtr && zPtr->containsBeing(*being)) return zPtr.get();
+            }
         }
         for (Singular* candidate : Universe::instance().beings()) {
             if (auto* z = dynamic_cast<Zone*>(candidate)) {
-                if (z->getFormation().hasMember(being)) return z;
-                for (const auto& obj : z->objects()) {
-                    if (obj.get() == being) return z;
-                }
-                for (const auto& stored : z->storedSingulars()) {
-                    if (stored.get() == being) return z;
-                }
+                if (z->containsBeing(*being)) return z;
             }
         }
     }
@@ -78,9 +78,17 @@ Zone* resolveZoneForBeing(const Singular* being, const Law* fallbackLaw = nullpt
         if (fallbackLaw->jurisdiction()) {
             return fallbackLaw->jurisdiction().get();
         }
+        for (Zone* z : ActiveZones::instance().zones()) {
+            if (z && z->containsBeing(*fallbackLaw)) return z;
+        }
+        if (ZoneManager* zm = ZoneManager::live()) {
+            for (const auto& zPtr : zm->zones()) {
+                if (zPtr && zPtr->containsBeing(*fallbackLaw)) return zPtr.get();
+            }
+        }
         for (Singular* candidate : Universe::instance().beings()) {
             if (auto* z = dynamic_cast<Zone*>(candidate)) {
-                if (z->getFormation().hasMember(fallbackLaw)) return z;
+                if (z->containsBeing(*fallbackLaw)) return z;
             }
         }
     }
@@ -664,6 +672,11 @@ bool TransferPolicy::checkAccess(Singular& bearer,
 
     auto resolveWinner = [](const std::vector<const PolicyRule*>& rules) -> const PolicyRule* {
         if (rules.empty()) return nullptr;
+        auto ruleSpecificity = [](const PolicyRule& r) -> int {
+            return (!r.pathPattern.empty() ? 2 : 0)
+                 + (!r.originZoneId.empty() ? 1 : 0)
+                 + (!r.targetZoneId.empty() ? 1 : 0);
+        };
         const PolicyRule* winner = rules[0];
         for (std::size_t i = 1; i < rules.size(); ++i) {
             const PolicyRule* candidate = rules[i];
@@ -671,6 +684,8 @@ bool TransferPolicy::checkAccess(Singular& bearer,
             const Law* candLaw = resolveGoverningLaw(*candidate);
             const bool winHasCell = resolveRuleCellId(*winner).valid();
             const bool candHasCell = resolveRuleCellId(*candidate).valid();
+            const int winSpec = ruleSpecificity(*winner);
+            const int candSpec = ruleSpecificity(*candidate);
             if (!winLaw && candLaw) {
                 winner = candidate;
             } else if (winLaw && candLaw) {
@@ -678,18 +693,26 @@ bool TransferPolicy::checkAccess(Singular& bearer,
                     winner = candidate;
                 } else if (!winLaw->hasAuthorityOver(*candLaw)) {
                     // If equal or unranked standing: cell-specific rule wins over generic path,
-                    // and if still tied, deny takes precedence.
+                    // then higher path + Zone-pair specificity wins, and if still tied, deny wins.
                     if (candHasCell && !winHasCell) {
                         winner = candidate;
-                    } else if (!candidate->allow && winner->allow) {
-                        winner = candidate;
+                    } else if (candHasCell == winHasCell) {
+                        if (candSpec > winSpec) {
+                            winner = candidate;
+                        } else if (candSpec == winSpec && !candidate->allow && winner->allow) {
+                            winner = candidate;
+                        }
                     }
                 }
             } else {
                 if (candHasCell && !winHasCell) {
                     winner = candidate;
-                } else if (!candidate->allow && winner->allow) {
-                    winner = candidate;
+                } else if (candHasCell == winHasCell) {
+                    if (candSpec > winSpec) {
+                        winner = candidate;
+                    } else if (candSpec == winSpec && !candidate->allow && winner->allow) {
+                        winner = candidate;
+                    }
                 }
             }
         }

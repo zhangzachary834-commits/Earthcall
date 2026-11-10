@@ -53,6 +53,8 @@ extern CategoryManager categories;
 void ZoneManager::addZone(std::shared_ptr<Zone> zone)
 {
     _zones.push_back(std::move(zone));
+    ActiveZones::instance().bumpStructuralRevision();
+    syncActiveZonesOperands();
 }
 
 bool ZoneManager::lawInUse(const std::string& lawId) const {
@@ -99,6 +101,8 @@ bool ZoneManager::holdZoneClosure(const std::string& holder, size_t index) {
             _lawManager->remove(id);
         }
     }
+    applyFormationRelations(*_zones[index], heldIdentity);
+    syncActiveZonesOperands();
     return true;
 }
 
@@ -108,16 +112,47 @@ void ZoneManager::releaseZoneClosure(const std::string& holder) {
     const std::unordered_set<std::string> ids = std::move(it->second);
     _heldZoneLawIds.erase(it);
     _heldZoneOf.erase(holder);
-    if (!_lawManager) return;
-    for (const auto& id : ids) {
-        if (_activeZoneLawIds.count(id) != 0 || heldByAnyone(id)) continue;
-        _lawManager->remove(id);
+    if (_lawManager) {
+        for (const auto& id : ids) {
+            if (_activeZoneLawIds.count(id) != 0 || heldByAnyone(id)) continue;
+            _lawManager->remove(id);
+        }
     }
+    syncActiveZonesOperands();
 }
 
 std::string ZoneManager::heldZone(const std::string& holder) const {
     auto it = _heldZoneOf.find(holder);
     return it == _heldZoneOf.end() ? std::string{} : it->second;
+}
+
+bool ZoneManager::mountZone(const std::string& zoneId) {
+    size_t idx = findZoneIndex(zoneId);
+    if (idx == static_cast<size_t>(-1)) {
+        return false;
+    }
+    return holdZoneClosure("mount:" + zoneId, idx);
+}
+
+void ZoneManager::unmountZone(const std::string& zoneId) {
+    releaseZoneClosure("mount:" + zoneId);
+}
+
+std::vector<Zone*> ZoneManager::activeZones() const {
+    std::vector<Zone*> result;
+    std::unordered_set<Zone*> seen;
+    if (!_zones.empty() && _currentIndex < _zones.size() && _zones[_currentIndex]) {
+        Zone* prim = _zones[_currentIndex].get();
+        result.push_back(prim);
+        seen.insert(prim);
+    }
+    for (const auto& kv : _heldZoneOf) {
+        Zone* z = findZone(kv.second);
+        if (z && seen.insert(z).second) {
+            result.push_back(z);
+        }
+    }
+    return result;
 }
 
 size_t ZoneManager::findZoneIndex(const std::string& nameOrId) const {
@@ -551,6 +586,7 @@ bool ZoneManager::switchTo(size_t index)
         // The zone is a being: laws hear arrival (subject: the zone itself).
         Core::EventBus::instance().publish(
             ECA::Event{"zone-entered", _zones[_currentIndex].get(), nullptr, std::time(nullptr)});
+        syncActiveZonesOperands();
         return true;
     }
     std::cerr << "⚠️ Invalid zone index!" << std::endl;
@@ -589,14 +625,41 @@ namespace {
 ZoneManager* g_liveZones = nullptr;
 } // namespace
 
+void ZoneManager::syncActiveZonesOperands() {
+    if (g_liveZones && this != g_liveZones) return;
+
+    std::vector<Zone*> activeList;
+    std::unordered_set<Zone*> seen;
+
+    if (!_zones.empty() && _currentIndex < _zones.size() && _zones[_currentIndex]) {
+        Zone* prim = _zones[_currentIndex].get();
+        activeList.push_back(prim);
+        seen.insert(prim);
+    }
+
+    for (const auto& kv : _heldZoneOf) {
+        const std::string& zoneId = kv.second;
+        Zone* z = findZone(zoneId);
+        if (z && seen.insert(z).second) {
+            activeList.push_back(z);
+        }
+    }
+
+    ActiveZones::instance().setActiveZones(std::move(activeList));
+}
+
 void ZoneManager::bindLive() {
     g_liveZones = this;
     // Where a being IS, as law-readable facts (ZoneBounds.cpp).
     installZoneReadings();
+    syncActiveZonesOperands();
 }
 
 void ZoneManager::unbindLive() {
-    if (g_liveZones == this) g_liveZones = nullptr;
+    if (g_liveZones == this) {
+        g_liveZones = nullptr;
+        ActiveZones::instance().clearActiveZones();
+    }
 }
 
 ZoneManager* ZoneManager::live() { return g_liveZones; }
@@ -1368,6 +1431,7 @@ void ZoneManager::hydrateFromZoneStore() {
             globalObjects.push_back(obj);
         }
     }
+    syncActiveZonesOperands();
 }
 
 bool ZoneManager::forkZone(const std::string& sourceId, const std::string& newId) {

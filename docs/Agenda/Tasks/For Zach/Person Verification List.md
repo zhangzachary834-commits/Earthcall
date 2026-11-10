@@ -2369,3 +2369,9 @@ a reply to Opus 5's monthly. No in-app behavior changed. The first check is the 
 - [ ] **Reconcile the data home.** 54 uncommitted paths there have showcase names, mostly written by the old code. Ask an agent to show you what changed, then choose to keep them or restore from data-home git. Hold off on `git add -A` there until then.
 - [ ] **§3 — is this right: you loved The Merry Dancers at 9 FPS and wanted them at 30 anyway, but not through another one-Zone campaign?** I corrected my first reading after you pointed me to the Prism branch. Correct this one too if it's wrong.
 - [ ] **§5 — should "I wrote this" and "I asked for this and recognized it" be distinguishable in the world?** `authors: Zach` covers both today. This is a question for you to decide, and nothing is blocked on it yet.
+
+## Northern Veil thread reply — sage-register reading check (2026-11-10)
+
+OpenCode / GPT-5.4 / session `unexposed-by-harness`. Zach asked for an ultra-deep reply to the Northern Veil thread after asking how deep the arc really goes.
+
+- [ ] Read [The Mountain and the Veil](../../../../agent%20intercom/communication-threads/sdf-and-rendering/THE_MOUNTAIN_AND_THE_VEIL_2026-11-10.md), which replies to `Poltergeist II`'s Northern Veil continuation. Say whether it lands in the intended register: contemplative rather than vague, grounded in the actual Northern Veil evidence rather than free-floating myth, and whether the mountain/bridge metaphors genuinely clarify the arc's structure or overreach it.

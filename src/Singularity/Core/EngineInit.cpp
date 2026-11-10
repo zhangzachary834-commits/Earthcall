@@ -365,94 +365,45 @@ bool Engine::initLogic() {
     _worldTimelineOwnership = std::make_shared<Relation>(
         "owned-by", _worldTimeline, _ourverse, true, 1.0f);
 
-    // The Universe: what continuous laws watch and quantified conditions
-    // (ForAny/ForAll) range over — the active world's objects, the laws
-    // themselves (so metalaws can quantify over laws), and the player.
-    // Evaluated lazily each tick, well after zones exist.
-    Universe::instance().setProvider([this](std::vector<Singular*>& beings) {
-        // Active Zone first: Spawn/Create fall back to the first Zone in the
-        // domain, which must be the one in front of the Person (the old
-        // World bag was only the active world's).
-        beings.push_back(&mgr.active());
-        // The Zone's continuous FieldNode is already a Singular and a member
-        // of its Formation. It must also enter the Universe working set or a
-        // named Law path such as @Sanctum_of_Beginnings_spatialRoot.origin
-        // can never resolve it: registered state that no Law can name is still
-        // a black box (Refusal #6). This is generic Field reachability, not a
-        // special Light type; light is merely the first consumer.
-        if (auto* field = mgr.active().spatialRoot()) beings.push_back(field);
-        for (const auto& field : mgr.active().additionalSpatialFields()) {
-            if (field) beings.push_back(field.get());
-        }
-        for (const auto& obj : mgr.active().getOwnedObjects()) {
-            if (obj) beings.push_back(obj.get());
-        }
+    // The ActiveZones working set: what beings currently exist for continuous /
+    // quantified laws to monitor. ActiveZones automatically harvests all active
+    // Zone operands (primary inhabited Zone + all held/mounted capability Zones).
+    // The shared provider supplies cross-Zone / engine-wide registers: laws,
+    // materials, categories, world timeline, transfer gate, Person, and inactive
+    // Zone headers for governance geography.
+    ActiveZones::instance().setProvider([this](std::vector<Singular*>& beings) {
         for (const auto& law : _lawManager->getAll()) {
             if (law) beings.push_back(law.get());
         }
-        // Relations are Singulars too: quantifiers (ForAny Relation...)
-        // range over them like any other being.
-        for (const auto& rel : mgr.active().formation().relations().getAll()) {
-            if (rel) beings.push_back(rel.get());
-        }
-        // Materials are cross-zone shared beings (globals.cpp), and
-        // Material.hpp has always claimed "the Law system can address
-        // material.clay.baseColor". Until they were provided here that was
-        // aspiration: buildProperties() registered the surface and nothing
-        // could reach it. Providing them makes the claim true — laws read and
-        // drive appearance, and quantifiers range over materials like any
-        // other being. See docs/architecture/ontology/AUTHORED_CATEGORIES.md §9a.
         for (const auto& material : materials.getAll()) {
             if (material) beings.push_back(material.get());
         }
         for (const auto& category : ::categories.getAll()) {
             if (category) beings.push_back(category.get());
         }
-        // Timelines are deliberately NOT swept into Universe merely because
-        // they exist. A relative Timeline's scope belongs to authored
-        // ownership/Zone relations; globally enumerating Timeline::all() here
-        // would turn every local clock into global Law-visible state.
-        //
-        // The one broad compatibility Timeline is intentionally visible here
-        // because its owner is Ourverse scope. Its ownership Relation is itself
-        // a first-class being; local Timelines must enter through their own
-        // authored owner/Zone reachability rather than this global seam.
         beings.push_back(&_worldTimeline);
         if (_worldTimelineOwnership) beings.push_back(_worldTimelineOwnership.get());
-        // The transfer gate is a legible being: laws govern set-to-set
-        // access by writing @transfer-policy.gate.* properties.
         beings.push_back(&TransferPolicy::instance());
-        beings.push_back(_person.get());
-        // Other Zones: governance geography — laws quantify over them
+        if (_person) beings.push_back(_person.get());
+
+        // Inactive Zones: governance geography — laws quantify over them
         // (ForAny Zone ...) and address them by name (@Home.owner) even
         // while unloaded. Their continuous field beings have the same right
-        // to named Law reachability; active was already pushed above.
+        // to named Law reachability; active Zones are natively harvested by ActiveZones.
         for (auto& zone : mgr.zones()) {
-            if (zone.get() == &mgr.active()) continue;
+            if (!zone || ActiveZones::instance().isActive(zone.get())) continue;
             beings.push_back(zone.get());
             if (auto* field = zone->spatialRoot()) beings.push_back(field);
             for (const auto& field : zone->additionalSpatialFields()) {
                 if (field) beings.push_back(field.get());
             }
         }
-        // Total named reach for the Zone's authored Singulars. Keep this
-        // enumeration aligned with tests/support/test_harness.hpp: Create
-        // prototypes must not be vocabulary-visible but PropertyPath-invisible.
-        // Deduplicate existing Objects/Laws/fields before adding Formation members
-        // and retained generic beings; their storage identity is not a new scope.
-        std::unordered_set<Singular*> provided(beings.begin(), beings.end());
-        for (auto* member : (mgr.active()).formation().getMembers())
-            if (member && provided.insert(member).second) beings.push_back(member);
-        for (const auto& stored : (mgr.active()).storedSingulars())
-            if (stored && provided.insert(stored.get()).second) beings.push_back(stored.get());
     });
 
-    // The relation GRAPH — the edge view Related conditions query
-    // ("is x related to y in type t?"): the active zone's Formation.
-    Universe::instance().setRelationProvider([this](std::vector<Relation*>& relations) {
-        for (const auto& rel : mgr.active().formation().relations().getAll()) {
-            if (rel) relations.push_back(rel.get());
-        }
+    // The relation GRAPH — ActiveZones natively aggregates the Formation
+    // relations of all active Zones. This provider supplies non-Zone relations:
+    // the world timeline ownership and Person bodily constitution.
+    ActiveZones::instance().setRelationProvider([this](std::vector<Relation*>& relations) {
         if (_worldTimelineOwnership) relations.push_back(_worldTimelineOwnership.get());
         // The Person's bodily constitution (BodyPart constituted-by Object,
         // Zach 2026-10-13): visible to Law so a manifestation can be walked
@@ -466,26 +417,15 @@ bool Engine::initLogic() {
             }
         }
     });
-    // ...and its write side: newborn relations (a concept's reborn
-    // inter-member structure) join the same Formation.
-    Universe::instance().setRelationRegistrar([](std::shared_ptr<Relation> relation) {
-        mgr.active().formation().relations().add(std::move(relation));
-    });
-    // ...and an index over that same graph, so a `Related` condition finds a
-    // being's edges in O(degree) instead of walking every relation per candidate
-    // per tick (FORMATION_RETE.md §8 rung 4). Installed AFTER setRelationProvider,
-    // which clears it. Like the provider above it reads `mgr.active()` live, so a
-    // Zone switch needs no separate invalidation — each RelationManager keeps its
-    // own index current.
-    Universe::instance().setRelationsInvolvingProvider(
+
+    // Index over the relation graph: ActiveZones natively queries all active
+    // Zones; this provider indexes world timeline ownership and bodily constitution.
+    ActiveZones::instance().setRelationsInvolvingProvider(
         [this](const Singular& being, std::vector<Relation*>& out) {
-            mgr.active().formation().relations().relationsInvolving(being, out);
             if (_worldTimelineOwnership &&
                 _worldTimelineOwnership->involves(being)) {
                 out.push_back(_worldTimelineOwnership.get());
             }
-            // Same constitution edges as the provider above. relationsInvolving
-            // clears `out`, so each part's answer is gathered separately.
             if (_person) {
                 std::vector<Relation*> partEdges;
                 for (BodyPart* part : _person->getBody().parts) {
@@ -495,19 +435,11 @@ bool Engine::initLogic() {
                 }
             }
         });
-    // ...and how many times that graph has changed, so anything derived from it
-    // can tell whether it is current (FORMATION_RETE.md §8 rungs 5-6). Reads the
-    // ACTIVE Zone's manager, like the two providers above, so a Zone switch
-    // shows up as a different count.
-    //
-    // The constitution edges above are part of that graph, so their changes
-    // must move this stamp too or a cached traversal goes deaf. Consumers
-    // compare for EQUALITY only (SlowAdapter, Law.cpp), so the parts are
-    // mixed hash_combine-style rather than summed: a rebuilt Body has fresh
-    // managers whose small generations could otherwise re-sum to an old value.
-    // Each manager's address is mixed in for the same reason.
-    Universe::instance().setRelationGenerationProvider([this]() {
-        std::size_t stamp = mgr.active().formation().relations().generation();
+
+    // Relation generation: ActiveZones natively mixes all active Zones' managers.
+    // This provider mixes Person BodyPart relation generation stamps.
+    ActiveZones::instance().setRelationGenerationProvider([this]() {
+        std::size_t stamp = 0;
         auto mix = [&stamp](std::size_t v) {
             stamp ^= v + 0x9e3779b97f4a7c15ULL + (stamp << 6) + (stamp >> 2);
         };

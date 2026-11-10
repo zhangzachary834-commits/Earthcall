@@ -459,6 +459,7 @@ void Zone::clearAdditionalSpatialFields() {
 }
 
 void Zone::addObject(std::shared_ptr<Object> obj) {
+    if (obj) _formation.addMember(obj.get());
     Universe::instance().bumpStructuralRevision();
     _objects.push_back(std::move(obj));
 }
@@ -498,6 +499,8 @@ bool Zone::removeObject(Object* obj) {
                            [obj](const std::shared_ptr<Object>& p) { return p.get() == obj; });
     if (it == _objects.end()) return false;
 
+    _formation.removeMember(obj);
+
     // The world's SHAPE just changed, so anything derived from "who exists and
     // what do they carry" is now stale. addObject has always said so; this did
     // not, and the omission was invisible only because nothing read the counter
@@ -517,6 +520,22 @@ bool Zone::removeObject(Object* obj) {
     }
     _objects.erase(it);
     return true;
+}
+
+bool Zone::containsBeing(const Singular& being) const {
+    if (&being == this) return true;
+    if (_spatialRootObject && &being == _spatialRootObject.get()) return true;
+    if (_formation.hasMember(&being)) return true;
+    for (const auto& obj : _objects) {
+        if (obj && obj.get() == &being) return true;
+    }
+    for (const auto& stored : _storedSingulars) {
+        if (stored && stored.get() == &being) return true;
+    }
+    for (const auto& field : _additionalSpatialFields) {
+        if (field && field.get() == &being) return true;
+    }
+    return false;
 }
 
 bool Zone::removeObjectById(const std::string& identifier) {
@@ -634,4 +653,6 @@ void Zone::update(float dt, UpdateTiming* out) {
     }
 }
 
-Zone::~Zone() {}
+Zone::~Zone() {
+    ActiveZones::instance().deactivateZone(this);
+}

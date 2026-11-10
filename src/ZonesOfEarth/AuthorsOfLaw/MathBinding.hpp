@@ -9,6 +9,8 @@
 #include "Universe.hpp"
 #include "Time/Event/Event.hpp"
 #include "json.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
 
 #include <functional>
 #include <iostream>
@@ -147,32 +149,104 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
     // The cache follows structuralRevision, not every possible mutation of a
     // being's textual identifier. Durable individual bindings remain open work.
     static uint64_t s_lastRevision = 0;
+    static ZoneManager* s_lastLiveManager = nullptr;
     static std::unordered_map<Earthcall::StringId, Singular*> s_beingMap;
     static bool s_initialized = false;
     
     uint64_t currentRevision = Universe::instance().structuralRevision();
-    if (!s_initialized || s_lastRevision != currentRevision) {
+    ZoneManager* currentLiveManager = ZoneManager::live();
+    if (!s_initialized || s_lastRevision != currentRevision || s_lastLiveManager != currentLiveManager) {
         s_beingMap.clear();
         const std::vector<Singular*> beings = Universe::instance().beings();
+        auto bindIfUnique = [&](Earthcall::StringId name, Singular* being) {
+            auto [it, inserted] = s_beingMap.emplace(name, being);
+            if (!inserted && it->second != being) it->second = nullptr;
+        };
+
+        // 1. Existing pass over ActiveZones::instance().beings() that binds @<ident> via bindIfUnique
         for (Singular* being : beings) {
             if (being) {
                 const std::string ident = being->getIdentifier();
-                Earthcall::StringId key = Earthcall::StringInterner::intern("@" + ident);
-                // Two distinct bearers with one spelling are ambiguous. Keep
-                // that spelling unresolved instead of letting provider order
-                // decide which individual a Law reads or writes.
-                auto bindIfUnique = [&](Earthcall::StringId name) {
-                    auto [it, inserted] = s_beingMap.emplace(name, being);
-                    if (!inserted && it->second != being) it->second = nullptr;
-                };
-                bindIfUnique(key);
-                if (ident == "Person" || ident == "person") {
-                    bindIfUnique(Earthcall::StringInterner::intern("@player"));
-                    bindIfUnique(Earthcall::StringInterner::intern("@Player"));
+                if (!ident.empty()) {
+                    Earthcall::StringId key = Earthcall::StringInterner::intern("@" + ident);
+                    bindIfUnique(key, being);
+                    if (ident == "Person" || ident == "person") {
+                        bindIfUnique(Earthcall::StringInterner::intern("@player"), being);
+                        bindIfUnique(Earthcall::StringInterner::intern("@Player"), being);
+                    }
                 }
             }
         }
+
+        // 2. Zone-qualified keys: for every active Zone* in ActiveZones::instance().zones()
+        // (and every loaded Zone in ZoneManager::live() ? ZoneManager::live()->zones() : ...)
+        std::vector<Zone*> zonesToInspect;
+        std::unordered_set<Zone*> seenZones;
+        for (Zone* z : Universe::instance().zones()) {
+            if (z && seenZones.insert(z).second) {
+                zonesToInspect.push_back(z);
+            }
+        }
+        if (currentLiveManager) {
+            for (const auto& zPtr : currentLiveManager->zones()) {
+                if (zPtr && seenZones.insert(zPtr.get()).second) {
+                    zonesToInspect.push_back(zPtr.get());
+                }
+            }
+        }
+
+        for (Zone* zone : zonesToInspect) {
+            if (!zone) continue;
+            const std::string zoneIdent = zone->getIdentifier();
+            if (zoneIdent.empty()) continue;
+            const std::string zonePrefix = "@" + zoneIdent + ".";
+            const bool isActiveZone = Universe::instance().isActive(zone);
+
+            std::vector<Singular*> members;
+            std::unordered_set<Singular*> seenMembers;
+            auto addZoneMember = [&](Singular* s) {
+                if (s && seenMembers.insert(s).second) {
+                    members.push_back(s);
+                }
+            };
+            if (auto* rootField = zone->spatialRoot()) addZoneMember(rootField);
+            for (const auto& f : zone->additionalSpatialFields()) {
+                if (f) addZoneMember(f.get());
+            }
+            for (const auto& obj : zone->getOwnedObjects()) {
+                if (obj) addZoneMember(obj.get());
+            }
+            for (auto* m : zone->formation().getMembers()) {
+                if (m) addZoneMember(m);
+            }
+            for (const auto& s : zone->storedSingulars()) {
+                if (s) addZoneMember(s.get());
+            }
+
+            for (Singular* m : members) {
+                if (!m) continue;
+                const std::string mIdent = m->getIdentifier();
+                if (mIdent.empty()) continue;
+
+                // Zone-qualified key: "@ZoneId.SingularId"
+                Earthcall::StringId qualifiedKey = Earthcall::StringInterner::intern(zonePrefix + mIdent);
+                bindIfUnique(qualifiedKey, m);
+
+                // If zone is an inactive loaded Zone (not in ActiveZones::instance().zones()),
+                // also register @<m->getIdentifier()> as a fallback ONLY if @<m->getIdentifier()>
+                // is not already present in s_beingMap (so an inactive Zone's object never shadows
+                // or invalidates an active Zone's object!).
+                if (!isActiveZone) {
+                    Earthcall::StringId unqualifiedKey = Earthcall::StringInterner::intern("@" + mIdent);
+                    if (s_beingMap.find(unqualifiedKey) == s_beingMap.end()) {
+                        s_beingMap.emplace(unqualifiedKey, m);
+                    }
+                }
+            }
+        }
+
         s_lastRevision = currentRevision;
+        s_lastLiveManager = currentLiveManager;
         s_initialized = true;
     }
 

@@ -72,20 +72,10 @@ struct BootedEngineHarness {
         // Exercise the exact authored-law registration path used by Engine::initLogic.
         Physics::registerAuthoredRotationalLaws(lawManager, player);
 
-        // 2. Wire Universe providers matching real app boot (EngineInit.cpp)
-        Universe::instance().setProvider([this](std::vector<Singular*>& beings) {
-            if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return;
-            auto active = zones.zones()[zones.currentIndex()];
-            if (!active) return;
-            beings.push_back(active.get());
-            for (const auto& obj : active->getOwnedObjects()) {
-                if (obj) beings.push_back(obj.get());
-            }
+        // 2. Wire ActiveZones providers matching real app boot (EngineInit.cpp)
+        ActiveZones::instance().setProvider([this](std::vector<Singular*>& beings) {
             for (const auto& law : lawManager.getAll()) {
                 if (law) beings.push_back(law.get());
-            }
-            for (const auto& rel : active->formation().relations().getAll()) {
-                if (rel) beings.push_back(rel.get());
             }
             for (const auto& material : materials.getAll()) {
                 if (material) beings.push_back(material.get());
@@ -95,62 +85,13 @@ struct BootedEngineHarness {
             }
             beings.push_back(&player);
             // EngineInit exposes inactive Zones for named reach/governance.
-            // Omitting them hid resolveZone's stale preference for "World":
-            // native Create sent newborns there instead of the visible Zone.
-            // Keep this domain aligned with EngineInit.cpp, including fields.
-            if (auto* field = active->spatialRoot()) beings.push_back(field);
-            for (const auto& field : active->additionalSpatialFields())
-                if (field) beings.push_back(field.get());
+            // Active Zones are natively harvested by ActiveZones.
             for (const auto& zone : zones.zones()) {
-                if (!zone || zone.get() == active.get()) continue;
+                if (!zone || ActiveZones::instance().isActive(zone.get())) continue;
                 beings.push_back(zone.get());
                 if (auto* field = zone->spatialRoot()) beings.push_back(field);
                 for (const auto& field : zone->additionalSpatialFields())
                     if (field) beings.push_back(field.get());
-            }
-            // Total named reach for the Zone's authored Singulars. Keep this
-            // enumeration aligned with Singularity/Core/EngineInit.cpp: Create
-            // prototypes must not be vocabulary-visible but PropertyPath-invisible.
-            // Deduplicate existing Objects/Laws/fields before adding Formation members
-            // and retained generic beings; their storage identity is not a new scope.
-            std::unordered_set<Singular*> provided(beings.begin(), beings.end());
-            for (auto* member : (*active).formation().getMembers())
-                if (member && provided.insert(member).second) beings.push_back(member);
-            for (const auto& stored : (*active).storedSingulars())
-                if (stored && provided.insert(stored.get()).second) beings.push_back(stored.get());
-        });
-
-        Universe::instance().setRelationProvider([this](std::vector<Relation*>& relations) {
-            if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return;
-            auto active = zones.zones()[zones.currentIndex()];
-            if (!active) return;
-            for (const auto& rel : active->formation().relations().getAll()) {
-                if (rel) relations.push_back(rel.get());
-            }
-        });
-        // The endpoint index, exactly as Engine::initLogic installs it — after
-        // setRelationProvider, which clears it. Without this every app test
-        // evaluated `Related` by scanning while the app indexes, so the path a
-        // Person runs was not the path tested (found 2026-09-15, rung 5).
-        Universe::instance().setRelationsInvolvingProvider(
-            [this](const Singular& being, std::vector<Relation*>& out) {
-                out.clear();
-                if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return;
-                auto active = zones.zones()[zones.currentIndex()];
-                if (!active) return;
-                active->formation().relations().relationsInvolving(being, out);
-            });
-        Universe::instance().setRelationGenerationProvider([this]() -> std::size_t {
-            if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return 0;
-            auto active = zones.zones()[zones.currentIndex()];
-            return active ? active->formation().relations().generation() : 0;
-        });
-
-        Universe::instance().setRelationRegistrar([this](std::shared_ptr<Relation> relation) {
-            if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return;
-            auto active = zones.zones()[zones.currentIndex()];
-            if (active) {
-                active->formation().relations().add(std::move(relation));
             }
         });
 
@@ -178,6 +119,7 @@ struct BootedEngineHarness {
         // bindLive() is process-global too; a block-scoped harness must not
         // leave ZoneManager::live() pointing at its destroyed ZoneManager.
         zones.unbindLive();
+        ActiveZones::instance().setProvider(nullptr);
 
         // The Physics bridge is process-global; do not leave a dangling pointer
         // when a block-scoped harness goes away. Only clear the slot we own.
