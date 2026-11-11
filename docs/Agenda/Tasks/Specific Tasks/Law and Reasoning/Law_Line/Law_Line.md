@@ -10,6 +10,8 @@ Zach clarified on 2026-10-20 that `LawSentence` was a slight naming imprecision.
 
 ## Status
 
+- **C++ boundary audit (2026-11-10):** Native model construction and denotation classification remain, and a binding sentence can be adopted after its compiler explicitly refuses. Follow the [audit and isolated witnesses](../../../../../audits/LAW_LINE_CPP_BOUNDARY_2026-11-10.md) to move binding lowering into authored compilers and preserve distinct meaning candidates.
+
 - **Direct Screen authoring (2026-10-06):** nested value constructors and mathematical quotation compile through authored Metalaws into existing fields/selectors; [recipe, examples, and evidence](../../Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md#cli-field-and-selector-authoring--2026-10-06).
 
 - **Practical guide (2026-10-05):** [Writing Earthcall Laws for humans and agents](../../../../../architecture/law/LAW_AUTHORING_CLI_GUIDE.md) supplies beginner lessons, creation and property recipes, ordered programs, all 26 action kinds, troubleshooting, and the authored compiler workflow; see [the guide record](#authoring-guide-2026-10-05).
