@@ -76,4 +76,14 @@ g++ -o relation_event_example examples/relation_event_example.cpp src/Relation/R
 ./relation_event_example
 ```
 
-This will show you how the event is triggered each time a new relation is created. 
+This will show you how the event is triggered each time a new relation is created.
+---
+
+## Relation Events and Durable Logging Addendum
+
+**Interrelated Documents:**
+*   `../PER_SINGULAR_DURABLE_LOGGING.md` (Per-Singular Durable Logging)
+
+### Thoughts on Integration and Interrelation
+
+In Earthcall's durable logging architecture, structural events like `RelationCreatedEvent` must be recorded in the durable logs of both participating entities (`entityA` and `entityB`). This ensures the relationship history is fully legible from the perspective of any involved Singular.
