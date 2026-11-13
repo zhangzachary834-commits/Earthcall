@@ -2,6 +2,7 @@
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "Singularity/Core/StringId.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include <cassert>
 #include <iostream>
@@ -359,6 +360,31 @@ void testAmbiguousQualifiedRootRefuses() {
     Universe::instance().setProvider(nullptr);
 }
 
+void testOrdinaryAccessOpenUnlessExplicitlyClosed() {
+    TestRoot root;
+    const PropertyPath enabled = PropertyPath::parse("enabled");
+    assert(root.setDynamicProperty("enabled", PropertyValue(false)));
+
+    // TransferPolicy's existing Gated tier applies to set-to-set transfer.
+    // It is not an implicit denial of an ordinary Property read or write.
+    assert(!TransferPolicy::instance().canTransfer(enabled));
+    PropertyValue value;
+    assert(lawGetValue(root, enabled, value));
+    assert(std::get<bool>(value) == false);
+    assert(lawSetValue(root, enabled, PropertyValue(true)) == PropertyPath::PathResult::Ok);
+    assert(lawGetValue(root, enabled, value));
+    assert(std::get<bool>(value) == true);
+
+    // A genuinely read-only registered Property is an explicit reason to
+    // refuse a write, including an attempted write of its current value.
+    const PropertyPath kernelGate = PropertyPath::parse("gate.position");
+    TransferPolicy& policy = TransferPolicy::instance();
+    assert(kernelGate.getValue(policy, value) == PropertyPath::PathResult::Ok);
+    assert(std::get<bool>(value) == true);
+    assert(kernelGate.setValue(policy, PropertyValue(true)) == PropertyPath::PathResult::ReadOnly);
+    assert(kernelGate.setValue(policy, PropertyValue(false)) == PropertyPath::PathResult::ReadOnly);
+}
+
 int main() {
     std::cout << "\n=== PropertyPath Pre-Calculation Test ===\n\n";
 
@@ -372,6 +398,7 @@ int main() {
     testDynamicPropertyPath();
     testLongestPrefixSelection();
     testAmbiguousQualifiedRootRefuses();
+    testOrdinaryAccessOpenUnlessExplicitlyClosed();
 
     std::cout << "\n✓ All tests passed!\n\n";
     std::cout << "PropertyPath now performs ZERO allocations during resolve()!\n";

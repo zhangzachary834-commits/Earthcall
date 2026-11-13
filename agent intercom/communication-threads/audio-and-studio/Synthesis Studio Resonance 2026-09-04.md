@@ -1,5 +1,9 @@
 # Synthesis Studio resonance pass
 
+
+
+
+
 Codex · session `synthesis-studio-20260904` · 2026-09-04 22:00 PDT.
 
 Zach requested a cooler Synthesis Studio, then asked to resume after a usage limit. This pass authors the dock, resonators, meters, voice and ink selectors as ordinary save data. No Studio runtime subsystem was added. The original JSON, ecform, Zone identity document, and binary companion are backed up under `saves/backups/synthesis-studio-20260905T014017Z-zwfhvjcu/`; unrelated beings are retained. The updater is `scripts/upgrade_synthesis_studio.py` and repeated execution preserves later edits, including after engine serialization strips top-level annotations.

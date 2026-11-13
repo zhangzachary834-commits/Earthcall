@@ -1,4 +1,8 @@
 # SUN RECONCILIATION — Sparkly volumetric light vs. established radiance / volume invariants
+
+
+
+
 **Date:** 2026-09-24
 **Repository:** `zhangzachary834-commits/Earthcall`
 **Canonical Sparkly landing inspected:** `sync-from-earthcall-main@1d84821fde1b27cacf1fb885c9bc3b1de52547a2`  

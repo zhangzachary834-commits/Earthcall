@@ -326,9 +326,18 @@ int main() {
     }
     wgpuDevicePushErrorScope(gpu.device, WGPUErrorFilter_Validation);
 
+    // EARTHCALL_PERLIN_TEST_MODE: unset = every gate; "ABC" = Gates A-C; "D" =
+    // the camera corpus only. Gate D used to sit inside the A-C block (a missing
+    // Gate A3 brace), so "D" ran nothing and still exited 0; Codex caught the
+    // empty run on the M5 (2026-10-17). Any other value refuses, loudly.
     const char* testMode = std::getenv("EARTHCALL_PERLIN_TEST_MODE");
-    const bool runCore = !(testMode && std::string(testMode) == "D");
-    const bool runGateD = !(testMode && std::string(testMode) == "ABC");
+    const std::string mode = testMode ? testMode : "";
+    if (!mode.empty() && mode != "ABC" && mode != "D") {
+        std::fprintf(stderr, "FAIL: EARTHCALL_PERLIN_TEST_MODE=\"%s\" is not a mode (unset, ABC or D)\n", testMode);
+        return 1;
+    }
+    const bool runCore = mode != "D";
+    const bool runGateD = mode != "ABC";
 
     if (runCore) {
     // =========================================================================
@@ -410,6 +419,7 @@ int main() {
         struct SimpleInstance {
             glm::mat4 model{1.0f};
             glm::mat4 invModel{1.0f};
+            glm::mat4 normalMat{1.0f};
             glm::vec4 baseColor{1.0f};
             glm::vec4 shading{1.0f};
             glm::vec4 extents{1000.0f, 30.0f, 1000.0f, 0.0f};
@@ -577,6 +587,7 @@ int main() {
         wgpuShaderModuleRelease(sm);
 
         std::printf("[Gate A3] Native GPU compute shader executed emitted sdfEvalGrad with 0 validation errors; verified readback point-by-point against CPU reference.\n");
+        } // Gate A3
     }
 
     // =========================================================================
@@ -890,7 +901,7 @@ int main() {
         std::printf("[Gate D] 0 uncaptured GPU errors confirmed across native camera corpus.\n");
     }
 
-    std::printf("=== webgpu_perlin_exact_gradient_test: ALL OK ===\n");
-}
+    std::printf("=== webgpu_perlin_exact_gradient_test: ALL OK (%s) ===\n",
+                runCore && runGateD ? "Gates A-D" : (runCore ? "Gates A-C only" : "Gate D only"));
     return 0;
 }

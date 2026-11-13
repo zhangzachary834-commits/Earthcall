@@ -1,8 +1,10 @@
+#include <unordered_set>
 #include "Person/Person.hpp"
 #include "Person/PersonDatabase.hpp"
 #include "Identity/IdentityLedger.hpp"
 #include "Identity/KeyStore.hpp"
 #include "Identity/FirstMoverRegister.hpp"
+#include "Identity/PersonPresence.hpp"
 #include <fstream>
 #include "Identity/PersonMigration.hpp"
 #include "Singularity/Input/Keyboard/KeyboardHandler.hpp"
@@ -38,12 +40,17 @@
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreationTools.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/Chat.hpp"
 #include "Singularity/Screen/ScreenChannel.hpp"
+#include "Singularity/OntoMath/ExpressionEvaluation.hpp"
 #include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/Storage/FileChannel.hpp"
+#include "Singularity/Core/CodecChannel.hpp"
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "Singularity/Storage/StreamChannel.hpp"
 #include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/Terminal/TerminalChannel.hpp"
+#include "Singularity/Foreign/Shell/ShellChannel.hpp"
+#include "Singularity/Network/Http/HttpChannel.hpp"
+#include "Singularity/Network/Osc/OscChannel.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/Serialization/Person/PersonSerialization.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
@@ -94,73 +101,32 @@ const char* keyPassphrase() {
     return (p && *p) ? p : nullptr;
 }
 
+// Boot's door to presence (the Identity Zone is the other): both go through
+// Identity/PersonPresence so they cannot drift apart.
 void loadKeyedPersonProfile(Person& person) {
     if (person.hasIdentity()) return;
     const char* passphrase = keyPassphrase();
-    if (!passphrase) return;
-
-    const char* chosen = std::getenv("EARTHCALL_PERSON_ID");
-    std::vector<std::pair<Identity::SingularId, nlohmann::json>> keyed;
-    for (const auto& info : SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)) {
-        nlohmann::json profile = SaveSystem::readSaveData(info.path);
-        if (!profile.is_object() || !profile.contains("personId") ||
-            !profile["personId"].is_string()) continue;
-        const auto id = Identity::SingularId::parse(profile["personId"].get<std::string>());
-        if (!id.canAuthenticate()) continue;
-        if (chosen && *chosen && id.toString() != chosen) continue;
-        keyed.emplace_back(id, std::move(profile));
-    }
-    if (keyed.empty()) return;
-    if (keyed.size() > 1) {
-        std::cerr << "[Identity] Several keyed Person profiles exist; set EARTHCALL_PERSON_ID "
-                     "to say which Person is present. Refusing to guess.\n";
-        return;
-    }
-
-    Identity::KeyStore keys;
-    auto key = keys.load(keyed.front().first, passphrase);
-    if (!key || key->id() != keyed.front().first) {
-        std::cerr << "[Identity] REFUSED Person unlock: the key for "
-                  << keyed.front().first.abbreviated()
-                  << " did not open with EARTHCALL_KEY_PASSPHRASE.\n";
-        return;
-    }
-    personFromJson(keyed.front().second, person);
-    if (person.personId() != keyed.front().first) {
-        std::cerr << "[Identity] REFUSED Person unlock: profile did not restore the "
-                     "identity its key proves.\n";
-        return;
-    }
-    std::cout << "[Identity] Restored keyed Person profile '" << person.getDisplayName()
-              << "' (" << person.personId().abbreviated() << ").\n";
+    if (!passphrase || !Identity::keyedProfileExists()) return;
+    const auto r = Identity::unlockPresentPerson(person, passphrase);
+    (r.ok ? std::cout : std::cerr) << "[Identity] " << r.report << "\n";
 }
 
 void seedTrustedPersonRoot(Person& person) {
-    auto& reg = Identity::FirstMoverRegister::instance();
     const char* passphrase = keyPassphrase();
     if (!person.hasIdentity() || !passphrase) {
         std::cout << "[Identity] No Person key unlocked this session; First Movers a "
-                     "Person granted stay inert (reads still work).\n";
+                     "Person granted stay inert (reads still work). Type `enter Identity` in "
+                     "the Terminal to become present.\n";
         return;
     }
-    Identity::KeyStore keys;
-    auto key = keys.load(person.personId(), passphrase);
-    if (!key || key->id() != person.personId()) {
-        std::cerr << "[Identity] REFUSED Person unlock for '" << person.getDisplayName()
-                  << "': KeyStore entry did not open or did not match.\n";
-        return;
-    }
-    if (reg.trustAuthenticatedPerson(*key)) {
-        person.login("key-" + person.personId().abbreviated());
-        std::cout << "[Identity] '" << person.getDisplayName()
-                  << "' authenticated by key; their First Mover grants may stand.\n";
-    }
+    if (Identity::FirstMoverRegister::instance().isAuthenticatedPerson(person.personId())) return;
+    const auto r = Identity::unlockPresentPerson(person, passphrase);
+    (r.ok ? std::cout : std::cerr) << "[Identity] " << r.report << "\n";
 }
 
 void loadFirstMoverRegister() {
     auto& reg = Identity::FirstMoverRegister::instance();
-    const std::string root = SaveSystem::saveRoot();
-    reg.setSaveRoot(root.empty() ? std::filesystem::path("saves") : std::filesystem::path(root));
+    reg.setSaveRoot(SaveSystem::rootPath());
 
     const std::string path = SaveSystem::firstMoverRegisterPath();
     std::error_code ec;
@@ -212,15 +178,32 @@ bool Engine::initLogic() {
         // claiming a cryptographic personId is never trusted merely because it
         // is a file on disk: loadKeyedPersonProfile below admits it only when
         // its key unlocks.
-        const auto profiles = SaveSystem::listWorlds(SaveSystem::SaveType::PERSON);
-        if (profiles.size() == 1) {
-            const nlohmann::json profile = SaveSystem::readSaveData(profiles.front().path);
-            if (profile.is_object() && !profile.contains("personId")) {
-                personFromJson(profile, *_person);
-                std::cout << "[Init] Restored sole legacy Person profile '"
-                          << _person->getDisplayName() << "' (not logged in).\n";
+        // One Person, not two: a legacy profile whose name the migration
+        // ledger signed over to a keyed profile on disk is superseded by it
+        // (found 2026-09-30, the first time Zach keyed: boot saw Zach.ecform
+        // AND did_earthcall_....ecform, refused to guess, and every Law
+        // authored "Zach" stopped resolving).
+        std::vector<nlohmann::json> candidates;
+        for (const auto& info : SaveSystem::listWorlds(SaveSystem::SaveType::PERSON)) {
+            nlohmann::json profile = SaveSystem::readSaveData(info.path);
+            if (!profile.is_object()) continue;
+            if (!profile.contains("personId") &&
+                Identity::legacyProfileSuperseded(profile.value("displayName", std::string{}))) {
+                continue;
             }
-        } else if (profiles.size() > 1) {
+            candidates.push_back(std::move(profile));
+        }
+        if (candidates.size() == 1) {
+            // The profile says who is at the machine (name, body, place). It
+            // does NOT make them present: a keyed Person is trusted only when
+            // their key unlocks (EARTHCALL_KEY_PASSPHRASE or `enter Identity`).
+            personFromJson(candidates.front(), *_person);
+            std::cout << "[Init] Restored Person profile '" << _person->getDisplayName() << "'"
+                      << (_person->hasIdentity() ? " (" + _person->personId().abbreviated() +
+                                                   "; not present until their key unlocks)"
+                                                 : " (not logged in)")
+                      << ".\n";
+        } else if (candidates.size() > 1) {
             std::cerr << "[Init] Multiple Person profiles exist; refusing to guess which "
                          "Person is present.\n";
         }
@@ -301,9 +284,15 @@ bool Engine::initLogic() {
 
     // Register first-mover ScreenChannel (GPU graphics telemetry and render governance)
     Singularity::Screen::ScreenChannel::syncRegister(*_lawManager);
+    // OntoMath answers <prefix>.evaluation on any being carrying an authored
+    // <prefix>.expression: a read-only derived report (ExpressionEvaluation.hpp).
+    OntoMath::registerEvaluationReading();
 
     // Register first-mover FileChannel (native computer filesystem sense and act)
     Singularity::Storage::FileChannel::syncRegister(*_lawManager);
+
+    // Register first-mover CodecChannel (semantic byte-transformations)
+    Singularity::Core::CodecChannel::syncRegister(*_lawManager);
 
     // Register first-mover ScreenRecorder (screen capture, video/frame stream, macOS permissions)
     Singularity::Screen::ScreenRecorder::syncRegister(*_lawManager);
@@ -317,10 +306,25 @@ bool Engine::initLogic() {
     // Register first-mover FileWatcher (reactive file sensing and live hot-reloading)
     Singularity::Storage::FileWatcher::syncRegister(*_lawManager);
 
+    // Decoupled hot-reload: listen to FileWatcher events via the EventBus
+    Core::EventBus::instance().subscribe<ECA::Event>([](const ECA::Event& ev) {
+        if (ev.type == "file-modified" || ev.type == "file-created") {
+            if (auto* watcher = dynamic_cast<Singularity::Storage::FileWatcher*>(ev.subject)) {
+                std::string path = watcher->propLastModifiedFile();
+                if (path.find(".wgsl") != std::string::npos || path.find("shader") != std::string::npos) {
+                    currentRenderer().reloadShaders();
+                }
+            }
+        }
+    });
+
     // Register first-mover TerminalChannel: the Mac Terminal's command line
     // (the window Run Earthcall.command opened) as a modality of this world.
     // Lines become Laws only through the authored LawLine seed Laws.
     Singularity::Terminal::TerminalChannel::syncRegister(*_lawManager);
+    Singularity::Foreign::Shell::ShellChannel::syncRegister(*_lawManager);
+    Singularity::Network::Http::HttpChannel::syncRegister(*_lawManager);
+    Singularity::Network::Osc::OscChannel::syncRegister(*_lawManager);
 
     // Register first-mover AudioChannel (authored acoustic reality -> output substrate).
     // This owns the checked PlayAudio sink; AudioSystem below it owns only
@@ -341,6 +345,9 @@ bool Engine::initLogic() {
         }
     }
 
+    // Shared production/test boot contract: author before registering Laws.
+    if (_person) Physics::registerAuthoredRotationalLaws(*_lawManager, *_person);
+
     // Shape Generator 3D plus the rest of the Creator Console tools, as
     // first movers. The console remains the chrome; these are the named
     // beings it arms. See CreationChannel::syncRegisterCreatorTools.
@@ -358,70 +365,33 @@ bool Engine::initLogic() {
     _worldTimelineOwnership = std::make_shared<Relation>(
         "owned-by", _worldTimeline, _ourverse, true, 1.0f);
 
-    // The Universe: what continuous laws watch and quantified conditions
-    // (ForAny/ForAll) range over — the active world's objects, the laws
-    // themselves (so metalaws can quantify over laws), and the player.
-    // Evaluated lazily each tick, well after zones exist.
-    Universe::instance().setProvider([this](std::vector<Singular*>& beings) {
-        // Active Zone first: Spawn/Create fall back to the first Zone in the
-        // domain, which must be the one in front of the Person (the old
-        // World bag was only the active world's).
-        beings.push_back(&mgr.active());
-        // The Zone's continuous FieldNode is already a Singular and a member
-        // of its Formation. It must also enter the Universe working set or a
-        // named Law path such as @Sanctum_of_Beginnings_spatialRoot.origin
-        // can never resolve it: registered state that no Law can name is still
-        // a black box (Refusal #6). This is generic Field reachability, not a
-        // special Light type; light is merely the first consumer.
-        if (auto* field = mgr.active().spatialRoot()) beings.push_back(field);
-        for (const auto& field : mgr.active().additionalSpatialFields()) {
-            if (field) beings.push_back(field.get());
-        }
-        for (const auto& obj : mgr.active().getOwnedObjects()) {
-            if (obj) beings.push_back(obj.get());
-        }
+    // The ActiveZones working set: what beings currently exist for continuous /
+    // quantified laws to monitor. ActiveZones automatically harvests all active
+    // Zone operands (primary inhabited Zone + all held/mounted capability Zones).
+    // The shared provider supplies cross-Zone / engine-wide registers: laws,
+    // materials, categories, world timeline, transfer gate, Person, and inactive
+    // Zone headers for governance geography.
+    ActiveZones::instance().setProvider([this](std::vector<Singular*>& beings) {
         for (const auto& law : _lawManager->getAll()) {
             if (law) beings.push_back(law.get());
         }
-        // Relations are Singulars too: quantifiers (ForAny Relation...)
-        // range over them like any other being.
-        for (const auto& rel : mgr.active().formation().relations().getAll()) {
-            if (rel) beings.push_back(rel.get());
-        }
-        // Materials are cross-zone shared beings (globals.cpp), and
-        // Material.hpp has always claimed "the Law system can address
-        // material.clay.baseColor". Until they were provided here that was
-        // aspiration: buildProperties() registered the surface and nothing
-        // could reach it. Providing them makes the claim true — laws read and
-        // drive appearance, and quantifiers range over materials like any
-        // other being. See docs/architecture/ontology/AUTHORED_CATEGORIES.md §9a.
         for (const auto& material : materials.getAll()) {
             if (material) beings.push_back(material.get());
         }
         for (const auto& category : ::categories.getAll()) {
             if (category) beings.push_back(category.get());
         }
-        // Timelines are deliberately NOT swept into Universe merely because
-        // they exist. A relative Timeline's scope belongs to authored
-        // ownership/Zone relations; globally enumerating Timeline::all() here
-        // would turn every local clock into global Law-visible state.
-        //
-        // The one broad compatibility Timeline is intentionally visible here
-        // because its owner is Ourverse scope. Its ownership Relation is itself
-        // a first-class being; local Timelines must enter through their own
-        // authored owner/Zone reachability rather than this global seam.
         beings.push_back(&_worldTimeline);
         if (_worldTimelineOwnership) beings.push_back(_worldTimelineOwnership.get());
-        // The transfer gate is a legible being: laws govern set-to-set
-        // access by writing @transfer-policy.gate.* properties.
         beings.push_back(&TransferPolicy::instance());
-        beings.push_back(_person.get());
-        // Other Zones: governance geography — laws quantify over them
+        if (_person) beings.push_back(_person.get());
+
+        // Inactive Zones: governance geography — laws quantify over them
         // (ForAny Zone ...) and address them by name (@Home.owner) even
         // while unloaded. Their continuous field beings have the same right
-        // to named Law reachability; active was already pushed above.
+        // to named Law reachability; active Zones are natively harvested by ActiveZones.
         for (auto& zone : mgr.zones()) {
-            if (zone.get() == &mgr.active()) continue;
+            if (!zone || ActiveZones::instance().isActive(zone.get())) continue;
             beings.push_back(zone.get());
             if (auto* field = zone->spatialRoot()) beings.push_back(field);
             for (const auto& field : zone->additionalSpatialFields()) {
@@ -430,39 +400,57 @@ bool Engine::initLogic() {
         }
     });
 
-    // The relation GRAPH — the edge view Related conditions query
-    // ("is x related to y in type t?"): the active zone's Formation.
-    Universe::instance().setRelationProvider([this](std::vector<Relation*>& relations) {
-        for (const auto& rel : mgr.active().formation().relations().getAll()) {
-            if (rel) relations.push_back(rel.get());
-        }
+    // The relation GRAPH — ActiveZones natively aggregates the Formation
+    // relations of all active Zones. This provider supplies non-Zone relations:
+    // the world timeline ownership and Person bodily constitution.
+    ActiveZones::instance().setRelationProvider([this](std::vector<Relation*>& relations) {
         if (_worldTimelineOwnership) relations.push_back(_worldTimelineOwnership.get());
+        // The Person's bodily constitution (BodyPart constituted-by Object,
+        // Zach 2026-10-13): visible to Law so a manifestation can be walked
+        // back to the part it constitutes. Read-visible only — authority over
+        // the body is still the kernel guards' and TransferPolicy's.
+        if (_person) {
+            for (BodyPart* part : _person->getBody().parts) {
+                if (!part) continue;
+                for (const auto& rel : part->relations().getAll())
+                    if (rel) relations.push_back(rel.get());
+            }
+        }
     });
-    // ...and its write side: newborn relations (a concept's reborn
-    // inter-member structure) join the same Formation.
-    Universe::instance().setRelationRegistrar([](std::shared_ptr<Relation> relation) {
-        mgr.active().formation().relations().add(std::move(relation));
-    });
-    // ...and an index over that same graph, so a `Related` condition finds a
-    // being's edges in O(degree) instead of walking every relation per candidate
-    // per tick (FORMATION_RETE.md §8 rung 4). Installed AFTER setRelationProvider,
-    // which clears it. Like the provider above it reads `mgr.active()` live, so a
-    // Zone switch needs no separate invalidation — each RelationManager keeps its
-    // own index current.
-    Universe::instance().setRelationsInvolvingProvider(
+
+    // Index over the relation graph: ActiveZones natively queries all active
+    // Zones; this provider indexes world timeline ownership and bodily constitution.
+    ActiveZones::instance().setRelationsInvolvingProvider(
         [this](const Singular& being, std::vector<Relation*>& out) {
-            mgr.active().formation().relations().relationsInvolving(being, out);
             if (_worldTimelineOwnership &&
                 _worldTimelineOwnership->involves(being)) {
                 out.push_back(_worldTimelineOwnership.get());
             }
+            if (_person) {
+                std::vector<Relation*> partEdges;
+                for (BodyPart* part : _person->getBody().parts) {
+                    if (!part) continue;
+                    part->relations().relationsInvolving(being, partEdges);
+                    out.insert(out.end(), partEdges.begin(), partEdges.end());
+                }
+            }
         });
-    // ...and how many times that graph has changed, so anything derived from it
-    // can tell whether it is current (FORMATION_RETE.md §8 rungs 5-6). Reads the
-    // ACTIVE Zone's manager, like the two providers above, so a Zone switch
-    // shows up as a different count.
-    Universe::instance().setRelationGenerationProvider([]() {
-        return mgr.active().formation().relations().generation();
+
+    // Relation generation: ActiveZones natively mixes all active Zones' managers.
+    // This provider mixes Person BodyPart relation generation stamps.
+    ActiveZones::instance().setRelationGenerationProvider([this]() {
+        std::size_t stamp = 0;
+        auto mix = [&stamp](std::size_t v) {
+            stamp ^= v + 0x9e3779b97f4a7c15ULL + (stamp << 6) + (stamp >> 2);
+        };
+        if (_person) {
+            for (BodyPart* part : _person->getBody().parts) {
+                if (!part) continue;
+                mix(reinterpret_cast<std::size_t>(&part->relations()));
+                mix(part->relations().generation());
+            }
+        }
+        return stamp;
     });
 
     // Init GL state – depth test already enabled in ShadingSystem::init()
@@ -526,11 +514,34 @@ bool Engine::initLogic() {
             std::cerr << "[ZoneSave] Save Active Zone refused; active Zone remains live and no legacy session was written.\n";
         }
     });
+    _mainMenu.addOption("Export Zone as JSON", GLFW_KEY_J, [this]() {
+        ECA::Event ev{"export-json", &mgr.active(), nullptr, std::time(nullptr)};
+        Core::EventBus::instance().publish(ev);
+    });
+    _mainMenu.addOption("Export Zone as ECGRAPH", GLFW_KEY_E, [this]() {
+        ECA::Event ev{"export-ecform", &mgr.active(), nullptr, std::time(nullptr)};
+        Core::EventBus::instance().publish(ev);
+    });
+    _mainMenu.addOption("Enter New Zone (Hydrate ECGRAPH)", GLFW_KEY_N, [this]() {
+        std::string newId = "hydrated-" + std::to_string(std::time(nullptr));
+        auto zone = mgr.authorZone(newId, "", "empty");
+        if (zone) {
+            for (size_t i = 0; i < mgr.zones().size(); ++i) {
+                if (mgr.zones()[i]->getIdentifier() == newId) {
+                    mgr.switchTo(i);
+                    break;
+                }
+            }
+        }
+        // The load-genesis-file metalaw will automatically catch the fact that 
+        // @state.genesis.loaded is missing/false in this new zone and begin 
+        // hydrating from saves/seed.ecgraph.
+    });
     _mainMenu.addOption("Legacy Session Export...", GLFW_KEY_A, [this]() {
         mgr.getSaveLoadState().showSaveWindow = true;
         ensureCursorUnlocked();
     });
-    _mainMenu.addOption("Legacy Session Import / Recovery", GLFW_KEY_L, [this]() {
+    _mainMenu.addOption("Legacy Session Import / Recovery", GLFW_KEY_O, [this]() {
         mgr.updateSaveFiles();
         mgr.getSaveLoadState().showLoadWindow = true;
         ensureCursorUnlocked();
@@ -857,7 +868,7 @@ void Engine::registerCallbacks() {
                         if (channel) break;
                     }
                 }
-                ECA::Event ev{"onMouseClicked", channel, nullptr, std::time(nullptr)};
+                ECA::Event ev{"mouse-clicked", self->_person.get(), nullptr, std::time(nullptr)};
                 Core::EventBus::instance().publish(ev);
             }
         }

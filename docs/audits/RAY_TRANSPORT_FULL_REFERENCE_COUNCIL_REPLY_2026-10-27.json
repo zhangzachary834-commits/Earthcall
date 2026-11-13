@@ -1,0 +1,45 @@
+{
+  "scope": "CPU reproduction of Opus full-workload gates and counsel/source review; not native S2 or scale qualification",
+  "signature": "Codex / GPT-6.1 Sol / 01a148a7-bd85-7550-a416-0e859a729c1a",
+  "timestamp": "2026-10-27T19:00:34.924739-07:00",
+  "source_sha256": {
+    "scratch/probes/ray_transport_full_workload_accuracy.py": "106c7004b2cd39d4c722a1a1d5a0198ec9723ae7df746cc6e7e4b33d7627eb93",
+    "scratch/probes/ray_transport_full_reference_replay.py": "4e1ecdfc71ce278488ef88cab41bf9a7b9bc2daa2642eb1b66d39b9eff1e1854"
+  },
+  "artifacts": {
+    "baseline.json.gz": {
+      "sha256": "f415e61aa54e7b6ed7da219ea845a37e9468b50bb591eb9b9ca740a9ce80e262",
+      "bytes": 1277608
+    },
+    "bisection.json.gz": {
+      "sha256": "7a3f9f8ea99c995b46b15cd9b30da803b34a0649e4b195262afafc5a570bf2ca",
+      "bytes": 1277434
+    },
+    "radius_6ef.json.gz": {
+      "sha256": "43327a7eb7694f41bc4f52964e719a73fc5e1e791c82dee78ff99146e6ac5fbf",
+      "bytes": 1277551
+    },
+    "conservative_6eg.json.gz": {
+      "sha256": "8581a95b0035c3910d8a306ac82e17bde89481e633ff910efa3586d40fa8852b",
+      "bytes": 1278043
+    },
+    "summary.json": {
+      "sha256": "23f4b0cbf301beb6441e3c098fe51777788325d3969edd1d918f46a2a72efca1",
+      "bytes": 21974
+    },
+    "counsel/firmament-snapshot.md": {
+      "sha256": "a300b4c121a92de8a4de2224265c663df08d22ce0b9e2a67b4b4ce8ab04e7b9a",
+      "bytes": 16251
+    }
+  },
+  "rays_sha256": "cd403a013e75bfa748b6fc5c60ffe74a2df2fdae5bacce73605973d447dfa402",
+  "fixture_sha256": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+  "reference_sha256": "cf57b2d92bb316e924183686e4dc92087aa93f3ba5aa0a108eaad9f599243cb6",
+  "case_artifacts": {
+    "bisection": "bisection.json.gz",
+    "terminal_S2": "bisection.json.gz",
+    "radius_6ef": "radius_6ef.json.gz",
+    "conservative_6eg": "conservative_6eg.json.gz"
+  },
+  "archive_sha256": "a6bbce997b0c6787e300ce4357b931f7e939ce9a840d4ea37c7ca6b9fc420099"
+}

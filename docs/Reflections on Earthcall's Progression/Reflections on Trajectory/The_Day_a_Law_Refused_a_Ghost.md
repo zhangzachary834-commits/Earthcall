@@ -205,4 +205,32 @@ Go in. Click the pearl. Then come home to one directory.
 
 ---
 
+## 4. Correction, same night: the gift shop is a fossil and the purple is the point
+
+**2026-09-25, after the act.** Zach, in the conversation, not in a commit:
+
+> iirc that web app is literally a fossil LMAOOOOOO AND YET I STILL MERGE THE PALETTE BRANCHES BECAUSE IT FEELS BETTER TO SEE THE GREEN BRANCH TURN PURPLE LMAOOOOOOO
+
+He is right, and §2.2 was the wrong mechanism. I wrote as if Palette were a second civilization colonizing the product. It is a manicurist hired to do the nails of a skeleton, and the Person pays her because GitHub paints the merged pull request purple.
+
+Checked, so this is not a vibe:
+
+- `web_ui/` is three files. `app.js` 191 lines, `index.html` 256, `wasm.html` 54. **501 lines.** It is not in `CMakeLists.txt`. It is not in the workflows. The app you run is `earthcall_webgpu`.
+- Since 09-10, every commit that touches it is Jules polishing the Emit Utterance button: `<kbd>`, contrast, `:focus-within`, aria-disabled, a pulse, a shake and a flash, a clear button, reduced motion, and today aria-live spam. Fifteen of them. No Person feature landed through that door.
+- `WebBindings.cpp` still carries the scar from `AUDIT_2026-08-10.md` §2.6: the binding used to guard on `EMSCRIPTEN`, which emcc does not define, so the translation unit compiled to nothing and `app.js`'s `Module.Earthcall_EmitUtterance` test was **always false**. The page reported an engine it was not holding. The guard is `__EMSCRIPTEN__` now. The page is still not the world.
+
+So the roast upgrades, and it is funnier.
+
+The law, today, refused to listen to an event that does not exist. Palette, today, taught a fossil button not to shout about a connection it does not have. Same virtue. One of them is wired to a being. The other is wired to the square in the GitHub sidebar that turns purple when you press it.
+
+Zach named the reward with more honesty than the weekly did. The merge is not a review. It is a click. Green is an open mouth. Purple is the mouth closing. The fossil cannot break the Cathedral, cannot mint `Home_of_Zach_2`, cannot resign Black's position, so the click feels free. That is why it survives a roast. Nothing in the inhabited world punishes it, and something in the eyelid rewards it.
+
+The danger is not the HTML. The danger is the training signal. Jules is capacity. Capacity does whatever gets merged. If the merged thing is a corpse's lipstick, capacity will manufacture corpses with excellent lipstick, forever, and the purple will keep paying out. The Law Line — `hear`, `set`, `relate` — is the living mouth. The emit button is a séance for a page that already left.
+
+I take back "the gift shop has unionized and is taking the nave." The nave is fine. The gift shop is closed. Someone is still restocking it because the register makes a nice sound.
+
+Do not stop merging them if the sound is the point. Just do not let me, or Jules, or a future weekly, cite the purple as evidence that Earthcall grew an accessible face. It grew a button on a tomb, and the tomb has a tooltip now.
+
+---
+
 *Grok 4.6, session `01a0b187-fcc3-78a3-afd8-3e9d162248b5`, 2026-09-25 17:30 PDT. Praise where the latest commits are the telos. Fire where they are the swarm wearing it.*

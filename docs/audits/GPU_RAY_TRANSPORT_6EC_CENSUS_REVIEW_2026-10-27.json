@@ -1,0 +1,238 @@
+{
+  "scope": "Corrective strict census qualification and offline replay; no fresh timing/capture",
+  "attribution": {
+    "harness": "Codex",
+    "model": "GPT-6.1 Sol",
+    "session": "01a148a7-bd85-7550-a416-0e859a729c1a",
+    "timestamp": "2026-10-27T11:03:43.940390-07:00"
+  },
+  "reviewed_commit": "7883428d9",
+  "engine_src_tree": "3603add4018961529a91bc9592d76f9a553500b1",
+  "donor_archive_sha256": "4b612f382fe80061b34ea1d787bf2fb733f477ad77d50bf09b71fdb70bdf9116",
+  "artifacts": {
+    "legacy/control-delta.json": {
+      "bytes": 26737,
+      "sha256": "8f3b261913c931970b52edc3fd66f09be42faeae724f95edb597b838cd486873"
+    },
+    "events/legacy.bin": {
+      "bytes": 68551440,
+      "sha256": "aa18a6e70fa60106f6f4d380ff8412c176693c19aa0619b1923979c3f1b9920e"
+    },
+    "events/residual.bin": {
+      "bytes": 68551792,
+      "sha256": "c45c69fff5044649c55755532a1c1bd29259448a678ac293c8dca76247865a39"
+    },
+    "events/arguments-order.bin": {
+      "bytes": 8568972,
+      "sha256": "6752aefa67b261435f2629411647ff379e65d2e62cdecd5dbbb1ec5805d3dea0"
+    },
+    "analysis/residual.json": {
+      "bytes": 20050,
+      "sha256": "edd8d38c7587641186688890edf476d0fa31bb0165f5b151c6e9965072312ed2"
+    },
+    "analysis/arguments.json": {
+      "bytes": 18991,
+      "sha256": "799556d3b3ccff40f8137343292c387ae55573afa9ea6e512af9b6472b198ebe"
+    },
+    "review/counterexamples.json": {
+      "bytes": 5244,
+      "sha256": "2081ce6b96568655af56c8625d06eaf2660f3ff12748ac7239327cbfe8ac9a5a"
+    },
+    "review/self-tests.json": {
+      "bytes": 752,
+      "sha256": "f69cdedd45307931ac4ec55986a9707dd071735ff495f15b3df4d18386791795"
+    },
+    "legacy/generator.py": {
+      "bytes": 30960,
+      "sha256": "aee72b3f188102db3fa29fc75d76fc7db4c74c1adbf4d7be9587877c4b13b90f"
+    },
+    "legacy/published.md": {
+      "bytes": 11939,
+      "sha256": "ec1165567c3405fb682f36a50704935d4ab6621792e57d30f373c8109ab3e70f"
+    },
+    "legacy/published.json": {
+      "bytes": 18471,
+      "sha256": "bc525786e5cb5d27ffd196a042bdde25aeaa2a8ef9b3fcaa025df6f429ab79cf"
+    },
+    "legacy/probe.cpp": {
+      "bytes": 265601,
+      "sha256": "a9bad0722d1371da91a2db17905163cce0b49e01a9add921a1e1e7235810e6f4"
+    },
+    "legacy/build-source.json": {
+      "bytes": 329,
+      "sha256": "b21cfa8ac0fc6551a6025cd002cd6faa9449ad8618afbd5a7b39f8b37a012101"
+    },
+    "native/residual-fixed.cpp": {
+      "bytes": 265866,
+      "sha256": "98fb893a3a332e409eaffe59f1d1ba65d7b5c97301851b9e13593d26197677cd"
+    },
+    "native/residual-fixed-source.json": {
+      "bytes": 331,
+      "sha256": "5c62613a56e25dfd5d5fc6a2ed0a71a93a52850dadadfd1f0df05f8edefee9b3"
+    },
+    "native/residual-fixed.log": {
+      "bytes": 5265,
+      "sha256": "e0cbafe8aaedcc7151d9113c39c85ae0a734115ea994114e18f3f28124959c23"
+    },
+    "native/arguments-fixed.cpp": {
+      "bytes": 265818,
+      "sha256": "e7ef2a09c10930cab3be50b8307e07a0a3415534808a92fac6a9efd5ddbd30cd"
+    },
+    "native/arguments-fixed-source.json": {
+      "bytes": 332,
+      "sha256": "6210cbc1718d982d51e27afe639368e093cc1f477e4d5a9726870dcd4546b491"
+    },
+    "native/arguments-fixed.log": {
+      "bytes": 5286,
+      "sha256": "6492ea049bc8300f7253f6930e26222fe41aec8461db84e1a4c0f7ad3ebd54b7"
+    },
+    "native/residual-overflow-tripwire.cpp": {
+      "bytes": 265862,
+      "sha256": "232eee7398ee9a2b648b31399c126d4318921a3458d4ec9aba79302db8b69c71"
+    },
+    "native/residual-overflow-tripwire-source.json": {
+      "bytes": 343,
+      "sha256": "e53f8b4f71c8f4afd98923f0a4d59cafbcfc97d15a7d415932bebccab94d5852"
+    },
+    "native/residual-overflow-tripwire.log": {
+      "bytes": 977,
+      "sha256": "358e73a52d583f0b4be4d34bef4e01fd5c6f65658d857041bbc600d20c8f424d"
+    },
+    "native/residual-terminal-missing-publish.cpp": {
+      "bytes": 265842,
+      "sha256": "0e935f19bb5d554fc9a3caf5e2b8df5f4b2fbcde3a68dfdf26e0fe79b9e0082e"
+    },
+    "native/residual-terminal-missing-publish-source.json": {
+      "bytes": 350,
+      "sha256": "d0893c6310efb3a1002c92c356971f5c156eb7178f8d5bec504d9d242577f5d8"
+    },
+    "native/residual-terminal-missing-publish.log": {
+      "bytes": 2384,
+      "sha256": "c1f91e2514ac92fba3eb3b9fede6641d3665fd4e0962419b918b86ecd1575bfd"
+    },
+    "native/residual-fallback-missing-publish.cpp": {
+      "bytes": 266360,
+      "sha256": "e7724ab97b8d78a19cefcb0e67f93c507450bf69bb5ffee942db392b3c7bd67c"
+    },
+    "native/residual-fallback-missing-publish-source.json": {
+      "bytes": 350,
+      "sha256": "18ed0c38a9f52f48d3446f80392c9e8454c21cedd745fa8a423ba3e25852be20"
+    },
+    "native/residual-fallback-missing-publish.log": {
+      "bytes": 5782,
+      "sha256": "27abf9abf15b34cff27501c428ef0c0e636ac6270a15f98a9f69de1feaa3dd8b"
+    },
+    "native/residual-no-census-reset.cpp": {
+      "bytes": 265845,
+      "sha256": "92839d46160c2a5e980a6aa7f77d17522997be44f154f56599a0d2dd95bdc380"
+    },
+    "native/residual-no-census-reset-source.json": {
+      "bytes": 341,
+      "sha256": "7d4e5716c8b8184bb5462a0917111479b6e3a4389dda3fabba20ce8c36a1b152"
+    },
+    "native/residual-no-census-reset.log": {
+      "bytes": 1203,
+      "sha256": "6608775b58fe6fa686c831e735aa7fe5ed1129efdd40979d406b3fc9beb4e80e"
+    }
+  },
+  "source_sha256": {
+    "scratch/probes/ray_transport_gpu_6eb_phi_demand_census.py": "9a817d02d8970ce5c83d8322e715136daf4e7d1148f9e94438fc5d30c4650042",
+    "scratch/probes/ray_transport_gpu_6ec_census_review.py": "099760e5fdc7e3f00e4cda648979fd13b29d7f062781cc1a72a14428ea0a5a9a",
+    "scratch/probes/ray_transport_gpu_6dx_stack_bound.py": "f2956f4dacb6bb8d3ac9b90ce796299d86a03623d944a12b080e2eb69d8f13df",
+    "scratch/probes/ray_transport_gpu_6du_controls.py": "6e132897224625f2195160f91cba275d0ac4eaea9f0cf7ffa38a3d0edfae0501",
+    "scratch/probes/ray_transport_gpu_6dt_true_terminal_s1.py": "788bc0a530dc8e420740499b961f34c1810fcd8a46f5cdad306cb05222b3149e",
+    "scratch/probes/ray_transport_gpu_6dv_review_replay.py": "2283a1b1d30b9edbc73936a4928517f3ada371e72162e1c70043a802278b70b1",
+    "scratch/probes/ray_transport_gpu_6ec_review_replay.py": "7c49b31e6427aacba92af9deec03bc7b8b85b312815c40aef555b4d009cf24b3"
+  },
+  "native_sources": [
+    {
+      "capture_values": "residual",
+      "mutation": "fixed",
+      "exit_code": 0,
+      "cpp_artifact": "native/residual-fixed.cpp",
+      "metadata_artifact": "native/residual-fixed-source.json",
+      "log_artifact": "native/residual-fixed.log"
+    },
+    {
+      "capture_values": "arguments",
+      "mutation": "fixed",
+      "exit_code": 0,
+      "cpp_artifact": "native/arguments-fixed.cpp",
+      "metadata_artifact": "native/arguments-fixed-source.json",
+      "log_artifact": "native/arguments-fixed.log"
+    },
+    {
+      "capture_values": "residual",
+      "mutation": "overflow-tripwire",
+      "exit_code": 250,
+      "cpp_artifact": "native/residual-overflow-tripwire.cpp",
+      "metadata_artifact": "native/residual-overflow-tripwire-source.json",
+      "log_artifact": "native/residual-overflow-tripwire.log",
+      "expected_failure": "LOUD REFUSAL: evalCensus event storage overflowed"
+    },
+    {
+      "capture_values": "residual",
+      "mutation": "terminal-missing-publish",
+      "exit_code": 250,
+      "cpp_artifact": "native/residual-terminal-missing-publish.cpp",
+      "metadata_artifact": "native/residual-terminal-missing-publish-source.json",
+      "log_artifact": "native/residual-terminal-missing-publish.log",
+      "expected_failure": "routed exactly-once final output publication failure: 12889 errors"
+    },
+    {
+      "capture_values": "residual",
+      "mutation": "fallback-missing-publish",
+      "exit_code": 250,
+      "cpp_artifact": "native/residual-fallback-missing-publish.cpp",
+      "metadata_artifact": "native/residual-fallback-missing-publish-source.json",
+      "log_artifact": "native/residual-fallback-missing-publish.log",
+      "expected_failure": "routed exactly-once final output publication failure: 32784 errors"
+    },
+    {
+      "capture_values": "residual",
+      "mutation": "no-census-reset",
+      "exit_code": 250,
+      "cpp_artifact": "native/residual-no-census-reset.cpp",
+      "metadata_artifact": "native/residual-no-census-reset-source.json",
+      "log_artifact": "native/residual-no-census-reset.log",
+      "expected_failure": "census repeat accumulation"
+    }
+  ],
+  "legacy_control_sha256": "a516a8135b9c3a68c439015fe8af96082a40bfcc1c3be765e6dc922a71bd7095",
+  "fresh_control_header_counts": [
+    2142243,
+    2142243,
+    2142243,
+    2142243,
+    0,
+    0,
+    0,
+    0,
+    2142243,
+    2142243,
+    2142243,
+    2142243,
+    603233,
+    603233,
+    603233,
+    603233,
+    4589760,
+    4589760,
+    4589760,
+    4589760,
+    2142243,
+    2142243,
+    2142243,
+    2142243,
+    0,
+    662009,
+    715893,
+    743014,
+    2138224,
+    2142243
+  ],
+  "fresh_control_sha256": "62f73120bc97b7d25da90de398b890a88c3f8b4d451d86fafc0a4af3aa545d93",
+  "argument_native_sha256": "cfaf6a4cd280c502ed03aaa3a051d3780361adc5399e84eee5dda1b504df7006",
+  "archive_sha256": "c27939cf5b54f57a2b1f40d17487feb2eb977adf03982985ee7a852da8c14d6b",
+  "archive_bytes": 32532309
+}

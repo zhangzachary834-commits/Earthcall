@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-11-01T19:11:29-08:00",
+  "restore_reference_commit": "547e311f4ee83fe7f6aaa432b1eb043594ee2ac3",
+  "incoming_commit": "56c36ec90f161318601b952a0c84ccd51577661c",
+  "original_bytes": 1491330,
+  "original_lines": 13526,
+  "original_sha256": "06a05bce336d20c1ea37903046b2172c6bf0d41b435d989ef2dcbfbdc19f9758",
+  "incoming_bytes": 9976,
+  "incoming_lines": 241,
+  "incoming_sha256": "f31473557ef5dc3f71c3ebc30f15059a0135690ad9cab6d16a5b5f6fe502b2b4",
+  "merge_base_bytes": 1485996,
+  "merge_base_sha256": "5d46be647168fc7efe37086327963f749fccaee45e20030d7bdb2b06f1f9d63b",
+  "candidate_bytes": 1502494,
+  "candidate_lines": 13778,
+  "candidate_sha256": "785f2a880283cf8f2867f08f124d673153e12a73fef4b4264ddd4b082643ffa4",
+  "all_working_non_marker_chunks_preserved": true,
+  "pre_repair_working_sha256": "c54f6a3cd8c718942800c7c10d0c53dae4bb2ebfb54cf2f964968eab11f35ffd",
+  "default_working_sha256": "df23b50a7b8ad5741324161964e96ba3a32db372fccaaebd1122ee53b1ec1936",
+  "backup_directory": "/private/tmp/ec-opus-handoff-recovery-20261101-f0r0p_2q",
+  "model_context_policy": "No historical body emitted; only byte counts, hashes, merge metadata, and incoming message headings inspected.",
+  "verification": {
+    "restored_prefix_byte_equal": true,
+    "incoming_message_byte_equal": true,
+    "merge_base_prefix_byte_equal": true,
+    "candidate_byte_equal": true,
+    "no_conflict_markers": true
+  },
+  "restored_prefix_sha256": "06a05bce336d20c1ea37903046b2172c6bf0d41b435d989ef2dcbfbdc19f9758",
+  "preserved_incoming_sha256": "f31473557ef5dc3f71c3ebc30f15059a0135690ad9cab6d16a5b5f6fe502b2b4",
+  "final_file_sha256": "785f2a880283cf8f2867f08f124d673153e12a73fef4b4264ddd4b082643ffa4",
+  "final_file_bytes": 1502494,
+  "final_file_lines": 13778,
+  "historical_body_sent_to_model_context": false,
+  "original_region_byte_range": [
+    0,
+    1491330
+  ],
+  "incoming_region_byte_range": [
+    1491330,
+    1501306
+  ],
+  "source_hash_before": "e71799e5938f2cf3e7302df90f3bf7cf82b28af534c103df6cacc33bf9eff6e7",
+  "repair_scope": "feature thread and verification receipt only; resolve this path in the existing merge; no commit or push"
+}

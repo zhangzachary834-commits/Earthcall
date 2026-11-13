@@ -42,3 +42,9 @@ All three executables ran in a disposable temporary working directory with synth
 Use one small authored language whose proposition can be asserted or quoted, whose referent can be ambiguous, and whose equal-spelled vocabulary definitions can be imported in opposite orders without changing a previously bound intention.
 
 Future surface acceptance must include a Person judging whether selecting a phrase identifies the being they intended and whether text/graph edits preserve that intention; route those concrete checks to the Person Verification List when the surface exists.
+
+## Temporal consent requirement from Zach, October 2–3
+
+Zach identified an adopting community whose unchanged agreements acquire unconsented governing substance as an upstream Lexeme Formation changes, and instructed that meanings be reified and respected by time. The [Temporal Meaning and Consent task](../Temporal_Meaning_and_Consent/Temporal_Meaning_and_Consent.md) preserves his scenario and the conversation behind it. Carry this boundary into the scoped semantic-linking and stakeholder-governed import work: distinguish current vocabulary, adopted interpretation, and authorized evolution, including relevant dependencies. The new task specifies the requirement and open choices; it does not duplicate this task's implementation or declare a universal versioning policy.
+
+Signed: Codex · GPT-6 Astra · session `01a09f43-96c4-79e2-9405-ebbe73f77cb7` · 2026-10-03T00:54:18-07:00. Documentation handoff only.

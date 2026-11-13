@@ -1,0 +1,113 @@
+{
+    "authors": [
+        "Zach",
+        "Gemini"
+    ],
+    "identifier": "law-chess2d-deselect-self",
+    "injected_by": "Gemini 3.8 Flash, 2026-10-16 2D Chess Zone authoring",
+    "law": {
+        "id": "law-chess2d-deselect-self",
+        "name": "deselect-self",
+        "enabled": true,
+        "activation": 0,
+        "scope": 0,
+        "authority": 0,
+        "drives": false,
+        "retrigger": 0,
+        "conditionMode": "all",
+        "authors": [
+            "Zach",
+            "Gemini"
+        ],
+        "conditionModel": {
+            "kind": 3,
+            "children": [
+                {
+                    "kind": 2,
+                    "relationType": "instance-of",
+                    "otherId": "category.chess2d.piece"
+                },
+                {
+                    "kind": 0,
+                    "path": "isSelected",
+                    "op": 0,
+                    "operand": {
+                        "t": "bool",
+                        "v": true
+                    }
+                }
+            ]
+        },
+        "actionModel": {
+            "kind": 5,
+            "children": [
+                {
+                    "kind": 0,
+                    "path": "isSelected",
+                    "operand": {
+                        "t": "bool",
+                        "v": false
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "zOrder2D",
+                    "operand": {
+                        "t": "int",
+                        "v": 10
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "@state.chess2d.selectionActive",
+                    "operand": {
+                        "t": "bool",
+                        "v": false
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "@state.chess2d.selectedX",
+                    "operand": {
+                        "t": "int",
+                        "v": -1
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "@state.chess2d.selectedY",
+                    "operand": {
+                        "t": "int",
+                        "v": -1
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "@state.chess2d.dx",
+                    "operand": {
+                        "t": "int",
+                        "v": 0
+                    }
+                },
+                {
+                    "kind": 0,
+                    "path": "@state.chess2d.dy",
+                    "operand": {
+                        "t": "int",
+                        "v": 0
+                    }
+                },
+                {
+                    "kind": 10,
+                    "eventType": "piece-deselected",
+                    "publishSubject": "",
+                    "publishObject": ""
+                }
+            ]
+        },
+        "targets": []
+    },
+    "triggers": [
+        "object-clicked"
+    ]
+}

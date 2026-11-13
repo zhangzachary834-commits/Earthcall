@@ -3,7 +3,7 @@
 **An authoring framework for agents and Persons coming from HTML, JavaScript, game
 engines, or ordinary application frameworks.**
 
-**Status (created 2026-09-06; revised 2026-09-09):** This is the integrative guide. The
+**Status (created 2026-09-06; direct 2D route revised 2026-10-17):** This is the integrative guide. The
 ontology and much of the mechanism described here are implemented; the Person-facing
 authoring experience and complete granular pixel mastery are still under development.
 Every section distinguishes what can be used now from what remains a design frontier.
@@ -435,7 +435,61 @@ act and must follow the attribution and round-trip discipline in
 
 ## 5. Building in 2D
 
-### 5.1 What exists now: First-Mover Screen parameterizations
+### 5.1 Start with a Singular and its mathematical form
+
+**For new direct 2D authoring, use Singular-borne OntoMath fields.** Zach asked whether
+the direct medium permits Singulars with mathematical pixel-region/pixel/color
+Properties and instructed agents to stop defaulting to 2D ShapeKind primitives.
+The named-region/value/field route already supplies that data model:
+
+```text
+@bearer                         an existing or appropriately authored Singular
+  region                        ordinary authored dictionary (not a new being)
+    color                       VectorField: C(x,y,t) = (r,g,b), Piece guards give drawn support
+    selector                    ScalarField: S(x,y,t) <= 0 selects observed pixels
+
+@screen-channel.output.colorPath = "@bearer.region.color"
+```
+
+`ScreenRegion <color: VectorField <...>, selector: ScalarField <...>>` is an authored
+value constructor/Metalaw, not a C++ class or kind. Use existing AddProperty to grant
+the record and Set/Map or checked canonical field paths to edit it. Any addressable
+Singular can bear the source; an Object geometry wrapper is unnecessary. If a region
+needs independent identity and Relations, create an appropriate existing concrete
+kind through the common creation route, then grant its Properties. Adding a region
+dictionary alone does not create that identity. A field or coefficient is a Property
+value; it does not automatically become a Singular.
+
+**Drawing and observation have independently authored bounds.** A color Piece's `where`
+expression controls where Screen draws. `region.selector` controls which completed
+viewport samples a ScreenSample request observes; it never implicitly clips color.
+Use the same selector mathematics in both when their domains should agree. These are
+pixel-domain bounds, not an implementation claim for universal constraints on every
+Property. A one-pixel region is the same mechanism: the
+[gold-pixel example](../../../examples/law_line_screen_pixel.txt) selects a physical
+pixel centre with distance mathematics. The color value can vary at every selected
+sample. Physical `x/y`, normalized `u/v`, dimensions, and explicitly bound `t` are admitted.
+
+There is one explicitly bound composed output field. Merely creating many Singulars
+with color Properties does not register independent layers; automatic discovery,
+multi-source ordering/authority, and inverse editing of composited pixels are unfinished.
+Use [CLI §5a–5b](../law/LAW_AUTHORING_CLI_GUIDE.md#5a-direct-2d-screen-forms--fields-written-in-the-cli)
+and the maintained [region creation/read](../../../examples/law_line_screen_region.txt)
+and [source-edit](../../../examples/law_line_screen_region_edit.txt) recipes. Keep any
+chosen bearer’s stable qualified path in quoted binding strings; `"my.region"` is text,
+not an expanded alias. The [direct Screen contract](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md#singular-bearers-and-agent-authoring-route--2026-10-17)
+records source inspection, historical native evidence and remaining acceptance.
+
+*Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-17T16:18:23-07:00; Zach originated this clarification and agent-routing request.*
+
+**Native follow-up:** the [property-only pipeline witness](../../audits/SINGULAR_SCREEN_PROPERTY_PIPELINE_2026-10-17.md)
+now verifies both a non-Object Singular and a plain Object, each with only added region
+Properties and no shape/material specification, through the actual Terminal and Engine.
+All six full-size captures match exactly. Codex / GPT-6.1 Sol /
+`01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` / 2026-10-17T16:27:11-07:00.
+
+### 5.1a Existing First-Mover Screen parameterizations (compatibility)
 
 `ShapeKind::Shape2D` (12) and `ShapeKind::Text2D` (13) are append-only Screen parameterizations
 in C++. They are not domain categories.
@@ -473,9 +527,10 @@ The working minimal example is
 2D Object whose `object-clicked` Law changes `x2D`. Its point is not visual sophistication;
 it proves that a control can be an Object plus Law rather than UI C++.
 
-### 5.2 The 2D composition pattern
+### 5.2 The legacy Object-based 2D composition pattern
 
-A conventional card, button, or panel should be authored as a set:
+The existing Object-based control example uses this set. It documents compatibility;
+begin new direct 2D form with §5.1 rather than copying its rectangle carrier:
 
 ```text
 background Shape2D
@@ -492,8 +547,9 @@ UI tree says so. Their attachment and semantic relationship are authored Relatio
 
 ### 5.3 Layout
 
-For now, simple layouts are direct authored positions. The architectural target is a
-Formation plus Laws over its members’ `x2D`, `y2D`, width, height, and order. A row,
+For legacy Objects, simple layouts use authored `x2D`/`y2D`, width, height and order.
+Direct Screen fields use authored coordinate mathematics, including normalized `u/v`
+and framebuffer dimensions. The architectural target is reusable Formation/Law layout. A row,
 stack, grid, radial menu, or responsive panel is therefore a reusable family of Laws,
 not a `LayoutKind` enum.
 
@@ -514,20 +570,21 @@ are not mature.
 - The “Professional 2D Design” and Creator Console Paint surfaces are intentionally
   disabled because their old tools were detached from Zone and would present controls
   that do nothing.
-- The current legacy 2D carrier is a rectangle (`ShapeKind::Shape2D`); rich
-  authored paths, curves, arbitrary 2D topology, and an OntoMath-native 2D shape taxonomy are
-  not complete. Per the architectural doctrine, expanding 2D geometric form must occur through
-  first-principles OntoMath fields and functions over $\mathbb{R}^2$ and Formations rather than
-  appending further shape kinds to the C++ enum.
-- WebGPU native line width is one pixel in the current path; thick strokes need geometry,
-  not a pretend width setting.
+- The legacy Object carrier is a rectangle (`ShapeKind::Shape2D`). Direct Screen already
+  admits arbitrary regions expressible in its supported OntoMath subset, without that
+  carrier. A general path/stroke/layout editing library and multi-source composition
+  remain unfinished; those gaps do not require a new shape taxonomy or enum.
+- The legacy WebGPU line primitive has one-pixel width. A direct Screen stroke can
+  instead author its width in the field's mathematical support; a driver line-width
+  setting does not provide that authoring model.
 - Text entry, IME, caret behavior, touch, and multi-pointer interaction are not built.
   `Text2D` acts as an orthographic quad carrier for text rendering, while the true human-facing
   ontology of text and language belongs to `Lexeme` beings and semantic Relations.
 - There is no finished responsive-layout Law library.
-- Individual pixels and OntoMath-selected pixel sets can now be elevated as live,
-  Law-addressable Properties, and `WritePixel` can act through the Screen channel. Whole
-  pixel buffers, authored resolution, and stroke history are not yet fully exposed.
+- Object surface texels and OntoMath-selected texture sets can be elevated as live
+  Properties through `WritePixel`/`ElevatePixels`. Direct Screen instead offers typed
+  source fields, named region records and explicit dated framebuffer observations.
+  A universal live framebuffer pixel l-value and full stroke history remain open.
 
 These are limits of the current manifestation and tools, not permission to build a
 parallel UI framework.
@@ -885,20 +942,33 @@ An art style can therefore govern:
 
 ### 7.4 The visual-atomicity ladder
 
-Zach’s goal is mastery down to individual pixels or meaningful pixel batches. The
-extension here is a **promotion rule** that preserves that intent without forcing the
-runtime to allocate a heavyweight C++ Object for every display sample:
+Zach’s goal is mastery down to individual pixels or meaningful pixel batches. His
+[canonized account of substrate, process and authored identity](../ontology/PIXEL_SUBSTRATE_PROCESS_AND_AUTHORED_IDENTITY.md)
+allows these perspectives to coexist and remain connected. The ladder below describes
+granularity, **not compulsory stages or a choice of one exclusive pixel ontology**.
+A sample can remain substrate, belong to an authored process's result, and be referred
+to by a meaningful Singular at the same time. A pixel-identity vessel may carry its
+machine substrate reference and other pixel characteristics as Properties; these
+predicates do not themselves become beings. Promotion is available when identity is
+authored, rather than required merely because a sample exists.
 
-> **CURRENT STATUS — UNDER DEVELOPMENT:** Earthcall does not yet provide complete
-> granular pixel mastery in which OntoMath defines any pixel-colored region directly,
-> independently of flat `ShapeKind` carriers, and Screen compiles that authored field all
-> the way to efficient manifestation. The first selective-elevation and `WritePixel`
-> rungs exist; they prove the direction, not completion of the full framework.
+*Canonization: Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+2026-10-17T16:41:45-07:00; the three perspectives and fluid coexistence originate with Zach.*
+
+> **CURRENT STATUS — DIRECT FIELDS, CLI NAMED REGIONS AND SOURCE EDITS IMPLEMENTED:**
+> Screen now admits typed authored OntoMath color/opacity fields directly at physical
+> framebuffer sample centres, independently of Object faces, Materials, textures, or
+> `ShapeKind` carriers. The shared GPU compiler supports piecewise intervals and pure
+> mathematical region selectors. A Singular can bear a named color/selector record;
+> checked field edits and dated actual-pixel sensing are available through Law Line.
+> General live sample elevation, interactive region selection and authored multi-source
+> composition remain unfinished. See [Direct Screen forms](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md)
+> for the exact contract, refusals, and native verification status.
 
 | Level | Representation | When it becomes a being |
 |---|---|---|
 | raw display sample | Screen-channel metal beneath the authored world | never merely because hardware has a pixel |
-| continuous image/field | OntoMath function over coordinates | when a Person authors the function or field as meaningful form |
+| continuous image/field | OntoMath value borne as a Singular’s Property | only when independently authored identity is needed; a field value alone is not a being |
 | pixel region / tile / stroke | sparse authored region with properties and provenance | when the region has identity, meaning, or independent governance |
 | visual Object | geometry plus Material manifestation | when it is a discrete constructed being |
 | compound visual whole | Formation of beings and Relations | when its unity is itself meaningful |
@@ -915,10 +985,18 @@ arbitrarily named Property to the defined set of a Person-authored OntoMath `Pie
 over local `u` and `v`. No rectangular or other named-region enum determines its bounds.
 The dense `FaceTexture` remains virtual until that authoring act, and Screen writes wake
 elevated Properties that contain the changed sample. Texture resolution and stroke history
-remain explicit debt, as do direct OntoMath-to-color-field compilation, arbitrary
-continuously changing regions, GPU evaluation at scale, and a finished Person-facing
-authoring surface. Do not describe granular pixel mastery as shipped, and do not fill the
-gap by adding more flat shape or region enums.
+remain explicit debt. The new direct Screen path compiles color and opacity mathematics
+without this texture carrier, rereads current field contents, and samples them on the GPU;
+`output.colorPath` can name a typed field on any addressable Singular. Its mathematical
+region can change with the authored expression or explicitly bound time. The CLI now
+constructs named regions and edits canonical fields; the authored pixel-art atelier
+provides a specific editor. General selection/editing UX and multi-source composition remain open. Do not
+describe the whole granular-mastery framework as complete or add flat shape/region enums
+to fill its remaining gaps.
+
+*Direct Screen extension: Codex / GPT-6.1 Sol / session
+`01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` / 2026-10-04 21:10 PDT;
+Zach requested the direct medium under Refusals 1, 3, and 7.*
 
 ### 7.5 2D-to-3D gradients
 
@@ -1319,10 +1397,10 @@ the prototype.
 
 | Area | Current truth | Frontier required by Zach’s intent |
 |---|---|---|
-| 2D authoring | screen-space rectangles/text render, serialize, and receive authored interaction; basic button and pixel writer are proven; pixel-set bounds are OntoMath | restore/replace the disabled design tools with Law/First-Mover authoring; OntoMath-native paths, strokes, and layouts |
+| 2D authoring | Singular-borne direct fields, CLI named region/color/selector records, source edits and dated sensing exist; legacy rectangles/text retain compatibility | general path/stroke/layout editing; automatic multi-source composition and authority |
 | 3D authoring | primitives, polyhedra, implicit Fields, Patches, Creator Console, Concepts, and Law creation exist | close live Shape Generator audit; deeper authored CAD/topology/continuity Law libraries |
 | Form | geometry, OntoMath, Materials, and Formations carry much of it | settle first-order Form ontology and authoring without reintroducing a hardcoded class hierarchy |
-| Materials/pixels | Materials are beings; textures persist; a pixel or OntoMath-selected set can be elevated as a live Property and written by Law | authorable resolution, authored stroke history/provenance, GPU compilation for large dynamic selections, and full no-black-box coverage |
+| Materials/pixels | Materials/textures and surface-texel elevation exist separately from direct Screen fields and named framebuffer observations | general live projected addressing, authored composition, stroke provenance, and full no-black-box coverage |
 | Relations/Formations | first-class endpoints, weights, history, attachments, rooted Categories, and persistence exist | make them load-bearing across more engine actions; settle remaining manifesto/runtime definition tensions |
 | Categories | direct `instance-of` queries and rooted Category pattern exist | category home/registry, inherited closure propagation, conflict/diamond policy |
 | Concepts | Object set capture/instantiate and anchored Relations exist | generalize `ObjectConcept` toward Singular creation without duplicating ontology |
@@ -1408,6 +1486,7 @@ libraries can do beyond Earthcall’s view.
 |---|---|
 | add `class Button`, `class Robot`, or `class ArtStyle` | Object(s), Category, Relations, Formation, Concept, Laws |
 | add `WidgetKind::Slider` or `ShapeKind::Cathedral` | Category beings and authored OntoMath; direct `ShapeKind` choice belongs only in focused compatibility/manifestation tests |
+| assemble every new 2D form from ShapeKind rectangles | Singular-borne VectorField color and mathematical Piece support, optional named selector, and explicit Screen binding (§5.1) |
 | create `src/UI/` or `src/Apps/` | interaction or foreign channel under Singularity only if a true modality bridge is needed; authored app stays in Zones |
 | store `type: "button"` as the classification | `instance-of -> category.control.button` |
 | put behavior in a renderer or input callback | channel publishes sense; Law decides and acts |
@@ -1428,6 +1507,12 @@ libraries can do beyond Earthcall’s view.
 ## 17. Worked blueprints
 
 ### 17.1 A reusable 2D transport control
+
+**Legacy compatibility blueprint:** this illustrates the existing Object hit-testing /
+text-carrier route. New direct Screen controls should begin at §5.1 and the
+[authored pixel-art atelier](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Law_Line_Pixel_Art_Editor/Law_Line_Pixel_Art_Editor.md);
+there, Laws test pointer coordinates against authored mathematics. A direct region
+does not automatically emit the legacy `object-clicked` event.
 
 ```text
 Beings
@@ -1537,7 +1622,7 @@ data. It is authored reality whose program has learned how to serve it.
 3. Inspect the closest working authored world rather than inventing a new schema.
 4. Write a one-sentence telos and identify the Person author.
 5. Create or select a Zone; name stable ids.
-6. Author one visual Object and one obvious Law.
+6. For direct 2D, author one Singular-borne mathematical field/region, bind Screen explicitly, and add one obvious Law; use geometry when the intended being needs it.
 7. Add Category and `instance-of`; confirm `Related` is one hop.
 8. Add real Relations and only then gather the Formation.
 9. Capture repetition as a Concept; verify anchored Relations on the newborn.

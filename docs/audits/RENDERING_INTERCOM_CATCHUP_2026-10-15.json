@@ -1,0 +1,46 @@
+{
+  "signature": "Codex / GPT-6.1 Sol / 01a122d7-0a5e-7c00-ac5b-fcd4f7c332ca",
+  "at": "2026-10-15T01:33:52.408688-07:00",
+  "head": "edccd0968cd3f24bb5d027e7b6dd5982e51b914a",
+  "inputs_sha256": {
+    "/private/tmp/firmament_radial_and_aniso_probe.cpp": "0aa282c0eb1f443bf39c914508b756d8757eef338c7f16bb3473d51c7d443ed5",
+    "/private/tmp/firmament_radial_and_aniso_probe": "2048fc5404ce6da1f167402bf791ca56f3ce0203d1295c8863fe8e887b62b15e",
+    "/private/tmp/sky_sharing_probe.cpp": "22e1b6f5e8bd75d3873aa38ab6d1ba31d01f8a670dfc11ea38b9374f21371547",
+    "/private/tmp/sky_sharing_probe": "0e5572b0283e505edab4c1aba6e4bb5d54e449dae12beb521e05ac9ab0949926",
+    "src/Singularity/Screen/WebGPU/SdfWgsl.cpp": "06699f509b1d2b90ed2fb5de6904fe580d9b20ff1b97aa56a6e60210b87e2cfa",
+    "src/Singularity/Screen/VolumeZeroProof.cpp": "45e49256a003b2bcdf4b6e498217e6780142f781676c3714c9516fb60067d4b9",
+    "src/Singularity/OntoMath/ScalarForm.cpp": "c2d55d8cf9c4e25c7f4a1afb667a39d5e1bf1bd867cc20b057095be20db7b3ac",
+    "saves/zones/Sky-Island Sanctuary/zone.json": "864a48ef4f8f9cdb7d8bf96059b630cd22a7f66029e3afdba588503a317430e6",
+    "/private/tmp/earthcall-sixth-one-sun-01a122d7/proof-pass/zone.json": null
+  },
+  "returncodes": [
+    0,
+    0
+  ],
+  "scope": "read-only source/history review, existing CPU probe reruns, source-level numeric counterexamples and offline analyzer output; no fresh full build, native GPU frame, performance benchmark or semantic implementation",
+  "sharing_output_sha256": "9139d85a2205cabd0f2843fa1540dee028f58a4f5ba5ee14d5314d22db4f5536",
+  "review_at": "2026-10-15T01:38:17.654972-07:00",
+  "radial_rerun_output": "=== 1. SKY-ISLAND SANCTUARY RADIAL PROOF WITNESS ===\nField: sky.sanctuary.sea-of-clouds | dims=(76,6,76) total=34656\n  Production (no Op::Distance): proven=0/34656 (0.00%) | inside |y|<2.3 slab: 0/34656 (0.00%)\n  With Op::Distance/Length:     proven=10968/34656 (31.65%) | inside |y|<2.3 slab: 10968/34656 (31.65%)\nField: sky.sanctuary.sunlit-halo-mist | dims=(40,22,40) total=35200\n  Production (no Op::Distance): proven=6400/35200 (18.18%) | inside |y|<2.1 slab: 0/28800 (0.00%)\n  With Op::Distance/Length:     proven=19648/35200 (55.82%) | inside |y|<2.1 slab: 13248/28800 (46.00%)\n\n=== 2. NORTHERN VEIL ANISOTROPIC GRID SCREENING ===\nNorthern Veil scratch zone.json not found\n",
+  "power_source_counterexamples": [
+    {
+      "base_f32": 9.9999998245167e-14,
+      "exponent_f32": -1.0,
+      "cpu_source_branch_result": 10000000175483.303,
+      "helper_source_branch": "near-zero base",
+      "helper_source_branch_result": 0.0,
+      "scope": "source-level host replay with uploaded f32 inputs; not a native GPU execution"
+    },
+    {
+      "base_f32": -2.0,
+      "exponent_f32": 2.0000500679016113,
+      "cpu_source_branch_result": 0.0,
+      "helper_source_branch": "near-integer negative base",
+      "helper_source_branch_result": 4.000138820108176,
+      "scope": "source-level host replay with uploaded f32 inputs; not a native GPU execution"
+    }
+  ],
+  "sharing_plan": "id=sky.sanctuary.sea-of-clouds\nsharing-plan:\ng0:c3@0/2,c5@0/1/2,\ng1:c3@0/1,c5@0/1/1,\ng2:c3@0/0,c5@0/1/0,\ng3:c0@0,c1@0/1,c2@0/1,c5@0/0/1,\n",
+  "sharing_analysis_report": "/private/tmp/earthcall-render-catchup-20261015/sharing-analysis/report.json",
+  "unreproduced": "Northern Veil ray/anisotropic tables: available probe skips missing zone.json; its source does not contain the posted ray simulator/four-family screen.",
+  "render_source_changes_this_pass": false
+}

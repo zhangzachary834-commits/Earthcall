@@ -1,3 +1,5 @@
+#include <unordered_set>
+#include <stdexcept>
 #pragma once
 
 #include "ConstructedBeing/CategoryManager.hpp"
@@ -13,6 +15,7 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
+#include "ZonesOfEarth/Physics/AuthoredPhysicsLaws.hpp"
 #include "ZonesOfEarth/SaveContext.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
@@ -46,7 +49,8 @@ struct BootedEngineHarness {
     Singularity::Input::InteractionChannel* interaction{nullptr};
 
     BootedEngineHarness(const std::string& playerName = "Player",
-                        const std::string& bodyType = "humanoid")
+                        const std::string& bodyType = "humanoid",
+                        bool hydrateAllZones = true)
         : soul(playerName),
           body(bodyType, "default"),
           player(std::move(soul), std::move(body), "default") {
@@ -65,20 +69,13 @@ struct BootedEngineHarness {
             interaction->setEnabled(true);
         }
 
-        // 2. Wire Universe providers matching real app boot (EngineInit.cpp)
-        Universe::instance().setProvider([this](std::vector<Singular*>& beings) {
-            if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return;
-            auto active = zones.zones()[zones.currentIndex()];
-            if (!active) return;
-            beings.push_back(active.get());
-            for (const auto& obj : active->getOwnedObjects()) {
-                if (obj) beings.push_back(obj.get());
-            }
+        // Exercise the exact authored-law registration path used by Engine::initLogic.
+        Physics::registerAuthoredRotationalLaws(lawManager, player);
+
+        // 2. Wire ActiveZones providers matching real app boot (EngineInit.cpp)
+        ActiveZones::instance().setProvider([this](std::vector<Singular*>& beings) {
             for (const auto& law : lawManager.getAll()) {
                 if (law) beings.push_back(law.get());
-            }
-            for (const auto& rel : active->formation().relations().getAll()) {
-                if (rel) beings.push_back(rel.get());
             }
             for (const auto& material : materials.getAll()) {
                 if (material) beings.push_back(material.get());
@@ -87,39 +84,14 @@ struct BootedEngineHarness {
                 if (category) beings.push_back(category.get());
             }
             beings.push_back(&player);
-        });
-
-        Universe::instance().setRelationProvider([this](std::vector<Relation*>& relations) {
-            if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return;
-            auto active = zones.zones()[zones.currentIndex()];
-            if (!active) return;
-            for (const auto& rel : active->formation().relations().getAll()) {
-                if (rel) relations.push_back(rel.get());
-            }
-        });
-        // The endpoint index, exactly as Engine::initLogic installs it — after
-        // setRelationProvider, which clears it. Without this every app test
-        // evaluated `Related` by scanning while the app indexes, so the path a
-        // Person runs was not the path tested (found 2026-09-15, rung 5).
-        Universe::instance().setRelationsInvolvingProvider(
-            [this](const Singular& being, std::vector<Relation*>& out) {
-                out.clear();
-                if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return;
-                auto active = zones.zones()[zones.currentIndex()];
-                if (!active) return;
-                active->formation().relations().relationsInvolving(being, out);
-            });
-        Universe::instance().setRelationGenerationProvider([this]() -> std::size_t {
-            if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return 0;
-            auto active = zones.zones()[zones.currentIndex()];
-            return active ? active->formation().relations().generation() : 0;
-        });
-
-        Universe::instance().setRelationRegistrar([this](std::shared_ptr<Relation> relation) {
-            if (zones.zones().empty() || zones.currentIndex() >= zones.zones().size()) return;
-            auto active = zones.zones()[zones.currentIndex()];
-            if (active) {
-                active->formation().relations().add(std::move(relation));
+            // EngineInit exposes inactive Zones for named reach/governance.
+            // Active Zones are natively harvested by ActiveZones.
+            for (const auto& zone : zones.zones()) {
+                if (!zone || ActiveZones::instance().isActive(zone.get())) continue;
+                beings.push_back(zone.get());
+                if (auto* field = zone->spatialRoot()) beings.push_back(field);
+                for (const auto& field : zone->additionalSpatialFields())
+                    if (field) beings.push_back(field.get());
             }
         });
 
@@ -133,11 +105,22 @@ struct BootedEngineHarness {
         ctx.unpackForAuthoring = false;
 
         // 4. Perform app boot hydration FIRST (matching Engine::initLogic boot sequence)
+        zones.bindLive();
         zones.bindLawManager(&lawManager);
-        zones.hydrateFromZoneStore();
+        if (hydrateAllZones) {
+            zones.hydrateFromZoneStore();
+        } else {
+            // Isolated witnesses must not hydrate or mutate real authored saves.
+            zones.addZone(std::make_shared<Zone>("Default", "default"));
+        }
     }
 
     ~BootedEngineHarness() {
+        // bindLive() is process-global too; a block-scoped harness must not
+        // leave ZoneManager::live() pointing at its destroyed ZoneManager.
+        zones.unbindLive();
+        ActiveZones::instance().setProvider(nullptr);
+
         // The Physics bridge is process-global; do not leave a dangling pointer
         // when a block-scoped harness goes away. Only clear the slot we own.
         if (Physics::getLawManager() == &lawManager) {
@@ -170,9 +153,8 @@ struct BootedEngineHarness {
 // state secretly depends on the tree's real absolute path, this instead
 // runs the test against the REAL tree exactly as it always ran —
 // unexplained differences have no surface to appear on — and protects it
-// by backing up just the two directories that actually get mutated
-// (zones/, homes/) beforehand and restoring them after, regardless of how
-// the test's own run went.
+// by backing up the save directories that get mutated beforehand and
+// restoring them after, regardless of how the test's own run went.
 inline std::string resolveRealWorldPath(const std::string& relativeWorldPath) {
     std::string filename = relativeWorldPath;
     if (!std::filesystem::exists(filename)) {
@@ -223,28 +205,17 @@ inline std::string hashDirectoryTree(const std::filesystem::path& dir) {
 // BootedEngineHarness (whose constructor hydrates from whatever
 // SaveSystem's root already is), so the backup captures the pre-test state.
 // Calls SaveSystem::setSaveRoot to the real saves/ directory itself — same
-// as the tree these tests always ran against — and restores saves/zones
-// and saves/homes from the backup on destruction. Does nothing (and leaves
-// SaveSystem's root untouched) if `resolvedWorldPath` is not a real
-// `saves/worlds/...` file, so a CI environment where the optional fixture
-// is simply absent behaves exactly as before.
-//
-// A second constructor, tagged GuardCurrentRoot, is for tests that never
-// name a real `saves/worlds/...` file at all but still risk writing into
-// the real tree simply because nothing ever pointed SaveSystem at a
-// sandbox — test_observation_load_test's dump_test_save is exactly this
-// shape: it calls ZoneManager::saveState (persistZones() unconditionally)
-// against whatever SaveSystem's save root already resolves to, which
-// defaults to the real ./saves next to the working directory when no one
-// has called setSaveRoot. Sol (agent intercom, "Basic Pixel Changer Zone
-// Identity Bug 9-7-26", 2026-09-09, Stage 0): "Put test_observation_load_test
-// behind the same TestSupport::RealSaveTreeGuard used by the chess tests."
+// as the tree these tests always ran against — and restores all mutable
+// subdirectories and cleans newly created artifacts on destruction.
 struct GuardCurrentRootTag {};
 inline constexpr GuardCurrentRootTag GuardCurrentRoot{};
 
 struct RealSaveTreeGuard {
     std::filesystem::path realSaves;
     std::filesystem::path backup;
+    std::unordered_set<std::string> initialEntries;
+    std::unordered_set<std::string> backedUpEntries;
+    std::string previousSaveRoot;
 
     explicit RealSaveTreeGuard(const std::string& resolvedWorldPath) {
         if (!std::filesystem::exists(resolvedWorldPath)) return;
@@ -263,20 +234,56 @@ struct RealSaveTreeGuard {
     }
 
     ~RealSaveTreeGuard() {
-        if (realSaves.empty()) return;
+        if (realSaves.empty() || backup.empty()) return;
+        if (!std::filesystem::is_directory(backup)) std::terminate();
+        for (const auto& entry : backedUpEntries) {
+            std::error_code snapshotEc;
+            const auto snapshotStatus = std::filesystem::symlink_status(backup / entry, snapshotEc);
+            if (snapshotEc || snapshotStatus.type() == std::filesystem::file_type::not_found) {
+                std::terminate(); // Never delete original data without its snapshot, including symlinks.
+            }
+        }
         std::error_code ec;
-        std::filesystem::remove_all(realSaves / "zones", ec);
-        if (std::filesystem::exists(backup / "zones")) {
-            std::filesystem::copy(backup / "zones", realSaves / "zones",
-                std::filesystem::copy_options::recursive, ec);
+
+        if (!backedUpEntries.empty()) {
+            std::filesystem::create_directories(realSaves, ec);
+            if (ec) std::terminate();
         }
-        std::filesystem::remove_all(realSaves / "homes", ec);
-        if (std::filesystem::exists(backup / "homes")) {
-            std::filesystem::copy(backup / "homes", realSaves / "homes",
-                std::filesystem::copy_options::recursive, ec);
+
+        // Restore every entry that existed when guarding began.
+        for (const auto& entry : backedUpEntries) {
+            std::filesystem::remove_all(realSaves / entry, ec);
+            if (ec) std::terminate(); // Preserve the backup for manual recovery.
+            std::filesystem::copy(
+                backup / entry, realSaves / entry,
+                std::filesystem::copy_options::recursive |
+                    std::filesystem::copy_options::copy_symlinks,
+                ec);
+            if (ec) std::terminate(); // Never discard a failed restoration snapshot.
         }
+
+        // Remove top-level entries created only while the guard was active.
+        std::vector<std::filesystem::path> newEntries;
+        if (std::filesystem::exists(realSaves, ec)) {
+            for (auto it = std::filesystem::directory_iterator(realSaves, ec);
+                 it != std::filesystem::directory_iterator(); it.increment(ec)) {
+                if (ec) break;
+                const std::string name = it->path().filename().string();
+                if (initialEntries.find(name) == initialEntries.end()) {
+                    newEntries.push_back(it->path());
+                }
+            }
+            if (ec) std::terminate();
+        }
+        if (ec) std::terminate();
+        for (const auto& entry : newEntries) {
+            std::filesystem::remove_all(entry, ec);
+            if (ec) std::terminate();
+        }
+
+        SaveSystem::setSaveRoot(previousSaveRoot);
         std::filesystem::remove_all(backup, ec);
-        SaveSystem::setSaveRoot("");
+        if (ec) std::terminate();
     }
 
     RealSaveTreeGuard(const RealSaveTreeGuard&) = delete;
@@ -288,16 +295,33 @@ private:
         backup = std::filesystem::temp_directory_path() /
             ("earthcall-save-backup-" + std::to_string(
                 std::chrono::steady_clock::now().time_since_epoch().count()));
-        std::filesystem::create_directories(backup);
+        if (!std::filesystem::create_directory(backup))
+            throw std::runtime_error("save-tree backup path already exists");
         std::error_code ec;
-        if (std::filesystem::exists(realSaves / "zones")) {
-            std::filesystem::copy(realSaves / "zones", backup / "zones",
-                std::filesystem::copy_options::recursive, ec);
+
+        // Enumerate the real save root once, then back up exactly that complete
+        // top-level set. New save categories therefore cannot silently escape
+        // restoration merely because this test helper predates their names.
+        if (std::filesystem::exists(realSaves, ec)) {
+            for (auto it = std::filesystem::directory_iterator(realSaves, ec);
+                 it != std::filesystem::directory_iterator(); it.increment(ec)) {
+                if (ec) break;
+                initialEntries.insert(it->path().filename().string());
+            }
+            if (ec) throw std::filesystem::filesystem_error("save-tree root enumeration failed", ec);
         }
-        if (std::filesystem::exists(realSaves / "homes")) {
-            std::filesystem::copy(realSaves / "homes", backup / "homes",
-                std::filesystem::copy_options::recursive, ec);
+        if (ec) throw std::filesystem::filesystem_error("save-tree root inspection failed", ec);
+
+        for (const auto& entry : initialEntries) {
+            std::filesystem::copy(
+                realSaves / entry, backup / entry,
+                std::filesystem::copy_options::recursive |
+                    std::filesystem::copy_options::copy_symlinks,
+                ec);
+            if (ec) throw std::filesystem::filesystem_error("save-tree backup failed", ec);
+            backedUpEntries.insert(entry);
         }
+        previousSaveRoot = SaveSystem::saveRoot();
         SaveSystem::setSaveRoot(realSaves.string());
     }
 };

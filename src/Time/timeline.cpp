@@ -8,6 +8,11 @@
 #include <cstdio>
 #include <stdexcept>
 #include <utility>
+#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))
+#  include <intrin.h>
+#elif defined(__i386__) || defined(__x86_64__)
+#  include <x86intrin.h>
+#endif
 
 namespace {
 std::atomic<unsigned long long> s_nextTimelineId{1};
@@ -174,6 +179,24 @@ void Timeline::announceMomentChange() {
     notifyPropertyChanged(this, "latestMoment");
 }
 
+long Timeline::propCpuClockCycle() const {
+#if (defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))) || defined(__i386__) || defined(__x86_64__)
+    return static_cast<long>(__rdtsc());
+#elif defined(__aarch64__)
+    unsigned long long value = 0;
+    asm volatile("mrs %0, cntvct_el0" : "=r"(value));
+    return static_cast<long>(value);
+#elif defined(__has_builtin)
+#  if __has_builtin(__builtin_readcyclecounter)
+    return static_cast<long>(__builtin_readcyclecounter());
+#  else
+    return 0;
+#  endif
+#else
+    return 0;
+#endif
+}
+
 void Timeline::buildProperties() {
     registerProperty(
         std::make_unique<ComputedProperty<Timeline, bool>>(
@@ -193,5 +216,8 @@ void Timeline::buildProperties() {
     registerProperty(
         std::make_unique<ComputedProperty<Timeline, std::string>>(
             "latestMoment", this, &Timeline::propLatestMoment, nullptr));
+    registerProperty(
+        std::make_unique<ComputedProperty<Timeline, long>>(
+            "cpuClockCycle", this, &Timeline::propCpuClockCycle, nullptr));
     _propertiesBuilt = true;
 }

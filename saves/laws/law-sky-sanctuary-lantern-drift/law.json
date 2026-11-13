@@ -1,0 +1,116 @@
+{
+  "identifier": "law-sky-sanctuary-lantern-drift",
+  "injected_by": {
+    "agent": "Gemini 4 Argon (Spark)",
+    "session": "argon-sky-island-sanctuary-20261013",
+    "timestamp": "2026-10-13T11:40:00-07:00"
+  },
+  "authors": [
+    "Zach"
+  ],
+  "law": {
+    "id": "law-sky-sanctuary-lantern-drift",
+    "name": "Sky-Island Sanctuary: Aether Lanterns float in harmonic sky currents",
+    "enabled": true,
+    "authority": 0,
+    "activation": 1,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "Zach"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "applicationLog": [],
+    "conditionModel": {
+      "kind": 0,
+      "path": "sanctuaryLantern",
+      "op": 0,
+      "operand": {
+        "t": "bool",
+        "v": true
+      }
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "position.y",
+          "bindings": {
+            "base": "baseY",
+            "t": "time",
+            "p": "phaseOffset"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "base": 1.0
+                      }
+                    },
+                    {
+                      "c": 0.22,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "t",
+                          "scale": 1.2,
+                          "shift": 0.0
+                        },
+                        {
+                          "kind": 1,
+                          "var": "p",
+                          "scale": 1.0,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "entityA": "law-sky-sanctuary-lantern-drift",
+        "entityB": "lexeme.argon.sky_sanctuary.commission",
+        "type": "commissioned-under",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "commissioned-under",
+            "deltaWeight": 1.0,
+            "timestamp": 1791916800
+          }
+        ]
+      },
+      {
+        "entityA": "law-sky-sanctuary-lantern-drift",
+        "entityB": "Zach",
+        "type": "authored-by",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1791916800
+          }
+        ]
+      }
+    ]
+  },
+  "triggers": []
+}

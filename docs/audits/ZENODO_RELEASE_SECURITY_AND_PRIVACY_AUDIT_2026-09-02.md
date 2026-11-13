@@ -34,7 +34,7 @@ A comprehensive automated and manual security and privacy audit was conducted ac
 | Google (`AIza*`) | Whole Repository | None | **CLEAN**. `src/Singularity/Foreign/py/api/ai_service.py` (L13, L23) properly reads from `os.environ.get("GOOGLE_API_KEY")`. |
 | AWS (`AKIA*`, secret keys) | Whole Repository | None | **CLEAN**. No AWS access keys or secrets found. |
 | GitHub Tokens (`ghp_*`, `gho_*`, `github_pat_*`) | Whole Repository | None | **CLEAN**. Only false positives in ImGui variable names (`start_pos_highp_x`). |
-| Private Key Material (`BEGIN PRIVATE KEY`) | Whole Repository | None (except OpenSSL tests) | **CLEAN**. Only upstream unit test certs in `local_deps/openssl-3.0.13/test/certs/*.key`. |
+| Private Key Material (`BEGIN PRIVATE KEY`) | Whole Repository | None (except OpenSSL tests) | **CLEAN**. Only upstream unit test certs in `local_deps/openssl-3.0.22/test/certs/*.key`. |
 | Cloud Storage Token | `src/Singularity/Storage/CloudStorage.cpp` | L91 | **CLEAN**. Safely reads from `std::getenv("EARTHCALL_CLOUD_TOKEN")`. |
 | Environment File (`.env`) | `src/Singularity/Foreign/py/.env` | L1-L6 | **SAFE**. Contains only development flags (`PORT=5005`, `DEBUG=True`, `HOST=127.0.0.1`, `FLASK_APP=app.py`). No secrets. |
 | Unit Test Secrets | `scratch/probes/test_app_secret_key.py` | L27, L44 | **SAFE**. Uses dummy string `custom-test-secret-key-[REDACTED]` and test constant `"earthcall-secret-key-logos"`. |

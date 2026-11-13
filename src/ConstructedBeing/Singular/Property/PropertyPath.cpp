@@ -1,13 +1,25 @@
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 
 #include "ConstructedBeing/Singular/Property/Property.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyCell.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "Singularity/OntoMath/Field.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
+#include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Relation/Relation.hpp"
+#include "Relation/Formation/Formation.hpp"
 #include "Singularity/Core/StringId.hpp"
+#include "Singularity/TransferPolicy.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/ActiveZones.hpp"
+#include "ZonesOfEarth/Zone/Zone.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
 
 #include <algorithm>
+#include <charconv>
 #include <cmath>
 #include <glm/glm.hpp>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 
@@ -104,91 +116,222 @@ std::string PropertyPath::toString() const {
 }
 
 // ============================================================================
-// HOT PATH: Resolve with zero allocations
+// HOT PATH: Registered flat lookups allocate no traversal storage
 //
 // Uses pre-calculated _joinedIds for pure integer lookups. No string
-// allocations, no string comparisons. When a Law fires on 500 targets,
-// this runs 500 times with ZERO heap allocations.
+// allocations. Nested containers pin shared storage for this access. Typed
+// mathematical constituents use an operation-local codec view; a checked
+// write replaces the canonical value through its original storage/setter.
 // ============================================================================
 PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t startIndex) const {
     ResolvedSlot slot;
-    if (segments.empty() || startIndex >= segments.size()) return slot;
+    if (startIndex >= segments.size() || _joinedIds.size() != segments.size()) return slot;
 
     Singular* currentOwner = &root;
     Property* currentRegistered = nullptr;
     PropertyValue* currentDynamic = nullptr;
     std::size_t i = startIndex;
 
+    if (startIndex == 0 && !segments.empty() && segments[0].size() > 1 && segments[0][0] == '@') {
+        if (segments[0] == "@transfer-policy") {
+            currentOwner = &TransferPolicy::instance();
+            i = 1;
+        } else {
+            Zone* matchedZone = nullptr;
+            std::size_t zoneConsumed = 0;
+            const auto& rootIds = _joinedIds[0];
+            for (std::size_t run = rootIds.size(); run > 0; --run) {
+                const std::string resolved = Earthcall::StringInterner::resolve(rootIds[run - 1]);
+                if (resolved.size() <= 1 || resolved[0] != '@') continue;
+                const std::string slug = resolved.substr(1);
+                for (Zone* z : ActiveZones::instance().zones()) {
+                    if (z && z->getIdentifier() == slug) {
+                        matchedZone = z;
+                        zoneConsumed = run;
+                        break;
+                    }
+                }
+                if (!matchedZone && ZoneManager::live()) {
+                    if (Zone* z = ZoneManager::live()->findZone(slug)) {
+                        matchedZone = z;
+                        zoneConsumed = run;
+                    }
+                }
+                if (matchedZone) break;
+            }
+
+            if (matchedZone) {
+                currentOwner = matchedZone;
+                i = zoneConsumed;
+            } else {
+                Singular* uniqueBeing = nullptr;
+                std::size_t beingConsumed = 0;
+                bool ambiguous = false;
+                const auto activeBeings = ActiveZones::instance().beings();
+
+                for (std::size_t run = rootIds.size(); run > 0; --run) {
+                    const std::string resolved = Earthcall::StringInterner::resolve(rootIds[run - 1]);
+                    if (resolved.size() <= 1 || resolved[0] != '@') continue;
+                    const std::string slug = resolved.substr(1);
+
+                    Singular* candidate = nullptr;
+                    bool dup = false;
+                    for (Singular* b : activeBeings) {
+                        if (b && b->getIdentifier() == slug) {
+                            if (candidate && candidate != b) {
+                                dup = true;
+                                break;
+                            }
+                            candidate = b;
+                        }
+                    }
+                    if (!candidate && !dup && ZoneManager::live()) {
+                        for (const auto& zPtr : ZoneManager::live()->zones()) {
+                            if (!zPtr || ActiveZones::instance().isActive(zPtr.get())) continue;
+                            for (const auto& obj : zPtr->getOwnedObjects()) {
+                                if (obj && obj->getIdentifier() == slug) {
+                                    if (candidate && candidate != obj.get()) { dup = true; break; }
+                                    candidate = obj.get();
+                                }
+                            }
+                            if (dup) break;
+                            for (const auto& s : zPtr->storedSingulars()) {
+                                if (s && s->getIdentifier() == slug) {
+                                    if (candidate && candidate != s.get()) { dup = true; break; }
+                                    candidate = s.get();
+                                }
+                            }
+                            if (dup) break;
+                        }
+                    }
+                    if (dup) {
+                        ambiguous = true;
+                        break;
+                    }
+                    if (candidate) {
+                        uniqueBeing = candidate;
+                        beingConsumed = run;
+                        break;
+                    }
+                }
+
+                if (!ambiguous && uniqueBeing) {
+                    currentOwner = uniqueBeing;
+                    i = beingConsumed;
+                } else {
+                    return {};
+                }
+            }
+        }
+    }
+
     while (i < segments.size()) {
         if (currentOwner) {
             Property* foundReg = nullptr;
+            PropertyValue* foundDyn = nullptr;
             std::size_t consumed = 0;
             const auto& idsFromHere = _joinedIds[i];
-            
-            PropertyValue* foundDyn = nullptr;
-            for (std::size_t runLength = idsFromHere.size(); runLength > 0; --runLength) {
-                Earthcall::StringId id = idsFromHere[runLength - 1];
+            Earthcall::StringId matchedId;
+            for (std::size_t run = idsFromHere.size(); run > 0; --run) {
+                Earthcall::StringId id = idsFromHere[run - 1];
+                if (currentOwner->hasPropertyCell(id)) {
+                    matchedId = id;
+                    consumed = run;
+                    if (currentOwner->getPropertyCellMode(id) != CellOwnershipMode::Weak) {
+                        foundDyn = currentOwner->getDynamicPropertyPtr(id);
+                    }
+                    break;
+                }
                 if (PropertyValue* candidate = currentOwner->getDynamicPropertyPtr(id)) {
                     foundDyn = candidate;
-                    consumed = runLength;
+                    matchedId = id;
+                    consumed = run;
                     break;
                 }
             }
-
-            if (!foundDyn) {
-                for (std::size_t runLength = idsFromHere.size(); runLength > 0; --runLength) {
-                    Earthcall::StringId id = idsFromHere[runLength - 1];
+            if (!foundDyn && !matchedId.isValid()) {
+                for (std::size_t run = idsFromHere.size(); run > 0; --run) {
+                    Earthcall::StringId id = idsFromHere[run - 1];
                     if (Property* candidate = currentOwner->findProperty(id)) {
                         foundReg = candidate;
-                        consumed = runLength;
+                        matchedId = id;
+                        consumed = run;
                         break;
                     }
                 }
             }
+            if (!foundReg && !foundDyn && !matchedId.isValid()) {
+                if (auto* zoneOwner = dynamic_cast<Zone*>(currentOwner)) {
+                    Singular* memberMatch = nullptr;
+                    std::size_t memberConsumed = 0;
+                    bool memberAmbiguous = false;
 
-            if (!foundReg && !foundDyn) return slot;
+                    std::vector<Singular*> zoneMembers;
+                    std::unordered_set<Singular*> seenMembers;
+                    auto addMember = [&](Singular* s) {
+                        if (s && seenMembers.insert(s).second) {
+                            zoneMembers.push_back(s);
+                        }
+                    };
+                    if (auto* rootField = zoneOwner->spatialRoot()) addMember(rootField);
+                    for (const auto& field : zoneOwner->additionalSpatialFields()) {
+                        if (field) addMember(field.get());
+                    }
+                    for (const auto& obj : zoneOwner->getOwnedObjects()) {
+                        if (obj) addMember(obj.get());
+                    }
+                    for (auto* m : zoneOwner->formation().getMembers()) {
+                        if (m) addMember(m);
+                    }
+                    for (const auto& s : zoneOwner->storedSingulars()) {
+                        if (s) addMember(s.get());
+                    }
 
-            i += consumed;
-            slot.owner = currentOwner;
-            if (foundDyn) {
-                slot.dynamicKey = Earthcall::StringInterner::resolve(_joinedIds[i - consumed][consumed - 1]);
+                    for (std::size_t run = idsFromHere.size(); run > 0; --run) {
+                        std::string targetIdent = Earthcall::StringInterner::resolve(idsFromHere[run - 1]);
+                        Singular* candidate = nullptr;
+                        bool dup = false;
+                        for (Singular* m : zoneMembers) {
+                            if (m && m->getIdentifier() == targetIdent) {
+                                if (candidate && candidate != m) {
+                                    dup = true;
+                                    break;
+                                }
+                                candidate = m;
+                            }
+                        }
+                        if (dup) {
+                            memberAmbiguous = true;
+                            break;
+                        }
+                        if (candidate) {
+                            memberMatch = candidate;
+                            memberConsumed = run;
+                            break;
+                        }
+                    }
+
+                    if (!memberAmbiguous && memberMatch) {
+                        currentOwner = memberMatch;
+                        i += memberConsumed;
+                        continue;
+                    }
+                }
+                return {};
             }
+            slot.owner = currentOwner;
+            slot.rootPropertyId = matchedId;
+            if (currentOwner->hasPropertyCell(matchedId)) {
+                slot.cellId = currentOwner->getPropertyCell(matchedId);
+                slot.cellMode = currentOwner->getPropertyCellMode(matchedId);
+            }
+            slot.dynamicKey = (foundDyn || matchedId.isValid())
+                ? Earthcall::StringInterner::resolve(matchedId) : std::string();
+            slot.containerProperty = nullptr;
             currentRegistered = foundReg;
             currentDynamic = foundDyn;
             currentOwner = nullptr;
-
-        } else if (currentDynamic) {
-            std::shared_ptr<PropertyDict>* pDict = std::get_if<std::shared_ptr<PropertyDict>>(currentDynamic);
-            if (pDict && *pDict) {
-                auto it = (*pDict)->elements.find(segments[i]);
-                if (it != (*pDict)->elements.end()) {
-                    currentDynamic = &it->second;
-                    currentRegistered = nullptr;
-                    i++;
-                } else {
-                    return slot;
-                }
-            } else {
-                std::shared_ptr<PropertyList>* pList = std::get_if<std::shared_ptr<PropertyList>>(currentDynamic);
-                if (pList && *pList) {
-                    try {
-                        std::size_t idx = std::stoull(segments[i]);
-                        if (idx < (*pList)->elements.size()) {
-                            currentDynamic = &(*pList)->elements[idx];
-                            currentRegistered = nullptr;
-                            i++;
-                        } else {
-                            return slot;
-                        }
-                    } catch (...) {
-                        return slot;
-                    }
-                } else {
-                    break;
-                }
-            }
-        } else {
-            return slot;
+            i += consumed;
         }
 
         if (i == segments.size()) {
@@ -197,7 +340,6 @@ PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t sta
             return slot;
         }
 
-        PropertyValue val;
         if (currentRegistered) {
             if (Singular* next = currentRegistered->asSingular()) {
                 currentOwner = next;
@@ -205,41 +347,210 @@ PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t sta
                 currentDynamic = nullptr;
                 continue;
             }
-            val = currentRegistered->value();
-        } else if (currentDynamic) {
-            val = *currentDynamic;
         }
-
-        if (Singular** nextSingular = std::get_if<Singular*>(&val)) {
-            if (*nextSingular) { currentOwner = *nextSingular; currentRegistered = nullptr; currentDynamic = nullptr; }
-        } else if (Object** nextObj = std::get_if<Object*>(&val)) {
-            if (*nextObj) { currentOwner = reinterpret_cast<Singular*>(*nextObj); currentRegistered = nullptr; currentDynamic = nullptr; }
-        } else if (Relation** nextRel = std::get_if<Relation*>(&val)) {
-            if (*nextRel) { currentOwner = reinterpret_cast<Singular*>(*nextRel); currentRegistered = nullptr; currentDynamic = nullptr; }
-        } else if (Formation** nextForm = std::get_if<Formation*>(&val)) {
-            if (*nextForm) { currentOwner = reinterpret_cast<Singular*>(*nextForm); currentRegistered = nullptr; currentDynamic = nullptr; }
-        }
-
-        if (i == segments.size() - 1 && std::holds_alternative<glm::vec3>(val)) {
-            const std::string& c = segments[i];
-            if (isVec3Component(c)) {
+        // Materialize only the typed view, never a deep copy. Container pins
+        // keep elements from a temporary getter alive until this access ends.
+        PropertyValue value;
+        if (slot.cellId.valid() && slot.containerPins.empty()) {
+            if (PropertyCellTable::instance().isExpired(slot.cellId)) {
                 slot.prop = currentRegistered;
                 slot.dynamicSlot = currentDynamic;
-                slot.trailingComponent = c;
                 return slot;
             }
+            const auto* cell = PropertyCellTable::instance().getCell(slot.cellId);
+            if (cell) {
+                value = cell->value;
+            }
+        } else {
+            value = currentRegistered ? currentRegistered->value() : (currentDynamic ? *currentDynamic : PropertyValue{});
+        }
+        if (std::holds_alternative<std::shared_ptr<OntoMath::ScalarField>>(value) ||
+            std::holds_alternative<std::shared_ptr<OntoMath::VectorField>>(value)) {
+            // Typed field constituents are the existing serialized vocabulary.
+            // The detached operation-local view never silently edits a shared
+            // tree or bypasses a registered setter. See Direct_Screen_Forms.
+            try {
+                const auto encoded=propertyValueToJson(value);
+                if (!encoded.contains("v") || encoded.at("v").is_null()) return {};
+                slot.structuredProperty=currentRegistered;
+                slot.structuredSource=currentDynamic;
+                slot.structuredOriginal=value;
+                slot.structuredView=propertyStructureFromJson(encoded.at("v"));
+            } catch (const std::exception&) { return {}; }
+            value=slot.structuredView;
+            slot.containerPins.push_back(value);
+            currentRegistered=nullptr;
+            currentDynamic=nullptr;
+        }
+
+        if (i == segments.size() - 1 && std::holds_alternative<glm::vec3>(value) &&
+            isVec3Component(segments[i])) {
+            slot.prop = currentRegistered;
+            slot.dynamicSlot = currentDynamic;
+            slot.trailingComponent = segments[i];
+            return slot;
+        }
+
+        PropertyValue* element = nullptr;
+        if (auto dict = std::get_if<std::shared_ptr<PropertyDict>>(&value); dict && *dict) {
+            const auto found = (*dict)->elements.find(segments[i]);
+            if (found == (*dict)->elements.end()) return {};
+            element = &found->second;
+        } else if (auto list = std::get_if<std::shared_ptr<PropertyList>>(&value); list && *list) {
+            std::size_t index = 0;
+            const std::string& text = segments[i];
+            const auto parsed = std::from_chars(text.data(), text.data() + text.size(), index);
+            if (text.empty() || parsed.ec != std::errc() || parsed.ptr != text.data() + text.size() ||
+                index >= (*list)->elements.size()) return {};
+            element = &(*list)->elements[index];
+        } else {
+            return {};
+        }
+        if (currentRegistered) slot.containerProperty = currentRegistered;
+        slot.containerPins.push_back(std::move(value));
+        currentRegistered = nullptr;
+        currentDynamic = element;
+        ++i;
+        if (i == segments.size()) {
+            slot.dynamicSlot = currentDynamic;
+            return slot;
         }
     }
-    return slot;
+    return {};
+}
+
+namespace {
+std::unordered_map<std::string, DerivedReading>& derivedReadings() {
+    static std::unordered_map<std::string, DerivedReading> readings;
+    return readings;
+}
+std::uint64_t s_derivedReadingRevision = 0;
+
+// The first segment k > startIndex naming a registered derived reading, or
+// segments.size() when none does.
+std::size_t derivedReadingIndex(const std::vector<std::string>& segments, std::size_t startIndex) {
+    const auto& readings = derivedReadings();
+    if (readings.empty()) return segments.size();
+    for (std::size_t k = startIndex + 1; k < segments.size(); ++k)
+        if (readings.count(segments[k])) return k;
+    return segments.size();
+}
+
+// Answer a path through a derived reading: compute it for the prefix, then
+// descend any remaining segments through its dictionaries and lists.
+bool readDerived(Singular& root, const std::vector<std::string>& segments, std::size_t startIndex,
+                 std::size_t k, PropertyValue& out) {
+    std::string prefix = segments[startIndex];
+    for (std::size_t i = startIndex + 1; i < k; ++i) prefix += "." + segments[i];
+    PropertyValue value;
+    if (!derivedReadings().at(segments[k])(root, prefix, value)) return false;
+    for (std::size_t i = k + 1; i < segments.size(); ++i) {
+        PropertyValue next;
+        if (auto dict = std::get_if<std::shared_ptr<PropertyDict>>(&value); dict && *dict) {
+            const auto found = (*dict)->elements.find(segments[i]);
+            if (found == (*dict)->elements.end()) return false;
+            next = found->second;
+        } else if (auto list = std::get_if<std::shared_ptr<PropertyList>>(&value); list && *list) {
+            std::size_t index = 0;
+            const std::string& text = segments[i];
+            const auto parsed = std::from_chars(text.data(), text.data() + text.size(), index);
+            if (text.empty() || parsed.ec != std::errc() || parsed.ptr != text.data() + text.size() ||
+                index >= (*list)->elements.size()) return false;
+            next = (*list)->elements[index];
+        } else {
+            return false;
+        }
+        value = std::move(next);
+    }
+    out = std::move(value);
+    return !std::holds_alternative<std::monostate>(out);
+}
+} // namespace
+
+void registerDerivedReading(const std::string& name, DerivedReading reading) {
+    if (name.empty() || name.find('.') != std::string::npos) return;   // one segment
+    ++s_derivedReadingRevision;
+    if (!reading) {
+        derivedReadings().erase(name);
+        return;
+    }
+    derivedReadings()[name] = std::move(reading);
+}
+
+bool hasDerivedReading(const std::string& name) { return derivedReadings().count(name) > 0; }
+
+std::uint64_t derivedReadingRevision() { return s_derivedReadingRevision; }
+
+bool pathReadsUntrackedDerivedReading(const PropertyPath& path) {
+    return derivedReadingIndex(path.segments, 0) < path.segments.size();
 }
 
 PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& out, std::size_t startIndex) const {
+    return getValue(root, out, startIndex, TransferPolicy::currentContext(AccessOp::Read));
+}
+
+PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& out, std::size_t startIndex, const AccessContext& ctx) const {
+    if (startIndex >= segments.size()) {
+        out = PropertyValue{};
+        return PathResult::NoSuchProperty;
+    }
     ResolvedSlot slot = resolve(root, startIndex);
-    
+
+    if (slot.cellId.valid()) {
+        if (PropertyCellTable::instance().isExpired(slot.cellId)) {
+            out = PropertyValue{};
+            return PathResult::ExpiredCell;
+        }
+        const ValueCell* cell = PropertyCellTable::instance().getCell(slot.cellId);
+        if (!cell) {
+            out = PropertyValue{};
+            return PathResult::ExpiredCell;
+        }
+        if (TransferPolicy::instance().accessPolicyRevision() > 0) {
+            AccessContext readCtx = ctx;
+            readCtx.op = AccessOp::Read;
+            if (!TransferPolicy::instance().checkAccess(root, slot, cell, readCtx)) {
+                out = PropertyValue{};
+                return PathResult::AccessDenied;
+            }
+        }
+        if (slot.trailingComponent.empty()) {
+            if (slot.dynamicSlot && !slot.containerPins.empty()) {
+                out = *slot.dynamicSlot;
+                return !std::holds_alternative<std::monostate>(out) ? PathResult::Ok : PathResult::NoSuchProperty;
+            }
+            out = cell->value;
+            return !std::holds_alternative<std::monostate>(out) ? PathResult::Ok : PathResult::NoSuchProperty;
+        }
+
+        const glm::vec3* vec = (slot.dynamicSlot && !slot.containerPins.empty())
+            ? std::get_if<glm::vec3>(slot.dynamicSlot)
+            : std::get_if<glm::vec3>(&cell->value);
+        if (!vec) {
+            out = PropertyValue{};
+            return PathResult::BadComponent;
+        }
+        out = PropertyValue(*componentOf(*const_cast<glm::vec3*>(vec), slot.trailingComponent));
+        return PathResult::Ok;
+    }
+
+    if (TransferPolicy::instance().accessPolicyRevision() > 0) {
+        AccessContext readCtx = ctx;
+        readCtx.op = AccessOp::Read;
+        if (!TransferPolicy::instance().checkAccess(root, slot, nullptr, readCtx)) {
+            out = PropertyValue{};
+            return PathResult::AccessDenied;
+        }
+    }
+
     if (!slot.prop && !slot.dynamicSlot) {
         if (segments.size() - startIndex == 1) {
             if (root.getDynamicProperty(segments[startIndex], out)) return PathResult::Ok;
         }
+        // Nothing stored here: a derived reading may answer (see the header).
+        const std::size_t k = derivedReadingIndex(segments, startIndex);
+        if (k < segments.size() && readDerived(root, segments, startIndex, k, out)) return PathResult::Ok;
+        out = PropertyValue{};
         return PathResult::NoSuchProperty;
     }
 
@@ -253,13 +564,119 @@ PropertyPath::PathResult PropertyPath::getValue(Singular& root, PropertyValue& o
     }
 
     glm::vec3* vec = std::get_if<glm::vec3>(&v);
-    if (!vec) return PathResult::BadComponent;
+    if (!vec) {
+        out = PropertyValue{};
+        return PathResult::BadComponent;
+    }
     out = PropertyValue(*componentOf(*vec, slot.trailingComponent));
     return PathResult::Ok;
 }
 
 PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyValue& v, std::size_t startIndex) const {
+    return setValue(root, v, startIndex, TransferPolicy::currentContext(AccessOp::Write));
+}
+
+PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyValue& v, std::size_t startIndex, const AccessContext& ctx) const {
+    if (startIndex >= segments.size()) return PathResult::NoSuchProperty;
     ResolvedSlot slot = resolve(root, startIndex);
+
+    if (slot.cellId.valid()) {
+        if (PropertyCellTable::instance().isExpired(slot.cellId)) {
+            return PathResult::ExpiredCell;
+        }
+        if (slot.cellMode == CellOwnershipMode::Weak) {
+            return PathResult::ReadOnly;
+        }
+        ValueCell* cell = PropertyCellTable::instance().getCell(slot.cellId);
+        if (!cell) {
+            return PathResult::ExpiredCell;
+        }
+        if (slot.prop && !slot.prop->isStructurallyWritable()) return PathResult::ReadOnly;
+
+        if (TransferPolicy::instance().accessPolicyRevision() > 0) {
+            AccessContext writeCtx = ctx;
+            writeCtx.op = AccessOp::Write;
+            if (!TransferPolicy::instance().checkAccess(root, slot, cell, writeCtx)) {
+                return PathResult::AccessDenied;
+            }
+        }
+
+        if (slot.trailingComponent.empty()) {
+            if (slot.dynamicSlot && !slot.containerPins.empty()) {
+                if (propertyValuesEquivalent(*slot.dynamicSlot, v)) return PathResult::Unchanged;
+                *slot.dynamicSlot = v;
+                PropertyCellTable::instance().notifyMutation(slot.cellId);
+                return PathResult::Ok;
+            }
+            if (propertyValuesEquivalent(cell->value, v)) return PathResult::Unchanged;
+
+            PropertyValue valToWrite = v;
+            double n = 0.0;
+            PropertyValue coerced;
+            if (cell->value.index() != v.index() && propertyValueToNumber(v, n) && coerceLike(cell->value, n, coerced)) {
+                if (propertyValuesEquivalent(cell->value, coerced)) return PathResult::Unchanged;
+                valToWrite = coerced;
+            } else if (!std::holds_alternative<std::monostate>(cell->value) && cell->value.index() != v.index()) {
+                return PathResult::TypeMismatch;
+            }
+
+            cell->value = valToWrite;
+            if (slot.prop) {
+                slot.prop->setValue(valToWrite);
+            }
+            if (slot.owner && slot.rootPropertyId.isValid()) {
+                slot.owner->setDynamicProperty(slot.rootPropertyId, valToWrite);
+            }
+            PropertyCellTable::instance().notifyMutation(slot.cellId);
+            return PathResult::Ok;
+        }
+
+        // Component write
+        double n = 0.0;
+        if (!propertyValueToNumber(v, n)) return PathResult::TypeMismatch;
+        glm::vec3* vec = (slot.dynamicSlot && !slot.containerPins.empty())
+            ? std::get_if<glm::vec3>(slot.dynamicSlot)
+            : std::get_if<glm::vec3>(&cell->value);
+        if (!vec) return PathResult::BadComponent;
+        float& lane = *componentOf(*vec, slot.trailingComponent);
+        if (std::fabs(static_cast<double>(lane) - n) <= 1e-6 * std::max(1.0, std::fabs(n))) {
+            return PathResult::Unchanged;
+        }
+        lane = static_cast<float>(n);
+        if (slot.prop) {
+            slot.prop->setValue(cell->value);
+        }
+        if (slot.owner && slot.rootPropertyId.isValid() && slot.containerPins.empty()) {
+            slot.owner->setDynamicProperty(slot.rootPropertyId, cell->value);
+        }
+        PropertyCellTable::instance().notifyMutation(slot.cellId);
+        return PathResult::Ok;
+    }
+
+    if (TransferPolicy::instance().accessPolicyRevision() > 0) {
+        AccessContext writeCtx = ctx;
+        writeCtx.op = AccessOp::Write;
+        if (!TransferPolicy::instance().checkAccess(root, slot, nullptr, writeCtx)) {
+            return PathResult::AccessDenied;
+        }
+    }
+
+    // A derived reading is an observation, not a dial: a write into one refuses,
+    // and never creates a stored property that would shadow it.
+    if (!slot.prop && !slot.dynamicSlot) {
+        const std::size_t k = derivedReadingIndex(segments, startIndex);
+        PropertyValue probe;
+        if (k < segments.size() && readDerived(root, segments, startIndex, k, probe)) return PathResult::ReadOnly;
+    }
+
+    // A read-only wrapper refuses even when the proposed value is identical.
+    // Equality is a value comparison, not authority to attempt a write.
+    if (slot.prop && !slot.prop->isStructurallyWritable()) return PathResult::ReadOnly;
+    if (slot.structuredProperty && !slot.structuredProperty->isStructurallyWritable()) return PathResult::ReadOnly;
+    if (slot.containerProperty) {
+        if (!slot.containerProperty->isStructurallyWritable()) return PathResult::ReadOnly;
+        if (!slot.containerProperty->exposesMutableContainer()) return PathResult::Unsupported;
+    }
 
     const auto announce = [&](PathResult result, Property* prop, Singular* on, const std::string& fallbackName = "") {
         if (result == PathResult::Ok && on) {
@@ -268,7 +685,57 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
         return result;
     };
 
-        if (!slot.prop && !slot.dynamicSlot) {
+    if (slot.structuredProperty || slot.structuredSource) {
+        if (!slot.dynamicSlot) return PathResult::NoSuchProperty;
+        double number=0;
+        if (propertyValueToNumber(v,number) && !std::isfinite(number)) return PathResult::TypeMismatch;
+        // Authored mathematics retains exact coefficients: the ordinary
+        // approximate numeric Map guard must not erase a small field edit.
+        if (propertyValueUnchanged(*slot.dynamicSlot,v)) return PathResult::Unchanged;
+        *slot.dynamicSlot=v; // detached view only; refuse before canonical commit
+        try {
+            auto original=propertyValueToJson(slot.structuredOriginal);
+            auto payload=propertyStructureToJson(slot.structuredView);
+            // These existing substrate coefficients are stored as float.
+            // Canonicalize only their named codec slots, never integer ops or
+            // the double precision authored mathematics beneath astDefinition.
+            for (const char* key : {"baseDensity", "baseFlowX", "baseFlowY", "baseFlowZ", "frequency", "amplitude"}) {
+                if (!payload.contains(key)) continue;
+                if (!payload[key].is_number()) return PathResult::TypeMismatch;
+                const float number=payload[key].get<float>();
+                if (!std::isfinite(number)) return PathResult::TypeMismatch;
+                payload[key]=number;
+            }
+            auto candidate=propertyValueFromJson({{"t",original.at("t")},{"v",payload}});
+            if (propertyValueToJson(candidate).at("v")!=payload) return PathResult::TypeMismatch;
+            const OntoMath::Piecewise* form=nullptr;
+            auto expected=OntoMath::ValueKind::Unknown;
+            if (auto field=std::get_if<std::shared_ptr<OntoMath::VectorField>>(&candidate); field && *field) {
+                form=&(*field)->astDefinition;expected=OntoMath::ValueKind::Vector;
+            } else if (auto field=std::get_if<std::shared_ptr<OntoMath::ScalarField>>(&candidate); field && *field) {
+                form=&(*field)->astDefinition;expected=OntoMath::ValueKind::Scalar;
+            } else return PathResult::TypeMismatch;
+            for (const auto& piece:form->pieces) {
+                if (piece.mathNode) {
+                    auto type=piece.mathNode->typeOf({},"root",true);
+                    if (!type || (*type!=OntoMath::ValueKind::Unknown && *type!=expected)) return PathResult::TypeMismatch;
+                }
+                if (piece.whereLEZero) {
+                    auto type=piece.whereLEZero->typeOf({},"selector",true);
+                    if (!type || (*type!=OntoMath::ValueKind::Unknown && *type!=OntoMath::ValueKind::Scalar)) return PathResult::TypeMismatch;
+                }
+            }
+            if (slot.structuredProperty)
+                return slot.structuredProperty->setValue(candidate)
+                    ? announce(PathResult::Ok,slot.structuredProperty,slot.owner) : PathResult::ReadOnly;
+            if (slot.structuredSource==slot.owner->getDynamicPropertyPtr(Earthcall::StringInterner::intern(slot.dynamicKey)))
+                return slot.owner->setDynamicProperty(slot.dynamicKey,candidate) ? PathResult::Ok : PathResult::ReadOnly;
+            *slot.structuredSource=std::move(candidate);
+            return announce(PathResult::Ok,slot.containerProperty,slot.owner,slot.dynamicKey);
+        } catch (const std::exception&) { return PathResult::TypeMismatch; }
+    }
+
+    if (!slot.prop && !slot.dynamicSlot) {
         if (segments.size() - startIndex == 1) {
             PropertyValue cur;
             if (root.getDynamicProperty(segments[startIndex], cur) && propertyValuesEquivalent(cur, v)) {
@@ -309,10 +776,21 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
                     return PathResult::Ok;
                 }
             } else {
-                *slot.dynamicSlot = valToWrite;
-                if (!slot.dynamicKey.empty()) {
-                    slot.owner->notifyPropertyChanged(slot.owner, slot.dynamicKey);
+                if (slot.containerProperty) {
+                    if (!slot.containerPins.empty()) {
+                        PropertyValue previousValue = *slot.dynamicSlot;
+                        *slot.dynamicSlot = valToWrite;
+                        if (!slot.containerProperty->setValue(slot.containerPins.front())) {
+                            *slot.dynamicSlot = std::move(previousValue);
+                            return PathResult::ReadOnly;
+                        }
+                    } else {
+                        return PathResult::ReadOnly;
+                    }
+                } else {
+                    *slot.dynamicSlot = valToWrite;
                 }
+                announce(PathResult::Ok, slot.containerProperty, slot.owner, slot.dynamicKey);
                 return PathResult::Ok;
             }
             return PathResult::ReadOnly;
@@ -343,9 +821,7 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
             }
         } else {
             *slot.dynamicSlot = PropertyValue(*vec);
-            if (!slot.dynamicKey.empty()) {
-                slot.owner->notifyPropertyChanged(slot.owner, slot.dynamicKey);
-            }
+            announce(PathResult::Ok, slot.containerProperty, slot.owner, slot.dynamicKey);
             return PathResult::Ok;
         }
         return PathResult::ReadOnly;
