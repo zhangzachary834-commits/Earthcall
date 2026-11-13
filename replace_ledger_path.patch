@@ -1,0 +1,54 @@
+--- src/ZonesOfEarth/ZoneManager.cpp
++++ src/ZonesOfEarth/ZoneManager.cpp
+@@ -604,22 +604,26 @@
+ namespace {
+ constexpr const char* kOwnedByRelation = "owned-by";
++}
+
+-bool legacyOwnerNamesPerson(const Zone& zone, const Person& person) {
++namespace detail {
++bool legacyOwnerNamesPerson(const Zone& zone, const Person& person, std::optional<std::filesystem::path> ledgerPathOverride) {
+     if (!zone.propOwnerKind().empty() && zone.propOwnerKind() != Zone::kOwnerKindPerson) {
+         return false;
+     }
+     if (zone.owner() == person.getIdentifier()) return true;
+     if (!person.hasIdentity()) return zone.owner() == person.getDisplayName();
+
+     // Once the Person has a key, spelling alone is deliberately insufficient.
+     // The ONE legitimate bridge from an old owner string to a keyed Person is
+     // the migration ledger: it records the explicit trust-on-first-migration
+     // act that this legacy spelling was signed over to this exact SingularId.
+-    Identity::IdentityLedger ledger;
++    Identity::IdentityLedger ledger(ledgerPathOverride.value_or(Identity::IdentityLedger::defaultPath()));
+     if (!ledger.load()) return false;
+     const auto migrated = ledger.find(zone.owner());
+     return migrated.has_value() && *migrated == person.personId();
+ }
++}
+
++namespace {
+ bool zoneNamesPersonOwner(const Zone& zone, const Person& person) {
+     const std::string personId = person.getIdentifier();
+@@ -638,7 +642,7 @@
+     // string is never allowed to overrule it. The cache is consulted only for
+     // legacy Homes that have no owned-by Relation yet.
+     if (hasOwnedBy) return false;
+-    return legacyOwnerNamesPerson(zone, person);
++    return detail::legacyOwnerNamesPerson(zone, person, std::nullopt);
+ }
+
+ std::vector<const Zone*> primaryHomesForPerson(const ZoneManager& manager,
+--- src/ZonesOfEarth/ZoneManager.hpp
++++ src/ZonesOfEarth/ZoneManager.hpp
+@@ -19,6 +19,11 @@
+ class Person;
+
+ bool isObservationZone(const Zone& zone);
+
++namespace detail {
++    // Exposed for testing
++    bool legacyOwnerNamesPerson(const Zone& zone, const Person& person, std::optional<std::filesystem::path> ledgerPathOverride = std::nullopt);
++}
++
+ // Persistence and UI state for save/load operations
+ struct SaveLoadState {
