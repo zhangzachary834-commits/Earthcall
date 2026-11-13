@@ -1,0 +1,38 @@
+name: Portfolio bridge Python witness
+
+on:
+  push:
+    paths:
+      - '.github/workflows/portfolio-bridge-python.yml'
+      - 'src/Singularity/Foreign/py/api/routes.py'
+      - 'src/Singularity/Foreign/py/bridge.py'
+      - 'tests/singularity/py/test_portfolio_bridge.py'
+  pull_request:
+    paths:
+      - '.github/workflows/portfolio-bridge-python.yml'
+      - 'src/Singularity/Foreign/py/api/routes.py'
+      - 'src/Singularity/Foreign/py/bridge.py'
+      - 'tests/singularity/py/test_portfolio_bridge.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portfolio-bridge-python:
+    name: Portfolio bridge Python regression (Ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out tested commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install isolated witness dependencies
+        run: python -m pip install 'Flask==3.1.2' 'websockets==15.0.1'
+      - name: Execute portfolio bridge projection and origin regression
+        run: python -m unittest discover -s tests/singularity/py -p 'test_portfolio_bridge.py' -v

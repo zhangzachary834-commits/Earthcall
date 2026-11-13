@@ -17,6 +17,7 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
     def test_projection_is_read_only_and_bounded(self):
         bridge = CppBridge()
         bridge.connected = True
+        bridge.has_engine_snapshot = True
         bridge.current_state = {
             "timestamp": 123.0,
             "active_zone_index": 2,
@@ -61,6 +62,8 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
 
     def test_public_portfolio_origin_is_explicitly_allowed(self):
         origin = "https://zhangzachary834-commits.github.io"
+        self.assertIsInstance(PORTFOLIO_ALLOWED_ORIGINS, set)
+        self.assertGreater(len(PORTFOLIO_ALLOWED_ORIGINS), 0)
         self.assertIn(origin, PORTFOLIO_ALLOWED_ORIGINS)
         self.assertTrue(_portfolio_origin_allowed(origin))
         self.assertFalse(_portfolio_origin_allowed("https://evil.example"))
