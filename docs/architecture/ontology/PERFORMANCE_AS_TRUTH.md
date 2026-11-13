@@ -120,3 +120,9 @@ This distinction is load-bearing for both [`CPU_GPU_MICRO_MASTERY.md`](CPU_GPU_M
 - The ontological lie only happens when a system **confuses the two orderings**—claiming an object is a continuous, lifelike field while secretly shattering it into a million triangles under the hood because the engine lacked the mathematical substrate to carry the continuous form.
 - By keeping each ordering honest about what kind of being it embodies, Earthcall preserves both the exactness of the continuous `OntoMath` field and the crystalline beauty of authored discrete geometry—each running at native speed because neither is pretending to be the other.
 
+
+## Interrelated Documents
+- `docs/architecture/SDF_SPATIAL_PROPHETIC_DIRECT_PROFITABILITY_ARTIFACT.md`
+
+## Thoughts on Integration and Interrelation
+The specific artifact findings regarding SDF profitability directly illustrate the philosophy of Performance as Truth. Theoretical optimizations, such as complex spatial hierarchies (e.g., dense/sparse octrees or distance-field traversal), are rejected when they fail to provide measurable wall-clock benefits on the execution substrate. By discarding these "illusions" of optimization that only add baggage, Earthcall strictly adheres to the principle that computational resources must be allocated minimally and purely to truthfully represent the authored being, honoring the underlying telos of speed over brute-force complexity.
