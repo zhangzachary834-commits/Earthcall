@@ -2,9 +2,14 @@
 #include "Person/Person.hpp"
 #include "Person/Soul/Soul.hpp"
 #include "Person/Body/Body.hpp"
+#include "Identity/IdentityLedger.hpp"
+#include "Identity/PersonPresence.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 
+#include <array>
 #include <cassert>
+#include <cstdlib>
+#include <optional>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -297,6 +302,99 @@ static void testLoadPersonLegacyJsonFormat() {
     std::cout << "  loadPerson legacy .json format resolution OK\n";
 }
 
+// Isolate the identity migration ledger, which deliberately lives OUTSIDE
+// SaveSystem::saveRoot(). A SaveRoot-only test would write the user's real
+// ~/.earthcall/identity/migration-ledger.json — never acceptable for a witness.
+struct ScopedIdentityTestEnv {
+    std::optional<std::string> previousHome;
+    std::optional<std::string> previousPersonId;
+
+    explicit ScopedIdentityTestEnv(const std::filesystem::path& home) {
+        if (const char* p = std::getenv("EARTHCALL_HOME")) previousHome = p;
+        if (const char* p = std::getenv("EARTHCALL_PERSON_ID")) previousPersonId = p;
+#ifdef _WIN32
+        assert(_putenv_s("EARTHCALL_HOME", home.string().c_str()) == 0);
+        assert(_putenv_s("EARTHCALL_PERSON_ID", "") == 0);
+#else
+        assert(setenv("EARTHCALL_HOME", home.string().c_str(), 1) == 0);
+        assert(unsetenv("EARTHCALL_PERSON_ID") == 0);
+#endif
+    }
+
+    ~ScopedIdentityTestEnv() {
+#ifdef _WIN32
+        _putenv_s("EARTHCALL_HOME", previousHome ? previousHome->c_str() : "");
+        _putenv_s("EARTHCALL_PERSON_ID", previousPersonId ? previousPersonId->c_str() : "");
+#else
+        if (previousHome) setenv("EARTHCALL_HOME", previousHome->c_str(), 1);
+        else unsetenv("EARTHCALL_HOME");
+        if (previousPersonId) setenv("EARTHCALL_PERSON_ID", previousPersonId->c_str(), 1);
+        else unsetenv("EARTHCALL_PERSON_ID");
+#endif
+    }
+};
+
+// Calls the SAME production selection function as Engine::initLogic, not a
+// synthetic PersonDatabase::loadPerson or duplicated boot algorithm.
+// Full application boot and private-key authentication are separate contracts.
+static void testProductionPersonProfileRestorationPath() {
+    TestEnvironment env;
+    ScopedIdentityTestEnv identityHome(env.tempDir / "identity-home");
+
+    Person untouched = createDummyPerson("Untouched");
+    assert(Identity::restoreUnambiguousLocalProfile(untouched) == 0);
+    assert(untouched.getDisplayName() == "Untouched");
+
+    Person legacy = createDummyPerson("Zach");
+    const nlohmann::json legacyJson = legacy.serialize();
+    Person keyed = createDummyPerson("Zach");
+    std::array<uint8_t, 32> key{};
+    key[0] = 42;
+    const auto personId = Identity::SingularId::fromPublicKey(key);
+    keyed.setPersonId(personId);
+    const nlohmann::json keyedJson = keyed.serialize();
+
+    Identity::IdentityLedger ledger;
+    assert(ledger.path().string().find(env.tempDir.string()) == 0);
+    assert(!ledger.load()); // Fresh sandbox; never import a real Person ledger.
+    ledger.record("Zach", personId);
+    assert(ledger.save());
+
+    const std::string folder = SaveSystem::ensureSaveTypeFolder(SaveSystem::SaveType::PERSON);
+    {
+        std::ofstream file(folder + "/Zach.ecform");
+        file << legacyJson.dump();
+        assert(file.good());
+    }
+    {
+        std::ofstream file(folder + "/" + keyed.getIdentifier() + ".ecform");
+        file << keyedJson.dump();
+        assert(file.good());
+    }
+
+    Person restored = createDummyPerson("Placeholder");
+    assert(Identity::restoreUnambiguousLocalProfile(restored) == 1);
+    assert(restored.getDisplayName() == "Zach");
+    assert(restored.hasIdentity());
+    assert(restored.personId() == personId);
+    assert(!restored.isLoggedIn()); // A profile file never authenticates a Person.
+
+    // Two unsuperseded profiles are ambiguous: boot must refuse to guess.
+    Person other = createDummyPerson("Another");
+    {
+        std::ofstream file(folder + "/Another.ecform");
+        file << other.serialize().dump();
+        assert(file.good());
+    }
+    Person refused = createDummyPerson("Untouched");
+    assert(Identity::restoreUnambiguousLocalProfile(refused) == 2);
+    assert(refused.getDisplayName() == "Untouched");
+    assert(!refused.hasIdentity());
+    assert(!refused.isLoggedIn());
+
+    std::cout << "  production Person boot profile selection and refusal OK\n";
+}
+
 int main() {
     std::cout << "person_database_test:\n";
     testGetInstanceSingleton();
@@ -313,6 +411,7 @@ int main() {
     testLoadPersonDeserializationFailure();
     testSaveAndLoadDistinctPersonsSameDisplayName();
     testLoadPersonLegacyJsonFormat();
+    testProductionPersonProfileRestorationPath();
     std::cout << "person_database_test: ALL OK\n";
     return 0;
 }
