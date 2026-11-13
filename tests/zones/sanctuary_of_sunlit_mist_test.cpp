@@ -17,6 +17,7 @@
 #include <memory>
 #include <filesystem>
 #include <cassert>
+#include <chrono>
 
 namespace {
 
@@ -44,10 +45,37 @@ int main() {
         return 1;
     }
 
-    // Ensure SaveSystem saveRoot points to the containing saves directory
+    // loadState may persist Zones: never point it at authored saves.
+    // This world references only the Sanctuary Zone; copy that closure, not all saves.
     const auto absWorld = std::filesystem::absolute(worldSavePath);
-    const auto savesDir = absWorld.parent_path().parent_path();
-    SaveSystem::setSaveRoot(savesDir.string());
+    const auto authoredSaves = absWorld.parent_path().parent_path();
+    const auto authoredZone = authoredSaves / "zones" / "Sanctuary of Sunlit Mist";
+    if (!std::filesystem::is_directory(authoredZone)) {
+        std::cerr << "sanctuary_of_sunlit_mist_test: missing authored Zone: "
+                  << authoredZone << '\n';
+        return 1;
+    }
+
+    const auto scratchDir = std::filesystem::temp_directory_path() /
+        ("earthcall-sanctuary-test-" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    struct ScratchCleanup {
+        std::filesystem::path path;
+        std::string previousRoot;
+        ~ScratchCleanup() {
+            SaveSystem::setSaveRoot(previousRoot);
+            std::error_code ec;
+            std::filesystem::remove_all(path, ec);
+        }
+    } scratch{scratchDir, SaveSystem::saveRoot()};
+
+    std::filesystem::create_directories(scratchDir / "worlds");
+    std::filesystem::create_directories(scratchDir / "zones");
+    const auto worldTarget = scratchDir / "worlds" / absWorld.filename();
+    std::filesystem::copy_file(absWorld, worldTarget);
+    std::filesystem::copy(authoredZone, scratchDir / "zones" / authoredZone.filename(),
+                          std::filesystem::copy_options::recursive);
+    SaveSystem::setSaveRoot(scratchDir.string());
 
     ZoneManager mgr;
     Core::Camera camera;
@@ -67,7 +95,7 @@ int main() {
     ctx.lawManager = &laws;
     ctx.worldTime = &worldTime;
 
-    mgr.loadState(worldSavePath, ctx);
+    mgr.loadState(worldTarget.string(), ctx);
 
     check(!mgr.zones().empty(), "zones loaded from sanctuary save");
     if (mgr.zones().empty()) {
