@@ -331,3 +331,12 @@ by keeping it where no law can look.
 Earthcall’s rejection of black boxes isn’t just an engineering preference; it’s an ontological commitment rooted in the belief that the system should be legible and authorable by its participants. This principle ties deeply to [ALGORITHMS_AS_LAW.md](../law/ALGORITHMS_AS_LAW.md) and [INTELLECTUAL_LINEAGE.md](../../core/Intellectual Lineage/INTELLECTUAL_LINEAGE.md).
 
 When we hide the state or purpose (telos) of a being inside private C++ member variables, we violate this principle. By integrating this understanding with the broader intellectual lineage, we realize that true End-to-End Coherence requires every structural aspect of the world to be explicitly authored and inspectable as Formations and Relations. This ensures that the engine remains a transparent substrate for expression rather than a closed, opaque box.
+
+## Addendum: Jules Integration Reflection
+
+**Interrelated Documents:**
+- `docs/architecture/law/DERIVED_STATE_LEDGER.md`
+
+**Thoughts on Integration and Interrelation**
+
+The "No Black Box" principle insists that no state or purpose should be hidden from the ontology and from authorable Laws. This spatial and state-based transparency has a direct temporal counterpart tracked in the `Derived-State Ledger`. Just as a hidden member variable is a spatial black box that a Law cannot read or govern, an undocumented cache or unrecorded derived structure is a temporal black box—an invisible mechanism whose invalidation logic cannot be tested or falsified. By demanding that every derived state declare its dependencies and invalidation rules in the Ledger, Earthcall extends the No Black Box philosophy from static data to the engine's dynamic, temporal execution flow.
