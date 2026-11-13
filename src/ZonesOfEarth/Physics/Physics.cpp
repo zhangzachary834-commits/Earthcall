@@ -679,26 +679,16 @@ namespace Physics {
     // -----------------------------------------------------------------
     void setupPhysicsEventListeners() {
         auto& eventBus = Core::EventBus::instance();
+        static Core::EventBus::SubscriptionToken s_physicsCollisionToken;
+        if (s_physicsCollisionToken) {
+            eventBus.unsubscribe(s_physicsCollisionToken);
+        }
         
-        // Listen for physics collisions with high priority
-        eventBus.subscribe<PhysicsCollisionEvent>([](const PhysicsCollisionEvent& event) {
-            
-            // Record collision in physics registry (existing functionality)
-            if (event.objectA && event.objectB) {
-                recordCollision(*event.objectA, *event.objectB, event.impactForce);
+        // Listen for physics contact-began edge events to record collisions in relation graph once upon impact
+        s_physicsCollisionToken = eventBus.subscribe<ECA::Event>([](const ECA::Event& event) {
+            if (event.type == "contact-began" && event.subject && event.object) {
+                recordCollision(*event.subject, *event.object, 1.0f);
             }
-            
-            // NO ECA echo here. This handler used to mint two
-            // "objects-collided" events per pair — and PhysicsCollisionEvent
-            // is published on EVERY frame an overlap persists, so that was
-            // ~120 facts per second per resting pair, each one a Rete
-            // assertion, feeding a law that spawned a being for each.
-            //
-            // The ECA vocabulary for contact is published where the edge is
-            // actually known, in updateBodies: `collision` (the level, every
-            // frame of overlap), `contact-began` and `contact-ended` (the two
-            // edges, once each). This handler does what only it can do —
-            // record the collision in the relation graph.
         }, 10); // High priority for physics events
     }
 
