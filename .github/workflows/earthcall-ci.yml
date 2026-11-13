@@ -26,6 +26,8 @@ jobs:
     env:
       FOCUSED_TESTS: |
         contour_test
+        key_pair_test
+        property_path_test
         line_editor_test
         law_line_test
         law_sentence_test
