@@ -147,6 +147,9 @@ void test_distinct_perspectives_same_spelling() {
     assert(manager.get(1)->getIdentifier() == "p2_cam");
     assert(manager.get(1)->getName() == "Overhead View");
 
+    // Searching by display name ("Overhead View") returns -1 (ambiguous) because two perspectives share it
+    assert(manager.findPerspective("Overhead View") == static_cast<size_t>(-1));
+
     // Switching by unique identifier targets the specific perspective
     manager.switchTo("p2_cam");
     assert(manager.currentIndex() == 1);
