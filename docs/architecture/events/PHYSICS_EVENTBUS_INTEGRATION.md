@@ -120,4 +120,15 @@ The physics system now seamlessly integrates with:
 - **Audio System**: Collision events can trigger sound effects
 - **Particle System**: Collision events can create visual effects
 
-This hybrid approach gives you the best of both worlds: reliable hard-wired physics calculations with flexible event-driven responses! 
+This hybrid approach gives you the best of both worlds: reliable hard-wired physics calculations with flexible event-driven responses!
+## Interrelated Documents
+
+* [No Black Box](../ontology/NO_BLACK_BOX.md)
+* [Physics and Collision](PHYSICS_AND_COLLISION.md)
+* [Event Bus vs Event Handler](EVENT_BUS_VS_EVENT_HANDLER.md)
+
+## Thoughts on Integration and Interrelation
+
+The transition of the physics system to a hybrid event-driven architecture directly embodies the [No Black Box](../ontology/NO_BLACK_BOX.md) principle. By explicitly publishing `PhysicsCollisionEvent`s onto the EventBus, we ensure that the internal state and actions of the physics engine are no longer hidden within C++ execution loops. Instead, they are legible, accessible, and authorable by any participant in the system.
+
+This integration bridges the gap between raw, continuous physical simulation and discrete, semantic meaning. When an object collides, the event is not just a mathematical curiosity; it becomes a registered fact within the active Zone's relation graph. This allows Persons to author Laws that react to these physical phenomena without needing to peer into the underlying collision detection code, thus fulfilling Earthcall's promise of an ontology where nothing a Person could mean something by is kept in the dark.
