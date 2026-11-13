@@ -72,9 +72,19 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // Redirect save root to an isolated scratch directory and copy world JSON
+    // into it rather than backing up the entire 1.1GB saves directory.
+    const auto scratchDir = std::filesystem::temp_directory_path() /
+        ("earthcall-perf-scratch-" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+    std::filesystem::create_directories(scratchDir / "worlds");
+    const auto targetWorld = scratchDir / "worlds" / std::filesystem::path(world).filename();
+    std::filesystem::copy_file(world, targetWorld, std::filesystem::copy_options::overwrite_existing);
+
+    const std::string originalSaveRoot = SaveSystem::saveRoot();
+    SaveSystem::setSaveRoot(scratchDir.string());
+
+    TestSupport::BootedEngineHarness h("Player", "humanoid", /*hydrateAllZones=*/false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);
@@ -164,6 +174,10 @@ int main(int argc, char** argv) {
         static_cast<unsigned long long>(h.lawManager.slowAdapterMaintenanceRuns()),
         h.lawManager.slowAdapter().roadsKnown(), h.lawManager.slowAdapter().roadsPending(),
         tierDirect, tierAdapter, tierVocabulary, tierSweep);
+
+    SaveSystem::setSaveRoot(originalSaveRoot);
+    std::error_code cleanupEc;
+    std::filesystem::remove_all(scratchDir, cleanupEc);
 
     return 0;
 }
