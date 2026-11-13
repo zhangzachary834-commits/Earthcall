@@ -2,13 +2,18 @@
 
 #include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 #include "ConstructedBeing/Singular/Property/Property.hpp"
+#include "Identity/FirstMoverRegister.hpp"
+#include "Identity/PersonPresence.hpp"
+#include "Person/Person.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
 
+#include <algorithm>
 #include <ctime>
 #include <string>
+#include <vector>
 
 namespace SecondNatureLawAuthoring {
 namespace {
@@ -34,10 +39,35 @@ void writeString(Singular& being, const char* property, const std::string& value
 
 Singular* findBeing(const std::string& id) {
     if (id.empty()) return nullptr;
+
+    const auto appendUnique = [](std::vector<Singular*>& candidates, Singular* being) {
+        if (being && std::find(candidates.begin(), candidates.end(), being) == candidates.end()) {
+            candidates.push_back(being);
+        }
+    };
+
+    std::vector<Singular*> people;
     for (Singular* being : Universe::instance().beings()) {
-        if (being && being->getIdentifier() == id) return being;
+        if (auto* person = dynamic_cast<Person*>(being)) {
+            if (Identity::personAnswersTo(*person, id)) {
+                appendUnique(people, person);
+            }
+        }
     }
-    return nullptr;
+    if (people.size() == 1) return people.front();
+    if (people.size() > 1) return nullptr;
+
+    std::vector<Singular*> exactBeings;
+    for (Singular* being : Universe::instance().beings()) {
+        if (!being || dynamic_cast<Person*>(being)) continue;
+        if (being->getIdentifier() == id) {
+            appendUnique(exactBeings, being);
+        }
+    }
+    if (exactBeings.size() == 1) return exactBeings.front();
+    if (exactBeings.size() > 1) return nullptr;
+
+    return Identity::FirstMoverRegister::instance().authorFor(id);
 }
 
 Law* resolvePrototype(const ECA::Event& event, LawManager& laws, Singular*& request) {
