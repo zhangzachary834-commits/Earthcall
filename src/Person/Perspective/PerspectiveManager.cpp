@@ -145,15 +145,27 @@ bool PerspectiveManager::hasPerspective(const std::string& id) const {
 }
 
 size_t PerspectiveManager::findPerspective(const std::string& nameOrId) const {
+    size_t idMatch = static_cast<size_t>(-1);
     for (size_t i = 0; i < _perspectives.size(); ++i) {
         if (_perspectives[i] && _perspectives[i]->getIdentifier() == nameOrId) {
-            return i;
+            if (idMatch != static_cast<size_t>(-1)) {
+                return static_cast<size_t>(-1); // ambiguous identifier
+            }
+            idMatch = i;
         }
     }
+    if (idMatch != static_cast<size_t>(-1)) {
+        return idMatch;
+    }
+
+    size_t nameMatch = static_cast<size_t>(-1);
     for (size_t i = 0; i < _perspectives.size(); ++i) {
         if (_perspectives[i] && _perspectives[i]->getName() == nameOrId) {
-            return i;
+            if (nameMatch != static_cast<size_t>(-1)) {
+                return static_cast<size_t>(-1); // ambiguous display name
+            }
+            nameMatch = i;
         }
     }
-    return static_cast<size_t>(-1);
+    return nameMatch;
 }
