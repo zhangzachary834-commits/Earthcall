@@ -72,12 +72,32 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // Protect the real Zone identity store by redirecting SaveSystem to a lightweight scratch root
+    // and copying only the target world file, avoiding 1.6GB whole-tree I/O backup overhead.
+    const std::string originalSaveRoot = SaveSystem::saveRoot();
+    const std::filesystem::path scratch = std::filesystem::temp_directory_path() /
+        ("earthcall_slow_adapter_scratch_" + std::to_string(
+            std::chrono::steady_clock::now().time_since_epoch().count()));
+    std::filesystem::create_directories(scratch / "worlds");
+    const std::filesystem::path targetWorldPath = scratch / "worlds" / std::filesystem::path(world).filename();
+    std::filesystem::copy_file(world, targetWorldPath, std::filesystem::copy_options::overwrite_existing);
+
+    struct SaveScratchGuard {
+        std::filesystem::path scratch;
+        std::string originalRoot;
+        ~SaveScratchGuard() {
+            SaveSystem::setSaveRoot(originalRoot);
+            std::error_code ec;
+            std::filesystem::remove_all(scratch, ec);
+        }
+    } scratchGuard{scratch, originalSaveRoot};
+
+    SaveSystem::setSaveRoot(scratch.string());
+
+    TestSupport::BootedEngineHarness h("Player", "person-1", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(targetWorldPath.string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
