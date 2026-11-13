@@ -28,7 +28,7 @@ int main() {
         std::fprintf(stderr, "law_graph_test: glfwInit failed\n");
         return 1;
     }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); glfwWindowHint(GLFW_CONTEXT_CREATION_API, GLFW_OSMESA_CONTEXT_API);
     GLFWwindow* window = glfwCreateWindow(64, 64, "law_graph_test", nullptr, nullptr);
     if (!window) {
         std::fprintf(stderr, "law_graph_test: no GL context\n");
