@@ -6,9 +6,12 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Physics/Physics.hpp"
+#include "Person/Person.hpp"
+#include "Identity/PersonPresence.hpp"
 
 #include <ctime>
 #include <string>
+#include <vector>
 
 namespace SecondNatureLawAuthoring {
 namespace {
@@ -34,9 +37,24 @@ void writeString(Singular& being, const char* property, const std::string& value
 
 Singular* findBeing(const std::string& id) {
     if (id.empty()) return nullptr;
+    std::vector<Singular*> exactMatches;
     for (Singular* being : Universe::instance().beings()) {
-        if (being && being->getIdentifier() == id) return being;
+        if (being && being->getIdentifier() == id) {
+            exactMatches.push_back(being);
+        }
     }
+    if (exactMatches.size() == 1) return exactMatches.front();
+    if (exactMatches.size() > 1) return nullptr; // ambiguous identifier match
+
+    std::vector<Singular*> matches;
+    for (Singular* being : Universe::instance().beings()) {
+        if (auto* person = dynamic_cast<Person*>(being)) {
+            if (Identity::personAnswersTo(*person, id)) {
+                matches.push_back(being);
+            }
+        }
+    }
+    if (matches.size() == 1) return matches.front();
     return nullptr;
 }
 
