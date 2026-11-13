@@ -995,7 +995,6 @@ std::shared_ptr<Zone> ZoneManager::authorZone(const std::string& identifier,
     addZone(zone);
     for (const auto& obj : zone->getOwnedObjects()) {
         if (!obj) continue;
-        obj->addZoneDesignation(zone->name());
         obj->addZoneDesignation(zone->getIdentifier());
         globalObjects.push_back(obj);
     }
@@ -1426,7 +1425,6 @@ void ZoneManager::hydrateFromZoneStore() {
         if (!z) continue;
         for (const auto& obj : z->getOwnedObjects()) {
             if (!obj) continue;
-            obj->addZoneDesignation(z->name());
             obj->addZoneDesignation(z->getIdentifier());
             globalObjects.push_back(obj);
         }
@@ -1477,7 +1475,6 @@ bool ZoneManager::forkZone(const std::string& sourceId, const std::string& newId
     addZone(forked);
     for (const auto& obj : forked->getOwnedObjects()) {
         if (!obj) continue;
-        obj->addZoneDesignation(forked->name());
         obj->addZoneDesignation(forked->getIdentifier());
         globalObjects.push_back(obj);
     }
@@ -2265,7 +2262,6 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
             if (!z) continue;
             for (const auto& obj : z->getOwnedObjects()) {
                 if (!obj) continue;
-                obj->addZoneDesignation(z->name());
                 obj->addZoneDesignation(z->getIdentifier());
                 globalObjects.push_back(obj);
             }
@@ -2809,7 +2805,6 @@ void ZoneManager::loadTestObservation(const std::string& filename, SaveContext& 
 
         for (const auto& obj : zone->getOwnedObjects()) {
             if (!obj) continue;
-            obj->addZoneDesignation(zone->name());
             obj->addZoneDesignation(zone->getIdentifier());
             globalObjects.push_back(obj);
         }

@@ -796,7 +796,6 @@ struct WebSocketServer::Impl {
                 }
 
                 // Register with Zone and Global Objects for persistence
-                obj->addZoneDesignation(mgr.active().name());
                 obj->addZoneDesignation(mgr.active().getIdentifier());
                 std::string onBehalfOf = j.value("onBehalfOf", "");
                 std::string lawId = onBehalfOf.empty() ? "mcp" : "mcp (claims to act on behalf of " + onBehalfOf + ", unverified)";

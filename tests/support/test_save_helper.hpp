@@ -54,7 +54,7 @@ inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawMan
     int objectCount = 0;
     for (const auto& obj : zone->getOwnedObjects()) {
         if (!obj) continue;
-        obj->addZoneDesignation(zone->name());
+        obj->addZoneDesignation(zone->getIdentifier());
         const glm::vec3 p = obj->getPosition();
         minP = glm::min(minP, p);
         maxP = glm::max(maxP, p);
