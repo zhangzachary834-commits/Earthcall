@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "fileEdits": {
+    "mode": "auto_sandbox",
+    "reviewPathPatterns": [
+      "package.json",
+      "CMakeLists.txt",
+      ".github/**",
+      "scripts/**",
+      "**/*.sh",
+      "**/*.command",
+      "config/**"
+    ]
+  },
+  "commands": {
+    "mode": "auto_except_review",
+    "reviewPrograms": [
+      "rm",
+      "sudo",
+      "curl",
+      "wget",
+      "ssh",
+      "scp",
+      "sftp",
+      "rsync",
+      "chmod",
+      "chown",
+      "kill",
+      "pkill",
+      "launchctl",
+      "security",
+      "open",
+      "osascript",
+      "docker",
+      "podman",
+      "nerdctl",
+      "nc",
+      "ncat",
+      "socat",
+      "bash",
+      "sh",
+      "zsh",
+      "fish"
+    ],
+    "reviewTokens": [
+      "--force",
+      "--hard",
+      "--delete",
+      "--recursive",
+      "--privileged",
+      "--network",
+      "--mount",
+      "/etc",
+      "/usr",
+      "/Applications",
+      "~/.ssh",
+      "~/Library/Keychains",
+      "git push",
+      "git reset",
+      "git clean"
+    ]
+  },
+  "limits": {
+    "timeoutSeconds": 180,
+    "maxTimeoutSeconds": 900,
+    "cpus": 4,
+    "memory": "4g",
+    "pids": 256,
+    "maxOutputChars": 250000
+  },
+  "image": "earthcall-sandbox:latest"
+}
