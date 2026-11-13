@@ -72,3 +72,11 @@ Collisions translate physical contact into legible ontological facts:
 - **Edge Transitions**: Transition from non-touching to touching emits `contact-began`. Transition from touching to separated emits `contact-ended`.
 - **Continuous Logic**: Continuous contact state is queried via `isTouching(other)`.
 - **Acoustics & Reactions**: The `physics-acoustics` first-mover law listens to `contact-began` to spawn dynamic sound emitter concepts in-world.
+
+## Interrelated Documents
+- [PHYSICS_EVENTBUS_INTEGRATION.md](PHYSICS_EVENTBUS_INTEGRATION.md)
+- [FIRST_MOVER_AUTHORING.md](../law/FIRST_MOVER_AUTHORING.md)
+
+## Thoughts on Integration and Interrelation
+
+The mechanics detailed here—such as the Fixed Timestep Loop and the Collision Pipeline—are the structural realization of the First Mover mechanics discussed in [FIRST_MOVER_AUTHORING.md](../law/FIRST_MOVER_AUTHORING.md). Hardcoded physics operate as `FirstMoverLaw` instances, providing the foundational behaviors (like gravity) that the world relies on. This document's focus on translating physical contact into ontological facts connects directly with [PHYSICS_EVENTBUS_INTEGRATION.md](PHYSICS_EVENTBUS_INTEGRATION.md), which provides the EventBus mechanism to publish these facts. Together, they ensure that the physics system acts not as a sovereign, opaque authority, but as a transparent First Mover that serves the Person-authored reality.
