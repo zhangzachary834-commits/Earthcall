@@ -131,6 +131,7 @@ Earthcall/
             src/
               assets/
         mcp/               earthcall-mcp-server.js
+        Shell/
         py/                app.py
           agent/
           api/
