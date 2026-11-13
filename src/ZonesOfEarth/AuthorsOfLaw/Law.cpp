@@ -15,7 +15,13 @@
 #include <algorithm>
 #include <atomic>
 #include <cstdio>
+#include <charconv>
+#include <random>
+#include <stdexcept>
+#include <string_view>
 #include <iterator>
+#include <cstdint>
+#include <limits>
 #include <optional>
 #include <unordered_set>
 
@@ -136,22 +142,89 @@ Law::Law(const std::string& name, const std::vector<Singular*>& authors)
 namespace {
 std::atomic<unsigned long long> g_nextLawId{1};
 
+// A new Law gets its own opaque 128-bit history lineage. This is NOT its
+// author-facing identifier, its world filename, or its Zone jurisdiction.
+// It is minted once at construction and restored from saved Law JSON.
+std::string mintDurableHistoryLineage() {
+    static constexpr char hex[] = "0123456789abcdef";
+    std::random_device entropy;
+    std::string lineage = "law-history-";
+    lineage.reserve(lineage.size() + 32);
+    for (int i = 0; i < 16; ++i) {
+        unsigned char byte = static_cast<unsigned char>(entropy());
+        if (i == 6) byte = static_cast<unsigned char>((byte & 0x0f) | 0x40); // v4
+        if (i == 8) byte = static_cast<unsigned char>((byte & 0x3f) | 0x80); // variant
+        lineage.push_back(hex[byte >> 4]);
+        lineage.push_back(hex[byte & 0x0f]);
+    }
+    return lineage;
+}
+
+bool validDurableHistoryLineage(const std::string& lineage) {
+    constexpr std::string_view prefix = "law-history-";
+    if (lineage.size() != prefix.size() + 32 ||
+        lineage.compare(0, prefix.size(), prefix) != 0) return false;
+    for (std::size_t i = prefix.size(); i < lineage.size(); ++i) {
+        const char c = lineage[i];
+        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return false;
+    }
+    return lineage[prefix.size() + 12] == '4' &&
+           (lineage[prefix.size() + 16] == '8' ||
+            lineage[prefix.size() + 16] == '9' ||
+            lineage[prefix.size() + 16] == 'a' ||
+            lineage[prefix.size() + 16] == 'b');
+}
+
 // A restored law id advances the fresh counter past itself — otherwise the
 // next authored law collides with a loaded one and LawManager::add silently
 // discards it (the register would "blur").
+// Pure high-water calculation: rejected world loads must not permanently
+// consume generated Law IDs, especially the exhausted sentinel.
+std::optional<unsigned long long> nextLawIdAfterRestoring(const std::string& id) {
+    constexpr std::string_view prefix = "law-";
+    if (id.compare(0, prefix.size(), prefix) != 0) return std::nullopt;
+    const char* first = id.data() + prefix.size();
+    const char* last = id.data() + id.size();
+    if (first == last) return std::nullopt;
+    unsigned long long n = 0;
+    const auto parsed = std::from_chars(first, last, n);
+    // Only a complete decimal suffix reserves generated IDs. law-(max-1)
+    // reserves max as the exhausted sentinel; law-max cannot advance.
+    if (parsed.ec != std::errc{} || parsed.ptr != last ||
+        n == std::numeric_limits<unsigned long long>::max()) return std::nullopt;
+    return n + 1;
+}
+
 void claimLawIdAtLeast(const std::string& id) {
-    const std::string prefix = "law-";
-    if (id.rfind(prefix, 0) != 0) return;
-    const unsigned long long n = std::strtoull(id.c_str() + prefix.size(), nullptr, 10);
+    const auto required = nextLawIdAfterRestoring(id);
+    if (!required) return;
     unsigned long long current = g_nextLawId.load();
-    while (n + 1 > current && !g_nextLawId.compare_exchange_weak(current, n + 1)) {
+    while (*required > current &&
+           !g_nextLawId.compare_exchange_weak(current, *required)) {
     }
 }
 } // namespace
 
 void Law::initializeLawIdentity() {
-    _lawId = "law-" + std::to_string(g_nextLawId.fetch_add(1));
+    // Reserve a fresh identifier without allowing unsigned wraparound.
+    // Once the sequence is exhausted, fail closed instead of minting law-0
+    // or reusing a historical identifier.
+    unsigned long long next = g_nextLawId.load();
+    while (true) {
+        if (next == std::numeric_limits<unsigned long long>::max()) {
+            throw std::overflow_error("Generated Law identifiers exhausted");
+        }
+        if (g_nextLawId.compare_exchange_weak(next, next + 1)) break;
+    }
+    _lawId = "law-" + std::to_string(next);
+    _durableHistoryLineage = mintDurableHistoryLineage();
     nameGroupFormations();
+}
+
+void Law::forkDurableHistoryLineage() {
+    // Explicit authored fork: preserve the original Law's history, but do not
+    // claim its records as the new Law's. Save As without a fork retains lineage.
+    _durableHistoryLineage = mintDurableHistoryLineage();
 }
 
 void Law::setLawIdentifier(const std::string& id) {
@@ -410,6 +483,15 @@ std::shared_ptr<Law> Law::fromJson(const nlohmann::json& j) {
         law->nameGroupFormations();
         claimLawIdAtLeast(law->_lawId);   // fresh ids stay fresh after loads
     }
+    // Legacy saves have no lineage: mint a fresh one, but NEVER infer that
+    // an unscoped identifier-keyed JSONL file belongs to it. Legacy history
+    // remains on disk for explicit provenance-aware migration.
+    if (j.contains("durableHistoryLineage")) {
+        if (!j["durableHistoryLineage"].is_string() ||
+            !validDurableHistoryLineage(j["durableHistoryLineage"].get<std::string>()))
+            throw std::invalid_argument("Invalid Law durable-history lineage");
+        law->_durableHistoryLineage = j["durableHistoryLineage"].get<std::string>();
+    }
     law->setEnabled(j.value("enabled", true));
     // CLAMPED, deliberately. A save file is authored text like any other, and
     // the authority ceiling is the one thing authored text may never raise —
@@ -578,21 +660,29 @@ Law::ApplicationResult Law::applyToImpl(
         result = ApplicationResult::AuthorityDenied;
     } else if (!conditionsAlreadySatisfied && !conditionsSatisfied(target)) {
         result = ApplicationResult::ConditionsFailed;
+        const std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
+                                    target.getIdentifier() + "\" - CONDITIONS FAILED";
+        const nlohmann::json details = {
+            {"lawId", getIdentifier()},
+            {"targetId", target.getIdentifier()},
+            {"result", "ConditionsFailed"}
+        };
+        ECA::LawAuditLogger::instance().logForLaw(durableHistoryLineage(), "LAW", message, details);
         if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
-            ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - CONDITIONS FAILED", {
-                {"lawId", getIdentifier()},
-                {"targetId", target.getIdentifier()},
-                {"result", "ConditionsFailed"}
-            });
+            ECA::LawAuditLogger::instance().log("LAW", message, details);
         }
     } else if (_actions.empty()) {
         result = ApplicationResult::NoAction;
+        const std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
+                                    target.getIdentifier() + "\" - NO ACTIONS";
+        const nlohmann::json details = {
+            {"lawId", getIdentifier()},
+            {"targetId", target.getIdentifier()},
+            {"result", "NoAction"}
+        };
+        ECA::LawAuditLogger::instance().logForLaw(durableHistoryLineage(), "LAW", message, details);
         if (ECA::LawAuditLogger::instance().level() == ECA::LawAuditLogger::Level::Verbose) {
-            ECA::LawAuditLogger::instance().log("LAW", "Law \"" + getIdentifier() + "\" applied to \"" + target.getIdentifier() + "\" - NO ACTIONS", {
-                {"lawId", getIdentifier()},
-                {"targetId", target.getIdentifier()},
-                {"result", "NoAction"}
-            });
+            ECA::LawAuditLogger::instance().log("LAW", message, details);
         }
     } else {
         ECA::Event event;
@@ -661,7 +751,7 @@ Law::ApplicationResult Law::applyToImpl(
         // WhileTrue that wrote nothing is a level, not an event. Logging it
         // every tick is the disk stall after loading a world of servos.
         const bool skipAudit = _activation == Activation::WhileTrue && !wrote;
-        if (!skipAudit && ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+        if (!skipAudit) {
             std::string message = "Law \"" + getIdentifier() + "\" applied to \"" +
                                   target.getIdentifier() + "\" - " +
                                   (trace.fired() ? (wrote ? "SUCCESS" : "NO EFFECT") : "NO NODES");
@@ -681,13 +771,20 @@ Law::ApplicationResult Law::applyToImpl(
                                          ? std::string(ActionNode::reasonName(node.reason))
                                          : node.note)}});
             }
-            ECA::LawAuditLogger::instance().log("LAW", message, {
+            // Construct the event payload once for both observation surfaces.
+            // The aggregate and per-Law JSONL records retain identical fields.
+            const nlohmann::json details = {
                 {"lawId", getIdentifier()},
                 {"targetId", target.getIdentifier()},
                 {"result", "Applied"},
                 {"changed", wrote},
-                {"nodes", nodesJson}
-            });
+                {"nodes", std::move(nodesJson)}
+            };
+            if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
+                ECA::LawAuditLogger::instance().log("LAW", message, details);
+            }
+            ECA::LawAuditLogger::instance().logForLaw(
+                durableHistoryLineage(), "LAW", message, details);
         }
     }
     // Bounded memory: a WhileTrue law applies every tick — the log is a
@@ -778,6 +875,7 @@ nlohmann::json Law::toJson() const {
 
     nlohmann::json j{
         {"id", _lawId},
+        {"durableHistoryLineage", _durableHistoryLineage},
         {"name", _name},
         {"enabled", _enabled},
         {"authority", _authorityLevel},
@@ -1997,7 +2095,24 @@ std::shared_ptr<Law> LawManager::createLaw(const std::string& name,
 void LawManager::add(const std::shared_ptr<Law>& law) {
     if (!law) return;
     const std::string id = law->getIdentifier();
-    if (_lawById.find(id) != _lawById.end()) return;
+    // Re-registering the exact same Law is idempotent, but a distinct Law
+    // with the same authored identifier must never vanish silently. Reject
+    // before touching the register or publishing any registration event.
+    if (auto existing = _lawById.find(id); existing != _lawById.end()) {
+        if (existing->second == law.get()) return;
+        throw std::invalid_argument(
+            "Duplicate live Law identifier; choose a distinct identifier before registering");
+    }
+
+    // Two simultaneously registered Laws cannot own the same durable history.
+    // A restored/copied Law must explicitly fork before being registered as
+    // another authored Law; silently sharing its JSONL file would merge lives.
+    for (const auto& registered : _laws) {
+        if (registered && registered->durableHistoryLineage() == law->durableHistoryLineage()) {
+            throw std::invalid_argument(
+                "Duplicate live Law history lineage; fork before registering a distinct Law");
+        }
+    }
 
     _laws.push_back(law);
     _lawById[id] = law.get();
@@ -2161,6 +2276,9 @@ void LawManager::connectToEventBus() {
                 {"objectId", objectId},
                 {"timestamp", e.timestamp().toJson()}
             });
+            // Events are broadcast to all laws, not specifically owned by a single law unless we are inside applyTo.
+            // In applyTo we already added logForLaw.
+            // This is the global event subscription, so it doesn't belong to one law.
         }
 
         // A being that has just left the world is released from every law
@@ -2285,16 +2403,23 @@ void LawManager::syncProphetic() {
     // satisfying range is exactly the thing an author stares at wondering why
     // their law never fires, and the engine already knows.
     for (const auto& finding : _prophetic.unreachable()) {
+        const std::string message = "Law \"" + finding.lawId +
+            "\" has a condition on " + finding.path + " that cannot be satisfied: " + finding.why;
+        const nlohmann::json details = {
+            {"lawId", finding.lawId},
+            {"path", finding.path},
+            {"why", finding.why},
+            {"selfImpossible", finding.selfImpossible}
+        };
+        // The prophetic index reports the authored id. Resolve its live Law
+        // before writing; a stale finding must never create an ambiguous
+        // identifier-keyed history file.
+        if (Law* sourceLaw = find(finding.lawId)) {
+            ECA::LawAuditLogger::instance().logForLaw(
+                sourceLaw->durableHistoryLineage(), "LAW", message, details);
+        }
         if (ECA::LawAuditLogger::instance().wouldLog("LAW")) {
-            ECA::LawAuditLogger::instance().log(
-                "LAW",
-                std::string(finding.selfImpossible ? "Law \"" : "Law \"") + finding.lawId +
-                    "\" has a condition on " + finding.path + " that cannot be satisfied: " +
-                    finding.why,
-                {{"lawId", finding.lawId},
-                 {"path", finding.path},
-                 {"why", finding.why},
-                 {"selfImpossible", finding.selfImpossible}});
+            ECA::LawAuditLogger::instance().log("LAW", message, details);
         }
     }
 }
@@ -3691,6 +3816,190 @@ void LawManager::compileConditionsToRete(Law& law) {
 }
 
 void LawManager::loadFromJson(const nlohmann::json& j) {
+    // A non-object payload has no Law fields; treating it as an empty world
+    // would silently erase every authored Law during replace-all.
+    if (!j.is_object())
+        throw std::invalid_argument("Invalid Law world payload; expected an object");
+    // A JSON integer may be an unsigned 64-bit value or exceed C++ int range.
+    // Reject it BEFORE replace-all rather than silently narrowing or throwing
+    // after destroying the existing Law register.
+    const auto fitsPersistedInt = [](const nlohmann::json& value) {
+        if (value.is_number_unsigned())
+            return value.get<std::uint64_t>() <=
+                   static_cast<std::uint64_t>(std::numeric_limits<int>::max());
+        if (!value.is_number_integer()) return false;
+        const auto number = value.get<std::int64_t>();
+        return number >= static_cast<std::int64_t>(std::numeric_limits<int>::min()) &&
+               number <= static_cast<std::int64_t>(std::numeric_limits<int>::max());
+    };
+    if (j.contains("maxChainRounds") && !fitsPersistedInt(j["maxChainRounds"]))
+        throw std::invalid_argument("Invalid Law maxChainRounds");
+    // Reject conflicting persisted histories BEFORE replace-all mutates the
+    // live register. Two different Laws (including engine-owned First Movers)
+    // must never append to the same lineage-scoped JSONL file.
+    std::unordered_set<std::string> persistedLineages;
+    // Duplicate authored identifiers would otherwise be silently discarded by
+    // add(), including an authored Law that shadows an engine-owned First Mover.
+    // Reject these before replace-all can discard the previous live world.
+    std::unordered_set<std::string> persistedLawIds;
+    for (const auto& existing : _laws) {
+        if (existing && existing->isFirstMover())
+            persistedLawIds.insert(existing->getIdentifier());
+    }
+    if (j.contains("laws")) {
+        if (!j["laws"].is_array())
+            throw std::invalid_argument("Invalid authored Laws array");
+        for (const auto& savedLaw : j["laws"]) {
+            if (!savedLaw.is_object())
+                throw std::invalid_argument("Invalid authored Law entry");
+            // Law::fromJson consumes these primitive fields only after the old
+            // register is destroyed. Fail closed on malformed types up front.
+            for (const char* field : {"name", "conditionMode"}) {
+                auto value = savedLaw.find(field);
+                if (value != savedLaw.end() && !value->is_string())
+                    throw std::invalid_argument("Invalid authored Law string field");
+            }
+            for (const char* field : {"enabled", "drives"}) {
+                auto value = savedLaw.find(field);
+                if (value != savedLaw.end() && !value->is_boolean())
+                    throw std::invalid_argument("Invalid authored Law boolean field");
+            }
+            for (const char* field : {"authority", "activation", "scope", "retrigger"}) {
+                auto value = savedLaw.find(field);
+                if (value != savedLaw.end() && !fitsPersistedInt(*value))
+                    throw std::invalid_argument("Invalid authored Law integer field");
+            }
+            // Nested models are parsed by Law::fromJson after replace-all.
+            // Parse them once here as a read-only preflight, so malformed
+            // paths, kinds, bindings or descendants cannot erase live Laws.
+            for (const char* field : {"conditionModel", "actionModel"}) {
+                auto model = savedLaw.find(field);
+                if (model == savedLaw.end()) continue;
+                if (!model->is_object())
+                    throw std::invalid_argument("Invalid authored Law model object");
+                try {
+                    if (std::string_view(field) == "conditionModel")
+                        (void)ConditionNode::fromJson(*model);
+                    else
+                        (void)ActionNode::fromJson(*model);
+                } catch (const nlohmann::json::exception&) {
+                    throw std::invalid_argument("Invalid authored Law nested model");
+                }
+            }
+            // Authored properties use a typed, potentially throwing codec in
+            // Law::fromJson. Preflight every present property before replace-all
+            // so malformed nested values cannot erase the previous Law register.
+            // Preserve the legacy behavior of ignoring non-object containers.
+            auto authoredProperties = savedLaw.find("authoredProperties");
+            if (authoredProperties != savedLaw.end() && authoredProperties->is_object()) {
+                for (auto property = authoredProperties->begin();
+                     property != authoredProperties->end(); ++property) {
+                    try {
+                        (void)propertyValueFromJson(property.value());
+                    } catch (const nlohmann::json::exception&) {
+                        throw std::invalid_argument("Invalid authored Law property value");
+                    }
+                }
+            }
+            // RelationManager::loadFromJson deserializes each provenance edge
+            // after the previous Law register has been destroyed. Preflight
+            // the same codec without binding live endpoints, so malformed
+            // relation types, events, attachments or typed properties cannot
+            // turn a rejected world into a partially replaced one. A legacy
+            // non-array provenance payload is still ignored by that loader.
+            auto provenance = savedLaw.find("provenance");
+            if (provenance != savedLaw.end() && provenance->is_array()) {
+                for (const auto& edge : *provenance) {
+                    try {
+                        (void)Relation::fromJson(edge);
+                    } catch (const nlohmann::json::exception&) {
+                        throw std::invalid_argument("Invalid authored Law provenance relation");
+                    }
+                }
+            }
+            auto idIt = savedLaw.find("id");
+            if (idIt != savedLaw.end()) {
+                if (!idIt->is_string() || idIt->get<std::string>().empty())
+                    throw std::invalid_argument("Invalid authored Law identifier");
+                if (!persistedLawIds.insert(idIt->get<std::string>()).second)
+                    throw std::invalid_argument("Duplicate persisted Law identifier");
+            }
+            // A malformed reference list would otherwise throw only after
+            // replace-all has already removed the previous world's Laws.
+            // Validate the shape before mutating the live register.
+            for (const char* field : {"authors", "targets"}) {
+                auto references = savedLaw.find(field);
+                if (references == savedLaw.end()) continue;
+                if (!references->is_array())
+                    throw std::invalid_argument("Invalid authored Law reference list");
+                for (const auto& reference : *references) {
+                    if (!reference.is_string())
+                        throw std::invalid_argument("Invalid authored Law reference identifier");
+                }
+            }
+            auto it = savedLaw.find("durableHistoryLineage");
+            if (it == savedLaw.end()) continue; // Legacy Law: fresh lineage on restore.
+            if (!it->is_string() ||
+                !validDurableHistoryLineage(it->get<std::string>()))
+                throw std::invalid_argument("Invalid authored Law history lineage");
+            if (!persistedLineages.insert(it->get<std::string>()).second)
+                throw std::invalid_argument("Duplicate persisted Law history lineage");
+        }
+    }
+    // Trigger payloads are consumed after replace-all too; reject malformed
+    // entries before any existing Law or First Mover history is disturbed.
+    if (j.contains("triggers")) {
+        const auto& triggers = j["triggers"];
+        if (!triggers.is_object())
+            throw std::invalid_argument("Invalid authored Law trigger map");
+        for (auto it = triggers.begin(); it != triggers.end(); ++it) {
+            if (!it.value().is_array())
+                throw std::invalid_argument("Invalid authored Law trigger list");
+            for (const auto& trigger : it.value()) {
+                if (!trigger.is_string())
+                    throw std::invalid_argument("Invalid authored Law trigger type");
+            }
+        }
+    }
+    // First Movers are absent from authored "laws", but their persisted
+    // histories share the same uniqueness namespace.
+    if (j.contains("firstMoverHistoryLineages")) {
+        const auto& histories = j["firstMoverHistoryLineages"];
+        if (!histories.is_object())
+            throw std::invalid_argument("Invalid First Mover history lineage map");
+        for (const auto& law : _laws) {
+            if (!law || !law->isFirstMover()) continue;
+            auto it = histories.find(law->getIdentifier());
+            if (it == histories.end()) continue;
+            if (!it->is_string() ||
+                !validDurableHistoryLineage(it->get<std::string>()))
+                throw std::invalid_argument("Invalid First Mover history lineage");
+            if (!persistedLineages.insert(it->get<std::string>()).second)
+                throw std::invalid_argument("Duplicate persisted Law history lineage");
+        }
+    }
+    // Law::fromJson constructs a fresh Law (and consumes one generated ID)
+    // before restoring its explicit persisted ID. Calculate the post-reservation
+    // high-water mark WITHOUT changing the process-global counter: a rejected
+    // world must not exhaust future Law creation as a side effect.
+    unsigned long long nextAfterRestore = g_nextLawId.load();
+    for (const auto& reservedId : persistedLawIds) {
+        if (const auto required = nextLawIdAfterRestoring(reservedId))
+            nextAfterRestore = std::max(nextAfterRestore, *required);
+    }
+    // Preflight the available ID budget before replacing any authored Law or
+    // First Mover history. World-load callers must serialize Law construction.
+    if (j.contains("laws") &&
+        j["laws"].size() > std::numeric_limits<unsigned long long>::max() -
+                               nextAfterRestore) {
+        throw std::overflow_error("Insufficient generated Law identifiers for world load");
+    }
+    // Only a validated, sufficiently funded world may reserve explicit IDs.
+    // Reserve them before constructing legacy Laws without an "id", or a
+    // legacy constructor could collide with a later explicit saved identifier.
+    for (const auto& reservedId : persistedLawIds) {
+        claimLawIdAtLeast(reservedId);
+    }
     // Replace-all, like the world loader — EXCEPT first movers, whose truth
     // lives in the engine and survives every load.
     std::vector<std::shared_ptr<Law>> firstMovers;
@@ -3739,6 +4048,29 @@ void LawManager::loadFromJson(const nlohmann::json& j) {
         // cryptographic id. It reattaches only while the mover stands.
         return Identity::FirstMoverRegister::instance().authorFor(id);
     };
+
+    // Rebind surviving First Movers BEFORE registering authored Laws. Otherwise
+    // a stale lineage from the previous world can falsely collide with an
+    // incoming authored Law, even when the saved world assigns distinct
+    // histories to both. Preflight above validates their persisted uniqueness.
+    // Restore the persisted history of each engine-owned First Mover without
+    // deserializing its authority or executable definition. These engine Laws
+    // survive replace-all loads, so a legacy world (or missing map entry) must
+    // NOT inherit the previously loaded world's lineage. Mint a fresh,
+    // unclaimed history instead of attributing another world's records.
+    const nlohmann::json* histories = j.contains("firstMoverHistoryLineages")
+        ? &j["firstMoverHistoryLineages"] : nullptr;
+    for (const auto& law : _laws) {
+        if (!law || !law->isFirstMover()) continue;
+        if (histories) {
+            auto it = histories->find(law->getIdentifier());
+            if (it != histories->end()) {
+                law->_durableHistoryLineage = it->get<std::string>();
+                continue;
+            }
+        }
+        law->forkDurableHistoryLineage();
+    }
 
     if (j.contains("laws")) {
         for (const auto& lj : j["laws"]) {
@@ -3841,9 +4173,43 @@ std::vector<Law::ApplicationRecord> LawManager::applyAllToTargets() {
     return records;
 }
 
+void LawManager::forkAllDurableHistoryLineages() {
+    // An explicit copied-world fork must re-key BOTH authored Laws and the
+    // surviving engine-owned First Movers. Never reuse a source-world lineage,
+    // even if the copied Law was renamed or a previous fork is already live.
+    // Prepare every new identity first: failure cannot partially fork the
+    // register or rewrite any previously saved world's history.
+    std::unordered_set<std::string> forbidden;
+    for (const auto& law : _laws) {
+        if (law) forbidden.insert(law->durableHistoryLineage());
+    }
+
+    std::vector<std::pair<Law*, std::string>> staged;
+    staged.reserve(_laws.size());
+    for (const auto& law : _laws) {
+        if (!law) continue;
+        bool minted = false;
+        std::string lineage;
+        for (int attempt = 0; attempt < 8; ++attempt) {
+            lineage = mintDurableHistoryLineage();
+            if (forbidden.insert(lineage).second) {
+                minted = true;
+                break;
+            }
+        }
+        if (!minted)
+            throw std::runtime_error("Unable to mint distinct copied-world Law history");
+        staged.emplace_back(law.get(), std::move(lineage));
+    }
+    for (auto& [law, lineage] : staged) {
+        law->_durableHistoryLineage = std::move(lineage);
+    }
+}
+
 nlohmann::json LawManager::toJson() const {
     nlohmann::json arr = nlohmann::json::array();
     nlohmann::json firstMoverEnabled = nlohmann::json::object();
+    nlohmann::json firstMoverHistoryLineages = nlohmann::json::object();
     for (const auto& law : _laws) {
         if (!law) continue;
         // First movers' truth lives in the engine (physics laws persist in
@@ -3853,6 +4219,7 @@ nlohmann::json LawManager::toJson() const {
         // only that bit, keyed by the stable slug.
         if (law->isFirstMover()) {
             firstMoverEnabled[law->getIdentifier()] = law->isEnabled();
+            firstMoverHistoryLineages[law->getIdentifier()] = law->durableHistoryLineage();
             continue;
         }
         arr.push_back(law->toJson());
@@ -3867,6 +4234,7 @@ nlohmann::json LawManager::toJson() const {
         {"formationMembers", formationMemberIds(_lawFormation)},
         {"rete", _rete.toJson()},
         {"firstMoverEnabled", firstMoverEnabled},
+        {"firstMoverHistoryLineages", firstMoverHistoryLineages},
         {"maxChainRounds", _maxChainRounds}
     };
 }
