@@ -125,11 +125,7 @@ Earthcall/
         Adapters/          MacOSAccessibilityAdapter
         Shell/
         Sync/              AsyncStateLogger, ForeignSyncManager, InferenceLawBridge
-        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager, web_ui
-          web_ui/
-            public/
-            src/
-              assets/
+        Web/               WebIntegration, RealWebView, WindowManager, IntegrationManager
         mcp/               earthcall-mcp-server.js
         py/                app.py
           agent/
