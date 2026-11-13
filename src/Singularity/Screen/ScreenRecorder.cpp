@@ -689,9 +689,15 @@ bool ScreenRecorder::captureSnapshot(const std::string& customPath, int viewport
         std::error_code ec;
         fs::create_directories(baseDir, ec);
         fs::path candidate = baseDir / buf;
-        for (uint64_t suffix = 1; fs::exists(candidate, ec); ++suffix) {
-            candidate = baseDir / (fs::path(buf).stem().string() + "_" +
-                std::to_string(suffix) + ".png");
+        if (fs::exists(candidate, ec)) {
+            auto now_ns = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            uint64_t attempt = 0;
+            std::string stem = fs::path(buf).stem().string();
+            do {
+                uint64_t r = (now_ns ^ (attempt * 1337));
+                candidate = baseDir / (stem + "_" + std::to_string(r) + ".png");
+                attempt++;
+            } while (fs::exists(candidate, ec));
         }
         destPath = candidate.string();
     }
