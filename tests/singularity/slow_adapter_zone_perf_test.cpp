@@ -72,9 +72,13 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    const auto absWorld = std::filesystem::absolute(world);
+    if (absWorld.parent_path().filename() == "worlds" &&
+        absWorld.parent_path().parent_path().filename() == "saves") {
+        SaveSystem::setSaveRoot(absWorld.parent_path().parent_path().string());
+    }
+
+    TestSupport::BootedEngineHarness h("Player", "humanoid", false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);
@@ -93,7 +97,7 @@ int main(int argc, char** argv) {
 
     // Warm foreground state without measuring it. The adapter's own timeline
     // advances too when ON, just as it would in a live 60 Hz session.
-    for (int i = 0; i < 30; ++i) {
+    for (int i = 0; i < 15; ++i) {
         zone->update(dt);
         zone->applyFormationRelations();
         h.worldTime += dt;
