@@ -59,10 +59,20 @@ int main() {
         {"zones", nlohmann::json::array({{{"identifier", "Zone1"}, {"owner", "OldName"}}})}
     };
     std::string ecformPath = (env.tempDir / "worlds" / "world1.ecform").string();
-    SaveSystem::writeSaveData(worldData, "world1", SaveSystem::SaveType::WORLD);
+    {
+        nlohmann::json wrapper = nlohmann::json::object();
+        wrapper["MigrationRoot"] = worldData.dump(-1);
+        std::vector<uint8_t> outBytes = nlohmann::json::to_msgpack(wrapper);
+        std::ofstream ecformOut(ecformPath, std::ios::binary);
+        ecformOut.write(reinterpret_cast<const char*>(outBytes.data()), outBytes.size());
+    }
 
     assert(std::filesystem::exists(ecformPath));
     assert(isBinaryMsgpack(ecformPath));
+
+    std::string ecsavePath = SaveSystem::writeSaveData(worldData, "world1", SaveSystem::SaveType::WORLD);
+    assert(std::filesystem::exists(ecsavePath));
+    assert(isBinaryMsgpack(ecsavePath));
 
     // 2. Create a plain .json save fixture
     nlohmann::json legacyWorldData = {
