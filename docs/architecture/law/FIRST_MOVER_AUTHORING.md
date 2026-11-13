@@ -903,3 +903,9 @@ Say what you made. 🕊️
 ## 9. Mover-Authored Law Reach
 
 A Law authored by a First Mover executes with the ordinary `Law` authority once placed in the world. Its reach when fired is governed entirely by standard Law targeting rules (`TransferPolicy`) and not artificially constrained by the originating First Mover's `fileScope`. We bounds-check the *act of authoring/injecting* the Law (does the Mover have authority to create a Law in this Zone?), but we do not bounds-check the Law's execution against its original author's credentials, because once authorized and authored, it is functionally a Person's authored Law.
+
+## Interrelated Documents
+- [Transfer Policy](../../../src/Singularity/TransferPolicy.hpp)
+
+## Thoughts on Integration and Interrelation
+First Mover Authoring represents the ultimate foundational authority, capable of directly injecting reality (Objects, Relations, Laws) into the serialization state without traversing the standard C++ engine gauntlet. The Transfer Policy, conversely, governs the in-world set-to-set transfer and write permissions for Properties by active Laws. Their interrelation is one of bootstrapping and bounds: the First Mover is the sole entity that can define, initialize, and bypass the Transfer Policy. Once the initial state and policies are set by the First Mover, the in-world Laws must strictly abide by the Transfer Policy's gates, ensuring security while maintaining the First Mover's sovereign authorial rights.
