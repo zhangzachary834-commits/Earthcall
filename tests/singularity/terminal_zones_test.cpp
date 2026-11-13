@@ -310,6 +310,7 @@ int main() {
     std::cout << "  the passphrase never reached output, lastLine, or any published line OK\n";
 
     reg.clearAuthenticatedPersons();
+    SaveSystem::setSaveRoot("");
     std::filesystem::remove_all(sandbox);
     std::cout << "terminal_zones_test: ALL OK\n";
     // Static destruction runs normally: LawManager revokes its EventBus
