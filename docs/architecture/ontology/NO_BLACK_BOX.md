@@ -331,3 +331,9 @@ by keeping it where no law can look.
 Earthcall’s rejection of black boxes isn’t just an engineering preference; it’s an ontological commitment rooted in the belief that the system should be legible and authorable by its participants. This principle ties deeply to [ALGORITHMS_AS_LAW.md](../law/ALGORITHMS_AS_LAW.md) and [INTELLECTUAL_LINEAGE.md](../../core/Intellectual Lineage/INTELLECTUAL_LINEAGE.md).
 
 When we hide the state or purpose (telos) of a being inside private C++ member variables, we violate this principle. By integrating this understanding with the broader intellectual lineage, we realize that true End-to-End Coherence requires every structural aspect of the world to be explicitly authored and inspectable as Formations and Relations. This ensures that the engine remains a transparent substrate for expression rather than a closed, opaque box.
+
+## Interrelated Documents
+* [Second Person Framework](../ourverse/SECOND_PERSON_FRAMEWORK.md)
+
+## Thoughts on Integration and Interrelation
+The "No Black Box" doctrine calls for legible, authorable state; it does not grant every actor unconditional read or write authority. The Second Person Framework extends this substrate principle to interpersonal visibility, representation, and actuation, where Person-specific standing and consent must be respected. `TransferPolicy` is an existing mechanism to extend for visibility and creation gates, **not** an already-implemented universal authorization layer for arbitrary `PropertyPath` reads and writes. Signed, revocable consent for positive bodily/location actuation and the general actor-aware enforcement path remain specified work, not completed guarantees. Discoverability of a property therefore must not be confused with permission to inspect or mutate it.
