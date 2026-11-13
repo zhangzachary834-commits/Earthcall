@@ -244,5 +244,11 @@
     "law-ambient-pan-root",
     "law-ambient-pan-fifth",
     "law-ambient-pan-ninth"
-  ]
+  ],
+  "matterGeneration": {
+    "snapshotId": "06aa325bf1a560d3",
+    "sha256": "06aa325bf1a560d3ea69ddc7cb286575a0db2bf8c0d67a01d2c1f21d928eeab6",
+    "byteLength": 820,
+    "schemaVersion": 1
+  }
 }

@@ -112,12 +112,17 @@ public:
     Timeline& worldTimeline() { return _worldTimeline; }
     const Timeline& worldTimeline() const { return _worldTimeline; }
 
+    void requestZoneSwitch(const std::string& destinationZone) {
+        _pendingZoneSwitch = destinationZone;
+    }
+
 private:
     Engine() = default;                       // use instance()
     ~Engine();
     Engine(const Engine&)            = delete;
     Engine& operator=(const Engine&) = delete;
 
+    std::string     _pendingZoneSwitch;
     GLFWwindow*     _window  = nullptr;
     bool            _running = false;
     WebGpuBackend*  _webgpu  = nullptr; // owned; only allocated in the WebGPU build

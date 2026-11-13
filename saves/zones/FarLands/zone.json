@@ -7757,5 +7757,11 @@
     "material.farlands.rock",
     "material.farlands.safezone",
     "material.farlands.terrain"
-  ]
+  ],
+  "matterGeneration": {
+    "snapshotId": "b8bd6f9d7a2390dc",
+    "sha256": "b8bd6f9d7a2390dc46d000d33afe45743528ce227ceb0722f6c990cb62f1a946",
+    "byteLength": 10492,
+    "schemaVersion": 1
+  }
 }

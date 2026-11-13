@@ -1,0 +1,2574 @@
+{
+  "identifier": "Ourverse Gathering",
+  "name": "Ourverse Gathering",
+  "owner": "",
+  "parentZone": "",
+  "scope": "Global",
+  "qualities": {
+    "kind": "ourverse-gathering",
+    "purpose": "personal-ourverse-navigator",
+    "injected_by": "Gemini 3.8 Flash (High) - Personal Ourverse Navigator Prototyping Loop authorized by Zach, 2026-10-16"
+  },
+  "deletable": {},
+  "lawRefs": [
+    "law-navigator-button"
+  ],
+  "lexemes": [],
+  "materials": [
+    {
+      "name": "navigator.sanctum.base",
+      "baseColor": [
+        0.78,
+        0.86,
+        0.45
+      ],
+      "ambient": 0.35,
+      "diffuse": 0.8,
+      "specular": 0.3,
+      "shininess": 16.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.sanctum.rock",
+      "baseColor": [
+        0.55,
+        0.48,
+        0.38
+      ],
+      "ambient": 0.25,
+      "diffuse": 0.75,
+      "specular": 0.2,
+      "shininess": 8.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.sanctum.gold",
+      "baseColor": [
+        0.98,
+        0.84,
+        0.28
+      ],
+      "ambient": 0.4,
+      "diffuse": 0.9,
+      "specular": 1.0,
+      "shininess": 64.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.sanctum.beacon",
+      "baseColor": [
+        1.0,
+        0.92,
+        0.4
+      ],
+      "ambient": 0.65,
+      "diffuse": 1.0,
+      "specular": 1.0,
+      "shininess": 128.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.temple.base",
+      "baseColor": [
+        0.24,
+        0.32,
+        0.55
+      ],
+      "ambient": 0.3,
+      "diffuse": 0.7,
+      "specular": 0.8,
+      "shininess": 48.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.temple.rock",
+      "baseColor": [
+        0.18,
+        0.22,
+        0.32
+      ],
+      "ambient": 0.2,
+      "diffuse": 0.65,
+      "specular": 0.2,
+      "shininess": 8.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.temple.silver",
+      "baseColor": [
+        0.82,
+        0.86,
+        0.95
+      ],
+      "ambient": 0.4,
+      "diffuse": 0.85,
+      "specular": 1.0,
+      "shininess": 80.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.temple.beacon",
+      "baseColor": [
+        0.35,
+        0.65,
+        1.0
+      ],
+      "ambient": 0.65,
+      "diffuse": 1.0,
+      "specular": 1.0,
+      "shininess": 128.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.cavern.base",
+      "baseColor": [
+        0.15,
+        0.2,
+        0.26
+      ],
+      "ambient": 0.25,
+      "diffuse": 0.7,
+      "specular": 0.4,
+      "shininess": 16.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.cavern.rock",
+      "baseColor": [
+        0.12,
+        0.14,
+        0.18
+      ],
+      "ambient": 0.18,
+      "diffuse": 0.6,
+      "specular": 0.1,
+      "shininess": 8.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.cavern.crystal",
+      "baseColor": [
+        0.15,
+        0.95,
+        0.78
+      ],
+      "ambient": 0.55,
+      "diffuse": 0.95,
+      "specular": 1.0,
+      "shininess": 96.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.cavern.beacon",
+      "baseColor": [
+        0.2,
+        1.0,
+        0.85
+      ],
+      "ambient": 0.65,
+      "diffuse": 1.0,
+      "specular": 1.0,
+      "shininess": 128.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.forge.base",
+      "baseColor": [
+        0.18,
+        0.16,
+        0.18
+      ],
+      "ambient": 0.25,
+      "diffuse": 0.7,
+      "specular": 0.3,
+      "shininess": 16.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.forge.magma",
+      "baseColor": [
+        0.98,
+        0.45,
+        0.12
+      ],
+      "ambient": 0.7,
+      "diffuse": 1.0,
+      "specular": 0.6,
+      "shininess": 32.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.forge.bronze",
+      "baseColor": [
+        0.78,
+        0.52,
+        0.22
+      ],
+      "ambient": 0.35,
+      "diffuse": 0.8,
+      "specular": 0.9,
+      "shininess": 50.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.forge.beacon",
+      "baseColor": [
+        1.0,
+        0.38,
+        0.15
+      ],
+      "ambient": 0.65,
+      "diffuse": 1.0,
+      "specular": 1.0,
+      "shininess": 128.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.plinth.deck",
+      "baseColor": [
+        0.88,
+        0.9,
+        0.95
+      ],
+      "ambient": 0.35,
+      "diffuse": 0.8,
+      "specular": 0.9,
+      "shininess": 60.0,
+      "opacity": 1.0
+    },
+    {
+      "name": "navigator.plinth.gold",
+      "baseColor": [
+        0.92,
+        0.78,
+        0.3
+      ],
+      "ambient": 0.4,
+      "diffuse": 0.9,
+      "specular": 1.0,
+      "shininess": 70.0,
+      "opacity": 1.0
+    }
+  ],
+  "formationRelations": [
+    {
+      "directed": true,
+      "entityA": "navigator-beacon-sanctum",
+      "entityB": "category.control.button",
+      "type": "instance-of",
+      "weight": 1.0
+    },
+    {
+      "directed": true,
+      "entityA": "navigator-beacon-temple",
+      "entityB": "category.control.button",
+      "type": "instance-of",
+      "weight": 1.0
+    },
+    {
+      "directed": true,
+      "entityA": "navigator-beacon-cavern",
+      "entityB": "category.control.button",
+      "type": "instance-of",
+      "weight": 1.0
+    },
+    {
+      "directed": true,
+      "entityA": "navigator-beacon-forge",
+      "entityB": "category.control.button",
+      "type": "instance-of",
+      "weight": 1.0
+    },
+    {
+      "directed": false,
+      "entityA": "navigator-plinth-center",
+      "entityB": "island-sanctum-base",
+      "type": "filament",
+      "weight": 1.0
+    },
+    {
+      "directed": false,
+      "entityA": "navigator-plinth-center",
+      "entityB": "island-temple-base",
+      "type": "filament",
+      "weight": 1.0
+    },
+    {
+      "directed": false,
+      "entityA": "navigator-plinth-center",
+      "entityB": "island-cavern-base",
+      "type": "filament",
+      "weight": 1.0
+    },
+    {
+      "directed": false,
+      "entityA": "navigator-plinth-center",
+      "entityB": "island-forge-base",
+      "type": "filament",
+      "weight": 1.0
+    }
+  ],
+  "spatialRoot": {
+    "id": "OurverseGathering_spatialRoot",
+    "origin": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "field": {
+      "amplitude": 1.0,
+      "baseDensity": 1.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    },
+    "vectorField": {
+      "amplitude": 1.0,
+      "baseFlowX": 0.0,
+      "baseFlowY": 0.0,
+      "baseFlowZ": 0.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    }
+  },
+  "world": {
+    "objects": [
+      {
+        "objectID": "navigator-plinth-center",
+        "materialId": "material.navigator.plinth.deck",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          2.5,
+          0.2,
+          2.5
+        ],
+        "center": [
+          0.0,
+          -0.2,
+          0.0
+        ],
+        "transform": [
+          5.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          5.0,
+          0.0,
+          0.0,
+          -0.2,
+          0.0,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "navigator-compass-ring",
+        "materialId": "material.navigator.plinth.gold",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          2.6,
+          0.05,
+          2.6
+        ],
+        "center": [
+          0.0,
+          0.02,
+          0.0
+        ],
+        "transform": [
+          5.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.1,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          5.2,
+          0.0,
+          0.0,
+          0.02,
+          0.0,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-sanctum-base",
+        "materialId": "material.navigator.sanctum.base",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          2.5,
+          0.4,
+          2.5
+        ],
+        "center": [
+          -10.0,
+          1.2,
+          -12.0
+        ],
+        "transform": [
+          5.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          5.0,
+          0.0,
+          -10.0,
+          1.2,
+          -12.0,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-sanctum-crag",
+        "materialId": "material.navigator.sanctum.rock",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          2.0,
+          0.6,
+          2.0
+        ],
+        "center": [
+          -10.0,
+          0.5,
+          -12.0
+        ],
+        "transform": [
+          4.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          4.0,
+          0.0,
+          -10.0,
+          0.5,
+          -12.0,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-sanctum-spire",
+        "materialId": "material.navigator.sanctum.gold",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.4,
+          1.8,
+          0.4
+        ],
+        "center": [
+          -10.0,
+          3.4000000000000004,
+          -12.8
+        ],
+        "transform": [
+          0.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          3.6,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.8,
+          0.0,
+          -10.0,
+          3.4000000000000004,
+          -12.8,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-sanctum-pillar-l",
+        "materialId": "material.navigator.sanctum.gold",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.2,
+          1.1,
+          0.2
+        ],
+        "center": [
+          -11.2,
+          2.7,
+          -12.0
+        ],
+        "transform": [
+          0.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.4,
+          0.0,
+          -11.2,
+          2.7,
+          -12.0,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-sanctum-pillar-r",
+        "materialId": "material.navigator.sanctum.gold",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.2,
+          1.1,
+          0.2
+        ],
+        "center": [
+          -8.8,
+          2.7,
+          -12.0
+        ],
+        "transform": [
+          0.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.4,
+          0.0,
+          -8.8,
+          2.7,
+          -12.0,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-sanctum-arch",
+        "materialId": "material.navigator.sanctum.gold",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          1.4,
+          0.15,
+          0.25
+        ],
+        "center": [
+          -10.0,
+          3.9000000000000004,
+          -12.0
+        ],
+        "transform": [
+          2.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          -10.0,
+          3.9000000000000004,
+          -12.0,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "navigator-beacon-sanctum",
+        "materialId": "material.navigator.sanctum.beacon",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.65
+        ],
+        "center": [
+          -10.0,
+          2.8,
+          -10.2
+        ],
+        "transform": [
+          1.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.3,
+          0.0,
+          -10.0,
+          2.8,
+          -10.2,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "authoredProperties": {
+          "destinationZone": {
+            "t": "string",
+            "v": "Sanctum of Beginnings"
+          },
+          "controlValue": {
+            "t": "double",
+            "v": 0.0
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Sanctum of Beginnings"
+          }
+        }
+      },
+      {
+        "objectID": "island-temple-base",
+        "materialId": "material.navigator.temple.base",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          2.6,
+          0.45,
+          2.6
+        ],
+        "center": [
+          -3.5,
+          1.8,
+          -15.5
+        ],
+        "transform": [
+          5.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.9,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          5.2,
+          0.0,
+          -3.5,
+          1.8,
+          -15.5,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-temple-crag",
+        "materialId": "material.navigator.temple.rock",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          2.1,
+          0.65,
+          2.1
+        ],
+        "center": [
+          -3.5,
+          1.05,
+          -15.5
+        ],
+        "transform": [
+          4.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          4.2,
+          0.0,
+          -3.5,
+          1.05,
+          -15.5,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-temple-col-1",
+        "materialId": "material.navigator.temple.silver",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.2,
+          1.1,
+          0.2
+        ],
+        "center": [
+          -4.7,
+          3.3,
+          -16.4
+        ],
+        "transform": [
+          0.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.4,
+          0.0,
+          -4.7,
+          3.3,
+          -16.4,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-temple-col-2",
+        "materialId": "material.navigator.temple.silver",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.2,
+          1.1,
+          0.2
+        ],
+        "center": [
+          -2.3,
+          3.3,
+          -16.4
+        ],
+        "transform": [
+          0.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.4,
+          0.0,
+          -2.3,
+          3.3,
+          -16.4,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-temple-col-3",
+        "materialId": "material.navigator.temple.silver",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.2,
+          1.1,
+          0.2
+        ],
+        "center": [
+          -4.7,
+          3.3,
+          -14.6
+        ],
+        "transform": [
+          0.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.4,
+          0.0,
+          -4.7,
+          3.3,
+          -14.6,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-temple-col-4",
+        "materialId": "material.navigator.temple.silver",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.2,
+          1.1,
+          0.2
+        ],
+        "center": [
+          -2.3,
+          3.3,
+          -14.6
+        ],
+        "transform": [
+          0.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.4,
+          0.0,
+          -2.3,
+          3.3,
+          -14.6,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-temple-roof",
+        "materialId": "material.navigator.temple.base",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          1.8,
+          0.2,
+          1.5
+        ],
+        "center": [
+          -3.5,
+          4.5,
+          -15.5
+        ],
+        "transform": [
+          3.6,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          3.0,
+          0.0,
+          -3.5,
+          4.5,
+          -15.5,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "navigator-beacon-temple",
+        "materialId": "material.navigator.temple.beacon",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.65
+        ],
+        "center": [
+          -3.5,
+          3.3,
+          -13.6
+        ],
+        "transform": [
+          1.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.3,
+          0.0,
+          -3.5,
+          3.3,
+          -13.6,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "authoredProperties": {
+          "destinationZone": {
+            "t": "string",
+            "v": "Temple of Echoes"
+          },
+          "controlValue": {
+            "t": "double",
+            "v": 0.0
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Temple of Echoes"
+          }
+        }
+      },
+      {
+        "objectID": "island-cavern-base",
+        "materialId": "material.navigator.cavern.base",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          2.6,
+          0.45,
+          2.6
+        ],
+        "center": [
+          3.5,
+          0.8,
+          -15.5
+        ],
+        "transform": [
+          5.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.9,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          5.2,
+          0.0,
+          3.5,
+          0.8,
+          -15.5,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-cavern-crag",
+        "materialId": "material.navigator.cavern.rock",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          2.1,
+          0.7,
+          2.1
+        ],
+        "center": [
+          3.5,
+          0.0,
+          -15.5
+        ],
+        "transform": [
+          4.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          4.2,
+          0.0,
+          3.5,
+          0.0,
+          -15.5,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-cavern-crys-1",
+        "materialId": "material.navigator.cavern.crystal",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.3,
+          1.4,
+          0.3
+        ],
+        "center": [
+          2.6,
+          2.4000000000000004,
+          -16.2
+        ],
+        "transform": [
+          0.6,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.6,
+          0.0,
+          2.6,
+          2.4000000000000004,
+          -16.2,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-cavern-crys-2",
+        "materialId": "material.navigator.cavern.crystal",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.4,
+          1.8,
+          0.4
+        ],
+        "center": [
+          3.5,
+          2.8,
+          -16.4
+        ],
+        "transform": [
+          0.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          3.6,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.8,
+          0.0,
+          3.5,
+          2.8,
+          -16.4,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-cavern-crys-3",
+        "materialId": "material.navigator.cavern.crystal",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.3,
+          1.2,
+          0.3
+        ],
+        "center": [
+          4.4,
+          2.2,
+          -16.1
+        ],
+        "transform": [
+          0.6,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          2.4,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.6,
+          0.0,
+          4.4,
+          2.2,
+          -16.1,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "navigator-beacon-cavern",
+        "materialId": "material.navigator.cavern.beacon",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.65
+        ],
+        "center": [
+          3.5,
+          2.3,
+          -13.6
+        ],
+        "transform": [
+          1.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.3,
+          0.0,
+          3.5,
+          2.3,
+          -13.6,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "authoredProperties": {
+          "destinationZone": {
+            "t": "string",
+            "v": "Cavern of Light"
+          },
+          "controlValue": {
+            "t": "double",
+            "v": 0.0
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Cavern of Light"
+          }
+        }
+      },
+      {
+        "objectID": "island-forge-base",
+        "materialId": "material.navigator.forge.base",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          2.6,
+          0.45,
+          2.6
+        ],
+        "center": [
+          10.0,
+          1.4,
+          -12.0
+        ],
+        "transform": [
+          5.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.9,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          5.2,
+          0.0,
+          10.0,
+          1.4,
+          -12.0,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-forge-crag",
+        "materialId": "material.navigator.forge.base",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          2.0,
+          0.65,
+          2.0
+        ],
+        "center": [
+          10.0,
+          0.6499999999999999,
+          -12.0
+        ],
+        "transform": [
+          4.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          4.0,
+          0.0,
+          10.0,
+          0.6499999999999999,
+          -12.0,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-forge-crucible",
+        "materialId": "material.navigator.forge.bronze",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.9,
+          0.8,
+          0.9
+        ],
+        "center": [
+          10.0,
+          2.5999999999999996,
+          -12.6
+        ],
+        "transform": [
+          1.8,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.6,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.8,
+          0.0,
+          10.0,
+          2.5999999999999996,
+          -12.6,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "island-forge-magma",
+        "materialId": "material.navigator.forge.magma",
+        "shapeKind": 0,
+        "geometryType": 0,
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "center": [
+          10.0,
+          3.2,
+          -12.6
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          10.0,
+          3.2,
+          -12.6,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "objectID": "navigator-beacon-forge",
+        "materialId": "material.navigator.forge.beacon",
+        "shapeKind": 2,
+        "geometryType": 2,
+        "shapeParams": [
+          0.65
+        ],
+        "center": [
+          10.0,
+          3.0,
+          -10.2
+        ],
+        "transform": [
+          1.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.3,
+          0.0,
+          10.0,
+          3.0,
+          -10.2,
+          1.0
+        ],
+        "authoritativeAxis": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "rotationResponsiveness": 10.0,
+        "renderMode": 0,
+        "targetRotation": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "faceColors": [
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ],
+          [
+            1.0,
+            1.0,
+            1.0
+          ]
+        ],
+        "authoredProperties": {
+          "destinationZone": {
+            "t": "string",
+            "v": "Character Architect Forge"
+          },
+          "controlValue": {
+            "t": "double",
+            "v": 0.0
+          },
+          "controlLabel": {
+            "t": "string",
+            "v": "Character Architect Forge"
+          }
+        }
+      }
+    ]
+  }
+}

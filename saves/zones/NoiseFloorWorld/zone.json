@@ -271,5 +271,11 @@
         "zOrder2D": 0
       }
     ]
+  },
+  "matterGeneration": {
+    "snapshotId": "32e2d0fc3a163b5f",
+    "sha256": "32e2d0fc3a163b5f1615a22cd4588e7afc173767678519a74591f83c2a9e3d13",
+    "byteLength": 388,
+    "schemaVersion": 1
   }
 }
