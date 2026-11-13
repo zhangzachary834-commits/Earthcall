@@ -377,6 +377,10 @@ public:
     void clearActionModel() {
         _actionModel.reset();
         _actions.clear();
+        _writesQualifiedRoots = false;
+        _writesMotionProperties = false;
+        _writesZoneCanExit = false;
+        _writesZoneOwner = false;
         bumpTextRevision();
     }
     void recompile();
@@ -474,6 +478,10 @@ private:
     std::vector<std::string> _requiredProperties;   // derived at recompile()
     std::vector<ConditionPredicate> _compiledGates;
     bool _writesQualifiedRoots{false};
+    // Derived, conservative action-destination summaries; rebuilt by recompile().
+    bool _writesMotionProperties{false};
+    bool _writesZoneCanExit{false};
+    bool _writesZoneOwner{false};
 };
 
 struct LawRegisteredEvent {
