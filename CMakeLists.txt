@@ -502,6 +502,7 @@ if(NOT EMSCRIPTEN)
             ${TEST_NAME} STREQUAL "synthesis_studio_living_test" OR
             ${TEST_NAME} STREQUAL "synthesis_studio_full_store_boot_test" OR
             ${TEST_NAME} STREQUAL "person_home_migration_boot_test" OR
+            ${TEST_NAME} STREQUAL "ontomath_two_direction_witness_test" OR
             ${TEST_NAME} STREQUAL "prism_cathedral_test" OR
             ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
             ${TEST_NAME} STREQUAL "veiled_hour_test" OR
