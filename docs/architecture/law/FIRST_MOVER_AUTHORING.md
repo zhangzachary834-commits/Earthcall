@@ -900,6 +900,27 @@ entire document that the format cannot detect and no future check will catch.
 
 Say what you made. 🕊️
 
-## 9. Mover-Authored Law Reach
+## 11. Mover-authored Law reach — Person-rooted authority survives causation
 
-A Law authored by a First Mover executes with the ordinary `Law` authority once placed in the world. Its reach when fired is governed entirely by standard Law targeting rules (`TransferPolicy`) and not artificially constrained by the originating First Mover's `fileScope`. We bounds-check the *act of authoring/injecting* the Law (does the Mover have authority to create a Law in this Zone?), but we do not bounds-check the Law's execution against its original author's credentials, because once authorized and authored, it is functionally a Person's authored Law.
+**2026-10-18 constitutional correction from Zach:** the previous version of this section said that once a First Mover had authored a Law, later execution was not bounded by the originating mover's credentials and the Law was functionally equivalent to a Person-authored Law. That is no longer the architecture.
+
+Recognition, authorship, and authority are different questions. A model-authored Law remains authored by that model. The model acts only from authority validly derived from the Person or Persons who granted it standing, and no authored interface or Law text can grant power that the grantor did not possess and have authority to delegate.
+
+The current `FirstMoverRegister::scopes` remain the built **resource/save-authoring scope**. They are not yet a complete Person-specific authority lattice. Do not falsely claim the broader model is implemented. The canonical design is in [Person-Rooted Delegated Authority and Causal Provenance](../ourverse/PERSON_ROOTED_DELEGATED_AUTHORITY.md).
+
+The required future invariant is that durable semantic machinery does not shed its authority ancestry merely because time passes or another Law fires:
+
+```text
+Person(s)
+  -> valid delegation
+  -> First Mover
+  -> authored Law
+  -> later Law execution
+  -> consequential effect
+```
+
+At every consequential boundary, effective authority must remain a subset of what the upstream grant validly transmitted. A Law may preserve and propagate meaning without manufacturing power.
+
+In particular, a First Mover being allowed to author inside a Zone or save scope must not imply that a Law placed there may later exercise unrelated global filesystem, process, network, device, Person-actuation, or other native-effect authority through a qualified Property path.
+
+**Authorship answers whose word. Authority answers whose power. Meaning may propagate freely; authority may not.**
