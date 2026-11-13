@@ -101,9 +101,9 @@ int main() {
     SaveSystem::setSaveRoot((sandbox / "saves").string());
     setenv("EARTHCALL_HOME", (sandbox / "home").string().c_str(), 1);   // keys stay in the sandbox
 
-    // The engine as tests boot it: a Universe provider, a LawManager wired to
-    // the EventBus, a live ZoneManager. The Person is "Zach", unkeyed.
-    static TestSupport::BootedEngineHarness h("Zach");   // outlives every publish
+    // The save root and key home are sandboxed above. Also skip authored-Zone
+    // hydration: this witness declares its own Zones and needs no saved world.
+    static TestSupport::BootedEngineHarness h("Zach", "humanoid", false);   // outlives every publish
     g_zones = &h.zones;
     h.zones.bindLawManager(&h.lawManager);
     h.zones.bindLive();
