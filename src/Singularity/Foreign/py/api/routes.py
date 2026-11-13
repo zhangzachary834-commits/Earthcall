@@ -4,19 +4,21 @@ from pathlib import Path
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
+PORTFOLIO_ALLOWED_ORIGINS = {
+    "https://zhangzachary834-commits.github.io",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5005",
+    "http://127.0.0.1:5005",
+}
+
 def _portfolio_allowed_origins():
     configured = os.environ.get("PORTFOLIO_ALLOWED_ORIGINS", "")
     if configured.strip():
         return {origin.strip() for origin in configured.split(",") if origin.strip()}
-    return {
-        "https://zhangzachary834-commits.github.io",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5005",
-        "http://127.0.0.1:5005",
-    }
+    return PORTFOLIO_ALLOWED_ORIGINS
 
 def _portfolio_origin_allowed(origin):
     return not origin or origin in _portfolio_allowed_origins()
