@@ -37,3 +37,7 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Unified Brush System and CPU-GPU Micro-Mastery](unified_brush_and_micro_mastery_addendum.md)
 *   [Integrating the Event Bus, Discrete Moments, and Continuous Time](event_bus_and_time_moment_addendum.md)
 *   [The Slow Adapter and the Architecture of Understanding](slow_adapter_and_architectural_interrelations_addendum.md)
+
+*   [Integrating Native GPU OntoMath and Authorable GPU Runs](native_gpu_ontomath_and_authorable_gpu_runs_addendum.md)
+*   [Integrating Pixel Identity and Maple Block Architecture](pixel_identity_and_maple_block_architecture_addendum.md)
+*   [Integrating Interaction as Law and Native GPU OntoMath](interaction_as_law_and_native_gpu_ontomath_addendum.md)
