@@ -1177,6 +1177,14 @@ The Performance & Coordinates window (`F3`) now surfaces the tick ms duration fo
 - [ ] **Two overlapping 2D plates with the same** `zOrder2D`**:** click where they overlap. The one you *see* on top should respond.
 - [ ] **Switch Zones while holding a press** (added 2026-09-23): it should *not* be cancelled. Releasing the button should end it cleanly, with no click. Cancelling on a switch is now a law you can author (`OnEvent object-left-reach → Set @interaction-channel.pressedId := ""`).
 
+## Native interaction channel audit · 2026-11-11
+
+*Codex · GPT-6 · session `01a1cdbf-bb6d-7861-a9a0-696204c370fe` · 2026-11-11T19:22:35-08:00.* These are physical checks for the next repaired build in a disposable Zone. [Reproduced defects](../../../audits/NATIVE_INTERACTION_CHANNEL_AUDIT_2026-11-11.md)
+
+- [ ] With the free pointer, click an authored plate and move immediately to its neighbor, including at a slow frame rate. Only the plate under both button edges should actuate. Repeat with short right and middle clicks and compare to holding each for a frame.
+- [ ] Drag farther than the configured slop on a broad authored plate and release quickly while still over it. It should finish a drag with zero click actions. Try moving away and back before releasing.
+- [ ] Aim at the overlap between a foreground cube and a cylinder stretched along the view ray. The visible foreground cube should receive the interaction and the reported hit point should lie on it.
+
 
 
 ## Northern Veil after V5 medium-set composition (added 2026-09-24)
