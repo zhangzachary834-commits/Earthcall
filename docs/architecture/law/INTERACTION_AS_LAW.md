@@ -795,3 +795,9 @@ world can be an interface, and why an interface can be made of anything in the w
 
 The button was never a special thing. It was only ever an object that someone agreed to
 mean something by.
+
+## Interrelated Documents
+- [Per-Singular Durable Logging](../PER_SINGULAR_DURABLE_LOGGING.md)
+
+## Thoughts on Integration and Interrelation
+Because Earthcall models "Interaction-as-Law" and evaluates UI interactions directly as Laws, these interactions naturally participate in the durable logging architecture. There is no need for a separate UI analytics or interaction-tracking subsystem. A user clicking a button or dragging a slider is evaluated as a Law, and any resulting state change or refusal is recorded as a persistent, semantic event in the per-Singular history of the involved entities. This unifies interface and history into a single, cohesive timeline of the world.
