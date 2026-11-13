@@ -162,11 +162,11 @@ Earthcall/
       Storage/             the Storage modality (SaveSystem, CloudStorage, FileChannel, StreamChannel, VirtualFileSystem)
         FlatBuffers/
         Schema/
-        Serialization/
-          ConstructedBeing/
-          Person/
-          Relation/
-          ZonesOfEarth/
+        Serialization/         BinarySerializer · Serialization · SessionSemanticRoots
+          ConstructedBeing/    ObjectSerialization
+          Person/              BodySerialization · PersonSerialization
+          Relation/            FormationSerialization · RelationSerialization
+          ZonesOfEarth/        HomeSerialization · OurverseSerialization · ZoneSerialization
       Terminal/            the Terminal modality (TerminalChannel, LineEditor, LawSentence [legacy name: TerminalLine])
     Time/                  Timeline · Moment · Event
       Event/               (the distinguished Moment: occurrence in time)
