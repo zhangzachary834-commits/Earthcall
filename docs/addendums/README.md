@@ -37,3 +37,6 @@ This directory contains synthesized addendums that tie together various architec
 *   [Integrating Unified Brush System and CPU-GPU Micro-Mastery](unified_brush_and_micro_mastery_addendum.md)
 *   [Integrating the Event Bus, Discrete Moments, and Continuous Time](event_bus_and_time_moment_addendum.md)
 *   [The Slow Adapter and the Architecture of Understanding](slow_adapter_and_architectural_interrelations_addendum.md)
+*   [Integrating Law Action Failure Memoization and Rate Limiting](law_action_failure_memoization_addendum.md)
+*   [Integrating Stable Identifiers and Identity Disambiguation Lookups](stable_identifiers_and_identity_disambiguation_addendum.md)
+*   [Integrating Test Sandboxing and Authored Save Integrity Protection](test_sandboxing_and_authored_save_integrity_addendum.md)
