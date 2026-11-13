@@ -32,6 +32,35 @@ int main() {
         }
     }
 
+    const fs::path engineRelative = "src/Singularity/Core/Engine.hpp";
+    std::ifstream engineFile(root / engineRelative);
+    if (!engineFile) {
+        std::cerr << "FAIL: Could not open Engine.hpp at " << root / engineRelative << "\n";
+        return 1;
+    }
+    const std::string engineContent((std::istreambuf_iterator<char>(engineFile)),
+                                    std::istreambuf_iterator<char>());
+    for (const char* fossil : {"getUseLegacy2DTools", "_useLegacy2DTools"}) {
+        if (engineContent.find(fossil) != std::string::npos) {
+            std::cerr << "FAIL: Legacy 2D tools fossil method/member exists: " << fossil << "\n";
+            return 1;
+        }
+    }
+
+    const fs::path consoleRelative =
+        "src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp";
+    std::ifstream consoleFile(root / consoleRelative);
+    if (!consoleFile) {
+        std::cerr << "FAIL: Could not open CreatorConsoleState.hpp at " << root / consoleRelative << "\n";
+        return 1;
+    }
+    const std::string consoleContent((std::istreambuf_iterator<char>(consoleFile)),
+                                     std::istreambuf_iterator<char>());
+    if (consoleContent.find("useLegacy2DTools") != std::string::npos) {
+        std::cerr << "FAIL: Legacy 2D tools console state field still exists\n";
+        return 1;
+    }
+
     std::ifstream toolFile(root / toolRelative);
     if (!toolFile) {
         std::cerr << "FAIL: Could not open Tool.cpp at " << root / toolRelative << "\n";
