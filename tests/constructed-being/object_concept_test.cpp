@@ -47,11 +47,11 @@ int main() {
         colA.setPosition(glm::vec3(-1.0f, 0.0f, 0.0f));
         colB.setPosition(glm::vec3(1.0f, 0.0f, 0.0f));
 
-        auto concept = ObjectConcept::captureFrom({&colA, &colB}, "twin-columns", &author);
-        assert(concept->members().size() == 2);
+        auto objConcept = ObjectConcept::captureFrom({&colA, &colB}, "twin-columns", &author);
+        assert(objConcept->members().size() == 2);
         // Poses are centroid-relative: the concept is placeable anywhere.
-        assert(nearf(glm::vec3(concept->members()[0].relativeTransform[3]).x, -1.0f));
-        assert(nearf(glm::vec3(concept->members()[1].relativeTransform[3]).x, 1.0f));
+        assert(nearf(glm::vec3(objConcept->members()[0].relativeTransform[3]).x, -1.0f));
+        assert(nearf(glm::vec3(objConcept->members()[1].relativeTransform[3]).x, 1.0f));
 
         // ------------------------------------------------------------------
         // 2. Derivation: each newborn's majorR = 1.5x its source's (PerMember),
@@ -61,17 +61,17 @@ int main() {
         perMember.source = PropertyPath::parse("shape.majorR");
         perMember.transform = CurveModel::polynomial({0.0, 1.5});
         perMember.target = PropertyPath::parse("shape.majorR");
-        concept->addMapping(perMember);
+        objConcept->addMapping(perMember);
 
         PropertyMapping meanMap;
         meanMap.source = PropertyPath::parse("shape.minorR");
         meanMap.transform = CurveModel::polynomial({0.0, 1.0});   // identity
         meanMap.target = PropertyPath::parse("shape.minorR");
         meanMap.agg = PropertyMapping::Aggregate::Mean;
-        concept->addMapping(meanMap);
+        objConcept->addMapping(meanMap);
 
         std::vector<Object*> sources{&colA, &colB};
-        auto newborns = concept->instantiate(
+        auto newborns = objConcept->instantiate(
             glm::translate(glm::mat4(1.0f), glm::vec3(10.0f, 0.0f, 0.0f)), &sources);
         assert(newborns.size() == 2);
         assert(nearf(newborns[0]->getPosition().x, 9.0f));    // placed, structure kept
@@ -102,13 +102,13 @@ int main() {
         assert(nearf(newborns[1]->getShapeParams().minorR, 0.15f));
 
         // Every newborn's origin is recorded.
-        assert(!concept->provenance().toJson().empty());
+        assert(!objConcept->provenance().toJson().empty());
 
         // ------------------------------------------------------------------
         // 3. The concept's text survives serialization.
         // ------------------------------------------------------------------
-        auto reloaded = ObjectConcept::fromJson(concept->toJson());
-        assert(reloaded->getIdentifier() == concept->getIdentifier());
+        auto reloaded = ObjectConcept::fromJson(objConcept->toJson());
+        assert(reloaded->getIdentifier() == objConcept->getIdentifier());
         assert(reloaded->members().size() == 2);
         assert(reloaded->mappings().size() == 2);
         auto again = reloaded->instantiate(glm::mat4(1.0f), &sources);
@@ -118,8 +118,8 @@ int main() {
         // ------------------------------------------------------------------
         // 4. Creation IS a law application: a Spawn law births into a World.
         // ------------------------------------------------------------------
-        ConceptRegistry::instance().add(concept);
-        assert(ConceptRegistry::instance().find(concept->getIdentifier()) == concept);
+        ConceptRegistry::instance().add(objConcept);
+        assert(ConceptRegistry::instance().find(objConcept->getIdentifier()) == objConcept);
 
         Zone world("test-zone", "default");
         LawManager mgr;
@@ -128,7 +128,7 @@ int main() {
         auto birthLaw = mgr.createLaw("raise-columns");   // deliberately unauthored
         ActionNode spawn;
         spawn.kind = ActionNode::Kind::Spawn;
-        spawn.conceptId = concept->getIdentifier();
+        spawn.conceptId = objConcept->getIdentifier();
         birthLaw->setActionModel(spawn);
 
         const std::size_t alpha = mgr.rete().addAlphaNode(
