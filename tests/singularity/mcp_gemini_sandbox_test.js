@@ -102,9 +102,9 @@ test("auto-approved command is wrapped in the hard Docker capability cage", asyn
   const created = sandbox.createSession(repo, "fake-docker");
   const fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), "earthcall-fake-docker-"));
   const fakeDocker = path.join(fakeBin, "docker");
-  fs.writeFileSync(fakeDocker, \`#!/usr/bin/env bash\nif [ "$1" = "image" ] && [ "$2" = "inspect" ]; then exit 0; fi\nprintf '%s\\n' "$@"\n\`, { mode: 0o755 });
+  fs.writeFileSync(fakeDocker, `#!/usr/bin/env bash\nif [ "$1" = "image" ] && [ "$2" = "inspect" ]; then exit 0; fi\nprintf '%s\\n' "$@"\n`, { mode: 0o755 });
   const oldPath = process.env.PATH;
-  process.env.PATH = \`\${fakeBin}:\${oldPath}\`;
+  process.env.PATH = `${fakeBin}:${oldPath}`;
   try {
     const result = await sandbox.runDocker(repo, created.id, ["node", "--version"], ".", 5);
     assert.equal(result.status, "completed");
