@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iterator>
 #include <string>
+#include <vector>
 
 int main() {
     namespace fs = std::filesystem;
@@ -44,6 +45,24 @@ int main() {
         if (content.find(fossil) != std::string::npos) {
             std::cerr << "FAIL: Legacy stroke/raycast fossil stub exists: " << fossil << "\n";
             return 1;
+        }
+    }
+
+    for (const auto& [relPath, fossils] : std::vector<std::pair<fs::path, std::vector<const char*>>>{
+             {fs::path("src/Singularity/Core/Engine.hpp"), {"getUseLegacy2DTools", "_useLegacy2DTools"}},
+             {fs::path("src/Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleState.hpp"), {"useLegacy2DTools"}}}) {
+        std::ifstream file(root / relPath);
+        if (!file) {
+            std::cerr << "FAIL: Could not open file for fossil inspection at " << root / relPath << "\n";
+            return 1;
+        }
+        const std::string fileContent((std::istreambuf_iterator<char>(file)),
+                                      std::istreambuf_iterator<char>());
+        for (const char* fossil : fossils) {
+            if (fileContent.find(fossil) != std::string::npos) {
+                std::cerr << "FAIL: Legacy fossil stub exists in " << relPath << ": " << fossil << "\n";
+                return 1;
+            }
         }
     }
 
