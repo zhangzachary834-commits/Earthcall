@@ -87,6 +87,10 @@ jobs:
         category_manager_test
         identity_test
         identity_ledger_test
+        key_store_test
+        key_pair_test
+        claim_test
+        first_mover_register_test
         lexeme_graph_roundtrip_test
         file_channel_test
         file_watcher_test
