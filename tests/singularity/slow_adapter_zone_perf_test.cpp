@@ -72,12 +72,43 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    namespace fs = std::filesystem;
+    fs::path realSaves = "saves";
+    if (!fs::exists(realSaves)) realSaves = "../saves";
+    realSaves = fs::absolute(realSaves);
+
+    struct Scratch {
+        fs::path path;
+        ~Scratch() {
+            SaveSystem::setSaveRoot("");
+            std::error_code ec;
+            fs::remove_all(path, ec);
+        }
+    };
+
+    Scratch scratch{fs::temp_directory_path() /
+        ("earthcall_perf_scratch_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))};
+
+    std::error_code ec;
+    fs::create_directories(scratch.path / "worlds", ec);
+
+    for (const char* name : {"zones", "laws", "materials", "homes", "persons", "fixtures"}) {
+        if (fs::exists(realSaves / name, ec)) {
+            fs::copy(realSaves / name, scratch.path / name,
+                     fs::copy_options::recursive | fs::copy_options::copy_symlinks, ec);
+        }
+    }
+
+    const fs::path sourceWorldPath = fs::absolute(world);
+    const fs::path targetWorldPath = scratch.path / "worlds" / sourceWorldPath.filename();
+    fs::copy_file(sourceWorldPath, targetWorldPath, ec);
+
+    SaveSystem::setSaveRoot(scratch.path.string());
+
+    TestSupport::BootedEngineHarness h("Player", "humanoid", /*hydrateAllZones=*/false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(targetWorldPath.string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
