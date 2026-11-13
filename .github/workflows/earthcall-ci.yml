@@ -105,6 +105,7 @@ jobs:
         async_state_logger_test
         my_probe_test
         save_system_error_test
+        save_integrity_preservation_test
         dump_test_save_isolation_test
         foreign_web_dom_bridge_test
         foreign_web_dom_projection_test
