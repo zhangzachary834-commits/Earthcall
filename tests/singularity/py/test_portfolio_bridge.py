@@ -1,5 +1,7 @@
+import os
 import sys
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 _SRC = Path(__file__).resolve().parents[3]
@@ -17,6 +19,7 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
     def test_projection_is_read_only_and_bounded(self):
         bridge = CppBridge()
         bridge.connected = True
+        bridge.has_engine_snapshot = True
         bridge.current_state = {
             "timestamp": 123.0,
             "active_zone_index": 2,
@@ -58,6 +61,27 @@ class TestPortfolioBridgeProjection(unittest.TestCase):
         self.assertNotIn("secret_internal_field", projection["objects"][0])
         self.assertNotIn("private_runtime_state", projection["laws"][0])
         self.assertEqual(len(projection["recent_events"]), 1)
+
+    def test_synthetic_state_is_not_exposed_as_live_engine_truth(self):
+        bridge = CppBridge()
+        bridge.connected = True
+        # A connection without a real engine snapshot must not expose Studio fallback objects.
+        projection = bridge.get_portfolio_state()
+        self.assertFalse(projection["has_engine_snapshot"])
+        self.assertEqual(projection["objects"], [])
+        self.assertEqual(projection["laws"], [])
+        self.assertEqual(projection["active_zone"]["name"], "")
+
+    def test_default_origins_are_immutable(self):
+        self.assertIsInstance(PORTFOLIO_ALLOWED_ORIGINS, frozenset)
+        self.assertIn("https://zhangzachary834-commits.github.io", PORTFOLIO_ALLOWED_ORIGINS)
+
+    def test_environment_origins_override_defaults(self):
+        with patch.dict(os.environ, {"PORTFOLIO_ALLOWED_ORIGINS": "https://custom.example, http://localhost:4200"}):
+            self.assertTrue(_portfolio_origin_allowed("https://custom.example"))
+            self.assertTrue(_portfolio_origin_allowed("http://localhost:4200"))
+            self.assertFalse(_portfolio_origin_allowed("https://zhangzachary834-commits.github.io"))
+            self.assertFalse(_portfolio_origin_allowed("https://evil.example"))
 
     def test_public_portfolio_origin_is_explicitly_allowed(self):
         origin = "https://zhangzachary834-commits.github.io"
