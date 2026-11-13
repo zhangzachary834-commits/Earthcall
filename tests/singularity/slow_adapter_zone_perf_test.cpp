@@ -13,6 +13,7 @@
 // it to an independent same-thread clock.
 
 #include "support/test_harness.hpp"
+#include "support/test_save_helper.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <algorithm>
@@ -73,11 +74,17 @@ int main(int argc, char** argv) {
     }
 
     // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // Use TempSaveRoot (memory) instead of RealSaveTreeGuard (memory) because RealSaveTreeGuard
+    // copies the entire ~1.6GB saves/ tree which causes CI timeouts.
+    TempSaveRoot saveGuard;
+    std::filesystem::copy(std::filesystem::path(world).parent_path().parent_path(),
+                          std::filesystem::path(SaveSystem::saveRoot()),
+                          std::filesystem::copy_options::recursive | std::filesystem::copy_options::copy_symlinks);
+
+    TestSupport::BootedEngineHarness h("Player", "humanoid", false /* hydrateAllZones */);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
-    h.loadWorld(world);
+    h.loadWorld(SaveSystem::saveRoot() + "/worlds/" + std::filesystem::path(world).filename().string());
 
     if (h.zones.zones().empty()) {
         std::fprintf(stderr, "world loaded no zones: %s\n", world.c_str());
