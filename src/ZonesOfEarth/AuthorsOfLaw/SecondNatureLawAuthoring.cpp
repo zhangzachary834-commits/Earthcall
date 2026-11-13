@@ -2,6 +2,8 @@
 
 #include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
 #include "ConstructedBeing/Singular/Property/Property.hpp"
+#include "Identity/PersonPresence.hpp"
+#include "Person/Person.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
@@ -34,10 +36,27 @@ void writeString(Singular& being, const char* property, const std::string& value
 
 Singular* findBeing(const std::string& id) {
     if (id.empty()) return nullptr;
+
+    // An exact identifier wins over historical Person aliases, but distinct
+    // beings with the same identifier must never be chosen by iteration order.
+    Singular* exact = nullptr;
     for (Singular* being : Universe::instance().beings()) {
-        if (being && being->getIdentifier() == id) return being;
+        if (!being || being->getIdentifier() != id) continue;
+        if (exact && exact != being) return nullptr;
+        exact = being;
     }
-    return nullptr;
+    if (exact) return exact;
+
+    // Migration aliases are Person-specific. Duplicate provider entries for
+    // the same being are harmless; distinct matching Persons are ambiguous.
+    Singular* candidate = nullptr;
+    for (Singular* being : Universe::instance().beings()) {
+        auto* person = dynamic_cast<Person*>(being);
+        if (!person || !Identity::personAnswersTo(*person, id)) continue;
+        if (candidate && candidate != being) return nullptr;
+        candidate = being;
+    }
+    return candidate;
 }
 
 Law* resolvePrototype(const ECA::Event& event, LawManager& laws, Singular*& request) {
