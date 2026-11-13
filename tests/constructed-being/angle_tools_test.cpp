@@ -1,44 +1,95 @@
 #include "ConstructedBeing/Singular/Object/AngleTools.hpp"
 #include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
+#include <vector>
 #include <iostream>
 #include <cmath>
-#include <cassert>
-#include <vector>
 
-bool near(float a, float b, float tol = 1e-5f) {
-    return std::abs(a - b) <= tol;
+using namespace AngleTools;
+
+bool near(float a, float b, float tol = 1e-5) {
+    return std::fabs(a - b) < tol;
 }
 
 int main() {
-    glm::vec3 origin(0.0f, 0.0f, 0.0f);
-    glm::vec3 x_axis(1.0f, 0.0f, 0.0f);
-    glm::vec3 y_axis(0.0f, 1.0f, 0.0f);
+    int failed = 0;
 
-    float angle = AngleTools::computeVertexAngle(origin, x_axis, y_axis);
-    if (!near(angle, glm::half_pi<float>())) {
-        std::cerr << "computeVertexAngle failed! expected " << glm::half_pi<float>() << " got " << angle << std::endl;
-        return 1;
+    // Test ComputeVertexAngle
+    glm::vec3 vertex(0, 0, 0);
+    glm::vec3 prevVertex(1, 0, 0);
+    glm::vec3 nextVertex(0, 1, 0);
+    float angle = computeVertexAngle(vertex, prevVertex, nextVertex);
+    if (!near(angle, M_PI / 2.0f)) {
+        std::cerr << "ComputeVertexAngle failed (90 deg)\n";
+        failed++;
     }
 
-    int chi = AngleTools::eulerCharacteristic(8, 12, 6);
-    if (chi != 2) {
-        std::cerr << "eulerCharacteristic failed! expected 2 got " << chi << std::endl;
-        return 1;
+    // Test ComputeDihedralAngle
+    glm::vec3 n1(0, 1, 0);
+    glm::vec3 n2(1, 0, 0);
+    glm::vec3 edgeDir(0, 0, -1);
+    float angle2 = computeDihedralAngle(n1, n2, edgeDir);
+    // Since computeDihedralAngle expects edgeDir in specific winding order
+    // relative to normals, changing edgeDir to (0,0,-1) makes the cross product
+    // match.
+    if (!near(angle2, M_PI / 2.0f)) {
+        std::cerr << "ComputeDihedralAngle failed. Expected " << M_PI / 2.0f << " but got " << angle2 << "\n";
+        failed++;
     }
 
-    std::vector<float> angles1 = {glm::half_pi<float>(), glm::half_pi<float>(), glm::half_pi<float>()};
-    if (!AngleTools::canFormConvexVertex(angles1)) {
-        std::cerr << "canFormConvexVertex failed for valid angles" << std::endl;
-        return 1;
+    // Test CubeTotalAngleDeficit
+    std::vector<glm::vec3> vertices = {
+        {-1, -1, -1}, { 1, -1, -1}, { 1,  1, -1}, {-1,  1, -1},
+        {-1, -1,  1}, { 1, -1,  1}, { 1,  1,  1}, {-1,  1,  1}
+    };
+    std::vector<std::vector<int>> faces = {
+        {0, 3, 2, 1}, {4, 5, 6, 7}, {0, 1, 5, 4},
+        {3, 7, 6, 2}, {0, 4, 7, 3}, {1, 2, 6, 5}
+    };
+    float deficit = totalAngleDeficit(vertices, faces);
+    if (!near(deficit, 4.0f * M_PI)) {
+        std::cerr << "CubeTotalAngleDeficit failed\n";
+        failed++;
     }
 
-    std::vector<float> angles2 = {glm::pi<float>(), glm::pi<float>(), 0.1f};
-    if (AngleTools::canFormConvexVertex(angles2)) {
-        std::cerr << "canFormConvexVertex failed for invalid angles" << std::endl;
-        return 1;
+    // Test EulerCharacteristic
+    if (eulerCharacteristic(8, 12, 6) != 2) {
+        std::cerr << "EulerCharacteristic failed\n";
+        failed++;
     }
 
-    std::cout << "All AngleTools tests passed.\n";
-    return 0;
+    // Test CanFormConvexVertex
+    std::vector<float> cubeCorner = {
+        static_cast<float>(M_PI) / 2.0f,
+        static_cast<float>(M_PI) / 2.0f,
+        static_cast<float>(M_PI) / 2.0f
+    };
+    if (!canFormConvexVertex(cubeCorner)) {
+        std::cerr << "CanFormConvexVertex failed (should be true)\n";
+        failed++;
+    }
+
+    std::vector<float> flatPlane = {
+        static_cast<float>(M_PI) / 2.0f,
+        static_cast<float>(M_PI) / 2.0f,
+        static_cast<float>(M_PI) / 2.0f,
+        static_cast<float>(M_PI) / 2.0f
+    };
+    if (canFormConvexVertex(flatPlane)) {
+        std::cerr << "CanFormConvexVertex failed (should be false)\n";
+        failed++;
+    }
+
+    // Test AdjustEdgeLength
+    std::vector<glm::vec3> verts2 = { {0, 0, 0}, {2, 0, 0} };
+    adjustEdgeLength(verts2, 0, 1, 5.0f);
+    if (!near(verts2[1].x, 5.0f)) {
+        std::cerr << "AdjustEdgeLength failed\n";
+        failed++;
+    }
+
+    if (failed == 0) {
+        std::cout << "All angle_tools tests passed.\n";
+    }
+
+    return failed;
 }
