@@ -1649,8 +1649,18 @@ bool writeZoneIdentity(const std::string& identifier, const nlohmann::json& j) {
     if (wrote) {
         const std::string safe = sanitizeLabel(identifier);
         if (!safe.empty()) {
-            std::error_code ec;
-            std::filesystem::remove(std::filesystem::path(path).parent_path() / "zone.json", ec);
+            const auto parent = std::filesystem::path(path).parent_path();
+            bool cleanupOk = true;
+            for (const auto& legacy : {parent / "zone.json", parent / "zone.ecsave"}) {
+                std::error_code ec;
+                std::filesystem::remove(legacy, ec);
+                if (ec) {
+                    std::cerr << "[SaveSystem] Failed to remove stale Zone identity sidecar "
+                              << legacy.string() << ": " << ec.message() << "\n";
+                    cleanupOk = false;
+                }
+            }
+            if (!cleanupOk) return false;
         }
     }
     return wrote;
@@ -1862,8 +1872,18 @@ bool writeHomeIdentity(const std::string& identifier, const nlohmann::json& j) {
     if (wrote) {
         const std::string safe = sanitizeLabel(identifier);
         if (!safe.empty()) {
-            std::error_code ec;
-            std::filesystem::remove(std::filesystem::path(path).parent_path() / "home.json", ec);
+            const auto parent = std::filesystem::path(path).parent_path();
+            bool cleanupOk = true;
+            for (const auto& legacy : {parent / "home.json", parent / "home.ecsave"}) {
+                std::error_code ec;
+                std::filesystem::remove(legacy, ec);
+                if (ec) {
+                    std::cerr << "[SaveSystem] Failed to remove stale Home identity sidecar "
+                              << legacy.string() << ": " << ec.message() << "\n";
+                    cleanupOk = false;
+                }
+            }
+            if (!cleanupOk) return false;
         }
     }
     return wrote;
