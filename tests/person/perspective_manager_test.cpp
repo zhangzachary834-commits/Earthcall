@@ -159,6 +159,23 @@ void test_distinct_perspectives_same_spelling() {
     // Duplicate identifier should still be rejected
     manager.addPerspective(std::make_unique<PersonPerspective>("p1_cam", "Overhead View", PersonPerspective::PerspectiveType::FreeCamera));
     assert(manager.count() == 2);
+
+    // Two identical display names are ambiguous; neither lookup nor switching guesses.
+    const size_t npos = static_cast<size_t>(-1);
+    assert(manager.findPerspective("Overhead View") == npos);
+    manager.switchTo("Overhead View");
+    assert(manager.currentIndex() == 0);
+
+    // Stable identifiers take priority over any display-name collision.
+    assert(manager.findPerspective("p1_cam") == 0);
+    assert(manager.findPerspective("p2_cam") == 1);
+    manager.addPerspective(std::make_unique<PersonPerspective>("Overhead View", "Third Camera", PersonPerspective::PerspectiveType::FreeCamera));
+    assert(manager.findPerspective("Overhead View") == 2);
+    manager.switchTo("Overhead View");
+    assert(manager.currentIndex() == 2);
+
+    // A unique display name remains a supported legacy fallback.
+    assert(manager.findPerspective("Third Camera") == 2);
 }
 
 } // namespace

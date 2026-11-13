@@ -80,6 +80,7 @@ jobs:
         person_ecform_propagation_test
         person_display_name_identity_test
         community_test
+        perspective_manager_test
         authorable_light_contract_test
         authored_physics_laws_test
         timeline_test
