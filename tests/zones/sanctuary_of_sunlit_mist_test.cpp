@@ -17,6 +17,7 @@
 #include <memory>
 #include <filesystem>
 #include <cassert>
+#include <chrono>
 
 namespace {
 
@@ -33,6 +34,20 @@ void check(bool condition, const std::string& description) {
     std::cout << "  ok: " << description << std::endl;
 }
 
+struct ScratchSaveRoot {
+    std::filesystem::path path;
+    std::string previousRoot = SaveSystem::saveRoot();
+    bool ownsDirectory = false;
+
+    ~ScratchSaveRoot() {
+        SaveSystem::setSaveRoot(previousRoot);
+        if (ownsDirectory) {
+            std::error_code ec;
+            std::filesystem::remove_all(path, ec);
+        }
+    }
+};
+
 } // namespace
 
 int main() {
@@ -44,10 +59,49 @@ int main() {
         return 1;
     }
 
-    // Ensure SaveSystem saveRoot points to the containing saves directory
+    // Isolate save operations in a temporary scratch directory so that loadState's
+    // implicit persistZones does not write to real authored save trees.
     const auto absWorld = std::filesystem::absolute(worldSavePath);
     const auto savesDir = absWorld.parent_path().parent_path();
-    SaveSystem::setSaveRoot(savesDir.string());
+
+    ScratchSaveRoot scratch{
+        std::filesystem::temp_directory_path() /
+        ("earthcall-sanctuary-mist-test-" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))};
+    // Claim the directory exclusively before any copy. Never remove a pre-existing
+    // path if another test happens to choose the same timestamp.
+    std::error_code ec;
+    scratch.ownsDirectory = std::filesystem::create_directory(scratch.path, ec);
+    if (!scratch.ownsDirectory || ec) {
+        std::cout << "sanctuary_of_sunlit_mist_test: FAILED (cannot create exclusive scratch root: "
+                  << ec.message() << ")\n";
+        return 1;
+    }
+
+    // Stage only the world and Zone identity under test, not the entire authored
+    // saves tree (which can be gigabytes). Never retain symlinks into real saves.
+    const auto sandboxWorld = scratch.path / "worlds" / "sanctuary_of_sunlit_mist.json";
+    const auto sandboxZone = scratch.path / "zones" / "Sanctuary of Sunlit Mist";
+    std::filesystem::create_directories(sandboxWorld.parent_path(), ec);
+    if (!ec) {
+        std::filesystem::copy_file(absWorld, sandboxWorld, std::filesystem::copy_options::none, ec);
+    }
+    if (!ec) {
+        std::filesystem::create_directories(sandboxZone.parent_path(), ec);
+    }
+    if (!ec) {
+        std::filesystem::copy(savesDir / "zones" / "Sanctuary of Sunlit Mist", sandboxZone,
+                              std::filesystem::copy_options::recursive |
+                                  std::filesystem::copy_options::skip_symlinks, ec);
+    }
+    if (ec) {
+        std::cout << "sanctuary_of_sunlit_mist_test: FAILED (cannot stage isolated saves: "
+                  << ec.message() << ")\n";
+        return 1;
+    }
+
+    SaveSystem::setSaveRoot(scratch.path.string());
+    const std::string sandboxWorldPath = sandboxWorld.string();
 
     ZoneManager mgr;
     Core::Camera camera;
@@ -67,7 +121,7 @@ int main() {
     ctx.lawManager = &laws;
     ctx.worldTime = &worldTime;
 
-    mgr.loadState(worldSavePath, ctx);
+    mgr.loadState(sandboxWorldPath, ctx);
 
     check(!mgr.zones().empty(), "zones loaded from sanctuary save");
     if (mgr.zones().empty()) {
