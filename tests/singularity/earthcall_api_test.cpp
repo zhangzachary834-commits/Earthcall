@@ -1,5 +1,6 @@
 #include "Singularity/Foreign/API/EarthcallAPI.hpp"
 #include "Singularity/Foreign/API/SecurityManager.hpp"
+#include "Singularity/Screen/Camera.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 #include <cassert>
 #include <algorithm>
@@ -132,9 +133,12 @@ int main() {
     assert(!api.deleteObject("rock1"));
     assert(!api.setCameraPosition(glm::vec3(10.0f)));
 
-    // getCameraPosition doesn't check permissions and returns hardcoded vec3(0,0,0) right now
-    auto camPos = api.getCameraPosition();
-    assert(camPos.x == 0.0f && camPos.y == 0.0f && camPos.z == 0.0f);
+    // Reading the camera is permission-independent and reflects the live engine state.
+    const glm::vec3 initialCameraPosition = Core::Camera::instance().getPos();
+    assert(api.getCameraPosition() == initialCameraPosition);
+    // Denied writes must not mutate the live camera.
+    assert(!api.setCameraPosition(glm::vec3(10.0f, 20.0f, 30.0f)));
+    assert(Core::Camera::instance().getPos() == initialCameraPosition);
 
     Integration::SecurityManager::instance().grantPermission(
         Integration::PermissionType::WORLD_ACCESS, "earthcall_api"
@@ -170,6 +174,8 @@ int main() {
     assert(!api.modifyObject("non_existent_rock", glm::vec3(1.0f), glm::vec3(1.0f)));
     assert(!api.deleteObject("non_existent_rock"));
     assert(api.setCameraPosition(glm::vec3(10.0f)));
+    assert(api.getCameraPosition() == glm::vec3(10.0f));
+    Core::Camera::instance().setPos(initialCameraPosition);
 
     // --- REAL RUNTIME GLOBAL SINGLETON PATH TEST ---
     // Test that the global getEarthcallAPI() singleton used by Web/foreign runtime
