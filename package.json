@@ -7,7 +7,10 @@
     "earthcall-mcp": "scripts/mcp-server.js"
   },
   "scripts": {
-    "mcp": "node scripts/mcp-server.js"
+    "mcp": "node scripts/mcp-server.js",
+    "mcp:gemini": "node scripts/mcp-gemini-server.js",
+    "mcp:gemini:test": "node --test tests/singularity/mcp_gemini_repo_tools_test.js tests/singularity/mcp_gemini_sandbox_policy_test.js tests/singularity/mcp_gemini_sandbox_test.js",
+    "mcp:gemini:sandbox-build": "bash scripts/build-gemini-sandbox.sh"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
