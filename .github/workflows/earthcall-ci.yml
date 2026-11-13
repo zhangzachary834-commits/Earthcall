@@ -217,6 +217,10 @@ jobs:
           cmake --build build --parallel 4 --target \
             sdf_revision_split_test \
             sdf_wgsl_parameter_refresh_test \
+            field_vm_test \
+            field_vm_dependency_test \
+            field_vm_property_authority_test \
+            visibility_proof_premises_test \
             sdf_range_soundness_test \
             sdf_range_hierarchy_test \
             heightfield_predicate_test \
@@ -242,6 +246,10 @@ jobs:
           set -euxo pipefail
           ./build/sdf_revision_split_test
           ./build/sdf_wgsl_parameter_refresh_test
+          ./build/field_vm_test
+          ./build/field_vm_dependency_test
+          ./build/field_vm_property_authority_test
+          ./build/visibility_proof_premises_test
           ./build/sdf_range_soundness_test
           ./build/sdf_range_hierarchy_test
           ./build/heightfield_predicate_test

@@ -15,7 +15,9 @@
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/Screen/RenderMaterial.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Time/timeline.hpp"
@@ -2065,8 +2067,258 @@ int main() {
                chiBlueSource.toJson().dump() == chiBlueBeforeVisibility &&
                "derived visibility leaked blocker state into authored source invariants");
 
-        renderer.setRadianceVisibilityEnabled(false);
+        // COMPLETE-SCENE FOREIGN FIELD VM: a Torus cannot enter the historical
+        // sphere/box analytic packet. Put it in a separate SDF program cohort,
+        // exactly on the red-source path but off the camera-centre ray. A centre
+        // red drop therefore proves foreign path visibility rather than visual
+        // occlusion of the receiver.
+        radiant.setFieldShape(receiver, glm::vec3(1.5f));
+        renderer.setRadianceVisibilityMode(RadianceVisibilityMode::CompleteScene);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        renderer.endFrame();
+        unsigned char vmSceneBaseline[4];
+        readCentre(vmSceneBaseline);
+        const Renderer::FrameStats vmBaselineStats = renderer.frameStats();
+        assert(vmBaselineStats.sceneVisibilitySdfKnownFrames >= 1 &&
+               vmBaselineStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               "receiver-only CompleteScene did not establish SDF visibility authority");
+
+        Object vmForeignBlocker;
+        auto vmFarSphere =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.05f));
+        vmFarSphere.offset = glm::vec3(0.0f, 10.0f, 0.0f);
+        auto vmTorus =
+            geom::SdfNode::leaf(geom::SdfPrim::Torus,
+                                glm::vec3(0.18f, 0.12f, 0.0f));
+        vmTorus.offset = glm::vec3(-0.4f, 0.18f, 1.075f);
+        auto vmForeignField =
+            geom::SdfNode::binary(
+                geom::SdfOp::Union, vmFarSphere, vmTorus);
+        vmForeignBlocker.setFieldShape(vmForeignField, glm::vec3(1.5f));
+        vmForeignBlocker.setMaterialId("material.webgpu_radiance_witness");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        vmForeignBlocker.drawObject();
+        renderer.endFrame();
+        unsigned char vmTorusBlocked[4];
+        readCentre(vmTorusBlocked);
+        const Renderer::FrameStats vmTorusStats = renderer.frameStats();
+        std::printf(
+            "foreign VM torus baseline=(%d,%d,%d) blocked=(%d,%d,%d) "
+            "known=%u unknownSkips=%u unknownFrames=%u\n",
+            vmSceneBaseline[0], vmSceneBaseline[1], vmSceneBaseline[2],
+            vmTorusBlocked[0], vmTorusBlocked[1], vmTorusBlocked[2],
+            vmTorusStats.sceneVisibilitySdfKnownFrames,
+            vmTorusStats.sdfVisibilityUnknownDirectSkips,
+            vmTorusStats.sceneVisibilityUnknownFrames);
+
+        assert(vmSceneBaseline[0] > vmTorusBlocked[0] + 20 &&
+               "foreign Torus VM program did not block the red source path");
+        assert(vmTorusBlocked[2] > 35 &&
+               std::abs(int(vmTorusBlocked[2]) - int(vmSceneBaseline[2])) < 25 &&
+               "foreign Torus damaged the independent blue source path");
+        assert(vmTorusStats.sceneVisibilitySdfKnownFrames >= 1 &&
+               vmTorusStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               vmTorusStats.sceneVisibilityUnknownFrames == 0 &&
+               "complete foreign Torus VM scene was reported Unknown");
+
+        // VALUE ONLY: move the Torus behind the receiver. The foreign program
+        // topology is unchanged; the scene-table bytecode must refresh without
+        // regenerating WGSL, and the red contribution must return.
+        const auto vmStructureBefore =
+            vmForeignBlocker.getSdfStructureRevision();
+        const auto vmParamsBefore =
+            vmForeignBlocker.getSdfParameterRevision();
+        vmForeignBlocker.setFieldOperandBOffset(
+            glm::vec3(-0.4f, 0.18f, -0.8f));
+        assert(vmForeignBlocker.getSdfStructureRevision() ==
+                   vmStructureBefore &&
+               vmForeignBlocker.getSdfParameterRevision() !=
+                   vmParamsBefore &&
+               "foreign Torus motion did not remain a value-only SDF edit");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        radiant.drawObject();
+        vmForeignBlocker.drawObject();
+        renderer.endFrame();
+        unsigned char vmTorusMoved[4];
+        readCentre(vmTorusMoved);
+        const Renderer::FrameStats vmMovedStats = renderer.frameStats();
+        assert(vmTorusMoved[0] > vmTorusBlocked[0] + 20 &&
+               "moving the foreign Torus left stale VM shadow bytecode");
+        assert(std::abs(int(vmTorusMoved[0]) - int(vmSceneBaseline[0])) < 25 &&
+               std::abs(int(vmTorusMoved[2]) - int(vmSceneBaseline[2])) < 25 &&
+               "foreign Torus removal did not restore the CompleteScene baseline");
+        assert(vmMovedStats.sdfProgramCompiles == 0 &&
+               vmMovedStats.sdfProgramCacheHits >= 2 &&
+               "foreign Torus value motion regenerated SDF WGSL");
+        assert(vmMovedStats.sceneVisibilitySdfKnownFrames >= 1 &&
+               vmMovedStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               "moved foreign Torus lost CompleteScene VM authority");
+
+        renderer.setRadianceVisibilityMode(RadianceVisibilityMode::Disabled);
         renderer.setRadianceSources({}, 0);
+    }
+
+    // --- LEGACY ENVIRONMENT / DIRECT-TRANSPORT SEPARATION ------------------
+    // Compatibility environment illumination may reuse authored chi(p,t), but
+    // it is not source rho and it is not visibility. A zero-rho source with a
+    // blocker on its geometric path must therefore keep the same environment
+    // pixel when visibility is enabled.
+    {
+        auto environmentMat = materials.create("webgpu_environment_separation");
+        environmentMat->baseColor = glm::vec3(1.0f);
+        environmentMat->ambient = 0.2f;
+        environmentMat->diffuse = 1.0f;
+        environmentMat->specular = 0.0f;
+
+        Object environmentReceiver;
+        auto environmentSphere =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.55f));
+        environmentReceiver.setFieldShape(environmentSphere, glm::vec3(1.5f));
+        environmentReceiver.setMaterialId("material.webgpu_environment_separation");
+
+        auto zeroRhoNode = scalarNode(0.0);
+        OntoMath::Piecewise zeroRho =
+            OntoMath::Piecewise::continuous(zeroRhoNode);
+        auto redEnvironmentNode = vectorNode(1.0, 0.0, 0.0);
+        OntoMath::Piecewise redEnvironmentChroma =
+            OntoMath::Piecewise::continuous(redEnvironmentNode);
+
+        const glm::vec3 environmentSourcePos(-0.8f, 0.0f, 1.6f);
+        renderer.setRadianceSources({}, 0);
+        renderer.setRadianceField(&zeroRho, 4301);
+        renderer.setRadianceChroma(&redEnvironmentChroma, 4302);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 0.0f);
+        renderer.setLight(environmentSourcePos,
+                          glm::vec3(0.2f),
+                          glm::vec3(0.8f),
+                          glm::vec3(0.0f));
+        renderer.setLightingEnabled(true);
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        environmentReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char environmentBaseline[4];
+        readCentre(environmentBaseline);
+        assert(environmentBaseline[0] > 35 &&
+               environmentBaseline[1] < 12 &&
+               environmentBaseline[2] < 12 &&
+               "zero-rho source lost its legacy environment illumination");
+
+        auto environmentBlocker =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.16f));
+        environmentBlocker.offset = glm::vec3(-0.4f, 0.0f, 1.075f);
+        environmentReceiver.setFieldShape(
+            geom::SdfNode::binary(
+                geom::SdfOp::Union, environmentSphere, environmentBlocker),
+            glm::vec3(1.5f));
+        renderer.setRadianceVisibilityEnabled(true);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        environmentReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char environmentBlocked[4];
+        readCentre(environmentBlocked);
+        std::printf("environment separation zero-rho baseline=(%d,%d,%d) blocked=(%d,%d,%d)\n",
+                    environmentBaseline[0], environmentBaseline[1], environmentBaseline[2],
+                    environmentBlocked[0], environmentBlocked[1], environmentBlocked[2]);
+        assert(abs(int(environmentBaseline[0]) - int(environmentBlocked[0])) <= 2 &&
+               abs(int(environmentBaseline[1]) - int(environmentBlocked[1])) <= 2 &&
+               abs(int(environmentBaseline[2]) - int(environmentBlocked[2])) <= 2 &&
+               "visibility or blocker geometry leaked into environment compatibility illumination");
+
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setRadianceField(nullptr, 0);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
+    }
+
+    // --- LEGACY DIRECT RESPONSE MIGRATION PIXEL PARITY ----------------------
+    // The old source API may still carry independent diffuse/specular weights,
+    // but SDF execution must receive one honest incident RGB plus compatibility
+    // lobe scalars. The inherited material.default response reproduces the old
+    // Blinn-Phong answer; no renderer-owned lobe formula participates.
+    {
+        auto legacyDirectMat = materials.create("webgpu_legacy_direct_migration");
+        legacyDirectMat->baseColor = glm::vec3(0.5f, 0.25f, 1.0f);
+        legacyDirectMat->ambient = 0.2f;
+        legacyDirectMat->diffuse = 0.8f;
+        legacyDirectMat->specular = 1.0f;
+        legacyDirectMat->shininess = 32.0f;
+        legacyDirectMat->responseExpr.reset();
+        legacyDirectMat->environmentResponseExpr.reset();
+
+        Object legacyDirectReceiver;
+        legacyDirectReceiver.setFieldShape(
+            geom::SdfNode::leaf(
+                geom::SdfPrim::Box, glm::vec3(0.55f, 0.55f, 0.55f)),
+            glm::vec3(1.0f));
+        legacyDirectReceiver.setMaterialId(
+            "material.webgpu_legacy_direct_migration");
+
+        auto legacyRhoNode = scalarNode(1.0);
+        OntoMath::Piecewise legacyRho =
+            OntoMath::Piecewise::continuous(legacyRhoNode);
+
+        renderer.setRadianceSources({}, 0);
+        renderer.setRadianceField(&legacyRho, 4401);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceVisibilityEnabled(false);
+        // Deliberately adversarial old API: diffuse and specular use
+        // DIFFERENT RGB chroma. Old no-chi SDF semantics consumed these
+        // vectors independently; the authored default must preserve that fact.
+        renderer.setRadianceSourceCoefficients(1.0f, 0.0f, 0.2f, 0.4f);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.0f),
+                          glm::vec3(0.20f, 0.08f, 0.04f),
+                          glm::vec3(0.40f, 0.20f, 0.05f));
+        renderer.setLightingEnabled(true);
+        renderer.setModel(glm::mat4(1.0f));
+
+        const RenderMaterial legacyResolved =
+            resolveRenderMaterial(
+                "material.webgpu_legacy_direct_migration", {});
+        assert(legacyResolved.responseExpr &&
+               legacyResolved.responseExpr.get() ==
+                   materials.defaultMaterial()->responseExpr.get() &&
+               "legacy direct receiver did not inherit material.default response");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        legacyDirectReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char migratedLegacyPixel[4];
+        readCentre(migratedLegacyPixel);
+        std::printf(
+            "legacy direct migration pixel=(%d,%d,%d) expected~(128,56,23)\n",
+            migratedLegacyPixel[0], migratedLegacyPixel[1],
+            migratedLegacyPixel[2]);
+
+        // Exact front-center is (.50,.22,.09) -> (128,56,23). The 16x16
+        // sample is slightly off-axis, mostly narrowing the shiny lobe.
+        assert(migratedLegacyPixel[0] >= 108 &&
+               migratedLegacyPixel[0] <= 140 &&
+               migratedLegacyPixel[1] >= 42 &&
+               migratedLegacyPixel[1] <= 72 &&
+               migratedLegacyPixel[2] >= 14 &&
+               migratedLegacyPixel[2] <= 38 &&
+               migratedLegacyPixel[0] > migratedLegacyPixel[1] + 45 &&
+               migratedLegacyPixel[1] > migratedLegacyPixel[2] + 15 &&
+               "authored default response failed arbitrary legacy diffuse/specular RGB parity");
+
+        renderer.setRadianceField(nullptr, 0);
+        renderer.setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.2f),
+                          glm::vec3(0.8f),
+                          glm::vec3(1.0f));
     }
 
     // --- RUNG 9 MATERIAL COPY-ON-WRITE CONTINUITY ---------------------------
@@ -2074,7 +2326,19 @@ int main() {
     // paint ownership; it must neither erase nor alias receiver-response truth.
     {
         auto sharedResponseMat = materials.create("webgpu_rung9_cow_shared");
-        auto sharedResponseRoot = vectorNode(0.8, 0.2, 0.1);
+        assert(sharedResponseMat->setDynamicProperty(
+            "roughness", PropertyValue(0.42f)));
+
+        auto sharedResponseRoot = std::make_shared<OntoMath::MathNode>();
+        sharedResponseRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto roughnessBind = std::make_unique<OntoMath::MathNode>();
+        roughnessBind->op = OntoMath::MathNode::Op::Bind;
+        roughnessBind->propertyPath = "roughness";
+        sharedResponseRoot->children.push_back(std::move(roughnessBind));
+        sharedResponseRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.2)));
+        sharedResponseRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.1)));
         sharedResponseMat->responseExpr = std::make_shared<OntoMath::Piecewise>(
             OntoMath::Piecewise::continuous(sharedResponseRoot));
         sharedResponseMat->bumpResponseRevision();
@@ -2097,6 +2361,33 @@ int main() {
         assert(privateResponseMat->responseExpr.get() !=
                    sharedResponseMat->responseExpr.get() &&
                "Material copy-on-write aliased the response Piecewise object");
+
+        PropertyValue privateRoughness;
+        PropertyValue sharedRoughness;
+        assert(privateResponseMat->getDynamicProperty(
+                   "roughness", privateRoughness) &&
+               sharedResponseMat->getDynamicProperty(
+                   "roughness", sharedRoughness) &&
+               "Material copy-on-write dropped an authored response Bind input");
+        double privateRoughNumber = 0.0;
+        double sharedRoughNumber = 0.0;
+        assert(propertyValueToNumber(privateRoughness, privateRoughNumber) &&
+               propertyValueToNumber(sharedRoughness, sharedRoughNumber) &&
+               std::abs(privateRoughNumber - 0.42) < 1e-6 &&
+               std::abs(sharedRoughNumber - 0.42) < 1e-6);
+
+        assert(PropertyPath::parse("roughness").setValue(
+                   *privateResponseMat, PropertyValue(0.15f)) ==
+               PropertyPath::PathResult::Ok);
+        assert(privateResponseMat->getDynamicProperty(
+                   "roughness", privateRoughness) &&
+               sharedResponseMat->getDynamicProperty(
+                   "roughness", sharedRoughness));
+        assert(propertyValueToNumber(privateRoughness, privateRoughNumber) &&
+               propertyValueToNumber(sharedRoughness, sharedRoughNumber) &&
+               std::abs(privateRoughNumber - 0.15) < 1e-6 &&
+               std::abs(sharedRoughNumber - 0.42) < 1e-6 &&
+               "editing the private scalar Bind input mutated the shared Material");
 
         privateResponseMat->responseExpr->pieces[0].mathNode =
             vectorNode(0.1, 0.2, 0.9);
@@ -2313,6 +2604,151 @@ int main() {
         renderer.setRadianceVisibilityEnabled(false);
     }
 
+    // --- DEFAULT DIRECT RESPONSE INHERITANCE / LOCAL BINDINGS ----------------
+    // A legacy Material has no local response AST. Resolution must inherit the
+    // default authored equation while binding THIS Material's coefficients.
+    // Equation inheritance is not value inheritance.
+    {
+        auto legacyInherited = materials.create("webgpu_default_response_inheritance");
+        legacyInherited->responseExpr.reset();
+        legacyInherited->environmentResponseExpr.reset();
+        legacyInherited->diffuse = 0.31f;
+        legacyInherited->specular = 0.27f;
+        legacyInherited->shininess = 11.0f;
+        legacyInherited->ambient = 0.09f;
+
+        auto defaultMaterial = materials.defaultMaterial();
+        assert(defaultMaterial && defaultMaterial->responseExpr &&
+               defaultMaterial->environmentResponseExpr);
+
+        const RenderMaterial resolvedInherited =
+            resolveRenderMaterial(
+                "material.webgpu_default_response_inheritance", {});
+        assert(resolvedInherited.responseExpr &&
+               resolvedInherited.responseExpr.get() ==
+                   defaultMaterial->responseExpr.get() &&
+               "legacy Material did not inherit the authored default direct equation");
+        assert(resolvedInherited.environmentResponseExpr &&
+               resolvedInherited.environmentResponseExpr.get() ==
+                   defaultMaterial->environmentResponseExpr.get() &&
+               "legacy Material did not inherit the authored default environment equation");
+
+        const auto readBoundNumber = [&](const char* path) {
+            const auto it = resolvedInherited.responseBindings.find(path);
+            assert(it != resolvedInherited.responseBindings.end());
+            double value = 0.0;
+            assert(propertyValueToNumber(it->second, value));
+            return value;
+        };
+        assert(std::abs(readBoundNumber("diffuse") - 0.31) < 1e-6 &&
+               std::abs(readBoundNumber("specular") - 0.27) < 1e-6 &&
+               std::abs(readBoundNumber("shininess") - 11.0) < 1e-6 &&
+               std::abs(readBoundNumber("ambient") - 0.09) < 1e-6 &&
+               "inherited response equation bound default Material values instead of receiver values");
+
+        auto localRoot = vectorNode(0.2, 0.3, 0.4);
+        legacyInherited->responseExpr =
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::continuous(localRoot));
+        legacyInherited->bumpResponseRevision();
+        const RenderMaterial resolvedLocal =
+            resolveRenderMaterial(
+                "material.webgpu_default_response_inheritance", {});
+        assert(resolvedLocal.responseExpr.get() ==
+                   legacyInherited->responseExpr.get() &&
+               resolvedLocal.responseExpr.get() !=
+                   defaultMaterial->responseExpr.get() &&
+               "explicit local response did not remain sovereign over the default");
+        assert(!resolvedLocal.environmentResponseExpr &&
+               "explicit direct response secretly inherited legacy environment response");
+    }
+
+    // --- AD-21 MATERIAL RESPONSE PROPERTY BIND -------------------------------
+    // The response AST stays byte-for-byte fixed while an ordinary Material
+    // Property changes through PropertyPath. resolveRenderMaterial must refresh
+    // the bound parameter value without a response revision bump or WGSL compile.
+    {
+        auto boundMat = materials.create("webgpu_response_bind_witness");
+        boundMat->baseColor = glm::vec3(1.0f);
+        boundMat->ambient = 0.0f;
+        boundMat->diffuse = 1.0f;
+        boundMat->specular = 0.0f;
+
+        auto boundRoot = std::make_shared<OntoMath::MathNode>();
+        boundRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto boundDiffuse = std::make_unique<OntoMath::MathNode>();
+        boundDiffuse->op = OntoMath::MathNode::Op::Bind;
+        boundDiffuse->propertyPath = "diffuse";
+        boundRoot->children.push_back(std::move(boundDiffuse));
+        boundRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        boundRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        boundMat->responseExpr = std::make_shared<OntoMath::Piecewise>(
+            OntoMath::Piecewise::continuous(boundRoot));
+        boundMat->bumpResponseRevision();
+        const uint32_t boundResponseRevision = boundMat->getResponseRevision();
+        const std::string boundResponseJson = boundMat->responseExpr->toJson().dump();
+
+        Object boundReceiver;
+        boundReceiver.setFieldShape(
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.55f)),
+            glm::vec3(1.0f));
+        boundReceiver.setMaterialId("material.webgpu_response_bind_witness");
+
+        auto boundRhoRoot = scalarNode(1.0);
+        OntoMath::Piecewise boundRho =
+            OntoMath::Piecewise::continuous(boundRhoRoot);
+        renderer.setRadianceSources({}, 0);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setRadianceField(&boundRho, 5101);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.0f),
+                          glm::vec3(0.8f),
+                          glm::vec3(0.0f));
+        renderer.setLightingEnabled(true);
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        boundReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char boundBright[4];
+        readCentre(boundBright);
+        const Renderer::FrameStats boundFirstStats = renderer.frameStats();
+        assert(boundBright[0] > 120 &&
+               "Material Property Bind did not reach the native receiver pixel");
+        assert(boundFirstStats.sdfProgramCompiles == 1 &&
+               "first Property-Bound response draw did not compile exactly once");
+
+        assert(PropertyPath::parse("diffuse").setValue(
+                   *boundMat, PropertyValue(0.18f)) == PropertyPath::PathResult::Ok);
+        assert(boundMat->getResponseRevision() == boundResponseRevision &&
+               boundMat->responseExpr->toJson().dump() == boundResponseJson &&
+               "ordinary bound-property edit mutated response structure/revision");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        boundReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char boundDim[4];
+        readCentre(boundDim);
+        const Renderer::FrameStats boundValueStats = renderer.frameStats();
+        std::printf("AD-21 response Bind red %d -> %d; compiles=%u cacheHits=%u paramBytes=%zu\n",
+                    boundBright[0], boundDim[0],
+                    boundValueStats.sdfProgramCompiles,
+                    boundValueStats.sdfProgramCacheHits,
+                    boundValueStats.sdfParameterBytesUploaded);
+        assert(boundBright[0] > boundDim[0] + 60 &&
+               "live Material Property Bind edit did not refresh native response value");
+        assert(boundValueStats.sdfProgramCompiles == 0 &&
+               boundValueStats.sdfProgramCacheHits >= 1 &&
+               boundValueStats.sdfParameterBytesUploaded > 0 &&
+               "Property Bind value edit recompiled WGSL or reused stale parameters");
+
+        renderer.setRadianceField(nullptr, 0);
+    }
+
     // --- Rung-8 WebGPU begin2D native pixel witness ----------------------------
     // Production begin2D now consumes OntoMath's top-left ZO orthographic
     // projection. Draw only the top-left quarter and prove through GPU readback
@@ -2370,6 +2806,930 @@ int main() {
         std::printf("single-face-painted cube draw calls = %d\n", paintedDrawCalls);
         assert(paintedDrawCalls == 6 &&
                "a single painted face must fall back to the six-draw path, not merge over the paint");
+    }
+
+    // --- AUTHORED RECEIVER LAW ON ORDINARY TRIANGLE MESH -------------------
+    // Rasterization may discover the surface, but it must execute the same
+    // Material response mathematics as the SDF path. A live Bind edit changes
+    // only response parameter bytes, never the mesh WGSL/pipeline.
+    {
+        auto meshResponseMat = materials.create("webgpu_mesh_response_witness");
+        meshResponseMat->baseColor = glm::vec3(1.0f);
+        meshResponseMat->ambient = 0.0f;
+        meshResponseMat->diffuse = 0.82f;
+        meshResponseMat->specular = 0.0f;
+
+        auto meshResponseRoot = std::make_shared<OntoMath::MathNode>();
+        meshResponseRoot->op = OntoMath::MathNode::Op::VectorConstruct;
+        auto meshDiffuseBind = std::make_unique<OntoMath::MathNode>();
+        meshDiffuseBind->op = OntoMath::MathNode::Op::Bind;
+        meshDiffuseBind->propertyPath = "diffuse";
+        meshResponseRoot->children.push_back(std::move(meshDiffuseBind));
+        meshResponseRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        meshResponseRoot->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.0)));
+        meshResponseMat->responseExpr =
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::continuous(meshResponseRoot));
+        meshResponseMat->environmentResponseExpr.reset();
+        meshResponseMat->bumpResponseRevision();
+        const uint32_t meshResponseRevision =
+            meshResponseMat->getResponseRevision();
+        const std::string meshResponseJson =
+            meshResponseMat->responseExpr->toJson().dump();
+
+        Object meshReceiver;
+        meshReceiver.setMaterialId("material.webgpu_mesh_response_witness");
+
+        renderer.setLightingEnabled(true);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.2f),
+                          glm::vec3(0.8f),
+                          glm::vec3(1.0f));
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char meshBright[4];
+        readCentre(meshBright);
+        const Renderer::FrameStats meshFirstStats = renderer.frameStats();
+        std::printf(
+            "mesh authored response bright=(%d,%d,%d) compiles=%u paramBytes=%zu\n",
+            meshBright[0], meshBright[1], meshBright[2],
+            meshFirstStats.meshProgramCompiles,
+            meshFirstStats.meshParameterBytesUploaded);
+        assert(meshBright[0] > 175 &&
+               meshBright[1] < 20 &&
+               meshBright[2] < 20 &&
+               "ordinary mesh did not execute its authored Material response");
+        assert(meshFirstStats.meshProgramCompiles == 1 &&
+               meshFirstStats.meshParameterBytesUploaded > 0 &&
+               "first authored mesh response did not compile/upload its receiver program");
+
+        assert(PropertyPath::parse("diffuse").setValue(
+                   *meshResponseMat, PropertyValue(0.18f)) ==
+               PropertyPath::PathResult::Ok);
+        assert(meshResponseMat->getResponseRevision() == meshResponseRevision &&
+               meshResponseMat->responseExpr->toJson().dump() == meshResponseJson &&
+               "bound mesh Material edit mutated receiver structure/revision");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char meshDim[4];
+        readCentre(meshDim);
+        const Renderer::FrameStats meshValueStats = renderer.frameStats();
+        std::printf(
+            "mesh authored response dim=(%d,%d,%d) compiles=%u paramBytes=%zu\n",
+            meshDim[0], meshDim[1], meshDim[2],
+            meshValueStats.meshProgramCompiles,
+            meshValueStats.meshParameterBytesUploaded);
+        assert(meshBright[0] > meshDim[0] + 110 &&
+               meshDim[0] >= 35 && meshDim[0] <= 60 &&
+               "mesh Bind value edit did not refresh the authored receiver pixel");
+        assert(meshValueStats.meshProgramCompiles == 0 &&
+               meshValueStats.meshParameterBytesUploaded > 0 &&
+               meshValueStats.meshProgramRefusals == 0 &&
+               "mesh Bind value edit recompiled or refused instead of refreshing parameters");
+    }
+
+    // --- MESH / IMPLICIT RECEIVER-LAW REPRESENTATION PARITY ----------------
+    // Geometry representation may change how the surface interaction is found.
+    // It must not change the Material response law that owns the pixel.
+    {
+        auto parityMat = materials.create("webgpu_mesh_sdf_response_parity");
+        parityMat->baseColor = glm::vec3(1.0f);
+
+        auto parityRoot = vectorNode(0.23, 0.61, 0.37);
+        parityMat->responseExpr =
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::continuous(parityRoot));
+        parityMat->environmentResponseExpr.reset();
+        parityMat->bumpResponseRevision();
+
+        Object meshSphere;
+        meshSphere.setShapeKind(Object::ShapeKind::Sphere);
+        meshSphere.setRenderMode(Object::RenderMode::Mesh);
+        meshSphere.setMaterialId(
+            "material.webgpu_mesh_sdf_response_parity");
+
+        Object implicitSphere;
+        implicitSphere.setShapeKind(Object::ShapeKind::Sphere);
+        implicitSphere.setRenderMode(Object::RenderMode::Auto);
+        implicitSphere.setMaterialId(
+            "material.webgpu_mesh_sdf_response_parity");
+
+        auto parityRhoRoot = scalarNode(1.0);
+        OntoMath::Piecewise parityRho =
+            OntoMath::Piecewise::continuous(parityRhoRoot);
+        renderer.setRadianceSources({}, 0);
+        renderer.setRadianceField(&parityRho, 6201);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.0f),
+                          glm::vec3(0.8f),
+                          glm::vec3(0.0f));
+        renderer.setLightingEnabled(true);
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshSphere.drawObject();
+        renderer.endFrame();
+        unsigned char meshRepresentation[4];
+        readCentre(meshRepresentation);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        implicitSphere.drawObject();
+        renderer.endFrame();
+        unsigned char implicitRepresentation[4];
+        readCentre(implicitRepresentation);
+
+        std::printf(
+            "surface-response parity mesh=(%d,%d,%d) implicit=(%d,%d,%d)\n",
+            meshRepresentation[0], meshRepresentation[1],
+            meshRepresentation[2], implicitRepresentation[0],
+            implicitRepresentation[1], implicitRepresentation[2]);
+
+        assert(meshRepresentation[0] > 45 &&
+               meshRepresentation[1] > 135 &&
+               meshRepresentation[2] > 75 &&
+               "mesh representation did not produce the authored receiver RGB");
+        assert(std::abs(int(meshRepresentation[0]) -
+                        int(implicitRepresentation[0])) <= 3 &&
+               std::abs(int(meshRepresentation[1]) -
+                        int(implicitRepresentation[1])) <= 3 &&
+               std::abs(int(meshRepresentation[2]) -
+                        int(implicitRepresentation[2])) <= 3 &&
+               "mesh and implicit representations disagreed on the same authored Material response");
+
+        renderer.setRadianceField(nullptr, 0);
+    }
+
+    // --- REPRESENTATION-INDEPENDENT AUTHORED SOURCE TRANSPORT ---------------
+    // Receiver law is deliberately just canonical incidentRadiance. Constant
+    // rho/chi/alpha remove geometry-dependent lobe/normal differences, so mesh
+    // and implicit representations must witness the same Source -> Receiver
+    // transport while visibility is explicitly disabled (V=1).
+    {
+        auto transportMat =
+            materials.create("webgpu_source_transport_parity");
+        transportMat->baseColor = glm::vec3(1.0f);
+
+        auto incidentRoot = std::make_shared<OntoMath::MathNode>();
+        incidentRoot->op = OntoMath::MathNode::Op::ValueLeaf;
+        incidentRoot->variableName = OntoMath::kIncidentRadianceVar;
+        transportMat->responseExpr =
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::continuous(incidentRoot));
+        transportMat->environmentResponseExpr.reset();
+        transportMat->bumpResponseRevision();
+
+        Object meshTransport;
+        meshTransport.setShapeKind(Object::ShapeKind::Sphere);
+        meshTransport.setRenderMode(Object::RenderMode::Mesh);
+        meshTransport.setMaterialId(
+            "material.webgpu_source_transport_parity");
+
+        Object implicitTransport;
+        implicitTransport.setShapeKind(Object::ShapeKind::Sphere);
+        implicitTransport.setRenderMode(Object::RenderMode::Auto);
+        implicitTransport.setMaterialId(
+            "material.webgpu_source_transport_parity");
+
+        auto rhoRoot = scalarNode(0.8);
+        auto chiRoot = vectorNode(0.25, 0.75, 0.50);
+        auto alphaRoot = scalarNode(0.75);
+        OntoMath::Piecewise rho =
+            OntoMath::Piecewise::continuous(rhoRoot);
+        OntoMath::Piecewise chi =
+            OntoMath::Piecewise::continuous(chiRoot);
+        OntoMath::Piecewise alpha =
+            OntoMath::Piecewise::continuous(alphaRoot);
+
+        Rendering::RadianceSourceBinding source;
+        source.producerId = "webgpu-source-transport-parity";
+        source.position = glm::vec3(0.0f, 0.0f, 2.0f);
+        source.radianceExpr = &rho;
+        source.radianceRevision = 1;
+        source.chromaExpr = &chi;
+        source.chromaRevision = 1;
+        source.angularExpr = &alpha;
+        source.angularRevision = 1;
+        source.temporalCoordinate = 0.0;
+        source.temporalDelta = 0.0;
+        source.enabled = true;
+
+        renderer.setRadianceField(nullptr, 0);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceSources({source}, 7301);
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setLightingEnabled(true);
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshA[4];
+        readCentre(sourceMeshA);
+        const Renderer::FrameStats sourceMeshAStats =
+            renderer.frameStats();
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        implicitTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceImplicitA[4];
+        readCentre(sourceImplicitA);
+
+        std::printf(
+            "source transport mesh=(%d,%d,%d) implicit=(%d,%d,%d) compiles=%u\n",
+            sourceMeshA[0], sourceMeshA[1], sourceMeshA[2],
+            sourceImplicitA[0], sourceImplicitA[1], sourceImplicitA[2],
+            sourceMeshAStats.meshProgramCompiles);
+
+        // Expected linear output is approximately (0.15, 0.45, 0.30).
+        assert(sourceMeshA[0] >= 32 && sourceMeshA[0] <= 46 &&
+               sourceMeshA[1] >= 108 && sourceMeshA[1] <= 122 &&
+               sourceMeshA[2] >= 70 && sourceMeshA[2] <= 84 &&
+               "mesh did not consume authored chi * rho * alpha source transport");
+        assert(std::abs(int(sourceMeshA[0]) -
+                        int(sourceImplicitA[0])) <= 3 &&
+               std::abs(int(sourceMeshA[1]) -
+                        int(sourceImplicitA[1])) <= 3 &&
+               std::abs(int(sourceMeshA[2]) -
+                        int(sourceImplicitA[2])) <= 3 &&
+               "mesh and implicit surfaces disagree on authored rho/chi/alpha transport");
+
+        // VALUE ONLY: halve rho. Source-set structure remains identical; the
+        // mesh pipeline must survive while only the combined parameter stream
+        // changes.
+        rhoRoot->scalarForm.terms[0].coefficient = 0.4;
+        source.radianceRevision = 2;
+        renderer.setRadianceSources({source}, 7302);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshB[4];
+        readCentre(sourceMeshB);
+        const Renderer::FrameStats sourceMeshBStats =
+            renderer.frameStats();
+
+        assert(sourceMeshA[0] > sourceMeshB[0] + 15 &&
+               sourceMeshA[1] > sourceMeshB[1] + 45 &&
+               sourceMeshA[2] > sourceMeshB[2] + 28 &&
+               "numeric rho edit did not reach ordinary mesh source transport");
+        assert(sourceMeshBStats.meshProgramCompiles == 0 &&
+               sourceMeshBStats.meshProgramRefusals == 0 &&
+               sourceMeshBStats.meshParameterBytesUploaded > 0 &&
+               "numeric rho edit recompiled/refused mesh WGSL instead of refreshing source params");
+
+        // LOCAL RECEIVER VISIBILITY: compatibility bool-on now means the
+        // explicitly scoped local-receiver query. Mesh cannot answer it, but the
+        // exact implicit representation can answer from its own SDF.
+        renderer.setRadianceVisibilityEnabled(true);
+        assert(renderer.radianceVisibilityMode() ==
+                   RadianceVisibilityMode::LocalReceiverGeometry &&
+               "legacy visibility bool must map to LocalReceiverGeometry");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshLocalUnknown[4];
+        readCentre(sourceMeshLocalUnknown);
+        const Renderer::FrameStats sourceMeshLocalStats =
+            renderer.frameStats();
+        assert(sourceMeshLocalUnknown[0] < 5 &&
+               sourceMeshLocalUnknown[1] < 5 &&
+               sourceMeshLocalUnknown[2] < 5 &&
+               sourceMeshLocalStats.meshVisibilityUnknownDirectSkips > 0 &&
+               "mesh silently substituted V=1 for unknown local-receiver visibility");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        implicitTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceImplicitLocalKnown[4];
+        readCentre(sourceImplicitLocalKnown);
+        assert(sourceImplicitLocalKnown[0] > 8 &&
+               sourceImplicitLocalKnown[1] > 35 &&
+               sourceImplicitLocalKnown[2] > 20 &&
+               "implicit local-receiver visibility failed to return known-unoccluded transport");
+
+        // COMPLETE SCENE VISIBILITY: first lawful provider. Move the source
+        // off the camera axis so a blocker can sit on the source ray without
+        // hiding the centre receiver pixel from the eye.
+        source.position = glm::vec3(1.4f, 0.0f, 1.4f);
+        renderer.setRadianceSources({source}, 7303);
+        renderer.setRadianceVisibilityMode(
+            RadianceVisibilityMode::CompleteScene);
+
+        // Mesh-only opaque scene is completely represented by the frame's exact
+        // world-triangle materialization. No blocker => known visible.
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshSceneVisible[4];
+        readCentre(sourceMeshSceneVisible);
+        const Renderer::FrameStats sourceMeshSceneVisibleStats =
+            renderer.frameStats();
+
+        assert(sourceMeshSceneVisible[0] > 8 &&
+               sourceMeshSceneVisible[1] > 35 &&
+               sourceMeshSceneVisible[2] > 20 &&
+               sourceMeshSceneVisibleStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshSceneVisibleStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshSceneVisibleStats.sceneVisibilityTriangles > 0 &&
+               "complete mesh scene did not yield a known visible path");
+
+        // Small opaque mesh blocker lies on the receiver->source segment but is
+        // displaced from the camera's x=0 centre ray.
+        Object meshBlocker;
+        meshBlocker.setShapeKind(Object::ShapeKind::Sphere);
+        meshBlocker.setRenderMode(Object::RenderMode::Mesh);
+        meshBlocker.setMaterialId("material.webgpu_source_transport_parity");
+        const glm::mat4 blockerModel =
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.95f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.22f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(blockerModel);
+        meshBlocker.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshSceneBlocked[4];
+        readCentre(sourceMeshSceneBlocked);
+        const Renderer::FrameStats sourceMeshSceneBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceMeshSceneBlocked[0] < 5 &&
+               sourceMeshSceneBlocked[1] < 5 &&
+               sourceMeshSceneBlocked[2] < 5 &&
+               sourceMeshSceneBlockedStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshSceneBlockedStats.meshVisibilityUnknownDirectSkips == 0 &&
+               "complete mesh scene failed to report a known occluded source path");
+
+        // Mixed representation: exactly one SDF receiver may combine its exact
+        // local field with the SAME complete mesh-triangle blocker set.
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(blockerModel);
+        meshBlocker.drawObject();
+        renderer.endFrame();
+        unsigned char sourceImplicitSceneBlocked[4];
+        readCentre(sourceImplicitSceneBlocked);
+        const Renderer::FrameStats sourceImplicitSceneBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceImplicitSceneBlocked[0] < 5 &&
+               sourceImplicitSceneBlocked[1] < 5 &&
+               sourceImplicitSceneBlocked[2] < 5 &&
+               sourceImplicitSceneBlockedStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceImplicitSceneBlockedStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               "one SDF receiver plus mesh blockers failed complete-scene visibility");
+
+        // Same-program SDF plurality is exact: the current SDF pipeline's
+        // instance storage already contains every transform/parameter record.
+        // First prove the one-instance cohort is known visible.
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.endFrame();
+        unsigned char sourceImplicitCohortVisible[4];
+        readCentre(sourceImplicitCohortVisible);
+        const Renderer::FrameStats sourceImplicitCohortVisibleStats =
+            renderer.frameStats();
+        assert(sourceImplicitCohortVisible[0] > 8 &&
+               sourceImplicitCohortVisible[1] > 35 &&
+               sourceImplicitCohortVisible[2] > 20 &&
+               sourceImplicitCohortVisibleStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceImplicitCohortVisibleStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               "single-program SDF cohort did not yield known visible transport");
+
+        // A second instance of the SAME compiled sphere program lies exactly on
+        // the receiver->source segment. CompleteScene must remain KNOWN and become
+        // occluded; plurality of instances is not plurality of field laws.
+        Object secondImplicit;
+        secondImplicit.setShapeKind(Object::ShapeKind::Sphere);
+        secondImplicit.setRenderMode(Object::RenderMode::Auto);
+        secondImplicit.setMaterialId("material.webgpu_source_transport_parity");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.95f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.22f)));
+        secondImplicit.drawObject();
+        renderer.endFrame();
+        unsigned char sourceSdfCohortBlocked[4];
+        readCentre(sourceSdfCohortBlocked);
+        const Renderer::FrameStats sourceSdfCohortBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceSdfCohortBlocked[0] < 5 &&
+               sourceSdfCohortBlocked[1] < 5 &&
+               sourceSdfCohortBlocked[2] < 5 &&
+               sourceSdfCohortBlockedStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceSdfCohortBlockedStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               "same-program second SDF instance was not admitted as an exact blocker");
+
+        // DISTINCT PROGRAM, SHARED FIELD VM: a box is a different compiled SDF
+        // law from the sphere receiver. Both raster and SDF receivers must now
+        // consume it through the same bounded field-program execution language.
+        Object differentImplicit;
+        differentImplicit.setFieldShape(
+            geom::SdfNode::leaf(
+                geom::SdfPrim::Box, glm::vec3(0.5f)),
+            glm::vec3(0.75f));
+        differentImplicit.setRenderMode(Object::RenderMode::Auto);
+        differentImplicit.setMaterialId("material.webgpu_source_transport_parity");
+        const glm::mat4 implicitBoxBlockerModel =
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.95f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.22f));
+
+        // Mesh receivers have no local SDF evaluator. Known occlusion here
+        // therefore proves the raster path consumed the all-SDF VM scene table.
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(implicitBoxBlockerModel);
+        differentImplicit.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshImplicitBlocked[4];
+        readCentre(sourceMeshImplicitBlocked);
+        const Renderer::FrameStats sourceMeshImplicitBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceMeshImplicitBlocked[0] < 5 &&
+               sourceMeshImplicitBlocked[1] < 5 &&
+               sourceMeshImplicitBlocked[2] < 5 &&
+               sourceMeshImplicitBlockedStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshImplicitBlockedStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshImplicitBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
+               "mesh receiver did not consume the shared field VM blocker table");
+
+        // SDF receiver: its own sphere cohort stays in the exact local/cohort
+        // evaluator while ONLY the foreign box travels through the same VM ABI.
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(implicitBoxBlockerModel);
+        differentImplicit.drawObject();
+        renderer.endFrame();
+        unsigned char sourceSdfMixedProgramBlocked[4];
+        readCentre(sourceSdfMixedProgramBlocked);
+        const Renderer::FrameStats sourceSdfMixedProgramBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceSdfMixedProgramBlocked[0] < 5 &&
+               sourceSdfMixedProgramBlocked[1] < 5 &&
+               sourceSdfMixedProgramBlocked[2] < 5 &&
+               sourceSdfMixedProgramBlockedStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceSdfMixedProgramBlockedStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               sourceSdfMixedProgramBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
+               "foreign box VM program did not retain CompleteScene SDF authority");
+
+        // TORUS IS NO LONGER THE REFUSAL FRONTIER. Put a Torus in its own SDF
+        // program and one major radius off the source ray in Y, so the ray cuts
+        // the tube rather than passing through the hole. X keeps the blocker off
+        // the camera-centre ray. A known black mesh pixel therefore requires
+        // on-device foreign Torus field execution.
+        Object vmKnownTorus;
+        vmKnownTorus.setFieldShape(
+            geom::SdfNode::leaf(
+                geom::SdfPrim::Torus, glm::vec3(0.5f, 0.2f, 0.0f)),
+            glm::vec3(0.8f));
+        vmKnownTorus.setRenderMode(Object::RenderMode::Auto);
+        vmKnownTorus.setMaterialId("material.webgpu_source_transport_parity");
+        const glm::mat4 implicitTorusBlockerModel =
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.11f, 0.95f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.22f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(implicitTorusBlockerModel);
+        vmKnownTorus.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshTorusBlocked[4];
+        readCentre(sourceMeshTorusBlocked);
+        const Renderer::FrameStats sourceMeshTorusBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceMeshTorusBlocked[0] < 5 &&
+               sourceMeshTorusBlocked[1] < 5 &&
+               sourceMeshTorusBlocked[2] < 5 &&
+               sourceMeshTorusBlockedStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshTorusBlockedStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshTorusBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
+               "mesh CompleteScene did not execute foreign Torus through the field VM");
+
+        // EXPR CROSSES THE VM FRONTIER with a deliberately NON-DISTANCE
+        // representation of a sphere: 4 * (length(p) - 0.5). The zero-set is
+        // exact, but raw f is four times geometric distance. A VM that merely
+        // "can evaluate Expr" can overshoot this blocker; matching the primary
+        // SDF gradient-step policy divides by |grad f|=4 and restores the lawful
+        // step. No primitive enum and no RPN execution authority participate.
+        auto exprPoint = std::make_unique<OntoMath::MathNode>();
+        exprPoint->op = OntoMath::MathNode::Op::ValueLeaf;
+        exprPoint->variableName = OntoMath::kAmbientPointVar;
+        auto exprLength = std::make_unique<OntoMath::MathNode>();
+        exprLength->op = OntoMath::MathNode::Op::Length;
+        exprLength->children.push_back(std::move(exprPoint));
+        auto exprDistance = std::make_unique<OntoMath::MathNode>();
+        exprDistance->op = OntoMath::MathNode::Op::Sub;
+        exprDistance->children.push_back(std::move(exprLength));
+        exprDistance->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(0.5)));
+        auto exprScaled = std::make_shared<OntoMath::MathNode>();
+        exprScaled->op = OntoMath::MathNode::Op::Scale;
+        exprScaled->children.push_back(
+            std::make_unique<OntoMath::MathNode>(*scalarNode(4.0)));
+        exprScaled->children.push_back(std::move(exprDistance));
+
+        Object vmKnownExpr;
+        vmKnownExpr.setFieldShape(
+            geom::makeImplicit(exprScaled),
+            glm::vec3(0.8f));
+        vmKnownExpr.setRenderMode(Object::RenderMode::Auto);
+        vmKnownExpr.setMaterialId("material.webgpu_source_transport_parity");
+        const glm::mat4 implicitExprBlockerModel =
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.95f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.22f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(implicitExprBlockerModel);
+        vmKnownExpr.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshExprBlocked[4];
+        readCentre(sourceMeshExprBlocked);
+        const Renderer::FrameStats sourceMeshExprBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceMeshExprBlocked[0] < 5 &&
+               sourceMeshExprBlocked[1] < 5 &&
+               sourceMeshExprBlocked[2] < 5 &&
+               sourceMeshExprBlockedStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshExprBlockedStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshExprBlockedStats.sceneVisibilityUnknownFrames == 0 &&
+               sourceMeshExprBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
+               "mesh CompleteScene did not execute foreign authored Expr through the field VM");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(implicitExprBlockerModel);
+        vmKnownExpr.drawObject();
+        renderer.endFrame();
+        unsigned char sourceSdfExprBlocked[4];
+        readCentre(sourceSdfExprBlocked);
+        const Renderer::FrameStats sourceSdfExprBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceSdfExprBlocked[0] < 5 &&
+               sourceSdfExprBlocked[1] < 5 &&
+               sourceSdfExprBlocked[2] < 5 &&
+               sourceSdfExprBlockedStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceSdfExprBlockedStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               sourceSdfExprBlockedStats.sceneVisibilityUnknownFrames == 0 &&
+               sourceSdfExprBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
+               "SDF CompleteScene did not execute foreign authored Expr through the field VM");
+
+        // PIECEWISE CROSSES ONLY WHEN BOTH EXECUTION REPRESENTATIONS AGREE.
+        // Bound the same non-distance sphere expression to local x in [-1,1].
+        // At identity it must exist visibly in the primary SDF evaluator; moved
+        // onto the source segment it must become Known foreign VM occlusion.
+        auto piecewiseField = std::make_shared<OntoMath::Piecewise>();
+        piecewiseField->inputVariable = "x";
+        OntoMath::Piecewise::Piece piecewiseSpherePiece;
+        piecewiseSpherePiece.mathNode =
+            std::make_shared<OntoMath::MathNode>(*exprScaled);
+        piecewiseSpherePiece.hasLo = true;
+        piecewiseSpherePiece.lo = -1.0;
+        piecewiseSpherePiece.includeLo = true;
+        piecewiseSpherePiece.hasHi = true;
+        piecewiseSpherePiece.hi = 1.0;
+        piecewiseSpherePiece.includeHi = true;
+        piecewiseField->pieces.push_back(std::move(piecewiseSpherePiece));
+
+        Object vmKnownPiecewise;
+        vmKnownPiecewise.setFieldShape(
+            geom::makeImplicit(piecewiseField),
+            glm::vec3(0.8f));
+        vmKnownPiecewise.setRenderMode(Object::RenderMode::Auto);
+        vmKnownPiecewise.setMaterialId(
+            "material.webgpu_source_transport_parity");
+
+        renderer.setLightingEnabled(false);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        vmKnownPiecewise.drawObject();
+        renderer.endFrame();
+        unsigned char primaryPiecewisePixel[4];
+        readCentre(primaryPiecewisePixel);
+        const Renderer::FrameStats primaryPiecewiseStats =
+            renderer.frameStats();
+        assert(primaryPiecewisePixel[0] > 220 &&
+               primaryPiecewisePixel[1] > 220 &&
+               primaryPiecewisePixel[2] > 220 &&
+               primaryPiecewiseStats.sdfProgramRefusals == 0 &&
+               "Piecewise SDF was still invisible/refused in the primary surface evaluator");
+        renderer.setLightingEnabled(true);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(implicitExprBlockerModel);
+        vmKnownPiecewise.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshPiecewiseBlocked[4];
+        readCentre(sourceMeshPiecewiseBlocked);
+        const Renderer::FrameStats sourceMeshPiecewiseStats =
+            renderer.frameStats();
+        assert(sourceMeshPiecewiseBlocked[0] < 5 &&
+               sourceMeshPiecewiseBlocked[1] < 5 &&
+               sourceMeshPiecewiseBlocked[2] < 5 &&
+               sourceMeshPiecewiseStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshPiecewiseStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshPiecewiseStats.sceneVisibilityUnknownFrames == 0 &&
+               "mesh CompleteScene did not execute foreign interval Piecewise through the field VM");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(implicitExprBlockerModel);
+        vmKnownPiecewise.drawObject();
+        renderer.endFrame();
+        unsigned char sourceSdfPiecewiseBlocked[4];
+        readCentre(sourceSdfPiecewiseBlocked);
+        const Renderer::FrameStats sourceSdfPiecewiseStats =
+            renderer.frameStats();
+        assert(sourceSdfPiecewiseBlocked[0] < 5 &&
+               sourceSdfPiecewiseBlocked[1] < 5 &&
+               sourceSdfPiecewiseBlocked[2] < 5 &&
+               sourceSdfPiecewiseStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceSdfPiecewiseStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               sourceSdfPiecewiseStats.sceneVisibilityUnknownFrames == 0 &&
+               "SDF CompleteScene did not execute foreign interval Piecewise through the field VM");
+
+        // PURE whereLEZero crosses the same dual authority. This guard is
+        // x^2 - 1 <= 0, so the sphere field is defined only in the local slab
+        // selected by authored predicate mathematics rather than interval syntax.
+        auto whereGuard = std::make_shared<OntoMath::MathNode>();
+        whereGuard->op = OntoMath::MathNode::Op::ScalarLeaf;
+        whereGuard->scalarForm =
+            OntoMath::ScalarForm::variable("x", 2.0)
+                .plus(OntoMath::ScalarForm::constant(-1.0));
+
+        auto wherePiecewiseField = std::make_shared<OntoMath::Piecewise>();
+        OntoMath::Piecewise::Piece whereSpherePiece;
+        whereSpherePiece.mathNode =
+            std::make_shared<OntoMath::MathNode>(*exprScaled);
+        whereSpherePiece.whereLEZero = whereGuard;
+        wherePiecewiseField->pieces.push_back(
+            std::move(whereSpherePiece));
+
+        Object vmKnownWherePiecewise;
+        vmKnownWherePiecewise.setFieldShape(
+            geom::makeImplicit(wherePiecewiseField),
+            glm::vec3(0.8f));
+        vmKnownWherePiecewise.setRenderMode(Object::RenderMode::Auto);
+        vmKnownWherePiecewise.setMaterialId(
+            "material.webgpu_source_transport_parity");
+
+        renderer.setLightingEnabled(false);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        vmKnownWherePiecewise.drawObject();
+        renderer.endFrame();
+        unsigned char primaryWherePiecewisePixel[4];
+        readCentre(primaryWherePiecewisePixel);
+        const Renderer::FrameStats primaryWherePiecewiseStats =
+            renderer.frameStats();
+        assert(primaryWherePiecewisePixel[0] > 220 &&
+               primaryWherePiecewisePixel[1] > 220 &&
+               primaryWherePiecewisePixel[2] > 220 &&
+               primaryWherePiecewiseStats.sdfProgramRefusals == 0 &&
+               "pure-where Piecewise SDF was refused/invisible in primary surface evaluation");
+        renderer.setLightingEnabled(true);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(implicitExprBlockerModel);
+        vmKnownWherePiecewise.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshWherePiecewiseBlocked[4];
+        readCentre(sourceMeshWherePiecewiseBlocked);
+        const Renderer::FrameStats sourceMeshWherePiecewiseStats =
+            renderer.frameStats();
+        assert(sourceMeshWherePiecewiseBlocked[0] < 5 &&
+               sourceMeshWherePiecewiseBlocked[1] < 5 &&
+               sourceMeshWherePiecewiseBlocked[2] < 5 &&
+               sourceMeshWherePiecewiseStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshWherePiecewiseStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshWherePiecewiseStats.sceneVisibilityUnknownFrames == 0 &&
+               "mesh CompleteScene did not execute foreign pure-where Piecewise through opcode 68");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(implicitExprBlockerModel);
+        vmKnownWherePiecewise.drawObject();
+        renderer.endFrame();
+        unsigned char sourceSdfWherePiecewiseBlocked[4];
+        readCentre(sourceSdfWherePiecewiseBlocked);
+        const Renderer::FrameStats sourceSdfWherePiecewiseStats =
+            renderer.frameStats();
+        assert(sourceSdfWherePiecewiseBlocked[0] < 5 &&
+               sourceSdfWherePiecewiseBlocked[1] < 5 &&
+               sourceSdfWherePiecewiseBlocked[2] < 5 &&
+               sourceSdfWherePiecewiseStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceSdfWherePiecewiseStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               sourceSdfWherePiecewiseStats.sceneVisibilityUnknownFrames == 0 &&
+               "SDF CompleteScene did not execute foreign pure-where Piecewise through opcode 68");
+
+        // CONVEX CROSSES THE SAME FRONTIER WITHOUT A NEW VM NOUN.
+        // Six authored outward unit planes form an exact local cube. The field
+        // VM lowers each half-space into generic scalar math and MathMax folds.
+        const std::vector<glm::vec4> convexPlanes{
+            { 1, 0, 0, .5f},{-1, 0, 0, .5f},
+            { 0, 1, 0, .5f},{ 0,-1, 0, .5f},
+            { 0, 0, 1, .5f},{ 0, 0,-1, .5f}
+        };
+        Object vmKnownConvex;
+        vmKnownConvex.setFieldShape(
+            geom::SdfNode::convex(convexPlanes),
+            glm::vec3(0.8f));
+        vmKnownConvex.setRenderMode(Object::RenderMode::Auto);
+        vmKnownConvex.setMaterialId("material.webgpu_source_transport_parity");
+        const glm::mat4 implicitConvexBlockerModel =
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.7f, 0.0f, 0.95f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(0.22f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(implicitConvexBlockerModel);
+        vmKnownConvex.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshConvexBlocked[4];
+        readCentre(sourceMeshConvexBlocked);
+        const Renderer::FrameStats sourceMeshConvexBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceMeshConvexBlocked[0] < 5 &&
+               sourceMeshConvexBlocked[1] < 5 &&
+               sourceMeshConvexBlocked[2] < 5 &&
+               sourceMeshConvexBlockedStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshConvexBlockedStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshConvexBlockedStats.sceneVisibilityUnknownFrames == 0 &&
+               sourceMeshConvexBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
+               "mesh CompleteScene did not execute foreign Convex planes through generic field VM math");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(implicitConvexBlockerModel);
+        vmKnownConvex.drawObject();
+        renderer.endFrame();
+        unsigned char sourceSdfConvexBlocked[4];
+        readCentre(sourceSdfConvexBlocked);
+        const Renderer::FrameStats sourceSdfConvexBlockedStats =
+            renderer.frameStats();
+
+        assert(sourceSdfConvexBlocked[0] < 5 &&
+               sourceSdfConvexBlocked[1] < 5 &&
+               sourceSdfConvexBlocked[2] < 5 &&
+               sourceSdfConvexBlockedStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceSdfConvexBlockedStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               sourceSdfConvexBlockedStats.sceneVisibilityUnknownFrames == 0 &&
+               sourceSdfConvexBlockedStats.sceneVisibilityImplicitBlockers > 0 &&
+               "SDF CompleteScene did not execute foreign Convex planes through generic field VM math");
+
+        // Plane equations are authored verbatim in Earthcall and are not
+        // structurally forced to unit normals. Scale every plane equation by
+        // 100x: the zero-set is the SAME cube, but the raw field is 100x too
+        // large for ordinary sphere tracing. CompleteScene must use the derived
+        // Convex Lipschitz bound instead of rejecting or overshooting it.
+        auto scaledConvexPlanes = convexPlanes;
+        for (auto& plane : scaledConvexPlanes) plane *= 100.0f;
+        Object scaledConvex;
+        scaledConvex.setFieldShape(
+            geom::SdfNode::convex(scaledConvexPlanes),
+            glm::vec3(0.8f));
+        scaledConvex.setRenderMode(Object::RenderMode::Auto);
+        scaledConvex.setMaterialId("material.webgpu_source_transport_parity");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(implicitConvexBlockerModel);
+        scaledConvex.drawObject();
+        renderer.endFrame();
+        unsigned char sourceMeshScaledConvexBlocked[4];
+        readCentre(sourceMeshScaledConvexBlocked);
+        const Renderer::FrameStats sourceMeshScaledConvexStats =
+            renderer.frameStats();
+        assert(sourceMeshScaledConvexBlocked[0] < 5 &&
+               sourceMeshScaledConvexBlocked[1] < 5 &&
+               sourceMeshScaledConvexBlocked[2] < 5 &&
+               sourceMeshScaledConvexStats.sceneVisibilityMeshKnownFrames > 0 &&
+               sourceMeshScaledConvexStats.meshVisibilityUnknownDirectSkips == 0 &&
+               sourceMeshScaledConvexStats.sceneVisibilityUnknownFrames == 0 &&
+               "mesh CompleteScene ignored the derived Lipschitz bound for non-unit Convex planes");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        implicitTransport.drawObject();
+        renderer.setModel(implicitConvexBlockerModel);
+        scaledConvex.drawObject();
+        renderer.endFrame();
+        unsigned char sourceSdfScaledConvexBlocked[4];
+        readCentre(sourceSdfScaledConvexBlocked);
+        const Renderer::FrameStats sourceSdfScaledConvexStats =
+            renderer.frameStats();
+        assert(sourceSdfScaledConvexBlocked[0] < 5 &&
+               sourceSdfScaledConvexBlocked[1] < 5 &&
+               sourceSdfScaledConvexBlocked[2] < 5 &&
+               sourceSdfScaledConvexStats.sceneVisibilitySdfKnownFrames > 0 &&
+               sourceSdfScaledConvexStats.sdfVisibilityUnknownDirectSkips == 0 &&
+               sourceSdfScaledConvexStats.sceneVisibilityUnknownFrames == 0 &&
+               "SDF CompleteScene ignored the derived Lipschitz bound for non-unit Convex planes");
+
+        // PRIMARY SURFACE MARCHER, NOT THE BLOCKER VM. A naked Convex would be
+        // solved by rootClosedFormHit and could not prove the fallback marcher.
+        // Morph(..., t=0) preserves the first child's field exactly while
+        // deliberately classifying to the generic marcher. At proxy entry the
+        // 100x Convex field is ~30 for only ~0.3 local distance: raw stepping
+        // leaps beyond the whole proxy, while f/L lands lawfully on the cube.
+        geom::SdfNode scaledConvexField =
+            geom::SdfNode::convex(scaledConvexPlanes);
+        geom::SdfNode irrelevantSphere =
+            geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(0.15f));
+        geom::SdfNode primaryScaledConvexField =
+            geom::SdfNode::binary(
+                geom::SdfOp::Morph,
+                scaledConvexField,
+                irrelevantSphere,
+                0.0f);
+        Object primaryScaledConvex;
+        primaryScaledConvex.setFieldShape(
+            primaryScaledConvexField, glm::vec3(0.8f));
+        primaryScaledConvex.setRenderMode(Object::RenderMode::Auto);
+        primaryScaledConvex.setMaterialId(
+            "material.webgpu_source_transport_parity");
+
+        renderer.setLightingEnabled(false);
+        renderer.setModel(glm::mat4(1.0f));
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        primaryScaledConvex.drawObject();
+        renderer.endFrame();
+        unsigned char primaryScaledConvexPixel[4];
+        readCentre(primaryScaledConvexPixel);
+        const Renderer::FrameStats primaryScaledConvexStats =
+            renderer.frameStats();
+        assert(primaryScaledConvexPixel[0] > 220 &&
+               primaryScaledConvexPixel[1] > 220 &&
+               primaryScaledConvexPixel[2] > 220 &&
+               primaryScaledConvexStats.sdfProgramRefusals == 0 &&
+               "primary SDF fallback marcher overshot a lawful 100x Convex field instead of using f/L");
+        renderer.setLightingEnabled(true);
+
+        // Refusal still exists where semantics are not losslessly encoded.
+        // A PropertyPath Bind needs a subject; the scene blocker VM has none.
+        auto unsupportedBind = std::make_shared<OntoMath::MathNode>();
+        unsupportedBind->op = OntoMath::MathNode::Op::Bind;
+        unsupportedBind->propertyPath = "radius";
+        Object unsupportedImplicit;
+        unsupportedImplicit.setFieldShape(
+            geom::makeImplicit(unsupportedBind),
+            glm::vec3(0.8f));
+        unsupportedImplicit.setRenderMode(Object::RenderMode::Auto);
+        unsupportedImplicit.setMaterialId("material.webgpu_source_transport_parity");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        renderer.setModel(glm::mat4(1.0f));
+        meshTransport.drawObject();
+        renderer.setModel(implicitExprBlockerModel);
+        unsupportedImplicit.drawObject();
+        renderer.endFrame();
+        const Renderer::FrameStats unsupportedBindStats = renderer.frameStats();
+        assert(unsupportedBindStats.meshVisibilityUnknownDirectSkips > 0 &&
+               unsupportedBindStats.sceneVisibilityUnknownFrames > 0 &&
+               "unsupported subject-bound Expr was silently admitted into CompleteScene truth");
+
+        renderer.setRadianceVisibilityMode(RadianceVisibilityMode::Disabled);
+        renderer.setRadianceSources({}, 0);
     }
 
     {

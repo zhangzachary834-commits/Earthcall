@@ -1,7 +1,7 @@
 // WebGpuRenderer verification (Milestone 5). Drives the real renderer class the
 // way the app will: setCamera → beginFrame → setModel → drawMesh → endFrame, then
 // reads the offscreen result back. Three things proven together:
-//   1. Perspective camera + lighting: colour = (ambient + diffuse·N·L)·baseColor.
+//   1. Perspective camera + authored Material response reaches mesh pixels.
 //   2. DEPTH: a near quad drawn BEFORE a far quad still wins at the centre.
 //   3. Texture albedo: a green albedo tints a white-baseColor surface green.
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE // WebGPU clip depth is [0,1], not GL's [-1,1]
@@ -16,6 +16,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 #include <vector>
 
 static const uint32_t W = 8, H = 8;
@@ -34,6 +35,28 @@ static geom::TessMesh quadNorm(float z, glm::vec3 n) {
     return m;
 }
 static geom::TessMesh quadAt(float z) { return quadNorm(z, glm::vec3(0, 0, 1)); }
+
+static std::shared_ptr<OntoMath::Piecewise> surfaceColorResponse() {
+    auto n = std::make_shared<OntoMath::MathNode>();
+    n->op = OntoMath::MathNode::Op::ValueLeaf;
+    n->variableName = OntoMath::kSurfaceColorVar;
+    return std::make_shared<OntoMath::Piecewise>(
+        OntoMath::Piecewise::continuous(n));
+}
+
+static std::shared_ptr<OntoMath::Piecewise> constantResponse(
+    const glm::vec3& rgb) {
+    auto n = std::make_shared<OntoMath::MathNode>();
+    n->op = OntoMath::MathNode::Op::VectorConstruct;
+    for (int i = 0; i < 3; ++i) {
+        auto c = std::make_unique<OntoMath::MathNode>();
+        c->op = OntoMath::MathNode::Op::ScalarLeaf;
+        c->scalarForm = OntoMath::ScalarForm::constant(rgb[i]);
+        n->children.push_back(std::move(c));
+    }
+    return std::make_shared<OntoMath::Piecewise>(
+        OntoMath::Piecewise::continuous(n));
+}
 
 int main() {
     wgpu::Device gpu;
@@ -102,9 +125,12 @@ int main() {
     r.setModel(glm::mat4(1.0f));
 
     // --- Scene 1: perspective + depth (near BLUE drawn before far RED) ----------
-    // specular 0 keeps these two deterministic (no white highlight added).
-    RenderMaterial blue; blue.baseColor = glm::vec3(0, 0, 1); blue.specular = 0;
-    RenderMaterial red;  red.baseColor  = glm::vec3(1, 0, 0); red.specular = 0;
+    // Bare RenderMaterial no longer means "surprise default shader"; this
+    // standalone diagnostic authors the tiny response it wants explicitly.
+    RenderMaterial blue; blue.baseColor = glm::vec3(0, 0, 1);
+    blue.responseExpr = surfaceColorResponse();
+    RenderMaterial red;  red.baseColor  = glm::vec3(1, 0, 0);
+    red.responseExpr = surfaceColorResponse();
     r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
     r.drawMesh(quadAt(0.5f), blue);  // near, first
     r.drawMesh(quadAt(-0.5f), red);  // far, second — depth must reject it
@@ -116,7 +142,8 @@ int main() {
     // --- Scene 2: texture albedo (white material + green albedo -> green) -------
     std::vector<unsigned char> green(4 * 4 * 4);           // 4×4 RGBA8, all green
     for (size_t i = 0; i < green.size(); i += 4) { green[i]=0; green[i+1]=255; green[i+2]=0; green[i+3]=255; }
-    RenderMaterial painted; painted.baseColor = glm::vec3(1, 1, 1); painted.specular = 0;
+    RenderMaterial painted; painted.baseColor = glm::vec3(1, 1, 1);
+    painted.responseExpr = surfaceColorResponse();
     painted.albedoPixels = green.data(); painted.albedoWidth = 4; painted.albedoHeight = 4;
     r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
     r.drawMesh(quadAt(0.0f), painted);
@@ -125,19 +152,18 @@ int main() {
     printf("scene 2 (albedo) centre = (%d,%d,%d,%d)\n", p2[0],p2[1],p2[2],p2[3]);
     bool texOK = p2[1] > 80 && p2[0] < 20 && p2[2] < 20; // green present, r/b absent
 
-    // --- Scene 3: Blinn-Phong specular ------------------------------------------
-    // A RED quad whose normals point along the half-vector H (so N·H = 1) gets a
-    // full white specular highlight — the green/blue channels jump from 0, which
-    // baseColor red alone can never produce. That is the specular term firing.
-    glm::vec3 halfV = glm::normalize(glm::normalize(glm::vec3(2, 5, 2)) + glm::vec3(0, 0, 1));
+    // --- Scene 3: authored receiver response -----------------------------------
+    // A red pigment receives an explicitly authored neutral response. Green/blue
+    // appearing in the pixel proves receiver mathematics, not a hidden mesh BRDF.
     RenderMaterial shiny; shiny.baseColor = glm::vec3(1, 0, 0);
-    shiny.specular = 0.7f; shiny.shininess = 32.0f;
+    shiny.responseExpr = constantResponse(glm::vec3(0.7f));
     r.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
-    r.drawMesh(quadNorm(0.0f, halfV), shiny);
+    r.drawMesh(quadAt(0.0f), shiny);
     r.endFrame();
     unsigned char p3[4]; readCenter(p3);
-    printf("scene 3 (specular) centre = (%d,%d,%d,%d)\n", p3[0],p3[1],p3[2],p3[3]);
-    bool specOK = p3[1] > 80 && p3[2] > 80; // white highlight added to g and b
+    printf("scene 3 (authored response) centre = (%d,%d,%d,%d)\n",
+           p3[0],p3[1],p3[2],p3[3]);
+    bool specOK = p3[1] > 80 && p3[2] > 80;
 
     // Count non-black pixels in the current target (for the wireframe check).
     auto countNonBlack = [&]() -> int {
@@ -275,6 +301,7 @@ int main() {
 
         RenderMaterial fm;
         fm.baseColor = glm::vec3(0.0f, 0.0f, 1.0f);
+        fm.responseExpr = surfaceColorResponse();
 
         glm::mat4 proj = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 100.0f);
         glm::vec3 eye(0.0f, 0.0f, 2.2f);

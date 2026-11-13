@@ -19,6 +19,8 @@
 #include <cassert>
 #include <cmath>
 #include <cstdio>
+#include <map>
+#include <set>
 
 static bool nearf(float a, float b, float eps = 1e-5f) { return std::fabs(a - b) < eps; }
 
@@ -50,7 +52,9 @@ int main() {
     {
         Material m("response_clay");
         assert(m.findProperty("responseExpr") != nullptr);
+        assert(m.findProperty("environmentResponseExpr") != nullptr);
         assert(!m.responseExpr);
+        assert(!m.environmentResponseExpr);
         const uint32_t colorRevisionBefore = m.getRevision();
         const uint32_t responseRevisionBefore = m.getResponseRevision();
 
@@ -87,6 +91,77 @@ int main() {
         std::printf("  rung9:    responseExpr is Law-addressable, persisted, and revision-independent\n");
     }
 
+    // --- 1c. AD-21 Bind reads ordinary Material PropertyPaths -----------------
+    {
+        Material m("bound_clay");
+        m.shininess = 24.0f;
+
+        auto bind = std::make_shared<OntoMath::MathNode>();
+        bind->op = OntoMath::MathNode::Op::Bind;
+        bind->propertyPath = "shininess";
+
+        auto value = bind->evaluate({}, &m);
+        double numeric = 0.0;
+        assert(value && propertyValueToNumber(*value, numeric));
+        assert(nearf(static_cast<float>(numeric), 24.0f));
+
+        std::set<std::string> paths;
+        bind->collectPropertyBindings(paths);
+        assert(paths.size() == 1 && paths.count("shininess") == 1);
+
+        const nlohmann::json encoded = bind->toJson();
+        assert(encoded["op"] == 42 && encoded["path"] == "shininess");
+        auto restored = OntoMath::MathNode::fromJson(encoded);
+        assert(restored && restored->op == OntoMath::MathNode::Op::Bind);
+        assert(restored->propertyPath == "shininess");
+
+        assert(PropertyPath::parse("shininess").setValue(
+                   m, PropertyValue(7.0f)) == PropertyPath::PathResult::Ok);
+        value = restored->evaluate({}, &m);
+        assert(value && propertyValueToNumber(*value, numeric));
+        assert(nearf(static_cast<float>(numeric), 7.0f));
+
+        OntoMath::MathNode unresolved;
+        unresolved.op = OntoMath::MathNode::Op::Bind;
+        unresolved.propertyPath = "does.not.exist";
+        assert(!unresolved.evaluate({}, &m));
+
+        // Dynamic authored parameters are first-class Material state too. A
+        // response Bind that survives only until save/load is not persistence.
+        assert(m.setDynamicProperty("roughness", PropertyValue(0.42f)));
+        auto roughBind = std::make_unique<OntoMath::MathNode>();
+        roughBind->op = OntoMath::MathNode::Op::Bind;
+        roughBind->propertyPath = "roughness";
+        auto roughResponse = std::make_shared<OntoMath::MathNode>();
+        roughResponse->op = OntoMath::MathNode::Op::VectorConstruct;
+        roughResponse->children.push_back(std::move(roughBind));
+        for (int i = 0; i < 2; ++i) {
+            auto zero = std::make_unique<OntoMath::MathNode>();
+            zero->op = OntoMath::MathNode::Op::ScalarLeaf;
+            zero->scalarForm = OntoMath::ScalarForm::constant(0.0);
+            roughResponse->children.push_back(std::move(zero));
+        }
+        m.responseExpr = std::make_shared<OntoMath::Piecewise>(
+            OntoMath::Piecewise::continuous(roughResponse));
+        m.bumpResponseRevision();
+
+        const nlohmann::json boundSaved = m.toJson();
+        assert(boundSaved.contains("authoredProperties"));
+        assert(boundSaved["authoredProperties"].contains("roughness"));
+        Material boundRestored = Material::fromJson(boundSaved);
+        PropertyValue roughness;
+        assert(boundRestored.getDynamicProperty("roughness", roughness));
+        double roughNumber = 0.0;
+        assert(propertyValueToNumber(roughness, roughNumber));
+        assert(nearf(static_cast<float>(roughNumber), 0.42f));
+        assert(boundRestored.responseExpr);
+        auto rebound = boundRestored.responseExpr->evaluate({}, &boundRestored);
+        assert(rebound && std::holds_alternative<glm::vec3>(*rebound));
+        assert(nearf(std::get<glm::vec3>(*rebound).x, 0.42f));
+
+        std::printf("  bind:     OntoMath Bind reads live/persisted Material PropertyPaths\n");
+    }
+
     // --- 2. The default material preserves the old global shading ------------
     {
         MaterialManager mm;
@@ -99,7 +174,69 @@ int main() {
         assert(nearf(def->specular, 1.0f));
         assert(nearf(def->shininess, 32.0f));
         assert(nearf(def->baseColor.r, 1.0f) && nearf(def->baseColor.g, 1.0f) && nearf(def->baseColor.b, 1.0f));
-        std::printf("  default: reproduces old global constants (ambient .2 / diffuse .8 / shininess 32)\n");
+        assert(def->responseExpr &&
+               "legacy direct Blinn-Phong must now exist only as authored Material math");
+        assert(def->environmentResponseExpr &&
+               "legacy default environment response should be authored OntoMath");
+
+        std::set<std::string> directBindings;
+        for (const auto& piece : def->responseExpr->pieces) {
+            if (piece.mathNode) piece.mathNode->collectPropertyBindings(directBindings);
+            if (piece.whereLEZero) piece.whereLEZero->collectPropertyBindings(directBindings);
+        }
+        assert(directBindings.size() == 3 &&
+               directBindings.count("diffuse") == 1 &&
+               directBindings.count("specular") == 1 &&
+               directBindings.count("shininess") == 1);
+
+        // Deliberately adversarial legacy lobe RGB: diffuse and specular
+        // have different chroma. With n=L=V=(0,0,1), both geometric lobes are 1.
+        // diffuse = surfaceColor * .8 * (.25,.10,.05) = (.10,.02,.04)
+        // specular = 1 * (.40,.20,.05), total = (.50,.22,.09).
+        const std::map<std::string, PropertyValue> directVars{
+            {OntoMath::kSurfaceNormalVar, PropertyValue(glm::vec3(0.0f, 0.0f, 1.0f))},
+            {OntoMath::kSurfaceColorVar, PropertyValue(glm::vec3(0.5f, 0.25f, 1.0f))},
+            {OntoMath::kIncidentRadianceVar, PropertyValue(glm::vec3(1.0f))},
+            {OntoMath::kWiXVar, PropertyValue(0.0)},
+            {OntoMath::kWiYVar, PropertyValue(0.0)},
+            {OntoMath::kWiZVar, PropertyValue(-1.0)},
+            {OntoMath::kWoXVar, PropertyValue(0.0)},
+            {OntoMath::kWoYVar, PropertyValue(0.0)},
+            {OntoMath::kWoZVar, PropertyValue(1.0)},
+            {OntoMath::kLegacyDiffuseIncidentVar,
+             PropertyValue(glm::vec3(0.25f, 0.10f, 0.05f))},
+            {OntoMath::kLegacySpecularIncidentVar,
+             PropertyValue(glm::vec3(0.40f, 0.20f, 0.05f))}
+        };
+        const auto directValue = def->responseExpr->evaluate(directVars, def.get());
+        assert(directValue && std::holds_alternative<glm::vec3>(*directValue));
+        const glm::vec3 directRgb = std::get<glm::vec3>(*directValue);
+        assert(nearf(directRgb.x, 0.50f) && nearf(directRgb.y, 0.22f) &&
+               nearf(directRgb.z, 0.09f));
+
+        std::set<std::string> envBindings;
+        for (const auto& piece : def->environmentResponseExpr->pieces) {
+            if (piece.mathNode) piece.mathNode->collectPropertyBindings(envBindings);
+        }
+        assert(envBindings.size() == 1 && envBindings.count("ambient") == 1);
+
+        const std::map<std::string, PropertyValue> envVars{
+            {OntoMath::kSurfaceColorVar, PropertyValue(glm::vec3(0.5f, 0.25f, 1.0f))},
+            {OntoMath::kEnvironmentRadianceVar, PropertyValue(glm::vec3(1.0f, 0.5f, 0.25f))}
+        };
+        const auto envValue = def->environmentResponseExpr->evaluate(envVars, def.get());
+        assert(envValue && std::holds_alternative<glm::vec3>(*envValue));
+        const glm::vec3 envRgb = std::get<glm::vec3>(*envValue);
+        assert(nearf(envRgb.x, 0.1f) && nearf(envRgb.y, 0.025f) &&
+               nearf(envRgb.z, 0.05f));
+
+        const auto defaultSaved = def->toJson();
+        assert(defaultSaved.contains("responseExpr"));
+        assert(defaultSaved.contains("environmentResponseExpr"));
+        Material defaultRestored = Material::fromJson(defaultSaved);
+        assert(defaultRestored.responseExpr);
+        assert(defaultRestored.environmentResponseExpr);
+        std::printf("  default: direct Blinn-Phong and environment compatibility are authored Material equations\n");
     }
 
     // --- 3. Manager ownership, resolution, and the undeletable default -------
@@ -193,8 +330,9 @@ int main() {
         assert(m.findProperty("diffuse") != nullptr);
         assert(m.findProperty("colorExpr") != nullptr);
         assert(m.findProperty("responseExpr") != nullptr);
+        assert(m.findProperty("environmentResponseExpr") != nullptr);
         assert(m.findProperty("nonexistent") == nullptr);
-        std::printf("  properties: all 6 properties registered and accessible\n");
+        std::printf("  properties: Material response channels are registered and accessible\n");
     }
 
     // --- 7. Material serialization edge cases and faceTextures ----------------

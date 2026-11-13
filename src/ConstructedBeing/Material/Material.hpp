@@ -64,11 +64,19 @@ public:
     // It deliberately does not reuse volume phase or source-radiance ownership.
     std::shared_ptr<OntoMath::Piecewise> responseExpr;
 
+    // Independent receiver law for directionless/environment incident radiance.
+    // This is not folded into direct response because environmentRadiance has no
+    // wi/source/visibility semantics. Absence means this Material contributes no
+    // authored environment reflection.
+    std::shared_ptr<OntoMath::Piecewise> environmentResponseExpr;
+
     // Historical revision remains the color-expression content revision.
     uint32_t getRevision() const { return _revision; }
     void bumpRevision() { ++_revision; }
     uint32_t getResponseRevision() const { return _responseRevision; }
     void bumpResponseRevision() { ++_responseRevision; }
+    uint32_t getEnvironmentResponseRevision() const { return _environmentResponseRevision; }
+    void bumpEnvironmentResponseRevision() { ++_environmentResponseRevision; }
 
     int textureResolution = 64;
     int textureWidth = 64;
@@ -87,6 +95,7 @@ private:
     std::string _name = "default";
     uint32_t _revision = 0;
     uint32_t _responseRevision = 0;
+    uint32_t _environmentResponseRevision = 0;
     mutable uint64_t _syncedFaceRevisionHash = 0;
     mutable bool _facesSynced = false;
     void buildProperties() override;

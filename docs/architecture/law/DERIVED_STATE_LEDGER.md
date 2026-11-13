@@ -47,6 +47,125 @@ red the moment the map stops noticing the world's shape move.
 
 ---
 
+## WebGPU external world-guard execution bridge — 2026-11-08
+
+This rung deliberately separates **world testimony acquisition** from **world testimony execution**.
+
+The authored source remains `Piece::guard : ConditionNode`. Neither the primary WebGPU SDF compiler nor the scene Field VM evaluates that condition, looks up a subject, queries the Universe, or turns an unavailable world fact into `false`. Instead an external authority may supply one decision for each reachable authored guard site:
+
+```
+FieldWorldGuardDecision::Unknown
+FieldWorldGuardDecision::False
+FieldWorldGuardDecision::True
+```
+
+`Unknown` is a refusal state and is never encoded as branch-false.
+
+| Structure | Derived from | Invalidated / renewed by | Guarded by |
+|---|---|---|---|
+| `inspectFieldWorldGuardSites(root)` | Reachable authored `ConditionNode` guards in exact SDF/CSG traversal order. A first bare Piece makes later Piece applicability unreachable, so later guards are omitted. Each site borrows the authored ConditionNode pointer and carries a structural path such as `root/child[1]/piece[0].guard`; no condition is evaluated. | Reinspect on authored SDF/Piecewise structural change. This is ordering/identity metadata only; Lattice dependency manifests/snapshots own external authority provenance and invalidation. | `field_vm_test`: exact site pointer/path and bare-Piece reachability. |
+| Primary SDF world-guard decision slots | Externally supplied False/True decisions in the site order above. Decision values enter `Emit::param` and therefore the ordinary SDF parameter stream; ConditionNode text does not become WGSL. Pure `whereLEZero` runs first, then world guard, and interval bounds are ignored whenever a world guard exists, matching `Piece::applies`. | Recollect parameters whenever the authoritative world decision snapshot changes. False↔True does not require shader regeneration. Missing/Unknown decisions or surplus testimony refuse compilation/recollection. The current production renderer supplies no decision provider, so world-guard SDFs remain refused there. | `sdf_wgsl_parameter_refresh_test`: False↔True = byte-identical WGSL + changed parameter bytes; recollection parity; missing/Unknown/extra refusal; changing ConditionNode text at a fixed guard site does not become shader topology. |
+| `FieldVmOpcode::BranchWorldGuard = 69` | The same externally supplied False/True decision, copied into frame-local derived VM IR as exact `0.0/1.0`. The VM contains no ConditionNode evaluator. False jumps to the next authored Piece; True falls through. | Re-lower with the current authoritative decision snapshot. Unknown/missing decisions refuse before executable bytecode is admitted. Decision-count mismatch refuses. Malformed non-0/1 execution record returns Unknown. | `field_vm_test`: False/True branch flip, Unknown/missing/extra refusal, malformed record, pure→world precedence, interval suppression, opcode-69 WGSL witness. |
+
+The ordering contract is the existing CPU applicability law, not a new renderer conjunction:
+
+```
+pure where (if authored)
+    undefined / false -> next Piece
+    true              -> continue
+
+world guard (if authored)
+    false             -> next Piece
+    true              -> Piece applies
+
+only when neither pure nor world guard exists:
+    interval decides
+
+otherwise:
+    bare Piece applies
+```
+
+### Authority stop line
+
+The current Law-facing `ConditionNode::compile()` returns plain `bool`. Some world-dependent cases deliberately map unavailable/unproven referents or missing event context to `false`. That contract is suitable for deciding whether a Law fires, but it cannot prove the distinction Visibility requires:
+
+```
+proved false
+!=
+authority missing / unproven
+```
+
+Therefore this rung **does not** connect `Object::drawObject` or `WebGpuRenderer` directly to `ConditionNode::compile()`. Production currently provides no `FieldWorldGuardDecisions`, and so world-guard SDF execution continues to refuse honestly.
+
+The missing future bridge must be owned by an authority capable of producing tri-state world testimony for the exact subject + world/query context, with Lattice provenance/invalidation evidence. Only then may those decisions be supplied to Heliograph's execution bridge. Parallax proof-premise identity and Visibility Knownness remain downstream and unchanged.
+
+No decision stream is authored or persisted. No ConditionNode is copied into GPU ABI. No subject/world is invented by Screen.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
+## WebGPU pure-guard Piecewise SDF execution — 2026-11-08
+
+| Structure | Derived from | Invalidated / renewed by | Guarded by |
+|---|---|---|---|
+| Primary SDF pure-guard selection | Current authored `Piece::whereLEZero` MathNode in the shared field-VM straight-line math subset. The predicate reads leaf-local variables and follows CPU precedence: a pure guard decides applicability before interval bounds, so interval bounds on the same pure-guard piece are intentionally ignored. Applicability is `defined(g) && !(g > 0)`, matching `Piece::applies` including its NaN comparison behavior. | Regenerated with SDF structure. Predicate coefficients remain ordinary parameters and recollect without WGSL regeneration; changing predicate operators/topology is structural. The predicate-only `preserveUndefinedLn` emitter mode is part of generated-fragment cache identity. | `field_vm_test`: local-offset pure guard, ignored impossible interval, ln-domain undefinedness, shared-subset refusal, primary generated-WGSL witness. `sdf_wgsl_parameter_refresh_test`: numeric guard threshold is value-only while guard operator change is structural. `webgpu_object_test`: pure-where non-distance sphere must render in primary SDF and occlude mesh+SDF receivers through CompleteScene. |
+| `FieldVmOpcode::BranchWhereLEZero` + isolated predicate slice | Same authored pure guard, lowered to a forward branch followed by straight-line scalar/vector math records. `meta.y` is predicate-slice length; `meta.w` is the forward false/undefined target. Predicate execution owns a separate stack and never mutates enclosing CSG operands. | Rebuilt per admitted frame program. Predicate slice must stay inside opcodes 40–65, fit existing instruction/stack budgets, and terminate in exactly one value. Malformed slice/target makes the whole field result Unknown. Authored semantic undefinedness (currently notably ScalarForm ln with argument <=0) is different: it skips only that Piece and continues. | `field_vm_test`: `where x<=0`, `where ln(x)<=0` across undefined/true/false regions, malformed zero-length predicate, opcode-68/WGSL source witness. |
+| Shared pure-predicate authority subset | Intersection of the mathematics admitted by primary SDF generation and the bounded Field VM predicate evaluator: local x/y/z/p ScalarForm/MathNode arithmetic, admitted vector algebra, min/max/difference, clamp, sqrt/tan/noise and related VM-lowered operations. Richer primary-only operations such as nested `SDF(f,q)` do **not** earn Piecewise SDF authority yet. | Structural inspection on primary compile plus ordinary VM lowering on scene admission. Expansion requires both execution representations and parity witnesses; one side being able to emit an op is insufficient. | `field_vm_test` constructs a scalar nested-`SDF` guard and requires **both** primary Piecewise compilation and VM authority to refuse it. |
+
+Predicate failure has two distinct meanings and they are intentionally not collapsed:
+
+```
+malformed / unsupported predicate execution
+    -> field result Unknown / program refusal
+
+authored predicate mathematically undefined
+    -> this Piece is not applicable; continue to next Piece
+
+defined predicate value
+    -> applies iff !(value > 0)
+```
+
+The second rule is why pure guards required their own execution wrapper instead of reusing ordinary `fieldVmEval`: ordinary field results reject non-finite values and propagate execution failure, while `Piece::applies` has local applicability semantics.
+
+**Historical boundary of the pure-guard rung:** subject/world `ConditionNode` guards, FunctionCall, Fold, and pure predicates outside the shared primary/VM math subset still refused here. The external world-guard execution bridge immediately above closes only **decision consumption**; production world-testimony acquisition remains intentionally absent. Other subsystems (line restriction, integration, etc.) retain their own explicit pure-guard refusals; this rung does not globalize GPU capabilities into unrelated execution contracts.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
+## WebGPU interval Piecewise field execution — 2026-11-08
+
+| Structure | Derived from | Invalidated / renewed by | Guarded by |
+|---|---|---|---|
+| Primary SDF inline Piecewise control | Current authored `SdfNode::piecewise` interval/bare pieces. Bounds test the leaf-local x/y/z coordinate after `offset`; authored order is preserved and the first applicable piece wins. Open/closed endpoint topology is structural; numeric endpoints and branch coefficients remain parameter values. | Generated with the SDF program. Numeric endpoint/value edits recollect through the ordinary parameter path without changing WGSL; changing endpoint openness or piece topology changes generated structure. At this interval rung, world guards, pure `whereLEZero`, calls and folds still refused rather than becoming empty geometry; the pure-guard continuation immediately above supersedes that limitation. | `field_vm_test` primary-WGSL witness; `sdf_wgsl_parameter_refresh_test` proves endpoint/value edits are byte-identical WGSL while open/closed edits are structural; `webgpu_object_test` requires a Piecewise-only SDF to render visibly. |
+| `FieldVmOpcode::BranchInterval` / `Jump` | The same current Piecewise interval/bare ordering, lowered to forward-only Kernel IR. Targets are program-relative instruction indices, so programs remain relocatable inside the packed scene bytecode buffer. Branch control preserves any enclosing CSG stack prefix and contributes no authored identity. | Rebuilt with each admitted frame program. Branch targets are validated as strictly forward and within the program; malformed/self/backward targets fail closed. Instruction/stack budgets remain the existing VM hard limits. | `field_vm_test`: CPU parity across overlapping intervals, open/closed endpoints, local offsets, catch-all, no-match fallback, nested CSG stack preservation and malformed target refusal; fixed WGSL interpreter source must contain opcodes 66/67. `webgpu_object_test`: the same Piecewise SDF must occlude both mesh and SDF receivers through CompleteScene. |
+| Piecewise SDF activity/noise discovery | Presence of authored `SdfNode::piecewise`; branch MathNode noise dependencies | Re-evaluated from current authored SDF structure; no persisted cache | Primary Piecewise native witness plus compiler noise/helper coverage |
+
+**Compatibility seam, stated rather than hidden.** `OntoMath::Piecewise::evaluate` defines “outside every piece” as undefined (`nullopt`). Current `geom::evalSdf` then falls through an empty legacy RPN and returns `1e9f` empty space for a Piecewise-only SDF. This rung makes primary WGSL and Field VM match that current **SDF rendering** behavior. It does not redefine OntoMath's abstract Piecewise semantics. A future undefined-SDF cleanup must migrate CPU `evalSdf`, primary GPU evaluation and VM execution together.
+
+**Historical boundary of this interval rung:** subject/world `ConditionNode` guards, pure `whereLEZero` guards, FunctionCall and Fold were still refused here. The pure-guard continuation above closes `whereLEZero` for the shared straight-line predicate subset by adding predicate-local undefinedness; world guards/calls/folds remain refused.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
+## WebGPU scene Field VM execution state — 2026-11-06, revised 2026-11-08
+
+| Structure | Derived from | Invalidated / renewed by | Guarded by |
+|---|---|---|---|
+| `FieldMarchPolicy { needsGradientStep, marchLipschitz }` | Current authored `geom::SdfNode` **values and structure**. Expr contributes local-gradient correction. Finite Convex contributes the exact global bound `max_i |n_i|` for `f=max_i(n_i·p-d_i)`; CSG inherits the maximum child bound and ORs Expr presence. No plane payload is normalized or rewritten. | Re-inspected from the current field for every primary SDF draw, so a numeric plane edit such as normal scale `1 -> 100` changes march policy without changing WGSL structure. Field-VM lowering copies the same inspector result into its frame program. Non-finite Convex plane data refuses. | `field_vm_test`: unit and 100×-scaled Convex preserve CPU field values while deriving L=1 / L=100; CSG keeps the scaled bound. `sdf_wgsl_parameter_refresh_test`: 1× vs 100× Convex keeps byte-identical WGSL while params and march policy change. `webgpu_object_test`: a `Morph(scaledConvex,...,t=0)` forces the primary fallback marcher and must remain visible. |
+| `FieldVmProgram.instructions`, `maxStackDepth`, `needsGradientStep`, `marchLipschitz` | Current authored `geom::SdfNode` tree and OntoMath `MathNode`; interval/bare and admitted pure-guard `Piecewise` now lower through bounded forward `BranchInterval` / `BranchWhereLEZero` / `Jump` control. Primitive/CSG leaves lower directly; Convex half-spaces lower into generic scalar math + `MathMax`; Expr vectors are scalarized into bounded float-stack IR. Legacy `SdfToken::rpn` is never a VM execution input. March metadata is copied from the shared `FieldMarchPolicy` inspector. | Re-derived when an opaque SDF draw is admitted into the current frame; no persisted/cross-frame VM program cache. Any authored tree/value revision therefore receives fresh bytecode and march metadata. Unsupported math, bounds overflow, subject-dependent Bind, malformed bytecode/control targets, empty/non-finite Convex payloads, or Piecewise world guards/calls/folds and pure predicates outside the shared VM math subset refuse instead of retaining an older program. | `field_vm_test`: primitive/CSG, Convex and Expr CPU parity, Perlin/gyroid/canonical primitive-tree coverage, scaled-Convex L=100, interval Piecewise order/endpoints/nested-CSG parity, pure-guard defined/undefined continuation, malformed control targets, RPN/Bind/shared-subset refusals, stack/instruction budgets and production WGSL policy. |
+| `SceneVisibilityVmBlocker.program`, `extents.w`, packed instruction buffer | Current frame's opaque admitted SDF cohorts. Descriptor `program={instructionBase,instructionCount,maxStackDepth,flags}`; flags bit 0 mirrors Expr/local-gradient policy. `extents.xyz` is proxy coverage; `extents.w` is the derived global march Lipschitz bound (>=1). | Rebuilt by `prepareFieldVmVisibility` from the current frame's admitted programs. Buffer-pool allocations and descriptors are frame execution state only. Incomplete opacity/materialization, unsupported programs, instruction/blocker budgets or failed storage allocation revoke CompleteScene knownness. | `webgpu_object_test`: both mesh and SDF receivers require a deliberately non-distance Expr blocker `4*(length(p)-0.5)`, unit Convex, and a **100× plane-scaled Convex with the same zero-set** to remain Known and occluding; subject-bound Expr remains Unknown. |
+
+The VM remains Kernel-derived execution IR, not a second geometry language. Extending its opcodes does not authorize a persisted noun: authored mathematics remains OntoMath/SdfNode.
+
+Marching now distinguishes two derived numerical responsibilities:
+
+```
+hitDistance   = f / max(|grad f|, 1)
+marchDistance = f / max(globalLipschitz, |grad f|, 1)
+```
+
+For ordinary certified distance fields both collapse to `f` and the historical over-relaxed path is unchanged. Expr uses local gradient correction. Non-unit Convex can use the cheap globally derived `L=max_i|n_i|` without being rejected or normalized. VM/gradient evaluation failure propagates to visibility Unknown rather than fabricating a clear or blocked path.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
+
 ## 1. The ledger
 
 ### Property ValueCell observer back-edges, durable alias topology & compiled paths (2026-11-04 / 2026-11-05)

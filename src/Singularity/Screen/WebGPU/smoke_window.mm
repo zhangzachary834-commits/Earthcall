@@ -27,6 +27,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <cstdio>
+#include <memory>
 
 // --- async adapter/device request with a surface-compatible adapter ------------
 struct AdapterR { WGPUAdapter a = nullptr; bool done = false; };
@@ -39,6 +40,14 @@ static void onDevice(WGPURequestDeviceStatus s, WGPUDevice d, WGPUStringView, vo
 }
 
 // A unit cube: 6 faces, outward normals, 2 triangles each.
+static std::shared_ptr<OntoMath::Piecewise> surfaceColorResponse() {
+    auto n = std::make_shared<OntoMath::MathNode>();
+    n->op = OntoMath::MathNode::Op::ValueLeaf;
+    n->variableName = OntoMath::kSurfaceColorVar;
+    return std::make_shared<OntoMath::Piecewise>(
+        OntoMath::Piecewise::continuous(n));
+}
+
 static geom::TessMesh makeCube() {
     struct Face { glm::vec3 n, a, b, c, d; };
     const float h = 0.5f;
@@ -116,7 +125,11 @@ int main() {
     if (!r.init(gpu, WGPUTextureFormat_BGRA8Unorm)) { printf("FAIL: renderer init\n"); return 1; }
 
     geom::TessMesh cube = makeCube();
-    RenderMaterial mat; mat.baseColor = glm::vec3(0.85f, 0.35f, 0.2f); mat.specular = 0.6f;
+    RenderMaterial mat;
+    mat.baseColor = glm::vec3(0.85f, 0.35f, 0.2f);
+    // Standalone diagnostic: make the receiver law explicit rather than asking
+    // a bare RenderMaterial to summon the removed mesh shader default.
+    mat.responseExpr = surfaceColorResponse();
 
     glm::vec3 eye(2.2f, 1.6f, 2.6f);
     printf("WebGPU window open — spinning cube. Close the window to exit.\n");

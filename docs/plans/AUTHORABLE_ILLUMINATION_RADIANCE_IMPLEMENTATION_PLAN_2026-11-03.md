@@ -1,0 +1,1744 @@
+# Authorable Illumination & Radiance — Renderer Deplasticization Implementation Plan
+
+**Date:** 2026-11-03  
+**Branch:** `sol/authorable-illumination-radiance-20261103`  
+**Architectural direction:** Zach  
+**Written by:** GPT-5.6 Sol  
+**Status:** implementation plan; no completion claim
+
+## Implementation ledger — 2026-11-08 continuation: world guards gain an execution bridge, not a renderer-owned world
+
+The next Piecewise frontier is qualitatively different from local interval and `whereLEZero` control. A `ConditionNode` can ask about a concrete Singular and live world state: kind, identity, properties, relations, overlaps, quantified beings, zones, and other condition calculus. That meaning does not belong to WGSL or the field VM.
+
+Reconnaissance found an explicit authority stop line: `Piece::applies(..., subject)` can evaluate the guard, but the existing Law-facing `ConditionNode::compile()` produces plain `bool`. Some world-dependent cases intentionally return false when a referent/event/world fact is unavailable. Heliograph therefore refuses to treat that bool as the visibility-grade distinction `proved false` vs `authority missing`.
+
+This rung lands **decision consumption only**.
+
+### Implemented execution substrate
+
+- added `FieldWorldGuardDecision { Unknown, False, True }`;
+- added `inspectFieldWorldGuardSites(SdfNode)`:
+  - walks SDF/CSG structure in the same authored order used for execution;
+  - names each reachable guard with a structural path;
+  - borrows the original `ConditionNode*`;
+  - stops after a bare always-applicable Piece because later Pieces are unreachable;
+  - performs no world query and carries no authority itself;
+- added derived VM opcode `BranchWorldGuard = 69`;
+- `lowerFieldVm(root, decisions)` consumes one supplied decision per reachable world-guard site:
+  - missing decision -> refuse;
+  - `Unknown` -> refuse;
+  - `False` -> forward branch to next Piece;
+  - `True` -> fall through to the guarded Piece;
+  - surplus decisions -> refuse;
+- CPU and WGSL VM interpreters validate opcode 69 as exact 0/1 derived data; malformed records fail closed;
+- primary SDF `compile(..., worldGuardDecisions)` consumes the same ordered decisions;
+- primary SDF writes False/True into ordinary parameter slots, so world truth changes are **value changes, not WGSL topology changes**;
+- `collectParams(..., worldGuardDecisions)` recollects the same guard slots and requires exact decision-count parity;
+- CPU applicability precedence is preserved:
+  1. pure `whereLEZero` first;
+  2. world guard second;
+  3. if a world guard exists and returns true, interval bounds on that Piece are ignored;
+  4. intervals decide only when neither pure nor world guard exists;
+- a Piece carrying both pure + world guards therefore needs both gates to pass, and both false exits target the same later Piece.
+
+### Structure/value theorem
+
+For a fixed authored guard site:
+
+```
+False -> True world testimony
+    WGSL structure: identical
+    parameter bytes: changed
+    Field VM frame program: re-derived decision record
+```
+
+The `ConditionNode` AST itself is not shader topology. Changing the authored world question while preserving one guard site may still share identical WGSL; the authoritative provider + Lattice manifest/snapshot/invalidation layer is responsible for proving which current decision speaks for that authored question.
+
+### Falsifiers
+
+`field_vm_test` now requires:
+- exact reachable guard-site path/pointer ordering;
+- False chooses fallback;
+- True chooses guarded value;
+- missing/Unknown testimony refuses;
+- surplus testimony refuses rather than shifting slots;
+- opcode 69 appears in derived CPU/WGSL execution;
+- malformed 0.5 decision record returns Unknown;
+- pure-guard false skips before world guard;
+- pure true + world true chooses guarded value;
+- pure true + world false chooses fallback;
+- impossible interval bounds remain ignored on a world-guard Piece;
+- guards after a bare Piece are unreachable and consume no testimony.
+
+`sdf_wgsl_parameter_refresh_test` requires:
+- False and True decisions both compile;
+- WGSL remains byte-identical;
+- parameter bytes differ;
+- value-only recollection matches full compilation exactly;
+- missing/Unknown/extra testimony refuses;
+- replacing the ConditionNode at the same guard site does not become WGSL structure.
+
+### What explicitly did NOT land
+
+- no `ConditionNode` evaluator in WGSL;
+- no `ConditionNode` evaluator in the Field VM;
+- no subject pointer in GPU ABI;
+- no Universe query in Screen;
+- no automatic `Object -> ConditionNode::compile()` bridge;
+- no decision cache;
+- no CompleteScene Knownness change;
+- no claim that Lattice `ready` means admitted/known;
+- no production world-guard admission yet.
+
+The current production renderer supplies no decision vector, therefore world-guard SDFs continue to refuse. That is intentional.
+
+### Future authority bridge
+
+A later authority office must be able to answer one exact authored guard site for one exact subject/world/query context with tri-state testimony and provenance/invalidation:
+
+```
+authored ConditionNode + exact subject/world authority
+    -> Unknown | False | True
+    -> Lattice dependency/provenance snapshot
+    -> Heliograph execution bridge
+    -> Parallax proof-premise identity
+    -> lawful traversal
+    -> Visibility KnownClear | KnownOccluded | Unknown
+```
+
+No downstream layer may manufacture an upstream answer.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
+---
+
+## Implementation ledger — 2026-11-08 continuation: pure Piecewise predicates become local execution truth
+
+The interval Piecewise rung still had one semantic refusal that could not be solved by ordinary branching: `whereLEZero`. CPU Piecewise does not treat predicate failure as failure of the whole field. An undefined pure predicate makes **that Piece non-applicable and evaluation continues**. The ordinary field VM, correctly, treats an undefined/malformed field evaluation as Unknown. Reusing it would have changed authored Piecewise meaning.
+
+This continuation adds a separate predicate epistemic wrapper while keeping the underlying mathematics ordinary OntoMath-derived execution.
+
+Implemented:
+- added derived VM opcode `BranchWhereLEZero = 68`;
+- the guard is lowered immediately after that branch as a bounded straight-line math slice using the existing scalar/vector math records;
+- the predicate slice executes on an **isolated stack**, so it cannot disturb enclosing CSG operands;
+- branch metadata carries only slice length and a forward false/undefined target; no backward jump or loop is admitted;
+- predicate execution returns three facts:
+  - `valid` — bytecode/execution shape is lawful;
+  - `defined` — authored predicate mathematics produced a value;
+  - `value` — that produced numeric value;
+- malformed predicate execution makes the entire field result Unknown;
+- semantic predicate undefinedness skips only the current Piece and continues;
+- for the currently admitted VM math, the decisive partial operation is ScalarForm `ln`: CPU semantics are undefined iff its argument is `<=0`;
+- NaN/±inf numeric outcomes are not conflated with semantic undefinedness in the predicate wrapper;
+- applicability mirrors the CPU's actual comparison, `!(value > 0)`, rather than rewriting it as IEEE `value <= 0`;
+- primary generated SDF WGSL now emits the same guard semantics through:
+  - `emitMathDefinedness(...)` for authored nullopt/domain conditions;
+  - predicate-only raw-ln emission;
+  - `defined && !(value > 0)`;
+- predicate-only ln behavior is isolated behind `Emit::preserveUndefinedLn` and included in retained-fragment cache identity; ordinary radiance/material/volume/field lowering is not silently redefined;
+- CPU precedence is preserved exactly: when a Piece has `whereLEZero`, that pure guard decides applicability before interval testing, so any interval bounds on the same Piece are intentionally ignored;
+- primary SDF guard admission is restricted to the **shared primary/field-VM straight-line math subset**. A richer operation being lowerable by the primary compiler alone does not grant CompleteScene authority.
+
+Adversarial witnesses:
+1. `where x <= 0` with a leaf offset and an impossible interval on the same Piece proves local-coordinate binding and pure-guard precedence.
+2. `where ln(x) <= 0` proves all three predicate states:
+   - `x<=0` -> predicate undefined -> later Piece;
+   - `0<x<=1` -> predicate defined true -> guarded Piece;
+   - `x>1` -> predicate defined false -> later Piece.
+3. corrupting the predicate slice to zero length must make the VM result Unknown, not silently choose another Piece.
+4. `SDF(f,q)` is deliberately used as a scalar **primary-only richer predicate** and must be refused by both Piecewise primary authority and VM admission until the shared predicate vocabulary expands.
+5. `sdf_wgsl_parameter_refresh_test` proves a numeric guard threshold edit changes only parameter bytes while changing the guard operator changes WGSL structure.
+6. `webgpu_object_test` requires one pure-where non-distance sphere field to render visibly through the primary SDF path and to become Known occlusion through opcode 68 for both mesh and SDF receivers.
+
+Still refused:
+- subject/world `ConditionNode` Piecewise guards;
+- FunctionCall;
+- Fold;
+- pure predicates outside the shared primary/VM predicate subset.
+
+This is deliberately not a global declaration that every Earthcall evaluator now supports pure guards. Line restriction, exact integration, transport certificate machinery and other subsystems keep their own explicit refusal contracts until their own semantics are proved.
+
+No exact-head CI green result is claimed until GitHub actually executes the jobs; the focused macOS workflow has repeatedly been cancelled with zero steps.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
+---
+
+## Implementation ledger — 2026-11-08 continuation: interval Piecewise becomes one field truth
+
+A Piecewise-only implicit field previously existed in three incompatible states: CPU `geom::evalSdf` could evaluate it, primary WebGPU SDF emission ignored `SdfNode::piecewise`, and the foreign field VM admitted only one unconditional Piecewise value. This pass collapses that split for the bounded interval/bare subset without inventing a Piecewise geometry kind.
+
+Implemented:
+- `geom::isSdfActive` now names `SdfNode::piecewise` explicitly instead of relying on unrelated default dimensions to make the node appear active;
+- primary SDF WGSL now lowers authored Piecewise values directly in leaf-local coordinates after the leaf offset;
+- interval input is deliberately limited to local `x/y/z` for this rung;
+- authored order and **first applicable piece wins** are preserved;
+- lower/upper endpoint openness is preserved exactly (`>` / `>=`, `<` / `<=`);
+- the first bare piece is a permanent catch-all; later pieces are unreachable, as on the CPU;
+- no-match behavior intentionally follows the current SDF compatibility contract: Piecewise `nullopt` falls through empty legacy RPN on CPU, hence the rendering value is `1e9` empty space;
+- SDF noise discovery now descends into Piecewise branch MathNodes so branch Perlin cannot compile without its helper code;
+- added two **derived Kernel control records**, not authored nouns:
+  - `BranchInterval` — test one local coordinate interval and jump forward if it does not apply;
+  - `Jump` — after an answering branch, skip all later pieces;
+- VM targets are program-relative and strictly forward, preserving relocatability in the packed scene bytecode buffer and preventing loops;
+- Piecewise branch alternatives preserve any incoming stack prefix, so a Piecewise leaf nested inside CSG can add exactly one value without destroying already-live sibling operands;
+- malformed/self/backward/out-of-range control targets fail closed;
+- primary generated SDF evaluation and foreign CompleteScene VM execution now admit the same interval Piecewise subset.
+
+Structure/value law:
+- numeric interval endpoints and branch coefficients remain parameters;
+- changing those values must leave WGSL byte-identical;
+- endpoint openness and Piecewise topology are structural and therefore may regenerate WGSL.
+
+Adversarial witnesses:
+1. `field_vm_test` covers overlapping pieces, earlier-piece priority, open/closed endpoints, local offsets, a bare catch-all, no-match `1e9`, nested CSG stack preservation, malformed branch targets, and CPU parity.
+2. `sdf_wgsl_parameter_refresh_test` proves endpoint/value edits are parameter refreshes while open→closed is structural.
+3. `webgpu_object_test` requires the **same Piecewise-authored non-distance sphere field** to:
+   - render visibly through the primary SDF evaluator;
+   - become a Known foreign occluder for a mesh receiver;
+   - become a Known foreign occluder for an SDF receiver.
+
+Historical boundary at the end of this interval rung:
+- subject/world `ConditionNode` guards;
+- pure `whereLEZero` guards;
+- FunctionCall;
+- Fold.
+
+The pure-guard continuation immediately above closes `whereLEZero` for the shared straight-line predicate subset by adding predicate-local failure/continuation. Subject/world guards, calls and folds remain refused.
+
+A separate cross-channel debt remains outside this SDF-specific rung: the generic renderer `emitPiecewise()` helper used by radiance/volume/material channels currently emits inclusive interval comparisons and its own channel-specific fallback values. This pass does not silently redefine those channels; they require an explicit semantics-unification pass.
+
+No exact-head CI green claim is made until GitHub executes the jobs; recent focused workflow attempts have been cancelled before checkout/step 1.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
+---
+
+## Implementation ledger — 2026-11-08 continuation: one field, one march policy
+
+The field VM and the primary SDF renderer now share one derived answer to a question that authored geometry does **not** answer by itself:
+
+> Given the current authored scalar field values, what may a numerical marcher safely infer from the magnitude of `f(p)`?
+
+This pass closes a renderer-only assumption that Convex planes were structurally unit-normal. Earthcall's actual authored contract stores finite plane equations verbatim, and its CPU evaluator/range proof already permits non-unit normals.
+
+Implemented:
+- added `inspectFieldMarchPolicy(SdfNode)` as the single derived execution office for:
+  - `needsGradientStep`: general Expr zero-set mathematics requires local-gradient correction;
+  - `marchLipschitz`: a cheaply-derived global conservative bound, default 1 and `max_i |n_i|` for Convex;
+- CSG composition preserves the strongest child obligation instead of changing authored field values;
+- `FieldVmProgram` copies this policy rather than independently inventing it during bytecode emission;
+- finite non-unit Convex planes are no longer rejected or normalized by the VM;
+- the 96-byte `SceneVisibilityVmBlocker` ABI remains unchanged:
+  - `extents.xyz` = blocker proxy coverage;
+  - `extents.w` = derived global Lipschitz bound;
+  - `program.w bit 0` = Expr/local-gradient policy;
+- foreign CompleteScene traversal now advances by
+  `f / max(globalLipschitz, |grad f| when required, 1)`;
+- the primary SDF renderer derives the same policy from the **current field values on every draw**, so a plane-normal value edit `1 -> 100` can remain parameter-only while its safe march divisor changes without WGSL recompilation;
+- primary SDF instance `extents.w` carries the same global Lipschitz execution channel as foreign visibility blockers;
+- exact-distance primitives retain the existing over-relaxed path; globally-scaled/non-distance fields do not inherit over-relaxation without its proof;
+- split numerical responsibilities explicitly:
+  - local zero-set proximity / secant history uses `hitDistance = f / max(|grad f|,1)`;
+  - safe forward traversal uses `marchDistance = f / max(globalLipschitz,|grad f|,1)`;
+- self-shadow escape, same-cohort shadow marching, primary camera marching and foreign VM visibility now respect that same distinction;
+- corrected stale canonical comments that described Convex planes as guaranteed unit-normal / always 1-Lipschitz.
+
+Adversarial witnesses:
+1. `field_vm_test` scales all six cube plane equations by 100×. The authored zero-set remains identical, VM evaluation must still match `geom::evalSdf`, and derived `marchLipschitz` must become 100 rather than refusing.
+2. `webgpu_object_test` requires the 100× Convex blocker to remain Known and occluding for **both mesh and SDF receivers** through CompleteScene.
+3. A primary-surface witness wraps the same 100× Convex in `Morph(convex, sphere, t=0)`. The field remains exactly the Convex while deliberately escaping root closed-form intersection, forcing the generic primary marcher to consume the Lipschitz policy.
+4. `sdf_wgsl_parameter_refresh_test` proves 1× and 100× plane values compile to byte-identical WGSL while parameter buffers and current-value march policy differ. Shader structure therefore does not become a hidden owner of numerical safety.
+
+The resulting theorem boundary is:
+
+```
+AUTHORED:
+    f(p)
+
+DERIVED:
+    local zero-set distance estimate
+    global conservative Lipschitz bound
+    safe march distance
+```
+
+The renderer may derive those numerical facts. It may not normalize or rewrite the Person-authored field merely to make sphere tracing convenient.
+
+No exact-head green CI result is claimed in this ledger until GitHub executes the current branch jobs; recent workflow attempts have been cancelled before steps begin.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
+---
+
+## Implementation ledger — 2026-11-06 continuation: one visibility epistemic contract
+
+All bounded field-path evaluators now use the same tri-state proof law. Finite march exhaustion is no longer allowed to masquerade as physical occlusion.
+
+Implemented:
+- changed receiver-local SDF visibility from a scalar `f32` to `VisibilityDecision { known, value }`;
+- changed same-program cohort visibility to the same decision type;
+- receiver-local proved traversal returns `KnownVisible`;
+- receiver-local proved field hit returns `KnownOccluded`;
+- receiver-local 192-step exhaustion returns `Unknown`, not `V=0`;
+- same-program cohort traversal composes identically: any proved blocker settles `KnownOccluded`, every proved-clear instance yields `KnownVisible`, and one unresolved finite march yields `Unknown`;
+- `sourceVisibility` now propagates local/cohort Unknown before consulting later providers, while preserving the useful dominance law that a proved blocker is enough to settle the path;
+- foreign scene-field VM visibility already obeyed this contract, so receiver-local, same-program and foreign-program evaluation now agree on what failure to prove means;
+- compiler tribunals require `localV.known` and `cohortV.known` gates and pin the explicit proof-budget wording.
+
+The resulting Path semantics are now uniform:
+
+```
+proved blocker       -> { known = 1, V = 0 }
+proved traversal     -> { known = 1, V = 1 }
+budget/refusal       -> { known = 0, V = undefined }
+```
+
+This pass does not change the 192-step local/cohort budget or claim that those marchers cannot exhaust. It changes only the truth claim Earthcall makes when they do.
+
+---
+
+## Implementation ledger — 2026-11-05 continuation: shared mesh/SDF field-VM visibility rung 2
+
+The historical Sphere/Box foreign-implicit packet is no longer an active CompleteScene authority. Raster mesh and implicit SDF receivers now consume **one shared bounded field-program VM language** for SDF blockers.
+
+Implemented:
+- generalized the receiver-relative VM scene-table packer:
+  - `receiver == nullptr` means a raster mesh consumer and packs **every** admitted SDF cohort;
+  - an SDF receiver omits only its own compiled-program cohort because that cohort is already evaluated directly by the receiver shader;
+- generalized the CompleteScene predicate so mesh and SDF consumers share one blocker/instruction budget and one opacity/program-admission law;
+- expanded mesh group-0 visibility bindings to:
+  - binding 5 = exact world-space mesh triangles,
+  - binding 6 = field-VM blocker descriptors,
+  - binding 7 = field-VM bytecode;
+- mesh WGSL now executes the same fixed `fieldVmEval` interpreter and the same tri-state `sceneFieldVmVisibility` module used by SDF receivers;
+- mesh visibility preserves epistemic tri-state semantics: VM refusal/malformed data/budget exhaustion returns Unknown; a proved blocker returns Known occluded; only proved traversal continues to mesh-triangle visibility;
+- the canonical primitive SDF equations are **not duplicated** for mesh: `compileSurfaceResponseModule()` already prefixes the shared `kPrimitives` math, and the VM interpreter consumes those exact functions;
+- deleted the renderer-owned analytic packet state:
+  - `SceneVisibilityImplicitBlocker`,
+  - `_sdfVisibilityBlockerBatches`,
+  - frame implicit buffer/offset/size/count;
+- deleted the retired WGSL analytic packet implementation:
+  - `SceneImplicitBlockerData`,
+  - `sceneImplicitSphereBlocks`,
+  - `sceneImplicitBoxBlocks`,
+  - `sceneImplicitVisibility`,
+  - `sceneVisibilityImplicitMathModule()`;
+- frame-scoped visibility now owns only exact mesh-triangle materialization; field-program descriptors/bytecode remain receiver-relative derived execution state;
+- mesh-known telemetry now records success only **after** VM descriptor/program buffers actually materialize; semantic completeness without device allocation can no longer produce a false Known receipt;
+- retained historical telemetry names `sceneVisibilityImplicitBlockers` / `sceneVisibilityImplicitBytesUploaded` for compatibility, but they now mean VM blocker descriptors and descriptor+bytecode bytes;
+- migrated the native CompleteScene tribunal:
+  1. foreign Box blocks a mesh receiver through the shared VM;
+  2. the same Box blocks an SDF receiver through the same ABI;
+  3. foreign Torus is now **Known** for a mesh receiver through VM execution;
+  4. `Expr` is the real current refusal frontier and revokes CompleteScene authority for both mesh and SDF receivers;
+- the Torus mesh witness is geometrically adversarial: its center is offset by one major radius from the source segment so the ray cuts the torus tube rather than flying through its hole, while remaining off the camera-centre ray.
+
+Final active CompleteScene authority after this rung:
+
+```
+Raster mesh receiver:
+    all admitted SDF cohorts -> field VM
+    all opaque mesh blockers -> exact triangles
+
+SDF receiver:
+    own compiled-program cohort -> native receiver evaluator
+    every foreign admitted SDF cohort -> field VM
+    all opaque mesh blockers -> exact triangles
+```
+
+Preserved refusal law:
+- `Expr` remains Unknown until Earthcall has lossless OntoMath-native field bytecode;
+- `Convex` remains Unknown until its plane payload has an explicit VM representation;
+- blocker/instruction budget overflow remains Unknown;
+- no triangulation is allowed to impersonate authored field truth merely to earn CompleteScene authority.
+
+Verification status:
+- static source/ABI sweep finds **zero** active Sphere/Box packet symbols in the renderer/WGSL/test authority path;
+- mesh bind-group layout and draw bindings both expose eight entries with bytecode at binding 7;
+- SDF bytecode remains at binding 5;
+- both representation paths call the same `sceneVisibilityFieldVmMathModule()`;
+- the native Box/Torus/Expr tribunals are authored in `webgpu_object_test`;
+- **no native-device/CI green result is claimed yet in this session** because no workflow/status result has surfaced for the current head.
+
+Next frontier:
+1. observe the native mesh-Torus / Expr-refusal tribunal on a real WebGPU runner;
+2. implement lossless OntoMath-native bytecode for `Expr` without reviving legacy `SdfToken` RPN as a second authority;
+3. encode Convex plane payloads;
+4. then decide whether the field VM should expand from path-visibility execution into primary surface execution.
+
+The representation boundary has now collapsed without collapsing the ontology:
+
+```
+mesh receiver ─┐
+               ├── one field execution language ──> Path truth
+SDF receiver ──┘
+```
+
+---
+
+## Implementation ledger — 2026-11-05 continuation: native GPU field-VM scene table rung 1
+
+The native field VM now crosses the first **production path-visibility authority** boundary for SDF receivers. Mixed authored SDF programs no longer require a universe-sized generated shader and no longer collapse to the Sphere/Box compatibility packet.
+
+Implemented:
+- added a receiver-relative **scene field-program table** for SDF CompleteScene visibility;
+- each foreign opaque SDF instance contributes a 96-byte VM descriptor carrying inverse model transform, bounded proxy extent, bytecode span and declared stack bound;
+- foreign program instructions are concatenated into a separate storage stream using the existing 48-byte `FieldVmInstruction` ABI;
+- SDF shaders bind VM descriptors at group 0 / binding 4 and bytecode at group 0 / binding 5;
+- the fixed WGSL VM is now assembled into both one-source and source-set production SDF programs;
+- the scene-table admission contract is explicitly bounded at **1,024 foreign blockers** and **16,384 total foreign instructions per receiver**, in addition to each program's 1,024-instruction / 128-stack limits;
+- CompleteScene SDF authority now requires one shared predicate covering:
+  1. receiver-local field authority,
+  2. every opaque instance in the receiver's same-program cohort,
+  3. every foreign SDF cohort admitted through the VM table,
+  4. exact frame mesh-triangle materialization;
+- renderer telemetry and the actual SDF binding path now consume that same completeness predicate rather than maintaining a second stale census;
+- the foreign VM source-segment marcher is tri-state:
+  - proved hit → `Known, V=0`;
+  - proved traversal through the clipped blocker interval → `Known, V=1`;
+  - malformed descriptor, VM refusal, non-finite result or march-budget exhaustion → `Unknown`;
+- a proved blocker settles the aggregate path even if another foreign program is Unknown; otherwise any unresolved blocker keeps the aggregate Unknown;
+- numeric SDF edits rebuild the derived scene bytecode from current field values without requiring receiver WGSL regeneration;
+- compiler witnesses now require the production ordering:
+  **own field → same-program cohort → foreign field VM → mesh triangles**;
+- `field_vm_test` now pins the production SDF WGSL binding and VM call using a mixed Sphere/Torus CSG program;
+- `sdf_wgsl_parameter_refresh_test` was migrated from the historical Sphere/Box packet vocabulary to the VM descriptor/binding/ordering contract;
+- `webgpu_object_test` now contains a native-device falsifier: a Sphere receiver and a **foreign Torus in a distinct CSG program cohort** must shadow only one source in CompleteScene mode, then moving that Torus by a value-only edit must remove the shadow without WGSL recompilation.
+
+Preserved boundaries / non-claims:
+- **no green CI or native-device result is claimed yet** for this rung; the native Torus witness is authored and wired into the existing WebGPU test target, but this session has not observed it execute on a native runner;
+- raster mesh receivers still consume the historical exact analytic Sphere/Box implicit packet; they do not yet consume the VM scene table;
+- `Expr` remains refused until Earthcall has a lossless **OntoMath-native** bytecode lowering; legacy `SdfToken` RPN is still not promoted back into authority;
+- `Convex` remains refused until its plane payload receives an explicit VM representation;
+- this VM is now a **foreign path-visibility consumer**, not yet the primary whole-scene surface renderer described by the longer Native GPU OntoMath horizon;
+- receiver-local, same-program-cohort and foreign-VM marchers now share the same exhaustion law: unresolved finite-step traversal is Unknown, never fabricated occlusion.
+
+Next gates:
+1. observe the Torus native WebGPU witness and focused SDF/compiler witnesses on a real runner;
+2. if green, let raster mesh receivers consume the same VM scene table and retire the Sphere/Box-only foreign implicit authority path;
+3. add native OntoMath bytecode for `Expr` without reviving a second mathematical ontology;
+4. only after those gates consider broader VM ownership of primary surface execution.
+
+The architectural inversion is now concrete:
+
+```
+many authored field laws
+        ↓
+many derived bytecode programs
+        ↓
+one bounded execution language
+        ↓
+receiver-relative path truth
+```
+
+No mega-shader. No triangulation lie. No privileged Torus/Sphere/Box ontology.
+
+---
+
+## Implementation ledger — 2026-11-05 continuation: native GPU field-VM substrate rung 0
+
+The next foreign-program frontier now has a **data-execution substrate** instead of requiring a scene-sized generated shader.
+
+Implemented:
+- added a derived Kernel `FieldVmInstruction` ABI: one 48-byte `uvec4 + vec4 + vec4` record;
+- added fixed execution bounds of 1,024 instructions and 128 stack values; overflow refuses rather than truncating authored mathematics;
+- lowered the existing exact `SdfNode` primitive/CSG vocabulary to postorder bytecode: Sphere, Box, RoundBox, Ellipsoid, Cylinder, Cone, Torus, Morph, Union, Intersect, Subtract and SmoothUnion;
+- added a CPU interpreter for the exact same records as a parity witness against `geom::evalSdf`;
+- added a fixed, binding-neutral WGSL stack interpreter returning `{value, known}`, so malformed/unknown bytecode cannot impersonate authored zero;
+- deliberately refused `Expr` until a lossless **OntoMath-native** bytecode encoding exists; legacy `SdfToken` RPN is not revived as a second mathematical authority;
+- deliberately refused `Convex` until its plane payload is represented explicitly;
+- added `field_vm_test`, covering all admitted primitives, all five CSG operators, local offsets, malformed opcode refusal, Expr/Convex refusal, and both hard execution budgets;
+- linked the VM compilation unit into the WebGPU app, WebGPU tests and CPU codegen witness lane;
+- added `field_vm_test` to the focused SDF GitHub Actions verification job.
+
+Not activated yet:
+- no renderer path uploads a scene field-program table yet;
+- no `CompleteScene` query grants `Known` from VM execution yet;
+- the WGSL VM module is source/ABI-tested but is not yet device-executed by this rung.
+
+This boundary is intentional. First prove that authored field mathematics can become bounded data without changing meaning; only then allow path visibility to trust that data. The next rung is the scene-program table: program descriptors + instance transforms + bytecode spans, a real GPU execution witness, then receiver-relative visibility activation.
+
+---
+
+## Implementation ledger — 2026-11-04 continuation: bounded mixed-program implicit visibility
+
+`CompleteScene` can now cross the first **distinct implicit-program** boundary without triangulating fields or inventing a universe-sized mega-shader.
+
+Implemented:
+- added a representation-neutral analytic implicit blocker packet carrying an inverse world transform, exact primitive dimensions, local leaf offset, and an execution kind;
+- the first admitted foreign primitive leaves are **Sphere** and **Box** only;
+- segment endpoints are transformed into blocker-local coordinates, so arbitrary affine instance transforms preserve exact line/primitive intersection;
+- shared WGSL implements exact segment/sphere quadratic intersection and exact segment/box slab intersection, including true unbounded intervals for parallel in-slab axes;
+- mesh and SDF surface shaders consume the same blocker packet and intersection module;
+- every Field draw exports a blocker packet only when its exact SDF root is an admitted finite positive primitive leaf; unsupported Torus/CSG/Expr/etc. export nothing rather than a proxy;
+- scene completeness is now **receiver-relative**:
+  - mesh receivers require every implicit blocker in the frame to be exactly packetized;
+  - an SDF receiver evaluates its own entire compiled-program cohort through the existing exact field shader and therefore packetizes only **foreign** cohorts;
+  - one unsupported foreign cohort revokes CompleteScene authority for that receiver;
+- foreign implicit packet work is capped at 1024 blockers. Overflow yields Unknown rather than an unbounded per-fragment loop;
+- binary CompleteScene authority also requires SDF receiver/blocker cohorts to be opaque; exact geometry does not pretend to solve unresolved optical transmission;
+- early surface flush and allocation failure provide legal inert bindings while revoking CompleteScene authority;
+- scene visibility telemetry now reports analytic implicit blocker count and bytes in addition to exact mesh triangles;
+- native tribunals distinguish:
+  1. mesh receiver + foreign exact Box Field blocker → known occluded;
+  2. Sphere SDF receiver + foreign exact Box Field program → known occluded;
+  3. Sphere SDF receiver + unsupported foreign Torus Field program → Unknown, direct transport withheld;
+- compiler tribunals require the shared Sphere/Box blocker functions and the CompleteScene composition order:
+  own exact SDF cohort → foreign analytic implicit blockers → exact mesh triangles.
+
+This is still a bounded execution provider, not a declaration that Sphere and Box are privileged ontology. The packet kinds are kernel execution cases for formulas whose exact segment intersections are currently implemented. The analytic and triangle paths share one world-space endpoint-bias convention before representation-specific intersection. Other field programs—and non-binary transmission—remain authored mathematics that may gain different exact providers later without changing Source, Path, or Receiver semantics.
+
+---
+
+## Implementation ledger — 2026-11-04 continuation: plural same-program SDF visibility cohorts
+
+The first bounded `CompleteScene` provider admitted exact mesh-only scenes and one SDF receiver plus the exact mesh-triangle blocker set. This continuation expands implicit plurality without pretending differently-authored field programs are interchangeable.
+
+Implemented:
+- `prepareSceneVisibilityFrame()` now distinguishes **SDF instance count** from **active compiled SDF-program cohort count**;
+- mesh receivers remain complete only when no implicit blocker exists, because mesh WGSL still has no exact implicit evaluator;
+- SDF receivers are complete when every admitted implicit instance belongs to one compiled SDF-program cohort, regardless of instance count;
+- generated SDF WGSL now emits `cohortOtherInstanceVisibility(...)`, iterating the runtime instance array for that exact pipeline;
+- cohort traversal temporarily switches `g_instIdx` so the existing exact field evaluator reads each blocker instance's own transform, parameter offset, bounds, and march policy, then restores the receiving instance before Material evaluation;
+- the receiving instance retains the existing self-shadow escape path; foreign cohort instances are tested as blockers without receiver-self bias;
+- the shared mesh-triangle visibility provider remains composed after the complete SDF cohort test;
+- a second distinct SDF program still revokes `CompleteScene` authority and yields Unknown rather than being silently omitted;
+- compiler tribunals require runtime cohort iteration, instance-authority switching, restoration, and invocation only inside the bounded complete-scene path;
+- native tribunals now distinguish:
+  1. one-instance SDF cohort → known visible;
+  2. two instances of the same compiled sphere program, with the second on the source path → known occluded;
+  3. receiver sphere plus differently-structured implicit box → Unknown.
+
+This is deliberately **not** a general mixed-SDF scene compiler. The new authority is exactly:
+`one compiled implicit field program × N instances + exact admitted mesh triangles`.
+A second field program remains outside the provider until Earthcall has a lawful way to compose multiple implicit programs into one path query.
+
+---
+
+## Implementation ledger — 2026-11-03 first cut
+
+Started on this branch.
+
+Implemented:
+- canonical receiver variable `surfaceColor` in OntoMath vocabulary;
+- material-response admission of `surfaceColor : Vector`;
+- WGSL response lowering binds `surfaceColor` only in the receiver context and refuses it elsewhere;
+- `materialResponseEval` now receives pigment explicitly;
+- authored response now owns final reflected RGB in the SDF surface path instead of being obligatorily multiplied by pigment afterward;
+- one-source and multi-source paths use the same new response call;
+- focused compiler witnesses cover pigment admission, authority isolation, structure/value behavior, and the sovereign-output seam.
+
+Commits:
+- `e30ad00b0c0a42387a6c01539906fe8d72a7d249` — admit surface pigment;
+- `5906e14641f2b5b2be41b977768aa49d56b7c5a1` — sovereign reflected RGB;
+- `8e7dd68c984d1dc4fd832997798b782aed2a0587` — focused compiler witnesses.
+
+No CI result is claimed yet; GitHub reports no workflow run attached to the current branch head.
+
+**Next dependency discovered:** AD-21's proposed generic `MathNode::Bind(PropertyPath)` is still not implemented in current canonical. Do not replace it with permanent renderer vocabulary such as `materialDiffuse` / `materialShininess`. The compatibility Blinn-Phong expression should become ordinary data only after it can consume ordinary Material properties through a generic binding path (or an existing equivalent that preserves the same structure/value/refusal laws).
+
+## Implementation ledger — 2026-11-03 second pass: AD-21 Bind bridge
+
+Implemented the generic input bridge required before legacy Blinn-Phong can become ordinary authored data:
+
+- appended `MathNode::Op::Bind = 42` with a canonical `propertyPath` payload;
+- CPU evaluation reads Bind through the existing `lawGetValue` / `PropertyPath` funnel against the supplied subject;
+- Bind is typed through the ordinary `TypeEnv`, serializes as `{"op":42,"path":"..."}`, prints as `bind(path)`, and has separate dependency collection from lexical variables;
+- the shared Math editor exposes **Property Bind** directly;
+- `resolveRenderMaterial` walks only Bind dependencies actually named by `responseExpr`, resolves their current Material values, and carries a detached binding snapshot plus independent value fingerprint;
+- the WGSL response compiler admits scalar and vec3 binding values and lowers them into the normal parameter stream;
+- binding paths participate in response dependency-structure identity, while binding numeric values do not;
+- `WebGpuRenderer` memoization now treats response-AST revision and response-binding-value revision as separate causes, recollecting params without recompilation when only a bound value changes;
+- focused CPU/editor/compiler tests and a native WebGPU witness were added. The native witness edits Material `diffuse` through PropertyPath without bumping `responseRevision` and requires the receiver pixel to change with zero shader compiles and a positive parameter upload.
+
+Key commits in this pass:
+- `640ca2a0`, `d33d33c8` — core Bind op, CPU evaluation, serialization, dependency discovery;
+- `1363e2f4`, `0e1edbf7` — Material response binding snapshot/fingerprint;
+- `4c1a400e`, `90454804` — typed response binding API and WGSL parameter lowering;
+- `163b546a`, `2decc506` — renderer memo/value-refresh integration;
+- `49fba4fc`, `c734c906` — authoring UI;
+- `8c201c7d`, `987b84fd`, `941e5df3`, `303b9b77`, `febf799d` — focused and native witnesses;
+- `aa06d453` — self-contained Bind type/arity refusal.
+
+**Scope retained:** the mathematical Bind primitive is generic, but this branch only supplies GPU PropertyPath values to the Material-response channel so far. Other channels must explicitly admit their own subject/binding provider; no global hidden registry was introduced.
+
+**Next architectural obstacle:** exact legacy Blinn-Phong-as-data needs a generic conditional/gating expression for the historical `step(0.0001, diffuse)` specular gate, plus a deliberate ambient/environment compatibility mapping. Do not encode either as a renderer special case.
+
+No CI/native execution result is claimed in this ledger until GitHub produces one.
+
+---
+
+## Implementation ledger — 2026-11-03 third pass: environment/direct separation
+
+The historical "ambient" contribution is now explicitly separated from direct source transport in the WebGPU SDF execution topology.
+
+Implemented:
+- SDF global/source GPU records now expose `legacyEnvironment` instead of an ambient-named shader input;
+- `legacyEnvironment.xyz` is the constant compatibility environment envelope normalized by the historical 0.2 reference;
+- `legacyEnvironment.w` is the authored-chroma environment scale `intensity * legacyAmbient / 0.2`;
+- one-source and multi-source shaders evaluate the compatibility environment contribution before any `rho`, `alpha`, visibility, light direction, half-vector, diffuse cosine, or specular-shape work;
+- authored `chi(p,t)` may still color this compatibility environment path, preserving the exact historical contract that ambient survived zero-rho sources while chroma remained spatially authorable;
+- below the explicit "Direct source transport begins here" seam, generated WGSL does not read `legacyEnvironment`;
+- the old SDF identifiers `ambientTerm`, `u.lightAmbient`, and `source.ambient` are gone from generated/production SDF code;
+- legacy Material `ambient` remains temporarily as compatibility receiver data; authored Material responses continue to bypass it, preserving Rung-9 sovereignty until a generic environment-response law replaces that coefficient;
+- focused compiler witnesses now require environment-before-direct ordering and prove the direct tail cannot read the environment input;
+- a native WebGPU witness uses `rho=0`, authored red chroma, a blocker on the source path, and enabled visibility; the environment pixel must remain unchanged.
+
+This pass deliberately does **not** claim the world ontology is purified yet. `AuthorableLightState.light.ambient`, `RadianceSourceBinding.ambientRadiance`, Material `ambient`, and mesh/OpenGL compatibility remain adapters/fossils to migrate. The important boundary crossed here is execution truth: SDF direct radiance no longer contains an ambient branch.
+
+Key commits:
+- `ee38279a` — explicit legacy-environment GPU projection;
+- `302d9710` — environment/direct WGSL separation;
+- `b50df428` — structural compiler witnesses;
+- `27e0ea5f` — native zero-rho/visibility environment witness.
+
+Next migration seam:
+1. make the legacy direct Blinn-Phong lobe an inherited authored `Material.responseExpr` using generic `Bind` + pure Piecewise;
+2. give environment illumination its own authored receiver-response law instead of `Material::ambient`;
+3. only then delete `<material-response:legacy-blinn-phong>`, hardcoded direct diffuse/specular WGSL, and the remaining source/light coefficient vocabulary.
+
+No CI/native execution result is claimed here until the exact branch head receives one.
+
+---
+
+## Implementation ledger — 2026-11-03 fourth pass: authored environment receiver law
+
+Environment illumination has crossed from renderer-owned receiver arithmetic into Material-authored OntoMath without changing the historical direct-light contract.
+
+Implemented:
+- canonical receiver input `environmentRadiance : Vector` in OntoMath;
+- independent `Material.environmentResponseExpr` with its own revision authority, Property bridge, JSON persistence and paint copy-on-write preservation;
+- `RenderMaterial` projects direct and environment response laws separately while resolving one generic union of `Bind(PropertyPath)` dependencies against the actual Material being;
+- a dedicated material-environment compiler context admits `p`, `n`, `wo`, `surfaceColor`, `environmentRadiance`, and generic Bind values, while refusing direct `wi`;
+- the direct response context correspondingly refuses `environmentRadiance`;
+- environment response participates independently in shader structure identity, refusal, parameter recollection and WebGPU memoization;
+- multi-source environment radiance is summed first and passed once through the Material environment-response law; direct source transport remains a separate sum;
+- fixed the multi-source splice boundary after environment work moved ahead of `L`: replacement now begins at the receiver's `V` prelude, so one-source chroma/environment code cannot leak into a multi-source program;
+- environment response output owns complete reflected environment RGB, preventing a second renderer pigment multiply;
+- `material.default` now receives an ordinary authored compatibility law equivalent to the historical ambient receiver term:
+  `surfaceColor ⊙ (Bind("ambient") × environmentRadiance)`;
+- legacy Materials with no direct response inherit that default environment law while binding their own `ambient` value;
+- a Material that explicitly authors direct `responseExpr` does **not** secretly inherit legacy environment response. It receives zero environment unless it authors `environmentResponseExpr` itself, preserving Rung-9 sovereignty;
+- compiler tribunals prove environment/direct input authority isolation and parameter-only `ambient` edits;
+- production compiler tribunals compile the environment law with two different Bind values and require byte-identical WGSL plus exact parameter recollection;
+- the native zero-rho + blocker + visibility witness remains the pixel-level compatibility tribunal.
+
+### Deliberate direct-Blinn-Phong gate
+
+The generic mathematics needed to express historical direct Blinn-Phong now exists: `Bind`, Dot, Normalize, Clamp, Pow, Scale/Add/Hadamard, and pure `Piecewise.whereLEZero`. However, **the default direct response is intentionally not activated yet**.
+
+Repository audit found inhabited/authored worlds with noncanonical source-side receiver knobs, including Prism Cathedral, Sanctuary of Sunlit Mist, Northern Veil, Borealis Sanctuary, Synthesis Studio and others. Their `light.diffuse` and `light.specular` values independently scale the historical diffuse and specular lobes. A single physically honest incident-radiance vector cannot encode two independent receiver-lobe multipliers. Activating a Material-only Blinn-Phong response now would therefore change authored appearances.
+
+Accordingly:
+- `material.default.responseExpr` remains absent;
+- the hardcoded **direct** Blinn-Phong compatibility branch remains temporarily authoritative;
+- `material.default.environmentResponseExpr` is active and authored;
+- source-side `light.diffuse/specular` must be migrated losslessly before the direct compatibility branch can be deleted.
+
+This is a narrower but stronger milestone: ambient/environment receiver semantics are no longer a shader law, while no inhabited world is silently recolored to make the architecture prettier on paper.
+
+Next migration target: re-home legacy source-side diffuse/specular receiver weights as explicit compatibility/authored data without pretending they are emitted radiance. Only after that witness is pixel-parity complete should the default direct Blinn-Phong AST take authority and `<material-response:legacy-blinn-phong>` disappear.
+
+No CI result is claimed here until the exact final branch head completes its workflow.
+
+---
+
+## Implementation ledger — 2026-11-03 fifth pass: direct response sovereignty and SDF Blinn–Phong demotion
+
+The SDF/WebGPU direct-lighting path no longer contains a renderer-owned Blinn–Phong law. Historical Blinn–Phong is now an ordinary inherited `Material.responseExpr` built from generic OntoMath, while direct transport remains source/visibility truth.
+
+### Direct receiver contract
+
+The direct Material response is now a complete reflected-RGB law:
+
+`R_direct(p, n, wi, wo, surfaceColor, incidentRadiance, compatibilityInputs, Bind(...)) -> vec3`.
+
+The renderer applies only the scalar transport term after the response:
+
+`L_direct_out = R_direct(...) * rho * alpha * visibility`.
+
+This replaces the earlier intermediate contract in which the response was treated as a throughput and multiplied by incident RGB afterward. A Person-authored response is therefore genuinely sovereign over direct reflected colour.
+
+The direct response context admits:
+- `p`, receiver normal `n`, canonical source->receiver `wi`, receiver->eye `wo`;
+- `surfaceColor`;
+- canonical `incidentRadiance`;
+- generic `Bind(PropertyPath)`;
+- two explicitly compatibility-only RGB inputs, `legacyDiffuseIncident` and `legacySpecularIncident`.
+
+The environment response does not admit the direct incident/lobe inputs, and generic source/vector contexts do not admit them.
+
+### Lossless migration of the old light.diffuse/light.specular fossil
+
+A well-formed `AuthorableLight` historically derived ambient, diffuse and specular colours from one `light.color * light.intensity`, so the canonical direct incident RGB is recoverable exactly. The older raw `Renderer::setLight` API can provide mutually inconsistent diffuse/specular RGB vectors, in which case a unique canonical source radiance is mathematically underdetermined.
+
+The migration therefore keeps two facts separate:
+1. `directIncidentRadiance` is the canonical/future-facing direct incident RGB. For AuthorableLight it is exact; for contradictory raw legacy calls it is only a best-effort projection.
+2. `legacyDiffuseIncident` and `legacySpecularIncident` carry the exact historical per-lobe RGB envelopes. They are execution-only compatibility data and are not source ontology.
+
+For no-chi legacy lighting:
+- `legacyDiffuseIncident.rgb = lightDiffuse / 0.8`;
+- `legacySpecularIncident.rgb = lightSpecular`.
+
+For authored chi:
+- the corresponding `.w` fields carry the historical scalar factors and the shader multiplies them by the authored source chroma at the receiver.
+
+This means even an old raw call with different diffuse and specular chroma remains exactly representable by the compatibility Material response without declaring either lobe to be a kind of emitted light.
+
+### material.default now owns historical Blinn–Phong as authored data
+
+`material.default.responseExpr` is seeded as generic OntoMath only. No privileged `BlinnPhong`, `BRDF`, Lambert, or material-model operation was added.
+
+Its direct compatibility mathematics is equivalent to the historical SDF branch:
+- `L = -wi`;
+- `d = max(dot(n,L),0)`;
+- diffuse = `surfaceColor ⊙ legacyDiffuseIncident * Bind("diffuse") * d`;
+- `H = normalize(L + wo)`;
+- specular = `legacySpecularIncident * Bind("specular") * pow(max(dot(n,H),0), max(Bind("shininess"),1))`;
+- the historical `step(0.0001,d)` specular gate is represented by a pure Piecewise `whereLEZero` guard on `0.0001 - d`.
+
+A legacy Material with no local direct response inherits this equation from `material.default`, but its Bind paths resolve against the receiving Material's own values. Equation inheritance is therefore not value inheritance. An explicit local response remains sovereign and is not replaced.
+
+`material.default.environmentResponseExpr` remains the independently authored environment law from the previous pass.
+
+### Renderer fallback deleted from SDF execution
+
+Generated SDF WGSL now has:
+- no `<material-response:legacy-blinn-phong>` identity — absence is `<material-response:absent>`;
+- no `inst.shading` reads;
+- no renderer-authored diffuse cosine;
+- no renderer-authored half-vector/specular power branch;
+- no `specShape`;
+- no post-response pigment multiply;
+- no direct-response multiply by incident RGB outside the Material law.
+
+The SDF instance ABI still physically contains its historical `shading` vec4 and WebGpuRenderer still writes that dead slot. This pass intentionally leaves the storage layout intact because many diagnostic GPU fixtures pin the 288-byte instance ABI. The slot has zero SDF WGSL authority and can be removed later as a mechanical ABI cleanup after this semantic migration is verified.
+
+### Witnesses
+
+Compiler/ownership tribunals now require:
+- an absent response to be true absence, not a hidden renderer law;
+- direct-response admission of canonical incident RGB and quarantine of legacy lobe RGB compatibility inputs;
+- environment/generic expression contexts to refuse those direct-only inputs;
+- generated SDF WGSL to contain no hardcoded `specShape`, `inst.shading`, or legacy response identity;
+- multi-source direct transport to accumulate `receiverResponse * directRadiance`, with source visibility remaining outside Material response;
+- Bind value edits to refresh parameters without changing shader structure;
+- inherited default equations to bind receiver-local diffuse/specular/shininess/ambient values.
+
+The default Material CPU witness deliberately gives the historical diffuse and specular lobes different chroma. With a front-facing receiver, `surfaceColor=(.5,.25,1)`, `legacyDiffuseIncident=(.25,.10,.05)`, and `legacySpecularIncident=(.40,.20,.05)`, the authored default response must produce `(.50,.22,.09)`.
+
+The native WebGPU witness drives the same adversarial condition through the old `Renderer::setLight` boundary and requires the centre pixel near `(128,56,23)`. This proves the old API's independent lobe colours survive the CPU compatibility adapter, inherited Material AST and production WGSL path.
+
+Geometry/range witnesses that manually construct bare `RenderMaterial` values now explicitly disable lighting. SDF visibility, parity, heightfield, range-performance and Perlin-root tests no longer rely on a hidden shading model merely to make a hit non-black.
+
+### Remaining fossils / next pass
+
+This pass purifies the **SDF/WebGPU surface path**, not every renderer path.
+
+Still remaining:
+- the ordinary WebGPU mesh shader still contains bespoke Blinn–Phong and `MeshUniforms.params` / `MeshBatchKey.shading`;
+- CPU/save compatibility still exposes `AuthorableLightState.ambient/diffuse/specular`, `RadianceSourceBinding.ambientRadiance/diffuseRadiance/specularRadiance`, and the historical `Renderer::setLight` surface;
+- the dead SDF instance `shading` ABI slot remains physically present;
+- OpenGL remains a legacy compatibility backend.
+
+The next architectural pass is to make ordinary WebGPU mesh surfaces consume the same authored Material direct/environment response semantics as SDF surfaces, then remove the mesh shader's built-in Blinn–Phong. Only after mesh parity is proven should the old CPU light vocabulary and dead SDF ABI slot be mechanically retired.
+
+No CI/native result is claimed for this exact head until its workflow completes.
+
+---
+
+## Implementation ledger — 2026-11-03 fifth pass: mesh receiver-law unification
+
+The ordinary WebGPU triangle path no longer owns a bespoke Blinn-Phong shader.
+
+Implemented:
+- extracted `compileSurfaceResponseModule(...)`, a geometry-independent receiver compiler using the same OntoMath validation/emission path as SDF material response;
+- the reusable module emits `materialResponseEval` and `materialEnvironmentResponseEval` plus one compact response parameter stream, with no vertex/fragment entry point and no SDF geometry bindings;
+- replaced the static mesh WGSL Blinn-Phong body with raster surface-interaction plumbing: rasterization supplies local/world position, world normal, view direction, paint/pigment and source direction; authored Material response supplies reflected RGB;
+- removed mesh-shader-owned diffuse cosine, half vector, specular power, `MeshUniforms.params`, and the semantic `MeshBatchKey.shading` quartet;
+- removed the fixed `_meshPipeline`; mesh pipelines are built lazily and cached by generated receiver WGSL structure;
+- mesh response structure is memoized independently from bound values; PropertyPath Bind edits recollect parameter values without recompiling the GPU pipeline;
+- response AST cache keys retain owning `shared_ptr` references plus authored revision authority, preventing an expired/reallocated AST address from aliasing historical compiled state;
+- instanced mesh batching now keys by mesh, receiver pipeline, albedo, and exact response-parameter **bit identity**. Float vectors themselves are payload, not an ordering oracle, so NaN ordering cannot silently merge distinct batches;
+- response params live in a read-only storage binding. Parameter-free responses receive one inert storage float because WebGPU does not admit a zero-sized binding;
+- added mesh-specific compiler/refusal/parameter-upload telemetry to `Renderer::FrameStats`;
+- standalone renderer/window diagnostics now author the receiver response they intend instead of relying on a bare `RenderMaterial` to summon the removed shader;
+- added a native ordinary-mesh witness whose response is `vec3(Bind("diffuse"),0,0)`; a PropertyPath edit changes the pixel while frame two requires zero mesh program compiles and positive parameter upload;
+- added a representation-parity witness: the same authored direction-independent Material response is rendered once as a tessellated sphere and once through the exact implicit path, and center RGB must agree within a narrow byte tolerance;
+- repaired two stale SDF tribunals from the prior authored-Blinn-Phong crown. The exact pre-mesh-unification CI head then passed the SDF proof suite and WebGPU object/radiance parity before this final cache-hardening/parity increment.
+
+### Deliberate transport boundary
+
+This pass unifies **receiver law**, not yet the entire source-transport implementation.
+
+Historical mesh shading ignored authored `rho/chi/alpha/visibility` and effectively consumed white direct/environment envelopes plus one positional light direction. To avoid combining a receiver-law migration with a source-transport behavior change, the new mesh path preserves that historical incident adapter for now:
+
+```
+raster surface interaction
+        ↓
+white compatibility incident envelopes + source direction
+        ↓
+the SAME Material.responseExpr / environmentResponseExpr semantics
+```
+
+The next transport rung may replace those white compatibility envelopes with the full authored RadianceSource set (`rho · chi · alpha · visibility`) and multi-source accumulation, but that is a separate pixel-parity tribunal.
+
+### Production fossil state
+
+In the current WebGPU mesh source:
+- no fixed `_meshPipeline`;
+- no `MeshBatchKey.shading`;
+- no `MeshUniforms.params`;
+- no hardcoded `diff = max(dot(N,L),...)`;
+- no hardcoded half-vector/specular `pow`;
+- no renderer-owned Blinn-Phong branch.
+
+The compatibility Blinn-Phong appearance survives only because `material.default.responseExpr` is authored OntoMath. An explicitly authored response therefore changes both implicit and mesh matter without adding a renderer shader kind.
+
+---
+
+## Implementation ledger — 2026-11-04: visibility authority / knownness pass
+
+Source and receiver mathematics are now representation-independent. This pass isolates the remaining Path relation without pretending receiver-local geometry is complete-scene truth.
+
+Implemented:
+- added `RadianceVisibilityMode` with three explicit scopes:
+  - `Disabled` — exact compatibility `V=1`, known;
+  - `LocalReceiverGeometry` — a backend may answer only from exact geometry owned by the receiving representation;
+  - `CompleteScene` — requires a future shared scene provider; until one exists, direct visibility is **Unknown**;
+- retained `setRadianceVisibilityEnabled(bool)` solely as compatibility syntax, mapping `true` to `LocalReceiverGeometry` rather than silently claiming complete-scene authority;
+- changed generated SDF visibility from a scalar to `VisibilityDecision { known, value }`;
+- SDF local marching returns KnownVisible/KnownOccluded only in `LocalReceiverGeometry` mode;
+- SDF `CompleteScene` returns Unknown **before** consulting receiver-local SDF geometry, so one exact field can never masquerade as the whole Zone;
+- mesh direct transport now uses the same known/value decision shape. With no exact mesh/scene path provider, any requested visibility scope is Unknown rather than fabricated `V=1`;
+- direct Material response executes only when visibility is known. Unknown has no scalar physical value; zero direct contribution is the execution refusal consequence, not a claim that the path is occluded;
+- environment response remains independent from direct-path visibility and therefore continues to execute when direct visibility is Unknown;
+- SDF and mesh uniforms now carry the explicit visibility mode number instead of a boolean;
+- added mesh and SDF unknown-visibility telemetry at draw scope;
+- compiler tribunals require explicit knownness, the `CompleteScene` Unknown branch, and use of `pathVisibility.value` only behind a `pathVisibility.known` gate;
+- native source-transport witness now proves:
+  1. legacy bool-on maps to `LocalReceiverGeometry`;
+  2. mesh local visibility is Unknown and refuses direct transport;
+  3. the same implicit receiver can answer local visibility from its own SDF;
+  4. `CompleteScene` causes **both** mesh and SDF to refuse direct transport until a shared provider exists.
+
+This pass does **not** implement complete-scene visibility. Existing CPU geometry already demonstrates two representation-specific ray truths (triangle `TriGrid::raycast` and SDF sphere tracing), but neither is yet a GPU-visible, scene-wide authority covering arbitrary mixed geometry. Shadow maps, acceleration structures, or shared ray-domain materializations are execution strategies to evaluate separately; none should become ontology.
+
+The architectural boundary is now explicit:
+
+```
+Authored Source (rho, chi, alpha)
+        ↓
+Path Visibility Decision { known, V }
+        ↓
+Authored Receiver (Material response)
+```
+
+A future complete-scene provider may replace Unknown with KnownVisible/KnownOccluded without changing Source ASTs, Material ASTs, or their compilers.
+
+---
+
+## Implementation ledger — 2026-11-04: first bounded CompleteScene visibility provider
+
+The visibility contract from the prior pass now has its first proof-producing `CompleteScene` implementation. This is deliberately a bounded execution substrate, not a new visibility ontology.
+
+Implemented:
+- surface draws remain deferred until frame admission closes at `endFrame()`; that boundary now materializes exact opaque mesh blockers once for both mesh and SDF consumers;
+- queued mesh triangles are transformed into world space and uploaded as flat `vec4` triplets;
+- mesh and SDF shaders share one Möller–Trumbore ray/triangle module;
+- `CompleteScene` knownness is admitted only where coverage is proved:
+  - mesh receiver + mesh-only opaque frame: known;
+  - exactly one SDF receiver + arbitrary admitted opaque mesh blockers: known by composing receiver-local SDF visibility with the shared mesh triangle set;
+  - multiple SDF instances: unknown;
+  - textured mesh alpha, partial opacity, depth-writing geometry outside the deferred surface batches, allocation failure, or the first-provider triangle budget being exceeded: unknown;
+- the initial brute-force budget is 8192 world triangles. Exceeding it revokes authority instead of returning an approximate result;
+- the scene triangle storage binding is structurally present even when visibility is disabled/unknown; an inert element keeps the GPU binding legal while `lightControl.z/w` carry provider completeness and triangle count as runtime values;
+- CompleteScene changes therefore do not require Source or Material AST recompilation;
+- frame telemetry records materialized triangle count/bytes, mesh-known frames, SDF-known frames, and frames where an admitted receiver class remains unknown;
+- native tribunals now demand:
+  1. a mesh-only CompleteScene receiver becomes KnownVisible with no blocker;
+  2. an off-camera mesh blocker placed on the receiver→source segment yields KnownOccluded;
+  3. the same mesh blocker occludes the sole SDF receiver through the combined local-SDF + scene-triangle provider;
+  4. admitting a second SDF revokes completeness and returns Unknown rather than silently omitting that being;
+- compiler tribunals pin the shared exact triangle intersection module and require direct transport to remain gated by `VisibilityDecision.known`;
+- early surface flushes are an explicit authority barrier. Volume staging and direct Screen can force opaque surfaces to execute before `endFrame()`; once that happens, later geometry cannot retroactively become a blocker, so CompleteScene authority is irrevocably Unknown for the rest of that frame. A legal inert visibility binding is supplied to those early draws.
+
+The execution is intentionally primitive. A future BVH, grid, ray-domain materialized view, shadow projection, or hybrid mesh/SDF accelerator may replace the brute-force triangle loop. Such a replacement must preserve the existing contract:
+
+```
+Authored Source
+      ↓
+VisibilityDecision { known, V }
+      ↓
+Authored Receiver
+```
+
+Acceleration may change how evidence is obtained. It may not redefine what visibility means, silently drop unsupported geometry, or collapse Unknown into either visible or occluded.
+
+No exact-head CI/native green claim is made until the workflow for this ledger's final commit completes.
+
+---
+
+## Implementation ledger — 2026-11-06 Heliograph pass: Expr joins the scene Field VM
+
+This pass closes the largest named semantic hole left by the representation-independent visibility substrate without creating an `Expr` shader model or reviving legacy RPN as a second mathematical language.
+
+### Authored truth and derived execution
+
+- `SdfPrim::Expr` now lowers from its existing OntoMath `MathNode` (or one truly unconditional Piecewise value) into the bounded scene Field VM.
+- The VM never lowers `SdfToken::rpn`. An Expr shell with legacy RPN but no OntoMath AST explicitly refuses.
+- No `MathNode::Op`, `SdfPrim`, save schema or new ontology noun was added. New VM opcodes are Kernel-derived scalar execution records only.
+- Vector OntoMath remains authored as vectors; lowering scalarizes components into the existing bounded float stack. There is no parallel vector bytecode type system.
+- Supported lowering now covers the scalar/vector operations exercised by authored implicit geometry: ScalarForm polynomial/transcendental terms, Add/Sub/Scale/Div/Pow, raw ScalarForm powers, vector construction/component, Hadamard, Dot/Cross, Normalize/Length/Distance/Project, Union/Intersection/Difference, Abs/Sqrt/Tan, Clamp, Round/Floor and exact classic Perlin.
+- Unsupported subject/world-dependent math and non-lossless Piecewise control flow refuse instead of manufacturing values.
+
+### Semantic parity corrections discovered during lowering
+
+- ScalarForm factor exponentiation remains distinct from `MathNode::Pow`: `MathRawPow` preserves raw `std::pow` / `ontoRawPow`; `MathPow` preserves MathNode's negative-fractional-to-zero contract.
+- Vector `Union/Intersection` preserve OntoMath's vector↔scalar widening rather than assuming vector/vector operands.
+- CPU and WGSL VM interpreters share Earthcall's existing divisor/vector degeneracy thresholds and reject non-finite or invalid-log results as Unknown.
+- VM hard bounds remain 1024 instructions / 128 stack slots; overflow refuses.
+
+### Expr is executable, but raw f is not silently promoted to distance
+
+Earthcall already distinguishes arbitrary implicit fields from distance fields in the primary SDF marcher. This pass carries that existing execution fact into foreign scene visibility:
+
+- `FieldVmProgram::needsGradientStep` is derived when lowering crosses any Expr leaf;
+- the frame descriptor uses the previously reserved `program.w` bit 0 for that policy;
+- Expr visibility advances by `f / max(|grad f|,1)`, using the same forward-difference fallback as `sourceTransportSignedStep`;
+- any Unknown/non-finite neighbor sample revokes visibility knownness;
+- primitive/CSG-only VM programs retain the direct distance-field path.
+
+This is derived execution metadata, not a distance certificate or authored property.
+
+### Tribunals
+
+`field_vm_test` now requires:
+- algebraic Expr parity against `geom::evalSdf`;
+- translated leaf-local coordinate parity;
+- vector + exact Perlin terrain parity;
+- ScalarForm gyroid sin/cos-product parity;
+- canonical OntoMath box/cylinder/torus trees lowered *as Expr*, not primitive VM aliases;
+- RPN-only, subject-bound Bind and conditional/multi-piece Piecewise refusal;
+- primitive programs to remain outside gradient-step policy and Expr programs to carry it;
+- production WGSL to contain the shared gradient-corrected scene visibility policy.
+
+`webgpu_object_test` replaces the old "Expr is Unknown" frontier with an adversarial CompleteScene witness:
+`4 * (length(p) - 0.5)` is an authored sphere zero-set whose raw field is four times geometric distance. Both mesh and SDF receivers must see it as a Known foreign blocker through the VM with zero Unknown direct skips. A subject-bound Expr remains the refusal control.
+
+### Remaining named frontier
+
+`Convex` is now the last explicit `SdfPrim` refusal in `lowerFieldVm`; it needs a lossless plane-payload encoding. Beyond that, broader Piecewise/world-dependent Expr admission requires explicit execution semantics rather than opcode accumulation by analogy.
+
+Derived-state lifetime/invalidation is registered in `docs/architecture/law/DERIVED_STATE_LEDGER.md`.
+
+No CI/native pass is claimed in this ledger until an exact-head workflow survives GitHub's cancel-in-progress queue.
+
+---
+
+## Implementation ledger — 2026-11-08 Heliograph pass: ancestry reconciliation + Convex joins CompleteScene
+
+### Lineage reconciliation
+
+Before expanding Field VM authority, Heliograph reconciled this illumination branch with the moving canonical trunk instead of building another geometry frontier on stale ancestry.
+
+- merge base before surgery: `d82a816163e48be525f1afbd781f2f3937a866b4`;
+- illumination head before surgery: `2f4f741d7fd589f87a9a84c84c66b66ad969823d`;
+- canonical head incorporated: `052338e627657a964e8ae4c3ba4c9aefe6deae47`;
+- two-parent reconciliation commit: `d9c57c8caf184ebffdc66200c8e795f6a222624f`;
+- resulting branch state immediately after reconciliation: 0 commits behind canonical and mergeable.
+
+The merge was not an ours/theirs overwrite. Canonical's transform cache, tight-AABB memoization, SDF upload paging and mesh upload-page optimization were preserved. The mesh optimization was translated onto the authored-response architecture: paged instance storage and consecutive-batch reuse survive, while the dead fixed `_meshPipeline`, `MeshBatchKey.shading` and renderer-owned Blinn-Phong assumptions do not return. The canonical mesh-upload oracle now authors `surfaceColor * Bind("ambient")` explicitly.
+
+### Convex execution authority
+
+`SdfPrim::Convex` no longer forms a named refusal frontier in the scene Field VM.
+
+No `Convex` VM opcode, plane table, persisted schema or new ontology noun was introduced. The existing authored payload remains authoritative:
+
+```
+plane_i = (n.x, n.y, n.z, d)
+field(p) = max_i( n_i dot (p - leafOffset) - d_i )
+```
+
+Lowering emits only the existing generic scalar IR:
+- `CoordX/Y/Z`;
+- `Constant`;
+- `MathMul`;
+- `MathAdd`;
+- `MathSub`;
+- `MathMax`.
+
+Because the SdfNode contract declares outward **unit** normals, an admitted Convex is a 1-Lipschitz max of half-space fields and keeps the ordinary distance-step path. Heliograph does not normalize malformed author data in the renderer. Admission requires:
+- at least one plane;
+- finite normal and offset components;
+- normal magnitude within the explicit unit-normal tolerance.
+
+Empty, non-finite or non-unit payloads refuse and therefore cannot grant CompleteScene knownness.
+
+### Tribunals
+
+`field_vm_test` now requires:
+- Convex CPU VM parity against `geom::evalSdf`;
+- leaf-local offset parity;
+- `needsGradientStep == false` for valid Convex;
+- instruction census proving no dedicated Convex opcode exists;
+- explicit refusal for empty, non-unit and non-finite plane payloads.
+
+`webgpu_object_test` now places the same authored six-plane Convex cube on the source path:
+1. a mesh receiver must become KnownOccluded;
+2. an SDF receiver must become KnownOccluded through the same scene Field VM;
+3. corrupting one plane to a non-unit normal must revoke authority and return Unknown rather than silently normalizing the plane.
+
+### Verification status
+
+GitHub Actions currently cancels the pull-request workflow and even a manually re-run SDF verification job before step 1. Therefore this pass makes **no CI/native green claim** and also has **no red compiler/test verdict**. The exact tests are committed as falsifiers; execution evidence remains pending infrastructure.
+
+### Remaining Field VM frontier
+
+There is no longer a named `SdfPrim` kind refused solely for lack of representation. The next expansions are no longer primitive-enum chores. Broader Piecewise/world-dependent Expr execution, if pursued, must receive explicit subject/control-flow semantics rather than being admitted by opcode analogy.
+
+*Heliograph Sun / GPT-5.6 Sol / 2026-11-08.*
+
+---
+
+---
+
+## Commission
+
+Retire Earthcall's bespoke default 3D Blinn-Phong shader as a renderer-owned law and make surface illumination a consequence of the broader authored radiance / visibility / material-response ontology.
+
+The goal is not to replace Blinn-Phong with another privileged shader model such as GGX. The goal is to make Blinn-Phong, GGX, Lambert, Oren-Nayar, velvet, toon, glass, impossible authored matter, and future response laws all ordinary mathematical artifacts expressible through the same OntoMath substrate.
+
+The renderer may choose execution strategy. It must not choose material metaphysics.
+
+---
+
+# 1. Current fossil
+
+Current canonical already contains most of the intended Rung-9 seam:
+
+- `Material.responseExpr` exists and persists as authored OntoMath.
+- `inspectResponseExpression(...)` / `collectResponseParams(...)` distinguish structure from numeric values.
+- WebGPU SDF code can emit `materialResponseEval(p,n,wi,wo)`.
+- response edits already have independent revision authority.
+- source strength `rho`, chroma `chi`, angular emission `alpha`, visibility, volume transport, and source collections already exist as separate concepts.
+
+But the renderer still owns the old model in several places:
+
+1. **Absent response means a magic renderer identity**
+   `<material-response:legacy-blinn-phong>`.
+
+2. **The WebGPU SDF path still hardcodes Blinn-Phong**
+   via `L`, `V`, `H`, `diff`, `pow(dot(N,H), shininess)`, and separate ambient/diffuse/specular terms.
+
+3. **The ordinary WebGPU mesh path has its own static Blinn-Phong shader**
+   independent from the authored Rung-9 response path.
+
+4. **The current authored response is not sovereign over the whole reflected RGB result.**
+   The SDF path still multiplies `surfaceColor * receiverResponse` outside the authored expression, while legacy specular is added separately. That makes an untinted white highlight over colored pigment impossible to reproduce as a general authored response.
+
+5. **Source state is still shaped like Blinn-Phong.**
+   `AuthorableLightState` and `RadianceSourceBinding` carry ambient / diffuse / specular channels or coefficients, and `Renderer::setLight` exposes those renderer-shaped categories.
+
+6. **`RenderMaterial` still carries renderer-owned shading coefficients**
+   `ambient`, `diffuse`, `specular`, `shininess`.
+
+The architecture is therefore authorable at the leaves while the old shader model still defines the hidden topology of the tree.
+
+---
+
+# 2. Governing equation
+
+Earthcall should converge on the conceptual direct-light form
+
+```
+Lo(p, wo)
+  = Le_surface(p, wo)
+  + sum over sources s [
+      Li_s(p, wi)
+      * T_s(source -> p)
+      * R_material(p, n, wi, wo, authored material state...)
+    ]
+  + L_volume(...)
+  + L_indirect(...)   // later transport rung
+```
+
+where:
+
+- `Li` is authored incoming source radiance derived from source invariants such as `rho * chi * alpha`;
+- `T` is derived visibility / attenuation / transport truth;
+- `R_material` is authored receiver response owned by Material;
+- surface emission, participating media, and future indirect transport remain distinct authorities;
+- the renderer compiles/evaluates/composes these facts but does not define their aesthetic law.
+
+No privileged `BlinnPhong`, `Lambert`, `GGX`, `BRDFKind`, `LightKind`, or equivalent enum/op is to be added.
+
+If OntoMath lacks a mathematical primitive needed by a response, add only the generic primitive.
+
+---
+
+# 3. Non-negotiable invariants
+
+## 3.1 Authored mathematics, not shader-model kinds
+
+Blinn-Phong must become an authored expression assembled from generic operations such as:
+
+- add / multiply;
+- dot;
+- normalize;
+- max / clamp;
+- pow;
+- vector construction;
+- ordinary PropertyPath-bound values.
+
+The GPU must never branch on a material-response kind.
+
+## 3.2 Receiver sovereignty
+
+Once resolved, a Material response owns the **complete reflected RGB contribution** for the admitted incident radiance.
+
+Do not apply hidden albedo multiplication, hidden white specular, hidden Fresnel, hidden ambient, or another aesthetic term after the authored response.
+
+Pigment / albedo must be an admitted input that the response may use, not a mandatory post-response multiplication imposed by the renderer.
+
+## 3.3 Source / receiver separation
+
+A source emits radiance. It does not emit "diffuse light" or "specular light."
+
+Material response determines how arriving radiance is received.
+
+Therefore source-side ambient/diffuse/specular categories are compatibility fossils to retire, not permanent source semantics.
+
+## 3.4 Compatibility becomes authored data
+
+Old worlds may retain their historical appearance, but no renderer branch may exist solely to preserve it.
+
+Legacy values must be translated/resolved into an ordinary authored compatibility response and, where required, ordinary authored/default source/environment data.
+
+After resolution, old and new worlds execute through the same path.
+
+## 3.5 Mesh and implicit surfaces share response truth
+
+Raster mesh intersection and SDF ray intersection are different ways to obtain a surface interaction:
+
+```
+p
+n
+wi
+wo
+material
+incident radiance
+```
+
+They must not define separate lighting systems.
+
+## 3.6 Structural/value invalidation survives
+
+Numeric-only edits to response parameters reuse compiled structure where supported.
+
+Topology/operator/read-set changes invalidate only the relevant response structure.
+
+Source edits must not recompile receiver response merely because illumination changed, and receiver edits must not rewrite source math.
+
+## 3.7 Refusal remains explicit
+
+Unsupported authored response math must refuse. It must never silently retain stale shader code, fabricate zero as if it were authored truth, or re-enter a hidden legacy shading branch.
+
+---
+
+# 4. Semantic correction before deletion
+
+The current Rung-9 response path must be widened before it can replace legacy Blinn-Phong.
+
+Today it behaves approximately as:
+
+```
+litRgb = surfaceColor * receiverResponse * incomingDiffuseLikeRadiance
+       + hiddenLegacySpecular
+```
+
+That is too narrow.
+
+The target is:
+
+```
+reflectedRgb = responseExpr(
+    p,
+    n,
+    wi,
+    wo,
+    surfaceColor,
+    authored material bindings...
+)
+
+contribution = incomingRadiance * reflectedRgb
+```
+
+or an equivalent convention documented precisely by the implementation.
+
+This enables, without renderer privilege:
+
+- colored diffuse + white specular;
+- colored metallic reflection;
+- spatially varying response;
+- grazing-angle effects;
+- matte cloth;
+- retroreflection;
+- stylized/toon response;
+- unusual authored matter.
+
+The exact units/convention must be written down in code comments and tests. If the implementation chooses a throughput-like factor rather than a physically normalized BRDF, call it response/throughput and do not falsely claim physical normalization.
+
+---
+
+# 5. Migration phases
+
+## Phase 0 — Freeze witnesses and inventory all hidden Blinn-Phong seams
+
+Before changing semantics, add/retain focused witnesses for:
+
+- current legacy default material output;
+- colored surface + white legacy specular highlight;
+- matte material with zero legacy specular;
+- authored Rung-9 response controlling pixels;
+- numeric response edit without structural recompile;
+- structural response edit with relevant recompile;
+- refusal without stale output;
+- mesh and SDF samples under equivalent incident conditions.
+
+Inventory and mark for removal:
+
+- `<material-response:legacy-blinn-phong>`;
+- `HAS_AUTHORED_MATERIAL_RESPONSE`;
+- hardcoded `L/V/H/diff/spec` branches in `SdfWgsl.cpp`;
+- the static Blinn-Phong mesh fragment shader in `WebGpuRenderer.cpp`;
+- `inst.shading` / equivalent packed material quartet;
+- `RenderMaterial.{ambient,diffuse,specular,shininess}` as renderer semantics;
+- `Renderer::setLight(...ambient,diffuse,specular)`;
+- `AuthorableLightState.{ambient,diffuse,specular}`;
+- `RadianceSourceBinding.{ambientRadiance,diffuseRadiance,specularRadiance,coefficients}`;
+- `lightAmbientRadiance/lightDiffuseRadiance/lightSpecularRadiance`.
+
+Do not delete these yet. First make the new route capable of replacing every required behavior.
+
+### Gate 0
+
+A checked inventory exists and baseline witnesses distinguish the exact visual cases the migration must preserve for old content.
+
+---
+
+## Phase 1 — Define a backend-independent Surface Interaction / Response contract
+
+Create or extract one response-lowering interface independent of SDF geometry.
+
+The current response compiler living in `SdfWgsl.*` should be factored or generalized so mesh rendering does not depend on an SDF-specific semantic owner.
+
+Suggested direction:
+
+```
+SurfaceResponseLayout
+inspectSurfaceResponse(...)
+collectSurfaceResponseParams(...)
+emitSurfaceResponseWgsl(...)
+```
+
+The name is not doctrine; the separation is.
+
+Admitted receiver variables initially:
+
+- `p`: surface-local or documented response coordinate;
+- `n`: receiver normal;
+- `wi`: canonical incoming transport direction;
+- `wo`: outgoing/view direction;
+- surface pigment/albedo as a receiver input;
+- ordinary authored material parameters through the existing Property/Bind direction when available.
+
+Direction convention must be explicit.
+
+Current Earthcall Rung-9 code uses `wi = source -> receiver`. If retained, every default expression must compensate accordingly; traditional receiver-to-source `L` is `-wi`.
+
+Do not silently reverse the convention between mesh and SDF paths.
+
+### Gate 1
+
+The response compiler can be invoked without SDF geometry ownership and gives identical structure/value/refusal behavior for equivalent expressions.
+
+---
+
+## Phase 2 — Make response output sovereign over reflected RGB
+
+Change response semantics so the authored program can reproduce the full legacy result.
+
+Admit surface pigment/albedo into the response environment.
+
+Do **not** perform mandatory `surfaceColor * response` after the response evaluator.
+
+A legacy-compatible authored expression must be able to encode conceptually:
+
+```
+L = -wi
+H = normalize(L + wo)
+
+diffuse =
+    surfaceColor
+    * kd
+    * max(dot(n, L), 0)
+
+specular =
+    specularColor
+    * ks
+    * pow(max(dot(n, H), 0), q)
+    * step(epsilon, max(dot(n, L), 0))
+
+response = diffuse + specular
+```
+
+Historical white Blinn-Phong specular is therefore expressible without a hidden post-step.
+
+The current `ambient` term is handled separately in Phase 5 because ambient is incoming illumination/environment approximation, not fundamentally receiver reflection.
+
+### Gate 2
+
+An authored response reproduces both:
+
+- a colored diffuse surface;
+- an untinted/white legacy specular highlight over that colored surface;
+
+without any renderer-side specular branch.
+
+---
+
+## Phase 3 — Material.default owns the compatibility response
+
+Replace the magic absence identity with normal material resolution.
+
+Target rule:
+
+> By the time rendering begins, every visible surface has a resolved response expression.
+
+Save data may omit `responseExpr`, but Material resolution must supply an authored/default expression from `material.default` or an explicit compatibility migration.
+
+The renderer must not interpret null response as "use Blinn-Phong."
+
+Author one Blinn-Phong compatibility response as ordinary OntoMath data.
+
+Historical coefficients may remain temporarily as ordinary Material Properties:
+
+- `ambient`;
+- `diffuse`;
+- `specular`;
+- `shininess`.
+
+But the compiler/renderer must not know their meanings. The compatibility expression references them as authored parameters/bindings.
+
+Longer-term names may be generalized, but this branch need not break old save authoring syntax merely to prove the architectural seam.
+
+### Gate 3
+
+- no-response saved materials resolve to a real response AST;
+- the renderer sees no semantic distinction between compatibility response and a newly authored response;
+- old material values still round-trip;
+- Law/Property edits alter the compatibility response result through ordinary data dependencies.
+
+---
+
+## Phase 4 — Route meshes and implicit surfaces through the same response compiler
+
+The ordinary WebGPU mesh path currently owns a static Blinn-Phong shader. Remove that semantic split.
+
+Two acceptable implementation strategies:
+
+### A. Shared generated fragment body
+
+Compile/cache a response program and insert/use the same generated response evaluator in both mesh and SDF programs.
+
+### B. Shared response module/program cache
+
+If WebGPU pipeline constraints make literal shader sharing awkward, give both paths the same structural response identity, parameter layout, emitter, and generated semantic body, with backend-specific pipeline wrappers only.
+
+In both cases:
+
+- mesh supplies its rasterized world/local position and normal;
+- SDF supplies its ray-hit position and gradient normal;
+- both form the same canonical `wi`, `wo`, pigment, and incoming-radiance inputs;
+- both call semantically identical response math.
+
+Do not fake unification by maintaining two manually copied Blinn-Phong implementations.
+
+### Gate 4
+
+Equivalent mesh and SDF surfaces using the same Material under equivalent incident conditions match within an explicitly justified numerical/pixel tolerance.
+
+Numeric material edits must not cause unnecessary full shader regeneration beyond the existing compiler's structural/value contract.
+
+---
+
+## Phase 5 — Purify source radiance and retire ambient/diffuse/specular light channels
+
+Once receiver response is sovereign, collapse source state toward source truth.
+
+Target source concept:
+
+```
+sourceEmission =
+    rho(p,t)
+    * chi(p,t,...)
+    * alpha(p,omega,t)
+```
+
+plus source placement, enabled state, Timeline coordinate, and other truly source-owned authored inputs.
+
+Retire source semantics shaped like receiver models:
+
+- ambientRadiance;
+- diffuseRadiance;
+- specularRadiance;
+- ambient/diffuse/specular coefficient triplets.
+
+`light.color` may remain as a compatibility/default constant chroma if that is still the declared absence mapping for `chi`.
+
+`light.intensity` may remain temporarily as ordinary authored source magnitude/default state, but it must not remain because a renderer shader expects a particular coefficient vector. Its eventual relation to `rho` must be explicit and must preserve the already-frozen meaning of authored `rho`.
+
+Do not reinterpret existing `rho` ASTs.
+
+### Environment / ambient compatibility
+
+Legacy "ambient" must not remain a special receiver/source channel forever.
+
+Migrate it to an explicit incoming environment-radiance/default-world contribution or another named authored compatibility source.
+
+During transition, old saves may receive a compatibility environment term that reproduces historical output.
+
+The key rule is:
+
+> ambient compatibility may be generated data; it may not remain a hidden renderer equation.
+
+### Gate 5
+
+A direct source binding no longer contains diffuse/specular semantics.
+
+Changing material response does not mutate source emission state.
+
+Changing source emission does not rewrite material response structure.
+
+---
+
+## Phase 6 — Remove renderer-owned Blinn-Phong
+
+Only after Gates 0–5 pass, delete the old law.
+
+Delete or retire from production semantics:
+
+- `<material-response:legacy-blinn-phong>`;
+- `HAS_AUTHORED_MATERIAL_RESPONSE`;
+- hidden fallback branches;
+- mesh Blinn-Phong shader equations;
+- SDF Blinn-Phong equations;
+- packed `inst.shading` quartet;
+- renderer light ambient/diffuse/specular uniforms;
+- `Renderer::setLight` old shaped contract;
+- `RenderMaterial` shading quartet if no longer needed by compatibility-data resolution;
+- `AuthorableLightState` ambient/diffuse/specular fields once migration no longer requires reading them directly;
+- `RadianceSourceBinding` ambient/diffuse/specular fields and coefficient vector;
+- helper conversion functions that manufacture those channels.
+
+Search the full repository after deletion for:
+
+```
+Blinn
+Phong
+shininess
+ambientRadiance
+diffuseRadiance
+specularRadiance
+lightAmbient
+lightDiffuse
+lightSpecular
+inst.shading
+HAS_AUTHORED_MATERIAL_RESPONSE
+```
+
+Every remaining occurrence must be one of:
+
+- historical documentation;
+- explicit save migration;
+- authored compatibility preset/data;
+- tests proving migration;
+- a deliberately retained legacy OpenGL boundary with a written removal/limitation note.
+
+No production WebGPU illumination equation may remain.
+
+### Gate 6
+
+A source-code audit finds no renderer-side Blinn-Phong equation in active WebGPU surface shading.
+
+---
+
+## Phase 7 — Replace the visual default, separately from compatibility
+
+Architecture migration and aesthetic default selection are separate decisions.
+
+After legacy appearance can be preserved for old worlds as authored compatibility data, define a new `material.default` for newly authored content that does **not** produce the conspicuous plastic Blinn-Phong look.
+
+Initial visual direction:
+
+- mostly matte / diffuse;
+- broad, restrained rough reflection rather than a tight white plastic blob;
+- environment-aware illumination rather than flat universal ambient;
+- no claim that this is the one physically correct or ontologically privileged material model.
+
+If GGX, Oren-Nayar, or another familiar response is used as inspiration, encode it as an authored expression/preset, not a renderer kind.
+
+Suggested authored presets may eventually include:
+
+```
+material.response.legacy-blinn-phong
+material.response.matte
+material.response.rough-dielectric
+material.response.metal
+material.response.velvet
+material.response.toon
+```
+
+These are authored artifacts/templates, never engine branches.
+
+### Gate 7
+
+New default objects visibly avoid the historical "everything is polished plastic" appearance while legacy worlds can still intentionally request the compatibility preset.
+
+---
+
+# 6. Bind / PropertyPath direction
+
+The clean end-state is aligned with AD-21:
+
+```
+OntoMath::Bind(PropertyPath)
+```
+
+or the adopted equivalent.
+
+A response expression should not require the compiler to maintain a growing hardcoded catalog such as:
+
+```
+materialDiffuse
+materialSpecular
+materialShininess
+materialFoo
+```
+
+Instead, the expression declares dependencies on ordinary authored properties, and lowering maps those dependencies to parameter slots or inlined field expressions according to their type/authority.
+
+This branch may stage the work if AD-21 is not yet complete, but every temporary receiver-specific binding must be designed as a bridge toward generic PropertyPath binding, not a new permanent vocabulary.
+
+Unresolvable bindings must refuse by name.
+
+---
+
+# 7. Cache and invalidation law
+
+Response caching should key on truths already possessed by the ontology/execution path:
+
+- Material identity;
+- response structural identity;
+- admitted binding layout;
+- backend/compiler profile where relevant.
+
+Separate:
+
+1. **structure identity**
+   operations, topology, admitted variable reads, bound property layout;
+
+2. **numeric/value state**
+   scalar/vector leaf values and bound material values;
+
+3. **incident/source state**
+   radiance values and transport state;
+
+4. **surface interaction state**
+   p/n/wi/wo per fragment.
+
+A change in (2) should update parameter data without rebuilding (1) where possible.
+
+A change in source radiance must not invalidate receiver structure.
+
+A changed Material response must not rewrite source programs.
+
+Do not key semantic caches by raw pointers or incidental draw order.
+
+---
+
+# 8. Persistence and migration
+
+Old material JSON currently stores legacy coefficients. Preserve read compatibility.
+
+Migration policy:
+
+1. Loading old content may keep the scalar properties so Laws and authoring tools do not break.
+2. Missing `responseExpr` resolves to the legacy authored compatibility response, not a renderer branch.
+3. Saving may either:
+   - persist the resolved compatibility expression explicitly; or
+   - preserve omission while Material resolution deterministically supplies the same authored default.
+4. Choose one canonical policy and test save -> load -> save stability.
+5. Do not silently rewrite authored `rho`, `chi`, or `alpha` ASTs.
+6. Do not migrate source emission into material response or vice versa.
+
+If source-side ambient compatibility requires a synthetic environment source, its provenance and deterministic migration rule must be visible.
+
+---
+
+# 9. Tests and tribunals
+
+Minimum focused witnesses before merge:
+
+## OntoMath / compiler
+
+- response with `p/n/wi/wo`;
+- response reading pigment;
+- generic operations needed by legacy expression;
+- numeric-only edit keeps emitted WGSL structure byte-identical where expected;
+- structural edit changes identity;
+- unsupported operation refuses;
+- unresolved binding refuses by name;
+- no stale program after refusal.
+
+## Material
+
+- `responseExpr` persistence;
+- default response resolution;
+- legacy coefficient PropertyPath compatibility;
+- copy-on-write preserves response ownership;
+- response revision / binding-value revision behaves correctly.
+
+## Source
+
+- source radiance no longer needs ambient/diffuse/specular output channels;
+- old `rho` CPU/GPU meaning unchanged;
+- old `chi` absence/default meaning unchanged;
+- old `alpha` absence remains multiplicative identity;
+- source edit does not recompile material response.
+
+## Native WebGPU
+
+- colored diffuse receiver;
+- white specular over colored pigment reproduced by authored legacy preset;
+- matte response with no specular;
+- two receivers under same source differ only by response;
+- same receiver under changed source differs without response recompile;
+- visibility change alters contribution without rewriting source or response math;
+- mesh/SDF parity witness;
+- new default visually distinct from legacy plastic preset;
+- unsupported response produces explicit refusal / no stale image.
+
+## Regression
+
+Preserve:
+
+- Rungs 3–8 source-radiance witnesses;
+- Rung-9 response ownership/invalidation witnesses, updated for no-fallback semantics;
+- volumetric V1–V5 / routed transport gates;
+- Cathedral / Sunlit Mist / Northern Veil focused tests relevant to radiance transport;
+- save/load and Law PropertyPath tests.
+
+Do not declare the branch complete because a standalone compiler test passes. The production mesh and implicit render paths must both be proven.
+
+---
+
+# 10. Performance constraints
+
+The ontology transition must not become a shader-per-object catastrophe.
+
+Required behavior:
+
+- materials sharing structural response identity share compiled response structure/pipelines when backend constraints permit;
+- numeric material variation uses parameter data, not source regeneration;
+- source changes do not multiply response compilation count by number of surfaces;
+- mesh and SDF response compilation share structural identity machinery;
+- no per-frame AST serialization or full tree traversal for unchanged materials;
+- no recompilation on camera motion merely because `wo` changes;
+- no recompilation on source motion merely because `wi` changes;
+- no recompilation on Timeline advance when time is a runtime binding rather than structural edit.
+
+Instrument response compiles/cache hits/parameter uploads if existing SDF counters cannot truthfully distinguish the new shared path.
+
+---
+
+# 11. Explicit non-goals
+
+This branch does **not** need to:
+
+- implement full path tracing;
+- solve global illumination;
+- become spectrally complete;
+- enforce physical energy conservation on every authored response;
+- provide a giant library of PBR presets;
+- delete every old material property on day one;
+- redesign the entire Material ontology;
+- introduce a `BRDF` class hierarchy;
+- make OpenGL feature-equivalent if WebGPU is the canonical production target.
+
+It **does** need to ensure those future features can arrive as authored mathematics/transport without another renderer-owned shader-model throne.
+
+---
+
+# 12. Recommended implementation sequence
+
+```
+0. baseline witnesses + fossil inventory
+        |
+1. extract/generalize response compiler from SDF-only ownership
+        |
+2. widen response semantics to sovereign reflected RGB
+        |
+3. author legacy Blinn-Phong as ordinary Material.default compatibility expression
+        |
+4. route mesh + SDF through one response semantic/compiler path
+        |
+5. purify RadianceSourceBinding and migrate ambient compatibility to explicit data
+        |
+6. delete renderer-owned Blinn-Phong and shaped light channels
+        |
+7. author a restrained non-plastic new default material
+        |
+8. full native/regression/performance tribunal
+```
+
+Do not reverse steps 2 and 6. The old shader may only be deleted after the authored response can reproduce every compatibility behavior that still matters.
+
+Do not reverse steps 3 and 7. Legacy compatibility and the new aesthetic default are separate artifacts.
+
+---
+
+# 13. Completion criteria
+
+This branch is complete only when all of the following are true:
+
+1. No active WebGPU surface path contains a hardcoded Blinn-Phong lighting equation.
+2. No null/absent Material response means "renderer chooses Blinn-Phong."
+3. Mesh and SDF surfaces consume the same authored response semantics.
+4. The response owns the full reflected RGB contribution, including pigment and untinted highlights when authored.
+5. Source bindings no longer define incoming radiance as ambient/diffuse/specular channels.
+6. Existing authored `rho`, `chi`, and `alpha` retain their frozen meanings.
+7. Old visual behavior, where intentionally preserved, is supplied by authored compatibility data rather than a renderer branch.
+8. Numeric response edits reuse structure where supported; structural edits invalidate only relevant response programs.
+9. Unsupported response math refuses explicitly without stale output.
+10. New default material appearance no longer imposes the historical polished-plastic Blinn-Phong aesthetic.
+11. Focused native WebGPU witnesses prove both mesh and implicit paths.
+12. Existing radiance, visibility, volume-transport, persistence, and Law regressions remain green or any unrelated pre-existing failures are explicitly separated with evidence.
+
+---
+
+# Final architectural maxim
+
+> **A renderer may execute illumination. It may not legislate what matter is.**
+
+Blinn-Phong survives only as an authored historical/material preset if a Person wants it.
+
+Radiance is source truth.  
+Visibility/transport is path truth.  
+Material response is receiver truth.  
+The Screen is their rendered consequence.
+
+That is the branch.

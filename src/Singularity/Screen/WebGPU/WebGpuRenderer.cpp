@@ -54,30 +54,106 @@ std::optional<glm::mat4> authoredScaledProduct(const glm::mat4& viewProj,
 }
 
 // Vertex layout mirrors geom::TessVertex exactly: {pos(3), normal(3), uv(2)}.
-// A world-space Lambert term (ambient + diffuse*N·L) tints baseColor; front_facing
-// flips the normal so open surfaces (patches) light on both sides. Texture albedo
-// (faceTextures) is not sampled yet — a later refinement (needs a WGPU texture).
-// Per-instance transform (CPU-GPU micro-mastery Phase 4.3): every mesh draw is
-// an instanced draw now, even a "batch" of one, so the model/normal matrices
-// that used to live in the per-draw uniform U live in this per-instance
-// storage array instead, indexed by @builtin(instance_index). U carries only
-// what every instance in a batch genuinely SHARES (camera, material, light).
-const char* kMeshWGSL = R"(
+// Rasterization discovers a surface interaction; Material OntoMath decides how
+// incident radiance becomes reflected RGB. The response module is compiled by
+// the SAME emitter/validator used by the implicit-surface path.
+std::string meshWgsl(
+    const sdfwgsl::SurfaceResponseProgram& response,
+    const sdfwgsl::RadianceSourceProgram* sourceProgram) {
+    const bool hasSourceSet = sourceProgram != nullptr;
+    std::string wgsl = R"WGSL(
 struct U {
-    viewProj:  mat4x4<f32>,
-    lightPos:  vec4<f32>,   // world-space POSITION (GL_LIGHT0 is positional)
-    params:    vec4<f32>,   // x=ambient, y=diffuse, z=specular, w=shininess
-    eyePos:    vec4<f32>,
+    viewProj:     mat4x4<f32>,
+    lightPos:     vec4<f32>,
+    eyePos:       vec4<f32>,
+    lightControl: vec4<f32>, // x = lighting enabled, y = RadianceVisibilityMode (0/1/2)
+    sceneVisibilityControl: vec4<f32>, // x = field VM blocker count, y = VM instruction count
 };
 struct Instance {
     model:     mat4x4<f32>,
     normalMat: mat4x4<f32>,
     baseColor: vec4<f32>,
 };
+struct Params { v: array<f32> };
+struct RadianceSourceData {
+    position: vec4<f32>,
+    legacyEnvironment: vec4<f32>,
+    directIncidentRadiance: vec4<f32>,
+    legacyDiffuseIncident: vec4<f32>,
+    legacySpecularIncident: vec4<f32>,
+    time: vec4<f32>,
+    control: vec4<f32>,
+};
+struct SceneFieldVmBlockerData {
+    invModel: mat4x4<f32>,
+    extents: vec4<f32>,
+    program: vec4<u32>,
+};
+
 @group(0) @binding(0) var<uniform> u: U;
 @group(0) @binding(1) var albedoTex: texture_2d<f32>;
 @group(0) @binding(2) var albedoSamp: sampler;
+@group(0) @binding(3) var<storage, read> P: Params;
+@group(0) @binding(4) var<storage, read> RS: array<RadianceSourceData>;
+@group(0) @binding(5) var<storage, read> sceneTriangles: array<vec4<f32>>;
+@group(0) @binding(6) var<storage, read>
+    sceneFieldVmBlockers: array<SceneFieldVmBlockerData>;
 @group(1) @binding(0) var<storage, read> instances: array<Instance>;
+)WGSL";
+
+    wgsl += response.wgsl;
+    if (sourceProgram) wgsl += sourceProgram->wgsl;
+
+    wgsl += std::string("\nconst HAS_AUTHORED_MATERIAL_RESPONSE: bool = ") +
+            (response.hasDirectResponse ? "true;\n" : "false;\n");
+    wgsl += std::string(
+                "const HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE: bool = ") +
+            (response.hasEnvironmentResponse ? "true;\n" : "false;\n");
+    wgsl += std::string("const MATERIAL_RESPONSE_READS_WI: bool = ") +
+            (response.directReadsWi ? "true;\n" : "false;\n");
+    wgsl += std::string("const HAS_AUTHORED_SOURCE_SET: bool = ") +
+            (hasSourceSet ? "true;\n" : "false;\n");
+    if (!hasSourceSet) {
+        wgsl += "const SOURCE_DIRECTION_EPS: f32 = " +
+                std::to_string(static_cast<float>(OntoMath::kDirectionEpsilon)) +
+                ";\n";
+    }
+
+    // compileSurfaceResponseModule() already prefixes the canonical primitive
+    // SDF math used by fieldVmEval; do not duplicate those functions here.
+    wgsl += sdfwgsl::fieldVmBoundMathModule(0u, 7u);
+    wgsl += sdfwgsl::sceneVisibilityTriangleMathModule();
+    wgsl += sdfwgsl::sceneVisibilityFieldVmMathModule();
+
+    wgsl += R"WGSL(
+struct VisibilityDecision {
+    known: f32,
+    value: f32,
+};
+
+fn meshPathVisibility(surfaceWorld: vec3<f32>, sourceWorld: vec3<f32>) -> VisibilityDecision {
+    if (u.lightControl.y < 0.5) {
+        return VisibilityDecision(1.0, 1.0);
+    }
+    // LocalReceiverGeometry remains Unknown for raster triangles because the
+    // receiver is only one member of a potentially larger mesh world.
+    if (u.lightControl.y < 1.5) {
+        return VisibilityDecision(0.0, 0.0);
+    }
+    if (u.lightControl.z < 0.5) {
+        return VisibilityDecision(0.0, 0.0);
+    }
+    let fieldVmV =
+        sceneFieldVmVisibility(surfaceWorld, sourceWorld);
+    if (fieldVmV.known < 0.5) {
+        return VisibilityDecision(0.0, 0.0);
+    }
+    if (fieldVmV.value < 0.5) {
+        return VisibilityDecision(1.0, 0.0);
+    }
+    return VisibilityDecision(
+        1.0, sceneMeshVisibility(surfaceWorld, sourceWorld));
+}
 
 struct VSOut {
     @builtin(position) clip: vec4<f32>,
@@ -85,6 +161,7 @@ struct VSOut {
     @location(1) uv: vec2<f32>,
     @location(2) worldPos: vec3<f32>,
     @location(3) baseColor: vec4<f32>,
+    @location(4) localPos: vec3<f32>,
 };
 
 @vertex
@@ -98,6 +175,7 @@ fn vs_main(@location(0) pos: vec3<f32>, @location(1) normal: vec3<f32>,
     out.uv = uv;
     out.worldPos = world.xyz;
     out.baseColor = inst.baseColor;
+    out.localPos = pos;
     return out;
 }
 
@@ -105,28 +183,152 @@ fn vs_main(@location(0) pos: vec3<f32>, @location(1) normal: vec3<f32>,
 fn fs_main(in: VSOut, @builtin(front_facing) front: bool) -> @location(0) vec4<f32> {
     var N = normalize(in.worldNormal);
     if (!front) { N = -N; }
-    let L = normalize(u.lightPos.xyz - in.worldPos);
     let V = normalize(u.eyePos.xyz - in.worldPos);
-    let H = normalize(L + V);
-    let diff = max(dot(N, L), 0.0);
-    let lit = u.params.x + u.params.y * diff;
-    // Blinn-Phong specular: white highlight, gated so it only appears on lit faces.
-    let spec = u.params.z * pow(max(dot(N, H), 0.0), max(u.params.w, 1.0)) * step(0.0001, diff);
-    let texel = textureSample(albedoTex, albedoSamp, in.uv); // paint (white when untextured)
-    let rgb = in.baseColor.rgb * texel.rgb * lit + vec3<f32>(spec);
+    let texel = textureSample(albedoTex, albedoSamp, in.uv);
+    let surfaceColor = in.baseColor.rgb * texel.rgb;
+
+    var environmentTerm = vec3<f32>(0.0);
+    var directTerm = vec3<f32>(0.0);
+)WGSL";
+
+    if (hasSourceSet) {
+        wgsl += "    var environmentRadiance = vec3<f32>(0.0);\n";
+        for (std::size_t i = 0; i < sourceProgram->angularReadsOmega.size(); ++i) {
+            const std::string index = std::to_string(i);
+            wgsl += "    {\n";
+            wgsl += "        let sourcePacket = sourceSample_" + index +
+                    "(in.worldPos);\n";
+            wgsl += "        if (sourcePacket.enabled > 0.5) {\n";
+            wgsl += "            environmentRadiance += "
+                    "sourcePacket.environmentRadiance;\n";
+            wgsl += "            let pathVisibility = meshPathVisibility(in.worldPos, RS[" +
+                    index + "u].position.xyz);\n";
+            wgsl += "            if (pathVisibility.known > 0.5 && "
+                    "HAS_AUTHORED_MATERIAL_RESPONSE) {\n";
+            wgsl += "                let responseDefined = "
+                    "sourcePacket.directionDefined > 0.5 || "
+                    "!MATERIAL_RESPONSE_READS_WI;\n";
+            wgsl += "                if (responseDefined) {\n";
+            wgsl += "                    let receiverResponse = "
+                    "materialResponseEval(in.localPos, N, sourcePacket.responseWi, "
+                    "V, surfaceColor, sourcePacket.incidentRadiance, "
+                    "sourcePacket.legacyDiffuseIncident, "
+                    "sourcePacket.legacySpecularIncident);\n";
+            wgsl += "                    directTerm += receiverResponse * "
+                    "sourcePacket.shapedRadiance * pathVisibility.value;\n";
+            wgsl += "                }\n";
+            wgsl += "            }\n";
+            wgsl += "        }\n";
+            wgsl += "    }\n";
+        }
+        wgsl += R"WGSL(
+    if (HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE) {
+        environmentTerm = materialEnvironmentResponseEval(
+            in.localPos, N, V, surfaceColor, environmentRadiance);
+    }
+)WGSL";
+    } else {
+        // Explicit zero-set compatibility lane. This preserves the historical
+        // ordinary-mesh incident contract without pretending it is authored
+        // source-set transport.
+        wgsl += R"WGSL(
+    let environmentRadiance = vec3<f32>(1.0);
+    if (HAS_AUTHORED_MATERIAL_ENVIRONMENT_RESPONSE) {
+        environmentTerm = materialEnvironmentResponseEval(
+            in.localPos, N, V, surfaceColor, environmentRadiance);
+    }
+
+    if (HAS_AUTHORED_MATERIAL_RESPONSE) {
+        let sourceDelta = in.worldPos - u.lightPos.xyz;
+        let sourceDistance = length(sourceDelta);
+        var responseWi = vec3<f32>(0.0);
+        var responseDefined = true;
+        if (sourceDistance > SOURCE_DIRECTION_EPS) {
+            responseWi = sourceDelta / sourceDistance;
+        } else if (MATERIAL_RESPONSE_READS_WI) {
+            responseDefined = false;
+        }
+        let pathVisibility = meshPathVisibility(in.worldPos, u.lightPos.xyz);
+        if (responseDefined && pathVisibility.known > 0.5) {
+            directTerm = materialResponseEval(
+                in.localPos, N, responseWi, V, surfaceColor,
+                vec3<f32>(1.0), vec3<f32>(1.0), vec3<f32>(1.0)) *
+                pathVisibility.value;
+        }
+    }
+)WGSL";
+    }
+
+    wgsl += R"WGSL(
+    let litRgb = environmentTerm + directTerm;
+    let rgb = mix(surfaceColor, litRgb, u.lightControl.x);
     return vec4<f32>(rgb, in.baseColor.a * texel.a);
 }
-)";
+)WGSL";
+    return wgsl;
+}
 
-// std140-compatible: all members are 16-byte aligned, so this matches the WGSL
-// uniform block byte-for-byte. glm and WGSL are both column-major. model/
-// normalMat moved to the per-instance storage buffer — see kMeshWGSL.
+// std140-compatible: all members are 16-byte aligned. Model/normal matrices
+// remain per-instance; this block is geometry-independent receiver transport.
 struct MeshUniforms {
     glm::mat4 viewProj;
     glm::vec4 lightPos;
-    glm::vec4 params;
     glm::vec4 eyePos;
+    glm::vec4 lightControl;
+    glm::vec4 sceneVisibilityControl;
 };
+
+glm::vec3 legacyDirectIncidentRadiance(const glm::vec3& ambientRadiance,
+                                       const glm::vec3& diffuseRadiance,
+                                       const glm::vec3& specularRadiance,
+                                       const glm::vec4& coefficients) {
+    constexpr float eps = 1e-8f;
+    if (std::fabs(coefficients.z) > eps) {
+        return diffuseRadiance / coefficients.z;
+    }
+    if (std::fabs(coefficients.w) > eps) {
+        return specularRadiance / coefficients.w;
+    }
+    if (std::fabs(coefficients.y) > eps) {
+        return ambientRadiance / coefficients.y;
+    }
+    return glm::vec3(0.0f);
+}
+
+struct RadianceSourceGpuData {
+    glm::vec4 position;
+    glm::vec4 legacyEnvironment;
+    glm::vec4 directIncidentRadiance;
+    glm::vec4 legacyDiffuseIncident;
+    glm::vec4 legacySpecularIncident;
+    glm::vec4 time;
+    glm::vec4 control;
+};
+
+RadianceSourceGpuData lowerRadianceSourceGpuData(
+    const Rendering::RadianceSourceBinding& source) {
+    RadianceSourceGpuData data{};
+    data.position = glm::vec4(source.position, 1.0f);
+    data.legacyEnvironment = glm::vec4(
+        source.ambientRadiance / 0.2f,
+        (source.coefficients.x * source.coefficients.y) / 0.2f);
+    data.directIncidentRadiance = glm::vec4(
+        legacyDirectIncidentRadiance(
+            source.ambientRadiance, source.diffuseRadiance,
+            source.specularRadiance, source.coefficients),
+        source.coefficients.x);
+    data.legacyDiffuseIncident = glm::vec4(
+        source.diffuseRadiance / 0.8f,
+        (source.coefficients.x * source.coefficients.z) / 0.8f);
+    data.legacySpecularIncident = glm::vec4(
+        source.specularRadiance,
+        source.coefficients.x * source.coefficients.w);
+    data.time = glm::vec4(static_cast<float>(source.temporalCoordinate),
+                          static_cast<float>(source.temporalDelta), 0.0f, 0.0f);
+    data.control =
+        glm::vec4(source.enabled ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
+    return data;
+}
 
 // Unlit flat-colour shader for the selection overlay + wireframe.
 const char* kFlatWGSL = R"(
@@ -251,15 +453,9 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     // timestamp extension, and F3 will say that no execution sample is present.
     initGpuTimestampQueries(gpu.timestampQueries);
 
-    WGPUShaderSourceWGSL src = {};
-    src.chain.sType = WGPUSType_ShaderSourceWGSL;
-    src.code = wgpu::Device::str(kMeshWGSL);
-    WGPUShaderModuleDescriptor smDesc = {};
-    smDesc.nextInChain = &src.chain;
-    WGPUShaderModule shader = wgpuDeviceCreateShaderModule(_device, &smDesc);
-    if (!shader) return false;
-
-    WGPUBindGroupLayoutEntry bglEntries[3] = {};
+    // Mesh pipeline layout is fixed execution machinery; the fragment
+    // mathematics is generated lazily per authored Material response structure.
+    WGPUBindGroupLayoutEntry bglEntries[8] = {};
     bglEntries[0].binding = 0;
     bglEntries[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     bglEntries[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -271,14 +467,28 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     bglEntries[2].binding = 2;
     bglEntries[2].visibility = WGPUShaderStage_Fragment;
     bglEntries[2].sampler.type = WGPUSamplerBindingType_Filtering;
+    bglEntries[3].binding = 3;
+    bglEntries[3].visibility = WGPUShaderStage_Fragment;
+    bglEntries[3].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    bglEntries[4].binding = 4;
+    bglEntries[4].visibility = WGPUShaderStage_Fragment;
+    bglEntries[4].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    bglEntries[5].binding = 5;
+    bglEntries[5].visibility = WGPUShaderStage_Fragment;
+    bglEntries[5].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    bglEntries[6].binding = 6;
+    bglEntries[6].visibility = WGPUShaderStage_Fragment;
+    bglEntries[6].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    bglEntries[7].binding = 7;
+    bglEntries[7].visibility = WGPUShaderStage_Fragment;
+    bglEntries[7].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     WGPUBindGroupLayoutDescriptor bglDesc = {};
-    bglDesc.entryCount = 3;
+    bglDesc.entryCount = 8;
     bglDesc.entries = bglEntries;
     _bgl = wgpuDeviceCreateBindGroupLayout(_device, &bglDesc);
 
-    // group(1): the per-instance transform storage array (Phase 4.3). Same
-    // ReadOnlyStorage shape as the SDF params bind group below — minBindingSize
-    // left at 0 (unsized), since a batch's instance count varies draw to draw.
+    // group(1): per-instance model/normal/baseColor storage. Geometry discovery
+    // remains raster-specific; Material response does not.
     WGPUBindGroupLayoutEntry instEntry = {};
     instEntry.binding = 0;
     instEntry.visibility = WGPUShaderStage_Vertex;
@@ -288,9 +498,7 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     instBglDesc.entries = &instEntry;
     _instanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &instBglDesc);
 
-    // group(2): SDF instances plus two derived acceleration buffers:
-    // binding 1 is the proven-heightfield min/max grid; binding 2 is the
-    // conservative zero-set hierarchy. Both are read-only Kernel substrate.
+    // group(2): SDF instances plus derived acceleration buffers.
     WGPUBindGroupLayoutEntry sdfInstEntry[3] = {};
     sdfInstEntry[0].binding = 0;
     sdfInstEntry[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
@@ -305,70 +513,6 @@ bool WebGpuRenderer::init(const wgpu::Device& gpu, WGPUTextureFormat colorFormat
     sdfInstBglDesc.entryCount = 3;
     sdfInstBglDesc.entries = sdfInstEntry;
     _sdfInstanceBgl = wgpuDeviceCreateBindGroupLayout(_device, &sdfInstBglDesc);
-
-    WGPUBindGroupLayout meshLayouts[2] = { _bgl, _instanceBgl };
-    WGPUPipelineLayoutDescriptor plDesc = {};
-    plDesc.bindGroupLayoutCount = 2;
-    plDesc.bindGroupLayouts = meshLayouts;
-    WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(_device, &plDesc);
-
-    WGPUVertexAttribute attrs[3] = {};
-    attrs[0].format = WGPUVertexFormat_Float32x3; attrs[0].offset = 0;  attrs[0].shaderLocation = 0; // pos
-    attrs[1].format = WGPUVertexFormat_Float32x3; attrs[1].offset = 12; attrs[1].shaderLocation = 1; // normal
-    attrs[2].format = WGPUVertexFormat_Float32x2; attrs[2].offset = 24; attrs[2].shaderLocation = 2; // uv
-    WGPUVertexBufferLayout vbl = {};
-    vbl.stepMode = WGPUVertexStepMode_Vertex;
-    vbl.arrayStride = 32; // sizeof(geom::TessVertex)
-    vbl.attributeCount = 3;
-    vbl.attributes = attrs;
-
-    // Alpha blending so RenderMaterial::opacity actually means something. With the
-    // default opacity of 1.0 this is a no-op — src*1 + dst*0 is exactly what an
-    // unblended write does — so it costs nothing for opaque surfaces while making
-    // a translucent material render translucent instead of silently solid.
-    WGPUBlendState meshBlend = {};
-    meshBlend.color.operation = WGPUBlendOperation_Add;
-    meshBlend.color.srcFactor = WGPUBlendFactor_SrcAlpha;
-    meshBlend.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
-    meshBlend.alpha.operation = WGPUBlendOperation_Add;
-    meshBlend.alpha.srcFactor = WGPUBlendFactor_One;
-    meshBlend.alpha.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
-
-    WGPUColorTargetState colorTarget = {};
-    colorTarget.format = _colorFormat;
-    colorTarget.writeMask = WGPUColorWriteMask_All;
-    colorTarget.blend = &meshBlend;
-    WGPUFragmentState frag = {};
-    frag.module = shader;
-    frag.entryPoint = wgpu::Device::str("fs_main");
-    frag.targetCount = 1;
-    frag.targets = &colorTarget;
-
-    // Depth test so nearer surfaces occlude farther ones. Depth24Plus, less-than,
-    // depth writes on. (WebGPU clip depth is [0,1]; the app must build projections
-    // with GLM_FORCE_DEPTH_ZERO_TO_ONE when feeding this backend.)
-    WGPUDepthStencilState ds = {};
-    ds.format = WGPUTextureFormat_Depth24Plus;
-    ds.depthWriteEnabled = WGPUOptionalBool_True;
-    ds.depthCompare = WGPUCompareFunction_Less;
-
-    WGPURenderPipelineDescriptor pd = {};
-    pd.layout = layout;
-    pd.vertex.module = shader;
-    pd.vertex.entryPoint = wgpu::Device::str("vs_main");
-    pd.vertex.bufferCount = 1;
-    pd.vertex.buffers = &vbl;
-    pd.primitive.topology = WGPUPrimitiveTopology_TriangleList;
-    pd.primitive.cullMode = WGPUCullMode_None; // the app has no backface culling
-    pd.depthStencil = &ds;
-    pd.multisample.count = 1;
-    pd.multisample.mask = 0xFFFFFFFFu;
-    pd.fragment = &frag;
-    _meshPipeline = wgpuDeviceCreateRenderPipeline(_device, &pd);
-
-    wgpuPipelineLayoutRelease(layout);
-    wgpuShaderModuleRelease(shader);
-    if (!_meshPipeline) return false;
 
     // Shared linear sampler.
     WGPUSamplerDescriptor sd = {};
@@ -544,6 +688,7 @@ void WebGpuRenderer::releasePersistentSdfParams() {
     for (auto& kv : _persistentSdfParams) {
         if (kv.second.buffer) wgpuBufferRelease(kv.second.buffer);
         kv.second.lastSignature.clear();
+        kv.second.lastResponseBindingIdentity.clear();
     }
     _persistentSdfParams.clear();
     _persistentSdfParamVramBytes = 0;
@@ -567,7 +712,452 @@ void WebGpuRenderer::releasePersistentRadianceSources() {
     _persistentRadianceSourceVramBytes = 0;
 }
 
+WebGpuRenderer::RadianceSourceBufferView
+WebGpuRenderer::prepareRadianceSourceBuffer() {
+    RadianceSourceBufferView out;
+    if (radianceSources().empty()) return out;
+
+    std::vector<RadianceSourceGpuData> gpuSources;
+    gpuSources.reserve(radianceSources().size());
+    for (const auto& source : radianceSources()) {
+        gpuSources.push_back(lowerRadianceSourceGpuData(source));
+    }
+
+    const uint64_t bytes =
+        static_cast<uint64_t>(gpuSources.size() * sizeof(RadianceSourceGpuData));
+    uint64_t capacity = 256;
+    while (capacity < bytes) capacity *= 2;
+
+    if (!_persistentRadianceSources.buffer ||
+        _persistentRadianceSources.capacityBytes < bytes) {
+        WGPUBufferDescriptor bd = {};
+        bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
+        bd.size = capacity;
+        WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
+        if (grown) {
+            if (_persistentRadianceSources.buffer) {
+                wgpuBufferRelease(_persistentRadianceSources.buffer);
+            }
+            _persistentRadianceSources.buffer = grown;
+            _persistentRadianceSources.capacityBytes = capacity;
+            _persistentRadianceSources.mirror.clear();
+            _persistentRadianceSourceVramBytes = static_cast<size_t>(capacity);
+        }
+    }
+
+    const auto* raw =
+        reinterpret_cast<const unsigned char*>(gpuSources.data());
+    const std::vector<unsigned char> bytesNow(raw, raw + bytes);
+    if (_persistentRadianceSources.buffer &&
+        _persistentRadianceSources.capacityBytes >= bytes) {
+        if (_persistentRadianceSources.mirror != bytesNow) {
+            wgpuQueueWriteBuffer(_queue, _persistentRadianceSources.buffer, 0,
+                                 gpuSources.data(), bytes);
+            _persistentRadianceSources.mirror = bytesNow;
+        }
+        out.buffer = _persistentRadianceSources.buffer;
+        out.size = bytes;
+        return out;
+    }
+
+    auto fallback = bufferPool().suballocateStorage(gpuSources.data(), bytes);
+    out.buffer = fallback.buffer;
+    out.offset = fallback.offset;
+    out.size = fallback.size;
+    return out;
+}
+
+
+
+WebGpuRenderer::SceneVisibilityFrame
+WebGpuRenderer::prepareSceneVisibilityFrame() {
+    SceneVisibilityFrame out;
+    constexpr uint64_t kMaxSceneVisibilityTriangles = 8192;
+
+    const SceneVisibilityTriangle inertTriangle{};
+    auto bindInertTriangles = [&]() {
+        auto alloc = bufferPool().suballocateStorage(
+            &inertTriangle, sizeof(inertTriangle));
+        out.buffer = alloc.buffer;
+        out.offset = alloc.offset;
+        out.size = alloc.size;
+        out.triangleCount = 0;
+    };
+
+    // The shared frame owns exact mesh-triangle truth only. SDF field programs
+    // are receiver-relative derived execution state and are packed separately.
+    if (radianceVisibilityMode() != RadianceVisibilityMode::CompleteScene) {
+        bindInertTriangles();
+        return out;
+    }
+
+    bool exactMeshMaterialization = !_frameHasUnmaterializedOpaqueGeometry;
+    bool hasMeshReceivers = false;
+    uint64_t triangleCount = 0;
+    for (const auto& entry : _meshBatches) {
+        if (!entry.second.empty()) hasMeshReceivers = true;
+        const MeshBatchKey& key = entry.first;
+        if (!key.mesh) {
+            exactMeshMaterialization = false;
+            continue;
+        }
+
+        // Binary path visibility cannot truthfully consume unknown texture alpha
+        // or partially transparent receiver/blocker surfaces yet.
+        if (key.albedoView != _whiteView) {
+            exactMeshMaterialization = false;
+        }
+
+        const uint64_t perInstance =
+            static_cast<uint64_t>(key.mesh->tris.size() / 3);
+        for (const InstanceData& inst : entry.second) {
+            if (inst.baseColor.a < 0.999999f) {
+                exactMeshMaterialization = false;
+            }
+            if (perInstance > kMaxSceneVisibilityTriangles ||
+                triangleCount > kMaxSceneVisibilityTriangles - perInstance) {
+                exactMeshMaterialization = false;
+                triangleCount = kMaxSceneVisibilityTriangles + 1;
+                break;
+            }
+            triangleCount += perInstance;
+        }
+        if (triangleCount > kMaxSceneVisibilityTriangles) break;
+    }
+
+    if (!exactMeshMaterialization ||
+        triangleCount > kMaxSceneVisibilityTriangles) {
+        bindInertTriangles();
+        mutableFrameStats().sceneVisibilityUnknownFrames++;
+        return out;
+    }
+
+    std::vector<SceneVisibilityTriangle> triangles;
+    triangles.reserve(static_cast<size_t>(triangleCount));
+    for (const auto& entry : _meshBatches) {
+        const geom::TessMesh& mesh = *entry.first.mesh;
+        for (const InstanceData& inst : entry.second) {
+            for (size_t i = 0; i + 2 < mesh.tris.size(); i += 3) {
+                const glm::vec4 a =
+                    inst.model * glm::vec4(mesh.tris[i + 0].pos, 1.0f);
+                const glm::vec4 b =
+                    inst.model * glm::vec4(mesh.tris[i + 1].pos, 1.0f);
+                const glm::vec4 c =
+                    inst.model * glm::vec4(mesh.tris[i + 2].pos, 1.0f);
+                triangles.push_back({a, b, c});
+            }
+        }
+    }
+
+    const void* triangleData = triangles.empty()
+        ? static_cast<const void*>(&inertTriangle)
+        : static_cast<const void*>(triangles.data());
+    const size_t triangleBytes = triangles.empty()
+        ? sizeof(inertTriangle)
+        : triangles.size() * sizeof(SceneVisibilityTriangle);
+    auto triangleAlloc =
+        bufferPool().suballocateStorage(triangleData, triangleBytes);
+    out.buffer = triangleAlloc.buffer;
+    out.offset = triangleAlloc.offset;
+    out.size = triangleAlloc.size;
+    out.triangleCount = static_cast<uint32_t>(triangles.size());
+    if (!out.buffer) {
+        out.triangleCount = 0;
+        mutableFrameStats().sceneVisibilityUnknownFrames++;
+        return out;
+    }
+
+    out.meshBlockersComplete = true;
+    out.meshComplete =
+        fieldVmSceneVisibilityCompleteForFrame(nullptr, true);
+
+    auto& stats = mutableFrameStats();
+    stats.sceneVisibilityTriangles = out.triangleCount;
+    stats.sceneVisibilityBytesUploaded += triangleBytes;
+
+    bool anyUnknown =
+        hasMeshReceivers && !out.meshComplete;
+    for (const SdfPipeline* sp : _activeSdfPipelines) {
+        const auto instancesIt = _sdfBatches.find(sp);
+        if (instancesIt == _sdfBatches.end() || instancesIt->second.empty()) {
+            continue;
+        }
+        if (!fieldVmSceneVisibilityCompleteForFrame(
+                sp, out.meshBlockersComplete)) {
+            anyUnknown = true;
+        }
+    }
+    if (anyUnknown) {
+        stats.sceneVisibilityUnknownFrames++;
+    }
+
+    return out;
+}
+
+bool WebGpuRenderer::fieldVmSceneVisibilityCompleteForFrame(
+    const SdfPipeline* receiver, bool meshBlockersComplete) const {
+    if (radianceVisibilityMode() != RadianceVisibilityMode::CompleteScene ||
+        !meshBlockersComplete) {
+        return false;
+    }
+
+    if (receiver) {
+        const auto receiverInstances = _sdfBatches.find(receiver);
+        if (receiverInstances == _sdfBatches.end() ||
+            receiverInstances->second.empty()) {
+            return false;
+        }
+        const auto receiverOpaque =
+            _sdfVisibilityOpaqueInstanceCounts.find(receiver);
+        if (receiverOpaque == _sdfVisibilityOpaqueInstanceCounts.end() ||
+            receiverOpaque->second != receiverInstances->second.size()) {
+            return false;
+        }
+    }
+
+    constexpr uint64_t kMaxForeignVmBlockers = 1024;
+    constexpr uint64_t kMaxForeignVmInstructions = 16384;
+    uint64_t blockerCount = 0;
+    uint64_t instructionCount = 0;
+
+    for (const SdfPipeline* foreign : _activeSdfPipelines) {
+        if (receiver && foreign == receiver) continue;
+        const auto instancesIt = _sdfBatches.find(foreign);
+        if (instancesIt == _sdfBatches.end() || instancesIt->second.empty()) {
+            continue;
+        }
+
+        const auto vmIt = _sdfVisibilityVmBatches.find(foreign);
+        if (vmIt == _sdfVisibilityVmBatches.end() ||
+            vmIt->second.size() != instancesIt->second.size()) {
+            return false;
+        }
+
+        if (vmIt->second.size() > kMaxForeignVmBlockers ||
+            blockerCount > kMaxForeignVmBlockers - vmIt->second.size()) {
+            return false;
+        }
+        blockerCount += vmIt->second.size();
+
+        for (const SceneVisibilityVmAdmission& admission : vmIt->second) {
+            const auto& program = admission.program;
+            if (!program.ok || program.instructions.empty() ||
+                program.instructions.size() > sdfwgsl::kFieldVmMaxInstructions ||
+                program.maxStackDepth > sdfwgsl::kFieldVmMaxStackDepth) {
+                return false;
+            }
+            if (program.instructions.size() > kMaxForeignVmInstructions ||
+                instructionCount >
+                    kMaxForeignVmInstructions - program.instructions.size()) {
+                return false;
+            }
+            instructionCount += program.instructions.size();
+        }
+    }
+    return true;
+}
+
+bool WebGpuRenderer::sdfSceneVisibilityComplete(
+    const SdfPipeline* receiver) const {
+    return fieldVmSceneVisibilityCompleteForFrame(
+        receiver, _sceneVisibilityFrame.meshBlockersComplete);
+}
+
+WebGpuRenderer::SceneVisibilityBufferView
+WebGpuRenderer::prepareFieldVmVisibility(
+    const SdfPipeline* receiver) {
+    SceneVisibilityBufferView out;
+    const SceneVisibilityVmBlocker inertBlocker{};
+    const sdfwgsl::FieldVmInstruction inertInstruction{};
+
+    auto bindInert = [&]() {
+        auto blockerAlloc =
+            bufferPool().suballocateStorage(&inertBlocker, sizeof(inertBlocker));
+        auto programAlloc =
+            bufferPool().suballocateStorage(&inertInstruction, sizeof(inertInstruction));
+        out.buffer = blockerAlloc.buffer;
+        out.offset = blockerAlloc.offset;
+        out.size = blockerAlloc.size;
+        out.count = 0;
+        out.programBuffer = programAlloc.buffer;
+        out.programOffset = programAlloc.offset;
+        out.programSize = programAlloc.size;
+        out.instructionCount = 0;
+    };
+
+    const bool complete = receiver
+        ? sdfSceneVisibilityComplete(receiver)
+        : fieldVmSceneVisibilityCompleteForFrame(
+              nullptr, _sceneVisibilityFrame.meshBlockersComplete);
+    if (!complete) {
+        bindInert();
+        return out;
+    }
+
+    std::vector<SceneVisibilityVmBlocker> blockers;
+    std::vector<sdfwgsl::FieldVmInstruction> instructions;
+    for (const SdfPipeline* foreign : _activeSdfPipelines) {
+        if (receiver && foreign == receiver) continue;
+        const auto it = _sdfVisibilityVmBatches.find(foreign);
+        if (it == _sdfVisibilityVmBatches.end()) continue;
+
+        for (const SceneVisibilityVmAdmission& admission : it->second) {
+            SceneVisibilityVmBlocker blocker = admission.blocker;
+            blocker.program = glm::uvec4(
+                static_cast<uint32_t>(instructions.size()),
+                static_cast<uint32_t>(admission.program.instructions.size()),
+                admission.program.maxStackDepth,
+                admission.program.needsGradientStep ? 1u : 0u);
+            blockers.push_back(blocker);
+            instructions.insert(
+                instructions.end(),
+                admission.program.instructions.begin(),
+                admission.program.instructions.end());
+        }
+    }
+
+    const void* blockerData = blockers.empty()
+        ? static_cast<const void*>(&inertBlocker)
+        : static_cast<const void*>(blockers.data());
+    const size_t blockerBytes = blockers.empty()
+        ? sizeof(inertBlocker)
+        : blockers.size() * sizeof(SceneVisibilityVmBlocker);
+    auto blockerAlloc =
+        bufferPool().suballocateStorage(blockerData, blockerBytes);
+
+    const void* programData = instructions.empty()
+        ? static_cast<const void*>(&inertInstruction)
+        : static_cast<const void*>(instructions.data());
+    const size_t programBytes = instructions.empty()
+        ? sizeof(inertInstruction)
+        : instructions.size() * sizeof(sdfwgsl::FieldVmInstruction);
+    auto programAlloc =
+        bufferPool().suballocateStorage(programData, programBytes);
+
+    out.buffer = blockerAlloc.buffer;
+    out.offset = blockerAlloc.offset;
+    out.size = blockerAlloc.size;
+    out.count = static_cast<uint32_t>(blockers.size());
+    out.programBuffer = programAlloc.buffer;
+    out.programOffset = programAlloc.offset;
+    out.programSize = programAlloc.size;
+    out.instructionCount = static_cast<uint32_t>(instructions.size());
+    out.complete = out.buffer != nullptr && out.programBuffer != nullptr;
+    if (!out.complete) {
+        out.count = 0;
+        out.instructionCount = 0;
+        return out;
+    }
+
+    auto& visibilityStats = mutableFrameStats();
+    visibilityStats.sceneVisibilityImplicitBlockers =
+        std::max(visibilityStats.sceneVisibilityImplicitBlockers, out.count);
+    visibilityStats.sceneVisibilityImplicitBytesUploaded +=
+        blockerBytes + programBytes;
+    return out;
+}
+
+void WebGpuRenderer::ensureSceneVisibilityBindingForEarlyFlush() {
+    if (_sceneVisibilityFrame.buffer) {
+        return;
+    }
+
+    // Surface shading is about to execute before frame admission has closed.
+    // Later blockers cannot retroactively affect already-emitted fragments, so
+    // CompleteScene authority is irrecoverably Unknown for the rest of this
+    // frame. Still provide every structurally-required storage binding.
+    _frameHadEarlySurfaceFlush = true;
+
+    if (!_sceneVisibilityFrame.buffer) {
+        const SceneVisibilityTriangle inertTriangle{};
+        auto alloc = bufferPool().suballocateStorage(
+            &inertTriangle, sizeof(inertTriangle));
+        _sceneVisibilityFrame.buffer = alloc.buffer;
+        _sceneVisibilityFrame.offset = alloc.offset;
+        _sceneVisibilityFrame.size = alloc.size;
+        _sceneVisibilityFrame.triangleCount = 0;
+    }
+
+    _sceneVisibilityFrame.meshBlockersComplete = false;
+    _sceneVisibilityFrame.meshComplete = false;
+    if (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene) {
+        mutableFrameStats().sceneVisibilityUnknownFrames++;
+    }
+}
+
+
+bool WebGpuRenderer::refreshRadianceSourceLayout() {
+    if (radianceSources().empty()) {
+        _radianceSourcesLayoutRevision = radianceSourcesRevision();
+        _radianceSourcesLayoutStructure.clear();
+        _radianceSourcesLayoutOk = true;
+        _radianceSourcesLayoutError.clear();
+        return true;
+    }
+    if (_radianceSourcesLayoutRevision == radianceSourcesRevision()) {
+        return _radianceSourcesLayoutOk;
+    }
+
+    std::string structure =
+        "sources:" + std::to_string(radianceSources().size()) + "\n";
+    bool ok = true;
+    std::string error;
+
+    for (std::size_t i = 0; i < radianceSources().size(); ++i) {
+        const auto& source = radianceSources()[i];
+        const auto rho =
+            sdfwgsl::inspectScalarExpression(source.radianceExpr, true);
+        const auto chi =
+            sdfwgsl::inspectVectorExpression(source.chromaExpr, true);
+        const auto alpha =
+            sdfwgsl::inspectAngularExpression(source.angularExpr);
+
+        structure += "source[" + std::to_string(i) + "]\n";
+        structure += "rho:" + rho.structure + "\n";
+        structure += "chi:" + chi.structure + "\n";
+        structure += "alpha:" + alpha.structure +
+                     (alpha.readsOmega ? ":omega\n" : ":no-omega\n");
+
+        if (!rho.ok && ok) {
+            ok = false;
+            error = "source[" + std::to_string(i) +
+                    "] radiance: " + rho.error;
+        }
+        if (!chi.ok && ok) {
+            ok = false;
+            error = "source[" + std::to_string(i) +
+                    "] chroma: " + chi.error;
+        }
+        if (!alpha.ok && ok) {
+            ok = false;
+            error = "source[" + std::to_string(i) +
+                    "] angular: " + alpha.error;
+        }
+    }
+
+    const bool structureChanged =
+        _radianceSourcesLayoutRevision == 0xffffffffffffffffULL ||
+        structure != _radianceSourcesLayoutStructure ||
+        ok != _radianceSourcesLayoutOk;
+    if (structureChanged) ++_radianceSourcesStructureRevision;
+
+    _radianceSourcesLayoutRevision = radianceSourcesRevision();
+    _radianceSourcesLayoutStructure = std::move(structure);
+    _radianceSourcesLayoutOk = ok;
+    _radianceSourcesLayoutError = std::move(error);
+    return ok;
+}
+
 void WebGpuRenderer::reloadShaders() {
+    // Response memo entries borrow MeshPipeline addresses; drop them before the
+    // pipeline map that owns those addresses.
+    _meshResponsePrograms.clear();
+    for (auto& kv : _meshPipes) {
+        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
+    }
+    _meshPipes.clear();
+    _meshBatches.clear();
+
     // Keys are SdfPipeline addresses, so release these before destroying the
     // pipeline map whose node addresses identify the caches.
     releasePersistentSdfParams();
@@ -579,11 +1169,14 @@ void WebGpuRenderer::reloadShaders() {
     }
     _activeSdfPipelines.clear();
     _sdfBatches.clear();
+    _sdfVisibilityVmBatches.clear();
+    _sdfVisibilityOpaqueInstanceCounts.clear();
     _sdfParamsBatches.clear();
     _sdfParamPtrBatches.clear();
     _sdfParamBatchCounts.clear();
     _unmemoizedParamCopies.clear();
     _sdfBatchSignatures.clear();
+    _sdfBatchResponseBindingIdentities.clear();
     _sdfHeightGridBatches.clear();
     _sdfRangeNodeBatches.clear();
     _sdfPipes.clear();
@@ -613,6 +1206,85 @@ void WebGpuRenderer::reloadShaders() {
     _volumeDrawInstanceCounts.clear();
     _activeVolumePipelines.clear();
     _kernelRouted.reset(); // All borrowed VolumePipeline::routedProgram pointers are gone.
+}
+
+const WebGpuRenderer::MeshPipeline*
+WebGpuRenderer::meshPipeline(const std::string& wgsl) {
+    auto it = _meshPipes.find(wgsl);
+    if (it != _meshPipes.end()) {
+        mutableFrameStats().meshProgramCacheHits++;
+        return &it->second;
+    }
+
+    WGPUShaderSourceWGSL src = {};
+    src.chain.sType = WGPUSType_ShaderSourceWGSL;
+    src.code = wgpu::Device::str(wgsl.c_str());
+    WGPUShaderModuleDescriptor smDesc = {};
+    smDesc.nextInChain = &src.chain;
+    WGPUShaderModule shader = wgpuDeviceCreateShaderModule(_device, &smDesc);
+    if (!shader) return nullptr;
+
+    WGPUBindGroupLayout layouts[2] = { _bgl, _instanceBgl };
+    WGPUPipelineLayoutDescriptor pld = {};
+    pld.bindGroupLayoutCount = 2;
+    pld.bindGroupLayouts = layouts;
+    WGPUPipelineLayout layout = wgpuDeviceCreatePipelineLayout(_device, &pld);
+
+    WGPUVertexAttribute attrs[3] = {};
+    attrs[0].format = WGPUVertexFormat_Float32x3; attrs[0].offset = 0;  attrs[0].shaderLocation = 0;
+    attrs[1].format = WGPUVertexFormat_Float32x3; attrs[1].offset = 12; attrs[1].shaderLocation = 1;
+    attrs[2].format = WGPUVertexFormat_Float32x2; attrs[2].offset = 24; attrs[2].shaderLocation = 2;
+    WGPUVertexBufferLayout vbl = {};
+    vbl.stepMode = WGPUVertexStepMode_Vertex;
+    vbl.arrayStride = 32;
+    vbl.attributeCount = 3;
+    vbl.attributes = attrs;
+
+    WGPUBlendState blend = {};
+    blend.color.operation = WGPUBlendOperation_Add;
+    blend.color.srcFactor = WGPUBlendFactor_SrcAlpha;
+    blend.color.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+    blend.alpha.operation = WGPUBlendOperation_Add;
+    blend.alpha.srcFactor = WGPUBlendFactor_One;
+    blend.alpha.dstFactor = WGPUBlendFactor_OneMinusSrcAlpha;
+
+    WGPUColorTargetState colorTarget = {};
+    colorTarget.format = _colorFormat;
+    colorTarget.writeMask = WGPUColorWriteMask_All;
+    colorTarget.blend = &blend;
+    WGPUFragmentState frag = {};
+    frag.module = shader;
+    frag.entryPoint = wgpu::Device::str("fs_main");
+    frag.targetCount = 1;
+    frag.targets = &colorTarget;
+
+    WGPUDepthStencilState ds = {};
+    ds.format = WGPUTextureFormat_Depth24Plus;
+    ds.depthWriteEnabled = WGPUOptionalBool_True;
+    ds.depthCompare = WGPUCompareFunction_Less;
+
+    WGPURenderPipelineDescriptor pd = {};
+    pd.layout = layout;
+    pd.vertex.module = shader;
+    pd.vertex.entryPoint = wgpu::Device::str("vs_main");
+    pd.vertex.bufferCount = 1;
+    pd.vertex.buffers = &vbl;
+    pd.primitive.topology = WGPUPrimitiveTopology_TriangleList;
+    pd.primitive.cullMode = WGPUCullMode_None;
+    pd.depthStencil = &ds;
+    pd.multisample.count = 1;
+    pd.multisample.mask = 0xFFFFFFFFu;
+    pd.fragment = &frag;
+
+    MeshPipeline out;
+    out.pipe = wgpuDeviceCreateRenderPipeline(_device, &pd);
+    wgpuPipelineLayoutRelease(layout);
+    wgpuShaderModuleRelease(shader);
+    if (!out.pipe) return nullptr;
+
+    auto [inserted, _] = _meshPipes.emplace(wgsl, out);
+    mutableFrameStats().meshProgramCompiles++;
+    return &inserted->second;
 }
 
 // Build-on-first-use so only the combinations the app actually draws exist.
@@ -702,7 +1374,11 @@ void WebGpuRenderer::shutdown() {
     if (_imageLayout) { wgpuPipelineLayoutRelease(_imageLayout); _imageLayout = nullptr; }
     if (_imageShader) { wgpuShaderModuleRelease(_imageShader); _imageShader = nullptr; }
     if (_imageBgl)    { wgpuBindGroupLayoutRelease(_imageBgl); _imageBgl = nullptr; }
-    if (_meshPipeline) { wgpuRenderPipelineRelease(_meshPipeline); _meshPipeline = nullptr; }
+    _meshResponsePrograms.clear();
+    for (auto& kv : _meshPipes) {
+        if (kv.second.pipe) wgpuRenderPipelineRelease(kv.second.pipe);
+    }
+    _meshPipes.clear();
     if (_bgl) { wgpuBindGroupLayoutRelease(_bgl); _bgl = nullptr; }
     if (_instanceBgl) { wgpuBindGroupLayoutRelease(_instanceBgl); _instanceBgl = nullptr; }
     _meshBatches.clear();
@@ -1048,14 +1724,16 @@ void WebGpuRenderer::beginFrameOffscreen(WGPUTextureView target, uint32_t width,
     // endFrame() (an early return, a crash-recovery path) would leave stale
     // entries — clear rather than carry them into a frame with a new _pass.
     _meshBatches.clear();
+    _sceneVisibilityFrame = {};
+    _frameHasUnmaterializedOpaqueGeometry = false;
+    _frameHadEarlySurfaceFlush = false;
 }
 
 void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& mat) {
     if (!_pass || mesh.tris.empty()) return;
 
-    // setWireframe: GL had glPolygonMode to draw the same triangles as edges.
-    // WebGPU has no such state, and reinterpreting a triangle list as a line list
-    // would connect the wrong vertices — so the edges are built explicitly.
+    // setWireframe is intentionally unlit overlay machinery, not a surface
+    // illumination path.
     if (_wireframe) {
         std::vector<glm::vec3> edges;
         edges.reserve(mesh.tris.size() * 2);
@@ -1073,14 +1751,163 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
                  glm::vec4(mat.baseColor, mat.opacity));
         return;
     }
+
+    // Compile/cache receiver STRUCTURE separately from values. Bind values are
+    // typed here only to distinguish scalar and vec3 layouts; the compiler
+    // remains ignorant of material nouns such as diffuse or shininess.
+    std::string bindingTypes;
+    for (const auto& [path, value] : mat.responseBindings) {
+        bindingTypes += std::to_string(path.size()) + ":" + path + "=";
+        double scalar = 0.0;
+        if (propertyValueToNumber(value, scalar)) {
+            bindingTypes += "scalar;";
+        } else if (std::holds_alternative<glm::vec3>(value)) {
+            bindingTypes += "vec3;";
+        } else {
+            // compileSurfaceResponseModule will issue the named refusal. Keep a
+            // stable type token so an unsupported value can never alias a valid
+            // receiver program.
+            bindingTypes += "unsupported;";
+        }
+    }
+
+    const bool hasSourceSet = !radianceSources().empty();
+    if (hasSourceSet && !refreshRadianceSourceLayout()) {
+        mutableFrameStats().meshProgramRefusals++;
+        mutableFrameStats().meshLastProgramRefusal =
+            _radianceSourcesLayoutError;
+        std::fprintf(stderr,
+                     "[WebGpuRenderer] mesh source-set response refused: %s\n",
+                     _radianceSourcesLayoutError.c_str());
+        return;
+    }
+
+    MeshResponseKey responseKey;
+    responseKey.direct = mat.responseExpr;
+    responseKey.directRevision = mat.responseRevision;
+    responseKey.environment = mat.environmentResponseExpr;
+    responseKey.environmentRevision = mat.environmentResponseRevision;
+    responseKey.sourceSet = hasSourceSet;
+    responseKey.sourceSetStructureRevision =
+        hasSourceSet ? _radianceSourcesStructureRevision : 0;
+    responseKey.bindingTypes = std::move(bindingTypes);
+
+    auto memoIt = _meshResponsePrograms.find(responseKey);
+    if (memoIt == _meshResponsePrograms.end()) {
+        MeshResponseMemo memo;
+        memo.program = sdfwgsl::compileSurfaceResponseModule(
+            mat.responseExpr.get(), mat.environmentResponseExpr.get(),
+            &mat.responseBindings);
+        if (!memo.program.ok) {
+            mutableFrameStats().meshProgramRefusals++;
+            mutableFrameStats().meshLastProgramRefusal = memo.program.error;
+            std::fprintf(stderr,
+                         "[WebGpuRenderer] mesh Material response refused: %s\n",
+                         memo.program.error.c_str());
+            return;
+        }
+        if (hasSourceSet) {
+            const std::string sourceOffset =
+                std::to_string(memo.program.params.size()) + "u";
+            memo.sourceProgram = sdfwgsl::compileRadianceSourceModule(
+                radianceSources(), sourceOffset);
+            if (!memo.sourceProgram.ok) {
+                mutableFrameStats().meshProgramRefusals++;
+                mutableFrameStats().meshLastProgramRefusal =
+                    memo.sourceProgram.error;
+                std::fprintf(
+                    stderr,
+                    "[WebGpuRenderer] mesh authored source-set refused: %s\n",
+                    memo.sourceProgram.error.c_str());
+                return;
+            }
+        }
+
+        const std::string wgsl =
+            meshWgsl(memo.program,
+                     hasSourceSet ? &memo.sourceProgram : nullptr);
+        memo.pipeline = meshPipeline(wgsl);
+        if (!memo.pipeline || !memo.pipeline->pipe) {
+            mutableFrameStats().meshProgramRefusals++;
+            mutableFrameStats().meshLastProgramRefusal =
+                "mesh Material response pipeline failed";
+            std::fprintf(stderr,
+                         "[WebGpuRenderer] mesh Material response pipeline failed\n");
+            return;
+        }
+        std::vector<float> initialParams = memo.program.params;
+        if (hasSourceSet) {
+            initialParams.insert(
+                initialParams.end(),
+                memo.sourceProgram.params.begin(),
+                memo.sourceProgram.params.end());
+        }
+        const std::string valueIdentity =
+            mat.responseBindingIdentity +
+            (hasSourceSet
+                 ? "#sourceSet:" + std::to_string(radianceSourcesRevision())
+                 : "#sourceSet:none");
+        memo.params.emplace(valueIdentity, std::move(initialParams));
+        memoIt = _meshResponsePrograms.emplace(
+            std::move(responseKey), std::move(memo)).first;
+    }
+
+    MeshResponseMemo& responseMemo = memoIt->second;
+    const std::string valueIdentity =
+        mat.responseBindingIdentity +
+        (hasSourceSet
+             ? "#sourceSet:" + std::to_string(radianceSourcesRevision())
+             : "#sourceSet:none");
+    auto paramsIt = responseMemo.params.find(valueIdentity);
+    if (paramsIt == responseMemo.params.end()) {
+        auto direct = sdfwgsl::collectResponseParams(
+            mat.responseExpr.get(), &mat.responseBindings);
+        auto environment = sdfwgsl::collectEnvironmentResponseParams(
+            mat.environmentResponseExpr.get(), &mat.responseBindings);
+        if (!direct.ok || !environment.ok) {
+            const std::string reason =
+                !direct.ok ? direct.error : environment.error;
+            mutableFrameStats().meshProgramRefusals++;
+            mutableFrameStats().meshLastProgramRefusal = reason;
+            std::fprintf(stderr,
+                         "[WebGpuRenderer] mesh Material response value refresh refused: %s\n",
+                         reason.c_str());
+            return;
+        }
+
+        sdfwgsl::ParameterBlock sourceParams;
+        if (hasSourceSet) {
+            sourceParams =
+                sdfwgsl::collectRadianceSourceParams(radianceSources());
+            if (!sourceParams.ok) {
+                mutableFrameStats().meshProgramRefusals++;
+                mutableFrameStats().meshLastProgramRefusal =
+                    sourceParams.error;
+                std::fprintf(
+                    stderr,
+                    "[WebGpuRenderer] mesh source param refresh refused: %s\n",
+                    sourceParams.error.c_str());
+                return;
+            }
+        }
+
+        std::vector<float> params;
+        params.reserve(direct.values.size() + environment.values.size() +
+                       sourceParams.values.size());
+        params.insert(params.end(), direct.values.begin(), direct.values.end());
+        params.insert(params.end(), environment.values.begin(), environment.values.end());
+        if (hasSourceSet) {
+            params.insert(params.end(),
+                          sourceParams.values.begin(),
+                          sourceParams.values.end());
+        }
+        paramsIt = responseMemo.params.emplace(
+            valueIdentity, std::move(params)).first;
+    }
+
     // Albedo is resolved NOW, not deferred: a queued batch cannot hold
-    // RenderMaterial::albedoPixels (documented "valid only for the duration
-    // of the draw call"), and resolving to a stable WGPUTextureView also
-    // doubles as the batching key's material identity — see MeshBatchKey.
+    // RenderMaterial::albedoPixels beyond this draw call.
     WGPUTextureView albedoView = _whiteView;
-    // Prefer a texture this backend already owns: FaceTexture re-uploads only when
-    // the paint changes, so a static surface costs nothing per frame. The
-    // albedoPixels path below is the fallback for callers that hold no handle.
     auto owned = _textures.find(mat.textureId);
     if (mat.textureId != 0 && owned != _textures.end()) {
         albedoView = owned->second.view;
@@ -1099,25 +1926,32 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
         WGPUTexelCopyBufferLayout alay = {};
         alay.bytesPerRow = w * 4; alay.rowsPerImage = h;
         WGPUExtent3D asize = { w, h, 1 };
-        wgpuQueueWriteTexture(_queue, &adst, mat.albedoPixels, size_t(w) * h * 4, &alay, &asize);
+        wgpuQueueWriteTexture(_queue, &adst, mat.albedoPixels,
+                              size_t(w) * h * 4, &alay, &asize);
         albedoView = wgpuTextureCreateView(atex, nullptr);
         _frameTextures.push_back(atex);
         _frameTextureViews.push_back(albedoView);
     }
 
     MeshBatchKey key;
-    key.mesh       = &mesh;
+    key.mesh = &mesh;
+    key.pipeline = responseMemo.pipeline;
     key.albedoView = albedoView;
-    key.shading    = glm::vec4(mat.ambient, mat.diffuse, mat.specular, mat.shininess);
+    key.responseParams = paramsIt->second;
+    key.sourceSet = hasSourceSet;
+    if (!key.responseParams.empty()) {
+        key.responseParamIdentity.assign(
+            reinterpret_cast<const char*>(key.responseParams.data()),
+            key.responseParams.size() * sizeof(float));
+    }
 
     const auto& authoredTransforms = getModelTransforms();
     if (!authoredTransforms) return;
 
     InstanceData inst;
-    inst.model     = _model;
+    inst.model = _model;
     inst.normalMat = authoredTransforms->normal;
     inst.baseColor = glm::vec4(mat.baseColor, mat.opacity);
-
     std::vector<InstanceData>* targetVec = nullptr;
     if (_lastMeshBatchKey && key == *_lastMeshBatchKey && _lastMeshBatchVector) {
         targetVec = _lastMeshBatchVector;
@@ -1128,10 +1962,8 @@ void WebGpuRenderer::drawMesh(const geom::TessMesh& mesh, const RenderMaterial& 
     }
     targetVec->push_back(inst);
 
-    // Every queued instance really will be drawn at flush — count its
-    // triangles now. drawCalls/pipelineSwitches are credited once per BATCH
-    // in flushMeshDraws(), which is the actual number of GPU draw calls.
-    mutableFrameStats().trianglesDrawn += static_cast<uint32_t>(mesh.tris.size() / 3);
+    mutableFrameStats().trianglesDrawn +=
+        static_cast<uint32_t>(mesh.tris.size() / 3);
 }
 
 void WebGpuRenderer::flushMeshDraws() {
@@ -1146,168 +1978,181 @@ void WebGpuRenderer::flushMeshDraws() {
         _lastMeshBatchVector = nullptr;
         return;
     }
+    if (!_sceneVisibilityFrame.buffer) ensureSceneVisibilityBindingForEarlyFlush();
+
+    RadianceSourceBufferView sourceView = prepareRadianceSourceBuffer();
+    const SceneVisibilityBufferView meshFieldVisibility =
+        prepareFieldVmVisibility(nullptr);
+    if (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene) {
+        if (_sceneVisibilityFrame.meshComplete && meshFieldVisibility.complete)
+            mutableFrameStats().sceneVisibilityMeshKnownFrames++;
+        else if (_sceneVisibilityFrame.meshComplete && !meshFieldVisibility.complete)
+            mutableFrameStats().sceneVisibilityUnknownFrames++;
+    }
+    if (!sourceView.buffer) {
+        const RadianceSourceGpuData inertSource{};
+        auto inert = bufferPool().suballocateStorage(&inertSource, sizeof(inertSource));
+        sourceView = {inert.buffer, inert.offset, inert.size};
+    }
 
     constexpr size_t pageBytes = 256 * 1024;
-    constexpr size_t bindingAlignment = 256; // Same alignment as GpuBufferPool.
-    const auto aligned = [](size_t bytes) {
-        return (bytes + bindingAlignment - 1) / bindingAlignment * bindingAlignment;
-    };
-
     _meshRecords.clear();
     _meshPageInstances.clear();
-    _meshPageUniformKeys.clear();
-    _meshPageUniformOffsets.clear();
-    _meshUniforms.clear();
-    _meshPageGroup0.clear();
+
+    const bool meshCompleteSceneKnown =
+        radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
+        _sceneVisibilityFrame.meshComplete && meshFieldVisibility.complete;
+    const bool meshVisibilityUnknown =
+        radianceVisibilityMode() == RadianceVisibilityMode::LocalReceiverGeometry ||
+        (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
+         !meshCompleteSceneKnown);
+
+    MeshUniforms commonUniform{};
+    commonUniform.viewProj = _viewProj;
+    commonUniform.lightPos = glm::vec4(lightPos(), 1.0f);
+    commonUniform.eyePos = glm::vec4(_eyePos, 1.0f);
+    commonUniform.lightControl = glm::vec4(
+        lightingEnabled() ? 1.0f : 0.0f,
+        static_cast<float>(static_cast<uint32_t>(radianceVisibilityMode())),
+        meshCompleteSceneKnown ? 1.0f : 0.0f,
+        static_cast<float>(_sceneVisibilityFrame.triangleCount));
+    commonUniform.sceneVisibilityControl = glm::vec4(
+        static_cast<float>(meshFieldVisibility.count),
+        static_cast<float>(meshFieldVisibility.instructionCount), 0.0f, 0.0f);
 
     const auto flushPage = [&]() {
         if (_meshRecords.empty()) return;
-        const auto uniformPage = bufferPool().suballocateUniform(_meshUniforms.data(), _meshUniforms.size());
         const size_t instBytes = _meshPageInstances.size() * sizeof(InstanceData);
-        const auto instancePage = bufferPool().suballocateStorage(_meshPageInstances.data(), instBytes);
+        auto instancePage = bufferPool().suballocateStorage(
+            _meshPageInstances.data(), instBytes);
+        auto uniformAlloc =
+            bufferPool().suballocateUniform(&commonUniform, sizeof(commonUniform));
 
-        // Group 1: one shared bind group covering all contiguous instances in this page
-        WGPUBindGroupEntry ibge = {};
-        ibge.binding = 0;
-        ibge.buffer = instancePage.buffer;
-        ibge.offset = instancePage.offset;
-        ibge.size = instBytes;
-        WGPUBindGroupDescriptor ibgDesc = {};
-        ibgDesc.layout = _instanceBgl;
-        ibgDesc.entryCount = 1;
-        ibgDesc.entries = &ibge;
-        WGPUBindGroup pageInstBindGroup = wgpuDeviceCreateBindGroup(_device, &ibgDesc);
+        WGPUBindGroupEntry ibge{};
+        ibge.binding=0; ibge.buffer=instancePage.buffer;
+        ibge.offset=instancePage.offset; ibge.size=instBytes;
+        WGPUBindGroupDescriptor ibgDesc{};
+        ibgDesc.layout=_instanceBgl; ibgDesc.entryCount=1; ibgDesc.entries=&ibge;
+        WGPUBindGroup pageInstBindGroup =
+            wgpuDeviceCreateBindGroup(_device, &ibgDesc);
         _frameBindGroups.push_back(pageInstBindGroup);
-
-        // Group 0: one bind group per unique (albedoView, shading) in this page
-        _meshPageGroup0.clear();
-        _meshPageGroup0.reserve(_meshPageUniformKeys.size());
-        for (size_t i = 0; i < _meshPageUniformKeys.size(); ++i) {
-            WGPUBindGroupEntry bge[3] = {};
-            bge[0].binding = 0;
-            bge[0].buffer = uniformPage.buffer;
-            bge[0].offset = uniformPage.offset + _meshPageUniformOffsets[i];
-            bge[0].size = sizeof(MeshUniforms);
-            bge[1].binding = 1;
-            bge[1].textureView = _meshPageUniformKeys[i].albedoView;
-            bge[2].binding = 2;
-            bge[2].sampler = _sampler;
-            WGPUBindGroupDescriptor bgDesc = {};
-            bgDesc.layout = _bgl;
-            bgDesc.entryCount = 3;
-            bgDesc.entries = bge;
-            WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgDesc);
-            _frameBindGroups.push_back(bg);
-            _meshPageGroup0.push_back(bg);
-        }
-
-        bindPipeline(_meshPipeline);
-        wgpuRenderPassEncoderSetBindGroup(_pass, 1, pageInstBindGroup, 0, nullptr);
-        WGPUBindGroup currentGroup0 = nullptr;
+        wgpuRenderPassEncoderSetBindGroup(_pass,1,pageInstBindGroup,0,nullptr);
 
         for (const auto& record : _meshRecords) {
-            const MeshBatchKey& key = *record.key;
-            const auto& instances = *record.instances;
-            const geom::TessMesh& mesh = *key.mesh;
+            const MeshBatchKey& key=*record.key;
+            const auto& instances=*record.instances;
+            if(!key.mesh||!key.pipeline||!key.pipeline->pipe||
+               key.mesh->tris.empty()||instances.empty()) continue;
 
-            const size_t vbytes = mesh.tris.size() * sizeof(geom::TessVertex);
-            WGPUBuffer vbuf = _meshCache.getOrUpload(mesh);
-            uint64_t voffset = 0;
-            if (!vbuf) {
-                auto vAlloc = bufferPool().suballocateVertex(mesh.tris.data(), vbytes);
-                vbuf = vAlloc.buffer;
-                voffset = vAlloc.offset;
+            if(meshVisibilityUnknown)
+                mutableFrameStats().meshVisibilityUnknownDirectSkips++;
+            if(key.sourceSet&&(!sourceView.buffer||sourceView.size==0)){
+                mutableFrameStats().meshProgramRefusals++;
+                mutableFrameStats().meshLastProgramRefusal=
+                    "admitted mesh source set has no GPU source buffer";
+                continue;
+            }
+            if(!_sceneVisibilityFrame.buffer||_sceneVisibilityFrame.size==0){
+                mutableFrameStats().meshProgramRefusals++;
+                mutableFrameStats().meshLastProgramRefusal=
+                    "scene visibility triangle binding unavailable";
+                continue;
+            }
+            if(!meshFieldVisibility.buffer||meshFieldVisibility.size==0){
+                mutableFrameStats().meshProgramRefusals++;
+                mutableFrameStats().meshLastProgramRefusal=
+                    "scene visibility field VM descriptor binding unavailable";
+                continue;
+            }
+            if(!meshFieldVisibility.programBuffer||meshFieldVisibility.programSize==0){
+                mutableFrameStats().meshProgramRefusals++;
+                mutableFrameStats().meshLastProgramRefusal=
+                    "scene visibility field VM program binding unavailable";
+                continue;
             }
 
-            WGPUBindGroup bg0 = _meshPageGroup0[record.uniformSlotIndex];
-            if (bg0 != currentGroup0) {
-                wgpuRenderPassEncoderSetBindGroup(_pass, 0, bg0, 0, nullptr);
-                currentGroup0 = bg0;
-            }
+            bindPipeline(key.pipeline->pipe);
+            const geom::TessMesh& mesh=*key.mesh;
+            const size_t vbytes=mesh.tris.size()*sizeof(geom::TessVertex);
+            WGPUBuffer vbuf=_meshCache.getOrUpload(mesh);
+            uint64_t voffset=0;
+            if(!vbuf){auto a=bufferPool().suballocateVertex(mesh.tris.data(),vbytes);vbuf=a.buffer;voffset=a.offset;}
 
-            wgpuRenderPassEncoderSetVertexBuffer(_pass, 0, vbuf, voffset, vbytes);
-            wgpuRenderPassEncoderDraw(_pass, static_cast<uint32_t>(mesh.tris.size()),
-                                      static_cast<uint32_t>(instances.size()), 0, record.firstInstance);
+            const float inert=0.0f;
+            const void* paramData=key.responseParams.empty()?static_cast<const void*>(&inert):static_cast<const void*>(key.responseParams.data());
+            const size_t paramBytes=key.responseParams.empty()?sizeof(float):key.responseParams.size()*sizeof(float);
+            auto paramAlloc=bufferPool().suballocateStorage(paramData,paramBytes);
+            mutableFrameStats().meshParameterBytesUploaded+=paramBytes;
 
+            WGPUBindGroupEntry bge[8]{};
+            bge[0].binding=0;bge[0].buffer=uniformAlloc.buffer;bge[0].offset=uniformAlloc.offset;bge[0].size=uniformAlloc.size;
+            bge[1].binding=1;bge[1].textureView=key.albedoView;
+            bge[2].binding=2;bge[2].sampler=_sampler;
+            bge[3].binding=3;bge[3].buffer=paramAlloc.buffer;bge[3].offset=paramAlloc.offset;bge[3].size=paramAlloc.size;
+            bge[4].binding=4;bge[4].buffer=sourceView.buffer;bge[4].offset=sourceView.offset;bge[4].size=sourceView.size;
+            bge[5].binding=5;bge[5].buffer=_sceneVisibilityFrame.buffer;bge[5].offset=_sceneVisibilityFrame.offset;bge[5].size=_sceneVisibilityFrame.size;
+            bge[6].binding=6;bge[6].buffer=meshFieldVisibility.buffer;bge[6].offset=meshFieldVisibility.offset;bge[6].size=meshFieldVisibility.size;
+            bge[7].binding=7;bge[7].buffer=meshFieldVisibility.programBuffer;bge[7].offset=meshFieldVisibility.programOffset;bge[7].size=meshFieldVisibility.programSize;
+            WGPUBindGroupDescriptor bgDesc{};
+            bgDesc.layout=_bgl;bgDesc.entryCount=8;bgDesc.entries=bge;
+            WGPUBindGroup bg=wgpuDeviceCreateBindGroup(_device,&bgDesc);
+            _frameBindGroups.push_back(bg);
+
+            wgpuRenderPassEncoderSetBindGroup(_pass,0,bg,0,nullptr);
+            wgpuRenderPassEncoderSetVertexBuffer(_pass,0,vbuf,voffset,vbytes);
+            wgpuRenderPassEncoderDraw(_pass,
+                static_cast<uint32_t>(mesh.tris.size()),
+                static_cast<uint32_t>(instances.size()),0,record.firstInstance);
             mutableFrameStats().drawCalls++;
             mutableFrameStats().meshDrawCalls++;
         }
         _meshRecords.clear();
-        _meshUniforms.clear();
         _meshPageInstances.clear();
-        _meshPageUniformKeys.clear();
-        _meshPageUniformOffsets.clear();
-        _meshPageGroup0.clear();
     };
 
-    for (const auto& [key, instances] : _meshBatches) {
-        if (!key.mesh || key.mesh->tris.empty() || instances.empty()) continue;
-
-        MeshUniformKey uKey{key.albedoView, key.shading};
-        auto it = std::find(_meshPageUniformKeys.begin(), _meshPageUniformKeys.end(), uKey);
-        const bool needNewUniform = (it == _meshPageUniformKeys.end());
-        const size_t addUniformBytes = needNewUniform ? sizeof(MeshUniforms) : 0;
-
-        if (!_meshRecords.empty() && (aligned(_meshUniforms.size()) + addUniformBytes > pageBytes ||
-                                 (_meshPageInstances.size() + instances.size()) * sizeof(InstanceData) > pageBytes)) {
-            flushPage();
-            it = _meshPageUniformKeys.end();
-        }
-
-        size_t uniformSlotIndex = 0;
-        if (it != _meshPageUniformKeys.end()) {
-            uniformSlotIndex = static_cast<size_t>(std::distance(_meshPageUniformKeys.begin(), it));
-        } else {
-            const size_t uniformOffset = aligned(_meshUniforms.size());
-            MeshUniforms uniform;
-            uniform.viewProj = _viewProj;
-            uniform.lightPos = glm::vec4(lightPos(), 1.0f);
-            uniform.params = key.shading;
-            uniform.eyePos = glm::vec4(_eyePos, 1.0f);
-            _meshUniforms.resize(uniformOffset + sizeof(uniform));
-            std::memcpy(_meshUniforms.data() + uniformOffset, &uniform, sizeof(uniform));
-
-            uniformSlotIndex = _meshPageUniformKeys.size();
-            _meshPageUniformKeys.push_back(uKey);
-            _meshPageUniformOffsets.push_back(uniformOffset);
-        }
-
-        const uint32_t firstInstance = static_cast<uint32_t>(_meshPageInstances.size());
-        _meshPageInstances.insert(_meshPageInstances.end(), instances.begin(), instances.end());
-        _meshRecords.push_back({&key, &instances, firstInstance, uniformSlotIndex});
+    for(const auto& [key,instances]:_meshBatches){
+        if(!key.mesh||!key.pipeline||!key.pipeline->pipe||
+           key.mesh->tris.empty()||instances.empty()) continue;
+        const size_t addBytes=instances.size()*sizeof(InstanceData);
+        const size_t curBytes=_meshPageInstances.size()*sizeof(InstanceData);
+        if(!_meshRecords.empty()&&curBytes+addBytes>pageBytes) flushPage();
+        const uint32_t firstInstance=static_cast<uint32_t>(_meshPageInstances.size());
+        _meshPageInstances.insert(_meshPageInstances.end(),instances.begin(),instances.end());
+        _meshRecords.push_back({&key,&instances,firstInstance});
     }
     flushPage();
     _meshBatches.clear();
     _lastMeshBatchKey.reset();
-    _lastMeshBatchVector = nullptr;
+    _lastMeshBatchVector=nullptr;
 }
 
 namespace {
+
 // Uniform block for the raymarcher; must match struct RU in the generated WGSL.
 struct SdfGlobalUniforms {
     glm::mat4 viewProj;
     glm::mat4 invViewProj;
     glm::vec4 lightPos;
     glm::vec4 eyePos;
-    glm::vec4 lightAmbient;
-    glm::vec4 lightDiffuse;
-    glm::vec4 lightSpecular;
-    glm::vec4 lightControl; // x = lighting enabled, y = derived visibility enabled
-    glm::vec4 radianceSourceCoefficients; // intensity, ambient, diffuse, specular
+    // Legacy compatibility only: xyz is the directionless environment envelope
+    // already normalized by the historical 0.2 reference; w is the authored
+    // chroma environment scale (intensity * legacyAmbient / 0.2).
+    glm::vec4 legacyEnvironment;
+    // xyz = honest constant direct incident radiance (color * intensity);
+    // w = source intensity used when authored chi replaces constant color.
+    glm::vec4 directIncidentRadiance;
+    // xyz = exact historical no-chi lobe envelope; w = authored-chi scale.
+    // These exist only so material.default can reproduce arbitrary old
+    // Renderer::setLight diffuse/specular RGB without making them source ontology.
+    glm::vec4 legacyDiffuseIncident;
+    glm::vec4 legacySpecularIncident;
+    glm::vec4 lightControl; // x = lighting enabled, y = RadianceVisibilityMode (0/1/2)
+    glm::vec4 sceneVisibilityControl; // x = foreign VM blocker count, y = VM instruction count
     glm::vec4 limits;       // x = far-plane distance, y = screen width, z = screen height, w = spaceDistortion
     glm::vec4 radianceTime; // x/y = admitted radiance-source coordinate/delta, z/w reserved
     glm::vec4 volumeTime;   // x/y = admitted participating-medium coordinate/delta
 };
 
-struct RadianceSourceGpuData {
-    glm::vec4 position;
-    glm::vec4 ambient;
-    glm::vec4 diffuse;
-    glm::vec4 specular;
-    glm::vec4 coefficients;
-    glm::vec4 time;
-    glm::vec4 control;
-};
 
 struct VolumeGlobalUniforms {
     glm::mat4 viewProj;
@@ -1365,7 +2210,7 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
 
     const bool usesRadianceSources =
         wgsl.find("@group(0) @binding(2) var<storage, read> RS") != std::string::npos;
-    WGPUBindGroupLayoutEntry be[3] = {};
+    WGPUBindGroupLayoutEntry be[6] = {};
     be[0].binding = 0;
     be[0].visibility = WGPUShaderStage_Vertex | WGPUShaderStage_Fragment;
     be[0].buffer.type = WGPUBufferBindingType_Uniform;
@@ -1373,13 +2218,26 @@ const WebGpuRenderer::SdfPipeline* WebGpuRenderer::sdfPipeline(const std::string
     be[1].binding = 1;
     be[1].visibility = WGPUShaderStage_Fragment;
     be[1].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    uint32_t sceneEntry = 2;
     if (usesRadianceSources) {
         be[2].binding = 2;
         be[2].visibility = WGPUShaderStage_Fragment;
         be[2].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+        sceneEntry = 3;
     }
+    be[sceneEntry].binding = 3;
+    be[sceneEntry].visibility = WGPUShaderStage_Fragment;
+    be[sceneEntry].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    const uint32_t implicitEntry = sceneEntry + 1;
+    be[implicitEntry].binding = 4;
+    be[implicitEntry].visibility = WGPUShaderStage_Fragment;
+    be[implicitEntry].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
+    const uint32_t vmProgramEntry = implicitEntry + 1;
+    be[vmProgramEntry].binding = 5;
+    be[vmProgramEntry].visibility = WGPUShaderStage_Fragment;
+    be[vmProgramEntry].buffer.type = WGPUBufferBindingType_ReadOnlyStorage;
     WGPUBindGroupLayoutDescriptor bgld = {};
-    bgld.entryCount = usesRadianceSources ? 3 : 2;
+    bgld.entryCount = usesRadianceSources ? 6 : 5;
     bgld.entries = be;
 
     SdfPipeline out;
@@ -1663,8 +2521,8 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // that rule for a COLLECTION: source membership/count and emitted AST shape
     // are shader structure; source positions, colors, enablement, temporal
     // coordinates and numeric AST coefficients are values.
-    const bool multiSource = radianceSources().size() > 1;
-    const auto* sourceSet = multiSource ? &radianceSources() : nullptr;
+    const bool hasSourceSet = !radianceSources().empty();
+    const auto* sourceSet = hasSourceSet ? &radianceSources() : nullptr;
 
     // Explicit drawImplicit(..., FieldNode*) is the bounded/native V0 witness
     // seam. Production Zone media are projected separately and are NOT consumed
@@ -1772,70 +2630,37 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             static_cast<uint64_t>(std::hash<std::string>{}(emissionJson));
     }
 
-    MemoizedProgram* memo = (memoId != 0) ? &_programCache[memoId] : nullptr;
+    MemoizedProgram* memo =
+        (memoId != 0) ? &_programCache[memoId] : nullptr;
 
-    // Rung 9 & 14: receiver-owned response has independent structure/value identity.
-    // Memoize the layout inspection inside MemoizedProgram when responseExpr and responseLayoutRevision are unchanged.
     sdfwgsl::ResponseExpressionLayout responseLayout;
     if (memo && memo->responseLayoutValid &&
         memo->responseExprPtr == mat.responseExpr.get() &&
-        memo->responseLayoutRevision == mat.responseRevision) {
+        memo->responseLayoutRevision == mat.responseRevision &&
+        memo->responseLayoutBindingIdentity == mat.responseBindingIdentity) {
         responseLayout = memo->cachedResponseLayout;
     } else {
-        responseLayout = sdfwgsl::inspectResponseExpression(mat.responseExpr.get());
+        responseLayout = sdfwgsl::inspectResponseExpression(
+            mat.responseExpr.get(), &mat.responseBindings);
         if (memo) {
             memo->cachedResponseLayout = responseLayout;
             memo->responseExprPtr = mat.responseExpr.get();
             memo->responseLayoutRevision = mat.responseRevision;
+            memo->responseLayoutBindingIdentity = mat.responseBindingIdentity;
             memo->responseLayoutValid = true;
         }
     }
     const std::string responseStructure = responseLayout.structure;
+    const auto environmentResponseLayout =
+        sdfwgsl::inspectEnvironmentResponseExpression(
+            mat.environmentResponseExpr.get(), &mat.responseBindings);
+    const std::string environmentResponseStructure =
+        environmentResponseLayout.structure;
 
-    if (multiSource) {
-        if (_radianceSourcesLayoutRevision != radianceSourcesRevision()) {
-            std::string structure = "sources:" + std::to_string(radianceSources().size()) + "\n";
-            bool ok = true;
-            std::string error;
-
-            for (std::size_t i = 0; i < radianceSources().size(); ++i) {
-                const auto& source = radianceSources()[i];
-                const auto rho = sdfwgsl::inspectScalarExpression(source.radianceExpr, true);
-                const auto chi = sdfwgsl::inspectVectorExpression(source.chromaExpr, true);
-                const auto alpha = sdfwgsl::inspectAngularExpression(source.angularExpr);
-
-                structure += "source[" + std::to_string(i) + "]\n";
-                structure += "rho:" + rho.structure + "\n";
-                structure += "chi:" + chi.structure + "\n";
-                structure += "alpha:" + alpha.structure +
-                             (alpha.readsOmega ? ":omega\n" : ":no-omega\n");
-
-                if (!rho.ok && ok) {
-                    ok = false;
-                    error = "source[" + std::to_string(i) + "] radiance: " + rho.error;
-                }
-                if (!chi.ok && ok) {
-                    ok = false;
-                    error = "source[" + std::to_string(i) + "] chroma: " + chi.error;
-                }
-                if (!alpha.ok && ok) {
-                    ok = false;
-                    error = "source[" + std::to_string(i) + "] angular: " + alpha.error;
-                }
-            }
-
-            const bool structureChanged =
-                _radianceSourcesLayoutRevision == 0xffffffffffffffffULL ||
-                structure != _radianceSourcesLayoutStructure ||
-                ok != _radianceSourcesLayoutOk;
-            if (structureChanged) ++_radianceSourcesStructureRevision;
-            _radianceSourcesLayoutRevision = radianceSourcesRevision();
-            _radianceSourcesLayoutStructure = std::move(structure);
-            _radianceSourcesLayoutOk = ok;
-            _radianceSourcesLayoutError = std::move(error);
-        }
+    if (hasSourceSet) {
+        (void)refreshRadianceSourceLayout();
     } else {
-        // Exact Rungs 3-6 layout inspection.
+        // Exact zero-set compatibility layout inspection.
         if (_radianceLayoutRevision != radianceRevision() ||
             _radianceLayoutExprPtr != radianceExpr()) {
             sdfwgsl::ScalarExpressionLayout nextLayout =
@@ -1919,8 +2744,13 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         recordProgramRefusal("material response: " + responseLayout.error);
         return;
     }
+    if (!environmentResponseLayout.ok) {
+        recordProgramRefusal(
+            "material environment response: " + environmentResponseLayout.error);
+        return;
+    }
 
-    if (multiSource) {
+    if (hasSourceSet) {
         if (!_radianceSourcesLayoutOk) {
             recordProgramRefusal(_radianceSourcesLayoutError);
             return;
@@ -1940,10 +2770,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         }
     }
 
-    if (memoId != 0 && memo) {
+    if (memo) {
         const bool sourceStructureMatches =
-            memo->multiSource == multiSource &&
-            (multiSource
+            memo->sourceSet == hasSourceSet &&
+            (hasSourceSet
                 ? memo->sourceSetStructureRevision == _radianceSourcesStructureRevision
                 : (memo->radianceStructureRevision == _radianceStructureRevision &&
                    memo->chromaStructureRevision == _chromaStructureRevision &&
@@ -1969,6 +2799,12 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->responseReadsNormal == responseLayout.readsNormal &&
             memo->responseReadsWi == responseLayout.readsWi &&
             memo->responseReadsWo == responseLayout.readsWo;
+        const bool environmentResponseStructureMatches =
+            memo->environmentResponseStructure == environmentResponseStructure &&
+            memo->environmentResponseReadsNormal ==
+                environmentResponseLayout.readsNormal &&
+            memo->environmentResponseReadsWo ==
+                environmentResponseLayout.readsWo;
 
         if (memo->revision == memoRevision &&
             memo->colorRevision == mat.colorRevision &&
@@ -1980,10 +2816,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             phaseStructureMatches &&
             emissionStructureMatches &&
             responseStructureMatches &&
+            environmentResponseStructureMatches &&
             memo->colorExprPtr == mat.colorExpr.get()) {
             needsCompile = false;
 
-            const bool sourceValuesChanged = multiSource
+            const bool sourceValuesChanged = hasSourceSet
                 ? memo->sourceSetRevision != radianceSourcesRevision()
                 : (memo->radianceRevision != radianceRevision() ||
                    memo->chromaRevision != radianceChromaRevision() ||
@@ -2002,7 +2839,11 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             const bool emissionValuesChanged =
                 emissionExpr && memo->emissionRevision != emissionRevision;
             const bool responseValuesChanged =
-                mat.responseExpr && memo->responseRevision != mat.responseRevision;
+                (mat.responseExpr || mat.environmentResponseExpr) &&
+                (memo->responseRevision != mat.responseRevision ||
+                 memo->environmentResponseRevision !=
+                     mat.environmentResponseRevision ||
+                 memo->responseBindingIdentity != mat.responseBindingIdentity);
             const bool valuesChanged =
                 memo->parameterRevision != memoParameterRevision ||
                 sourceValuesChanged || densityValuesChanged || extinctionValuesChanged ||
@@ -2016,7 +2857,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                            radianceAngularExpr(), sourceSet,
                                            densityExpr, densityKind, extinctionExpr,
                                            scatteringExpr, volumeChromaExpr, phaseExpr,
-                                           emissionExpr, mat.responseExpr.get());
+                                           emissionExpr, mat.responseExpr.get(),
+                                           &mat.responseBindings,
+                                           mat.environmentResponseExpr.get());
                 if (!refreshed.ok) {
                     recordProgramRefusal(refreshed.error);
                     return;
@@ -2035,6 +2878,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                     memo->phaseRevision = phaseRevision;
                     memo->emissionRevision = emissionRevision;
                     memo->responseRevision = mat.responseRevision;
+                    memo->environmentResponseRevision =
+                        mat.environmentResponseRevision;
+                    memo->responseBindingIdentity = mat.responseBindingIdentity;
                 } else {
                     needsCompile = true;
                 }
@@ -2056,7 +2902,9 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
                                      radianceAngularExpr(), sourceSet,
                                      densityExpr, densityKind, extinctionExpr,
                                      scatteringExpr, volumeChromaExpr, phaseExpr,
-                                     emissionExpr, mat.responseExpr.get());
+                                     emissionExpr, mat.responseExpr.get(),
+                                     &mat.responseBindings,
+                                     mat.environmentResponseExpr.get());
         mutableFrameStats().sdfProgramCompiles++;
         mutableFrameStats().sdfWgslBytesGenerated += localProg.wgsl.size();
         if (!localProg.ok) {
@@ -2072,7 +2920,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->revision = memoRevision;
             memo->parameterRevision = memoParameterRevision;
             memo->colorRevision = mat.colorRevision;
-            memo->multiSource = multiSource;
+            memo->sourceSet = hasSourceSet;
             memo->radianceRevision = radianceRevision();
             memo->radianceStructureRevision = _radianceStructureRevision;
             memo->chromaRevision = radianceChromaRevision();
@@ -2098,10 +2946,18 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
             memo->emissionStructure = emissionStructure;
             memo->emissionReadsOmega = emissionLayout.readsOmega;
             memo->responseRevision = mat.responseRevision;
+            memo->environmentResponseRevision =
+                mat.environmentResponseRevision;
+            memo->responseBindingIdentity = mat.responseBindingIdentity;
             memo->responseStructure = responseStructure;
             memo->responseReadsNormal = responseLayout.readsNormal;
             memo->responseReadsWi = responseLayout.readsWi;
             memo->responseReadsWo = responseLayout.readsWo;
+            memo->environmentResponseStructure = environmentResponseStructure;
+            memo->environmentResponseReadsNormal =
+                environmentResponseLayout.readsNormal;
+            memo->environmentResponseReadsWo =
+                environmentResponseLayout.readsWo;
             memo->colorExprPtr = mat.colorExpr.get();
             memo->prog = std::move(localProg);
             memo->sp = sp;
@@ -2120,6 +2976,17 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     }
     if (!sp || !prog) return;
 
+    // March policy is value-derived execution truth, independent of WGSL
+    // structure. A Convex plane normal edit can change its global Lipschitz
+    // bound without recompiling the pipeline; Expr membership independently
+    // selects the local-gradient lane.
+    const sdfwgsl::FieldMarchPolicy marchPolicy =
+        sdfwgsl::inspectFieldMarchPolicy(field);
+    if (!marchPolicy.ok) {
+        recordProgramRefusal("field march policy: " + marchPolicy.error);
+        return;
+    }
+
     // Surface and volumetric proxies share one immutable resident cube.
     ensureSdfCubeVerts();
     if (!_sdfCubeVerts) return;
@@ -2131,7 +2998,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     inst.model = _model;
     inst.invModel = authoredTransforms->inverse;
     inst.normalMat = authoredTransforms->normal;
-    
+
     glm::vec3 albedo(1.0f);
     if (mat.albedoPixels && mat.albedoWidth > 0 && mat.albedoHeight > 0) {
         const int halfW = mat.albedoWidth / 2;
@@ -2274,7 +3141,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // FieldNode draws remain excluded because zero-set emptiness says nothing
     // about volumetric density.
     const bool rangeTraversalMarcherVerified =
-        prog->needsGradientStep || kSdfRangeDistanceTraversalVerified;
+        marchPolicy.needsGradientStep || kSdfRangeDistanceTraversalVerified;
     if (_sdfRangeProxyEnabled && memo && fieldNode == nullptr &&
         rangeTraversalMarcherVerified &&
         memo->rangeReady && memo->rangeHasPositiveSkip &&
@@ -2297,7 +3164,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
         }
     }
 
-    inst.extents = glm::vec4(proxyExtent, 0.0f);
+    // xyz owns proxy coverage; w is derived execution metadata. It is not an
+    // authored extent and never participates in geometry bounds.
+    inst.extents = glm::vec4(
+        proxyExtent, std::max(marchPolicy.marchLipschitz, 1.0f));
     
     // The box is grown slightly past the extent so a surface sitting exactly on the
     // boundary still gets fragments. surfaceEps/maxDist mirror the CPU raycaster's
@@ -2327,7 +3197,7 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     // the VERTICAL distance and can exceed the Euclidean distance when h slopes.
     // A min/max grid may conservatively skip empty cells, but it does not license
     // distance-field stepping inside a candidate cell.
-    const float damping = prog->needsGradientStep ? 0.25f : 1.0f;
+    const float damping = marchPolicy.needsGradientStep ? 0.25f : 1.0f;
     // misc.x is a distinct proof bit: damping selects the step policy, while
     // only a structurally-proved y-h(x,z) field may use heightfield-only
     // planar/vertical early exits. Keep the two latches separate so a generic
@@ -2338,6 +3208,10 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     size_t& runningParamCount = _sdfParamBatchCounts[sp];
     inst.paramOffset = static_cast<uint32_t>(runningParamCount);
     runningParamCount += prog->params.size();
+
+    // Memoized Program storage is stable for the frame. Unmemoized local
+    // programs die at function exit, so preserve their parameter vectors in a
+    // frame-scoped deque before recording a pointer.
     const std::vector<float>* paramPtr = &prog->params;
     if (memo == nullptr) {
         _unmemoizedParamCopies.push_back(prog->params);
@@ -2349,33 +3223,64 @@ void WebGpuRenderer::drawImplicit(const geom::SdfNode& field, const glm::vec3& e
     if (sdfBatch.empty()) _activeSdfPipelines.push_back(sp);
     sdfBatch.push_back(inst);
 
+    const bool binaryVisibilityOpaque = mat.opacity >= 0.999999f;
+    if (binaryVisibilityOpaque) {
+        ++_sdfVisibilityOpaqueInstanceCounts[sp];
+    }
+    if (binaryVisibilityOpaque) {
+        sdfwgsl::FieldVmProgram visibilityVm = sdfwgsl::lowerFieldVm(field);
+        if (visibilityVm.ok) {
+            SceneVisibilityVmAdmission admission;
+            admission.blocker.invModel = authoredTransforms->inverse;
+            admission.blocker.extents = inst.extents;
+            admission.blocker.extents.w =
+                std::max(visibilityVm.marchLipschitz, 1.0f);
+            admission.program = std::move(visibilityVm);
+            _sdfVisibilityVmBatches[sp].push_back(std::move(admission));
+        }
+    }
+
+    // Canonical Rung 18/21 static signature, translated onto #845's authored
+    // response/source/medium value offices. A zero signature means "unmemoized:
+    // materialize and compare this frame" rather than permission to trust a
+    // guessed identity.
     uint64_t instSig = 0;
     if (memoId != 0) {
+        constexpr uint64_t kSigPrime = 1099511628211ULL;
+        const auto mix = [&](uint64_t v) {
+            instSig = instSig * kSigPrime ^ v;
+        };
         instSig = static_cast<uint64_t>(memoId);
-        instSig = instSig * 1099511628211ULL ^ static_cast<uint64_t>(memoRevision);
-        instSig = instSig * 1099511628211ULL ^ static_cast<uint64_t>(memoParameterRevision);
-        instSig = instSig * 1099511628211ULL ^ static_cast<uint64_t>(mat.colorRevision);
-        instSig = instSig * 1099511628211ULL ^ static_cast<uint64_t>(mat.responseRevision);
-        if (multiSource) {
-            instSig = instSig * 1099511628211ULL ^ static_cast<uint64_t>(radianceSourcesRevision());
+        mix(static_cast<uint64_t>(memoRevision));
+        mix(static_cast<uint64_t>(memoParameterRevision));
+        mix(static_cast<uint64_t>(mat.colorRevision));
+        mix(static_cast<uint64_t>(mat.responseRevision));
+        mix(static_cast<uint64_t>(mat.environmentResponseRevision));
+        if (hasSourceSet) {
+            mix(static_cast<uint64_t>(radianceSourcesRevision()));
         } else {
-            instSig = instSig * 1099511628211ULL ^ static_cast<uint64_t>(radianceRevision());
-            instSig = instSig * 1099511628211ULL ^ static_cast<uint64_t>(radianceChromaRevision());
-            instSig = instSig * 1099511628211ULL ^ static_cast<uint64_t>(radianceAngularRevision());
+            mix(static_cast<uint64_t>(radianceRevision()));
+            mix(static_cast<uint64_t>(radianceChromaRevision()));
+            mix(static_cast<uint64_t>(radianceAngularRevision()));
         }
-        instSig = instSig * 1099511628211ULL ^ densityRevision;
-        instSig = instSig * 1099511628211ULL ^ extinctionRevision;
-        instSig = instSig * 1099511628211ULL ^ scatteringRevision;
-        instSig = instSig * 1099511628211ULL ^ volumeChromaRevision;
-        instSig = instSig * 1099511628211ULL ^ phaseRevision;
-        instSig = instSig * 1099511628211ULL ^ emissionRevision;
+        mix(densityRevision);
+        mix(extinctionRevision);
+        mix(scatteringRevision);
+        mix(volumeChromaRevision);
+        mix(phaseRevision);
+        mix(emissionRevision);
         if (fieldNode) {
-            instSig = instSig * 1099511628211ULL ^ static_cast<uint64_t>(fieldNode->authoredMathRevision());
+            mix(static_cast<uint64_t>(fieldNode->authoredMathRevision()));
         }
-        instSig = instSig * 1099511628211ULL ^ static_cast<uint64_t>(prog->params.size());
+        mix(static_cast<uint64_t>(prog->params.size()));
         if (instSig == 0) instSig = 1ULL;
     }
     _sdfBatchSignatures[sp].push_back(instSig);
+    // responseBindingIdentity is already an exact value identity in #845.
+    // Keep it exact beside the compact canonical revision signature so a Bind
+    // value edit can never be hidden by an unchanged response AST revision.
+    _sdfBatchResponseBindingIdentities[sp].push_back(
+        mat.responseBindingIdentity);
 
     mutableFrameStats().trianglesDrawn += 12;
 }
@@ -2477,10 +3382,13 @@ void WebGpuRenderer::flushSdfDraws() {
     if (!_pass) {
         for (const SdfPipeline* sp : _activeSdfPipelines) {
             _sdfBatches[sp].clear();
+            _sdfVisibilityVmBatches[sp].clear();
+            _sdfVisibilityOpaqueInstanceCounts[sp] = 0;
             _sdfParamsBatches[sp].clear();
             _sdfParamPtrBatches[sp].clear();
             _sdfParamBatchCounts[sp] = 0;
             _sdfBatchSignatures[sp].clear();
+            _sdfBatchResponseBindingIdentities[sp].clear();
             _sdfHeightGridBatches[sp].clear();
             _sdfRangeNodeBatches[sp].clear();
         }
@@ -2488,91 +3396,47 @@ void WebGpuRenderer::flushSdfDraws() {
         _activeSdfPipelines.clear();
         return;
     }
-    
-    // Rung 7 source records are shared across every SDF pipeline in the frame.
-    // Upload only when their byte representation changes; source time and
-    // placement are values, not reasons to rebuild WGSL.
-    WGPUBuffer sourceBuffer = nullptr;
-    uint64_t sourceOffset = 0;
-    uint64_t sourceBindingSize = 0;
-
-    if (radianceSources().size() > 1) {
-        std::vector<RadianceSourceGpuData> gpuSources;
-        gpuSources.reserve(radianceSources().size());
-        for (const auto& source : radianceSources()) {
-            RadianceSourceGpuData data{};
-            data.position = glm::vec4(source.position, 1.0f);
-            data.ambient = glm::vec4(source.ambientRadiance, 1.0f);
-            data.diffuse = glm::vec4(source.diffuseRadiance, 1.0f);
-            data.specular = glm::vec4(source.specularRadiance, 1.0f);
-            data.coefficients = source.coefficients;
-            data.time = glm::vec4(static_cast<float>(source.temporalCoordinate),
-                                  static_cast<float>(source.temporalDelta), 0.0f, 0.0f);
-            data.control =
-                glm::vec4(source.enabled ? 1.0f : 0.0f, 0.0f, 0.0f, 0.0f);
-            gpuSources.push_back(data);
-        }
-
-        const uint64_t bytes =
-            static_cast<uint64_t>(gpuSources.size() * sizeof(RadianceSourceGpuData));
-        uint64_t capacity = 256;
-        while (capacity < bytes) capacity *= 2;
-
-        if (!_persistentRadianceSources.buffer ||
-            _persistentRadianceSources.capacityBytes < bytes) {
-            WGPUBufferDescriptor bd = {};
-            bd.usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst;
-            bd.size = capacity;
-            WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
-            if (grown) {
-                if (_persistentRadianceSources.buffer) {
-                    wgpuBufferRelease(_persistentRadianceSources.buffer);
-                }
-                _persistentRadianceSources.buffer = grown;
-                _persistentRadianceSources.capacityBytes = capacity;
-                _persistentRadianceSources.mirror.clear();
-                _persistentRadianceSourceVramBytes = static_cast<size_t>(capacity);
-            }
-        }
-
-        const auto* raw =
-            reinterpret_cast<const unsigned char*>(gpuSources.data());
-        const std::vector<unsigned char> bytesNow(raw, raw + bytes);
-        if (_persistentRadianceSources.buffer &&
-            _persistentRadianceSources.capacityBytes >= bytes) {
-            if (_persistentRadianceSources.mirror != bytesNow) {
-                wgpuQueueWriteBuffer(_queue, _persistentRadianceSources.buffer, 0,
-                                     gpuSources.data(), bytes);
-                _persistentRadianceSources.mirror = bytesNow;
-            }
-            sourceBuffer = _persistentRadianceSources.buffer;
-            sourceBindingSize = bytes;
-        } else {
-            auto fallback =
-                bufferPool().suballocateStorage(gpuSources.data(), bytes);
-            sourceBuffer = fallback.buffer;
-            sourceOffset = fallback.offset;
-            sourceBindingSize = fallback.size;
-        }
+    if (!_sceneVisibilityFrame.buffer) {
+        ensureSceneVisibilityBindingForEarlyFlush();
     }
+    
+    // Source records are world truth shared by mesh and SDF consumers. The
+    // helper owns persistent residency and exact-byte refresh; representation
+    // paths only bind the returned view.
+    const RadianceSourceBufferView sourceView = prepareRadianceSourceBuffer();
+    WGPUBuffer sourceBuffer = sourceView.buffer;
+    const uint64_t sourceOffset = sourceView.offset;
+    const uint64_t sourceBindingSize = sourceView.size;
 
-    // Global uniforms for SDFs
-    SdfGlobalUniforms u;
-    u.viewProj = _viewProj;
-    u.invViewProj = _invViewProj;
-    u.lightPos = glm::vec4(lightPos(), 1.0f);
-    u.eyePos = glm::vec4(_eyePos, 1.0f);
-    u.lightAmbient = glm::vec4(lightAmbient(), 1.0f);
-    u.lightDiffuse = glm::vec4(lightDiffuse(), 1.0f);
-    u.lightSpecular = glm::vec4(lightSpecular(), 1.0f);
-    u.lightControl = glm::vec4(lightingEnabled() ? 1.0f : 0.0f,
-                               radianceVisibilityEnabled() ? 1.0f : 0.0f,
-                               0.0f, 0.0f);
-    u.radianceSourceCoefficients = radianceSourceCoefficients();
-    u.radianceTime = glm::vec4(static_cast<float>(radianceTemporalCoordinate()),
-                               static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
-    u.volumeTime = glm::vec4(static_cast<float>(volumeDensityTemporalCoordinate()),
-                            static_cast<float>(volumeDensityTemporalDelta()), 0.0f, 0.0f);
+    // Global SDF uniform values shared across program cohorts. Visibility
+    // completeness and foreign blocker count are receiver-relative, so those
+    // two fields are filled separately inside the cohort loop.
+    SdfGlobalUniforms baseU{};
+    baseU.viewProj = _viewProj;
+    baseU.invViewProj = _invViewProj;
+    baseU.lightPos = glm::vec4(lightPos(), 1.0f);
+    baseU.eyePos = glm::vec4(_eyePos, 1.0f);
+    const glm::vec4 sourceCoefficients = radianceSourceCoefficients();
+    baseU.legacyEnvironment = glm::vec4(
+        lightAmbient() / 0.2f,
+        (sourceCoefficients.x * sourceCoefficients.y) / 0.2f);
+    baseU.directIncidentRadiance = glm::vec4(
+        legacyDirectIncidentRadiance(
+            lightAmbient(), lightDiffuse(), lightSpecular(), sourceCoefficients),
+        sourceCoefficients.x);
+    baseU.legacyDiffuseIncident = glm::vec4(
+        lightDiffuse() / 0.8f,
+        (sourceCoefficients.x * sourceCoefficients.z) / 0.8f);
+    baseU.legacySpecularIncident = glm::vec4(
+        lightSpecular(),
+        sourceCoefficients.x * sourceCoefficients.w);
+    baseU.radianceTime = glm::vec4(
+        static_cast<float>(radianceTemporalCoordinate()),
+        static_cast<float>(radianceTemporalDelta()), 0.0f, 0.0f);
+    baseU.volumeTime = glm::vec4(
+        static_cast<float>(volumeDensityTemporalCoordinate()),
+        static_cast<float>(volumeDensityTemporalDelta()), 0.0f, 0.0f);
+
     // Unprojected rather than read off a named setting: the far plane belongs to
     // whatever projection the caller actually set, and asking the matrix cannot
     // drift away from it. NDC z = 1 is the far plane under the [0,1] depth range
@@ -2589,10 +3453,10 @@ void WebGpuRenderer::flushSdfDraws() {
             }
         }
     }
-    u.limits = glm::vec4(farDist, float(_depthW), float(_depthH), _spaceDistortion);
+    baseU.limits =
+        glm::vec4(farDist, float(_depthW), float(_depthH), _spaceDistortion);
 
-    auto uAlloc = bufferPool().suballocateUniform(&u, sizeof(SdfGlobalUniforms));
-
+    bool recordedSdfKnownFrame = false;
     static constexpr uint32_t kZeroDummy[4] = {0u, 0u, 0u, 0u};
     auto emptyAccelAlloc = bufferPool().suballocateStorage(kZeroDummy, sizeof(kZeroDummy));
 
@@ -2640,7 +3504,41 @@ void WebGpuRenderer::flushSdfDraws() {
         const auto itInst = _sdfInstanceAllocations.find(sp);
         if (itInst == _sdfInstanceAllocations.end() || !itInst->second.buffer) continue;
         const auto& instAlloc = itInst->second;
-        
+
+        // Own-program instances stay in this shader's exact cohort evaluator.
+        // Only foreign cohorts are materialized into the field-VM table.
+        const SceneVisibilityBufferView foreignVisibility =
+            prepareFieldVmVisibility(sp);
+        const bool sdfCompleteSceneKnown =
+            radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene &&
+            foreignVisibility.complete;
+
+        if (radianceVisibilityMode() == RadianceVisibilityMode::CompleteScene) {
+            if (sdfCompleteSceneKnown) {
+                if (!recordedSdfKnownFrame) {
+                    mutableFrameStats().sceneVisibilitySdfKnownFrames++;
+                    recordedSdfKnownFrame = true;
+                }
+            } else {
+                mutableFrameStats().sdfVisibilityUnknownDirectSkips +=
+                    static_cast<uint32_t>(instances.size());
+            }
+        }
+
+        SdfGlobalUniforms u = baseU;
+        u.lightControl = glm::vec4(
+            lightingEnabled() ? 1.0f : 0.0f,
+            static_cast<float>(
+                static_cast<uint32_t>(radianceVisibilityMode())),
+            sdfCompleteSceneKnown ? 1.0f : 0.0f,
+            static_cast<float>(_sceneVisibilityFrame.triangleCount));
+        u.sceneVisibilityControl = glm::vec4(
+            static_cast<float>(foreignVisibility.count),
+            static_cast<float>(foreignVisibility.instructionCount),
+            0.0f, 0.0f);
+        auto uAlloc =
+            bufferPool().suballocateUniform(&u, sizeof(SdfGlobalUniforms));
+
         const size_t totalParamCount = _sdfParamBatchCounts[sp];
         const size_t paramBytes = totalParamCount * sizeof(float);
         auto& persistent = _persistentSdfParams[sp];
@@ -2649,7 +3547,9 @@ void WebGpuRenderer::flushSdfDraws() {
         // not churn buffers. Buffer contents are compared byte-for-byte: NaNs,
         // signed zero, and authored float bit patterns are all treated as data,
         // not normalized by a semantic comparison.
-        const uint64_t requiredBytes = static_cast<uint64_t>(std::max<size_t>(paramBytes, sizeof(float)));
+        const uint64_t requiredBytes =
+            static_cast<uint64_t>(
+                std::max<size_t>(paramBytes, sizeof(float)));
         if (!persistent.buffer || persistent.capacityBytes < requiredBytes) {
             uint64_t capacity = 256;
             while (capacity < requiredBytes) capacity *= 2;
@@ -2660,22 +3560,31 @@ void WebGpuRenderer::flushSdfDraws() {
             WGPUBuffer grown = wgpuDeviceCreateBuffer(_device, &bd);
             if (grown) {
                 if (persistent.buffer) {
-                    _persistentSdfParamVramBytes -= static_cast<size_t>(persistent.capacityBytes);
+                    _persistentSdfParamVramBytes -=
+                        static_cast<size_t>(persistent.capacityBytes);
                     wgpuBufferRelease(persistent.buffer);
                 }
                 persistent.buffer = grown;
                 persistent.capacityBytes = capacity;
                 persistent.mirror.clear();
-                _persistentSdfParamVramBytes += static_cast<size_t>(capacity);
+                persistent.lastSignature.clear();
+                persistent.lastResponseBindingIdentity.clear();
+                _persistentSdfParamVramBytes +=
+                    static_cast<size_t>(capacity);
             }
         }
 
         const auto& sig = _sdfBatchSignatures[sp];
+        const auto& responseBindings =
+            _sdfBatchResponseBindingIdentities[sp];
         const bool persistentUsable =
-            persistent.buffer && persistent.capacityBytes >= requiredBytes;
-        bool allMemoized = !sig.empty();
-        for (uint64_t s : sig) {
-            if (s == 0) {
+            persistent.buffer &&
+            persistent.capacityBytes >= requiredBytes;
+        bool allMemoized =
+            !sig.empty() && sig.size() == instances.size() &&
+            responseBindings.size() == instances.size();
+        for (uint64_t value : sig) {
+            if (value == 0) {
                 allMemoized = false;
                 break;
             }
@@ -2683,54 +3592,75 @@ void WebGpuRenderer::flushSdfDraws() {
 
         auto& params = _sdfParamsBatches[sp];
         bool paramsChanged = true;
-        if (persistentUsable && allMemoized && persistent.lastSignature == sig &&
+        if (persistentUsable && allMemoized &&
+            persistent.lastSignature == sig &&
+            persistent.lastResponseBindingIdentity == responseBindings &&
             persistent.mirror.size() == totalParamCount) {
+            // The exact #845 response Bind identities and all canonical
+            // revision premises agree, so no CPU float materialization is
+            // required on this static frame.
             paramsChanged = false;
         } else {
             params.clear();
             params.reserve(totalParamCount);
-            for (const auto* p : _sdfParamPtrBatches[sp]) {
-                params.insert(params.end(), p->begin(), p->end());
+            for (const auto* values : _sdfParamPtrBatches[sp]) {
+                if (!values) continue;
+                params.insert(params.end(),
+                              values->begin(), values->end());
             }
 
-            paramsChanged = persistent.mirror.size() != params.size();
+            paramsChanged =
+                persistent.mirror.size() != params.size();
             if (!paramsChanged && !params.empty()) {
-                paramsChanged = std::memcmp(persistent.mirror.data(), params.data(), paramBytes) != 0;
+                paramsChanged = std::memcmp(
+                    persistent.mirror.data(), params.data(),
+                    paramBytes) != 0;
             }
         }
 
         // A failed grow leaves the previous buffer alive for accounting/later
         // retry, but it is not large enough for this batch and must not be used.
-        WGPUBuffer paramBuffer = persistentUsable ? persistent.buffer : nullptr;
+        WGPUBuffer paramBuffer =
+            persistentUsable ? persistent.buffer : nullptr;
         uint64_t paramOffset = 0;
         uint64_t paramBindingSize = requiredBytes;
 
         if (paramBuffer && paramBytes > 0) {
             if (paramsChanged) {
-                wgpuQueueWriteBuffer(_queue, paramBuffer, 0, params.data(), paramBytes);
+                wgpuQueueWriteBuffer(
+                    _queue, paramBuffer, 0, params.data(), paramBytes);
                 persistent.mirror = params;
-                persistent.lastSignature = sig;
                 mutableFrameStats().sdfParameterBytesUploaded += paramBytes;
-            } else {
-                persistent.lastSignature = sig;
             }
+            persistent.lastSignature = sig;
+            persistent.lastResponseBindingIdentity = responseBindings;
         } else if (paramBuffer) {
+            // WebGPU storage bindings cannot be zero-sized, but zero authored
+            // parameters require no queue write.
             persistent.mirror.clear();
             persistent.lastSignature = sig;
+            persistent.lastResponseBindingIdentity = responseBindings;
         } else {
             if (params.empty() && totalParamCount > 0) {
-                params.clear();
                 params.reserve(totalParamCount);
-                for (const auto* p : _sdfParamPtrBatches[sp]) {
-                    params.insert(params.end(), p->begin(), p->end());
+                for (const auto* values : _sdfParamPtrBatches[sp]) {
+                    if (!values) continue;
+                    params.insert(params.end(),
+                                  values->begin(), values->end());
                 }
             }
+
             // Allocation failure must degrade to the already-correct frame ring,
-            // never to a missing parameter binding.
+            // never to a missing parameter binding or a zero-byte queue write.
             const float dummyZero = 0.0f;
-            const void* uploadData = params.empty() ? &dummyZero : params.data();
-            const size_t uploadBytes = std::max<size_t>(paramBytes, 4);
-            auto fallback = bufferPool().suballocateStorage(uploadData, uploadBytes);
+            const void* uploadData =
+                params.empty()
+                    ? static_cast<const void*>(&dummyZero)
+                    : static_cast<const void*>(params.data());
+            const size_t uploadBytes =
+                std::max<size_t>(paramBytes, sizeof(float));
+            auto fallback =
+                bufferPool().suballocateStorage(uploadData, uploadBytes);
             paramBuffer = fallback.buffer;
             paramOffset = fallback.offset;
             paramBindingSize = fallback.size;
@@ -2802,8 +3732,10 @@ void WebGpuRenderer::flushSdfDraws() {
             }
         }
 
-        // Group 0: globals + authored parameter values + optional Rung 7 sources.
-        WGPUBindGroupEntry bge[3] = {};
+        // Group 0: globals + authored parameters + optional sources +
+        // complete-scene mesh triangles + receiver-relative foreign field-VM
+        // descriptors/instructions.
+        WGPUBindGroupEntry bge[6] = {};
         bge[0].binding = 0;
         bge[0].buffer = uAlloc.buffer;
         bge[0].offset = uAlloc.offset;
@@ -2812,16 +3744,54 @@ void WebGpuRenderer::flushSdfDraws() {
         bge[1].buffer = paramBuffer;
         bge[1].offset = paramOffset;
         bge[1].size = paramBindingSize;
+        uint32_t sceneEntry = 2;
         if (sp->usesRadianceSources) {
             if (!sourceBuffer || sourceBindingSize == 0) continue;
             bge[2].binding = 2;
             bge[2].buffer = sourceBuffer;
             bge[2].offset = sourceOffset;
             bge[2].size = sourceBindingSize;
+            sceneEntry = 3;
         }
+        if (!_sceneVisibilityFrame.buffer || _sceneVisibilityFrame.size == 0) {
+            mutableFrameStats().sdfProgramRefusals++;
+            mutableFrameStats().sdfLastProgramRefusal =
+                "scene visibility triangle binding unavailable";
+            continue;
+        }
+        bge[sceneEntry].binding = 3;
+        bge[sceneEntry].buffer = _sceneVisibilityFrame.buffer;
+        bge[sceneEntry].offset = _sceneVisibilityFrame.offset;
+        bge[sceneEntry].size = _sceneVisibilityFrame.size;
+
+        if (!foreignVisibility.buffer || foreignVisibility.size == 0) {
+            mutableFrameStats().sdfProgramRefusals++;
+            mutableFrameStats().sdfLastProgramRefusal =
+                "scene visibility implicit binding unavailable";
+            continue;
+        }
+        const uint32_t implicitEntry = sceneEntry + 1;
+        bge[implicitEntry].binding = 4;
+        bge[implicitEntry].buffer = foreignVisibility.buffer;
+        bge[implicitEntry].offset = foreignVisibility.offset;
+        bge[implicitEntry].size = foreignVisibility.size;
+
+        if (!foreignVisibility.programBuffer ||
+            foreignVisibility.programSize == 0) {
+            mutableFrameStats().sdfProgramRefusals++;
+            mutableFrameStats().sdfLastProgramRefusal =
+                "scene visibility VM program binding unavailable";
+            continue;
+        }
+        const uint32_t vmProgramEntry = implicitEntry + 1;
+        bge[vmProgramEntry].binding = 5;
+        bge[vmProgramEntry].buffer = foreignVisibility.programBuffer;
+        bge[vmProgramEntry].offset = foreignVisibility.programOffset;
+        bge[vmProgramEntry].size = foreignVisibility.programSize;
+
         WGPUBindGroupDescriptor bgd = {};
         bgd.layout = sp->bgl;
-        bgd.entryCount = sp->usesRadianceSources ? 3 : 2;
+        bgd.entryCount = sp->usesRadianceSources ? 6 : 5;
         bgd.entries = bge;
         WGPUBindGroup bg = wgpuDeviceCreateBindGroup(_device, &bgd);
         _frameBindGroups.push_back(bg);
@@ -2861,15 +3831,18 @@ void WebGpuRenderer::flushSdfDraws() {
     }
     for (const SdfPipeline* sp : _activeSdfPipelines) {
         _sdfBatches[sp].clear();
+        _sdfVisibilityVmBatches[sp].clear();
+        _sdfVisibilityOpaqueInstanceCounts[sp] = 0;
         _sdfParamsBatches[sp].clear();
         _sdfParamPtrBatches[sp].clear();
         _sdfParamBatchCounts[sp] = 0;
         _sdfBatchSignatures[sp].clear();
+        _sdfBatchResponseBindingIdentities[sp].clear();
         _sdfHeightGridBatches[sp].clear();
         _sdfRangeNodeBatches[sp].clear();
     }
-    _activeSdfPipelines.clear();
     _unmemoizedParamCopies.clear();
+    _activeSdfPipelines.clear();
     _sdfInstanceAllocations.clear();
 }
 
@@ -4390,6 +5363,15 @@ void WebGpuRenderer::composeVolumes() {
 
 void WebGpuRenderer::endFrame() {
     if (!_pass) return;
+    // Every opaque draw is now admitted. Build frame-scoped visibility only
+    // if no surface was shaded earlier. Once an early flush happened, later
+    // geometry cannot retroactively become a blocker for those fragments.
+    if (!_frameHadEarlySurfaceFlush) {
+        _sceneVisibilityFrame = prepareSceneVisibilityFrame();
+    } else if (!_sceneVisibilityFrame.buffer) {
+        ensureSceneVisibilityBindingForEarlyFlush();
+    }
+
     // Every drawMesh() call this frame only queued into _meshBatches; this is
     // where those batches actually become wgpuRenderPassEncoderDraw calls, so
     // it must run before the pass ends.
@@ -4574,6 +5556,9 @@ void WebGpuRenderer::drawSolid(const std::vector<glm::vec3>& tris, const glm::ve
     // In 2D scope the model transform is meaningless; otherwise these are world-space
     // triangles under the current OntoMath-authored view-projection/model cache.
     if (!_in2D && !ensureModelViewProj()) return;
+    if (!_in2D && depthWrite) {
+        _frameHasUnmaterializedOpaqueGeometry = true;
+    }
     const glm::mat4& mvp = _in2D ? _ortho2D : _modelViewProj;
     drawFlat(flatPipeline(WGPUPrimitiveTopology_TriangleList, blend,
                           depthWrite ? DepthMode::TestWrite : DepthMode::TestOnly),

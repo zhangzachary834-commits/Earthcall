@@ -1,15 +1,41 @@
 // Codex / GPT-6 / 01a148a7-bd85-7550-a416-0e859a729c1a / 2026-11-03.
 // Independent pixel oracle for aligned upload pages, multiple flushes, an
-// oversized instance batch, and changed transforms/materials between frames.
+// oversized instance batch, and changed transforms/authored receiver bindings
+// between frames. This test intentionally authors its surface law: a bare
+// RenderMaterial no longer means "summon the historical mesh shader".
 #include "Singularity/Screen/WebGPU/WgpuDevice.hpp"
 #include "Singularity/Screen/WebGPU/WebGpuRenderer.hpp"
 #include "Singularity/Screen/RenderMaterial.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/SmoothSurface.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <array>
 #include <cmath>
 #include <cstdio>
 #include <vector>
+
+static std::shared_ptr<OntoMath::Piecewise> ambientReceiverLaw() {
+    auto bind = std::make_unique<OntoMath::MathNode>();
+    bind->op = OntoMath::MathNode::Op::Bind;
+    bind->propertyPath = "ambient";
+
+    auto pigment = std::make_unique<OntoMath::MathNode>();
+    pigment->op = OntoMath::MathNode::Op::ValueLeaf;
+    pigment->variableName = OntoMath::kSurfaceColorVar;
+
+    auto scale = std::make_shared<OntoMath::MathNode>();
+    scale->op = OntoMath::MathNode::Op::Scale;
+    scale->children.push_back(std::move(bind));
+    scale->children.push_back(std::move(pigment));
+    return std::make_shared<OntoMath::Piecewise>(
+        OntoMath::Piecewise::continuous(scale));
+}
+
+static void setAmbientBinding(RenderMaterial& material, float value) {
+    material.responseBindings["ambient"] = PropertyValue(value);
+    material.responseBindingIdentity =
+        std::string("ambient:") + std::to_string(value);
+}
 
 int main() {
     constexpr unsigned columns = 48, rows = 24, count = columns * rows;
@@ -23,6 +49,7 @@ int main() {
     if (!renderer.init(gpu)) return 1;
     renderer.setCamera(glm::mat4(1), glm::vec3(0, 0, 2));
     renderer.setLight(glm::vec3(0, 0, 2), glm::vec3(1), glm::vec3(0), glm::vec3(0));
+    renderer.setLightingEnabled(true);
     geom::TessMesh mesh;
     const auto vertex = [](float x, float y) {
         return geom::TessVertex{{x, y, 0}, {0, 0, 1}, {0, 0}};
@@ -55,7 +82,9 @@ int main() {
         }
         renderer.beginFrameOffscreen(view, width, height, glm::vec4(0, 0, 0, 1));
         RenderMaterial material;
-        material.ambient = 1; material.diffuse = material.specular = 0;
+        material.responseExpr = ambientReceiverLaw();
+        material.responseRevision = 1;
+        setAmbientBinding(material, 1.0f);
         for (unsigned i = 0; i < count; ++i) {
             const auto cell = (i + frame * 37) % count;
             const float x = (float(cell % columns) + .5f) * 2 / columns - 1;
@@ -63,7 +92,7 @@ int main() {
             renderer.setModel(glm::scale(glm::translate(glm::mat4(1), {x, y, .5f}),
                 glm::vec3(.85f / columns, .85f * (240.f / height) / rows, 1)));
             material.textureId = textures[i];
-            material.ambient = i % 2 ? .5f : 1.f;
+            setAmbientBinding(material, i % 2 ? .5f : 1.f);
             renderer.drawMesh(mesh, material);
             if (frame == 1 && i == 600) {
                 renderer.begin2D(width, height);
@@ -71,7 +100,8 @@ int main() {
             }
         }
         // This one batch exceeds a 256 KiB page. Its last instance is visible.
-        material.textureId = 0; material.ambient = 1;
+        material.textureId = 0;
+        setAmbientBinding(material, 1.0f);
         material.baseColor = glm::vec3(1, 0, 1);
         for (unsigned i = 0; i < 2050; ++i) {
             renderer.setModel(glm::scale(glm::translate(glm::mat4(1),

@@ -32,6 +32,24 @@ namespace geom { struct SdfNode; class FieldNode; struct HeightGrid; }
 // selection/law-candidate overlays.
 enum class Blend { Opaque, Alpha, Additive };
 
+// Visibility is derived path truth with an explicit epistemic scope.
+// Disabled: exact compatibility V=1.
+// LocalReceiverGeometry: a backend may answer only from the receiving geometry
+// it actually owns (today: SDF instance-local marching). Other representations
+// must return Unknown rather than inventing V.
+// CompleteScene: requires a provider that proves coverage of every relevant
+// blocker for the queried frame/receiver. WebGPU composes exact mesh triangles
+// with one bounded field-program VM language for implicit blockers. Raster mesh
+// receivers consume every admitted SDF cohort through that VM; an SDF receiver
+// evaluates its own compiled-program cohort directly and consumes only foreign
+// cohorts through the same VM. Unsupported programs or budget overflow remain
+// Unknown rather than being approximated into authority.
+enum class RadianceVisibilityMode : uint32_t {
+    Disabled = 0,
+    LocalReceiverGeometry = 1,
+    CompleteScene = 2
+};
+
 // An opaque handle to a GPU-side texture. Under OpenGL this happens to be the GL
 // texture name (which is why RenderMaterial::textureId is the same width); under
 // WebGPU it is an index the backend assigns. 0 means "none".
@@ -45,6 +63,35 @@ public:
     struct FrameStats {
         uint32_t drawCalls = 0;
         uint32_t meshDrawCalls = 0;
+        // Authored mesh receiver-program observability. Pipeline compilation is
+        // structural; Bind/numeric values belong to parameter uploads.
+        uint32_t meshProgramCompiles = 0;
+        uint32_t meshProgramCacheHits = 0;
+        uint32_t meshProgramRefusals = 0;
+        std::string meshLastProgramRefusal;
+        size_t meshParameterBytesUploaded = 0;
+        // Direct transport refused because the requested visibility scope was
+        // not known for a mesh receiver. LocalReceiverGeometry remains unknown
+        // for raster meshes; CompleteScene may be known through a complete frame
+        // provider.
+        uint32_t meshVisibilityUnknownDirectSkips = 0;
+        // CompleteScene provider observability. Both representation kinds
+        // require exact world triangles plus bounded field-VM coverage of every
+        // relevant SDF cohort; an SDF receiver additionally evaluates its own
+        // exact cohort directly instead of redundantly packing it into the VM.
+        uint32_t sceneVisibilityTriangles = 0;
+        // Historical field name retained for telemetry compatibility: this
+        // now counts field-VM blocker descriptors, not an analytic packet.
+        uint32_t sceneVisibilityImplicitBlockers = 0;
+        size_t sceneVisibilityBytesUploaded = 0;
+        // Descriptor + bytecode bytes uploaded for field-VM visibility.
+        size_t sceneVisibilityImplicitBytesUploaded = 0;
+        uint32_t sceneVisibilityMeshKnownFrames = 0;
+        uint32_t sceneVisibilitySdfKnownFrames = 0;
+        uint32_t sceneVisibilityUnknownFrames = 0;
+        // Same epistemic refusal on implicit surfaces when CompleteScene is
+        // requested but no complete provider exists for that receiver.
+        uint32_t sdfVisibilityUnknownDirectSkips = 0;
         uint32_t sdfDrawCalls = 0;
         uint32_t trianglesDrawn = 0;
         size_t   vramAllocatedBytes = 0;
@@ -244,10 +291,10 @@ public:
     double volumeDensityTemporalCoordinate() const { return _volumeDensityTemporalCoordinate; }
     double volumeDensityTemporalDelta() const { return _volumeDensityTemporalDelta; }
 
-    // Rung 7: when a Zone owns two or more radiant FieldNodes, Screen projects
-    // them together instead of forcing one source AST to enumerate the world.
-    // One-source worlds intentionally keep using the historical scalar setters
-    // above, making the one-element sum an exact compatibility path.
+    // Rung 7: Screen projects the ordered admitted radiant FieldNode set
+    // independently of source count. One authored source is the one-element sum
+    // and therefore uses the same source-set compiler/runtime buffer as N sources.
+    // Historical scalar setters above remain an explicit zero-set compatibility lane.
     void setRadianceSources(std::vector<Rendering::RadianceSourceBinding> sources,
                             uint64_t revision) {
         _radianceSources = std::move(sources);
@@ -300,14 +347,27 @@ public:
         return _renderedFieldObserver.stats();
     }
 
-    // Rung 8 execution seam: visibility is DERIVED transport truth, never an
-    // authored property of rho/chi/alpha. Keeping this as renderer state makes
-    // V=1 an exact compatibility mode and lets transport change at runtime
-    // without regenerating source WGSL or mutating any source AST. The default
-    // remains false until Screen can truthfully query the complete scene, not
-    // merely the SDF geometry owned by the currently executing pipeline.
-    void setRadianceVisibilityEnabled(bool on) { _radianceVisibilityEnabled = on; }
-    bool radianceVisibilityEnabled() const { return _radianceVisibilityEnabled; }
+    // Rung 8 execution seam: visibility is DERIVED path truth, never an
+    // authored property of rho/chi/alpha. The mode distinguishes exact V=1,
+    // receiver-local evidence, and complete-scene authority. Unknown is never
+    // collapsed into visible or occluded.
+    void setRadianceVisibilityMode(RadianceVisibilityMode mode) {
+        _radianceVisibilityMode = mode;
+    }
+    RadianceVisibilityMode radianceVisibilityMode() const {
+        return _radianceVisibilityMode;
+    }
+
+    // Compatibility API retained for existing witnesses/callers: "enabled"
+    // historically meant the SDF instance-local query, not complete-scene truth.
+    void setRadianceVisibilityEnabled(bool on) {
+        _radianceVisibilityMode = on
+            ? RadianceVisibilityMode::LocalReceiverGeometry
+            : RadianceVisibilityMode::Disabled;
+    }
+    bool radianceVisibilityEnabled() const {
+        return _radianceVisibilityMode != RadianceVisibilityMode::Disabled;
+    }
 
     // Zero-density proof: skip evaluating a medium's density in cells where
     // OntoMath interval arithmetic proved it can never be positive. Such a
@@ -560,7 +620,8 @@ private:
     double _volumeDensityTemporalDelta = 0.0;
     std::vector<Rendering::RadianceSourceBinding> _radianceSources;
     uint64_t _radianceSourcesRevision = 0;
-    bool _radianceVisibilityEnabled = false;
+    RadianceVisibilityMode _radianceVisibilityMode =
+        RadianceVisibilityMode::Disabled;
     bool _volumeZeroProofEnabled = true;
     bool _volumeRoutedTransportEnabled = true; // Zach, direct branch-default authorization 2026-10-28
     bool _volumeSupportCertificatesEnabled = false;

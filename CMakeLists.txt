@@ -282,6 +282,7 @@ if(NOT EMSCRIPTEN)
     list(APPEND WEBGPU_APP_SOURCES 
         src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
         src/Singularity/Screen/WebGPU/SdfWgsl.cpp
+        src/Singularity/Screen/WebGPU/FieldVm.cpp
         src/Singularity/Screen/WebGPU/GpuBufferPool.cpp
         src/Singularity/Screen/WebGPU/GpuMeshCache.cpp
     )
@@ -378,6 +379,7 @@ if(NOT EMSCRIPTEN)
             target_compile_definitions(${TEST_NAME} PRIVATE GLFW_INCLUDE_NONE)
             target_link_libraries(${TEST_NAME} PRIVATE earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
         elseif (${TEST_NAME} STREQUAL "sdf_wgsl_parameter_refresh_test" OR
+                 ${TEST_NAME} STREQUAL "field_vm_test" OR
                  ${TEST_NAME} STREQUAL "gyroid_reliquary_test" OR
                  ${TEST_NAME} STREQUAL "veiled_hour_test" OR
                  ${TEST_NAME} STREQUAL "merry_dancers_test" OR
@@ -406,7 +408,8 @@ if(NOT EMSCRIPTEN)
             # binds `p` happily), so this needs the real emitter.
             add_executable(${TEST_NAME}
                 ${TEST_SOURCE}
-                src/Singularity/Screen/WebGPU/SdfWgsl.cpp)
+                src/Singularity/Screen/WebGPU/SdfWgsl.cpp
+                src/Singularity/Screen/WebGPU/FieldVm.cpp)
             target_link_libraries(${TEST_NAME} PRIVATE
                 earthcall_core ${GLFW_LIB} OpenSSL::SSL OpenSSL::Crypto
                 ZLIB::ZLIB ${CMAKE_DL_LIBS} Threads::Threads)
@@ -414,6 +417,7 @@ if(NOT EMSCRIPTEN)
             set(WEBGPU_TEST_EXTRA_SRCS
                 src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp
                 src/Singularity/Screen/WebGPU/SdfWgsl.cpp
+                src/Singularity/Screen/WebGPU/FieldVm.cpp
                 src/Singularity/Screen/WebGPU/GpuBufferPool.cpp
                 src/Singularity/Screen/WebGPU/GpuMeshCache.cpp)
             if(APPLE)
