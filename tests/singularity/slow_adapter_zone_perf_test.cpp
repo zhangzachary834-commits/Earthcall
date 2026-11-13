@@ -72,9 +72,10 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    // Protect the real Zone identity store exactly like frame_lag_test.
-    TestSupport::RealSaveTreeGuard saveGuard(world);
-    TestSupport::BootedEngineHarness h;
+    // Use an isolated scratch save root and skip full store hydration to avoid
+    // 1.6GB+ disk copy I/O overhead from RealSaveTreeGuard during perf benchmark.
+    TestSupport::TempSaveRoot tempSave;
+    TestSupport::BootedEngineHarness h("Player", "humanoid", /*hydrateAllZones=*/false);
     h.lawManager.setUseSlowAdapter(adapter);
     h.lawManager.setUseLawDirect(direct);
     h.loadWorld(world);
