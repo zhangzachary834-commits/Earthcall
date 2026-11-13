@@ -85,13 +85,13 @@ All paths are under `docs/architecture/` unless noted. Map of the folders: `docs
 src/
   ConstructedBeing/  Singular (Object · Lexeme · Creation) · Material
                     Property is a non-Singular predicate under Singular/Property/; ObjectConcept is under Object/Creation/
+  Identity/       First Mover register, identity ledger, keys
   Person/         Person · Soul · Body · Voice · Perspective · Relationship
   Relation/       Relation · Formation — a first-class being, not an edge in someone's array
-  ZonesOfEarth/   Zone · HomesOfEarth/Home · Physics · AuthorsOfLaw (Law lives here) · Ourverse
   Singularity/    Core · Audio · Language · Network · Physical · OntoMath · Foreign · Input · Screen · Storage · Terminal · Execution
                   FirstMoverOntology/ (FirstMoverWindowTools · TalkingRobotGuyAPI)
-  Identity/       First Mover register, identity ledger, keys
   Time/           Timeline · Moment · Event (distinguished Moment) — temporal ownership is relational; Universe may borrow a Timeline
+  ZonesOfEarth/   Zone · HomesOfEarth/Home · Physics · AuthorsOfLaw (Law lives here) · Ourverse
 docs/ tests/ examples/ scripts/ saves/ scratch/ web_ui/     the workshop (saves/ = frozen snapshot + fixtures; live data is the data home)
 third_party/ local_deps/ imgui/                     the foreign
 ```
