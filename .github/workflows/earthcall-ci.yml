@@ -48,6 +48,8 @@ jobs:
         keyboard_shell_shortcuts_test
         no_black_box_test
         channel_paths_test
+        audio_channel_test
+        audio_system_test
         dynamic_property_reachability_test
         property_path_precalc_test
         law_identifier_index_test

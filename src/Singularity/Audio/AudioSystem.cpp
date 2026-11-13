@@ -206,13 +206,20 @@ void AudioSystem::tick() {
         }
     }
 
+    // Immutable authored paths are parsed once, not for every emitter each tick.
+    static const PropertyPath pathIsEmitter = PropertyPath::parse("acoustic.isSoundEmitter");
+    static const PropertyPath pathFrequency = PropertyPath::parse("acoustic.frequency");
+    static const PropertyPath pathAmplitude = PropertyPath::parse("acoustic.amplitude");
+    static const PropertyPath pathWaveType = PropertyPath::parse("acoustic.waveType");
+    static const PropertyPath pathCutoff = PropertyPath::parse("acoustic.lowpassCutoff");
+
     // Update existing or create new
     for (const auto& up : objects) {
         Object* obj = up.get();
         if (!obj) continue;
 
         PropertyValue isEmitterVal;
-        if (!lawGetValue(*obj, PropertyPath::parse("acoustic.isSoundEmitter"), isEmitterVal)) continue;
+        if (!lawGetValue(*obj, pathIsEmitter, isEmitterVal)) continue;
 
         bool isEmitter = false;
         if (std::holds_alternative<std::string>(isEmitterVal) && std::get<std::string>(isEmitterVal) == "true") {
@@ -228,7 +235,7 @@ void AudioSystem::tick() {
         std::string waveTypeStr = "sine";
 
         PropertyValue pv;
-        if (lawGetValue(*obj, PropertyPath::parse("acoustic.frequency"), pv)) {
+        if (lawGetValue(*obj, pathFrequency, pv)) {
             if (std::holds_alternative<double>(pv)) frequency = std::get<double>(pv);
             else if (std::holds_alternative<int>(pv)) frequency = static_cast<double>(std::get<int>(pv));
             else if (std::holds_alternative<std::string>(pv)) {
@@ -236,7 +243,7 @@ void AudioSystem::tick() {
             }
         }
 
-        if (lawGetValue(*obj, PropertyPath::parse("acoustic.amplitude"), pv)) {
+        if (lawGetValue(*obj, pathAmplitude, pv)) {
             if (std::holds_alternative<double>(pv)) amplitude = std::get<double>(pv);
             else if (std::holds_alternative<int>(pv)) amplitude = static_cast<double>(std::get<int>(pv));
             else if (std::holds_alternative<std::string>(pv)) {
@@ -244,7 +251,7 @@ void AudioSystem::tick() {
             }
         }
 
-        if (lawGetValue(*obj, PropertyPath::parse("acoustic.waveType"), pv) && std::holds_alternative<std::string>(pv)) {
+        if (lawGetValue(*obj, pathWaveType, pv) && std::holds_alternative<std::string>(pv)) {
             waveTypeStr = std::get<std::string>(pv);
         }
 
@@ -308,7 +315,7 @@ void AudioSystem::tick() {
         amplitude = std::clamp(amplitude, 0.0, 1.0);
 
         // 2. Ontological Occlusion (Muffling)
-        if (lawGetValue(*obj, PropertyPath::parse("acoustic.lowpassCutoff"), pv)) {
+        if (lawGetValue(*obj, pathCutoff, pv)) {
             double cutoff = 22000.0;
             if (std::holds_alternative<double>(pv)) cutoff = std::get<double>(pv);
             else if (std::holds_alternative<int>(pv)) cutoff = static_cast<double>(std::get<int>(pv));
