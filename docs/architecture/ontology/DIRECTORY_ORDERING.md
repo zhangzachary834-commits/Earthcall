@@ -70,7 +70,7 @@ TOP LEVEL = the ontology + the modality layer.
 ```
 
 Clause (e) is load-bearing and is the difference between an ontology and a pose.
-`build/`, `third_party/`, `local_deps/`, `Legacy/` are not ontological and never will
+`build/`, `third_party/`, and `local_deps/` are not ontological and never will
 be. The honest move is to name them plainly rather than to invent an ontological gloss
 for a folder of vendored OpenSSL. `SUBSTRATE_ORDERING.md` §2 makes the same discipline
 quantitative: an artifact without provenance counts as hand-written, and *the ratio
@@ -251,7 +251,7 @@ into their proper ontological homes:
 
 | Subsystem | Action | Why |
 |---|---|---|
-| `Legacy/` | dissolve | the graveyard; burn down gradually. |
+| Former `Legacy/` | dissolved | **Done.** The obsolete directory has been retired. |
 
 **Stage 2's exit test achieved:** nothing at `src/` top level is named after a technology.
 
@@ -271,7 +271,7 @@ regrouping has thinned it.
 | `build/`, `logs/` | machine-specific output | permanent, and git-ignored. |
 | `TestLabInterfaces/`, `TestLabAI/` | standalone experiments with their own `main` | temporary. Fold in or retire. |
 | `docs/`, `tests/`, `examples/`, `scripts/`, `scratch/`, `saves/`, `web_ui/` | the workshop — things *about* the world rather than *in* it | permanent. `SUBSTRATE_ORDERING.md` contemplates a future where the world reads its own tests and docs as beings; until it does, they are workshop. |
-| `Legacy/`, `Legacy Depricated/` | superseded code, retained | temporary by intent. Named honestly, which is why it is tolerable. |
+| Former `Legacy/`, `Legacy Depricated/` | superseded code, retired | These directories are no longer present at the repository root. |
 
 ---\
 
