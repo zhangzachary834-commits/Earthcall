@@ -11,10 +11,27 @@
 // category, because RelationTemplate only remembered edges whose far end was
 // also inside the captured set. A hundred instantiated buttons, none of them
 // buttons, all of them looking right.
+//
+// WITNESS GAP AUDIT (Witness 👁️):
+// What the synthetic unit test (sections 1-7) could prove:
+//   - That when synthetic ECA events (`object-clicked`, `object-scrolled`, `key-pressed`)
+//     are directly published to EventBus, LawManager's Rete network evaluates
+//     archetype control laws (createButtonLaw, createToggleLaw, etc.) and fires
+//     the expected actions.
+// What the synthetic unit test could NOT prove:
+//   - That a Person interacting with a control object via the real runtime sensing path
+//     (InteractionChannel::setPointingPerson -> InteractionChannel::observePending -> EventBus -> LawManager::tick())
+//     successfully performs raycast/2D AABB picking, attributes the Person as event agent,
+//     publishes the real `object-clicked` ECA event, and triggers the Control Laws end-to-end.
+//
+// Section 8 below closes this gap by traversing the complete real application sensing path.
 
 #include "ConstructedBeing/CategoryManager.hpp"
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "Person/Body/Body.hpp"
+#include "Person/Person.hpp"
+#include "Person/Soul/Soul.hpp"
 #include "Relation/RelationManager.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "Singularity/Input/Interaction/ControlPatterns.hpp"
@@ -24,7 +41,6 @@
 #include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
-#include <GLFW/glfw3.h>
 #include <cmath>
 #include <cstdio>
 #include <memory>
@@ -65,22 +81,20 @@ bool onOf(Singular& being) {
     return b && *b;
 }
 
+void rect(Object& obj, const std::string& id, float x, float y, float w, float h, int z) {
+    obj.setObjectID(id);
+    Object::ShapeParams p;
+    p.width2D = w;
+    p.height2D = h;
+    obj.setShape(Object::ShapeKind::Shape2D, p);
+    obj.setX2D(x);
+    obj.setY2D(y);
+    obj.setZOrder2D(z);
+}
+
 } // namespace
 
 int main() {
-    if (!glfwInit()) {
-        std::fprintf(stderr, "control_patterns_test: glfwInit failed\n");
-        return 1;
-    }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "control_patterns_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "control_patterns_test: no GL context\n");
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
-
     std::printf("Running control patterns test...\n");
 
     Core::EventBus::instance().subscribe<ECA::Event>([](const ECA::Event& e) {
@@ -549,12 +563,57 @@ int main() {
         check(g_activated.empty(), "and the button law correctly does not reach it");
     }
 
+    // ------------------------------------------------------------------
+    // 8. WITNESS GAP VERIFICATION: Real application path traversal.
+    //    Exercise InteractionChannel::setPointingPerson + observePending
+    //    -> EventBus edge publishing -> LawManager::tick() -> Control Law.
+    // ------------------------------------------------------------------
+    {
+        // Restore category if it was removed in test 7
+        cats.create(Control::kCategoryButton);
+        seedControlCategories(cats, author);
+
+        Soul playerSoul("Zach");
+        Body playerBody("humanoid", "default");
+        Person player(std::move(playerSoul), std::move(playerBody), "default");
+
+        channel.setPointingPerson(&player);
+        PropertyValue pid;
+        check(PropertyPath::parse("personId").getValue(channel, pid) == PropertyPath::PathResult::Ok &&
+              std::get<std::string>(pid) == player.getIdentifier(),
+              "InteractionChannel acknowledges pointing Person ID via law property");
+
+        Object realButton;
+        rect(realButton, "real-path-button", 10.0f, 10.0f, 50.0f, 50.0f, 0);
+        world.push_back(&realButton);
+        makeControl(realButton, Control::kCategoryButton, cats);
+
+        g_activated.clear();
+
+        // Frame 1: Pointer presses down on the 2D button
+        InteractionChannel::Sense pressSense;
+        pressSense.pointerX = 25.0f;
+        pressSense.pointerY = 25.0f;
+        pressSense.left = true;
+        pressSense.rayOrigin = glm::vec3(0.0f, 0.0f, 1e6f);
+        pressSense.rayDirection = glm::vec3(0.0f, 0.0f, 1.0f);
+        channel.observePending(pressSense, world);
+
+        // Frame 2: Pointer releases on the 2D button (completing click gesture)
+        InteractionChannel::Sense releaseSense = pressSense;
+        releaseSense.left = false;
+        channel.observePending(releaseSense, world);
+
+        // Tick the Law network to process the published object-clicked event
+        laws.tick();
+
+        check(g_activated.size() == 1 && g_activated[0] == "real-path-button",
+              "real path (InteractionChannel::observePending -> EventBus -> LawManager) activates the button");
+    }
+
     Universe::instance().setProvider({});
     Universe::instance().setRelationProvider({});
     Universe::instance().setRelationRegistrar({});
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
 
     if (g_failures) {
         std::printf("control_patterns_test: %d FAILURES\n", g_failures);
