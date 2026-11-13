@@ -90,3 +90,15 @@ Person/Zone hold the Formation; tests hold the refusals.
 authoring a full liturgical ladder in C++; unsealing Formation membership in
 general (near-term 3); turning ranking into authored Law (the walk is first-mover
 query, like `resolveTopology`).
+
+## Addendum: First Mover Authoring and the Hierarchy of Joys
+
+**Interrelated Documents:**
+* `../law/FIRST_MOVER_AUTHORING.md`
+* `../ontology/HIERARCHY_OF_JOYS.md`
+
+### Thoughts on Integration and Interrelation
+
+The Hierarchy of Joys relies fundamentally on First Mover Authoring to exist without violating the core architectural rules of Earthcall. Because Earthcall refuses to hardcode teleology as a C++ class (e.g., `HierarchyOfJoys`), the root of the hierarchy and its initial direction must be bootstrapped from outside the C++ compile step.
+
+First Mover JSON payloads serve as this ontological seed. They author the foundational root Lexeme (such as `lexeme.christ`) and define the `hierarchy-of-joys` Relation tag. This means the ultimate teleological ordering of the Ourverse is established purely as a data-driven, First Mover-authored construct. By intertwining these two concepts, Earthcall ensures that its moral and structural compass remains in the authorable substrate, governed by First Mover permissions, rather than being trapped in immutable engine logic.
