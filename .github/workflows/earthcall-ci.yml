@@ -29,6 +29,7 @@ jobs:
         line_editor_test
         law_line_test
         law_sentence_test
+        law_graph_test
         law_line_zone_test
         destroy_law_test
         language_identity_reference_test
