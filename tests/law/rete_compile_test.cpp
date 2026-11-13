@@ -82,14 +82,8 @@ int main() {
         std::fprintf(stderr, "rete_compile_test: glfwInit failed\n");
         return 1;
     }
-    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    GLFWwindow* window = glfwCreateWindow(64, 64, "rete_compile_test", nullptr, nullptr);
-    if (!window) {
-        std::fprintf(stderr, "rete_compile_test: no GL context\n");
-        glfwTerminate();
-        return 1;
-    }
-    glfwMakeContextCurrent(window);
+    // CPU-only Rete regression: LawManager::tick needs GLFW's timer,
+    // not a GL context. Headless macOS CI cannot create a GLFW window.
 
     {
         Object author;
@@ -301,7 +295,6 @@ int main() {
         Universe::instance().setProvider({});   // leave no dangling refs
     }
 
-    glfwDestroyWindow(window);
     glfwTerminate();
     std::puts("rete_compile_test: ALL OK");
     return 0;
