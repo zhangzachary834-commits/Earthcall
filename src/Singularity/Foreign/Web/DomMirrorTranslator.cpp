@@ -289,6 +289,71 @@ bool DomMirrorTranslator::applyDelta(const DomDelta& delta, std::string* outErro
 
     auto& language = Singularity::Language::LanguageSystem::instance();
 
+    // Reconcile an attribute's complete relational occurrence before replacement or removal.
+    auto removeAttributeOccurrence = [&](const std::string& nodeToken, const std::string& attributeName) {
+                auto nodeForm = findNodeFormation(nodeToken);
+                if (nodeForm) {
+                    std::shared_ptr<Relation> attrRel;
+                    std::shared_ptr<Relation> valRel;
+                    Singularity::Language::Lexeme* attrLex = nullptr;
+                    Singularity::Language::Lexeme* valLex = nullptr;
+
+                    for (const auto& rel : nodeForm->relations().getAll()) {
+                        if (rel->typeLabel() == DomRelationType::kHasAttribute) {
+                            auto* target = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
+                            if (target && target->getSymbol() == attributeName) {
+                                attrRel = rel;
+                                attrLex = target;
+                                break;
+                            }
+                        }
+                    }
+                    if (attrLex) {
+                        for (const auto& rel : nodeForm->relations().getAll()) {
+                            if (rel->typeLabel() == DomRelationType::kHasValue && rel->a() == attrLex) {
+                                valRel = rel;
+                                valLex = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
+                                break;
+                            }
+                        }
+                    }
+
+                    if (attrRel) {
+                        nodeForm->removeRelation(attrRel);
+                        auto& nodeRels = _nodeRelations[nodeToken];
+                        nodeRels.erase(std::remove(nodeRels.begin(), nodeRels.end(), attrRel), nodeRels.end());
+                        _allSessionRelations.erase(std::remove(_allSessionRelations.begin(), _allSessionRelations.end(), attrRel), _allSessionRelations.end());
+                    }
+                    if (valRel) {
+                        nodeForm->removeRelation(valRel);
+                        auto& nodeRels = _nodeRelations[nodeToken];
+                        nodeRels.erase(std::remove(nodeRels.begin(), nodeRels.end(), valRel), nodeRels.end());
+                        _allSessionRelations.erase(std::remove(_allSessionRelations.begin(), _allSessionRelations.end(), valRel), _allSessionRelations.end());
+                    }
+
+                    if (attrLex) {
+                        std::string stableId = "@" + attrLex->getIdentifier();
+                        nodeForm->releaseMember(attrLex);
+                        language.remove(stableId);
+
+                        _allSessionLexemes.erase(
+                            std::remove_if(_allSessionLexemes.begin(), _allSessionLexemes.end(),
+                                [&](const std::shared_ptr<Singularity::Language::Lexeme>& l) { return l.get() == attrLex; }),
+                            _allSessionLexemes.end());
+                    }
+                    if (valLex) {
+                        std::string stableId = "@" + valLex->getIdentifier();
+                        nodeForm->releaseMember(valLex);
+                        language.remove(stableId);
+
+                        _allSessionLexemes.erase(
+                            std::remove_if(_allSessionLexemes.begin(), _allSessionLexemes.end(),
+                                [&](const std::shared_ptr<Singularity::Language::Lexeme>& l) { return l.get() == valLex; }),
+                            _allSessionLexemes.end());
+                    }
+                }
+    };
+
     for (const auto& rec : delta.records) {
         switch (rec.kind) {
             case DomDeltaKind::TextChange: {
@@ -307,6 +372,7 @@ bool DomMirrorTranslator::applyDelta(const DomDelta& delta, std::string* outErro
                 auto nodeForm = findNodeFormation(rec.targetNodeToken);
                 auto nodeLexeme = findNodeLexeme(rec.targetNodeToken);
                 if (nodeForm && nodeLexeme) {
+                    removeAttributeOccurrence(rec.targetNodeToken, rec.attributeName);
                     size_t newIndex = _nextAttributeIndex[rec.targetNodeToken]++;
                     std::string attrId = makeAttrLexemeId(_pageSessionId, rec.targetNodeToken, newIndex);
                     std::string valId = makeAttrValLexemeId(_pageSessionId, rec.targetNodeToken, newIndex);
@@ -347,67 +413,7 @@ bool DomMirrorTranslator::applyDelta(const DomDelta& delta, std::string* outErro
             }
 
             case DomDeltaKind::AttributeRemove: {
-                auto nodeForm = findNodeFormation(rec.targetNodeToken);
-                if (nodeForm) {
-                    std::shared_ptr<Relation> attrRel;
-                    std::shared_ptr<Relation> valRel;
-                    Singularity::Language::Lexeme* attrLex = nullptr;
-                    Singularity::Language::Lexeme* valLex = nullptr;
-
-                    for (const auto& rel : nodeForm->relations().getAll()) {
-                        if (rel->typeLabel() == DomRelationType::kHasAttribute) {
-                            auto* target = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
-                            if (target && target->getSymbol() == rec.attributeName) {
-                                attrRel = rel;
-                                attrLex = target;
-                                break;
-                            }
-                        }
-                    }
-                    if (attrLex) {
-                        for (const auto& rel : nodeForm->relations().getAll()) {
-                            if (rel->typeLabel() == DomRelationType::kHasValue && rel->a() == attrLex) {
-                                valRel = rel;
-                                valLex = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
-                                break;
-                            }
-                        }
-                    }
-
-                    if (attrRel) {
-                        nodeForm->removeRelation(attrRel);
-                        auto& nodeRels = _nodeRelations[rec.targetNodeToken];
-                        nodeRels.erase(std::remove(nodeRels.begin(), nodeRels.end(), attrRel), nodeRels.end());
-                        _allSessionRelations.erase(std::remove(_allSessionRelations.begin(), _allSessionRelations.end(), attrRel), _allSessionRelations.end());
-                    }
-                    if (valRel) {
-                        nodeForm->removeRelation(valRel);
-                        auto& nodeRels = _nodeRelations[rec.targetNodeToken];
-                        nodeRels.erase(std::remove(nodeRels.begin(), nodeRels.end(), valRel), nodeRels.end());
-                        _allSessionRelations.erase(std::remove(_allSessionRelations.begin(), _allSessionRelations.end(), valRel), _allSessionRelations.end());
-                    }
-
-                    if (attrLex) {
-                        std::string stableId = "@" + attrLex->getIdentifier();
-                        nodeForm->releaseMember(attrLex);
-                        language.remove(stableId);
-
-                        _allSessionLexemes.erase(
-                            std::remove_if(_allSessionLexemes.begin(), _allSessionLexemes.end(),
-                                [&](const std::shared_ptr<Singularity::Language::Lexeme>& l) { return l.get() == attrLex; }),
-                            _allSessionLexemes.end());
-                    }
-                    if (valLex) {
-                        std::string stableId = "@" + valLex->getIdentifier();
-                        nodeForm->releaseMember(valLex);
-                        language.remove(stableId);
-
-                        _allSessionLexemes.erase(
-                            std::remove_if(_allSessionLexemes.begin(), _allSessionLexemes.end(),
-                                [&](const std::shared_ptr<Singularity::Language::Lexeme>& l) { return l.get() == valLex; }),
-                            _allSessionLexemes.end());
-                    }
-                }
+                removeAttributeOccurrence(rec.targetNodeToken, rec.attributeName);
                 break;
             }
 
