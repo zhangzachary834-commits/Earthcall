@@ -236,6 +236,60 @@ int main() {
         assert(!removedLinked);
     }
 
+    // 5.7 Repeated set replaces the previous occurrence and remove clears the final one.
+    {
+        const std::string prefix = "page-session.a91f4b2c.";
+        for (int sequence = 5; sequence <= 6; ++sequence) {
+            nlohmann::json j = {
+                {"protocolVersion", 1}, {"pageSessionId", "page-session.a91f4b2c"},
+                {"sequence", sequence}, {"records", {{
+                    {"kind", "attribute-set"}, {"targetNodeToken", "node.6"},
+                    {"attributeName", "data-repeat"},
+                    {"attributeValue", sequence == 5 ? "first" : "second"}
+                }}}
+            };
+            auto delta = DomDelta::fromJson(j);
+            assert(delta.validate().valid);
+            std::string err;
+            assert(translator.applyDelta(delta, &err));
+            assert(err.empty());
+        }
+        auto form = translator.findNodeFormation("node.6");
+        assert(form != nullptr);
+        assert(language.findById(prefix + "attr.node.6.3") == nullptr);
+        assert(language.findById(prefix + "attrval.node.6.3") == nullptr);
+        assert(language.findById(prefix + "attr.node.6.4") != nullptr);
+        assert(language.findById(prefix + "attrval.node.6.4") != nullptr);
+        int repeatedLinks = 0;
+        for (const auto& rel : form->relations().getAll()) {
+            if (rel->typeLabel() != DomRelationType::kHasAttribute) continue;
+            auto* attr = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
+            if (attr && attr->getSymbol() == "data-repeat") ++repeatedLinks;
+        }
+        assert(repeatedLinks == 1);
+        nlohmann::json j = {
+            {"protocolVersion", 1}, {"pageSessionId", "page-session.a91f4b2c"},
+            {"sequence", 7}, {"records", {{
+                {"kind", "attribute-remove"}, {"targetNodeToken", "node.6"},
+                {"attributeName", "data-repeat"}
+            }}}
+        };
+        auto delta = DomDelta::fromJson(j);
+        assert(delta.validate().valid);
+        std::string err;
+        assert(translator.applyDelta(delta, &err));
+        assert(err.empty());
+        assert(language.findById(prefix + "attr.node.6.4") == nullptr);
+        assert(language.findById(prefix + "attrval.node.6.4") == nullptr);
+        assert(language.findById(prefix + "attr.node.6.1") != nullptr);
+        assert(language.findById(prefix + "attrval.node.6.1") != nullptr);
+        for (const auto& rel : form->relations().getAll()) {
+            if (rel->typeLabel() != DomRelationType::kHasAttribute) continue;
+            auto* attr = dynamic_cast<Singularity::Language::Lexeme*>(rel->b());
+            assert(!attr || attr->getSymbol() != "data-repeat");
+        }
+    }
+
     // 6. Navigation / Retirement Lifecycle
     {
         // Prove retire completely clears live mirror
