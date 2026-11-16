@@ -828,7 +828,12 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
                          std::to_string(node.children.size()));
                 return "vec3<f32>(0.0)";
             }
-            return "vec3<f32>(" + arg(0) + ", " + arg(1) + ", " + arg(2) + ")";
+            // Parameter allocation is an execution ABI. Evaluate children in
+            // authored order rather than relying on C++ operand evaluation order.
+            const std::string x = arg(0);
+            const std::string y = arg(1);
+            const std::string z = arg(2);
+            return "vec3<f32>(" + x + ", " + y + ", " + z + ")";
         }
         case Op::Component: {
             if (node.stringArg != "x" && node.stringArg != "y" && node.stringArg != "z") {
@@ -837,15 +842,33 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
             }
             return "(" + arg(0) + ")." + node.stringArg;
         }
-        case Op::Add:      return "(" + arg(0) + " + " + arg(1) + ")";
-        case Op::Sub:      return "(" + arg(0) + " - " + arg(1) + ")";
+        case Op::Add: {
+            const std::string a = arg(0), b = arg(1);
+            return "(" + a + " + " + b + ")";
+        }
+        case Op::Sub: {
+            const std::string a = arg(0), b = arg(1);
+            return "(" + a + " - " + b + ")";
+        }
         // Scale covers scalar*vector, vector*scalar AND scalar*scalar; WGSL's
         // `*` is the same three, which is why the CPU evaluator was widened to
         // match instead of the emitter being narrowed.
-        case Op::Scale:    return "(" + arg(0) + " * " + arg(1) + ")";
-        case Op::Dot:      return "dot(" + arg(0) + ", " + arg(1) + ")";
-        case Op::Cross:    return "cross(" + arg(0) + ", " + arg(1) + ")";
-        case Op::Hadamard: return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::Scale: {
+            const std::string a = arg(0), b = arg(1);
+            return "(" + a + " * " + b + ")";
+        }
+        case Op::Dot: {
+            const std::string a = arg(0), b = arg(1);
+            return "dot(" + a + ", " + b + ")";
+        }
+        case Op::Cross: {
+            const std::string a = arg(0), b = arg(1);
+            return "cross(" + a + ", " + b + ")";
+        }
+        case Op::Hadamard: {
+            const std::string a = arg(0), b = arg(1);
+            return "(" + a + " * " + b + ")";
+        }
         case Op::Normalize:return "normalize(" + arg(0) + ")";
         case Op::Length:   return "length(" + arg(0) + ")";
         case Op::Map: {
@@ -881,10 +904,14 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
                    ") / dot(" + vb + ", " + vb + "))), length(" + vb + ") >= " +
                    wgslLiteral(OntoMath::kDegenerateVectorLength) + ")";
         }
-        case Op::Distance: return "distance(" + arg(0) + ", " + arg(1) + ")";
+        case Op::Distance: {
+            const std::string a = arg(0), b = arg(1);
+            return "distance(" + a + ", " + b + ")";
+        }
         case Op::Div: {
+            const std::string a = arg(0);
             const std::string b = arg(1);
-            return "select(0.0, ((" + arg(0) + ") / (" + b + ")), abs(" + b + ") >= " + wgslLiteral(OntoMath::kDegenerateDivisor) + ")";
+            return "select(0.0, ((" + a + ") / (" + b + ")), abs(" + b + ") >= " + wgslLiteral(OntoMath::kDegenerateDivisor) + ")";
         }
         case Op::Pow: {
             if (node.children.size() != 2 || !node.children[0] || !node.children[1]) {
@@ -904,10 +931,17 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
             const auto type = node.children[0]->typeOf(env, "pow.base", false);
             const std::string fn = type.success && type.kind == OntoMath::ValueKind::Vector
                 ? "ontoPow3" : "ontoPow";
-            return fn + "((" + arg(0) + "), (" + arg(1) + "))";
+            const std::string a = arg(0);
+            const std::string b = arg(1);
+            return fn + "((" + a + "), (" + b + "))";
         }
         case Op::Abs:   return "abs(" + arg(0) + ")";
-        case Op::Clamp: return "clamp((" + arg(0) + "), (" + arg(1) + "), (" + arg(2) + "))";
+        case Op::Clamp: {
+            const std::string value = arg(0);
+            const std::string lo = arg(1);
+            const std::string hi = arg(2);
+            return "clamp((" + value + "), (" + lo + "), (" + hi + "))";
+        }
         case Op::Sqrt:  return "sqrt(max((" + arg(0) + "), 0.0))";
         case Op::Tan:   return "tan(" + arg(0) + ")";
         case Op::Noise: return "cnoise3(" + arg(0) + ")";
@@ -916,9 +950,18 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
         // Character-identical to what emitNode() below emits for
         // geom::SdfOp::Union / Intersect / Subtract, and to what evalSdf
         // computes on the CPU. One vocabulary, written in two syntaxes.
-        case Op::Union:        return "min(" + arg(0) + ", " + arg(1) + ")";
-        case Op::Intersection: return "max(" + arg(0) + ", " + arg(1) + ")";
-        case Op::Difference:   return "max(" + arg(0) + ", -(" + arg(1) + "))";
+        case Op::Union: {
+            const std::string a = arg(0), b = arg(1);
+            return "min(" + a + ", " + b + ")";
+        }
+        case Op::Intersection: {
+            const std::string a = arg(0), b = arg(1);
+            return "max(" + a + ", " + b + ")";
+        }
+        case Op::Difference: {
+            const std::string a = arg(0), b = arg(1);
+            return "max(" + a + ", -(" + b + "))";
+        }
 
         // --- Sampling a field expression elsewhere -------------------------
         // SDF(f, q) is f with the ambient point substituted by q. The emitter
@@ -1004,11 +1047,26 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
             }
             return out + ")";
         }
-        case Op::MatrixAdd: return "(" + arg(0) + " + " + arg(1) + ")";
-        case Op::MatrixSub: return "(" + arg(0) + " - " + arg(1) + ")";
-        case Op::MatrixScale: return "(" + arg(0) + " * " + arg(1) + ")";
-        case Op::MatrixMultiply: return "(" + arg(0) + " * " + arg(1) + ")";
-        case Op::MatrixVectorMultiply: return "(" + arg(0) + " * " + arg(1) + ")";
+        case Op::MatrixAdd: {
+            const std::string a = arg(0), b = arg(1);
+            return "(" + a + " + " + b + ")";
+        }
+        case Op::MatrixSub: {
+            const std::string a = arg(0), b = arg(1);
+            return "(" + a + " - " + b + ")";
+        }
+        case Op::MatrixScale: {
+            const std::string a = arg(0), b = arg(1);
+            return "(" + a + " * " + b + ")";
+        }
+        case Op::MatrixMultiply: {
+            const std::string a = arg(0), b = arg(1);
+            return "(" + a + " * " + b + ")";
+        }
+        case Op::MatrixVectorMultiply: {
+            const std::string a = arg(0), b = arg(1);
+            return "(" + a + " * " + b + ")";
+        }
         case Op::MatrixTranspose: return "transpose(" + arg(0) + ")";
         case Op::MatrixDeterminant: return "determinant(" + arg(0) + ")";
         case Op::MatrixInverse: {
@@ -8248,7 +8306,13 @@ Program compile(const geom::SdfNode& root,
 
     Program prog;
     prog.wgsl = std::string(kSdfBindings) + kPrimitives;
-    if (needsNoise) {
+    // CompleteScene embeds the generic foreign-blocker Field VM below. That VM
+    // admits MathNoise3 regardless of whether this receiver's own authored
+    // channels use Noise, so cnoise3 must remain link-complete for every shader
+    // carrying the VM. `needsNoise` still records local authored use; helper
+    // availability is a separate execution dependency.
+    const bool fieldVmNeedsNoise = true;
+    if (needsNoise || fieldVmNeedsNoise) {
         prog.wgsl += kPerlinNoiseFunctions;
     }
 
