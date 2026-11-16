@@ -1820,6 +1820,18 @@ fn cnoise3_grad(P: vec3<f32>) -> PerlinJet {
 }
 )WGSL";
 
+const std::string& scalarPerlinNoiseFunctions() {
+    static const std::string scalar = [] {
+        std::string all(kPerlinNoiseFunctions);
+        const std::size_t gradient =
+            all.find("\nfn cnoise3_grad(P: vec3<f32>) -> PerlinJet");
+        return gradient == std::string::npos
+            ? all
+            : all.substr(0, gradient);
+    }();
+    return scalar;
+}
+
 bool sdfNodeContainsNoise(const geom::SdfNode& n) {
     if (n.op == geom::SdfOp::Leaf) {
         if (n.prim == geom::SdfPrim::Expr) {
@@ -8327,8 +8339,15 @@ Program compile(const geom::SdfNode& root,
     // carrying the VM. `needsNoise` still records local authored use; helper
     // availability is a separate execution dependency.
     const bool fieldVmNeedsNoise = true;
-    if (needsNoise || fieldVmNeedsNoise) {
+    const bool geometryNeedsAnalyticNoiseGradient =
+        hasAnalyticGrad && sdfNodeContainsNoise(root);
+    if (geometryNeedsAnalyticNoiseGradient) {
         prog.wgsl += kPerlinNoiseFunctions;
+    } else if (needsNoise || fieldVmNeedsNoise) {
+        // Non-geometry authored channels and the generic foreign-blocker VM
+        // need scalar noise only. Keep the expensive analytic gradient body out
+        // of shaders whose own surface geometry cannot call it.
+        prog.wgsl += scalarPerlinNoiseFunctions();
     }
 
     if (hasAnalyticGrad) {
