@@ -1790,17 +1790,31 @@ int main() {
               oneSource.wgsl.find("sceneTriangles[base + 2u]") !=
                   std::string::npos,
               "one-source direct transport consumes only known V and carries exact shared triangle execution math");
-        check(oneSource.wgsl.find(
-                  "fn cohortOtherInstanceVisibility") != std::string::npos &&
-              oneSource.wgsl.find("arrayLength(&instances)") !=
-                  std::string::npos &&
-              oneSource.wgsl.find("g_instIdx = i") !=
-                  std::string::npos &&
-              oneSource.wgsl.find("g_instIdx = savedIndex") !=
-                  std::string::npos &&
-              oneSource.wgsl.find(
-                  "cohortOtherInstanceVisibility(surfaceWorld, sourceWorld, receiverIndex)") !=
-                  std::string::npos,
+        const auto cohortFn =
+            oneSource.wgsl.find("fn cohortOtherInstanceVisibility(");
+        const auto cohortSaved =
+            oneSource.wgsl.find("let savedIndex = g_instIdx", cohortFn);
+        const auto cohortSwap =
+            oneSource.wgsl.find("g_instIdx = i", cohortSaved);
+        const auto cohortRestore =
+            oneSource.wgsl.find("g_instIdx = savedIndex", cohortSwap);
+        const auto sourceVisibilityFn =
+            oneSource.wgsl.find("fn sourceVisibility(", cohortFn);
+        const auto cohortFinalRestore =
+            oneSource.wgsl.rfind("g_instIdx = savedIndex", sourceVisibilityFn);
+        const auto cohortCall =
+            oneSource.wgsl.find("cohortOtherInstanceVisibility(", sourceVisibilityFn);
+        const auto receiverRestore =
+            oneSource.wgsl.find("g_instIdx = receiverIndex", cohortCall);
+        check(cohortFn != std::string::npos &&
+              cohortSaved != std::string::npos &&
+              cohortSwap != std::string::npos &&
+              cohortRestore != std::string::npos &&
+              cohortFinalRestore != std::string::npos &&
+              cohortFinalRestore < sourceVisibilityFn &&
+              cohortCall != std::string::npos &&
+              receiverRestore != std::string::npos &&
+              cohortCall < receiverRestore,
               "CompleteScene SDF visibility evaluates every instance in the admitted same-program cohort and restores receiver authority");
         check(oneSource.wgsl.find(
                   "fn localSourceVisibility(") != std::string::npos &&
@@ -1834,23 +1848,27 @@ int main() {
                   "fieldVmEval(programBase, instructionCount") !=
                   std::string::npos,
               "CompleteScene carries bounded foreign field-program VM execution math");
-        const auto cohortVisibilityUse =
-            oneSource.wgsl.find(
-                "cohortOtherInstanceVisibility(surfaceWorld, sourceWorld, receiverIndex)");
+        const auto cohortVisibilityUse = cohortCall;
+        const auto foreignVisibilityLabel =
+            oneSource.wgsl.find("let foreignVm =", receiverRestore);
         const auto foreignVisibilityUse =
             oneSource.wgsl.find(
-                "sceneFieldVmVisibility(surfaceWorld, sourceWorld)",
-                cohortVisibilityUse);
+                "sceneFieldVmVisibility(", foreignVisibilityLabel);
+        const auto meshVisibilityLabel =
+            oneSource.wgsl.find("let meshV =", foreignVisibilityUse);
         const auto meshVisibilityUse =
             oneSource.wgsl.find(
-                "sceneMeshVisibility(surfaceWorld, sourceWorld)",
-                foreignVisibilityUse);
+                "sceneMeshVisibility(", meshVisibilityLabel);
         check(cohortVisibilityUse != std::string::npos &&
+                  receiverRestore != std::string::npos &&
+                  foreignVisibilityLabel != std::string::npos &&
                   foreignVisibilityUse != std::string::npos &&
+                  meshVisibilityLabel != std::string::npos &&
                   meshVisibilityUse != std::string::npos &&
-                  cohortVisibilityUse < foreignVisibilityUse &&
+                  cohortVisibilityUse < receiverRestore &&
+                  receiverRestore < foreignVisibilityUse &&
                   foreignVisibilityUse < meshVisibilityUse,
-              "CompleteScene composes own exact SDF cohort, foreign field-program VM blockers, then mesh triangles");
+              "CompleteScene composes own exact SDF cohort, restores receiver authority, executes foreign field-program VM blockers, then mesh triangles");
         const auto oneEnvironment =
             oneSource.wgsl.find("legacyEnvironment");
         const auto oneDirect =
@@ -2702,8 +2720,11 @@ int main() {
                   csgProg.wgsl.find("sdCone(p + vec3<f32>") == std::string::npos &&
                   csgProg.wgsl.find("sdEllipsoid(p + vec3<f32>") == std::string::npos,
               "primitive gradient functions use 1-pass analytical formulas without 6-tap finite differences");
-        check(csgProg.wgsl.find("return sdfEvalGrad(p).value;") == std::string::npos,
-              "sdfEval(p) is emitted as a standalone scalar evaluator rather than delegating to sdfEvalGrad(p)");
+        check(csgProg.wgsl.find("return sdfEvalGrad(p).value;") == std::string::npos &&
+                  csgProg.wgsl.find(
+                      "fn sdfEval(p: vec3<f32>) -> f32 {\n    let paramOffset = instances[g_instIdx].paramOffset;") !=
+                      std::string::npos,
+              "sdfEval(p) retains an independent scalar evaluator with the same deterministic parameter ABI as sdfEvalGrad(p)");
 
         // 6. Rung 3 Closed-Form Root Hit Witness
         {
@@ -2864,19 +2885,41 @@ int main() {
                   "WGSL is byte-identical across parameter mutation on pruned Subtract tree");
         }
 
-        // 10. Rung 6B Conditional Perlin Noise Stripping in SdfWgsl
+        // 10. Rung 6B local-noise isolation + CompleteScene Field-VM linkage.
+        // A pure receiver no longer implies a noise-free WHOLE shader: the same
+        // pipeline can execute a foreign blocker whose admitted Field-VM program
+        // contains MathNoise3. Local geometry must stay pure while the shared VM
+        // remains link-complete.
         {
             auto pureSphere = geom::SdfNode::leaf(geom::SdfPrim::Sphere, glm::vec3(1.0f));
             const auto pureProg = sdfwgsl::compile(pureSphere);
             check(pureProg.ok, "pureSphere compiles");
-            check(pureProg.wgsl.find("cnoise3") == std::string::npos,
-                  "pure geometry SDF strips unused cnoise3 and cnoise3_grad from WGSL");
+            const auto pureEvalBegin =
+                pureProg.wgsl.find("fn sdfEval(p: vec3<f32>) -> f32 {");
+            const auto pureEvalEnd =
+                pureProg.wgsl.find("\n}\n", pureEvalBegin);
+            const std::string pureEval =
+                (pureEvalBegin != std::string::npos &&
+                 pureEvalEnd != std::string::npos)
+                    ? pureProg.wgsl.substr(
+                          pureEvalBegin, pureEvalEnd - pureEvalBegin)
+                    : std::string{};
+            check(!pureEval.empty() &&
+                      pureEval.find("cnoise3(") == std::string::npos &&
+                      pureProg.wgsl.find(
+                          "fn cnoise3(P: vec3<f32>) -> f32") !=
+                          std::string::npos &&
+                      pureProg.wgsl.find("value = cnoise3(v)") !=
+                          std::string::npos,
+                  "pure local SDF emits no noise call while generic foreign-blocker VM retains a defined Noise execution dependency");
 
             auto noiseExpr = geom::makeImplicit(terrainMath(40.0));
             const auto noiseProg = sdfwgsl::compile(noiseExpr);
             check(noiseProg.ok, "noiseExpr compiles");
-            check(noiseProg.wgsl.find("fn cnoise3(P: vec3<f32>) -> f32") != std::string::npos,
-                  "noise-dependent SDF includes cnoise3 definition in WGSL");
+            check(noiseProg.wgsl.find("fn cnoise3(P: vec3<f32>) -> f32") != std::string::npos &&
+                      noiseProg.wgsl.find("cnoise3(") !=
+                          noiseProg.wgsl.find("fn cnoise3(P: vec3<f32>) -> f32"),
+                  "noise-dependent SDF includes and consumes cnoise3 in WGSL");
         }
 
         // 11. Rung 7 OntoMath Irreducible 1D Ray-Domain Compilation & Rung 8A Left-Heavy CSG Pruning
