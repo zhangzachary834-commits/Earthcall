@@ -2916,10 +2916,22 @@ int main() {
             auto noiseExpr = geom::makeImplicit(terrainMath(40.0));
             const auto noiseProg = sdfwgsl::compile(noiseExpr);
             check(noiseProg.ok, "noiseExpr compiles");
-            check(noiseProg.wgsl.find("fn cnoise3(P: vec3<f32>) -> f32") != std::string::npos &&
-                      noiseProg.wgsl.find("cnoise3(") !=
-                          noiseProg.wgsl.find("fn cnoise3(P: vec3<f32>) -> f32"),
-                  "noise-dependent SDF includes and consumes cnoise3 in WGSL");
+            const auto noiseEvalBegin =
+                noiseProg.wgsl.find("fn sdfEval(p: vec3<f32>) -> f32 {");
+            const auto noiseEvalEnd =
+                noiseProg.wgsl.find("\n}\n", noiseEvalBegin);
+            const std::string noiseEval =
+                (noiseEvalBegin != std::string::npos &&
+                 noiseEvalEnd != std::string::npos)
+                    ? noiseProg.wgsl.substr(
+                          noiseEvalBegin, noiseEvalEnd - noiseEvalBegin)
+                    : std::string{};
+            check(noiseProg.wgsl.find(
+                          "fn cnoise3(P: vec3<f32>) -> f32") !=
+                          std::string::npos &&
+                      !noiseEval.empty() &&
+                      noiseEval.find("cnoise3(") != std::string::npos,
+                  "noise-dependent local SDF includes and consumes cnoise3 in WGSL");
         }
 
         // 11. Rung 7 OntoMath Irreducible 1D Ray-Domain Compilation & Rung 8A Left-Heavy CSG Pruning
