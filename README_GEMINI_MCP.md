@@ -1,129 +1,242 @@
-# Earthcall Gemini Local MCP Bridge
+# Earthcall Gemini MCP Gate — Vision + Disposable Laboratory
 
-A read-only MCP gateway that restores Gemini's ability to inspect the **actual local Earthcall checkout** even when Gemini Tasks' native Mac folder binding is missing.
+This bridge restores Gemini Tasks' ability to inspect the **actual local Earthcall checkout** and adds a tightly bounded execution laboratory for experiments and tests.
 
-## Why this exists
-
-Earthcall already has a powerful MCP bridge for interacting with the live world and First Mover system. This gateway is intentionally separate: it exposes only source-workspace observation tools over a remote HTTPS MCP endpoint so a Gemini Task can read local files and local git state without exposing Earthcall's mutation-capable world tools to the public internet.
-
-The server uses the repository's existing `@modelcontextprotocol/sdk` v1 line, which implements MCP through `2025-11-25` — the same maximum protocol revision currently documented by Google's Connected Apps Platform. Gemini requires Streamable HTTP at a public HTTPS endpoint.
-
-## Tools
-
-- `earthcall_list_directory` — enumerate a directory inside the Earthcall checkout.
-- `earthcall_read_file` — read a UTF-8 text file with line numbers and paging.
-- `earthcall_search_text` — literal text search across the local checkout, with glob filtering.
-- `earthcall_git_status` — inspect local/uncommitted working-tree state.
-- `earthcall_git_diff` — inspect local or staged diffs, optionally scoped to a path.
-
-Every tool is read-only and carries MCP `readOnlyHint` / non-destructive annotations.
-
-## Safety boundary
-
-The root jail is enforced in code, not by prompt. Canonical paths must remain under `EARTHCALL_MCP_ROOT`; symlink escapes and `..` traversal are refused. The bridge also refuses secret-like paths such as `.env`, private-key formats, `.git`, `.ssh`, and `secrets/` by default. Binary files are not returned. Search skips bulky generated trees including `.git`, `node_modules`, and `build`.
-
-The HTTP server binds to `127.0.0.1` by default. Remote access is expected to arrive through an HTTPS tunnel. A minimum-24-character bearer token is mandatory. For the Gemini custom-app bootstrap flow, the launcher carries this token in the endpoint query string because Gemini Developer Mode does not provide an arbitrary-header field. Treat the complete endpoint URL as a secret.
-
-For long-lived use, replace the temporary bearer-URL mechanism with OAuth 2.1 / PKCE using Gemini Connected Apps' supported authentication flow.
-
-## Fastest macOS setup
-
-From the Earthcall repository:
-
-```bash
-npm install
-brew install cloudflared
-./scripts/start-gemini-mcp.sh
-```
-
-The launcher:
-
-1. Finds or creates a 256-bit token. On macOS it stores the token in Keychain under service `earthcall-gemini-mcp`.
-2. Starts the read-only MCP server on `127.0.0.1:8765`.
-3. Starts a temporary Cloudflare Quick Tunnel.
-4. Prints the complete Gemini MCP URL.
-
-Then open Gemini on the web:
-
-1. `Settings` -> `Gemini Apps Developer Mode`.
-2. `Create new` custom MCP app.
-3. Paste the printed `https://...trycloudflare.com/mcp?token=...` URL.
-4. Choose **No authorization** for this temporary bootstrap endpoint.
-5. Confirm that all five Earthcall tools appear.
-6. Save it as something like **Earthcall Local**.
-
-Example test:
-
-```text
-@Earthcall Local list the repository root, inspect git status, then find every file mentioning "Northern Veil".
-```
-
-## Manual server start
-
-If you do not want the launcher:
-
-```bash
-export EARTHCALL_MCP_TOKEN="$(openssl rand -hex 32)"
-export EARTHCALL_MCP_ROOT="/Users/zacharyzhang/Documents/GitHub/Earthcall"
-node scripts/mcp-gemini-server.js
-```
-
-The local endpoint is:
-
-```text
-http://127.0.0.1:8765/mcp?token=<token>
-```
-
-Health check:
-
-```bash
-curl http://127.0.0.1:8765/healthz
-```
-
-Expose only the localhost port through your chosen HTTPS tunnel, then give Gemini the resulting HTTPS `/mcp?token=...` endpoint.
-
-## Configuration
-
-- `EARTHCALL_MCP_ROOT` — root jail; defaults to the repository containing `scripts/mcp-gemini-server.js`.
-- `EARTHCALL_MCP_HOST` — bind host; defaults to `127.0.0.1`.
-- `EARTHCALL_MCP_PORT` — bind port; defaults to `8765`.
-- `EARTHCALL_MCP_TOKEN` — required bearer token, minimum 24 characters.
-- `EARTHCALL_MCP_ALLOW_SENSITIVE=1` — disables secret-like-file refusal. Avoid this for a remotely reachable server.
-
-## Verification
-
-The repository-tools module has Node built-in tests covering:
-
-- root traversal confinement
-- directory listing
-- paged/numbered reads
-- secret and binary refusal
-- literal glob-filtered search
-- symlink escape prevention
-- read-only git status/diff behavior
-
-Run them with:
-
-```bash
-node --test tests/singularity/mcp_gemini_repo_tools_test.js
-```
+The remote Gemini gate observes the real checkout and edits or runs commands inside a disposable sandbox copy. Use the local import command to bring the resulting changes into the checkout.
 
 ## Architecture
 
 ```text
 Gemini Task / Firmament / Hydrogen
               |
-        Streamable HTTP MCP
+       public HTTPS MCP
               |
-       public HTTPS tunnel
+      127.0.0.1:8765
               |
-        127.0.0.1:8765
-              |
-   Earthcall Gemini MCP gateway
-              |
-     hard read-only root jail
-              |
- /Users/zacharyzhang/Documents/GitHub/Earthcall
+  Earthcall Gemini MCP broker
+       /               \
+      /                 \
+ real checkout        disposable lab
+ READ ONLY            WRITE + EXECUTE
+      |                    |
+ root jail           Docker container
+                    network = none
+                    rootfs = read-only
+                    cap-drop = ALL
+                    no-new-privileges
+                    CPU/RAM/PID/time bounds
+                    no Docker socket
+                    no host HOME/secrets
 ```
 
-The existing Earthcall First Mover MCP remains separate and unchanged. This is deliberate: observation can be remotely exposed with a narrow capability surface, while world mutation stays behind Earthcall's Person-authored First Mover authorization boundary.
+The sandbox source copy includes current uncommitted local files, but excludes `.git`, `node_modules`, `build`, caches, and common secret-bearing paths/files (`.env`, `.ssh`, `.aws`, private-key formats, credentials files, etc.). `.env.example` / `.env.sample` remain available as non-secret examples.
+
+## Real-checkout observation tools
+
+- `earthcall_list_directory`
+- `earthcall_read_file`
+- `earthcall_search_text`
+- `earthcall_git_status`
+- `earthcall_git_diff`
+
+These remain read-only and root-jailed to Earthcall.
+
+## Disposable laboratory tools
+
+- `earthcall_get_sandbox_policy` — inspect current approval policy.
+- `earthcall_sandbox_create` — copy the current working tree into a disposable lab session.
+- `earthcall_sandbox_read_file` — inspect the lab copy.
+- `earthcall_sandbox_write_file` — edit only the lab copy.
+- `earthcall_sandbox_run` — execute a structured `argv` in the Docker sandbox.
+- `earthcall_sandbox_diff` — compare the lab copy against the source snapshot.
+- `earthcall_get_approval_status` — inspect a pending/approved/denied request.
+- `earthcall_sandbox_discard` — destroy the lab session.
+
+There is deliberately **no shell-string tool**. Commands are represented as an argv array, e.g.:
+
+```json
+{
+  "argv": ["ctest", "--test-dir", "build", "-R", "mcp"]
+}
+```
+
+A shell interpreter such as `bash` can still be invoked as a program if policy permits, but the default review list makes shell interpreters require manual approval.
+
+## Bring Gemini's changes into your checkout
+
+### Mac app
+
+Open **Earthcall Sandbox Import**, select a session, then review the diff and click
+**Import & Open GitHub Desktop**. Review the imported files in GitHub Desktop's
+**Changes** tab. **Refresh** (⌘R) picks up new sessions and sandbox edits. If the
+patch changes after preview, the app asks you to refresh before importing.
+
+To build the app for this checkout, run `bash scripts/macos/build_sandbox_import_app.sh`.
+It prints the path to the signed `.app` in `build/sandbox-import/`. Open it in Finder
+or copy it into `~/Applications`. The app bundles the importer and uses the
+checkout and Node executable recorded at build time. It calls GitHub Desktop's
+[command-line launcher](https://docs.github.com/en/desktop/overview/launching-github-desktop-from-the-command-line)
+with the checkout path.
+
+### Terminal
+
+From the checkout that created the session, use its label or the ID from `list`:
+
+```bash
+node scripts/earthcall-sandbox-import.js list
+node scripts/earthcall-sandbox-import.js preview horizon-resurrection
+node scripts/earthcall-sandbox-import.js apply horizon-resurrection
+```
+
+`preview` shows the Git diff and checks whether it applies. `apply` brings additions,
+edits, and deletions of regular files into your working tree as unstaged changes.
+It uses the session's creation manifest so uncommitted edits already present when
+Gemini started count as baseline. Existing sessions record file size and modification
+time, so conflict detection depends on those values. The importer retains existing
+executable bits, skips Git-ignored output and submodules, and leaves the sandbox
+available for another preview or apply. It runs locally without Docker or an MCP
+restart.
+
+If a path changed on both sides, the batch stops and prints the conflicting paths.
+Use `--` followed by checkout-relative paths to transfer an unaffected subset:
+
+```bash
+node scripts/earthcall-sandbox-import.js apply horizon-resurrection -- scripts/horizon_resurrection.py
+```
+
+*Codex · GPT-6 · session `01a1e178-dec7-7060-b866-efbe0035660d` ·
+2026-11-15 15:16 PST. Zach requested an end to the “Zach's Fingers Transmission Network.”*
+
+## Approval policy
+
+Policy lives at:
+
+```text
+config/earthcall-gemini-sandbox-policy.json
+```
+
+The server reloads it on each action, so changes apply without restarting the MCP gate.
+
+### File edit modes
+
+- `manual` — every sandbox file edit creates a manual approval request.
+- `auto_sandbox` — every sandbox file edit is automatically accepted. **Default.**
+- `auto_safe_paths` — edits auto-apply except configured path patterns (for example scripts/config/build files).
+
+### Command modes
+
+- `manual` — every command requires local approval.
+- `auto` — all sandbox commands auto-run at the approval layer.
+- `auto_except_review` — commands auto-run except those whose program or argv text matches configured review entries. **Default.**
+
+These modes control *approval friction*, not the sandbox's hard capabilities. Even `commands.mode = auto` does not grant network, host-home access, Docker socket access, or writes to the real Earthcall checkout.
+
+### Convenient local presets
+
+```bash
+node scripts/earthcall-mcp-policy.js show
+node scripts/earthcall-mcp-policy.js lockdown   # manual edits + manual commands
+node scripts/earthcall-mcp-policy.js lab        # auto edits + auto commands except review list
+node scripts/earthcall-mcp-policy.js auto       # auto edits + auto sandbox commands
+```
+
+Add/remove custom review conditions:
+
+```bash
+node scripts/earthcall-mcp-policy.js add-review-token "--hard"
+node scripts/earthcall-mcp-policy.js remove-review-token "--hard"
+node scripts/earthcall-mcp-policy.js add-review-program curl
+node scripts/earthcall-mcp-policy.js remove-review-program curl
+```
+
+The exact-token list is a **policy convenience**, not the security wall. The real boundary is the container capability cage.
+
+## Manual approvals are local-only
+
+If a tool returns:
+
+```text
+status: approval_required
+approval_id: <id>
+```
+
+Gemini cannot approve it. On the Mac, inspect and approve the exact action:
+
+```bash
+node scripts/earthcall-mcp-approve.js <approval-id>
+```
+
+or explicitly:
+
+```bash
+node scripts/earthcall-mcp-approve.js <approval-id> --yes
+node scripts/earthcall-mcp-approve.js <approval-id> --deny
+```
+
+Approval records live outside the repo in Earthcall's local application-state directory. Each approval is cryptographically fingerprinted to the exact action and is one-shot. Changing argv, cwd, path, or file content invalidates the approval.
+
+## Build the laboratory image
+
+Install/start Docker Desktop, then:
+
+```bash
+./scripts/build-gemini-sandbox.sh
+```
+
+This builds `earthcall-sandbox:latest`, based on Node 22 / Debian with common CPU-development tools (`clang`, `cmake`, `ninja`, `git`, `python3`, `ripgrep`, etc.). Building the image may use the network; **runtime sandbox execution uses `--network none` and `--pull=never`.**
+
+The Linux lab is authoritative for generic Node/CPU/build logic, not for native macOS/Metal/WebGPU performance or behavior. Native renderer/performance verification belongs in a later macOS-native/VM execution profile.
+
+## Start the gate
+
+```bash
+npm install
+brew install cloudflared
+./scripts/build-gemini-sandbox.sh
+./scripts/start-gemini-mcp.sh
+```
+
+The launcher obtains/creates a 256-bit access token in macOS Keychain, starts the localhost MCP server, opens a Cloudflare Quick Tunnel, and prints the Gemini MCP URL.
+
+Treat the full `.../mcp?token=...` URL as a secret. Quick Tunnel + query-token authentication is a development/bootstrap configuration, not the desired permanent production design.
+
+## Suggested Firmament test
+
+```text
+@Earthcall Local
+Create a disposable sandbox named "first-lab".
+Read package.json from the sandbox.
+Run ["node", "--version"].
+Then run the Gemini MCP policy/unit tests.
+Show me the resulting sandbox diff.
+Do not modify the real Earthcall checkout.
+```
+
+For a manual-approval demonstration:
+
+```bash
+node scripts/earthcall-mcp-policy.js lockdown
+```
+
+Then ask Gemini to edit a sandbox file or run a command. It should return an approval id rather than executing.
+
+## Verification
+
+```bash
+npm run mcp:gemini:test
+```
+
+The tests cover:
+
+- root/path confinement
+- secret/binary refusal for real-checkout reads
+- sandbox secret exclusion
+- sandbox edits never touching the source repo
+- manual file approvals and one-shot exact-action fingerprints
+- auto/manual/auto-except-review policy behavior
+- token/program review matching
+- sandbox diff generation
+- traversal refusal
+- Docker command construction enforcing `--network none`, read-only root, capability drop and no-new-privileges
+
+A live Docker execution smoke test must be run on a machine with Docker Desktop and the sandbox image built.

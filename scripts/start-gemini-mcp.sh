@@ -6,6 +6,7 @@ PORT="${EARTHCALL_MCP_PORT:-8765}"
 HOST="${EARTHCALL_MCP_HOST:-127.0.0.1}"
 TOKEN_SERVICE="earthcall-gemini-mcp"
 TOKEN_ACCOUNT="${USER:-earthcall}"
+SANDBOX_IMAGE="${EARTHCALL_SANDBOX_IMAGE:-earthcall-sandbox:latest}"
 
 cd "$REPO_ROOT"
 
@@ -23,6 +24,15 @@ if ! command -v cloudflared >/dev/null 2>&1; then
   echo "cloudflared is required for the temporary HTTPS tunnel." >&2
   echo "Install it with Homebrew: brew install cloudflared" >&2
   exit 1
+fi
+
+LAB_STATUS="unavailable"
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+  if docker image inspect "$SANDBOX_IMAGE" >/dev/null 2>&1; then
+    LAB_STATUS="ready"
+  else
+    LAB_STATUS="image-missing"
+  fi
 fi
 
 if [ -z "${EARTHCALL_MCP_TOKEN:-}" ]; then
@@ -45,6 +55,7 @@ export EARTHCALL_MCP_TOKEN
 export EARTHCALL_MCP_ROOT="$REPO_ROOT"
 export EARTHCALL_MCP_HOST="$HOST"
 export EARTHCALL_MCP_PORT="$PORT"
+export EARTHCALL_SANDBOX_IMAGE="$SANDBOX_IMAGE"
 
 LOG_DIR="${TMPDIR:-/tmp}/earthcall-gemini-mcp"
 mkdir -p "$LOG_DIR"
@@ -102,27 +113,46 @@ fi
 cat <<MSG
 
 ======================================================================
-  EARTHCALL <-> GEMINI GATE IS OPEN
+  EARTHCALL <-> GEMINI GATE IS OPEN  (VISION + LAB)
 ======================================================================
 
 Gemini MCP URL:
 
   ${PUBLIC_URL}/mcp?token=${EARTHCALL_MCP_TOKEN}
 
+Sandbox laboratory: ${LAB_STATUS}
+Sandbox image:      ${SANDBOX_IMAGE}
+
 In Gemini web:
   Settings -> Gemini Apps Developer Mode -> Create new
   MCP Server URL -> paste the URL above
   Authorization -> No (the temporary URL already carries a bearer token)
 
-You should see these five read-only tools:
+Real-workspace observation tools:
   earthcall_list_directory
   earthcall_read_file
   earthcall_search_text
   earthcall_git_status
   earthcall_git_diff
 
+Disposable laboratory tools:
+  earthcall_get_sandbox_policy
+  earthcall_sandbox_create
+  earthcall_sandbox_read_file
+  earthcall_sandbox_write_file
+  earthcall_sandbox_run
+  earthcall_sandbox_diff
+  earthcall_get_approval_status
+  earthcall_sandbox_discard
+
+Manual approval command:
+  node scripts/earthcall-mcp-approve.js <approval-id>
+
+If sandbox laboratory is 'image-missing', run in another terminal:
+  ./scripts/build-gemini-sandbox.sh
+
 Test prompt:
-  @Earthcall Local list the repository root, then inspect git status.
+  @Earthcall Local create a sandbox, run node --version in it, then show the sandbox diff.
 
 Keep this terminal open. Closing it closes the temporary gate.
 Treat the full URL as a secret because it contains the access token.

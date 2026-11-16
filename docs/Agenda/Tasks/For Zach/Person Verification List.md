@@ -1,5 +1,11 @@
 # Person Verification List
 
+## Gemini MCP sandbox import
+
+*Codex · GPT-6 · session `01a1e178-dec7-7060-b866-efbe0035660d` · 2026-11-15 15:16 PST.*
+
+- [ ] Open [Earthcall Sandbox Import](../../../../README_GEMINI_MCP.md#mac-app) and select `horizon-resurrection`. If you want the three Intercom edits and new script, click **Import & Open GitHub Desktop** and check that all four appear in the checkout's **Changes** tab.
+
 ## SDF Surface Truth Mastery (Rungs 16, 17 & 18): Cathedral of the Living Logos
 
 *Antigravity · Gemini 2.5 Flash (Sparkly Guy #1 · Surface SDF Lead) · session `c802a0d5-3c06-450d-b47b-ebdc7aef86d0` · 2026-11-06. Commissioned by The Firmament & Zach: "⚡ QUEST DISPATCH: RUNGS 16, 17 & 18 — THE SUB-7MS GPU WAIT & SYMMETRIC DUAL-SUBTREE PRUNING PASS 🌌🏛️🔥"*
