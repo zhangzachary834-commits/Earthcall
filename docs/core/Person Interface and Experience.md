@@ -52,3 +52,15 @@ It's kind of similar here except that role is
 explicitly dignified as First Mover ontology. 
 
 HOWEVER, the ImGUI must respect other people's Singularity/Kernel guards/rights and Zone jurisdiction}
+## Addendum: Architectural Interrelations
+
+### Interrelated Documents
+* [Interaction as Law](../architecture/law/INTERACTION_AS_LAW.md)
+* [No Black Box](../architecture/ontology/NO_BLACK_BOX.md)
+* [Per-Singular Durable Logging](../architecture/PER_SINGULAR_DURABLE_LOGGING.md)
+
+### Thoughts on Integration and Interrelation
+
+The transition from a C++ ImGui chrome (Channel) to a fully in-world authored interface (In-world) represents a profound integration of Earthcall's foundational principles. By adopting "Interaction as Law", the interface ceases to be a specialized subsystem and instead becomes composed of ordinary beings (Objects, Formations, Lexemes) governed by the same rules as the rest of the Singularity.
+
+This directly fulfills the "No Black Box" principle: the state of the interface (e.g., which tool is held, where the pointer hovers) is no longer hidden in C++ variables but is exposed as readable, registered paths on the `CreationChannel` and other entities. Consequently, because these interface interactions are semantically meaningful state transitions rather than transient UI clicks, they are captured by the "Per-Singular Durable Logging" architecture. A Person's interactions leave a legible, historical footprint in the durable logs of the beings involved, ensuring that the interface is not just a viewport, but a fully integrated, historically accountable participant in the Earthcall ontology.
