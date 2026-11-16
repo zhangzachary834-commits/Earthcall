@@ -1144,3 +1144,9 @@ The Person authors the policy.
 The Kernel guarantees liveness and truth.
 
 The GPU is allowed to keep working intelligently before asking the CPU what to do next.
+
+## Interrelated Documents
+- `docs/architecture/ontology/NO_BLACK_BOX.md`
+
+## Thoughts on Integration and Interrelation
+Making GPU scheduling policies authorable brings previously opaque GPU pipeline states into the legible, governable ontology of Earthcall. The `NO_BLACK_BOX` doctrine demands that all meaningful state of a being must be registered as legible, addressable Properties so that Laws can interact with them. By exposing GPU continuation and re-cohorting parameters as authorable properties, we ensure that execution scheduling itself becomes part of the shared, inspectable reality governed by Laws, preventing execution from remaining a hardcoded engine secret.

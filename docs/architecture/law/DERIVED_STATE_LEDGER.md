@@ -765,3 +765,9 @@ Sparkly Guy / Gemini 3.8 Flash / session `50cf28df-09e9-4c2b-a4d5-1f796abbc73a` 
 ### Mesh upload packets — 2026-11-03
 
 **Mesh upload packets, 2026-11-03.** `WebGpuRenderer::flushMeshDraws` derives aligned uniform/instance upload pages from the current ordered `_meshBatches`, view-projection, light, and eye snapshots. These Kernel packets live for one flush, and GPU ranges live in the existing queue-ordered buffer pool. Every flush reconstructs them, so camera/material/model edits require no cross-frame cache invalidation. Bindings retain each batch's original byte extent and 256-byte alignment. Multiple flushes and an oversized individual batch are covered by `webgpu_mesh_upload_pages_test`, with independent pixel expectations and a failing offset mutation. [Native correctness and cost record](../../audits/CATHEDRAL_SURFACE_SDF_FIRST_PASS_2026-11-03.md#native-continuation-and-retained-upload-repair). Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-03T22:52:00-08:00.
+
+## Interrelated Documents
+- `docs/architecture/AUTHORABLE_GPU_RUNS_BETWEEN_CPU_CYCLES.md`
+
+## Thoughts on Integration and Interrelation
+Asynchronous or multi-cycle GPU computation complicates state dependencies. The Derived-State Ledger must account for the invalidation of in-flight GPU runs when their inputs change mid-execution. If a GPU run relies on a relation or state that is invalidated before the run completes and yields to the host, the ledger must ensure that the output of that run is either appropriately discarded or re-evaluated, maintaining the strict falsifiability and coherence of derived state across the CPU-GPU boundary.
