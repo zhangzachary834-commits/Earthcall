@@ -12,6 +12,7 @@
 #include "Singularity/Core/StringId.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ActiveZones.hpp"
+#include "ZonesOfEarth/AuthorsOfLaw/MathBinding.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "ZonesOfEarth/ZoneManager.hpp"
 
@@ -133,96 +134,10 @@ PropertyPath::ResolvedSlot PropertyPath::resolve(Singular& root, std::size_t sta
     std::size_t i = startIndex;
 
     if (startIndex == 0 && !segments.empty() && segments[0].size() > 1 && segments[0][0] == '@') {
-        if (segments[0] == "@transfer-policy") {
-            currentOwner = &TransferPolicy::instance();
-            i = 1;
-        } else {
-            Zone* matchedZone = nullptr;
-            std::size_t zoneConsumed = 0;
-            const auto& rootIds = _joinedIds[0];
-            for (std::size_t run = rootIds.size(); run > 0; --run) {
-                const std::string resolved = Earthcall::StringInterner::resolve(rootIds[run - 1]);
-                if (resolved.size() <= 1 || resolved[0] != '@') continue;
-                const std::string slug = resolved.substr(1);
-                for (Zone* z : ActiveZones::instance().zones()) {
-                    if (z && z->getIdentifier() == slug) {
-                        matchedZone = z;
-                        zoneConsumed = run;
-                        break;
-                    }
-                }
-                if (!matchedZone && ZoneManager::live()) {
-                    if (Zone* z = ZoneManager::live()->findZone(slug)) {
-                        matchedZone = z;
-                        zoneConsumed = run;
-                    }
-                }
-                if (matchedZone) break;
-            }
-
-            if (matchedZone) {
-                currentOwner = matchedZone;
-                i = zoneConsumed;
-            } else {
-                Singular* uniqueBeing = nullptr;
-                std::size_t beingConsumed = 0;
-                bool ambiguous = false;
-                const auto activeBeings = ActiveZones::instance().beings();
-
-                for (std::size_t run = rootIds.size(); run > 0; --run) {
-                    const std::string resolved = Earthcall::StringInterner::resolve(rootIds[run - 1]);
-                    if (resolved.size() <= 1 || resolved[0] != '@') continue;
-                    const std::string slug = resolved.substr(1);
-
-                    Singular* candidate = nullptr;
-                    bool dup = false;
-                    for (Singular* b : activeBeings) {
-                        if (b && b->getIdentifier() == slug) {
-                            if (candidate && candidate != b) {
-                                dup = true;
-                                break;
-                            }
-                            candidate = b;
-                        }
-                    }
-                    if (!candidate && !dup && ZoneManager::live()) {
-                        for (const auto& zPtr : ZoneManager::live()->zones()) {
-                            if (!zPtr || ActiveZones::instance().isActive(zPtr.get())) continue;
-                            for (const auto& obj : zPtr->getOwnedObjects()) {
-                                if (obj && obj->getIdentifier() == slug) {
-                                    if (candidate && candidate != obj.get()) { dup = true; break; }
-                                    candidate = obj.get();
-                                }
-                            }
-                            if (dup) break;
-                            for (const auto& s : zPtr->storedSingulars()) {
-                                if (s && s->getIdentifier() == slug) {
-                                    if (candidate && candidate != s.get()) { dup = true; break; }
-                                    candidate = s.get();
-                                }
-                            }
-                            if (dup) break;
-                        }
-                    }
-                    if (dup) {
-                        ambiguous = true;
-                        break;
-                    }
-                    if (candidate) {
-                        uniqueBeing = candidate;
-                        beingConsumed = run;
-                        break;
-                    }
-                }
-
-                if (!ambiguous && uniqueBeing) {
-                    currentOwner = uniqueBeing;
-                    i = beingConsumed;
-                } else {
-                    return {};
-                }
-            }
-        }
+        std::size_t resolvedStart = 0;
+        currentOwner = resolveLawRoot(root, *this, resolvedStart);
+        if (!currentOwner || resolvedStart == 0) return {};
+        i = resolvedStart;
     }
 
     while (i < segments.size()) {

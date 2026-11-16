@@ -1,5 +1,11 @@
 # Person Verification List
 
+## ActiveZones 52-Zone lag repair
+
+*Codex · GPT-5.6 Sol · session `01a1e2e9-2234-7510-8e51-f98034f60923` · 2026-11-15 23:01 PST. Commissioned after Zach's live lag report and the Twin Firmament's Intercom diagnosis.*
+
+- [ ] Launch the ordinary Earthcall WebGPU app against the same hydrated 52-Zone data home that previously lagged. Confirm startup and steady movement no longer hitch from `@`-referent harvesting, then mount/unmount a capability Zone and exercise the cross-Zone Whiteboard paths to confirm the world still feels responsive and resolves the same beings. Automated tests establish semantics and save continuity, not this Person-perceived frame result.
+
 ## Gemini MCP sandbox import
 
 *Codex · GPT-6 · session `01a1e178-dec7-7060-b866-efbe0035660d` · 2026-11-15 15:16 PST.*

@@ -53,44 +53,38 @@ CellId resolveRuleCellId(const PolicyRule& rule) {
 }
 
 Zone* resolveZoneForBeing(const Singular* being, const Law* fallbackLaw = nullptr) {
+    auto resolveWithoutManager = [](const Singular& candidate) -> Zone* {
+        for (Zone* z : ActiveZones::instance().zones()) {
+            if (z && z->containsBeing(candidate)) return z;
+        }
+        // Persistence binding and isolated Law tests can execute before a
+        // ZoneManager owns the loaded Zones.  Preserve that compatibility
+        // boundary, but keep it out of the live runtime path: the retained
+        // Universe referent set is consulted only while no manager exists.
+        for (Singular* registered : Universe::instance().beings()) {
+            auto* zone = dynamic_cast<Zone*>(registered);
+            if (zone && zone->containsBeing(candidate)) return zone;
+        }
+        return nullptr;
+    };
+
     if (being) {
         if (const auto* asZone = dynamic_cast<const Zone*>(being)) {
             return const_cast<Zone*>(asZone);
         }
-        for (Zone* z : ActiveZones::instance().zones()) {
-            if (z && z->containsBeing(*being)) return z;
-        }
         if (ZoneManager* zm = ZoneManager::live()) {
-            if (Zone* res = zm->residenceOf(*being)) {
-                return res;
-            }
-            for (const auto& zPtr : zm->zones()) {
-                if (zPtr && zPtr->containsBeing(*being)) return zPtr.get();
-            }
+            return zm->residenceOf(*being);
         }
-        for (Singular* candidate : Universe::instance().beings()) {
-            if (auto* z = dynamic_cast<Zone*>(candidate)) {
-                if (z->containsBeing(*being)) return z;
-            }
-        }
+        if (Zone* z = resolveWithoutManager(*being)) return z;
     }
     if (fallbackLaw) {
         if (fallbackLaw->jurisdiction()) {
             return fallbackLaw->jurisdiction().get();
         }
-        for (Zone* z : ActiveZones::instance().zones()) {
-            if (z && z->containsBeing(*fallbackLaw)) return z;
-        }
         if (ZoneManager* zm = ZoneManager::live()) {
-            for (const auto& zPtr : zm->zones()) {
-                if (zPtr && zPtr->containsBeing(*fallbackLaw)) return zPtr.get();
-            }
+            return zm->residenceOf(*fallbackLaw);
         }
-        for (Singular* candidate : Universe::instance().beings()) {
-            if (auto* z = dynamic_cast<Zone*>(candidate)) {
-                if (z->containsBeing(*fallbackLaw)) return z;
-            }
-        }
+        if (Zone* z = resolveWithoutManager(*fallbackLaw)) return z;
     }
     return nullptr;
 }
@@ -502,6 +496,7 @@ void TransferPolicy::loadFromJson(const nlohmann::json& j) {
     }
     if (j.contains("rules") && j["rules"].is_array()) {
         _rules.clear();
+        _compiledRuleIndexRevision = std::numeric_limits<uint64_t>::max();
         auto* cohort = SingularPersistence::CohortContext::active();
         for (const auto& item : j["rules"]) {
             PolicyRule r;
@@ -555,6 +550,7 @@ void TransferPolicy::addPolicyRule(const PolicyRule& rule) {
         copy.governingLawId = copy.governingLaw->getIdentifier();
     }
     _rules.push_back(std::move(copy));
+    _compiledRuleIndexRevision = std::numeric_limits<uint64_t>::max();
     ++_accessPolicyRevision;
     notifyRuleChanged(_rules.back());
     Singular::notifyPropertyChanged(this, "ruleCount");
@@ -574,6 +570,7 @@ void TransferPolicy::removeRulesForBearer(const Singular* bearer) {
     }
     if (!removed.empty()) {
         _rules = std::move(remaining);
+        _compiledRuleIndexRevision = std::numeric_limits<uint64_t>::max();
         _accessPolicyRevision = _rules.empty() ? 0 : (_accessPolicyRevision + 1);
         for (const auto& r : removed) {
             notifyRuleChanged(r, bearer);
@@ -586,6 +583,11 @@ void TransferPolicy::removeRulesForBearer(const Singular* bearer) {
 void TransferPolicy::clearPolicyRules() {
     auto oldRules = std::move(_rules);
     _rules.clear();
+    // _accessPolicyRevision is a public semantic revision that historically
+    // returns to zero when no rules remain.  The compiled index therefore
+    // carries its own explicit poison currency: a later first rule may reuse
+    // revision 1, but it must never reuse the former rule table.
+    _compiledRuleIndexRevision = std::numeric_limits<uint64_t>::max();
     _accessPolicyRevision = 0;
     _stagedPathPattern.clear();
     _stagedTargetCellPath.clear();
@@ -601,6 +603,29 @@ void TransferPolicy::clearPolicyRules() {
     }
     Singular::notifyPropertyChanged(this, "ruleCount");
     Singular::notifyPropertyChanged(this, "rules");
+}
+
+void TransferPolicy::ensureCompiledRuleIndex() const {
+    if (_compiledRuleIndexRevision == _accessPolicyRevision) return;
+    for (auto& rules : _compiledWildcardRules) rules.clear();
+    for (auto& rules : _compiledCellRules) rules.clear();
+    for (auto& rules : _compiledExactPathRules) rules.clear();
+
+    for (std::size_t i = 0; i < _rules.size(); ++i) {
+        const PolicyRule& rule = _rules[i];
+        const std::size_t op = static_cast<std::size_t>(rule.op);
+        if (op >= _compiledWildcardRules.size()) continue;
+        if (rule.pathPattern.empty()) {
+            _compiledWildcardRules[op].push_back(i);
+        } else {
+            _compiledExactPathRules[op][Earthcall::StringInterner::intern(rule.pathPattern)]
+                .push_back(i);
+        }
+        if (rule.cellId.valid() || !rule.targetCellPath.empty()) {
+            _compiledCellRules[op].push_back(i);
+        }
+    }
+    _compiledRuleIndexRevision = _accessPolicyRevision;
 }
 
 bool TransferPolicy::checkAccess(Singular& bearer,
@@ -633,7 +658,34 @@ bool TransferPolicy::checkAccess(Singular& bearer,
     std::string dynamicKey = slot.dynamicKey;
     std::string propName = slot.prop ? slot.prop->name() : "";
 
-    for (const auto& rule : _rules) {
+    ensureCompiledRuleIndex();
+    const std::size_t opIndex = static_cast<std::size_t>(effectiveCtx.op);
+    std::vector<std::size_t> candidateIndices;
+    auto appendUnique = [&](const std::vector<std::size_t>& source) {
+        for (std::size_t index : source) {
+            if (std::find(candidateIndices.begin(), candidateIndices.end(), index) ==
+                candidateIndices.end()) {
+                candidateIndices.push_back(index);
+            }
+        }
+    };
+    if (opIndex < _compiledWildcardRules.size()) {
+        appendUnique(_compiledWildcardRules[opIndex]);
+        appendUnique(_compiledCellRules[opIndex]);
+        auto appendPath = [&](Earthcall::StringId path) {
+            if (!path.isValid()) return;
+            const auto it = _compiledExactPathRules[opIndex].find(path);
+            if (it != _compiledExactPathRules[opIndex].end()) appendUnique(it->second);
+        };
+        appendPath(dynamicKey.empty() ? Earthcall::StringId{}
+                                      : Earthcall::StringInterner::intern(dynamicKey));
+        appendPath(slot.prop ? slot.prop->nameId() : Earthcall::StringId{});
+        appendPath(slot.rootPropertyId);
+    }
+
+    for (std::size_t ruleIndex : candidateIndices) {
+        if (ruleIndex >= _rules.size()) continue; // fail-open against stale derived state
+        const auto& rule = _rules[ruleIndex];
         if (rule.op != effectiveCtx.op) continue;
 
         // Committed-snapshot guard (PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md §5b):

@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <cstdint>
 #include <glm/glm.hpp>
 #include "Relation/RelationManager.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
@@ -72,7 +73,8 @@ public:
         : Singular(o), members(o.members), relationMgr(o.relationMgr),
           subformations(cloneSubformations(o.subformations, 0)),
           pendingRelations(o.pendingRelations),
-          relationTypeTag(o.relationTypeTag), _root(o._root) {}
+          relationTypeTag(o.relationTypeTag), _root(o._root),
+          _membershipGeneration(1) {}
     Formation& operator=(const Formation& o) {
         if (this != &o) {
             Singular::operator=(o);
@@ -82,6 +84,7 @@ public:
             relationTypeTag = o.relationTypeTag;
             _root = o._root;
             pendingRelations = o.pendingRelations;
+            ++_membershipGeneration;
             // _formationId intentionally kept: assignment replaces content,
             // not identity.
         }
@@ -120,6 +123,12 @@ public:
 
     // Since members are Singulars*, that means a Relation can be part of a Formation.
     const std::vector<Singular*>& getMembers() const { return members; }
+
+    // Kernel-derived cache currency, never authored or persisted. It names
+    // only whether the member-pointer set changed so referent and relevance
+    // indexes can retain still-current answers without hiding any Formation
+    // meaning from Law. DERIVED_STATE_LEDGER.md governs every consumer.
+    std::uint64_t membershipGeneration() const noexcept { return _membershipGeneration; }
 
     // If we want to get the "hard" members, we use this.
     // Need to change the code to reflect this.
@@ -305,6 +314,7 @@ private:
     // The being this Formation is ABOUT. Non-owning, like every member, and
     // always also a member. Null for a Formation that is merely a set.
     Singular* _root = nullptr;
+    std::uint64_t _membershipGeneration = 1;
 
     // Guards reintegrateRelationsFor against re-entering itself while
     // integration is adding the very members it is reacting to.

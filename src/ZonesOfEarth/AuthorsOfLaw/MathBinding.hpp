@@ -5,6 +5,7 @@
 #include "Singularity/Core/StringId.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include <unordered_map>
+#include <unordered_set>
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include "Universe.hpp"
 #include "Time/Event/Event.hpp"
@@ -146,18 +147,85 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
     // are not offered to the property lookup.
     
     // HOT PATH CACHE: avoid O(N^2) string comparisons and massive vector allocations.
-    // The cache follows structuralRevision, not every possible mutation of a
-    // being's textual identifier. Durable individual bindings remain open work.
+    // The active namespace follows the complete structural fallback. Loaded
+    // inactive Zones are deliberately absent: a qualified lookup reaches only
+    // the named Zone's retained referent table, so one local edit never sweeps
+    // every hydrated Zone. Identifiers are stable authored slugs; changing one
+    // after admission must travel through a structural/referent mutation door.
     static uint64_t s_lastRevision = 0;
+    static std::size_t s_lastActiveReferentCurrency = 0;
     static ZoneManager* s_lastLiveManager = nullptr;
     static std::unordered_map<Earthcall::StringId, Singular*> s_beingMap;
     static bool s_initialized = false;
+
+    struct ZoneReferentCache {
+        uint64_t revision = 0;
+        const geom::FieldNode* identityWitness = nullptr;
+        std::string zoneIdentifier;
+        std::unordered_map<Earthcall::StringId, Singular*> qualified;
+        std::unordered_map<Earthcall::StringId, Singular*> unqualified;
+        bool initialized = false;
+    };
+    static std::unordered_map<const Zone*, ZoneReferentCache> s_zoneReferents;
+
+    auto zoneReferents = [&](Zone& zone) -> ZoneReferentCache& {
+        ZoneReferentCache& cache = s_zoneReferents[&zone];
+        const uint64_t revision = zone.referentRevision();
+        const auto* witness = zone.spatialRoot();
+        const std::string zoneIdent = zone.getIdentifier();
+        if (cache.initialized && cache.revision == revision &&
+            cache.identityWitness == witness && cache.zoneIdentifier == zoneIdent) {
+            return cache;
+        }
+
+        cache.qualified.clear();
+        cache.unqualified.clear();
+        auto bindIfUnique = [](auto& table, Earthcall::StringId name, Singular* being) {
+            auto [it, inserted] = table.emplace(name, being);
+            if (!inserted && it->second != being) it->second = nullptr;
+        };
+        const std::string zonePrefix = "@" + zoneIdent + ".";
+        std::unordered_set<Singular*> seen;
+        auto add = [&](Singular* being) {
+            if (!being || !seen.insert(being).second) return;
+            const std::string ident = being->getIdentifier();
+            if (ident.empty()) return;
+            bindIfUnique(cache.qualified,
+                         Earthcall::StringInterner::intern(zonePrefix + ident), being);
+            bindIfUnique(cache.unqualified,
+                         Earthcall::StringInterner::intern("@" + ident), being);
+        };
+        add(zone.spatialRoot());
+        for (const auto& field : zone.additionalSpatialFields()) add(field.get());
+        for (const auto& object : zone.getOwnedObjects()) add(object.get());
+        for (Singular* member : zone.formation().getMembers()) add(member);
+        for (const auto& stored : zone.storedSingulars()) add(stored.get());
+
+        cache.revision = revision;
+        cache.identityWitness = witness;
+        cache.zoneIdentifier = zoneIdent;
+        cache.initialized = true;
+        return cache;
+    };
     
     uint64_t currentRevision = Universe::instance().structuralRevision();
+    std::size_t activeReferentCurrency = 0;
+    auto mixActiveReferent = [&activeReferentCurrency](std::size_t value) {
+        activeReferentCurrency ^= value + 0x9e3779b97f4a7c15ULL +
+                                   (activeReferentCurrency << 6) +
+                                   (activeReferentCurrency >> 2);
+    };
+    for (const Zone* zone : Universe::instance().zones()) {
+        if (!zone) continue;
+        mixActiveReferent(reinterpret_cast<std::size_t>(zone));
+        mixActiveReferent(static_cast<std::size_t>(zone->referentRevision()));
+    }
     ZoneManager* currentLiveManager = ZoneManager::live();
-    if (!s_initialized || s_lastRevision != currentRevision || s_lastLiveManager != currentLiveManager) {
+    if (!s_initialized || s_lastRevision != currentRevision ||
+        s_lastActiveReferentCurrency != activeReferentCurrency ||
+        s_lastLiveManager != currentLiveManager) {
         s_beingMap.clear();
-        const std::vector<Singular*> beings = Universe::instance().beings();
+        const auto& beings = Universe::instance().beings();
         auto bindIfUnique = [&](Earthcall::StringId name, Singular* being) {
             auto [it, inserted] = s_beingMap.emplace(name, being);
             if (!inserted && it->second != being) it->second = nullptr;
@@ -178,80 +246,28 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
             }
         }
 
-        // 2. Zone-qualified keys: for every active Zone* in ActiveZones::instance().zones()
-        // (and every loaded Zone in ZoneManager::live() ? ZoneManager::live()->zones() : ...)
-        std::vector<Zone*> zonesToInspect;
-        std::unordered_set<Zone*> seenZones;
+        // 2. Zone-qualified keys for ACTIVE operands only. Inactive loaded
+        // Zones are resolved lazily below through their own cache.
         for (Zone* z : Universe::instance().zones()) {
-            if (z && seenZones.insert(z).second) {
-                zonesToInspect.push_back(z);
-            }
-        }
-        if (currentLiveManager) {
-            for (const auto& zPtr : currentLiveManager->zones()) {
-                if (zPtr && seenZones.insert(zPtr.get()).second) {
-                    zonesToInspect.push_back(zPtr.get());
-                }
-            }
-        }
-
-        for (Zone* zone : zonesToInspect) {
-            if (!zone) continue;
-            const std::string zoneIdent = zone->getIdentifier();
-            if (zoneIdent.empty()) continue;
-            const std::string zonePrefix = "@" + zoneIdent + ".";
-            const bool isActiveZone = Universe::instance().isActive(zone);
-
-            std::vector<Singular*> members;
-            std::unordered_set<Singular*> seenMembers;
-            auto addZoneMember = [&](Singular* s) {
-                if (s && seenMembers.insert(s).second) {
-                    members.push_back(s);
-                }
-            };
-            if (auto* rootField = zone->spatialRoot()) addZoneMember(rootField);
-            for (const auto& f : zone->additionalSpatialFields()) {
-                if (f) addZoneMember(f.get());
-            }
-            for (const auto& obj : zone->getOwnedObjects()) {
-                if (obj) addZoneMember(obj.get());
-            }
-            for (auto* m : zone->formation().getMembers()) {
-                if (m) addZoneMember(m);
-            }
-            for (const auto& s : zone->storedSingulars()) {
-                if (s) addZoneMember(s.get());
-            }
-
-            for (Singular* m : members) {
-                if (!m) continue;
-                const std::string mIdent = m->getIdentifier();
-                if (mIdent.empty()) continue;
-
-                // Zone-qualified key: "@ZoneId.SingularId"
-                Earthcall::StringId qualifiedKey = Earthcall::StringInterner::intern(zonePrefix + mIdent);
-                bindIfUnique(qualifiedKey, m);
-
-                // If zone is an inactive loaded Zone (not in ActiveZones::instance().zones()),
-                // also register @<m->getIdentifier()> as a fallback ONLY if @<m->getIdentifier()>
-                // is not already present in s_beingMap (so an inactive Zone's object never shadows
-                // or invalidates an active Zone's object!).
-                if (!isActiveZone) {
-                    Earthcall::StringId unqualifiedKey = Earthcall::StringInterner::intern("@" + mIdent);
-                    if (s_beingMap.find(unqualifiedKey) == s_beingMap.end()) {
-                        s_beingMap.emplace(unqualifiedKey, m);
-                    }
-                }
+            if (!z) continue;
+            ZoneReferentCache& cache = zoneReferents(*z);
+            for (const auto& [key, being] : cache.qualified) {
+                // A null value is an ambiguity proof inside that Zone. Keep
+                // it null in the aggregate namespace; skipping it here would
+                // turn two equal authored identifiers into load-order choice.
+                bindIfUnique(key, being);
             }
         }
 
         s_lastRevision = currentRevision;
+        s_lastActiveReferentCurrency = activeReferentCurrency;
         s_lastLiveManager = currentLiveManager;
         s_initialized = true;
     }
 
     Singular* best = nullptr;
     std::size_t bestConsumed = 0;
+    bool activeNamespaceAnswered = false;
     const auto& jIds = path.joinedIds();
     if (!jIds.empty() && !jIds[0].empty()) {
         const auto& idsFromHere = jIds[0];
@@ -260,6 +276,64 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
             if (it != s_beingMap.end()) {
                 best = it->second;
                 bestConsumed = n;
+                activeNamespaceAnswered = true;
+            }
+        }
+    }
+
+    // Lazy loaded-Zone lookup. A qualified root reaches only that Zone. An
+    // unqualified inactive fallback is accepted only when exactly one loaded
+    // inactive Zone answers; ambiguity refuses instead of depending on load
+    // order. Active ambiguity already answered above and may not be shadowed.
+    if (!activeNamespaceAnswered && currentLiveManager && !jIds.empty() && !jIds[0].empty()) {
+        const auto& idsFromHere = jIds[0];
+        Zone* namedZone = nullptr;
+        std::size_t zoneConsumed = 0;
+        for (const auto& zonePtr : currentLiveManager->zones()) {
+            if (!zonePtr) continue;
+            const auto zoneKey = Earthcall::StringInterner::intern(
+                "@" + zonePtr->getIdentifier());
+            for (std::size_t n = 1; n <= idsFromHere.size(); ++n) {
+                if (idsFromHere[n - 1] == zoneKey && n >= zoneConsumed) {
+                    namedZone = zonePtr.get();
+                    zoneConsumed = n;
+                }
+            }
+        }
+
+        if (namedZone) {
+            best = namedZone;
+            bestConsumed = zoneConsumed;
+            ZoneReferentCache& cache = zoneReferents(*namedZone);
+            for (std::size_t n = zoneConsumed + 1; n <= idsFromHere.size(); ++n) {
+                auto it = cache.qualified.find(idsFromHere[n - 1]);
+                if (it != cache.qualified.end()) {
+                    best = it->second;
+                    bestConsumed = n;
+                }
+            }
+        } else {
+            Singular* inactiveBest = nullptr;
+            std::size_t inactiveConsumed = 0;
+            bool ambiguous = false;
+            for (const auto& zonePtr : currentLiveManager->zones()) {
+                if (!zonePtr || Universe::instance().isActive(zonePtr.get())) continue;
+                ZoneReferentCache& cache = zoneReferents(*zonePtr);
+                for (std::size_t n = 1; n <= idsFromHere.size(); ++n) {
+                    auto it = cache.unqualified.find(idsFromHere[n - 1]);
+                    if (it == cache.unqualified.end() || !it->second) continue;
+                    if (n > inactiveConsumed) {
+                        inactiveBest = it->second;
+                        inactiveConsumed = n;
+                        ambiguous = false;
+                    } else if (n == inactiveConsumed && inactiveBest != it->second) {
+                        ambiguous = true;
+                    }
+                }
+            }
+            if (!ambiguous && inactiveBest) {
+                best = inactiveBest;
+                bestConsumed = inactiveConsumed;
             }
         }
     }

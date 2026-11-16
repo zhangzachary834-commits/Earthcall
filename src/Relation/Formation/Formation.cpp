@@ -108,6 +108,7 @@ bool Formation::admitMember(Singular* s) {
     }
     if (hasMember(s)) return false;
     members.push_back(s);
+    ++_membershipGeneration;
     return true;
 }
 
@@ -182,6 +183,7 @@ bool Formation::releaseMemberAt(Singular* s, int depth) {
     const auto it = std::remove(members.begin(), members.end(), s);
     if (it != members.end()) {
         members.erase(it, members.end());
+        ++_membershipGeneration;
         found = true;
     }
     if (_root == s) _root = nullptr;
@@ -206,6 +208,7 @@ void Formation::removeMember(Singular* s) {
 }
 
 void Formation::clearMembers() {
+    if (!members.empty() || !subformations.empty() || _root) ++_membershipGeneration;
     members.clear();
     subformations.clear();
     _root = nullptr;
@@ -217,6 +220,7 @@ void Formation::clearRelations() {
 }
 
 void Formation::clear() {
+    if (!members.empty() || !subformations.empty() || _root) ++_membershipGeneration;
     members.clear();
     relationMgr = RelationManager{};
     subformations.clear();

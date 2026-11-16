@@ -2121,6 +2121,17 @@ int main() {
         zone20A.addObject(objA);
         zone20B.addObject(objB);
 
+        // Residence is not authored Formation membership. Hydrating an
+        // Object must not silently assert a first-class Formation fact.
+        assert(!zone20A.formation().hasMember(objA.get()));
+        assert(!zone20B.formation().hasMember(objB.get()));
+        Object explicitlyFormed;
+        explicitlyFormed.setObjectID("explicitly-formed-20");
+        zone20A.addToFormation(&explicitlyFormed);
+        zone20A.syncFormationMembers();
+        assert(zone20A.formation().hasMember(&explicitlyFormed));
+        assert(!zone20A.formation().hasMember(objA.get()));
+
         // Verify Zone::containsBeing
         assert(zone20A.containsBeing(zone20A));
         assert(zone20A.containsBeing(*objA));
@@ -2149,8 +2160,24 @@ int main() {
         assert(az.isActive(&zone20A));
         assert(az.isActive(&zone20B));
 
+        Object sharedRegister20;
+        sharedRegister20.setObjectID("shared-register-20");
+        objA->setDynamicProperty("cacheProbe20", PropertyValue(7));
+        Object lateFormationMember20;
+        lateFormationMember20.setObjectID("late-formation-member-20");
+        lateFormationMember20.setDynamicProperty("cacheProbe20", PropertyValue(19));
+        int providerCalls20 = 0;
+        az.setProvider([&](std::vector<Singular*>& out) {
+            ++providerCalls20;
+            out.push_back(&sharedRegister20);
+        });
+
         // beings() harvests across both active Zone operands
-        const auto allBeings = az.beings();
+        const auto& allBeings = az.beings();
+        const Singular* const* retainedData20 = allBeings.data();
+        const auto& allBeingsAgain = az.beings();
+        assert(providerCalls20 == 1);
+        assert(allBeingsAgain.data() == retainedData20);
         auto hasBeing = [&allBeings](const Singular* s) {
             return std::find(allBeings.begin(), allBeings.end(), s) != allBeings.end();
         };
@@ -2158,6 +2185,20 @@ int main() {
         assert(hasBeing(objA.get()));
         assert(hasBeing(&zone20B));
         assert(hasBeing(objB.get()));
+        assert(hasBeing(&sharedRegister20));
+
+        PropertyValue referentProbe20;
+        assert(PropertyPath::parse("@Obj20A.cacheProbe20")
+                   .getValue(*objA, referentProbe20) == Result::Ok);
+        assert(std::get<int>(referentProbe20) == 7);
+        zone20A.addToFormation(&lateFormationMember20);
+        const auto& afterFormationAdmission20 = az.beings();
+        assert(providerCalls20 == 2);
+        assert(std::find(afterFormationAdmission20.begin(), afterFormationAdmission20.end(),
+                         &lateFormationMember20) != afterFormationAdmission20.end());
+        assert(PropertyPath::parse("@late-formation-member-20.cacheProbe20")
+                   .getValue(*objA, referentProbe20) == Result::Ok);
+        assert(std::get<int>(referentProbe20) == 19);
 
         // relations() harvests across both active Zone operands
         const auto allRelations = az.relations();
@@ -2186,6 +2227,9 @@ int main() {
         zone20B.formation().relations().add(relB2);
         const std::size_t gen2 = az.relationGeneration();
         assert(gen2 != gen1);
+        (void)az.beings();
+        assert(providerCalls20 == 3 &&
+               "relation beings are part of the retained working-set frontier");
 
         // addRelation routes to the active Zone that contains relation->a()
         auto newbornRel = std::make_shared<Relation>("self-linked", *objA, *objA, false, 1.0f);
@@ -2210,6 +2254,7 @@ int main() {
         assert(std::find(relsAfterDeact.begin(), relsAfterDeact.end(), relA.get()) != relsAfterDeact.end());
         assert(std::find(relsAfterDeact.begin(), relsAfterDeact.end(), relB.get()) == relsAfterDeact.end());
 
+        az.setProvider(nullptr);
         az.clearActiveZones();
 
         // --- Part 20.2: ZoneManager mountZone & unmountZone Integration ---
@@ -2674,6 +2719,33 @@ int main() {
             assert(PropertyPath::parse("@archive.vault.preservedCanvas").getValue(*wbController, archVal) == Result::Ok);
             assert(std::get<std::string>(archVal) == "ancient-fresco");
             assert(lawGetValueResult(*wbController, PropertyPath::parse("@archive.vault.preservedCanvas"), archVal) == Result::Ok);
+            assert(std::get<std::string>(archVal) == "ancient-fresco");
+
+            // The inactive cache renews from Archive_Zone's own referent
+            // currency when a new resident arrives; no all-Zone sweep is
+            // needed to make the new qualified root reachable.
+            auto lateArchive = std::make_shared<Object>("archive.late");
+            lateArchive->setObjectID("archive.late");
+            lateArchive->setDynamicProperty("mark", PropertyValue(91));
+            archiveZone->addObject(lateArchive);
+            assert(PropertyPath::parse("@Archive_Zone.archive.late.mark")
+                       .getValue(*wbController, archVal) == Result::Ok);
+            assert(std::get<int>(archVal) == 91);
+
+            // Unqualified inactive roots remain ambiguity-safe. The same
+            // identifier in another loaded Zone must refuse rather than let
+            // hydration order choose a bearer.
+            auto mirrorZone = std::make_shared<Zone>("Mirror_Archive", "default");
+            auto mirrorVault = std::make_shared<Object>("archive.vault");
+            mirrorVault->setObjectID("archive.vault");
+            mirrorVault->setDynamicProperty(
+                "preservedCanvas", PropertyValue(std::string("counterfeit")));
+            mirrorZone->addObject(mirrorVault);
+            zmInactive.addZone(mirrorZone);
+            assert(PropertyPath::parse("@archive.vault.preservedCanvas")
+                       .getValue(*wbController, archVal) != Result::Ok);
+            assert(PropertyPath::parse("@Archive_Zone.archive.vault.preservedCanvas")
+                       .getValue(*wbController, archVal) == Result::Ok);
             assert(std::get<std::string>(archVal) == "ancient-fresco");
 
             zmInactive.unbindLive();
