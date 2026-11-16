@@ -2909,9 +2909,11 @@ int main() {
                       pureProg.wgsl.find(
                           "fn cnoise3(P: vec3<f32>) -> f32") !=
                           std::string::npos &&
+                      pureProg.wgsl.find("fn cnoise3_grad(") ==
+                          std::string::npos &&
                       pureProg.wgsl.find("value = cnoise3(v)") !=
                           std::string::npos,
-                  "pure local SDF emits no noise call while generic foreign-blocker VM retains a defined Noise execution dependency");
+                  "pure local SDF emits no noise call, strips analytic Perlin gradients, and keeps the generic foreign-blocker VM's scalar Noise dependency defined");
 
             auto noiseExpr = geom::makeImplicit(terrainMath(40.0));
             const auto noiseProg = sdfwgsl::compile(noiseExpr);
@@ -2929,9 +2931,11 @@ int main() {
             check(noiseProg.wgsl.find(
                           "fn cnoise3(P: vec3<f32>) -> f32") !=
                           std::string::npos &&
+                      noiseProg.wgsl.find("fn cnoise3_grad(") !=
+                          std::string::npos &&
                       !noiseEval.empty() &&
                       noiseEval.find("cnoise3(") != std::string::npos,
-                  "noise-dependent local SDF includes and consumes cnoise3 in WGSL");
+                  "analytic noise geometry includes scalar and gradient Perlin support and consumes local cnoise3");
         }
 
         // 11. Rung 7 OntoMath Irreducible 1D Ray-Domain Compilation & Rung 8A Left-Heavy CSG Pruning
