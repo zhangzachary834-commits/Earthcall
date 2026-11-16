@@ -2,7 +2,7 @@
 
 This bridge restores Gemini Tasks' ability to inspect the **actual local Earthcall checkout** and adds a tightly bounded execution laboratory for experiments and tests.
 
-It is intentionally separate from Earthcall's mutation-capable First Mover MCP. The remote Gemini gate may **observe the real checkout**, but all edits and command execution happen in a disposable sandbox copy. Nothing in this pass promotes changes into the living Earthcall tree.
+The remote Gemini gate observes the real checkout and edits or runs commands inside a disposable sandbox copy. Use the local import command to bring the resulting changes into the checkout.
 
 ## Architecture
 
@@ -61,6 +61,51 @@ There is deliberately **no shell-string tool**. Commands are represented as an a
 ```
 
 A shell interpreter such as `bash` can still be invoked as a program if policy permits, but the default review list makes shell interpreters require manual approval.
+
+## Bring Gemini's changes into your checkout
+
+### Mac app
+
+Open **Earthcall Sandbox Import**, select a session, then review the diff and click
+**Import & Open GitHub Desktop**. Review the imported files in GitHub Desktop's
+**Changes** tab. **Refresh** (⌘R) picks up new sessions and sandbox edits. If the
+patch changes after preview, the app asks you to refresh before importing.
+
+To build the app for this checkout, run `bash scripts/macos/build_sandbox_import_app.sh`.
+It prints the path to the signed `.app` in `build/sandbox-import/`. Open it in Finder
+or copy it into `~/Applications`. The app bundles the importer and uses the
+checkout and Node executable recorded at build time. It calls GitHub Desktop's
+[command-line launcher](https://docs.github.com/en/desktop/overview/launching-github-desktop-from-the-command-line)
+with the checkout path.
+
+### Terminal
+
+From the checkout that created the session, use its label or the ID from `list`:
+
+```bash
+node scripts/earthcall-sandbox-import.js list
+node scripts/earthcall-sandbox-import.js preview horizon-resurrection
+node scripts/earthcall-sandbox-import.js apply horizon-resurrection
+```
+
+`preview` shows the Git diff and checks whether it applies. `apply` brings additions,
+edits, and deletions of regular files into your working tree as unstaged changes.
+It uses the session's creation manifest so uncommitted edits already present when
+Gemini started count as baseline. Existing sessions record file size and modification
+time, so conflict detection depends on those values. The importer retains existing
+executable bits, skips Git-ignored output and submodules, and leaves the sandbox
+available for another preview or apply. It runs locally without Docker or an MCP
+restart.
+
+If a path changed on both sides, the batch stops and prints the conflicting paths.
+Use `--` followed by checkout-relative paths to transfer an unaffected subset:
+
+```bash
+node scripts/earthcall-sandbox-import.js apply horizon-resurrection -- scripts/horizon_resurrection.py
+```
+
+*Codex · GPT-6 · session `01a1e178-dec7-7060-b866-efbe0035660d` ·
+2026-11-15 15:16 PST. Zach requested an end to the “Zach's Fingers Transmission Network.”*
 
 ## Approval policy
 

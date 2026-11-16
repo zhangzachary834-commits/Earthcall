@@ -63,7 +63,7 @@ function ensurePrivateDir(dir) {
 }
 
 function approvalDir() { return ensurePrivateDir(path.join(dataRoot(), "approvals")); }
-function sandboxDir() { return ensurePrivateDir(path.join(dataRoot(), "sandboxes")); }
+function sandboxDir() { return path.join(dataRoot(), "sandboxes"); }
 
 function policyPath(projectRoot) {
   return process.env.EARTHCALL_SANDBOX_POLICY || path.join(projectRoot, "config", "earthcall-gemini-sandbox-policy.json");
@@ -178,6 +178,11 @@ function sessionMetaPath(sessionId) { return path.join(sessionRoot(sessionId), "
 function sessionManifestPath(sessionId) { return path.join(sessionRoot(sessionId), "manifest.json"); }
 function sessionWorkspace(sessionId) { return path.join(sessionRoot(sessionId), "workspace"); }
 
+// Both the MCP diff and the local import command read the creation manifest.
+function readSessionManifest(sessionId) {
+  return JSON.parse(fs.readFileSync(sessionManifestPath(sessionId), "utf8"));
+}
+
 function loadSession(sessionId) {
   const metaPath = sessionMetaPath(sessionId);
   if (!fs.existsSync(metaPath)) throw new Error(`Unknown sandbox session: ${sessionId}`);
@@ -189,6 +194,7 @@ function loadSession(sessionId) {
 function createSession(projectRoot, label = "") {
   const sourceRoot = fs.realpathSync.native(projectRoot);
   const id = randomId(12);
+  ensurePrivateDir(sandboxDir());
   const root = ensurePrivateDir(sessionRoot(id));
   const workspace = path.join(root, "workspace");
   fs.mkdirSync(workspace, { recursive: true, mode: 0o700 });
@@ -502,7 +508,7 @@ function diffPair(oldPath, newPath, labelPath) {
 
 function sandboxDiff(sessionId, requestedPath = null, maxChars = 250000) {
   const session = loadSession(sessionId);
-  const manifest = JSON.parse(fs.readFileSync(sessionManifestPath(sessionId), "utf8"));
+  const manifest = readSessionManifest(sessionId);
   const current = new Map();
   walkWorkspace(session.workspace, ".", current);
 
@@ -562,6 +568,7 @@ module.exports = {
   loadPolicy,
   createSession,
   loadSession,
+  readSessionManifest,
   deleteSession,
   runDocker,
   readSandboxFile,
@@ -572,6 +579,7 @@ module.exports = {
   consumeApproval,
   _internal: {
     safeWorkspacePath,
+    shouldSkipCopy,
     copyTreeCow,
     summarizeAction,
     isInside,
