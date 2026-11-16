@@ -37,3 +37,7 @@ These three entries are why Palette kept sanding a skeleton. Kept so the miss st
 ## 2025-02-18 - Throttling aria-live status loop
 **Learning:** `aria-live` elements combined with an auto-reconnect retry loop in JS can spam screen readers continuously with "Connecting... Disconnected..." announcements on interval.
 **Action:** Move continuous string status updates out of `aria-live` containers and instead inject specific logical state changes into a controlled `#sr-announcer` hidden div when the binary state (connected/disconnected) explicitly flips.
+
+## 2026-11-09 - Expose refusal reasons in Law Graph Window
+**Learning:** When an Earthcall Law application is refused, the system populates a refusal reason indicating the semantic failure. Hiding this reason behind the interface creates a disjointed experience where users don't know why their authored law failed.
+**Action:** Always expose semantic refusal reasons in Law-authoring interfaces like `LawGraphWindow.cpp` using the semantic error color `ImVec4(1.0f, 0.4f, 0.3f, 1.0f)` to give truthful, understandable feedback directly to the Person.
