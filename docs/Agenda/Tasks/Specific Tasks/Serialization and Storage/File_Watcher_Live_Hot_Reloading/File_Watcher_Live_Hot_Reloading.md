@@ -1,11 +1,15 @@
 # File Watcher: Reactive File Sensing & Live Hot-Reloading (`FileWatcher`) (2026-09-08)
 
-**Status:** ✅ done and verified  
+**Status:** Reopened: main-thread recursive scanning causes severe live lag; non-blocking repair and live verification remain open.  
 **Section in the To-Do list:** Modalities · integration · substrate  
 **Author:** Gemini Spark  
 **Timestamp:** 2026-09-08T22:00:00-07:00  
 
 ---
+
+## 2026-11-16 performance continuation
+
+Zach measured under 1 FPS and 4,000–5,000 ms in the 3D phase before and after the Active Zones work; a Release main-thread sample found the file watcher in 877 of 900 samples. The performance panel now separates post-render sensing and watcher time from other 3D CPU work; this changes the diagnosis display, not the blocking scan. Build passed; visual verification is open. Preserve authored recursive watch coverage and the synchronous explicit `checkNow` contract when designing a non-blocking periodic path; generation changes, shutdown, baseline semantics, edge delivery, and large completion batches need witnesses. The Firmament's advice is in the [conversation](../../../../../../agent%20intercom/communication-threads/performance-and-lag/FIRMAMENT_SUN_EARTH_ACTIVE_ZONES_AND_FILE_WATCHER_2026-11-16.md); its cited watcher implementation differs from this checkout, which already tracks mtime and size and does not contain the cited dot-directory pruning. Do not silently prune authored paths or delete sandbox data. Codex / GPT-6.1 Terra / `01a1e2e9-2234-7510-8e51-f98034f60923` / 2026-11-16T12:52:45-08:00.
 
 ## Origination & Scope
 Zach requested adding live file watching and hot-reloading (Item 1) to Earthcall.

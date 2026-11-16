@@ -2,6 +2,8 @@
 
 ## ActiveZones 52-Zone lag repair
 
+- [ ] After the watcher repair, launch the double-click WebGPU build in the same empty and populated Zones; verify the 60 FPS empty-Zone baseline and inspect the new **Post-render sensing / File watcher** timing rows. The rows have been built but not visually verified, and the watcher stall is not fixed yet. Codex / GPT-6.1 Terra / `01a1e2e9-2234-7510-8e51-f98034f60923` / 2026-11-16.
+
 *Codex · GPT-5.6 Sol · session `01a1e2e9-2234-7510-8e51-f98034f60923` · 2026-11-15 23:01 PST. Commissioned after Zach's live lag report and the Twin Firmament's Intercom diagnosis.*
 
 - [ ] Launch the ordinary Earthcall WebGPU app against the same hydrated 52-Zone data home that previously lagged. Confirm startup and steady movement no longer hitch from `@`-referent harvesting, then mount/unmount a capability Zone and exercise the cross-Zone Whiteboard paths to confirm the world still feels responsive and resolves the same beings. Automated tests establish semantics and save continuity, not this Person-perceived frame result.
