@@ -843,30 +843,36 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
             return "(" + arg(0) + ")." + node.stringArg;
         }
         case Op::Add: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "(" + a + " + " + b + ")";
         }
         case Op::Sub: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "(" + a + " - " + b + ")";
         }
         // Scale covers scalar*vector, vector*scalar AND scalar*scalar; WGSL's
         // `*` is the same three, which is why the CPU evaluator was widened to
         // match instead of the emitter being narrowed.
         case Op::Scale: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "(" + a + " * " + b + ")";
         }
         case Op::Dot: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "dot(" + a + ", " + b + ")";
         }
         case Op::Cross: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "cross(" + a + ", " + b + ")";
         }
         case Op::Hadamard: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "(" + a + " * " + b + ")";
         }
         case Op::Normalize:return "normalize(" + arg(0) + ")";
@@ -905,7 +911,8 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
                    wgslLiteral(OntoMath::kDegenerateVectorLength) + ")";
         }
         case Op::Distance: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "distance(" + a + ", " + b + ")";
         }
         case Op::Div: {
@@ -951,15 +958,18 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
         // geom::SdfOp::Union / Intersect / Subtract, and to what evalSdf
         // computes on the CPU. One vocabulary, written in two syntaxes.
         case Op::Union: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "min(" + a + ", " + b + ")";
         }
         case Op::Intersection: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "max(" + a + ", " + b + ")";
         }
         case Op::Difference: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "max(" + a + ", -(" + b + "))";
         }
 
@@ -1048,23 +1058,28 @@ std::string emitMathNodeUncached(const OntoMath::MathNode& node, Emit& e, const 
             return out + ")";
         }
         case Op::MatrixAdd: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "(" + a + " + " + b + ")";
         }
         case Op::MatrixSub: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "(" + a + " - " + b + ")";
         }
         case Op::MatrixScale: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "(" + a + " * " + b + ")";
         }
         case Op::MatrixMultiply: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "(" + a + " * " + b + ")";
         }
         case Op::MatrixVectorMultiply: {
-            const std::string a = arg(0), b = arg(1);
+            const std::string a = arg(0);
+            const std::string b = arg(1);
             return "(" + a + " * " + b + ")";
         }
         case Op::MatrixTranspose: return "transpose(" + arg(0) + ")";
