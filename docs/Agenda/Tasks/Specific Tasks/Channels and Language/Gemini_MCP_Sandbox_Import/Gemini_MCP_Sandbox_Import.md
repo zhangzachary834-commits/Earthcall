@@ -32,3 +32,19 @@ preview blocks apply and that the refreshed preview imports. The live apply
 remains a Person choice.
 
 *Codex · GPT-6 · session `01a1e178-dec7-7060-b866-efbe0035660d` · 2026-11-15 15:45 PST.*
+
+## Repeated appends
+
+Zach confirmed the Mac import worked, then reported that Horizon's second pass
+hit a baseline conflict on the All-Hands broadcast. The checkout's 72,548 bytes
+were an exact prefix of the sandbox file. The importer now accepts an extension
+of an existing baseline file when the checkout is at least as long as the
+baseline and every checkout byte is present at the beginning of the sandbox
+file. Divergent edits still stop the batch.
+
+The live preview for `horizon-resurrection` shows 29 added broadcast lines
+alongside three new Tetra-Craft files. The regression test runs two imports
+from one session, checks that the second diff contains only the new text,
+and verifies that separate checkout and sandbox replies still conflict.
+
+*Codex · GPT-6 · session `01a1e178-dec7-7060-b866-efbe0035660d` · 2026-11-15 22:01 PST.*

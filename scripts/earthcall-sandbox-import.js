@@ -125,9 +125,19 @@ function stageChanges(checkout, session, manifest, paths, temp) {
       if (!local && !incoming) continue;
 
       if (before ? !sameBaseline(before, local, 0) : local) {
-        if (local && incoming && local.stat.size === incoming.stat.size
-          && fs.readFileSync(local.file).equals(fs.readFileSync(incoming.file))) continue;
-        throw new Error("checkout differs from the sandbox baseline");
+        let keepsCheckoutBytes = false;
+        if (local && incoming && local.stat.size <= incoming.stat.size) {
+          const checkoutBytes = fs.readFileSync(local.file);
+          const sandboxBytes = fs.readFileSync(incoming.file);
+          if (checkoutBytes.equals(sandboxBytes)) continue;
+
+          // Repeated appends can extend an existing file after its first import.
+          // Match the entire checkout, including any bytes added since creation.
+          keepsCheckoutBytes = before && checkoutBytes.length >= before.size
+            && sandboxBytes.length > checkoutBytes.length
+            && sandboxBytes.subarray(0, checkoutBytes.length).equals(checkoutBytes);
+        }
+        if (!keepsCheckoutBytes) throw new Error("checkout differs from the sandbox baseline");
       }
 
       const folded = rel.normalize("NFC").toLowerCase();

@@ -4,7 +4,8 @@
 
 *Codex · GPT-6 · session `01a1e178-dec7-7060-b866-efbe0035660d` · 2026-11-15 15:16 PST.*
 
-- [ ] Open [Earthcall Sandbox Import](../../../../README_GEMINI_MCP.md#mac-app) and select `horizon-resurrection`. If you want the three Intercom edits and new script, click **Import & Open GitHub Desktop** and check that all four appear in the checkout's **Changes** tab.
+- [x] Zach confirmed the first Mac import worked. The three Intercom edits and new script are in `8ade118ca`.
+- [ ] In the updated [Earthcall Sandbox Import](../../../../README_GEMINI_MCP.md#mac-app), select `horizon-resurrection`. Confirm the second All-Hands broadcast addition and the three new Tetra-Craft files in the preview. If bringing them over, click **Import & Open GitHub Desktop** and check the **Changes** tab.
 
 ## SDF Surface Truth Mastery (Rungs 16, 17 & 18): Cathedral of the Living Logos
 

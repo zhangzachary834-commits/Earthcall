@@ -243,3 +243,35 @@ test("Mac companion applies only the patch returned by its preview", (t) => {
   assert.equal(fs.readFileSync(destination, "utf8"), "updated after preview\n");
   assert.deepEqual(JSON.parse(cli("--json", "preview", id).stdout), { diff: "", digest: null });
 });
+
+test("repeated sandbox imports append new bytes and preserve divergent checkout edits", (t) => {
+  const { repo, workspace, id, cli } = importFixture(t);
+  const rel = "src/hello.txt";
+  const local = path.join(repo, rel);
+  const incoming = path.join(workspace, rel);
+  const initial = fs.readFileSync(local, "utf8");
+  const first = "First Horizon pass\n";
+  const second = "Second Horizon pass\n";
+
+  fs.appendFileSync(incoming, first);
+  const initialImport = cli("apply", id);
+  assert.equal(initialImport.status, 0, initialImport.stderr);
+  assert.equal(fs.readFileSync(local, "utf8"), initial + first);
+
+  fs.appendFileSync(incoming, second);
+  const preview = cli("--json", "preview", id);
+  assert.equal(preview.status, 0, preview.stderr);
+  const { diff, digest } = JSON.parse(preview.stdout);
+  assert.deepEqual(diff.split("\n").filter((line) => /^\+[^+]/.test(line)), ["+Second Horizon pass"]);
+  const applied = cli("apply", id, "--expected-diff", digest);
+  assert.equal(applied.status, 0, applied.stderr);
+  assert.equal(fs.readFileSync(local, "utf8"), initial + first + second);
+  assert.match(cli("apply", id).stdout, /No sandbox changes/);
+
+  fs.appendFileSync(local, "Checkout-only reply\n");
+  fs.appendFileSync(incoming, "A different, longer sandbox reply\n");
+  const refused = cli("apply", id);
+  assert.equal(refused.status, 1);
+  assert.match(refused.stderr, /checkout differs from the sandbox baseline/);
+  assert.equal(fs.readFileSync(local, "utf8"), initial + first + second + "Checkout-only reply\n");
+});

@@ -97,8 +97,11 @@ executable bits, skips Git-ignored output and submodules, and leaves the sandbox
 available for another preview or apply. It runs locally without Docker or an MCP
 restart.
 
-If a path changed on both sides, the batch stops and prints the conflicting paths.
-Use `--` followed by checkout-relative paths to transfer an unaffected subset:
+You can import the same session again when Gemini appends to an existing file.
+If the sandbox file starts with every byte currently in the checkout, the preview
+shows the additional content. Divergent edits stop the batch and print the
+conflicting paths. From the terminal, use `--` followed by checkout-relative
+paths to transfer an unaffected subset:
 
 ```bash
 node scripts/earthcall-sandbox-import.js apply horizon-resurrection -- scripts/horizon_resurrection.py

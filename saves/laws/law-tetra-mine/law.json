@@ -1,0 +1,22 @@
+{
+  "id": "law-tetra-mine",
+  "authors": [
+    "Zach"
+  ],
+  "trigger": "OnEvent",
+  "eventType": "object-clicked",
+  "condition": {
+    "op": 6,
+    "left": {
+      "path": "@event.target"
+    },
+    "right": {
+      "value": "category.voxel.tetrahedron"
+    }
+  },
+  "action": {
+    "kind": 16,
+    "elementToken": "",
+    "writes": "@event.target"
+  }
+}
