@@ -1005,6 +1005,111 @@ There is no longer a named `SdfPrim` kind refused solely for lack of representat
 
 ---
 
+## Implementation ledger — 2026-11-16 Parallax pass: reconciliation tribunal + ship-readiness boundary
+
+### Published reconciliation failures classified
+
+Heliograph's scratch Linux execution exposed four `sdf_wgsl_parameter_refresh_test` failures that reproduce on the published Lattice reconciliation crown `e014d00a91174a159159aa0143b850823149661b`.
+
+Parallax classified them by invariant rather than by assertion count.
+
+1. **same-program cohort visibility / receiver restoration** — stale textual witness.  
+   The generated WGSL still saves `g_instIdx`, evaluates foreign same-program instances, restores on occlusion/Unknown/success, and reasserts the receiver index before later visibility providers. The old test assumed a one-line call spelling after reconciliation formatting changed.
+
+2. **cohort -> foreign Field VM -> mesh order** — stale textual witness.  
+   The execution order remains:
+   `local receiver -> same-program cohort -> receiver restore -> foreign VM -> exact mesh triangles`.  
+   The tribunal now proves structural positions rather than one-line call text.
+
+3. **standalone scalar `sdfEval`** — real parameter-ABI regression.  
+   Scalar OntoMath WGSL lowering embedded side-effecting `arg(i)` calls inside chained C++ string expressions, allowing compiler operand-evaluation order to change parameter allocation order relative to the analytic-jet emitter. GCC/Linux exposed the mismatch, causing the compiler to fall back to `sdfEvalGrad(p).value`.  
+   The repair evaluates parameter-producing children in explicit authored order for vector construction, binary scalar/vector/CSG operations, Div, Pow, Clamp and matrix binary operations.
+
+4. **pure-geometry Perlin stripping** — stale whole-module assumption plus a real link-completeness bug.  
+   CompleteScene's generic foreign-blocker Field VM may execute `MathNoise3` even when the receiver's own SDF is noise-free. The old assertion that a pure receiver shader contains no `cnoise3` anywhere is therefore no longer valid. Worse, the VM referenced `cnoise3(v)` while the compiler emitted Perlin helpers only for local authored Noise, leaving a latent shader-link failure on pure receivers.  
+   The repair keeps scalar `cnoise3` available whenever the generic foreign VM is embedded, while preserving canonical code-size optimization by emitting `cnoise3_grad` only when the receiver's own analytic SDF geometry needs Noise gradients.
+
+Published repair sequence:
+- `a00cacc7` — deterministic parameter order + foreign-VM noise linkage;
+- `c7280811` — structural reconciliation witnesses;
+- `69c068c7` — mechanically explicit child sequencing;
+- `f368b0b2` — local noise-body tribunal tightening;
+- `92f4a7ea` — scalar-only Perlin module for pure receiver geometry;
+- `1401aad2` — preserve analytic-gradient stripping witness.
+
+### Verification status
+
+Exact-head GitHub Actions continues to cancel all macOS jobs before step 1. A manual rerun of the SDF range-proxy verification job on the repaired crown was likewise cancelled with zero executed steps.
+
+Therefore this ledger makes:
+- **no green CPU claim** for the repaired `sdf_wgsl_parameter_refresh_test`;
+- **no native WebGPU green claim**;
+- **no red execution verdict** on the repair, because GitHub did not execute it.
+
+Heliograph, who previously obtained a scratch Linux CPU build, has been asked to execute the repaired crown independently.
+
+### Ship-readiness architecture audit
+
+The 12 written completion criteria are no longer blocked by a renderer-owned Blinn-Phong equation:
+- active WebGPU SDF and mesh paths contain no hardcoded Blinn-Phong response law;
+- mesh and implicit surfaces use the same authored response compiler/semantics;
+- absent response is zero/refusal at the compiler boundary, not a hidden legacy shader;
+- legacy appearance is supplied by authored Material compatibility expressions;
+- mixed-representation CompleteScene visibility now has exact triangle + field-program execution providers with explicit Unknown.
+
+Two explicit product architecture gates remain open:
+
+#### A. Source-binding purification
+
+`RadianceSourceBinding` still physically carries `ambientRadiance`, `diffuseRadiance`, `specularRadiance` and the historical coefficient quartet. Those values are now mostly compatibility projection rather than BRDF law, but Completion Criterion 5 requires the source binding itself to stop defining incoming radiance through receiver-model lobes.
+
+A lawful migration must split:
+- canonical source truth / numeric fallback for `rho * chi * alpha`;
+- explicit legacy surface-incident compatibility envelopes used only by the authored historical response.
+
+Renaming the existing fields is not sufficient.
+
+#### B. Fresh non-plastic default
+
+A newly-created `material.default` still receives the authored historical Blinn-Phong compatibility response. Completion Criterion 10 therefore remains open.
+
+The proposed persistence-safe migration is:
+- old saved response-less materials, identified by absence of a current omission-policy marker, migrate once at load time to an explicit authored legacy compatibility AST;
+- freshly-created `material.default` authors a restrained matte response:
+  `surfaceColor ⊙ incidentRadiance * max(dot(n,-wi),0)`;
+- its environment response is `surfaceColor ⊙ environmentRadiance`;
+- new materials that intentionally inherit the default persist an omission-mode discriminator so save/load does not reinterpret them as legacy;
+- renderer execution never branches on that persistence metadata.
+
+This migration is designed but intentionally not landed until the repaired CPU tribunal executes.
+
+### Non-blocking frontiers
+
+The following are valuable follow-on work but are **not required by the original illumination commission if explicit refusal/recomputation remains in force**:
+- retained visibility-result caching / Parallax traversal-policy identity;
+- scene-evidence proof-key production;
+- broader world-dependent Piecewise authority beyond supported tri-state testimony;
+- removal of dead `SdfInstanceData.shading` ABI sediment;
+- renaming `HAS_AUTHORED_MATERIAL_RESPONSE` now that it means response presence rather than a legacy-vs-authored shading branch;
+- OpenGL feature parity.
+
+### Remaining ship gates
+
+Before this branch should be undrafted:
+
+1. execute the repaired CPU SDF tribunal and resolve any remaining real failure;
+2. land source-binding purification;
+3. land persistence-safe fresh matte default;
+4. run exact-head native WebGPU mesh/SDF/visibility witnesses;
+5. run focused radiance/volume/persistence/Law regressions and separate unrelated baseline failures with evidence;
+6. perform the final fossil audit / dead-ABI cleanup decision;
+7. review exact-head performance against the reconciled canonical SDF optimization crown;
+8. undraft only after the exact shipped head, not an ancestor, owns the evidence.
+
+— **Parallax Sun [H→P]** ☀️🔭
+
+---
+
 ## Commission
 
 Retire Earthcall's bespoke default 3D Blinn-Phong shader as a renderer-owned law and make surface illumination a consequence of the broader authored radiance / visibility / material-response ontology.
