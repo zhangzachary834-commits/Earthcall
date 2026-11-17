@@ -2336,6 +2336,96 @@ int main() {
                           glm::vec3(1.0f));
     }
 
+    // --- GATE B NATIVE OLD/NEW DEFAULT CONTRAST ----------------------------
+    // Same black receiver, same aligned source, same SDF geometry. Historical
+    // response migration retains a specular-only highlight; fresh response
+    // omission inherits the current matte default and therefore cannot create a
+    // white lobe from a black surface. Persistence history affects which authored
+    // AST exists, never a renderer-side history branch.
+    {
+        auto currentMat = materials.create("webgpu_gate_b_current_default");
+        currentMat->baseColor = glm::vec3(0.0f);
+        currentMat->responseExpr.reset();
+        currentMat->environmentResponseExpr.reset();
+
+        auto oldMat = std::make_shared<Material>(
+            Material::fromJson(nlohmann::json{
+                {"name", "webgpu_gate_b_legacy_default"},
+                {"baseColor", {0.0f, 0.0f, 0.0f}},
+                {"ambient", 0.0f},
+                {"diffuse", 0.0f},
+                {"specular", 1.0f},
+                {"shininess", 1.0f}
+            }));
+        assert(oldMat->responseExpr &&
+               "legacy Gate B control did not hydrate explicit response");
+        materials.add(oldMat);
+
+        Object currentReceiver;
+        currentReceiver.setFieldShape(
+            geom::SdfNode::leaf(
+                geom::SdfPrim::Box, glm::vec3(0.55f, 0.55f, 0.55f)),
+            glm::vec3(1.0f));
+        currentReceiver.setMaterialId("material.webgpu_gate_b_current_default");
+
+        Object legacyReceiver;
+        legacyReceiver.setFieldShape(
+            geom::SdfNode::leaf(
+                geom::SdfPrim::Box, glm::vec3(0.55f, 0.55f, 0.55f)),
+            glm::vec3(1.0f));
+        legacyReceiver.setMaterialId("material.webgpu_gate_b_legacy_default");
+
+        auto gateBRhoNode = scalarNode(1.0);
+        OntoMath::Piecewise gateBRho =
+            OntoMath::Piecewise::continuous(gateBRhoNode);
+        renderer.setRadianceSources({}, 0);
+        renderer.setRadianceField(&gateBRho, 4451);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setRadianceSourceCoefficients(1.0f, 0.0f, 0.0f, 1.0f);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.0f),
+                          glm::vec3(0.0f),
+                          glm::vec3(1.0f));
+        renderer.setLightingEnabled(true);
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        currentReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char currentDefaultPixel[4];
+        readCentre(currentDefaultPixel);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        legacyReceiver.drawObject();
+        renderer.endFrame();
+        unsigned char legacyDefaultPixel[4];
+        readCentre(legacyDefaultPixel);
+
+        std::printf(
+            "Gate-B fresh matte=(%d,%d,%d) migrated legacy=(%d,%d,%d)\n",
+            currentDefaultPixel[0], currentDefaultPixel[1],
+            currentDefaultPixel[2], legacyDefaultPixel[0],
+            legacyDefaultPixel[1], legacyDefaultPixel[2]);
+
+        assert(currentDefaultPixel[0] < 12 &&
+               currentDefaultPixel[1] < 12 &&
+               currentDefaultPixel[2] < 12 &&
+               "fresh matte default manufactured a specular lobe on black albedo");
+        assert(legacyDefaultPixel[0] > 80 &&
+               legacyDefaultPixel[1] > 80 &&
+               legacyDefaultPixel[2] > 80 &&
+               "migrated legacy response failed to preserve specular-only old appearance");
+
+        renderer.setRadianceField(nullptr, 0);
+        renderer.setRadianceSourceCoefficients(1.0f, 0.2f, 0.8f, 1.0f);
+        renderer.setLight(glm::vec3(0.0f, 0.0f, 2.0f),
+                          glm::vec3(0.2f),
+                          glm::vec3(0.8f),
+                          glm::vec3(1.0f));
+    }
+
     // --- RUNG 9 MATERIAL COPY-ON-WRITE CONTINUITY ---------------------------
     // Painting an Object creates its private Material. That operation may change
     // paint ownership; it must neither erase nor alias receiver-response truth.
