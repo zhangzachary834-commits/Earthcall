@@ -123,12 +123,20 @@ int main() {
     Rendering::RadianceSourceBinding source;
     source.producerId = "test.shared-source";
     source.position = glm::vec3(4, 5, -4);
-    source.ambientRadiance = glm::vec3(0.2f);
-    source.diffuseRadiance = glm::vec3(2.0f);
-    source.specularRadiance = glm::vec3(1.0f);
-    source.coefficients = glm::vec4(2.0f, 0.2f, 0.8f, 1.0f);
+    // Historical direct incident was diffuse / kd = 2.0 / 0.8 = 2.5.
+    // Keep that exact constant source truth independently from the legacy packet.
+    source.fallbackChroma = glm::vec3(1.25f);
+    source.fallbackIntensity = 2.0f;
+    source.legacySurface.environmentRadiance = glm::vec3(0.2f);
+    source.legacySurface.diffuseIncident = glm::vec3(2.0f);
+    source.legacySurface.specularIncident = glm::vec3(1.0f);
+    source.legacySurface.coefficients = glm::vec3(0.2f, 0.8f, 1.0f);
     source.enabled = true;
-    renderer.setLight(source.position, source.ambientRadiance, source.diffuseRadiance, source.specularRadiance);
+    renderer.setLight(
+        source.position,
+        source.legacySurface.environmentRadiance,
+        source.legacySurface.diffuseIncident,
+        source.legacySurface.specularIncident);
     renderer.setLightingEnabled(true);
     renderer.setVolumeZeroProofEnabled(false);
 
