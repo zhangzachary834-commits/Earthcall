@@ -1,4 +1,5 @@
 #include "ConstructedBeing/Material/Material.hpp"
+#include "ConstructedBeing/Material/MaterialResponseDefaults.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Object/Object/FaceTexture.hpp"
@@ -7,6 +8,7 @@
 
 #include <cstdint>
 #include <string>
+#include <stdexcept>
 #include <vector>
 
 using json = nlohmann::json;
@@ -305,6 +307,13 @@ json Material::toJson() const {
     }
     if (responseExpr) {
         j["responseExpr"] = responseExpr->toJson();
+    } else {
+        // Gate B persistence marker: in CURRENT saves, direct-response omission
+        // means inherit material.default. Old saves have no marker and are
+        // migrated once on load to an explicit legacy compatibility AST.
+        // This metadata is intentionally not a Property and never reaches the renderer.
+        j[MaterialResponseDefaults::kOmissionSemanticsKey] =
+            MaterialResponseDefaults::kInheritDefaultV1;
     }
     if (environmentResponseExpr) {
         j["environmentResponseExpr"] = environmentResponseExpr->toJson();
@@ -356,14 +365,45 @@ Material Material::fromJson(const json& j) {
     if (j.contains("colorExpr")) {
         m.colorExpr = std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(j["colorExpr"]));
     }
-    if (j.contains("responseExpr")) {
+    const bool hasDirectResponse = j.contains("responseExpr");
+    const bool hasEnvironmentResponse = j.contains("environmentResponseExpr");
+    if (hasDirectResponse) {
         m.responseExpr =
-            std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(j["responseExpr"]));
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::fromJson(j["responseExpr"]));
     }
-    if (j.contains("environmentResponseExpr")) {
+    if (hasEnvironmentResponse) {
         m.environmentResponseExpr =
             std::make_shared<OntoMath::Piecewise>(
                 OntoMath::Piecewise::fromJson(j["environmentResponseExpr"]));
+    }
+
+    if (!hasDirectResponse) {
+        const auto omissionIt =
+            j.find(MaterialResponseDefaults::kOmissionSemanticsKey);
+        if (omissionIt == j.end()) {
+            // Legacy save: response omission historically meant the old
+            // compatibility law. Materialize that law NOW so the next save
+            // persists explicit authored mathematics and ambiguity disappears.
+            m.responseExpr =
+                MaterialResponseDefaults::makeLegacyDirectResponse();
+            m.bumpResponseRevision();
+            if (!hasEnvironmentResponse) {
+                m.environmentResponseExpr =
+                    MaterialResponseDefaults::makeLegacyEnvironmentResponse();
+                m.bumpEnvironmentResponseRevision();
+            }
+        } else {
+            if (!omissionIt->is_string() ||
+                omissionIt->get<std::string>() !=
+                    MaterialResponseDefaults::kInheritDefaultV1) {
+                throw std::invalid_argument(
+                    "Material response omission semantics are unknown to this build");
+            }
+            // Current save: omission intentionally means inherit material.default.
+            // Keep responseExpr absent. RenderMaterial already resolves inheritance
+            // without consulting this persistence metadata.
+        }
     }
     if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
         for (auto it = j["authoredProperties"].begin();
