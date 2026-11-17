@@ -15,6 +15,7 @@
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Material/MaterialResponseDefaults.hpp"
+#include "ConstructedBeing/Material/MaterialPersistenceMigration.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 
 #include <cassert>
@@ -300,25 +301,175 @@ int main() {
         }
         assert(refusedUnknown);
 
-        // A legacy snapshot that contains no material.default at all still gets
-        // the historical fallback explicitly, rather than the fresh matte default.
+        // The GLOBAL manager may not infer old-world fallback semantics from a
+        // missing/default record. It always reinstates the CURRENT matte default;
+        // document-local persistence migration owns old-world preservation.
         MaterialManager legacySnapshot;
         legacySnapshot.loadFromJson(nlohmann::json::array({
             nlohmann::json{{"name", "old_stone"}}
         }));
-        auto legacyDefault = legacySnapshot.defaultMaterial();
-        assert(legacyDefault && legacyDefault->responseExpr);
-        std::set<std::string> legacyDefaultBindings;
-        for (const auto& piece : legacyDefault->responseExpr->pieces) {
+        auto canonicalDefault = legacySnapshot.defaultMaterial();
+        assert(canonicalDefault && canonicalDefault->responseExpr);
+        std::set<std::string> canonicalBindings;
+        for (const auto& piece : canonicalDefault->responseExpr->pieces) {
             if (piece.mathNode)
-                piece.mathNode->collectPropertyBindings(legacyDefaultBindings);
+                piece.mathNode->collectPropertyBindings(canonicalBindings);
             if (piece.whereLEZero)
-                piece.whereLEZero->collectPropertyBindings(legacyDefaultBindings);
+                piece.whereLEZero->collectPropertyBindings(canonicalBindings);
         }
-        assert(legacyDefaultBindings.count("specular") == 1 &&
-               "missing default in legacy snapshot must preserve old fallback appearance");
+        assert(canonicalBindings.empty() &&
+               "global fallback became legacy merely because a snapshot omitted default");
 
-        std::printf("  gate-b: fresh matte default and persistence-stable legacy migration\n");
+        // A concrete old Zone document gets a collision-free scoped legacy
+        // default and only its own default references are rewritten.
+        nlohmann::json oldZone{
+            {"identifier", "Old Zone / 成都"},
+            {"materials", nlohmann::json::array({
+                nlohmann::json{
+                    {"name", "default"},
+                    {"ambient", 0.2f},
+                    {"diffuse", 0.8f},
+                    {"specular", 1.0f},
+                    {"shininess", 32.0f}
+                },
+                nlohmann::json{{"name", "stone"}}
+            })},
+            {"world", {
+                {"objects", nlohmann::json::array({
+                    nlohmann::json{
+                        {"objectID", "old-default-object"},
+                        {"materialId", "material.default"}
+                    },
+                    nlohmann::json{
+                        {"objectID", "named-object"},
+                        {"materialId", "material.stone"}
+                    }
+                })}
+            }}
+        };
+        const auto scoped =
+            MaterialPersistenceMigration::migrateLegacyDefaultDocument(
+                oldZone, "zone:Old Zone / 成都");
+        assert(scoped.migrated && !scoped.synthesized);
+        assert(scoped.scopedMaterialId != "material.default");
+        assert(scoped.scopedMaterialId ==
+               MaterialPersistenceMigration::scopedLegacyDefaultId(
+                   "zone:Old Zone / 成都"));
+        assert(scoped.document["world"]["objects"][0]["materialId"] ==
+               scoped.scopedMaterialId);
+        assert(scoped.document["world"]["objects"][1]["materialId"] ==
+               "material.stone");
+        assert(MaterialPersistenceMigration::materialIdentity(
+                   scoped.document["materials"][0]) ==
+               scoped.scopedMaterialId);
+
+        // Full identity encoding, not a finite hash: another owning identity
+        // must produce a different compatibility Material.
+        assert(MaterialPersistenceMigration::scopedLegacyDefaultId(
+                   "zone:Old Zone / 成都") !=
+               MaterialPersistenceMigration::scopedLegacyDefaultId(
+                   "zone:Other Zone / 成都"));
+
+        legacySnapshot.mergeFromJson(scoped.document["materials"]);
+        auto scopedLegacy =
+            legacySnapshot.get(scoped.scopedMaterialId);
+        assert(scopedLegacy && scopedLegacy->responseExpr);
+        std::set<std::string> scopedBindings;
+        for (const auto& piece : scopedLegacy->responseExpr->pieces) {
+            if (piece.mathNode)
+                piece.mathNode->collectPropertyBindings(scopedBindings);
+            if (piece.whereLEZero)
+                piece.whereLEZero->collectPropertyBindings(scopedBindings);
+        }
+        assert(scopedBindings.count("specular") == 1);
+        canonicalBindings.clear();
+        for (const auto& piece : legacySnapshot.defaultMaterial()->responseExpr->pieces) {
+            if (piece.mathNode)
+                piece.mathNode->collectPropertyBindings(canonicalBindings);
+        }
+        assert(canonicalBindings.empty() &&
+               "scoped legacy Zone poisoned canonical material.default");
+
+        // Migration is one-way/idempotent: once scoped, no default reference
+        // remains to migrate again.
+        const auto scopedAgain =
+            MaterialPersistenceMigration::migrateLegacyDefaultDocument(
+                scoped.document, "zone:Old Zone / 成都");
+        assert(!scopedAgain.migrated);
+
+        // Pre-material legacy documents still preserve appearance: a default
+        // object with no materials bag gets a synthesized scoped compatibility
+        // Material.
+        nlohmann::json preMaterialZone{
+            {"identifier", "Pre Materials"},
+            {"objects", nlohmann::json::array({
+                nlohmann::json{
+                    {"objectID", "pre-material-object"},
+                    {"materialId", "material.default"}
+                }
+            })}
+        };
+        const auto synthesized =
+            MaterialPersistenceMigration::migrateLegacyDefaultDocument(
+                preMaterialZone, "zone:Pre Materials");
+        assert(synthesized.migrated && synthesized.synthesized);
+        assert(synthesized.document["materials"].size() == 1);
+        assert(synthesized.document["objects"][0]["materialId"] ==
+               synthesized.scopedMaterialId);
+
+        // Gate-A-era explicit legacy defaults are recognized too; otherwise a
+        // save written after the first migration could re-poison the global
+        // default on its second load.
+        nlohmann::json gateADefault{
+            {"name", "default"},
+            {"responseExpr",
+             MaterialResponseDefaults::makeLegacyDirectResponse()->toJson()},
+            {"environmentResponseExpr",
+             MaterialResponseDefaults::makeLegacyEnvironmentResponse()->toJson()}
+        };
+        nlohmann::json gateAZone{
+            {"identifier", "Gate A Old Zone"},
+            {"materials", nlohmann::json::array({gateADefault})},
+            {"objects", nlohmann::json::array({
+                nlohmann::json{
+                    {"objectID", "gate-a-object"},
+                    {"materialId", "material.default"}
+                }
+            })}
+        };
+        const auto gateAScoped =
+            MaterialPersistenceMigration::migrateLegacyDefaultDocument(
+                gateAZone, "zone:Gate A Old Zone");
+        assert(gateAScoped.migrated &&
+               gateAScoped.document["objects"][0]["materialId"] ==
+                   gateAScoped.scopedMaterialId);
+
+        // A current explicit matte default is NOT legacy evidence and must not
+        // be renamed by the Gate B migrator.
+        nlohmann::json currentZone{
+            {"identifier", "Current Zone"},
+            {"materials", nlohmann::json::array({
+                nlohmann::json{
+                    {"name", "default"},
+                    {"responseExpr",
+                     MaterialResponseDefaults::makeCurrentDefaultDirectResponse()->toJson()},
+                    {"environmentResponseExpr",
+                     MaterialResponseDefaults::makeCurrentDefaultEnvironmentResponse()->toJson()}
+                }
+            })},
+            {"objects", nlohmann::json::array({
+                nlohmann::json{
+                    {"objectID", "current-object"},
+                    {"materialId", "material.default"}
+                }
+            })}
+        };
+        const auto currentScoped =
+            MaterialPersistenceMigration::migrateLegacyDefaultDocument(
+                currentZone, "zone:Current Zone");
+        assert(!currentScoped.migrated);
+
+        std::printf("  gate-b: matte global default + scoped legacy document migration\n");
     }
 
     // --- 3. Manager ownership, resolution, and the undeletable default -------
@@ -343,26 +494,32 @@ int main() {
         assert(mm.remove("material.clay"));
         assert(mm.get("clay") == nullptr);
 
-        // Merge/upsert may replace the undeletable default's STATE without
-        // duplicating its identity. An old response-less default is migrated
-        // before replacement, preserving the loaded world's legacy appearance.
+        // An UNSCOPED legacy default may not replace canonical global state.
+        // Persistence must transplant it first.
         const std::size_t beforeMergeCount = mm.getAll().size();
+        const std::string defaultBefore =
+            mm.defaultMaterial()->responseExpr->toJson().dump();
         mm.mergeFromJson(nlohmann::json::array({
             nlohmann::json{{"name", "default"}}
         }));
         assert(mm.getAll().size() == beforeMergeCount);
-        auto mergedDefault = mm.defaultMaterial();
-        assert(mergedDefault && mergedDefault->responseExpr);
-        std::set<std::string> mergedBindings;
-        for (const auto& piece : mergedDefault->responseExpr->pieces) {
-            if (piece.mathNode)
-                piece.mathNode->collectPropertyBindings(mergedBindings);
-            if (piece.whereLEZero)
-                piece.whereLEZero->collectPropertyBindings(mergedBindings);
-        }
-        assert(mergedBindings.count("specular") == 1);
+        assert(mm.defaultMaterial()->responseExpr->toJson().dump() ==
+               defaultBefore);
 
-        std::printf("  manager: default is undeletable externally but merge-replaceable without duplicate identity\n");
+        // Current explicit authored default state may still be merged normally.
+        nlohmann::json customDefault{
+            {"name", "default"},
+            {"baseColor", {0.2f, 0.3f, 0.4f}},
+            {"responseExpr",
+             MaterialResponseDefaults::makeCurrentDefaultDirectResponse()->toJson()},
+            {"environmentResponseExpr",
+             MaterialResponseDefaults::makeCurrentDefaultEnvironmentResponse()->toJson()}
+        };
+        mm.mergeFromJson(nlohmann::json::array({customDefault}));
+        assert(mm.getAll().size() == beforeMergeCount);
+        assert(nearf(mm.defaultMaterial()->baseColor.r, 0.2f));
+
+        std::printf("  manager: unscoped legacy default refused; current authored default remains replaceable\n");
     }
 
     // --- 4. Serialization round-trip -----------------------------------------
