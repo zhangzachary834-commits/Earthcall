@@ -6796,8 +6796,10 @@ struct RadianceSourceSample {
                 "(p: vec3<f32>, omega: vec3<f32>) -> f32 {\n" +
                 angularBody + "}\n";
 
-        // This is the geometry-independent source packet. Visibility is
-        // deliberately NOT here: Source authors rho/chi/alpha; Path owns V.
+        // Geometry-independent source projection. Canonical transport is
+        // fallback incident chroma/magnitude shaped only by authored rho/chi/alpha;
+        // the two legacy lobe envelopes are quarantined receiver-compatibility
+        // inputs carried beside it. Visibility is deliberately NOT here: Path owns V.
         wgsl += "\nfn sourceSample_" + suffix +
                 "(receiverWorld: vec3<f32>) -> RadianceSourceSample {\n";
         wgsl += "    let source = RS[" + suffix + "u];\n";
@@ -8758,8 +8760,9 @@ Program compile(const geom::SdfNode& root,
                 sum += "        if (sourcePacket.enabled > 0.5) {\n";
                 sum += "            environmentRadiance += "
                        "sourcePacket.environmentRadiance;\n";
-                sum += "            // Path transport begins here. Source packet "
-                       "contains rho/chi/alpha only; V remains derived geometry.\n";
+                sum += "            // Path transport begins here. Canonical source "
+                       "transport is rho/chi/alpha; legacy envelopes are receiver-only "
+                       "compatibility inputs and V remains derived geometry.\n";
                 sum += "            var pathVisibility = VisibilityDecision(1.0, 1.0);\n";
                 sum += "            if (sourcePacket.shapedRadiance > 0.0) {\n";
                 sum += "                pathVisibility = "
