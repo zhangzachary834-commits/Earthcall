@@ -404,8 +404,9 @@ int main() {
             {"identifier", "Pre Materials"},
             {"objects", nlohmann::json::array({
                 nlohmann::json{
-                    {"objectID", "pre-material-object"},
-                    {"materialId", "material.default"}
+                    {"objectID", "pre-material-object"}
+                    // Deliberately NO materialId: Object::from_json historically
+                    // interprets this omission as material.default.
                 }
             })}
         };
@@ -415,7 +416,8 @@ int main() {
         assert(synthesized.migrated && synthesized.synthesized);
         assert(synthesized.document["materials"].size() == 1);
         assert(synthesized.document["objects"][0]["materialId"] ==
-               synthesized.scopedMaterialId);
+               synthesized.scopedMaterialId &&
+               "pre-material omission was reinterpreted as current matte default");
 
         // Gate-A-era explicit legacy defaults are recognized too; otherwise a
         // save written after the first migration could re-poison the global
