@@ -220,6 +220,7 @@ jobs:
             field_vm_test \
             material_being_test \
             zone_identifier_name_split_test \
+            zone_material_closure_test \
             field_vm_dependency_test \
             field_vm_property_authority_test \
             visibility_proof_premises_test \
@@ -251,6 +252,7 @@ jobs:
           ./build/field_vm_test
           ./build/material_being_test
           ./build/zone_identifier_name_split_test
+          ./build/zone_material_closure_test
           ./build/field_vm_dependency_test
           ./build/field_vm_property_authority_test
           ./build/visibility_proof_premises_test
