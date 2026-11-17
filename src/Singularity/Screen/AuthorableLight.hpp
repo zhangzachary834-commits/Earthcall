@@ -27,9 +27,13 @@ struct AuthorableLightState {
 // properties retain the historical renderer defaults when absent.
 bool readAuthorableLight(const geom::FieldNode& field, AuthorableLightState& out);
 
-// Convert authored chromatic/intensity coefficients into the renderer boundary's
-// three existing radiance channels. Keeping this transform in one place prevents
-// OpenGL and WebGPU call sites from inventing separate interpretations.
+// Canonical source fallback: one chroma times one magnitude. This is the
+// source-owned constant incident envelope used when authored chi is absent.
+glm::vec3 lightIncidentRadiance(const AuthorableLightState& light);
+
+// Historical ambient/diffuse/specular projections remain only for legacy
+// surface-response/backend compatibility. New source transport must not infer
+// canonical incident radiance from these receiver-model channels.
 glm::vec3 lightAmbientRadiance(const AuthorableLightState& light);
 glm::vec3 lightDiffuseRadiance(const AuthorableLightState& light);
 glm::vec3 lightSpecularRadiance(const AuthorableLightState& light);
