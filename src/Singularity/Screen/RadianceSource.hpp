@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include <glm/glm.hpp>
 
 namespace OntoMath { struct Piecewise; }
