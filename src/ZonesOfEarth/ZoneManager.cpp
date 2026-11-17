@@ -14,6 +14,7 @@
 #include "ZonesOfEarth/Physics/Physics.hpp"
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "ConstructedBeing/Material/MaterialPersistenceMigration.hpp"
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Object/Object/ObjectIdentity.hpp"
 #include "Singularity/OntoMath/ScalarForm.hpp"
@@ -1312,6 +1313,11 @@ void ZoneManager::hydrateFromZoneStore() {
     }
 
     auto admit = [&](const std::string& id, const nlohmann::json& zj) {
+        const auto gateBMigration =
+            MaterialPersistenceMigration::migrateLegacyDefaultDocument(
+                zj, "zone:" + id);
+        const nlohmann::json& effectiveZj = gateBMigration.document;
+
         std::shared_ptr<Zone> live;
         for (auto& z : _zones) {
             if (z && z->getIdentifier() == id) {
@@ -1322,12 +1328,16 @@ void ZoneManager::hydrateFromZoneStore() {
         if (live) {
             // Objects already here stay (keep-live). Still merge this
             // identity's materials so FaceTextures are not a leftover
-            // from whatever session was last loaded.
-            if (zj.contains("materials")) materials.mergeFromJson(zj["materials"]);
-            if (live->getOwnedObjects().empty()) applyZoneJson(*live, zj, true);
-            else reinstatedMissingOwnMaterials(*live);
+            // from whatever session was last loaded. Gate B's legacy default
+            // is already scoped away from canonical material.default.
+            if (effectiveZj.contains("materials"))
+                materials.mergeFromJson(effectiveZj["materials"]);
+            if (live->getOwnedObjects().empty())
+                applyZoneJson(*live, effectiveZj, true);
+            else
+                reinstatedMissingOwnMaterials(*live);
         } else {
-            live = makeZoneFromJson(zj);
+            live = makeZoneFromJson(effectiveZj);
             addZone(live);
         }
         if (live) {
@@ -2007,14 +2017,26 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         std::string currentZoneId = j.value("currentZoneId", std::string{});
         const bool snapshotRestore = isBeforeLoadSnapshot(filename);
 
-        // Materials are beings objects name by id. FaceTextures live on them,
-        // not on the Object. A session file still carries a materials bag;
+        // Materials are beings objects name by id. Gate B must process the
+        // top-level session bag independently of nested Zones: an old root
+        // material.default becomes a world-scoped compatibility Material and
+        // only top-level objects are rewritten. Nested Zone documents receive
+        // their own Zone-scoped migration below.
+        const auto rootMaterialMigration =
+            MaterialPersistenceMigration::migrateLegacyDefaultDocument(
+                j, "world:" + name);
+        const nlohmann::json& rootSurfaceJson =
+            rootMaterialMigration.document;
+
         // REPLACE would wipe paint on a live Home when another save loaded.
-        // Snapshot restore rewinds; every other load merges, then Home/Zone
-        // identity files re-apply their own surfaces (source of truth).
-        if (j.contains("materials")) {
-            if (snapshotRestore) materials.loadFromJson(j["materials"]);
-            else materials.mergeFromJson(j["materials"]);
+        // Snapshot restore rewinds the named bag, but MaterialManager always
+        // reinstates the canonical current material.default if the bag contains
+        // only a legacy default.
+        if (rootSurfaceJson.contains("materials")) {
+            if (snapshotRestore)
+                materials.loadFromJson(rootSurfaceJson["materials"]);
+            else
+                materials.mergeFromJson(rootSurfaceJson["materials"]);
         }
         if (j.contains("categories")) categories.loadFromJson(j["categories"]);
 
@@ -2034,6 +2056,11 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         auto admitFromJson = [&](const nlohmann::json& zj) {
             const std::string id = zoneIdFromJson(zj);
             if (id.empty()) return;
+            const auto gateBMigration =
+                MaterialPersistenceMigration::migrateLegacyDefaultDocument(
+                    zj, "zone:" + id);
+            const nlohmann::json& effectiveZj = gateBMigration.document;
+
             if (auto live = findLive(id)) {
                 // A LIVE zone still needs the session's zone JSON merged into
                 // it. Boot runs hydrateFromZoneStore() (EngineInit.cpp) before
@@ -2059,7 +2086,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 // exactly as the store-hit branch below keeps the store's.
                 // applyFormationRelations is idempotent by type + endpoint ids,
                 // so re-running it adds only what is genuinely missing.
-                applyZoneJson(*live, zj, /*replaceObjects=*/snapshotRestore, /*restoreExistingLexemes=*/snapshotRestore);
+                applyZoneJson(*live, effectiveZj, /*replaceObjects=*/snapshotRestore, /*restoreExistingLexemes=*/snapshotRestore);
                 // Tried and reverted (2026-09-07): re-running from_json on an
                 // object that is already live corrupts it. from_json is only
                 // safe on a just-constructed Object — a live one may already
@@ -2086,25 +2113,25 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                     // things the session snapshot still holds — most
                     // critically the formation relation graph, which used
                     // to have no load path of its own. Merge rather than
-                    if (zj.is_object()) {
-                        applyZoneJson(*z, zj, /*replaceObjects=*/false);
+                    if (effectiveZj.is_object()) {
+                        applyZoneJson(*z, effectiveZj, /*replaceObjects=*/false);
                         // The store wins per-FIELD, not per-object: a field the
                         // World authors after this identity snapshot was taken —
                         // faceColors added to an object the snapshot predates,
                         // say — must not regress to a hardcoded default just
                         // because the snapshot never recorded it. See
                         // mergeZoneObjectsFromJson's own comment for the mechanism.
-                        if (zj.contains("world")) {
-                            mergeZoneObjectsFromJson(zj["world"], *z);
-                        } else if (zj.contains("objects")) {
-                            mergeZoneObjectsFromJson(zj, *z);
+                        if (effectiveZj.contains("world")) {
+                            mergeZoneObjectsFromJson(effectiveZj["world"], *z);
+                        } else if (effectiveZj.contains("objects")) {
+                            mergeZoneObjectsFromJson(effectiveZj, *z);
                         }
                     }
                     return;
                 }
             }
-            if (!zj.is_object()) return;
-            auto z = makeZoneFromJson(zj, /*restoreExistingLexemes=*/snapshotRestore);
+            if (!effectiveZj.is_object()) return;
+            auto z = makeZoneFromJson(effectiveZj, /*restoreExistingLexemes=*/snapshotRestore);
             addZone(z);
             if (!snapshotRestore && !isObservationZone(*z)) {
                 // A session's embedded zones[] can equally name a Home
@@ -2156,7 +2183,8 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
         // zone's world came in empty, fold those into the active zone so
         // a Person's spawned shapes survive the round-trip. Identity-stable
         // Zones that already have beings are left alone.
-        if (j.contains("objects") && j["objects"].is_array() && !_zones.empty()) {
+        if (rootSurfaceJson.contains("objects") &&
+            rootSurfaceJson["objects"].is_array() && !_zones.empty()) {
             size_t foldIdx = std::min(currentZoneIdx, _zones.size() - 1);
             if (!currentZoneId.empty()) {
                 for (size_t i = 0; i < _zones.size(); ++i) {
@@ -2168,7 +2196,7 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
             }
             auto& loadZone = *_zones[foldIdx];
             if (loadZone.getOwnedObjects().empty()) {
-                zoneObjectsFromJson(j, loadZone);
+                zoneObjectsFromJson(rootSurfaceJson, loadZone);
             }
         }
 
@@ -2184,8 +2212,12 @@ void ZoneManager::loadState(const std::string& filename, SaveContext& ctx) {
                 nlohmann::json idj = z->isHome()
                     ? SaveSystem::readHomeIdentity(id)
                     : SaveSystem::readZoneIdentity(id);
-                if (idj.contains("materials"))
-                    materials.mergeFromJson(idj["materials"]);
+                const auto gateBIdentity =
+                    MaterialPersistenceMigration::migrateLegacyDefaultDocument(
+                        idj, "zone:" + id);
+                if (gateBIdentity.document.contains("materials"))
+                    materials.mergeFromJson(
+                        gateBIdentity.document["materials"]);
                 reinstatedMissingOwnMaterials(*z);
             }
         }
