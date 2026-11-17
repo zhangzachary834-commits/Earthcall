@@ -218,6 +218,8 @@ jobs:
             sdf_revision_split_test \
             sdf_wgsl_parameter_refresh_test \
             field_vm_test \
+            material_being_test \
+            zone_identifier_name_split_test \
             field_vm_dependency_test \
             field_vm_property_authority_test \
             visibility_proof_premises_test \
@@ -247,6 +249,8 @@ jobs:
           ./build/sdf_revision_split_test
           ./build/sdf_wgsl_parameter_refresh_test
           ./build/field_vm_test
+          ./build/material_being_test
+          ./build/zone_identifier_name_split_test
           ./build/field_vm_dependency_test
           ./build/field_vm_property_authority_test
           ./build/visibility_proof_premises_test
