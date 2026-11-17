@@ -22,8 +22,9 @@ RenderMaterial resolveRenderMaterial(const Material& m, const FaceAlbedo& albedo
     rm.responseExpr = m.responseExpr;
     rm.responseRevision = m.getResponseRevision();
 
-    // A legacy Material inherits the default direct receiver law as an
-    // equation, but Bind paths resolve against THIS Material.
+    // A CURRENT response-less Material inherits the default direct receiver law
+    // as an equation. Legacy response-less saves are migrated on hydration to an
+    // explicit compatibility AST, so rendering never branches on save history.
     if (!rm.responseExpr) {
         if (auto fallback = materials.defaultMaterial();
             fallback && fallback.get() != &m) {
@@ -32,9 +33,9 @@ RenderMaterial resolveRenderMaterial(const Material& m, const FaceAlbedo& albedo
         }
     }
 
-    // An explicit local direct response opts out of inherited legacy
-    // environment. Legacy Materials inherit the default environment equation,
-    // again binding values against the receiving Material.
+    // An explicit local direct response opts out of inherited environment.
+    // A current response-less Material inherits the default environment equation.
+    // Migrated legacy Materials already own their explicit environment law.
     if (m.environmentResponseExpr) {
         rm.environmentResponseExpr = m.environmentResponseExpr;
         rm.environmentResponseRevision = m.getEnvironmentResponseRevision();
