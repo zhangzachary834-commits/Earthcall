@@ -59,15 +59,31 @@ std::shared_ptr<Material> MaterialManager::create(const std::string& name) {
 
 void MaterialManager::add(const std::shared_ptr<Material>& m) {
     if (!m) return;
-    // material.default is externally undeletable, but merge/upsert must still
-    // replace its state rather than create two beings with one identity.
+
+    // Gate B safety rail at the object boundary, not only JSON ingestion.
+    // Shared Material roots and stored-Singular restoration may hand this
+    // registry an already-deserialized Material directly. The canonical global
+    // default may therefore be replaced only by explicit CURRENT authored
+    // response state. A response-less or exact historical compatibility default
+    // belongs to a document scope and must be transplanted to a named
+    // compatibility Material before registry admission.
     if (m->name() == "default") {
+        const bool exactLegacy =
+            m->responseExpr &&
+            m->responseExpr->toJson() ==
+                MaterialPersistenceMigration::legacyDirectJson();
+        if (!m->responseExpr || exactLegacy) {
+            ensureDefault();
+            return;
+        }
+
         auto it = _materialIndexByName.find("default");
         if (it != _materialIndexByName.end() && it->second < _materials.size()) {
             _materials[it->second] = m;
             return;
         }
     }
+
     // Replace any non-default material of the same identity rather than duplicate it.
     remove(m->getIdentifier());
     _materials.push_back(m);
