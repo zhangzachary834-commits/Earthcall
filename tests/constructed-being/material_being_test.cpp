@@ -342,7 +342,27 @@ int main() {
         assert(!mm.remove("material.default"));
         assert(mm.remove("material.clay"));
         assert(mm.get("clay") == nullptr);
-        std::printf("  manager: create/get/resolveOrDefault work; default is undeletable\n");
+
+        // Merge/upsert may replace the undeletable default's STATE without
+        // duplicating its identity. An old response-less default is migrated
+        // before replacement, preserving the loaded world's legacy appearance.
+        const std::size_t beforeMergeCount = mm.getAll().size();
+        mm.mergeFromJson(nlohmann::json::array({
+            nlohmann::json{{"name", "default"}}
+        }));
+        assert(mm.getAll().size() == beforeMergeCount);
+        auto mergedDefault = mm.defaultMaterial();
+        assert(mergedDefault && mergedDefault->responseExpr);
+        std::set<std::string> mergedBindings;
+        for (const auto& piece : mergedDefault->responseExpr->pieces) {
+            if (piece.mathNode)
+                piece.mathNode->collectPropertyBindings(mergedBindings);
+            if (piece.whereLEZero)
+                piece.whereLEZero->collectPropertyBindings(mergedBindings);
+        }
+        assert(mergedBindings.count("specular") == 1);
+
+        std::printf("  manager: default is undeletable externally but merge-replaceable without duplicate identity\n");
     }
 
     // --- 4. Serialization round-trip -----------------------------------------
