@@ -330,7 +330,10 @@ void from_json(const nlohmann::json& j, Object& obj){
     if (j.contains("objectID") && j["objectID"].is_string()) {
         obj.setObjectID(j["objectID"].get<std::string>());
     }
-    // Older saves predate materials; they resolve to material.default on load.
+    // Raw Object decoding keeps the current fallback contract. Gate B
+    // persistence boundaries rewrite genuinely old omitted/default references
+    // to a scoped compatibility Material BEFORE this decoder runs, so historical
+    // omission is never reinterpreted as the current matte global default.
     obj.setMaterialId(j.value("materialId", std::string("material.default")));
     std::vector<float> tvals = j.value("transform", std::vector<float>{});
     if(tvals.size()==16){ obj.setTransform(vectorToMat4(tvals)); }
