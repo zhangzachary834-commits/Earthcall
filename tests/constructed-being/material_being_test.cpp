@@ -425,9 +425,10 @@ int main() {
         nlohmann::json gateADefault{
             {"name", "default"},
             {"responseExpr",
-             MaterialResponseDefaults::makeLegacyDirectResponse()->toJson()},
-            {"environmentResponseExpr",
-             MaterialResponseDefaults::makeLegacyEnvironmentResponse()->toJson()}
+             MaterialResponseDefaults::makeLegacyDirectResponse()->toJson()}
+            // Deliberately no environmentResponseExpr: once the direct AST is
+            // recognized as the exact historical default, Gate B restores the
+            // matching historical environment law while scoping it.
         };
         nlohmann::json gateAZone{
             {"identifier", "Gate A Old Zone"},
@@ -445,6 +446,33 @@ int main() {
         assert(gateAScoped.migrated &&
                gateAScoped.document["objects"][0]["materialId"] ==
                    gateAScoped.scopedMaterialId);
+        assert(gateAScoped.document["materials"][0].contains(
+                   "environmentResponseExpr") &&
+               "Gate-A explicit legacy default lost historical environment law");
+
+        // A shared root named material.default is an ambiguous historical
+        // authority at this helper layer: the root may carry custom old
+        // coefficients. Refuse rather than synthesize generic legacy values.
+        nlohmann::json sharedDefaultZone{
+            {"identifier", "Shared Default Root"},
+            {"materialRefs",
+             nlohmann::json::array({"material.default"})},
+            {"objects", nlohmann::json::array({
+                nlohmann::json{
+                    {"objectID", "shared-default-object"},
+                    {"materialId", "material.default"}
+                }
+            })}
+        };
+        bool refusedSharedDefaultRoot = false;
+        try {
+            (void)MaterialPersistenceMigration::migrateLegacyDefaultDocument(
+                sharedDefaultZone, "zone:Shared Default Root");
+        } catch (const std::invalid_argument&) {
+            refusedSharedDefaultRoot = true;
+        }
+        assert(refusedSharedDefaultRoot &&
+               "ambiguous shared legacy default root was replaced with invented coefficients");
 
         // A current explicit matte default is NOT legacy evidence and must not
         // be renamed by the Gate B migrator.
