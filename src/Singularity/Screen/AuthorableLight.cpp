@@ -65,6 +65,10 @@ bool readAuthorableLight(const geom::FieldNode& field, AuthorableLightState& out
     return true;
 }
 
+glm::vec3 lightIncidentRadiance(const AuthorableLightState& light) {
+    return light.color * light.intensity;
+}
+
 glm::vec3 lightAmbientRadiance(const AuthorableLightState& light) {
     return light.color * (light.intensity * light.ambient);
 }
