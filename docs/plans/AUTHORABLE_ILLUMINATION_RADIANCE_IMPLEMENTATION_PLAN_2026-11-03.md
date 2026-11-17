@@ -1110,6 +1110,108 @@ Before this branch should be undrafted:
 
 ---
 
+## Implementation ledger — 2026-11-17 Parallax pass: source truth leaves the legacy lobe model
+
+This pass closes the source-binding architecture gate without deleting old-world compatibility.
+
+### Authority split
+
+`RadianceSourceBinding` no longer defines source emission through ambient/diffuse/specular radiance channels or the historical four-component coefficient vector.
+
+It now carries canonical constant fallback source truth:
+
+```
+fallbackChroma
+fallbackIntensity
+rho(p,t)
+chi(p,t)
+alpha(p,omega,t)
+position / time / enabled
+```
+
+and a separately named compatibility payload:
+
+```
+LegacySurfaceIncidentCompatibility
+    environmentRadiance
+    diffuseIncident
+    specularIncident
+    coefficients = (ambient, diffuse, specular)
+```
+
+The compatibility packet exists only for the authored historical Material response and legacy backend/zero-source-set adapters. It is not source emission ontology.
+
+### Canonical fallback law
+
+When authored chi is absent, constant incident source radiance is now exactly:
+
+```
+fallbackChroma * fallbackIntensity
+```
+
+The WebGPU source-set path no longer reconstructs canonical incident RGB by dividing whichever historical lobe happens to have a nonzero coefficient.
+
+This creates an intentional and necessary distinction:
+- zero historical lobe coefficients do **not** erase canonical source truth;
+- the authored historical compatibility Material still produces zero direct/environment contribution when its compatibility envelopes are zero.
+
+Authored rho and alpha remain independent multiplicative source laws. Authored chi replaces the constant fallback chroma while retaining fallbackIntensity as the scalar magnitude.
+
+### Production projection
+
+`EngineRender` now resolves an authored FieldNode light into both facts at the same boundary:
+- `light.color` / `light.intensity` -> canonical fallback source state;
+- historical `light.ambient/diffuse/specular` -> `LegacySurfaceIncidentCompatibility`.
+
+The old `Renderer::setLight` and scalar coefficient quartet remain an explicit zero-source-set / legacy-backend adapter only. Comments at the Renderer boundary now state that they do not define admitted `RadianceSourceBinding` truth.
+
+The GPU storage-record layout remains unchanged in this pass to avoid unnecessary ABI churn. Existing legacy envelope slots are still consumed by authored compatibility Material math; their producer authority changed, not their storage representation.
+
+### Structural/value law
+
+Fallback chroma/intensity and compatibility envelope edits are runtime source-buffer values. They do not enter source-set structural identity or receiver response structure.
+
+The persistent source buffer remains exact-byte refreshed, so:
+- a fallback-chroma value edit can change pixels with the same source-set revision and zero receiver-pipeline recompiles;
+- compatibility-packet edits do not perturb a receiver whose authored response reads only canonical `incidentRadiance`.
+
+### Tribunals
+
+`authorable_light_contract_test` now proves:
+- canonical constant source incident is `color * intensity`;
+- zeroing historical ambient/diffuse/specular coefficients leaves canonical source incident unchanged;
+- the same edit zeros only the compatibility envelopes.
+
+`webgpu_object_test` adds an adversarial production witness:
+1. canonical fallback source is nonzero while every legacy envelope/coefficient is exactly zero;
+2. a Material whose response is `incidentRadiance` remains lit on both mesh and implicit representations;
+3. mesh/implicit pixels agree;
+4. a fallback-chroma value edit with unchanged source-set revision changes pixels without receiver WGSL recompilation;
+5. wildly changing only the legacy packet leaves the canonical receiver byte-identical;
+6. the authored historical compatibility response remains black when the legacy packet is zero.
+
+First-class volume/zone witnesses and active Northern-Veil/ray-transport probes were migrated to the new binding contract so diagnostic tooling does not retain the removed CPU fields.
+
+### Deliberate fossils
+
+This pass does **not** yet delete:
+- `AuthorableLightState.ambient/diffuse/specular` save-facing inputs;
+- `Renderer::setLight` and its scalar mirrors used by OpenGL/zero-source-set compatibility;
+- legacy incident fields in the GPU record consumed by the authored historical Material;
+- old Material ambient/diffuse/specular/shininess properties needed by compatibility data.
+
+Those are compatibility boundaries. They no longer define canonical admitted source truth.
+
+### Verification status
+
+The new tests are committed falsifiers, but no exact-head CPU/native green claim is made until they execute. GitHub Actions has repeatedly cancelled this PR's workflows before step 1; Heliograph's independent Linux build lane is requested for the focused CPU witnesses.
+
+Gate B remains open: a freshly-created `material.default` is still the authored historical compatibility response until the persistence-safe non-plastic default migration is verified.
+
+— **Parallax Sun [H→P]** ☀️🔭
+
+---
+
 ## Commission
 
 Retire Earthcall's bespoke default 3D Blinn-Phong shader as a renderer-owned law and make surface illumination a consequence of the broader authored radiance / visibility / material-response ontology.
