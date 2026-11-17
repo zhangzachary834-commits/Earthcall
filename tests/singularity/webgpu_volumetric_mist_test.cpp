@@ -137,10 +137,15 @@ int main() {
     renderer.setLightingEnabled(true);
     Rendering::RadianceSourceBinding sunSource;
     sunSource.position = lightPos;
-    sunSource.ambientRadiance = lightAmbient;
-    sunSource.diffuseRadiance = lightDiffuse;
-    sunSource.specularRadiance = lightSpecular;
-    sunSource.coefficients = glm::vec4(1.0f);
+    // This fixture historically supplied an arbitrary diffuse RGB envelope.
+    // Preserve that legacy packet while naming the same vector explicitly as
+    // the canonical constant source fallback used by authored transport.
+    sunSource.fallbackChroma = lightDiffuse;
+    sunSource.fallbackIntensity = 1.0f;
+    sunSource.legacySurface.environmentRadiance = lightAmbient;
+    sunSource.legacySurface.diffuseIncident = lightDiffuse;
+    sunSource.legacySurface.specularIncident = lightSpecular;
+    sunSource.legacySurface.coefficients = glm::vec3(1.0f);
     sunSource.enabled = true;
 
     // Cross-rung authority witness: volumetric transport consumes source rho,
