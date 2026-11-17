@@ -208,10 +208,10 @@ public:
     // {x, y, width, height} of the frame, recorded by beginFrame.
     const glm::ivec4& viewport() const { return _viewport; }
 
-    // The scene's single light, in WORLD space. OpenGL configures GL_LIGHT0 —
-    // which is why setCamera must run first, since fixed-function transforms a
-    // light position by whatever MODELVIEW is in force when it is set. WebGPU
-    // feeds the same numbers to its WGSL lighting uniforms.
+    // Legacy single-light compatibility projection, in WORLD space. OpenGL
+    // still configures GL_LIGHT0 here; WebGPU's zero-source-set compatibility
+    // lane mirrors these values. Admitted RadianceSourceBinding collections do
+    // NOT derive canonical source truth from ambient/diffuse/specular state.
     void setLight(const glm::vec3& worldPos, const glm::vec3& ambient,
                   const glm::vec3& diffuse, const glm::vec3& specular) {
         _lightPos = worldPos; _lightAmbient = ambient;
@@ -258,9 +258,11 @@ public:
     const OntoMath::Piecewise* radianceAngularExpr() const { return _radianceAngularExpr; }
     uint64_t radianceAngularRevision() const { return _radianceAngularRevision; }
 
-    // Scalar source coefficients are the non-chromatic part of the historical
-    // light state. WebGPU uses them only when authored chi is present, so the
-    // no-chi path remains the exact pre-Rung-5 formula.
+    // Legacy zero-source-set compatibility quartet. x keeps the historical
+    // intensity mirror; y/z/w are ambient/diffuse/specular receiver-model
+    // coefficients. Admitted RadianceSourceBinding collections carry their own
+    // canonical fallbackIntensity/fallbackChroma and quarantined legacySurface
+    // packet instead of reading source truth from this vector.
     void setRadianceSourceCoefficients(float intensity, float ambient,
                                        float diffuse, float specular) {
         _radianceSourceCoefficients = glm::vec4(intensity, ambient, diffuse, specular);
