@@ -278,23 +278,6 @@ struct MeshUniforms {
     glm::vec4 sceneVisibilityControl;
 };
 
-glm::vec3 legacyDirectIncidentRadiance(const glm::vec3& ambientRadiance,
-                                       const glm::vec3& diffuseRadiance,
-                                       const glm::vec3& specularRadiance,
-                                       const glm::vec4& coefficients) {
-    constexpr float eps = 1e-8f;
-    if (std::fabs(coefficients.z) > eps) {
-        return diffuseRadiance / coefficients.z;
-    }
-    if (std::fabs(coefficients.w) > eps) {
-        return specularRadiance / coefficients.w;
-    }
-    if (std::fabs(coefficients.y) > eps) {
-        return ambientRadiance / coefficients.y;
-    }
-    return glm::vec3(0.0f);
-}
-
 struct RadianceSourceGpuData {
     glm::vec4 position;
     glm::vec4 legacyEnvironment;
@@ -309,20 +292,27 @@ RadianceSourceGpuData lowerRadianceSourceGpuData(
     const Rendering::RadianceSourceBinding& source) {
     RadianceSourceGpuData data{};
     data.position = glm::vec4(source.position, 1.0f);
+
+    // Canonical source incident radiance is source truth: one constant fallback
+    // chroma times one fallback intensity. It must not disappear merely because
+    // an old receiver-model lobe coefficient is zero.
+    const glm::vec3 fallbackIncident =
+        source.fallbackChroma * source.fallbackIntensity;
+    data.directIncidentRadiance =
+        glm::vec4(fallbackIncident, source.fallbackIntensity);
+
+    // Historical lobe envelopes are a quarantined compatibility projection for
+    // the authored legacy Material response and old backend adapters only.
+    const auto& legacy = source.legacySurface;
     data.legacyEnvironment = glm::vec4(
-        source.ambientRadiance / 0.2f,
-        (source.coefficients.x * source.coefficients.y) / 0.2f);
-    data.directIncidentRadiance = glm::vec4(
-        legacyDirectIncidentRadiance(
-            source.ambientRadiance, source.diffuseRadiance,
-            source.specularRadiance, source.coefficients),
-        source.coefficients.x);
+        legacy.environmentRadiance / 0.2f,
+        (source.fallbackIntensity * legacy.coefficients.x) / 0.2f);
     data.legacyDiffuseIncident = glm::vec4(
-        source.diffuseRadiance / 0.8f,
-        (source.coefficients.x * source.coefficients.z) / 0.8f);
+        legacy.diffuseIncident / 0.8f,
+        (source.fallbackIntensity * legacy.coefficients.y) / 0.8f);
     data.legacySpecularIncident = glm::vec4(
-        source.specularRadiance,
-        source.coefficients.x * source.coefficients.w);
+        legacy.specularIncident,
+        source.fallbackIntensity * legacy.coefficients.z);
     data.time = glm::vec4(static_cast<float>(source.temporalCoordinate),
                           static_cast<float>(source.temporalDelta), 0.0f, 0.0f);
     data.control =
