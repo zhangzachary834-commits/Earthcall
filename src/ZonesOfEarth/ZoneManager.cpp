@@ -363,7 +363,16 @@ bool ZoneManager::prepareZoneMaterialClosure(size_t index, const nlohmann::json&
                                              std::vector<std::shared_ptr<Material>>& sharedRoots) {
     if (index >= _zones.size() || !_zones[index]) return false;
     const std::string zoneId = _zones[index]->getIdentifier();
-    if (!identity.is_object()) return true;   // no stored identity: nothing to close over
+
+    // Preflight the SAME Gate-B-migrated identity view that hydration uses.
+    // Otherwise an old raw "material.default" reference could validate while
+    // the live Object actually names its scoped compatibility Material.
+    const auto gateBMigration =
+        MaterialPersistenceMigration::migrateLegacyDefaultDocument(
+            identity, "zone:" + zoneId);
+    const nlohmann::json& closureIdentity = gateBMigration.document;
+    if (!closureIdentity.is_object())
+        return true;   // no stored identity: nothing to close over
 
     const auto stemOf = [](const std::string& id) {
         static const std::string prefix = "material.";
@@ -374,20 +383,20 @@ bool ZoneManager::prepareZoneMaterialClosure(size_t index, const nlohmann::json&
         std::unordered_set<std::string> resolvable{"default"};
         std::unordered_set<std::string> namedRefs;
 
-        if (identity.contains("materials")) {
-            if (!identity["materials"].is_array()) {
+        if (closureIdentity.contains("materials")) {
+            if (!closureIdentity["materials"].is_array()) {
                 throw std::runtime_error("materials is not an array");
             }
-            for (const auto& entry : identity["materials"]) {
+            for (const auto& entry : closureIdentity["materials"]) {
                 if (entry.is_object()) resolvable.insert(Material::fromJson(entry).name());
             }
         }
 
-        if (identity.contains("materialRefs")) {
-            if (!identity["materialRefs"].is_array()) {
+        if (closureIdentity.contains("materialRefs")) {
+            if (!closureIdentity["materialRefs"].is_array()) {
                 throw std::runtime_error("materialRefs is not an array");
             }
-            for (const auto& refJson : identity["materialRefs"]) {
+            for (const auto& refJson : closureIdentity["materialRefs"]) {
                 if (!refJson.is_string() || refJson.get<std::string>().empty()) {
                     throw std::runtime_error("materialRef is not a non-empty string");
                 }
@@ -417,11 +426,11 @@ bool ZoneManager::prepareZoneMaterialClosure(size_t index, const nlohmann::json&
         }
 
         const nlohmann::json* objects = nullptr;
-        if (identity.contains("world") && identity["world"].is_object() &&
-            identity["world"].contains("objects") && identity["world"]["objects"].is_array()) {
-            objects = &identity["world"]["objects"];
-        } else if (identity.contains("objects") && identity["objects"].is_array()) {
-            objects = &identity["objects"];
+        if (closureIdentity.contains("world") && closureIdentity["world"].is_object() &&
+            closureIdentity["world"].contains("objects") && closureIdentity["world"]["objects"].is_array()) {
+            objects = &closureIdentity["world"]["objects"];
+        } else if (closureIdentity.contains("objects") && closureIdentity["objects"].is_array()) {
+            objects = &closureIdentity["objects"];
         }
         if (objects) {
             std::vector<std::string> unresolved;
