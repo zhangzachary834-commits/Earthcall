@@ -1,5 +1,6 @@
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Material/MaterialResponseDefaults.hpp"
+#include "ConstructedBeing/Material/MaterialPersistenceMigration.hpp"
 
 using json = nlohmann::json;
 
@@ -9,20 +10,6 @@ std::string normalizeName(const std::string& s) {
     const std::string prefix = "material.";
     if (s.rfind(prefix, 0) == 0) return s.substr(prefix.size());
     return s;
-}
-
-void seedLegacyCompatibilityIfUnspecified(Material& material) {
-    const bool hadDirectResponse = bool(material.responseExpr);
-    if (!material.responseExpr) {
-        material.responseExpr =
-            MaterialResponseDefaults::makeLegacyDirectResponse();
-        material.bumpResponseRevision();
-    }
-    if (!hadDirectResponse && !material.environmentResponseExpr) {
-        material.environmentResponseExpr =
-            MaterialResponseDefaults::makeLegacyEnvironmentResponse();
-        material.bumpEnvironmentResponseRevision();
-    }
 }
 
 void seedCurrentDefaultIfUnspecified(Material& material) {
@@ -57,16 +44,6 @@ void MaterialManager::ensureDefault() {
     }
     auto material = std::make_shared<Material>("default");
     seedCurrentDefaultIfUnspecified(*material);
-    _materials.insert(_materials.begin(), std::move(material));
-    rebuildIndex();
-}
-
-void MaterialManager::ensureLegacyDefaultForSnapshot() {
-    for (const auto& m : _materials) {
-        if (m && m->name() == "default") return;
-    }
-    auto material = std::make_shared<Material>("default");
-    seedLegacyCompatibilityIfUnspecified(*material);
     _materials.insert(_materials.begin(), std::move(material));
     rebuildIndex();
 }
@@ -146,14 +123,21 @@ json MaterialManager::toJson() const {
 void MaterialManager::loadFromJson(const json& j) {
     _materials.clear();
     if (j.is_array()) {
-        for (const auto& e : j)
+        for (const auto& e : j) {
+            // Gate B safety rail: a legacy saved default has document-local
+            // appearance semantics. It must be scoped/remapped by the
+            // persistence boundary before entering this global registry.
+            if (MaterialPersistenceMigration::isLegacyDefaultRecord(e)) {
+                continue;
+            }
             _materials.push_back(
                 std::make_shared<Material>(Material::fromJson(e)));
+        }
     }
-    // Snapshot restore with no persisted default predates the Gate B current
-    // default contract. Preserve the old world's fallback appearance by
-    // materializing explicit legacy response data.
-    ensureLegacyDefaultForSnapshot();
+    // The canonical fallback is always CURRENT. Old worlds retain historical
+    // appearance through scoped explicit compatibility Materials, never by
+    // changing what new response omission means globally.
+    ensureDefault();
     rebuildIndex();
 }
 
@@ -162,8 +146,12 @@ void MaterialManager::mergeFromJson(const json& j) {
         ensureDefault();
         return;
     }
-    for (const auto& e : j)
+    for (const auto& e : j) {
+        if (MaterialPersistenceMigration::isLegacyDefaultRecord(e)) {
+            continue;
+        }
         add(std::make_shared<Material>(Material::fromJson(e)));
+    }
     ensureDefault();
     rebuildIndex();
 }
