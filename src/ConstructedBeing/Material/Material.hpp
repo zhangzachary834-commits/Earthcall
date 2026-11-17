@@ -45,9 +45,9 @@ public:
     nlohmann::json toJson() const;
     static Material fromJson(const nlohmann::json& j);
 
-    // Authorable appearance (public data, addressable via PropertyPath). The
-    // defaults reproduce the previous global ShadingSystem constants exactly, so
-    // an object drawn with the default material looks identical to before.
+    // Authorable appearance (public data, addressable via PropertyPath).
+    // Historical coefficients remain compatibility state for migrated legacy
+    // response ASTs; fresh material.default no longer uses them as its law.
     glm::vec3 baseColor{1.0f, 1.0f, 1.0f}; // albedo tint; multiplies any face texture
     float opacity   = 1.0f;                // 1 = opaque
     float shininess = 32.0f;               // Blinn-Phong specular exponent (was global)
@@ -59,9 +59,12 @@ public:
     // compiles this directly into the shader instead of using baseColor.
     std::shared_ptr<OntoMath::Piecewise> colorExpr;
 
-    // Rung 9: independently authored receiving-surface response. This is the
-    // Material being's f_r-like truth; absence preserves exact legacy shading.
-    // It deliberately does not reuse volume phase or source-radiance ownership.
+    // Independently authored receiving-surface response. This is the Material
+    // being's f_r-like truth. In current persistence, absence means inherit the
+    // current material.default response. Legacy response-less saves are migrated
+    // once on hydration to an explicit compatibility AST, so absence no longer
+    // carries historical ambiguity. It deliberately does not reuse volume phase
+    // or source-radiance ownership.
     std::shared_ptr<OntoMath::Piecewise> responseExpr;
 
     // Independent receiver law for directionless/environment incident radiance.
