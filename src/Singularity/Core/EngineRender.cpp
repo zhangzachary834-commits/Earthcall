@@ -197,10 +197,10 @@ namespace Core {
 
             // Rung 7 structural/value invalidation is intentionally bounded.
             // Source membership/order plus authored rho/chi/alpha content is the
-            // parameter/compiler identity. Position, light coefficients,
-            // enablement and temporal coordinates live in the persistent source
-            // storage buffer and must NOT serialize an entire FieldNode merely
-            // to move/recolor/enable a source.
+            // parameter/compiler identity. Position, canonical fallback
+            // chroma/intensity, legacy compatibility envelopes, enablement and
+            // temporal coordinates are runtime source-buffer values and must NOT
+            // serialize an entire FieldNode merely to move/recolor/enable a source.
             sourceSetIdentity += source.producerId;
             sourceSetIdentity += ":";
             sourceSetIdentity += std::to_string(source.radianceRevision);
@@ -252,9 +252,9 @@ namespace Core {
                 static_cast<uint64_t>(std::hash<std::string>{}(sourceSetIdentity));
             currentRenderer().setRadianceSources(radiantSources, sourceSetRevision);
 
-            // Legacy fixed/mesh lighting has only one source-shaped slot. Keep
-            // it deterministic by projecting the first ENABLED source there;
-            // WebGPU SDF transport below receives and sums the complete set.
+            // Legacy scalar/back-end lighting has only one source-shaped slot.
+            // Keep it deterministic by projecting the first ENABLED source there;
+            // WebGPU mesh/SDF source-set transport receives and sums the complete set.
             const auto it = std::find_if(
                 radiantSources.begin(), radiantSources.end(),
                 [](const Rendering::RadianceSourceBinding& source) {
