@@ -8,9 +8,9 @@
 //   2. MaterialManager owns the beings the way RelationManager owns relations:
 //      a default always resolves, references resolve by identifier, and the set
 //      survives a JSON round-trip.
-// A behaviour-preserving detail is pinned too: the default material must carry the
-// old global ShadingSystem constants, so nothing looks different until a Person
-// authors a new material.
+// Gate B pins a stronger compatibility boundary: fresh material.default authors
+// the current matte law, while old response-less saved Materials migrate once to
+// explicit legacy compatibility ASTs so their appearance does not silently change.
 
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <map>
 #include <set>
+#include <stdexcept>
 
 static bool nearf(float a, float b, float eps = 1e-5f) { return std::fabs(a - b) < eps; }
 
