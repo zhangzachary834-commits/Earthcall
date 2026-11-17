@@ -6,9 +6,11 @@ namespace geom { class FieldNode; }
 
 namespace Rendering {
 
-// The authored meaning of one radiant FieldNode, before any rendering backend
-// decides how to realize it. Nothing here creates a Light kind: these are
-// ordinary authored properties on the Zone's existing continuous FieldNode.
+// Compatibility reader for one radiant FieldNode. Nothing here creates a Light
+// kind: these are ordinary authored properties on the Zone's existing continuous
+// FieldNode. color/intensity are the canonical constant source fallback.
+// ambient/diffuse/specular are historical save/backend inputs retained only to
+// construct LegacySurfaceIncidentCompatibility at the rendering boundary.
 struct AuthorableLightState {
     bool source = false;
     bool enabled = true;
