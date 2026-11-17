@@ -3000,6 +3000,81 @@ int main() {
         implicitTransport.setMaterialId(
             "material.webgpu_source_transport_parity");
 
+        // SOURCE / LEGACY-RECEIVER SEPARATION TRIBUNAL ----------------------
+        // Canonical constant source truth is nonzero while every historical
+        // ambient/diffuse/specular compatibility envelope is exactly zero.
+        // A receiver that reads canonical incidentRadiance must still see the
+        // source; the authored historical compatibility Material must remain
+        // black. This is the semantic difference between source purification
+        // and merely renaming the old lobe channels.
+        Rendering::RadianceSourceBinding purifiedSource;
+        purifiedSource.producerId = "webgpu-source-purification-witness";
+        purifiedSource.position = glm::vec3(0.0f, 0.0f, 2.0f);
+        purifiedSource.fallbackChroma = glm::vec3(0.70f, 0.20f, 0.10f);
+        purifiedSource.fallbackIntensity = 0.50f;
+        purifiedSource.legacySurface.environmentRadiance = glm::vec3(0.0f);
+        purifiedSource.legacySurface.diffuseIncident = glm::vec3(0.0f);
+        purifiedSource.legacySurface.specularIncident = glm::vec3(0.0f);
+        purifiedSource.legacySurface.coefficients = glm::vec3(0.0f);
+        purifiedSource.enabled = true;
+
+        renderer.setRadianceField(nullptr, 0);
+        renderer.setRadianceChroma(nullptr, 0);
+        renderer.setRadianceAngular(nullptr, 0);
+        renderer.setRadianceSources({purifiedSource}, 7299);
+        renderer.setRadianceVisibilityEnabled(false);
+        renderer.setLightingEnabled(true);
+        renderer.setModel(glm::mat4(1.0f));
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshTransport.drawObject();
+        renderer.endFrame();
+        unsigned char purifiedMesh[4];
+        readCentre(purifiedMesh);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        implicitTransport.drawObject();
+        renderer.endFrame();
+        unsigned char purifiedImplicit[4];
+        readCentre(purifiedImplicit);
+
+        assert(purifiedMesh[0] > 75 &&
+               purifiedMesh[1] > 15 &&
+               purifiedMesh[2] > 5 &&
+               "zero legacy lobes erased canonical mesh source incident radiance");
+        assert(std::abs(int(purifiedMesh[0]) - int(purifiedImplicit[0])) <= 3 &&
+               std::abs(int(purifiedMesh[1]) - int(purifiedImplicit[1])) <= 3 &&
+               std::abs(int(purifiedMesh[2]) - int(purifiedImplicit[2])) <= 3 &&
+               "mesh and implicit receivers disagree on purified constant source truth");
+
+        meshTransport.setMaterialId("material.default");
+        implicitTransport.setMaterialId("material.default");
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshTransport.drawObject();
+        renderer.endFrame();
+        unsigned char purifiedLegacyMesh[4];
+        readCentre(purifiedLegacyMesh);
+
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        implicitTransport.drawObject();
+        renderer.endFrame();
+        unsigned char purifiedLegacyImplicit[4];
+        readCentre(purifiedLegacyImplicit);
+
+        assert(purifiedLegacyMesh[0] < 5 &&
+               purifiedLegacyMesh[1] < 5 &&
+               purifiedLegacyMesh[2] < 5 &&
+               purifiedLegacyImplicit[0] < 5 &&
+               purifiedLegacyImplicit[1] < 5 &&
+               purifiedLegacyImplicit[2] < 5 &&
+               "zero compatibility envelopes leaked canonical source incident into the authored legacy response");
+
+        meshTransport.setMaterialId(
+            "material.webgpu_source_transport_parity");
+        implicitTransport.setMaterialId(
+            "material.webgpu_source_transport_parity");
+
         auto rhoRoot = scalarNode(0.8);
         auto chiRoot = vectorNode(0.25, 0.75, 0.50);
         auto alphaRoot = scalarNode(0.75);
