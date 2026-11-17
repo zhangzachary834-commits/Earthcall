@@ -140,9 +140,81 @@ All legacy ambiguity has already been removed before rendering.
 
 These two CPU/Zone persistence witnesses were promoted into the focused SDF CI lane before the native WebGPU witness.
 
+### Gate B hardening after full persistence audit
+
+The first persistence discriminator was necessary but not sufficient. A live audit found several deeper old-world channels; Second Parallax closed them before treating Gate B as reviewable.
+
+1. **Pre-material Object omission**
+   - `Object::from_json` historically maps a missing `materialId` to `material.default`.
+   - Gate B migration now inspects the actual root Object array and converts both explicit `material.default` and omitted `materialId` into the scoped compatibility identity before Object hydration.
+   - This avoids reinterpreting truly ancient Objects under the current matte default.
+
+2. **Canonical-default registry admission**
+   - `MaterialManager::add`, `mergeFromJson`, and `loadFromJson` now share the same invariant.
+   - An exact legacy default or response-less/self-inheriting default cannot occupy the canonical global `material.default` slot.
+   - This closes already-deserialized shared-root/stored-Singular bypasses, not merely JSON-manager ingestion.
+
+3. **Material closure preflight**
+   - `prepareZoneMaterialClosure` now validates the same Gate-B-migrated Zone identity view that hydration uses.
+   - Preflight and live execution therefore speak about the same scoped Material identifiers.
+
+4. **Shared legacy-default roots**
+   - No inhabited corpus Zone currently names `material.default` through `materialRefs`.
+   - If such a historical shared root appears, the local document helper refuses rather than synthesizing generic coefficients because the external root may carry custom historical values.
+   - A root-aware migration would be required before admitting that state.
+
+5. **Gate-A partial compatibility record**
+   - An exact Gate-A legacy direct default missing its environment response is unambiguously historical; scoped migration restores the matching historical environment law.
+
+6. **Current-default self-inheritance**
+   - A `material.default` record marked as response omission/inheritance cannot become canonical state: the default cannot inherit itself.
+
+7. **Zone activation tribunal**
+   - `zone_material_closure_test` now verifies an old default Zone both hydrates and passes preflight using the same scoped identity.
+   - The test is promoted into the focused Gate-B CPU lane.
+
+### Living renderer contract re-proof
+
+Prism's succession scroll explicitly required the proposed matte formula to be re-proved against current execution rather than inherited by narrative.
+
+The current SDF and raster source-set paths agree on the transport split:
+
+```
+receiverResponse =
+    MaterialResponse(
+        incidentRadiance RGB envelope,
+        p, n, wi, wo, surfaceColor, ...
+    )
+
+final direct contribution =
+    receiverResponse
+    * shapedRadiance
+    * pathVisibility
+```
+
+For the SDF single-source path, `directRadiance = shapedRadiance * visibility`; for raster source sets, the same scalar factors are multiplied after the receiver response.
+
+Therefore `incidentRadiance` inside the matte response is **not** the same quantity as the scalar `directRadiance/shapedRadiance` applied afterward. The current formula does not square path transport.
+
+The living convention also confirms `wi` is source -> receiver, so receiver -> source for the cosine is `-wi`.
+
+Thus the Gate-B current default remains:
+
+```
+L = -wi
+cosine = max(dot(n, L), 0)
+direct = (surfaceColor ⊙ incidentRadiance) * cosine
+environment = surfaceColor ⊙ environmentRadiance
+```
+
 ### Verification status
 
-At the time this rung was authored, GitHub Actions was cancelling exact-head workflow jobs before step 1, including manual job reruns. Therefore source/test falsifiers are committed, but **no green execution claim is made until an exact-current tribunal actually runs**.
+Exact-current GitHub Actions remains unavailable as execution evidence. A frozen SHA produced both push and pull-request workflow runs that cancelled before checkout, and a manual re-run of the frozen push-triggered Focused CPU job also cancelled with zero steps.
+
+Therefore:
+- there is **no red compiler/test verdict**;
+- there is **no green claim**;
+- the committed CPU, Zone-closure, and native WebGPU witnesses remain the required falsifiers for the next environment that actually executes them.
 
 ### Gate B invariant
 
