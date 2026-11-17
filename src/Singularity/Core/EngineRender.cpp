@@ -165,11 +165,16 @@ namespace Core {
             Rendering::RadianceSourceBinding source;
             source.producerId = field->getIdentifier();
             source.position = light.position;
-            source.ambientRadiance = Rendering::lightAmbientRadiance(light);
-            source.diffuseRadiance = Rendering::lightDiffuseRadiance(light);
-            source.specularRadiance = Rendering::lightSpecularRadiance(light);
-            source.coefficients =
-                glm::vec4(light.intensity, light.ambient, light.diffuse, light.specular);
+            source.fallbackChroma = light.color;
+            source.fallbackIntensity = light.intensity;
+            source.legacySurface.environmentRadiance =
+                Rendering::lightAmbientRadiance(light);
+            source.legacySurface.diffuseIncident =
+                Rendering::lightDiffuseRadiance(light);
+            source.legacySurface.specularIncident =
+                Rendering::lightSpecularRadiance(light);
+            source.legacySurface.coefficients =
+                glm::vec3(light.ambient, light.diffuse, light.specular);
             source.temporalCoordinate = sourceTime;
             source.temporalDelta = sourceDelta;
             source.enabled = light.enabled;
@@ -226,12 +231,17 @@ namespace Core {
             const uint64_t sourceSetRevision =
                 static_cast<uint64_t>(std::hash<std::string>{}(sourceSetIdentity));
             currentRenderer().setRadianceSources(radiantSources, sourceSetRevision);
-            currentRenderer().setLight(source.position, source.ambientRadiance,
-                                       source.diffuseRadiance, source.specularRadiance);
+            currentRenderer().setLight(
+                source.position,
+                source.legacySurface.environmentRadiance,
+                source.legacySurface.diffuseIncident,
+                source.legacySurface.specularIncident);
             currentRenderer().setLightingEnabled(source.enabled);
             currentRenderer().setRadianceSourceCoefficients(
-                source.coefficients.x, source.coefficients.y,
-                source.coefficients.z, source.coefficients.w);
+                source.fallbackIntensity,
+                source.legacySurface.coefficients.x,
+                source.legacySurface.coefficients.y,
+                source.legacySurface.coefficients.z);
             currentRenderer().setRadianceTemporalCoordinate(
                 source.temporalCoordinate, source.temporalDelta);
             currentRenderer().setRadianceField(source.radianceExpr, source.radianceRevision);
@@ -253,12 +263,16 @@ namespace Core {
             const auto& compatibility =
                 it != radiantSources.end() ? *it : radiantSources.front();
             currentRenderer().setLight(
-                compatibility.position, compatibility.ambientRadiance,
-                compatibility.diffuseRadiance, compatibility.specularRadiance);
+                compatibility.position,
+                compatibility.legacySurface.environmentRadiance,
+                compatibility.legacySurface.diffuseIncident,
+                compatibility.legacySurface.specularIncident);
             currentRenderer().setLightingEnabled(it != radiantSources.end());
             currentRenderer().setRadianceSourceCoefficients(
-                compatibility.coefficients.x, compatibility.coefficients.y,
-                compatibility.coefficients.z, compatibility.coefficients.w);
+                compatibility.fallbackIntensity,
+                compatibility.legacySurface.coefficients.x,
+                compatibility.legacySurface.coefficients.y,
+                compatibility.legacySurface.coefficients.z);
             currentRenderer().setRadianceTemporalCoordinate(
                 compatibility.temporalCoordinate, compatibility.temporalDelta);
             currentRenderer().setRadianceField(
