@@ -85,42 +85,67 @@ inline std::string bareMaterialName(const std::string& id) {
     return id.rfind(kPrefix, 0) == 0 ? id.substr(9) : id;
 }
 
-inline bool containsDefaultMaterialReference(const nlohmann::json& node) {
-    if (node.is_object()) {
-        const auto it = node.find("materialId");
-        if (it != node.end() && it->is_string() &&
-            it->get<std::string>() == "material.default") {
-            return true;
-        }
-        for (auto child = node.begin(); child != node.end(); ++child) {
-            if (containsDefaultMaterialReference(child.value())) return true;
-        }
-        return false;
+inline const nlohmann::json* documentObjects(
+    const nlohmann::json& document) {
+    if (!document.is_object()) return nullptr;
+    if (document.contains("world") && document["world"].is_object() &&
+        document["world"].contains("objects") &&
+        document["world"]["objects"].is_array()) {
+        return &document["world"]["objects"];
     }
-    if (node.is_array()) {
-        for (const auto& child : node) {
-            if (containsDefaultMaterialReference(child)) return true;
-        }
+    if (document.contains("objects") && document["objects"].is_array()) {
+        return &document["objects"];
+    }
+    return nullptr;
+}
+
+inline nlohmann::json* documentObjects(nlohmann::json& document) {
+    if (!document.is_object()) return nullptr;
+    if (document.contains("world") && document["world"].is_object() &&
+        document["world"].contains("objects") &&
+        document["world"]["objects"].is_array()) {
+        return &document["world"]["objects"];
+    }
+    if (document.contains("objects") && document["objects"].is_array()) {
+        return &document["objects"];
+    }
+    return nullptr;
+}
+
+inline bool objectUsesLegacyDefault(const nlohmann::json& object) {
+    if (!object.is_object()) return false;
+    const auto it = object.find("materialId");
+    if (it == object.end()) {
+        // Object::from_json historically maps omission to material.default.
+        return true;
+    }
+    return it->is_string() &&
+           it->get<std::string>() == "material.default";
+}
+
+inline bool objectsUseLegacyDefault(const nlohmann::json& document) {
+    const auto* objects = documentObjects(document);
+    if (!objects) return false;
+    for (const auto& object : *objects) {
+        if (objectUsesLegacyDefault(object)) return true;
     }
     return false;
 }
 
-inline void rewriteDefaultMaterialReferences(
-    nlohmann::json& node, const std::string& scopedId) {
-    if (node.is_object()) {
-        auto it = node.find("materialId");
-        if (it != node.end() && it->is_string() &&
-            it->get<std::string>() == "material.default") {
+inline void rewriteLegacyDefaultObjectReferences(
+    nlohmann::json& document, const std::string& scopedId) {
+    auto* objects = documentObjects(document);
+    if (!objects) return;
+    for (auto& object : *objects) {
+        if (!object.is_object()) continue;
+        const auto it = object.find("materialId");
+        if (it == object.end()) {
+            // Make the old implicit fallback explicit before Object::from_json
+            // can reinterpret it under the current canonical default.
+            object["materialId"] = scopedId;
+        } else if (it->is_string() &&
+                   it->get<std::string>() == "material.default") {
             *it = scopedId;
-        }
-        for (auto child = node.begin(); child != node.end(); ++child) {
-            rewriteDefaultMaterialReferences(child.value(), scopedId);
-        }
-        return;
-    }
-    if (node.is_array()) {
-        for (auto& child : node) {
-            rewriteDefaultMaterialReferences(child, scopedId);
         }
     }
 }
@@ -152,15 +177,8 @@ inline ScopedLegacyDefaultMigration migrateLegacyDefaultDocument(
     out.document = input;
     if (!input.is_object()) return out;
 
-    bool rootReferencesDefault = false;
-    if (input.contains("world")) {
-        rootReferencesDefault =
-            containsDefaultMaterialReference(input["world"]);
-    }
-    if (!rootReferencesDefault && input.contains("objects")) {
-        rootReferencesDefault =
-            containsDefaultMaterialReference(input["objects"]);
-    }
+    const bool rootReferencesDefault =
+        objectsUseLegacyDefault(input);
 
     std::size_t legacyDefaultIndex = static_cast<std::size_t>(-1);
     bool hasAnyDefaultRecord = false;
@@ -208,14 +226,8 @@ inline ScopedLegacyDefaultMigration migrateLegacyDefaultDocument(
         out.synthesized = true;
     }
 
-    if (out.document.contains("world")) {
-        rewriteDefaultMaterialReferences(
-            out.document["world"], out.scopedMaterialId);
-    }
-    if (out.document.contains("objects")) {
-        rewriteDefaultMaterialReferences(
-            out.document["objects"], out.scopedMaterialId);
-    }
+    rewriteLegacyDefaultObjectReferences(
+        out.document, out.scopedMaterialId);
 
     out.migrated = true;
     return out;
