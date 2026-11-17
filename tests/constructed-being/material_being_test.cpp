@@ -519,7 +519,36 @@ int main() {
         assert(mm.getAll().size() == beforeMergeCount);
         assert(nearf(mm.defaultMaterial()->baseColor.r, 0.2f));
 
-        std::printf("  manager: unscoped legacy default refused; current authored default remains replaceable\n");
+        // Already-deserialized Material objects can enter through shared roots
+        // and stored Singular restoration, bypassing JSON mergeFromJson. The
+        // object-level registry boundary must enforce the same law.
+        auto directLegacyDefault = std::make_shared<Material>("default");
+        directLegacyDefault->responseExpr =
+            MaterialResponseDefaults::makeLegacyDirectResponse();
+        directLegacyDefault->environmentResponseExpr =
+            MaterialResponseDefaults::makeLegacyEnvironmentResponse();
+        directLegacyDefault->baseColor = glm::vec3(0.91f, 0.01f, 0.02f);
+        mm.add(directLegacyDefault);
+        assert(nearf(mm.defaultMaterial()->baseColor.r, 0.2f) &&
+               "direct legacy default Material bypass poisoned canonical fallback");
+
+        auto responseLessDefault = std::make_shared<Material>("default");
+        responseLessDefault->baseColor = glm::vec3(0.88f, 0.02f, 0.03f);
+        mm.add(responseLessDefault);
+        assert(nearf(mm.defaultMaterial()->baseColor.r, 0.2f) &&
+               "response-less direct default Material bypass poisoned canonical fallback");
+
+        auto directCurrentDefault = std::make_shared<Material>("default");
+        directCurrentDefault->baseColor = glm::vec3(0.15f, 0.25f, 0.35f);
+        directCurrentDefault->responseExpr =
+            MaterialResponseDefaults::makeCurrentDefaultDirectResponse();
+        directCurrentDefault->environmentResponseExpr =
+            MaterialResponseDefaults::makeCurrentDefaultEnvironmentResponse();
+        mm.add(directCurrentDefault);
+        assert(nearf(mm.defaultMaterial()->baseColor.r, 0.15f) &&
+               "explicit current default Material could not replace canonical state");
+
+        std::printf("  manager: JSON and direct-object legacy defaults refused; current authored default remains replaceable\n");
     }
 
     // --- 4. Serialization round-trip -----------------------------------------
