@@ -350,10 +350,16 @@ int main(int argc, char** argv) {
     Rendering::RadianceSourceBinding source;
     source.producerId = root->getIdentifier();
     source.position = light.position;
-    source.ambientRadiance = Rendering::lightAmbientRadiance(light);
-    source.diffuseRadiance = Rendering::lightDiffuseRadiance(light);
-    source.specularRadiance = Rendering::lightSpecularRadiance(light);
-    source.coefficients = glm::vec4(light.intensity, light.ambient, light.diffuse, light.specular);
+    source.fallbackChroma = light.color;
+    source.fallbackIntensity = light.intensity;
+    source.legacySurface.environmentRadiance =
+        Rendering::lightAmbientRadiance(light);
+    source.legacySurface.diffuseIncident =
+        Rendering::lightDiffuseRadiance(light);
+    source.legacySurface.specularIncident =
+        Rendering::lightSpecularRadiance(light);
+    source.legacySurface.coefficients =
+        glm::vec3(light.ambient, light.diffuse, light.specular);
     source.enabled = light.enabled;
     source.temporalCoordinate = 7.25;
     source.temporalDelta = 1.0 / 60.0;
@@ -372,7 +378,11 @@ int main(int argc, char** argv) {
         source.angularRevision = root->authoredMathRevision(geom::FieldNode::kMathLightAngular);
     }
     renderer.setRadianceSources({source}, 1);
-    renderer.setLight(source.position, source.ambientRadiance, source.diffuseRadiance, source.specularRadiance);
+    renderer.setLight(
+        source.position,
+        source.legacySurface.environmentRadiance,
+        source.legacySurface.diffuseIncident,
+        source.legacySurface.specularIncident);
     renderer.setLightingEnabled(light.enabled);
 
     auto readTargetRgbaHash = [&](WGPUTexture srcTex, WGPUBuffer dstBuf, uint32_t tw, uint32_t th, uint32_t tstride) -> uint64_t {
