@@ -1876,7 +1876,7 @@ int main() {
 
         Rendering::RadianceSourceBinding redSource;
         redSource.position = glm::vec3(-0.25f, 0.0f, 2.0f);
-        redSource.coefficients = glm::vec4(1.0f, 0.2f, 0.8f, 1.0f);
+        redSource.legacySurface.coefficients = glm::vec3(0.2f, 0.8f, 1.0f);
         redSource.radianceExpr = &rhoRed;
         redSource.radianceRevision = 4001;
         redSource.chromaExpr = &chiRedSource;
@@ -1884,7 +1884,7 @@ int main() {
 
         Rendering::RadianceSourceBinding blueSource;
         blueSource.position = glm::vec3(0.25f, 0.0f, 2.0f);
-        blueSource.coefficients = glm::vec4(1.0f, 0.2f, 0.8f, 1.0f);
+        blueSource.legacySurface.coefficients = glm::vec3(0.2f, 0.8f, 1.0f);
         blueSource.radianceExpr = &rhoBlue;
         blueSource.radianceRevision = 4002;
         blueSource.chromaExpr = &chiBlueSource;
@@ -1946,8 +1946,8 @@ int main() {
         blueSource.enabled = true;
         redSource.position = glm::vec3(-0.8f, 0.0f, 1.6f);
         blueSource.position = glm::vec3(0.8f, 0.0f, 1.6f);
-        redSource.coefficients = glm::vec4(1.0f, 0.0f, 1.0f, 0.0f);
-        blueSource.coefficients = glm::vec4(1.0f, 0.0f, 1.0f, 0.0f);
+        redSource.legacySurface.coefficients = glm::vec3(0.0f, 1.0f, 0.0f);
+        blueSource.legacySurface.coefficients = glm::vec3(0.0f, 1.0f, 0.0f);
         renderer.setRadianceSources({redSource, blueSource}, 4201);
 
         const std::string rhoRedBeforeVisibility = rhoRed.toJson().dump();
