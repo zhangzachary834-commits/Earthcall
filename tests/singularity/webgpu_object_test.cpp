@@ -2183,6 +2183,14 @@ int main() {
         environmentMat->ambient = 0.2f;
         environmentMat->diffuse = 1.0f;
         environmentMat->specular = 0.0f;
+        // This witness is specifically about the historical environment
+        // compatibility envelope. Gate B requires that envelope to be explicit.
+        environmentMat->responseExpr =
+            MaterialResponseDefaults::makeLegacyDirectResponse();
+        environmentMat->environmentResponseExpr =
+            MaterialResponseDefaults::makeLegacyEnvironmentResponse();
+        environmentMat->bumpResponseRevision();
+        environmentMat->bumpEnvironmentResponseRevision();
 
         Object environmentReceiver;
         auto environmentSphere =
