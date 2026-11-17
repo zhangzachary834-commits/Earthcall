@@ -65,6 +65,8 @@ Look for existing modality channels before adding one: `Storage/FileChannel`, `T
 
 ## Persistence and history
 
+- Shared Material installation can retire an instance used as a Formation member. The [Zone switch repair](Agenda/Tasks/Specific%20Tasks/Zones%20and%20Ourverse/Zone_Switch_Repair/Zone_Switch_Repair.md) covers that lifetime boundary and rebinds retained Relations on closure hydration; both Move and Mount reach it. Keep authored identifiers and history when renewing borrowed pointers.
+
 Registered reach, saved state, and a reconstructible past are independent obligations. [Persistence tier at registration](Agenda/Tasks/Specific%20Tasks/Serialization%20and%20Storage/Persistence_Tier_At_Registration/Persistence_Tier_At_Registration.md) is an **open proposal** prompted by the [Undeclared Survivor audit](audits/2026-10-08_mythos_undeclared_survivor_audit.md). Inspect registry and every applicable codec; do not infer durability from a successful property write or declare the proposed tier machinery implemented.
 
 Agent save injection follows [First Mover Authoring §7](architecture/law/FIRST_MOVER_AUTHORING.md): read current bytes, patch stable identifiers, stage, retain backup outside live save discovery, prove preservation/additions, loader-round-trip, recheck concurrent edits, and atomically replace. First seeds may begin from scratch. Current engine Save Zone rebuilds from runtime state; preservation of unknown disk keys and extending patch semantics to that runtime writer remain explicitly unresolved in the persistence task. This gap does not relax the agent injection rule.

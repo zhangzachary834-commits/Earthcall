@@ -21,6 +21,49 @@ FileWatcher::FileWatcher() : Law("file-watcher") {
     _pollIntervalMs = 250.0;
     _status = "idle";
     _lastPollTime = std::chrono::steady_clock::now();
+    _scanWorker = std::thread(&FileWatcher::workerLoop, this);
+}
+
+FileWatcher::~FileWatcher() {
+    { std::lock_guard<std::mutex> lock(_scanMutex); _shutdown = true; }
+    _scanCv.notify_one();
+    if (_scanWorker.joinable()) _scanWorker.join();
+}
+
+FileWatcher::ScanConfig FileWatcher::scanConfig() const {
+    return {VirtualFileSystem::resolve(_watchPath), _recursive, _filterExtension, _configGeneration};
+}
+
+FileWatcher::ScanResult FileWatcher::scanSnapshot(const ScanConfig& config) {
+    ScanResult result{config.generation, {}, {}};
+    std::error_code ec;
+    if (config.target.empty() || !fs::exists(config.target, ec)) {
+        result.error = "Watch path does not exist: " + config.target.string();
+        return result;
+    }
+    try {
+        scanDirectory(config.target, config.recursive, config.filter, result.files);
+    } catch (const std::exception& e) {
+        result.files.clear();
+        result.error = std::string("Watch scan failed: ") + e.what();
+    }
+    return result;
+}
+
+void FileWatcher::workerLoop() {
+    for (;;) {
+        std::unique_lock<std::mutex> lock(_scanMutex);
+        _scanCv.wait(lock, [this] { return _shutdown || _pendingScan.has_value(); });
+        if (_shutdown) return;
+        auto config = std::move(*_pendingScan);
+        _pendingScan.reset();
+        lock.unlock();
+        auto result = scanSnapshot(config);
+        lock.lock();
+        if (_shutdown) return;
+        _completedScan = std::move(result);
+        _scanBusy = false;
+    }
 }
 
 void FileWatcher::syncRegister(LawManager& laws) {
@@ -40,26 +83,17 @@ void FileWatcher::propSetWatchPath(const std::string& v) {
 }
 
 void FileWatcher::rescanBaseline() {
-    std::lock_guard<std::mutex> lock(_mutex);
-    _trackedFiles.clear();
-
-    std::string resolved = VirtualFileSystem::resolve(_watchPath);
-    if (resolved.empty()) return;
-
-    std::error_code ec;
-    fs::path p(resolved);
-    if (!fs::exists(p, ec)) return;
-
-    scanDirectory(p, _trackedFiles);
-    _status = "watching";
-    _lastError = "";
+    ++_configGeneration;
+    auto result = scanSnapshot(scanConfig());
+    applySnapshot(std::move(result), true);
 }
 
-void FileWatcher::scanDirectory(const fs::path& target,
+void FileWatcher::scanDirectory(const fs::path& target, bool recursive,
+                                const std::string& filterExtension,
                                 std::unordered_map<std::string, FileEntry>& outFiles) {
     std::error_code ec;
     if (fs::is_regular_file(target, ec)) {
-        if (_filterExtension.empty() || target.extension() == _filterExtension) {
+        if (filterExtension.empty() || target.extension() == filterExtension) {
             auto lwt = fs::last_write_time(target, ec);
             auto sz = fs::file_size(target, ec);
             if (!ec) {
@@ -71,10 +105,10 @@ void FileWatcher::scanDirectory(const fs::path& target,
 
     if (!fs::is_directory(target, ec)) return;
 
-    if (_recursive) {
+    if (recursive) {
         for (const auto& entry : fs::recursive_directory_iterator(target, ec)) {
             if (entry.is_regular_file(ec)) {
-                if (_filterExtension.empty() || entry.path().extension() == _filterExtension) {
+                if (filterExtension.empty() || entry.path().extension() == filterExtension) {
                     auto lwt = entry.last_write_time(ec);
                     auto sz = entry.file_size(ec);
                     if (!ec) {
@@ -86,7 +120,7 @@ void FileWatcher::scanDirectory(const fs::path& target,
     } else {
         for (const auto& entry : fs::directory_iterator(target, ec)) {
             if (entry.is_regular_file(ec)) {
-                if (_filterExtension.empty() || entry.path().extension() == _filterExtension) {
+                if (filterExtension.empty() || entry.path().extension() == filterExtension) {
                     auto lwt = entry.last_write_time(ec);
                     auto sz = entry.file_size(ec);
                     if (!ec) {
@@ -101,30 +135,56 @@ void FileWatcher::scanDirectory(const fs::path& target,
 void FileWatcher::tick() {
     if (!_enabled) return;
 
+    std::optional<ScanResult> completed;
+    {
+        std::lock_guard<std::mutex> lock(_scanMutex);
+        completed = std::move(_completedScan);
+        _completedScan.reset();
+    }
+    if (completed && completed->generation == _configGeneration)
+        applySnapshot(std::move(*completed), !_baselineInitialized);
+
     auto now = std::chrono::steady_clock::now();
     double elapsedMs = std::chrono::duration<double, std::milli>(now - _lastPollTime).count();
     if (elapsedMs < _pollIntervalMs) return;
 
     _lastPollTime = now;
-    checkNow();
+    {
+        std::lock_guard<std::mutex> lock(_scanMutex);
+        if (!_scanBusy) {
+            _scanBusy = true;
+            _pendingScan = scanConfig();
+            _scanCv.notify_one();
+        }
+    }
 }
 
 void FileWatcher::checkNow() {
     if (!_enabled) return;
+    ++_configGeneration;
+    applySnapshot(scanSnapshot(scanConfig()), false);
+}
 
-    std::string resolved = VirtualFileSystem::resolve(_watchPath);
-    if (resolved.empty()) return;
-
-    std::error_code ec;
-    fs::path target(resolved);
-    if (!fs::exists(target, ec)) {
+void FileWatcher::applySnapshot(ScanResult result, bool baseline) {
+    if (!result.error.empty()) {
         _status = "error: target does not exist";
-        _lastError = "Watch path does not exist: " + resolved;
+        _lastError = std::move(result.error);
+        if (baseline) {
+            std::lock_guard<std::mutex> lock(_mutex);
+            _trackedFiles.clear();
+            _baselineInitialized = false;
+        }
         return;
     }
-
-    std::unordered_map<std::string, FileEntry> currentFiles;
-    scanDirectory(target, currentFiles);
+    auto& currentFiles = result.files;
+    if (baseline) {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _trackedFiles = std::move(currentFiles);
+        _baselineInitialized = true;
+        _status = "watching";
+        _lastError.clear();
+        return;
+    }
 
     std::vector<std::pair<std::string, std::string>> detectedEvents; // {path, eventType}
 
@@ -153,6 +213,7 @@ void FileWatcher::checkNow() {
         }
 
         _trackedFiles = std::move(currentFiles);
+        _baselineInitialized = true;
         _status = "watching";
         _lastError = "";
     }

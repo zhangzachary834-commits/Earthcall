@@ -26,3 +26,5 @@ Rather than building a fake "panning" property, three mathematical Laws were aut
 
 ### 3. Result
 When the Zone is loaded, the Law infinitely oscillating the orb's physical X-position causes CoreAudio to spatially pan the 140Hz lowpass-filtered drone from the left speaker/headphone to the right, and back again, continuously. Zach verified this directly on native Apple Headphones.
+
+2026-11-16 revisit: Zach reported **Move to Zone** refused entry. The three shared Law roots omitted the activation field, decoding as `OnEvent` with no trigger. Their saved activation is now explicitly `WhileTrue`; the existing formulas and recorded `ambient.creator` authorship were preserved in the checkout and the live data home. Each voice moved in the isolated Zone run, and the saved round trip reopened. The headphone check for the rebuilt app remains with Zach. [Repair record](../../Zones%20and%20Ourverse/Zone_Switch_Repair/Zone_Switch_Repair.md). Codex / GPT-6 / session `01a1e641-c9be-7892-8938-ce93617a2341` / 2026-11-16.

@@ -49,6 +49,12 @@ red the moment the map stops noticing the world's shape move.
 
 ## 1. The ledger
 
+### Formation member lifetime (2026-11-16)
+
+The reverse membership index is derived from each Formation's direct borrowed member pointers. Admission, explicit release, replacement (including copies, partition, and clear), and Formation destruction maintain the corresponding entries. Singular destruction detaches only the recorded holders, clears any root pointing to it, and advances each affected membership generation; the Zone referent stamp already consumes that generation. The Relation graph separately detaches expired endpoint pointers while keeping identifiers and history. A hydration rebind changes the retained Relation in place and advances every RelationManager generation that shares it.
+
+`zone_material_closure_test` exercises destruction without a LawManager, copied holders, and the embedded-to-shared Material path through `switchTo`. [Sky-Island repair](../../Agenda/Tasks/Specific%20Tasks/Zones%20and%20Ourverse/Zone_Switch_Repair/Zone_Switch_Repair.md). Codex / GPT-6 / session `01a1e641-c9be-7892-8938-ce93617a2341` / 2026-11-16.
+
 ### Property ValueCell observer back-edges, durable alias topology & compiled paths (2026-11-04 / 2026-11-05)
 
 Zach's Property memory micromastery and alias-deafness resolution (Rungs 0–5): multiple Property paths (`Shared`, `Unique`, `Weak`) may bind to an underlying `ValueCell`. Changes through any bound path fan out notifications across all live observers to close the Rete alias-deafness gap. Shared alias topologies persist durably across save/load via `SingularPersistence`, while reactive derived edges and compiled paths remain disposable runtime caches.

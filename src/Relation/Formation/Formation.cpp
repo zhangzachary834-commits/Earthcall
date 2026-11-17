@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cstdio>
+#include <mutex>
 #include <unordered_map>
 #include <unordered_set>
 #include <map>
@@ -56,6 +57,24 @@ std::string Formation::nextFormationId() {
 }
 
 namespace {
+struct MembershipIndex {
+    std::mutex mutex;
+    std::unordered_map<const Singular*, std::unordered_set<Formation*>> holders;
+};
+
+MembershipIndex& membershipIndex() {
+    // Formations and their members can both be destroyed in static teardown.
+    static auto* index = new MembershipIndex;
+    return *index;
+}
+
+void untrackMember(MembershipIndex& index, const Singular* being, Formation* holder) {
+    auto it = index.holders.find(being);
+    if (it == index.holders.end()) return;
+    it->second.erase(holder);
+    if (it->second.empty()) index.holders.erase(it);
+}
+
 glm::vec3 extractScale(const glm::mat4& transform) {
     glm::vec3 scale(glm::length(glm::vec3(transform[0])),
                     glm::length(glm::vec3(transform[1])),
@@ -73,7 +92,55 @@ Formation::Formation(const std::vector<Singular*>& members) {
     }
 }
 
+Formation::Formation(const Formation& o)
+    : Singular(o), relationMgr(o.relationMgr),
+      subformations(cloneSubformations(o.subformations, 0)),
+      pendingRelations(o.pendingRelations), relationTypeTag(o.relationTypeTag),
+      _root(o._root) {
+    replaceMembers(o.members);
+}
 
+Formation& Formation::operator=(const Formation& o) {
+    if (this != &o) {
+        Singular::operator=(o);
+        replaceMembers(o.members);
+        relationMgr = o.relationMgr;
+        subformations = cloneSubformations(o.subformations, 0);
+        relationTypeTag = o.relationTypeTag;
+        _root = o._root;
+        pendingRelations = o.pendingRelations;
+        ++_membershipGeneration;
+        // Assignment replaces content, not _formationId.
+    }
+    return *this;
+}
+
+Formation::~Formation() {
+    replaceMembers({});
+}
+
+void Formation::replaceMembers(const std::vector<Singular*>& replacements) {
+    if (members.empty() && replacements.empty()) return;
+    auto& index = membershipIndex();
+    std::lock_guard<std::mutex> guard(index.mutex);
+    for (auto* member : members) untrackMember(index, member, this);
+    members = replacements;
+    for (auto* member : members) index.holders[member].insert(this);
+}
+
+void Formation::forgetBeingEverywhere(const Singular* being) {
+    auto& index = membershipIndex();
+    std::lock_guard<std::mutex> guard(index.mutex);
+    auto it = index.holders.find(being);
+    if (it == index.holders.end()) return;
+    for (auto* holder : it->second) {
+        auto& members = holder->members;
+        members.erase(std::remove(members.begin(), members.end(), being), members.end());
+        if (holder->_root == being) holder->_root = nullptr;
+        ++holder->_membershipGeneration;
+    }
+    index.holders.erase(it);
+}
 
 void Formation::addElement(const Singular& s) {
     addMember(const_cast<Singular*>(&s));
@@ -107,7 +174,12 @@ bool Formation::admitMember(Singular* s) {
         return false;
     }
     if (hasMember(s)) return false;
-    members.push_back(s);
+    {
+        auto& index = membershipIndex();
+        std::lock_guard<std::mutex> guard(index.mutex);
+        members.push_back(s);
+        index.holders[s].insert(this);
+    }
     ++_membershipGeneration;
     return true;
 }
@@ -180,19 +252,24 @@ bool Formation::releaseMember(Singular* s) {
 bool Formation::releaseMemberAt(Singular* s, int depth) {
     if (!s) return false;
     bool found = false;
-    const auto it = std::remove(members.begin(), members.end(), s);
-    if (it != members.end()) {
-        members.erase(it, members.end());
-        ++_membershipGeneration;
-        found = true;
+    {
+        auto& index = membershipIndex();
+        std::lock_guard<std::mutex> guard(index.mutex);
+        const auto it = std::remove(members.begin(), members.end(), s);
+        if (it != members.end()) {
+            members.erase(it, members.end());
+            untrackMember(index, s, this);
+            ++_membershipGeneration;
+            found = true;
+        }
+        if (_root == s) _root = nullptr;
     }
-    if (_root == s) _root = nullptr;
     relationMgr.removeInvolving(s);
     if (subformations.empty()) return found;
     if (depth + 1 >= kMaxFormationDepth) {
         std::fprintf(stderr,
             "Formation '%s': subformation nesting reached kMaxFormationDepth (%d); "
-            "release stops here and a member may still dangle below.\n",
+            "explicit release stops here; deeper membership is unchanged.\n",
             getIdentifier().c_str(), kMaxFormationDepth);
         return found;
     }
@@ -209,7 +286,7 @@ void Formation::removeMember(Singular* s) {
 
 void Formation::clearMembers() {
     if (!members.empty() || !subformations.empty() || _root) ++_membershipGeneration;
-    members.clear();
+    replaceMembers({});
     subformations.clear();
     _root = nullptr;
 }
@@ -221,7 +298,7 @@ void Formation::clearRelations() {
 
 void Formation::clear() {
     if (!members.empty() || !subformations.empty() || _root) ++_membershipGeneration;
-    members.clear();
+    replaceMembers({});
     relationMgr = RelationManager{};
     subformations.clear();
     relationTypeTag.clear();
@@ -266,6 +343,13 @@ bool Formation::retainRelation(const std::shared_ptr<Relation>& r) {
     if (!mayAdmitRelation(r) || !relationMgr.retain(r)) return false;
     integrateRelationTopology(r);
     return true;
+}
+
+void Formation::rebindRetainedRelation(const std::shared_ptr<Relation>& relation,
+                                       Singular* a, Singular* b) {
+    if (!a || !b || a == b || relation->hasEndpoints()) return;
+    RelationManager::rebindEndpoints(*relation, a, b);
+    integrateRelationTopology(relation);
 }
 
 bool Formation::addRelation(const std::shared_ptr<Relation>& r) {
@@ -473,7 +557,7 @@ Formation::Topology Formation::resolveTopology() {
     const std::vector<std::shared_ptr<Relation>> oldRelations = relationMgr.getAll();
     Singular* oldRoot = _root;
 
-    members.clear();
+    replaceMembers({});
     relationMgr = RelationManager{};
     subformations.clear();
     _root = nullptr;
@@ -717,7 +801,7 @@ std::vector<std::shared_ptr<Formation>> Formation::cloneSubformations(
         // depth bound survives the recursion. A fresh Formation mints a fresh
         // identity, which is the whole point: a copy is a new being.
         auto copy = std::make_shared<Formation>();
-        copy->members = sub->members;
+        copy->replaceMembers(sub->members);
         copy->relationMgr = sub->relationMgr;
         copy->relationTypeTag = sub->relationTypeTag;
         copy->_root = sub->_root;

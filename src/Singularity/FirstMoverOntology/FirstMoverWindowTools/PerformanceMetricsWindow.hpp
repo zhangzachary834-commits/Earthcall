@@ -23,7 +23,7 @@ struct FrameTimings {
     float wait_surface_ms = 0.f; // wgpuSurfaceGetCurrentTexture block time
     float wait_submit_ms  = 0.f; // wgpuQueueSubmit block time
     float post_render_ms  = 0.f; // sensing and maintenance after endFrame
-    float file_watcher_ms = 0.f; // filesystem watcher inside post-render work
+    float file_watcher_ms = 0.f; // watcher sensing before LawManager tick
     float imgui_ms        = 0.f; // ImGui::Render + swap/present
     float total_ms        = 0.f; // full tick wall-clock
 };

@@ -2084,14 +2084,6 @@ void LawManager::connectToEventBus() {
         }
         _relationStateToRevalidate.erase(being);
         _adapter.forgetBeing(being);
-        // …and every RELATION that held it lets go of the pointer, keeping the
-        // name. Relations outlive their endpoints all the time (a Formation, a
-        // provenance record, a test's own graph), and aId()/bId() call a
-        // virtual through the pointer — so a stale endpoint is not a stale
-        // read, it is an abort in whatever next asks the graph a question.
-        // This is the one hook that hears about every being's death, so it is
-        // where the graph finds out too.
-        RelationManager::forgetBeingEverywhere(being);
     });
 
     Singular::setPropertyChangeCallback([this](Singular* owner, const std::string& name) {

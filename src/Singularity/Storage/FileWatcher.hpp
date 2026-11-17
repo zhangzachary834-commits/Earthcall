@@ -2,10 +2,14 @@
 
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
 #include <chrono>
+#include <condition_variable>
+#include <cstdint>
 #include <filesystem>
 #include <functional>
 #include <mutex>
+#include <optional>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -30,7 +34,7 @@ public:
     using ChangeCallback = std::function<void(const std::string& path, const std::string& eventType)>;
 
     FileWatcher();
-    ~FileWatcher() override = default;
+    ~FileWatcher() override;
 
     bool isFirstMover() const override { return true; }
     std::string getIdentifier() const override { return "file-watcher"; }
@@ -62,21 +66,41 @@ private:
         uintmax_t size = 0;
     };
 
-    void scanDirectory(const std::filesystem::path& dir,
-                       std::unordered_map<std::string, FileEntry>& outFiles);
+    using FileMap = std::unordered_map<std::string, FileEntry>;
+    struct ScanConfig {
+        std::filesystem::path target;
+        bool recursive;
+        std::string filter;
+        std::uint64_t generation;
+    };
+    struct ScanResult {
+        std::uint64_t generation;
+        FileMap files;
+        std::string error;
+    };
+    ScanConfig scanConfig() const;
+    static ScanResult scanSnapshot(const ScanConfig& config);
+    void workerLoop();
+    void applySnapshot(ScanResult result, bool baseline);
+
+    // A scan consumes copied configuration and produces only a filesystem
+    // snapshot. No Law, event, renderer, or mutable watcher state is touched.
+    static void scanDirectory(const std::filesystem::path& dir, bool recursive,
+                              const std::string& filterExtension,
+                              std::unordered_map<std::string, FileEntry>& outFiles);
 
     // Property getters/setters
     bool propEnabled() const { return _enabled; }
-    void propSetEnabled(const bool& v) { _enabled = v; }
+    void propSetEnabled(const bool& v) { if (_enabled != v) { _enabled = v; ++_configGeneration; } }
 
     std::string propWatchPath() const { return _watchPath; }
     void propSetWatchPath(const std::string& v);
 
     bool propRecursive() const { return _recursive; }
-    void propSetRecursive(const bool& v) { _recursive = v; }
+    void propSetRecursive(const bool& v) { if (_recursive != v) { _recursive = v; ++_configGeneration; } }
 
     std::string propFilterExtension() const { return _filterExtension; }
-    void propSetFilterExtension(const std::string& v) { _filterExtension = v; }
+    void propSetFilterExtension(const std::string& v) { if (_filterExtension != v) { _filterExtension = v; ++_configGeneration; } }
 
     double propPollIntervalMs() const { return _pollIntervalMs; }
     void propSetPollIntervalMs(const double& v) { _pollIntervalMs = v > 10.0 ? v : 10.0; }
@@ -113,6 +137,17 @@ private:
     mutable std::mutex _mutex;
     std::unordered_map<std::string, FileEntry> _trackedFiles;
     std::vector<ChangeCallback> _callbacks;
+    // Kernel worker state: a single immutable request and result; generation
+    // discards observations superseded by configuration or synchronous checks.
+    std::uint64_t _configGeneration = 1;
+    bool _baselineInitialized = false;
+    std::mutex _scanMutex;
+    std::condition_variable _scanCv;
+    bool _shutdown = false;
+    bool _scanBusy = false;
+    std::optional<ScanConfig> _pendingScan;
+    std::optional<ScanResult> _completedScan;
+    std::thread _scanWorker;
 };
 
 } // namespace Storage

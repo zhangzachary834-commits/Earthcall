@@ -153,6 +153,8 @@ Addendum: Also ensure save system works in every case and everything that needs 
 
 <a id="joys-ourverse-zones"></a>
 ### Joys · Ourverse · Zones
+
+- **Sky-Island, Ambient, and Tetra-Craft switch repairs (2026-11-16)** — recovered entry and checked the retained Material Relations, continuous panning, and Tetra-Craft mining through Zone-native loading. [Details and Person checks](Specific%20Tasks/Zones%20and%20Ourverse/Zone_Switch_Repair/Zone_Switch_Repair.md).
 - **The Merry Dancers aurora Zone** — Zach called the complete Zone the most insane thing in Earthcall so far; a second look pass awaits his eye, and FPS waits for a general architecture; [task](Specific%20Tasks/Zones%20and%20Ourverse/The_Merry_Dancers/The_Merry_Dancers.md).
 - ⚑ ZACH'S IDEA — **Personal Ourverse Navigator: little 2D/3D islands for each world, the first thing Earthcall.app shows**; plan in its own session, attaching through the app's first-run Foundation. → [full task](Specific%20Tasks/Zones%20and%20Ourverse/Personal_Ourverse_Navigator/Personal_Ourverse_Navigator.md)
 - **The Hierarchy of Joys has no consumer** — `rankOf`/`orderMembersBy` are called only by tests, `telos` is non-empty on 2 beings across all saves and in 0 law conditions; give it one true consumer (agenda order when two laws are eligible on the same subject). → [audit §5, §9](../../audits/2026-09-24_mythos_ungoverned_governor_audit.md) — Claude Fable 5.1 (Mythos), 2026-09-24.

@@ -17,7 +17,6 @@
 #include "Singularity/Screen/ScreenRecorder.hpp"
 #include "Singularity/Input/Interaction/InteractionChannel.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
-#include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/Audio/AudioRecorder.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
 
@@ -398,7 +397,6 @@ namespace Core {
         g_frameTimings.wait_submit_ms = std::chrono::duration<float, std::milli>(tE1 - tE0).count();
 
         auto tPost0 = std::chrono::steady_clock::now();
-        g_frameTimings.file_watcher_ms = 0.f;
         if (_lawManager) {
             if (auto* sc = Singularity::Screen::ScreenChannel::find(*_lawManager)) {
                 sc->senseOutput(currentRenderer(),static_cast<uint32_t>(fbW),static_cast<uint32_t>(fbH));
@@ -450,12 +448,6 @@ namespace Core {
                     }
                     recorder->stepFrame(fbW, fbH, nullptr, cursorX, cursorY);
                 }
-            }
-            if (auto* watcher = Singularity::Storage::FileWatcher::find(*_lawManager)) {
-                auto tWatcher0 = std::chrono::steady_clock::now();
-                watcher->tick();
-                g_frameTimings.file_watcher_ms = std::chrono::duration<float, std::milli>(
-                    std::chrono::steady_clock::now() - tWatcher0).count();
             }
             if (auto* mic = Singularity::Audio::AudioRecorder::find(*_lawManager)) {
                 double dt = Universe::instance().dt();

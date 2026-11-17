@@ -191,7 +191,7 @@ void renderPerformanceMetricsContent(Core::Engine* engine) {
         }
         ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Other 3D CPU work:     %6.2f ms", actual_3d);
         ImGui::Text("    |- Post-render sensing:   %6.2f ms", g_frameTimings.post_render_ms);
-        ImGui::Text("       |- File watcher:       %6.2f ms", g_frameTimings.file_watcher_ms);
+        ImGui::Text("  File watcher:    %6.2f ms", g_frameTimings.file_watcher_ms);
         ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Surface acquire wait:  %6.2f ms", g_frameTimings.wait_surface_ms);
         if (g_frameTimings.wait_submit_ms > 0.1f) {
             ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Queue-submit wait:     %6.2f ms", g_frameTimings.wait_submit_ms);
