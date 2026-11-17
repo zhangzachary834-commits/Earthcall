@@ -138,6 +138,7 @@ json MaterialManager::toJson() const {
 
 void MaterialManager::loadFromJson(const json& j) {
     _materials.clear();
+    _materialIndexByName.clear();
     if (j.is_array()) {
         for (const auto& e : j) {
             // Gate B safety rail: a legacy saved default has document-local
@@ -146,8 +147,11 @@ void MaterialManager::loadFromJson(const json& j) {
             if (MaterialPersistenceMigration::isLegacyDefaultRecord(e)) {
                 continue;
             }
-            _materials.push_back(
-                std::make_shared<Material>(Material::fromJson(e)));
+            // Snapshot replacement still passes through the same object-level
+            // admission law as shared roots/stored Singulars. A current-marker
+            // response-less default is not a valid canonical default either:
+            // material.default cannot inherit itself.
+            add(std::make_shared<Material>(Material::fromJson(e)));
         }
     }
     // The canonical fallback is always CURRENT. Old worlds retain historical
