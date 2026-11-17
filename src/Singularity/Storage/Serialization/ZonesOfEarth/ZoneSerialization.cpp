@@ -9,6 +9,7 @@
 #include "Singularity/Storage/Serialization/Relation/FormationSerialization.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/HomeSerialization.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "ConstructedBeing/Material/MaterialPersistenceMigration.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
 #include "Singularity/Language/LanguageSystem.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
@@ -403,8 +404,16 @@ nlohmann::json zoneToJson(const Zone& zone) {
 void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects, bool restoreExistingLexemes) {
     if (!zj.is_object()) return;
     SingularPersistence::CohortScope cohortScope(true);
-    if (zj.contains("materials")) {
-        materials.mergeFromJson(zj["materials"]);
+
+    // Gate B: old Zone-local meaning of material.default must not overwrite the
+    // canonical global current default. Scope that old snapshot before either
+    // its Material or its Objects enter the live world.
+    const auto materialMigration =
+        MaterialPersistenceMigration::migrateLegacyDefaultDocument(
+            zj, "zone:" + zone.getIdentifier());
+    const nlohmann::json& surfaceJson = materialMigration.document;
+    if (surfaceJson.contains("materials")) {
+        materials.mergeFromJson(surfaceJson["materials"]);
     }
     if (zj.contains("owner")) {
         zone.setOwner(zj.value("owner", std::string{}));
@@ -458,10 +467,10 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects, bo
         zone.getOwnedObjectsMutable().clear();
     }
     if (zone.getOwnedObjects().empty()) {
-        if (zj.contains("world")) {
-            zoneObjectsFromJson(zj["world"], zone);
-        } else if (zj.contains("objects")) {
-            zoneObjectsFromJson(zj, zone);
+        if (surfaceJson.contains("world")) {
+            zoneObjectsFromJson(surfaceJson["world"], zone);
+        } else if (surfaceJson.contains("objects")) {
+            zoneObjectsFromJson(surfaceJson, zone);
         }
     }
     if (zj.contains("storedSingulars")) {
