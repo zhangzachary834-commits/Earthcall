@@ -14,6 +14,7 @@
 
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "ConstructedBeing/Material/MaterialResponseDefaults.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 
 #include <cassert>
@@ -162,40 +163,91 @@ int main() {
         std::printf("  bind:     OntoMath Bind reads live/persisted Material PropertyPaths\n");
     }
 
-    // --- 2. The default material preserves the old global shading ------------
+    // --- 2. Gate B: fresh matte default vs one-time legacy migration ----------
     {
         MaterialManager mm;
         auto def = mm.defaultMaterial();
         assert(def);
         assert(def->getIdentifier() == "material.default");
-        // These are the exact constants ShadingSystem used to set globally.
+        assert(def->responseExpr &&
+               "fresh material.default must own the current authored matte law");
+        assert(def->environmentResponseExpr &&
+               "fresh material.default must own current environment response");
+
+        // Historical compatibility coefficients remain stored/Law-addressable,
+        // but the fresh default response must not Bind them.
         assert(nearf(def->ambient, 0.2f));
         assert(nearf(def->diffuse, 0.8f));
         assert(nearf(def->specular, 1.0f));
         assert(nearf(def->shininess, 32.0f));
-        assert(nearf(def->baseColor.r, 1.0f) && nearf(def->baseColor.g, 1.0f) && nearf(def->baseColor.b, 1.0f));
-        assert(def->responseExpr &&
-               "legacy direct Blinn-Phong must now exist only as authored Material math");
-        assert(def->environmentResponseExpr &&
-               "legacy default environment response should be authored OntoMath");
-
-        std::set<std::string> directBindings;
+        std::set<std::string> freshBindings;
         for (const auto& piece : def->responseExpr->pieces) {
-            if (piece.mathNode) piece.mathNode->collectPropertyBindings(directBindings);
-            if (piece.whereLEZero) piece.whereLEZero->collectPropertyBindings(directBindings);
+            if (piece.mathNode) piece.mathNode->collectPropertyBindings(freshBindings);
+            if (piece.whereLEZero) piece.whereLEZero->collectPropertyBindings(freshBindings);
         }
-        assert(directBindings.size() == 3 &&
-               directBindings.count("diffuse") == 1 &&
-               directBindings.count("specular") == 1 &&
-               directBindings.count("shininess") == 1);
+        assert(freshBindings.empty() &&
+               "fresh default must not resurrect legacy diffuse/specular/shininess Bind inputs");
 
-        // Deliberately adversarial legacy lobe RGB: diffuse and specular
-        // have different chroma. With n=L=V=(0,0,1), both geometric lobes are 1.
-        // diffuse = surfaceColor * .8 * (.25,.10,.05) = (.10,.02,.04)
-        // specular = 1 * (.40,.20,.05), total = (.50,.22,.09).
-        const std::map<std::string, PropertyValue> directVars{
-            {OntoMath::kSurfaceNormalVar, PropertyValue(glm::vec3(0.0f, 0.0f, 1.0f))},
-            {OntoMath::kSurfaceColorVar, PropertyValue(glm::vec3(0.5f, 0.25f, 1.0f))},
+        const std::map<std::string, PropertyValue> matteVars{
+            {OntoMath::kSurfaceNormalVar,
+             PropertyValue(glm::vec3(0.0f, 0.0f, 1.0f))},
+            {OntoMath::kSurfaceColorVar,
+             PropertyValue(glm::vec3(0.5f, 0.25f, 1.0f))},
+            {OntoMath::kIncidentRadianceVar,
+             PropertyValue(glm::vec3(0.25f, 0.10f, 0.05f))},
+            {OntoMath::kWiXVar, PropertyValue(0.0)},
+            {OntoMath::kWiYVar, PropertyValue(0.0)},
+            {OntoMath::kWiZVar, PropertyValue(-1.0)}
+        };
+        const auto matteValue = def->responseExpr->evaluate(matteVars, def.get());
+        assert(matteValue && std::holds_alternative<glm::vec3>(*matteValue));
+        const glm::vec3 matteRgb = std::get<glm::vec3>(*matteValue);
+        assert(nearf(matteRgb.x, 0.125f) &&
+               nearf(matteRgb.y, 0.025f) &&
+               nearf(matteRgb.z, 0.05f));
+
+        const std::map<std::string, PropertyValue> envVars{
+            {OntoMath::kSurfaceColorVar,
+             PropertyValue(glm::vec3(0.5f, 0.25f, 1.0f))},
+            {OntoMath::kEnvironmentRadianceVar,
+             PropertyValue(glm::vec3(1.0f, 0.5f, 0.25f))}
+        };
+        const auto envValue =
+            def->environmentResponseExpr->evaluate(envVars, def.get());
+        assert(envValue && std::holds_alternative<glm::vec3>(*envValue));
+        const glm::vec3 envRgb = std::get<glm::vec3>(*envValue);
+        assert(nearf(envRgb.x, 0.5f) &&
+               nearf(envRgb.y, 0.125f) &&
+               nearf(envRgb.z, 0.25f));
+
+        // Old save: no responseExpr and no omission marker. Hydration migrates
+        // once to explicit legacy compatibility ASTs.
+        nlohmann::json oldSaved{
+            {"name", "legacy_clay"},
+            {"ambient", 0.2f},
+            {"diffuse", 0.8f},
+            {"specular", 1.0f},
+            {"shininess", 32.0f}
+        };
+        Material legacy = Material::fromJson(oldSaved);
+        assert(legacy.responseExpr);
+        assert(legacy.environmentResponseExpr);
+
+        std::set<std::string> legacyBindings;
+        for (const auto& piece : legacy.responseExpr->pieces) {
+            if (piece.mathNode) piece.mathNode->collectPropertyBindings(legacyBindings);
+            if (piece.whereLEZero) piece.whereLEZero->collectPropertyBindings(legacyBindings);
+        }
+        assert(legacyBindings.size() == 3 &&
+               legacyBindings.count("diffuse") == 1 &&
+               legacyBindings.count("specular") == 1 &&
+               legacyBindings.count("shininess") == 1);
+
+        const std::map<std::string, PropertyValue> legacyVars{
+            {OntoMath::kSurfaceNormalVar,
+             PropertyValue(glm::vec3(0.0f, 0.0f, 1.0f))},
+            {OntoMath::kSurfaceColorVar,
+             PropertyValue(glm::vec3(0.5f, 0.25f, 1.0f))},
             {OntoMath::kIncidentRadianceVar, PropertyValue(glm::vec3(1.0f))},
             {OntoMath::kWiXVar, PropertyValue(0.0)},
             {OntoMath::kWiYVar, PropertyValue(0.0)},
@@ -208,35 +260,64 @@ int main() {
             {OntoMath::kLegacySpecularIncidentVar,
              PropertyValue(glm::vec3(0.40f, 0.20f, 0.05f))}
         };
-        const auto directValue = def->responseExpr->evaluate(directVars, def.get());
-        assert(directValue && std::holds_alternative<glm::vec3>(*directValue));
-        const glm::vec3 directRgb = std::get<glm::vec3>(*directValue);
-        assert(nearf(directRgb.x, 0.50f) && nearf(directRgb.y, 0.22f) &&
-               nearf(directRgb.z, 0.09f));
+        const auto legacyValue =
+            legacy.responseExpr->evaluate(legacyVars, &legacy);
+        assert(legacyValue && std::holds_alternative<glm::vec3>(*legacyValue));
+        const glm::vec3 legacyRgb = std::get<glm::vec3>(*legacyValue);
+        assert(nearf(legacyRgb.x, 0.50f) &&
+               nearf(legacyRgb.y, 0.22f) &&
+               nearf(legacyRgb.z, 0.09f));
 
-        std::set<std::string> envBindings;
-        for (const auto& piece : def->environmentResponseExpr->pieces) {
-            if (piece.mathNode) piece.mathNode->collectPropertyBindings(envBindings);
+        const auto migratedSaved = legacy.toJson();
+        assert(migratedSaved.contains("responseExpr"));
+        assert(migratedSaved.contains("environmentResponseExpr"));
+        assert(!migratedSaved.contains(
+            MaterialResponseDefaults::kOmissionSemanticsKey));
+
+        // Current material: response omission intentionally means inheritance.
+        Material currentInherited("current_inherited");
+        assert(!currentInherited.responseExpr);
+        const auto currentSaved = currentInherited.toJson();
+        assert(currentSaved.value(
+                   MaterialResponseDefaults::kOmissionSemanticsKey,
+                   std::string()) ==
+               MaterialResponseDefaults::kInheritDefaultV1);
+        Material currentRestored = Material::fromJson(currentSaved);
+        assert(!currentRestored.responseExpr);
+        assert(!currentRestored.environmentResponseExpr);
+
+        // Unknown future omission semantics must refuse rather than silently
+        // reinterpret a save as either legacy or current.
+        nlohmann::json unknown = currentSaved;
+        unknown[MaterialResponseDefaults::kOmissionSemanticsKey] =
+            "future-policy-v999";
+        bool refusedUnknown = false;
+        try {
+            (void)Material::fromJson(unknown);
+        } catch (const std::invalid_argument&) {
+            refusedUnknown = true;
         }
-        assert(envBindings.size() == 1 && envBindings.count("ambient") == 1);
+        assert(refusedUnknown);
 
-        const std::map<std::string, PropertyValue> envVars{
-            {OntoMath::kSurfaceColorVar, PropertyValue(glm::vec3(0.5f, 0.25f, 1.0f))},
-            {OntoMath::kEnvironmentRadianceVar, PropertyValue(glm::vec3(1.0f, 0.5f, 0.25f))}
-        };
-        const auto envValue = def->environmentResponseExpr->evaluate(envVars, def.get());
-        assert(envValue && std::holds_alternative<glm::vec3>(*envValue));
-        const glm::vec3 envRgb = std::get<glm::vec3>(*envValue);
-        assert(nearf(envRgb.x, 0.1f) && nearf(envRgb.y, 0.025f) &&
-               nearf(envRgb.z, 0.05f));
+        // A legacy snapshot that contains no material.default at all still gets
+        // the historical fallback explicitly, rather than the fresh matte default.
+        MaterialManager legacySnapshot;
+        legacySnapshot.loadFromJson(nlohmann::json::array({
+            nlohmann::json{{"name", "old_stone"}}
+        }));
+        auto legacyDefault = legacySnapshot.defaultMaterial();
+        assert(legacyDefault && legacyDefault->responseExpr);
+        std::set<std::string> legacyDefaultBindings;
+        for (const auto& piece : legacyDefault->responseExpr->pieces) {
+            if (piece.mathNode)
+                piece.mathNode->collectPropertyBindings(legacyDefaultBindings);
+            if (piece.whereLEZero)
+                piece.whereLEZero->collectPropertyBindings(legacyDefaultBindings);
+        }
+        assert(legacyDefaultBindings.count("specular") == 1 &&
+               "missing default in legacy snapshot must preserve old fallback appearance");
 
-        const auto defaultSaved = def->toJson();
-        assert(defaultSaved.contains("responseExpr"));
-        assert(defaultSaved.contains("environmentResponseExpr"));
-        Material defaultRestored = Material::fromJson(defaultSaved);
-        assert(defaultRestored.responseExpr);
-        assert(defaultRestored.environmentResponseExpr);
-        std::printf("  default: direct Blinn-Phong and environment compatibility are authored Material equations\n");
+        std::printf("  gate-b: fresh matte default and persistence-stable legacy migration\n");
     }
 
     // --- 3. Manager ownership, resolution, and the undeletable default -------
@@ -276,8 +357,18 @@ int main() {
         auto rt = loaded.get("clay");
         assert(rt);
         assert(nearf(rt->baseColor.r, 0.6f) && nearf(rt->shininess, 8.0f));
-        assert(loaded.defaultMaterial()); // default survives / is reinstated
-        std::printf("  serial:  materials round-trip through JSON, default preserved\n");
+        assert(!rt->responseExpr &&
+               "current response omission must survive round-trip as inheritance");
+        assert(loaded.defaultMaterial());
+        assert(loaded.defaultMaterial()->responseExpr);
+        std::set<std::string> roundTripDefaultBindings;
+        for (const auto& piece : loaded.defaultMaterial()->responseExpr->pieces) {
+            if (piece.mathNode)
+                piece.mathNode->collectPropertyBindings(roundTripDefaultBindings);
+        }
+        assert(roundTripDefaultBindings.empty() &&
+               "fresh matte default must survive manager round-trip");
+        std::printf("  serial: current inheritance and matte default round-trip through JSON\n");
     }
 
     // --- 5. Direct Material methods and faceTextures unit tests --------------
