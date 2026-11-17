@@ -12,6 +12,7 @@
 // backend first means Object construction never calls into OpenGL.
 
 #include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "ConstructedBeing/Material/MaterialResponseDefaults.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/Sdf.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
@@ -1472,6 +1473,14 @@ int main() {
         radiantMat->ambient = 0.0f;   // isolate rho on diffuse light
         radiantMat->diffuse = 1.0f;
         radiantMat->specular = 0.0f;
+        // This witness measures radiance transport under the historical receiver
+        // envelope; Gate B forbids fresh response omission from summoning it.
+        radiantMat->responseExpr =
+            MaterialResponseDefaults::makeLegacyDirectResponse();
+        radiantMat->environmentResponseExpr =
+            MaterialResponseDefaults::makeLegacyEnvironmentResponse();
+        radiantMat->bumpResponseRevision();
+        radiantMat->bumpEnvironmentResponseRevision();
 
         Object radiant;
         radiant.setFieldShape(
@@ -2241,19 +2250,23 @@ int main() {
     }
 
     // --- LEGACY DIRECT RESPONSE MIGRATION PIXEL PARITY ----------------------
-    // The old source API may still carry independent diffuse/specular weights,
-    // but SDF execution must receive one honest incident RGB plus compatibility
-    // lobe scalars. The inherited material.default response reproduces the old
-    // Blinn-Phong answer; no renderer-owned lobe formula participates.
+    // The old source API may still carry independent diffuse/specular weights.
+    // Old response-less JSON is hydrated ONCE into explicit compatibility math;
+    // no fresh omission or renderer-owned lobe formula participates.
     {
-        auto legacyDirectMat = materials.create("webgpu_legacy_direct_migration");
-        legacyDirectMat->baseColor = glm::vec3(0.5f, 0.25f, 1.0f);
-        legacyDirectMat->ambient = 0.2f;
-        legacyDirectMat->diffuse = 0.8f;
-        legacyDirectMat->specular = 1.0f;
-        legacyDirectMat->shininess = 32.0f;
-        legacyDirectMat->responseExpr.reset();
-        legacyDirectMat->environmentResponseExpr.reset();
+        auto legacyDirectMat = std::make_shared<Material>(
+            Material::fromJson(nlohmann::json{
+                {"name", "webgpu_legacy_direct_migration"},
+                {"baseColor", {0.5f, 0.25f, 1.0f}},
+                {"ambient", 0.2f},
+                {"diffuse", 0.8f},
+                {"specular", 1.0f},
+                {"shininess", 32.0f}
+            }));
+        assert(legacyDirectMat->responseExpr &&
+               legacyDirectMat->environmentResponseExpr &&
+               "old response-less JSON did not migrate to explicit compatibility ASTs");
+        materials.add(legacyDirectMat);
 
         Object legacyDirectReceiver;
         legacyDirectReceiver.setFieldShape(
@@ -2288,8 +2301,10 @@ int main() {
                 "material.webgpu_legacy_direct_migration", {});
         assert(legacyResolved.responseExpr &&
                legacyResolved.responseExpr.get() ==
+                   legacyDirectMat->responseExpr.get() &&
+               legacyResolved.responseExpr.get() !=
                    materials.defaultMaterial()->responseExpr.get() &&
-               "legacy direct receiver did not inherit material.default response");
+               "hydrated legacy receiver did not retain its explicit migrated response");
 
         renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
         legacyDirectReceiver.drawObject();
@@ -2604,18 +2619,21 @@ int main() {
         renderer.setRadianceVisibilityEnabled(false);
     }
 
-    // --- DEFAULT DIRECT RESPONSE INHERITANCE / LOCAL BINDINGS ----------------
-    // A legacy Material has no local response AST. Resolution must inherit the
-    // default authored equation while binding THIS Material's coefficients.
-    // Equation inheritance is not value inheritance.
+    // --- GATE B CURRENT DEFAULT INHERITANCE / LOCAL SOVEREIGNTY ------------
+    // A fresh/current response-less Material inherits material.default. Unlike
+    // migrated legacy material, it must NOT bind the historical coefficient
+    // quartet into the new matte law.
     {
-        auto legacyInherited = materials.create("webgpu_default_response_inheritance");
-        legacyInherited->responseExpr.reset();
-        legacyInherited->environmentResponseExpr.reset();
-        legacyInherited->diffuse = 0.31f;
-        legacyInherited->specular = 0.27f;
-        legacyInherited->shininess = 11.0f;
-        legacyInherited->ambient = 0.09f;
+        auto currentInherited =
+            materials.create("webgpu_default_response_inheritance");
+        currentInherited->responseExpr.reset();
+        currentInherited->environmentResponseExpr.reset();
+        // Hostile historical values: fresh inheritance must ignore these unless
+        // an explicit response AST actually Binds them.
+        currentInherited->diffuse = 0.31f;
+        currentInherited->specular = 0.27f;
+        currentInherited->shininess = 11.0f;
+        currentInherited->ambient = 0.09f;
 
         auto defaultMaterial = materials.defaultMaterial();
         assert(defaultMaterial && defaultMaterial->responseExpr &&
@@ -2627,40 +2645,41 @@ int main() {
         assert(resolvedInherited.responseExpr &&
                resolvedInherited.responseExpr.get() ==
                    defaultMaterial->responseExpr.get() &&
-               "legacy Material did not inherit the authored default direct equation");
+               "current response-less Material did not inherit matte default direct law");
         assert(resolvedInherited.environmentResponseExpr &&
                resolvedInherited.environmentResponseExpr.get() ==
                    defaultMaterial->environmentResponseExpr.get() &&
-               "legacy Material did not inherit the authored default environment equation");
+               "current response-less Material did not inherit default environment law");
+        assert(resolvedInherited.responseBindings.empty() &&
+               "fresh matte inheritance secretly bound legacy coefficient values");
 
-        const auto readBoundNumber = [&](const char* path) {
-            const auto it = resolvedInherited.responseBindings.find(path);
-            assert(it != resolvedInherited.responseBindings.end());
-            double value = 0.0;
-            assert(propertyValueToNumber(it->second, value));
-            return value;
-        };
-        assert(std::abs(readBoundNumber("diffuse") - 0.31) < 1e-6 &&
-               std::abs(readBoundNumber("specular") - 0.27) < 1e-6 &&
-               std::abs(readBoundNumber("shininess") - 11.0) < 1e-6 &&
-               std::abs(readBoundNumber("ambient") - 0.09) < 1e-6 &&
-               "inherited response equation bound default Material values instead of receiver values");
+        // Current omission must remain current omission across persistence.
+        const nlohmann::json inheritedSaved = currentInherited->toJson();
+        assert(inheritedSaved.value(
+                   MaterialResponseDefaults::kOmissionSemanticsKey,
+                   std::string()) ==
+               MaterialResponseDefaults::kInheritDefaultV1);
+        Material inheritedRestored = Material::fromJson(inheritedSaved);
+        assert(!inheritedRestored.responseExpr &&
+               !inheritedRestored.environmentResponseExpr);
 
+        // An explicit local response remains sovereign and does not secretly
+        // inherit environment just because the default has one.
         auto localRoot = vectorNode(0.2, 0.3, 0.4);
-        legacyInherited->responseExpr =
+        currentInherited->responseExpr =
             std::make_shared<OntoMath::Piecewise>(
                 OntoMath::Piecewise::continuous(localRoot));
-        legacyInherited->bumpResponseRevision();
+        currentInherited->bumpResponseRevision();
         const RenderMaterial resolvedLocal =
             resolveRenderMaterial(
                 "material.webgpu_default_response_inheritance", {});
         assert(resolvedLocal.responseExpr.get() ==
-                   legacyInherited->responseExpr.get() &&
+                   currentInherited->responseExpr.get() &&
                resolvedLocal.responseExpr.get() !=
                    defaultMaterial->responseExpr.get() &&
                "explicit local response did not remain sovereign over the default");
         assert(!resolvedLocal.environmentResponseExpr &&
-               "explicit direct response secretly inherited legacy environment response");
+               "explicit direct response secretly inherited default environment response");
     }
 
     // --- AD-21 MATERIAL RESPONSE PROPERTY BIND -------------------------------
