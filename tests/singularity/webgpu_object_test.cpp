@@ -3047,6 +3047,61 @@ int main() {
                std::abs(int(purifiedMesh[2]) - int(purifiedImplicit[2])) <= 3 &&
                "mesh and implicit receivers disagree on purified constant source truth");
 
+        // VALUE-ONLY SOURCE EDIT: mutate canonical fallback chroma while keeping
+        // source-set revision and all rho/chi/alpha structure fixed. The source
+        // storage bytes must refresh without recompiling the receiver pipeline.
+        const Renderer::FrameStats purifiedBeforeValueStats =
+            renderer.frameStats();
+        purifiedSource.fallbackChroma = glm::vec3(0.10f, 0.70f, 0.20f);
+        renderer.setRadianceSources({purifiedSource}, 7299);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshTransport.drawObject();
+        renderer.endFrame();
+        unsigned char purifiedMeshValueEdit[4];
+        readCentre(purifiedMeshValueEdit);
+        const Renderer::FrameStats purifiedValueStats = renderer.frameStats();
+
+        assert(purifiedMesh[0] > purifiedMeshValueEdit[0] + 45 &&
+               purifiedMeshValueEdit[1] > purifiedMesh[1] + 45 &&
+               "canonical fallback chroma value edit did not refresh source transport");
+        assert(purifiedValueStats.meshProgramCompiles == 0 &&
+               purifiedValueStats.meshProgramRefusals == 0 &&
+               "canonical fallback value edit recompiled/refused receiver WGSL");
+        (void)purifiedBeforeValueStats;
+
+        // LEGACY-PACKET-ONLY EDIT: wildly recolor the quarantined old lobes.
+        // A receiver whose authored law reads canonical incidentRadiance must
+        // remain byte-identical.
+        const unsigned char canonicalBeforeLegacyEdit[4] = {
+            purifiedMeshValueEdit[0], purifiedMeshValueEdit[1],
+            purifiedMeshValueEdit[2], purifiedMeshValueEdit[3]};
+        purifiedSource.legacySurface.environmentRadiance =
+            glm::vec3(4.0f, 0.0f, 3.0f);
+        purifiedSource.legacySurface.diffuseIncident =
+            glm::vec3(0.0f, 5.0f, 0.0f);
+        purifiedSource.legacySurface.specularIncident =
+            glm::vec3(7.0f, 0.0f, 0.0f);
+        purifiedSource.legacySurface.coefficients =
+            glm::vec3(0.9f, 0.6f, 0.4f);
+        renderer.setRadianceSources({purifiedSource}, 7299);
+        renderer.beginFrameOffscreen(view, W, H, glm::vec4(0, 0, 0, 1));
+        meshTransport.drawObject();
+        renderer.endFrame();
+        unsigned char canonicalAfterLegacyEdit[4];
+        readCentre(canonicalAfterLegacyEdit);
+        assert(canonicalAfterLegacyEdit[0] == canonicalBeforeLegacyEdit[0] &&
+               canonicalAfterLegacyEdit[1] == canonicalBeforeLegacyEdit[1] &&
+               canonicalAfterLegacyEdit[2] == canonicalBeforeLegacyEdit[2] &&
+               "legacy lobe packet leaked into canonical incidentRadiance receiver law");
+
+        // Restore the zero-lobe compatibility control for the historical
+        // Material below.
+        purifiedSource.legacySurface.environmentRadiance = glm::vec3(0.0f);
+        purifiedSource.legacySurface.diffuseIncident = glm::vec3(0.0f);
+        purifiedSource.legacySurface.specularIncident = glm::vec3(0.0f);
+        purifiedSource.legacySurface.coefficients = glm::vec3(0.0f);
+        renderer.setRadianceSources({purifiedSource}, 7299);
+
         meshTransport.setMaterialId("material.default");
         implicitTransport.setMaterialId("material.default");
 
