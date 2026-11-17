@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <string>
+#include <stdexcept>
 #include <utility>
 
 namespace MaterialPersistenceMigration {
@@ -39,6 +40,28 @@ inline const nlohmann::json& legacyDirectJson() {
     static const nlohmann::json value =
         MaterialResponseDefaults::makeLegacyDirectResponse()->toJson();
     return value;
+}
+
+inline const nlohmann::json& legacyEnvironmentJson() {
+    static const nlohmann::json value =
+        MaterialResponseDefaults::makeLegacyEnvironmentResponse()->toJson();
+    return value;
+}
+
+inline bool referencesSharedDefaultRoot(const nlohmann::json& document) {
+    if (!document.is_object() ||
+        !document.contains("materialRefs") ||
+        !document["materialRefs"].is_array()) {
+        return false;
+    }
+    for (const auto& ref : document["materialRefs"]) {
+        if (ref.is_string() &&
+            materialIdentity(nlohmann::json{{"id", ref.get<std::string>()}}) ==
+                "material.default") {
+            return true;
+        }
+    }
+    return false;
 }
 
 inline bool isLegacyDefaultRecord(const nlohmann::json& material) {
@@ -197,6 +220,19 @@ inline ScopedLegacyDefaultMigration migrateLegacyDefaultDocument(
     // Current serializer always carries every referenced Material in the
     // Zone identity. Therefore a root object that names material.default while
     // its old document has no default record is itself legacy evidence.
+    if (rootReferencesDefault &&
+        legacyDefaultIndex == static_cast<std::size_t>(-1) &&
+        !hasAnyDefaultRecord &&
+        referencesSharedDefaultRoot(input)) {
+        // This helper intentionally does not read shared roots. A historical
+        // material.default root may carry non-default coefficient values, so
+        // synthesizing generic compatibility state here would rewrite old
+        // appearance. Refuse until a root-aware persistence boundary supplies
+        // the actual Material.
+        throw std::invalid_argument(
+            "legacy material.default through materialRefs requires root-aware Gate B migration");
+    }
+
     const bool synthesize =
         legacyDefaultIndex == static_cast<std::size_t>(-1) &&
         !hasAnyDefaultRecord && rootReferencesDefault;
@@ -212,6 +248,15 @@ inline ScopedLegacyDefaultMigration migrateLegacyDefaultDocument(
 
     scopedRecord["id"] = out.scopedMaterialId;
     scopedRecord["name"] = bareMaterialName(out.scopedMaterialId);
+
+    // Gate-A-era legacy default may already have direct compatibility math.
+    // If its historical environment law was omitted by an intermediate save,
+    // restore that law while the record is unambiguously identified as legacy.
+    if (scopedRecord.contains("responseExpr") &&
+        scopedRecord["responseExpr"] == legacyDirectJson() &&
+        !scopedRecord.contains("environmentResponseExpr")) {
+        scopedRecord["environmentResponseExpr"] = legacyEnvironmentJson();
+    }
 
     if (!out.document.contains("materials") ||
         !out.document["materials"].is_array()) {
