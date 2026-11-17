@@ -540,6 +540,20 @@ int main() {
         assert(nearf(mm.defaultMaterial()->baseColor.r, 0.2f) &&
                "response-less direct default Material bypass poisoned canonical fallback");
 
+        // Same refusal must hold for REPLACE/snapshot ingestion. A default that
+        // says "inherit material.default" would be self-referential, not a
+        // lawful canonical default.
+        nlohmann::json selfInheritingDefault{
+            {"name", "default"},
+            {MaterialResponseDefaults::kOmissionSemanticsKey,
+             MaterialResponseDefaults::kInheritDefaultV1},
+            {"baseColor", {0.77f, 0.01f, 0.02f}}
+        };
+        mm.loadFromJson(nlohmann::json::array({selfInheritingDefault}));
+        assert(mm.defaultMaterial() && mm.defaultMaterial()->responseExpr);
+        assert(nearf(mm.defaultMaterial()->baseColor.r, 1.0f) &&
+               "snapshot installed response-less self-inheriting material.default");
+
         auto directCurrentDefault = std::make_shared<Material>("default");
         directCurrentDefault->baseColor = glm::vec3(0.15f, 0.25f, 0.35f);
         directCurrentDefault->responseExpr =
