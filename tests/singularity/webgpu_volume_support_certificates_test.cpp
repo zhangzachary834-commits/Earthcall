@@ -733,7 +733,11 @@ int main() {
                     if (!fresh.init(gpu)) { check(false, "M0: a fresh renderer initializes"); break; }
                     setCurrentRenderer(&fresh);
                     fresh.setRadianceSources({source}, 1);
-                    fresh.setLight(source.position, source.ambientRadiance, source.diffuseRadiance, source.specularRadiance);
+                    fresh.setLight(
+                        source.position,
+                        source.legacySurface.environmentRadiance,
+                        source.legacySurface.diffuseIncident,
+                        source.legacySurface.specularIncident);
                     fresh.setLightingEnabled(light.enabled);
                     configure(fresh, proofOn);
                     pose(fresh, poses[k].first, poses[k].second);
