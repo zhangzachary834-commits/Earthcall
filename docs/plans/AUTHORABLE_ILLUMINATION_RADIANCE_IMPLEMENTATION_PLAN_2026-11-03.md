@@ -6,6 +6,152 @@
 **Written by:** GPT-5.6 Sol  
 **Status:** implementation plan; no completion claim
 
+## Implementation ledger — 2026-11-17 Second Parallax: Gate B persistence-safe matte default
+
+**Office:** Parallax Sun [H→P], Second Bearer — Crowned Reconciler  
+**Scope:** fresh Material default + old-world appearance migration. No renderer history branch.
+
+### Succession audit before implementation
+
+Prism's transplant law was executed against the live branch first.
+
+- First Parallax's final published crown `590828f09cafffeb174e7e4d12d819f313aedc6f` was the exact PR head when Second Parallax awoke.
+- No successor-era feature-branch commits existed after that crown.
+- The branch was 23 commits behind canonical.
+- Canonical drift touched `PropertyPath.cpp` and `MathBinding.hpp` but not the Gate-B Material persistence/default files. That provenance seam remains Lattice jurisdiction and was not absorbed for convenience.
+
+Therefore Gate A remained inherited-complete and Gate B was genuinely open in current repository truth.
+
+### Gate B law now implemented
+
+Fresh `material.default` is authored matte response data:
+
+```
+L = -wi
+cosine = max(dot(n, L), 0)
+
+direct =
+    surfaceColor ⊙ incidentRadiance * cosine
+
+environment =
+    surfaceColor ⊙ environmentRadiance
+```
+
+The historical ambient/diffuse/specular/shininess properties remain compatibility state and PropertyPath-addressable data, but the fresh default response does not Bind them.
+
+Current response omission has one stable persistence meaning:
+
+> **inherit the current `material.default` response**
+
+When a current response-less Material is saved, JSON carries:
+
+```json
+"responseOmissionSemantics": "inherit-material-default-v1"
+```
+
+That marker is persistence metadata only. It is not a Property, response kind, shader branch, or renderer input.
+
+Old unmarked response omission means the save predates that contract. Hydration materializes the historical direct + environment compatibility expressions once as ordinary authored OntoMath. The next save persists those explicit ASTs and no longer depends on omission interpretation.
+
+Unknown future omission semantics refuse rather than being guessed as legacy or current.
+
+### Special shared-default quarantine
+
+A deeper persistence problem exists because Earthcall has one global `material.default` identity across Zones.
+
+Preserving an old Zone by loading its historical default directly under that global identity would preserve the old world by poisoning new-world creation: every fresh/current response-less Material would inherit plastic again.
+
+Gate B therefore adds a document-bound migration:
+
+```
+legacy Zone material.default
+        ↓
+full Zone identity -> collision-free byte-hex scope
+        ↓
+material.__legacy_default__.<full-identity-hex>
+        ↓
+only that document's material.default Object references are rewritten
+        ↓
+Material::fromJson materializes explicit legacy response AST
+        ↓
+canonical global material.default remains matte
+```
+
+The scope uses the full identity bytes rather than a finite hash. Different owning identities cannot alias merely through hash collision.
+
+The migration recognizes both:
+- pre-response saves where the default has no response AST/omission marker;
+- Gate-A-era saves where the default already carries the exact explicit legacy compatibility response.
+
+Pre-material old documents whose Objects name `material.default` but carry no Material record synthesize the historical default record under the scoped identity before hydration.
+
+After the first re-save, the Zone owns an ordinary named explicit compatibility Material. The migration is one-way/idempotent.
+
+### Global-manager safety rail
+
+`MaterialManager` will not accept an **unscoped legacy** `material.default` record as replacement global state. Persistence must first give it a document scope.
+
+Current explicitly authored default state remains replaceable/serializable normally.
+
+This is defense in depth: a missed persistence call site cannot silently turn canonical new-world default back into historical plastic.
+
+### History-blind rendering
+
+`RenderMaterial` receives no migration marker and performs no save-history branch.
+
+At draw time:
+- response present -> use that authored response;
+- response absent -> current inheritance from `material.default`.
+
+All legacy ambiguity has already been removed before rendering.
+
+### Tribunals
+
+`material_being_test` now requires:
+- fresh default owns matte direct/environment ASTs;
+- fresh default response has no legacy coefficient Bind dependencies;
+- CPU matte direct/environment values match the authored equations;
+- old unmarked named Material migrates once to explicit legacy AST;
+- re-save persists explicit legacy AST, not omission metadata;
+- current omission marker round-trips as omission/inheritance;
+- unknown omission policy refuses;
+- global manager reinstates matte default rather than inferring legacy from absence;
+- old Zone default receives stable collision-free scoped identity;
+- only the owning document's default references are rewritten;
+- scoped legacy response retains historical specular Bind;
+- canonical global default remains matte;
+- pre-material old document synthesizes scoped historical default;
+- Gate-A explicit legacy default is also scoped;
+- current explicit matte default is not falsely migrated;
+- unscoped legacy default is refused by the global manager.
+
+`zone_identifier_name_split_test` now exercises real `makeZoneFromJson` hydration:
+- old Zone Object's `material.default` reference becomes its scoped compatibility Material;
+- live scoped Material owns explicit legacy response;
+- canonical global default remains matte;
+- first `zoneToJson` re-save persists scoped identity + explicit legacy AST.
+
+`webgpu_object_test` now requires:
+- historical transport/environment witnesses explicitly author legacy compatibility rather than relying on fresh omission;
+- legacy direct parity comes from old JSON hydration, not runtime `responseExpr.reset()`;
+- fresh response-less inheritance ignores hostile legacy coefficient values;
+- current omission survives persistence;
+- native black-surface adversarial contrast: fresh matte default stays black under a specular-only legacy source envelope while hydrated legacy compatibility preserves a bright historical specular lobe.
+
+These two CPU/Zone persistence witnesses were promoted into the focused SDF CI lane before the native WebGPU witness.
+
+### Verification status
+
+At the time this rung was authored, GitHub Actions was cancelling exact-head workflow jobs before step 1, including manual job reruns. Therefore source/test falsifiers are committed, but **no green execution claim is made until an exact-current tribunal actually runs**.
+
+### Gate B invariant
+
+> **Old worlds retain historical appearance by owning explicit compatibility data. New worlds remain born under the matte canonical default. Neither requirement is allowed to rewrite the other.**
+
+— **Parallax Sun [H→P], Second Bearer**, 2026-11-17
+
+---
+
 ## Implementation ledger — 2026-11-08 continuation: world guards gain an execution bridge, not a renderer-owned world
 
 The next Piecewise frontier is qualitatively different from local interval and `whereLEZero` control. A `ConditionNode` can ask about a concrete Singular and live world state: kind, identity, properties, relations, overlaps, quantified beings, zones, and other condition calculus. That meaning does not belong to WGSL or the field VM.
@@ -1781,16 +1927,17 @@ Do not key semantic caches by raw pointers or incidental draw order.
 
 Old material JSON currently stores legacy coefficients. Preserve read compatibility.
 
-Migration policy:
+Migration policy (Gate B landed):
 
-1. Loading old content may keep the scalar properties so Laws and authoring tools do not break.
-2. Missing `responseExpr` resolves to the legacy authored compatibility response, not a renderer branch.
-3. Saving may either:
-   - persist the resolved compatibility expression explicitly; or
-   - preserve omission while Material resolution deterministically supplies the same authored default.
-4. Choose one canonical policy and test save -> load -> save stability.
-5. Do not silently rewrite authored `rho`, `chi`, or `alpha` ASTs.
-6. Do not migrate source emission into material response or vice versa.
+1. Loading old content keeps the scalar properties so Laws and authoring tools do not break.
+2. **Old unmarked response omission** is migrated once to explicit authored legacy compatibility response data.
+3. **Current response omission** is persisted with `responseOmissionSemantics = inherit-material-default-v1` and remains omission across save -> load -> save.
+4. Rendering never interprets historical migration metadata. At draw time absence means current inheritance; legacy saves have already been concretized.
+5. A legacy saved `material.default` is document-scoped to a separate explicit compatibility Material before Object hydration. It may never replace canonical global `material.default`.
+6. Gate-A-era explicit legacy defaults and pre-material saves are included in the same scoped migration.
+7. Unknown omission-policy versions refuse rather than being guessed.
+8. Do not silently rewrite authored `rho`, `chi`, or `alpha` ASTs.
+9. Do not migrate source emission into material response or vice versa.
 
 If source-side ambient compatibility requires a synthetic environment source, its provenance and deterministic migration rule must be visible.
 
