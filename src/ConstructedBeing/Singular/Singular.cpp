@@ -24,6 +24,8 @@ Singular::~Singular() {
     // every derived destructor has already run, so this object is a Singular
     // and nothing more. See the header for why this exists.
     notifyBeingReleased(this);
+    Formation::forgetBeingEverywhere(this);
+    RelationManager::forgetBeingEverywhere(this);
     detachAllPropertyCells();
     s_singularAliveCount.fetch_sub(1, std::memory_order_relaxed);
 }

@@ -1,10 +1,31 @@
 # Person Verification List
 
+## Checkout-to-sandbox merge transplants
+
+- [ ] In **Earthcall Sandbox Import**, select `horizon-resurrection` and **Checkout → Sandbox**. Review the clean updates and the broadcast/Tetra-Craft conflicts. Choose **Keep Sandbox** or **Use Checkout** per conflicting file, review the resulting diff, then click **Merge Into Sandbox** when ready. Ask Gemini to read one updated file and confirm it sees the checkout edit alongside its retained work. [Task and evidence](../Specific%20Tasks/Channels%20and%20Language/Gemini_MCP_Sandbox_Import/Gemini_MCP_Sandbox_Import.md#checkout-transplants-and-shared-baselines). Codex / GPT-6 / `01a1e178-dec7-7060-b866-efbe0035660d` / 2026-11-17.
+
+## Sky-Island Sanctuary and Ambient Zone switch repair
+
+- [ ] Restart with **Run Earthcall.command**. In **Creator Console → Zones**, use **Move to Zone** for **Sky-Island Sanctuary**, then **Ambient Zone**, then return to **Sky-Island Sanctuary**. The app should stay open on all three moves. In Ambient Zone, listen for the three voices to pan as the emitters move. [Repair record](../Specific%20Tasks/Zones%20and%20Ourverse/Zone_Switch_Repair/Zone_Switch_Repair.md). Codex / GPT-6 / `01a1e641-c9be-7892-8938-ce93617a2341` / 2026-11-16.
+## Tetra-Craft switch and mining repair
+
+- [ ] After restarting Earthcall, use **Move to Zone** for **Tetra-Craft**. Look toward the terrain around `(3.5, 0, 3.5)` and click a grass tetrahedron. Only the clicked voxel should disappear. Codex / GPT-6 / `01a1e641-c9be-7892-8938-ce93617a2341` / 2026-11-16. [Tetra-Craft repair](../Specific%20Tasks/Zones%20and%20Ourverse/Zone_Switch_Repair/Zone_Switch_Repair.md#tetra-craft).
+
+## ActiveZones 52-Zone lag repair
+
+- [x] Zach reports Sanctum of Beginnings returned to **60 FPS**, with the 3D command-recording reading around **0.1 ms**, after the working-tree watcher change (2026-11-16). This is Person-reported live evidence for that Zone, not a controlled benchmark or verification of watcher edge semantics.
+- [ ] Verify populated Zones and same-view movement, inspect the **File watcher** timing row and confirm live file creation, modification, deletion and shader hot-reload after the remaining concurrency and failure tests pass. Codex / GPT-6.1 Terra / `01a1e2e9-2234-7510-8e51-f98034f60923` / 2026-11-16.
+
+*Codex · GPT-5.6 Sol · session `01a1e2e9-2234-7510-8e51-f98034f60923` · 2026-11-15 23:01 PST. Commissioned after Zach's live lag report and the Twin Firmament's Intercom diagnosis.*
+
+- [ ] Launch the ordinary Earthcall WebGPU app against the same hydrated 52-Zone data home that previously lagged. Confirm startup and steady movement no longer hitch from `@`-referent harvesting, then mount/unmount a capability Zone and exercise the cross-Zone Whiteboard paths to confirm the world still feels responsive and resolves the same beings. Automated tests establish semantics and save continuity, not this Person-perceived frame result.
+
 ## Gemini MCP sandbox import
 
 *Codex · GPT-6 · session `01a1e178-dec7-7060-b866-efbe0035660d` · 2026-11-15 15:16 PST.*
 
-- [ ] Open [Earthcall Sandbox Import](../../../../README_GEMINI_MCP.md#mac-app) and select `horizon-resurrection`. If you want the three Intercom edits and new script, click **Import & Open GitHub Desktop** and check that all four appear in the checkout's **Changes** tab.
+- [x] Zach confirmed the first Mac import worked. The three Intercom edits and new script are in `8ade118ca`.
+- [ ] In the updated [Earthcall Sandbox Import](../../../../README_GEMINI_MCP.md#mac-app), select `horizon-resurrection`. Confirm the second All-Hands broadcast addition and the three new Tetra-Craft files in the preview. If bringing them over, click **Import & Open GitHub Desktop** and check the **Changes** tab.
 
 ## SDF Surface Truth Mastery (Rungs 16, 17 & 18): Cathedral of the Living Logos
 

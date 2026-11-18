@@ -73,11 +73,12 @@ class ZoneManager {
     // Laws retired from a Zone by an authored act, by Zone identifier.
     std::unordered_map<std::string, std::unordered_set<std::string>> _retiredLawIdsByZone;
     // Residence index for locate(): being -> the Zone whose store holds it.
-    // Derived state (DERIVED_STATE_LEDGER): rebuilt when the Universe clock
-    // has advanced since the last build, and on any miss. Stale for at most
-    // the remainder of a tick for a being moved between stores mid-tick.
+    // Kernel-derived state (DERIVED_STATE_LEDGER): rebuilt only when the
+    // complete structural currency moves. It is never rebuilt on a miss;
+    // engine-wide registers and authored Formation peers legitimately have no
+    // Zone residence, and a miss must not trigger a scan of every Zone.
     mutable std::unordered_map<const Singular*, Zone*> _residenceIndex;
-    mutable double _residenceStamp = -1.0;
+    mutable std::uint64_t _residenceStructuralRevision = 0;
     mutable bool _residenceBuilt = false;
 
 public:

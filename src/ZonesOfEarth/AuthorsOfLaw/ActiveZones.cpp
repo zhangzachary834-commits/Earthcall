@@ -79,7 +79,27 @@ bool ActiveZones::isActive(const Zone* zone) const noexcept {
     return false;
 }
 
-std::vector<Singular*> ActiveZones::beings() const {
+const std::vector<Singular*>& ActiveZones::beings() const {
+    const std::size_t relationCurrency = relationGeneration();
+    std::size_t zoneReferentCurrency = 0;
+    auto mixReferent = [&zoneReferentCurrency](std::size_t value) {
+        zoneReferentCurrency ^= value + 0x9e3779b97f4a7c15ULL +
+                                  (zoneReferentCurrency << 6) +
+                                  (zoneReferentCurrency >> 2);
+    };
+    for (const Zone* zone : _zones) {
+        if (!zone) continue;
+        mixReferent(reinterpret_cast<std::size_t>(zone));
+        mixReferent(static_cast<std::size_t>(zone->referentRevision()));
+    }
+    if (_cachedBeingsStructuralRevision == _structuralRevision &&
+        _cachedBeingsRelationGeneration == relationCurrency &&
+        _cachedBeingsZoneReferentGeneration == zoneReferentCurrency &&
+        _cachedBeingsProviderRevision == _providerRevision &&
+        _cachedBeingsUnmakingRevision == _unmakingRevision) {
+        return _cachedBeings;
+    }
+
     std::vector<Singular*> out;
     std::unordered_set<Singular*> seen;
 
@@ -126,7 +146,13 @@ std::vector<Singular*> ActiveZones::beings() const {
                   out.end());
     }
 
-    return out;
+    _cachedBeings = std::move(out);
+    _cachedBeingsStructuralRevision = _structuralRevision;
+    _cachedBeingsRelationGeneration = relationCurrency;
+    _cachedBeingsZoneReferentGeneration = zoneReferentCurrency;
+    _cachedBeingsProviderRevision = _providerRevision;
+    _cachedBeingsUnmakingRevision = _unmakingRevision;
+    return _cachedBeings;
 }
 
 std::vector<Relation*> ActiveZones::relations() const {

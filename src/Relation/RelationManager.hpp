@@ -46,6 +46,8 @@ public:
     // relations that are actually reachable.
     // ---------------------------------------------------------------------
     static void forgetBeingEverywhere(const Singular* being);
+    // Rebind a retained Relation in place and invalidate all views sharing it.
+    static void rebindEndpoints(Relation& relation, Singular* a, Singular* b);
     // Mechanical lifetime lookup for an already-resolved Relation instance.
     // Does not resolve names or confer access; graph codecs use it to retain
     // the same enduring Relation rather than fabricate a second instance.

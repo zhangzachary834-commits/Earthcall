@@ -1,0 +1,28 @@
+{
+  "identifier": "law-tetra-mine",
+  "authors": [
+    "Zach"
+  ],
+  "triggers": [
+    "object-clicked"
+  ],
+  "law": {
+    "id": "law-tetra-mine",
+    "name": "Mine tetrahedron",
+    "authors": [
+      "Zach"
+    ],
+    "activation": 0,
+    "scope": 0,
+    "authority": 0,
+    "conditionModel": {
+      "kind": 2,
+      "relationType": "instance-of",
+      "otherId": "category.voxel.tetrahedron"
+    },
+    "actionModel": {
+      "kind": 16,
+      "elementToken": "@event.subject"
+    }
+  }
+}

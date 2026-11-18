@@ -14,7 +14,8 @@ resources="$app/Contents/Resources"
 mcp="src/Singularity/Foreign/mcp"
 mkdir -p "$app/Contents/MacOS" "$resources/scripts" "$resources/$mcp"
 cp "$checkout/scripts/earthcall-sandbox-import.js" "$resources/scripts/"
-cp "$checkout/$mcp/earthcall-sandbox.js" "$checkout/$mcp/earthcall-sandbox-policy.js" "$resources/$mcp/"
+cp "$checkout/$mcp/earthcall-sandbox.js" "$checkout/$mcp/earthcall-sandbox-policy.js" \
+    "$checkout/$mcp/earthcall-sandbox-sync.js" "$resources/$mcp/"
 cat > "$app/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

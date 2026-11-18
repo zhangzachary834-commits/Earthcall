@@ -354,4 +354,23 @@ During our final Firmament audit of Passes 3 & 4, we identified and directly app
      - Resolution of `@Archive_Zone.archive.vault.preservedCanvas` and `@archive.vault.preservedCanvas` on an inactive Zone added to `ZoneManager::live()` after `bindLive()`.
    - Rebuilt and verified `property_memory_access_test` (`PASS`), `law_model_test` (`ALL OK`), `law_line_test` (`OK`), and `terminal_zones_test` (`ALL OK`), with `git status -s saves/` 100% empty.
 
+---
+
+## 6. Pass 5 — Relevant-change hot-path repair (2026-11-15)
+
+**Commissioned by:** Zach, after the Twin Firmament traced the live 52-Zone lag to global referent rebuilding, per-call working-set harvest, residence/Formation conflation, and access-path scans.
+**Implemented by:** Codex / GPT-5.6 Sol · session `01a1e2e9-2234-7510-8e51-f98034f60923` · 2026-11-15T23:01:56-08:00 (PST).
+
+The implementation preserves Passes 1–4's authored cross-Zone meaning while changing the machine's answer to local change:
+
+1. `ActiveZones::beings()` is a retained snapshot with explicit global structural, per-Zone referent/membership, relation, shared-provider, and deferred-unmaking currency. Steady reads return the same vector without reinvoking the provider or allocating another hash harvest.
+2. `Zone::addObject` no longer asserts Formation membership, and `syncFormationMembers()` no longer admits every resident Object or every global Language Lexeme, nor destructively erases explicit authored members. Residence and authored Formation meaning are distinct again.
+3. `resolveLawRoot` holds per-Zone referent tables. The active namespace aggregates only active operands; qualified inactive paths renew only the named Zone; unqualified inactive lookup remains fail-closed on ambiguity. Direct `PropertyPath::resolve(..., 0)` delegates to that same route.
+4. `ZoneManager::residenceOf` uses structural rather than per-frame time currency, indexes resident fields/retained Singulars/Objects, excludes Formation peers, and does not rescan the world on a legitimate miss. `TransferPolicy` consumes this one residence office.
+5. `TransferPolicy` compiles conservative candidates by operation, exact path, wildcard, and cell-bearing families while retaining every committed-snapshot, jurisdiction, cell, filter, authority, specificity, and deny decision in the canonical check. Rule mutation explicitly invalidates the derived table even when the historical public revision number returns to zero.
+
+New §20 witnesses prove retained provider invocation, late explicit Formation admission, residence/Formation separation, late inactive-Zone admission, and ambiguity-safe inactive twins. Existing cross-Zone, access-policy, creation, relation, hydration, save, and spatial-field witnesses remain the semantic floor. The global CandidateRoute/Slow-Adapter currencies are deliberately unchanged: per-Zone route stamps remain Formation Rete Rung B work until their semantic dependency frontier is proved complete.
+
+Live 52-Zone frame feel remains a Person acceptance check in `docs/Agenda/Tasks/For Zach/Person Verification List.md`; no automated suite can truthfully establish that experiential result.
+
 

@@ -74,16 +74,29 @@ int main() {
     // -----------------------------------------------------------------------
     std::string receivedPath;
     std::string receivedType;
+    bool callbackStateMatches = true;
+    bool callbackOnMainThread = true;
+    const auto mainThread = std::this_thread::get_id();
     watcher->addCallback([&](const std::string& path, const std::string& type) {
+        callbackOnMainThread &= std::this_thread::get_id() == mainThread;
         receivedPath = path;
         receivedType = type;
+        PropertyValue currentPath, currentType;
+        callbackStateMatches &= lawGetValue(*watcher, PropertyPath::parse("watcher.lastModifiedFile"), currentPath)
+            && lawGetValue(*watcher, PropertyPath::parse("watcher.lastEventType"), currentType)
+            && std::get<std::string>(currentPath) == path && std::get<std::string>(currentType) == type;
     });
 
     // Listen to EventBus for ECA::Event
     int ecaModifiedCount = 0;
+    bool eventStateMatches = false;
     Core::EventBus::instance().subscribe<ECA::Event>([&](const ECA::Event& ev) {
         if (ev.type == "file-modified") {
             ++ecaModifiedCount;
+            PropertyValue currentType;
+            eventStateMatches = ev.subject == watcher && watcher->propLastModifiedFile() == fileA.lexically_normal().string()
+                && lawGetValue(*watcher, PropertyPath::parse("watcher.lastEventType"), currentType)
+                && std::get<std::string>(currentType) == ev.type;
         }
     });
 
@@ -101,9 +114,37 @@ int main() {
     check(receivedType == "file-modified", "Hot-reload callback caught 'file-modified' event");
     check(receivedPath == fileA.lexically_normal().string(), "Callback reported accurate modified filepath");
     check(ecaModifiedCount == 1, "EventBus delivered ECA::Event('file-modified') on transition edge");
-
+    check(callbackStateMatches && eventStateMatches, "synchronous consumers observe the current edge properties");
     lawGetValue(*watcher, PropertyPath::parse("watcher.lastEventType"), val);
     check(std::get<std::string>(val) == "file-modified", "watcher.lastEventType is 'file-modified'");
+
+    // Recursive watches cover ordinary nested files. An explicit check is
+    // synchronous: the callback must have fired before the setter returns.
+    fs::path nested = watchDir / "deep" / "branch" / "nested.txt";
+    fs::create_directories(nested.parent_path(), ec);
+    { std::ofstream out(nested); out << "nested"; }
+    receivedType.clear();
+    lawSetValue(*watcher, PropertyPath::parse("watcher.checkNow"), PropertyValue(true));
+    check(receivedType == "file-created" && receivedPath == nested.lexically_normal().string(),
+          "explicit check synchronously observes deep recursive creation");
+    fs::remove(nested, ec);
+    watcher->checkNow();
+
+    // Re-selecting a watch path establishes a new silent baseline.
+    receivedType.clear();
+    lawSetValue(*watcher, PropertyPath::parse("watcher.watchPath"), PropertyValue(watchDir.string()));
+    check(receivedType.empty(), "watch path rebaseline emits no creation callbacks");
+
+    fs::path alternate = watchDir / "alternate";
+    fs::create_directories(alternate, ec);
+    { std::ofstream out(alternate / "existing.txt"); out << "already present"; }
+    receivedType.clear();
+    lawSetValue(*watcher, PropertyPath::parse("watcher.watchPath"), PropertyValue(alternate.string()));
+    lawGetValue(*watcher, PropertyPath::parse("watcher.filesTracked"), val);
+    check(receivedType.empty() && std::get<double>(val) == 1.0, "switching paths silently baselines the new path");
+    fs::remove(alternate / "existing.txt", ec);
+    fs::remove(alternate, ec);
+    lawSetValue(*watcher, PropertyPath::parse("watcher.watchPath"), PropertyValue(watchDir.string()));
 
     // -----------------------------------------------------------------------
     // Case 2: Detect New File Creation ("file-created" event)
@@ -143,6 +184,12 @@ int main() {
     // Case 4: Extension Filter (.wgsl only)
     // -----------------------------------------------------------------------
     lawSetValue(*watcher, PropertyPath::parse("watcher.filterExtension"), PropertyValue(std::string(".wgsl")));
+    lawGetValue(*watcher, PropertyPath::parse("watcher.filesTracked"), val);
+    check(std::get<double>(val) == 2.0, "changing filter alone retains existing baseline until a scan");
+    receivedType.clear();
+    watcher->checkNow();
+    check(receivedType == "file-deleted" && receivedPath == fileB.lexically_normal().string(),
+          "next scan reports filtered-out baseline entry as deleted");
     watcher->rescanBaseline();
 
     lawGetValue(*watcher, PropertyPath::parse("watcher.filesTracked"), val);
@@ -171,8 +218,13 @@ int main() {
     check(receivedType.empty(), "tick() is gated before pollIntervalMs elapses");
     std::this_thread::sleep_for(std::chrono::milliseconds(110));
     watcher->tick();
+    for (int i = 0; i < 200 && receivedType.empty(); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        watcher->tick();
+    }
     check(receivedType == "file-created", "tick() detected file creation after poll interval");
     check(receivedPath == fileD.lexically_normal().string(), "tick() reported accurate file path");
+    check(callbackOnMainThread, "periodic and synchronous callbacks run on the caller thread");
 
     receivedType.clear();
     receivedPath.clear();
