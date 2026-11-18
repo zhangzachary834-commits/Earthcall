@@ -125,7 +125,7 @@ test("auto-approved command is wrapped in the hard Docker capability cage", asyn
 
 const importScript = path.resolve(__dirname, "../../scripts/earthcall-sandbox-import.js");
 
-function importFixture(t) {
+function importFixture(t, initialText = null) {
   const repo = fixtureRepo();
   t.after(() => fs.rmSync(repo, { recursive: true, force: true }));
   function git(...args) {
@@ -137,6 +137,7 @@ function importFixture(t) {
   fs.writeFileSync(path.join(repo, "src/remove me.txt"), "remove me\n");
   git("add", ".");
   fs.appendFileSync(path.join(repo, "src/hello.txt"), "Zach's pre-existing edit\n");
+  if (initialText !== null) fs.writeFileSync(path.join(repo, "src/hello.txt"), initialText);
   const { id } = sandbox.createSession(repo, "test handoff");
   const { workspace } = sandbox.loadSession(id);
   t.after(() => sandbox.deleteSession(id));
@@ -196,7 +197,7 @@ test("local import refuses a batch with overlaps and supports selecting unaffect
   fs.writeFileSync(path.join(workspace, "src/ready.txt"), "ready\n");
   const blocked = cli("apply", id);
   assert.equal(blocked.status, 1);
-  assert.match(blocked.stderr, /src\/hello.txt.*checkout differs/);
+  assert.match(blocked.stderr, /src\/hello.txt.*Overlapping edits/);
   assert.equal(fs.existsSync(path.join(repo, "src/ready.txt")), false);
   const applied = cli("apply", id, "--", "src/ready.txt");
   assert.equal(applied.status, 0, applied.stderr);
@@ -241,7 +242,9 @@ test("Mac companion applies only the patch returned by its preview", (t) => {
   const applied = cli("apply", id, "--expected-diff", second.digest);
   assert.equal(applied.status, 0, applied.stderr);
   assert.equal(fs.readFileSync(destination, "utf8"), "updated after preview\n");
-  assert.deepEqual(JSON.parse(cli("--json", "preview", id).stdout), { diff: "", digest: null });
+  const empty = JSON.parse(cli("--json", "preview", id).stdout);
+  assert.equal(empty.diff, "");
+  assert.equal(empty.digest, null);
 });
 
 test("repeated sandbox imports append new bytes and preserve divergent checkout edits", (t) => {
@@ -272,6 +275,142 @@ test("repeated sandbox imports append new bytes and preserve divergent checkout 
   fs.appendFileSync(incoming, "A different, longer sandbox reply\n");
   const refused = cli("apply", id);
   assert.equal(refused.status, 1);
-  assert.match(refused.stderr, /checkout differs from the sandbox baseline/);
+  assert.match(refused.stderr, /Overlapping edits/);
   assert.equal(fs.readFileSync(local, "utf8"), initial + first + second + "Checkout-only reply\n");
+});
+
+test("checkout transplants merge independent edits and keep working in both directions", (t) => {
+  const base = "first\nsecond\nthird\nfourth\nfifth\nsixth\n";
+  const { repo, workspace, id, cli } = importFixture(t, base);
+  const upstream = path.join(repo, "src/hello.txt");
+  const local = path.join(workspace, "src/hello.txt");
+  fs.writeFileSync(local, base.replace("sixth", "Gemini sixth"));
+  fs.writeFileSync(upstream, base.replace("first", "Checkout first"));
+  const before = fs.readFileSync(upstream);
+  const previewResult = cli("--json", "sync-preview", id);
+  assert.equal(previewResult.status, 0, previewResult.stderr);
+  const preview = JSON.parse(previewResult.stdout);
+  assert.deepEqual(preview.conflicts, []);
+  assert.match(preview.diff, /\+Checkout first/);
+  assert.doesNotMatch(preview.diff, /\+Gemini sixth/);
+  assert.equal(fs.readFileSync(local, "utf8"), base.replace("sixth", "Gemini sixth"));
+  const applied = cli("sync-apply", id, "--expected-diff", preview.digest);
+  assert.equal(applied.status, 0, applied.stderr);
+  assert.deepEqual(fs.readFileSync(upstream), before);
+  const merged = base.replace("sixth", "Gemini sixth").replace("first", "Checkout first");
+  assert.equal(fs.readFileSync(local, "utf8"), merged);
+
+  fs.writeFileSync(upstream, before.toString().replace("second", "Checkout second"));
+  assert.equal(cli("sync-apply", id).status, 0);
+  assert.equal(fs.readFileSync(local, "utf8"), merged.replace("second", "Checkout second"));
+  // Bring Gemini's independent edit back through the ordinary import button.
+  const imported = cli("apply", id);
+  assert.equal(imported.status, 0, imported.stderr);
+  assert.equal(fs.readFileSync(upstream, "utf8"), merged.replace("second", "Checkout second"));
+  assert.equal(JSON.parse(cli("--json", "sync-preview", id).stdout).digest, null);
+});
+
+test("checkout transplants report text conflicts and refuse the whole batch", (t) => {
+  const { repo, workspace, id, cli } = importFixture(t);
+  fs.writeFileSync(path.join(repo, "src/hello.txt"), "checkout rewrite\n");
+  fs.writeFileSync(path.join(workspace, "src/hello.txt"), "Gemini rewrite\n");
+  fs.writeFileSync(path.join(repo, "src/clean.txt"), "independent new file\n");
+  const result = cli("--json", "sync-preview", id);
+  assert.equal(result.status, 0, result.stderr);
+  const preview = JSON.parse(result.stdout);
+  assert.equal(preview.digest, null);
+  assert.equal(preview.conflicts.length, 1);
+  assert.equal(preview.conflicts[0].path, "src/hello.txt");
+  assert.match(preview.diff, /<<<<<<< Sandbox/);
+  assert.match(preview.diff, /\|\|\|\|\|\|\| Shared baseline/);
+  assert.match(preview.diff, />>>>>>> Checkout/);
+  assert.equal(cli("sync-apply", id).status, 1);
+  assert.equal(fs.existsSync(path.join(workspace, "src/clean.txt")), false);
+  assert.equal(fs.readFileSync(path.join(workspace, "src/hello.txt"), "utf8"), "Gemini rewrite\n");
+  const scoped = cli("sync-apply", id, "--", "src/clean.txt");
+  assert.equal(scoped.status, 0, scoped.stderr);
+  assert.equal(fs.readFileSync(path.join(workspace, "src/clean.txt"), "utf8"), "independent new file\n");
+  // An explicit file choice is bound to a fresh review before any overwrite.
+  const chosen = JSON.parse(cli("--json", "sync-preview", id,
+    "--resolve-ours", "src/hello.txt").stdout);
+  assert.deepEqual(chosen.conflicts, []);
+  const resolved = cli("sync-apply", id, "--expected-diff", chosen.digest,
+    "--resolve-ours", "src/hello.txt");
+  assert.equal(resolved.status, 0, resolved.stderr);
+  assert.equal(fs.readFileSync(path.join(workspace, "src/hello.txt"), "utf8"), "Gemini rewrite\n");
+  assert.equal(JSON.parse(cli("--json", "sync-preview", id).stdout).digest, null);
+});
+
+test("checkout transplants preserve binary bytes, deletions, file modes and review digests", (t) => {
+  const { repo, workspace, id, cli } = importFixture(t);
+  const bytes = Buffer.from([0, 255, 13, 12, 44]);
+  fs.writeFileSync(path.join(repo, "new binary.bin"), bytes);
+  fs.unlinkSync(path.join(repo, "src/remove me.txt"));
+  fs.writeFileSync(path.join(repo, "scripts/build.sh"), "echo checkout\n");
+  const preview = JSON.parse(cli("--json", "sync-preview", id).stdout);
+  assert.match(preview.diff, /GIT binary patch/);
+  fs.writeFileSync(path.join(repo, "new binary.bin"), Buffer.from([0, 255, 1]));
+  assert.equal(cli("sync-apply", id, "--expected-diff", preview.digest).status, 1);
+  assert.equal(fs.existsSync(path.join(workspace, "new binary.bin")), false);
+  fs.writeFileSync(path.join(repo, "new binary.bin"), bytes);
+  const applied = cli("sync-apply", id, "--expected-diff", preview.digest);
+  assert.equal(applied.status, 0, applied.stderr);
+  assert.deepEqual(fs.readFileSync(path.join(workspace, "new binary.bin")), bytes);
+  assert.equal(fs.existsSync(path.join(workspace, "src/remove me.txt")), false);
+  assert.ok(fs.statSync(path.join(workspace, "scripts/build.sh")).mode & 0o100);
+  fs.writeFileSync(path.join(repo, "new binary.bin"), Buffer.from([0, 101]));
+  fs.writeFileSync(path.join(workspace, "new binary.bin"), Buffer.from([0, 102]));
+  const conflicts = JSON.parse(cli("--json", "sync-preview", id).stdout).conflicts;
+  assert.match(conflicts[0].reason, /binary/);
+});
+
+test("older sessions bootstrap from unchanged bytes and refuse missing ancestors", (t) => {
+  const { repo, workspace, id, cli } = importFixture(t);
+  fs.rmSync(path.join(path.dirname(workspace), "baseline"), { recursive: true });
+  fs.writeFileSync(path.join(repo, "src/hello.txt"), "new checkout contents\n");
+  const initial = cli("sync-apply", id);
+  assert.equal(initial.status, 0, initial.stderr);
+  assert.equal(fs.readFileSync(path.join(workspace, "src/hello.txt"), "utf8"), "new checkout contents\n");
+  // Exact checkpoints survive the first sync even for files unchanged that time.
+  fs.writeFileSync(path.join(repo, "scripts/build.sh"), "echo checkout\n");
+  fs.writeFileSync(path.join(workspace, "scripts/build.sh"), "echo Gemini\n");
+  const preview = JSON.parse(cli("--json", "sync-preview", id).stdout);
+  assert.match(preview.conflicts.find((c) => c.path === "scripts/build.sh").reason, /Overlapping/);
+
+  fs.rmSync(path.join(path.dirname(workspace), "sync"), { recursive: true });
+  const missing = JSON.parse(cli("--json", "sync-preview", id).stdout);
+  assert.match(missing.conflicts.find((c) => c.path === "scripts/build.sh").reason, /Original contents unavailable/);
+});
+
+test("interrupted transplants resume from retained before and after objects", (t) => {
+  const { repo, workspace, id, cli } = importFixture(t);
+  fs.writeFileSync(path.join(repo, "aaa.txt"), "first transfer\n");
+  fs.writeFileSync(path.join(repo, "src/hello.txt"), "second transfer\n");
+  const failed = spawnSync(process.execPath, ["-e", `
+    const fs = require("node:fs");
+    const original = fs.renameSync;
+    fs.renameSync = function(from, to) {
+      if (to === process.env.TRANSPLANT_FAILURE_PATH) throw Error("Injected disk failure");
+      return original(from, to);
+    };
+    process.argv = [process.execPath, process.env.TRANSPLANT_SCRIPT, "sync-apply", process.env.TRANSPLANT_SESSION];
+    require(process.env.TRANSPLANT_SCRIPT);
+  `], { cwd: repo, encoding: "utf8", env: {
+    ...process.env, TRANSPLANT_FAILURE_PATH: path.join(workspace, "src/hello.txt"),
+    TRANSPLANT_SCRIPT: importScript, TRANSPLANT_SESSION: id,
+  } });
+  assert.equal(failed.status, 1);
+  assert.match(failed.stderr, /Injected disk failure/);
+  assert.equal(fs.readFileSync(path.join(workspace, "aaa.txt"), "utf8"), "first transfer\n");
+  const recovery = JSON.parse(cli("--json", "sync-preview", id).stdout);
+  assert.equal(recovery.recovery, true);
+  const lock = path.join(path.dirname(workspace), "sync/lock");
+  fs.writeFileSync(lock, JSON.stringify({ pid: process.pid }));
+  assert.match(cli("sync-apply", id).stderr, /Another transplant is running/);
+  const exited = spawnSync(process.execPath, ["-e", "console.log(process.pid)"], { encoding: "utf8" });
+  fs.writeFileSync(lock, JSON.stringify({ pid: Number(exited.stdout.trim()) }));
+  const resumed = cli("sync-apply", id, "--expected-diff", recovery.digest);
+  assert.equal(resumed.status, 0, resumed.stderr);
+  assert.equal(fs.readFileSync(path.join(workspace, "src/hello.txt"), "utf8"), "second transfer\n");
+  assert.equal(JSON.parse(cli("--json", "sync-preview", id).stdout).digest, null);
 });

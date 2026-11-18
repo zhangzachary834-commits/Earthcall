@@ -1,5 +1,9 @@
 # Person Verification List
 
+## Checkout-to-sandbox merge transplants
+
+- [ ] In **Earthcall Sandbox Import**, select `horizon-resurrection` and **Checkout → Sandbox**. Review the clean updates and the broadcast/Tetra-Craft conflicts. Choose **Keep Sandbox** or **Use Checkout** per conflicting file, review the resulting diff, then click **Merge Into Sandbox** when ready. Ask Gemini to read one updated file and confirm it sees the checkout edit alongside its retained work. [Task and evidence](../Specific%20Tasks/Channels%20and%20Language/Gemini_MCP_Sandbox_Import/Gemini_MCP_Sandbox_Import.md#checkout-transplants-and-shared-baselines). Codex / GPT-6 / `01a1e178-dec7-7060-b866-efbe0035660d` / 2026-11-17.
+
 ## Sky-Island Sanctuary and Ambient Zone switch repair
 
 - [ ] Restart with **Run Earthcall.command**. In **Creator Console → Zones**, use **Move to Zone** for **Sky-Island Sanctuary**, then **Ambient Zone**, then return to **Sky-Island Sanctuary**. The app should stay open on all three moves. In Ambient Zone, listen for the three voices to pan as the emitters move. [Repair record](../Specific%20Tasks/Zones%20and%20Ourverse/Zone_Switch_Repair/Zone_Switch_Repair.md). Codex / GPT-6 / `01a1e641-c9be-7892-8938-ce93617a2341` / 2026-11-16.

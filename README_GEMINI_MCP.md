@@ -71,6 +71,26 @@ Open **Earthcall Sandbox Import**, select a session, then review the diff and cl
 **Changes** tab. **Refresh** (⌘R) picks up new sessions and sandbox edits. If the
 patch changes after preview, the app asks you to refresh before importing.
 
+Choose **Checkout → Sandbox** to bring later checkout edits, including uncommitted
+work, into an existing Gemini session. Review the resulting diff, then click
+**Merge Into Sandbox**. Git's three-way file merge combines independent text
+edits. Conflicts show their file paths and conflict markers. **Keep Sandbox**
+or **Use Checkout** selects a whole file version and generates a fresh preview
+before you apply. The reverse direction provides the corresponding choices.
+
+The local tool retains shared file contents outside the container workspace.
+Each completed transplant advances that shared baseline so later passes can
+merge again. New sessions retain their original contents when created by the
+updated MCP broker. Restart the Gemini MCP gate to load that creation change
+if it was already running. Older sessions recover a base from an unchanged
+side or an agreed append-only prefix. Files without a recoverable base appear
+as conflicts with explicit choices.
+
+Additions, deletions, executable bits and binary files are included. Conflicting
+binary changes and edit/delete conflicts require a file choice. A retained
+transaction journal allows an interrupted apply to resume through the app.
+Preview and apply recheck the source and destination before writing.
+
 To build the app for this checkout, run `bash scripts/macos/build_sandbox_import_app.sh`.
 It prints the path to the signed `.app` in `build/sandbox-import/`. Open it in Finder
 or copy it into `~/Applications`. The app bundles the importer and uses the
@@ -86,21 +106,23 @@ From the checkout that created the session, use its label or the ID from `list`:
 node scripts/earthcall-sandbox-import.js list
 node scripts/earthcall-sandbox-import.js preview horizon-resurrection
 node scripts/earthcall-sandbox-import.js apply horizon-resurrection
+node scripts/earthcall-sandbox-import.js sync-preview horizon-resurrection
+node scripts/earthcall-sandbox-import.js sync-apply horizon-resurrection
 ```
 
 `preview` shows the Git diff and checks whether it applies. `apply` brings additions,
 edits, and deletions of regular files into your working tree as unstaged changes.
-It uses the session's creation manifest so uncommitted edits already present when
-Gemini started count as baseline. Existing sessions record file size and modification
-time, so conflict detection depends on those values. The importer retains existing
+It uses the session's shared baseline so uncommitted edits already present when
+Gemini started count as baseline. Legacy imports made before the first transplant
+use the creation manifest and its size/time checks. The importer retains existing
 executable bits, skips Git-ignored output and submodules, and leaves the sandbox
 available for another preview or apply. It runs locally without Docker or an MCP
 restart.
 
-You can import the same session again when Gemini appends to an existing file.
-If the sandbox file starts with every byte currently in the checkout, the preview
-shows the additional content. Divergent edits stop the batch and print the
-conflicting paths. From the terminal, use `--` followed by checkout-relative
+Shared baselines support repeated merges in either direction. Legacy sessions
+also support repeated imports of appends when every existing checkout byte is
+preserved. Conflicting files stop the batch until you choose a version or
+reconcile their contents. From the terminal, use `--` followed by checkout-relative
 paths to transfer an unaffected subset:
 
 ```bash

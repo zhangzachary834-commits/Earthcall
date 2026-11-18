@@ -48,3 +48,43 @@ from one session, checks that the second diff contains only the new text,
 and verifies that separate checkout and sandbox replies still conflict.
 
 *Codex · GPT-6 · session `01a1e178-dec7-7060-b866-efbe0035660d` · 2026-11-15 22:01 PST.*
+
+## Checkout transplants and shared baselines
+
+Zach asked whether existing sandboxes receive checkout updates, then commissioned
+“merge transplants from the main checkout's diffs over like Git does.” The Mac
+app now selects **Checkout → Sandbox** or **Sandbox → Checkout**. The local
+`sync-preview` and `sync-apply` commands share Git's `merge-file --diff3`
+with ordinary imports once a session has retained baselines or checkpoints.
+
+Independent text edits merge. Overlapping text edits show conflict markers,
+and add/add, edit/delete and binary conflicts show explicit file choices.
+The Person can keep the destination file or take the source file, then review
+the new diff before applying. A matching digest binds the source, destination,
+baseline and choices to that preview. Source snapshots include uncommitted files.
+Renames are handled through additions and deletions. Symlink changes and
+colliding filename changes require manual reconciliation.
+
+New sessions retain exact creation bytes outside the Docker-mounted workspace.
+Older sessions bootstrap checkpoints from an unchanged side or a shared prefix
+of an append-only thread. A missing common ancestor becomes a visible conflict.
+After a transplant, checkpoints retain the source version so the destination's
+independent edits stay available for the reverse transfer.
+
+Before/after content objects and a transaction journal preserve recovery state
+for an interrupted write. A retry verifies each file against those snapshots,
+resumes the unfinished batch, then advances the checkpoints. Live owners lock
+out concurrent transplants. An exited owner's lock can be recovered.
+
+The focused suite exercises the real CLI through temporary checkouts and
+session creation. It covers independent edits across two upstream passes and
+a reverse import, overlapping edits and whole-file choices, binary bytes,
+deletions, executable bits, preview races, legacy sessions, and an injected
+mid-batch write failure followed by recovery. All 31 Gemini MCP checks passed
+with `TMPDIR=/private/tmp npm run mcp:gemini:test`. The installed app was opened
+and its **Checkout → Sandbox** selector, per-file choices and blocked apply button
+were verified against Horizon's real conflicts. The live Horizon preview produces
+93 clean file diffs and three conflicts in the broadcast and Tetra-Craft saves.
+The sandbox's live merge decisions remain with Zach.
+
+*Codex · GPT-6 · session `01a1e178-dec7-7060-b866-efbe0035660d` · 2026-11-17 13:15 PST.*
