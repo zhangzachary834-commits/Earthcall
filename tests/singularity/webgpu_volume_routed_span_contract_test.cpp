@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstdint>
 #include <iostream>
+#include <string>
 #include <type_traits>
 
 int main() {
@@ -51,8 +52,9 @@ int main() {
 
     // C5b-2b2 certificate law: invalid/refused routed truth is all-ones
     // (unknown/maybe), while a valid ray with no spans is exact zero. The
-    // compactor includes singles and overlaps and uses the cohort-independent
-    // absolute camera-distance domain [0, 2048].
+    // compactor includes singles and overlaps. C5b-2c quantizes both in the
+    // same host-supplied radial range used by the fused shader, independently
+    // of the per-ray clipping interval.
     const std::string compactor = routed_wgsl::kFirstActivityMaskWgsl;
     assert(compactor.find("ecFirstActivity[pixel] = 0xffffffffu;") !=
            std::string::npos);
@@ -62,13 +64,23 @@ int main() {
            std::string::npos);
     assert(compactor.find("for (var i = 0u; i < overlapCount; i++)") !=
            std::string::npos);
-    assert(compactor.find("hi > 2048.0001") != std::string::npos);
-    assert(compactor.find("lo * (1.0 / 2048.0)") != std::string::npos);
+    assert(compactor.find("ray.rd_clipB.w > 2048.0001") != std::string::npos);
+    assert(compactor.find("let quantLo = bitcast<f32>(ecWindow.flags.y)") !=
+           std::string::npos);
+    assert(compactor.find("let quantHi = bitcast<f32>(ecWindow.flags.z)") !=
+           std::string::npos);
+    assert(compactor.find("lo < quantLo - 1e-3 || hi > quantHi + 1e-3") !=
+           std::string::npos);
+    assert(compactor.find("let inv = 1.0 / (quantHi - quantLo)") !=
+           std::string::npos);
+    assert(compactor.find("(lo - quantLo) * inv") != std::string::npos);
+    assert(compactor.find("(hi - quantLo) * inv") != std::string::npos);
+    assert(compactor.find("lo * (1.0 / 2048.0)") == std::string::npos);
     assert(compactor.find("(lo - t0)") == std::string::npos);
     assert(compactor.find("(hi - t0)") == std::string::npos);
 
     std::cout
         << "PASS volume_routed_span_contract_test: strip metadata, "
-        << "scratch byte geometry and borrowed callback contract\n";
+        << "scratch byte geometry, borrowed callback and First-activity range\n";
     return 0;
 }
