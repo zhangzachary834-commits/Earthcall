@@ -4099,9 +4099,16 @@ void renderLawGraphWindow(bool* open, LawManager& laws, Singular& person,
             const std::size_t shown = std::min<std::size_t>(3, log.size());
             for (std::size_t i = 0; i < shown; ++i) {
                 const auto& record = log[log.size() - 1 - i];
-                ImGui::BulletText("%s -> %s", Law::resultName(record.result),
-                                  record.targetId.empty() ? "(no target)"
-                                                          : record.targetId.c_str());
+                if (record.refusalReason.empty()) {
+                    ImGui::BulletText("%s -> %s", Law::resultName(record.result),
+                                      record.targetId.empty() ? "(no target)"
+                                                              : record.targetId.c_str());
+                } else {
+                    ImGui::BulletText("%s -> %s : %s", Law::resultName(record.result),
+                                      record.targetId.empty() ? "(no target)"
+                                                              : record.targetId.c_str(),
+                                      record.refusalReason.c_str());
+                }
             }
         }
         if (testSubject) {

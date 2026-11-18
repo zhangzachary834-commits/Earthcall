@@ -37,3 +37,7 @@ These three entries are why Palette kept sanding a skeleton. Kept so the miss st
 ## 2025-02-18 - Throttling aria-live status loop
 **Learning:** `aria-live` elements combined with an auto-reconnect retry loop in JS can spam screen readers continuously with "Connecting... Disconnected..." announcements on interval.
 **Action:** Move continuous string status updates out of `aria-live` containers and instead inject specific logical state changes into a controlled `#sr-announcer` hidden div when the binary state (connected/disconnected) explicitly flips.
+
+## 2026-11-06 - Expose semantic refusal reasons in Law application feedback
+**Learning:** Masking Earthcall semantic refusals (like authority denial or condition failure) behind generic failure notices hides the truth from the author. `ApplicationRecord::refusalReason` is populated by the system for exactly this purpose.
+**Action:** Always explicitly expose semantic refusal reasons in Law-authoring interfaces so the Person can understand why their authored Law was rejected.
