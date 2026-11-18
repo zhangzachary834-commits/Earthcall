@@ -4662,6 +4662,7 @@ struct Parameters { v: array<f32> };
 var<private> screenPoint: vec3<f32>;
 )WGSL";
     prog.wgsl += kPrimitives;
+    if (astContainsNoise(field)) prog.wgsl += kPerlinNoiseFunctions;
     prog.wgsl += "fn lineField(p: vec3<f32>) -> f32 {\n" + fieldBody + "    return " + value + ";\n}\n";
     prog.wgsl += "fn lineIntegral(o: vec3<f32>, d: vec3<f32>, lo: f32, hi: f32, tol: f32) -> vec4<f32> {\n"
                  "    let a = min(lo, hi);\n"
@@ -5346,6 +5347,8 @@ struct Parameters { v: array<f32> };
 var<private> screenPoint: vec3<f32>;
 )WGSL";
     prelude += kPrimitives;
+    if (astContainsNoise(sigma) || (!depthOnly && astContainsNoise(emission)))
+        prelude += kPerlinNoiseFunctions;
     prelude += "fn lineSigma(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + sigmaBody + "    return " + sigmaValue + ";\n}\n";
     if(!depthOnly) prelude += "fn lineEmission(p: vec3<f32>, clock: f32, omega: vec3<f32>) -> f32 {\n" + emissionBody + "    return " + emissionValue + ";\n}\n";
     if (grid) return lowerGridDepth(e, std::move(prelude), domainPredicate, *grid, sigmaCert.model, gridPanels, gridForm);
