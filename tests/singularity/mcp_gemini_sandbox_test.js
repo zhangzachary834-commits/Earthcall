@@ -407,8 +407,14 @@ test("interrupted transplants resume from retained before and after objects", (t
   const lock = path.join(path.dirname(workspace), "sync/lock");
   fs.writeFileSync(lock, JSON.stringify({ pid: process.pid }));
   assert.match(cli("sync-apply", id).stderr, /Another transplant is running/);
-  const exited = spawnSync(process.execPath, ["-e", "console.log(process.pid)"], { encoding: "utf8" });
-  fs.writeFileSync(lock, JSON.stringify({ pid: Number(exited.stdout.trim()) }));
+  const exited = spawnSync(process.execPath, ["-e", ""], { encoding: "utf8" });
+  assert.equal(exited.status, 0, exited.stderr);
+  assert.ok(Number.isSafeInteger(exited.pid) && exited.pid > 0);
+  assert.throws(() => process.kill(exited.pid, 0), (error) => error?.code === "ESRCH");
+  const replacement = lock + ".stale-test";
+  fs.writeFileSync(replacement, JSON.stringify({ pid: exited.pid }));
+  fs.renameSync(replacement, lock);
+  assert.deepEqual(JSON.parse(fs.readFileSync(lock, "utf8")), { pid: exited.pid });
   const resumed = cli("sync-apply", id, "--expected-diff", recovery.digest);
   assert.equal(resumed.status, 0, resumed.stderr);
   assert.equal(fs.readFileSync(path.join(workspace, "src/hello.txt"), "utf8"), "second transfer\n");
