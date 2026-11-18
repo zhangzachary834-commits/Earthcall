@@ -252,7 +252,7 @@ int main() {
             assert(delta.validate().valid);
             std::string err;
             const bool applied = translator.applyDelta(delta, &err);
-            assert(applied);
+        assert(applied);
             assert(err.empty());
         }
         auto form = translator.findNodeFormation("node.6");
