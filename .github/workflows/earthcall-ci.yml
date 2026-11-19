@@ -109,6 +109,10 @@ jobs:
         foreign_web_dom_bridge_test
         foreign_web_dom_projection_test
         foreign_web_dom_protocol_test
+        volume_transport_cohort_planner_test
+        volume_cohort_interval_schedule_test
+        volume_cohort_gpu_lowering_test
+        webgpu_volume_routed_span_contract_test
 
     steps:
       - name: Check out tested commit

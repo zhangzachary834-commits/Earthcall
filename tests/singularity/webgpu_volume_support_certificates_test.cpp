@@ -184,6 +184,7 @@ int main() {
         wgpuBufferUnmap(readback);
         return lit;
     };
+    constexpr size_t probePairsPerMedium = 5;
     auto render = [&](const std::vector<std::shared_ptr<geom::FieldNode>>& set, bool proofOn,
                       bool certificatesOn, double t, int timedFrames) {
         renderer.setVolumeZeroProofEnabled(proofOn);
@@ -210,10 +211,13 @@ int main() {
         frame.firstCompiles = renderer.frameStats().volumeProgramCompiles;
         frame.firstCertificateBuilds = renderer.frameStats().volumeSupportCertificateBuilds;
         frame.probes += renderer.frameStats().volumeSupportCertificateProbeRenders;
-        // A verdict owed in this regime is timed one hidden pair per frame; let
-        // it settle so timed frames carry no probe (bounded: warm-up + 4 pairs).
+        // A verdict owed in this regime is timed one hidden pair per frame, up
+        // to one warm-up and four recorded pairs per medium. Settle the entire
+        // batch before judging the visible lane.
         const auto settleStart = std::chrono::steady_clock::now();
-        for (int i = 0; i < 16 && renderer.frameStats().volumeSupportCertificateProbeRenders > 0; ++i) {
+        const size_t settleFrames = probePairsPerMedium * set.size();
+        for (size_t i = 0; i < settleFrames &&
+             renderer.frameStats().volumeSupportCertificateProbeRenders > 0; ++i) {
             drawOnce();
             frame.probes += renderer.frameStats().volumeSupportCertificateProbeRenders;
             ++frame.settleFrames;
@@ -683,6 +687,25 @@ int main() {
             }
             for (bool proofOn : {false, true}) {
                 configure(renderer, proofOn);
+                if (proofOn) {
+                    const auto inside = [&](const glm::vec3& at) {
+                        return std::any_of(tour.set.begin(), tour.set.end(), [&](const auto& medium) {
+                            return glm::all(glm::lessThanEqual(glm::abs(at - medium->origin),
+                                                              glm::abs(medium->scale)));
+                        });
+                    };
+                    const bool startInside = inside(poses.front().first);
+                    const auto alternate = std::find_if(poses.begin(), poses.end(), [&](const auto& p) {
+                        return inside(p.first) != startInside;
+                    });
+                    if (alternate != poses.end()) {
+                        // The two resident payloads can still contain different
+                        // clock buckets from earlier cases. Warm both at 0.75
+                        // before measuring a camera-only change.
+                        pose(renderer, alternate->first, alternate->second);
+                        drawWith(renderer, tour.set);
+                    }
+                }
                 pose(renderer, poses.front().first, poses.front().second);
                 drawWith(renderer, tour.set);   // warm: the one lowering this set owes
                 drawWith(renderer, tour.set);
@@ -748,9 +771,9 @@ int main() {
     }
 
     // Rung 2f-native eligibility (auto mode, the default within an enabled
-    // lane). The Kernel's cost estimate should keep Northern Veil on the grid
-    // lane (measured +16–49% with certificates) and admit Prism wing B (up to
-    // 4.8× cheaper). Pixels stay byte-identical either way; timings report only.
+    // lane). The estimate nominates candidates and measured results decide
+    // which survive at this view. The authored fixture and adapter can change
+    // the verdict, while pixels must stay byte-identical.
     autoEligibility = true;
     {
         const bool timing = std::getenv("EARTHCALL_CERTIFICATE_TIMING") &&
@@ -774,8 +797,14 @@ int main() {
         const Frame nvAuto = render(media, true, true, 7.25, 0);
         std::printf("       auto eligibility, Northern Veil: %u of %zu media eligible, %u killers enabled\n",
                     nvAuto.eligible, media.size(), nvAuto.killers);
-        check(nvAuto.eligible == 0 && nvAuto.rgba == nvExact.rgba,
-              "auto eligibility keeps every Northern Veil curtain on the grid lane, every byte intact");
+        check(nvAuto.lastProbes == 0, "Northern Veil auto eligibility settles before the fused verdict");
+        // This fresh fixed-view trial times two hidden renders per pair. Every
+        // estimate-admitted medium must receive a complete measured verdict.
+        constexpr size_t probeRendersPerMedium = 2 * probePairsPerMedium;
+        check(nvAuto.probes > 0 &&
+                  nvAuto.probes == probeRendersPerMedium * (nvAuto.eligible + nvAuto.vetoes),
+              "Northern Veil keeps or vetoes one medium per complete probe sequence");
+        check(nvAuto.rgba == nvExact.rgba, "settled Northern Veil auto eligibility keeps every RGBA byte");
         // Per curtain (2026-10-18, eleventh pass). Ranking killer subsets for
         // eligibility promoted emerald and cyan; the M5 ran emerald 16–20% slower
         // and cyan even, so eligibility stays with every killer enabled. Rendered
@@ -789,7 +818,10 @@ int main() {
             std::printf("       auto eligibility, %s: %s (%u killers enabled)\n", m->getIdentifier().c_str(),
                         autoFrame.eligible ? "certificates attached" : "grid lane only", autoFrame.killers);
             check(grid.rgba == autoFrame.rgba, m->getIdentifier() + ": auto eligibility keeps every byte");
-            if (!autoFrame.eligible && !idleSeen) {
+            if (autoFrame.vetoes && !autoFrame.eligible)
+                check(autoFrame.warmCompiles == 0,
+                      m->getIdentifier() + ": measured veto returns to the warm grid program");
+            if (!autoFrame.eligible && !autoFrame.vetoes && !autoFrame.probes && !idleSeen) {
                 idleSeen = true;
                 idleCompiles = autoFrame.firstCompiles + autoFrame.warmCompiles;
             }
@@ -797,6 +829,7 @@ int main() {
         }
         // The Sun's M5 measured the idle certificate variant 18–23% slower: with
         // nothing eligible the lane must select the lane-off program itself.
+        check(idleSeen, "an estimate-ineligible curtain supplies the idle reuse control");
         if (idleSeen) {
             std::printf("       auto eligibility, an ineligible curtain: %u program compiles after enabling the lane\n",
                         idleCompiles);
