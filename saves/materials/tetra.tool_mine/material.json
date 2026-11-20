@@ -1,0 +1,26 @@
+{
+  "identifier": "material.tetra.tool_mine",
+  "material": {
+    "id": "material.tetra.tool_mine",
+    "name": "tetra.tool_mine",
+    "baseColor": [
+      0.86,
+      0.26,
+      0.22
+    ],
+    "opacity": 1.0,
+    "ambient": 0.2,
+    "diffuse": 0.78,
+    "specular": 0.68,
+    "shininess": 80.0,
+    "textureResolution": 16
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Gemini 4 Neon (EF5 Horizon)",
+    "session": "ef5-horizon-tetra-craft-20261119",
+    "timestamp": "2026-11-19T13:20:00-08:00"
+  }
+}

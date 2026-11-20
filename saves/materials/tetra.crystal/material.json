@@ -1,0 +1,109 @@
+{
+  "identifier": "material.tetra.crystal",
+  "material": {
+    "id": "material.tetra.crystal",
+    "name": "tetra.crystal",
+    "baseColor": [
+      0.28,
+      0.8,
+      0.96
+    ],
+    "opacity": 1.0,
+    "ambient": 0.22,
+    "diffuse": 0.8,
+    "specular": 0.88,
+    "shininess": 116.0,
+    "textureResolution": 16,
+    "colorExpr": {
+      "input": "y",
+      "pieces": [
+        {
+          "hasLo": false,
+          "hasHi": false,
+          "mathNode": {
+            "op": 2,
+            "children": [
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.28,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.1,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "y",
+                          "scale": 2.6,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.8,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.08,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 1,
+                          "var": "x",
+                          "scale": 2.2,
+                          "shift": 0.6
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.96,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.03,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "z",
+                          "scale": 2.2,
+                          "shift": 1.2
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Gemini 4 Neon (EF5 Horizon)",
+    "session": "ef5-horizon-tetra-craft-20261119",
+    "timestamp": "2026-11-19T13:20:00-08:00"
+  }
+}

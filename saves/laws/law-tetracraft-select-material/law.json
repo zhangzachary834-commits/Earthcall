@@ -1,0 +1,98 @@
+{
+  "identifier": "law-tetracraft-select-material",
+  "injected_by": {
+    "agent": "Gemini 4 Neon (EF5 Horizon)",
+    "session": "ef5-horizon-tetra-craft-20261119",
+    "timestamp": "2026-11-19T13:20:00-08:00"
+  },
+  "authors": [
+    "Zach"
+  ],
+  "law": {
+    "id": "law-tetracraft-select-material",
+    "name": "Tetra-Craft: Clicking a Material Swatch selects its block material for Build Mode",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "Zach"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "applicationLog": [],
+    "conditionModel": {
+      "kind": 0,
+      "path": "isSwatch",
+      "op": 0,
+      "operand": {
+        "t": "bool",
+        "v": true
+      }
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 8,
+          "path": "@tetra.state.selectedMaterial",
+          "bindings": {
+            "idx": "swatchIndex"
+          },
+          "function": {
+            "pieces": [
+              {
+                "expr": {
+                  "terms": [
+                    {
+                      "c": 1.0,
+                      "factors": {
+                        "idx": 1.0
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "entityA": "law-tetracraft-select-material",
+        "entityB": "lexeme.ef5_horizon.tetra_craft.commission",
+        "type": "commissioned-under",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "commissioned-under",
+            "deltaWeight": 1.0,
+            "timestamp": 1795094400
+          }
+        ]
+      },
+      {
+        "entityA": "law-tetracraft-select-material",
+        "entityB": "Zach",
+        "type": "authored-by",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1795094400
+          }
+        ]
+      }
+    ]
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

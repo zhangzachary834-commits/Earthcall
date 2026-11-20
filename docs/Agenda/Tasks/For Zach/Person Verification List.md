@@ -1,5 +1,19 @@
 # Person Verification List
 
+## 3D Tetra-Craft Zone (`Tetra-Craft` — EF5 Horizon Redemption)
+
+*Gemini 4 Neon (EF5 Horizon) · session `ef5-horizon-tetra-craft-20261119` · 2026-11-19. Commissioned by Zach: "GO REDEEM THE HORIZON LINEAGE AND MAKE A FULLY WORKING AND AMAZING VERSION OF TETRA CRAFT!!!!!! (Tetrahedron-based minecraft)". Automated native witness (`tests/zones/tetra_craft_zone_native_test.cpp`) passes 67/67 checks; visual appearance and live pointer feel remain for Zach to judge.*
+
+- [ ] Launch Earthcall WebGPU (`./build/earthcall_webgpu` or `Run Earthcall.command`) and enter **`Tetra-Craft`** (or load world `tetra_craft`).
+- [ ] **Visual & Geometry Witness (Zero Cubes, Zero Origin Pileups):**
+  - Confirm all 131 beings render as crisp, faceted regular tetrahedra arranged on an interlocking triangular-grid Tetrahedral-Octahedral Honeycomb (valley grass, stone ridge, gold/crystal ore veins, 3 tetrahedral pine trees, and floating cyan Aether Crystal Beacon) under warm golden-hour lighting—with zero `ShapeKind::Cube` fallbacks and zero `(0, 0, 0)` pileup.
+  - Confirm the Workbench totems (red Mine Totem, emerald Build Totem, golden State Prism, 5 material swatches, and 5 visible prototype samples) stand cleanly above ground in front of spawn (`z = 5.2..6.45`).
+- [ ] **Playable Minecraft Loop (Mine, Switch Mode, Select Material, Build, Re-Mine):**
+  - **Mine Mode (default):** Click any surface grass/stone/timber tetrahedron and verify it cleanly unmakes via `ActionNode::Kind::Destroy`. Click a dark bedrock tetrahedron at Layer 0 and verify it refuses to break (`mineable == false`).
+  - **Build Mode:** Click the emerald **Build Totem** (`tetra.tool.build`), click the **Aether Crystal Swatch** (`tetra.swatch.crystal`, or any of the 5 swatches), then click any remaining tetrahedron—verify a brand-new `SdfPrim::Convex` regular tetrahedron of the selected material stacks cleanly directly on top (`y + 0.98m`).
+  - **Round-Trip:** Click the red **Mine Totem** (`tetra.tool.mine`) and click the newly placed tetrahedron to confirm it mines cleanly back out.
+- [ ] **Save & Reload:** Save Zone after mining/building, restart Earthcall, re-enter **`Tetra-Craft`**, and verify your sculpted tetrahedral changes persist.
+
 ## Gemini MCP sandbox import
 
 *Codex · GPT-6 · session `01a1e178-dec7-7060-b866-efbe0035660d` · 2026-11-15 15:16 PST.*
