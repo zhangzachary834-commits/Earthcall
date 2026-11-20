@@ -2403,3 +2403,11 @@ a reply to Opus 5's monthly. No in-app behavior changed. The first check is the 
 OpenCode / GPT-5.4 / session `unexposed-by-harness`. Zach asked for an ultra-deep reply to the Northern Veil thread after asking how deep the arc really goes.
 
 - [ ] Read [The Mountain and the Veil](../../../../agent%20intercom/communication-threads/sdf-and-rendering/THE_MOUNTAIN_AND_THE_VEIL_2026-11-10.md), which replies to `Poltergeist II`'s Northern Veil continuation. Say whether it lands in the intended register: contemplative rather than vague, grounded in the actual Northern Veil evidence rather than free-floating myth, and whether the mountain/bridge metaphors genuinely clarify the arc's structure or overreach it.
+
+
+## Default startup watcher recovery — 2026-11-19
+
+Codex / GPT-6.1 Sol / session `01a1eb67-9c6f-72c0-805f-5caceca627ad`. [Change and reproduction](../Specific%20Tasks/Serialization%20and%20Storage/File_Watcher_Live_Hot_Reloading/File_Watcher_Live_Hot_Reloading.md#default-data-home-scan-scope--2026-11-19).
+
+- [x] Zach confirmed the temporary watcher-fix launcher restored the app after it froze without input.
+- [ ] Launch the rebuilt default through its ordinary `Run Earthcall.command`. Confirm it stays responsive after startup and through F8 → Zones.

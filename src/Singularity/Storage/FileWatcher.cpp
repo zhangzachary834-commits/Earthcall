@@ -1,5 +1,6 @@
 #include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/Storage/VirtualFileSystem.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
@@ -72,7 +73,20 @@ void FileWatcher::scanDirectory(const fs::path& target,
     if (!fs::is_directory(target, ec)) return;
 
     if (_recursive) {
-        for (const auto& entry : fs::recursive_directory_iterator(target, ec)) {
+        // A whole-Data-Home watch sees authored saves and other live files.
+        // Gemini sandbox workspaces are integration runtime state and can
+        // contain hundreds of thousands of files. A watch pointed directly
+        // at a sandbox path still traverses it normally.
+        const bool wholeDataHome =
+            target.lexically_normal() == SaveSystem::rootPath().lexically_normal();
+        const fs::path sandboxWorkspaces = target / "gemini-mcp" / "sandboxes";
+        const fs::recursive_directory_iterator end;
+        for (auto it = fs::recursive_directory_iterator(target, ec); it != end; ++it) {
+            const auto& entry = *it;
+            if (wholeDataHome && entry.path() == sandboxWorkspaces) {
+                it.disable_recursion_pending();
+                continue;
+            }
             if (entry.is_regular_file(ec)) {
                 if (_filterExtension.empty() || entry.path().extension() == _filterExtension) {
                     auto lwt = entry.last_write_time(ec);

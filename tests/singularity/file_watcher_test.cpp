@@ -1,4 +1,5 @@
 #include "Singularity/Storage/FileWatcher.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/VirtualFileSystem.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
@@ -180,6 +181,54 @@ int main() {
     lawSetValue(*watcher, PropertyPath::parse("watcher.checkNow"), PropertyValue(true));
     check(receivedType == "file-deleted", "watcher.checkNow property triggers immediate scan");
 
+    // Case 6: a whole-Data-Home watch prunes integration workspace copies,
+    // while save metadata and explicit sandbox watches remain observable.
+    const auto previousRoot = SaveSystem::saveRoot();
+    const fs::path isolatedRoot = fs::absolute(watchDir / "data-home");
+    const fs::path authoredFile = isolatedRoot / "zones" / "witness.ecform";
+    const fs::path sandboxFile =
+        isolatedRoot / "gemini-mcp" / "sandboxes" / "trial" / "file.txt";
+    const fs::path approvalFile =
+        isolatedRoot / "gemini-mcp" / "approvals" / "approval.json";
+    for (const auto& path : {authoredFile, sandboxFile, approvalFile}) {
+        fs::create_directories(path.parent_path());
+        std::ofstream(path) << "baseline";
+    }
+    SaveSystem::setSaveRoot(isolatedRoot.string());
+    {
+        FileWatcher dataWatcher;
+        dataWatcher.rescanBaseline();
+        lawGetValue(dataWatcher, PropertyPath::parse("watcher.filesTracked"), val);
+        check(std::get<double>(val) == 2.0,
+              "whole Data Home tracks authored files and approval metadata");
+
+        int callbacks = 0;
+        dataWatcher.addCallback([&](const std::string& path, const std::string& type) {
+            ++callbacks;
+            receivedPath = path;
+            receivedType = type;
+        });
+        receivedPath.clear();
+        receivedType.clear();
+        std::ofstream(authoredFile, std::ios::app) << " authored edit";
+        std::ofstream(sandboxFile, std::ios::app) << " sandbox edit";
+        dataWatcher.checkNow();
+        check(callbacks == 1 && receivedPath == authoredFile.string() &&
+                  receivedType == "file-modified",
+              "ordinary save edits publish while sandbox work stays outside the default scan");
+
+        lawSetValue(dataWatcher, PropertyPath::parse("watcher.watchPath"),
+                    PropertyValue(std::string("save://gemini-mcp/sandboxes")));
+        callbacks = 0;
+        receivedPath.clear();
+        std::ofstream(sandboxFile, std::ios::app) << " explicit watch edit";
+        dataWatcher.checkNow();
+        check(callbacks == 1 && receivedPath == sandboxFile.string() &&
+                  receivedType == "file-modified",
+              "explicit sandbox watches retain change detection");
+    }
+    SaveSystem::setSaveRoot(previousRoot);
+
     // Clean up
     fs::remove_all(watchDir, ec);
 
@@ -188,6 +237,6 @@ int main() {
         return 1;
     }
 
-    std::printf("file_watcher_test: ALL OK (all 5 cases passed)\n");
+    std::printf("file_watcher_test: ALL OK (all 6 cases passed)\n");
     return 0;
 }
