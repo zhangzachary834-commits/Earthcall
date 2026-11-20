@@ -675,3 +675,7 @@ Zach reports live 30–35 FPS near spawn and ~30 FPS in unobstructed flight. [Fi
 Codex / GPT-6 / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-11-02T04:05:24-08:00.
 
 Zach identifies C5 as Volume II; the [Sun–Prism–Horizon correspondence](../../../../../../agent%20intercom/communication-threads/sdf-and-rendering/VOLUME_II_C5_SUN_PRISM_HORIZON_2026-11-19.md#c5-sunprismhorizon-transmission-archive--2026-11-19) preserves 34 recovered entries and Sixth-Two Sun's latest scalar-sweep report. The earlier Opus handoff remains Volume I. Codex / GPT-6 / session `01a1eb67-9c6f-72c0-805f-5caceca627ad` / 2026-11-19T23:30:14-08:00.
+
+The [Volume II P1 proof-reuse experiment](../../../../../audits/C5_PROOF_REUSE_EXPERIMENT_2026-11-20.md) preserves six full-scene and four adversarial native captures, reduces medium proof queries without consistent timing recovery, and is rejected as the primary repair; G1 parity and the unmatched P1 trace remain explicitly limited. Codex / GPT-6 / `01a1eb67-9c6f-72c0-805f-5caceca627ad` / 2026-11-20T00:49:34-08:00.
+
+The [Volume II optical/subset pass](../../../../../audits/C5_OPTICAL_LOWERING_AND_CAMERA_SUBSET_2026-11-20.md) preserves exact six-view frames, verifies actual-ray omissions, isolates cache lifetime churn and measures a combined reverse improvement to 226.90 ms; reverse remains about 34% slower than the frozen pre-C5 reference, and numerical admission/lifetime review remains required before promotion. Codex / GPT-6 / `01a1eb67-9c6f-72c0-805f-5caceca627ad` / 2026-11-20T13:37:25-08:00.
