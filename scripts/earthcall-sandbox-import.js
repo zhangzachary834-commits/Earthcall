@@ -11,6 +11,8 @@ const usage = `Usage:
   node scripts/earthcall-sandbox-import.js list
   node scripts/earthcall-sandbox-import.js preview <session-id-or-label> [-- <path> ...]
   node scripts/earthcall-sandbox-import.js apply   <session-id-or-label> [-- <path> ...]
+  node scripts/earthcall-sandbox-import.js sync-preview <session-id-or-label> [-- <path> ...]
+  node scripts/earthcall-sandbox-import.js sync-apply   <session-id-or-label> [-- <path> ...]
 
 Run from the checkout the sandbox was created from. Paths are relative to its root.`;
 
@@ -125,9 +127,19 @@ function stageChanges(checkout, session, manifest, paths, temp) {
       if (!local && !incoming) continue;
 
       if (before ? !sameBaseline(before, local, 0) : local) {
-        if (local && incoming && local.stat.size === incoming.stat.size
-          && fs.readFileSync(local.file).equals(fs.readFileSync(incoming.file))) continue;
-        throw new Error("checkout differs from the sandbox baseline");
+        let keepsCheckoutBytes = false;
+        if (local && incoming && local.stat.size <= incoming.stat.size) {
+          const checkoutBytes = fs.readFileSync(local.file);
+          const sandboxBytes = fs.readFileSync(incoming.file);
+          if (checkoutBytes.equals(sandboxBytes)) continue;
+
+          // Repeated appends can extend an existing file after its first import.
+          // Match the entire checkout, including any bytes added since creation.
+          keepsCheckoutBytes = before && checkoutBytes.length >= before.size
+            && sandboxBytes.length > checkoutBytes.length
+            && sandboxBytes.subarray(0, checkoutBytes.length).equals(checkoutBytes);
+        }
+        if (!keepsCheckoutBytes) throw new Error("checkout differs from the sandbox baseline");
       }
 
       const folded = rel.normalize("NFC").toLowerCase();
@@ -219,9 +231,15 @@ function main(args) {
   if (json) args.shift();
   const [command, name, ...options] = args;
   let expectedDiff;
-  if (command === "apply" && options[0] === "--expected-diff") {
+  if (["apply", "sync-apply"].includes(command) && options[0] === "--expected-diff") {
     [, expectedDiff] = options.splice(0, 2);
     if (!/^[a-f0-9]{64}$/.test(expectedDiff || "")) throw new Error("Invalid reviewed diff digest.");
+  }
+  const resolutions = {};
+  while (["--resolve-ours", "--resolve-theirs"].includes(options[0])) {
+    const [flag, rel] = options.splice(0, 2);
+    pathParts(rel || "");
+    resolutions[rel] = flag === "--resolve-ours" ? "ours" : "theirs";
   }
   const [separator, ...paths] = options;
   if (!command || command === "--help" || command === "-h") return console.log(usage);
@@ -238,7 +256,8 @@ function main(args) {
     }
     return;
   }
-  if (!["preview", "apply"].includes(command) || !name || (separator !== undefined && (separator !== "--" || !paths.length))) {
+  if (!["preview", "apply", "sync-preview", "sync-apply"].includes(command) || !name
+    || (separator !== undefined && (separator !== "--" || !paths.length))) {
     throw new Error(usage);
   }
 
@@ -254,6 +273,23 @@ function main(args) {
   }
   const scopes = paths.map((p) => p.replace(/^\.\//, "").replace(/\/$/, ""));
   for (const scope of scopes) pathParts(scope);
+  const hasMergeBase = fs.existsSync(path.join(path.dirname(session.workspace), "baseline"))
+    || fs.existsSync(path.join(path.dirname(session.workspace), "sync", "checkpoints.json"));
+  if (command.startsWith("sync-") || hasMergeBase) {
+    const { transplant } = require("../src/Singularity/Foreign/mcp/earthcall-sandbox-sync.js");
+    const toCheckout = !command.startsWith("sync-");
+    const result = transplant(checkout, session, scopes, {
+      apply: ["apply", "sync-apply"].includes(command), expectedDiff, toCheckout, resolutions,
+    });
+    if (json) console.log(JSON.stringify(result));
+    else if (["sync-preview", "preview"].includes(command)) {
+      console.log(result.diff || "No sandbox changes to import. Checkout and sandbox are up to date.");
+    } else {
+      console.log(!result.diff ? "No sandbox changes to import. Checkout and sandbox are up to date."
+        : toCheckout ? "Imported into the working tree." : "Checkout changes transplanted into the sandbox.");
+    }
+    return;
+  }
   if (!json) console.log(`Sandbox ${JSON.stringify(session.label)}  ${session.id}`);
   transfer(checkout, session, command, scopes, { json, expectedDiff });
 }
