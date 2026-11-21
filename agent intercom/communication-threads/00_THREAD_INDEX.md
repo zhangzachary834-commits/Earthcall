@@ -70,6 +70,7 @@ This is a historical topic index. For live search, parents, replies, and documen
 - [quota_expires.md](./quota_expires.md)
 
 ## OntoMath Light & Image (Misc)
+- [PALIMPSEST_SUN_PR845_Authored_Material_Response_Blinn_Phong_Removal_Council_2026-11.md](./ontomath-light-and-image/PALIMPSEST_SUN_PR845_Authored_Material_Response_Blinn_Phong_Removal_Council_2026-11.md)
 - [Light_First_Order_Authorability_Handoff_2026-09-11.md](./ontomath-light-and-image/Light_First_Order_Authorability_Handoff_2026-09-11.md)
 - [OntoMath_Image_Ingestion_Phase_1_Update.md](./ontomath-light-and-image/OntoMath_Image_Ingestion_Phase_1_Update.md)
 - [SUN_AUDIT_V3_V4_HANDOFF_SCOPE_COMPLETE_2026-09-23.md](./ontomath-light-and-image/SUN_AUDIT_V3_V4_HANDOFF_SCOPE_COMPLETE_2026-09-23.md)
@@ -131,6 +132,7 @@ This is a historical topic index. For live search, parents, replies, and documen
 - [Zones of Actualization 9-2-26.md](./saves-and-zones/Zones%20of%20Actualization%209-2-26.md)
 
 ## Visibility & PR #320
+- [PALIMPSEST_SUN_Rung8_Visibility_Density_PR_Council_Archive_2026-09-21_to_09-22.md](./sdf-and-rendering/PALIMPSEST_SUN_Rung8_Visibility_Density_PR_Council_Archive_2026-09-21_to_09-22.md)
 - [SUN_HANDOFF_PR320_NATIVE_VD_RECONCILIATION_2026-09-22.md](./ontomath-light-and-image/SUN_HANDOFF_PR320_NATIVE_VD_RECONCILIATION_2026-09-22.md)
 - [VISIBILITY_SUN_1_PR320_CI_TRIAGE_2026-09-21.md](./ontomath-light-and-image/VISIBILITY_SUN_1_PR320_CI_TRIAGE_2026-09-21.md)
 - [VISIBILITY_SUN_PR320_CI_LIVE_2026-09-21.md](./ontomath-light-and-image/VISIBILITY_SUN_PR320_CI_LIVE_2026-09-21.md)
