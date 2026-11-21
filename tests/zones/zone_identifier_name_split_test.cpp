@@ -32,6 +32,8 @@
 // out of sync before.
 
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "ConstructedBeing/Material/MaterialPersistenceMigration.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
@@ -42,7 +44,11 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <set>
 #include <string>
+
+
+extern MaterialManager materials;
 
 namespace {
 
@@ -99,6 +105,99 @@ int main() {
         check(roundTrip.value("identifier", std::string{}) == "Basic2DButtonZone" &&
               roundTrip.value("name", std::string{}) == "Basic 2D Button Zone",
               "zoneToJson round-trips both fields distinctly");
+    }
+
+    // ---- Gate B: old Zone default is scoped, global default stays current. ----
+    {
+        // Reset the global registry to the current canonical matte baseline.
+        materials.loadFromJson(nlohmann::json::array());
+        auto canonicalBefore = materials.defaultMaterial();
+        check(canonicalBefore && canonicalBefore->responseExpr,
+              "Gate B test begins with canonical current material.default");
+
+        nlohmann::json legacyZone{
+            {"identifier", "Legacy Default Zone"},
+            {"name", "Legacy Default Zone"},
+            {"materials", nlohmann::json::array({
+                nlohmann::json{
+                    {"name", "default"},
+                    {"ambient", 0.2f},
+                    {"diffuse", 0.8f},
+                    {"specular", 1.0f},
+                    {"shininess", 32.0f}
+                }
+            })},
+            {"world", {
+                {"objects", nlohmann::json::array({
+                    nlohmann::json{
+                        {"objectID", "legacy-default-cube"},
+                        {"shapeKind", 0},
+                        {"materialId", "material.default"}
+                    }
+                })}
+            }}
+        };
+
+        auto legacy = makeZoneFromJson(legacyZone);
+        check(legacy && legacy->getOwnedObjects().size() == 1,
+              "old Zone identity hydrates its Object through the real Zone path");
+
+        const std::string expectedScoped =
+            MaterialPersistenceMigration::scopedLegacyDefaultId(
+                "zone:Legacy Default Zone");
+        auto legacyObject = legacy->getOwnedObjects().front();
+        check(legacyObject &&
+                  legacyObject->materialId() == expectedScoped,
+              "old Zone Object material.default reference is rewritten to scoped compatibility identity");
+
+        auto scopedLegacy = materials.get(expectedScoped);
+        check(scopedLegacy && scopedLegacy->responseExpr,
+              "scoped old default enters the live MaterialManager with explicit migrated response");
+
+        std::set<std::string> scopedBindings;
+        if (scopedLegacy && scopedLegacy->responseExpr) {
+            for (const auto& piece : scopedLegacy->responseExpr->pieces) {
+                if (piece.mathNode)
+                    piece.mathNode->collectPropertyBindings(scopedBindings);
+                if (piece.whereLEZero)
+                    piece.whereLEZero->collectPropertyBindings(scopedBindings);
+            }
+        }
+        check(scopedBindings.count("specular") == 1,
+              "scoped old Zone default preserves historical specular compatibility law");
+
+        auto canonicalAfter = materials.defaultMaterial();
+        std::set<std::string> canonicalBindings;
+        if (canonicalAfter && canonicalAfter->responseExpr) {
+            for (const auto& piece : canonicalAfter->responseExpr->pieces) {
+                if (piece.mathNode)
+                    piece.mathNode->collectPropertyBindings(canonicalBindings);
+            }
+        }
+        check(canonicalAfter &&
+                  canonicalBindings.empty(),
+              "hydrating old Zone does not poison canonical current material.default");
+
+        nlohmann::json persisted = zoneToJson(*legacy);
+        check(persisted["world"]["objects"][0]["materialId"] == expectedScoped,
+              "first re-save persists scoped material identity so migration is one-way");
+        bool persistedScopedMaterial = false;
+        if (persisted.contains("materials") &&
+            persisted["materials"].is_array()) {
+            for (const auto& material : persisted["materials"]) {
+                if (MaterialPersistenceMigration::materialIdentity(material) ==
+                    expectedScoped) {
+                    persistedScopedMaterial =
+                        material.contains("responseExpr");
+                    break;
+                }
+            }
+        }
+        check(persistedScopedMaterial,
+              "first re-save persists explicit legacy AST under scoped identity");
+
+        // Restore clean current default for the rest of this independent test.
+        materials.loadFromJson(nlohmann::json::array());
     }
 
     // ---- Every pre-existing call shape (single string, no JSON) is unchanged. ----

@@ -1,11 +1,14 @@
 #include "ConstructedBeing/Material/Material.hpp"
+#include "ConstructedBeing/Material/MaterialResponseDefaults.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyRef.hpp"
 #include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
 #include "ConstructedBeing/Singular/Object/Object/FaceTexture.hpp"
 #include "Singularity/Screen/Renderer.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
 
 #include <cstdint>
 #include <string>
+#include <stdexcept>
 #include <vector>
 
 using json = nlohmann::json;
@@ -156,6 +159,38 @@ private:
     Material* _mat;
 };
 
+class EnvironmentResponseExprBridge : public Property {
+public:
+    explicit EnvironmentResponseExprBridge(std::string name, Material* mat)
+        : _name(std::move(name)), _nameId(Earthcall::StringInterner::intern(_name)), _mat(mat) {}
+
+    std::string name() const override { return _name; }
+    Earthcall::StringId nameId() const override { return _nameId; }
+    std::string typeName() const override { return "string"; }
+
+    PropertyValue value() const override {
+        if (!_mat || !_mat->environmentResponseExpr) return PropertyValue(std::string("{}"));
+        return PropertyValue(_mat->environmentResponseExpr->toJson().dump());
+    }
+    bool setValue(const PropertyValue& v) override {
+        if (!_mat) return false;
+        const std::string* src = std::get_if<std::string>(&v);
+        if (!src) return false;
+        nlohmann::json parsed = nlohmann::json::parse(*src, nullptr, false);
+        if (parsed.is_discarded()) return false;
+
+        _mat->environmentResponseExpr =
+            std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(parsed));
+        _mat->bumpEnvironmentResponseRevision();
+        return true;
+    }
+
+private:
+    std::string _name;
+    Earthcall::StringId _nameId;
+    Material* _mat;
+};
+
 class ColorExprBridge : public Property {
 public:
     explicit ColorExprBridge(std::string name, Material* mat)
@@ -206,6 +241,8 @@ void Material::buildProperties() {
         "colorExpr", this));
     registerProperty(std::make_unique<ResponseExprBridge>(
         "responseExpr", this));
+    registerProperty(std::make_unique<EnvironmentResponseExprBridge>(
+        "environmentResponseExpr", this));
     registerProperty(std::make_unique<ComputedProperty<Material, int>>(
         "textureResolution", this, &Material::getTextureResolution, &Material::setTextureResolution));
     registerProperty(std::make_unique<ComputedProperty<Material, int>>(
@@ -270,6 +307,27 @@ json Material::toJson() const {
     }
     if (responseExpr) {
         j["responseExpr"] = responseExpr->toJson();
+    } else {
+        // Gate B persistence marker: in CURRENT saves, direct-response omission
+        // means inherit material.default. Old saves have no marker and are
+        // migrated once on load to an explicit legacy compatibility AST.
+        // This metadata is intentionally not a Property and never reaches the renderer.
+        j[MaterialResponseDefaults::kOmissionSemanticsKey] =
+            MaterialResponseDefaults::kInheritDefaultV1;
+    }
+    if (environmentResponseExpr) {
+        j["environmentResponseExpr"] = environmentResponseExpr->toJson();
+    }
+    // A Material may own Person-authored response parameters just like any
+    // other Singular. If responseExpr binds one of them, dropping it here would
+    // make save/load silently change the material's mathematics.
+    if (!dynamicProperties().empty()) {
+        json authored = json::object();
+        for (const auto& [id, value] : dynamicProperties()) {
+            authored[Earthcall::StringInterner::resolve(id)] =
+                propertyValueToJson(value);
+        }
+        if (!authored.empty()) j["authoredProperties"] = std::move(authored);
     }
     if (textureResolution != 64) {
         j["textureResolution"] = textureResolution;
@@ -307,9 +365,51 @@ Material Material::fromJson(const json& j) {
     if (j.contains("colorExpr")) {
         m.colorExpr = std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(j["colorExpr"]));
     }
-    if (j.contains("responseExpr")) {
+    const bool hasDirectResponse = j.contains("responseExpr");
+    const bool hasEnvironmentResponse = j.contains("environmentResponseExpr");
+    if (hasDirectResponse) {
         m.responseExpr =
-            std::make_shared<OntoMath::Piecewise>(OntoMath::Piecewise::fromJson(j["responseExpr"]));
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::fromJson(j["responseExpr"]));
+    }
+    if (hasEnvironmentResponse) {
+        m.environmentResponseExpr =
+            std::make_shared<OntoMath::Piecewise>(
+                OntoMath::Piecewise::fromJson(j["environmentResponseExpr"]));
+    }
+
+    if (!hasDirectResponse) {
+        const auto omissionIt =
+            j.find(MaterialResponseDefaults::kOmissionSemanticsKey);
+        if (omissionIt == j.end()) {
+            // Legacy save: response omission historically meant the old
+            // compatibility law. Materialize that law NOW so the next save
+            // persists explicit authored mathematics and ambiguity disappears.
+            m.responseExpr =
+                MaterialResponseDefaults::makeLegacyDirectResponse();
+            m.bumpResponseRevision();
+            if (!hasEnvironmentResponse) {
+                m.environmentResponseExpr =
+                    MaterialResponseDefaults::makeLegacyEnvironmentResponse();
+                m.bumpEnvironmentResponseRevision();
+            }
+        } else {
+            if (!omissionIt->is_string() ||
+                omissionIt->get<std::string>() !=
+                    MaterialResponseDefaults::kInheritDefaultV1) {
+                throw std::invalid_argument(
+                    "Material response omission semantics are unknown to this build");
+            }
+            // Current save: omission intentionally means inherit material.default.
+            // Keep responseExpr absent. RenderMaterial already resolves inheritance
+            // without consulting this persistence metadata.
+        }
+    }
+    if (j.contains("authoredProperties") && j["authoredProperties"].is_object()) {
+        for (auto it = j["authoredProperties"].begin();
+             it != j["authoredProperties"].end(); ++it) {
+            m.setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
+        }
     }
     if (j.contains("textureResolution") && j["textureResolution"].is_number_integer()) {
         m.textureResolution = j["textureResolution"].get<int>();

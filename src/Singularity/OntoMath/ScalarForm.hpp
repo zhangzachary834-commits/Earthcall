@@ -445,8 +445,27 @@ using TypeEnv = std::map<std::string, MathType>;
 //                  world-space normalized sample -> receiver/eye.
 //   "n"            Rung 9 receiving-surface normal, a Vector. It is admitted
 //                  only by a material-response execution context.
+//   "surfaceColor" receiving-surface pigment/albedo, a Vector. Material response
+//                  may consume it; the renderer must not force an albedo multiply
+//                  after an authored response has already returned reflected RGB.
+//   "environmentRadiance" directionless incident-environment RGB admitted only by
+//                  the Material environment-response channel. It is not a light
+//                  source, wi, rho, visibility, or a material coefficient.
+//   "incidentRadiance" direct incident RGB at the receiver before the Material
+//                  response. This is the canonical direct-light colour input.
+//   "legacyDiffuseIncident" / "legacySpecularIncident" are execution-only
+//                  migration inputs admitted only by the direct Material response
+//                  channel. They carry the historical per-lobe RGB envelopes so
+//                  even arbitrary old Renderer::setLight diffuse/specular colours
+//                  can be reproduced without pretending they are source ontology.
+//                  They are compatibility scaffolding, not authored ontology.
 inline constexpr const char* kAmbientPointVar = "p";
 inline constexpr const char* kSurfaceNormalVar = "n";
+inline constexpr const char* kSurfaceColorVar = "surfaceColor";
+inline constexpr const char* kEnvironmentRadianceVar = "environmentRadiance";
+inline constexpr const char* kIncidentRadianceVar = "incidentRadiance";
+inline constexpr const char* kLegacyDiffuseIncidentVar = "legacyDiffuseIncident";
+inline constexpr const char* kLegacySpecularIncidentVar = "legacySpecularIncident";
 inline constexpr const char* kTimeVar = "t";
 inline constexpr const char* kOmegaXVar = "omega.x";
 inline constexpr const char* kOmegaYVar = "omega.y";
@@ -555,6 +574,12 @@ struct MathNode {
         // composes the value's bound into the body's (plan §6an).
         Let = 41,
 
+        // Bind(path) reads one authored PropertyPath from the supplied subject
+        // context. The path is mathematical input, not renderer vocabulary.
+        // GPU channels lower admitted scalar/vector values to parameter slots;
+        // an unresolved or unsupported path refuses by name.
+        Bind = 42,
+
         // Not a kind an author picks — the landing place for an op THIS BUILD
         // does not know: a save written by another version. It never
         // evaluates (nullopt), never type-checks, and refuses to compile to
@@ -567,6 +592,7 @@ struct MathNode {
     Op op = Op::ScalarLeaf;
     ScalarForm scalarForm;
     std::string variableName;
+    std::string propertyPath; // Bind payload: canonical authored PropertyPath text
     std::string stringArg; // For Component index or Map func name
     // MatrixConstruct / MatrixIdentity shape. Serialized only for those ops.
     // These are mathematical dimensions, not GLM storage dimensions.
@@ -580,7 +606,8 @@ struct MathNode {
     MathNode() = default;
     MathNode(const MathNode& o)
         : op(o.op), scalarForm(o.scalarForm), variableName(o.variableName),
-          stringArg(o.stringArg), matrixRows(o.matrixRows), matrixCols(o.matrixCols),
+          propertyPath(o.propertyPath), stringArg(o.stringArg),
+          matrixRows(o.matrixRows), matrixCols(o.matrixCols),
           unsupported(o.unsupported) {
         children.reserve(o.children.size());
         for (const auto& c : o.children) {
@@ -610,6 +637,8 @@ struct MathNode {
                     ValueKind* outKind = nullptr, bool allowUnbound = false) const;
 
     void collectDependencies(std::set<std::string>& outDeps) const;
+    // PropertyPath dependencies are distinct from lexical/free variables.
+    void collectPropertyBindings(std::set<std::string>& outPaths) const;
 
     std::optional<PropertyValue> evaluate(const std::map<std::string, PropertyValue>& vars, const Singular* subject = nullptr) const;
 

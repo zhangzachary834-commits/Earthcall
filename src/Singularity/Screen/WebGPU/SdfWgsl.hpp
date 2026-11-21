@@ -19,8 +19,12 @@
 // per-instance data. Two spheres of different radii share one pipeline.
 
 #include <cstddef>
+#include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
+#include <map>
+#include <glm/glm.hpp>
 
 #include "Singularity/OntoMath/ScalarForm.hpp"
 #include "Singularity/Screen/RadianceSource.hpp"
@@ -53,6 +57,197 @@ struct ParameterBlock {
     bool ok = true;
     std::string error;
 };
+
+// ---------------------------------------------------------------------------
+// Native GPU field VM — first production substrate rung.
+//
+// This is DERIVED Kernel IR, never authored or persisted identity. OntoMath /
+// SdfNode remain the mathematical source of truth. The VM exists only so a
+// fixed WebGPU shader can evaluate many active field programs supplied as data
+// without recompiling one receiver shader per scene topology.
+//
+// Primitive/CSG shorthands, Convex plane payloads, and scalar-valued Expr
+// MathNode trees lower into the same bounded instruction stream. Expr bytecode
+// is derived directly from OntoMath (vectors are scalarized during lowering);
+// legacy SdfToken RPN is not an execution authority here. Convex likewise adds
+// no VM noun: each authored half-space becomes generic scalar math and the
+// polyhedron is a MathMax fold.
+enum class FieldVmOpcode : uint32_t {
+    Sphere = 1,
+    Box = 2,
+    RoundBox = 3,
+    Ellipsoid = 4,
+    Cylinder = 5,
+    Cone = 6,
+    Torus = 7,
+
+    Morph = 20,
+    Union = 21,
+    Intersect = 22,
+    Subtract = 23,
+    SmoothUnion = 24,
+
+    // Derived OntoMath scalar execution. These are NOT authored math kinds:
+    // MathNode remains the sole authored language; lowering scalarizes vectors
+    // into this bounded float stack so Expr geometry can join the same scene
+    // field VM without reviving SdfToken RPN or inventing "Expr geometry".
+    Constant = 40,
+    CoordX = 41,
+    CoordY = 42,
+    CoordZ = 43,
+    MathAdd = 44,
+    MathSub = 45,
+    MathMul = 46,
+    MathDiv = 47,
+    MathPow = 48,
+    MathAbs = 49,
+    MathSqrt = 50,
+    MathTan = 51,
+    MathSin = 52,
+    MathCos = 53,
+    MathExp = 54,
+    MathLog = 55,
+    MathMin = 56,
+    MathMax = 57,
+    MathClamp = 58,
+    MathNoise3 = 59,
+    MathRound = 60,
+    MathFloor = 61,
+    MathLength3 = 62,
+    MathNormalizeComponent = 63,
+    MathProjectComponent = 64,
+    // ScalarForm factor exponent uses raw std::pow / ontoRawPow semantics,
+    // distinct from MathNode::Pow's negative-fractional -> 0 contract.
+    MathRawPow = 65,
+
+    // Derived forward-only control for authored Piecewise field execution.
+    // These are Kernel IR, not authored Piecewise kinds.
+    // BranchInterval: meta.y=axis (0=x,1=y,2=z), meta.z flags
+    // {hasLo,hasHi,includeLo,includeHi}=bits {0,1,2,3}, meta.w=forward
+    // program-relative target. a.x=leaf-local axis offset, a.y=lo, a.z=hi.
+    // Jump: meta.y=forward program-relative target.
+    BranchInterval = 66,
+    Jump = 67,
+    // Pure Piecewise whereLEZero. The straight-line predicate slice begins at
+    // the next instruction; meta.y is its length and meta.w is the forward
+    // false/undefined target. The interpreter skips the slice in the main
+    // stack and evaluates it in an isolated predicate stack.
+    BranchWhereLEZero = 68,
+    // World/subject Piecewise guard. The VM does NOT evaluate ConditionNode:
+    // a caller with explicit authority supplies the tri-state decision before
+    // lowering. Unknown is a lowering refusal; admitted records carry only
+    // false/true in a.x and meta.w is the forward false target.
+    BranchWorldGuard = 69,
+};
+
+// One postorder stack instruction. meta.x = FieldVmOpcode.
+// Primitive records:
+//   a.xyz = local leaf offset; a.w = primitive scalar parameter 0
+//   b.xyz = primitive dimensions / remaining scalar parameters.
+// CSG records:
+//   a.x = blend parameter for Morph / SmoothUnion.
+// Derived OntoMath records:
+//   Constant: a.x = literal.
+//   CoordX/Y/Z: a.x = leaf-local offset for that axis.
+//   MathNormalizeComponent / MathProjectComponent: meta.y = output axis.
+//   BranchInterval / Jump / BranchWhereLEZero / BranchWorldGuard: forward-only
+//   Piecewise execution control. Pure-predicate slices use an isolated stack;
+//   world-guard records consume only caller-supplied decisions. All targets stay
+//   program-relative and none mutate the enclosing scalar stack.
+// Other math instructions consume only the scalar stack.
+// The ABI stays plain storage-buffer data; extending execution does not change
+// the 48-byte record or create persisted authored identity.
+struct FieldVmInstruction {
+    glm::uvec4 meta{0u};
+    glm::vec4 a{0.0f};
+    glm::vec4 b{0.0f};
+};
+static_assert(sizeof(FieldVmInstruction) == 48,
+              "field VM GPU ABI must remain uvec4 + 2 vec4");
+
+// Shared execution-policy inspection for any authored SdfNode. This is
+// derived renderer truth, not geometry ontology: it says how conservatively a
+// zero-set field may be advanced by a marcher without changing the authored
+// field itself. Expr requires local-gradient correction; finite Convex planes
+// contribute max_i |n_i| as a global Lipschitz bound. CSG keeps the maximum
+// child bound. Numeric edits may change this policy without changing WGSL.
+struct FieldMarchPolicy {
+    bool needsGradientStep = false;
+    float marchLipschitz = 1.0f;
+    bool ok = true;
+    std::string error;
+};
+FieldMarchPolicy inspectFieldMarchPolicy(const geom::SdfNode& root);
+
+enum class FieldWorldGuardDecision : uint32_t {
+    Unknown = 0,
+    False = 1,
+    True = 2,
+};
+
+// Structural inspection order for authored Piecewise world guards. This does
+// not evaluate ConditionNode and carries no authority; it only tells an
+// authoritative caller which exact authored guards require decisions.
+// The returned pointers borrow from `root`.
+struct FieldWorldGuardSite {
+    std::string path;
+    const ConditionNode* condition = nullptr;
+};
+
+using FieldWorldGuardDecisions = std::vector<FieldWorldGuardDecision>;
+
+std::vector<FieldWorldGuardSite>
+inspectFieldWorldGuardSites(const geom::SdfNode& root);
+
+struct FieldVmProgram {
+    std::vector<FieldVmInstruction> instructions;
+    uint32_t maxStackDepth = 0;
+    // Copied from FieldMarchPolicy. General Expr leaves require local-gradient
+    // hit/step correction; the independent marchLipschitz value carries any
+    // cheaply-derived global bound such as non-unit Convex planes.
+    bool needsGradientStep = false;
+    // Global conservative Lipschitz bound when it is cheaply derivable from
+    // authored structure. Primitive defaults are 1. Convex contributes
+    // max_i |n_i| because its field is max_i(n_i·p-d_i). CSG composition keeps
+    // the maximum child bound. This is Kernel execution metadata only.
+    float marchLipschitz = 1.0f;
+    bool ok = true;
+    std::string error;
+};
+
+// Hard bounds are part of the execution contract. A field that cannot fit is
+// not silently truncated and cannot grant visibility authority.
+inline constexpr uint32_t kFieldVmMaxInstructions = 1024;
+inline constexpr uint32_t kFieldVmMaxStackDepth = 128;
+
+FieldVmProgram lowerFieldVm(
+    const geom::SdfNode& root,
+    const FieldWorldGuardDecisions* worldGuardDecisions = nullptr);
+
+// CPU execution witness for the exact same derived records. This is not a
+// second authored evaluator; tests compare it directly against geom::evalSdf.
+// nullopt means malformed/refused bytecode.
+std::optional<float> evaluateFieldVm(const FieldVmProgram& program,
+                                     const glm::vec3& p);
+
+// Fixed WGSL interpreter module. The caller owns the storage binding and must
+// expose:
+//   var<storage, read> fieldVmInstructions: array<FieldVmInstructionData>;
+// The returned module defines FieldVmInstructionData and
+// fieldVmEval(programBase, instructionCount, p). It requires the canonical
+// primitive/math helpers (sdSphere/sdBox/..., ontoPow, cnoise3) already emitted
+// by this compiler.
+std::string fieldVmMathModule();
+// Production consumers bind the otherwise-neutral VM instruction stream at a
+// concrete storage location without baking renderer resource topology into the
+// derived bytecode format itself.
+std::string fieldVmBoundMathModule(uint32_t group, uint32_t binding);
+
+
+// Generic authored PropertyPath values supplied by the channel that owns the
+// subject. The compiler knows paths and types only; it does not know Material,
+// Light, roughness, shininess, or any other domain-specific noun.
+using BindingValues = std::map<std::string, PropertyValue>;
 
 // Isolated authored scalar-expression layout. This deliberately reuses the
 // production emitter: numeric values become parameter slots, while every choice
@@ -132,13 +327,13 @@ struct Program {
     std::string kernelVolumePreparationWgsl;
     uint32_t kernelVolumePreparationInstanceBase = 0;
 
-    // True when the tree contains an implicit f(x,y,z)=0 leaf. Such a field is an
-    // ISO-SURFACE VALUE, not a distance: it can be arbitrarily larger than the
-    // true distance, so a sphere-tracing step of `f` tunnels straight through the
-    // surface. (For x^2+y^2+z^2-0.3 viewed from z=3, f is 8.7 while the surface is
-    // 2.45 away — even a halved step overshoots the shape entirely.) When set, the
-    // marcher steps by f/|grad f| instead, which is a conservative distance
-    // estimate. It costs a gradient per step, so it is only enabled where needed.
+    // Structural compiler witness: true when emitted WGSL contains a general
+    // implicit f(x,y,z)=0 Expr leaf. It is intentionally NOT the complete runtime
+    // march policy: value-only edits (notably Convex plane normal magnitudes) can
+    // change the lawful global Lipschitz divisor without changing shader structure.
+    // Production traversal must consume inspectFieldMarchPolicy(current SdfNode)
+    // for current-value execution truth. This field remains useful to compiler
+    // tests/structure consumers that specifically need to know Expr was emitted.
     bool needsGradientStep = false;
 
     // THE REFUSAL. False when the field's authored OntoMath AST contains
@@ -249,7 +444,10 @@ Program compile(const geom::SdfNode& root,
                 const OntoMath::Piecewise* volumeChromaExpr = nullptr,
                 const OntoMath::Piecewise* phaseExpr = nullptr,
                 const OntoMath::Piecewise* emissionExpr = nullptr,
-                const OntoMath::Piecewise* responseExpr = nullptr);
+                const OntoMath::Piecewise* responseExpr = nullptr,
+                const BindingValues* responseBindings = nullptr,
+                const OntoMath::Piecewise* environmentResponseExpr = nullptr,
+                const FieldWorldGuardDecisions* worldGuardDecisions = nullptr);
 
 // Re-collect numeric parameter values in the exact order used by compile()
 // without assembling the complete WGSL module. This is the value-revision path:
@@ -268,7 +466,10 @@ ParameterBlock collectParams(const geom::SdfNode& root,
                              const OntoMath::Piecewise* volumeChromaExpr = nullptr,
                              const OntoMath::Piecewise* phaseExpr = nullptr,
                              const OntoMath::Piecewise* emissionExpr = nullptr,
-                             const OntoMath::Piecewise* responseExpr = nullptr);
+                             const OntoMath::Piecewise* responseExpr = nullptr,
+                             const BindingValues* responseBindings = nullptr,
+                             const OntoMath::Piecewise* environmentResponseExpr = nullptr,
+                             const FieldWorldGuardDecisions* worldGuardDecisions = nullptr);
 
 // Inspect one authored scalar Piecewise with the SAME emission rules compile()
 // uses, but with its parameter numbering starting at zero. Equal structure means
@@ -333,18 +534,96 @@ VectorExpressionLayout inspectVectorExpression(const OntoMath::Piecewise* expr,
 // only source-radiance scalar context that admits omega.x/y/z.
 AngularExpressionLayout inspectAngularExpression(const OntoMath::Piecewise* expr);
 
+// Geometry-independent authored source compiler. It lowers the ordered admitted
+// source set's rho(p,t), chi(p,t), and alpha(p,omega,t) through the SAME emitter
+// used by SDF transport. It deliberately owns no visibility query and no
+// surface/geometry semantics. Callers supply a parameter-buffer base expression
+// because receiver and source numeric streams may share one storage array.
+struct RadianceSourceProgram {
+    std::string wgsl;
+    std::vector<float> params;
+    std::vector<bool> angularReadsOmega;
+    bool ok = true;
+    std::string error;
+};
+RadianceSourceProgram compileRadianceSourceModule(
+    const std::vector<Rendering::RadianceSourceBinding>& sources,
+    const std::string& parameterOffset = "0u");
+
+// Recollect rho/chi/alpha numeric values in exactly the module's emission order.
+// Structure/revisions are caller cache authority; this path performs no WGSL
+// assembly and is therefore the source-side analogue of collectResponseParams.
+ParameterBlock collectRadianceSourceParams(
+    const std::vector<Rendering::RadianceSourceBinding>& sources);
+
+// Shared CompleteScene execution math. Callers declare a storage array named
+// sceneTriangles and carry triangle count in u.lightControl.w. The module owns
+// exact ray/triangle intersection only; scene completeness remains renderer
+// authority and is carried separately in u.lightControl.z.
+std::string sceneVisibilityTriangleMathModule();
+
+
+// Bounded tri-state foreign field-program visibility. Callers provide
+// SceneFieldVmBlockerData[] as sceneFieldVmBlockers, bind fieldVmInstructions,
+// and carry blocker/instruction counts in u.sceneVisibilityControl.{x,y}.
+// Knownness remains renderer authority; march exhaustion/refusal returns Unknown.
+std::string sceneVisibilityFieldVmMathModule();
+
 // V3 medium phase Phi(p,wi,wo,t)->scalar. Absence is exact identity Phi=1.
 // wi/wo are transport bindings, never aliases of source alpha's omega.
 PhaseExpressionLayout inspectPhaseExpression(const OntoMath::Piecewise* expr);
 
-// Rung 9 receiver-owned f_r-like channel. Authored responses are vec3-valued,
-// may read n and existing wi/wo directional coordinates, and deliberately do
-// not admit t until an honest Material-owned Timeline exists.
-ResponseExpressionLayout inspectResponseExpression(const OntoMath::Piecewise* expr);
+// Rung 9 receiver-owned response channel. Authored responses are vec3-valued,
+// may read n, surfaceColor, and existing wi/wo directional coordinates. The
+// vec3 is the receiver's complete reflected RGB factor/contribution for the
+// admitted incident radiance: Screen must not secretly multiply pigment or add
+// another aesthetic lobe afterward. No t is admitted until an honest
+// Material-owned Timeline exists.
+ResponseExpressionLayout inspectResponseExpression(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings = nullptr);
 
 // Re-collect only response numeric parameters using the same admission/lowering
-// path as inspectResponseExpression. This is the future value-only cache path.
-ParameterBlock collectResponseParams(const OntoMath::Piecewise* expr);
+// path as inspectResponseExpression. Bound PropertyPath values enter the same
+// parameter stream, so value edits preserve WGSL structure.
+ParameterBlock collectResponseParams(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings = nullptr);
+
+// Independent receiver law for directionless environment incident radiance.
+// It may read p/n/wo/surfaceColor/environmentRadiance plus generic Bind paths;
+// wi is deliberately absent because environment input has no single source
+// direction. The returned vec3 is complete reflected environment RGB.
+ResponseExpressionLayout inspectEnvironmentResponseExpression(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings = nullptr);
+ParameterBlock collectEnvironmentResponseParams(
+    const OntoMath::Piecewise* expr,
+    const BindingValues* bindings = nullptr);
+
+// Geometry-independent receiver compiler. Raster meshes and implicit surfaces
+// discover p/n/wo differently, but once a surface interaction exists they must
+// execute the SAME authored Material laws. This module contains only reusable
+// mathematical helpers + materialResponseEval/materialEnvironmentResponseEval;
+// it has no vertex/fragment entry point and no SDF geometry authority.
+// Numeric leaves/Bind values live in params, so equal wgsl means pipeline reuse.
+struct SurfaceResponseProgram {
+    std::string wgsl;
+    std::vector<float> params;
+    bool hasDirectResponse = false;
+    bool hasEnvironmentResponse = false;
+    bool directReadsNormal = false;
+    bool directReadsWi = false;
+    bool directReadsWo = false;
+    bool environmentReadsNormal = false;
+    bool environmentReadsWo = false;
+    bool ok = true;
+    std::string error;
+};
+SurfaceResponseProgram compileSurfaceResponseModule(
+    const OntoMath::Piecewise* responseExpr,
+    const OntoMath::Piecewise* environmentResponseExpr,
+    const BindingValues* bindings = nullptr);
 
 // V4 medium self-emission E_v(p,omega,t)->vec3. Absence is no self-emitted
 // radiance. omega is world-space sample -> eye in an emission-owned context.

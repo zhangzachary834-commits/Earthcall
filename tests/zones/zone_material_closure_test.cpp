@@ -23,6 +23,7 @@
 #include "support/test_harness.hpp"
 #include "ConstructedBeing/Material/Material.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
+#include "ConstructedBeing/Material/MaterialPersistenceMigration.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "json.hpp"
 
@@ -109,6 +110,29 @@ int main() {
     makeZone("ZtBeta", "material.zt_shared_red", true);
     makeZone("ZtGamma", "material.zt_ghost", false);
 
+    // Gate B old-world control: embedded historical material.default must be
+    // scoped before BOTH hydration and closure preflight.
+    {
+        nlohmann::json j = base;
+        j["identifier"] = "ZtLegacyDefault";
+        j["name"] = "ZtLegacyDefault";
+        j["materials"] = nlohmann::json::array({
+            nlohmann::json{
+                {"name", "default"},
+                {"ambient", 0.2f},
+                {"diffuse", 0.8f},
+                {"specular", 1.0f},
+                {"shininess", 32.0f}
+            }
+        });
+        j["world"]["objects"][0]["objectID"] = "ZtLegacyDefault-cube";
+        j["world"]["objects"][0]["materialId"] = "material.default";
+        j.erase("materialRefs");
+        const auto dir = scratch.path / "zones/ZtLegacyDefault";
+        std::filesystem::create_directories(dir);
+        std::ofstream(dir / "zone.json") << j.dump(2);
+    }
+
     {
         Material red("zt_shared_red");
         red.baseColor = glm::vec3(0.9f, 0.1f, 0.1f);
@@ -127,9 +151,12 @@ int main() {
         const std::size_t alpha = indexOf(zm, "ZtAlpha");
         const std::size_t beta = indexOf(zm, "ZtBeta");
         const std::size_t gamma = indexOf(zm, "ZtGamma");
-        check(alpha < zm.zones().size() && beta < zm.zones().size() && gamma < zm.zones().size(),
-              "fresh boot discovers all three Zones from saves/zones alone");
-        if (alpha >= zm.zones().size() || beta >= zm.zones().size() || gamma >= zm.zones().size()) return 1;
+        const std::size_t legacyDefault = indexOf(zm, "ZtLegacyDefault");
+        check(alpha < zm.zones().size() && beta < zm.zones().size() &&
+                  gamma < zm.zones().size() && legacyDefault < zm.zones().size(),
+              "fresh boot discovers all four Zones from saves/zones alone");
+        if (alpha >= zm.zones().size() || beta >= zm.zones().size() ||
+            gamma >= zm.zones().size() || legacyDefault >= zm.zones().size()) return 1;
 
         // (1) Alpha resolves the shared Material from its root.
         check(zm.switchTo(alpha), "Move to Zone commits Alpha with a shared Material root");
@@ -137,6 +164,31 @@ int main() {
         check(live != nullptr, "shared Material is live after the move");
         check(live && live->baseColor.r > 0.89f && live->baseColor.g < 0.11f,
               "shared Material carries the root's authored colour");
+
+        // Gate B: the old default Zone must pass closure preflight using the
+        // SAME scoped identity its live Object received during hydration.
+        const std::string expectedLegacyDefault =
+            MaterialPersistenceMigration::scopedLegacyDefaultId(
+                "zone:ZtLegacyDefault");
+        auto legacyZone = zm.zones()[legacyDefault];
+        check(legacyZone && legacyZone->getOwnedObjects().size() == 1,
+              "legacy-default Zone hydrated one live Object");
+        check(legacyZone && legacyZone->getOwnedObjects()[0]->materialId() ==
+                  expectedLegacyDefault,
+              "legacy-default Zone live Object uses scoped compatibility identity");
+        check(materials.get(expectedLegacyDefault) != nullptr,
+              "scoped compatibility Material is live before activation");
+        check(zm.switchTo(legacyDefault),
+              "Move to legacy-default Zone passes Material closure after Gate B migration");
+        check(zm.currentIndex() == legacyDefault,
+              "legacy-default closure activation commits the intended Zone");
+        check(materials.defaultMaterial() &&
+                  materials.defaultMaterial()->responseExpr &&
+                  materials.defaultMaterial()->responseExpr->toJson() !=
+                      MaterialPersistenceMigration::legacyDirectJson(),
+              "legacy-default activation did not poison canonical material.default");
+        check(zm.switchTo(alpha),
+              "Move back to Alpha after Gate B closure witness");
 
         // (2) Gamma names a Material defined nowhere: refuse, stay in Alpha.
         const std::size_t before = zm.currentIndex();

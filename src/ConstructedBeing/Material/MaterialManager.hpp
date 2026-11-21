@@ -11,9 +11,10 @@
 // ---------------------------------------------------------------------------
 // Owns the Material beings, the way RelationManager owns Relations and
 // ZoneManager owns Zones. Objects hold a material *identifier*; this manager
-// resolves it to the being. There is always a "material.default" whose values
-// reproduce the previous global shading, so an object with no material assigned
-// still renders and never dangles.
+// resolves it to the being. There is always a canonical CURRENT "material.default"
+// with the authored matte response. Legacy documents may not replace that global
+// fallback directly: their old default is scoped to a separate compatibility
+// Material at the persistence boundary before their Objects are hydrated.
 // ---------------------------------------------------------------------------
 class MaterialManager {
 public:

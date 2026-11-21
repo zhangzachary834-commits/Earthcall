@@ -93,6 +93,19 @@ int main() {
     Rendering::MathEd::initializeMathNodeForEditor(inverse, Op::MatrixInverse);
     assert(inverse.children.size() == 1);
 
+    // Property Bind is a Person-authorable mathematical leaf, not JSON-only.
+    MathNode bind;
+    Rendering::MathEd::initializeMathNodeForEditor(bind, Op::Bind);
+    assert(bind.op == Op::Bind);
+    assert(bind.children.empty());
+    assert(bind.propertyPath.empty());
+    bind.propertyPath = "matrix";
+    auto bindRestored = MathNode::fromJson(bind.toJson());
+    assert(bindRestored);
+    assert(bindRestored->op == Op::Bind);
+    assert(bindRestored->propertyPath == "matrix");
+    assert(bindRestored->print() == "bind(matrix)");
+
     // Unknown future operations survive load/save byte-for-meaning unchanged.
     const nlohmann::json future = {
         {"op", 240},
