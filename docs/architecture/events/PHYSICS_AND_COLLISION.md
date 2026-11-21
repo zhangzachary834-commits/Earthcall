@@ -72,3 +72,17 @@ Collisions translate physical contact into legible ontological facts:
 - **Edge Transitions**: Transition from non-touching to touching emits `contact-began`. Transition from touching to separated emits `contact-ended`.
 - **Continuous Logic**: Continuous contact state is queried via `isTouching(other)`.
 - **Acoustics & Reactions**: The `physics-acoustics` first-mover law listens to `contact-began` to spawn dynamic sound emitter concepts in-world.
+
+## Interrelated Documents
+
+*   [Physics EventBus Integration](PHYSICS_EVENTBUS_INTEGRATION.md)
+*   [Event Bus vs Event Handler](EVENT_BUS_VS_EVENT_HANDLER.md)
+*   [Relation Event System](RELATION_EVENT_SYSTEM.md)
+
+## Thoughts on Integration and Interrelation
+
+The Physics and Collision Architecture is intrinsically linked to the broader event and relation systems within Earthcall. While this document details the hard-wired mechanics—such as the deterministic fixed-timestep loop and the multi-phase collision pipeline (Broad-Phase Sweep and Prune, Narrow-Phase GJK/EPA)—the actual manifestation of these mechanics as legible facts relies on the `EventBus`.
+
+As detailed in `PHYSICS_EVENTBUS_INTEGRATION.md` and `EVENT_BUS_VS_EVENT_HANDLER.md`, the physics system does not operate in a vacuum. It acts as a sense-act mechanism that publishes semantic events (like `contact-began` or `PhysicsCollisionEvent`) onto the EventBus. This design perfectly adheres to the "No Black Box" philosophy. The physics engine computes the truth of the world, but it is the event system that translates these physical interactions into ontological facts that authored Laws can respond to.
+
+Furthermore, as seen in the `RELATION_EVENT_SYSTEM.md`, these physical contacts are often just the genesis of deeper semantic relations. A physical collision might be registered into the active Zone's relation graph, seamlessly bridging the gap between raw spatial simulation and high-level relational logic. Thus, the physics system is not just moving bounding boxes; it is the foundational driver for the continuous relational and semantic evolution of the world.
