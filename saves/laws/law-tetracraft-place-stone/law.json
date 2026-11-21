@@ -1,0 +1,217 @@
+{
+  "identifier": "law-tetracraft-place-stone",
+  "injected_by": {
+    "agent": "Gemini 4 Neon (EF5 Horizon)",
+    "session": "ef5-horizon-tetra-craft-20261119",
+    "timestamp": "2026-11-19T13:20:00-08:00"
+  },
+  "authors": [
+    "Zach"
+  ],
+  "law": {
+    "id": "law-tetracraft-place-stone",
+    "name": "Tetra-Craft: Clicking a Tetrahedron in Build Mode with Carved Stone selected stacks a new Carved Stone Tetrahedron",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "Zach"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "applicationLog": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 0,
+          "path": "tetraBlock",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@tetra.state.mode",
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@tetra.state.selectedMaterial",
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 1
+          }
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 11,
+          "path": "@tetra.proto.stone",
+          "children": [
+            {
+              "kind": 8,
+              "path": "position.x",
+              "bindings": {
+                "px": "@event.subject.position.x"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "px": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "position.y",
+              "bindings": {
+                "py": "@event.subject.position.y"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "py": 1.0
+                          }
+                        },
+                        {
+                          "c": 0.9797958971132712,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 8,
+              "path": "position.z",
+              "bindings": {
+                "pz": "@event.subject.position.z"
+              },
+              "function": {
+                "pieces": [
+                  {
+                    "expr": {
+                      "terms": [
+                        {
+                          "c": 1.0,
+                          "factors": {
+                            "pz": 1.0
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "kind": 0,
+              "path": "material",
+              "operand": {
+                "t": "string",
+                "v": "material.tetra.stone"
+              }
+            },
+            {
+              "kind": 0,
+              "path": "tetraBlock",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "mineable",
+              "operand": {
+                "t": "bool",
+                "v": true
+              }
+            },
+            {
+              "kind": 0,
+              "path": "isPrototype",
+              "operand": {
+                "t": "bool",
+                "v": false
+              }
+            }
+          ]
+        },
+        {
+          "kind": 1,
+          "path": "@tetra.state.blocksPlaced",
+          "operand": {
+            "t": "int",
+            "v": 1
+          }
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "entityA": "law-tetracraft-place-stone",
+        "entityB": "lexeme.ef5_horizon.tetra_craft.commission",
+        "type": "commissioned-under",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "commissioned-under",
+            "deltaWeight": 1.0,
+            "timestamp": 1795094400
+          }
+        ]
+      },
+      {
+        "entityA": "law-tetracraft-place-stone",
+        "entityB": "Zach",
+        "type": "authored-by",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1795094400
+          }
+        ]
+      }
+    ]
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

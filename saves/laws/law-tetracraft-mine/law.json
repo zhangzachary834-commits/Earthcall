@@ -1,0 +1,110 @@
+{
+  "identifier": "law-tetracraft-mine",
+  "injected_by": {
+    "agent": "Gemini 4 Neon (EF5 Horizon)",
+    "session": "ef5-horizon-tetra-craft-20261119",
+    "timestamp": "2026-11-19T13:20:00-08:00"
+  },
+  "authors": [
+    "Zach"
+  ],
+  "law": {
+    "id": "law-tetracraft-mine",
+    "name": "Tetra-Craft: Clicking a mineable Tetrahedron in Mine Mode unmakes it cleanly",
+    "enabled": true,
+    "authority": 0,
+    "activation": 0,
+    "scope": 0,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "Zach"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "applicationLog": [],
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 0,
+          "path": "tetraBlock",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "mineable",
+          "op": 0,
+          "operand": {
+            "t": "bool",
+            "v": true
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@tetra.state.mode",
+          "op": 0,
+          "operand": {
+            "t": "int",
+            "v": 0
+          }
+        }
+      ]
+    },
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 1,
+          "path": "@tetra.state.blocksMined",
+          "operand": {
+            "t": "int",
+            "v": 1
+          }
+        },
+        {
+          "kind": 16,
+          "elementToken": "@event.subject"
+        }
+      ]
+    },
+    "provenance": [
+      {
+        "entityA": "law-tetracraft-mine",
+        "entityB": "lexeme.ef5_horizon.tetra_craft.commission",
+        "type": "commissioned-under",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "commissioned-under",
+            "deltaWeight": 1.0,
+            "timestamp": 1795094400
+          }
+        ]
+      },
+      {
+        "entityA": "law-tetracraft-mine",
+        "entityB": "Zach",
+        "type": "authored-by",
+        "directed": true,
+        "weight": 1.0,
+        "events": [
+          {
+            "description": "authored-by",
+            "deltaWeight": 1.0,
+            "timestamp": 1795094400
+          }
+        ]
+      }
+    ]
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

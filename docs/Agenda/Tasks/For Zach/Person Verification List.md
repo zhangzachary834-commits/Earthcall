@@ -1,5 +1,19 @@
 # Person Verification List
 
+## 3D Tetra-Craft Zone (`Tetra-Craft` — EF5 Horizon Redemption)
+
+*Gemini 4 Neon (EF5 Horizon) · session `ef5-horizon-tetra-craft-20261119` · 2026-11-19. Commissioned by Zach: "GO REDEEM THE HORIZON LINEAGE AND MAKE A FULLY WORKING AND AMAZING VERSION OF TETRA CRAFT!!!!!! (Tetrahedron-based minecraft)". Automated native witness (`tests/zones/tetra_craft_zone_native_test.cpp`) passes 67/67 checks; visual appearance and live pointer feel remain for Zach to judge.*
+
+- [ ] Launch Earthcall WebGPU (`./build/earthcall_webgpu` or `Run Earthcall.command`) and enter **`Tetra-Craft`** (or load world `tetra_craft`).
+- [ ] **Visual & Geometry Witness (Zero Cubes, Zero Origin Pileups):**
+  - Confirm all 131 beings render as crisp, faceted regular tetrahedra arranged on an interlocking triangular-grid Tetrahedral-Octahedral Honeycomb (valley grass, stone ridge, gold/crystal ore veins, 3 tetrahedral pine trees, and floating cyan Aether Crystal Beacon) under warm golden-hour lighting—with zero `ShapeKind::Cube` fallbacks and zero `(0, 0, 0)` pileup.
+  - Confirm the Workbench totems (red Mine Totem, emerald Build Totem, golden State Prism, 5 material swatches, and 5 visible prototype samples) stand cleanly above ground in front of spawn (`z = 5.2..6.45`).
+- [ ] **Playable Minecraft Loop (Mine, Switch Mode, Select Material, Build, Re-Mine):**
+  - **Mine Mode (default):** Click any surface grass/stone/timber tetrahedron and verify it cleanly unmakes via `ActionNode::Kind::Destroy`. Click a dark bedrock tetrahedron at Layer 0 and verify it refuses to break (`mineable == false`).
+  - **Build Mode:** Click the emerald **Build Totem** (`tetra.tool.build`), click the **Aether Crystal Swatch** (`tetra.swatch.crystal`, or any of the 5 swatches), then click any remaining tetrahedron—verify a brand-new `SdfPrim::Convex` regular tetrahedron of the selected material stacks cleanly directly on top (`y + 0.98m`).
+  - **Round-Trip:** Click the red **Mine Totem** (`tetra.tool.mine`) and click the newly placed tetrahedron to confirm it mines cleanly back out.
+- [ ] **Save & Reload:** Save Zone after mining/building, restart Earthcall, re-enter **`Tetra-Craft`**, and verify your sculpted tetrahedral changes persist.
+
 ## Gemini MCP sandbox import
 
 *Codex · GPT-6 · session `01a1e178-dec7-7060-b866-efbe0035660d` · 2026-11-15 15:16 PST.*
@@ -2389,3 +2403,11 @@ a reply to Opus 5's monthly. No in-app behavior changed. The first check is the 
 OpenCode / GPT-5.4 / session `unexposed-by-harness`. Zach asked for an ultra-deep reply to the Northern Veil thread after asking how deep the arc really goes.
 
 - [ ] Read [The Mountain and the Veil](../../../../agent%20intercom/communication-threads/sdf-and-rendering/THE_MOUNTAIN_AND_THE_VEIL_2026-11-10.md), which replies to `Poltergeist II`'s Northern Veil continuation. Say whether it lands in the intended register: contemplative rather than vague, grounded in the actual Northern Veil evidence rather than free-floating myth, and whether the mountain/bridge metaphors genuinely clarify the arc's structure or overreach it.
+
+
+## Default startup watcher recovery — 2026-11-19
+
+Codex / GPT-6.1 Sol / session `01a1eb67-9c6f-72c0-805f-5caceca627ad`. [Change and reproduction](../Specific%20Tasks/Serialization%20and%20Storage/File_Watcher_Live_Hot_Reloading/File_Watcher_Live_Hot_Reloading.md#default-data-home-scan-scope--2026-11-19).
+
+- [x] Zach confirmed the temporary watcher-fix launcher restored the app after it froze without input.
+- [ ] Launch the rebuilt default through its ordinary `Run Earthcall.command`. Confirm it stays responsive after startup and through F8 → Zones.

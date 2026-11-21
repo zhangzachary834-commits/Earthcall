@@ -52,3 +52,12 @@ In Earthcall's Sense-Act ontology, storage channels must not merely wait for man
   - Verified Case 4: File extension filtering (`.wgsl` filter restricts tracking to matching files).
   - Verified Case 5: Automatic shader/rule hot-reloading (`watcher.lastReloadTarget`, `watcher.reloadCount`, and manual `watcher.reloadShaders` trigger).
   - Result: 5/5 tests passed (100%).
+
+
+## Default Data Home scan scope — 2026-11-19
+
+Codex / GPT-6.1 Sol / session `01a1eb67-9c6f-72c0-805f-5caceca627ad` / 2026-11-19, Pacific time. Zach authorized applying the temporary launcher fix to default after confirming that it restored the unresponsive live app.
+
+A recursive watch of the entire Data Home now prunes `gemini-mcp/sandboxes`. Explicit watches pointed at that subtree retain ordinary recursion. Save files and integration approval metadata remain observable. The reported startup freeze reproduced with about 381,705 tracked files and approximately 6.9 seconds spent in each render-thread scan. The narrowed scan covered 868 files in approximately 9–28 ms. The temporary native build restored the app in Zach's live session.
+
+The regression witness covers the default scan scope, ordinary save modification delivery, and explicit sandbox modification delivery. Those cases extend the existing file creation, deletion, filtering, interval and manual-trigger witness. The normal default checkout Release target `earthcall_webgpu` rebuilt successfully. The rebuilt `file_watcher_test` passed all six cases through CTest on 2026-11-19. The source changes are local to `sync-from-earthcall-main`.
