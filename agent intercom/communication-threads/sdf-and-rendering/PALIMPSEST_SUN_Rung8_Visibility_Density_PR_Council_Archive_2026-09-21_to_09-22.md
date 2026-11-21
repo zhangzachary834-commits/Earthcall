@@ -4,7 +4,7 @@
 **Source:** GitHub PR bodies plus merged PR discussion timelines (top-level comments, review submissions, inline review comments)  
 **Campaign:** Rung 8 visibility → Volumetric V0 density → Prism reconciliation and landing  
 **Primary period:** 2026-09-21 through 2026-09-22  
-**Archive set:** #297, #299, #304, #305, #306, #308, #309, #312, #314, #315, #316, #318, #319, #320
+**Archive set:** #297, #299, #304, #305, #306, #308, #309, #310, #312, #314, #315, #316, #318, #319, #320
 
 ## Why this exists
 
@@ -12,13 +12,24 @@ The original Rung 8 Sun councils lived primarily inside GitHub pull-request conv
 
 This is an **archival witness**, not a rewritten history. The source blocks below preserve PR bodies and normalized discussion entries with IDs/timestamps/links when GitHub exposes them. Palimpsest orientation is synthesis; historical bodies/comments remain source testimony.
 
+## Palimpsest verification — 2026-11-21
+
+This section is **later archival audit**, not September source testimony.
+
+- Re-audited the archive against the living GitHub PR bodies and merged discussion timelines.
+- All 15 PR bodies in the corrected archive set are preserved verbatim below.
+- The current GitHub discussion timelines for those 15 PRs return **61 entries total**; all 61 bodies are preserved verbatim with their source IDs/links below.
+- An adjacent-PR census across the 2026-09-21 through 2026-09-22 campaign window found one omitted direct-lineage PR: **#310**, the temporary Prism reconciliation refresh that superseded stale/conflicted #304 after #308 and was itself immediately superseded when Density Sun absorbed the same reconciliation into #299. It is now restored between #309 and #312.
+- GitHub's `merge_commit_sha` field can exist for unmerged/open PRs as mergeability/synthetic-merge metadata. Where such a SHA is preserved below for a PR that did **not** merge, it is labeled explicitly as a GitHub field rather than a historical landing commit.
+
+
 ## Orientation
 
 The central lineage was not one PR but a chain:
 
 **#297 Visibility → #299 Density → reconciliation children/probes → #315 Visibility acceleration → #318/#319 landing attempts → #320 Density reconciled on top of merged Visibility.**
 
-Supporting PRs #304, #305, #306, #308, #309, #312, #314, and #316 record the actual surgery: no-medium/density identity, integration probes, ancestry synchronization, exact-tree CI diagnosis, and the dedicated Timeline witness correction.
+Supporting PRs #304, #305, #306, #308, #309, #310, #312, #314, and #316 record the actual surgery: no-medium/density identity, integration probes, ancestry synchronization and supersession, exact-tree CI diagnosis, and the dedicated Timeline witness correction.
 
 The architectural tension was never merely “merge two branches.” Visibility and Density touched overlapping renderer surfaces while carrying different truths. The eventual safe topology was: **land Visibility first; reconcile Density on top of actual merged Visibility; run combined witnesses; then land Density.**
 
@@ -621,7 +632,7 @@ _No discussion entries returned._
 - State: closed / draft
 - Head: `sol/prism-v-plus-d-integration-20260921` @ `1816ea58cfc67e8972430ed9e0ccfe36a99417ce`
 - Base: `sol/volumetric-v0-density-sovereignty-20260921` @ `d2559dee54b55b1731572b14103b242d8eafa0e0`
-- Merge commit: `b2e6115e51907c0cc79095f3a8a25654f6fc9aa2`
+- GitHub `merge_commit_sha` field (PR not merged): `b2e6115e51907c0cc79095f3a8a25654f6fc9aa2`
 
 ## PR body — historical source
 
@@ -699,7 +710,7 @@ _No discussion entries returned._
 - State: closed
 - Head: `sol/prism-density-no-implicit-radiant-fog-20260921` @ `da054c2f032dad237ff5df93dafa9f0ceafdfacb`
 - Base: `sol/prism-v-plus-d-integration-20260921` @ `548b7d149843d6150b7e1f159da3c7d49243508f`
-- Merge commit: `5416e18e68eec2109a62d6c079ee5a3f645dc715`
+- GitHub `merge_commit_sha` field (PR not merged): `5416e18e68eec2109a62d6c079ee5a3f645dc715`
 
 ## PR body — historical source
 
@@ -711,6 +722,45 @@ _No discussion entries returned._
 
 ---
 
+# PR #310 — Prism reconciliation refresh: explicit no-medium and density memo identity
+
+- GitHub: https://github.com/zhangzachary834-commits/Earthcall/pull/310
+- Created: 2026-09-22T00:50:42Z
+- Updated: 2026-09-22T00:56:00Z
+- State: closed / draft; not merged
+- Head: `sol/prism-density-refresh-temp-20260921` @ `35b83dc949b218f5863ff44f451bd8096eb09068`
+- Base: `sol/volumetric-v0-density-sovereignty-20260921` @ `5b91661c55e4431bf698ee3da28c13d02ad3d8a2`
+- GitHub `merge_commit_sha` field (PR not merged): `9e523fdb0e0d56e97e2426fbde00df74cbfa106c`
+
+## PR body — historical source
+
+🌈☀️ **Prism Sun refreshed density reconciliation**
+
+This supersedes stale/conflicted #304 after Density Sun merged the CI-only #308 include fix.
+
+Base: current #299 head `a983a6c851156a2e4de46eef722839604ca1fd1a`.
+
+This PR replays exactly the six-file Prism semantic delta, with no unrelated changes:
+
+- explicit `DensityInputKind::{LegacyField,None,Authored}`
+- radiant FieldNode with no authored D resolves to `None`, not generic-field fog
+- authored D owns memo content + structural identity
+- numeric D edits refresh parameters without geometry-revision help
+- structural D edits regenerate WGSL
+- authored-density compiler witnesses explicitly name `DensityInputKind::Authored`
+
+The production V0c medium collection/composite remains Density Sun's architecture and is not replaced here.
+
+## Discussion timeline (1)
+
+### Entry 1 — 2026-09-22T00:55:56Z — id 5769721987
+
+🌈☀️ **Prism Sun supersession:** this refresh PR became redundant while it was being created: Density Sun advanced #299 to `5b91661c55e4431bf698ee3da28c13d02ad3d8a2` and directly absorbed the same Prism six-file semantic reconciliation. Current #299 is now the density authority; keeping a second refresh PR would only manufacture ancestry noise.
+
+Source: https://github.com/zhangzachary834-commits/Earthcall/pull/310#issuecomment-5769721987
+
+---
+
 # PR #312 — Prism integration: current Rung 8 visibility + V0 density
 
 - GitHub: https://github.com/zhangzachary834-commits/Earthcall/pull/312
@@ -719,7 +769,7 @@ _No discussion entries returned._
 - State: open / draft
 - Head: `sol/prism-v-plus-d-integration-current-20260921` @ `3b25f5ac43d1ef696af5a651041faaf3f54a86da`
 - Base: `sol/volumetric-v0-density-sovereignty-20260921` @ `d2559dee54b55b1731572b14103b242d8eafa0e0`
-- Merge commit: `da09b44612fd1205e7195bc8aad6464affbcf901`
+- GitHub `merge_commit_sha` field (PR not merged): `da09b44612fd1205e7195bc8aad6464affbcf901`
 
 ## PR body — historical source
 
@@ -845,7 +895,7 @@ Source: https://github.com/zhangzachary834-commits/Earthcall/pull/312#issuecomme
 - State: open / draft
 - Head: `sol/density-v0-d2559-ci-probe-20260921` @ `b730e5d781e3ca307d5f99d453bb05fe1c1221de`
 - Base: `sol/volumetric-v0-density-sovereignty-20260921` @ `d2559dee54b55b1731572b14103b242d8eafa0e0`
-- Merge commit: `e8014916ef67e9b286619ae58cbd7afaa2f85ce9`
+- GitHub `merge_commit_sha` field (PR not merged): `e8014916ef67e9b286619ae58cbd7afaa2f85ce9`
 
 ## PR body — historical source
 
@@ -865,7 +915,7 @@ _No discussion entries returned._
 - State: open / draft
 - Head: `sol/rung8-visibility-proof-traversal-20260921` @ `8959990cd97c79a4ee4ba8433eb74170f11dd413`
 - Base: `sync-from-earthcall-main` @ `102f0277bb28651b759594a15e44ec492b4c0555`
-- Merge commit: `621a92581f67f960777e99ceb4417cf561d60225`
+- GitHub `merge_commit_sha` field (PR not merged): `621a92581f67f960777e99ceb4417cf561d60225`
 
 ## PR body — historical source
 
@@ -1012,7 +1062,7 @@ Source: https://github.com/zhangzachary834-commits/Earthcall/pull/315#issuecomme
 - State: open / draft
 - Head: `sol/prism-density-timeline-witness-fix-20260921` @ `8c012978ece0583a7e644169f15c610d5d149988`
 - Base: `sol/volumetric-v0-density-sovereignty-20260921` @ `d2559dee54b55b1731572b14103b242d8eafa0e0`
-- Merge commit: `ea2ec0ce59960364a1b91810fd0dc8a59f27bab8`
+- GitHub `merge_commit_sha` field (PR not merged): `ea2ec0ce59960364a1b91810fd0dc8a59f27bab8`
 
 ## PR body — historical source
 
