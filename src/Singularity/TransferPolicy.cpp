@@ -9,6 +9,7 @@
 #include "ZonesOfEarth/ZoneManager.hpp"
 
 #include <algorithm>
+#include <utility>
 
 namespace {
 bool s_transferPolicyAlive = false;
@@ -96,6 +97,12 @@ Zone* resolveZoneForBeing(const Singular* being, const Law* fallbackLaw = nullpt
 }
 
 void notifyRuleChanged(const PolicyRule& rule, const Singular* excludedBearer = nullptr) {
+    if (rule.targetBearer) {
+        if (rule.targetBearer != excludedBearer) {
+            Singular::notifyPropertyChanged(rule.targetBearer, rule.pathPattern);
+        }
+        return;
+    }
     CellId cid = resolveRuleCellId(rule);
     if (cid.valid()) {
         PropertyCellTable::instance().notifyMutation(cid);
@@ -200,6 +207,49 @@ void TransferPolicy::notifyBearerDestroyed(const Singular* bearer) {
 TransferPolicy& TransferPolicy::instance() {
     static TransferPolicy policy;
     return policy;
+}
+
+void TransferPolicy::syncRegisterMemoryLaws(LawManager& laws) {
+    // Zach's temporary device-driver exception. The compiled recipe applies
+    // named First Mover Laws through the same rule store as authored policy.
+    // See PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md §5c.
+    const auto registerSnapshotLaw = [this, &laws](const char* id, const char* name,
+                                                  const char* property) {
+        if (laws.find(id)) return;
+
+        auto law = std::make_shared<FirstMoverLaw>(name);
+        law->setLawIdentifier(id);
+        law->addAuthor(*this);
+        law->addTarget(*this);
+        law->addAction("Permit detached reads and copies of " + std::string(property) +
+                       " and refuse writes and live cell bindings",
+            [this, property](const ECA::Event& event, Singular& subject) {
+                const Law* governingLaw = currentContext().authorizingLaw;
+                if (&subject != this || !governingLaw || governingLaw != event.object) return;
+                for (AccessOp op : {AccessOp::Read, AccessOp::Write, AccessOp::Share,
+                                    AccessOp::BorrowWeak, AccessOp::TransferUnique,
+                                    AccessOp::Derive}) {
+                    const bool installed = std::any_of(_rules.begin(), _rules.end(),
+                        [&](const PolicyRule& rule) {
+                            return rule.targetBearer == this && rule.governingLaw == governingLaw &&
+                                rule.pathPattern == property && rule.op == op;
+                        });
+                    if (installed) continue;
+                    PolicyRule rule;
+                    rule.pathPattern = property;
+                    rule.targetBearer = this;
+                    rule.op = op;
+                    rule.allow = op == AccessOp::Read;
+                    rule.governingLaw = governingLaw;
+                    rule.createdInScopeId = activeScopeId();
+                    addPolicyRule(rule);
+                }
+            });
+        laws.add(law);
+        law->applyTo(*this);
+    };
+    registerSnapshotLaw("memory-policy-rule-list", "Memory Policy · Inspect Rule List", "rules");
+    registerSnapshotLaw("memory-policy-rule-count", "Memory Policy · Inspect Rule Count", "ruleCount");
 }
 
 TransferPolicy::~TransferPolicy() {
@@ -307,7 +357,7 @@ void TransferPolicy::buildProperties() {
         "rule.originZoneId", this, &TransferPolicy::propRuleOriginZoneId, &TransferPolicy::propSetRuleOriginZoneId));
     registerProperty(std::make_unique<ComputedProperty<TransferPolicy, std::string>>(
         "rule.targetZoneId", this, &TransferPolicy::propRuleTargetZoneId, &TransferPolicy::propSetRuleTargetZoneId));
-    registerProperty(std::make_unique<ComputedProperty<TransferPolicy, bool>>(
+    registerProperty(std::make_unique<CheckedComputedProperty<TransferPolicy, bool>>(
         "rule.commit", this, &TransferPolicy::propRuleCommit, &TransferPolicy::propSetRuleCommit));
     registerProperty(std::make_unique<CheckedComputedProperty<TransferPolicy, std::string>>(
         "rule.revokeGoverningLawId", this, &TransferPolicy::propRuleRevokeGoverningLawId, &TransferPolicy::propSetRuleRevokeGoverningLawId));
@@ -330,6 +380,9 @@ std::shared_ptr<PropertyList> TransferPolicy::propRules() const {
         dict->elements["governingZoneId"] = PropertyValue(r.governingZoneId);
         dict->elements["originZoneId"] = PropertyValue(r.originZoneId);
         dict->elements["targetZoneId"] = PropertyValue(r.targetZoneId);
+        if (r.targetBearer) {
+            dict->elements["targetBearerId"] = PropertyValue(r.targetBearer->getIdentifier());
+        }
         list->elements.push_back(PropertyValue(std::move(dict)));
     }
     return list;
@@ -395,10 +448,10 @@ bool TransferPolicy::propSetRuleRevokeGoverningLawId(const std::string& targetLa
     return true;
 }
 
-void TransferPolicy::propSetRuleCommit(const bool& v) {
+bool TransferPolicy::propSetRuleCommit(const bool& v) {
     if (!v) {
         _stagedCommit = false;
-        return;
+        return true;
     }
     PolicyRule r;
     r.pathPattern = _stagedPathPattern;
@@ -408,6 +461,16 @@ void TransferPolicy::propSetRuleCommit(const bool& v) {
     r.governingZoneId = _stagedGoverningZoneId;
     r.originZoneId = _stagedOriginZoneId;
     r.targetZoneId = _stagedTargetZoneId;
+
+    _stagedPathPattern.clear();
+    _stagedTargetCellPath.clear();
+    _stagedOp = "write";
+    _stagedAllow = true;
+    _stagedGoverningZoneId.clear();
+    _stagedOriginZoneId.clear();
+    _stagedTargetZoneId.clear();
+    _stagedCommit = false;
+
     r.governingLaw = currentContext().authorizingLaw;
     if (r.governingLaw) {
         r.governingLawId = r.governingLaw->getIdentifier();
@@ -417,8 +480,8 @@ void TransferPolicy::propSetRuleCommit(const bool& v) {
             r.governingZoneId = z->getIdentifier();
         }
     }
-    if (!_stagedTargetCellPath.empty()) {
-        PropertyPath cellPath = PropertyPath::parse(_stagedTargetCellPath);
+    if (!r.targetCellPath.empty()) {
+        PropertyPath cellPath = PropertyPath::parse(r.targetCellPath);
         std::size_t startIdx = 0;
         Singular* fallbackSubj = currentContext().actor ? currentContext().actor : this;
         Singular* root = resolveLawRoot(*fallbackSubj, cellPath, startIdx);
@@ -428,6 +491,14 @@ void TransferPolicy::propSetRuleCommit(const bool& v) {
             if (slot.cellId.valid()) {
                 r.cellId = slot.cellId;
             } else if (slot.prop || slot.dynamicSlot) {
+                // Anchoring to inline memory promotes it to shared storage.
+                // The policy author must be allowed to perform that binding.
+                if (!checkAccess(*root, slot, nullptr, currentContext(AccessOp::Share)) ||
+                    !checkAccess(*root, slot, nullptr, currentContext(AccessOp::Write)) ||
+                    (slot.prop && !slot.prop->isStructurallyWritable()) ||
+                    (slot.containerProperty && !slot.containerProperty->isStructurallyWritable())) {
+                    return false;
+                }
                 Earthcall::StringId propId = slot.prop
                     ? slot.prop->nameId()
                     : Earthcall::StringInterner::intern(slot.dynamicKey);
@@ -442,21 +513,14 @@ void TransferPolicy::propSetRuleCommit(const bool& v) {
     r.createdInScopeId = s_activeScopeId;
     addPolicyRule(r);
 
-    _stagedPathPattern.clear();
-    _stagedTargetCellPath.clear();
-    _stagedOp = "write";
-    _stagedAllow = true;
-    _stagedGoverningZoneId.clear();
-    _stagedOriginZoneId.clear();
-    _stagedTargetZoneId.clear();
-    _stagedCommit = false;
-
     Singular::notifyPropertyChanged(this, "ruleCount");
     Singular::notifyPropertyChanged(this, "rule.commit");
+    return true;
 }
 
 bool TransferPolicy::hasNonDefaultState() const {
-    if (!_rules.empty()) return true;
+    if (std::any_of(_rules.begin(), _rules.end(),
+                    [](const PolicyRule& rule) { return !rule.targetBearer; })) return true;
     for (const auto& entry : _tiers) {
         if (entry.second == Tier::Kernel) continue;
         bool defaultOpen = (entry.second != Tier::Gated);
@@ -471,6 +535,7 @@ nlohmann::json TransferPolicy::toJson() const {
 
     nlohmann::json rules = nlohmann::json::array();
     for (const auto& r : _rules) {
+        if (r.targetBearer) continue; // Reconstructed by the device at boot.
         nlohmann::json ruleObj;
         ruleObj["pathPattern"] = r.pathPattern;
         if (!r.targetCellPath.empty()) {
@@ -501,7 +566,8 @@ void TransferPolicy::loadFromJson(const nlohmann::json& j) {
         }
     }
     if (j.contains("rules") && j["rules"].is_array()) {
-        _rules.clear();
+        _rules.erase(std::remove_if(_rules.begin(), _rules.end(),
+            [](const PolicyRule& rule) { return !rule.targetBearer; }), _rules.end());
         auto* cohort = SingularPersistence::CohortContext::active();
         for (const auto& item : j["rules"]) {
             PolicyRule r;
@@ -566,7 +632,7 @@ void TransferPolicy::removeRulesForBearer(const Singular* bearer) {
     std::vector<PolicyRule> remaining;
     std::vector<PolicyRule> removed;
     for (const auto& r : _rules) {
-        if (static_cast<const Singular*>(r.governingLaw) == bearer) {
+        if (static_cast<const Singular*>(r.governingLaw) == bearer || r.targetBearer == bearer) {
             removed.push_back(r);
         } else {
             remaining.push_back(r);
@@ -617,24 +683,17 @@ bool TransferPolicy::checkAccess(Singular& bearer,
         effectiveCtx.actor = s_activeActor;
     }
 
-    // Automatically infer originZone and targetZone when not explicitly supplied
-    // so real Law executions across Zones enforce dual-jurisdiction governance.
-    if (!effectiveCtx.originZone && !effectiveCtx.targetZone) {
-        const Singular* targetBearer = slot.owner ? slot.owner : &bearer;
-        effectiveCtx.originZone = resolveZoneForBeing(effectiveCtx.actor, effectiveCtx.authorizingLaw);
-        effectiveCtx.targetZone = resolveZoneForBeing(targetBearer, nullptr);
-    }
-
-    const std::string originId = effectiveCtx.originZone ? effectiveCtx.originZone->getIdentifier() : "";
-    const std::string targetId = effectiveCtx.targetZone ? effectiveCtx.targetZone->getIdentifier() : "";
-
-    // Collect all matching rules
+    const Singular* targetBearer = slot.owner ? slot.owner : &bearer;
+    // Device rules match very few slots. Resolve jurisdictions only after an
+    // operation's bearer and slot match, so unrelated reads stay cheap at boot.
+    bool resolvedJurisdiction = false;
+    std::string originId;
+    std::string targetId;
     std::vector<const PolicyRule*> matching;
-    std::string dynamicKey = slot.dynamicKey;
-    std::string propName = slot.prop ? slot.prop->name() : "";
 
     for (const auto& rule : _rules) {
         if (rule.op != effectiveCtx.op) continue;
+        if (rule.targetBearer && rule.targetBearer != targetBearer) continue;
 
         // Committed-snapshot guard (PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md §5b):
         // A newly authored allow-rule cannot authorize the same Law application
@@ -643,14 +702,12 @@ bool TransferPolicy::checkAccess(Singular& bearer,
             continue;
         }
 
-        if (!rule.originZoneId.empty() && rule.originZoneId != originId) continue;
-        if (!rule.targetZoneId.empty() && rule.targetZoneId != targetId) continue;
-
         const CellId ruleCid = resolveRuleCellId(rule);
         bool cellMatch = ruleCid.valid() && effectiveCell && (ruleCid == effectiveCell->id);
         bool pathMatch = false;
         if (!rule.pathPattern.empty()) {
-            if (rule.pathPattern == dynamicKey || rule.pathPattern == propName) {
+            if (rule.pathPattern == slot.dynamicKey ||
+                (slot.prop && rule.pathPattern == slot.prop->name())) {
                 pathMatch = true;
             } else if (!ruleCid.valid() && slot.rootPropertyId.isValid()) {
                 if (Earthcall::StringInterner::resolve(slot.rootPropertyId) == rule.pathPattern) {
@@ -661,21 +718,31 @@ bool TransferPolicy::checkAccess(Singular& bearer,
             pathMatch = true; // Wildcard pattern
         }
 
-        if (cellMatch || pathMatch) {
-            if (!rule.filter || rule.filter(effectiveCtx)) {
-                matching.push_back(&rule);
+        if (!cellMatch && !pathMatch) continue;
+
+        if (!resolvedJurisdiction) {
+            if (!effectiveCtx.originZone && !effectiveCtx.targetZone) {
+                effectiveCtx.originZone = resolveZoneForBeing(effectiveCtx.actor, effectiveCtx.authorizingLaw);
+                effectiveCtx.targetZone = resolveZoneForBeing(targetBearer, nullptr);
             }
+            if (effectiveCtx.originZone) originId = effectiveCtx.originZone->getIdentifier();
+            if (effectiveCtx.targetZone) targetId = effectiveCtx.targetZone->getIdentifier();
+            resolvedJurisdiction = true;
         }
+        if (!rule.originZoneId.empty() && rule.originZoneId != originId) continue;
+        if (!rule.targetZoneId.empty() && rule.targetZoneId != targetId) continue;
+        if (!rule.filter || rule.filter(effectiveCtx)) matching.push_back(&rule);
     }
 
     if (matching.empty()) return true; // Open-by-default migration baseline
 
     auto resolveWinner = [](const std::vector<const PolicyRule*>& rules) -> const PolicyRule* {
         if (rules.empty()) return nullptr;
-        auto ruleSpecificity = [](const PolicyRule& r) -> int {
-            return (!r.pathPattern.empty() ? 2 : 0)
-                 + (!r.originZoneId.empty() ? 1 : 0)
-                 + (!r.targetZoneId.empty() ? 1 : 0);
+        auto ruleSpecificity = [](const PolicyRule& r) {
+            return std::pair{r.targetBearer != nullptr,
+                (!r.pathPattern.empty() ? 2 : 0)
+                    + (!r.originZoneId.empty() ? 1 : 0)
+                    + (!r.targetZoneId.empty() ? 1 : 0)};
         };
         const PolicyRule* winner = rules[0];
         for (std::size_t i = 1; i < rules.size(); ++i) {
@@ -684,8 +751,8 @@ bool TransferPolicy::checkAccess(Singular& bearer,
             const Law* candLaw = resolveGoverningLaw(*candidate);
             const bool winHasCell = resolveRuleCellId(*winner).valid();
             const bool candHasCell = resolveRuleCellId(*candidate).valid();
-            const int winSpec = ruleSpecificity(*winner);
-            const int candSpec = ruleSpecificity(*candidate);
+            const auto winSpec = ruleSpecificity(*winner);
+            const auto candSpec = ruleSpecificity(*candidate);
             if (!winLaw && candLaw) {
                 winner = candidate;
             } else if (winLaw && candLaw) {

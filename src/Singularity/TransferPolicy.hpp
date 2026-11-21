@@ -43,6 +43,7 @@ inline AccessOp accessOpFromString(const std::string& str) {
 
 class Zone;
 class Law;
+class LawManager;
 
 struct AccessContext {
     Singular* actor = nullptr;
@@ -65,6 +66,8 @@ struct PolicyRule {
     std::string targetZoneId;    // matches targetZone or empty for any
     uint64_t createdInScopeId = 0; // committed-snapshot scope guard (AD-38)
     std::function<bool(const AccessContext&)> filter;
+    // Compiled device policy only. Pinned to a live bearer and omitted from saves.
+    Singular* targetBearer = nullptr;
 };
 
 // ============================================================================
@@ -91,6 +94,9 @@ public:
     enum class Tier { Kernel = 0, Governable = 1, Gated = 2 };
 
     static TransferPolicy& instance();
+
+    // Registers and applies the compiled First Mover Laws for this device.
+    void syncRegisterMemoryLaws(LawManager& laws);
 
     std::string getIdentifier() const override { return "transfer-policy"; }
 
@@ -150,7 +156,7 @@ public:
     void propSetRuleTargetZoneId(const std::string& v) { _stagedTargetZoneId = v; }
 
     bool propRuleCommit() const { return _stagedCommit; }
-    void propSetRuleCommit(const bool& v);
+    bool propSetRuleCommit(const bool& v);
 
     std::shared_ptr<PropertyList> propRules() const;
 

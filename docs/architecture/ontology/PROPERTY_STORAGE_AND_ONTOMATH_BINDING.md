@@ -138,6 +138,18 @@ No access Law can be read or run before its text is present and admitted. Requir
 
 **⚑ AUTHOR — open:** What is the initial seed's minimum accessible vocabulary, and may an access Law authorize edits to its own future text when an independent Metalaw would refuse? The committed-snapshot rule prevents a new Law from granting its own creation, but does not alone settle legitimate self-editing, policy deletion, or conflict among several Laws. These require an authored decision before a serialized permission meaning is fixed.
 
+### 5c. Temporary device-driver First Movers, 2026-11-20
+
+Zach authorized C++ to seed the first memory-policy Laws as generalizable templates. He described the provenance as “device driver” authority and chose this temporary path while the newer Law-as-data pipeline matures. The exception covers the two named bootstrap recipes. Future policy for Person-authored memory still belongs to Laws under the existing First Mover and Zone ordering.
+
+At startup `TransferPolicy` authors and applies `memory-policy-rule-list` and `memory-policy-rule-count` as registered First Mover Laws. Each grants reads of its own inspection Property, `rules` or `ruleCount`, and denies writes, sharing, weak borrowing, unique transfer, and reactive derivation. Copying works through a read of the published value and a write to the caller's permitted destination. The rule list is a detached snapshot, so an edited copy has no effect on access decisions. Ordinary rule authoring through `@transfer-policy.rule.*` remains available. An authored rule anchored to an inline Property must have permission to promote that Property to shared storage.
+
+The two Laws use the same rule store and access checks as authored policy. Each rule names the specific live bearer and its Property, so similarly named Properties on other Singulars keep their own policy. The rule records are legible in `@transfer-policy.rules` with their governing Law IDs and `targetBearerId`. Zone and world snapshots carry the authored rules. Loading a snapshot replaces those authored records and retains the compiled records. Disabling a First Mover prevents another application of its recipe. Its already committed rules follow the existing rule-revocation semantics.
+
+The first run on a clean boot has two Laws and twelve rules. This establishes the initial device policy and leaves the general actor-specific rule schema, winning-Law accounting for each access, and universal mediation across Law Actions as open work. The [implementation task](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md#first-device-driver-policy-laws) records verification.
+
+*Codex · GPT-6 · session `01a1fc29-5539-7f12-bc32-783dde165cfc` · 2026-11-20T22:29:27-08:00. Zach supplied the exception and its rationale. Codex selected the two device inspection Properties as the initial scope.*
+
 ## 6. Change feed, cache, and persistence
 
 The value cell and every path that observes it need a complete dependency record. A successful mutation must:

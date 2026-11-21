@@ -755,14 +755,16 @@ PropertyPath::PathResult PropertyPath::setValue(Singular& root, const PropertyVa
         
         if (slot.prop) {
             if (slot.prop->setValue(v)) return announce(PathResult::Ok, slot.prop, slot.owner);
+            // A setter can refuse an operation of the correct type. Retrying
+            // it through numeric coercion would issue the same command twice.
+            if (currentVal.index() == v.index()) return PathResult::ReadOnly;
             double n = 0.0;
             PropertyValue coerced;
             if (propertyValueToNumber(v, n) && coerceLike(currentVal, n, coerced)) {
                 if (propertyValuesEquivalent(currentVal, coerced)) return PathResult::Unchanged;
                 if (slot.prop->setValue(coerced)) return announce(PathResult::Ok, slot.prop, slot.owner);
             }
-            if (currentVal.index() != v.index()) return PathResult::TypeMismatch;
-            return PathResult::ReadOnly;
+            return PathResult::TypeMismatch;
                         } else if (slot.dynamicSlot) {
             double n = 0.0;
             PropertyValue coerced;

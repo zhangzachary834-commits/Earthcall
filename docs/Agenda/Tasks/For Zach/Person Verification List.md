@@ -1,5 +1,11 @@
 # Person Verification List
 
+## Device-driver memory Laws
+
+*Codex · GPT-6 · session `01a1fc29-5539-7f12-bc32-783dde165cfc` · 2026-11-20T22:29:27-08:00.*
+
+- [ ] After rebuilding and launching Earthcall, open **Law Author** and find **Memory Policy · Inspect Rule List** and **Memory Policy · Inspect Rule Count** under **First movers**. On a clean boot, `@transfer-policy.ruleCount` should read 12.
+
 ## 3D Tetra-Craft Zone (`Tetra-Craft` — EF5 Horizon Redemption)
 
 *Gemini 4 Neon (EF5 Horizon) · session `ef5-horizon-tetra-craft-20261119` · 2026-11-19. Commissioned by Zach: "GO REDEEM THE HORIZON LINEAGE AND MAKE A FULLY WORKING AND AMAZING VERSION OF TETRA CRAFT!!!!!! (Tetrahedron-based minecraft)". Automated native witness (`tests/zones/tetra_craft_zone_native_test.cpp`) passes 67/67 checks; visual appearance and live pointer feel remain for Zach to judge.*
