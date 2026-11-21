@@ -88,7 +88,7 @@ src/
   Person/         Person · Soul · Body · Voice · Perspective · Relationship
   Relation/       Relation · Formation — a first-class being, not an edge in someone's array
   ZonesOfEarth/   Zone · HomesOfEarth/Home · Physics · AuthorsOfLaw (Law lives here) · Ourverse
-  Singularity/    Core · Audio · Language · Network · Physical · OntoMath · Foreign · Input · Screen · Storage · Terminal · Execution
+  Singularity/    Audio · Core · Execution · Foreign · Input · Language · Network · OntoMath · Physical · Screen · Storage · Terminal
                   FirstMoverOntology/ (FirstMoverWindowTools · TalkingRobotGuyAPI)
   Identity/       First Mover register, identity ledger, keys
   Time/           Timeline · Moment · Event (distinguished Moment) — temporal ownership is relational; Universe may borrow a Timeline
