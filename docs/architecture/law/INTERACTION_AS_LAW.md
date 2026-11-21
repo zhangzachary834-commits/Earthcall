@@ -795,3 +795,14 @@ world can be an interface, and why an interface can be made of anything in the w
 
 The button was never a special thing. It was only ever an object that someone agreed to
 mean something by.
+
+---
+
+## Interaction-as-Law and Durable Logging Addendum
+
+**Interrelated Documents:**
+*   `../PER_SINGULAR_DURABLE_LOGGING.md` (Per-Singular Durable Logging)
+
+### Thoughts on Integration and Interrelation
+
+Because 'Interaction-as-Law' evaluates UI interactions as Laws, these interactions are recorded in the durable logging architecture as persistent, semantic events within the per-Singular histories of the involved entities. This unifies human interaction history with the world's mechanical event history.

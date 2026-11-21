@@ -903,3 +903,14 @@ Say what you made. 🕊️
 ## 9. Mover-Authored Law Reach
 
 A Law authored by a First Mover executes with the ordinary `Law` authority once placed in the world. Its reach when fired is governed entirely by standard Law targeting rules (`TransferPolicy`) and not artificially constrained by the originating First Mover's `fileScope`. We bounds-check the *act of authoring/injecting* the Law (does the Mover have authority to create a Law in this Zone?), but we do not bounds-check the Law's execution against its original author's credentials, because once authorized and authored, it is functionally a Person's authored Law.
+
+---
+
+## First Mover Authoring and Transfer Policy Addendum
+
+**Interrelated Documents:**
+*   `../migration/SECURITY_FEATURES.md` (Security Features)
+
+### Thoughts on Integration and Interrelation
+
+First Mover Authoring is the sole authority capable of defining, bootstrapping, and bypassing the Transfer Policy restrictions, which in turn governs the set-to-set transfer and write permissions for Properties by active in-world Laws. This grounds the root of trust explicitly in the First Mover domain.

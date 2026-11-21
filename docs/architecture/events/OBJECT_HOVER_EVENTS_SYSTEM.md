@@ -216,4 +216,14 @@ The Object Hover Events system integrates seamlessly with:
 - **UI System**: Perfect for tooltips and highlighting
 - **Debug System**: Useful for debugging object interactions
 
-This provides a complete event-driven system for tracking mouse interactions with Objects in your application! 🖱️ 
+This provides a complete event-driven system for tracking mouse interactions with Objects in your application! 🖱️
+---
+
+## Object Hover Events and Durable Logging Addendum
+
+**Interrelated Documents:**
+*   `../PER_SINGULAR_DURABLE_LOGGING.md` (Per-Singular Durable Logging)
+
+### Thoughts on Integration and Interrelation
+
+While many events have structural significance, mechanical sensor events like object hovers must be logged to the hovered object's history. This tracks the attention paid to specific entities and grounds UI mechanical actions into the semantic logging substrate.
