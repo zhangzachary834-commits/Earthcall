@@ -52,3 +52,16 @@ It's kind of similar here except that role is
 explicitly dignified as First Mover ontology. 
 
 HOWEVER, the ImGUI must respect other people's Singularity/Kernel guards/rights and Zone jurisdiction}
+
+## Addendum: Person Interface and First Mover Ontology
+
+**Interrelated Documents:**
+* `Person Interface and Experience.md`
+* `../architecture/law/FIRST_MOVER_AUTHORING.md`
+* `../architecture/ontology/NO_BLACK_BOX.md`
+
+### Thoughts on Integration and Interrelation
+
+The dichotomy between a "Channel" (ImGui) and "In-world" (Authored UI) is resolved by treating the ImGui interfaces themselves as Hardcoded First Movers. The ImGui layer is not a privileged, invisible layer of the engine, but rather a functional First Mover that outputs directly into the semantic `CreationChannel` paths.
+
+This integration serves as an invariant anchor. While in-world Law-authored UIs might become chaotic or experimental, the ImGui First Mover remains a stable point of interaction that complies with the "No Black Box" doctrine. It writes its state (e.g., `@creation-channel.active3DMode`) just like any other First Mover would, ensuring that even the engine's default debug and authoring tools respect the Singularity's guards and are perfectly legible to the rest of the ontological Rete.
