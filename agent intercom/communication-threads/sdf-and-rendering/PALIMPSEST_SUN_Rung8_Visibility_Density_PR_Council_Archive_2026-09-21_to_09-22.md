@@ -43,6 +43,27 @@ Other directly useful surrounding witnesses:
 The explicit `conversation_links.jsonl` lineage registry currently contains no Palimpsest-Rung-8 edge. Per Intercom law, do **not** hand-edit that append-only registry or fabricate sibling blocks; register any future `summarizes` / `reflects-on` / `continues` edge through the navigation command.
 
 
+### Current implementation-truth audit — canonical `sync-from-earthcall-main@c564ca1672a9e5a267daa9bce1c3cd8e94f56ed9`
+
+This is **November implementation evidence**, not September testimony.
+
+The central separation remains present in current canonical source and witnesses:
+
+- `Renderer.hpp` still defines Rung-8 visibility as **derived transport truth**, not authored `rho/chi/alpha`, with an exact runtime `V=1` compatibility mode.
+- The same current comment explicitly retains the original scope boundary: visibility defaults false until Screen can truthfully query the **complete scene**, because the executing SDF pipeline alone is not a scene-wide occlusion oracle.
+- `WebGpuRenderer.cpp` still writes visibility enablement through `lightControl.y` while carrying an independent `volumeTime`; authored density is separately resolved through `DensityInputKind`.
+- A radiant `FieldNode` with no authored density is resolved to `DensityInputKind::None`: source radiance is not silently reused as participating-medium density.
+- `SdfWgsl.cpp` still computes authored `shapedRadiance`, then derives `pathVisibility = sourceVisibility(...)`, then forms `directRadiance = shapedRadiance * pathVisibility`. Its own source comment still warns that the query sees geometry owned by the executing SDF pipeline rather than arbitrary differently structured pipelines elsewhere in the Zone.
+- `sdf_wgsl_parameter_refresh_test.cpp` still carries an explicit Prism integration witness requiring a combined shader to contain both `sourceVisibility()` and `volumeDensityEval()` without semantic aliasing.
+- `webgpu_object_test.cpp` still carries the native Rung-8 witness family: no-blocker `V=1` parity, no shader regeneration merely from enabling visibility, and a blocker placed only on the red-source path while the blue path remains unobstructed.
+
+Therefore the historical boundary still has living implementation support, with an important qualification:
+
+> **Current canonical preserves `rho_source != V_transport != D_medium`, but the original Rung-8 visibility baseline remains intentionally pipeline-scoped rather than a complete-scene transport oracle.**
+
+Historical testimony explains why the distinction exists; this current-code audit is the separate evidence that the distinction still survives today.
+
+
 ## Orientation
 
 The campaign is **not a single Git ancestry chain**. Visibility and Density began as parallel owner lanes over the same canonical era, then Prism built temporary reconciliation/probe branches across them.
