@@ -252,10 +252,26 @@ def save_world():
     success = bridge.save_world(name=name)
     return jsonify({"status": "ok", "name": name, "success": success})
 
+def _data_root():
+    """The save root the engine chooses (SaveSystem::chooseDataRoot — keep in
+    step): the data home once it carries data-home.json, else checkout saves/."""
+    env = os.environ.get("EARTHCALL_DATA")
+    if env:
+        home = Path(env)
+    elif os.name == "nt":
+        home = Path(os.environ.get("APPDATA", "")) / "Earthcall"
+    elif os.uname().sysname == "Darwin":
+        home = Path.home() / "Library" / "Application Support" / "Earthcall"
+    else:
+        xdg = os.environ.get("XDG_DATA_HOME")
+        home = Path(xdg) / "earthcall" if xdg else Path.home() / ".local" / "share" / "earthcall"
+    if (home / "data-home.json").is_file():
+        return home
+    return Path(__file__).resolve().parents[4] / "saves"
+
 @api_bp.route('/saves', methods=['GET'])
 def list_saves():
-    repo_root = Path(__file__).resolve().parents[4]
-    saves_dir = repo_root / "saves" / "worlds"
+    saves_dir = _data_root() / "worlds"
     
     save_files = []
     if saves_dir.exists():

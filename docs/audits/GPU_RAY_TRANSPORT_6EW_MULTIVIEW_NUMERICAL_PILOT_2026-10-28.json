@@ -1,0 +1,1222 @@
+{
+  "scoped_aggregate_gate_count": 162,
+  "all_scoped_aggregate_gates_pass": true,
+  "schema": "6ew-bounded-native-multiview-numerical-pilot-1",
+  "native_cases": 24,
+  "full_viewport": [
+    2560,
+    1440
+  ],
+  "record_grid": [
+    640,
+    360
+  ],
+  "sample_stride": 4,
+  "pixels_selected_per_case": 80,
+  "paired_pixel_cases": 320,
+  "reference_rows": 880,
+  "distinct_reference_inputs": 774,
+  "continuity_execution_rows": 36,
+  "reference_budget": {
+    "seconds": 115.28676545902272,
+    "rows": 916
+  },
+  "max_convergence": 1.0560022434269456e-07,
+  "exact_Screen_observer_comparison_bytes": 235929600,
+  "full_publication_hash_comparison_bytes": 235929600,
+  "metrics": {
+    "inside": {
+      "own": {
+        "2^16": {
+          "Current": {
+            "T": {
+              "mean": 0.0008183234574196355,
+              "p99": 0.003709046581704012,
+              "max": 0.003709046581704012
+            },
+            "RGB_max_per_ray": {
+              "mean": 0.0005276658701059977,
+              "p99": 0.0023975580871325036,
+              "max": 0.0023975580871325036
+            },
+            "RGB_components": {
+              "mean": 0.0003335377360356611,
+              "p99": 0.002323035715530386,
+              "max": 0.0023975580871325036
+            }
+          },
+          "candidate": {
+            "T": {
+              "mean": 1.4294421845646721e-05,
+              "p99": 7.006962880673484e-05,
+              "max": 7.006962880673484e-05
+            },
+            "RGB_max_per_ray": {
+              "mean": 1.0555571006229895e-05,
+              "p99": 4.822734286162589e-05,
+              "max": 4.822734286162589e-05
+            },
+            "RGB_components": {
+              "mean": 5.337325515809878e-06,
+              "p99": 4.2861845415909094e-05,
+              "max": 4.822734286162589e-05
+            }
+          },
+          "gates": {
+            "T": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "individual": {
+            "T": {
+              "candidate_worse": 11,
+              "largest_increase": 6.734541441899555e-05,
+              "candidate_above_Current_cohort_max": 0
+            },
+            "RGB": {
+              "candidate_worse": 11,
+              "largest_increase": 4.635059722155055e-05,
+              "candidate_above_Current_cohort_max": 0
+            }
+          }
+        },
+        "2^15": {
+          "Current": {
+            "T": {
+              "mean": 0.0008183211575397184,
+              "p99": 0.003709049174480228,
+              "max": 0.003709049174480228
+            },
+            "RGB_max_per_ray": {
+              "mean": 0.0005276651079695074,
+              "p99": 0.0023975633343400887,
+              "max": 0.0023975633343400887
+            },
+            "RGB_components": {
+              "mean": 0.00033353679684169674,
+              "p99": 0.002322993891426428,
+              "max": 0.0023975633343400887
+            }
+          },
+          "candidate": {
+            "T": {
+              "mean": 1.4292513410905926e-05,
+              "p99": 7.004062145976597e-05,
+              "max": 7.004062145976597e-05
+            },
+            "RGB_max_per_ray": {
+              "mean": 1.0554818484058474e-05,
+              "p99": 4.820504628075262e-05,
+              "max": 4.820504628075262e-05
+            },
+            "RGB_components": {
+              "mean": 5.33711067817509e-06,
+              "p99": 4.286563849659891e-05,
+              "max": 4.820504628075262e-05
+            }
+          },
+          "gates": {
+            "T": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "individual": {
+            "T": {
+              "candidate_worse": 11,
+              "largest_increase": 6.72839199782338e-05,
+              "candidate_above_Current_cohort_max": 0
+            },
+            "RGB": {
+              "candidate_worse": 11,
+              "largest_increase": 4.630604657517717e-05,
+              "candidate_above_Current_cohort_max": 0
+            }
+          }
+        }
+      },
+      "ideal": {
+        "2^16": {
+          "Current": {
+            "T": {
+              "mean": 0.0008254589846102917,
+              "p99": 0.003725633294756614,
+              "max": 0.003725633294756614
+            },
+            "RGB_max_per_ray": {
+              "mean": 0.0005339593078042828,
+              "p99": 0.00240790363921381,
+              "max": 0.00240790363921381
+            },
+            "RGB_components": {
+              "mean": 0.00033725936785345214,
+              "p99": 0.0023242624844438398,
+              "max": 0.00240790363921381
+            }
+          },
+          "candidate": {
+            "T": {
+              "mean": 2.4104457535567557e-05,
+              "p99": 0.00013350853062743528,
+              "max": 0.00013350853062743528
+            },
+            "RGB_max_per_ray": {
+              "mean": 1.7568767118114228e-05,
+              "p99": 9.035505015823897e-05,
+              "max": 9.035505015823897e-05
+            },
+            "RGB_components": {
+              "mean": 9.335471276192946e-06,
+              "p99": 6.414779275193405e-05,
+              "max": 9.035505015823897e-05
+            }
+          },
+          "gates": {
+            "T": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "individual": {
+            "T": {
+              "candidate_worse": 11,
+              "largest_increase": 0.00013350265695799557,
+              "candidate_above_Current_cohort_max": 0
+            },
+            "RGB": {
+              "candidate_worse": 10,
+              "largest_increase": 4.578353442336036e-05,
+              "candidate_above_Current_cohort_max": 0
+            }
+          }
+        },
+        "2^15": {
+          "Current": {
+            "T": {
+              "mean": 0.0008254565557432702,
+              "p99": 0.0037256206784169743,
+              "max": 0.0037256206784169743
+            },
+            "RGB_max_per_ray": {
+              "mean": 0.0005339585490674295,
+              "p99": 0.0024078989268013634,
+              "max": 0.0024078989268013634
+            },
+            "RGB_components": {
+              "mean": 0.00033725831718822306,
+              "p99": 0.0023242601248830708,
+              "max": 0.0024078989268013634
+            }
+          },
+          "candidate": {
+            "T": {
+              "mean": 2.4102254990004955e-05,
+              "p99": 0.00013350723152316668,
+              "max": 0.00013350723152316668
+            },
+            "RGB_max_per_ray": {
+              "mean": 1.7568724034157673e-05,
+              "p99": 9.035466562139216e-05,
+              "max": 9.035466562139216e-05
+            },
+            "RGB_components": {
+              "mean": 9.335131365238362e-06,
+              "p99": 6.416272692316705e-05,
+              "max": 9.035466562139216e-05
+            }
+          },
+          "gates": {
+            "T": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "individual": {
+            "T": {
+              "candidate_worse": 11,
+              "largest_increase": 0.00013350005874945836,
+              "candidate_above_Current_cohort_max": 0
+            },
+            "RGB": {
+              "candidate_worse": 10,
+              "largest_increase": 4.573938199256555e-05,
+              "candidate_above_Current_cohort_max": 0
+            }
+          }
+        }
+      },
+      "unmodified_Screen_common_ideal": {
+        "2^16": {
+          "Current": {
+            "RGB_max_per_ray": {
+              "mean": 0.0016096279749801003,
+              "p99": 0.004130952168418009,
+              "max": 0.004130952168418009
+            },
+            "RGB_components": {
+              "mean": 0.001017812677638638,
+              "p99": 0.0036906642562307274,
+              "max": 0.004130952168418009
+            }
+          },
+          "candidate": {
+            "RGB_max_per_ray": {
+              "mean": 0.0014376947410535304,
+              "p99": 0.0019873464732576484,
+              "max": 0.0019873464732576484
+            },
+            "RGB_components": {
+              "mean": 0.0009462425268890767,
+              "p99": 0.0019267745959467078,
+              "max": 0.0019873464732576484
+            }
+          },
+          "gates": {
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "per_pixel_max_RGB_worse": 0
+        },
+        "2^15": {
+          "Current": {
+            "RGB_max_per_ray": {
+              "mean": 0.0016096263045534576,
+              "p99": 0.004130947456005563,
+              "max": 0.004130947456005563
+            },
+            "RGB_components": {
+              "mean": 0.0010178114757673489,
+              "p99": 0.0036906566130900376,
+              "max": 0.004130947456005563
+            }
+          },
+          "candidate": {
+            "RGB_max_per_ray": {
+              "mean": 0.0014376936446629928,
+              "p99": 0.0019873488902124566,
+              "max": 0.0019873488902124566
+            },
+            "RGB_components": {
+              "mean": 0.0009462422260568969,
+              "p99": 0.001926776570570471,
+              "max": 0.0019873488902124566
+            }
+          },
+          "gates": {
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "per_pixel_max_RGB_worse": 0
+        }
+      }
+    },
+    "turned": {
+      "own": {
+        "2^16": {
+          "Current": {
+            "T": {
+              "mean": 0.0004676751699792821,
+              "p99": 0.0020912750412711567,
+              "max": 0.0020912750412711567
+            },
+            "RGB_max_per_ray": {
+              "mean": 0.0003039305285887153,
+              "p99": 0.0013420681773966964,
+              "max": 0.0013420681773966964
+            },
+            "RGB_components": {
+              "mean": 0.00019529963268457502,
+              "p99": 0.001339004340786834,
+              "max": 0.0013420681773966964
+            }
+          },
+          "candidate": {
+            "T": {
+              "mean": 2.026229919660644e-05,
+              "p99": 0.00011259212580194689,
+              "max": 0.00011259212580194689
+            },
+            "RGB_max_per_ray": {
+              "mean": 1.3210650332862891e-05,
+              "p99": 7.225332408930529e-05,
+              "max": 7.225332408930529e-05
+            },
+            "RGB_components": {
+              "mean": 8.294891897338567e-06,
+              "p99": 6.168127184390249e-05,
+              "max": 7.225332408930529e-05
+            }
+          },
+          "gates": {
+            "T": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "individual": {
+            "T": {
+              "candidate_worse": 1,
+              "largest_increase": 4.057689178638135e-05,
+              "candidate_above_Current_cohort_max": 0
+            },
+            "RGB": {
+              "candidate_worse": 1,
+              "largest_increase": 2.79020979896058e-05,
+              "candidate_above_Current_cohort_max": 0
+            }
+          }
+        },
+        "2^15": {
+          "Current": {
+            "T": {
+              "mean": 0.0004676753576150744,
+              "p99": 0.0020912621228874606,
+              "max": 0.0020912621228874606
+            },
+            "RGB_max_per_ray": {
+              "mean": 0.00030393066550929795,
+              "p99": 0.0013420602170776258,
+              "max": 0.0013420602170776258
+            },
+            "RGB_components": {
+              "mean": 0.00019529970664618456,
+              "p99": 0.001339007386261644,
+              "max": 0.0013420602170776258
+            }
+          },
+          "candidate": {
+            "T": {
+              "mean": 2.0262352565175724e-05,
+              "p99": 0.00011259362398485795,
+              "max": 0.00011259362398485795
+            },
+            "RGB_max_per_ray": {
+              "mean": 1.3210785250152224e-05,
+              "p99": 7.225424753367488e-05,
+              "max": 7.225424753367488e-05
+            },
+            "RGB_components": {
+              "mean": 8.295014857434198e-06,
+              "p99": 6.168204272820332e-05,
+              "max": 7.225424753367488e-05
+            }
+          },
+          "gates": {
+            "T": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "individual": {
+            "T": {
+              "candidate_worse": 1,
+              "largest_increase": 4.058090111624946e-05,
+              "candidate_above_Current_cohort_max": 0
+            },
+            "RGB": {
+              "candidate_worse": 1,
+              "largest_increase": 2.790424739759767e-05,
+              "candidate_above_Current_cohort_max": 0
+            }
+          }
+        }
+      },
+      "ideal": {
+        "2^16": {
+          "Current": {
+            "T": {
+              "mean": 0.0004733689590923629,
+              "p99": 0.002089453281964415,
+              "max": 0.002089453281964415
+            },
+            "RGB_max_per_ray": {
+              "mean": 0.0003078551449356121,
+              "p99": 0.0013409005023676812,
+              "max": 0.0013409005023676812
+            },
+            "RGB_components": {
+              "mean": 0.00019715930070979864,
+              "p99": 0.0013363830220023132,
+              "max": 0.0013409005023676812
+            }
+          },
+          "candidate": {
+            "T": {
+              "mean": 2.1329365619793263e-05,
+              "p99": 0.00011800473729217664,
+              "max": 0.00011800473729217664
+            },
+            "RGB_max_per_ray": {
+              "mean": 1.401825834478559e-05,
+              "p99": 7.572681529932623e-05,
+              "max": 7.572681529932623e-05
+            },
+            "RGB_components": {
+              "mean": 8.765385924279592e-06,
+              "p99": 6.464646757170164e-05,
+              "max": 7.572681529932623e-05
+            }
+          },
+          "gates": {
+            "T": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "individual": {
+            "T": {
+              "candidate_worse": 2,
+              "largest_increase": 3.566089926154703e-05,
+              "candidate_above_Current_cohort_max": 0
+            },
+            "RGB": {
+              "candidate_worse": 2,
+              "largest_increase": 2.4521625254445012e-05,
+              "candidate_above_Current_cohort_max": 0
+            }
+          }
+        },
+        "2^15": {
+          "Current": {
+            "T": {
+              "mean": 0.0004733688993081721,
+              "p99": 0.0020894552049190995,
+              "max": 0.0020894552049190995
+            },
+            "RGB_max_per_ray": {
+              "mean": 0.00030785503170596663,
+              "p99": 0.0013409017215978147,
+              "max": 0.0013409017215978147
+            },
+            "RGB_components": {
+              "mean": 0.00019715928511268148,
+              "p99": 0.0013363616561525501,
+              "max": 0.0013409017215978147
+            }
+          },
+          "candidate": {
+            "T": {
+              "mean": 2.1329350346139393e-05,
+              "p99": 0.00011800281433749227,
+              "max": 0.00011800281433749227
+            },
+            "RGB_max_per_ray": {
+              "mean": 1.4018132542057755e-05,
+              "p99": 7.572559606919271e-05,
+              "max": 7.572559606919271e-05
+            },
+            "RGB_components": {
+              "mean": 8.765307918381263e-06,
+              "p99": 6.464539749362341e-05,
+              "max": 7.572559606919271e-05
+            }
+          },
+          "gates": {
+            "T": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "individual": {
+            "T": {
+              "candidate_worse": 2,
+              "largest_increase": 3.569410405668272e-05,
+              "candidate_above_Current_cohort_max": 0
+            },
+            "RGB": {
+              "candidate_worse": 2,
+              "largest_increase": 2.4543207864380356e-05,
+              "candidate_above_Current_cohort_max": 0
+            }
+          }
+        }
+      },
+      "unmodified_Screen_common_ideal": {
+        "2^16": {
+          "Current": {
+            "RGB_max_per_ray": {
+              "mean": 0.0010148694906539574,
+              "p99": 0.002855774689455394,
+              "max": 0.002855774689455394
+            },
+            "RGB_components": {
+              "mean": 0.0007040484203342068,
+              "p99": 0.0025158714209167557,
+              "max": 0.002855774689455394
+            }
+          },
+          "candidate": {
+            "RGB_max_per_ray": {
+              "mean": 0.0009677390220106203,
+              "p99": 0.0019291088032445253,
+              "max": 0.0019291088032445253
+            },
+            "RGB_components": {
+              "mean": 0.0006781932167240906,
+              "p99": 0.0019226184342668318,
+              "max": 0.0019291088032445253
+            }
+          },
+          "gates": {
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "per_pixel_max_RGB_worse": 0
+        },
+        "2^15": {
+          "Current": {
+            "RGB_max_per_ray": {
+              "mean": 0.0010148695984074955,
+              "p99": 0.002855772337994736,
+              "max": 0.002855772337994736
+            },
+            "RGB_components": {
+              "mean": 0.0007040482512685675,
+              "p99": 0.0025158617302118366,
+              "max": 0.002855772337994736
+            }
+          },
+          "candidate": {
+            "RGB_max_per_ray": {
+              "mean": 0.000967738941860036,
+              "p99": 0.0019291015800081135,
+              "max": 0.0019291015800081135
+            },
+            "RGB_components": {
+              "mean": 0.0006781930427947759,
+              "p99": 0.0019226184588397588,
+              "max": 0.0019291015800081135
+            }
+          },
+          "gates": {
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "per_pixel_max_RGB_worse": 0
+        }
+      }
+    },
+    "outside": {
+      "own": {
+        "2^16": {
+          "Current": {
+            "T": {
+              "mean": 0.0005183631051191309,
+              "p99": 0.0024797690329606548,
+              "max": 0.0024797690329606548
+            },
+            "RGB_max_per_ray": {
+              "mean": 0.0003344139778613118,
+              "p99": 0.0015913866375202104,
+              "max": 0.0015913866375202104
+            },
+            "RGB_components": {
+              "mean": 0.00021070296815506664,
+              "p99": 0.0015706870090068936,
+              "max": 0.0015913866375202104
+            }
+          },
+          "candidate": {
+            "T": {
+              "mean": 3.403734686042992e-06,
+              "p99": 2.4657597302857326e-05,
+              "max": 2.4657597302857326e-05
+            },
+            "RGB_max_per_ray": {
+              "mean": 2.3445428547024355e-06,
+              "p99": 1.8200507516316633e-05,
+              "max": 1.8200507516316633e-05
+            },
+            "RGB_components": {
+              "mean": 1.2539931403895548e-06,
+              "p99": 1.1345791302103114e-05,
+              "max": 1.8200507516316633e-05
+            }
+          },
+          "gates": {
+            "T": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "individual": {
+            "T": {
+              "candidate_worse": 2,
+              "largest_increase": 7.9114300126637e-06,
+              "candidate_above_Current_cohort_max": 0
+            },
+            "RGB": {
+              "candidate_worse": 2,
+              "largest_increase": 5.38686557813306e-06,
+              "candidate_above_Current_cohort_max": 0
+            }
+          }
+        },
+        "2^15": {
+          "Current": {
+            "T": {
+              "mean": 0.0005183676907404399,
+              "p99": 0.002479825281029524,
+              "max": 0.002479825281029524
+            },
+            "RGB_max_per_ray": {
+              "mean": 0.0003344169940330289,
+              "p99": 0.001591422806607505,
+              "max": 0.001591422806607505
+            },
+            "RGB_components": {
+              "mean": 0.00021070471722697714,
+              "p99": 0.001570704938905959,
+              "max": 0.001591422806607505
+            }
+          },
+          "candidate": {
+            "T": {
+              "mean": 3.4004360600886628e-06,
+              "p99": 2.4649858532788116e-05,
+              "max": 2.4649858532788116e-05
+            },
+            "RGB_max_per_ray": {
+              "mean": 2.342858539858209e-06,
+              "p99": 1.819774426192744e-05,
+              "max": 1.819774426192744e-05
+            },
+            "RGB_components": {
+              "mean": 1.253094734105056e-06,
+              "p99": 1.1363586720269936e-05,
+              "max": 1.819774426192744e-05
+            }
+          },
+          "gates": {
+            "T": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "individual": {
+            "T": {
+              "candidate_worse": 2,
+              "largest_increase": 7.911739376420535e-06,
+              "candidate_above_Current_cohort_max": 0
+            },
+            "RGB": {
+              "candidate_worse": 2,
+              "largest_increase": 5.386977252594405e-06,
+              "candidate_above_Current_cohort_max": 0
+            }
+          }
+        }
+      },
+      "ideal": {
+        "2^16": {
+          "Current": {
+            "T": {
+              "mean": 0.0005183359939379226,
+              "p99": 0.002480351827957028,
+              "max": 0.002480351827957028
+            },
+            "RGB_max_per_ray": {
+              "mean": 0.0003343798876751547,
+              "p99": 0.0015917605769030438,
+              "max": 0.0015917605769030438
+            },
+            "RGB_components": {
+              "mean": 0.00021068619456937653,
+              "p99": 0.0015712856421659371,
+              "max": 0.0015917605769030438
+            }
+          },
+          "candidate": {
+            "T": {
+              "mean": 3.3179422487025765e-06,
+              "p99": 2.4382491613517132e-05,
+              "max": 2.4382491613517132e-05
+            },
+            "RGB_max_per_ray": {
+              "mean": 2.3022226392389033e-06,
+              "p99": 1.824805032750454e-05,
+              "max": 1.824805032750454e-05
+            },
+            "RGB_components": {
+              "mean": 1.231297902899213e-06,
+              "p99": 1.1564577148646948e-05,
+              "max": 1.824805032750454e-05
+            }
+          },
+          "gates": {
+            "T": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "individual": {
+            "T": {
+              "candidate_worse": 2,
+              "largest_increase": 7.867813110351562e-06,
+              "candidate_above_Current_cohort_max": 0
+            },
+            "RGB": {
+              "candidate_worse": 2,
+              "largest_increase": 5.356967449188232e-06,
+              "candidate_above_Current_cohort_max": 0
+            }
+          }
+        },
+        "2^15": {
+          "Current": {
+            "T": {
+              "mean": 0.0005183406559350664,
+              "p99": 0.002480408071006579,
+              "max": 0.002480408071006579
+            },
+            "RGB_max_per_ray": {
+              "mean": 0.0003343829847828377,
+              "p99": 0.001591796564878109,
+              "max": 0.001591796564878109
+            },
+            "RGB_components": {
+              "mean": 0.00021068799454016036,
+              "p99": 0.0015713038564849624,
+              "max": 0.001591796564878109
+            }
+          },
+          "candidate": {
+            "T": {
+              "mean": 3.316145333158438e-06,
+              "p99": 2.437398562882276e-05,
+              "max": 2.437398562882276e-05
+            },
+            "RGB_max_per_ray": {
+              "mean": 2.300585723960015e-06,
+              "p99": 1.8244459251678946e-05,
+              "max": 1.8244459251678946e-05
+            },
+            "RGB_components": {
+              "mean": 1.2304355686892637e-06,
+              "p99": 1.1567229701067716e-05,
+              "max": 1.8244459251678946e-05
+            }
+          },
+          "gates": {
+            "T": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "individual": {
+            "T": {
+              "candidate_worse": 2,
+              "largest_increase": 7.867813110351562e-06,
+              "candidate_above_Current_cohort_max": 0
+            },
+            "RGB": {
+              "candidate_worse": 2,
+              "largest_increase": 5.356967449188232e-06,
+              "candidate_above_Current_cohort_max": 0
+            }
+          }
+        }
+      },
+      "unmodified_Screen_common_ideal": {
+        "2^16": {
+          "Current": {
+            "RGB_max_per_ray": {
+              "mean": 0.0011925156646401887,
+              "p99": 0.003277725291380304,
+              "max": 0.003277725291380304
+            },
+            "RGB_components": {
+              "mean": 0.0007588433666988707,
+              "p99": 0.002948573054502926,
+              "max": 0.003277725291380304
+            }
+          },
+          "candidate": {
+            "RGB_max_per_ray": {
+              "mean": 0.0010391198638237116,
+              "p99": 0.001959936075315548,
+              "max": 0.001959936075315548
+            },
+            "RGB_components": {
+              "mean": 0.0007005709743436477,
+              "p99": 0.0019317221450132552,
+              "max": 0.001959936075315548
+            }
+          },
+          "gates": {
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "per_pixel_max_RGB_worse": 0
+        },
+        "2^15": {
+          "Current": {
+            "RGB_max_per_ray": {
+              "mean": 0.0011925163914820298,
+              "p99": 0.003277756064335488,
+              "max": 0.003277756064335488
+            },
+            "RGB_components": {
+              "mean": 0.0007588433202826174,
+              "p99": 0.0029485725716464836,
+              "max": 0.003277756064335488
+            }
+          },
+          "candidate": {
+            "RGB_max_per_ray": {
+              "mean": 0.001039117434798744,
+              "p99": 0.00195993196018974,
+              "max": 0.00195993196018974
+            },
+            "RGB_components": {
+              "mean": 0.0007005695879988176,
+              "p99": 0.001931742945954898,
+              "max": 0.00195993196018974
+            }
+          },
+          "gates": {
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "per_pixel_max_RGB_worse": 0
+        }
+      }
+    },
+    "front": {
+      "own": {
+        "2^16": {
+          "Current": {
+            "T": {
+              "mean": 0.0008015748287770408,
+              "p99": 0.003709046581704012,
+              "max": 0.003709046581704012
+            },
+            "RGB_max_per_ray": {
+              "mean": 0.000516195969648786,
+              "p99": 0.0023975580871325036,
+              "max": 0.0023975580871325036
+            },
+            "RGB_components": {
+              "mean": 0.000327787980020437,
+              "p99": 0.002323035715530386,
+              "max": 0.0023975580871325036
+            }
+          },
+          "candidate": {
+            "T": {
+              "mean": 1.1217141750750892e-05,
+              "p99": 7.006962880673484e-05,
+              "max": 7.006962880673484e-05
+            },
+            "RGB_max_per_ray": {
+              "mean": 8.432643171443592e-06,
+              "p99": 4.822734286162589e-05,
+              "max": 4.822734286162589e-05
+            },
+            "RGB_components": {
+              "mean": 4.269481667407231e-06,
+              "p99": 4.2861845415909094e-05,
+              "max": 4.822734286162589e-05
+            }
+          },
+          "gates": {
+            "T": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "individual": {
+            "T": {
+              "candidate_worse": 4,
+              "largest_increase": 6.734541441899555e-05,
+              "candidate_above_Current_cohort_max": 0
+            },
+            "RGB": {
+              "candidate_worse": 4,
+              "largest_increase": 4.635059722155055e-05,
+              "candidate_above_Current_cohort_max": 0
+            }
+          }
+        },
+        "2^15": {
+          "Current": {
+            "T": {
+              "mean": 0.0008015730459966369,
+              "p99": 0.003709049174480228,
+              "max": 0.003709049174480228
+            },
+            "RGB_max_per_ray": {
+              "mean": 0.0005161956430972,
+              "p99": 0.0023975633343400887,
+              "max": 0.0023975633343400887
+            },
+            "RGB_components": {
+              "mean": 0.0003277873092958676,
+              "p99": 0.002322993891426428,
+              "max": 0.0023975633343400887
+            }
+          },
+          "candidate": {
+            "T": {
+              "mean": 1.1215114711993212e-05,
+              "p99": 7.004062145976597e-05,
+              "max": 7.004062145976597e-05
+            },
+            "RGB_max_per_ray": {
+              "mean": 8.43185764265197e-06,
+              "p99": 4.820504628075262e-05,
+              "max": 4.820504628075262e-05
+            },
+            "RGB_components": {
+              "mean": 4.269242101458813e-06,
+              "p99": 4.286563849659891e-05,
+              "max": 4.820504628075262e-05
+            }
+          },
+          "gates": {
+            "T": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_max_per_ray": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            },
+            "RGB_components": {
+              "mean": true,
+              "p99": true,
+              "max": true
+            }
+          },
+          "individual": {
+            "T": {
+              "candidate_worse": 4,
+              "largest_increase": 6.72839199782338e-05,
+              "candidate_above_Current_cohort_max": 0
+            },
+            "RGB": {
+              "candidate_worse": 4,
+              "largest_increase": 4.630604657517717e-05,
+              "candidate_above_Current_cohort_max": 0
+            }
+          }
+        }
+      }
+    }
+  },
+  "reference_binding_negatives": [
+    {
+      "name": "wrong-input-binding",
+      "rejection": "own/common reference pairing"
+    },
+    {
+      "name": "changed-reference-binary",
+      "rejection": "CPU process/source"
+    },
+    {
+      "name": "missing-reference-row",
+      "rejection": "reference coverage"
+    },
+    {
+      "name": "nonfinite-reference",
+      "rejection": "finite reference rows"
+    }
+  ],
+  "full_population_qualified": false,
+  "inhabited_performance_measured": false,
+  "scope": "Own-input comparisons bind each lane to its captured f32 rays/clips; common targets use explicit ideal cameras on3clear views. Current float records are diagnostic, with exact original Screen controls. Some individual float errors regress. Full publication equality is retained as native hashes; raw replay covers sampled publication and all Screen bytes. No whole-frame accuracy, generic certification, moving FPS or Person acceptance."
+}

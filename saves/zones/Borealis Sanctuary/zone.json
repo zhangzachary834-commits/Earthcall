@@ -4571,5 +4571,8 @@
     ]
   },
   "formationRelations": [],
-  "lexemes": []
+  "lexemes": [],
+  "materialRefs": [
+    "material.cathedral_basalt"
+  ]
 }

@@ -120,6 +120,7 @@ public:
     void addObject(std::shared_ptr<Object> obj);
     bool removeObject(Object* obj);
     bool removeObjectById(const std::string& identifier);
+    bool containsBeing(const Singular& being) const;
     const std::vector<std::shared_ptr<Object>>& objects() const { return _objects; }
     const std::vector<std::shared_ptr<Object>>& getOwnedObjects() const { return _objects; }
     std::vector<std::shared_ptr<Object>>& getOwnedObjectsMutable() { return _objects; }
@@ -203,6 +204,14 @@ public:
     void addSpatialField(std::shared_ptr<geom::FieldNode> field);
     void clearAdditionalSpatialFields();
 
+    // Mechanical lifetime custody for ordinary authored Singulars which have
+    // no Object/field storage slot. Membership is visible in the Formation;
+    // storage does not confer ontological ownership or governance.
+    const std::vector<std::shared_ptr<Singular>>& storedSingulars() const { return _storedSingulars; }
+    bool retainSingular(std::shared_ptr<Singular> being);
+    void clearStoredSingulars();
+    std::shared_ptr<PropertyList> propStoredSingulars() const;
+
 protected:
     void buildProperties() override;
 
@@ -238,6 +247,7 @@ private:
     
     std::shared_ptr<geom::FieldNode> _spatialRootObject;
     std::vector<std::shared_ptr<geom::FieldNode>> _additionalSpatialFields;
+    std::vector<std::shared_ptr<Singular>> _storedSingulars;
 
 public:
     Formation& formation() { return _formation; }

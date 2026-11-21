@@ -1,0 +1,139 @@
+{
+  "authors": [
+    "author.antigravity"
+  ],
+  "identifier": "law-mtg-turn-cycle",
+  "injected_by": "Antigravity, 2026-10-11 MTG Zone Law",
+  "law": {
+    "actionDescriptions": [
+      "sequence"
+    ],
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 1,
+          "path": "@state.mtg.turnNumber",
+          "operand": {
+            "t": "int",
+            "v": 1
+          },
+          "desc": "add(@state.mtg.turnNumber)"
+        },
+        {
+          "kind": 0,
+          "path": "@state.mtg.landPlayedThisTurn",
+          "operand": {
+            "t": "int",
+            "v": 0
+          },
+          "desc": "set(@state.mtg.landPlayedThisTurn)"
+        },
+        {
+          "kind": 0,
+          "path": "@card.forest_1.isTapped",
+          "operand": {
+            "t": "int",
+            "v": 0
+          },
+          "desc": "set(@card.forest_1.isTapped)"
+        },
+        {
+          "kind": 0,
+          "path": "@card.forest_1.rotation.y",
+          "operand": {
+            "t": "float",
+            "v": 0.0
+          },
+          "desc": "set(@card.forest_1.rotation.y)"
+        },
+        {
+          "kind": 0,
+          "path": "@card.mountain_1.isTapped",
+          "operand": {
+            "t": "int",
+            "v": 0
+          },
+          "desc": "set(@card.mountain_1.isTapped)"
+        },
+        {
+          "kind": 0,
+          "path": "@card.mountain_1.rotation.y",
+          "operand": {
+            "t": "float",
+            "v": 0.0
+          },
+          "desc": "set(@card.mountain_1.rotation.y)"
+        },
+        {
+          "kind": 0,
+          "path": "@card.grizzly_bears_1.isTapped",
+          "operand": {
+            "t": "int",
+            "v": 0
+          },
+          "desc": "set(@card.grizzly_bears_1.isTapped)"
+        },
+        {
+          "kind": 0,
+          "path": "@card.grizzly_bears_1.rotation.y",
+          "operand": {
+            "t": "float",
+            "v": 0.0
+          },
+          "desc": "set(@card.grizzly_bears_1.rotation.y)"
+        },
+        {
+          "kind": 0,
+          "path": "@card.grizzly_bears_1.isAttacking",
+          "operand": {
+            "t": "int",
+            "v": 0
+          },
+          "desc": "set(@card.grizzly_bears_1.isAttacking)"
+        }
+      ],
+      "desc": "sequence"
+    },
+    "activation": 0,
+    "authority": 0,
+    "authors": [
+      "author.antigravity"
+    ],
+    "conditionDescriptions": [
+      "all"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "button.mtg.pass_phase",
+          "desc": "identity(button.mtg.pass_phase)"
+        },
+        {
+          "kind": 0,
+          "path": "@state.mtg.phase",
+          "op": 0,
+          "desc": "compare(@state.mtg.phase)",
+          "operand": {
+            "t": "int",
+            "v": 6
+          }
+        }
+      ],
+      "desc": "all"
+    },
+    "drives": false,
+    "enabled": true,
+    "id": "law-mtg-turn-cycle",
+    "name": "mtg-turn-cycle",
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": [
+    "object-clicked"
+  ]
+}

@@ -4,6 +4,10 @@ set -u
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 
+# Finder launches should be optimized even when build/ was configured as Debug.
+# Developers can still explicitly request EARTHCALL_BUILD_TYPE=Debug.
+export EARTHCALL_BUILD_TYPE="${EARTHCALL_BUILD_TYPE:-Release}"
+
 if "$ROOT/scripts/build.sh" webgpu run; then
   exit 0
 else

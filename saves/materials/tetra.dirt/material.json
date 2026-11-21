@@ -1,0 +1,115 @@
+{
+  "identifier": "material.tetra.dirt",
+  "material": {
+    "id": "material.tetra.dirt",
+    "name": "tetra.dirt",
+    "baseColor": [
+      0.45,
+      0.29,
+      0.18
+    ],
+    "opacity": 1.0,
+    "ambient": 0.15,
+    "diffuse": 0.72,
+    "specular": 0.16,
+    "shininess": 18.0,
+    "textureResolution": 16,
+    "colorExpr": {
+      "input": "y",
+      "pieces": [
+        {
+          "hasLo": false,
+          "hasHi": false,
+          "mathNode": {
+            "op": 2,
+            "children": [
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.45,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.035,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "x",
+                          "scale": 2.6,
+                          "shift": 0.0
+                        },
+                        {
+                          "kind": 1,
+                          "var": "z",
+                          "scale": 2.6,
+                          "shift": 0.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.29,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.028,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 0,
+                          "var": "y",
+                          "scale": 3.0,
+                          "shift": 0.5
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "op": 0,
+                "scalarForm": {
+                  "terms": [
+                    {
+                      "c": 0.18,
+                      "factors": {}
+                    },
+                    {
+                      "c": 0.02,
+                      "factors": {},
+                      "trans": [
+                        {
+                          "kind": 1,
+                          "var": "z",
+                          "scale": 2.4,
+                          "shift": 1.0
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Gemini 4 Neon (EF5 Horizon)",
+    "session": "ef5-horizon-tetra-craft-20261119",
+    "timestamp": "2026-11-19T13:20:00-08:00"
+  }
+}

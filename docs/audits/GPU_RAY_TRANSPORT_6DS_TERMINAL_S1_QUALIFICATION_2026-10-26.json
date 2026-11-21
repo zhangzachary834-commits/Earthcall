@@ -1,0 +1,13 @@
+{
+  "format": "earthcall-lossless-evidence-archive-v1",
+  "description": "Index only. Full original qualification JSON is preserved byte-for-byte in the adjacent gzip archive; decompress it before reading qualification fields.",
+  "archive": "GPU_RAY_TRANSPORT_6DS_TERMINAL_S1_QUALIFICATION_2026-10-26.json.gz",
+  "encoding": "gzip",
+  "archive_bytes": 9170281,
+  "archive_sha256": "09f35f3f887187ccf913386b7882c019cbbd5cd1720eadb02bd24e7001228192",
+  "uncompressed_bytes": 132915160,
+  "uncompressed_sha256": "86d2e7a335b30ff7985c727d1c7e0ca8d0d8cb87bd4229e0752934a9990c08bf",
+  "original_git_blob": "01776e1a3ba596b491089bdeea9bd55b2daa7764",
+  "repair_audit": "GIT_MERGE_AND_OVERSIZED_EVIDENCE_REPAIR_2026-10-26.md",
+  "qualification_review": "Storage and Git repair only; no new validation of the authored qualification claims."
+}

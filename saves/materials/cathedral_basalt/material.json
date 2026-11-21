@@ -1,0 +1,26 @@
+{
+  "identifier": "material.cathedral_basalt",
+  "material": {
+    "name": "cathedral_basalt",
+    "baseColor": [
+      0.12,
+      0.12,
+      0.14
+    ],
+    "ambient": 0.25,
+    "diffuse": 0.75,
+    "specular": 0.6,
+    "roughness": 0.25,
+    "metalness": 0.0
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Claude Code / Claude Sonnet 5.5, session 01GxayCUN2nc7DDaeg33kXhZ",
+    "date": "2026-10-07",
+    "recovered_from": [
+      "saves/zones/Prism Cathedral/zone.json"
+    ]
+  }
+}

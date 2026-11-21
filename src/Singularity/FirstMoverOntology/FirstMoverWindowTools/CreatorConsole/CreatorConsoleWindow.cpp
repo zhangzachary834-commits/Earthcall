@@ -1,3 +1,5 @@
+#include "Singularity/Screen/Renderer.hpp"
+#include "Singularity/Core/CreationChannel.hpp"
 #include "CreatorConsoleWindow.hpp"
 #include <imgui.h>
 #include <GLFW/glfw3.h>
@@ -46,7 +48,17 @@ namespace Rendering {
         {
             ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.08f, 0.09f, 0.11f, 0.85f));
             if (ImGui::BeginChild("##CreatorConsoleHeaderBar", ImVec2(0, 26.0f), false, ImGuiWindowFlags_NoScrollbar)) {
-                ImGui::TextColored(ImVec4(0.45f, 0.75f, 1.0f, 1.0f), "Zone: %s", zoneMgr.active().name().c_str());
+                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.12f, 0.22f, 0.35f, 0.70f));
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.20f, 0.35f, 0.55f, 0.90f));
+                std::string zonePillLabel = "Zone: " + zoneMgr.active().name() + " 🗺️";
+                if (ImGui::SmallButton(zonePillLabel.c_str())) {
+                    state.currentSection = CreatorSection::Zones;
+                }
+                ImGui::PopStyleColor(2);
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip("Active Zone: %s (@%s)\nClick to open 2D Zone Selector workbench.",
+                                      zoneMgr.active().name().c_str(), zoneMgr.active().getIdentifier().c_str());
+                }
                 ImGui::SameLine();
                 ImGui::TextDisabled("|");
                 ImGui::SameLine();
@@ -186,38 +198,64 @@ namespace Rendering {
         if (!engine) engine = &Core::Engine::instance();
         if (!window && engine) window = engine->window();
 
-        ImGui::SetNextWindowSize(ImVec2(440, 660), ImGuiCond_FirstUseEver);
+        const ImGuiIO& io = ImGui::GetIO();
+        float displayH = io.DisplaySize.y;
+        float displayW = io.DisplaySize.x;
+        float maxH = (displayH > 200.0f) ? (displayH - 60.0f) : 500.0f;
+        float maxW = (displayW > 200.0f) ? (displayW - 40.0f) : 600.0f;
+        float normalH = std::clamp(460.0f, 280.0f, maxH);
+        float normalW = std::clamp(450.0f, 360.0f, maxW);
+
+        ImGui::SetNextWindowSizeConstraints(ImVec2(360.0f, 240.0f), ImVec2(maxW, maxH));
+        ImGui::SetNextWindowSize(ImVec2(normalW, normalH), ImGuiCond_FirstUseEver);
         if (ImGui::Begin("Creator Console [F8]", open, ImGuiWindowFlags_MenuBar)) {
+            // Safety guard: if window was saved with off-screen position or extreme height in imgui.ini, snap it back
+            ImVec2 curPos = ImGui::GetWindowPos();
+            ImVec2 curSize = ImGui::GetWindowSize();
+            if (displayH > 200.0f && displayW > 200.0f) {
+                if (curPos.y < 25.0f || curPos.y + curSize.y > displayH || curSize.y > maxH) {
+                    float fixedY = std::clamp(curPos.y, 30.0f, std::max(30.0f, displayH - normalH - 20.0f));
+                    float fixedX = std::clamp(curPos.x, 10.0f, std::max(10.0f, displayW - normalW - 20.0f));
+                    ImGui::SetWindowPos(ImVec2(fixedX, fixedY));
+                    if (curSize.y > maxH) {
+                        ImGui::SetWindowSize(ImVec2(curSize.x, normalH));
+                    }
+                }
+            }
+
             renderCreatorConsoleContent(player, selected, zoneMgr, window, engine);
         }
         ImGui::End();
     }
 
-    void renderCreatorConsole3DPreviews(Person* player, Object* selected) {
+    void renderCreatorConsole3DPreviews(Person* player, Object* selected, Core::Engine* engine) {
         (void)player;
         (void)selected;
         auto& state = getCreatorConsoleState();
-        if (state.currentSection == CreatorSection::Create3D && state.current3DMode == Mode3D::BrushCreate) {
-            const char* kindStr = "Cube";
-            switch (state.polyhedron.shapeKind) {
-                case ObjectTypes::ShapeKind::Cube: kindStr = "Cube"; break;
-                case ObjectTypes::ShapeKind::Polyhedron: kindStr = "Polyhedron"; break;
-                case ObjectTypes::ShapeKind::Sphere: kindStr = "Sphere"; break;
-                case ObjectTypes::ShapeKind::Ellipsoid: kindStr = "Ellipsoid"; break;
-                case ObjectTypes::ShapeKind::Ovoid: kindStr = "Ovoid"; break;
-                case ObjectTypes::ShapeKind::Paraboloid: kindStr = "Paraboloid"; break;
-                case ObjectTypes::ShapeKind::Torus: kindStr = "Torus"; break;
-                case ObjectTypes::ShapeKind::Cylinder: kindStr = "Cylinder"; break;
-                case ObjectTypes::ShapeKind::Cone: kindStr = "Cone"; break;
-                case ObjectTypes::ShapeKind::RoundedBox: kindStr = "Rounded Box"; break;
-                default: break;
+        
+        Singularity::Core::CreationChannel* channel = nullptr;
+        if (engine) {
+            if (auto* lm = engine->getLawManager()) {
+                channel = Singularity::Core::CreationChannel::find(*lm);
             }
-
-            ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "Preview: [%s]", kindStr);
-            ImGui::SameLine();
-            ImGui::ColorButton("##previewColor", ImVec4(state.createColor.x, state.createColor.y, state.createColor.z, 1.0f),
-                               ImGuiColorEditFlags_NoTooltip, ImVec2(16, 16));
+        }
+        
+        if (channel && state.current3DMode == Mode3D::BrushCreate) {
+            glm::mat4 t = channel->getCursorSpawnTransform();
+            
+            Object ghost;
+            ghost.setShapeKind(static_cast<ObjectTypes::ShapeKind>(channel->activeShapeKind));
+            ghost.setTransform(t);
+            const int faces = ghost.getFaces() > 0 ? ghost.getFaces() : 6;
+            for (int f = 0; f < faces; ++f) {
+                ghost.setFaceColor(f, channel->activeColor.x, channel->activeColor.y, channel->activeColor.z);
+            }
+            
+            currentRenderer().setModel(t);
+            currentRenderer().setWireframe(true);
+            ghost.drawObject();
+            currentRenderer().setWireframe(false);
+            currentRenderer().setModel(glm::mat4(1.0f));
         }
     }
-
 } // namespace Rendering

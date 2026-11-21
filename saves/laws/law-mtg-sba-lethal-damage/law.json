@@ -1,0 +1,115 @@
+{
+  "authors": [
+    "author.antigravity"
+  ],
+  "identifier": "law-mtg-sba-lethal-damage",
+  "injected_by": "Antigravity, 2026-10-11 MTG Zone Law",
+  "law": {
+    "actionDescriptions": [
+      "sequence"
+    ],
+    "actionModel": {
+      "kind": 5,
+      "children": [
+        {
+          "kind": 0,
+          "path": "zone",
+          "operand": {
+            "t": "string",
+            "v": "graveyard"
+          },
+          "desc": "set(zone)"
+        },
+        {
+          "kind": 0,
+          "path": "position",
+          "operand": {
+            "t": "vec3",
+            "x": 3.0,
+            "y": 0.52,
+            "z": -2.0
+          },
+          "desc": "set(position)"
+        },
+        {
+          "kind": 0,
+          "path": "damage",
+          "operand": {
+            "t": "int",
+            "v": 0
+          },
+          "desc": "set(damage)"
+        },
+        {
+          "kind": 0,
+          "path": "isTapped",
+          "operand": {
+            "t": "int",
+            "v": 0
+          },
+          "desc": "set(isTapped)"
+        },
+        {
+          "kind": 0,
+          "path": "rotation.y",
+          "operand": {
+            "t": "float",
+            "v": 0.0
+          },
+          "desc": "set(rotation.y)"
+        }
+      ],
+      "desc": "sequence"
+    },
+    "activation": 1,
+    "authority": 0,
+    "authors": [
+      "author.antigravity"
+    ],
+    "conditionDescriptions": [
+      "all"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 0,
+          "path": "zone",
+          "op": 0,
+          "desc": "compare(zone)",
+          "operand": {
+            "t": "string",
+            "v": "battlefield"
+          }
+        },
+        {
+          "kind": 0,
+          "path": "cardType",
+          "op": 0,
+          "desc": "compare(cardType)",
+          "operand": {
+            "t": "string",
+            "v": "creature"
+          }
+        },
+        {
+          "kind": 0,
+          "path": "damage",
+          "op": 5,
+          "desc": "compare(damage)",
+          "operandPath": "toughness"
+        }
+      ],
+      "desc": "all"
+    },
+    "drives": false,
+    "enabled": true,
+    "id": "law-mtg-sba-lethal-damage",
+    "name": "mtg-sba-lethal-damage",
+    "retrigger": 0,
+    "scope": 1,
+    "targets": []
+  },
+  "triggers": []
+}

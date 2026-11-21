@@ -1,0 +1,350 @@
+{
+  "scope": "Northern Veil \u2014 Canonical Level-Set & Curvature-Enclosed Preflight (Step 1)",
+  "author": "Sparkly Guy (Gemini 3.8 Flash High / Antigravity)",
+  "parent_specification": "FIRMAMENT_SPEC_6CF_CANONICAL_PRODUCER_FOR_SPARKLY_GUY_2026-10-21.md",
+  "narrow_lobe_witness": {
+    "function": "D(s) = max(0.01 - s^2, 0) on [-1, 1]",
+    "exact_integral": 0.0013333333333333333,
+    "naive_midpoint_gl2_integral": 0.0,
+    "naive_midpoint_error": 0.0013333333333333333,
+    "bow_upper_bound": 0.010000000000000009,
+    "bow_refuses_skip": true,
+    "extremum_s_star": 0.0,
+    "isolated_roots": [
+      -0.1,
+      0.1
+    ],
+    "rooted_panels": [
+      [
+        -0.1,
+        0.0
+      ],
+      [
+        0.0,
+        0.1
+      ]
+    ],
+    "rooted_gl2_integral": 0.0013333333333333335,
+    "rooted_gl2_abs_error": 2.168404344971009e-19,
+    "verdict": "PASS \u2014 Extremum Split + Root Isolation completely eliminates GL2 false zero omission"
+  },
+  "counterexamples_witness": {
+    "count": 20,
+    "all_matched": true,
+    "results": [
+      {
+        "index": 0,
+        "ray": 15,
+        "target_window": [
+          30.408400813450548,
+          30.41241735130478
+        ],
+        "target_span": 0.004016537854230506,
+        "matched": true,
+        "isolated_bracket": [
+          30.4092852450205,
+          30.409285508602153
+        ],
+        "bracket_width": 2.635816542806424e-07
+      },
+      {
+        "index": 1,
+        "ray": 15,
+        "target_window": [
+          33.75819338387781,
+          33.76220992173204
+        ],
+        "target_span": 0.004016537854226954,
+        "matched": true,
+        "isolated_bracket": [
+          33.760167976836755,
+          33.76016824041841
+        ],
+        "bracket_width": 2.635816542806424e-07
+      },
+      {
+        "index": 2,
+        "ray": 654,
+        "target_window": [
+          24.322296181228012,
+          24.327467516064644
+        ],
+        "target_span": 0.005171334836632013,
+        "matched": true,
+        "isolated_bracket": [
+          24.32570991680518,
+          24.325710255287817
+        ],
+        "bracket_width": 3.38482635697801e-07
+      },
+      {
+        "index": 3,
+        "ray": 654,
+        "target_window": [
+          31.644906309898943,
+          31.650077644735575
+        ],
+        "target_span": 0.005171334836632013,
+        "matched": true,
+        "isolated_bracket": [
+          31.64687743681867,
+          31.646877775301306
+        ],
+        "bracket_width": 3.38482635697801e-07
+      },
+      {
+        "index": 4,
+        "ray": 718,
+        "target_window": [
+          23.6435550856404,
+          23.649390164762735
+        ],
+        "target_span": 0.005835079122334719,
+        "matched": true,
+        "isolated_bracket": [
+          23.64592646874371,
+          23.645926803774273
+        ],
+        "bracket_width": 3.350305632920936e-07
+      },
+      {
+        "index": 5,
+        "ray": 718,
+        "target_window": [
+          31.981883151456714,
+          31.98771823057905
+        ],
+        "target_span": 0.005835079122334719,
+        "matched": true,
+        "isolated_bracket": [
+          31.98686747429747,
+          31.986867809328032
+        ],
+        "bracket_width": 3.350305632920936e-07
+      },
+      {
+        "index": 6,
+        "ray": 719,
+        "target_window": [
+          60.601530539337546,
+          60.60644680354744
+        ],
+        "target_span": 0.004916264209896326,
+        "matched": true,
+        "isolated_bracket": [
+          60.60595811557698,
+          60.605958452933464
+        ],
+        "bracket_width": 3.373564823050401e-07
+      },
+      {
+        "index": 7,
+        "ray": 719,
+        "target_window": [
+          65.3506417660974,
+          65.3555580303073
+        ],
+        "target_span": 0.004916264209896326,
+        "matched": true,
+        "isolated_bracket": [
+          65.35102547604959,
+          65.35102581340607
+        ],
+        "bracket_width": 3.373564823050401e-07
+      },
+      {
+        "index": 8,
+        "ray": 784,
+        "target_window": [
+          44.30700453463942,
+          44.31535501591861
+        ],
+        "target_span": 0.008350481279194355,
+        "matched": true,
+        "isolated_bracket": [
+          44.31355496943161,
+          44.3135563159085
+        ],
+        "bracket_width": 1.3464768926496617e-06
+      },
+      {
+        "index": 9,
+        "ray": 784,
+        "target_window": [
+          47.85595907829702,
+          47.86430955957621
+        ],
+        "target_span": 0.008350481279194355,
+        "matched": true,
+        "isolated_bracket": [
+          47.860875272654994,
+          47.860876619131886
+        ],
+        "bracket_width": 1.3464768926496617e-06
+      },
+      {
+        "index": 10,
+        "ray": 847,
+        "target_window": [
+          56.2175532206893,
+          56.22598226647824
+        ],
+        "target_span": 0.008429045788943768,
+        "matched": true,
+        "isolated_bracket": [
+          56.22582427258817,
+          56.2258255970105
+        ],
+        "bracket_width": 1.3244223282526946e-06
+      },
+      {
+        "index": 11,
+        "ray": 847,
+        "target_window": [
+          67.1753127463162,
+          67.18374179210514
+        ],
+        "target_span": 0.008429045788943768,
+        "matched": true,
+        "isolated_bracket": [
+          67.18160602699618,
+          67.1816073514185
+        ],
+        "bracket_width": 1.3244223282526946e-06
+      },
+      {
+        "index": 12,
+        "ray": 896,
+        "target_window": [
+          142.86702683144,
+          142.87905774346186
+        ],
+        "target_span": 0.012030912021856466,
+        "matched": true,
+        "isolated_bracket": [
+          142.87094088201695,
+          142.87094119937933
+        ],
+        "bracket_width": 3.173623781549395e-07
+      },
+      {
+        "index": 13,
+        "ray": 896,
+        "target_window": [
+          146.92144418280125,
+          146.9334750948231
+        ],
+        "target_span": 0.012030912021856466,
+        "matched": true,
+        "isolated_bracket": [
+          146.92521987395605,
+          146.92522019131843
+        ],
+        "bracket_width": 3.173623781549395e-07
+      },
+      {
+        "index": 14,
+        "ray": 973,
+        "target_window": [
+          24.602152457926422,
+          24.611990310950205
+        ],
+        "target_span": 0.009837853023782372,
+        "matched": true,
+        "isolated_bracket": [
+          24.607710626976626,
+          24.607710949239106
+        ],
+        "bracket_width": 3.2226247981270717e-07
+      },
+      {
+        "index": 15,
+        "ray": 973,
+        "target_window": [
+          28.183130958583206,
+          28.19296881160699
+        ],
+        "target_span": 0.009837853023782372,
+        "matched": true,
+        "isolated_bracket": [
+          28.18719020402446,
+          28.18719052628694
+        ],
+        "bracket_width": 3.2226247981270717e-07
+      },
+      {
+        "index": 16,
+        "ray": 1037,
+        "target_window": [
+          23.73829104588367,
+          23.74971954524517
+        ],
+        "target_span": 0.011428499361500144,
+        "matched": true,
+        "isolated_bracket": [
+          23.741958884750602,
+          23.741959204995794
+        ],
+        "bracket_width": 3.202451921424654e-07
+      },
+      {
+        "index": 17,
+        "ray": 1037,
+        "target_window": [
+          28.915401256643236,
+          28.926829756004736
+        ],
+        "target_span": 0.011428499361500144,
+        "matched": true,
+        "isolated_bracket": [
+          28.91818632528191,
+          28.9181866455271
+        ],
+        "bracket_width": 3.202451921424654e-07
+      },
+      {
+        "index": 18,
+        "ray": 1038,
+        "target_window": [
+          21.24241813761182,
+          21.25379615277052
+        ],
+        "target_span": 0.011378015158697963,
+        "matched": true,
+        "isolated_bracket": [
+          21.2475701134166,
+          21.247571401124787
+        ],
+        "bracket_width": 1.2877081871920382e-06
+      },
+      {
+        "index": 19,
+        "ray": 1038,
+        "target_window": [
+          33.42827237257734,
+          33.43965038773604
+        ],
+        "target_span": 0.011378015158697963,
+        "matched": true,
+        "isolated_bracket": [
+          33.437245025433754,
+          33.43724631314194
+        ],
+        "bracket_width": 1.2877081871920382e-06
+      }
+    ],
+    "verdict": "PASS \u2014 100% of the 20 missed crossing instances from \u00a76ce are caught and bracketed"
+  },
+  "full_2304_ray_preflight_member0": {
+    "total_rays": 2304,
+    "total_wave_crossings_isolated": 2685,
+    "mean_crossings_per_ray": 1.1653645833333333,
+    "max_crossings_per_ray": 5,
+    "total_bins_tested": 23574,
+    "mean_bins_tested_per_ray": 10.231770833333334,
+    "total_certified_skips": 18318,
+    "certified_skip_pct": 77.70425044540595,
+    "max_bisection_depth": 6,
+    "verdict": "PASS \u2014 Curvature enclosure successfully processes all 2,304 rays with max depth <= 6 and 0 omissions"
+  }
+}

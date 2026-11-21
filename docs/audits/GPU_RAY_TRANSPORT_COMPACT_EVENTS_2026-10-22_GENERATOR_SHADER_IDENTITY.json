@@ -1,0 +1,30 @@
+{
+  "ray_transport_gpu_knot_numerical": {
+    "shader_hashes": {
+      "kGpuProducerWgsl": "31b79b53abc3b861440cfadcb0558456e8da0d77cb06aeb7e538fc633d08470c",
+      "kKnotProducer": "081b7e312a5a6d96ef2b35b292f8d0407eff6a7cccdb3579b9a2736cf9ed2f59",
+      "kKnotConsumer": "a0c8b0b0570279ae7f67706230c08d102c14f1a32d2c9a10ab92d7abefed9edb",
+      "kKnotDecompress": "e4fa049efe199505ba9191df374a0303160661c8a9e506e5c7519f4ed1eaf2c6",
+      "kCommonWgslHeader": "15b42988e92c553e019cdc43098070ea89dedb83b1faccf44484acbe0a5d780c",
+      "kOverlapWgsl": "112b77ff20297801d5618cb19710813861c1c6d369b44495a8555b8a6bbe00d6",
+      "kUnfusedShader": "935e32d14aec72764755ce6887b8d9b22016420ae35f3dbad2c06bd48768b724",
+      "kFusedShader": "925ed7a05767e97a19f5df1fed2a65e414c1154372f24a24dcb0f175f3cce1fc"
+    },
+    "match": true,
+    "scope": "Current report-label correction leaves all8 static GPU shader literals identical to compiled native snapshot"
+  },
+  "ray_transport_gpu_knot_phases": {
+    "shader_hashes": {
+      "kGpuProducerWgsl": "31b79b53abc3b861440cfadcb0558456e8da0d77cb06aeb7e538fc633d08470c",
+      "kKnotProducer": "081b7e312a5a6d96ef2b35b292f8d0407eff6a7cccdb3579b9a2736cf9ed2f59",
+      "kKnotConsumer": "a0c8b0b0570279ae7f67706230c08d102c14f1a32d2c9a10ab92d7abefed9edb",
+      "kKnotDecompress": "e4fa049efe199505ba9191df374a0303160661c8a9e506e5c7519f4ed1eaf2c6",
+      "kCommonWgslHeader": "15b42988e92c553e019cdc43098070ea89dedb83b1faccf44484acbe0a5d780c",
+      "kOverlapWgsl": "112b77ff20297801d5618cb19710813861c1c6d369b44495a8555b8a6bbe00d6",
+      "kUnfusedShader": "935e32d14aec72764755ce6887b8d9b22016420ae35f3dbad2c06bd48768b724",
+      "kFusedShader": "925ed7a05767e97a19f5df1fed2a65e414c1154372f24a24dcb0f175f3cce1fc"
+    },
+    "match": true,
+    "scope": "Current report-label correction leaves all8 static GPU shader literals identical to compiled native snapshot"
+  }
+}

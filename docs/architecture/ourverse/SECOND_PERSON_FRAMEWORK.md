@@ -3,9 +3,10 @@
 **What must be true before a second Person enters — Person-to-Person visibility,
 representation, and conflict, specified at population one.**
 
-**Status:** Specified only. Nothing below is implemented, and nothing below is needed
-yet — *that is the point*: each of these three questions becomes a crisis if it is
-first asked in production, and today they can be designed in peace. Commissioned by
+**Status:** The three Second-Person mechanisms below are specified only; the
+Primary Home admission invariant cited in §0 already has a live implementation.
+The three questions become a crisis if first asked in production, and today they
+can be designed in peace. Commissioned by
 the world's author 2026-08-19, in response to
 `docs/Reflections on Trends and Directions/Reflections on Trajectory/The_Second_Person_and_the_Speed_of_Frameworks.md` §5.
 Decisions marked **⚑ AUTHOR** are the world's author's to make, not an agent's —
@@ -39,6 +40,36 @@ machinery built for the substrate case.
 | **Representation** (§2) | what may B *show* of A? | kernel guards, `Relation`, Body doctrine | a rights-management subsystem |
 | **Conflict** (§3) | whose law *fires* when equals contradict? | authority, jurisdiction, `ChangeRecorder` | a scheduler priority hack |
 
+### Zach's account of standing and Constitution (2026-09-28)
+
+Zach supplied these distinctions directly in the PropertyPath and memory micromastery conversation. **They are five distinct Relation kinds, like Category Relations, not a hardcoded enum.** Preserve them as separate grounds of standing; do not turn a dependency into ownership or governance into authorship. Their exact endpoints and admission rules remain for Zach to specify:
+
+| Ground | Zach's meaning |
+|---|---|
+| **Authorship** | Origination from a Person: the Person intentionally acts, and an outcome corresponding to the nature of that act results. The Person need not have deliberately aimed at that particular outcome. |
+| **Ownership** | Every change in what a Person owns must answer to that Person. “Answer to” is Zach's term; this definition alone does not specify a universal prior-veto procedure. |
+| **Governance** | Scoped authority over reading and writing a Singular's Properties, without necessarily owning that Singular. |
+| **Dependency** | Something in which a Person holds an ownership stake is causally affected by another Singular in a way that significantly affects the owned thing's telos. |
+| **Constitution** | Above the other four: a Singular's Property is a constitutive predicate of oneself, or the matter is an inviolable human right. This grounds non-negotiable Person guards. |
+
+Zach's examples of Constitution are the Person's Body and protection against another's theft or misrepresentation of their likeness, and the guarantee that every Person has **at least one Primary Home**. This does not declare every authored or dependent Property constitutionally guarded. `ZoneManager::enforcePrimaryHomeInvariant` already names and checks the at-least-one admission invariant; §2's proposed likeness channel checks remain design work. The distinction between a real human body and an avatar below remains in force.
+
+**Bodily/location actuation, Zach's further 2026-09-28 direction:** The refusal of another actor positively forcing a Person's body/location to a specified place is an intrinsic hardcoded Kernel boundary, prior to any Metalaw bootstrap. A Law's Person authorship alone cannot authorize its later firings. An authored, revocable consent sub-Relation must join the Person who would move to the Law that would move them; it remains active until that Person revokes it, then becomes historical while their primary Relation endures. The Person's signing key must authorize both consent and revocation. The current Relation graph does not yet carry this complete lifecycle or signed proof, so the Law motion path refuses without it. See [the PropertyPath task](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Property_Storage_and_OntoMath_Binding/Property_Storage_and_OntoMath_Binding.md) for the live enforcement limit.
+
+**Zach's distinction:** This boundary prohibits an unconsented *positive write* that places or drives the Person. It does not prohibit Laws from saying the Person should be out of a restricted, dangerous, or private area. A location condition and a non-motion response remain authorable; the rule for entry, warning, or egress is not supplied by the Kernel guard.
+
+**Representation boundary:** Do not introduce `StakeKind`, `ConstitutionKind`, or a fixed C++ list of these grounds. Zach confirmed that Constitution is one of the five distinct Relation kinds; "unique" distinguishes the kinds, not one canonical Relation instance per pair. Which Singulars each Relation joins and how a claim gains standing still need authorial decisions before serialization or matching semantics are fixed.
+
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:47 PDT. The five definitions and three examples are Zach's; Codex placed them beside the existing stakes framework and checked the current Home invariant and proposed likeness boundary.*
+
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 01:49 PDT. Zach clarified that these grounds are unique Relations rather than hardcoded enums; their exact topology awaits his answer.*
+
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:26 PDT. Zach specified signed Person–Law consent as an ongoing, revocable sub-Relation beneath a constitutional Kernel refusal; Codex recorded the human-authored rule and current implementation limit.*
+
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 19:29 PDT. Zach clarified that the constitutional guard is against positive body/location writes, not every authored location prohibition.*
+
+*Codex · GPT-6.1 Sol · session `01a0e64f-5853-7d30-8196-995b4fd16b89` · 2026-09-28 12:53 PDT. Zach clarified that all five are distinct Relation kinds, analogous to Category Relations; no canonical per-pair instance rule was supplied.*
+
 ---
 
 ## 1. Axis one: read-visibility between Persons
@@ -58,10 +89,10 @@ Relation, not a transfer (the manifesto's own resolution of the perceived-Voice
 question). What B may read of A is a function of the Relation A has authored toward
 B — a Relationship *is* the unit of disclosure. This is why no new machinery is
 admitted: `Relation` already exists as a first-class being, and `TransferPolicy` is
-already the one gate. The gate gains a **subject dimension** — today it answers
-"may this path be written?"; it must learn to answer "may this path be read, *by a
-law whose author stands in this Relation to the owner*?" One gate, one new
-question, zero new systems.
+already the one gate for set-to-set transfer. General PropertyPath reads and writes
+do not yet pass through it. The gate must learn the **subject dimension** and
+operation: may this path be read or written by an actor standing in the relevant
+Relation? One authority office, new questions, zero competing permission systems.
 
 - The gates themselves are registered properties (refusal #6 applies to the gate:
   A can see what A has disclosed and to whom; hiding the disclosure table would be
@@ -72,7 +103,7 @@ question, zero new systems.
   direction. **⚑ AUTHOR:** the exact contents of that floor.
 - **⚑ AUTHOR (Zachary, 2026-09-01, reported by Antigravity Gemini 3.1 Pro):** The default posture between Persons with *no* authored Relation is neither a simple open nor closed, but a **third path projecting vertically through both, governed by a stakes framework**:
   1. **Constitutive Properties (Closed by default):** Anything constitutive of Persons (hardcoded properties, `Body`, `Soul`) is strictly closed by default. The `Soul` framework models a Person's internal journey; nothing constitutively owned by the Soul (internal thoughts, etc.) may *ever* be exposed by default.
-  2. **Authored/Incidental Properties (Evaluated by Stakes):** Non-constitutive state is evaluated by a stakes framework. The engine compares the "level-tier" of stakes of the reader and the property. Ontological categories of stakes include:
+  2. **Authored/Incidental Properties (Evaluated by Stakes):** Non-constitutive state is evaluated by a stakes framework. The engine compares the "level-tier" of stakes of the reader and the property. The grounds below are Relation-borne, not enum values:
      - **Belonging:** Ownership, authorship, governance, or telos (modeled by Lexemes as a benefit/good received).
      - **Effect on properties.**
      - **Intensity of Relations.**

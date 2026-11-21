@@ -1,8 +1,9 @@
 #include "SmoothSurface.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 
-#include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
 
 namespace geom {
 
@@ -55,9 +56,22 @@ glm::mat4 paraboloid(float a) {
 }
 
 glm::mat4 translate(const glm::mat4& Q, const glm::vec3& t) {
-    // Points q satisfy (q−t) on the original surface: Q' = Mᵀ Q M, M = translate(−t).
-    glm::mat4 M = glm::translate(glm::mat4(1.0f), -t);
-    return glm::transpose(M) * Q * M;
+    // Point-space translation is authored by OntoMath. transformQuadric owns
+    // Q' = T^-T Q T^-1; GLM remains only the representation boundary here.
+    const auto pointTransform = OntoMath::affineTranslation(t);
+    if (!pointTransform) {
+        throw std::runtime_error("OntoMath refused quadric point translation");
+    }
+    const auto transformed = OntoMath::transformQuadric(
+        OntoMath::MatrixValue::fromGlmMat4(Q), *pointTransform);
+    if (!transformed) {
+        throw std::runtime_error("OntoMath refused quadric congruence transform");
+    }
+    const auto lowered = transformed->toGlmMat4();
+    if (!lowered) {
+        throw std::runtime_error("OntoMath quadric result cannot lower to glm::mat4");
+    }
+    return *lowered;
 }
 
 OntoMath::ScalarForm toScalarForm(const glm::mat4& Q) {
@@ -224,6 +238,8 @@ SmoothSurfaceData makeParaboloid(float a, float halfH) {
     s.form = SmoothSurfaceData::QuadricForm::Paraboloid;
     s.Q = Quadric::paraboloid(a);
     s.zTrim = glm::vec2(0.0f, 2.0f * halfH);
+    float r = std::sqrt(2.0f * halfH / std::max(1e-4f, a));
+    s.axes = glm::vec3(r, r, 2.0f * halfH);
     s.closed = false; s.orientable = true; s.hasBoundary = true; s.isVolume = false;
     return s;
 }
@@ -233,6 +249,7 @@ SmoothSurfaceData makeTorus(float majorR, float minorR) {
     s.model = SmoothSurfaceData::Model::Parametric;
     s.pkind = SmoothSurfaceData::ParametricKind::Torus;
     s.params = {majorR, minorR};
+    s.axes = glm::vec3(majorR + minorR, majorR + minorR, minorR);
     s.closed = true; s.orientable = true; s.hasBoundary = false; s.isVolume = true;
     return s;
 }
@@ -242,6 +259,7 @@ SmoothSurfaceData makeOvoid(float r, float asym) {
     s.model = SmoothSurfaceData::Model::Parametric;
     s.pkind = SmoothSurfaceData::ParametricKind::Ovoid;
     s.params = {r, asym};
+    s.axes = glm::vec3(r);
     s.closed = true; s.orientable = true; s.hasBoundary = false; s.isVolume = true;
     return s;
 }

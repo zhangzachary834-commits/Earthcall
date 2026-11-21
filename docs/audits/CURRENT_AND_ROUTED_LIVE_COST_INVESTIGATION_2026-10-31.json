@@ -1,0 +1,113 @@
+{
+  "signed": "Codex / GPT-6.1 Sol / Sixth-One Sun / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-31T23:41:22-07:00",
+  "scope": "source inspection, stored timing arithmetic, shell launcher checks and Release builds; no fresh runtime FPS/native GPU timing",
+  "before": {
+    "head": "6911446c38ff4970922914c41d14a1ec1289449b",
+    "binary_sha256": "64b2bcd9938a3a93e7f88074e417c46f23bb409ff9c1f014fee3bda19e6847ff",
+    "preserved_at": "/private/tmp/ec-current-drift-20261031/pre-rebuild-64b2bcd9938a",
+    "at": "2026-11-01T06:31:50.011123+00:00",
+    "observation": "CMake cache/flags Debug while executable contains Release-style label; original preserved before normalization; no causal runtime claim."
+  },
+  "after": {
+    "head": "6911446c38ff4970922914c41d14a1ec1289449b",
+    "at": "2026-11-01T06:38:46.883058+00:00",
+    "executable": "/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/build/earthcall_webgpu",
+    "binary_sha256": "c0088eb54dc2ea980c2e4de8eb9f2057e61dcd1837a2d37ad202bbb7555a4eaf",
+    "cmake_home": "/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport",
+    "build_type": "Release",
+    "flags_sha256": "4a51c2dfd2c68603b54d23744ca8c62de8c056829cfd7d41a553d901d3c83e7d",
+    "compile_flags": "-O3 -DNDEBUG",
+    "explicit_release_build_exit": 0,
+    "no_override_build_exit": 0,
+    "normal_helper_preserves_release": true,
+    "launcher_cases_passed": 8,
+    "runtime_fps_retested": false,
+    "kernel_changes_this_pass": false
+  },
+  "timings": [
+    {
+      "file": "positive_e2e_p10_verification.json",
+      "sha256": "11d7f43e864209b0f95d9bfb07503d30fc7d556373e812deb1e7a020a36cfb2c",
+      "all_64": {
+        "current_mean_ms": 105.44267783789063,
+        "current_median_ms": 107.7943229375,
+        "delta_ms": -13.460792761718764,
+        "delta_pct": -12.765981515011992,
+        "routed_mean_ms": 91.98188507617186,
+        "routed_median_ms": 93.343880203125
+      }
+    },
+    {
+      "file": "positive_e2e_p8_verification.json",
+      "sha256": "0738fdd82759b735669aa8873d151e1eaa4143642a2f6a962f089d24fbfc34e6",
+      "all_64": {
+        "current_mean_ms": 87.8519969824219,
+        "current_median_ms": 87.644752921875,
+        "delta_ms": 0.41602988476560654,
+        "delta_pct": 0.47355768685468697,
+        "routed_mean_ms": 88.2680268671875,
+        "routed_median_ms": 86.15737438281249
+      }
+    },
+    {
+      "file": "positive_e2e_p9_verification.json",
+      "sha256": "60cf5248c4f30a1590bff6cd5e8c2ced73529de8ef1d2dc8da2c2c436b77cad7",
+      "all_64": {
+        "current_mean_ms": 91.73122515429687,
+        "current_median_ms": 93.6430165546875,
+        "delta_ms": -3.882120615234385,
+        "delta_pct": -4.232060139504785,
+        "routed_mean_ms": 87.84910453906248,
+        "routed_median_ms": 88.7990142578125
+      }
+    }
+  ],
+  "source_identity": [
+    {
+      "file": "src/Singularity/Screen/WebGPU/SdfWgsl.cpp",
+      "same_as_074f4075a": true,
+      "current_sha256": "7448ed0b220d5248d2d73659e9f1d446a85e4924a137da60409b5410dc677d70"
+    },
+    {
+      "file": "src/Singularity/Core/EngineRender.cpp",
+      "same_as_074f4075a": true,
+      "current_sha256": "ca4bedf57f341cab10f3089faee546598204d49c32920ca602552c02e31c990c"
+    },
+    {
+      "file": "src/Singularity/Screen/Renderer.hpp",
+      "same_as_074f4075a": true,
+      "current_sha256": "d2f994701be5be21bc6ac0a9f6d2e242a33c0224a132dfbdf311ce4b369e822a"
+    },
+    {
+      "file": "src/Singularity/Screen/ScreenChannel.hpp",
+      "same_as_074f4075a": true,
+      "current_sha256": "f7637e99a782d66a044dec011ab7f3fdbadad083f4ce9b03296f0a75ced0052e"
+    },
+    {
+      "file": "src/Singularity/Core/EngineInit.cpp",
+      "same_as_074f4075a": true,
+      "current_sha256": "9767e3938d282bce1c23e46c270a80fa8837f51c3876dda6aa093962aa0913a1"
+    }
+  ],
+  "person_observations": {
+    "earlier_release_fps": "about19\u201321, similar view",
+    "recent_modes_fps": "about13\u201317, sometimes about14 for both",
+    "latest_reported_current_fps": "about13",
+    "latest_reported_routed_fps": "about17",
+    "off_routed_sets": 0,
+    "off_routed_pixels": 0,
+    "on_routed_sets": 1,
+    "on_routed_pixels": 3686400,
+    "slow_run_build_label": "not checked; unknown"
+  },
+  "field_fixture_sha256": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496",
+  "live_zone_matches_frozen_fixture": true,
+  "fps_average_frames": 60,
+  "root_cause_of_live_current_fps_drop": "not established",
+  "default_merge_performance_gate": "about28\u201330FPS in any one accepted view; not met by these observations",
+  "source_edits": {
+    "scripts/build.sh": "2c7f81637d75cb0b779f1fadde50447084fd020e6c1e4a3ca3f65320219aadd8",
+    "src/Singularity/Screen/DeveloperToolsWindow.cpp": "c5d990856cd91e7f4963880fb44ce3191ea2d2531f00904c4af17ab174408302",
+    "src/Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.cpp": "b2fdfd5301f3b676a1ca112cbc5e1bafdda065b834ad6497ebab7fd48a4721bb"
+  }
+}

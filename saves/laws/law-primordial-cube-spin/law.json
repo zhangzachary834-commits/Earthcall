@@ -1,0 +1,150 @@
+{
+  "identifier": "law-primordial-cube-spin",
+  "injected_by": "GPT-5.6 Sol — The Sun · commissioned by Zach · 2026-10-26",
+  "authors": [
+    "Zach"
+  ],
+  "law": {
+    "id": "law-primordial-cube-spin",
+    "name": "Primordial Cube: authored rotation from world time",
+    "enabled": true,
+    "authority": 0,
+    "activation": 1,
+    "scope": 1,
+    "drives": false,
+    "retrigger": 0,
+    "conditionMode": "all",
+    "authors": [
+      "Zach"
+    ],
+    "conditionSubjects": [],
+    "targets": [],
+    "applicationLog": [],
+    "conditionModel": {
+      "kind": 0,
+      "path": "primordialCube",
+      "op": 0,
+      "operand": {
+        "t": "bool",
+        "v": true
+      }
+    },
+    "actionModel": {
+      "kind": 8,
+      "path": "rotation",
+      "bindings": {
+        "t": "time",
+        "sx": "primordial.spin.xDegreesPerSecond",
+        "sy": "primordial.spin.yDegreesPerSecond",
+        "sz": "primordial.spin.zDegreesPerSecond"
+      },
+      "function": {
+        "input": "t",
+        "pieces": [
+          {
+            "hasLo": false,
+            "hasHi": false,
+            "mathNode": {
+              "op": 2,
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1,
+                        "factors": {
+                          "t": 1,
+                          "sx": 1
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1,
+                        "factors": {
+                          "t": 1,
+                          "sy": 1
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 1,
+                        "factors": {
+                          "t": 1,
+                          "sz": 1
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "provenance": [
+      {
+        "entityA": "law-primordial-cube-spin",
+        "entityB": "Zach",
+        "type": "authored-by",
+        "directed": true,
+        "weight": 1,
+        "events": [],
+        "attachment": {
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "childAnchor": [
+            0,
+            0,
+            0
+          ],
+          "parentAnchor": [
+            0,
+            0,
+            0
+          ],
+          "localOffset": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1
+          }
+        }
+      }
+    ]
+  },
+  "triggers": []
+}

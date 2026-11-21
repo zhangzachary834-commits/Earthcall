@@ -1,0 +1,64 @@
+{
+  "schema": "6ex-external-lookup-reference-experiment-1",
+  "reference_rows": 1526,
+  "reference_seconds": 191.19278841497726,
+  "binary64_values": 12208,
+  "all_exact": true,
+  "allocation_witness": {
+    "original": {
+      "allocation_calls_10000_scalar_leaves": 20000,
+      "serial_bytes": 55191,
+      "parallel_workers": 8,
+      "nested_cases_per_suite": 1000,
+      "binding_cases_per_suite": 495
+    },
+    "lookup": {
+      "allocation_calls_10000_scalar_leaves": 0,
+      "serial_bytes": 55191,
+      "parallel_workers": 8,
+      "nested_cases_per_suite": 1000,
+      "binding_cases_per_suite": 495
+    }
+  },
+  "timing_blocks": [
+    {
+      "block": 0,
+      "original_seconds": 4.876673728998867,
+      "lookup_seconds": 4.173888417004491,
+      "ratio": 0.8558883880594057
+    },
+    {
+      "block": 1,
+      "original_seconds": 4.521016311991843,
+      "lookup_seconds": 4.065851395498612,
+      "ratio": 0.8993224343637244
+    },
+    {
+      "block": 2,
+      "original_seconds": 4.422856270495686,
+      "lookup_seconds": 4.287354000014602,
+      "ratio": 0.9693631756959858
+    },
+    {
+      "block": 3,
+      "original_seconds": 5.178088354499778,
+      "lookup_seconds": 4.386116979003418,
+      "ratio": 0.847053329090429
+    }
+  ],
+  "median_paired_ratio": 0.877605411211565,
+  "blocks_faster": 4,
+  "engine_source_unchanged": true,
+  "new_reference_population_coverage": 0,
+  "native_GPU": false,
+  "full_population_qualified": false,
+  "Person_acceptance": false,
+  "negative_controls": [
+    "one-ULP-output-drift",
+    "nonfinite-output",
+    "missing-result-row",
+    "wrong-input-output-order",
+    "changed-parent-source",
+    "derived-labelled-canonical"
+  ]
+}

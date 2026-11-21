@@ -1,0 +1,59 @@
+{
+ "authors": [
+  "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+ ],
+ "identifier": "law-line-resolve-y-value",
+ "injected_by": "Codex / GPT-6.1 Sol / 01a10992-828e-7e80-890c-c64b09141e18 / 2026-10-06",
+ "law": {
+  "activation": 1,
+  "applicationLog": [],
+  "authors": [
+   "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+  ],
+  "authority": 0,
+  "conditionMode": "all",
+  "conditionSubjects": [],
+  "drives": false,
+  "enabled": true,
+  "id": "law-line-resolve-y-value",
+  "name": "Law Line · y in value",
+  "provenance": [
+   {
+    "directed": true,
+    "entityA": "law-line-resolve-y-value",
+    "entityB": "Zach",
+    "events": [],
+    "type": "authored-by",
+    "weight": 1.0
+   }
+  ],
+  "retrigger": 0,
+  "scope": 0,
+  "targets": [
+   "terminal-channel"
+  ],
+  "conditionModel": {
+   "kind": 3,
+   "children": [
+    {
+     "kind": 0,
+     "path": "ambiguity.symbol",
+     "op": 0,
+     "operand": "y"
+    },
+    {
+     "kind": 0,
+     "path": "ambiguity.slot",
+     "op": 0,
+     "operand": "value"
+    }
+   ]
+  },
+  "actionModel": {
+   "kind": 0,
+   "path": "ambiguity.resolved",
+   "operand": "lexeme.law-line.y.value-true->law-line-value-true"
+  }
+ },
+ "triggers": []
+}

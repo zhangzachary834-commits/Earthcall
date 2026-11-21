@@ -1,0 +1,371 @@
+{
+  "at": "2026-11-04T06:47:47.360567+00:00",
+  "rows": [
+    {
+      "block": 0,
+      "slot": 0,
+      "lane": "baseline",
+      "complete_ms": 60.83253125,
+      "encode_ms": 38.549156249999996,
+      "wait_ms": 22.284073,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 10365,
+        "upload_bytes": 1463480
+      },
+      "different_bytes_vs_first_baseline": 0,
+      "image_sha256": "c9cb72298f7ec6ccb7772272592e0e619ed9ba83679f685941b932b2df812fba"
+    },
+    {
+      "block": 0,
+      "slot": 1,
+      "lane": "candidate-final",
+      "complete_ms": 30.44357325,
+      "encode_ms": 15.987291500000001,
+      "wait_ms": 14.45685425,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 147,
+        "upload_bytes": 2771288
+      },
+      "different_bytes_vs_first_baseline": 0,
+      "image_sha256": "c9cb72298f7ec6ccb7772272592e0e619ed9ba83679f685941b932b2df812fba"
+    },
+    {
+      "block": 0,
+      "slot": 2,
+      "lane": "candidate-final",
+      "complete_ms": 29.745604,
+      "encode_ms": 15.65802075,
+      "wait_ms": 14.08825,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 147,
+        "upload_bytes": 2771288
+      },
+      "different_bytes_vs_first_baseline": 0,
+      "image_sha256": "c9cb72298f7ec6ccb7772272592e0e619ed9ba83679f685941b932b2df812fba"
+    },
+    {
+      "block": 0,
+      "slot": 3,
+      "lane": "baseline",
+      "complete_ms": 61.812979500000004,
+      "encode_ms": 39.62762525,
+      "wait_ms": 22.1860415,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 10365,
+        "upload_bytes": 1463480
+      },
+      "different_bytes_vs_first_baseline": 0,
+      "image_sha256": "c9cb72298f7ec6ccb7772272592e0e619ed9ba83679f685941b932b2df812fba"
+    },
+    {
+      "block": 1,
+      "slot": 0,
+      "lane": "baseline",
+      "complete_ms": 61.30270825,
+      "encode_ms": 39.13040625,
+      "wait_ms": 22.172979249999997,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 10365,
+        "upload_bytes": 1463480
+      },
+      "different_bytes_vs_first_baseline": 0,
+      "image_sha256": "c9cb72298f7ec6ccb7772272592e0e619ed9ba83679f685941b932b2df812fba"
+    },
+    {
+      "block": 1,
+      "slot": 1,
+      "lane": "candidate-final",
+      "complete_ms": 30.142114499999998,
+      "encode_ms": 15.73457275,
+      "wait_ms": 14.4081565,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 147,
+        "upload_bytes": 2771288
+      },
+      "different_bytes_vs_first_baseline": 0,
+      "image_sha256": "c9cb72298f7ec6ccb7772272592e0e619ed9ba83679f685941b932b2df812fba"
+    },
+    {
+      "block": 1,
+      "slot": 2,
+      "lane": "candidate-final",
+      "complete_ms": 30.086406500000002,
+      "encode_ms": 15.75141675,
+      "wait_ms": 14.335521,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 147,
+        "upload_bytes": 2771288
+      },
+      "different_bytes_vs_first_baseline": 0,
+      "image_sha256": "c9cb72298f7ec6ccb7772272592e0e619ed9ba83679f685941b932b2df812fba"
+    },
+    {
+      "block": 1,
+      "slot": 3,
+      "lane": "baseline",
+      "complete_ms": 62.41835425,
+      "encode_ms": 39.87973975,
+      "wait_ms": 22.53930175,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 10365,
+        "upload_bytes": 1463480
+      },
+      "different_bytes_vs_first_baseline": 48,
+      "image_sha256": "cf7b08b07ac1c61d6d1d12d4caff871395fccf62dab88cd980875c912dfd49ed"
+    },
+    {
+      "block": 2,
+      "slot": 0,
+      "lane": "baseline",
+      "complete_ms": 62.611104,
+      "encode_ms": 39.93989575,
+      "wait_ms": 22.671885250000003,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 10365,
+        "upload_bytes": 1463480
+      },
+      "different_bytes_vs_first_baseline": 0,
+      "image_sha256": "c9cb72298f7ec6ccb7772272592e0e619ed9ba83679f685941b932b2df812fba"
+    },
+    {
+      "block": 2,
+      "slot": 1,
+      "lane": "candidate-final",
+      "complete_ms": 30.056979,
+      "encode_ms": 15.6088645,
+      "wait_ms": 14.448937749999999,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 147,
+        "upload_bytes": 2771288
+      },
+      "different_bytes_vs_first_baseline": 0,
+      "image_sha256": "c9cb72298f7ec6ccb7772272592e0e619ed9ba83679f685941b932b2df812fba"
+    },
+    {
+      "block": 2,
+      "slot": 2,
+      "lane": "candidate-final",
+      "complete_ms": 29.70869825,
+      "encode_ms": 15.44017725,
+      "wait_ms": 14.26912525,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 147,
+        "upload_bytes": 2771288
+      },
+      "different_bytes_vs_first_baseline": 66,
+      "image_sha256": "ddcad55d10b420d075f746dd504eda57db02367f36c49ef4875c594fc45acb70"
+    },
+    {
+      "block": 2,
+      "slot": 3,
+      "lane": "baseline",
+      "complete_ms": 62.8273645,
+      "encode_ms": 39.75133325,
+      "wait_ms": 23.0768125,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 10365,
+        "upload_bytes": 1463480
+      },
+      "different_bytes_vs_first_baseline": 0,
+      "image_sha256": "c9cb72298f7ec6ccb7772272592e0e619ed9ba83679f685941b932b2df812fba"
+    },
+    {
+      "block": 3,
+      "slot": 0,
+      "lane": "baseline",
+      "complete_ms": 62.600479500000006,
+      "encode_ms": 39.78606275,
+      "wait_ms": 22.81507275,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 10365,
+        "upload_bytes": 1463480
+      },
+      "different_bytes_vs_first_baseline": 0,
+      "image_sha256": "c9cb72298f7ec6ccb7772272592e0e619ed9ba83679f685941b932b2df812fba"
+    },
+    {
+      "block": 3,
+      "slot": 1,
+      "lane": "candidate-final",
+      "complete_ms": 30.17267725,
+      "encode_ms": 15.56338575,
+      "wait_ms": 14.60999975,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 147,
+        "upload_bytes": 2771288
+      },
+      "different_bytes_vs_first_baseline": 0,
+      "image_sha256": "c9cb72298f7ec6ccb7772272592e0e619ed9ba83679f685941b932b2df812fba"
+    },
+    {
+      "block": 3,
+      "slot": 2,
+      "lane": "candidate-final",
+      "complete_ms": 29.98140625,
+      "encode_ms": 15.4910625,
+      "wait_ms": 14.4912085,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 147,
+        "upload_bytes": 2771288
+      },
+      "different_bytes_vs_first_baseline": 0,
+      "image_sha256": "c9cb72298f7ec6ccb7772272592e0e619ed9ba83679f685941b932b2df812fba"
+    },
+    {
+      "block": 3,
+      "slot": 3,
+      "lane": "baseline",
+      "complete_ms": 62.48807325,
+      "encode_ms": 40.071094,
+      "wait_ms": 22.41770825,
+      "counts": {
+        "draw_calls": 5182,
+        "mesh_draw_calls": 5115,
+        "sdf_draw_calls": 67,
+        "suballocations": 10365,
+        "upload_bytes": 1463480
+      },
+      "different_bytes_vs_first_baseline": 0,
+      "image_sha256": "c9cb72298f7ec6ccb7772272592e0e619ed9ba83679f685941b932b2df812fba"
+    }
+  ],
+  "summary": {
+    "baseline": {
+      "complete_ms": 62.1116993125,
+      "encode_ms": 39.59191415625,
+      "wait_ms": 22.52048428125
+    },
+    "candidate-final": {
+      "complete_ms": 30.042182375,
+      "encode_ms": 15.65434896875,
+      "wait_ms": 14.388506625
+    },
+    "delta_pct": -51.632007001048194
+  },
+  "scope": "fixed saved world, normal Object draws, 2560x1440, warm complete costs, four ABBA blocks",
+  "fixed_order_parity": {
+    "bytes": 14745600,
+    "differences": 0,
+    "baseline_sha256": "4798b224ff5dca76486251f7a3fadb710c25a3b5079286238d506e5add69677b",
+    "candidate_sha256": "4798b224ff5dca76486251f7a3fadb710c25a3b5079286238d506e5add69677b",
+    "scope": "accuracy only, both source variants use identical logical mesh/texture order"
+  },
+  "pixel_controls": {
+    "mesh-pages-baseline": {
+      "exit_code": 0,
+      "output": "mesh upload pages: 10371 checks, 0 failures\n"
+    },
+    "mesh-pages-offset-negative": {
+      "exit_code": 1,
+      "output": "mesh upload pages: 10371 checks, 5184 failures\n"
+    }
+  },
+  "build": {
+    "at": "2026-11-04T06:47:12.738260+00:00",
+    "head": "d82a816163e48be525f1afbd781f2f3937a866b4",
+    "source_sha256": {
+      "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "e2f6e4b759372b4cbc24ce6e3b2f65aa7d002c4359f13115e635133ecb44f178",
+      "tests/singularity/webgpu_mesh_upload_pages_test.cpp": "a8e061c677f2f79771a16fd6b2208b1254aedd2a3d7ae7994ad0b18f6e00eca0",
+      "tests/singularity/gpu_mastery_test.cpp": "7631d065eb7ea6a5bdd228bf00a73aa752e2abb9ac20ab7c82abc362158d7409",
+      "scratch/probes/cathedral_surface_probe.cpp": "579f3e822796ec6404b0163da60787bb1511828a4e03e5a81b5f9badd91a9ac5"
+    },
+    "binary_sha256": {
+      "baseline": "8761008e2970802d4010b5fc6c8091ff1277ebddefc84cf6e01514ec1d852926",
+      "candidate-final": "c4d7e6d6d7428079a7190899acb6e60160e7ac5c9e8025020202cb51551414d1"
+    },
+    "zone_sha256": "e10b6249036b6e2ebf8d44542af206852fa11a8238a3c6e118bf4cb42c47509f"
+  },
+  "shader_sha256": "fb9e24da95904aad0157af38f941fa7cbaec8a8c32df392447d2538f9782f975",
+  "baseline_pixel_outlier_bytes": [
+    0,
+    0,
+    0,
+    48,
+    0,
+    0,
+    0,
+    0
+  ],
+  "candidate_pixel_outlier_bytes": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    66,
+    0,
+    0
+  ],
+  "scope_limits": [
+    "saved Objects through normal drawObject, fixed preset camera, no Person/tools/Law execution",
+    "natural mesh order depends on pointer addresses, comparator freezes order only for accuracy",
+    "material scalar Map load diagnostic remains a separate typing follow-up"
+  ],
+  "warm_profile": {
+    "frame_counts": {
+      "draw_calls": 5182,
+      "mesh_draw_calls": 5115,
+      "sdf_draw_calls": 67,
+      "suballocations": 10365,
+      "upload_bytes": 1463480
+    },
+    "profile_cpu_ms_by_kind": {
+      "0": 6.332856441666659,
+      "10": 0.28161900833333325,
+      "12": 0.001662225000000001,
+      "13": 0.0009156166666666671,
+      "2": 0.15806190833333322,
+      "8": 0.03046769999999997
+    }
+  },
+  "regressions": {
+    "mesh_upload_pages": "10371 checks, 0 failures",
+    "gpu_mastery": "40/40",
+    "volume_unified": "11/15 before and after, identical error rows"
+  }
+}

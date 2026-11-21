@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 // ---------------------------------------------------------------------------
@@ -39,5 +40,7 @@ public:
 
 private:
     void ensureDefault();
+    void rebuildIndex();
     std::vector<std::shared_ptr<Material>> _materials;
+    std::unordered_map<std::string, size_t> _materialIndexByName;
 };

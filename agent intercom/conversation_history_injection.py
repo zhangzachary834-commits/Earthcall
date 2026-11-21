@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """A small, local intercom for agents sharing one workspace.
 
-Messages are appended to ``updates.txt`` as JSON Lines. No service needs to be
+Messages are appended to explicitly selected conversation files as JSON Lines. No service needs to be
 running, so the channel survives terminal restarts and works from separate
 processes. ``context`` emits only messages addressed to an agent (plus
 broadcasts), wrapped so its output can be pasted directly into a prompt.
@@ -10,6 +10,7 @@ broadcasts), wrapped so its output can be pasted directly into a prompt.
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import json
 import os
 import sys
@@ -50,6 +51,7 @@ def thread_files() -> list:
     return sorted(
         p for p in THREADS_DIR.rglob("*")
         if p.is_file() and p.suffix in THREAD_SUFFIXES
+        and p.name not in ("00_THREAD_INDEX.md", "README.md")
         and not any(part.startswith(".") for part in p.relative_to(THREADS_DIR).parts)
     )
 
@@ -105,6 +107,23 @@ def unlock_file(handle: Any) -> None:
         fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
+@contextmanager
+def mutation_lock(path: Path):
+    """Stable directory lock shared by message append, links and nav cleanup.
+
+    Locking the document inode alone cannot coordinate atomic replacement:
+    an appender could wait on the retired inode and then lose its message.
+    Direct file writers must use this same protocol while cleanup runs.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with (path.parent / ".intercom-write.lock").open("a+b") as handle:
+        lock_file(handle)
+        try:
+            yield
+        finally:
+            unlock_file(handle)
+
+
 def append_message(
     log: Path,
     sender: str,
@@ -129,14 +148,11 @@ def append_message(
 
     log.parent.mkdir(parents=True, exist_ok=True)
     encoded = json.dumps(entry, ensure_ascii=False, separators=(",", ":")) + "\n"
-    with log.open("a+", encoding="utf-8") as handle:
-        lock_file(handle)
-        try:
+    with mutation_lock(log):
+        with log.open("a+", encoding="utf-8") as handle:
             handle.write(encoded)
             handle.flush()
             os.fsync(handle.fileno())
-        finally:
-            unlock_file(handle)
     return entry
 
 
@@ -361,6 +377,9 @@ def parser() -> argparse.ArgumentParser:
 
     self_test = subcommands.add_parser("self-test", help="exercise send, filtering, and persistence")
     self_test.set_defaults(func=cmd_self_test)
+
+    from conversation_navigation import add_parser
+    add_parser(subcommands)
     return command
 
 
@@ -397,7 +416,7 @@ def main() -> int:
         # `threads` is the command you run precisely BECAUSE the default is
         # ambiguous -- resolving it first made the disambiguator refuse to run
         # whenever there was something to disambiguate.
-        if getattr(args, "log", None) is None and args.command not in ("threads", "self-test"):
+        if getattr(args, "log", None) is None and args.command not in ("threads", "self-test", "nav"):
             args.log = default_log()
         return args.func(args)
     except (OSError, ValueError) as error:

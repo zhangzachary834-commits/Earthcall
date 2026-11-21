@@ -1,0 +1,13 @@
+{
+  "source_head": "ee905784589ed42626c61c0c2e6fa67c39657ec3",
+  "parent": "5bcb63837",
+  "saves": {
+    "/Users/zacharyzhang/Documents/GitHub/Earthcall/saves/zones/Prism Cathedral/zone.json": "9aac6f840882332264f25d56af43e0a8668451d5349e87b292297904d580e595",
+    "/Users/zacharyzhang/Documents/GitHub/Earthcall/saves/zones/Radiance Gallery/zone.ecform": "cace76903419be2d027cdf2e8a7e118a0cf77d8ffddb3d076631f7351d1ab498",
+    "/Users/zacharyzhang/Documents/GitHub/Earthcall/saves/zones/Sky-Island Sanctuary/zone.json": "864a48ef4f8f9cdb7d8bf96059b630cd22a7f66029e3afdba588503a317430e6"
+  },
+  "fixture_profile": "saves/persons/Zach.ecform copied byte-for-byte; no keys",
+  "capture_entry": "capture.cpp replacing entry.cpp; production Engine/render/recorder unchanged",
+  "hardware": "MacBook Air Mac17,3 Apple M5 16 GB macOS 26.6 (25G72)",
+  "native_backend": "WGPUBackendType_Metal (5), Apple M5"
+}

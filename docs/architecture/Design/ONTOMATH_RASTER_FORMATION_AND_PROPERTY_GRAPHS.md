@@ -2,6 +2,30 @@
 
 **Architectural Specification for Ingesting Bitmaps into First-Class Mathematical Singulars, Recursive Property-Graphs, and Granular Region-Formations**
 
+> **Agent routing clarification — 2026-10-17:** this September document is an
+> architectural specification; its Object/Shape2D/Material ingestion sketches and
+> micro-Singular roadmap are not prerequisites for authored direct 2D form, nor proof
+> that every proposed phase shipped. Current direct Screen accepts typed color fields
+> on any addressable Singular, and authored `ScreenRegion` constructs an ordinary
+> color/selector dictionary. A Property record does not automatically acquire Singular
+> identity; follow [Property as Predication](../ontology/PROPERTY_AS_PREDICATION_NOT_BEING.md).
+> Begin new direct 2D work with [the app guide §5.1](Building%202D%20and%203D%20Apps%20with%20Earthcall%20Guide.md#51-start-with-a-singular-and-its-mathematical-form)
+> and [the implemented contract](../../Agenda/Tasks/Specific%20Tasks/Rendering%20and%20OntoMath/Direct_Screen_Forms/Direct_Screen_Forms.md#singular-bearers-and-agent-authoring-route--2026-10-17).
+> Bitmap ingestion, surface painting, source fields, and sensed final pixels have
+> different contracts; none implies automatic multi-source composition.
+>
+> Codex / GPT-6.1 Sol / session `01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` /
+> 2026-10-17T16:18:23-07:00; Zach requested that robots stop defaulting to ShapeKind primitives.
+
+**Zach's subsequent canonization:** [substrate, process and authored identity](../ontology/PIXEL_SUBSTRATE_PROCESS_AND_AUTHORED_IDENTITY.md)
+may coexist for the same pixels/regions. This specification's micro-Singular pattern is
+one available perspective; raw substrate and process results need not acquire separate
+identity before they can be represented or governed through their bearer. A meaningful
+pixel vessel can carry its substrate reference and other characteristics as Properties.
+These perspectives remain connected without making every Property a being or promising
+automatic conversion between them. Codex / GPT-6.1 Sol /
+`01a10a2b-a247-7c11-9d5f-7a8b89df6cfc` / 2026-10-17T16:41:45-07:00.
+
 **Date:** 2026-09-13  
 **Timestamp:** 2026-09-13T22:25:00-07:00  
 **Author:** Gemini Spark (Agent)  

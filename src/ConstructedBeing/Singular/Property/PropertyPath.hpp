@@ -1,13 +1,18 @@
 #pragma once
 
 #include "PropertyValue.hpp"
+#include "PropertyCell.hpp"
 #include "Singularity/Core/StringId.hpp"
 
+#include <functional>
+#include <cstdint>
 #include <string>
 #include <vector>
 
 class Property;
 class Singular;
+struct AccessContext;
+struct CompiledPath;
 
 // ============================================================================
 // PropertyPath — The address of a variable on the substrate
@@ -18,19 +23,21 @@ class Singular;
 //   1. longest dotted-name match in the Singular's registry (supports flat
 //      registration like "shape.r"),
 //   2. descend into nested Singulars via Property::asSingular(),
+//      or list/dictionary elements while pinning their storage for this access,
 //   3. one final unmatched x|y|z segment on a glm::vec3 property resolves as a
 //      component (read the vec3, mutate the component, write it back whole).
 //
-// **PHASE 4 OPTIMIZATION (Zero-Allocation Resolve):**
+// **PHASE 4 OPTIMIZATION (Interned Flat Lookup):**
 // parse() pre-calculates and interns ALL joined sub-path combinations as
-// StringIds, so resolve() performs zero allocations and zero string comparisons.
+// StringIds, so registered flat lookup needs no traversal allocation.
+// Container traversal additionally pins shared storage for the access.
 //
 // For path "@shape.color.r":
 // - segments = ["shape", "color", "r"]  (kept for toString/debug)
-// - _joinedIds = [id("shape"), id("shape.color"), id("shape.color.r")]
+// - _joinedIds[0] = [id("shape"), id("shape.color"), id("shape.color.r")]
 //
 // resolve() now scans _joinedIds with pure integer lookups. A Law firing on
-// 500 targets performs 500 zero-allocation property lookups.
+// 500 targets avoids reparsing or deep-copying the addressed values.
 // ============================================================================
 struct PropertyPath {
     std::vector<std::string> segments;  // Original segments (for toString/debug)
@@ -48,9 +55,9 @@ private:
     // Pre-calculated joined sub-path combinations, interned as StringIds
     //
     // For path "shape.color.r" with segments ["shape", "color", "r"]:
-    //   _joinedIds[0] = [id("shape")]
-    //   _joinedIds[1] = [id("shape"), id("shape.color")]
-    //   _joinedIds[2] = [id("shape"), id("shape.color"), id("shape.color.r")]
+    //   _joinedIds[0] = [id("shape"), id("shape.color"), id("shape.color.r")]
+    //   _joinedIds[1] = [id("color"), id("color.r")]
+    //   _joinedIds[2] = [id("r")]
     //
     // Indexed as: _joinedIds[segmentIndex][runLength - 1]
     //
@@ -75,6 +82,21 @@ public:
         Singular* owner = nullptr;
         std::string trailingComponent;
         std::string dynamicKey;
+        Property* containerProperty = nullptr;
+        // Operation-local lifetime pins, beneath the Kernel: a getter may
+        // return the only strong reference to a list/dict. These keep the
+        // resolved element alive for this access; the PropertyPath holds none.
+        std::vector<PropertyValue> containerPins;
+        // Operation-local structural view of a typed mathematical value.
+        // Writes validate and commit through its original setter/storage;
+        // this is a codec window, never a second canonical definition.
+        Property* structuredProperty = nullptr;
+        PropertyValue* structuredSource = nullptr;
+        PropertyValue structuredOriginal;
+        PropertyValue structuredView;
+        CellId cellId;
+        CellOwnershipMode cellMode = CellOwnershipMode::InlineValue;
+        Earthcall::StringId rootPropertyId;
     };
 
     ResolvedSlot resolve(Singular& root, std::size_t startIndex = 0) const;
@@ -85,9 +107,95 @@ public:
         TypeMismatch,
         ReadOnly,
         BadComponent,
-        Unchanged  // the slot already held this value; not a write
+        Unchanged, // the slot already held this value; not a write
+        Unsupported, // readable storage whose bridge cannot safely mutate an element
+        ExpiredCell, // weak read/write after final strong owner released
+        UniqueOwnershipRefused, // attempt to share a cell currently held as Unique
+        AccessDenied // reserved for Rung 3 Law/TransferPolicy refusal
     };
 
     PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex = 0) const;
+    PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex, const AccessContext& ctx) const;
     PathResult setValue(Singular& root, const PropertyValue& v, std::size_t startIndex = 0) const;
+    PathResult setValue(Singular& root, const PropertyValue& v, std::size_t startIndex, const AccessContext& ctx) const;
+
+    using CompiledPath = ::CompiledPath;
+    CompiledPath compile() const;
+    static CompiledPath compile(const std::string& dotted);
 };
+
+// Pre-parsed and interned PropertyPath representation for accelerated hot-loop evaluation.
+struct CompiledPath {
+    PropertyPath path;
+
+    static CompiledPath compile(const std::string& dotted) {
+        return CompiledPath{PropertyPath::parse(dotted)};
+    }
+
+    std::string toString() const { return path.toString(); }
+    bool empty() const { return path.empty(); }
+    operator const PropertyPath&() const noexcept { return path; }
+
+    PropertyPath::ResolvedSlot resolve(Singular& root, std::size_t startIndex = 0) const {
+        return path.resolve(root, startIndex);
+    }
+
+    PropertyPath::PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex = 0) const {
+        return path.getValue(root, out, startIndex);
+    }
+    PropertyPath::PathResult getValue(Singular& root, PropertyValue& out, std::size_t startIndex, const AccessContext& ctx) const {
+        return path.getValue(root, out, startIndex, ctx);
+    }
+
+    PropertyPath::PathResult setValue(Singular& root, const PropertyValue& in, std::size_t startIndex = 0) const {
+        return path.setValue(root, in, startIndex);
+    }
+    PropertyPath::PathResult setValue(Singular& root, const PropertyValue& in, std::size_t startIndex, const AccessContext& ctx) const {
+        return path.setValue(root, in, startIndex, ctx);
+    }
+};
+
+inline CompiledPath PropertyPath::compile() const { return CompiledPath{*this}; }
+inline CompiledPath PropertyPath::compile(const std::string& dotted) { return CompiledPath::compile(dotted); }
+
+// ============================================================================
+// DERIVED READINGS (2026-10-19). A read-only observation that an authored
+// route carries WITHOUT storing it: `<prefix>.<name>` (and any path into its
+// result, `<prefix>.<name>.<key>…`) is answered by the registered reading,
+// from the being's own authored properties under `<prefix>`.
+//
+// Codex placed the authored Integral's evaluation report on the expression's
+// existing bearer as a read-only derived PropertyDict, not as a new kind or a
+// fixed field on every Singular (2026-10-19 21:30). This is the seam that lets
+// an authored route carry one. The rules:
+//  · It is consulted only where resolution finds NO stored property, so it
+//    never shadows authored or registered state and costs nothing on a hit.
+//  · Writes to the route refuse with ReadOnly: an observation is not a dial.
+//  · Each read computes afresh, so a refusal replaces a success and no stale
+//    report survives a changed input. The result is a fresh value, never
+//    shared canonical storage.
+//  · It is registered by a modality channel (OntoMath registers "evaluation"),
+//    like world readings. Nothing is registered by default.
+//  · No reading declares its dependencies yet, so none publishes change
+//    facts: nothing tells the Rete that `<prefix>.evaluation.value` moved when
+//    a bound input did. A consumer that indexes on change facts must
+//    therefore ask pathReadsUntrackedDerivedReading() and take its general,
+//    re-evaluating path when the answer is yes (Codex, 2026-10-19 23:58:
+//    "decline the indexed admission loudly" until dependencies are complete).
+//    LawManager does: such a law gets no Rete terminals and is decided on the
+//    continuous sweep every tick. Lasting fix, open: declared dependencies
+//    (expression, bindings record and mappings, each resolved input) that
+//    dirty the reader selectively.
+// ============================================================================
+using DerivedReading = std::function<bool(Singular& root, const std::string& prefix, PropertyValue& out)>;
+void registerDerivedReading(const std::string& name, DerivedReading reading);
+bool hasDerivedReading(const std::string& name);
+// Bumped by every registration or removal, so an index compiled against the
+// set of readings can tell the set moved and re-decide.
+std::uint64_t derivedReadingRevision();
+// True when a segment after the root names a registered reading whose
+// dependencies are not tracked (today: every reading). Static and
+// over-approximate on purpose: a stored property of the same spelling would
+// shadow the reading at run time, and this still answers yes. Yes only costs
+// the indexed path; a wrong no would make a reader deaf (PROPHETIC_RETE §2).
+bool pathReadsUntrackedDerivedReading(const PropertyPath& path);

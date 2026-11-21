@@ -1,0 +1,1 @@
+called "My Alt J Templates" on "terminal-key-pressed" if @terminal-channel.zone is "LawLine" and @terminal-channel.key.chord is "alt+j" then Sequence <children: [Set @terminal-channel.completion.items to @law-line-template-shelf.items, Add @terminal-channel.completion.openRequests by 1]>

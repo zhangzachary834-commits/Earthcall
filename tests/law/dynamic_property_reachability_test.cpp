@@ -22,6 +22,8 @@
 // disagree about either OWNER or NAME, one of these witnesses stays at zero.
 
 #include "ConstructedBeing/Singular/Object/Object.hpp"
+#include "ConstructedBeing/Singular/Property/ComputedProperty.hpp"
+#include "ConstructedBeing/Singular/Property/PropertyCell.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyPath.hpp"
 #include "ConstructedBeing/Singular/Property/PropertyValue.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Law.hpp"
@@ -56,6 +58,19 @@ bool near(double a, double b) {
     return std::fabs(a - b) < 1e-4;
 }
 
+class MacroImageObject : public Object {
+public:
+    using Object::Object;
+    Singular* region = nullptr;
+    Singular* readRegion() const { return region; }
+protected:
+    void buildProperties() override {
+        Object::buildProperties();
+        registerProperty(std::make_unique<ComputedProperty<MacroImageObject, Singular*>>(
+            "region", this, &MacroImageObject::readRegion));
+    }
+};
+
 } // namespace
 
 int main() {
@@ -72,16 +87,13 @@ int main() {
     dotted.setDynamicProperty("image.pixelWidth", PropertyValue(50.0f));
     writeNumber(dotted, "position.z", 0.0);
 
-    Object macro;
+    MacroImageObject macro;
     macro.setObjectID("image.reachability-macro");
     Object region;
     region.setObjectID("image.reachability-macro.region.sky");
     region.setDynamicProperty("region.tint", PropertyValue(glm::vec3(0.1f, 0.2f, 0.3f)));
     writeNumber(region, "position.z", 0.0);
-
-    auto regions = std::make_shared<PropertyDict>();
-    regions->elements["sky"] = PropertyValue(static_cast<Singular*>(&region));
-    macro.setDynamicProperty("image.regions", PropertyValue(regions));
+    macro.region = &region;
 
     std::vector<Singular*> population{&author, &plain, &dotted, &macro, &region};
     Universe::instance().setProvider([&](std::vector<Singular*>& out) {
@@ -122,23 +134,30 @@ int main() {
         assert(near(readNumber(dotted, "position.z"), 0.0));
         assert(near(readNumber(region, "position.z"), 0.0));
 
+        // LawManager's per-tick state seeding may be skipped when the Universe
+        // structure is unchanged. These value-only writes must still wake the
+        // Rete via the property-change callback, without changing that revision.
+        const uint64_t seededRevision = Universe::instance().structuralRevision();
+
         const auto plainResult = PropertyPath::parse("beacon").setValue(
             plain, PropertyValue(200.0f));
         const auto dottedResult = PropertyPath::parse("image.pixelWidth").setValue(
             dotted, PropertyValue(200.0f));
         const auto regionResult = PropertyPath::parse(
-            "image.regions.sky.region.tint.g").setValue(
+            "region.region.tint.g").setValue(
                 macro, PropertyValue(0.9f));
 
         assert(plainResult == PropertyPath::PathResult::Ok);
         assert(dottedResult == PropertyPath::PathResult::Ok);
         assert(regionResult == PropertyPath::PathResult::Ok);
+        assert(Universe::instance().structuralRevision() == seededRevision &&
+               "value-only property writes must not be mistaken for structural edits");
 
         // Readback is useful diagnosis, but NOT the verdict. The historical bug
         // passed these assertions. The three action witnesses below are the gate.
         assert(near(readNumber(plain, "beacon"), 200.0));
         assert(near(readNumber(dotted, "image.pixelWidth"), 200.0));
-        assert(near(readNumber(macro, "image.regions.sky.region.tint.g"), 0.9));
+        assert(near(readNumber(macro, "region.region.tint.g"), 0.9));
 
         manager.tick();
 
@@ -156,6 +175,92 @@ int main() {
                "dotted dynamic property changed but its Law stayed deaf");
         assert(near(regionFires, 1.0) &&
                "nested write notified the wrong owner/name; region Law stayed deaf");
+
+        // The opposite half of the revision gate: a new being admitted by the
+        // provider AFTER a steady tick must receive its initial state facts.
+        // No object-created ECA echo is published here, so a working gate must
+        // rely on the explicit structural revision signal rather than events.
+        Object newcomer;
+        newcomer.setObjectID("subject.newborn-revision-gate");
+        newcomer.setDynamicProperty("beacon", PropertyValue(200.0f));
+        writeNumber(newcomer, "position.z", 0.0);
+        population.push_back(&newcomer);
+        Universe::instance().bumpStructuralRevision();
+        manager.tick();
+        assert(near(readNumber(newcomer, "position.z"), 1.0) &&
+               "structural revision must seed a newly admitted being");
+        population.pop_back();
+
+        // ---------------------------------------------------------------------
+        // ValueCell Multi-Alias Rete Fan-Out Witness (Rung 1):
+        // Object A and Object B share a scalar cell ("scalarVal") and a vector cell ("color").
+        // A WhileTrue law watches Object B ("scalarVal" > 50.0 and "color.r" > 0.5).
+        // Mutating through Object A must fan out change notifications to Object B
+        // and wake Object B's law in the Prophetic Rete without alias deafness.
+        // ---------------------------------------------------------------------
+        Object sharedA;
+        sharedA.setObjectID("subject.shared-cell-a");
+        Object sharedB;
+        sharedB.setObjectID("subject.shared-cell-b");
+
+        // Allocate shared scalar cell and shared vector cell
+        CellId scalarCell = PropertyCellTable::instance().allocateCell(
+            PropertyValue(10.0), CellOwnershipMode::Shared, &sharedA, Earthcall::StringInterner::intern("scalarVal"));
+        sharedA.bindPropertyCell("scalarVal", scalarCell, CellOwnershipMode::Shared);
+        sharedB.bindPropertyCell("scalarVal", scalarCell, CellOwnershipMode::Shared);
+
+        CellId vectorCell = PropertyCellTable::instance().allocateCell(
+            PropertyValue(glm::vec3(0.0f, 0.0f, 0.0f)), CellOwnershipMode::Shared, &sharedA, Earthcall::StringInterner::intern("color"));
+        sharedA.bindPropertyCell("color", vectorCell, CellOwnershipMode::Shared);
+        sharedB.bindPropertyCell("color", vectorCell, CellOwnershipMode::Shared);
+
+        writeNumber(sharedA, "position.z", 0.0);
+        writeNumber(sharedB, "position.z", 0.0);
+
+        population.push_back(&sharedA);
+        population.push_back(&sharedB);
+        Universe::instance().bumpStructuralRevision();
+
+        auto sharedScalarLaw = manager.createLaw("shared cell: scalar fanout", {&author});
+        sharedScalarLaw->setLawIdentifier("test-shared-cell-scalar");
+        sharedScalarLaw->setActivation(Law::Activation::WhileTrue);
+        sharedScalarLaw->setConditionModel(ConditionNode::compare(
+            "scalarVal", ConditionNode::Op::Gt, PropertyValue(50.0)));
+        sharedScalarLaw->setActionModel(ActionNode::add("position.z", 1.0));
+
+        auto sharedVectorLaw = manager.createLaw("shared cell: vector fanout", {&author});
+        sharedVectorLaw->setLawIdentifier("test-shared-cell-vector");
+        sharedVectorLaw->setActivation(Law::Activation::WhileTrue);
+        sharedVectorLaw->setConditionModel(ConditionNode::compare(
+            "color.r", ConditionNode::Op::Gt, PropertyValue(0.5f)));
+        sharedVectorLaw->setActionModel(ActionNode::add("position.z", 1.0));
+
+        manager.tick();
+        assert(near(readNumber(sharedA, "position.z"), 0.0));
+        assert(near(readNumber(sharedB, "position.z"), 0.0));
+
+        // Now mutate strictly through sharedA!
+        const auto setScalarRes = PropertyPath::parse("scalarVal").setValue(sharedA, PropertyValue(75.0));
+        assert(setScalarRes == PropertyPath::PathResult::Ok);
+        const auto setVecRes = PropertyPath::parse("color.r").setValue(sharedA, PropertyValue(0.9f));
+        assert(setVecRes == PropertyPath::PathResult::Ok);
+
+        // Verify sharedB reads the updated values
+        PropertyValue bScalar, bColorR;
+        assert(PropertyPath::parse("scalarVal").getValue(sharedB, bScalar) == PropertyPath::PathResult::Ok);
+        assert(std::get<double>(bScalar) == 75.0);
+        assert(PropertyPath::parse("color.r").getValue(sharedB, bColorR) == PropertyPath::PathResult::Ok);
+        assert(std::get<float>(bColorR) == 0.9f);
+
+        // Tick manager and assert both laws fired for sharedB!
+        manager.tick();
+        const double sharedAFires = readNumber(sharedA, "position.z");
+        const double sharedBFires = readNumber(sharedB, "position.z");
+        std::printf("shared-cell writes on A -> A fires %.0f, B fires %.0f (expected 2 on B)\n", sharedAFires, sharedBFires);
+        assert(near(sharedBFires, 2.0) && "mutations on shared cell via A failed to wake WhileTrue Law on B (alias deafness gap)");
+
+        population.pop_back(); // pop sharedB
+        population.pop_back(); // pop sharedA
     }
 
     Universe::instance().setProvider(nullptr);

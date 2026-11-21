@@ -50,6 +50,10 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Core/Logger.hpp"
+#include "Singularity/Core/AppPaths.hpp"
+#include "Singularity/Storage/VirtualFileSystem.hpp"
+#include <unistd.h>
+#include <cstdio>
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/IDEDockManager.hpp"
 
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/CreatorConsole/CreatorConsoleWindow.hpp"
@@ -58,9 +62,6 @@
 #include <vector>
 #include <climits>
 #include <chrono>
-#ifdef __APPLE__
-#include <mach-o/dyld.h>
-#endif
 
 extern ZoneManager mgr;
 
@@ -79,45 +80,41 @@ Engine& Engine::instance() {
     return s_instance;
 }
 
-namespace {
-std::filesystem::path findRepoRoot() {
-    std::error_code ec;
-    std::vector<std::filesystem::path> seeds;
-    if (auto cwd = std::filesystem::current_path(ec); !ec) seeds.push_back(cwd);
-#ifdef __APPLE__
-    char buf[PATH_MAX];
-    uint32_t sz = sizeof(buf);
-    if (_NSGetExecutablePath(buf, &sz) == 0) {
-        auto exe = std::filesystem::weakly_canonical(std::filesystem::path(buf), ec);
-        if (!ec) seeds.push_back(exe.parent_path());
-    }
-#endif
-    for (auto& dir : seeds) {
-        for (int i = 0; i < 8 && !dir.empty() && dir != dir.root_path(); ++i) {
-            if (std::filesystem::exists(dir / "AGENTS.md", ec) &&
-                std::filesystem::is_directory(dir / "saves", ec)) {
-                return dir;
-            }
-            dir = dir.parent_path();
-        }
-    }
-    return {};
-}
-} // namespace
 
 bool Engine::init(int /*argc*/, char** /*argv*/) {
     ECA::Logger::instance().log(ECA::LogCategory::System, "SYSTEM", "Engine::init starting");
     std::cout << "Engine::init starting" << std::endl;
     {
-        const auto root = findRepoRoot();
-        if (!root.empty()) {
-            std::error_code ec;
-            std::filesystem::current_path(root, ec);
-            const auto saves = (root / "saves").string();
-            SaveSystem::setSaveRoot(saves);
-            std::cout << "[Engine] repo root: " << root.string()
-                      << "  saves: " << saves << std::endl;
+        // Run from a checkout, the checkout stays the cwd and the Person's
+        // data lives in the data home once migrated (SaveSystem::chooseDataRoot
+        // falls back to the checkout's saves/ when it is not). Installed as
+        // Earthcall.app there is no checkout: Finder starts us at "/", output
+        // has no terminal, and resources ship inside the bundle.
+        std::error_code ec;
+        if (AppPaths::isBundled() && !isatty(STDOUT_FILENO)) {
+            const auto logs = AppPaths::logDirectory();
+            std::filesystem::create_directories(logs, ec);
+            const std::string log = (logs / "earthcall.log").string();
+            std::freopen(log.c_str(), "w", stdout);
+            std::freopen(log.c_str(), "a", stderr);
+            std::setvbuf(stdout, nullptr, _IOLBF, 0);
+            std::setvbuf(stderr, nullptr, _IONBF, 0);
         }
+        const auto root = AppPaths::isBundled() ? std::filesystem::path{} : AppPaths::checkoutRoot();
+        if (!root.empty()) std::filesystem::current_path(root, ec);
+        std::string note;
+        const auto saves = SaveSystem::chooseDataRoot(
+            root.empty() ? std::filesystem::path{} : root / "saves", note,
+            AppPaths::isBundled() ? AppPaths::resourceRoot() / "Foundation" : std::filesystem::path{});
+        SaveSystem::setSaveRoot(saves.string());
+        // A stray relative write must land somewhere the Person owns, not "/".
+        if (AppPaths::isBundled()) std::filesystem::current_path(saves, ec);
+        if (const auto resources = AppPaths::resourceRoot(); !resources.empty()) {
+            Singularity::Storage::VirtualFileSystem::instance().mount("resource://", resources.string());
+        }
+        std::cout << "[Engine] " << (AppPaths::isBundled() ? "installed app" : "checkout")
+                  << " root: " << (root.empty() ? AppPaths::resourceRoot().string() : root.string())
+                  << "  saves: " << saves.string() << "\n[Engine] " << note << std::endl;
     }
     if (glfwInit() == GLFW_FALSE) {
         std::cerr << "⚠️  Failed to initialise GLFW!" << std::endl;
@@ -189,6 +186,17 @@ bool Engine::init(int /*argc*/, char** /*argv*/) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
+    if (AppPaths::isBundled()) {
+        // Window layout is the Person's, beside their saves; unbundled it
+        // stays imgui.ini in the checkout as before.
+        static const std::string ini = [] {
+            std::error_code ec;
+            const auto dir = SaveSystem::rootPath() / "ui";
+            std::filesystem::create_directories(dir, ec);
+            return (dir / "imgui.ini").string();
+        }();
+        io.IniFilename = ini.c_str();
+    }
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 #ifdef ImGuiConfigFlags_DockingEnable
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;

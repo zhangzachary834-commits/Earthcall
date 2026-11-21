@@ -1,0 +1,170 @@
+{
+  "beam_support_certificate_sweep": [
+    {
+      "baseline_knot_evalPhi": 934074,
+      "beam_certified_whole_member_skips": 54319,
+      "beam_ref_knot_evalPhi": 234675,
+      "beam_size": 4,
+      "beam_whole_skip_capture_pct": 98.19407787700206,
+      "box_hits": 103786,
+      "gt_whole_member_skips": 55318,
+      "knot_evalPhi_reduction_pct": 55.77812892768668,
+      "parallel_ref_knot_waves": 78225,
+      "per_ray_residual_knot_evalPhi": 178390,
+      "schedule_differing_rays": 0,
+      "total_knot_evalPhi": 413065,
+      "total_producer_evalPhi_baseline": 2505324,
+      "total_producer_evalPhi_candidate": 1984315,
+      "total_producer_evalPhi_reduction_pct": 20.796072683612977
+    },
+    {
+      "baseline_knot_evalPhi": 934074,
+      "beam_certified_whole_member_skips": 53327,
+      "beam_ref_knot_evalPhi": 118071,
+      "beam_size": 8,
+      "beam_whole_skip_capture_pct": 96.40080986297407,
+      "box_hits": 103786,
+      "gt_whole_member_skips": 55318,
+      "knot_evalPhi_reduction_pct": 64.12457685365399,
+      "parallel_ref_knot_waves": 26238,
+      "per_ray_residual_knot_evalPhi": 217032,
+      "schedule_differing_rays": 0,
+      "total_knot_evalPhi": 335103,
+      "total_producer_evalPhi_baseline": 2505324,
+      "total_producer_evalPhi_candidate": 1906353,
+      "total_producer_evalPhi_reduction_pct": 23.907925681468743
+    },
+    {
+      "baseline_knot_evalPhi": 934074,
+      "beam_certified_whole_member_skips": 51452,
+      "beam_ref_knot_evalPhi": 59760,
+      "beam_size": 16,
+      "beam_whole_skip_capture_pct": 93.01131638887884,
+      "box_hits": 103786,
+      "gt_whole_member_skips": 55318,
+      "knot_evalPhi_reduction_pct": 66.57299100499532,
+      "parallel_ref_knot_waves": 6640,
+      "per_ray_residual_knot_evalPhi": 252473,
+      "schedule_differing_rays": 0,
+      "total_knot_evalPhi": 312233,
+      "total_producer_evalPhi_baseline": 2505324,
+      "total_producer_evalPhi_candidate": 1883483,
+      "total_producer_evalPhi_reduction_pct": 24.820781663369683
+    },
+    {
+      "baseline_knot_evalPhi": 934074,
+      "beam_certified_whole_member_skips": 47863,
+      "beam_ref_knot_evalPhi": 30645,
+      "beam_size": 32,
+      "beam_whole_skip_capture_pct": 86.52337394699737,
+      "box_hits": 103786,
+      "gt_whole_member_skips": 55318,
+      "knot_evalPhi_reduction_pct": 64.22435481557136,
+      "parallel_ref_knot_waves": 3405,
+      "per_ray_residual_knot_evalPhi": 303526,
+      "schedule_differing_rays": 0,
+      "total_knot_evalPhi": 334171,
+      "total_producer_evalPhi_baseline": 2505324,
+      "total_producer_evalPhi_candidate": 1905421,
+      "total_producer_evalPhi_reduction_pct": 23.945126458693565
+    },
+    {
+      "baseline_knot_evalPhi": 934074,
+      "beam_certified_whole_member_skips": 41343,
+      "beam_ref_knot_evalPhi": 15993,
+      "beam_size": 64,
+      "beam_whole_skip_capture_pct": 74.73697530641022,
+      "box_hits": 103786,
+      "gt_whole_member_skips": 55318,
+      "knot_evalPhi_reduction_pct": 56.64165794144789,
+      "parallel_ref_knot_waves": 1777,
+      "per_ray_residual_knot_evalPhi": 389006,
+      "schedule_differing_rays": 0,
+      "total_knot_evalPhi": 404999,
+      "total_producer_evalPhi_baseline": 2505324,
+      "total_producer_evalPhi_candidate": 1976249,
+      "total_producer_evalPhi_reduction_pct": 21.118027049595177
+    }
+  ],
+  "capacity_controls_beam16": {
+    "bit_exact_to_baseline_pass": true,
+    "maxOverPerRay_1_refused": 412,
+    "maxSubPerRay_4_refused": 26243
+  },
+  "cnoise3_pair_verification": {
+    "baseline_gradient_setups": 483431,
+    "bit_exact_pass": true,
+    "both_positive_cross_cell_pairs": 24520,
+    "both_positive_same_cell_pairs": 211627,
+    "cnoise3_pair_gradient_setups": 271804,
+    "eliminated_gradient_setups": 211627,
+    "gradient_setup_reduction_pct": 43.77605077043053,
+    "old_6cc_over_evaluated_single_positive_subpanels_fixed": 11137,
+    "ray_output_bit_diffs": 0,
+    "same_cell_rate_among_both_positive_pct": 89.61663709469101,
+    "subpanel_bit_diffs": 0,
+    "subpanels_both_nodes_positive": 236147,
+    "subpanels_both_nodes_zero": 44,
+    "subpanels_single_node_positive": 11137
+  },
+  "protocol": "6de: C++20 IEEE-754 f32 verification of cnoise3Pair (Parberry 2014 / GPU Gems 2) and Cooperative Sub-Beam Lipschitz Certificate (Ganacim 2011 / Knoll 2009)",
+  "rays": 32784,
+  "synthetic_budget_controls_beam16": [
+    {
+      "budget": 23,
+      "expected": 16,
+      "fallbacks": 16,
+      "pass": true
+    },
+    {
+      "budget": 24,
+      "expected": 0,
+      "fallbacks": 0,
+      "pass": true
+    },
+    {
+      "budget": 25,
+      "expected": 0,
+      "fallbacks": 0,
+      "pass": true
+    }
+  ],
+  "total_overlap_intervals": 1799,
+  "total_single_subpanels": 247328,
+  "compiled_native_binaries": {
+    "cnoise3-pair-wide": {
+      "work_dir": "/private/tmp/earthcall-6de-cnoise3-pair-wide",
+      "binary_path": "/private/tmp/earthcall-6de-cnoise3-pair-wide/probe",
+      "cpp_sha256": "48b1b4f755b15853ef578301da3a635b5f7b0239a13d3737e967dea512468115",
+      "binary_sha256": "c219f9c538faa9dfad8f8c728320a19b97716bb8e82b31c82fbe9d532b40bfc5"
+    },
+    "cnoise3-pair": {
+      "work_dir": "/private/tmp/earthcall-6de-cnoise3-pair",
+      "binary_path": "/private/tmp/earthcall-6de-cnoise3-pair/probe",
+      "cpp_sha256": "04ec640e57ec2b5cc2ff3f1fbd723a817f44bf977f11ac8bd0629255bfe70c67",
+      "binary_sha256": "dd103a26ad49ce42895054c5babd763ce39691de2aa0611dfdad293a779b895b"
+    },
+    "tile-beam-wide": {
+      "work_dir": "/private/tmp/earthcall-6de-tile-beam-wide",
+      "binary_path": "/private/tmp/earthcall-6de-tile-beam-wide/probe",
+      "cpp_sha256": "2c0826122d69cf93f5c09dd38017a117c6f2002e09e8162a22c6eee3591bf75c",
+      "binary_sha256": "6a856470897c71eedced717ffd808946c38e44663d4123c648a1e11fcb59a0f9"
+    },
+    "tile-beam": {
+      "work_dir": "/private/tmp/earthcall-6de-tile-beam",
+      "binary_path": "/private/tmp/earthcall-6de-tile-beam/probe",
+      "cpp_sha256": "2336e59178cbfd63b06dab15bba2dfb4973b859d04f5bf4b8ce2c749c6a99c16",
+      "binary_sha256": "9f85b9cace29aa9149633368ea93414299b807497ffac1504ca3d63623a99803"
+    },
+    "combined-ancients-wide": {
+      "work_dir": "/private/tmp/earthcall-6de-combined-wide",
+      "binary_path": "/private/tmp/earthcall-6de-combined-wide/probe",
+      "cpp_sha256": "27bccf7829e1feffb5a3ae08c797a72ed4b2dcb60a0773274801ff6ab7142552",
+      "binary_sha256": "654500478d1c6428904483d02cf1777ec4b5e7eb8f02843f6f8b9923f7caf611"
+    }
+  },
+  "scripts": {
+    "scratch/probes/ray_transport_gpu_6de_prism_ancients.py": "2e64d575e3977e5ea1931733ec111b144d7074d630b28c52b161c3ba2c548042",
+    "scratch/probes/ray_transport_gpu_6de_verify.py": "91c1d4f89703935a77e5c78613925b667d658d9b70ad2eac524609a757102de7"
+  }
+}

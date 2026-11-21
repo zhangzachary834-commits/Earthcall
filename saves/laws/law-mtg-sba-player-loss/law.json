@@ -1,0 +1,66 @@
+{
+  "authors": [
+    "author.antigravity"
+  ],
+  "identifier": "law-mtg-sba-player-loss",
+  "injected_by": "Antigravity, 2026-10-11 MTG Zone Law",
+  "law": {
+    "actionDescriptions": [
+      "set(@state.mtg.gameOver)"
+    ],
+    "actionModel": {
+      "kind": 0,
+      "path": "@state.mtg.gameOver",
+      "operand": {
+        "t": "bool",
+        "v": true
+      },
+      "desc": "set(@state.mtg.gameOver)"
+    },
+    "activation": 1,
+    "authority": 0,
+    "authors": [
+      "author.antigravity"
+    ],
+    "conditionDescriptions": [
+      "all"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "kind": 3,
+      "children": [
+        {
+          "kind": 0,
+          "path": "@state.mtg.player2Life",
+          "op": 3,
+          "desc": "compare(@state.mtg.player2Life)",
+          "operand": {
+            "t": "int",
+            "v": 0
+          }
+        },
+        {
+          "kind": 0,
+          "path": "@state.mtg.gameOver",
+          "op": 0,
+          "desc": "compare(@state.mtg.gameOver)",
+          "operand": {
+            "t": "bool",
+            "v": false
+          }
+        }
+      ],
+      "desc": "all"
+    },
+    "drives": false,
+    "enabled": true,
+    "id": "law-mtg-sba-player-loss",
+    "name": "mtg-sba-player-loss",
+    "retrigger": 0,
+    "scope": 0,
+    "targets": [
+      "state.mtg"
+    ]
+  },
+  "triggers": []
+}

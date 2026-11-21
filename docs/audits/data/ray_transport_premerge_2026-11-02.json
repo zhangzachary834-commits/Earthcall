@@ -1,0 +1,122 @@
+{
+  "schema": "earthcall-ray-transport-premerge-checkpoint-2026-11-02-v1",
+  "at": "2026-11-02T04:05:24-08:00",
+  "by": "Codex/GPT-6/01a148a7-bd85-7550-a416-0e859a729c1a",
+  "branch": "claude/ray-domain-transport-rung0",
+  "source_base": "634194d044235a96d254ada0d44a9579b74305c8",
+  "docs_successor_head": "dc4c1596120a82ee9c84e7acbc50ea30b6f44d5b",
+  "person_evidence": "Zach reported consistent 30 FPS near spawn, up to 35 FPS in some views, and ~30 FPS during unobstructed flight before this audit; no new Person observation of the corrected build is claimed.",
+  "repairs": [
+    "uncertain root signs retain their enclosure",
+    "support slack is intersected with hard physical bounds",
+    "NaN coordinates and excessive f32 grouping discrepancy retain Current at host admission"
+  ],
+  "source_sha256": {
+    "src/Singularity/OntoMath/ClampedWaveSupport.hpp": "d50fd4dbddd1e9ad222e1dba205d999b9ef2a76f49b0ab48099aac69e46fa585",
+    "src/Singularity/Screen/WebGPU/VolumeRoutedKernels.hpp": "a96c1f42c642189eab8d9f0de9a5f0196e36a329b0e322c3825f225f7dba2aef",
+    "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "9f823f9905b75b73bffa3752845f621b082cc0614c4fcba6b57ce880ff29d850",
+    "scratch/probes/positive_e2e_cpu_verify.cpp": "3398db0dc5a7800925df464f35bb2b88a16aab9b79b734d6ece40e5e0858c61b",
+    "scratch/probes/positive_e2e_metal_verify.cpp": "6e6bda79bda834dbdb736dd5770bae5c6445d996bdde328df1723d34542d2323",
+    "tests/singularity/webgpu_routed_transport_math_test.cpp": "166c1e09de06f5fa6220d778e43ffd9d611247c90e0cd73062042420fc510ad1"
+  },
+  "receipts": {
+    "baseline": {
+      "path": "docs/audits/data/ray_transport_premerge_baseline_2026-11-02.json",
+      "sha256": "d30e97da07e9b3d7faea7b147af48998faefd51ec4705b12fb094bada3b7dc89"
+    },
+    "repaired": {
+      "path": "docs/audits/data/ray_transport_premerge_repaired_2026-11-02.json",
+      "sha256": "81b60ff92eaa06c50f8b5dae8ecea8c1e82b279fd914d1fd249eaa53fd0c452d"
+    },
+    "final_correctness": {
+      "path": "docs/audits/data/ray_transport_premerge_final_correctness_2026-11-02.json",
+      "sha256": "ac64389bc3b3be6e95406221b74eafe8184baf9e6f1cc13c9f43d6be6d6d899d"
+    },
+    "cpu": {
+      "path": "docs/audits/data/ray_transport_premerge_cpu_2026-11-02.json",
+      "sha256": "1841d0f921d42ba065965bf9de37cb914f559962bb034b562eb014c64e085dce"
+    },
+    "independent_reference": {
+      "path": "docs/audits/data/ray_transport_premerge_independent_reference_2026-11-02.json",
+      "sha256": "0f9d6659fa9e89c1aa16230a2b6b112609b57e70c9ad8e5f69c0af73d8f5ea55"
+    },
+    "math": {
+      "path": "docs/audits/data/ray_transport_premerge_math_2026-11-02.json",
+      "sha256": "893d3cf292eceec9be18a99a60dce5d62a778b726820c9a92a6c338faa91ec8f"
+    },
+    "negative_control": {
+      "path": "docs/audits/data/ray_transport_premerge_negative_control_2026-11-02.json",
+      "sha256": "8e833253ad84232c8fb4ab3d118871248493035748186fb3876f800107b034b1"
+    },
+    "selected_native": {
+      "path": "docs/audits/data/ray_transport_premerge_selected_2026-11-02.json",
+      "sha256": "533f3a1587d6fd796b8733edba2fc4fa88adca8ef7237e940e8771e5fe6d2a81"
+    },
+    "focused_ctest": {
+      "path": "docs/audits/data/ray_transport_premerge_focused_ctest_2026-11-02.txt",
+      "sha256": "238583316f5f548ae284fcd53e449f67204fbb177544520325aa05c3f64ef5b0"
+    },
+    "negative_exit": {
+      "path": "docs/audits/data/ray_transport_premerge_negative_exit_2026-11-02.json",
+      "sha256": "2c17f37cf27d5f028e5db86f5be5cd49d28e6d381690e03b8e2dc07307414f30"
+    }
+  },
+  "native_scopes": {
+    "full_measured_repair_run": "10/10 existing gates plus complete-cost sweep",
+    "final_host_guard_run": "8/8 correctness gates; timing gates 9/10 and dual-regime sweep unrun",
+    "final_parity_records_equal_measured_repair": true,
+    "new_independent_math_test": "48 exact-root cases + 48 producer-ray instances over six directed faces; grouping controls; Metal asserted on Apple"
+  },
+  "reference_scope": {
+    "scope": "fresh native four-scene bounded pilot at the original frozen 320 pixels; not full-population or pointwise dominance",
+    "native_controls": "24 captures; Current observer Screen equality, candidate observer Screen/full-publication equality, complete stride-four records",
+    "reference_reuse": "archived converged CPU rows reused only after input f32-bit equality, zone, time, camera, canonical generator and evaluator hash checks",
+    "bound_own_input_rows": 640,
+    "reference_convergence_max": 1.0511302739324435e-07,
+    "checks": 162,
+    "failed": [],
+    "candidate_above_Current_cohort_max_total": 0
+  },
+  "performance": {
+    "all_64_poses": {
+      "current_mean_ms": 83.80484494335937,
+      "current_median_ms": 82.775514640625,
+      "delta_ms": -26.078568164062496,
+      "delta_pct": -31.11821062575564,
+      "routed_mean_ms": 57.726276779296875,
+      "routed_median_ms": 56.994432601562494
+    },
+    "regime1_full_screen_green_poses_0_19_51_63": {
+      "current_mean_ms": 102.607834875,
+      "current_median_ms": 100.6961053939394,
+      "delta_ms": -34.49050802272727,
+      "delta_pct": -33.61391268487895,
+      "poses_count": 33,
+      "routed_mean_ms": 68.11732685227273,
+      "routed_median_ms": 67.41881748484849
+    },
+    "regime2_open_sky_poses_20_50": {
+      "current_mean_ms": 63.788758887096776,
+      "current_median_ms": 63.89710011290323,
+      "delta_ms": -17.123922508064524,
+      "delta_pct": -26.844733785106392,
+      "poses_count": 31,
+      "routed_mean_ms": 46.66483637903225,
+      "routed_median_ms": 46.01032530645161
+    }
+  },
+  "performance_scope": "existing quiet completion-fenced ABBA; both groups improve in the pre/post aggregate screen; no claim that every checkpoint has identical pre/post cost",
+  "no_new_per_sample_box_test": true,
+  "no_added_gpu_dispatch": true,
+  "full_population_certification_claimed": false,
+  "capture_protocol_notes": [
+    "first observer attempt was rejected for copying inside an open coalesced compute pass",
+    "temporary observer splits passes for copy; shaders unchanged; 24 full observation controls pass",
+    "selected rows retained; temporary full captures are local and not committed"
+  ],
+  "local_artifacts": "/private/tmp/ec-premerge-20261102",
+  "merged": false,
+  "pushed": false,
+  "receipt_paths_relative_to": "/Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport",
+  "default_checkout_copy_contains_summary_only": true
+}

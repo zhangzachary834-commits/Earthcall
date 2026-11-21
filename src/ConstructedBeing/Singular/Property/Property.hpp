@@ -57,6 +57,17 @@ public:
     virtual PropertyValue value() const = 0;
     virtual bool setValue(const PropertyValue& v) = 0;
 
+    // Whether this wrapper has a setter at all. This is substrate capability,
+    // not the Law/Zone access decision. PropertyPath checks it before treating
+    // an equal-value write as Unchanged: read-only never grants a no-op write.
+    virtual bool isStructurallyWritable() const { return true; }
+
+    // An actual member-held list/dict permits a checked in-place element
+    // write. A getter/setter bridge does not imply this: changing memory
+    // behind its getter would bypass its setter. This describes machine
+    // access, not a second authority policy; TransferPolicy remains the gate.
+    virtual bool exposesMutableContainer() const { return false; }
+
     // Non-null when this property's value is itself a Singular — the
     // recursion point PropertyPath descends through for nested addresses.
     virtual Singular* asSingular() const { return nullptr; }
