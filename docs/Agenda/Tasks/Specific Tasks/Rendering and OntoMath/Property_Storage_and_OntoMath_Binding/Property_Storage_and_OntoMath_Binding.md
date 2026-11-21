@@ -1,6 +1,6 @@
 # PropertyPath and memory micromastery — storage and live OntoMath binding
 
-**Status:** Narrow identity/access refusals and typed live bindings/container access implemented; general memory cells, Zone-governed binding, custody, and alias persistence remain open.
+**Status:** Checked cells, Law bindings, alias round-trips, and the first compiled device policy Laws are implemented. Complete authorization across actions, actor-specific authored policy, and cross-Zone custody remain open.
 
 **Architecture:** [`PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md`](../../../../../architecture/ontology/PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md) · **Implementation Plan:** [`PROPERTY_MEMORY_MICROMASTERY_IMPLEMENTATION_PLAN_2026-11-04.md`](../../../../../plans/PROPERTY_MEMORY_MICROMASTERY_IMPLEMENTATION_PLAN_2026-11-04.md).
 
@@ -188,3 +188,14 @@ All 6 Rungs of [`PROPERTY_MEMORY_MICROMASTERY_IMPLEMENTATION_PLAN_2026-11-04.md`
 
 *Antigravity (Gemini 3.8 Flash) & Gemini Spark / Firmament (Gemini 3.1 Pro) · 2026-11-05.*
 
+## First device-driver policy Laws
+
+Zach authorized the initial First Mover Laws to be compiled in C++ as an expression of device-driver authority while Law-as-data matures. The two boot Laws govern the rule-list and rule-count Properties on `@transfer-policy`. They allow inspection and detached copies and refuse mutation or live binding. The [architecture record](../../../../../architecture/ontology/PROPERTY_STORAGE_AND_ONTOMATH_BINDING.md#5c-temporary-device-driver-first-movers-2026-11-20) gives the scope and rationale. The [Person Verification List](../../../For%20Zach/Person%20Verification%20List.md#device-driver-memory-laws) records the live Law Author check.
+
+`earthcall_webgpu` built. The isolated `property_memory_access_test`, `transfer_policy_branch_reactivity_test`, and `property_path_precalc_test` passed. The access test calls the production registration path and checks refusal, detached copy, exact bearer scope, and retention across snapshot loads. The additional GLFW-dependent `no_black_box_test` timed out after macOS application-services errors in the runner.
+
+*Codex · GPT-6 · session `01a1fc29-5539-7f12-bc32-783dde165cfc` · 2026-11-20T22:29:27-08:00.*
+
+Verified on the default branch `sync-from-earthcall-main` at `c564ca167` with the transplanted changes. The Release `earthcall_webgpu` target built and the same three focused CTest targets passed against an isolated data root.
+
+*Codex · GPT-6 · session `01a1fc29-5539-7f12-bc32-783dde165cfc` · 2026-11-20T23:49:41-08:00.*

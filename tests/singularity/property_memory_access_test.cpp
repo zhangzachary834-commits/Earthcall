@@ -2682,5 +2682,90 @@ int main() {
         }
     }
 
+    // Exercise the same First Mover registration that Engine uses at boot.
+    {
+        auto& policy = TransferPolicy::instance();
+        policy.clearPolicyRules();
+        LawManager laws;
+        policy.syncRegisterMemoryLaws(laws);
+        policy.syncRegisterMemoryLaws(laws);
+        assert(laws.getAll().size() == 2);
+        assert(policy.ruleCount() == 12);
+        for (const auto& law : laws.getAll()) {
+            assert(law->isFirstMover() && law->isAuthored());
+            assert(law->authors().getMembers().front() == &policy);
+            assert(law->applicationLog().back().result == Law::ApplicationResult::Applied);
+        }
+
+        assert(!policy.hasNonDefaultState());
+        assert(policy.toJson().at("rules").empty());
+        laws.loadFromJson(laws.toJson());
+        policy.loadFromJson({{"rules", nlohmann::json::array()}});
+        assert(laws.find("memory-policy-rule-list"));
+        assert(laws.find("memory-policy-rule-count"));
+        assert(policy.ruleCount() == 12);
+        assert(std::get<int>(read(policy, "ruleCount")) == 12);
+        assert(std::get<std::string>(read(policy, "rules.0.targetBearerId")) == "transfer-policy");
+        assert(PropertyPath::parse("rules.0.allow").setValue(policy, false) == Result::AccessDenied);
+
+        Object recipient;
+        recipient.setDynamicProperty("ruleCount", 7);
+        assert(PropertyPath::parse("ruleCount").setValue(recipient, 42) == Result::Ok);
+
+        Law access("device-memory-access-test", {&recipient});
+        access.setActionModel(ActionNode::copyCell("policyCopy", "@transfer-policy.rules"));
+        assert(access.applyTo(recipient) == Law::ApplicationResult::Applied);
+        assert(std::get<std::shared_ptr<PropertyList>>(read(recipient, "policyCopy"))->elements.size() == 12);
+        assert(PropertyPath::parse("policyCopy.0.allow").setValue(recipient, false) == Result::Ok);
+        assert(std::get<bool>(read(policy, "rules.0.allow")));
+
+        const auto expectDenied = [&](const ActionNode& action) {
+            access.setActionModel(action);
+            assert(access.applyTo(recipient) == Law::ApplicationResult::Applied);
+            assert(access.applicationLog().back().trace.nodes.back().reason == Result::AccessDenied);
+        };
+        expectDenied(ActionNode::set("@transfer-policy.ruleCount", 0));
+        expectDenied(ActionNode::shareCell("alias", "@transfer-policy.ruleCount"));
+        expectDenied(ActionNode::weakCell("alias", "@transfer-policy.ruleCount"));
+        expectDenied(ActionNode::uniqueCell("alias", "@transfer-policy.ruleCount"));
+        assert(!recipient.hasPropertyCell("alias"));
+        assert(!policy.hasPropertyCell("ruleCount"));
+
+        auto input = std::make_shared<OntoMath::MathNode>();
+        input->op = OntoMath::MathNode::Op::ValueLeaf;
+        input->variableName = "x";
+        expectDenied(ActionNode::deriveCell("derivedCount", OntoMath::Piecewise::continuous(input),
+            {{"x", PropertyPath::parse("@transfer-policy.ruleCount")}}));
+        assert(!recipient.hasDynamicProperty("derivedCount"));
+
+        access.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.targetCellPath", std::string("@transfer-policy.ruleCount")),
+            ActionNode::set("@transfer-policy.rule.commit", true)
+        }));
+        assert(access.applyTo(recipient) == Law::ApplicationResult::Applied);
+        assert(access.applicationLog().back().trace.nodes.back().reason == Result::ReadOnly);
+        assert(!policy.hasPropertyCell("ruleCount"));
+        assert(policy.ruleCount() == 12);
+
+        // Normal authoring still works, and a snapshot keeps the authored
+        // record independent of the boot Laws and their runtime rules.
+        access.setActionModel(ActionNode::sequence({
+            ActionNode::set("@transfer-policy.rule.pathPattern", std::string("temporary")),
+            ActionNode::set("@transfer-policy.rule.allow", false),
+            ActionNode::set("@transfer-policy.rule.commit", true)
+        }));
+        assert(access.applyTo(recipient) == Law::ApplicationResult::Applied);
+        assert(policy.ruleCount() == 13);
+        const auto saved = policy.toJson();
+        assert(saved.at("rules").size() == 1);
+        policy.loadFromJson(saved);
+        assert(policy.ruleCount() == 13);
+        recipient.setDynamicProperty("temporary", 0);
+        assert(PropertyPath::parse("temporary").setValue(recipient, 1) == Result::AccessDenied);
+        policy.loadFromJson({{"rules", nlohmann::json::array()}});
+        assert(policy.ruleCount() == 12);
+    }
+    assert(TransferPolicy::instance().ruleCount() == 0);
+
     std::cout << "property_memory_access_test: PASS\n";
 }

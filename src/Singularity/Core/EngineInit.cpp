@@ -252,7 +252,7 @@ bool Engine::initLogic() {
     // Laws listen from the first frame: every ECA::Event published anywhere
     // in the engine becomes a fact the law network can act on.
     _lawManager->connectToEventBus();
-    (void)TransferPolicy::instance();   // the gate exists from the first frame
+    TransferPolicy::instance().syncRegisterMemoryLaws(*_lawManager);
 
 #ifndef __EMSCRIPTEN__
     // Start WebSocket server on port 8080 to link with the Python backend and Web UI
