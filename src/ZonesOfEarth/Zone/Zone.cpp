@@ -322,27 +322,15 @@ void Zone::setOwner(const std::string& ownerId, const std::string& ownerKind) {
 }
 
 void Zone::syncFormationMembers(const std::vector<Singular*>& extraMembers) {
-    std::unordered_set<const Singular*> live;
     const auto admit = [&](Singular* member) {
         if (!member) return;
-        live.insert(member);
         _formation.addMember(member);
     };
 
     admit(_spatialRootObject.get());
     for (const auto& field : _additionalSpatialFields) admit(field.get());
     for (const auto& being : _storedSingulars) admit(being.get());
-    for (const auto& up : _objects) admit(up.get());
     for (auto* member : extraMembers) admit(member);
-    for (const auto& lexeme : Singularity::Language::LanguageSystem::instance().getAll()) {
-        if (lexeme) admit(lexeme.get());
-    }
-
-    const std::vector<Singular*> current = _formation.getMembers();
-    for (Singular* member : current) {
-        if (!member || live.count(member) != 0) continue;
-        _formation.removeMember(member);
-    }
 }
 
 void Zone::applyFormationRelations() {
@@ -444,14 +432,14 @@ void Zone::addSpatialField(std::shared_ptr<geom::FieldNode> field) {
         });
     if (duplicate != _additionalSpatialFields.end()) return;
 
-    Universe::instance().bumpStructuralRevision();
+    noteResidentReferentsChanged();
     _formation.addMember(field.get());
     _additionalSpatialFields.push_back(std::move(field));
 }
 
 void Zone::clearAdditionalSpatialFields() {
     if (_additionalSpatialFields.empty()) return;
-    Universe::instance().bumpStructuralRevision();
+    noteResidentReferentsChanged();
     for (const auto& field : _additionalSpatialFields) {
         if (field) _formation.removeMember(field.get());
     }
@@ -459,8 +447,8 @@ void Zone::clearAdditionalSpatialFields() {
 }
 
 void Zone::addObject(std::shared_ptr<Object> obj) {
-    if (obj) _formation.addMember(obj.get());
-    Universe::instance().bumpStructuralRevision();
+    if (!obj) return;
+    noteResidentReferentsChanged();
     _objects.push_back(std::move(obj));
 }
 
@@ -472,7 +460,7 @@ bool Zone::retainSingular(std::shared_ptr<Singular> being) {
     }
     _formation.addMember(being.get());
     _storedSingulars.push_back(std::move(being));
-    Universe::instance().bumpStructuralRevision();
+    noteResidentReferentsChanged();
     notifyPropertyChanged(this, "storedSingulars");
     return true;
 }
@@ -481,7 +469,7 @@ void Zone::clearStoredSingulars() {
     if (_storedSingulars.empty()) return;
     for (const auto& being : _storedSingulars) _formation.releaseMember(being.get());
     _storedSingulars.clear();
-    Universe::instance().bumpStructuralRevision();
+    noteResidentReferentsChanged();
     notifyPropertyChanged(this, "storedSingulars");
 }
 
@@ -510,7 +498,7 @@ bool Zone::removeObject(Object* obj) {
     // the next sweep reads freed memory rather than merely a stale answer.
     // reapUnmadeBeings bumps too; both paths must, because either can be the
     // one that runs.
-    Universe::instance().bumpStructuralRevision();
+    noteResidentReferentsChanged();
 
     Core::EventBus::instance().publish(
         ECA::Event{"object-destroyed", obj, nullptr, std::time(nullptr)});
@@ -520,6 +508,26 @@ bool Zone::removeObject(Object* obj) {
     }
     _objects.erase(it);
     return true;
+}
+
+void Zone::noteResidentReferentsChanged() {
+    ++_residentReferentRevision;
+    Universe::instance().bumpStructuralRevision();
+}
+
+std::uint64_t Zone::referentRevision() const noexcept {
+    std::uint64_t stamp = _residentReferentRevision;
+    const std::uint64_t members = _formation.membershipGeneration();
+    stamp ^= members + 0x9e3779b97f4a7c15ULL + (stamp << 6) + (stamp >> 2);
+    return stamp;
+}
+
+std::vector<std::shared_ptr<Object>>& Zone::getOwnedObjectsMutable() {
+    // Legacy mutable access cannot reveal when its retained reference is later
+    // changed, so invalidate before handing it out. New code should prefer the
+    // named admission/removal methods, whose mutation point is exact.
+    noteResidentReferentsChanged();
+    return _objects;
 }
 
 bool Zone::containsBeing(const Singular& being) const {
