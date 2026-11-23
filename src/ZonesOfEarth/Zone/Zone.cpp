@@ -16,10 +16,19 @@
 #include <ctime>
 #include <chrono>
 #include <unordered_set>
+#include <atomic>
 #include "Singularity/OntoMath/Field.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 
 using Scope = Zone::Scope;
+
+namespace {
+std::shared_ptr<const std::uint64_t> nextZoneReferentLifetimeGeneration() {
+    static std::atomic<std::uint64_t> next{1};
+    return std::make_shared<const std::uint64_t>(
+        next.fetch_add(1, std::memory_order_relaxed));
+}
+} // namespace
 
 static const char* scopeToString(Scope scope) {
     switch(scope) {
@@ -339,6 +348,7 @@ void Zone::applyFormationRelations() {
 
 Zone::Zone(const std::string& name, const std::string& foundationSymbol, Scope scope)
     : _name(name), _identifier(name), _scope(scope), _formation(),
+      _referentLifetimeGeneration(nextZoneReferentLifetimeGeneration()),
       _spatialRootObject(std::make_shared<geom::FieldNode>(name + "_spatialRoot"))
 {
     _spatialField = _spatialRootObject->field;
@@ -360,6 +370,7 @@ Zone::Zone(const std::string& name, const std::string& foundationSymbol, Scope s
 Zone::Zone(const Zone& other)
     : _name(other._name), _identifier(other._identifier), _scope(other._scope), _qualities(other._qualities), _deletable(other._deletable),
       _joys(other._joys), _ownerId(other._ownerId), _formation(),
+      _referentLifetimeGeneration(nextZoneReferentLifetimeGeneration()),
       _spatialRootObject(std::make_shared<geom::FieldNode>(other._name + "_spatialRoot")),
       _lastUpdateTiming(other._lastUpdateTiming), _storedSingulars(other._storedSingulars)
 {
@@ -520,6 +531,10 @@ std::uint64_t Zone::referentRevision() const noexcept {
     const std::uint64_t members = _formation.membershipGeneration();
     stamp ^= members + 0x9e3779b97f4a7c15ULL + (stamp << 6) + (stamp >> 2);
     return stamp;
+}
+
+std::uint64_t Zone::referentLifetimeGeneration() const noexcept {
+    return _referentLifetimeGeneration ? *_referentLifetimeGeneration : 0;
 }
 
 std::vector<std::shared_ptr<Object>>& Zone::getOwnedObjectsMutable() {
