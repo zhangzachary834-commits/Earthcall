@@ -111,7 +111,7 @@ int main() {
     worldTime = 11.0;
     mgr.saveState((sandbox / "worlds" / "alpha.json").string(), ctx);
 
-    zoneA->getOwnedObjectsMutable().clear();
+    zoneA->clearObjects();
     zoneA->addObject(makeCube("cube-world-b", glm::vec3(9.0f, 0.0f, 0.0f)));
     worldTime = 22.0;
     mgr.saveState((sandbox / "worlds" / "beta.json").string(), ctx);

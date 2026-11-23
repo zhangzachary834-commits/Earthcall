@@ -64,7 +64,7 @@ void zoneObjectsFromJson(const nlohmann::json& j, Zone& zone) {
     // identifier, so this pass is order-independent; an element that is not in
     // the Zone is simply not re-linked (composition is a covenant between
     // beings that are present, never a pointer to something absent).
-    auto& owned = zone.getOwnedObjectsMutable();
+    const auto& owned = zone.getOwnedObjects();
     for (auto& holder : owned) {
         if (!holder || holder->getPendingElementIds().empty()) continue;
         for (const auto& id : holder->getPendingElementIds()) {
@@ -157,7 +157,7 @@ void mergeZoneObjectsFromJson(const nlohmann::json& j, Zone& zone) {
     else if (j.is_array()) arr = &j;
     if (!arr) return;
     const nlohmann::json& worldObjects = *arr;
-    auto& owned = zone.getOwnedObjectsMutable();
+    const auto& owned = zone.getOwnedObjects();
     for (const auto& oj : worldObjects) {
         std::string id;
         if (oj.contains("objectID") && oj["objectID"].is_string()) {
@@ -455,7 +455,7 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects, bo
     }
 
     if (replaceObjects) {
-        zone.getOwnedObjectsMutable().clear();
+        zone.clearObjects();
     }
     if (zone.getOwnedObjects().empty()) {
         if (zj.contains("world")) {

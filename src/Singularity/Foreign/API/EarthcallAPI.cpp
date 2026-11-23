@@ -322,7 +322,7 @@ bool EarthcallAPI::modifyObject(const std::string& id, const glm::vec3& position
 
     if (_zoneManager) {
         for (auto& zone : _zoneManager->zones()) {
-            for (auto& obj : zone->getOwnedObjectsMutable()) {
+            for (const auto& obj : zone->getOwnedObjects()) {
                 if (obj->getIdentifier() == id) {
                     glm::mat4 t = obj->getTransform();
                     glm::vec3 oldScale(glm::length(glm::vec3(t[0])), glm::length(glm::vec3(t[1])), glm::length(glm::vec3(t[2])));

@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <limits>
 
 class Singular;
 class Relation;
@@ -51,6 +52,7 @@ public:
 
     void setProvider(Provider provider) {
         _provider = std::move(provider);
+        ++_providerRevision;
         bumpStructuralRevision();
     }
     void setSharedProvider(Provider provider) {
@@ -59,7 +61,7 @@ public:
     bool hasProvider() const { return static_cast<bool>(_provider); }
 
     // Native multi-zone operand harvesting + shared provider beings
-    std::vector<Singular*> beings() const;
+    const std::vector<Singular*>& beings() const;
 
     // ------------------------------------------------------------------
     // Who is listening. A law publishing an event that no law hears is a
@@ -199,6 +201,7 @@ public:
             if (pending == being) return;
         }
         _unmaking.push_back(being);
+        ++_unmakingRevision;
     }
     bool isUnmade(Singular* being) const {
         for (Singular* pending : _unmaking) {
@@ -211,6 +214,7 @@ public:
     std::vector<Singular*> takeUnmakings() {
         std::vector<Singular*> out;
         out.swap(_unmaking);
+        if (!out.empty()) ++_unmakingRevision;
         return out;
     }
 
@@ -246,6 +250,20 @@ private:
 
     std::vector<Singular*> _unmaking;
     uint64_t _structuralRevision = 0;
+
+    // Kernel-derived retained working set. The answer depends on the active
+    // operands, their relation-member population, the shared provider, and
+    // deferred unmaking. Returning this vector by const reference removes the
+    // former per-call vector/hash reconstruction while every mutation family
+    // below remains explicit cache currency.
+    mutable std::vector<Singular*> _cachedBeings;
+    mutable uint64_t _cachedBeingsStructuralRevision = std::numeric_limits<uint64_t>::max();
+    mutable std::size_t _cachedBeingsRelationGeneration = std::numeric_limits<std::size_t>::max();
+    mutable std::size_t _cachedBeingsZoneReferentGeneration = std::numeric_limits<std::size_t>::max();
+    mutable uint64_t _cachedBeingsProviderRevision = std::numeric_limits<uint64_t>::max();
+    mutable uint64_t _cachedBeingsUnmakingRevision = std::numeric_limits<uint64_t>::max();
+    uint64_t _providerRevision = 0;
+    uint64_t _unmakingRevision = 0;
 };
 
 void reapUnmadeBeings();

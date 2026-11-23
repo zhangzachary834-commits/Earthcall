@@ -8,6 +8,7 @@
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include <glm/glm.hpp>
 #include <map>
+#include <cstdint>
 
 namespace OntoMath {
     class ScalarField;
@@ -123,7 +124,9 @@ public:
     bool containsBeing(const Singular& being) const;
     const std::vector<std::shared_ptr<Object>>& objects() const { return _objects; }
     const std::vector<std::shared_ptr<Object>>& getOwnedObjects() const { return _objects; }
-    std::vector<std::shared_ptr<Object>>& getOwnedObjectsMutable() { return _objects; }
+    // Structural mutation stays behind named doors so referent-cache currency
+    // advances at the actual mutation point. Do not expose the vector itself.
+    void clearObjects();
     struct UpdateTiming {
         double groundScanMs = 0.0;
         double rotationMs = 0.0;
@@ -212,6 +215,15 @@ public:
     void clearStoredSingulars();
     std::shared_ptr<PropertyList> propStoredSingulars() const;
 
+    // Kernel-derived referent currency. This is not authored Zone state: it
+    // combines residence-set changes with explicit Formation membership so
+    // qualified-path caches can renew exactly this Zone and nothing else.
+    std::uint64_t referentRevision() const noexcept;
+    // Monotonic identity for this Zone lifetime. Unlike the object address,
+    // this generation cannot be recycled by the allocator, so retained
+    // referent caches can reject ABA reuse after Zone destruction/reload.
+    std::uint64_t referentLifetimeGeneration() const noexcept;
+
 protected:
     void buildProperties() override;
 
@@ -241,6 +253,10 @@ private:
     // Kernel performance instrumentation — sub-phase tick telemetry beneath the Law system.
     UpdateTiming _lastUpdateTiming;
     Formation _formation;
+    // Shared so the default move operations transfer this lifetime identity;
+    // copies receive a fresh generation and copy-assignment preserves the
+    // destination object's identity.
+    std::shared_ptr<const std::uint64_t> _referentLifetimeGeneration;
     
     std::shared_ptr<OntoMath::ScalarField> _spatialField;
     std::shared_ptr<OntoMath::VectorField> _spatialVectorField;
@@ -248,6 +264,12 @@ private:
     std::shared_ptr<geom::FieldNode> _spatialRootObject;
     std::vector<std::shared_ptr<geom::FieldNode>> _additionalSpatialFields;
     std::vector<std::shared_ptr<Singular>> _storedSingulars;
+    std::uint64_t _residentReferentRevision = 1;
+
+    // Marks a machine-owned residence/index surface as changed and advances
+    // the complete global fallback. Kept beneath the Kernel by name: Persons
+    // author the residents and Relations, never this cache counter.
+    void noteResidentReferentsChanged();
 
 public:
     Formation& formation() { return _formation; }
