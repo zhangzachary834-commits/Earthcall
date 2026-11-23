@@ -565,8 +565,7 @@ bool ZoneManager::switchTo(size_t index)
             currentZoneId = parent;
         }
 
-        auto& worldObjs = _zones[_currentIndex]->getOwnedObjectsMutable();
-        worldObjs.clear();
+        _zones[_currentIndex]->clearObjects();
         for (const auto& obj : globalObjects) {
             bool matches = false;
             for (const auto& az : activeZones) {
@@ -576,7 +575,7 @@ bool ZoneManager::switchTo(size_t index)
                 }
             }
             if (matches) {
-                worldObjs.push_back(obj);
+                _zones[_currentIndex]->addObject(obj);
             }
         }
 
@@ -2786,7 +2785,7 @@ void ZoneManager::loadTestObservation(const std::string& filename, SaveContext& 
         for (const auto& obj : zone->getOwnedObjects()) {
             if (obj) retiring.insert(obj.get());
         }
-        zone->getOwnedObjectsMutable().clear();
+        zone->clearObjects();
         globalObjects.erase(
             std::remove_if(globalObjects.begin(), globalObjects.end(),
                            [&](const std::shared_ptr<Object>& obj) {
