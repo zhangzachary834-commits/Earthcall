@@ -79,6 +79,35 @@ int main() {
         check(plain.getIdentifier() == "material.plain", "without \"id\", name is still the identity");
     }
 
+    {
+        Formation source;
+        Material other("zt_other");
+        auto retired = std::make_unique<Material>("zt_retired");
+        source.setRoot(retired.get());
+        auto edge = std::make_shared<Relation>("zt-lifetime", *retired, other);
+        edge->setWeight(1.0f);
+        source.addRelation(edge);
+        Formation copy(source);
+        Formation assigned;
+        assigned = source;
+        const auto stamp = source.membershipGeneration();
+        const auto copyRelations = copy.relations().generation();
+        const auto assignedRelations = assigned.relations().generation();
+        retired.reset();
+        check(!source.root() && source.membershipGeneration() != stamp &&
+                  !source.findMemberByIdentifier("material.zt_retired"),
+              "ordinary destruction retires borrowed membership and its root without a LawManager");
+        check(!copy.root() && !assigned.root() &&
+                  !copy.findMemberByIdentifier("material.zt_retired") &&
+                  !assigned.findMemberByIdentifier("material.zt_retired"),
+              "copied and assigned Formations also release borrowed memberships");
+        check(!edge->a() && edge->aId() == "material.zt_retired" &&
+                  source.relations().getAll().size() == 1 &&
+                  copy.relations().generation() != copyRelations &&
+                  assigned.relations().generation() != assignedRelations,
+              "retirement preserves the Relation and invalidates every shared endpoint index");
+    }
+
     std::filesystem::path saves = "saves";
     if (!std::filesystem::exists(saves / "zones/visible_cube/zone.json")) {
         saves = std::filesystem::path("..") / "saves";
@@ -92,6 +121,8 @@ int main() {
         ("earthcall_zone_material_closure_" + std::to_string(
             std::chrono::steady_clock::now().time_since_epoch().count()))};
 
+    Material red("zt_shared_red");
+    red.baseColor = glm::vec3(0.9f, 0.1f, 0.1f);
     const auto makeZone = [&](const std::string& id, const std::string& materialId,
                               bool refShared) {
         nlohmann::json j = base;
@@ -101,6 +132,18 @@ int main() {
         j["world"]["objects"][0]["objectID"] = id + "-cube";
         j["world"]["objects"][0]["materialId"] = materialId;
         if (refShared) j["materialRefs"] = nlohmann::json::array({"material.zt_shared_red"});
+        if (id == "ZtAlpha") {
+            // Sky-Island kept its embedded Material alongside a shared root.
+            // Hydration binds the former; activation installs the latter.
+            j["materials"] = nlohmann::json::array({red.toJson()});
+            j["formationRelations"] = nlohmann::json::array({
+                {{"type", "zt-material-for"}, {"entityA", materialId},
+                 {"entityB", "ZtAlpha-cube"}, {"directed", true},
+                 {"events", nlohmann::json::array({
+                     {{"description", "original"}, {"deltaWeight", 1.0}, {"timestamp", 1}}
+                 })}}
+            });
+        }
         const auto dir = scratch.path / "zones" / id;
         std::filesystem::create_directories(dir);
         std::ofstream(dir / "zone.json") << j.dump(2);
@@ -110,8 +153,6 @@ int main() {
     makeZone("ZtGamma", "material.zt_ghost", false);
 
     {
-        Material red("zt_shared_red");
-        red.baseColor = glm::vec3(0.9f, 0.1f, 0.1f);
         const auto dir = scratch.path / "materials/zt_shared_red";
         std::filesystem::create_directories(dir);
         std::ofstream(dir / "material.json")
@@ -131,12 +172,28 @@ int main() {
               "fresh boot discovers all three Zones from saves/zones alone");
         if (alpha >= zm.zones().size() || beta >= zm.zones().size() || gamma >= zm.zones().size()) return 1;
 
+        auto& graph = zm.zones()[alpha]->formation();
+        const auto original = graph.relations().getRelationsOfType("zt-material-for");
+        const bool loaded = original.size() == 1 && original.front()->a() &&
+              !original.front()->events.empty() &&
+              original.front()->events.front().description == "original";
+        check(loaded,
+              "boot binds the persisted edge to the embedded Material");
+        if (!loaded) return 1;
+        const auto historySize = original.front()->events.size();
+
         // (1) Alpha resolves the shared Material from its root.
         check(zm.switchTo(alpha), "Move to Zone commits Alpha with a shared Material root");
         auto live = materials.get("material.zt_shared_red");
         check(live != nullptr, "shared Material is live after the move");
         check(live && live->baseColor.r > 0.89f && live->baseColor.g < 0.11f,
               "shared Material carries the root's authored colour");
+        const auto restored = graph.relations().getRelationsOfType("zt-material-for");
+        check(restored == original && restored.front()->a() == live.get() &&
+                  restored.front()->events.size() == historySize,
+              "activation rebinds the same Relation with its original history");
+        check(graph.findMemberByIdentifier("material.zt_shared_red") == live.get(),
+              "Formation lookup returns the installed Material");
 
         // (2) Gamma names a Material defined nowhere: refuse, stay in Alpha.
         const std::size_t before = zm.currentIndex();
