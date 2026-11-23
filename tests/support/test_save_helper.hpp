@@ -133,12 +133,12 @@ inline void dump_test_save(const std::string& test_name, Zone& testWorld, LawMan
     mgr.saveState(filepath, ctx);
     
     // Restore objects back to testWorld so the test can continue using them
-    for (auto& obj : zone->getOwnedObjectsMutable()) {
+    for (const auto& obj : zone->getOwnedObjects()) {
         if (obj) {
-            testWorld.addObject(std::move(obj));
+            testWorld.addObject(obj);
         }
     }
-    zone->getOwnedObjectsMutable().clear();
+    zone->clearObjects();
 
     std::cout << "[TestSaveHelper] Saved test state to " << filepath << std::endl;
 }
