@@ -160,6 +160,7 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
 
     struct ZoneReferentCache {
         uint64_t revision = 0;
+        uint64_t lifetimeGeneration = 0;
         const geom::FieldNode* identityWitness = nullptr;
         std::string zoneIdentifier;
         std::unordered_map<Earthcall::StringId, Singular*> qualified;
@@ -171,9 +172,11 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
     auto zoneReferents = [&](Zone& zone) -> ZoneReferentCache& {
         ZoneReferentCache& cache = s_zoneReferents[&zone];
         const uint64_t revision = zone.referentRevision();
+        const uint64_t lifetime = zone.referentLifetimeGeneration();
         const auto* witness = zone.spatialRoot();
         const std::string zoneIdent = zone.getIdentifier();
         if (cache.initialized && cache.revision == revision &&
+            cache.lifetimeGeneration == lifetime &&
             cache.identityWitness == witness && cache.zoneIdentifier == zoneIdent) {
             return cache;
         }
@@ -202,6 +205,7 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
         for (const auto& stored : zone.storedSingulars()) add(stored.get());
 
         cache.revision = revision;
+        cache.lifetimeGeneration = lifetime;
         cache.identityWitness = witness;
         cache.zoneIdentifier = zoneIdent;
         cache.initialized = true;
@@ -217,7 +221,7 @@ inline Singular* resolveLawRoot(Singular& subject, const PropertyPath& path,
     };
     for (const Zone* zone : Universe::instance().zones()) {
         if (!zone) continue;
-        mixActiveReferent(reinterpret_cast<std::size_t>(zone));
+        mixActiveReferent(static_cast<std::size_t>(zone->referentLifetimeGeneration()));
         mixActiveReferent(static_cast<std::size_t>(zone->referentRevision()));
     }
     ZoneManager* currentLiveManager = ZoneManager::live();
