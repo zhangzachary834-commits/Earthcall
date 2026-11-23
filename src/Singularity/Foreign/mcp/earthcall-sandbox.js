@@ -138,6 +138,11 @@ function copyTreeCow(sourceRoot, workspaceRoot, manifest, rel = ".", baselineRoo
     if (entry.name === ".DS_Store") continue;
 
     const childRel = rel === "." ? entry.name : path.join(rel, entry.name);
+    // Claude worktrees can contain complete nested checkouts (including large
+    // generated/audit artifacts). They are agent scratch state, not part of the
+    // sandbox source tree, and copying them recursively can explode session size.
+    const normalizedChildRel = childRel.split(path.sep).join("/");
+    if (entry.isDirectory() && normalizedChildRel === ".claude/worktrees") continue;
     const srcPath = path.join(sourceRoot, childRel);
     const dstPath = path.join(workspaceRoot, childRel);
 
