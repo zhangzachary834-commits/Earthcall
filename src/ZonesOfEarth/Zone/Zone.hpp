@@ -124,7 +124,9 @@ public:
     bool containsBeing(const Singular& being) const;
     const std::vector<std::shared_ptr<Object>>& objects() const { return _objects; }
     const std::vector<std::shared_ptr<Object>>& getOwnedObjects() const { return _objects; }
-    std::vector<std::shared_ptr<Object>>& getOwnedObjectsMutable();
+    // Structural mutation stays behind named doors so referent-cache currency
+    // advances at the actual mutation point. Do not expose the vector itself.
+    void clearObjects();
     struct UpdateTiming {
         double groundScanMs = 0.0;
         double rotationMs = 0.0;
