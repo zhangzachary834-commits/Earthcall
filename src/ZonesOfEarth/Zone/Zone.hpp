@@ -8,6 +8,7 @@
 #include "ConstructedBeing/Singular/Singular.hpp"
 #include <glm/glm.hpp>
 #include <map>
+#include <cstdint>
 
 namespace OntoMath {
     class ScalarField;
@@ -216,6 +217,10 @@ public:
     // combines residence-set changes with explicit Formation membership so
     // qualified-path caches can renew exactly this Zone and nothing else.
     std::uint64_t referentRevision() const noexcept;
+    // Monotonic identity for this Zone lifetime. Unlike the object address,
+    // this generation cannot be recycled by the allocator, so retained
+    // referent caches can reject ABA reuse after Zone destruction/reload.
+    std::uint64_t referentLifetimeGeneration() const noexcept;
 
 protected:
     void buildProperties() override;
@@ -246,6 +251,10 @@ private:
     // Kernel performance instrumentation — sub-phase tick telemetry beneath the Law system.
     UpdateTiming _lastUpdateTiming;
     Formation _formation;
+    // Shared so the default move operations transfer this lifetime identity;
+    // copies receive a fresh generation and copy-assignment preserves the
+    // destination object's identity.
+    std::shared_ptr<const std::uint64_t> _referentLifetimeGeneration;
     
     std::shared_ptr<OntoMath::ScalarField> _spatialField;
     std::shared_ptr<OntoMath::VectorField> _spatialVectorField;
