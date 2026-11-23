@@ -179,7 +179,7 @@ void renderPerformanceMetricsContent(Core::Engine* engine) {
         // durations around recording, surface acquisition, and queue submission;
         // a late surface/submit stall often reports accumulated queue pressure,
         // not the execution time of just this frame's SDF draw.
-        float actual_3d = g_frameTimings.render3d_ms - g_frameTimings.wait_surface_ms - g_frameTimings.wait_submit_ms;
+        float actual_3d = g_frameTimings.render3d_ms - g_frameTimings.wait_surface_ms - g_frameTimings.wait_submit_ms - g_frameTimings.post_render_ms;
         if (actual_3d < 0.0f) actual_3d = 0.0f;
         ImGui::Text("  3D phase (CPU wall-clock): %6.2f ms", g_frameTimings.render3d_ms);
         if (ImGui::IsItemHovered()) {
@@ -189,7 +189,9 @@ void renderPerformanceMetricsContent(Core::Engine* engine) {
                 "by the main thread. If this adapter supports timestamp queries, the GPU\n"
                 "main-render-pass sample above is the separate execution measurement.");
         }
-        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Command recording:     %6.2f ms", actual_3d);
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Other 3D CPU work:     %6.2f ms", actual_3d);
+        ImGui::Text("    |- Post-render sensing:   %6.2f ms", g_frameTimings.post_render_ms);
+        ImGui::Text("  File watcher:    %6.2f ms", g_frameTimings.file_watcher_ms);
         ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Surface acquire wait:  %6.2f ms", g_frameTimings.wait_surface_ms);
         if (g_frameTimings.wait_submit_ms > 0.1f) {
             ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "    |- Queue-submit wait:     %6.2f ms", g_frameTimings.wait_submit_ms);
