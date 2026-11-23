@@ -103,11 +103,17 @@ Zone* ZoneManager::residenceOf(const Singular& being) const {
         return _zones.empty() ? nullptr : _zones[_currentIndex].get();
     }
 
-    const double now = Universe::instance().now();
+    const std::uint64_t structural = Universe::instance().structuralRevision();
     const auto rebuild = [&]() {
         _residenceIndex.clear();
         for (const auto& zone : _zones) {
             if (!zone) continue;
+            auto admit = [&](const Singular* being) {
+                if (being) _residenceIndex.emplace(being, zone.get());
+            };
+            admit(zone->spatialRoot());
+            for (const auto& field : zone->additionalSpatialFields()) admit(field.get());
+            for (const auto& stored : zone->storedSingulars()) admit(stored.get());
             for (const auto& obj : zone->objects()) {
                 if (!obj) continue;
                 // A child Zone's view includes its parents' objects
@@ -123,15 +129,11 @@ Zone* ZoneManager::residenceOf(const Singular& being) const {
                 }
             }
         }
-        _residenceStamp = now;
+        _residenceStructuralRevision = structural;
         _residenceBuilt = true;
     };
-    if (!_residenceBuilt || now != _residenceStamp) rebuild();
+    if (!_residenceBuilt || structural != _residenceStructuralRevision) rebuild();
     auto it = _residenceIndex.find(&being);
-    if (it == _residenceIndex.end()) {
-        rebuild();   // a being born this tick
-        it = _residenceIndex.find(&being);
-    }
     return it == _residenceIndex.end() ? nullptr : it->second;
 }
 
