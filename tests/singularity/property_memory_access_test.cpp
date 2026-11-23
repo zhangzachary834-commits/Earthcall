@@ -2767,5 +2767,36 @@ int main() {
     }
     assert(TransferPolicy::instance().ruleCount() == 0);
 
+    // Derived-index currency must not alias when public revision numbers are
+    // reused: revision 1 (first deny) -> clear to 0 -> revision 1 (second deny).
+    {
+        auto& policy = TransferPolicy::instance();
+        Object probe;
+        probe.setObjectID("compiled-policy-revision-probe");
+        probe.setDynamicProperty("first", 0);
+        probe.setDynamicProperty("second", 0);
+
+        PolicyRule firstDeny;
+        firstDeny.pathPattern = "first";
+        firstDeny.op = AccessOp::Write;
+        firstDeny.allow = false;
+        policy.addPolicyRule(firstDeny);
+        assert(policy.accessPolicyRevision() == 1);
+        assert(PropertyPath::parse("first").setValue(probe, 1) == Result::AccessDenied);
+
+        policy.clearPolicyRules();
+        assert(policy.accessPolicyRevision() == 0);
+
+        PolicyRule secondDeny;
+        secondDeny.pathPattern = "second";
+        secondDeny.op = AccessOp::Write;
+        secondDeny.allow = false;
+        policy.addPolicyRule(secondDeny);
+        assert(policy.accessPolicyRevision() == 1);
+        assert(PropertyPath::parse("second").setValue(probe, 1) == Result::AccessDenied);
+        assert(PropertyPath::parse("first").setValue(probe, 1) == Result::Ok);
+        policy.clearPolicyRules();
+    }
+
     std::cout << "property_memory_access_test: PASS\n";
 }
