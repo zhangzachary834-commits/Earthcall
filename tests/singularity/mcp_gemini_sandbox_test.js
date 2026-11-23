@@ -38,13 +38,21 @@ test("sandbox session copies working tree but excludes build/git style directori
   const repo = fixtureRepo();
   fs.mkdirSync(path.join(repo, "build"));
   fs.writeFileSync(path.join(repo, "build", "huge.bin"), "nope");
+  fs.mkdirSync(path.join(repo, ".claude", "worktrees", "nested-checkout"), { recursive: true });
+  fs.writeFileSync(path.join(repo, ".claude", "worktrees", "nested-checkout", "huge.zip"), "agent scratch");
+  fs.writeFileSync(path.join(repo, ".claude", "project-note.txt"), "keep project metadata\n");
   const created = sandbox.createSession(repo, "test");
   const loaded = sandbox.loadSession(created.id);
+  const baseline = path.join(path.dirname(loaded.workspace), "baseline");
   assert.equal(fs.readFileSync(path.join(loaded.workspace, "src", "hello.txt"), "utf8"), "hello\n");
   assert.equal(fs.existsSync(path.join(loaded.workspace, "build")), false);
   assert.equal(fs.existsSync(path.join(loaded.workspace, ".env")), false);
   assert.equal(fs.existsSync(path.join(loaded.workspace, "private.key")), false);
   assert.equal(fs.existsSync(path.join(loaded.workspace, ".env.example")), true);
+  assert.equal(fs.existsSync(path.join(loaded.workspace, ".claude", "worktrees")), false);
+  assert.equal(fs.existsSync(path.join(baseline, ".claude", "worktrees")), false);
+  assert.equal(fs.readFileSync(path.join(loaded.workspace, ".claude", "project-note.txt"), "utf8"),
+    "keep project metadata\n");
 });
 
 test("default sandbox file edit is automatic and never changes source repo", () => {
