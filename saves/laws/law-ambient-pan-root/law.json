@@ -4,6 +4,7 @@
         "ambient.creator"
     ],
     "law": {
+        "activation": 1,
         "authority": 0,
         "authors": [
             "ambient.creator"
