@@ -9,6 +9,9 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <array>
+#include <unordered_map>
+#include <limits>
 
 enum class AccessOp : uint8_t {
     Read = 0,
@@ -181,12 +184,23 @@ private:
     TransferPolicy& operator=(const TransferPolicy&) = delete;
 
     void buildProperties() override;
+    void ensureCompiledRuleIndex() const;
 
     std::map<std::string, Tier> _tiers;   // declared gates
     std::map<std::string, bool> _open;    // current state (Governable/Gated)
 
     uint64_t _accessPolicyRevision = 0;
     std::vector<PolicyRule> _rules;
+
+    // Kernel-derived discrimination index. It only narrows impossible
+    // op/path/cell candidates; full policy semantics still execute below.
+    // Public accessPolicyRevision historically resets to zero when rules are
+    // cleared, so every mutation explicitly poisons this separate cache stamp.
+    mutable uint64_t _compiledRuleIndexRevision = std::numeric_limits<uint64_t>::max();
+    mutable std::array<std::vector<std::size_t>, 6> _compiledWildcardRules;
+    mutable std::array<std::vector<std::size_t>, 6> _compiledCellRules;
+    mutable std::array<std::unordered_map<Earthcall::StringId, std::vector<std::size_t>>, 6>
+        _compiledExactPathRules;
 
     std::string _stagedPathPattern = "";
     std::string _stagedTargetCellPath = "";
