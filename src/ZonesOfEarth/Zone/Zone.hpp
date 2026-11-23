@@ -123,7 +123,7 @@ public:
     bool containsBeing(const Singular& being) const;
     const std::vector<std::shared_ptr<Object>>& objects() const { return _objects; }
     const std::vector<std::shared_ptr<Object>>& getOwnedObjects() const { return _objects; }
-    std::vector<std::shared_ptr<Object>>& getOwnedObjectsMutable() { return _objects; }
+    std::vector<std::shared_ptr<Object>>& getOwnedObjectsMutable();
     struct UpdateTiming {
         double groundScanMs = 0.0;
         double rotationMs = 0.0;
@@ -212,6 +212,11 @@ public:
     void clearStoredSingulars();
     std::shared_ptr<PropertyList> propStoredSingulars() const;
 
+    // Kernel-derived referent currency. This is not authored Zone state: it
+    // combines residence-set changes with explicit Formation membership so
+    // qualified-path caches can renew exactly this Zone and nothing else.
+    std::uint64_t referentRevision() const noexcept;
+
 protected:
     void buildProperties() override;
 
@@ -248,6 +253,12 @@ private:
     std::shared_ptr<geom::FieldNode> _spatialRootObject;
     std::vector<std::shared_ptr<geom::FieldNode>> _additionalSpatialFields;
     std::vector<std::shared_ptr<Singular>> _storedSingulars;
+    std::uint64_t _residentReferentRevision = 1;
+
+    // Marks a machine-owned residence/index surface as changed and advances
+    // the complete global fallback. Kept beneath the Kernel by name: Persons
+    // author the residents and Relations, never this cache counter.
+    void noteResidentReferentsChanged();
 
 public:
     Formation& formation() { return _formation; }
