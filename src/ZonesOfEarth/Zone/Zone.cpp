@@ -537,12 +537,10 @@ std::uint64_t Zone::referentLifetimeGeneration() const noexcept {
     return _referentLifetimeGeneration ? *_referentLifetimeGeneration : 0;
 }
 
-std::vector<std::shared_ptr<Object>>& Zone::getOwnedObjectsMutable() {
-    // Legacy mutable access cannot reveal when its retained reference is later
-    // changed, so invalidate before handing it out. New code should prefer the
-    // named admission/removal methods, whose mutation point is exact.
+void Zone::clearObjects() {
+    if (_objects.empty()) return;
     noteResidentReferentsChanged();
-    return _objects;
+    _objects.clear();
 }
 
 bool Zone::containsBeing(const Singular& being) const {
