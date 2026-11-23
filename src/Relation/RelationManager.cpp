@@ -72,6 +72,7 @@ void RelationManager::forgetBeingEverywhere(const Singular* being) {
     // every live manager (Relation.hpp, struct Endpoint, has the measurement).
     // Guarded by tests/relation/endpoint_register_test.cpp.
     if (!Relation::mayBeEndpoint(being)) return;
+    std::unordered_set<const Relation*> detached;
     for (RelationManager* manager : liveManagers()) {
         if (!manager) continue;
         bool changed = false;
@@ -81,6 +82,11 @@ void RelationManager::forgetBeingEverywhere(const Singular* being) {
             // dereferenced (see Singular::notifyBeingReleased).
             if (relation->a() == being || relation->b() == being) {
                 relation->forgetEndpoint(being);
+                detached.insert(relation.get());
+                changed = true;
+            } else if (detached.count(relation.get())) {
+                // A copied graph or derived subformation can hold the same
+                // Relation. Its index is stale even if another holder detached it.
                 changed = true;
             }
         }
@@ -113,6 +119,16 @@ void RelationManager::forgetTypeLexemeEverywhere(
         if (!manager) continue;
         for (const auto& relation : manager->relations) {
             if (relation) relation->forgetTypeLexeme(lexeme);
+        }
+    }
+}
+
+void RelationManager::rebindEndpoints(Relation& relation, Singular* a, Singular* b) {
+    relation.bind(a, b);
+    for (auto* manager : liveManagers()) {
+        if (std::any_of(manager->relations.begin(), manager->relations.end(),
+                       [&](const auto& owned) { return owned.get() == &relation; })) {
+            manager->touch();
         }
     }
 }
