@@ -80,10 +80,19 @@ bool ZoneManager::persistZone(size_t index) const {
                                  : SaveSystem::readZoneIdentity(id);
     }
 
+    nlohmann::json doc = zoneToJson(*zone);
+    // First Mover provenance is part of the authored identity. The runtime
+    // Zone codec has no equivalent for this injection envelope.
+    for (const char* key : {"authors", "injected_by"}) {
+        if (priorIdentity.is_object() && priorIdentity.contains(key)) {
+            doc[key] = priorIdentity.at(key);
+        }
+    }
+
     // Keep the same anti-erasure covenant as the bulk compatibility writer.
     // A boot-minted empty Zone/Home may not stamp emptiness over an authored
     // identity simply because that identity has not been admitted correctly.
-    if (zone->getOwnedObjects().empty() && identityExists) {
+    if (storedObjectCount(doc) == 0 && identityExists) {
         const std::size_t stored = storedObjectCount(priorIdentity);
         if (stored > 0) {
             std::cerr << "[zones] REFUSED Save Zone for '" << id
@@ -92,8 +101,6 @@ bool ZoneManager::persistZone(size_t index) const {
             return false;
         }
     }
-
-    nlohmann::json doc = zoneToJson(*zone);
 
     // lawRefs are authored Zone membership. They are deliberately NOT inferred
     // from whichever Laws happen to be globally registered this frame.

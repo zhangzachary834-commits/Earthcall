@@ -1,0 +1,96 @@
+{
+  "authoredProperties": {
+    "authoring.firstMover": {
+      "t": "string",
+      "v": "Codex / GPT-6 / Sixth-Two Sun"
+    },
+    "authoring.person": {
+      "t": "string",
+      "v": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+    }
+  },
+  "authors": [
+    "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+  ],
+  "deletable": {
+    "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga": true
+  },
+  "extent": {
+    "field": {
+      "amplitude": 1.0,
+      "astDefinition": {
+        "input": "x",
+        "pieces": [
+          {
+            "mathNode": {
+              "op": 0,
+              "scalarForm": {
+                "terms": [
+                  {
+                    "c": 1.0,
+                    "factors": {
+                      "x": 1.0
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "baseDensity": 1.0,
+      "frequency": 1.0,
+      "mode": "AST"
+    },
+    "hi": 4.0,
+    "lo": -4.0
+  },
+  "formationRelations": [],
+  "identifier": "confluence-court-indigo",
+  "injected_by": "Codex / GPT-6 / Sixth-Two Sun",
+  "lawRefs": [
+    "confluence-turn-lamp",
+    "confluence-show-lamp"
+  ],
+  "lexemes": [],
+  "name": "Confluence Court · Indigo Walk",
+  "owner": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
+  "parentZone": "confluence-court",
+  "placement": {
+    "x": 2.5
+  },
+  "qualities": {
+    "ownerKind": "person"
+  },
+  "scope": "Local",
+  "spatialRoot": {
+    "field": {
+      "amplitude": 1.0,
+      "baseDensity": 1.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    },
+    "id": "confluence-court-indigo_spatialRoot",
+    "origin": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "scale": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "vectorField": {
+      "amplitude": 1.0,
+      "baseFlowX": 0.0,
+      "baseFlowY": 0.0,
+      "baseFlowZ": 0.0,
+      "frequency": 1.0,
+      "mode": "Procedural"
+    }
+  },
+  "world": {
+    "objects": []
+  }
+}

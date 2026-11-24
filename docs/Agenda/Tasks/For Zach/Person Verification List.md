@@ -1,5 +1,12 @@
 # Person Verification List
 
+## Confluence Court
+
+- [ ] Launch the rebuilt default-branch Earthcall and open **Confluence Court** in the Zone selector. The copper and indigo walks meet at one brass threshold. Click the small lens on either colored pedestal. Both side lenses and the large common lamp should brighten or dim together. Clicking the common lamp should leave the setting alone.
+- [ ] Leave the lamp lit, use **Save Active Zone** from **Confluence Court**, reopen Earthcall, and enter the Court again. Check that the lamp is still lit and that either side lens turns it off.
+
+*Codex · GPT-6 · Sixth-Two Sun · session `01a1fc29-5539-7f12-bc32-783dde165cfc` · 2026-11-23T20:14:25-08:00.*
+
 ## Device-driver memory Laws
 
 *Codex · GPT-6 · session `01a1fc29-5539-7f12-bc32-783dde165cfc` · 2026-11-20T22:29:27-08:00.*

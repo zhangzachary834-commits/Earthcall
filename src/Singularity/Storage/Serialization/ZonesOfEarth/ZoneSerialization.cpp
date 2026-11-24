@@ -14,6 +14,7 @@
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Relation/Relation.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
 #include "Singularity/TransferPolicy.hpp"
 #include <iostream>
 #include <memory>
@@ -32,11 +33,39 @@ std::string zoneIdFromJson(const nlohmann::json& zj) {
 // ------------------------------------------------------------------
 // Zone object bag — on disk still `{"objects":[...]}` (the old World shape).
 // ------------------------------------------------------------------
+namespace {
+
+std::unordered_set<const Object*> ancestorObjects(const Zone& zone) {
+    std::unordered_set<const Object*> objects;
+    const auto* manager = ZoneManager::live();
+    if (!manager || zone.getParentZone().empty()) return objects;
+
+    // A switched child borrows its ancestors' live pointers for presentation.
+    // Serialize a definition only where it is held, never from that view.
+    const Zone* parent = manager->withinOf(zone);
+    std::unordered_set<const Zone*> visited{&zone};
+    while (parent && visited.insert(parent).second) {
+        for (const auto& object : parent->objects()) {
+            if (object) objects.insert(object.get());
+        }
+        parent = manager->withinOf(*parent);
+    }
+    return objects;
+}
+
+} // namespace
+
 nlohmann::json zoneObjectsToJson(const Zone& zone) {
     nlohmann::json j = nlohmann::json{};
     nlohmann::json arr = nlohmann::json::array();
-    for (const auto& ptr : zone.objects()) {
-        if (ptr) arr.push_back(*ptr);
+    const auto inherited = ancestorObjects(zone);
+    for (const auto& object : zone.objects()) {
+        if (!object) continue;
+        if (inherited.count(object.get()) &&
+            !object->belongsToZone(zone.getIdentifier()) && !object->belongsToZone(zone.name())) {
+            continue;
+        }
+        arr.push_back(*object);
     }
     j["objects"] = arr;
     return j;
@@ -382,9 +411,8 @@ nlohmann::json zoneToJson(const Zone& zone) {
     // this Zone/Home's objects name, so the identity file is the surface.
     nlohmann::json mats = nlohmann::json::array();
     std::unordered_set<std::string> seen;
-    for (const auto& obj : zone.objects()) {
-        if (!obj) continue;
-        const std::string& mid = obj->materialId();
+    for (const auto& object : zj["world"]["objects"]) {
+        const std::string mid = object.value("materialId", std::string{});
         if (mid.empty() || !seen.insert(mid).second) continue;
         if (auto m = materials.get(mid)) mats.push_back(m->toJson());
     }
