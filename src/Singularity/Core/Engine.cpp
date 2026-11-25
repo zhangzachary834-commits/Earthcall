@@ -2,6 +2,7 @@
 #include "Singularity/Screen/ScreenChannel.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/FirstMoverOntology/FirstMoverWindowTools/PerformanceMetricsWindow.hpp"
+#include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/Core/Engine.hpp"
 #include "Singularity/Core/CreationChannel.hpp"
 #include "Singularity/Screen/Camera.hpp"
@@ -384,11 +385,16 @@ void Engine::tick(float dt) {
     }
 
     // 4. Laws: LawManager::tick() drains the Rete agenda queued by events published this frame.
-    auto tLaws0 = clock::now();
     // The terminal line is sensed just before the laws run and answered just
     // after, so a line's authored laws (and the Law it speaks) land in one frame.
     auto* terminal = _lawManager ? Singularity::Terminal::TerminalChannel::find(*_lawManager) : nullptr;
     if (terminal) terminal->sense(*_lawManager);
+    auto tWatcher0 = clock::now();
+    if (_lawManager) {
+        if (auto* watcher = Singularity::Storage::FileWatcher::find(*_lawManager)) watcher->tick();
+    }
+    g_frameTimings.file_watcher_ms = getMs(tWatcher0, clock::now());
+    auto tLaws0 = clock::now();
     if (_lawManager) _lawManager->tick();
     if (terminal) terminal->act(*_lawManager);
     auto tLaws1 = clock::now();
