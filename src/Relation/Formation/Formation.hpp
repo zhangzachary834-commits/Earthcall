@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <cstdint>
 #include <glm/glm.hpp>
 #include "Relation/RelationManager.hpp"
 #include "ConstructedBeing/Singular/Singular.hpp"
@@ -68,28 +69,15 @@ public:
     // subformation objects, and a merge in one erased subformations the other
     // still held — an alias wearing a fresh name. Keep the member lists below
     // in sync with the data members.
-    Formation(const Formation& o)
-        : Singular(o), members(o.members), relationMgr(o.relationMgr),
-          subformations(cloneSubformations(o.subformations, 0)),
-          pendingRelations(o.pendingRelations),
-          relationTypeTag(o.relationTypeTag), _root(o._root) {}
-    Formation& operator=(const Formation& o) {
-        if (this != &o) {
-            Singular::operator=(o);
-            members = o.members;
-            relationMgr = o.relationMgr;
-            subformations = cloneSubformations(o.subformations, 0);
-            relationTypeTag = o.relationTypeTag;
-            _root = o._root;
-            pendingRelations = o.pendingRelations;
-            // _formationId intentionally kept: assignment replaces content,
-            // not identity.
-        }
-        return *this;
-    }
+    Formation(const Formation& o);
+    Formation& operator=(const Formation& o);
+    ~Formation();
 
-    // Destructor
-    ~Formation() = default;
+    // Lifetime cleanup only: remove borrowed pointers from every holding
+    // Formation without retracting authored Relations or dereferencing the being.
+    static void forgetBeingEverywhere(const Singular* being);
+    void rebindRetainedRelation(const std::shared_ptr<Relation>& relation,
+                                Singular* a, Singular* b);
 
     // ------ Generic membership helpers (any Singular) ------------
     virtual void addMember(Singular* s);
@@ -97,10 +85,8 @@ public:
     Singular* findMemberByIdentifier(const std::string& identifier) const;
 
     // Release a being from this Formation AND from every subformation beneath
-    // it, and drop it as root if it was one. This is the removal path a caller
-    // must use when the being is about to be destroyed: Formations hold raw,
-    // non-owning `Singular*`, so a member left behind is a dangling pointer
-    // that findMemberByIdentifier dereferences on the next sweep.
+    // it, and drop it as root if it was one. This explicitly removes its local
+    // Relations too. Destruction releases borrowed pointers separately.
     // Returns true if the being was found anywhere.
     bool releaseMember(Singular* s);
     void removeMember(Singular* s);   // alias for releaseMember, result discarded
@@ -120,6 +106,12 @@ public:
 
     // Since members are Singulars*, that means a Relation can be part of a Formation.
     const std::vector<Singular*>& getMembers() const { return members; }
+
+    // Kernel-derived cache currency, never authored or persisted. It names
+    // only whether the member-pointer set changed so referent and relevance
+    // indexes can retain still-current answers without hiding any Formation
+    // meaning from Law. DERIVED_STATE_LEDGER.md governs every consumer.
+    std::uint64_t membershipGeneration() const noexcept { return _membershipGeneration; }
 
     // If we want to get the "hard" members, we use this.
     // Need to change the code to reflect this.
@@ -296,6 +288,9 @@ private:
     bool reachesDirected(const std::string& from, const std::string& to,
                          const std::string& type) const;
 
+    void replaceMembers(const std::vector<Singular*>& replacements);
+    // Mechanism bookkeeping: reverse membership tracks these borrowed
+    // addresses for lifetime cleanup; the actual members are exposed above.
     std::vector<Singular*> members;
     RelationManager relationMgr;
     std::vector<std::shared_ptr<Formation>> subformations;
@@ -305,6 +300,7 @@ private:
     // The being this Formation is ABOUT. Non-owning, like every member, and
     // always also a member. Null for a Formation that is merely a set.
     Singular* _root = nullptr;
+    std::uint64_t _membershipGeneration = 1;
 
     // Guards reintegrateRelationsFor against re-entering itself while
     // integration is adding the very members it is reacting to.

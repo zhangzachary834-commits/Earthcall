@@ -8,8 +8,8 @@
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 
 #include <iostream>
+#include <map>
 #include <memory>
-#include <set>
 #include <tuple>
 #include <vector>
 
@@ -84,9 +84,10 @@ void applyFormationRelations(Zone& zone, const nlohmann::json& zj, bool restoreE
     // child nested below the Zone that happens to hold its endpoints.
     zone.syncFormationMembers();
 
-    std::set<std::tuple<std::string, std::string, std::string>> existing;
+    std::map<std::tuple<std::string, std::string, std::string>, std::shared_ptr<Relation>> existing;
     for (const auto& relation : zone.formation().relations().getAll()) {
-        if (relation) existing.insert({relation->type, relation->aId(), relation->bId()});
+        if (relation) existing.emplace(
+            std::make_tuple(relation->type, relation->aId(), relation->bId()), relation);
     }
 
     size_t refused = 0;
@@ -98,12 +99,23 @@ void applyFormationRelations(Zone& zone, const nlohmann::json& zj, bool restoreE
             }));
         const auto key = std::make_tuple(relation->type,
                                          relation->aId(), relation->bId());
-        if (existing.count(key)) continue;
+        if (auto it = existing.find(key); it != existing.end()) {
+            // The old runtime endpoint may have retired (e.g. a shared
+            // Material replaced at activation). Keep the Relation and its
+            // live history; only restore the missing endpoint pointers.
+            const auto& retained = it->second;
+            if (!retained->hasEndpoints()) {
+                zone.formation().rebindRetainedRelation(
+                    retained, retained->a() ? retained->a() : relation->a(),
+                    retained->b() ? retained->b() : relation->b());
+            }
+            continue;
+        }
         if (!zone.formation().add(relation)) {
             ++refused;
             if (!relation->hasEndpoints()) ++unbound;
         } else {
-            existing.insert(key);
+            existing.emplace(key, relation);
         }
     }
 
