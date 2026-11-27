@@ -413,6 +413,7 @@ CRITICAL: Ensure the MCP protocol abides by Earthcalls First Mover and authorshi
 
 <a id="housekeeping"></a>
 ## Housekeeping:
+- [ ] Pilot [domain test suites](Specific%20Tasks/Housekeeping%20and%20Build/Domain_Test_Suites/Domain_Test_Suites.md) on Properties and TransferPolicy using the [Opus and Sonnet implementation plan](../../plans/DOMAIN_TEST_SUITES_IMPLEMENTATION_2026-11-20.md).
 - **PARTIAL (2026-10-12) — Earthcall.app: installed macOS app in `/Applications`, built by `Install Earthcall App.command`**; landed unsigned-for-sharing by design, while the local signing certificate, real icon, Keychain keys, and the future Developer ID/notarization path remain. → [full task](Specific%20Tasks/Housekeeping%20and%20Build/macOS_App_Bundle/macOS_App_Bundle.md)
 - ✅ **Repair the corrupt Intercom nav journal (2026-11-04)** — done: replays removed, foreign records quarantined, 29 records dropped on Oct 26 restored, and reads no longer refuse on damage (`nav repair` handles the next one). → [full task](Specific%20Tasks/Housekeeping%20and%20Build/Linked_Conversations_and_Document_Navigation/Linked_Conversations_and_Document_Navigation.md#journal-repair-2026-11-04)
 - [ ] **Catch silently dropped journal records in CI** — a commit carrying a stale `conversation_links.jsonl` still passes every check, which is how 59 records vanished on 2026-10-26. → [full task](Specific%20Tasks/Housekeeping%20and%20Build/Linked_Conversations_and_Document_Navigation/Linked_Conversations_and_Document_Navigation.md#journal-repair-2026-11-04)
