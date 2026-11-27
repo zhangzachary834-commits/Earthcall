@@ -18,6 +18,23 @@ private struct SandboxSession: Decodable, Identifiable {
 private struct SandboxPreview: Decodable {
     let diff: String
     let digest: String?
+    let conflicts: [MergeConflict]?
+    let checkpointOnly: Bool?
+    let recovery: Bool?
+}
+
+private struct MergeConflict: Decodable {
+    let path: String
+    let reason: String
+    let canResolve: Bool
+}
+
+private enum TransferDirection: String, CaseIterable, Identifiable {
+    case intoCheckout = "Sandbox → Checkout"
+    case intoSandbox = "Checkout → Sandbox"
+    var id: Self { self }
+    var previewCommand: String { self == .intoSandbox ? "sync-preview" : "preview" }
+    var applyCommand: String { self == .intoSandbox ? "sync-apply" : "apply" }
 }
 
 private struct CommandFailure: LocalizedError {
@@ -91,9 +108,11 @@ private final class ImportModel: ObservableObject {
     @Published private(set) var imported = false
     @Published private(set) var status = ""
     @Published private(set) var hasError = false
+    @Published private(set) var direction: TransferDirection = .intoCheckout
 
     let backend = ImportBackend()
     private var previewTask: Task<Void, Never>?
+    private var resolutions: [String: String] = [:]
     private let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
@@ -103,6 +122,12 @@ private final class ImportModel: ObservableObject {
     var selectedSession: SandboxSession? { sessions.first { $0.id == selection } }
     var canApply: Bool {
         preview?.digest != nil && selection != nil && !refreshing && !applying && !openingDesktop
+    }
+
+    func changeDirection(_ next: TransferDirection) {
+        guard !applying else { return }
+        direction = next
+        choose(selection)
     }
 
     func refresh() async {
@@ -122,8 +147,9 @@ private final class ImportModel: ObservableObject {
         }
     }
 
-    func choose(_ id: String?) {
+    func choose(_ id: String?, preservingResolutions: Bool = false) {
         guard !applying else { return }
+        if !preservingResolutions { resolutions = [:] }
         selection = id
         resetPreview()
         imported = false
@@ -133,9 +159,16 @@ private final class ImportModel: ObservableObject {
         loadingPreview = true
         previewTask = Task {
             do {
-                let result = try await backend.command(["--json", "preview", id])
+                let result = try await backend.command(["--json", direction.previewCommand, id] + resolutionArguments)
                 guard !Task.isCancelled else { return }
                 preview = try decoder.decode(SandboxPreview.self, from: result)
+                if let count = preview?.conflicts?.count, count > 0 {
+                    report("\(count) conflicting files. Review the markers and choose which version to keep.", error: true)
+                } else if preview?.recovery == true {
+                    report("An interrupted transplant is ready to resume.")
+                } else if preview?.checkpointOnly == true, preview?.digest != nil {
+                    report("File contents agree. Apply to record their shared baseline.")
+                }
             } catch {
                 guard !Task.isCancelled else { return }
                 report(error.localizedDescription, error: true)
@@ -144,13 +177,22 @@ private final class ImportModel: ObservableObject {
         }
     }
 
+    private var resolutionArguments: [String] {
+        resolutions.keys.sorted().flatMap { ["--resolve-" + resolutions[$0]!, $0] }
+    }
+
+    func resolve(_ file: String, using choice: String) {
+        resolutions[file] = choice
+        choose(selection, preservingResolutions: true)
+    }
+
     func applyAndOpen() async {
         guard canApply, let id = selection, let digest = preview?.digest else { return }
         applying = true
         defer { applying = false }
-        report("Importing into the checkout…")
+        report(direction == .intoSandbox ? "Merging checkout changes into the sandbox…" : "Importing into the checkout…")
         do {
-            _ = try await backend.command(["apply", id, "--expected-diff", digest])
+            _ = try await backend.command([direction.applyCommand, id, "--expected-diff", digest] + resolutionArguments)
         } catch {
             resetPreview()
             report(error.localizedDescription, error: true)
@@ -158,8 +200,12 @@ private final class ImportModel: ObservableObject {
         }
         resetPreview()
         imported = true
-        report("Imported into the checkout. Opening GitHub Desktop…")
-        await openDesktop()
+        if direction == .intoSandbox {
+            report("Checkout changes merged into the sandbox. Gemini can continue from the updated files.")
+        } else {
+            report("Imported into the checkout. Opening GitHub Desktop…")
+            await openDesktop()
+        }
     }
 
     func openDesktop() async {
@@ -168,9 +214,9 @@ private final class ImportModel: ObservableObject {
         defer { openingDesktop = false }
         do {
             try await backend.openDesktop()
-            if imported { report("Imported. Review the unstaged changes in GitHub Desktop.") }
+            if imported && direction == .intoCheckout { report("Imported. Review the unstaged changes in GitHub Desktop.") }
         } catch {
-            let prefix = imported ? "Imported into the checkout. " : ""
+            let prefix = imported && direction == .intoCheckout ? "Imported into the checkout. " : ""
             report(prefix + error.localizedDescription, error: true)
         }
     }
@@ -252,9 +298,40 @@ private struct ImportWindow: View {
                     Label(model.backend.checkout.path.replacingOccurrences(
                         of: NSHomeDirectory(), with: "~", options: .anchored), systemImage: "folder")
                         .font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
+                    Picker("Transfer direction", selection: Binding(
+                        get: { model.direction }, set: { model.changeDirection($0) })) {
+                        ForEach(TransferDirection.allCases) { Text($0.rawValue).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .disabled(model.applying)
+                    .padding(.top, 9)
                 }
                 .padding(18)
                 Divider()
+                if let conflicts = model.preview?.conflicts, !conflicts.isEmpty {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 10) {
+                            ForEach(conflicts, id: \.path) { conflict in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(conflict.path).font(.callout.weight(.semibold)).textSelection(.enabled)
+                                    Text(conflict.reason).font(.caption).foregroundStyle(.secondary)
+                                    if conflict.canResolve {
+                                        HStack {
+                                            Button(model.direction == .intoSandbox ? "Keep Sandbox" : "Keep Checkout") {
+                                                model.resolve(conflict.path, using: "ours")
+                                            }
+                                            Button(model.direction == .intoSandbox ? "Use Checkout" : "Use Sandbox") {
+                                                model.resolve(conflict.path, using: "theirs")
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }.padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(maxHeight: 180)
+                    Divider()
+                }
                 detail
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 Divider()
@@ -266,7 +343,8 @@ private struct ImportWindow: View {
                             .textSelection(.enabled)
                     }
                     Spacer(minLength: 12)
-                    Button("Import & Open GitHub Desktop", systemImage: "arrow.down.to.line") {
+                    Button(model.direction == .intoSandbox ? "Merge Into Sandbox" : "Import & Open GitHub Desktop",
+                           systemImage: model.direction == .intoSandbox ? "arrow.triangle.merge" : "arrow.down.to.line") {
                         Task { await model.applyAndOpen() }
                     }
                     .buttonStyle(.borderedProminent)
@@ -300,7 +378,7 @@ private struct ImportWindow: View {
             DiffView(diff: preview.diff)
                 .accessibilityLabel("Git diff")
         } else if model.imported {
-            ContentUnavailableView("Imported", systemImage: "checkmark.circle",
+            ContentUnavailableView(model.direction == .intoSandbox ? "Sandbox updated" : "Imported", systemImage: "checkmark.circle",
                                    description: Text("Refresh to check for more sandbox changes."))
         } else if model.hasError {
             ContentUnavailableView("Couldn’t load changes", systemImage: "exclamationmark.circle")
@@ -308,7 +386,8 @@ private struct ImportWindow: View {
             ContentUnavailableView("No sandboxes found", systemImage: "tray",
                                    description: Text("Create a Gemini sandbox for this checkout, then refresh."))
         } else {
-            ContentUnavailableView("No changes to import", systemImage: "checkmark.circle")
+            ContentUnavailableView(model.preview?.digest == nil ? "Up to date" : "Record shared baseline",
+                                   systemImage: "checkmark.circle")
         }
     }
 }

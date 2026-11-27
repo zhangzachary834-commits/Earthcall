@@ -129,7 +129,7 @@ function copyFileCow(src, dst, stat) {
   try { fs.utimesSync(dst, stat.atime, stat.mtime); } catch (_) {}
 }
 
-function copyTreeCow(sourceRoot, workspaceRoot, manifest, rel = ".") {
+function copyTreeCow(sourceRoot, workspaceRoot, manifest, rel = ".", baselineRoot = null) {
   const src = rel === "." ? sourceRoot : path.join(sourceRoot, rel);
   const entries = fs.readdirSync(src, { withFileTypes: true });
   for (const entry of entries) {
@@ -138,6 +138,11 @@ function copyTreeCow(sourceRoot, workspaceRoot, manifest, rel = ".") {
     if (entry.name === ".DS_Store") continue;
 
     const childRel = rel === "." ? entry.name : path.join(rel, entry.name);
+    // Claude worktrees can contain complete nested checkouts (including large
+    // generated/audit artifacts). They are agent scratch state, not part of the
+    // sandbox source tree, and copying them recursively can explode session size.
+    const normalizedChildRel = childRel.split(path.sep).join("/");
+    if (entry.isDirectory() && normalizedChildRel === ".claude/worktrees") continue;
     const srcPath = path.join(sourceRoot, childRel);
     const dstPath = path.join(workspaceRoot, childRel);
 
@@ -154,17 +159,21 @@ function copyTreeCow(sourceRoot, workspaceRoot, manifest, rel = ".") {
 
     if (entry.isDirectory()) {
       fs.mkdirSync(dstPath, { recursive: true });
-      copyTreeCow(sourceRoot, workspaceRoot, manifest, childRel);
+      copyTreeCow(sourceRoot, workspaceRoot, manifest, childRel, baselineRoot);
       continue;
     }
 
     if (!entry.isFile()) continue;
     const stat = fs.statSync(srcPath);
     copyFileCow(srcPath, dstPath, stat);
+    // The container only mounts workspace. Retain the exact copied bytes
+    // privately so later local checkout transplants have a three-way base.
+    if (baselineRoot) copyFileCow(dstPath, path.join(baselineRoot, childRel), fs.statSync(dstPath));
     manifest[childRel.split(path.sep).join("/")] = {
       kind: "file",
       size: stat.size,
       mtimeMs: stat.mtimeMs,
+      mode: stat.mode & 0o100 ? 0o755 : 0o644,
     };
   }
 }
@@ -200,7 +209,8 @@ function createSession(projectRoot, label = "") {
   fs.mkdirSync(workspace, { recursive: true, mode: 0o700 });
 
   const manifest = {};
-  copyTreeCow(sourceRoot, workspace, manifest);
+  const baseline = ensurePrivateDir(path.join(root, "baseline"));
+  copyTreeCow(sourceRoot, workspace, manifest, ".", baseline);
 
   const meta = {
     id,
@@ -460,7 +470,8 @@ function writeSandboxFile(projectRoot, sessionId, requestedPath, content, approv
 
   fs.mkdirSync(path.dirname(target), { recursive: true });
   const tmp = `${target}.earthcall-mcp-${randomId(4)}.tmp`;
-  fs.writeFileSync(tmp, content, { encoding: "utf8", mode: 0o600 });
+  const mode = fs.existsSync(target) ? fs.statSync(target).mode & 0o777 : 0o600;
+  fs.writeFileSync(tmp, content, { encoding: "utf8", mode });
   fs.renameSync(tmp, target);
   return {
     status: "written",
