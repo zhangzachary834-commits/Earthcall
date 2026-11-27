@@ -75,12 +75,32 @@ int main() {
               nearf(state.attenuationQuadratic, 0.03f),
           "attenuation vocabulary resolves without inventing a Light C++ kind");
 
+    check(near3(Rendering::lightIncidentRadiance(state), glm::vec3(2.0f, 1.0f, 0.5f)),
+          "canonical source incident is color * intensity, independent from receiver-model lobes");
     check(near3(Rendering::lightAmbientRadiance(state), glm::vec3(0.2f, 0.1f, 0.05f)),
-          "ambient renderer radiance is color * intensity * authored ambient coefficient");
+          "legacy ambient compatibility radiance is color * intensity * authored ambient coefficient");
     check(near3(Rendering::lightDiffuseRadiance(state), glm::vec3(1.5f, 0.75f, 0.375f)),
-          "diffuse renderer radiance is color * intensity * authored diffuse coefficient");
+          "legacy diffuse compatibility radiance is color * intensity * authored diffuse coefficient");
     check(near3(Rendering::lightSpecularRadiance(state), glm::vec3(1.0f, 0.5f, 0.25f)),
-          "specular renderer radiance is color * intensity * authored specular coefficient");
+          "legacy specular compatibility radiance is color * intensity * authored specular coefficient");
+
+    const glm::vec3 canonicalBeforeLobeZero =
+        Rendering::lightIncidentRadiance(state);
+    const float savedAmbient = state.ambient;
+    const float savedDiffuse = state.diffuse;
+    const float savedSpecular = state.specular;
+    state.ambient = 0.0f;
+    state.diffuse = 0.0f;
+    state.specular = 0.0f;
+    check(near3(Rendering::lightIncidentRadiance(state), canonicalBeforeLobeZero),
+          "zero legacy lobe coefficients cannot erase canonical source incident radiance");
+    check(near3(Rendering::lightAmbientRadiance(state), glm::vec3(0.0f)) &&
+              near3(Rendering::lightDiffuseRadiance(state), glm::vec3(0.0f)) &&
+              near3(Rendering::lightSpecularRadiance(state), glm::vec3(0.0f)),
+          "zero legacy lobe coefficients erase only the compatibility envelopes");
+    state.ambient = savedAmbient;
+    state.diffuse = savedDiffuse;
+    state.specular = savedSpecular;
 
     // Hydrate the actual authored Sun Zone spatial root rather than rebuilding
     // a lookalike AST in test code. This witnesses the save -> FieldNode ->

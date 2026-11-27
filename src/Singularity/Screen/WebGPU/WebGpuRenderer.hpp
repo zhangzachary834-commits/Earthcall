@@ -7,9 +7,10 @@
 // These extra methods are WebGPU-specific for now; when the app swaps renderers
 // they will be lifted onto the Renderer interface (OpenGL impl = no-ops).
 //
-// Status: drawMesh is real (TessMesh vertex layout, camera+model+material
-// uniforms, Lambert+ambient lighting, two-sided). drawImplicit tessellates and
-// reuses drawMesh; drawLines/drawOverlay are stubs pending their own pipelines.
+// Status: drawMesh rasterizes TessMesh geometry but delegates receiver
+// illumination to the same authored Material response compiler used by implicit
+// surfaces. Triangle vs. field is representation, not a second shading model.
+// drawLines/drawOverlay and other flat paths remain intentionally unlit pipelines.
 
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Screen/WebGPU/GpuBufferPool.hpp"
@@ -185,8 +186,118 @@ private:
     WGPUDevice _device = nullptr;
     WGPUQueue  _queue  = nullptr;
     WGPUTextureFormat _colorFormat = WGPUTextureFormat_RGBA8Unorm;
-    WGPURenderPipeline _meshPipeline = nullptr;
+
+    // Mesh geometry no longer owns a fixed shading model. Pipelines are keyed
+    // only by emitted receiver-program structure; numeric Material values live
+    // in a separate parameter buffer and therefore reuse the same pipeline.
+    struct MeshPipeline { WGPURenderPipeline pipe = nullptr; };
+    std::map<std::string, MeshPipeline> _meshPipes;
     WGPUBindGroupLayout _bgl = nullptr;
+    const MeshPipeline* meshPipeline(const std::string& wgsl);
+
+    struct SdfPipeline;
+
+    // Bounded CompleteScene execution substrate:
+    //  * exact world-space triangles for opaque meshes;
+    //  * bounded foreign/all-SDF field-program VM tables;
+    //  * an SDF receiver shader's own exact same-program instance cohort.
+    // Unsupported field programs remain Unknown; no tessellation substitutes
+    // for authored field truth merely to manufacture scene completeness.
+    struct SceneVisibilityTriangle {
+        glm::vec4 a;
+        glm::vec4 b;
+        glm::vec4 c;
+    };
+    // Generic field-program visibility packet. For an SDF receiver the table
+    // contains every foreign cohort; for a raster mesh receiver it contains
+    // every admitted SDF cohort in the frame.
+    // The authored field remains an SdfNode/OntoMath tree; this is derived
+    // frame execution state. program = {instructionBase, instructionCount,
+    // maxStackDepth, flags}; flags bit 0 = needsGradientStep, derived from Expr
+    // presence exactly like the primary SDF marcher's execution policy.
+    // extents.xyz is the local proxy half-extent; extents.w is the derived
+    // conservative march Lipschitz bound (>=1), never authored geometry.
+    struct SceneVisibilityVmBlocker {
+        glm::mat4 invModel{1.0f};
+        glm::vec4 extents{0.0f};
+        glm::uvec4 program{0u};
+    };
+    static_assert(sizeof(SceneVisibilityVmBlocker) == 96,
+                  "scene VM blocker GPU ABI must remain mat4 + vec4 + uvec4");
+    struct SceneVisibilityVmAdmission {
+        SceneVisibilityVmBlocker blocker;
+        sdfwgsl::FieldVmProgram program;
+    };
+
+    struct SceneVisibilityBufferView {
+        WGPUBuffer buffer = nullptr;
+        uint64_t offset = 0;
+        uint64_t size = 0;
+        uint32_t count = 0;
+
+        // A separate instruction stream keeps instance transforms/descriptors
+        // compact while allowing many blocker programs in one fixed shader.
+        WGPUBuffer programBuffer = nullptr;
+        uint64_t programOffset = 0;
+        uint64_t programSize = 0;
+        uint32_t instructionCount = 0;
+
+        bool complete = false;
+    };
+    struct SceneVisibilityFrame {
+        WGPUBuffer buffer = nullptr;
+        uint64_t offset = 0;
+        uint64_t size = 0;
+        uint32_t triangleCount = 0;
+
+        // Every opaque mesh blocker was exactly materialized as triangles.
+        bool meshBlockersComplete = false;
+        // Mesh CompleteScene additionally requires every SDF blocker to be
+        // admitted by the same bounded field-VM table used by SDF receivers.
+        bool meshComplete = false;
+    };
+    SceneVisibilityFrame _sceneVisibilityFrame;
+    bool _frameHasUnmaterializedOpaqueGeometry = false;
+    bool _frameHadEarlySurfaceFlush = false;
+    SceneVisibilityFrame prepareSceneVisibilityFrame();
+    // receiver == nullptr means a raster mesh consumer: include every SDF
+    // cohort. Otherwise omit only that SDF receiver's own exact cohort.
+    SceneVisibilityBufferView prepareFieldVmVisibility(
+        const SdfPipeline* receiver);
+    bool fieldVmSceneVisibilityCompleteForFrame(
+        const SdfPipeline* receiver, bool meshBlockersComplete) const;
+    bool sdfSceneVisibilityComplete(const SdfPipeline* receiver) const;
+    void ensureSceneVisibilityBindingForEarlyFlush();
+
+    struct MeshResponseKey {
+        // Owning references prevent an expired/reallocated AST address from
+        // aliasing a historical cache entry. Revisions remain the authored
+        // content authority for in-place edits.
+        std::shared_ptr<const OntoMath::Piecewise> direct;
+        uint32_t directRevision = 0;
+        std::shared_ptr<const OntoMath::Piecewise> environment;
+        uint32_t environmentRevision = 0;
+        bool sourceSet = false;
+        uint64_t sourceSetStructureRevision = 0;
+        std::string bindingTypes;
+        bool operator<(const MeshResponseKey& o) const {
+            return std::tie(direct, directRevision, environment,
+                            environmentRevision, sourceSet,
+                            sourceSetStructureRevision, bindingTypes)
+                 < std::tie(o.direct, o.directRevision, o.environment,
+                            o.environmentRevision, o.sourceSet,
+                            o.sourceSetStructureRevision, o.bindingTypes);
+        }
+    };
+    struct MeshResponseMemo {
+        sdfwgsl::SurfaceResponseProgram program;
+        sdfwgsl::RadianceSourceProgram sourceProgram;
+        const MeshPipeline* pipeline = nullptr;
+        // Material Bind identity + source-set value revision -> combined
+        // receiver/source param stream. Structure lives in the key above.
+        std::map<std::string, std::vector<float>> params;
+    };
+    std::map<MeshResponseKey, MeshResponseMemo> _meshResponsePrograms;
 
     // ---- Flat-colour pipelines (unlit: overlays, gizmos, wireframe, all 2D) ----
     // OpenGL could change blend and depth state between draws; WebGPU bakes them
@@ -248,12 +359,21 @@ private:
         uint32_t parameterRevision = 0xffffffff;
         uint32_t colorRevision = 0xffffffff;
         uint32_t responseRevision = 0xffffffff;
+        uint32_t environmentResponseRevision = 0xffffffff;
+        std::string responseBindingIdentity;
         std::string responseStructure;
         bool responseReadsNormal = false;
         bool responseReadsWi = false;
         bool responseReadsWo = false;
+        std::string environmentResponseStructure;
+        bool environmentResponseReadsNormal = false;
+        bool environmentResponseReadsWo = false;
+        // Canonical renderer optimization, adapted to authored response Bind
+        // identity: cache layout inspection only while both response structure
+        // revision and resolved binding fingerprint remain unchanged.
         const OntoMath::Piecewise* responseExprPtr = nullptr;
         uint32_t responseLayoutRevision = 0xffffffffu;
+        std::string responseLayoutBindingIdentity;
         bool responseLayoutValid = false;
         sdfwgsl::ResponseExpressionLayout cachedResponseLayout;
 
@@ -288,7 +408,7 @@ private:
         uint64_t emissionRevision = 0xffffffffffffffffULL;
         std::string emissionStructure;
         bool emissionReadsOmega = false;
-        bool multiSource = false;
+        bool sourceSet = false;
         uint64_t sourceSetRevision = 0xffffffffffffffffULL;
         uint64_t sourceSetStructureRevision = 0xffffffffffffffffULL;
         const OntoMath::Piecewise* colorExprPtr = nullptr;
@@ -344,6 +464,7 @@ private:
     bool _radianceSourcesLayoutOk = true;
     std::string _radianceSourcesLayoutError;
     uint64_t _radianceSourcesStructureRevision = 0;
+    bool refreshRadianceSourceLayout();
 
     // Pipeline-local parameter storage survives frame boundaries. The frame still
     // assembles the compact contiguous parameter vector in instance order, but an
@@ -354,6 +475,10 @@ private:
         uint64_t capacityBytes = 0;
         std::vector<float> mirror;
         std::vector<uint64_t> lastSignature;
+        // #845 authored response Bind values may change without changing the
+        // response AST revision. Preserve the exact binding identity beside
+        // the canonical revision signature before skipping parameter packing.
+        std::vector<std::string> lastResponseBindingIdentity;
     };
     std::unordered_map<const SdfPipeline*, PersistentSdfParams> _persistentSdfParams;
     size_t _persistentSdfParamVramBytes = 0;
@@ -379,6 +504,13 @@ private:
     PersistentRadianceSources _persistentRadianceSources;
     size_t _persistentRadianceSourceVramBytes = 0;
     void releasePersistentRadianceSources();
+
+    struct RadianceSourceBufferView {
+        WGPUBuffer buffer = nullptr;
+        uint64_t offset = 0;
+        uint64_t size = 0;
+    };
+    RadianceSourceBufferView prepareRadianceSourceBuffer();
 
     WGPUBuffer _sdfCubeVerts = nullptr; // unit bounding cube, shared by SDF + volume proxies
     void ensureSdfCubeVerts();
@@ -798,15 +930,24 @@ private:
     // which a deferred batch cannot honor.
     struct MeshBatchKey {
         const geom::TessMesh* mesh = nullptr;
+        const MeshPipeline* pipeline = nullptr;
         WGPUTextureView albedoView = nullptr;
-        glm::vec4 shading{0.2f, 0.8f, 1.0f, 32.0f}; // ambient, diffuse, specular, shininess
+        // Exact byte identity owns batching equality. The float vector is payload,
+        // never an ordering oracle (NaN would make ordinary float ordering unsafe).
+        std::string responseParamIdentity;
+        std::vector<float> responseParams;
+        bool sourceSet = false;
         bool operator<(const MeshBatchKey& o) const {
-            return std::tie(mesh, albedoView, shading.x, shading.y, shading.z, shading.w)
-                 < std::tie(o.mesh, o.albedoView, o.shading.x, o.shading.y, o.shading.z, o.shading.w);
+            return std::tie(mesh, pipeline, albedoView, responseParamIdentity,
+                            sourceSet)
+                 < std::tie(o.mesh, o.pipeline, o.albedoView,
+                            o.responseParamIdentity, o.sourceSet);
         }
         bool operator==(const MeshBatchKey& o) const {
-            return std::tie(mesh, albedoView, shading.x, shading.y, shading.z, shading.w)
-                == std::tie(o.mesh, o.albedoView, o.shading.x, o.shading.y, o.shading.z, o.shading.w);
+            return std::tie(mesh, pipeline, albedoView, responseParamIdentity,
+                            sourceSet)
+                == std::tie(o.mesh, o.pipeline, o.albedoView,
+                            o.responseParamIdentity, o.sourceSet);
         }
     };
     // Mirrors the WGSL `Instance` struct in kMeshWGSL.
@@ -818,26 +959,19 @@ private:
     std::map<MeshBatchKey, std::vector<InstanceData>> _meshBatches;
     WGPUBindGroupLayout _instanceBgl = nullptr; // group(1): the instance storage buffer
 
+    // Canonical upload-page optimization, translated onto authored receiver
+    // identity. One record names a whole instanced batch in the page; group(0)
+    // still varies by response params/albedo/pipeline, while instance bytes are
+    // uploaded contiguously once per page.
     struct MeshUploadRecord {
         const MeshBatchKey* key = nullptr;
         const std::vector<InstanceData>* instances = nullptr;
         uint32_t firstInstance = 0;
-        size_t uniformSlotIndex = 0;
-    };
-    struct MeshUniformKey {
-        WGPUTextureView albedoView = nullptr;
-        glm::vec4 shading{0.0f};
-        bool operator==(const MeshUniformKey& o) const {
-            return albedoView == o.albedoView && shading == o.shading;
-        }
     };
     std::vector<MeshUploadRecord> _meshRecords;
     std::vector<InstanceData> _meshPageInstances;
-    std::vector<MeshUniformKey> _meshPageUniformKeys;
-    std::vector<size_t> _meshPageUniformOffsets;
-    std::vector<uint8_t> _meshUniforms;
-    std::vector<WGPUBindGroup> _meshPageGroup0;
 
+    // Consecutive identical authored batch keys avoid a repeated map lookup.
     std::optional<MeshBatchKey> _lastMeshBatchKey;
     std::vector<InstanceData>* _lastMeshBatchVector = nullptr;
 
@@ -883,11 +1017,21 @@ private:
         uint32_t rangeProofDepth = 0;
     };
     std::map<const SdfPipeline*, std::vector<SdfInstanceData>> _sdfBatches;
+    // Equality with the corresponding opaque SDF instance batch size is the
+    // exact completeness proof for exporting that program cohort to any foreign
+    // visibility consumer, mesh or SDF.
+    std::map<const SdfPipeline*, std::vector<SceneVisibilityVmAdmission>>
+        _sdfVisibilityVmBatches;
+    // Count of instances whose surface opacity is compatible with this binary
+    // visibility provider. Own-program exact geometry is not sufficient when
+    // optical transmission itself is unresolved.
+    std::map<const SdfPipeline*, uint32_t> _sdfVisibilityOpaqueInstanceCounts;
     std::map<const SdfPipeline*, std::vector<float>> _sdfParamsBatches;
     std::map<const SdfPipeline*, std::vector<const std::vector<float>*>> _sdfParamPtrBatches;
     std::map<const SdfPipeline*, size_t> _sdfParamBatchCounts;
     std::deque<std::vector<float>> _unmemoizedParamCopies;
     std::map<const SdfPipeline*, std::vector<uint64_t>> _sdfBatchSignatures;
+    std::map<const SdfPipeline*, std::vector<std::string>> _sdfBatchResponseBindingIdentities;
     std::map<const SdfPipeline*, std::vector<glm::vec2>> _sdfHeightGridBatches;
     std::map<const SdfPipeline*, std::vector<uint32_t>> _sdfRangeNodeBatches;
     // Maps retain their vectors across frames so capacity is reused. This list

@@ -1,5 +1,8 @@
 # Native GPU OntoMath (The AST Interpreter)
 
+> **Implementation status — 2026-11-05.** Rung 2 is now wired as a production **shared path-visibility execution language for mesh and SDF receivers**. `SdfWgsl.hpp` / `FieldVm.cpp` define bounded field bytecode, CPU parity execution and the fixed WGSL interpreter; `WebGpuRenderer` packs receiver-relative program descriptors plus bytecode into storage buffers. Raster mesh receivers consume every admitted SDF cohort through that VM; an SDF receiver evaluates its own compiled-program cohort directly and consumes only foreign cohorts through the same VM. Both then compose exact mesh-triangle visibility, and VM uncertainty propagates as `Unknown`. The historical Sphere/Box foreign packet has been deleted from active source. Primitive/CSG `SdfNode` forms are admitted. `Expr` still refuses until OntoMath has a lossless native bytecode lowering; `Convex` still refuses until its plane payload is encoded. Native Box/Torus/Expr CompleteScene witnesses are authored in `webgpu_object_test`, but **no native-device/CI execution result is claimed by this status note**. The primary surface renderer still uses structure-specialized WGSL codegen; the whole-scene VM horizon below remains a horizon, not present-tense fact.
+
+
 ## 1. The Dynamic SDF Recompilation Problem
 Earthcall’s `OntoMath` provides a mathematically pure representation of the Zone, modeling Beings as analytic fields (SDFs). Currently, the `@screen-channel` translates this pure math into pixels by recursively generating a string of WGSL source code (`SdfWgsl.cpp`) and passing it to the graphics driver for compilation.
 

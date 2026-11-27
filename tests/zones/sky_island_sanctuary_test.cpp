@@ -143,10 +143,16 @@ bool renderOffscreen(wgpu::Device& gpu, WebGpuRenderer& r, Zone& zone,
         Rendering::RadianceSourceBinding src;
         src.producerId = field->getIdentifier();
         src.position = l.position;
-        src.ambientRadiance = Rendering::lightAmbientRadiance(l);
-        src.diffuseRadiance = Rendering::lightDiffuseRadiance(l);
-        src.specularRadiance = Rendering::lightSpecularRadiance(l);
-        src.coefficients = glm::vec4(l.intensity, l.ambient, l.diffuse, l.specular);
+        src.fallbackChroma = l.color;
+        src.fallbackIntensity = l.intensity;
+        src.legacySurface.environmentRadiance =
+            Rendering::lightAmbientRadiance(l);
+        src.legacySurface.diffuseIncident =
+            Rendering::lightDiffuseRadiance(l);
+        src.legacySurface.specularIncident =
+            Rendering::lightSpecularRadiance(l);
+        src.legacySurface.coefficients =
+            glm::vec3(l.ambient, l.diffuse, l.specular);
         src.temporalCoordinate = 0.0;
         src.temporalDelta = 0.016;
         src.enabled = l.enabled;
@@ -171,9 +177,17 @@ bool renderOffscreen(wgpu::Device& gpu, WebGpuRenderer& r, Zone& zone,
     r.setRadianceSources(radiantSources, std::hash<std::string>{}(sourceSetIdentity));
     if (!radiantSources.empty()) {
         const auto& c = radiantSources.front();
-        r.setLight(c.position, c.ambientRadiance, c.diffuseRadiance, c.specularRadiance);
+        r.setLight(
+            c.position,
+            c.legacySurface.environmentRadiance,
+            c.legacySurface.diffuseIncident,
+            c.legacySurface.specularIncident);
         r.setLightingEnabled(c.enabled);
-        r.setRadianceSourceCoefficients(c.coefficients.x, c.coefficients.y, c.coefficients.z, c.coefficients.w);
+        r.setRadianceSourceCoefficients(
+            c.fallbackIntensity,
+            c.legacySurface.coefficients.x,
+            c.legacySurface.coefficients.y,
+            c.legacySurface.coefficients.z);
         r.setRadianceField(c.radianceExpr, c.radianceRevision);
         r.setRadianceChroma(c.chromaExpr, c.chromaRevision);
         r.setRadianceAngular(c.angularExpr, c.angularRevision);

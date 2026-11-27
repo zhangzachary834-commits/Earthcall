@@ -89,11 +89,16 @@ int main(int argc, char** argv) {
     renderer.setLightingEnabled(light.enabled);
     Rendering::RadianceSourceBinding source;
     source.position = light.position;
-    source.ambientRadiance = Rendering::lightAmbientRadiance(light);
-    source.diffuseRadiance = Rendering::lightDiffuseRadiance(light);
-    source.specularRadiance = Rendering::lightSpecularRadiance(light);
-    source.coefficients = glm::vec4(light.intensity, light.ambient,
-                                     light.diffuse, light.specular);
+    source.fallbackChroma = light.color;
+    source.fallbackIntensity = light.intensity;
+    source.legacySurface.environmentRadiance =
+        Rendering::lightAmbientRadiance(light);
+    source.legacySurface.diffuseIncident =
+        Rendering::lightDiffuseRadiance(light);
+    source.legacySurface.specularIncident =
+        Rendering::lightSpecularRadiance(light);
+    source.legacySurface.coefficients =
+        glm::vec3(light.ambient, light.diffuse, light.specular);
     source.enabled = light.enabled;
     renderer.setRadianceSources({source}, 1);
 

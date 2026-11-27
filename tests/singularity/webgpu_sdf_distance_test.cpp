@@ -56,6 +56,9 @@ int main() {
     WebGpuRenderer r;
     if (!r.init(gpu)) { std::printf("FAIL: renderer init\n"); return 1; }
     setCurrentRenderer(&r);
+    // Geometry/proof witness: surface visibility must not depend on any
+    // renderer-owned or Material receiver-lighting law.
+    r.setLightingEnabled(false);
 
     WGPUTextureDescriptor td = {};
     td.usage = WGPUTextureUsage_RenderAttachment | WGPUTextureUsage_CopySrc;
