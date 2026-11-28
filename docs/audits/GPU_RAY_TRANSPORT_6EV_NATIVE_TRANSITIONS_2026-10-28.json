@@ -1,0 +1,515 @@
+{
+  "schema": "6ev-retained-native-transition-review-1",
+  "engine": {
+    "base_src_tree": "46ed26f689f8ad5aebfd24688c7c7375e61f32d2",
+    "working_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source_files": {
+      "src/Singularity/Screen/WebGPU/WebGpuRenderer.cpp": "c9b2eaa0c3c6d4b59945ffa4ec6febab1f3ce8cc08e6b256499aeff6c70df382",
+      "src/Singularity/Screen/WebGPU/WebGpuRenderer.hpp": "1310f4e89ab71d6cbfe8565993c17da42484e476662c08c4c1998569168d1700",
+      "src/Singularity/Screen/WebGPU/VolumeRoutedTransport.hpp": "7d85cb9ddb0ee70eebfa8c0e8c1f21530e9f9d76e002a72efae9228bc178c9fc",
+      "src/Singularity/Screen/WebGPU/VolumeRoutedTransport.inc": "47fb2884614b1b3034599ab1d6da3b0283dee8179ee204e0aa268090bcd920bb",
+      "src/Singularity/Screen/WebGPU/VolumeRoutedKernels.hpp": "66c725d43bb1ec49e1b1dd89b92caa1cde6b730ec19bb0d3a4ea21bf893bfb61",
+      "src/Singularity/OntoMath/ClampedWaveSupport.hpp": "0c4cfc4ed6f5cb43f16fe7277bf5d3d737c3570f2395f2d1428cc07239ab25f7",
+      "src/Singularity/Screen/Camera.hpp": "dac58143d3d11b63b34b9150c1ad6f6735b11017335e4edca587ba11131dffe9",
+      "src/Singularity/Screen/Camera.cpp": "f113f8236e2a59b1c9e27395746a874ca66745a233bbcd3a594711c6c0ab9b9a",
+      "src/Singularity/Screen/ScreenChannel.hpp": "f7637e99a782d66a044dec011ab7f3fdbadad083f4ce9b03296f0a75ced0052e",
+      "src/Singularity/Screen/ScreenChannel.cpp": "297e82afcffbe21a4018025f5ff7de63a3a34f01adb4b505064bf819cff0216b",
+      "src/Singularity/Screen/Renderer.hpp": "d2f994701be5be21bc6ac0a9f6d2e242a33c0224a132dfbdf311ce4b369e822a",
+      "src/Singularity/Core/EngineRender.cpp": "ca4bedf57f341cab10f3089faee546598204d49c32920ca602552c02e31c990c"
+    },
+    "zone_sha256": "6f541ef6818206be7274fd84659f1c0f7870b450ff8e15035ec34051a2605496"
+  },
+  "states": [
+    {
+      "name": "baseline",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "baseline-repeat",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "toggle-off",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": false,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 0,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 0
+      }
+    },
+    {
+      "name": "toggle-on",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "independent-clocks",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "clock-recover",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "emission-edit",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63450
+      }
+    },
+    {
+      "name": "emission-recover",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "density-edit",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 34796
+      }
+    },
+    {
+      "name": "density-recover",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "unsupported-structure",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": false,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 0,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 0
+      }
+    },
+    {
+      "name": "structure-recover",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "move-and-extent",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63460
+      }
+    },
+    {
+      "name": "bounds-recover",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "membership-three",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": false,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 0,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 0
+      }
+    },
+    {
+      "name": "membership-recover",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "positive-source",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": false,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 0,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 0
+      }
+    },
+    {
+      "name": "source-recover",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "absent-source-nonwi",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": false,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 0,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 0
+      }
+    },
+    {
+      "name": "phase-source-recover",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "resize-odd",
+      "shape": [
+        321,
+        181
+      ],
+      "routed": true,
+      "poison_bytes": 21403156,
+      "publication": {
+        "accepted": 58101,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 58095
+      }
+    },
+    {
+      "name": "resize-wide",
+      "shape": [
+        640,
+        360
+      ],
+      "routed": true,
+      "poison_bytes": 44505652,
+      "publication": {
+        "accepted": 230400,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 230376
+      }
+    },
+    {
+      "name": "resize-recover",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "opaque-front",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 31730
+      }
+    },
+    {
+      "name": "opaque-recover",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "forced-refusal",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 0,
+        "refused": 63460,
+        "nonfinite": 0,
+        "nonempty": 0
+      }
+    },
+    {
+      "name": "refusal-recover",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "camera-outside",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 28358
+      }
+    },
+    {
+      "name": "camera-recover",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "fresh-device",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    },
+    {
+      "name": "fresh-device-repeat",
+      "shape": [
+        334,
+        190
+      ],
+      "routed": true,
+      "poison_bytes": 22318004,
+      "publication": {
+        "accepted": 63460,
+        "refused": 0,
+        "nonfinite": 0,
+        "nonempty": 63454
+      }
+    }
+  ],
+  "transition_states": 31,
+  "compared_bytes": 75000040,
+  "submitted_poison_bytes": 713130924,
+  "negative_controls": [
+    {
+      "mutation": "missing-setup",
+      "exit_code": 42,
+      "rejection": "TRANSITION FAIL publication finite baseline"
+    },
+    {
+      "mutation": "missing-producer",
+      "exit_code": 42,
+      "rejection": "TRANSITION FAIL Screen stale or missing output baseline"
+    },
+    {
+      "mutation": "missing-consumer",
+      "exit_code": 42,
+      "rejection": "TRANSITION FAIL Screen stale or missing output baseline"
+    },
+    {
+      "mutation": "missing-publication",
+      "exit_code": 42,
+      "rejection": "TRANSITION FAIL Screen stale or missing output baseline"
+    }
+  ],
+  "scope": "Same-process state/cache/publication validity on actual app renderer, fresh instance comparisons and independent intended-state/refusal checks. No new authored-reference accuracy, full-resolution transition screen, performance/FPS or Person acceptance."
+}

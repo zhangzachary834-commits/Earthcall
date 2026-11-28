@@ -357,7 +357,7 @@ int main() {
         nlohmann::json bodyJson = bodyPartToJson(part);
         bodyJson["geometryType"] = 99999;
         bodyPartFromJson(bodyJson, part);
-        check(part.getPrimaryShape() == ObjectTypes::ShapeKind::Cube,
+        check(part.getPrimaryObject()->getShapeKind() == ObjectTypes::ShapeKind::Cube,
               "BodyPart refuses an invalid primary ShapeKind ordinal");
 
         nlohmann::json sub = nlohmann::json::object();

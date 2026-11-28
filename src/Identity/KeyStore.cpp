@@ -6,6 +6,8 @@
 #include <openssl/rand.h>
 #endif
 
+#include <chrono>
+#include <cerrno>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -14,6 +16,8 @@
 
 #if !defined(_WIN32)
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #endif
 
 namespace Identity {
@@ -240,21 +244,57 @@ bool KeyStore::store(const PrivateKey& key, const std::string& passphrase) {
     file["tag"] = hexEncode(tag);
 
     const std::filesystem::path path = pathFor(id);
+    const std::filesystem::path tempPath =
+        path.string() + ".tmp-" +
+        std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    const std::string serialized = file.dump(2) + "\n";
 
-    // Create with 0600 from the outset rather than widening then narrowing:
-    // between the two there would be a window where the sealed key is
-    // world-readable.
+#if !defined(_WIN32)
+    // The sealed key must be 0600 from the first instant of creation.
+    // O_EXCL also refuses an attacker-preplanted symlink at the temporary path.
+    const int fd = ::open(tempPath.c_str(), O_WRONLY | O_CREAT | O_EXCL, 0600);
+    if (fd < 0) {
+        std::cerr << "[KeyStore] cannot securely create temporary key file " << tempPath << "\n";
+        return false;
+    }
+    size_t written = 0;
+    bool writeOk = true;
+    while (written < serialized.size()) {
+        const ssize_t n = ::write(fd, serialized.data() + written, serialized.size() - written);
+        if (n < 0 && errno == EINTR) continue;
+        if (n <= 0) { writeOk = false; break; }
+        written += static_cast<size_t>(n);
+    }
+    if (writeOk && ::fsync(fd) != 0) writeOk = false;
+    if (::close(fd) != 0) writeOk = false;
+    if (!writeOk) {
+        std::filesystem::remove(tempPath, ec);
+        std::cerr << "[KeyStore] failed to write temporary key file " << tempPath << "\n";
+        return false;
+    }
+#else
     {
-        std::ofstream out(path, std::ios::binary | std::ios::trunc);
-        if (!out.is_open()) {
-            std::cerr << "[KeyStore] cannot write " << path << "\n";
+        std::ofstream out(tempPath, std::ios::binary | std::ios::out | std::ios::trunc);
+        if (!out) return false;
+        out << serialized;
+        out.flush();
+        out.close(); // Also detect delayed errors on Windows staged writes.
+        if (!out) {
+            std::filesystem::remove(tempPath, ec);
             return false;
         }
-        out << file.dump(2) << "\n";
     }
-#if !defined(_WIN32)
-    ::chmod(path.c_str(), 0600);
 #endif
+
+    ec.clear();
+    std::filesystem::rename(tempPath, path, ec);
+    if (ec) {
+        const auto renameError = ec;
+        std::filesystem::remove(tempPath, ec);
+        std::cerr << "[KeyStore] failed to rename temporary key file to " << path
+                  << ": " << renameError.message() << "\n";
+        return false;
+    }
 
     return true;
 #else

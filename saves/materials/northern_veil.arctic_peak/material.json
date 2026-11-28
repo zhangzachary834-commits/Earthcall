@@ -1,0 +1,331 @@
+{
+  "identifier": "material.northern_veil.arctic_peak",
+  "material": {
+    "name": "northern_veil.arctic_peak",
+    "baseColor": [
+      0.05,
+      0.16,
+      0.18
+    ],
+    "opacity": 1.0,
+    "shininess": 48.0,
+    "specular": 0.62,
+    "ambient": 0.25,
+    "diffuse": 0.8,
+    "colorExpr": {
+      "input": "x",
+      "pieces": [
+        {
+          "mathNode": {
+            "children": [
+              {
+                "children": [
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 0.012,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 0.018,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 0.028,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "op": 2
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 0.16,
+                                  "factors": {}
+                                },
+                                {
+                                  "c": 0.068,
+                                  "factors": {
+                                    "y": 1.0
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 0.0,
+                                  "factors": {}
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 1.0,
+                                  "factors": {}
+                                }
+                              ]
+                            }
+                          }
+                        ],
+                        "op": 26
+                      },
+                      {
+                        "children": [
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 0.52,
+                                  "factors": {}
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "children": [
+                              {
+                                "op": 0,
+                                "scalarForm": {
+                                  "terms": [
+                                    {
+                                      "c": 0.48,
+                                      "factors": {}
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "children": [
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.18,
+                                              "factors": {
+                                                "x": 1.0
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.26,
+                                              "factors": {
+                                                "y": 1.0
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.18,
+                                              "factors": {
+                                                "z": 1.0
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ],
+                                    "op": 2
+                                  }
+                                ],
+                                "op": 29
+                              }
+                            ],
+                            "op": 6
+                          }
+                        ],
+                        "op": 4
+                      }
+                    ],
+                    "op": 6
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 0.055,
+                                  "factors": {}
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 0.235,
+                                  "factors": {}
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 0.185,
+                                  "factors": {}
+                                }
+                              ]
+                            }
+                          }
+                        ],
+                        "op": 2
+                      },
+                      {
+                        "children": [
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 0.5,
+                                  "factors": {}
+                                },
+                                {
+                                  "c": 0.28,
+                                  "factors": {},
+                                  "trans": [
+                                    {
+                                      "kind": 1,
+                                      "scale": 0.14,
+                                      "var": "x",
+                                      "shift": 0.4
+                                    }
+                                  ]
+                                },
+                                {
+                                  "c": 0.22,
+                                  "factors": {},
+                                  "trans": [
+                                    {
+                                      "kind": 0,
+                                      "scale": 0.18,
+                                      "var": "z",
+                                      "shift": -0.3
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "children": [
+                              {
+                                "op": 0,
+                                "scalarForm": {
+                                  "terms": [
+                                    {
+                                      "c": 0.145,
+                                      "factors": {}
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "op": 0,
+                                "scalarForm": {
+                                  "terms": [
+                                    {
+                                      "c": 0.042,
+                                      "factors": {}
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "op": 0,
+                                "scalarForm": {
+                                  "terms": [
+                                    {
+                                      "c": 0.165,
+                                      "factors": {}
+                                    }
+                                  ]
+                                }
+                              }
+                            ],
+                            "op": 2
+                          }
+                        ],
+                        "op": 6
+                      }
+                    ],
+                    "op": 4
+                  }
+                ],
+                "op": 6
+              }
+            ],
+            "op": 4
+          }
+        }
+      ]
+    }
+  },
+  "authors": [
+    "Zach",
+    "Firmament"
+  ],
+  "injected_by": {
+    "agent": "Firmament & Sparkly Guy",
+    "date": "2026-11-02",
+    "context": "Northern Veil Sanctuary procedural material root (Pass 2)"
+  }
+}

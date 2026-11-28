@@ -1,0 +1,281 @@
+{
+  "census": {
+    "axes_crossed": {
+      "1_axis": {
+        "count": 2110,
+        "pct": 96.30305796439981
+      },
+      "2_axes": {
+        "count": 81,
+        "pct": 3.6969420356001828
+      },
+      "3_axes": {
+        "count": 0,
+        "pct": 0.0
+      }
+    },
+    "by_curtain": [
+      {
+        "alpha": 0.13333333333333333,
+        "axes_crossed": {
+          "1_axis": 985,
+          "2_axes": 38,
+          "3_axes": 0
+        },
+        "cross_cell_pct": 7.267173403424025,
+        "curtain_id": "northern_veil.aurora.primary-emerald-curtain",
+        "floor_correlation": {
+          "cross_cell": {
+            "active": 32,
+            "crossing": 7,
+            "inactive": 984
+          },
+          "same_cell": {
+            "active": 578,
+            "crossing": 3482,
+            "inactive": 8994
+          }
+        },
+        "noise_freq": 0.08,
+        "same_cell_pct": 92.73282659657598,
+        "subpanels": 14077
+      },
+      {
+        "alpha": 0.13846153846153847,
+        "axes_crossed": {
+          "1_axis": 243,
+          "2_axes": 8,
+          "3_axes": 0
+        },
+        "cross_cell_pct": 7.175528873642081,
+        "curtain_id": "northern_veil.aurora.secondary-cyan-ribbon",
+        "floor_correlation": {
+          "cross_cell": {
+            "active": 0,
+            "crossing": 1,
+            "inactive": 250
+          },
+          "same_cell": {
+            "active": 389,
+            "crossing": 806,
+            "inactive": 2052
+          }
+        },
+        "noise_freq": 0.09,
+        "same_cell_pct": 92.82447112635792,
+        "subpanels": 3498
+      },
+      {
+        "alpha": 0.14545454545454545,
+        "axes_crossed": {
+          "1_axis": 308,
+          "2_axes": 23,
+          "3_axes": 0
+        },
+        "cross_cell_pct": 12.058287795992713,
+        "curtain_id": "northern_veil.aurora.accent-violet-crest",
+        "floor_correlation": {
+          "cross_cell": {
+            "active": 0,
+            "crossing": 1,
+            "inactive": 330
+          },
+          "same_cell": {
+            "active": 160,
+            "crossing": 465,
+            "inactive": 1789
+          }
+        },
+        "noise_freq": 0.07,
+        "same_cell_pct": 87.94171220400729,
+        "subpanels": 2745
+      },
+      {
+        "alpha": 0.16,
+        "axes_crossed": {
+          "1_axis": 574,
+          "2_axes": 12,
+          "3_axes": 0
+        },
+        "cross_cell_pct": 16.95601851851852,
+        "curtain_id": "northern_veil.aurora.deep-crimson-fringe",
+        "floor_correlation": {
+          "cross_cell": {
+            "active": 2,
+            "crossing": 0,
+            "inactive": 584
+          },
+          "same_cell": {
+            "active": 251,
+            "crossing": 551,
+            "inactive": 2068
+          }
+        },
+        "noise_freq": 0.1,
+        "same_cell_pct": 83.04398148148148,
+        "subpanels": 3456
+      }
+    ],
+    "cross_cell_pairs": 2191,
+    "cross_cell_pct": 9.215174966352624,
+    "same_cell_pairs": 21585,
+    "same_cell_pct": 90.78482503364738,
+    "setups_per_ray": {
+      "cross_cell_pairs": {
+        "max": 7.0,
+        "mean": 0.9509548611111112,
+        "min": 0.0,
+        "p50": 1.0,
+        "p90": 3.0,
+        "p99": 5.0,
+        "rms": 1.5638882721530263
+      },
+      "same_cell_pairs": {
+        "max": 25.0,
+        "mean": 9.368489583333334,
+        "min": 2.0,
+        "p50": 9.0,
+        "p90": 15.0,
+        "p99": 21.0,
+        "rms": 10.165876847735927
+      },
+      "subpanels": {
+        "max": 27.0,
+        "mean": 10.319444444444445,
+        "min": 3.0,
+        "p50": 10.0,
+        "p90": 18.0,
+        "p99": 24.0,
+        "rms": 11.361675651553828
+      },
+      "with_fusion": {
+        "max": 80.0,
+        "mean": 12.148871527777779,
+        "min": 3.0,
+        "p50": 10.0,
+        "p90": 22.0,
+        "p99": 47.0,
+        "rms": 14.584746955295454
+      },
+      "without_fusion": {
+        "max": 100.0,
+        "mean": 21.51736111111111,
+        "min": 6.0,
+        "p50": 20.0,
+        "p90": 38.0,
+        "p99": 64.0,
+        "rms": 24.35993123964023
+      }
+    },
+    "setups_reduction_pct": 43.53921252218815,
+    "subpanels_per_ray": 10.319444444444445,
+    "total_subpanels": 23776
+  },
+  "ms_per_ray": 3.499254937065972,
+  "native_targets": {
+    "RGB_max": 0.001958,
+    "RGB_mean": 5.223e-05,
+    "RGB_p99": 0.0007491,
+    "T_max": 0.003025,
+    "T_mean": 0.0001335,
+    "T_p99": 0.00143
+  },
+  "rays": 2304,
+  "scope": "Intra-Subpanel GL2 Dual-Noise Census and Three-Consumer CPU Screen",
+  "screen": {
+    "consumer_A": {
+      "AST_calls_per_ray": 21.51736111111111,
+      "RGB": {
+        "max": 9.15331044624712e-05,
+        "mean": 1.3861247282266854e-05,
+        "min": 8.997098253915592e-09,
+        "p50": 1.0908456174137104e-05,
+        "p90": 3.0361431159808827e-05,
+        "p99": 7.54403767633735e-05,
+        "rms": 1.9633672303041742e-05
+      },
+      "T": {
+        "max": 0.00013909630627650937,
+        "mean": 2.0207422555679945e-05,
+        "min": 1.7077922409569624e-09,
+        "p50": 1.5828078087865016e-05,
+        "p90": 4.5210947122176215e-05,
+        "p99": 0.0001098162648583978,
+        "rms": 2.8948313696877022e-05
+      },
+      "admitted_pct": 0.0,
+      "admitted_subpanels": 0,
+      "envelope_calls_per_ray": 0.0,
+      "evaluations_per_ray": 21.51736111111111,
+      "fallback_subpanels": 0,
+      "moment_calls_per_ray": 0.0,
+      "name": "Consumer A (Frozen §6bv GL2 Control)",
+      "noise_calls_per_ray": 20.63888888888889,
+      "worsened_rays_RGB_count": 0,
+      "worsened_rays_T_count": 0
+    },
+    "consumer_B": {
+      "AST_calls_per_ray": 6.716145833333333,
+      "RGB": {
+        "max": 3.055252464191638e-05,
+        "mean": 7.321593633779716e-06,
+        "min": 2.8753135037848376e-09,
+        "p50": 5.066685011656524e-06,
+        "p90": 1.734859079424722e-05,
+        "p99": 2.625820649330285e-05,
+        "rms": 1.019229596157281e-05
+      },
+      "T": {
+        "max": 4.989413801259612e-05,
+        "mean": 1.059903386317555e-05,
+        "min": 1.105283087277087e-09,
+        "p50": 6.7482437089427805e-06,
+        "p90": 2.5565484652601e-05,
+        "p99": 3.876682850056934e-05,
+        "rms": 1.4940109878607777e-05
+      },
+      "admitted_pct": 71.71517496635262,
+      "admitted_subpanels": 17051,
+      "envelope_calls_per_ray": 22.201822916666668,
+      "evaluations_per_ray": 21.51736111111111,
+      "fallback_subpanels": 6725,
+      "moment_calls_per_ray": 7.400607638888889,
+      "name": "Consumer B (Moment-Weighted GL2)",
+      "noise_calls_per_ray": 20.63888888888889,
+      "worsened_rays_RGB_count": 0,
+      "worsened_rays_T_count": 0
+    },
+    "consumer_C": {
+      "AST_calls_per_ray": 6.716145833333333,
+      "RGB": {
+        "max": 0.000418408753249902,
+        "mean": 9.286434264551999e-05,
+        "min": 7.585323468515051e-09,
+        "p50": 6.106454118792737e-05,
+        "p90": 0.0002127576807030157,
+        "p99": 0.00027475539250237935,
+        "rms": 0.0001238017668950565
+      },
+      "T": {
+        "max": 0.0006817678497730295,
+        "mean": 0.0001349657136917127,
+        "min": 1.4106166235094975e-09,
+        "p50": 8.998783923486187e-05,
+        "p90": 0.00031053217022991575,
+        "p99": 0.00042397596948251515,
+        "rms": 0.0001815097071524802
+      },
+      "admitted_pct": 71.71517496635262,
+      "admitted_subpanels": 17051,
+      "envelope_calls_per_ray": 22.201822916666668,
+      "evaluations_per_ray": 14.116753472222221,
+      "fallback_subpanels": 6725,
+      "moment_calls_per_ray": 7.400607638888889,
+      "name": "Consumer C (Barycentric 1-Noise)",
+      "noise_calls_per_ray": 13.23828125,
+      "worsened_rays_RGB_count": 0,
+      "worsened_rays_T_count": 0
+    }
+  },
+  "total_time_ms": 8062.283375
+}

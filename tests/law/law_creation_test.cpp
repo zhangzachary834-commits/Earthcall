@@ -64,6 +64,7 @@ int main() {
     glfwMakeContextCurrent(window);
 
     Zone world("test-zone", "default");
+    Zone inactiveWorld("World", "default");
     Object subject;
     subject.setObjectType("subject");
     subject.setPosition(glm::vec3(2.0f, 3.0f, 4.0f));
@@ -75,6 +76,7 @@ int main() {
         for (const auto& obj : world.getOwnedObjects()) {
             if (obj) beings.push_back(obj.get());
         }
+        beings.push_back(&inactiveWorld); // real boot exposes inactive Zones
     });
 
     const ECA::Event event{"test", &subject, nullptr, 0};
@@ -89,6 +91,7 @@ int main() {
         create.compile()(event, subject);
 
         check(world.getOwnedObjects().size() == 1, "one object was born");
+        check(inactiveWorld.getOwnedObjects().empty(), "an inactive Zone named World does not steal Create birth");
         Object* born = findByType(world, "lantern");
         check(born != nullptr, "the newborn carries its authored type");
         check(born && born->getShapeKind() == Object::ShapeKind::Sphere,
@@ -256,6 +259,10 @@ int main() {
         }
     }
 
+    ActionNode::create(static_cast<int>(Object::ShapeKind::Cube), "explicit-destination")
+        .compile()(event, inactiveWorld);
+    check(inactiveWorld.getOwnedObjects().size() == 1,
+          "an explicit Zone subject still determines Create destination");
     std::cout << "\nSUCCESS — " << g_checks << " checks passed." << std::endl;
     Universe::instance().setProvider(nullptr);   // the world outlives this scope
     glfwDestroyWindow(window);

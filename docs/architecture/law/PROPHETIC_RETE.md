@@ -49,6 +49,7 @@ So the discipline, enforced throughout `src/ZonesOfEarth/AuthorsOfLaw/PropheticR
 - Every filter derived from an incomplete index **fails open**.
 - `met()` (narrowing, for `All`) widens to Top on any case it cannot compute — never to Bottom.
 - `mayIntersect()` returns `true` for every pair of lattice kinds it does not know how to relate.
+- A condition that reads through a **derived reading** (`<prefix>.evaluation…`, computed on read from inputs no change fact names) gets **no Rete terminals**. It is decided on the sweep every tick (`ConditionNode::readsUntrackedDerivedReading`, `tests/law/derived_reading_law_test.cpp`; 2026-10-20).
 
 `tests/law/prophetic_rete_test.cpp` **Section F** is the section that matters. Every other
 section checks that the analysis is clever; F checks that it is safe, by firing real Laws

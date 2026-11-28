@@ -1,0 +1,40 @@
+{
+  "result": "PASS",
+  "before_fix": {
+    "active_zone": "LawLine",
+    "active_count": 1,
+    "inactive_World_count": 1
+  },
+  "after_fix": {
+    "active_zone": "LawLine",
+    "active_count": 2,
+    "inactive_World_count": 0
+  },
+  "full_engine_native_capture": {
+    "before_gold_pixels": 0,
+    "after_gold_pixels": 484416,
+    "width": 2560,
+    "height": 1440
+  },
+  "focused_tests_passed": 7,
+  "harness": "Codex",
+  "model": "GPT-6.1 Sol",
+  "session": "01a10992-828e-7e80-890c-c64b09141e18",
+  "date": "2026-10-05",
+  "focused_test_names": [
+    "action_spawn_test",
+    "chess_zone_native_boot_test",
+    "law_creation_test",
+    "shape_generator_law_test",
+    "universal_singular_creation_test",
+    "law_line_zone_test",
+    "terminal_zones_test"
+  ],
+  "broader_run": "Interrupted after legacy chess capture assertion and costly unrelated full-store pre-load serialization; not a full-suite pass",
+  "saves_preserved": "All zones/homes bytes and file membership match pre-test backup",
+  "legacy_chess_comparison": {
+    "baseline": "capture assertion fails",
+    "current": "same capture assertion fails",
+    "scope": "isolated Chess and World roots; old resolver and harness versus corrected resolver and harness; assertions unwind via exceptions"
+  }
+}

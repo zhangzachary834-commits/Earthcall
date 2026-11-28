@@ -1,0 +1,25 @@
+{
+  "identifier": "material.luna.sunbeam",
+  "material": {
+    "name": "luna.sunbeam",
+    "baseColor": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "opacity": 1.0,
+    "shininess": 32.0,
+    "specular": 1.0,
+    "ambient": 0.20000000298023224,
+    "diffuse": 0.800000011920929
+  },
+  "authors": [
+    "Zach"
+  ],
+  "injected_by": {
+    "agent": "Claude Code / Claude Sonnet 5.5, session 01GxayCUN2nc7DDaeg33kXhZ",
+    "date": "2026-10-07",
+    "recovered_from": [],
+    "note": "No authored definition existed in any source; this root declares the engine-default Material those Objects already rendered with. Repaint freely."
+  }
+}

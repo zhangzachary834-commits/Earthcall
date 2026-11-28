@@ -1,5 +1,6 @@
 #include "Singularity/Storage/FileWatcher.hpp"
 #include "Singularity/Storage/VirtualFileSystem.hpp"
+#include "Singularity/Storage/SaveSystem.hpp"
 #include "Singularity/Screen/Renderer.hpp"
 #include "Singularity/Core/EventBus.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/ECA.hpp"
@@ -72,7 +73,20 @@ void FileWatcher::scanDirectory(const fs::path& target,
     if (!fs::is_directory(target, ec)) return;
 
     if (_recursive) {
-        for (const auto& entry : fs::recursive_directory_iterator(target, ec)) {
+        // A whole-Data-Home watch sees authored saves and other live files.
+        // Gemini sandbox workspaces are integration runtime state and can
+        // contain hundreds of thousands of files. A watch pointed directly
+        // at a sandbox path still traverses it normally.
+        const bool wholeDataHome =
+            target.lexically_normal() == SaveSystem::rootPath().lexically_normal();
+        const fs::path sandboxWorkspaces = target / "gemini-mcp" / "sandboxes";
+        const fs::recursive_directory_iterator end;
+        for (auto it = fs::recursive_directory_iterator(target, ec); it != end; ++it) {
+            const auto& entry = *it;
+            if (wholeDataHome && entry.path() == sandboxWorkspaces) {
+                it.disable_recursion_pending();
+                continue;
+            }
             if (entry.is_regular_file(ec)) {
                 if (_filterExtension.empty() || entry.path().extension() == _filterExtension) {
                     auto lwt = entry.last_write_time(ec);
@@ -179,21 +193,6 @@ void FileWatcher::checkNow() {
         for (const auto& cb : callbacksCopy) {
             if (cb) cb(path, eventType);
         }
-
-        // 4. Automatic hot-reloading if enabled
-        if (_autoReload && (eventType == "file-modified" || eventType == "file-created")) {
-            if (path.find(".wgsl") != std::string::npos || path.find("shader") != std::string::npos) {
-                currentRenderer().reloadShaders();
-                _lastReloadTarget = "shader";
-                _reloadCount += 1.0;
-            } else if (path.find("zone.json") != std::string::npos || path.find(".ecform") != std::string::npos) {
-                _lastReloadTarget = "zone";
-                _reloadCount += 1.0;
-            } else if (path.find(".json") != std::string::npos) {
-                _lastReloadTarget = "rule";
-                _reloadCount += 1.0;
-            }
-        }
     }
 }
 
@@ -220,17 +219,6 @@ void FileWatcher::propSetCheckNowTrigger(const bool& v) {
         _checkNowTrigger = false;
     }
 }
-
-void FileWatcher::propSetReloadShadersTrigger(const bool& v) {
-    _reloadShadersTrigger = v;
-    if (_reloadShadersTrigger) {
-        currentRenderer().reloadShaders();
-        _lastReloadTarget = "shader";
-        _reloadCount += 1.0;
-        _reloadShadersTrigger = false;
-    }
-}
-
 void FileWatcher::buildProperties() {
     registerProperty(std::make_unique<ComputedProperty<FileWatcher, bool>>(
         "watcher.enabled", this, &FileWatcher::propEnabled, &FileWatcher::propSetEnabled));
@@ -256,15 +244,6 @@ void FileWatcher::buildProperties() {
 
     registerProperty(std::make_unique<ComputedProperty<FileWatcher, bool>>(
         "watcher.checkNow", this, &FileWatcher::propCheckNowTrigger, &FileWatcher::propSetCheckNowTrigger));
-
-    registerProperty(std::make_unique<ComputedProperty<FileWatcher, bool>>(
-        "watcher.autoReload", this, &FileWatcher::propAutoReload, &FileWatcher::propSetAutoReload));
-    registerProperty(std::make_unique<ComputedProperty<FileWatcher, double>>(
-        "watcher.reloadCount", this, &FileWatcher::propReloadCount, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<FileWatcher, std::string>>(
-        "watcher.lastReloadTarget", this, &FileWatcher::propLastReloadTarget, nullptr));
-    registerProperty(std::make_unique<ComputedProperty<FileWatcher, bool>>(
-        "watcher.reloadShaders", this, &FileWatcher::propReloadShadersTrigger, &FileWatcher::propSetReloadShadersTrigger));
 
     registerProperty(std::make_unique<ComputedProperty<FileWatcher, std::string>>(
         "watcher.status", this, &FileWatcher::propStatus, nullptr));

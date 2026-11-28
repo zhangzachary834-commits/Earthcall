@@ -1,0 +1,237 @@
+{
+  "identifier": "material.northern_veil.glacial_dais",
+  "material": {
+    "name": "northern_veil.glacial_dais",
+    "baseColor": [
+      0.08,
+      0.2,
+      0.2
+    ],
+    "opacity": 1.0,
+    "shininess": 76.0,
+    "specular": 0.8,
+    "ambient": 0.25,
+    "diffuse": 0.8,
+    "colorExpr": {
+      "input": "x",
+      "pieces": [
+        {
+          "mathNode": {
+            "children": [
+              {
+                "children": [
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 0.032,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 0.056,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "op": 0,
+                    "scalarForm": {
+                      "terms": [
+                        {
+                          "c": 0.078,
+                          "factors": {}
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "op": 2
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "op": 0,
+                            "scalarForm": {
+                              "terms": [
+                                {
+                                  "c": 0.56,
+                                  "factors": {}
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "children": [
+                              {
+                                "op": 0,
+                                "scalarForm": {
+                                  "terms": [
+                                    {
+                                      "c": 0.44,
+                                      "factors": {}
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "children": [
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.42,
+                                              "factors": {
+                                                "x": 1.0
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.85,
+                                              "factors": {
+                                                "y": 1.0
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      {
+                                        "op": 0,
+                                        "scalarForm": {
+                                          "terms": [
+                                            {
+                                              "c": 0.42,
+                                              "factors": {
+                                                "z": 1.0
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ],
+                                    "op": 2
+                                  }
+                                ],
+                                "op": 29
+                              }
+                            ],
+                            "op": 6
+                          }
+                        ],
+                        "op": 4
+                      },
+                      {
+                        "op": 0,
+                        "scalarForm": {
+                          "terms": [
+                            {
+                              "c": 0.52,
+                              "factors": {}
+                            },
+                            {
+                              "c": 0.26,
+                              "factors": {},
+                              "trans": [
+                                {
+                                  "kind": 1,
+                                  "scale": 0.55,
+                                  "var": "x"
+                                }
+                              ]
+                            },
+                            {
+                              "c": 0.22,
+                              "factors": {},
+                              "trans": [
+                                {
+                                  "kind": 1,
+                                  "scale": 0.55,
+                                  "var": "z"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "op": 6
+                  },
+                  {
+                    "children": [
+                      {
+                        "op": 0,
+                        "scalarForm": {
+                          "terms": [
+                            {
+                              "c": 0.055,
+                              "factors": {}
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "op": 0,
+                        "scalarForm": {
+                          "terms": [
+                            {
+                              "c": 0.245,
+                              "factors": {}
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "op": 0,
+                        "scalarForm": {
+                          "terms": [
+                            {
+                              "c": 0.195,
+                              "factors": {}
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "op": 2
+                  }
+                ],
+                "op": 6
+              }
+            ],
+            "op": 4
+          }
+        }
+      ]
+    }
+  },
+  "authors": [
+    "Zach",
+    "Firmament"
+  ],
+  "injected_by": {
+    "agent": "Firmament & Sparkly Guy",
+    "date": "2026-11-02",
+    "context": "Northern Veil Sanctuary procedural material root (Pass 2)"
+  }
+}

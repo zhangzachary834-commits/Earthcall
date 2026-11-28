@@ -4,6 +4,7 @@
 #include "ConstructedBeing/Singular/Object/Creation/ObjectConcept.hpp"
 #include "ConstructedBeing/Singular/Object/Object.hpp"
 #include "Singularity/TransferPolicy.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "ZonesOfEarth/AuthorsOfLaw/Universe.hpp"
 #include "ZonesOfEarth/Zone/Zone.hpp"
 
@@ -158,7 +159,9 @@ glm::mat4 placementFor(const std::vector<Singular*>& sources, Object* selected) 
         if (placed > 0) at /= static_cast<float>(placed);
     }
     at += glm::vec3(g.offset[0], g.offset[1], g.offset[2]);
-    return glm::translate(glm::mat4(1.0f), at);
+    const auto placement = OntoMath::affineTranslation(at);
+    if (!placement) return glm::mat4(1.0f);
+    return placement->toGlmMat4().value_or(glm::mat4(1.0f));
 }
 
 } // namespace

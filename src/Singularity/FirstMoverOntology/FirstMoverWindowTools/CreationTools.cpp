@@ -11,6 +11,7 @@
 #include "ZonesOfEarth/Zone/Zone.hpp"
 #include "Singularity/Screen/Camera.hpp"
 #include "Singularity/Screen/GL/GluCompat.hpp"
+#include "Singularity/OntoMath/LinearAlgebra.hpp"
 #include "Singularity/Screen/HighlightSystem.hpp"
 
 #include <imgui.h>
@@ -101,13 +102,15 @@ void handleCreateLawKey(GLFWwindow* window, Core::Engine& engine,
     if (engine.getMainMenu().isOpen()) return;
     if (ImGui::GetIO().WantCaptureKeyboard) return;
 
-    // BENEATH THE KERNEL: edge latch so a held L publishes once, not
-    // as a per-frame level. Same reason Tool::ShapeGenerator3D tracks
-    // its mouse button before any gate.
     static bool lawModeKeyDownLast = false;
     const bool lawModeKeyDown = glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS;
     if (lawModeKeyDown && !lawModeKeyDownLast) {
-        channel.spawnLawArmed = !channel.spawnLawArmed;
+        auto& state = getCreatorConsoleState();
+        if (state.current3DMode == Mode3D::BrushCreate) {
+            state.current3DMode = Mode3D::None;
+        } else {
+            state.current3DMode = Mode3D::BrushCreate;
+        }
     }
     lawModeKeyDownLast = lawModeKeyDown;
 }
@@ -158,9 +161,16 @@ void stepMorphTool(GLFWwindow* window, Core::Engine* engine,
             if (ecgl::project(wv.x, wv.y, wv.z, mv, pr, vp, &sx, &sy, &sz)) {
                 GLdouble nx, ny, nz;
                 if (ecgl::unProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
-                    glm::vec3 local = glm::vec3(glm::inverse(xf) *
-                        glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
-                    obj->setPolyhedronVertexLocal(state.morphVertexIndex, local);
+                    const auto inverseXf =
+                        OntoMath::inverseAffine(OntoMath::MatrixValue::fromGlmMat4(xf));
+                    const auto local = inverseXf
+                        ? OntoMath::transformPoint(
+                              *inverseXf,
+                              glm::vec3((float)nx, (float)ny, (float)nz))
+                        : std::nullopt;
+                    if (local) {
+                        obj->setPolyhedronVertexLocal(state.morphVertexIndex, *local);
+                    }
                 }
             }
         }
@@ -187,9 +197,16 @@ void stepMorphTool(GLFWwindow* window, Core::Engine* engine,
             if (ecgl::project(wv.x, wv.y, wv.z, mv, pr, vp, &sx, &sy, &sz)) {
                 GLdouble nx, ny, nz;
                 if (ecgl::unProject(winX, winY, sz, mv, pr, vp, &nx, &ny, &nz)) {
-                    glm::vec3 local = glm::vec3(glm::inverse(xf) *
-                        glm::vec4((float)nx, (float)ny, (float)nz, 1.0f));
-                    obj->setPatchControlLocal(state.patchCtrlIndex, local);
+                    const auto inverseXf =
+                        OntoMath::inverseAffine(OntoMath::MatrixValue::fromGlmMat4(xf));
+                    const auto local = inverseXf
+                        ? OntoMath::transformPoint(
+                              *inverseXf,
+                              glm::vec3((float)nx, (float)ny, (float)nz))
+                        : std::nullopt;
+                    if (local) {
+                        obj->setPatchControlLocal(state.patchCtrlIndex, *local);
+                    }
                 }
             }
         }
@@ -212,7 +229,6 @@ void dispatchActiveTool(GLFWwindow* window, Core::Engine* engine,
     switch (state.current3DMode) {
         case Mode3D::BrushCreate: {
             if (channel) {
-                Tool::ShapeGenerator3D(window, engine, zoneMgr, *channel, nullptr);
             }
             break;
         }

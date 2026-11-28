@@ -1,0 +1,1445 @@
+{
+  "analytic_gradient_fields": 0,
+  "cpu_compile_collect_ms": 19.109583,
+  "field_count": 178,
+  "fields": [
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "logos.resonator.core",
+      "parameter_count": 153,
+      "shader_bytes": 60324
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.sdf.gyroid_north",
+      "parameter_count": 145,
+      "shader_bytes": 59898
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.merkaba_south",
+      "parameter_count": 186,
+      "shader_bytes": 62195
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.font_basin",
+      "parameter_count": 142,
+      "shader_bytes": 59604
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.font_water",
+      "parameter_count": 139,
+      "shader_bytes": 59484
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.altar_monstrance",
+      "parameter_count": 179,
+      "shader_bytes": 61823
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.holy_grail",
+      "parameter_count": 131,
+      "shader_bytes": 58959
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.seraph.left",
+      "parameter_count": 234,
+      "shader_bytes": 65142
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.seraph.right",
+      "parameter_count": 234,
+      "shader_bytes": 65142
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.portal_monolith",
+      "parameter_count": 115,
+      "shader_bytes": 57969
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.portal_crystal",
+      "parameter_count": 109,
+      "shader_bytes": 57605
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.brazier.flame.n",
+      "parameter_count": 113,
+      "shader_bytes": 57859
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.brazier.flame.s",
+      "parameter_count": 113,
+      "shader_bytes": 57859
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.sdf.ophanim_throne",
+      "parameter_count": 207,
+      "shader_bytes": 64025
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.thurible",
+      "parameter_count": 130,
+      "shader_bytes": 58894
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.monumental_mandorla",
+      "parameter_count": 156,
+      "shader_bytes": 60360
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.singularity_pillar",
+      "parameter_count": 152,
+      "shader_bytes": 60003
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.monumental_gyroid_north",
+      "parameter_count": 145,
+      "shader_bytes": 59600
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.monumental_merkaba_south",
+      "parameter_count": 164,
+      "shader_bytes": 60673
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sdf.monumental_genesis_rose",
+      "parameter_count": 147,
+      "shader_bytes": 59742
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.lightshow.shekinah_aurora",
+      "parameter_count": 147,
+      "shader_bytes": 59668
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.lightshow.prismatic_shafts",
+      "parameter_count": 144,
+      "shader_bytes": 59499
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.lightshow.altar_shekinah",
+      "parameter_count": 135,
+      "shader_bytes": 59034
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.lightshow.lagoon_aurora",
+      "parameter_count": 131,
+      "shader_bytes": 58782
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sky.aurora.emerald",
+      "parameter_count": 132,
+      "shader_bytes": 58789
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sky.aurora.turquoise",
+      "parameter_count": 132,
+      "shader_bytes": 58789
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sky.aurora.violet",
+      "parameter_count": 132,
+      "shader_bytes": 58789
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.sky.aurora.corona",
+      "parameter_count": 132,
+      "shader_bytes": 58789
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.pebble_bed",
+      "parameter_count": 135,
+      "shader_bytes": 59044
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.abyss",
+      "parameter_count": 148,
+      "shader_bytes": 59745
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.water_basin",
+      "parameter_count": 215,
+      "shader_bytes": 63430
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.spring_bubble.1",
+      "parameter_count": 201,
+      "shader_bytes": 62596
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.spring_bubble.2",
+      "parameter_count": 201,
+      "shader_bytes": 62596
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.spring_bubble.3",
+      "parameter_count": 201,
+      "shader_bytes": 62596
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.brooklet.weir",
+      "parameter_count": 202,
+      "shader_bytes": 62641
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.lotus.grand",
+      "parameter_count": 175,
+      "shader_bytes": 61460
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.lotus.white",
+      "parameter_count": 175,
+      "shader_bytes": 61460
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.lotus.cyan",
+      "parameter_count": 175,
+      "shader_bytes": 61460
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.lily.bud.north",
+      "parameter_count": 126,
+      "shader_bytes": 58519
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.lily.bud.south",
+      "parameter_count": 126,
+      "shader_bytes": 58519
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.iris.north",
+      "parameter_count": 220,
+      "shader_bytes": 64191
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.iris.south",
+      "parameter_count": 220,
+      "shader_bytes": 64191
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.ferns.north",
+      "parameter_count": 142,
+      "shader_bytes": 59459
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.ferns.south",
+      "parameter_count": 142,
+      "shader_bytes": 59459
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.willow",
+      "parameter_count": 156,
+      "shader_bytes": 60297
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.lilypads.cluster.1",
+      "parameter_count": 151,
+      "shader_bytes": 60070
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.lilypads.cluster.2",
+      "parameter_count": 151,
+      "shader_bytes": 60070
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.lilypads.cluster.3",
+      "parameter_count": 151,
+      "shader_bytes": 60070
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.lilypads.cluster.4",
+      "parameter_count": 139,
+      "shader_bytes": 59324
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.duckweed.1",
+      "parameter_count": 187,
+      "shader_bytes": 62307
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.duckweed.2",
+      "parameter_count": 187,
+      "shader_bytes": 62307
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.duckweed.3",
+      "parameter_count": 187,
+      "shader_bytes": 62307
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.koi.1",
+      "parameter_count": 156,
+      "shader_bytes": 60297
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.koi.2",
+      "parameter_count": 156,
+      "shader_bytes": 60297
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.koi.3",
+      "parameter_count": 156,
+      "shader_bytes": 60297
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.koi.4",
+      "parameter_count": 156,
+      "shader_bytes": 60297
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.koi.5",
+      "parameter_count": 156,
+      "shader_bytes": 60297
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.dragonfly.1",
+      "parameter_count": 151,
+      "shader_bytes": 60051
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.dragonfly.2",
+      "parameter_count": 151,
+      "shader_bytes": 60051
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.wisp.1",
+      "parameter_count": 124,
+      "shader_bytes": 58414
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.wisp.2",
+      "parameter_count": 124,
+      "shader_bytes": 58414
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.wisp.3",
+      "parameter_count": 124,
+      "shader_bytes": 58414
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.wisp.4",
+      "parameter_count": 124,
+      "shader_bytes": 58414
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.wisp.5",
+      "parameter_count": 124,
+      "shader_bytes": 58414
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.wisp.6",
+      "parameter_count": 124,
+      "shader_bytes": 58414
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.stepping_stone.1",
+      "parameter_count": 129,
+      "shader_bytes": 58670
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.stepping_stone.2",
+      "parameter_count": 129,
+      "shader_bytes": 58670
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.stepping_stone.3",
+      "parameter_count": 129,
+      "shader_bytes": 58670
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.stepping_stone.4",
+      "parameter_count": 129,
+      "shader_bytes": 58670
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.boulders.north",
+      "parameter_count": 136,
+      "shader_bytes": 59089
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.boulders.south",
+      "parameter_count": 136,
+      "shader_bytes": 59089
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.reeds.north",
+      "parameter_count": 209,
+      "shader_bytes": 63565
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.reeds.south",
+      "parameter_count": 209,
+      "shader_bytes": 63565
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.reeds.inlet",
+      "parameter_count": 209,
+      "shader_bytes": 63565
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.spring_grotto",
+      "parameter_count": 148,
+      "shader_bytes": 59785
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.lantern.north",
+      "parameter_count": 154,
+      "shader_bytes": 60177
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.pond.lantern.south",
+      "parameter_count": 154,
+      "shader_bytes": 60177
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.bounds.stratified_obelisk",
+      "parameter_count": 133,
+      "shader_bytes": 58975
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.bounds.quantized_ziggurat",
+      "parameter_count": 132,
+      "shader_bytes": 58866
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.bounds.perlin_nebula_orb",
+      "parameter_count": 116,
+      "shader_bytes": 58006
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.bounds.radial_halo_core",
+      "parameter_count": 129,
+      "shader_bytes": 58735
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.bounds.checkerboard_monolith",
+      "parameter_count": 124,
+      "shader_bytes": 58412
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.bounds.chladni_resonator",
+      "parameter_count": 123,
+      "shader_bytes": 58358
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.bounds.dual_pillar",
+      "parameter_count": 124,
+      "shader_bytes": 58465
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.terrace.0",
+      "parameter_count": 108,
+      "shader_bytes": 57546
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.terrace.1",
+      "parameter_count": 126,
+      "shader_bytes": 58475
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.terrace.2",
+      "parameter_count": 126,
+      "shader_bytes": 58475
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.terrace.3",
+      "parameter_count": 108,
+      "shader_bytes": 57546
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.inlay.0",
+      "parameter_count": 108,
+      "shader_bytes": 57543
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.inlay.1",
+      "parameter_count": 108,
+      "shader_bytes": 57543
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.inlay.2",
+      "parameter_count": 108,
+      "shader_bytes": 57543
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.00",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.01",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.02",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.03",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.04",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.05",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.06",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.07",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.08",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.09",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.10",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.11",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.12",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.13",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.14",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.15",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.16",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.17",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.18",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.19",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.20",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.21",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.22",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.compass.23",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.portal.0",
+      "parameter_count": 147,
+      "shader_bytes": 59780
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.portal.foot.0",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.portal.tear.0",
+      "parameter_count": 125,
+      "shader_bytes": 58507
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.portal.1",
+      "parameter_count": 147,
+      "shader_bytes": 59780
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.portal.foot.1",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.portal.tear.1",
+      "parameter_count": 125,
+      "shader_bytes": 58507
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.portal.2",
+      "parameter_count": 147,
+      "shader_bytes": 59780
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.portal.foot.2",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.portal.tear.2",
+      "parameter_count": 125,
+      "shader_bytes": 58507
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.portal.3",
+      "parameter_count": 147,
+      "shader_bytes": 59780
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.portal.foot.3",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.portal.tear.3",
+      "parameter_count": 125,
+      "shader_bytes": 58507
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.portal.4",
+      "parameter_count": 147,
+      "shader_bytes": 59780
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.portal.foot.4",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.portal.tear.4",
+      "parameter_count": 125,
+      "shader_bytes": 58507
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.portal.5",
+      "parameter_count": 147,
+      "shader_bytes": 59780
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.portal.foot.5",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.portal.tear.5",
+      "parameter_count": 125,
+      "shader_bytes": 58507
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.portal.6",
+      "parameter_count": 147,
+      "shader_bytes": 59780
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.portal.foot.6",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.portal.tear.6",
+      "parameter_count": 125,
+      "shader_bytes": 58507
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.leaf.00",
+      "parameter_count": 129,
+      "shader_bytes": 58855
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.leaf.01",
+      "parameter_count": 129,
+      "shader_bytes": 58855
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.leaf.02",
+      "parameter_count": 129,
+      "shader_bytes": 58855
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.leaf.03",
+      "parameter_count": 129,
+      "shader_bytes": 58855
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.leaf.04",
+      "parameter_count": 129,
+      "shader_bytes": 58855
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.leaf.05",
+      "parameter_count": 129,
+      "shader_bytes": 58855
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.leaf.06",
+      "parameter_count": 129,
+      "shader_bytes": 58855
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.leaf.07",
+      "parameter_count": 129,
+      "shader_bytes": 58855
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.leaf.08",
+      "parameter_count": 129,
+      "shader_bytes": 58855
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.leaf.09",
+      "parameter_count": 129,
+      "shader_bytes": 58855
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.leaf.10",
+      "parameter_count": 129,
+      "shader_bytes": 58855
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.leaf.11",
+      "parameter_count": 129,
+      "shader_bytes": 58855
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.heart.plinth",
+      "parameter_count": 126,
+      "shader_bytes": 58475
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.heart.rim",
+      "parameter_count": 108,
+      "shader_bytes": 57543
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.seed",
+      "parameter_count": 125,
+      "shader_bytes": 58507
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.seed.meridian.0",
+      "parameter_count": 108,
+      "shader_bytes": 57543
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.seed.meridian.1",
+      "parameter_count": 108,
+      "shader_bytes": 57543
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.seed.meridian.2",
+      "parameter_count": 108,
+      "shader_bytes": 57543
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.crown",
+      "parameter_count": 126,
+      "shader_bytes": 58472
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.crown.drop.0",
+      "parameter_count": 107,
+      "shader_bytes": 57577
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.crown.drop.1",
+      "parameter_count": 107,
+      "shader_bytes": 57577
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.crown.drop.2",
+      "parameter_count": 107,
+      "shader_bytes": 57577
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.crown.drop.3",
+      "parameter_count": 107,
+      "shader_bytes": 57577
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.crown.drop.4",
+      "parameter_count": 107,
+      "shader_bytes": 57577
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.crown.drop.5",
+      "parameter_count": 107,
+      "shader_bytes": 57577
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.crown.drop.6",
+      "parameter_count": 107,
+      "shader_bytes": 57577
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.crown.drop.7",
+      "parameter_count": 107,
+      "shader_bytes": 57577
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.crown.drop.8",
+      "parameter_count": 107,
+      "shader_bytes": 57577
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.crown.drop.9",
+      "parameter_count": 107,
+      "shader_bytes": 57577
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.crown.drop.10",
+      "parameter_count": 107,
+      "shader_bytes": 57577
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.crown.drop.11",
+      "parameter_count": 107,
+      "shader_bytes": 57577
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.seat.-1",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.seat.foot.-1.-1",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.seat.foot.-1.1",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.seat.1",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.seat.foot.1.-1",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.seat.foot.1.1",
+      "parameter_count": 110,
+      "shader_bytes": 57651
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.touchstone.base",
+      "parameter_count": 125,
+      "shader_bytes": 58507
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": true,
+      "id": "cathedral.astra.openhand.touchstone",
+      "parameter_count": 107,
+      "shader_bytes": 57577
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.approach.0",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.approach.1",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    },
+    {
+      "analytic_gradient": false,
+      "collected_parameters_match": true,
+      "gradient_step": false,
+      "id": "cathedral.astra.openhand.approach.2",
+      "parameter_count": 128,
+      "shader_bytes": 58578
+    }
+  ],
+  "gpu_executed": false,
+  "gradient_step_fields": 36,
+  "material_type_diagnostics": [
+    {
+      "error": "root.VectorConstruct[0]: Map argument 0 must be Vector, got Scalar",
+      "id": "cathedral.bounds.quantized_ziggurat",
+      "material": "material.logos.bounds.quantized"
+    }
+  ],
+  "parameter_mismatches": 0,
+  "radiance_is_spatial_root": true,
+  "scope": "saved surface subset and production compiler, fixed clock, no Law/Engine execution",
+  "unique_shader_structures": 66,
+  "zone": "Cathedral of the Living Logos"
+}

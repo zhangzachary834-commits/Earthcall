@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# The Intercom link journal is an append-only set of immutable records. A merge
+# keeps both sides' appends; `nav repair` removes any replay this can produce.
+agent[[:space:]]intercom/conversation_links.jsonl merge=union
+agent[[:space:]]intercom/conversation_links.quarantine.jsonl merge=union

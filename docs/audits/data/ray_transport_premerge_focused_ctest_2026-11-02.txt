@@ -1,0 +1,13 @@
+Test project /Users/zacharyzhang/Documents/GitHub/Earthcall-ray-transport/build
+    Start 236: webgpu_line_quadrature_test
+1/4 Test #236: webgpu_line_quadrature_test ...............   Passed   10.63 sec
+    Start 242: webgpu_routed_transport_math_test
+2/4 Test #242: webgpu_routed_transport_math_test .........   Passed    0.67 sec
+    Start 251: webgpu_volume_support_certificates_test
+3/4 Test #251: webgpu_volume_support_certificates_test ...   Passed   16.60 sec
+    Start 254: webgpu_volume_zero_proof_test
+4/4 Test #254: webgpu_volume_zero_proof_test .............   Passed    4.42 sec
+
+100% tests passed out of 4
+
+Total Test time (real) =  32.33 sec

@@ -1,0 +1,221 @@
+{
+  "scope": "source inspection plus synthetic CPU mirror execution; no GPU, app, frame capture or timing",
+  "source_head": "3d170e447a8536db673780c275a10ab9b6440511",
+  "source_sha256": {
+    "cpu_mirror": "72c640cbbc2486ea780a44541dcff15ff7fad4bad230635d31748d06160468d6",
+    "kernel": "e71799e5938f2cf3e7302df90f3bf7cf82b28af534c103df6cacc33bf9eff6e7",
+    "transport": "c6a36bda6b41257db9dd964bf14da080473c7c726b06155f0338a46178e6e5b4",
+    "header": "23be48484e6338267dd2b7d8d0a229a479a24a03f441f3a96f8830e3240fde19",
+    "adversary": "a3c6d218125303a4dc206e57d717c1b6856a51dc1d9930ea411cdd1e4fad2a71"
+  },
+  "near_parallel": {
+    "accepted_overlap_rays": 0,
+    "camera": [
+      0,
+      -38,
+      -40
+    ],
+    "cooperative_cohort": 3,
+    "empty_tile_cohort": 0,
+    "independent_density_A": 0.0031059051398187876,
+    "independent_density_B": 0.004962547216564417,
+    "independent_world_point": [
+      0.0,
+      9.919116973876953,
+      8.079998016357422
+    ],
+    "legacy_serial_cohort": 2,
+    "overlapping_rays": 12,
+    "rays": [
+      {
+        "dx": 0.0,
+        "dy_over_dz": 1.000100016593933,
+        "fallback_overlap_count": 0,
+        "ray": 0,
+        "s2_chronology_violation": false,
+        "s2_reason": 0,
+        "s2_subpanels": 12
+      },
+      {
+        "dx": 0.0005752965225838125,
+        "dy_over_dz": 1.000100016593933,
+        "fallback_overlap_count": 0,
+        "ray": 1,
+        "s2_chronology_violation": false,
+        "s2_reason": 0,
+        "s2_subpanels": 12
+      },
+      {
+        "dx": 0.0011505924630910158,
+        "dy_over_dz": 1.000100016593933,
+        "fallback_overlap_count": 0,
+        "ray": 2,
+        "s2_chronology_violation": false,
+        "s2_reason": 0,
+        "s2_subpanels": 12
+      },
+      {
+        "dx": 0.00172588718123734,
+        "dy_over_dz": 1.000100016593933,
+        "fallback_overlap_count": 0,
+        "ray": 3,
+        "s2_chronology_violation": false,
+        "s2_reason": 0,
+        "s2_subpanels": 12
+      },
+      {
+        "dx": 0.0,
+        "dy_over_dz": 0.9989500045776367,
+        "fallback_overlap_count": 1,
+        "ray": 4,
+        "s2_chronology_violation": false,
+        "s2_reason": 64,
+        "s2_subpanels": 0
+      },
+      {
+        "dx": 0.0005752962897531688,
+        "dy_over_dz": 0.9989500045776367,
+        "fallback_overlap_count": 1,
+        "ray": 5,
+        "s2_chronology_violation": false,
+        "s2_reason": 64,
+        "s2_subpanels": 0
+      },
+      {
+        "dx": 0.0011505919974297285,
+        "dy_over_dz": 0.9989500045776367,
+        "fallback_overlap_count": 1,
+        "ray": 6,
+        "s2_chronology_violation": false,
+        "s2_reason": 64,
+        "s2_subpanels": 0
+      },
+      {
+        "dx": 0.0017258865991607308,
+        "dy_over_dz": 0.9989498853683472,
+        "fallback_overlap_count": 1,
+        "ray": 7,
+        "s2_chronology_violation": false,
+        "s2_reason": 64,
+        "s2_subpanels": 0
+      },
+      {
+        "dx": 0.0,
+        "dy_over_dz": 0.9978011846542358,
+        "fallback_overlap_count": 1,
+        "ray": 8,
+        "s2_chronology_violation": false,
+        "s2_reason": 64,
+        "s2_subpanels": 0
+      },
+      {
+        "dx": 0.0005752959405072033,
+        "dy_over_dz": 0.9978011846542358,
+        "fallback_overlap_count": 1,
+        "ray": 9,
+        "s2_chronology_violation": false,
+        "s2_reason": 64,
+        "s2_subpanels": 0
+      },
+      {
+        "dx": 0.0011505912989377975,
+        "dy_over_dz": 0.9978012442588806,
+        "fallback_overlap_count": 1,
+        "ray": 10,
+        "s2_chronology_violation": false,
+        "s2_reason": 64,
+        "s2_subpanels": 0
+      },
+      {
+        "dx": 0.0017258854350075126,
+        "dy_over_dz": 0.9978012442588806,
+        "fallback_overlap_count": 1,
+        "ray": 11,
+        "s2_chronology_violation": false,
+        "s2_reason": 64,
+        "s2_subpanels": 0
+      },
+      {
+        "dx": 0.0,
+        "dy_over_dz": 0.9966538548469543,
+        "fallback_overlap_count": 1,
+        "ray": 12,
+        "s2_chronology_violation": false,
+        "s2_reason": 64,
+        "s2_subpanels": 0
+      },
+      {
+        "dx": 0.0005752953584305942,
+        "dy_over_dz": 0.9966538548469543,
+        "fallback_overlap_count": 1,
+        "ray": 13,
+        "s2_chronology_violation": false,
+        "s2_reason": 64,
+        "s2_subpanels": 0
+      },
+      {
+        "dx": 0.0011505901347845793,
+        "dy_over_dz": 0.9966538548469543,
+        "fallback_overlap_count": 1,
+        "ray": 14,
+        "s2_chronology_violation": false,
+        "s2_reason": 64,
+        "s2_subpanels": 0
+      },
+      {
+        "dx": 0.001725883805193007,
+        "dy_over_dz": 0.9966538548469543,
+        "fallback_overlap_count": 1,
+        "ray": 15,
+        "s2_chronology_violation": false,
+        "s2_reason": 64,
+        "s2_subpanels": 0
+      }
+    ],
+    "scope": "CPU witness using the repository classifier/producer mirror functions plus independent synthetic rectilinear camera/box geometry; NOT a GPU execution",
+    "serial_cohort": 3,
+    "serial_packed": 805306368,
+    "tile_pixel_origin": [
+      640,
+      720
+    ],
+    "viewport": [
+      1281,
+      1440
+    ]
+  },
+  "tall_viewport": {
+    "width": 1024,
+    "height": 4096,
+    "binding_limit": 134217728,
+    "publication_bytes": 67108864,
+    "strip_rows": 48,
+    "needed_strips": 86,
+    "allocated_cached_strips": 86,
+    "scope": "integer/source model, verified allocated == needed == 86"
+  },
+  "empty_strip": {
+    "source_proven_tile_cohort": 0,
+    "cpu_mirror_tile_cohort": 0,
+    "camera": [
+      0,
+      0,
+      10
+    ],
+    "direction": [
+      0,
+      1,
+      0
+    ],
+    "box_half": [
+      20,
+      20,
+      20
+    ],
+    "z_support_envelope": 1.3,
+    "margin": 0.001,
+    "normal_setup_publication_writes": 1,
+    "scope": "independent support geometry plus verified ecSetup publication ownership"
+  },
+  "meaning_of_exit_0": "all three corrective gates verified repaired in source, header, and CPU adversary"
+}

@@ -1,0 +1,56 @@
+{
+  "audit": "docs/audits/GPU_RAY_TRANSPORT_STACK_AND_COMPACT_STATE_2026-10-22.md",
+  "date": "2026-10-22T14:48:00-07:00",
+  "platform": "Apple Silicon M5 (Metal / WebGPU)",
+  "session": "50cf28df-09e9-4c2b-a4d5-1f796abbc73a",
+  "branch": "claude/ray-domain-transport-rung0",
+  "author": "Sparkly Guy (Gemini 3.8 Flash High / Antigravity)",
+  "workload": {
+    "distinct_native_rays": 32784,
+    "viewport": [
+      2560,
+      1440
+    ],
+    "capture_grid": [
+      256,
+      144
+    ],
+    "camera": "inside",
+    "clock": 7.25,
+    "manifest_sha256": "9b7aeb82f1b777a8342416f06b6eb4313f8c5b3c3b0eb6886e08216fc1b97a2d"
+  },
+  "bit_exactness_vs_baseline": {
+    "differing_rays": 0,
+    "total_rays": 32784,
+    "max_absolute_delta": 0.0,
+    "exact_match": true
+  },
+  "accuracy_gates": {
+    "independent_reference_finest_all_six_pass": true,
+    "independent_reference_half_all_six_pass": true,
+    "all_rays_original_AST_node_agreement": true,
+    "fallback_rays": 0
+  },
+  "algorithmic_and_memory_reduction": {
+    "stack_endpoint_value_forwarding": true,
+    "stack_evalPhi_calls_on_pop": 0,
+    "stack_evalPhi_calls_on_split": 1,
+    "subdivision_evalPhi_reduction_factor": 4.0,
+    "bounds_and_events_merged_into_knots_96": true,
+    "pieces_packed_to_vec2f_48_with_member_bits": true,
+    "private_memory_bytes_per_thread_before": 2148,
+    "private_memory_bytes_per_thread_after": 1344,
+    "private_memory_reduction_bytes_per_thread": 768,
+    "private_memory_reduction_percent": 35.75,
+    "all_capacities_retained": true,
+    "old_packet_format_retained": true
+  },
+  "component_phases_65536_cap_4_repeats": {
+    "current_marcher_ms_per_query": 2.2985,
+    "bulk_connected_ms_per_query": 2.6371,
+    "stack_compact_producer_only_ms_per_query": 1.8684,
+    "consumer_only_plus_fallback_ms_per_query": 1.1177,
+    "connected_vs_current_ratio": 0.872,
+    "economic_verdict": "REJECTED_AS_CONNECTED_WIN; Producer alone (1.87 ms) still takes 81% of Current budget (2.30 ms); ~144,000 root-bracket sliver subpanels (44.4% of total) remain dominant barrier requiring Stage 2 sliver absorption"
+  }
+}

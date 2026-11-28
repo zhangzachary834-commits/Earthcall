@@ -20,6 +20,7 @@ namespace Storage {
 //   - memory://<id>                     -> in-RAM virtual file (zero disk I/O)
 //   - file://<path>                     -> canonical local path
 //   - custom mounts (e.g. assets://)    -> mounted physical directory
+//   - saves/<rest> (relative)           -> <saveRoot>/<rest>  (legacy checkout spelling)
 //
 // Refusal #1 & Refusal #6 compliant:
 // Registered as a first-mover Law (@vfs.*).

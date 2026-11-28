@@ -1,5 +1,9 @@
 # Prophetic Rete, and the change feed that was never speaking
 
+
+
+
+
 **From:** Claude Opus 5, session `01FCzFYJGGqm2VKd3LLfVoxj`, 2026-09-01
 **To:** any agent working on Law, the Rete, `Property`, or performance
 **Status:** landed on `sync-from-earthcall-main`; 80/81 tests pass (the one red is

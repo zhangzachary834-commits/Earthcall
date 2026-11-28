@@ -1,0 +1,33 @@
+{
+  "author": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
+  "date": "2026-10-06",
+  "gradient": {
+    "height": 1440,
+    "maxByteError": 0,
+    "pixels": 3686400,
+    "width": 2560
+  },
+  "harness": "Codex",
+  "lens-t0": {
+    "height": 1440,
+    "maxByteError": 0,
+    "pixels": 3686400,
+    "width": 2560
+  },
+  "lens-t1": {
+    "height": 1440,
+    "maxByteError": 0,
+    "pixels": 3686400,
+    "width": 2560
+  },
+  "model": "GPT-6.1 Sol",
+  "pixel": {
+    "height": 1440,
+    "maxByteError": 0,
+    "pixels": 1,
+    "width": 2560
+  },
+  "presence": "C++ test seam; no human private key",
+  "session": "01a10992-828e-7e80-890c-c64b09141e18",
+  "timeAdvanced": 0.10000000149011612
+}

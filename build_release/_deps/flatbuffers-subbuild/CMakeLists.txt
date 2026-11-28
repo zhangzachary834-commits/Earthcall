@@ -19,9 +19,9 @@ project(flatbuffers-populate NONE)
 # Pass through things we've already detected in the main project to avoid
 # paying the cost of redetecting them again in ExternalProject_Add()
 set(GIT_EXECUTABLE [==[/usr/bin/git]==])
-set(Git_VERSION [==[2.50.1 (Apple Git-155)]==])
+set(Git_VERSION [==[2.54.0 (Apple Git-157)]==])
 set_property(GLOBAL PROPERTY _CMAKE_FindGit_GIT_EXECUTABLE_VERSION
-  [==[/usr/bin/git;2.50.1 (Apple Git-155)]==]
+  [==[/usr/bin/git;2.54.0 (Apple Git-157)]==]
 )
 
 

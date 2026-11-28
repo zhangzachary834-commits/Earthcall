@@ -13,6 +13,8 @@ an instantiated control a member of its category — are built on `ObjectConcept
 failure being the deliberate `webgpu_particle_test`. **§11b, the manual protocol, has not
 been run** — nothing below is a claim about how any of this feels in the window.
 
+**2026-11-11 native audit.** The current channel and 10,000-frame robustness tests pass, while focused probes reproduce wrong-target clicks during input replay, short right/middle clicks disappearing, release bypassing click slop, a scaled 3D object winning through a closer object, and queued key events reading the final key. Treat the tables below as the interaction contract when repairing those paths. [Reproductions and repair order](../../audits/NATIVE_INTERACTION_CHANNEL_AUDIT_2026-11-11.md)
+
 The spawn law (`shape-generator-3d-law`) arms on `@creation-channel.spawnLawArmed`
 (L / "Spawn as law"). Console Create is a different being (`tool-create-3d-law`)
 and a different bit (`active3DMode`). A later step is to replace the L/checkbox

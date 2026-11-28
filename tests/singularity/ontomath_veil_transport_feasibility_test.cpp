@@ -1,0 +1,445 @@
+// ontomath_veil_transport_feasibility_test — can Northern Veil's REAL curtains
+// take the certified transport route (plan §6ar)? A measurement before gate 3.
+//
+// For every medium in saves/zones/Northern Veil (read only), at t = 0:
+//   σ_t  = the authored extinction, or 0.5·D (the compatibility law);
+//   ε_c  = max(emission_c, 0) per channel — the marcher's own clamp — with the
+//          view direction ω certified over [−1, 1]³ so one certificate covers
+//          every pixel's direction;
+// certify both (OntoMath::certifyLineQuadrature under kVolumeExecutionModel),
+// then plan rays crossing the medium-local box [−|scale|,+|scale|],
+// entry to exit, at ±1e-2 and ±1e-3 (absolute, emission units). Printed: what
+// certifies, σ ≥ 0, admitted fractions and cells. ASSERTED: admitted a-priori
+// marches fit the mathematical radius; posterior marches fit their total.
+// The fine cumulative reference is a numerical cross-check, not a certified
+// exact integral; its field samples still pass through CPU f32 vectors.
+// Claude Code · Claude Opus 5.5 · session f3af84cf-bfe3-429d-b417-2d533119f169 · 2026-10-20.
+
+#include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
+#include "Singularity/OntoMath/LineRestriction.hpp"
+#include "Singularity/OntoMath/ScalarForm.hpp"
+#include "Singularity/Screen/VolumeDensity.hpp"
+#include "Singularity/Screen/VolumeRayTransport.hpp"
+
+#include "json.hpp"
+
+#include <cmath>
+#include <chrono>
+#include <cstdlib>
+#include <optional>
+#include <cstdio>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <memory>
+#include <random>
+#include <string>
+#include <vector>
+
+namespace fs = std::filesystem;
+namespace {
+int g_checks = 0, g_failures = 0;
+void check(bool condition, const std::string& description) {
+    ++g_checks;
+    if (!condition) ++g_failures;
+    std::cout << (condition ? "  ok: " : "  FAILED: ") << description << "\n";
+}
+using OntoMath::MathNode;
+using OntoMath::ScalarForm;
+using Op = MathNode::Op;
+using Node = std::unique_ptr<MathNode>;
+Node clone(const MathNode& n) { return MathNode::fromJson(n.toJson()); }
+Node constant(double c) { auto n = std::make_unique<MathNode>(); n->op = Op::ScalarLeaf; n->scalarForm = ScalarForm::constant(c); return n; }
+template <class... Kids> Node node(Op op, Kids... kids) {
+    auto n = std::make_unique<MathNode>(); n->op = op; (n->children.push_back(std::move(kids)), ...); return n;
+}
+const MathNode* singlePiece(const OntoMath::Piecewise* pw) {
+    if (!pw || pw->pieces.size() != 1) return nullptr;
+    const auto& piece = pw->pieces[0];
+    if (piece.guard || piece.call || piece.fold || piece.hasLo || piece.hasHi || piece.whereLEZero) return nullptr;
+    return piece.mathNode.get();
+}
+} // namespace
+
+int main() {
+    std::cout << "Starting ontomath_veil_transport_feasibility_test...\n";
+    fs::path dir;
+    for (const char* candidate : {"saves/zones/Northern Veil", "../saves/zones/Northern Veil"})
+        if (fs::exists(fs::path(candidate) / "zone.json") || fs::exists(fs::path(candidate) / "zone.ecform")) { dir = candidate; break; }
+    if (dir.empty()) { std::cout << "UNAVAILABLE: Northern Veil's zone was not found from this directory\n"; return 77; }
+    nlohmann::json zone;
+    if (fs::exists(dir / "zone.json")) {
+        std::ifstream in(dir / "zone.json");
+        zone = nlohmann::json::parse(in);
+    } else {
+        std::ifstream in(dir / "zone.ecform", std::ios::binary);
+        const std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        zone = nlohmann::json::parse(nlohmann::json::from_msgpack(bytes).at("MigrationRoot").get<std::string>());
+    }
+    const auto& model = Rendering::kVolumeExecutionModel;
+    const std::map<std::string, std::pair<double, double>> symbols{
+        {OntoMath::kTimeVar, {0.0, 0.0}}, {OntoMath::kOmegaXVar, {-1.0, 1.0}},
+        {OntoMath::kOmegaYVar, {-1.0, 1.0}}, {OntoMath::kOmegaZVar, {-1.0, 1.0}}};
+    auto limit = [](const char* name, int maximum) {
+        const char* value = std::getenv(name);
+        return value ? std::max(1, std::min(maximum, std::atoi(value))) : maximum;
+    };
+    const int rayCount = limit("EC_VEIL_RAYS", 12), channelCount = limit("EC_VEIL_CHANNELS", 3);
+    const int mediumCount = limit("EC_VEIL_MEDIA", 4);
+    std::printf("  scope: up to %d media, %d channels, %d rays/channel; fixed t=0, medium-local frame\n", mediumCount, channelCount, rayCount);
+    const bool adaptiveOnly = std::getenv("EC_VEIL_ADAPTIVE_ONLY");
+    const bool reductionOnly = std::getenv("EC_VEIL_REDUCTION_ONLY");
+    int reductions = 0;
+    const int selectedChannel = std::getenv("EC_VEIL_CHANNEL") ? std::atoi(std::getenv("EC_VEIL_CHANNEL")) : -1;
+    int media = 0, soundRays = 0, admittedRays = 0;
+    int scalarRays = 0, activeScalarRays = 0, regionTotal[2] = {0, 0}, regionActiveTotal[2] = {0, 0};
+    for (const auto& fj : zone.at("spatialFields")) {
+        auto field = geom::FieldNode::fromJson(fj);
+        Rendering::VolumeDensityBinding b;
+        if (!field || !Rendering::readVolumeDensity(*field, 0.0, 0.0, b) || !b.densityExpr) continue;
+        if (media == mediumCount) break;
+        ++media;
+        std::printf("  -- %s: box centre (%.3g, %.3g, %.3g) half-span (%.3g, %.3g, %.3g)\n", b.producerId.c_str(), b.origin.x, b.origin.y,
+                    b.origin.z, std::abs(b.scale.x), std::abs(b.scale.y), std::abs(b.scale.z));
+        const MathNode* ext = singlePiece(b.extinctionExpr);
+        const MathNode* den = singlePiece(b.densityExpr);
+        const MathNode* emi = singlePiece(b.emissionExpr);
+        if ((!ext && !den) || !emi) {
+            std::printf("     not a single unguarded piece (extinction/density %s, emission %s): not attempted\n",
+                        (ext || den) ? "ok" : "no", emi ? "ok" : "no");
+            continue;
+        }
+        if (std::getenv("EC_PRINT_VEIL")) std::printf("     σ: %s\n     ε: %s\n", (ext ? ext : den)->print().c_str(), emi->print().c_str());
+        Node sigma = ext ? clone(*ext) : node(Op::Scale, constant(0.5), clone(*den));
+        std::string why;
+        if (reductionOnly) {
+            // Raw authored extinction and component projection only. Native
+            // density gates, floors, emission clamps and scattering remain
+            // separate admission obligations; this mode claims no frame gain.
+            auto named = [](const char* v) { auto n = std::make_unique<MathNode>(); n->op = Op::ValueLeaf; n->variableName = v; return n; };
+            auto at = [&](const char* v) { return node(Op::VectorConstruct, named(v), constant(0.0), constant(0.0)); };
+            const char* axes[] = {"x", "y", "z"};
+            for (int c = 0; c < channelCount; ++c) {
+                auto component = node(Op::Component, clone(*emi)); component->stringArg = axes[c];
+                auto depth = node(Op::Integral, node(Op::SDF, clone(*sigma), at("u")), constant(0.0), named("s"));
+                depth->variableName = "u";
+                auto exponential = std::make_unique<MathNode>();
+                exponential->scalarForm = ScalarForm::transcendental(OntoMath::TransFactor::Kind::Exp, "tau", -1.0);
+                auto let = node(Op::Let, std::move(depth), node(Op::Scale, std::move(exponential), node(Op::SDF, std::move(component), at("s"))));
+                let->variableName = "tau";
+                auto integral = node(Op::Integral, std::move(let), constant(0.0), constant(1.0)); integral->variableName = "s";
+                const auto reduced = OntoMath::deriveExponentialIntegral(*integral, &why);
+                check(bool(reduced), b.producerId + "." + axes[c] + " raw authored pair derives a shared endpoint: " + why);
+                if (!reduced) continue;
+                ++reductions;
+                const auto& coefficient = *reduced->children[1]->children[0];
+                std::set<std::string> deps; coefficient.collectDependencies(deps);
+                bool agrees = !deps.count("s") && !deps.count("u") && !deps.count("tau");
+                const auto sigmaAt = node(Op::SDF, clone(*sigma), named("q"));
+                auto emittedComponent = node(Op::Component, clone(*emi)); emittedComponent->stringArg = axes[c];
+                const auto emissionAt = node(Op::SDF, std::move(emittedComponent), named("q"));
+                for (double clock : {0.0, 3.0}) {
+                    double k = NAN;
+                    const auto kv = coefficient.evaluate({{OntoMath::kTimeVar, PropertyValue(clock)}});
+                    if (kv) propertyValueToNumber(*kv, k);
+                    bool occupied = false;
+                    for (int z = -20; z <= 20; z += 2) {
+                        const std::map<std::string, PropertyValue> scope{{OntoMath::kTimeVar, PropertyValue(clock)},
+                            {"q", PropertyValue(glm::vec3(0.0f, 0.0f, float(z)))}};
+                        double extinction = NAN;
+                        const auto sv = sigmaAt->evaluate(scope), ev = emissionAt->evaluate(scope);
+                        if (sv) propertyValueToNumber(*sv, extinction);
+                        double emission = NAN;
+                        if (extinction > 1e-4 && ev && propertyValueToNumber(*ev, emission)) {
+                            const double reference = emission / extinction;
+                            agrees = agrees && std::isfinite(k) && std::abs(k - reference) < 1e-6;
+                            occupied = true;
+                        }
+                    }
+                    agrees = agrees && occupied;
+                }
+                check(agrees, b.producerId + "." + axes[c] + " coefficient is independent of integration and agrees with original evaluations at two clocks");
+            }
+            continue;
+        }
+        const auto sc = OntoMath::certifyLineQuadrature(*sigma, model, 20, &why, symbols);
+        if (!sc) { std::printf("     σ_t does not certify: %s\n", why.c_str()); continue; }
+        // The band covering the curtain's box.
+        // The fields are authored in the MEDIUM frame, centred on the box: p ∈
+        // [−half, +half] (the faithfulness witness's frame). Before this fix the
+        // probe traced world-space boxes, mostly empty space (plan §6au).
+        const double reach = std::max({std::abs(b.scale.x), std::abs(b.scale.y), std::abs(b.scale.z)});
+        const OntoMath::LineQuadratureBand* sb = nullptr;
+        for (const auto& band : sc->bands) if (reach <= band.cap) { sb = &band; break; }
+        if (!sb) { std::printf("     no σ band reaches the box (|p| up to %.3g)\n", reach); continue; }
+        std::printf("     σ_t band ≤ %g: range [%.3g, %.3g], L %.3g, H %s, device error %.3g → σ ≥ 0 %s\n", sb->cap, sb->low, sb->high,
+                    sb->lipschitz, std::isfinite(sb->hessian) ? std::to_string(sb->hessian).c_str() : "unbounded", sb->execution,
+                    sb->low >= 0.0 ? "PROVED" : "NOT proved");
+        // Per-region certificates (plan §6at): 4-unit cells, filled lazily.
+        const double cellSize = std::getenv("EC_VEIL_CELL") ? std::atof(std::getenv("EC_VEIL_CELL")) : 4.0;
+        const OntoMath::RegionCertificate sigmaRegion(*sigma, model, cellSize, symbols);
+        if (std::getenv("EC_VEIL_PROBE")) {   // one core cell's constants, to check the grid
+            const double lo3[3] = {-0.5, -0.5, -0.5}, hi3[3] = {0.5, 0.5, 0.5};
+            const auto c = sigmaRegion.over(lo3, hi3);
+            if (c) std::printf("     PROBE σ core cell: low %.4g high %.4g width %.4g L %.4g H %.4g exec %.4g\n", c->low, c->high, c->width, c->lipschitz, c->hessian, c->execution);
+            else std::printf("     PROBE σ core cell: no certificate\n");
+        }
+        // Plan §6bd: the hierarchical, camera-independent proof grid over the
+        // whole medium box for a 3 s clock window, against the flat grid cell by
+        // cell. EC_VEIL_GRID_CELL picks the cell (default 8: a quick witness).
+        // Claude Code / Claude Opus 5.5 / f3af84cf-bfe3-429d-b417-2d533119f169 / 2026-10-20.
+        if (!reductionOnly) {
+            auto windowed = symbols;
+            windowed[OntoMath::kTimeVar] = {0.0, 3.0};
+            const double gridCell = std::getenv("EC_VEIL_GRID_CELL") ? std::atof(std::getenv("EC_VEIL_GRID_CELL")) : 8.0;
+            const OntoMath::RegionCertificate tree(*sigma, model, gridCell, windowed), flat(*sigma, model, gridCell, windowed);
+            const double half[3] = {std::abs(b.scale.x), std::abs(b.scale.y), std::abs(b.scale.z)};
+            const double boxLo[3] = {-half[0], -half[1], -half[2]};
+            const auto t0 = std::chrono::steady_clock::now();
+            const auto grid = tree.proveGrid(boxLo, half, std::size_t(1) << 22, &why);
+            const double treeMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+            check(bool(grid), b.producerId + " σ proof grid completes over the whole medium box for t ∈ [0, 3]: " + why);
+            if (grid) {
+                long long cells = 1, occupiedMatch = 0, zeroMatch = 0, mismatch = 0;
+                for (int i = 0; i < 3; ++i) cells *= grid->last[i] - grid->first[i] + 1;
+                std::vector<char> zeroed;   // dense per-cell flag, for the flat comparison only
+                zeroed.assign(std::size_t(cells), 0);
+                const auto at = [&](long long x, long long y, long long z) {
+                    return std::size_t(((x - grid->first[0]) * (grid->last[1] - grid->first[1] + 1) + (y - grid->first[1])) *
+                                           (grid->last[2] - grid->first[2] + 1) + (z - grid->first[2]));
+                };
+                for (const auto& blk : grid->zero)
+                    for (long long x = blk.first[0]; x <= blk.last[0]; ++x)
+                        for (long long y = blk.first[1]; y <= blk.last[1]; ++y)
+                            for (long long z = blk.first[2]; z <= blk.last[2]; ++z) ++zeroed[at(x, y, z)];
+                const auto t1 = std::chrono::steady_clock::now();
+                for (long long x = grid->first[0]; x <= grid->last[0]; ++x)
+                    for (long long y = grid->first[1]; y <= grid->last[1]; ++y)
+                        for (long long z = grid->first[2]; z <= grid->last[2]; ++z) {
+                            const double cl[3] = {(x + 0.25) * gridCell, (y + 0.25) * gridCell, (z + 0.25) * gridCell};
+                            const double ch[3] = {(x + 0.75) * gridCell, (y + 0.75) * gridCell, (z + 0.75) * gridCell};
+                            const auto f = flat.over(cl, ch);
+                            const auto it = grid->occupied.find({x, y, z});
+                            const int inZero = zeroed[at(x, y, z)];
+                            if (it != grid->occupied.end() && inZero == 0 && f &&
+                                f->lipschitz == it->second.lipschitz && f->hessian == it->second.hessian &&
+                                f->execution == it->second.execution && f->low == it->second.low &&
+                                f->high == it->second.high && f->branchSignature == it->second.branchSignature)
+                                ++occupiedMatch;
+                            else if (it == grid->occupied.end() && inZero == 1 && f && f->low == 0.0 && f->high == 0.0)
+                                ++zeroMatch;
+                            else
+                                ++mismatch;
+                        }
+                const double flatMs = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t1).count();
+                std::printf("     PROOF GRID h=%g: %lld cells, %zu occupied, %zu zero blocks; %zu proofs %.1f ms vs flat %.1f ms\n",
+                            gridCell, cells, grid->occupied.size(), grid->zero.size(), grid->proofs, treeMs, flatMs);
+                check(mismatch == 0 && occupiedMatch + zeroMatch == cells,
+                      b.producerId + " σ proof grid: every occupied leaf equals the flat cell and every other cell is in one "
+                      "zero block and exactly zero alone (" + std::to_string(mismatch) + " mismatches)");
+            }
+        }
+        const char* axes[3] = {"x", "y", "z"};
+        for (int c = 0; c < channelCount; ++c) {
+            if (selectedChannel >= 0 && c != selectedChannel) continue;
+            auto component = node(Op::Component, clone(*emi));
+            component->stringArg = axes[c];
+            // max(ε_c, 0): Intersection is max for scalars (a Clamp with a huge
+            // literal upper bound charged that literal's f32 rounding, 1.5e25).
+            auto epsilon = node(Op::Intersection, std::move(component), constant(0.0));
+            const auto ec = OntoMath::certifyLineQuadrature(*epsilon, model, 20, &why, symbols);
+            if (!ec) { std::printf("     ε_%s does not certify: %s\n", axes[c], why.c_str()); continue; }
+            const OntoMath::LineQuadratureBand* eb = nullptr;
+            for (const auto& band : ec->bands) if (reach <= band.cap) { eb = &band; break; }
+            std::mt19937_64 rng(1000 + c);
+            std::uniform_real_distribution<double> un(-1.0, 1.0);
+            const OntoMath::RegionCertificate emissionRegion(*epsilon, model, cellSize, symbols);
+            int regAdmitted[2] = {0, 0};
+            double regCells[2] = {0.0, 0.0};
+            std::optional<OntoMath::LineTransportMarch> regBest, regWorst, postBest, postWorst;
+            int regCapCount = 0, postCapCount = 0, activeRays = 0, regActive[2] = {0, 0};
+            auto recordCap = [](const auto& value, auto& best, auto& worst, int& count) {
+                if (!value) return;
+                ++count;
+                if (!best || value->total() < best->total()) best = value;
+                if (!worst || value->total() > worst->total()) worst = value;
+            };
+            int admitted[2] = {0, 0}, sound = 0, postAdmitted[2] = {0, 0}, postSound = 0, postTried = 0;
+            double cells[2] = {0.0, 0.0}, postCells[2] = {0.0, 0.0};
+            std::string refusal[2];
+            for (int r = 0; r < rayCount; ++r) {
+                double o[3], d[3], n2 = 0.0;
+                const double centre[3] = {0.0, 0.0, 0.0}, half[3] = {std::abs(b.scale.x), std::abs(b.scale.y), std::abs(b.scale.z)};
+                for (int k = 0; k < 3; ++k) { o[k] = centre[k] + half[k] * 0.9 * un(rng); d[k] = un(rng); n2 += d[k] * d[k]; }
+                for (int k = 0; k < 3; ++k) d[k] /= std::sqrt(n2);
+                double t0 = -1e300, t1 = 1e300;   // the box's entry and exit along the line
+                for (int k = 0; k < 3; ++k) {
+                    if (std::abs(d[k]) < 1e-12) continue;
+                    const double a = (centre[k] - half[k] - o[k]) / d[k], bb = (centre[k] + half[k] - o[k]) / d[k];
+                    t0 = std::max(t0, std::min(a, bb));
+                    t1 = std::min(t1, std::max(a, bb));
+                }
+                if (adaptiveOnly) {
+                    // Freeze exactly the ray values consumed by the device.
+                    for (int k=0;k<3;++k) { o[k]=float(o[k]); d[k]=float(d[k]); }
+                    t0=float(t0); t1=float(t1);
+                }
+                auto at = [&](const MathNode& f, long double s) {
+                    const glm::vec3 p(float(o[0] + s * d[0]), float(o[1] + s * d[1]), float(o[2] + s * d[2]));
+                    const auto v = f.evaluate({{"p", PropertyValue(p)}, {"x", PropertyValue(double(p.x))}, {"y", PropertyValue(double(p.y))},
+                                               {"z", PropertyValue(double(p.z))}, {OntoMath::kTimeVar, PropertyValue(0.0)},
+                                               {OntoMath::kOmegaXVar, PropertyValue(-d[0])}, {OntoMath::kOmegaYVar, PropertyValue(-d[1])},
+                                               {OntoMath::kOmegaZVar, PropertyValue(-d[2])}});
+                    double dd = NAN; if (v) propertyValueToNumber(*v, dd); return (long double)dd;
+                };
+                const int M = 2000;
+                const long double hh = ((long double)t1 - t0) / M;
+                std::vector<long double> tau(M + 1, 0.0L);
+                for (int i = 2; i <= M; i += 2)
+                    tau[i] = tau[i - 2] + hh / 3.0L * (at(*sigma, t0 + (i - 2) * hh) + 4.0L * at(*sigma, t0 + (i - 1) * hh) + at(*sigma, t0 + i * hh));
+                for (int i = 1; i < M; i += 2)
+                    tau[i] = tau[i - 1] + hh * (5.0L * at(*sigma, t0 + (i - 1) * hh) + 8.0L * at(*sigma, t0 + i * hh) - at(*sigma, t0 + (i + 1) * hh)) / 12.0L;
+                long double sum = 0.0L;
+                long double maxEmission = 0.0L;
+                for (int i = 0; i <= M; ++i) {
+                    const long double source = at(*epsilon, t0 + i * hh);
+                    maxEmission = std::max(maxEmission, source);
+                    sum += (i == 0 || i == M ? 1.0L : (i % 2 ? 4.0L : 2.0L)) * std::exp(-tau[i]) * source;
+                }
+                const bool active = maxEmission > 0.0L;
+                if (active) ++activeRays;
+                const double ref = double(sum * hh / 3.0L);
+                if (adaptiveOnly) {
+                    const auto started = std::chrono::steady_clock::now();
+                    const std::size_t cap = std::getenv("EC_VEIL_PANELS") ? std::max(1,std::atoi(std::getenv("EC_VEIL_PANELS"))) : 1024;
+                    for (int k=0;k<2;++k) {
+                        const double tol=k==0?1e-2:1e-3;
+                        std::string reason;
+                        const auto plan=OntoMath::planRegionalLineTransport(sigmaRegion,emissionRegion,
+                            [&](double x){return double(at(*sigma,x));},[&](double x){return double(at(*epsilon,x));},
+                            o,d,t0,t1,tol,1e-2,cap,&reason);
+                        const bool fits=plan && plan->admitted;
+                        if(fits) {
+                            ++admittedRays;
+                            const double tReference=double(std::exp(-tau.back()));
+                            soundRays += std::abs(plan->result.value-ref)<=plan->result.total() &&
+                                std::abs(plan->result.transmittance-tReference)<=plan->result.transmittanceTotal();
+                        }
+                        std::printf("     ADAPTIVE ε_%s ray %d active %d L %.7g T %.7g tol %.3g: %s; panels %zu, field calls %zu/%zu, host unique %zu/%zu; L bound %.6g (math %.6g exec %.6g), T bound %.6g; %s\n",
+                            axes[c],r,int(active),plan?plan->result.value:NAN,plan?plan->result.transmittance:NAN,tol,
+                            fits?"ADMIT":"REFUSE",plan?plan->panels.size():0,plan?plan->sigmaSamples:0,plan?plan->emissionSamples:0,
+                            plan?plan->sigmaPreparations:0,plan?plan->emissionPreparations:0,
+                            plan?plan->result.total():NAN,plan?plan->result.mathematical:NAN,plan?plan->result.execution:NAN,
+                            plan?plan->result.transmittanceTotal():NAN,reason.c_str());
+                        std::fflush(stdout);
+                    }
+                    const double ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-started).count();
+                    std::printf("     ADAPTIVE host schedule preparation (both tolerances) %.3f ms; NOT GPU frame cost\n",ms);
+                    continue;
+                }
+                // Cap diagnostics include EVERY ray, even those admitted early.
+                // Keep each winning value together with its own decomposition.
+                std::optional<OntoMath::LineTransportMarch> regionCap;
+                if (std::getenv("EC_VEIL_REGION")) {
+                    regionCap = OntoMath::marchLineTransport(sigmaRegion, emissionRegion,
+                        [&](double x) { return double(at(*sigma, x)); }, [&](double x) { return double(at(*epsilon, x)); }, o, d, t0, t1, 4096);
+                    recordCap(regionCap, regBest, regWorst, regCapCount);
+                }
+                const auto postCap = OntoMath::marchLineTransport(*sc, *ec,
+                    [&](double x) { return double(at(*sigma, x)); }, [&](double x) { return double(at(*epsilon, x)); }, o, d, t0, t1, 4096);
+                recordCap(postCap, postBest, postWorst, postCapCount);
+                // The region-grid march (plan §6at): each panel's constants from its cells.
+                // About 8 minutes in Debug, so opt-in: EC_VEIL_REGION=1 (EC_VEIL_CELL sets the cell size).
+                for (int k = 0; k < 2 && std::getenv("EC_VEIL_REGION"); ++k) {
+                    const double tol = k == 0 ? 1e-2 : 1e-3;
+                    for (double n = 2.0; n <= 4096.0; n *= 2.0) {
+                        const auto m = n == 4096.0 ? regionCap : OntoMath::marchLineTransport(sigmaRegion, emissionRegion, [&](double s) { return double(at(*sigma, s)); },
+                                                                    [&](double s) { return double(at(*epsilon, s)); }, o, d, t0, t1, n);
+                        if (!m) continue;   // a coarse panel may touch too many cells: refine
+                        if (m->total() <= tol) {
+                            ++regAdmitted[k];
+                            if (active) ++regActive[k];
+                            regCells[k] += n;
+                            ++postTried;
+                            postSound += std::abs(m->value - ref) <= m->total();
+                            break;
+                        }
+                    }
+                }
+                // The a-posteriori march (plan §6as): the bound accumulated as it goes.
+                for (int k = 0; k < 2; ++k) {
+                    const double tol = k == 0 ? 1e-2 : 1e-3;
+                    for (double n = 2.0; n <= 4096.0; n *= 2.0) {
+                        const auto m = n == 4096.0 ? postCap : OntoMath::marchLineTransport(*sc, *ec, [&](double s) { return double(at(*sigma, s)); },
+                                                                    [&](double s) { return double(at(*epsilon, s)); }, o, d, t0, t1, n);
+                        if (!m) break;
+                        if (m->total() <= tol) {
+                            ++postAdmitted[k];
+                            postCells[k] += n;
+                            ++postTried;
+                            postSound += std::abs(m->value - ref) <= m->total();
+                            break;
+                        }
+                    }
+                }
+                for (int k = 0; k < 2; ++k) {
+                    const double tol = k == 0 ? 1e-2 : 1e-3;
+                    std::string pw;
+                    const auto plan = OntoMath::planLineTransport(*sc, *ec, o, d, t0, t1, tol, 4096, &pw);
+                    if (!plan) { refusal[k] = pw; continue; }
+                    ++admitted[k];
+                    cells[k] += plan->cells;
+                    // The march in double at the plan's cells, against the reference.
+                    const int n = int(plan->cells);
+                    const double h = (t1 - t0) / n;
+                    double tauA = 0.0, sigA = double(at(*sigma, t0)), gA = double(at(*epsilon, t0)), L = 0.0;
+                    for (int j = 0; j < n; j += 2) {
+                        const double sm = t0 + (j + 1) * h, sbb = t0 + (j + 2) * h;
+                        const double sigM = double(at(*sigma, sm)), sigB = double(at(*sigma, sbb));
+                        const double tauM = tauA + h * (5.0 * sigA + 8.0 * sigM - sigB) / 12.0, tauB = tauA + h / 3.0 * (sigA + 4.0 * sigM + sigB);
+                        const double gM = std::exp(-tauM) * double(at(*epsilon, sm)), gB = std::exp(-tauB) * double(at(*epsilon, sbb));
+                        L += h / 3.0 * (gA + 4.0 * gM + gB);
+                        tauA = tauB; sigA = sigB; gA = gB;
+                    }
+                    sound += std::abs(L - ref) <= plan->mathematical;
+                    ++admittedRays;
+                }
+            }
+            if(adaptiveOnly) continue;
+            scalarRays += rayCount;
+            activeScalarRays += activeRays;
+            for (int k = 0; k < 2; ++k) { regionTotal[k] += regAdmitted[k]; regionActiveTotal[k] += regActive[k]; }
+            soundRays += sound + postSound;
+            admittedRays += postTried;
+            auto printCap = [&](const char* tag, const auto& best, const auto& worst, int count) {
+                std::printf("     ε_%s %s cap 4096: %d/%d rays; best %.6g (math %.6g, exec %.6g); worst %.6g (math %.6g, exec %.6g)\n",
+                    axes[c], tag, count, rayCount, best ? best->total() : NAN, best ? best->mathematical : NAN, best ? best->execution : NAN,
+                    worst ? worst->total() : NAN, worst ? worst->mathematical : NAN, worst ? worst->execution : NAN);
+            };
+            std::printf("     ε_%s REGION GRID (%.3g-unit cells): ±1e-2 %d/%d (mean %.0f cells); ±1e-3 %d/%d (mean %.0f cells); reference-sampled nonzero-source rays %d/%d; admitted active at ±1e-2 %d/%d; at ±1e-3 %d/%d\n",
+                axes[c], cellSize, regAdmitted[0], rayCount, regAdmitted[0] ? regCells[0] / regAdmitted[0] : 0.0,
+                regAdmitted[1], rayCount, regAdmitted[1] ? regCells[1] / regAdmitted[1] : 0.0, activeRays, rayCount, regActive[0], activeRays, regActive[1], activeRays);
+            printCap("REGION", regBest, regWorst, regCapCount);
+            std::printf("     ε_%s A-POSTERIORI: ±1e-2 %d/%d (mean %.0f cells); ±1e-3 %d/%d (mean %.0f cells)\n",
+                axes[c], postAdmitted[0], rayCount, postAdmitted[0] ? postCells[0] / postAdmitted[0] : 0.0,
+                postAdmitted[1], rayCount, postAdmitted[1] ? postCells[1] / postAdmitted[1] : 0.0);
+            printCap("BAND", postBest, postWorst, postCapCount);
+            std::printf("     ε_%s (band sup %.3g, L %.3g, H %s, device error %.3g): ±1e-2 %d/%d (mean %.0f cells)%s; ±1e-3 %d/%d (mean %.0f cells)%s\n",
+                        axes[c], eb ? eb->sup : NAN, eb ? eb->lipschitz : NAN,
+                        eb && std::isfinite(eb->hessian) ? std::to_string(eb->hessian).c_str() : "unbounded", eb ? eb->execution : NAN,
+                        admitted[0], rayCount, admitted[0] ? cells[0] / admitted[0] : 0.0, admitted[0] < rayCount ? (" — " + refusal[0]).c_str() : "",
+                        admitted[1], rayCount, admitted[1] ? cells[1] / admitted[1] : 0.0, admitted[1] < rayCount ? (" — " + refusal[1]).c_str() : "");
+        }
+    }
+    std::printf("  %d media read; %d admitted (route, ray, channel, tolerance) records\n", media, admittedRays);
+    if (!adaptiveOnly && std::getenv("EC_VEIL_REGION"))
+        std::printf("  REGION totals: ±1e-2 %d/%d, active %d/%d; ±1e-3 %d/%d, active %d/%d (scalar ray/channel records, not RGB frames)\n",
+                    regionTotal[0], scalarRays, regionActiveTotal[0], activeScalarRays,
+                    regionTotal[1], scalarRays, regionActiveTotal[1], activeScalarRays);
+    check(media > 0, "Northern Veil's media were read");
+    if (reductionOnly) check(reductions == media * channelCount, "every attempted raw authored channel has the structural reduction");
+    if (!reductionOnly) check(soundRays == admittedRays, "on every admitted record, the reference lies within its asserted route bound (" +
+                                         std::to_string(soundRays) + "/" + std::to_string(admittedRays) + ")");
+    std::cout << "ontomath_veil_transport_feasibility_test: " << (g_checks - g_failures) << "/" << g_checks << " checks passed\n";
+    return g_failures == 0 ? 0 : 1;
+}

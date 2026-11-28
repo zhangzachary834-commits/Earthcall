@@ -1,0 +1,162 @@
+{
+  "scope": "Five-branch scratch/tool integration, CPU/static/model/linked CPU checks only; no GPU or production change",
+  "signature": "Codex/GPT-6.1 Sol/01a148a7-bd85-7550-a416-0e859a729c1a",
+  "timestamp": "2026-10-27T23:59:46.491897-07:00",
+  "branches": {
+    "claude/native-ray-capture-layout-9b40ea": "cb9f6fea855b5662e053518953999496a478e4fd",
+    "claude/sonnet-oracle-ray-transport-c7ecc9": "eb95033205d06bbabfb0bc0126f4b8283f7811f5",
+    "claude/sonnet-bridge-gpu-ray-406844": "36fe43bec7efd220d4c528e9e113355d87f49aff",
+    "claude/sonnet-boundary-guardian-cd2a31": "97c408458bf1ae3d00198a1f0f8bf57343d9d525",
+    "claude/northern-veil-skeptic-review-8c86bd": "72b20ec3c15aabcdb2e64653cc52921fb9194d13"
+  },
+  "checks": {
+    "surveyor": 54,
+    "oracle": 22,
+    "guardian_contract": 68,
+    "guardian_generated_static_syntax": 42,
+    "guardian_generated_all_pass": true,
+    "bridge_fresh_equals_original_machine_report": true,
+    "integration": {
+      "checks": [
+        "Surveyor -> Oracle preserves non-unit directions, original rows and byte identity",
+        "missing real reference fails closed by default; stub is explicitly diagnostic-only",
+        "different independent medium clocks remain unsupported",
+        "stale reference generator source",
+        "receipt-bound original capture passes all-row dual-resolution gate",
+        "raw reference cannot be relabelled without a generation receipt",
+        "stale reference receipt rays_sha256",
+        "stale reference receipt reference_sha256",
+        "stale reference receipt zone_sha256",
+        "stale reference receipt time",
+        "stale reference receipt origin",
+        "stale reference receipt medium_clocks",
+        "re-signed fractional capture pixel",
+        "per-ray and indirect-producer dispatch ceilings checked independently",
+        "preflight row identity cannot be reassigned by enumeration",
+        "preflight extra row",
+        "archived actual Mode2 is routed-unfused, not obsolete streamed branch"
+      ],
+      "count": 17,
+      "paired_K16": {
+        "0": {
+          "blocks": [
+            {
+              "series": "series_1",
+              "block": 0,
+              "routed_vs_Current": 0.8455831139302485
+            },
+            {
+              "series": "series_1",
+              "block": 1,
+              "routed_vs_Current": 0.936335911084868
+            },
+            {
+              "series": "series_1",
+              "block": 2,
+              "routed_vs_Current": 0.8757986984977176
+            },
+            {
+              "series": "series_1",
+              "block": 3,
+              "routed_vs_Current": 0.8160251887549628
+            },
+            {
+              "series": "series_2",
+              "block": 0,
+              "routed_vs_Current": 0.819428788219761
+            },
+            {
+              "series": "series_2",
+              "block": 1,
+              "routed_vs_Current": 0.8149691543149057
+            },
+            {
+              "series": "series_2",
+              "block": 2,
+              "routed_vs_Current": 0.8297493470631033
+            },
+            {
+              "series": "series_2",
+              "block": 3,
+              "routed_vs_Current": 0.8250531742421592
+            }
+          ],
+          "median_ratio": 0.8274012606526313,
+          "range": [
+            0.8149691543149057,
+            0.936335911084868
+          ],
+          "scope": "descriptive paired ABBA block ratios, no confidence interval or new timing"
+        },
+        "1": {
+          "blocks": [
+            {
+              "series": "series_1",
+              "block": 0,
+              "routed_vs_Current": 0.7830284429897977
+            },
+            {
+              "series": "series_1",
+              "block": 1,
+              "routed_vs_Current": 0.8483774143986336
+            },
+            {
+              "series": "series_1",
+              "block": 2,
+              "routed_vs_Current": 0.8299642992525029
+            },
+            {
+              "series": "series_1",
+              "block": 3,
+              "routed_vs_Current": 0.7766838077350218
+            },
+            {
+              "series": "series_2",
+              "block": 0,
+              "routed_vs_Current": 0.8158929282855246
+            },
+            {
+              "series": "series_2",
+              "block": 1,
+              "routed_vs_Current": 0.8786001854827213
+            },
+            {
+              "series": "series_2",
+              "block": 2,
+              "routed_vs_Current": 0.7977362068104427
+            },
+            {
+              "series": "series_2",
+              "block": 3,
+              "routed_vs_Current": 0.7371565672260537
+            }
+          ],
+          "median_ratio": 0.8068145675479836,
+          "range": [
+            0.7371565672260537,
+            0.8786001854827213
+          ],
+          "scope": "descriptive paired ABBA block ratios, no confidence interval or new timing"
+        }
+      },
+      "scope": "CPU source/model/evidence integration; no new native/GPU execution"
+    }
+  },
+  "engine_src_tree": "3603add4018961529a91bc9592d76f9a553500b1",
+  "shipping_gates_open": [
+    1,
+    2,
+    3
+  ],
+  "reviewed_source_sha256": {
+    "ray_transport_sonnet_integration_checks.py": "5eec3897288e2809d2ef9a3080fd1e0887641f012f874308e06742e4802bfe96",
+    "sonnet_oracle_capture_gate.py": "b7da13de10ce0d9375991b71e8c14e23b8bd6c7e80b556e08aa9607f8bd50411",
+    "sonnet_oracle_plan.py": "3abbde03ec4830572448ba23a96887839c62c2001c8914972b43ed96b7e43e22",
+    "sonnet_surveyor_capture.py": "eadb4ae94bb728771ef15bd33c747a888ae6abf7cfa832fec067463f03d822ab",
+    "sonnet_surveyor_layout.py": "045f4122274d40d7f8a1e7d17d2ec455132b90e3caf350bee5d75340e0ddc4d8",
+    "sonnet_surveyor_harness_patch.py": "1e9a4c05362724bfccdeebc3250c9884cd0c4e9fed29538d2b9a212655bebb23",
+    "ray_transport_6em_replay.py": "e601d2907cfe8741b712fe16c76192eaa26c276143cd2f38e42afbdc34c718e8"
+  },
+  "completion_date": "2026-10-28 America/Los_Angeles",
+  "completed_at": "2026-10-28T00:07:46.495432-07:00"
+}

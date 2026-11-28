@@ -6,10 +6,13 @@
 
 #include <cstdint>
 #include <deque>
+#include <map>
 #include <optional>
 #include <functional>
 #include <string>
 #include <vector>
+
+class Person;
 
 namespace Singularity {
 namespace Terminal {
@@ -59,8 +62,10 @@ namespace Terminal {
 // harness, a script, an agent. Astra's warning ("a string saying Terminal
 // supplies transport context, not proof that Zach authored an utterance") holds
 // here: a non-Person writer should arrive as a registered First Mover under a
-// Person's grant, as MCP does via ForeignActuationGuard. Not built yet; see
-// Law_Line.md, "The line trusts its stdin, and stdin can lie".
+// Person's grant, as MCP does via ForeignActuationGuard. That door now exists
+// (authorForeign below, reached by the socket's `law_sentence`, 2026-09-30);
+// the stdin path itself still trusts its writer -- see Law_Line.md, "The line
+// trusts its stdin, and stdin can lie".
 class TerminalChannel : public Law {
 public:
     using Sink = std::function<void(const std::string&)>;
@@ -75,23 +80,92 @@ public:
     static TerminalChannel* find(LawManager& laws);
 
     // Once per frame BEFORE LawManager::tick(): read the keyboard, publish at
-    // most one line (so the laws answer each line before the next arrives).
+    // most one line or chord (so each is decided before later input arrives).
     void sense(LawManager& laws);
     // Once per frame AFTER LawManager::tick(): speak if the laws asked.
     void act(LawManager& laws);
 
     // The live vocabulary: structural words, the engine's opcode spellings,
     // every Lexeme that denotes a Law, heard events, present beings.
-    LawSentence::Vocabulary vocabulary(LawManager& laws);
+    LawSentence::Vocabulary vocabulary(LawManager& laws, const std::string& authorId = "");
+
+    // The Law Line for a writer who is NOT the Person at the keyboard: a
+    // foreign First Mover (MCP) that has already proved its key and been
+    // admitted by ForeignActuationGuard. Same grammar, same vocabulary, same
+    // Law construction as a typed line -- only the author differs, and it is
+    // the mover, never @interaction-channel.personId. Closes the gap named
+    // above ("a non-Person writer should arrive as a registered First
+    // Mover"). A trailing '?' previews and a leading '??' searches; both are
+    // read-only and take no author. Immediate acts ("delete Blue") are
+    // refused here: they need the channel's own confirming Metalaw.
+    struct ForeignSentence {
+        std::string status;                   // authored | preview | search | refused
+        std::string lawId;
+        std::string preview;                  // WHEN ... -> IF ... -> THEN ...
+        std::string detail;                   // dry run / persistence / notes
+        std::string error;
+        std::vector<std::string> candidates;
+        std::vector<std::string> openClauses;
+    };
+    static bool isReadOnlySentence(const std::string& text);
+    ForeignSentence authorForeign(LawManager& laws, const std::string& text,
+                                  const std::vector<Singular*>& authors,
+                                  const std::string& identifier);
+
+    // ------------------------------------------------------------------
+    // Terminal Zones (Zach, 2026-09-30; Terminal_Zones.md). The line has a
+    // LOCATION: a real Zone whose Laws hear what is typed there. The Person's
+    // body stays where it is; only the line moves. `enter <zone>` is the one
+    // move opcode and works in every Zone (a Zone that decided whether you
+    // may leave it could trap the line). A Law moves it by writing `zone`.
+    // ⚠ GATE: build nothing on top of these opcodes until Zach verifies them
+    // as minimal-maximal invariants.
+    // ------------------------------------------------------------------
+    static constexpr const char* kLineHolder = "terminal-channel";
+    const std::string& zone() const { return _zone; }
+    bool awaitingSecret() const { return _secretStage != 0; }
+    // Why Enter would KEEP this line rather than send it ("" = sent). The
+    // editor's submit gate; public so tests witness what a Person's Enter does.
+    std::string submitRefusal(const std::string& text);
+    // Test seam: the Person the Identity Zone makes present (default: the
+    // Engine's Person).
+    void setPresencePerson(Person* person) { _presencePerson = person; }
+    // Why a typed line may not author right now ("" = it may). Kernel guard,
+    // never a property: stdin authors only as a Person who is PRESENT, i.e.
+    // proved their key to this process this session (Identity unlock), the
+    // same root MCP grants terminate in. Zach, 2026-10-05: "Require presence".
+    std::string presenceRefusal();
+    // Test seam (C++ only, like setPresencePerson): replaces the register
+    // check so an isolated harness, which holds no real private key, can
+    // stand in for a present Person. Never reachable from Law or a socket.
+    void setPresenceCheckForTests(std::function<bool(const Person&)> check) { _presenceCheck = std::move(check); }
 
     // Test seams: a line as if typed and entered; where output goes.
     void inject(const std::string& line) { _pending.push_back(line); }
+    void injectKeys(const std::string& bytes) { _injectedBytes += bytes; }
+    const LineEditor& editorForTests() const { return _editor; }
     void setSink(Sink sink) { _sink = std::move(sink); }
     bool attached() const { return _attached; }
 
 private:
     void buildProperties() override;
     void speak(LawManager& laws, const std::string& text);
+    void placeLine();
+    bool moveLine(const std::string& target);         // false = stayed, and said why
+    bool handleEnter(const std::string& trimmed);      // true = the line was `enter ...`
+    void beginSecret();
+    void takeSecret(std::string& secret);
+    void cancelSecret(const std::string& why);
+    std::string zoneLabel() const;
+    // The Law Line grammar (gate, menu, colouring) reads the line only where
+    // the line is in the Law Line -- or nowhere yet (legacy). Elsewhere a line
+    // is sent as typed and that Zone's Laws decide what it means.
+    bool lawGrammarHere() const { return _zone.empty() || _zone == "LawLine"; }
+    // The one place a parsed sentence becomes a live Law (speak + authorForeign).
+    // Returns "" on success, else the refusal.
+    std::string enact(LawManager& laws, const LawSentence::Parse& p, const std::string& text,
+                      const std::vector<Singular*>& authors, const std::string& id,
+                      std::string& persistence);
     void say(const std::string& text);
     const LawSentence::Vocabulary& liveVocabulary();
     const LawSentence::Parse& liveParse(const std::string& text);
@@ -103,6 +177,8 @@ private:
     int width() const;
     std::string describeProperty(const std::string& beingId, const std::string& property) const;
     std::string describeBeing(const std::string& beingId) const;
+    static std::string describeSingular(Singular* being);
+    std::string propertySuggestionBeing() const;
     // Rung 3 (Zach, 2026-09-25): the footer, help, confirmed deletion, dry run.
     std::string footerText(bool& hears);
     void showHelp();
@@ -113,22 +189,65 @@ private:
     std::string dryRun(const LawSentence::Parse& p);
     std::string lawSummary(const Law& law, LawManager& laws) const;
     LawSentence::Resolution resolveByMetalaw(LawManager& laws, const LawSentence::Ambiguity& a);
+    LawSentence::Compilation compileByMetalaw(LawManager& laws, const nlohmann::json& input, bool readOnly, nlohmann::json* document = nullptr);
+    std::string propCompilationResult() const;
+    void configureEditor();
+    std::vector<LawSentence::Suggestion> completionSuggestions(const std::string& before);
+    std::string propDraft() const { return _editor.secret ? "" : _editor.buffer(); }
+    double propCursor() const { return _editor.secret ? 0 : static_cast<double>(_editor.cursor()); }
+    bool propCompletionVisible() const { return _completionActive && !_editor.secret && _editor.menuVisible(); }
+    double propCompletionMatches() const { return _completionActive && !_editor.secret ? static_cast<double>(_editor.suggestions().size()) : 0; }
     void attach(LawManager& laws);
     void detach();
 
     std::string propOutput() const { return _output; }
+    std::string propZone() const { return _zone; }
+    void propSetZone(const std::string& v) { _requestedZone = v; }
     void propSetOutput(const std::string& v);
     double propSpeakRequests() const { return _speakRequests; }
     void propSetSpeakRequests(const double& v) { _speakRequests = v; }
 
     // Law-legible state (NO_BLACK_BOX: every field is a registered path).
     std::string _lastLine;
+    std::string _lastChord;
+    double _keyPresses = 0;
+    std::shared_ptr<PropertyList> _completionItems = std::make_shared<PropertyList>();
+    double _completionRequests = 0, _completionHandled = 0;
+    bool _completionActive = false;
+    // Beneath Kernel: device input awaiting the next sense/decide/act boundary.
+    // Stop after each chord/submission so the corresponding Law sees that draft.
+    std::deque<Key> _keyQueue;
+    std::string _injectedBytes; // C++ test transport only, no foreign mutation route
+
+    // Multi-line block (Python-style) being typed: its lines so far. Folded
+    // into one sentence by LawSentence::unfoldBlock when an empty line ends it.
+    // Registered read-only as `block` (lines joined by newlines).
+    std::vector<std::string> _block;
+    std::string propBlock() const;
+    // The line being typed, read in its open block's context: the folded text
+    // and how far the line's own offsets shift inside it (0 = no context).
+    std::string blockContext(const std::string& line, long& shift);
     std::string _output;
     std::string _prompt = "earthcall> ";
     double _linesEntered = 0.0;
     double _speakRequests = 0.0;
     double _spoken = 0.0;
     std::string _authorPath = "@interaction-channel.personId";
+    // Terminal Zones: where the line is, where a Law asked it to go.
+    std::string _zone;
+    std::string _requestedZone;
+    bool _zoneBootTried = false;
+    // Identity: a Law asks (unlockRequests), the kernel takes one secret line.
+    double _unlockRequests = 0.0;
+    double _unlocksHandled = 0.0;
+    bool _awaitingSecretFlag = false;          // registered mirror of _secretStage
+    // NOT registered, named per NO_BLACK_BOX §5 (secrets beneath the Kernel):
+    // _secretStage (0 none, 1 unlock, 2 new passphrase, 3 confirm) and
+    // _pendingSecret (the first entry while keying, wiped after confirmation).
+    int _secretStage = 0;
+    std::string _pendingSecret;
+    Person* _presencePerson = nullptr;          // test seam; null = Engine's Person
+    std::function<bool(const Person&)> _presenceCheck;   // test seam; empty = FirstMoverRegister
     std::string _lexemeRelation = "denotes";
     std::string _scopeBeing;
     std::string _status;
@@ -139,6 +258,12 @@ private:
     std::string _ambiguitySlot;
     std::string _ambiguityCandidates;
     std::string _ambiguityResolved;
+    // Generic invocation protocol. Input is channel-sensed syntax; templates
+    // and refusals are authored by Metalaws targeting this channel. The result
+    // is derived solely by structural JSON substitution, not by opcode lowering.
+    std::shared_ptr<PropertyDict> _compilationInput = std::make_shared<PropertyDict>();
+    std::string _compilationTemplate;
+    std::string _compilationError;
     bool _attached = false;
     // Confirmed deletion (registered): the question a Metalaw asks, and what
     // is waiting for the Person's answer.
@@ -151,6 +276,10 @@ private:
     bool _color = true;
     bool _hints = true;
     bool _relayLogs = true;
+    // How many colours this terminal shows: "truecolor" or "256" (sensed from
+    // COLORTERM at birth; writable, for a terminal that lies). Authored
+    // `appearance.color` values are lowered to whichever this says.
+    std::string _colorDepth = "256";
 
     // Below the Kernel — machine mechanism, not world state (named per
     // NO_BLACK_BOX §5): the queue between libedit's callback and the frame,
@@ -184,6 +313,19 @@ private:
     std::vector<std::string> _pendingTargets;
     std::string _deletingId;
     std::string _deletingName;
+    // Derived cache (DERIVED_STATE_LEDGER), not world state: every authored
+    // `appearance.*` property of the Lexemes and of the line's and body's
+    // Zones, lowered to SGR at `_colorDepth`, keyed as LineEditor::look asks
+    // ("lexeme.<id>", "role.<role>", "chrome.<element>"). Its sources are
+    // registered properties; it is re-derived once per frame (and on a depth
+    // change), and a changed result redraws -- so a Law writing a Lexeme's
+    // look is seen on the next frame without a keystroke.
+    std::map<std::string, LineEditor::Look> _looks;
+    std::uint64_t _looksFrame = 0;
+    std::string _looksDepth;
+    bool _looksChanged = false;
+    bool refreshLooks();
+    LineEditor::Look lookFor(const std::string& key) const;
 };
 
 } // namespace Terminal

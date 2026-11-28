@@ -9,7 +9,7 @@ Camera::Camera() {
     pos = glm::vec3(0.0f, 0.0f, 3.0f);
     front = glm::vec3(0.0f, 0.0f, -1.0f);
     up = glm::vec3(0.0f, 1.0f, 0.0f);
-    speed = 0.1f;
+    // The in-class speed default is authoritative; do not restore per-frame units.
     
     // Initialize matrices to identity
     for (int i = 0; i < 16; ++i) {

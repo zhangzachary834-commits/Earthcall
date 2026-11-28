@@ -1,0 +1,1 @@
+called "Store My Templates" on "terminal-key-pressed" if Identity @terminal-channel and key.chord is "ctrl+g" then Set @law-line-template-shelf.items to Literal <value: [{text: "when clicked then Set color to gold", description: "My golden touch"}, {text: "always if hp is greater than 0 then Set color to blue", description: "My repeating Law"}]>

@@ -1,0 +1,177 @@
+{
+  "protocol": "earthcall-ray-transport-6dk-scratch-lifetime-v1",
+  "signature": {
+    "harness": "Antigravity",
+    "model": "Gemini",
+    "session": "50cf28df-09e9-4c2b-a4d5-1f796abbc73a",
+    "timestamp": "2026-10-25T18:51:46.399626-07:00"
+  },
+  "prior_audit": "GPU_RAY_TRANSPORT_M5_COUNTER_PROFILE_6DJ_2026-10-25",
+  "intervention": {
+    "kind": "scratch_lifetime_reduction",
+    "removed_bounds_96_from_call_stack": true,
+    "bounds_bytes_saved_live_stack": null,
+    "localized_knots_70_to_post_roots_member_loop": true,
+    "knots_bytes_saved_function_scope": null,
+    "isolated_merge_knots_96_to_fallback_branch": true,
+    "strictly_ascending_disjoint_fastpath_percent": 96.52,
+    "total_simultaneous_scratch_savings_bytes": null
+  },
+  "qualification": {
+    "disjoint_scratch_trimmed": {
+      "pass": true,
+      "queries": 32784,
+      "normal_fallbacks": 0,
+      "singles": 247326,
+      "overlaps": 1799,
+      "affine_matched": 12102,
+      "affine_missing": 0,
+      "clocks": [
+        {
+          "repeats": 1,
+          "per_complete_query_ms": {
+            "0": 2.5532395,
+            "1": 2.547755375,
+            "2": 2.52467175,
+            "3": 2.57075
+          },
+          "candidate_slower_percent_vs_current": 0.685815020486702,
+          "candidate_slower_percent_vs_stream": 1.82511845351776
+        },
+        {
+          "repeats": 2,
+          "per_complete_query_ms": {
+            "0": 1.9911926875000001,
+            "1": 2.4097605625,
+            "2": 2.47446875,
+            "3": 2.2397525625
+          },
+          "candidate_slower_percent_vs_current": 12.482964434349842,
+          "candidate_slower_percent_vs_stream": -9.485518356212829
+        },
+        {
+          "repeats": 4,
+          "per_complete_query_ms": {
+            "0": 2.17157296875,
+            "1": 2.381138,
+            "2": 2.4793893750000002,
+            "3": 2.22470053125
+          },
+          "candidate_slower_percent_vs_current": 2.4465013731765684,
+          "candidate_slower_percent_vs_stream": -10.27224067014485
+        }
+      ]
+    },
+    "ux_tile_cert_scratch_trimmed": {
+      "pass": true,
+      "queries": 32784,
+      "normal_fallbacks": 0,
+      "singles": 247326,
+      "overlaps": 1799,
+      "affine_matched": 12102,
+      "affine_missing": 0,
+      "clocks": [
+        {
+          "repeats": 1,
+          "per_complete_query_ms": {
+            "0": 2.55916675,
+            "1": 2.5613175,
+            "2": 2.541614625,
+            "3": 2.562067625
+          },
+          "candidate_slower_percent_vs_current": 0.11335232454079414,
+          "candidate_slower_percent_vs_stream": 0.8047246737888258
+        },
+        {
+          "repeats": 2,
+          "per_complete_query_ms": {
+            "0": 1.897632875,
+            "1": 2.1645285625,
+            "2": 2.2334870000000002,
+            "3": 1.9155989375
+          },
+          "candidate_slower_percent_vs_current": 0.94676176496995,
+          "candidate_slower_percent_vs_stream": -14.232814540671168
+        },
+        {
+          "repeats": 4,
+          "per_complete_query_ms": {
+            "0": 1.89429690625,
+            "1": 2.08272134375,
+            "2": 1.95214190625,
+            "3": 1.91591146875
+          },
+          "candidate_slower_percent_vs_current": 1.1410335110977332,
+          "candidate_slower_percent_vs_stream": -1.8559325725247877
+        }
+      ]
+    }
+  },
+  "batch_timings": {
+    "disjoint_trimmed": {
+      "batch_1": {
+        "current_ms": 2.53546,
+        "connected_ms": 2.53236,
+        "speedup": 1.00123
+      },
+      "batch_2": {
+        "current_ms": 6.4631,
+        "connected_ms": 7.14231,
+        "speedup": 0.9049
+      },
+      "batch_4": {
+        "current_ms": 22.21745,
+        "connected_ms": 23.11553,
+        "speedup": 0.96115
+      }
+    },
+    "cert_trimmed": {
+      "batch_1": {
+        "current_ms": 3.36892,
+        "connected_ms": 3.36361,
+        "speedup": 1.00158
+      },
+      "batch_2": {
+        "current_ms": 6.72044,
+        "connected_ms": 7.5932,
+        "speedup": 0.88506
+      },
+      "batch_4": {
+        "current_ms": 11.87141,
+        "connected_ms": 13.19456,
+        "speedup": 0.89972
+      }
+    }
+  },
+  "shader_shas": {
+    "disjoint_scratch_trimmed_producerFastMain": "ae5bed4bc1cf73c40c69ed537f7072eeb1d6a2e628ab5c05b1a134afd3edd152",
+    "ux_tile_cert_scratch_trimmed_producerFastMain": "5506da621f5a6b4aa317be665fea2d0f1a4adfb49508552fad8f812aa6b1f7d5"
+  },
+  "traces_captured": [
+    "/private/tmp/earthcall-6dk-capture-disjoint/disjoint-trimmed.gputrace",
+    "/private/tmp/earthcall-6dk-capture-cert/cert-trimmed.gputrace"
+  ],
+  "shipping_gates_open": true,
+  "superseded_intervention_claims": {
+    "kind": "scratch_lifetime_reduction",
+    "removed_bounds_96_from_call_stack": true,
+    "bounds_bytes_saved_live_stack": 384,
+    "localized_knots_70_to_post_roots_member_loop": true,
+    "knots_bytes_saved_function_scope": 384,
+    "isolated_merge_knots_96_to_fallback_branch": true,
+    "strictly_ascending_disjoint_fastpath_percent": 96.52,
+    "total_simultaneous_scratch_savings_bytes": 768
+  },
+  "review_correction": {
+    "by": "Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-25T19:24:08.355403-07:00",
+    "audit": "GPU_RAY_TRANSPORT_SCRATCH_LIFETIME_REVIEW_6DL_2026-10-25.md",
+    "batch_timings_scope": "Instrumented capture runs, unchanged cpProducer; not trimmed candidate",
+    "mode3_scope": "resident cpFastCompact plus consumer/fallback and encode/complete; host certificate construction/initial upload excluded",
+    "physical_scratch_savings_proven": false,
+    "member_knots_required_upper_bound": 69,
+    "member_knots_capacity": 70,
+    "old_bounds_aliases_knots": true,
+    "fresh_producer_spilled_bytes_display": "2.22 KiB both variants; previously1.95 KiB",
+    "qualified_speedup": false
+  }
+}

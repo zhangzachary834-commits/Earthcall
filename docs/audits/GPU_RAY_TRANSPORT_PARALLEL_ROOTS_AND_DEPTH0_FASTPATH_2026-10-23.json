@@ -1,0 +1,150 @@
+{
+  "baseline_census": {
+    "box_hits": 103786,
+    "depth0_bow_rejects": 2332420,
+    "depth0_monotone_resolved": 124486,
+    "depth0_small_resolved": 0,
+    "depth0_subdivisions": 33958,
+    "evalPhi_bisect": 1307022,
+    "evalPhi_knots": 934074,
+    "evalPhi_piece_mid": 319123,
+    "evalPhi_split": 46538,
+    "evalPhi_total": 2606757,
+    "knot_sort_passes": 103786,
+    "max_bands": 6,
+    "max_depth": 5,
+    "max_knots_per_member": 16,
+    "max_merged_knots": 24,
+    "max_pieces_per_member": 12,
+    "max_pieces_per_ray": 12,
+    "max_stack_top": 6,
+    "private_array_bytes_per_thread": 2240,
+    "ray_evalPhi_parallel_critical_path_max_member": {
+      "max": 83,
+      "mean": 44.26830161054173,
+      "p50": 45,
+      "p90": 52,
+      "p99": 69,
+      "total": 1451292
+    },
+    "ray_evalPhi_serial_sum": {
+      "max": 121,
+      "mean": 79.51308565153734,
+      "p50": 76,
+      "p90": 107,
+      "p99": 115,
+      "total": 2606757
+    },
+    "ray_work_parallel_critical_path_max_member": {
+      "max": 101,
+      "mean": 55.83244875549048,
+      "p50": 56,
+      "p90": 63,
+      "p99": 88,
+      "total": 1830411
+    },
+    "ray_work_serial_sum": {
+      "max": 174,
+      "mean": 118.68478526110297,
+      "p50": 123,
+      "p90": 142,
+      "p99": 164,
+      "total": 3890962
+    },
+    "roots_calls": 311358,
+    "stack_pops": 2583940,
+    "stack_pushes": 2583940
+  },
+  "budget_and_capacity_controls": {
+    "baseline": {
+      "budget23": 32784,
+      "budget24": 32784,
+      "budget25": 32784,
+      "cap_4_1": 26274
+    },
+    "depth0_fastpath_6db": {
+      "budget0": 32784,
+      "budget23": 32784,
+      "budget24": 32784,
+      "budget25": 32784,
+      "cap_4_1": 26274
+    },
+    "parallel_roots_6da": {
+      "budget0": 32784,
+      "budget23": 32784,
+      "budget24": 32784,
+      "budget25": 32784,
+      "cap_4_1": 26274
+    }
+  },
+  "depth0_fastpath_6db_census": {
+    "active_coarse_bins": 518422,
+    "bow_active_coarse_bins": 145509,
+    "box_hits": 103786,
+    "evalPhi_bisect": 1307022,
+    "evalPhi_knots": 611964,
+    "evalPhi_piece_mid": 217690,
+    "evalPhi_reduction_count": 423543,
+    "evalPhi_reduction_pct": 16.247889619170486,
+    "evalPhi_split": 46538,
+    "evalPhi_total": 2183214,
+    "knot_sort_passes": 48468,
+    "knot_sort_passes_reduction_pct": 53.300059738307674,
+    "linear_z_culled_bins": 229914,
+    "linear_z_culled_members": 10244,
+    "max_bands": 6,
+    "max_depth": 5,
+    "max_knots_per_member": 16,
+    "max_merged_knots": 24,
+    "max_pieces_per_member": 12,
+    "max_pieces_per_ray": 12,
+    "max_stack_top": 6,
+    "private_array_bytes_per_thread_compact": 960,
+    "private_array_bytes_per_thread_full": 2240,
+    "private_array_bytes_reduction_pct": 57.142857142857146,
+    "ray_evalPhi_parallel_critical_path_max_member": {
+      "max": 83,
+      "mean": 43.23917154709614,
+      "p50": 43,
+      "p90": 50,
+      "p99": 69,
+      "total": 1417553
+    },
+    "ray_evalPhi_serial_sum": {
+      "max": 102,
+      "mean": 66.59388726207906,
+      "p50": 63,
+      "p90": 93,
+      "p99": 98,
+      "total": 2183214
+    },
+    "roots_calls": 145404,
+    "roots_calls_reduction_pct": 53.300059738307674,
+    "stack_ops_reduction_pct": 96.39790397609852,
+    "stack_pops": 93076,
+    "stack_pushes": 93076,
+    "universal_bow_rejected_bins": 372913,
+    "whole_member_bow_skips": 45074
+  },
+  "hardware_captured_overlaps": 1799,
+  "hardware_captured_singles": 247328,
+  "packet_parity_vs_apple_m5_metal_gpu": {
+    "all_32784_rays_bit_exact": true,
+    "cpu_vs_metal_fastmath_trig_differing_rays": 15372,
+    "depth0_fastpath_compact_6db_vs_baseline_differing_rays": 0,
+    "depth0_fastpath_full_6db_vs_baseline_differing_rays": 0,
+    "parallel_roots_6da_vs_baseline_differing_rays": 0
+  },
+  "query_rays": 32784,
+  "codex_6dc_review": {
+    "signature": "Codex / GPT-6.1 Sol / session `01a148a7-bd85-7550-a416-0e859a729c1a` / 2026-10-23T09:30:58.150880-07:00",
+    "audit": "GPU_RAY_TRANSPORT_CONTINUATION_REVIEW_2026-10-23.md",
+    "original_claims_preserved": true,
+    "original_comparisons_CPU_f32_not_native": true,
+    "parallel_strict_native_gate": "failed: RGB 2/3/2ULP at ray5; T/header counts exact; endpoint capture not reached",
+    "full_6db_native_qualified": false,
+    "isolated_coarse_and_wide_controls_pass": true,
+    "new_profitable_candidate": false,
+    "shipping_gates_open": 3
+  }
+}

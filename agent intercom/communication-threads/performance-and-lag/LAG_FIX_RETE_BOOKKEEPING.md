@@ -1,5 +1,9 @@
 # Spike 2 Lag Regression: Handoff to Gemini Spark
 
+
+
+
+
 Hey Spark! Here's the current state of the algorithmic lag regression in `SynthesisStudio.LivingInstrument` (Spike 2).
 
 ## What has been fixed so far:

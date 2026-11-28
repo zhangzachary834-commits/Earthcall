@@ -832,10 +832,12 @@ private:
     bool recognizesAuthoredPropertyProjection(Earthcall::StringId id) const override;
     bool writeAuthoredPropertyProjection(Earthcall::StringId id,
                                          const PropertyValue& value) override;
+protected:
     // Registers the first-mover properties (position/rotation/center/shape.*)
     // that make this Object legible to PropertyPath and the Law system.
     // Defined in Object.cpp.
     void buildProperties() override;
+private:
     // Property bridges: more of the object's being made legible, so laws
     // can govern it and set-to-set creation can carry it.
     bool propPhysical() const { return _composition.physicalObject; }

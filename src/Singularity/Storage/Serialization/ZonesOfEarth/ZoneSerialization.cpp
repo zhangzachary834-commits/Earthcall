@@ -1,3 +1,7 @@
+#include "ConstructedBeing/Singular/Property/PropertyValueJson.hpp"
+#include "ConstructedBeing/Singular/Creation/SingularSetToSetCreation.hpp"
+#include "ConstructedBeing/Singular/SingularPersistence.hpp"
+
 #include "Singularity/OntoMath/Field.hpp"
 #include "Singularity/Core/StringId.hpp"
 #include "Singularity/Storage/Serialization/ZonesOfEarth/ZoneSerialization.hpp"
@@ -6,9 +10,12 @@
 #include "Singularity/Storage/Serialization/ZonesOfEarth/HomeSerialization.hpp"
 #include "ConstructedBeing/Material/MaterialManager.hpp"
 #include "ConstructedBeing/Singular/Lexeme/Lexeme.hpp"
+#include "Singularity/Language/LanguageSystem.hpp"
 #include "ConstructedBeing/Singular/Object/Geometry/FieldNode.hpp"
 #include "Relation/Relation.hpp"
 #include "ZonesOfEarth/HomesOfEarth/Home.hpp"
+#include "ZonesOfEarth/ZoneManager.hpp"
+#include "Singularity/TransferPolicy.hpp"
 #include <iostream>
 #include <memory>
 #include <string>
@@ -26,17 +33,46 @@ std::string zoneIdFromJson(const nlohmann::json& zj) {
 // ------------------------------------------------------------------
 // Zone object bag — on disk still `{"objects":[...]}` (the old World shape).
 // ------------------------------------------------------------------
+namespace {
+
+std::unordered_set<const Object*> ancestorObjects(const Zone& zone) {
+    std::unordered_set<const Object*> objects;
+    const auto* manager = ZoneManager::live();
+    if (!manager || zone.getParentZone().empty()) return objects;
+
+    // A switched child borrows its ancestors' live pointers for presentation.
+    // Serialize a definition only where it is held, never from that view.
+    const Zone* parent = manager->withinOf(zone);
+    std::unordered_set<const Zone*> visited{&zone};
+    while (parent && visited.insert(parent).second) {
+        for (const auto& object : parent->objects()) {
+            if (object) objects.insert(object.get());
+        }
+        parent = manager->withinOf(*parent);
+    }
+    return objects;
+}
+
+} // namespace
+
 nlohmann::json zoneObjectsToJson(const Zone& zone) {
     nlohmann::json j = nlohmann::json{};
     nlohmann::json arr = nlohmann::json::array();
-    for (const auto& ptr : zone.objects()) {
-        if (ptr) arr.push_back(*ptr);
+    const auto inherited = ancestorObjects(zone);
+    for (const auto& object : zone.objects()) {
+        if (!object) continue;
+        if (inherited.count(object.get()) &&
+            !object->belongsToZone(zone.getIdentifier()) && !object->belongsToZone(zone.name())) {
+            continue;
+        }
+        arr.push_back(*object);
     }
     j["objects"] = arr;
     return j;
 }
 
 void zoneObjectsFromJson(const nlohmann::json& j, Zone& zone) {
+    SingularPersistence::CohortScope cohortScope;
     const nlohmann::json* arr = nullptr;
     if (j.contains("objects") && j["objects"].is_array()) arr = &j["objects"];
     else if (j.is_array()) arr = &j;
@@ -231,6 +267,34 @@ void writeZoneBounds(const Zone& zone, nlohmann::json& zj) {
     }
 }
 
+// Every OTHER authored property a Zone carries (e.g. an event's meaning,
+// `meaning.object-clicked`, Zach 2026-10-05), under "authoredProperties" as
+// Lexemes already store theirs. Before this, AddProperty on a Zone worked
+// until Save Zone and then silently vanished. The bounds families above keep
+// their own keys and are not repeated here.
+bool isBoundsProperty(const std::string& name) {
+    return name.rfind(Zone::kDimensionPrefix, 0) == 0 || name.rfind(Zone::kPlacementPrefix, 0) == 0 ||
+           name == Zone::kExtentLo || name == Zone::kExtentHi;
+}
+
+void writeZoneAuthoredProperties(const Zone& zone, nlohmann::json& zj) {
+    nlohmann::json authored = nlohmann::json::object();
+    for (const auto& [id, value] : zone.dynamicProperties()) {
+        const std::string& name = Earthcall::StringInterner::resolve(id);
+        if (name.empty() || isBoundsProperty(name)) continue;
+        authored[name] = propertyValueToJson(value);
+    }
+    if (!authored.empty()) zj["authoredProperties"] = std::move(authored);
+}
+
+void readZoneAuthoredProperties(Zone& zone, const nlohmann::json& zj) {
+    if (!zj.contains("authoredProperties") || !zj["authoredProperties"].is_object()) return;
+    for (auto it = zj["authoredProperties"].begin(); it != zj["authoredProperties"].end(); ++it) {
+        if (isBoundsProperty(it.key())) continue;
+        zone.setDynamicProperty(it.key(), propertyValueFromJson(it.value()));
+    }
+}
+
 void readZoneBounds(Zone& zone, const nlohmann::json& zj) {
     if (zj.contains("dimensions") && zj["dimensions"].is_object()) {
         for (auto it = zj["dimensions"].begin(); it != zj["dimensions"].end(); ++it) {
@@ -286,7 +350,16 @@ nlohmann::json zoneToJson(const Zone& zone) {
     }
     zj["deletable"] = del;
     zj["world"] = zoneObjectsToJson(zone);
+    if (!zone.storedSingulars().empty()) {
+        zj["storedSingulars"] = nlohmann::json::array();
+        for (const auto& being : zone.storedSingulars()) {
+            auto record = SingularSetToSetCreation::storedToJson(*being);
+            if (record.is_null()) throw std::runtime_error("stored Singular has no persistence codec");
+            zj["storedSingulars"].push_back(std::move(record));
+        }
+    }
     writeZoneBounds(zone, zj);
+    writeZoneAuthoredProperties(zone, zj);
 
     // The Zone's continuous field root used to exist live, participate in the
     // Formation, expose PropertyPaths, and then simply disappear from saves.
@@ -307,12 +380,27 @@ nlohmann::json zoneToJson(const Zone& zone) {
 
     nlohmann::json lexemes = nlohmann::json::array();
     for (Singular* member : zone.formation().getMembers()) {
+
         auto* lexeme = dynamic_cast<Singularity::Language::Lexeme*>(member);
         if (!lexeme) continue;
-        lexemes.push_back({
+        // Stored Lexemes have a complete codec record above. Emitting the
+        // legacy projection too would overwrite restored typed references
+        // with the old property decoder's monostate values on hydration.
+        if (std::any_of(zone.storedSingulars().begin(), zone.storedSingulars().end(),
+                        [&](const auto& stored) { return stored.get() == member; })) continue;
+        nlohmann::json item = {
             {"id", lexeme->getIdentifier()},
             {"symbol", lexeme->getSymbol()}
-        });
+        };
+        nlohmann::json dyn = nlohmann::json::object();
+        for (const auto& entry : lexeme->dynamicProperties()) {
+            dyn[Earthcall::StringInterner::resolve(entry.first)] = propertyValueToJson(entry.second);
+        }
+        if (!dyn.empty()) {
+            item["authoredProperties"] = std::move(dyn);
+        }
+        lexemes.push_back(item);
+
     }
     zj["lexemes"] = lexemes;
     zj["formationRelations"] = zone.formation().relations().toJson();
@@ -323,13 +411,16 @@ nlohmann::json zoneToJson(const Zone& zone) {
     // this Zone/Home's objects name, so the identity file is the surface.
     nlohmann::json mats = nlohmann::json::array();
     std::unordered_set<std::string> seen;
-    for (const auto& obj : zone.objects()) {
-        if (!obj) continue;
-        const std::string& mid = obj->materialId();
+    for (const auto& object : zj["world"]["objects"]) {
+        const std::string mid = object.value("materialId", std::string{});
         if (mid.empty() || !seen.insert(mid).second) continue;
         if (auto m = materials.get(mid)) mats.push_back(m->toJson());
     }
     if (!mats.empty()) zj["materials"] = std::move(mats);
+
+    if (TransferPolicy::instance().hasNonDefaultState()) {
+        zj["transferPolicy"] = TransferPolicy::instance().toJson();
+    }
 
     if (const auto* home = dynamic_cast<const Home*>(&zone)) {
         homeToJson(zj, *home);
@@ -337,8 +428,9 @@ nlohmann::json zoneToJson(const Zone& zone) {
     return zj;
 }
 
-void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
+void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects, bool restoreExistingLexemes) {
     if (!zj.is_object()) return;
+    SingularPersistence::CohortScope cohortScope(true);
     if (zj.contains("materials")) {
         materials.mergeFromJson(zj["materials"]);
     }
@@ -352,6 +444,7 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
         zone.setScope(scopeFromName(zj["scope"].get<std::string>()));
     }
     readZoneBounds(zone, zj);
+    readZoneAuthoredProperties(zone, zj);
     if (zj.contains("qualities") && zj["qualities"].is_object()) {
         for (auto it = zj["qualities"].begin(); it != zj["qualities"].end(); ++it) {
             if (it.value().is_string()) {
@@ -399,6 +492,15 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
             zoneObjectsFromJson(zj, zone);
         }
     }
+    if (zj.contains("storedSingulars")) {
+        // Hydrate before stored graphs resolve source references. A second
+        // relation pass must only rebind, never replay an older snapshot.
+        hydrateZoneLexemes(zone, zj, restoreExistingLexemes);
+        SingularSetToSetCreation::restoreStored(zone, zj["storedSingulars"], replaceObjects, restoreExistingLexemes);
+    } else {
+        if (replaceObjects) zone.clearStoredSingulars();
+        hydrateZoneLexemes(zone, zj, restoreExistingLexemes);
+    }
     // A non-empty zone here can mean two different things this function
     // cannot tell apart from replaceObjects alone: a Zone kept LIVE from the
     // running session (unsaved_preserve_test: another file's snapshot of the
@@ -413,12 +515,15 @@ void applyZoneJson(Zone& zone, const nlohmann::json& zj, bool replaceObjects) {
     // the store) could never receive its relation graph or lexemes. Now
     // idempotent (see applyFormationRelations), it always runs.
     applyFormationRelations(zone, zj);
+    if (zj.contains("transferPolicy")) {
+        TransferPolicy::instance().loadFromJson(zj["transferPolicy"]);
+    }
     if (auto* home = dynamic_cast<Home*>(&zone)) {
         homeFromJson(zj, *home);
     }
 }
 
-std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj) {
+std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj, bool restoreExistingLexemes) {
     // Identity, not display: MUST agree with zoneIdFromJson, the same
     // resolution every admission/dedup check in ZoneManager.cpp uses to
     // ask "is a Zone with this id already live?" Before this fix, this
@@ -447,6 +552,6 @@ std::shared_ptr<Zone> makeZoneFromJson(const nlohmann::json& zj) {
     if (!displayName.empty() && displayName != safeIdentifier) {
         zone->setName(displayName);
     }
-    applyZoneJson(*zone, zj, true);
+    applyZoneJson(*zone, zj, true, restoreExistingLexemes);
     return zone;
 }

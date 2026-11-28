@@ -1,0 +1,20 @@
+{
+  "result": "PASS",
+  "harness": "Codex",
+  "model": "GPT-6.1 Sol",
+  "session": "01a10992-828e-7e80-890c-c64b09141e18",
+  "date": "2026-10-05",
+  "program": "examples/law_line_sky_stairway.txt",
+  "new_laws": 3,
+  "native_births": 19,
+  "native_gold_pixels_before": 0,
+  "native_gold_pixels_after": 3049,
+  "native_width": 2560,
+  "native_height": 1440,
+  "native_hover_turn_degrees": 25,
+  "native_hover_departure_restores_orientation": true,
+  "fixture_author": "simulated Zach; temporary copied seeds and test profile only",
+  "person_confirmation": "Zach confirmed original cube visibility and Stairmaker; enhanced program not yet Person verified",
+  "focused_checks_passed": 162,
+  "focused_checks_total": 162
+}

@@ -1,0 +1,174 @@
+{
+  "authors": [
+    "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+  ],
+  "identifier": "confluence-show-lamp",
+  "injected_by": "Codex / GPT-6 / Sixth-Two Sun",
+  "law": {
+    "actionDescriptions": [
+      "color := (0.78level + 0.22, 0.58level + 0.16, 0.18level + 0.12)"
+    ],
+    "actionModel": {
+      "bindings": {
+        "level": "confluence.lampLevel"
+      },
+      "function": {
+        "input": "x",
+        "pieces": [
+          {
+            "mathNode": {
+              "children": [
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.7799999713897705,
+                        "factors": {
+                          "level": 1.0
+                        }
+                      },
+                      {
+                        "c": 0.2199999988079071,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.5800000429153442,
+                        "factors": {
+                          "level": 1.0
+                        }
+                      },
+                      {
+                        "c": 0.1599999964237213,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                },
+                {
+                  "op": 0,
+                  "scalarForm": {
+                    "terms": [
+                      {
+                        "c": 0.18000000715255737,
+                        "factors": {
+                          "level": 1.0
+                        }
+                      },
+                      {
+                        "c": 0.11999999731779099,
+                        "factors": {}
+                      }
+                    ]
+                  }
+                }
+              ],
+              "op": 2
+            }
+          }
+        ]
+      },
+      "kind": 8,
+      "path": "color"
+    },
+    "activation": 1,
+    "applicationLog": [],
+    "authority": 0,
+    "authors": [
+      "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga"
+    ],
+    "conditionDescriptions": [
+      "any(3)"
+    ],
+    "conditionMode": "all",
+    "conditionModel": {
+      "children": [
+        {
+          "kind": 8,
+          "otherId": "confluence-copper-lens"
+        },
+        {
+          "kind": 8,
+          "otherId": "confluence-indigo-lens"
+        },
+        {
+          "kind": 8,
+          "otherId": "confluence-common-lens"
+        }
+      ],
+      "kind": 4
+    },
+    "conditionSubjects": [],
+    "drives": false,
+    "enabled": true,
+    "id": "confluence-show-lamp",
+    "name": "Show the one flame",
+    "provenance": [
+      {
+        "attachment": {
+          "childAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "enabled": false,
+          "inheritRotation": true,
+          "inheritScale": true,
+          "inheritTranslation": true,
+          "localOffset": [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "parentAnchor": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "authoredProperties": {
+          "weight": {
+            "t": "float",
+            "v": 1.0
+          }
+        },
+        "directed": true,
+        "entityA": "confluence-show-lamp",
+        "entityB": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
+        "events": [
+          {
+            "deltaWeight": 1.0,
+            "description": "authored-by",
+            "timestamp": 1795493352
+          }
+        ],
+        "type": "authored-by",
+        "weight": 1.0
+      }
+    ],
+    "retrigger": 0,
+    "scope": 0,
+    "targets": []
+  },
+  "triggers": []
+}

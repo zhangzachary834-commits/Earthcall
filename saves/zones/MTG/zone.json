@@ -1,0 +1,842 @@
+{
+  "identifier": "MTG",
+  "name": "Magic: The Gathering",
+  "scope": "Local",
+  "lawRefs": [
+    "law-mtg-turn-cycle",
+    "law-mtg-pass-phase",
+    "law-mtg-tap-forest",
+    "law-mtg-play-forest",
+    "law-mtg-tap-mountain",
+    "law-mtg-play-mountain",
+    "law-mtg-cast-grizzly-bears",
+    "law-mtg-cast-lightning-bolt",
+    "law-mtg-trigger-resolve",
+    "law-mtg-resolve-lightning-bolt",
+    "law-mtg-resolve-grizzly-bears",
+    "law-mtg-attack-grizzly-bears",
+    "law-mtg-sba-lethal-damage",
+    "law-mtg-sba-player-loss"
+  ],
+  "materials": [
+    {
+      "name": "mtg.table",
+      "id": "material.mtg.table",
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0.4,
+      "shininess": 24.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.22,
+        0.12,
+        0.07
+      ]
+    },
+    {
+      "name": "mtg.playmat",
+      "id": "material.mtg.playmat",
+      "ambient": 0.3,
+      "diffuse": 0.9,
+      "specular": 0.2,
+      "shininess": 16.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.08,
+        0.1,
+        0.14
+      ]
+    },
+    {
+      "name": "mtg.stack",
+      "id": "material.mtg.stack",
+      "ambient": 0.4,
+      "diffuse": 0.8,
+      "specular": 0.8,
+      "shininess": 64.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.35,
+        0.18,
+        0.55
+      ]
+    },
+    {
+      "name": "mtg.button.pass",
+      "id": "material.mtg.button.pass",
+      "ambient": 0.35,
+      "diffuse": 0.9,
+      "specular": 1.0,
+      "shininess": 80.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.85,
+        0.65,
+        0.15
+      ]
+    },
+    {
+      "name": "mtg.button.resolve",
+      "id": "material.mtg.button.resolve",
+      "ambient": 0.4,
+      "diffuse": 0.9,
+      "specular": 1.0,
+      "shininess": 90.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.15,
+        0.65,
+        0.85
+      ]
+    },
+    {
+      "name": "mtg.card.forest",
+      "id": "material.mtg.card.forest",
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0.5,
+      "shininess": 32.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.18,
+        0.45,
+        0.22
+      ]
+    },
+    {
+      "name": "mtg.card.mountain",
+      "id": "material.mtg.card.mountain",
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0.5,
+      "shininess": 32.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.65,
+        0.25,
+        0.15
+      ]
+    },
+    {
+      "name": "mtg.card.bears",
+      "id": "material.mtg.card.bears",
+      "ambient": 0.25,
+      "diffuse": 0.85,
+      "specular": 0.5,
+      "shininess": 32.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.45,
+        0.32,
+        0.18
+      ]
+    },
+    {
+      "name": "mtg.card.bolt",
+      "id": "material.mtg.card.bolt",
+      "ambient": 0.3,
+      "diffuse": 0.9,
+      "specular": 0.7,
+      "shininess": 48.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.85,
+        0.35,
+        0.1
+      ]
+    },
+    {
+      "name": "mtg.crystal.p1",
+      "id": "material.mtg.crystal.p1",
+      "ambient": 0.35,
+      "diffuse": 0.85,
+      "specular": 0.9,
+      "shininess": 70.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.2,
+        0.8,
+        0.3
+      ]
+    },
+    {
+      "name": "mtg.crystal.p2",
+      "id": "material.mtg.crystal.p2",
+      "ambient": 0.35,
+      "diffuse": 0.85,
+      "specular": 0.9,
+      "shininess": 70.0,
+      "opacity": 1.0,
+      "baseColor": [
+        0.85,
+        0.2,
+        0.2
+      ]
+    }
+  ],
+  "world": {
+    "objects": [
+      {
+        "objectID": "object.mtg.table",
+        "shapeKind": 9,
+        "materialId": "material.mtg.table",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.05
+        ],
+        "transform": [
+          10.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          8.0,
+          0.0,
+          0.0,
+          0.25,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.25,
+          0.0
+        ]
+      },
+      {
+        "objectID": "object.mtg.playmat",
+        "shapeKind": 9,
+        "materialId": "material.mtg.playmat",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02
+        ],
+        "transform": [
+          8.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          6.0,
+          0.0,
+          0.0,
+          0.51,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.51,
+          0.0
+        ]
+      },
+      {
+        "objectID": "object.mtg.stack_zone",
+        "shapeKind": 3,
+        "materialId": "material.mtg.stack",
+        "shapeParams": [
+          1.2,
+          0.015,
+          1.2,
+          0.015,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.5,
+          0.0,
+          0.0,
+          0.522,
+          0.0,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.522,
+          0.0
+        ]
+      },
+      {
+        "objectID": "button.mtg.pass_phase",
+        "shapeKind": 9,
+        "materialId": "material.mtg.button.pass",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.04,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.6,
+          0.0,
+          3.0,
+          0.535,
+          1.5,
+          1.0
+        ],
+        "center": [
+          3.0,
+          0.535,
+          1.5
+        ],
+        "authoredProperties": {
+          "isButton": {
+            "t": "bool",
+            "v": true
+          }
+        }
+      },
+      {
+        "objectID": "button.mtg.resolve",
+        "shapeKind": 9,
+        "materialId": "material.mtg.button.resolve",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02
+        ],
+        "transform": [
+          0.9,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.04,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5,
+          0.0,
+          0.0,
+          0.535,
+          1.2,
+          1.0
+        ],
+        "center": [
+          0.0,
+          0.535,
+          1.2
+        ],
+        "authoredProperties": {
+          "isButton": {
+            "t": "bool",
+            "v": true
+          }
+        }
+      },
+      {
+        "objectID": "counter.mtg.life1",
+        "shapeKind": 2,
+        "materialId": "material.mtg.crystal.p1",
+        "shapeParams": [
+          0.2,
+          0.2,
+          0.2,
+          0.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.3,
+          0.0,
+          -3.2,
+          0.55,
+          2.2,
+          1.0
+        ],
+        "center": [
+          -3.2,
+          0.55,
+          2.2
+        ]
+      },
+      {
+        "objectID": "counter.mtg.life2",
+        "shapeKind": 2,
+        "materialId": "material.mtg.crystal.p2",
+        "shapeParams": [
+          0.2,
+          0.2,
+          0.2,
+          0.2,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          0.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.3,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.3,
+          0.0,
+          -3.2,
+          0.55,
+          -2.2,
+          1.0
+        ],
+        "center": [
+          -3.2,
+          0.55,
+          -2.2
+        ]
+      },
+      {
+        "objectID": "card.forest_1",
+        "shapeKind": 9,
+        "materialId": "material.mtg.card.forest",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01
+        ],
+        "transform": [
+          0.7,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -2.0,
+          0.53,
+          2.4,
+          1.0
+        ],
+        "center": [
+          -2.0,
+          0.53,
+          2.4
+        ],
+        "authoredProperties": {
+          "cardName": {
+            "t": "string",
+            "v": "Forest"
+          },
+          "cardType": {
+            "t": "string",
+            "v": "land"
+          },
+          "zone": {
+            "t": "string",
+            "v": "hand"
+          },
+          "isTapped": {
+            "t": "int",
+            "v": 0
+          }
+        }
+      },
+      {
+        "objectID": "card.mountain_1",
+        "shapeKind": 9,
+        "materialId": "material.mtg.card.mountain",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01
+        ],
+        "transform": [
+          0.7,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          -0.8,
+          0.53,
+          2.4,
+          1.0
+        ],
+        "center": [
+          -0.8,
+          0.53,
+          2.4
+        ],
+        "authoredProperties": {
+          "cardName": {
+            "t": "string",
+            "v": "Mountain"
+          },
+          "cardType": {
+            "t": "string",
+            "v": "land"
+          },
+          "zone": {
+            "t": "string",
+            "v": "hand"
+          },
+          "isTapped": {
+            "t": "int",
+            "v": 0
+          }
+        }
+      },
+      {
+        "objectID": "card.grizzly_bears_1",
+        "shapeKind": 9,
+        "materialId": "material.mtg.card.bears",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01
+        ],
+        "transform": [
+          0.7,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.8,
+          0.53,
+          2.4,
+          1.0
+        ],
+        "center": [
+          0.8,
+          0.53,
+          2.4
+        ],
+        "authoredProperties": {
+          "cardName": {
+            "t": "string",
+            "v": "Grizzly Bears"
+          },
+          "cardType": {
+            "t": "string",
+            "v": "creature"
+          },
+          "manaCost": {
+            "t": "int",
+            "v": 1
+          },
+          "power": {
+            "t": "int",
+            "v": 2
+          },
+          "toughness": {
+            "t": "int",
+            "v": 2
+          },
+          "damage": {
+            "t": "int",
+            "v": 0
+          },
+          "zone": {
+            "t": "string",
+            "v": "hand"
+          },
+          "isTapped": {
+            "t": "int",
+            "v": 0
+          },
+          "isAttacking": {
+            "t": "int",
+            "v": 0
+          },
+          "stackOrder": {
+            "t": "int",
+            "v": 0
+          }
+        }
+      },
+      {
+        "objectID": "card.lightning_bolt_1",
+        "shapeKind": 9,
+        "materialId": "material.mtg.card.bolt",
+        "shapeParams": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.01
+        ],
+        "transform": [
+          0.7,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.02,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          2.0,
+          0.53,
+          2.4,
+          1.0
+        ],
+        "center": [
+          2.0,
+          0.53,
+          2.4
+        ],
+        "authoredProperties": {
+          "cardName": {
+            "t": "string",
+            "v": "Lightning Bolt"
+          },
+          "cardType": {
+            "t": "string",
+            "v": "instant"
+          },
+          "manaCost": {
+            "t": "int",
+            "v": 1
+          },
+          "zone": {
+            "t": "string",
+            "v": "hand"
+          },
+          "stackOrder": {
+            "t": "int",
+            "v": 0
+          }
+        }
+      },
+      {
+        "objectID": "author.antigravity",
+        "shapeKind": 12,
+        "materialId": "",
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          80.0,
+          80.0,
+          80.0,
+          1.0
+        ],
+        "center": [
+          80.0,
+          80.0,
+          80.0
+        ]
+      },
+      {
+        "objectID": "state.mtg",
+        "shapeKind": 12,
+        "materialId": "",
+        "shapeParams": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "transform": [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          80.0,
+          80.0,
+          80.0,
+          1.0
+        ],
+        "center": [
+          80.0,
+          80.0,
+          80.0
+        ],
+        "authoredProperties": {
+          "phase": {
+            "t": "int",
+            "v": 0
+          },
+          "turnNumber": {
+            "t": "int",
+            "v": 1
+          },
+          "activePlayer": {
+            "t": "int",
+            "v": 1
+          },
+          "landPlayedThisTurn": {
+            "t": "int",
+            "v": 0
+          },
+          "manaGreen": {
+            "t": "int",
+            "v": 0
+          },
+          "manaRed": {
+            "t": "int",
+            "v": 0
+          },
+          "player1Life": {
+            "t": "int",
+            "v": 20
+          },
+          "player2Life": {
+            "t": "int",
+            "v": 20
+          },
+          "stackCount": {
+            "t": "int",
+            "v": 0
+          },
+          "gameOver": {
+            "t": "bool",
+            "v": false
+          }
+        }
+      }
+    ]
+  }
+}

@@ -16,6 +16,7 @@
 #include "Singularity/OntoMath/ScalarForm.hpp"
 
 #include <cmath>
+#include <glm/gtc/matrix_transform.hpp>
 #include <cstdio>
 #include <string>
 
@@ -404,6 +405,62 @@ int main() {
         check(roundTrips,  "every quadric round-trips matrix -> ScalarForm -> matrix");
         check(gradsAgree,  "the matrix gradient equals ScalarForm::derivative for every quadric");
         check(coeffsAgree, "raycast's A/B/C equal the symbolic coefficients of f(o + t*d)");
+
+        // RUNG 9 -- translated quadrics must now flow through OntoMath's
+        // congruence authority, while preserving the historical GLM result.
+        // The oracle deliberately restates the pre-migration formula here in
+        // test code only; production may not originate this mathematics.
+        const glm::vec3 shift(0.75f, -0.4f, 1.25f);
+        bool translatedPrimitiveParity = true;
+        bool translatedGradientParity = true;
+        bool translatedRayParity = true;
+        for (const Q& q : quadrics) {
+            const glm::mat4 legacyM = glm::translate(glm::mat4(1.0f), -shift);
+            const glm::mat4 legacyTranslated = glm::transpose(legacyM) * q.m * legacyM;
+            const glm::mat4 ontoTranslated = geom::Quadric::translate(q.m, shift);
+
+            for (int r = 0; r < 4; ++r)
+                for (int col = 0; col < 4; ++col)
+                    if (!nearf(legacyTranslated[col][r], ontoTranslated[col][r], 1e-5f))
+                        translatedPrimitiveParity = false;
+
+            const OntoMath::ScalarForm translatedForm =
+                geom::Quadric::toScalarForm(ontoTranslated);
+            const glm::vec3 translatedSample = shift + glm::vec3(0.2f, -0.1f, 0.7f);
+            const glm::vec3 matrixGradient =
+                geom::Quadric::gradient(ontoTranslated, translatedSample);
+            const glm::vec3 formGradient =
+                geom::Quadric::gradientFromForm(translatedForm, translatedSample);
+            if (!nearf(matrixGradient.x, formGradient.x, 1e-4f) ||
+                !nearf(matrixGradient.y, formGradient.y, 1e-4f) ||
+                !nearf(matrixGradient.z, formGradient.z, 1e-4f))
+                translatedGradientParity = false;
+
+            // Translating the surface by shift must be exactly equivalent to
+            // translating the ray origin by -shift. This checks intersections,
+            // not merely that two matrix-construction paths produced equal bytes.
+            const glm::vec3 worldOrigin = shift + glm::vec3(-3.0f, 0.1f, 0.2f);
+            const glm::vec3 direction = glm::normalize(glm::vec3(1.0f, 0.0f, 0.0f));
+            float worldT0 = 0.0f, worldT1 = 0.0f, localT0 = 0.0f, localT1 = 0.0f;
+            const bool worldHit =
+                geom::Quadric::raycast(ontoTranslated, worldOrigin, direction, worldT0, worldT1);
+            const bool localHit =
+                geom::Quadric::raycast(q.m, worldOrigin - shift, direction, localT0, localT1);
+            if (worldHit != localHit ||
+                (worldHit && (!nearf(worldT0, localT0, 1e-4f) ||
+                              !nearf(worldT1, localT1, 1e-4f)))) {
+                translatedRayParity = false;
+                std::printf("    (%s translated ray mismatch: hit %d/%d, t %.5f/%.5f vs %.5f/%.5f)\n",
+                            q.name, worldHit ? 1 : 0, localHit ? 1 : 0,
+                            worldT0, worldT1, localT0, localT1);
+            }
+        }
+        check(translatedPrimitiveParity,
+              "OntoMath translation preserves sphere/ellipsoid/cylinder/cone/paraboloid matrices");
+        check(translatedGradientParity,
+              "every translated quadric remains equivalent to its ScalarForm gradient");
+        check(translatedRayParity,
+              "translated quadric ray intersections equal the corresponding local-space rays");
     }
 
     // --- Tessellated normals must not depend on cell ASPECT RATIO -----------

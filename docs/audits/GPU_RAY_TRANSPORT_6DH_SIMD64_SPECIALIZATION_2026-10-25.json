@@ -1,0 +1,57 @@
+{
+  "agent": "Sparkly Guy / Gemini 3.8 Flash High",
+  "audit_name": "GPU_RAY_TRANSPORT_6DG_QUERY_FAMILY_SPECIALIZATION_2026-10-24",
+  "benchmark_matrix": [
+    {
+      "cold_delta_pct": 0.015830944385293734,
+      "cold_routed_ms": 1.5263666,
+      "reference_marcher_ms": 1.526125,
+      "repeats": 1,
+      "standalone_classify_ms": 1.5325916,
+      "warm_delta_pct": 0.1752674256695938,
+      "warm_routed_ms": 1.5287998
+    },
+    {
+      "cold_delta_pct": 100.97168787609743,
+      "cold_routed_ms": 1.5279374999999997,
+      "reference_marcher_ms": 0.760275,
+      "repeats": 2,
+      "standalone_classify_ms": 1.5346418,
+      "warm_delta_pct": -0.2548288448258825,
+      "warm_routed_ms": 0.7583376000000001
+    },
+    {
+      "cold_delta_pct": 50.25316983212337,
+      "cold_routed_ms": 1.13752295,
+      "reference_marcher_ms": 0.75707085,
+      "repeats": 4,
+      "standalone_classify_ms": 1.5297581999999998,
+      "warm_delta_pct": 0.42295909293033607,
+      "warm_routed_ms": 0.76027295
+    }
+  ],
+  "branch": "claude/ray-domain-transport-rung0",
+  "date": "2026-10-24",
+  "gates": {
+    "gate_1_standalone_metal": "PASS",
+    "gate_2_webgpu_screen_render": "OPEN",
+    "gate_3_end_to_end_30fps": "OPEN"
+  },
+  "harness": "Antigravity",
+  "parity": {
+    "differing_rays": 0,
+    "max_delta_rgb": 2.3283064365386963e-10,
+    "max_delta_t": 0.0,
+    "status": "100.0% BIT-EXACT PARITY"
+  },
+  "pinned_rays_count": 32784,
+  "tile_counts": {
+    "fallback_pct": 29.991319444444443,
+    "fallback_tiles": 691,
+    "s1_pct": 39.322916666666664,
+    "s1_tiles": 906,
+    "s2_pct": 30.68576388888889,
+    "s2_tiles": 707,
+    "total_tiles": 2304
+  }
+}

@@ -660,10 +660,13 @@ chess is written in, and the only shape that reaches `sweepSubjects`), the mutat
 `Any` being go deaf and the test catches it.
 
 **Two things found on the way, both recorded rather than worked around:**
-- `LawManager`'s EventBus subscription outlives the manager (Law.hpp says so: "a connected
-  LawManager must outlive all publishing"). Two connected managers in one process means the dead
-  one still hears every event: whichever arm of a two-manager test runs second counts everything
-  twice. The parity test therefore uses ONE manager and toggles the flag.
+- `LawManager`'s EventBus subscriptions originally outlived the manager. Two connected managers
+  in one process made the dead one's callbacks hear later events; the parity test exposed this as
+  doubled counts, and a referent-map experiment recorded a segfault. Fixed by subscription tokens
+  owned and revoked by `LawManager` (designed by GPT-5.6 Sol 2026-09-20, landed on
+  `sync-from-earthcall-main` 2026-10-06), with `law_manager_eventbus_lifetime_test` as the
+  deterministic witness. The parity test still uses ONE manager so adapter on/off remains its only
+  experimental variable.
 - Route registration must not live in `compileConditionsToRete`: that runs only for laws that want
   Rete terminals (`activation() != OnEvent`), which is exactly the set of laws that never sweep. It
   is now `syncAdapterRoutes`, keyed on the law's condition revision, called for every law.
@@ -818,3 +821,34 @@ Architecture:
 `docs/architecture/law/FORMATION_RETE_INCREMENTAL_MAINTENANCE_AND_SELF_REFINING_EVENTS.md`
 
 **Do not start over.** Extend the existing Prophetic relevance graph, Slow Adapter, tier query, Law-Direct currency/fallback, EventBus, PropertyPath, and Derived-State Ledger. Coarse revision/generation invalidation remains the safe fallback until a narrower semantic frontier is proved complete.
+
+## 2026-10-20 — disjunctions and bare quantifiers were deaf; repaired, with the sweep made single-evaluation
+
+*Claude Code · Claude Opus 5.5 · session `f3af84cf-bfe3-429d-b417-2d533119f169`. Raised in the [ray-domain intercom thread](../../../../../../agent%20intercom/communication-threads/sdf-and-rendering/OPUS_HANDOFF_Ray_Domain_Transport_Rung_0_1_2026-10-16.md) as a suspicion. Codex asked for a bounded reproducer first and said the work belongs here, in the shared condition compiler. Zach: "BROOOOOOOO NEXT PASSSSSS".*
+
+**Reproduced** (`tests/law/disjunction_candidate_test.cpp`): real OnBecomeTrue laws, ticked only and compared against `conditionsSatisfied`. Before the repair, 2 of 8 checks passed.
+
+| Case | Before |
+|---|---|
+| A `Any(All(ForAny(lit>0)), x>100)` | deaf: full evaluation true, never fired |
+| B `Any(All(), x>100)`, vacuously true | deaf |
+| C `Any(ForAny(lit>0), x>100)`, a bare quantifier disjunct | deaf (two terminals, neither proposing the subject) |
+| E a top-level `ForAny(lit>0)` targeted at a subject that isn't the lamp | deaf |
+| D control, `Any(x>100, y>100)` | heard |
+
+**Why.** A quantifier's alpha predicate ignores its subject. It admits whichever being's fact just changed (the lamp), never the subject the law is about. An `Any` concatenated its children's terminals, so an alternative that yields none was silently dropped. An empty terminal vector means "cannot index", not "impossible".
+
+**Repair** (`ConditionModel.cpp`):
+- A leaf containing a quantifier (a quantifier itself, or a `Not` over one) gets no alpha, and an `All` skips it as before.
+- An `Any` with any alternative that yields no terminals has none itself.
+- Such laws take the sweep. After the repair, 8/8 pass.
+
+**Cost, measured and recovered.** On the sweep, `quantifier_scaling_test`'s bare ForAll rose from 233 to 442 ms/tick at 320 beings (gap 0.79 > its 0.75 bound). That was because the sweep decided the condition and then `applyTo` decided it again. The sweep now applies through `applyToAfterConditions` when nothing intervened; a restarted drive session is re-checked as before. The reactive path already applied once per candidate in the same way. Re-measured: 234–248 ms, gap 0.70–0.73, then 228 ms, gap 0.687 on a quieter run. Passing. The bound was not widened. The margin is thin, so the per-tick memo of a subject-independent quantifier (rung 1b) is still the real fix for that cost.
+
+**Not examined:** `Overlaps` and `Related` far-end changes in an `Any` have the same shape on paper (truth moving with another being's state). There is no witness for them, so no claim is made.
+
+**The rest of `tests/law`, run one at a time:**
+- 58 of 66 pass.
+- The four chess tests and `second_nature_law_forge_zone_test` fail exactly as at `6bd248d94`. `chess_app_test` was confirmed in a throwaway baseline worktree.
+- `synthesis_studio_app_test` fails its 17 pad-note checks identically with this repair switched off. Both are already on the 2026-10-07 clean-HEAD failure list.
+- The other two Synthesis tests pass when run through `ctest`, which sets their working directory.

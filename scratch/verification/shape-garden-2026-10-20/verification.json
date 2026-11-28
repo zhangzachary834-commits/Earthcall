@@ -1,0 +1,43 @@
+{
+  "branch": "claude/ray-domain-transport-rung0",
+  "commit": "d7f8aa31f061e2e5e7c18ff6539edb0ce5c976f9",
+  "fixture": "/var/folders/xs/21wyg25d1sqgqhfv5td0jdwr0000gn/T/shape-garden-proof-1v7806if",
+  "sourceSha256": "d0bb05b6c0265ce59524ccad8612be9b1c4f9adf1496f4ae6c1f3810c465ad2a",
+  "logic": {
+    "author": "did:earthcall:dmvokvvtp4jwmhhkyzv23xanzyukspdv5aykm7okru3mdidyncga",
+    "checks": 87,
+    "laws": [
+      "shape-garden-law-0",
+      "shape-garden-law-1",
+      "shape-garden-law-2",
+      "shape-garden-law-3",
+      "shape-garden-law-4",
+      "shape-garden-law-5",
+      "shape-garden-law-6",
+      "shape-garden-law-7",
+      "shape-garden-law-8",
+      "shape-garden-law-9",
+      "shape-garden-law-10",
+      "shape-garden-law-11",
+      "shape-garden-law-12",
+      "shape-garden-law-13",
+      "shape-garden-law-14",
+      "shape-garden-law-15",
+      "shape-garden-law-16",
+      "shape-garden-law-17",
+      "shape-garden-law-18",
+      "shape-garden-law-19",
+      "shape-garden-law-20",
+      "shape-garden-law-21",
+      "shape-garden-law-22",
+      "shape-garden-law-23",
+      "shape-garden-law-24",
+      "shape-garden-law-25",
+      "shape-garden-law-26",
+      "shape-garden-law-27"
+    ],
+    "objectsAfterClicks": 5,
+    "source": "TerminalChannel::authorForeign -> authored compiler Metalaws"
+  },
+  "native": true
+}

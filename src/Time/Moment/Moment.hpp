@@ -25,12 +25,17 @@ public:
     Moment();
     Moment(std::time_t unixSeconds);
     explicit Moment(double seconds);
+    // Named authored Moment birth: two temporal beings may have the same
+    // coordinates without becoming the same individual. Legacy unnamed
+    // Moments retain their historical coordinate spelling.
+    Moment(std::string identifier, const Moment& prototype);
 
     static Moment instant(double seconds);
     static Moment interval(double startSeconds, double endSeconds);
     static Moment now();
 
     std::string getIdentifier() const override;
+    std::string propIdentifier() const { return getIdentifier(); }
 
     Kind kind() const { return _kind; }
     bool isInstant() const { return _kind == Kind::Instant; }
@@ -55,6 +60,7 @@ public:
     void setStart(const double& t);
     double propEnd() const { return _endCache; }
     void setEnd(const double& t);
+    long propCpuClockCycle() const;
 
     explicit operator std::time_t() const { return unixTime(); }
     explicit operator double() const { return asSeconds(); }
@@ -67,9 +73,13 @@ public:
 
     nlohmann::json toJson() const {
         nlohmann::json j{{"kind", static_cast<int>(_kind)}, {"start", _startCache}};
+        if (!_authoredIdentifier.empty()) j["id"] = _authoredIdentifier;
+        j["startForm"] = _start.toJson();
+        j["endForm"] = _end.toJson();
         if (_kind == Kind::Interval) j["end"] = _endCache;
         return j;
     }
+    static Moment fromJson(const nlohmann::json& state);
 
 protected:
     void buildProperties() override;
@@ -83,6 +93,7 @@ private:
     OntoMath::ScalarForm _end = OntoMath::ScalarForm::constant(0.0);
     double _startCache = 0.0;
     double _endCache = 0.0;
+    std::string _authoredIdentifier;
 };
 
 inline void to_json(nlohmann::json& j, const Moment& m) { j = m.toJson(); }
